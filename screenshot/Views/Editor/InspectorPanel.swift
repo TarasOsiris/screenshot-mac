@@ -102,7 +102,7 @@ struct InspectorPanel: View {
 
                     // Options
                     inspectorSection("Options") {
-                        Toggle("Show device frame", isOn: $state.rows[rowIndex].showDevice.onSet { state.scheduleSave() })
+                        Toggle("Show devices", isOn: $state.rows[rowIndex].showDevice.onSet { state.scheduleSave() })
                         .font(.system(size: 12))
                         .toggleStyle(.switch)
                         .controlSize(.small)
@@ -119,6 +119,7 @@ struct InspectorPanel: View {
             }
             .onAppear { isLabelFocused = false }
             .onChange(of: state.selectedRowId) { isLabelFocused = false }
+            .onChange(of: state.selectedShapeId) { if state.selectedShapeId != nil { isLabelFocused = false } }
         }
     }
 

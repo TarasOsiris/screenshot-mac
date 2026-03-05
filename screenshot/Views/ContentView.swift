@@ -8,6 +8,8 @@ struct ContentView: View {
     @State private var isRenamingProject = false
     @State private var renameText = ""
     @State private var isDeletingProject = false
+    @State private var isDeletingShape = false
+    @State private var keyMonitor: Any?
 
     var body: some View {
         @Bindable var state = state
@@ -134,6 +136,14 @@ struct ContentView: View {
         } message: {
             Text("Are you sure you want to delete \"\(state.activeProject?.name ?? "")\"? This cannot be undone.")
         }
+        .alert("Delete Shape", isPresented: $isDeletingShape) {
+            Button("Delete", role: .destructive) {
+                state.deleteSelectedShape()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to delete this shape?")
+        }
         .alert("Rename Project", isPresented: $isRenamingProject) {
             TextField("Project name", text: $renameText)
             Button("Rename") {
@@ -142,6 +152,34 @@ struct ContentView: View {
                 }
             }
             Button("Cancel", role: .cancel) {}
+        }
+        .onAppear {
+            keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                // Don't intercept when a text field has focus
+                if let responder = event.window?.firstResponder,
+                   responder.isKind(of: NSText.self) {
+                    return event
+                }
+
+                guard state.selectedShapeId != nil else { return event }
+
+                switch event.keyCode {
+                case 51: // Delete key
+                    isDeletingShape = true
+                    return nil
+                case 53: // Escape key
+                    state.deselectShape()
+                    return nil
+                default:
+                    return event
+                }
+            }
+        }
+        .onDisappear {
+            if let monitor = keyMonitor {
+                NSEvent.removeMonitor(monitor)
+                keyMonitor = nil
+            }
         }
     }
 

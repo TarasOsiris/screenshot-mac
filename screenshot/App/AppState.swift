@@ -218,6 +218,20 @@ final class AppState {
         scheduleSave()
     }
 
+    func duplicateSelectedShape() {
+        guard let rowIdx = selectedRowIndex,
+              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == selectedShapeId }) else { return }
+        let copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: 20, offsetY: 20)
+        rows[rowIdx].shapes.append(copy)
+        selectedShapeId = copy.id
+        scheduleSave()
+    }
+
+    func deleteSelectedShape() {
+        guard let id = selectedShapeId else { return }
+        deleteShape(id)
+    }
+
     func deselectShape() {
         selectedShapeId = nil
     }
