@@ -3,6 +3,7 @@ import SwiftUI
 struct InspectorPanel: View {
     @Bindable var state: AppState
     @FocusState private var isLabelFocused: Bool
+    @State private var expandedCategories: Set<String> = []
 
     var body: some View {
         if let rowIndex = state.selectedRowIndex {
@@ -24,12 +25,36 @@ struct InspectorPanel: View {
                     inspectorSection("Screenshot Size") {
                         VStack(alignment: .leading, spacing: 2) {
                             ForEach(displayCategories) { category in
-                                DisclosureGroup(category.name) {
+                                let isExpanded = expandedCategories.contains(category.name)
+
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.15)) {
+                                        if isExpanded {
+                                            expandedCategories.remove(category.name)
+                                        } else {
+                                            expandedCategories.insert(category.name)
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 8, weight: .semibold))
+                                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                                        Text(category.name)
+                                    }
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+
+                                if isExpanded {
                                     ForEach(category.sizes) { size in
                                         let isSelected = row.templateWidth == size.width && row.templateHeight == size.height
                                         Button {
                                             state.rows[rowIndex].templateWidth = size.width
                                             state.rows[rowIndex].templateHeight = size.height
+                                            state.rows[rowIndex].label = "\(category.name) — \(size.label)"
                                             state.scheduleSave()
                                         } label: {
                                             HStack {
@@ -50,8 +75,6 @@ struct InspectorPanel: View {
                                         .buttonStyle(.plain)
                                     }
                                 }
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundStyle(.secondary)
                             }
                         }
                     }
