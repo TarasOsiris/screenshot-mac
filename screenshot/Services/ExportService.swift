@@ -24,10 +24,12 @@ struct ExportService {
             }
 
             for (index, _) in row.templates.enumerated() {
-                let image = renderTemplate(index: index, row: row)
+                guard let pngData = renderTemplatePNG(index: index, row: row) else {
+                    throw ExportError.renderFailed
+                }
                 let filename = "screenshot-\(index + 1).png"
                 let fileURL = destFolder.appendingPathComponent(filename)
-                try savePNG(image: image, to: fileURL)
+                try pngData.write(to: fileURL)
             }
         }
     }
@@ -38,18 +40,22 @@ struct ExportService {
             .replacingOccurrences(of: "\\", with: "-")
     }
 
+    // MARK: - Shared Rendering
+
     @MainActor
-    private static func renderTemplate(index: Int, row: ScreenshotRow) -> NSImage {
+    static func renderTemplatePNG(index: Int, row: ScreenshotRow) -> Data? {
+        let image = renderTemplateImage(index: index, row: row)
+        return pngData(from: image)
+    }
+
+    @MainActor
+    static func renderTemplateImage(index: Int, row: ScreenshotRow) -> NSImage {
         let tLeft = CGFloat(index) * row.templateWidth
-        let tRight = tLeft + row.templateWidth
-        let templateShapes = row.shapes.filter { s in
-            let cx = s.x + s.width / 2
-            return cx >= tLeft && cx < tRight
-        }
+        let visibleShapes = row.visibleShapes(forTemplateAt: index)
 
         let view = ZStack {
             Rectangle().fill(row.bgColor.gradient)
-            ForEach(templateShapes) { shape in
+            ForEach(visibleShapes) { shape in
                 CanvasShapeView(
                     shape: shape.duplicated(offsetX: -tLeft),
                     displayScale: 1.0,
@@ -61,6 +67,7 @@ struct ExportService {
             }
         }
         .frame(width: row.templateWidth, height: row.templateHeight)
+        .clipped()
 
         let renderer = ImageRenderer(content: view)
         renderer.scale = 1.0
@@ -75,24 +82,20 @@ struct ExportService {
         return NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
     }
 
-    private static func savePNG(image: NSImage, to url: URL) throws {
+    static func pngData(from image: NSImage) -> Data? {
         guard let tiffData = image.tiffRepresentation,
               let bitmap = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmap.representation(using: .png, properties: [:]) else {
-            throw ExportError.renderFailed
-        }
-        try pngData.write(to: url)
+              let pngData = bitmap.representation(using: .png, properties: [:]) else { return nil }
+        return pngData
     }
 }
 
 enum ExportError: LocalizedError {
     case renderFailed
-    case noFolder
 
     var errorDescription: String? {
         switch self {
         case .renderFailed: "Failed to render screenshot"
-        case .noFolder: "No export folder selected"
         }
     }
 }

@@ -65,12 +65,23 @@ struct EditorRowView: View {
                         // Guideline separators
                         if row.showBorders {
                             ForEach(1..<row.templates.count, id: \.self) { i in
-                                Path { path in
-                                    path.move(to: CGPoint(x: 0, y: 0))
-                                    path.addLine(to: CGPoint(x: 0, y: row.displayHeight(zoom: zoom)))
+                                ZStack {
+                                    // Black dashes
+                                    Path { path in
+                                        path.move(to: CGPoint(x: 0, y: 0))
+                                        path.addLine(to: CGPoint(x: 0, y: row.displayHeight(zoom: zoom)))
+                                    }
+                                    .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                                    .foregroundStyle(.black)
+
+                                    // White dashes offset to fill the gaps
+                                    Path { path in
+                                        path.move(to: CGPoint(x: 0, y: 0))
+                                        path.addLine(to: CGPoint(x: 0, y: row.displayHeight(zoom: zoom)))
+                                    }
+                                    .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4], dashPhase: 4))
+                                    .foregroundStyle(.white)
                                 }
-                                .stroke(style: StrokeStyle(lineWidth: 1, dash: [6, 4]))
-                                .foregroundStyle(.white.opacity(0.5))
                                 .frame(width: 1, height: row.displayHeight(zoom: zoom))
                                 .offset(x: row.displayWidth(zoom: zoom) * CGFloat(i))
                             }
@@ -120,13 +131,9 @@ struct EditorRowView: View {
                                 .frame(height: 20)
                         }
                         TemplateControlBar(
+                            row: row,
                             index: index,
-                            canDelete: row.templates.count > 1,
-                            displayWidth: row.displayWidth(zoom: zoom),
-                            templateWidth: row.templateWidth,
-                            templateHeight: row.templateHeight,
-                            bgColor: row.bgColor,
-                            shapes: row.shapes,
+                            zoom: zoom,
                             onDelete: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     state.removeTemplate(template.id, from: row.id)
@@ -170,15 +177,13 @@ struct EditorRowView: View {
 // MARK: - Template Control Bar
 
 private struct TemplateControlBar: View {
+    let row: ScreenshotRow
     let index: Int
-    let canDelete: Bool
-    let displayWidth: CGFloat
-    let templateWidth: CGFloat
-    let templateHeight: CGFloat
-    let bgColor: Color
-    let shapes: [CanvasShapeModel]
+    let zoom: CGFloat
     var onDelete: () -> Void
     @State private var isDeletingTemplate = false
+
+    private var canDelete: Bool { row.templates.count > 1 }
 
     var body: some View {
         HStack(spacing: 6) {
@@ -196,7 +201,7 @@ private struct TemplateControlBar: View {
             }
         }
         .padding(.horizontal, 4)
-        .frame(width: displayWidth)
+        .frame(width: row.displayWidth(zoom: zoom))
         .alert("Delete Screenshot", isPresented: $isDeletingTemplate) {
             Button("Delete", role: .destructive) { onDelete() }
             Button("Cancel", role: .cancel) {}
@@ -217,45 +222,8 @@ private struct TemplateControlBar: View {
         .help(tooltip)
     }
 
-    private func renderPNGData() -> Data? {
-        let tLeft = CGFloat(index) * templateWidth
-        let tRight = tLeft + templateWidth
-        let templateShapes = shapes.filter { s in
-            let cx = s.x + s.width / 2
-            return cx >= tLeft && cx < tRight
-        }
-
-        let shapeViews = ForEach(templateShapes) { shape in
-            CanvasShapeView(
-                shape: shape.duplicated(offsetX: -tLeft),
-                displayScale: 1.0,
-                isSelected: false,
-                onSelect: {},
-                onUpdate: { _ in },
-                onDelete: {}
-            )
-        }
-
-        let view = ZStack {
-            Rectangle().fill(bgColor.gradient)
-            shapeViews
-        }
-        .frame(width: templateWidth, height: templateHeight)
-
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = 1.0
-        renderer.proposedSize = ProposedViewSize(width: templateWidth, height: templateHeight)
-
-        guard let cgImage = renderer.cgImage else { return nil }
-        let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: templateWidth, height: templateHeight))
-        guard let tiffData = nsImage.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmap.representation(using: .png, properties: [:]) else { return nil }
-        return pngData
-    }
-
     private func previewScreenshot() {
-        guard let pngData = renderPNGData() else { return }
+        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row) else { return }
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("screenshot-\(index + 1).png")
         try? pngData.write(to: tempURL)
@@ -269,7 +237,7 @@ private struct TemplateControlBar: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        guard let pngData = renderPNGData() else { return }
+        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row) else { return }
         try? pngData.write(to: url)
     }
 }

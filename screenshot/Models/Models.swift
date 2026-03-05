@@ -115,6 +115,22 @@ enum ShapeType: String, Codable, CaseIterable {
     case image
 }
 
+enum TextAlign: String, Codable {
+    case left
+    case center
+    case right
+}
+
+extension Optional where Wrapped == TextAlign {
+    var textAlignment: TextAlignment {
+        switch self {
+        case .left: .leading
+        case .right: .trailing
+        default: .center
+        }
+    }
+}
+
 struct CanvasShapeModel: Identifiable, Codable {
     let id: UUID
     var type: ShapeType
@@ -131,7 +147,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     var text: String?
     var fontSize: CGFloat?
     var fontWeight: Int?
-    var textAlign: String?
+    var textAlign: TextAlign?
 
     // Image properties
     var imageFileName: String?
@@ -150,7 +166,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         text: String? = nil,
         fontSize: CGFloat? = nil,
         fontWeight: Int? = nil,
-        textAlign: String? = nil,
+        textAlign: TextAlign? = nil,
         imageFileName: String? = nil
     ) {
         self.id = id
@@ -198,7 +214,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     static func defaultText(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
         CanvasShapeModel(
             type: .text, x: centerX - 200, y: centerY - 42, width: 400, height: 84,
-            color: .white, text: "Your text here", fontSize: 72, fontWeight: 700, textAlign: "center"
+            color: .white, text: "Your text here", fontSize: 72, fontWeight: 700, textAlign: .center
         )
     }
 
@@ -288,6 +304,15 @@ struct ScreenshotRow: Identifiable, Codable {
 
     var resolutionLabel: String {
         "\(Int(templateWidth))x\(Int(templateHeight))"
+    }
+
+    func visibleShapes(forTemplateAt index: Int) -> [CanvasShapeModel] {
+        let tLeft = CGFloat(index) * templateWidth
+        let tRight = tLeft + templateWidth
+        return shapes.filter { s in
+            let sRight = s.x + s.width
+            return sRight > tLeft && s.x < tRight
+        }
     }
 }
 

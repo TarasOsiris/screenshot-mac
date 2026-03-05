@@ -51,7 +51,7 @@ struct CanvasShapeView: View {
                     weight: fontWeight(shape.fontWeight ?? 700)
                 ))
                 .foregroundStyle(shape.color)
-                .multilineTextAlignment(textAlignment(shape.textAlign))
+                .multilineTextAlignment(shape.textAlign.textAlignment)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
         case .image:
@@ -106,11 +106,4 @@ struct CanvasShapeView: View {
         }
     }
 
-    private func textAlignment(_ align: String?) -> TextAlignment {
-        switch align {
-        case "left": .leading
-        case "right": .trailing
-        default: .center
-        }
-    }
 }

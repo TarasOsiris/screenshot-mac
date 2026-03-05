@@ -13,7 +13,7 @@ struct ContentView: View {
         @Bindable var state = state
         VStack(spacing: 0) {
             ScrollView(.vertical) {
-                VStack(spacing: 0) {
+                LazyVStack(spacing: 0) {
                     ForEach(state.rows) { row in
                         EditorRowView(state: state, row: row)
                         Divider()
@@ -100,48 +100,8 @@ struct ContentView: View {
             }
 
             ToolbarItem(placement: .navigation) {
-                HStack(spacing: 4) {
-                    Button {
-                        state.zoomLevel = max(0.25, state.zoomLevel - 0.25)
-                    } label: {
-                        Image(systemName: "minus")
-                            .font(.system(size: 9, weight: .semibold))
-                            .frame(width: 20, height: 20)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .disabled(state.zoomLevel <= 0.25)
-
-                    Slider(value: $state.zoomLevel, in: 0.25...2.0, step: 0.25)
-                        .frame(width: 80)
-                        .controlSize(.small)
-
-                    Button {
-                        state.zoomLevel = min(2.0, state.zoomLevel + 0.25)
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 9, weight: .semibold))
-                            .frame(width: 20, height: 20)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .disabled(state.zoomLevel >= 2.0)
-
-                    Button {
-                        state.zoomLevel = 1.0
-                    } label: {
-                        Text(verbatim: "\(Int(state.zoomLevel * 100))%")
-                            .font(.system(size: 10, weight: .medium).monospacedDigit())
-                            .foregroundStyle(state.zoomLevel == 1.0 ? .tertiary : .secondary)
-                            .frame(width: 34)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help("Reset to 100%")
-                }
-                .padding(.leading, 8)
+                ZoomControls(zoomLevel: $state.zoomLevel)
+                    .padding(.leading, 8)
             }
 
             ToolbarItem(placement: .primaryAction) {
@@ -206,6 +166,56 @@ struct ContentView: View {
             exportError = error.localizedDescription
         }
         isExporting = false
+    }
+}
+
+// MARK: - Zoom Controls
+
+private struct ZoomControls: View {
+    @Binding var zoomLevel: CGFloat
+
+    private static let min: CGFloat = 0.25
+    private static let max: CGFloat = 2.0
+    private static let step: CGFloat = 0.25
+
+    var body: some View {
+        HStack(spacing: 4) {
+            zoomButton("minus", disabled: zoomLevel <= Self.min) {
+                zoomLevel = Swift.max(Self.min, zoomLevel - Self.step)
+            }
+
+            Slider(value: $zoomLevel, in: Self.min...Self.max, step: Self.step)
+                .frame(width: 80)
+                .controlSize(.small)
+
+            zoomButton("plus", disabled: zoomLevel >= Self.max) {
+                zoomLevel = Swift.min(Self.max, zoomLevel + Self.step)
+            }
+
+            Button {
+                zoomLevel = 1.0
+            } label: {
+                Text(verbatim: "\(Int(zoomLevel * 100))%")
+                    .font(.system(size: 10, weight: .medium).monospacedDigit())
+                    .foregroundStyle(zoomLevel == 1.0 ? .tertiary : .secondary)
+                    .frame(width: 34)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Reset to 100%")
+        }
+    }
+
+    private func zoomButton(_ icon: String, disabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 9, weight: .semibold))
+                .frame(width: 20, height: 20)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .disabled(disabled)
     }
 }
 
