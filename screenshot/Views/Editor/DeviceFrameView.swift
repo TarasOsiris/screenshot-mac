@@ -85,6 +85,8 @@ struct DeviceFrameView: View {
         let camCtrlH: CGFloat = 25 * s
         let camCtrlY: CGFloat = bodyH * 0.67
 
+        let btnColor = buttonColor
+
         return ZStack {
             // Body
             RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
@@ -127,24 +129,24 @@ struct DeviceFrameView: View {
 
             // Left side buttons
             // Action button (small, round-ish)
-            sideButton(width: btnDepth, height: actionH)
+            sideButton(width: btnDepth, height: actionH, color: btnColor)
                 .offset(x: -(bodyW / 2 + btnDepth / 2), y: -(bodyH / 2 - actionY))
 
             // Volume Up
-            sideButton(width: btnDepth, height: volUpH)
+            sideButton(width: btnDepth, height: volUpH, color: btnColor)
                 .offset(x: -(bodyW / 2 + btnDepth / 2), y: -(bodyH / 2 - volUpY))
 
             // Volume Down
-            sideButton(width: btnDepth, height: volDownH)
+            sideButton(width: btnDepth, height: volDownH, color: btnColor)
                 .offset(x: -(bodyW / 2 + btnDepth / 2), y: -(bodyH / 2 - volDownY))
 
             // Right side buttons
             // Power / Side button
-            sideButton(width: btnDepth, height: powerH)
+            sideButton(width: btnDepth, height: powerH, color: btnColor)
                 .offset(x: bodyW / 2 + btnDepth / 2, y: -(bodyH / 2 - powerY))
 
             // Camera Control (flush capacitive — thinner, subtler)
-            cameraControlButton(width: btnDepth * 0.7, height: camCtrlH)
+            sideButton(width: btnDepth * 0.7, height: camCtrlH, color: btnColor.opacity(0.7))
                 .offset(x: bodyW / 2 + btnDepth * 0.35, y: -(bodyH / 2 - camCtrlY))
 
             // Shine overlay
@@ -167,15 +169,9 @@ struct DeviceFrameView: View {
 
     // MARK: - Button Helpers
 
-    private func sideButton(width: CGFloat, height: CGFloat) -> some View {
+    private func sideButton(width: CGFloat, height: CGFloat, color: Color) -> some View {
         RoundedRectangle(cornerRadius: width / 2, style: .continuous)
-            .fill(buttonColor)
-            .frame(width: width, height: height)
-    }
-
-    private func cameraControlButton(width: CGFloat, height: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: width / 2, style: .continuous)
-            .fill(buttonColor.opacity(0.7))
+            .fill(color)
             .frame(width: width, height: height)
     }
 

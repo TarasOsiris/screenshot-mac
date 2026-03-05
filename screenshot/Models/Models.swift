@@ -330,10 +330,6 @@ struct ScreenshotRow: Identifiable, Codable {
         shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []
     }
 
-    var totalCanvasWidth: CGFloat {
-        templateWidth * CGFloat(templates.count)
-    }
-
     var bgColor: Color {
         get { backgroundColorData.color }
         set { backgroundColorData = CodableColor(newValue) }
@@ -358,6 +354,10 @@ struct ScreenshotRow: Identifiable, Codable {
 
     var resolutionLabel: String {
         "\(Int(templateWidth))x\(Int(templateHeight))"
+    }
+
+    var activeShapes: [CanvasShapeModel] {
+        shapes.filter { showDevice || $0.type != .device }
     }
 
     func visibleShapes(forTemplateAt index: Int) -> [CanvasShapeModel] {

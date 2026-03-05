@@ -267,8 +267,9 @@ struct CanvasShapeView: View {
     private func fontWeight(_ weight: Int) -> Font.Weight {
         switch weight {
         case ...299: .light
-        case 300...399: .regular
-        case 400...599: .medium
+        case 300...399: .light
+        case 400...499: .regular
+        case 500...599: .medium
         case 600...699: .semibold
         case 700...799: .bold
         default: .heavy

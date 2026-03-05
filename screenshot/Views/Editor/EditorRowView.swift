@@ -53,6 +53,10 @@ struct EditorRowView: View {
 
             // Unified canvas + add button
             ScrollView(.horizontal, showsIndicators: false) {
+                let dw = row.displayWidth(zoom: zoom)
+                let dh = row.displayHeight(zoom: zoom)
+                let ds = row.displayScale(zoom: zoom)
+
                 HStack(alignment: .top, spacing: 0) {
                     // Unified canvas
                     ZStack(alignment: .topLeading) {
@@ -61,15 +65,15 @@ struct EditorRowView: View {
                             ForEach(row.templates) { _ in
                                 Rectangle()
                                     .fill(row.bgColor.gradient)
-                                    .frame(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom))
+                                    .frame(width: dw, height: dh)
                             }
                         }
 
                         // Shared shapes layer
-                        ForEach(row.shapes.filter { row.showDevice || $0.type != .device }) { shape in
+                        ForEach(row.activeShapes) { shape in
                             CanvasShapeView(
                                 shape: shape,
-                                displayScale: row.displayScale(zoom: zoom),
+                                displayScale: ds,
                                 isSelected: shape.id == state.selectedShapeId,
                                 onSelect: { state.selectedRowId = row.id; state.selectedShapeId = shape.id },
                                 onUpdate: { state.updateShape($0) },
@@ -83,27 +87,27 @@ struct EditorRowView: View {
                                 ZStack {
                                     Path { path in
                                         path.move(to: CGPoint(x: 0, y: 0))
-                                        path.addLine(to: CGPoint(x: 0, y: row.displayHeight(zoom: zoom)))
+                                        path.addLine(to: CGPoint(x: 0, y: dh))
                                     }
                                     .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
                                     .foregroundStyle(.black)
 
                                     Path { path in
                                         path.move(to: CGPoint(x: 0, y: 0))
-                                        path.addLine(to: CGPoint(x: 0, y: row.displayHeight(zoom: zoom)))
+                                        path.addLine(to: CGPoint(x: 0, y: dh))
                                     }
                                     .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4], dashPhase: 4))
                                     .foregroundStyle(.white)
                                 }
-                                .frame(width: 1, height: row.displayHeight(zoom: zoom))
-                                .offset(x: row.displayWidth(zoom: zoom) * CGFloat(i))
+                                .frame(width: 1, height: dh)
+                                .offset(x: dw * CGFloat(i))
                                 .allowsHitTesting(false)
                             }
                         }
                     }
                     .frame(
                         width: row.totalDisplayWidth(zoom: zoom),
-                        height: row.displayHeight(zoom: zoom)
+                        height: dh
                     )
                     .clipped()
                     .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
@@ -111,7 +115,7 @@ struct EditorRowView: View {
                     .onTapGesture { state.deselectShape() }
 
                     // Add button
-                    AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
+                    AddTemplateButton(width: dw, height: dh) {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             state.addTemplate(to: row.id)
                         }
@@ -163,7 +167,7 @@ struct EditorRowView: View {
         }
     }
 
-    fileprivate func rowActionButton(_ icon: String, tooltip: String, disabled: Bool, action: @escaping () -> Void) -> some View {
+    private func rowActionButton(_ icon: String, tooltip: String, disabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 10))
