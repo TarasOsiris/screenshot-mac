@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var isDeletingProject = false
     @State private var isDeletingShape = false
     @State private var keyMonitor: Any?
+    @State private var exportSuccessMessage: String?
 
     var body: some View {
         @Bindable var state = state
@@ -36,6 +37,8 @@ struct ContentView: View {
                         .padding(.vertical, 16)
                     }
                     .buttonStyle(.plain)
+                    .keyboardShortcut("r", modifiers: [.command, .shift])
+                    .help("Add row (\u{21e7}\u{2318}R)")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -114,7 +117,9 @@ struct ContentView: View {
                         .font(.system(size: 12, weight: .medium))
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(isExporting)
+                .disabled(isExporting || state.rows.isEmpty)
+                .keyboardShortcut("e", modifiers: .command)
+                .help("Export screenshots (\u{2318}E)")
             }
         }
         .toolbarRole(.editor)
@@ -125,6 +130,14 @@ struct ContentView: View {
             Button("OK") { exportError = nil }
         } message: {
             Text(exportError ?? "")
+        }
+        .alert("Export Complete", isPresented: .init(
+            get: { exportSuccessMessage != nil },
+            set: { if !$0 { exportSuccessMessage = nil } }
+        )) {
+            Button("OK") { exportSuccessMessage = nil }
+        } message: {
+            Text(exportSuccessMessage ?? "")
         }
         .alert("Delete Project", isPresented: $isDeletingProject) {
             Button("Delete", role: .destructive) {
@@ -147,8 +160,9 @@ struct ContentView: View {
         .alert("Rename Project", isPresented: $isRenamingProject) {
             TextField("Project name", text: $renameText)
             Button("Rename") {
-                if let id = state.activeProjectId, !renameText.isEmpty {
-                    state.renameProject(id, to: renameText)
+                let trimmedName = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let id = state.activeProjectId, !trimmedName.isEmpty {
+                    state.renameProject(id, to: trimmedName)
                 }
             }
             Button("Cancel", role: .cancel) {}
@@ -197,8 +211,14 @@ struct ContentView: View {
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
 
         isExporting = true
+        exportError = nil
+        exportSuccessMessage = nil
         do {
-            try ExportService.exportAll(rows: state.rows, projectName: state.activeProject?.name ?? "Screenshots", to: url)
+            let projectName = state.activeProject?.name ?? "Screenshots"
+            try ExportService.exportAll(rows: state.rows, projectName: projectName, to: url)
+            let totalScreenshots = state.rows.reduce(0) { $0 + $1.templates.count }
+            let destinationFolder = url.appendingPathComponent(projectName.isEmpty ? "Screenshots" : projectName).path
+            exportSuccessMessage = "Exported \(totalScreenshots) screenshot\(totalScreenshots == 1 ? "" : "s") to \(destinationFolder)."
         } catch {
             exportError = error.localizedDescription
         }

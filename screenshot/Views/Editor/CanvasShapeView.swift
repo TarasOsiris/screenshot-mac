@@ -151,7 +151,8 @@ struct CanvasShapeView: View {
                 .onChanged { value in
                     let tx = value.translation.width / displayScale
                     let ty = value.translation.height / displayScale
-                    resizeState = computeResize(edge: edge, tx: tx, ty: ty)
+                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift)
+                    resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
                 }
                 .onEnded { _ in
                     if let rs = resizeState {
@@ -170,7 +171,7 @@ struct CanvasShapeView: View {
     // MARK: - Resize Math
 
     /// Compute new x, y, width, height for a resize drag, keeping the anchor point fixed in canvas space.
-    private func computeResize(edge: ResizeEdge, tx: CGFloat, ty: CGFloat) -> ResizeState {
+    private func computeResize(edge: ResizeEdge, tx: CGFloat, ty: CGFloat, lockAspectRatio: Bool = false) -> ResizeState {
         let minSize: CGFloat = 20
         let cosA = cos(rotationRadians)
         let sinA = sin(rotationRadians)
@@ -191,6 +192,29 @@ struct CanvasShapeView: View {
         case .bottomLeft:  newW = max(minSize, shape.width - localTx);  newH = max(minSize, shape.height + localTy)
         case .bottom:      newH = max(minSize, shape.height + localTy)
         case .bottomRight: newW = max(minSize, shape.width + localTx);  newH = max(minSize, shape.height + localTy)
+        }
+
+        if lockAspectRatio {
+            let baseW = max(shape.width, 1)
+            let baseH = max(shape.height, 1)
+            let minScale = max(minSize / baseW, minSize / baseH)
+
+            let widthScale = newW / baseW
+            let heightScale = newH / baseH
+
+            let scale: CGFloat
+            switch edge {
+            case .left, .right:
+                scale = max(minScale, widthScale)
+            case .top, .bottom:
+                scale = max(minScale, heightScale)
+            case .topLeft, .topRight, .bottomLeft, .bottomRight:
+                let useWidth = abs(widthScale - 1) >= abs(heightScale - 1)
+                scale = max(minScale, useWidth ? widthScale : heightScale)
+            }
+
+            newW = baseW * scale
+            newH = baseH * scale
         }
 
         // Anchor point: the corner/edge opposite to the dragged one, in local coords relative to shape origin

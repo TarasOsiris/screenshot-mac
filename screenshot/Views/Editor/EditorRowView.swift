@@ -5,6 +5,7 @@ struct EditorRowView: View {
     @Bindable var state: AppState
     let row: ScreenshotRow
     @State private var isDeletingRow = false
+    @State private var isRowHovered = false
 
     private var isSelected: Bool {
         state.selectedRowId == row.id
@@ -30,23 +31,25 @@ struct EditorRowView: View {
                 Spacer()
 
                 HStack(spacing: 4) {
-                    rowActionButton("chevron.up", disabled: state.rows.first?.id == row.id) {
+                    rowActionButton("chevron.up", tooltip: "Move up", disabled: state.rows.first?.id == row.id) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
                     }
-                    rowActionButton("chevron.down", disabled: state.rows.last?.id == row.id) {
+                    rowActionButton("chevron.down", tooltip: "Move down", disabled: state.rows.last?.id == row.id) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
                     }
-                    rowActionButton("doc.on.doc", disabled: false) {
+                    rowActionButton("doc.on.doc", tooltip: "Duplicate row", disabled: false) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
                     }
-                    rowActionButton("trash", disabled: state.rows.count <= 1) {
+                    rowActionButton("trash", tooltip: "Delete row", disabled: state.rows.count <= 1) {
                         isDeletingRow = true
                     }
                 }
-                .opacity(isSelected ? 1 : 0)
+                .opacity(isSelected || isRowHovered ? 1 : 0.35)
+                .animation(.easeInOut(duration: 0.15), value: isSelected || isRowHovered)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
+            .onHover { isRowHovered = $0 }
 
             // Unified canvas + add button
             ScrollView(.horizontal, showsIndicators: false) {
@@ -160,7 +163,7 @@ struct EditorRowView: View {
         }
     }
 
-    fileprivate func rowActionButton(_ icon: String, disabled: Bool, action: @escaping () -> Void) -> some View {
+    fileprivate func rowActionButton(_ icon: String, tooltip: String, disabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 10))
@@ -170,6 +173,7 @@ struct EditorRowView: View {
         .buttonStyle(.plain)
         .foregroundStyle(disabled ? .tertiary : .secondary)
         .disabled(disabled)
+        .help(tooltip)
     }
 }
 
@@ -250,22 +254,26 @@ private struct AddTemplateButton: View {
     @State private var isHovered = false
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 8)
-            .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-            .foregroundStyle(isHovered ? .primary : .secondary)
-            .frame(width: width, height: height)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(.primary.opacity(isHovered ? 0.04 : 0))
-            )
-            .contentShape(Rectangle())
-            .overlay {
-                Image(systemName: "plus")
-                    .font(.system(size: 20))
-                    .foregroundStyle(isHovered ? .primary : .secondary)
-            }
-            .onHover { isHovered = $0 }
-            .onTapGesture { action() }
-            .animation(.easeInOut(duration: 0.15), value: isHovered)
+        Button(action: action) {
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
+                .foregroundStyle(isHovered ? .primary : .secondary)
+                .frame(width: width, height: height)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.primary.opacity(isHovered ? 0.04 : 0))
+                )
+                .contentShape(Rectangle())
+                .overlay {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20))
+                        .foregroundStyle(isHovered ? .primary : .secondary)
+                }
+        }
+        .buttonStyle(.plain)
+        .help("Add screenshot")
+        .accessibilityLabel("Add screenshot")
+        .onHover { isHovered = $0 }
+        .animation(.easeInOut(duration: 0.15), value: isHovered)
     }
 }
