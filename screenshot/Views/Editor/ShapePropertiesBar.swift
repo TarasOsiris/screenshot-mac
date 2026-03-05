@@ -9,6 +9,14 @@ struct ShapePropertiesBar: View {
         guard let rowIndex, let shapeId = state.selectedShapeId else { return nil }
         return state.rows[rowIndex].shapes.firstIndex { $0.id == shapeId }
     }
+    private var canBringToFront: Bool {
+        guard let rowIndex, let shapeIndex else { return false }
+        return shapeIndex < state.rows[rowIndex].shapes.count - 1
+    }
+    private var canSendToBack: Bool {
+        guard let shapeIndex else { return false }
+        return shapeIndex > 0
+    }
 
     var body: some View {
         if let rowIndex, let shapeIdx = shapeIndex {
@@ -101,6 +109,17 @@ struct ShapePropertiesBar: View {
 
                 Spacer()
 
+                // Layer order
+                barButton("square.3.layers.3d.top.filled", disabled: !canBringToFront) {
+                    state.bringSelectedShapeToFront()
+                }
+                .help("Bring to front")
+
+                barButton("square.3.layers.3d.bottom.filled", disabled: !canSendToBack) {
+                    state.sendSelectedShapeToBack()
+                }
+                .help("Send to back")
+
                 // Duplicate
                 barButton("doc.on.doc") {
                     state.duplicateSelectedShape()
@@ -142,7 +161,7 @@ struct ShapePropertiesBar: View {
         }
     }
 
-    private func barButton(_ icon: String, action: @escaping () -> Void) -> some View {
+    private func barButton(_ icon: String, disabled: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 11))
@@ -150,6 +169,7 @@ struct ShapePropertiesBar: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(disabled ? .tertiary : .secondary)
+        .disabled(disabled)
     }
 }

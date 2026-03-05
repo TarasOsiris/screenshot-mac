@@ -185,6 +185,22 @@ struct ContentView: View {
                     isDeletingShape = true
                     return nil
                 }
+
+                let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+                let isCommandShift = flags.contains([.command, .shift]) &&
+                    !flags.contains(.option) &&
+                    !flags.contains(.control)
+
+                if isCommandShift {
+                    if event.keyCode == 30 { // ] key
+                        state.bringSelectedShapeToFront()
+                        return nil
+                    }
+                    if event.keyCode == 33 { // [ key
+                        state.sendSelectedShapeToBack()
+                        return nil
+                    }
+                }
                 return event
             }
         }

@@ -227,6 +227,36 @@ final class AppState {
         scheduleSave()
     }
 
+    func bringShapeToFront(_ id: UUID) {
+        guard let rowIdx = selectedRowIndex,
+              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
+              shapeIdx < rows[rowIdx].shapes.count - 1 else { return }
+        let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
+        rows[rowIdx].shapes.append(shape)
+        selectedShapeId = id
+        scheduleSave()
+    }
+
+    func sendShapeToBack(_ id: UUID) {
+        guard let rowIdx = selectedRowIndex,
+              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
+              shapeIdx > 0 else { return }
+        let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
+        rows[rowIdx].shapes.insert(shape, at: 0)
+        selectedShapeId = id
+        scheduleSave()
+    }
+
+    func bringSelectedShapeToFront() {
+        guard let id = selectedShapeId else { return }
+        bringShapeToFront(id)
+    }
+
+    func sendSelectedShapeToBack() {
+        guard let id = selectedShapeId else { return }
+        sendShapeToBack(id)
+    }
+
     func deleteSelectedShape() {
         guard let id = selectedShapeId else { return }
         deleteShape(id)
