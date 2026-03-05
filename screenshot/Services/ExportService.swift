@@ -40,13 +40,9 @@ struct ExportService {
 
     @MainActor
     private static func renderTemplate(template: ScreenshotTemplate, row: ScreenshotRow) -> NSImage {
-        let view = ScreenshotTemplateView(
-            template: template,
-            displayWidth: row.templateWidth,
-            displayHeight: row.templateHeight,
-            bgColor: row.bgColor,
-            onDelete: nil
-        )
+        let view = Rectangle()
+            .fill(row.bgColor.gradient)
+            .frame(width: row.templateWidth, height: row.templateHeight)
 
         let renderer = ImageRenderer(content: view)
         renderer.scale = 1.0

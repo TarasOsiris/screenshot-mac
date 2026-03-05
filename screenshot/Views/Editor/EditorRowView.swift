@@ -46,18 +46,22 @@ struct EditorRowView: View {
 
             // Template strip
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(row.templates) { template in
+                HStack(alignment: .top, spacing: 12) {
+                    ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
                         ScreenshotTemplateView(
                             template: template,
                             displayWidth: row.displayWidth,
                             displayHeight: row.displayHeight,
+                            templateWidth: row.templateWidth,
+                            templateHeight: row.templateHeight,
                             bgColor: row.bgColor,
-                            onDelete: row.templates.count > 1 ? {
+                            index: index,
+                            canDelete: row.templates.count > 1,
+                            onDelete: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     state.removeTemplate(template.id, from: row.id)
                                 }
-                            } : nil
+                            }
                         )
                     }
 
