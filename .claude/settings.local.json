@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild:*)",
+      "Bash(git push:*)",
+      "WebSearch",
+      "WebFetch(domain:www.apple.com)",
+      "WebFetch(domain:www.gsmarena.com)",
+      "WebFetch(domain:www.dimensions.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:useyourloaf.com)",
+      "WebFetch(domain:support.apple.com)",
+      "WebFetch(domain:gist.github.com)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git check-ignore:*)"
+    ]
+  }
+}
