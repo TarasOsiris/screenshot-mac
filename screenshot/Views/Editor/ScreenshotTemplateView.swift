@@ -4,12 +4,13 @@ struct ScreenshotTemplateView: View {
     let template: ScreenshotTemplate
     let displayWidth: CGFloat
     let displayHeight: CGFloat
+    var bgColor: Color = .blue
     var onDelete: (() -> Void)?
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 8)
-                .fill(template.backgroundColor.gradient)
+                .fill(bgColor.gradient)
                 .frame(width: displayWidth, height: displayHeight)
 
             VStack {

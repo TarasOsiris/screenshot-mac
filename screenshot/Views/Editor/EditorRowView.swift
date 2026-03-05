@@ -19,28 +19,27 @@ struct EditorRowView: View {
                 Text(row.label)
                     .font(.system(size: 12, weight: .medium))
 
-                Text(row.resolutionLabel)
+                Text(verbatim: row.resolutionLabel)
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
 
                 Spacer()
 
-                if isSelected {
-                    HStack(spacing: 4) {
-                        rowActionButton("chevron.up", disabled: state.rows.first?.id == row.id) {
-                            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
-                        }
-                        rowActionButton("chevron.down", disabled: state.rows.last?.id == row.id) {
-                            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
-                        }
-                        rowActionButton("doc.on.doc", disabled: false) {
-                            withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
-                        }
-                        rowActionButton("trash", disabled: state.rows.count <= 1) {
-                            withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
-                        }
+                HStack(spacing: 4) {
+                    rowActionButton("chevron.up", disabled: state.rows.first?.id == row.id) {
+                        withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
+                    }
+                    rowActionButton("chevron.down", disabled: state.rows.last?.id == row.id) {
+                        withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
+                    }
+                    rowActionButton("doc.on.doc", disabled: false) {
+                        withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+                    }
+                    rowActionButton("trash", disabled: state.rows.count <= 1) {
+                        withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
                     }
                 }
+                .opacity(isSelected ? 1 : 0)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -53,6 +52,7 @@ struct EditorRowView: View {
                             template: template,
                             displayWidth: row.displayWidth,
                             displayHeight: row.displayHeight,
+                            bgColor: row.bgColor,
                             onDelete: row.templates.count > 1 ? {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     state.removeTemplate(template.id, from: row.id)

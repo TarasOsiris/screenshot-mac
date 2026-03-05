@@ -38,7 +38,7 @@ struct InspectorPanel: View {
                                             Text(preset.name)
                                                 .font(.system(size: 12))
                                             Spacer()
-                                            Text("\(Int(preset.width))x\(Int(preset.height))")
+                                            Text(verbatim: "\(Int(preset.width))x\(Int(preset.height))")
                                                 .font(.system(size: 10))
                                                 .foregroundStyle(.secondary)
                                         }

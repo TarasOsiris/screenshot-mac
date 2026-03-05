@@ -10,5 +10,9 @@ struct screenshotApp: App {
                 .environment(appState)
         }
         .defaultSize(width: 1100, height: 700)
+
+        Settings {
+            SettingsView()
+        }
     }
 }

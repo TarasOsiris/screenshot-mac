@@ -44,6 +44,7 @@ struct ExportService {
             template: template,
             displayWidth: row.templateWidth,
             displayHeight: row.templateHeight,
+            bgColor: row.bgColor,
             onDelete: nil
         )
 
