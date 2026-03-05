@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("defaultDevicePreset") private var defaultDevicePreset = "iPhone 6.7\""
+    @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("exportScale") private var exportScale = 1.0
     @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
@@ -21,10 +21,14 @@ struct SettingsView: View {
 
     private var generalSettings: some View {
         Form {
-            Picker("Default device", selection: $defaultDevicePreset) {
-                ForEach(devicePresets) { preset in
-                    Text(verbatim: "\(preset.name) (\(Int(preset.width))x\(Int(preset.height)))")
-                        .tag(preset.name)
+            Picker("Default screenshot size", selection: $defaultScreenshotSize) {
+                ForEach(displayCategories) { category in
+                    Section(category.name) {
+                        ForEach(category.sizes) { size in
+                            Text(size.label)
+                                .tag("\(Int(size.width))x\(Int(size.height))")
+                        }
+                    }
                 }
             }
 

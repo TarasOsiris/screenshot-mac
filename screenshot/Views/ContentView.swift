@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var isDeletingProject = false
 
     var body: some View {
+        @Bindable var state = state
         VStack(spacing: 0) {
             ScrollView(.vertical) {
                 VStack(spacing: 0) {
@@ -49,6 +50,15 @@ struct ContentView: View {
         .inspector(isPresented: $isInspectorPresented) {
             InspectorPanel(state: state)
                 .inspectorColumnWidth(min: 220, ideal: 260, max: 320)
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            isInspectorPresented.toggle()
+                        } label: {
+                            Image(systemName: "sidebar.trailing")
+                        }
+                    }
+                }
         }
         .toolbar {
             ToolbarItem(placement: .navigation) {
@@ -89,23 +99,63 @@ struct ContentView: View {
                 }
             }
 
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    exportScreenshots()
-                } label: {
-                    Label("Export", systemImage: "square.and.arrow.up")
+            ToolbarItem(placement: .navigation) {
+                HStack(spacing: 4) {
+                    Button {
+                        state.zoomLevel = max(0.25, state.zoomLevel - 0.25)
+                    } label: {
+                        Image(systemName: "minus")
+                            .font(.system(size: 9, weight: .semibold))
+                            .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .disabled(state.zoomLevel <= 0.25)
+
+                    Slider(value: $state.zoomLevel, in: 0.25...2.0, step: 0.25)
+                        .frame(width: 80)
+                        .controlSize(.small)
+
+                    Button {
+                        state.zoomLevel = min(2.0, state.zoomLevel + 0.25)
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 9, weight: .semibold))
+                            .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .disabled(state.zoomLevel >= 2.0)
+
+                    Button {
+                        state.zoomLevel = 1.0
+                    } label: {
+                        Text(verbatim: "\(Int(state.zoomLevel * 100))%")
+                            .font(.system(size: 10, weight: .medium).monospacedDigit())
+                            .foregroundStyle(state.zoomLevel == 1.0 ? .tertiary : .secondary)
+                            .frame(width: 34)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Reset to 100%")
                 }
-                .disabled(isExporting)
+                .padding(.leading, 8)
             }
 
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    isInspectorPresented.toggle()
+                    exportScreenshots()
                 } label: {
-                    Label("Toggle Inspector", systemImage: "sidebar.trailing")
+                    Text("Export")
+                        .font(.system(size: 12, weight: .medium))
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(isExporting)
             }
         }
+        .toolbarRole(.editor)
         .alert("Export Failed", isPresented: .init(
             get: { exportError != nil },
             set: { if !$0 { exportError = nil } }

@@ -12,34 +12,48 @@ extension Binding {
     }
 }
 
-enum DeviceCategory: String, CaseIterable, Identifiable, Codable {
-    case iphone = "iPhone"
-    case ipad = "iPad"
+struct ScreenshotSize: Identifiable {
+    let id = UUID()
+    let width: CGFloat
+    let height: CGFloat
 
-    var id: String { rawValue }
+    var label: String {
+        "\(Int(width)) × \(Int(height))px"
+    }
 
-    var icon: String {
-        switch self {
-        case .iphone: "iphone"
-        case .ipad: "ipad"
-        }
+    var isLandscape: Bool {
+        width > height
     }
 }
 
-struct DevicePreset: Identifiable {
+struct DisplayCategory: Identifiable {
     let id = UUID()
     let name: String
-    let width: CGFloat
-    let height: CGFloat
-    let category: DeviceCategory
+    let icon: String
+    let sizes: [ScreenshotSize]
 }
 
-let devicePresets: [DevicePreset] = [
-    DevicePreset(name: "iPhone 6.7\"", width: 1290, height: 2796, category: .iphone),
-    DevicePreset(name: "iPhone 6.5\"", width: 1284, height: 2778, category: .iphone),
-    DevicePreset(name: "iPhone 5.5\"", width: 1242, height: 2208, category: .iphone),
-    DevicePreset(name: "iPad 12.9\"", width: 2048, height: 2732, category: .ipad),
-    DevicePreset(name: "iPad 11\"", width: 1668, height: 2388, category: .ipad),
+let displayCategories: [DisplayCategory] = [
+    DisplayCategory(
+        name: "iPhone 6.5\" Display",
+        icon: "iphone",
+        sizes: [
+            ScreenshotSize(width: 1242, height: 2688),
+            ScreenshotSize(width: 2688, height: 1242),
+            ScreenshotSize(width: 1284, height: 2778),
+            ScreenshotSize(width: 2778, height: 1284),
+        ]
+    ),
+    DisplayCategory(
+        name: "iPad 13\" Display",
+        icon: "ipad",
+        sizes: [
+            ScreenshotSize(width: 2064, height: 2752),
+            ScreenshotSize(width: 2752, height: 2064),
+            ScreenshotSize(width: 2048, height: 2732),
+            ScreenshotSize(width: 2732, height: 2048),
+        ]
+    ),
 ]
 
 // MARK: - Codable Color
@@ -210,8 +224,8 @@ struct ScreenshotRow: Identifiable, Codable {
         id: UUID = UUID(),
         label: String = "Screenshot 1",
         templates: [ScreenshotTemplate] = [],
-        templateWidth: CGFloat = 1290,
-        templateHeight: CGFloat = 2796,
+        templateWidth: CGFloat = 1242,
+        templateHeight: CGFloat = 2688,
         bgColor: Color = .blue,
         showDevice: Bool = true,
         showBorders: Bool = true,
@@ -250,26 +264,26 @@ struct ScreenshotRow: Identifiable, Codable {
         templateWidth * CGFloat(templates.count)
     }
 
-    var totalDisplayWidth: CGFloat {
-        displayWidth * CGFloat(templates.count)
-    }
-
     var bgColor: Color {
         get { backgroundColorData.color }
         set { backgroundColorData = CodableColor(newValue) }
     }
 
-    var displayScale: CGFloat {
+    func displayScale(zoom: CGFloat = 1.0) -> CGFloat {
         let maxDisplayHeight: CGFloat = 500
-        return min(1, maxDisplayHeight / templateHeight)
+        return min(1, maxDisplayHeight / templateHeight) * zoom
     }
 
-    var displayWidth: CGFloat {
-        templateWidth * displayScale
+    func displayWidth(zoom: CGFloat = 1.0) -> CGFloat {
+        templateWidth * displayScale(zoom: zoom)
     }
 
-    var displayHeight: CGFloat {
-        templateHeight * displayScale
+    func displayHeight(zoom: CGFloat = 1.0) -> CGFloat {
+        templateHeight * displayScale(zoom: zoom)
+    }
+
+    func totalDisplayWidth(zoom: CGFloat = 1.0) -> CGFloat {
+        displayWidth(zoom: zoom) * CGFloat(templates.count)
     }
 
     var resolutionLabel: String {

@@ -18,26 +18,25 @@ struct InspectorPanel: View {
                         .focused($isLabelFocused)
                     }
 
+                    Divider()
+
                     // Device preset
-                    inspectorSection("Device") {
+                    inspectorSection("Screenshot Size") {
                         VStack(alignment: .leading, spacing: 2) {
-                            ForEach(DeviceCategory.allCases) { category in
-                                DisclosureGroup(category.rawValue) {
-                                    ForEach(devicePresets.filter { $0.category == category }) { preset in
-                                        let isSelected = row.templateWidth == preset.width && row.templateHeight == preset.height
+                            ForEach(displayCategories) { category in
+                                DisclosureGroup(category.name) {
+                                    ForEach(category.sizes) { size in
+                                        let isSelected = row.templateWidth == size.width && row.templateHeight == size.height
                                         Button {
-                                            state.rows[rowIndex].templateWidth = preset.width
-                                            state.rows[rowIndex].templateHeight = preset.height
+                                            state.rows[rowIndex].templateWidth = size.width
+                                            state.rows[rowIndex].templateHeight = size.height
                                             state.scheduleSave()
                                         } label: {
                                             HStack {
-                                                Image(systemName: category.icon)
-                                                    .font(.system(size: 11))
-                                                    .frame(width: 16)
-                                                Text(preset.name)
+                                                Text(size.label)
                                                     .font(.system(size: 12))
                                                 Spacer()
-                                                Text(verbatim: "\(Int(preset.width))x\(Int(preset.height))")
+                                                Text(size.isLandscape ? "Landscape" : "Portrait")
                                                     .font(.system(size: 10))
                                                     .foregroundStyle(.secondary)
                                             }
@@ -57,6 +56,8 @@ struct InspectorPanel: View {
                         }
                     }
 
+                    Divider()
+
                     // Background color
                     inspectorSection("Background") {
                         ColorPicker(
@@ -67,10 +68,14 @@ struct InspectorPanel: View {
                         .font(.system(size: 12))
                     }
 
+                    Divider()
+
                     // Elements (add shapes)
                     inspectorSection("Elements") {
                         ShapeToolbar(state: state)
                     }
+
+                    Divider()
 
                     // Options
                     inspectorSection("Options") {

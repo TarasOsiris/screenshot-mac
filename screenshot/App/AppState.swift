@@ -7,6 +7,7 @@ final class AppState {
     var rows: [ScreenshotRow] = []
     var selectedRowId: UUID?
     var selectedShapeId: UUID?
+    var zoomLevel: CGFloat = 1.0
 
     private var saveTask: DispatchWorkItem?
 

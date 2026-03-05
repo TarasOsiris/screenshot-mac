@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct screenshotApp: App {
+struct ScreenshotBroApp: App {
     @State private var appState = AppState()
 
     var body: some Scene {
@@ -10,6 +10,7 @@ struct screenshotApp: App {
                 .environment(appState)
         }
         .defaultSize(width: 1100, height: 700)
+        .windowToolbarStyle(.unifiedCompact(showsTitle: false))
 
         Settings {
             SettingsView()

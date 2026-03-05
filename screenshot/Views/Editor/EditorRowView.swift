@@ -10,6 +10,8 @@ struct EditorRowView: View {
         state.selectedRowId == row.id
     }
 
+    private var zoom: CGFloat { state.zoomLevel }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Row header
@@ -56,17 +58,21 @@ struct EditorRowView: View {
                             ForEach(row.templates) { _ in
                                 Rectangle()
                                     .fill(row.bgColor.gradient)
-                                    .frame(width: row.displayWidth, height: row.displayHeight)
+                                    .frame(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom))
                             }
                         }
 
                         // Guideline separators
                         if row.showBorders {
                             ForEach(1..<row.templates.count, id: \.self) { i in
-                                Rectangle()
-                                    .fill(.white.opacity(0.2))
-                                    .frame(width: 1, height: row.displayHeight)
-                                    .offset(x: row.displayWidth * CGFloat(i))
+                                Path { path in
+                                    path.move(to: CGPoint(x: 0, y: 0))
+                                    path.addLine(to: CGPoint(x: 0, y: row.displayHeight(zoom: zoom)))
+                                }
+                                .stroke(style: StrokeStyle(lineWidth: 1, dash: [6, 4]))
+                                .foregroundStyle(.white.opacity(0.5))
+                                .frame(width: 1, height: row.displayHeight(zoom: zoom))
+                                .offset(x: row.displayWidth(zoom: zoom) * CGFloat(i))
                             }
                         }
 
@@ -74,17 +80,17 @@ struct EditorRowView: View {
                         ForEach(row.shapes) { shape in
                             CanvasShapeView(
                                 shape: shape,
-                                displayScale: row.displayScale,
+                                displayScale: row.displayScale(zoom: zoom),
                                 isSelected: shape.id == state.selectedShapeId,
-                                onSelect: { state.selectedShapeId = shape.id },
+                                onSelect: { state.selectedRowId = row.id; state.selectedShapeId = shape.id },
                                 onUpdate: { state.updateShape($0) },
                                 onDelete: { state.deleteShape(shape.id) }
                             )
                         }
                     }
                     .frame(
-                        width: row.totalDisplayWidth,
-                        height: row.displayHeight
+                        width: row.totalDisplayWidth(zoom: zoom),
+                        height: row.displayHeight(zoom: zoom)
                     )
                     .clipped()
                     .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
@@ -92,7 +98,7 @@ struct EditorRowView: View {
                     .onTapGesture { state.deselectShape() }
 
                     // Add button
-                    AddTemplateButton(width: row.displayWidth, height: row.displayHeight) {
+                    AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             state.addTemplate(to: row.id)
                         }
@@ -109,10 +115,14 @@ struct EditorRowView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 0) {
                     ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
+                        if index > 0 {
+                            Divider()
+                                .frame(height: 20)
+                        }
                         TemplateControlBar(
                             index: index,
                             canDelete: row.templates.count > 1,
-                            displayWidth: row.displayWidth,
+                            displayWidth: row.displayWidth(zoom: zoom),
                             templateWidth: row.templateWidth,
                             templateHeight: row.templateHeight,
                             bgColor: row.bgColor,

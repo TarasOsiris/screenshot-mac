@@ -31,15 +31,17 @@ struct ShapePropertiesBar: View {
                         .frame(width: 32, alignment: .trailing)
                 }
 
-                separator
+                // Rotation (not for circles)
+                if shape.type != .circle {
+                    separator
 
-                // Rotation
-                controlGroup("Rotation") {
-                    Slider(value: $state.rows[rowIndex].shapes[shapeIdx].rotation.onSet { state.scheduleSave() }, in: 0...360)
-                    .frame(width: 80)
+                    controlGroup("Rotation") {
+                        Slider(value: $state.rows[rowIndex].shapes[shapeIdx].rotation.onSet { state.scheduleSave() }, in: 0...360)
+                        .frame(width: 80)
 
-                    Text(verbatim: "\(Int(state.rows[rowIndex].shapes[shapeIdx].rotation))°")
-                        .frame(width: 28, alignment: .trailing)
+                        Text(verbatim: "\(Int(state.rows[rowIndex].shapes[shapeIdx].rotation))°")
+                            .frame(width: 28, alignment: .trailing)
+                    }
                 }
 
                 // Border radius (rectangle)
