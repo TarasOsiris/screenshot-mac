@@ -33,15 +33,15 @@ struct ScreenshotBroApp: App {
                 }
             }
 
-            CommandGroup(replacing: .toolbar) {
+            CommandGroup(before: .toolbar) {
                 Section {
                     Button("Zoom In") {
-                        appState.zoomLevel = min(2.0, appState.zoomLevel + 0.25)
+                        appState.zoomLevel = min(ZoomConstants.max, appState.zoomLevel + ZoomConstants.step)
                     }
                     .keyboardShortcut("+", modifiers: .command)
 
                     Button("Zoom Out") {
-                        appState.zoomLevel = max(0.25, appState.zoomLevel - 0.25)
+                        appState.zoomLevel = max(ZoomConstants.min, appState.zoomLevel - ZoomConstants.step)
                     }
                     .keyboardShortcut("-", modifiers: .command)
 

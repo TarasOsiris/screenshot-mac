@@ -105,7 +105,7 @@ struct ShapePropertiesBar: View {
 
                 // Duplicate
                 barButton("doc.on.doc") {
-                    state.addShape(shape.duplicated(offsetX: 20, offsetY: 20))
+                    state.duplicateSelectedShape()
                 }
 
                 // Delete

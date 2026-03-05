@@ -10,12 +10,19 @@ struct CanvasShapeView: View {
 
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
-    @State private var resizeDelta: ResizeDelta = .zero
+    @State private var resizeState: ResizeState?
 
-    private var effectiveX: CGFloat { shape.x + dragOffset.width + resizeDelta.dx }
-    private var effectiveY: CGFloat { shape.y + dragOffset.height + resizeDelta.dy }
-    private var effectiveW: CGFloat { max(20, shape.width + resizeDelta.dw) }
-    private var effectiveH: CGFloat { max(20, shape.height + resizeDelta.dh) }
+    private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
+
+    // Current effective geometry (accounts for in-progress resize or drag)
+    private var effectiveX: CGFloat {
+        if let rs = resizeState { return rs.newX } else { return shape.x + dragOffset.width }
+    }
+    private var effectiveY: CGFloat {
+        if let rs = resizeState { return rs.newY } else { return shape.y + dragOffset.height }
+    }
+    private var effectiveW: CGFloat { resizeState?.newW ?? shape.width }
+    private var effectiveH: CGFloat { resizeState?.newH ?? shape.height }
 
     private var displayX: CGFloat { effectiveX * displayScale }
     private var displayY: CGFloat { effectiveY * displayScale }
@@ -86,53 +93,127 @@ struct CanvasShapeView: View {
             .frame(width: displayW, height: displayH)
             .rotationEffect(.degrees(shape.rotation))
             .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+            .allowsHitTesting(false)
     }
 
     // MARK: - Resize Handles
 
     private var resizeHandles: some View {
-        let cx = displayX + displayW / 2
-        let cy = displayY + displayH / 2
+        ZStack {
+            resizeHandle(edge: .topLeft)
+            resizeHandle(edge: .topRight)
+            resizeHandle(edge: .bottomLeft)
+            resizeHandle(edge: .bottomRight)
+            resizeHandle(edge: .top)
+            resizeHandle(edge: .bottom)
+            resizeHandle(edge: .left)
+            resizeHandle(edge: .right)
+        }
+        .frame(width: displayW, height: displayH)
+        .rotationEffect(.degrees(shape.rotation))
+        .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+    }
 
-        return ZStack {
-            // Corners
-            resizeHandle(at: CGPoint(x: displayX, y: displayY), edge: .topLeft)
-            resizeHandle(at: CGPoint(x: displayX + displayW, y: displayY), edge: .topRight)
-            resizeHandle(at: CGPoint(x: displayX, y: displayY + displayH), edge: .bottomLeft)
-            resizeHandle(at: CGPoint(x: displayX + displayW, y: displayY + displayH), edge: .bottomRight)
-
-            // Edges
-            resizeHandle(at: CGPoint(x: cx, y: displayY), edge: .top)
-            resizeHandle(at: CGPoint(x: cx, y: displayY + displayH), edge: .bottom)
-            resizeHandle(at: CGPoint(x: displayX, y: cy), edge: .left)
-            resizeHandle(at: CGPoint(x: displayX + displayW, y: cy), edge: .right)
+    private func handlePosition(for edge: ResizeEdge) -> CGPoint {
+        let hw = displayW / 2
+        let hh = displayH / 2
+        switch edge {
+        case .topLeft:     return CGPoint(x: 0, y: 0)
+        case .top:         return CGPoint(x: hw, y: 0)
+        case .topRight:    return CGPoint(x: displayW, y: 0)
+        case .left:        return CGPoint(x: 0, y: hh)
+        case .right:       return CGPoint(x: displayW, y: hh)
+        case .bottomLeft:  return CGPoint(x: 0, y: displayH)
+        case .bottom:      return CGPoint(x: hw, y: displayH)
+        case .bottomRight: return CGPoint(x: displayW, y: displayH)
         }
     }
 
-    private func resizeHandle(at point: CGPoint, edge: ResizeEdge) -> some View {
+    private func resizeHandle(edge: ResizeEdge) -> some View {
         let handleSize: CGFloat = 8
-        return Circle()
-            .fill(Color.white)
-            .strokeBorder(Color.accentColor, lineWidth: 1.5)
-            .frame(width: handleSize, height: handleSize)
-            .position(point)
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        let tx = value.translation.width / displayScale
-                        let ty = value.translation.height / displayScale
-                        resizeDelta = edge.delta(tx: tx, ty: ty, shapeWidth: shape.width, shapeHeight: shape.height)
-                    }
-                    .onEnded { _ in
+        let hitSize: CGFloat = 20
+        let pos = handlePosition(for: edge)
+
+        return ZStack {
+            Color.clear
+                .frame(width: hitSize, height: hitSize)
+                .contentShape(Rectangle())
+
+            Circle()
+                .fill(Color.white)
+                .strokeBorder(Color.accentColor, lineWidth: 1.5)
+                .frame(width: handleSize, height: handleSize)
+                .allowsHitTesting(false)
+        }
+        .position(pos)
+        .gesture(
+            DragGesture(coordinateSpace: .global)
+                .onChanged { value in
+                    let tx = value.translation.width / displayScale
+                    let ty = value.translation.height / displayScale
+                    resizeState = computeResize(edge: edge, tx: tx, ty: ty)
+                }
+                .onEnded { _ in
+                    if let rs = resizeState {
                         var updated = shape
-                        updated.x = effectiveX
-                        updated.y = effectiveY
-                        updated.width = effectiveW
-                        updated.height = effectiveH
-                        resizeDelta = .zero
+                        updated.x = rs.newX
+                        updated.y = rs.newY
+                        updated.width = rs.newW
+                        updated.height = rs.newH
                         onUpdate(updated)
                     }
-            )
+                    resizeState = nil
+                }
+        )
+    }
+
+    // MARK: - Resize Math
+
+    /// Compute new x, y, width, height for a resize drag, keeping the anchor point fixed in canvas space.
+    private func computeResize(edge: ResizeEdge, tx: CGFloat, ty: CGFloat) -> ResizeState {
+        let minSize: CGFloat = 20
+        let cosA = cos(rotationRadians)
+        let sinA = sin(rotationRadians)
+
+        // Rotate screen-space drag into local shape space (cos(-x)=cos(x), sin(-x)=-sin(x))
+        let localTx =  tx * cosA + ty * sinA
+        let localTy = -tx * sinA + ty * cosA
+
+        // Compute new size from local-space drag
+        var newW = shape.width
+        var newH = shape.height
+        switch edge {
+        case .topLeft:     newW = max(minSize, shape.width - localTx);  newH = max(minSize, shape.height - localTy)
+        case .top:         newH = max(minSize, shape.height - localTy)
+        case .topRight:    newW = max(minSize, shape.width + localTx);  newH = max(minSize, shape.height - localTy)
+        case .left:        newW = max(minSize, shape.width - localTx)
+        case .right:       newW = max(minSize, shape.width + localTx)
+        case .bottomLeft:  newW = max(minSize, shape.width - localTx);  newH = max(minSize, shape.height + localTy)
+        case .bottom:      newH = max(minSize, shape.height + localTy)
+        case .bottomRight: newW = max(minSize, shape.width + localTx);  newH = max(minSize, shape.height + localTy)
+        }
+
+        // Anchor point: the corner/edge opposite to the dragged one, in local coords relative to shape origin
+        let anchor = edge.anchorPoint(width: shape.width, height: shape.height)
+
+        // Anchor in canvas space: rotate around shape center
+        let cx = shape.x + shape.width / 2
+        let cy = shape.y + shape.height / 2
+        let ax = anchor.x - shape.width / 2
+        let ay = anchor.y - shape.height / 2
+        let anchorCanvasX = cx + ax * cosA - ay * sinA
+        let anchorCanvasY = cy + ax * sinA + ay * cosA
+
+        // Same anchor in new local coords
+        let newAnchor = edge.anchorPoint(width: newW, height: newH)
+        let nax = newAnchor.x - newW / 2
+        let nay = newAnchor.y - newH / 2
+
+        // Solve for new center: newCenter + rotate(newAnchorRelCenter) = anchorCanvas
+        let newCx = anchorCanvasX - (nax * cosA - nay * sinA)
+        let newCy = anchorCanvasY - (nax * sinA + nay * cosA)
+
+        return ResizeState(newX: newCx - newW / 2, newY: newCy - newH / 2, newW: newW, newH: newH)
     }
 
     // MARK: - Drag
@@ -173,13 +254,11 @@ struct CanvasShapeView: View {
 
 // MARK: - Resize Types
 
-private struct ResizeDelta {
-    var dx: CGFloat = 0
-    var dy: CGFloat = 0
-    var dw: CGFloat = 0
-    var dh: CGFloat = 0
-
-    static let zero = ResizeDelta()
+private struct ResizeState {
+    var newX: CGFloat
+    var newY: CGFloat
+    var newW: CGFloat
+    var newH: CGFloat
 }
 
 private enum ResizeEdge {
@@ -187,45 +266,17 @@ private enum ResizeEdge {
     case left, right
     case bottomLeft, bottom, bottomRight
 
-    func delta(tx: CGFloat, ty: CGFloat, shapeWidth: CGFloat, shapeHeight: CGFloat) -> ResizeDelta {
-        let minSize: CGFloat = 20
+    /// The point that should stay fixed (opposite corner/edge), in local shape coords (0,0 = top-left)
+    func anchorPoint(width w: CGFloat, height h: CGFloat) -> CGPoint {
         switch self {
-        case .topLeft:
-            let dw = clampShrink(-tx, current: shapeWidth, min: minSize)
-            let dh = clampShrink(-ty, current: shapeHeight, min: minSize)
-            return ResizeDelta(dx: -dw, dy: -dh, dw: dw, dh: dh)
-        case .top:
-            let dh = clampShrink(-ty, current: shapeHeight, min: minSize)
-            return ResizeDelta(dy: -dh, dh: dh)
-        case .topRight:
-            let dw = clampGrow(tx, current: shapeWidth, min: minSize)
-            let dh = clampShrink(-ty, current: shapeHeight, min: minSize)
-            return ResizeDelta(dy: -dh, dw: dw, dh: dh)
-        case .left:
-            let dw = clampShrink(-tx, current: shapeWidth, min: minSize)
-            return ResizeDelta(dx: -dw, dw: dw)
-        case .right:
-            let dw = clampGrow(tx, current: shapeWidth, min: minSize)
-            return ResizeDelta(dw: dw)
-        case .bottomLeft:
-            let dw = clampShrink(-tx, current: shapeWidth, min: minSize)
-            let dh = clampGrow(ty, current: shapeHeight, min: minSize)
-            return ResizeDelta(dx: -dw, dw: dw, dh: dh)
-        case .bottom:
-            let dh = clampGrow(ty, current: shapeHeight, min: minSize)
-            return ResizeDelta(dh: dh)
-        case .bottomRight:
-            let dw = clampGrow(tx, current: shapeWidth, min: minSize)
-            let dh = clampGrow(ty, current: shapeHeight, min: minSize)
-            return ResizeDelta(dw: dw, dh: dh)
+        case .topLeft:     return CGPoint(x: w, y: h)
+        case .top:         return CGPoint(x: w / 2, y: h)
+        case .topRight:    return CGPoint(x: 0, y: h)
+        case .left:        return CGPoint(x: w, y: h / 2)
+        case .right:       return CGPoint(x: 0, y: h / 2)
+        case .bottomLeft:  return CGPoint(x: w, y: 0)
+        case .bottom:      return CGPoint(x: w / 2, y: 0)
+        case .bottomRight: return CGPoint(x: 0, y: 0)
         }
-    }
-
-    private func clampGrow(_ delta: CGFloat, current: CGFloat, min minSize: CGFloat) -> CGFloat {
-        max(delta, minSize - current)
-    }
-
-    private func clampShrink(_ delta: CGFloat, current: CGFloat, min minSize: CGFloat) -> CGFloat {
-        min(delta, current - minSize)
     }
 }

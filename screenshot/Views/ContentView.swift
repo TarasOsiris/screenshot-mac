@@ -154,6 +154,10 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) {}
         }
         .onAppear {
+            // Remove any existing monitor to guard against double-registration
+            if let monitor = keyMonitor {
+                NSEvent.removeMonitor(monitor)
+            }
             keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 // Don't intercept when a text field has focus
                 if let responder = event.window?.firstResponder,
@@ -163,16 +167,11 @@ struct ContentView: View {
 
                 guard state.selectedShapeId != nil else { return event }
 
-                switch event.keyCode {
-                case 51: // Delete key
+                if event.keyCode == 51 { // Delete key
                     isDeletingShape = true
                     return nil
-                case 53: // Escape key
-                    state.deselectShape()
-                    return nil
-                default:
-                    return event
                 }
+                return event
             }
         }
         .onDisappear {
@@ -209,25 +208,27 @@ struct ContentView: View {
 
 // MARK: - Zoom Controls
 
+enum ZoomConstants {
+    static let min: CGFloat = 0.25
+    static let max: CGFloat = 2.0
+    static let step: CGFloat = 0.25
+}
+
 private struct ZoomControls: View {
     @Binding var zoomLevel: CGFloat
 
-    private static let min: CGFloat = 0.25
-    private static let max: CGFloat = 2.0
-    private static let step: CGFloat = 0.25
-
     var body: some View {
         HStack(spacing: 4) {
-            zoomButton("minus", disabled: zoomLevel <= Self.min) {
-                zoomLevel = Swift.max(Self.min, zoomLevel - Self.step)
+            zoomButton("minus", disabled: zoomLevel <= ZoomConstants.min) {
+                zoomLevel = Swift.max(ZoomConstants.min, zoomLevel - ZoomConstants.step)
             }
 
-            Slider(value: $zoomLevel, in: Self.min...Self.max, step: Self.step)
+            Slider(value: $zoomLevel, in: ZoomConstants.min...ZoomConstants.max, step: ZoomConstants.step)
                 .frame(width: 80)
                 .controlSize(.small)
 
-            zoomButton("plus", disabled: zoomLevel >= Self.max) {
-                zoomLevel = Swift.min(Self.max, zoomLevel + Self.step)
+            zoomButton("plus", disabled: zoomLevel >= ZoomConstants.max) {
+                zoomLevel = Swift.min(ZoomConstants.max, zoomLevel + ZoomConstants.step)
             }
 
             Button {
