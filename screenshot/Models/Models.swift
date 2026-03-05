@@ -113,6 +113,31 @@ enum ShapeType: String, Codable, CaseIterable {
     case circle
     case text
     case image
+    case device
+}
+
+enum DeviceCategory: String, Codable, CaseIterable {
+    case iphone
+
+    var label: String {
+        switch self {
+        case .iphone: "iPhone"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .iphone: "iphone"
+        }
+    }
+
+    /// Base dimensions for the device frame (body including bezels).
+    /// iPhone 17: 71.5 × 149.6 mm at scale 3.077 px/mm → 220 × 460.
+    var baseDimensions: (width: CGFloat, height: CGFloat) {
+        switch self {
+        case .iphone: (220, 460)
+        }
+    }
 }
 
 enum TextAlign: String, Codable {
@@ -152,6 +177,10 @@ struct CanvasShapeModel: Identifiable, Codable {
     // Image properties
     var imageFileName: String?
 
+    // Device properties
+    var deviceCategory: DeviceCategory?
+    var deviceBodyColorData: CodableColor?
+
     init(
         id: UUID = UUID(),
         type: ShapeType,
@@ -167,7 +196,9 @@ struct CanvasShapeModel: Identifiable, Codable {
         fontSize: CGFloat? = nil,
         fontWeight: Int? = nil,
         textAlign: TextAlign? = nil,
-        imageFileName: String? = nil
+        imageFileName: String? = nil,
+        deviceCategory: DeviceCategory? = nil,
+        deviceBodyColor: Color? = nil
     ) {
         self.id = id
         self.type = type
@@ -184,11 +215,18 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.fontWeight = fontWeight
         self.textAlign = textAlign
         self.imageFileName = imageFileName
+        self.deviceCategory = deviceCategory
+        self.deviceBodyColorData = deviceBodyColor.map { CodableColor($0) }
     }
 
     var color: Color {
         get { colorData.color }
         set { colorData = CodableColor(newValue) }
+    }
+
+    var deviceBodyColor: Color {
+        get { deviceBodyColorData?.color ?? Color(red: 0.11, green: 0.11, blue: 0.12) }
+        set { deviceBodyColorData = CodableColor(newValue) }
     }
 
     func duplicated(offsetX: CGFloat = 0, offsetY: CGFloat = 0) -> CanvasShapeModel {
@@ -199,7 +237,9 @@ struct CanvasShapeModel: Identifiable, Codable {
             color: color, opacity: opacity,
             text: text, fontSize: fontSize,
             fontWeight: fontWeight, textAlign: textAlign,
-            imageFileName: imageFileName
+            imageFileName: imageFileName,
+            deviceCategory: deviceCategory,
+            deviceBodyColor: deviceBodyColorData?.color
         )
     }
 
@@ -220,6 +260,19 @@ struct CanvasShapeModel: Identifiable, Codable {
 
     static func defaultImage(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
         CanvasShapeModel(type: .image, x: centerX - 150, y: centerY - 150, width: 300, height: 300, color: .gray)
+    }
+
+    static func defaultDevice(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
+        let dims = DeviceCategory.iphone.baseDimensions
+        let scale: CGFloat = 2.0
+        let w = dims.width * scale
+        let h = dims.height * scale
+        return CanvasShapeModel(
+            type: .device, x: centerX - w / 2, y: centerY - h / 2,
+            width: w, height: h,
+            color: .clear, deviceCategory: .iphone,
+            deviceBodyColor: Color(red: 0.11, green: 0.11, blue: 0.12)
+        )
     }
 }
 

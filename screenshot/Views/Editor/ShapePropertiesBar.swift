@@ -54,6 +54,17 @@ struct ShapePropertiesBar: View {
                     }
                 }
 
+                // Device properties
+                if shape.type == .device {
+                    separator
+
+                    controlGroup("Body") {
+                        ColorPicker("", selection: $state.rows[rowIndex].shapes[shapeIdx].deviceBodyColor.onSet { state.scheduleSave() }, supportsOpacity: false)
+                            .labelsHidden()
+                            .frame(width: 30)
+                    }
+                }
+
                 // Text properties
                 if shape.type == .text {
                     separator

@@ -10,11 +10,17 @@ struct CanvasShapeView: View {
 
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
+    @State private var resizeDelta: ResizeDelta = .zero
 
-    private var displayX: CGFloat { (shape.x + dragOffset.width) * displayScale }
-    private var displayY: CGFloat { (shape.y + dragOffset.height) * displayScale }
-    private var displayW: CGFloat { shape.width * displayScale }
-    private var displayH: CGFloat { shape.height * displayScale }
+    private var effectiveX: CGFloat { shape.x + dragOffset.width + resizeDelta.dx }
+    private var effectiveY: CGFloat { shape.y + dragOffset.height + resizeDelta.dy }
+    private var effectiveW: CGFloat { max(20, shape.width + resizeDelta.dw) }
+    private var effectiveH: CGFloat { max(20, shape.height + resizeDelta.dh) }
+
+    private var displayX: CGFloat { effectiveX * displayScale }
+    private var displayY: CGFloat { effectiveY * displayScale }
+    private var displayW: CGFloat { effectiveW * displayScale }
+    private var displayH: CGFloat { effectiveH * displayScale }
 
     var body: some View {
         ZStack {
@@ -27,6 +33,7 @@ struct CanvasShapeView: View {
         .overlay {
             if isSelected {
                 selectionOverlay
+                resizeHandles
             }
         }
         .gesture(dragGesture)
@@ -62,6 +69,14 @@ struct CanvasShapeView: View {
                         .font(.system(size: 24 * displayScale))
                         .foregroundStyle(.secondary)
                 }
+
+        case .device:
+            DeviceFrameView(
+                category: shape.deviceCategory ?? .iphone,
+                bodyColor: shape.deviceBodyColor,
+                width: displayW,
+                height: displayH
+            )
         }
     }
 
@@ -72,6 +87,55 @@ struct CanvasShapeView: View {
             .rotationEffect(.degrees(shape.rotation))
             .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
     }
+
+    // MARK: - Resize Handles
+
+    private var resizeHandles: some View {
+        let cx = displayX + displayW / 2
+        let cy = displayY + displayH / 2
+
+        return ZStack {
+            // Corners
+            resizeHandle(at: CGPoint(x: displayX, y: displayY), edge: .topLeft)
+            resizeHandle(at: CGPoint(x: displayX + displayW, y: displayY), edge: .topRight)
+            resizeHandle(at: CGPoint(x: displayX, y: displayY + displayH), edge: .bottomLeft)
+            resizeHandle(at: CGPoint(x: displayX + displayW, y: displayY + displayH), edge: .bottomRight)
+
+            // Edges
+            resizeHandle(at: CGPoint(x: cx, y: displayY), edge: .top)
+            resizeHandle(at: CGPoint(x: cx, y: displayY + displayH), edge: .bottom)
+            resizeHandle(at: CGPoint(x: displayX, y: cy), edge: .left)
+            resizeHandle(at: CGPoint(x: displayX + displayW, y: cy), edge: .right)
+        }
+    }
+
+    private func resizeHandle(at point: CGPoint, edge: ResizeEdge) -> some View {
+        let handleSize: CGFloat = 8
+        return Circle()
+            .fill(Color.white)
+            .strokeBorder(Color.accentColor, lineWidth: 1.5)
+            .frame(width: handleSize, height: handleSize)
+            .position(point)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        let tx = value.translation.width / displayScale
+                        let ty = value.translation.height / displayScale
+                        resizeDelta = edge.delta(tx: tx, ty: ty, shapeWidth: shape.width, shapeHeight: shape.height)
+                    }
+                    .onEnded { _ in
+                        var updated = shape
+                        updated.x = effectiveX
+                        updated.y = effectiveY
+                        updated.width = effectiveW
+                        updated.height = effectiveH
+                        resizeDelta = .zero
+                        onUpdate(updated)
+                    }
+            )
+    }
+
+    // MARK: - Drag
 
     private var dragGesture: some Gesture {
         DragGesture()
@@ -105,5 +169,63 @@ struct CanvasShapeView: View {
         default: .heavy
         }
     }
+}
 
+// MARK: - Resize Types
+
+private struct ResizeDelta {
+    var dx: CGFloat = 0
+    var dy: CGFloat = 0
+    var dw: CGFloat = 0
+    var dh: CGFloat = 0
+
+    static let zero = ResizeDelta()
+}
+
+private enum ResizeEdge {
+    case topLeft, top, topRight
+    case left, right
+    case bottomLeft, bottom, bottomRight
+
+    func delta(tx: CGFloat, ty: CGFloat, shapeWidth: CGFloat, shapeHeight: CGFloat) -> ResizeDelta {
+        let minSize: CGFloat = 20
+        switch self {
+        case .topLeft:
+            let dw = clampShrink(-tx, current: shapeWidth, min: minSize)
+            let dh = clampShrink(-ty, current: shapeHeight, min: minSize)
+            return ResizeDelta(dx: -dw, dy: -dh, dw: dw, dh: dh)
+        case .top:
+            let dh = clampShrink(-ty, current: shapeHeight, min: minSize)
+            return ResizeDelta(dy: -dh, dh: dh)
+        case .topRight:
+            let dw = clampGrow(tx, current: shapeWidth, min: minSize)
+            let dh = clampShrink(-ty, current: shapeHeight, min: minSize)
+            return ResizeDelta(dy: -dh, dw: dw, dh: dh)
+        case .left:
+            let dw = clampShrink(-tx, current: shapeWidth, min: minSize)
+            return ResizeDelta(dx: -dw, dw: dw)
+        case .right:
+            let dw = clampGrow(tx, current: shapeWidth, min: minSize)
+            return ResizeDelta(dw: dw)
+        case .bottomLeft:
+            let dw = clampShrink(-tx, current: shapeWidth, min: minSize)
+            let dh = clampGrow(ty, current: shapeHeight, min: minSize)
+            return ResizeDelta(dx: -dw, dw: dw, dh: dh)
+        case .bottom:
+            let dh = clampGrow(ty, current: shapeHeight, min: minSize)
+            return ResizeDelta(dh: dh)
+        case .bottomRight:
+            let dw = clampGrow(tx, current: shapeWidth, min: minSize)
+            let dh = clampGrow(ty, current: shapeHeight, min: minSize)
+            return ResizeDelta(dw: dw, dh: dh)
+        }
+    }
+
+    private func clampGrow(_ delta: CGFloat, current: CGFloat, min minSize: CGFloat) -> CGFloat {
+        max(delta, minSize - current)
+    }
+
+    private func clampShrink(_ delta: CGFloat, current: CGFloat, min minSize: CGFloat) -> CGFloat {
+        min(delta, current - minSize)
+    }
 }

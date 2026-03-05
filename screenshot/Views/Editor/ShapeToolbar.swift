@@ -17,6 +17,9 @@ struct ShapeToolbar: View {
             shapeButton("photo", label: "Image") {
                 addShape(.image)
             }
+            shapeButton("iphone", label: "Device") {
+                addShape(.device)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 6)
@@ -49,6 +52,7 @@ struct ShapeToolbar: View {
         case .circle: shape = .defaultCircle(centerX: centerX, centerY: centerY)
         case .text: shape = .defaultText(centerX: centerX, centerY: centerY)
         case .image: shape = .defaultImage(centerX: centerX, centerY: centerY)
+        case .device: shape = .defaultDevice(centerX: centerX, centerY: centerY)
         }
 
         state.addShape(shape)
