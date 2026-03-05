@@ -52,7 +52,7 @@ struct ShapeToolbar: View {
         case .circle: shape = .defaultCircle(centerX: centerX, centerY: centerY)
         case .text: shape = .defaultText(centerX: centerX, centerY: centerY)
         case .image: shape = .defaultImage(centerX: centerX, centerY: centerY)
-        case .device: shape = .defaultDevice(centerX: centerX, centerY: centerY)
+        case .device: shape = .defaultDevice(centerX: centerX, centerY: centerY, templateHeight: row.templateHeight)
         }
 
         state.addShape(shape)

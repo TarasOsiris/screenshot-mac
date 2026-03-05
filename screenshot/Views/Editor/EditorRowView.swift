@@ -62,11 +62,22 @@ struct EditorRowView: View {
                             }
                         }
 
-                        // Guideline separators
+                        // Shared shapes layer
+                        ForEach(row.shapes.filter { row.showDevice || $0.type != .device }) { shape in
+                            CanvasShapeView(
+                                shape: shape,
+                                displayScale: row.displayScale(zoom: zoom),
+                                isSelected: shape.id == state.selectedShapeId,
+                                onSelect: { state.selectedRowId = row.id; state.selectedShapeId = shape.id },
+                                onUpdate: { state.updateShape($0) },
+                                onDelete: { state.deleteShape(shape.id) }
+                            )
+                        }
+
+                        // Guideline separators (always on top)
                         if row.showBorders {
                             ForEach(1..<row.templates.count, id: \.self) { i in
                                 ZStack {
-                                    // Black dashes
                                     Path { path in
                                         path.move(to: CGPoint(x: 0, y: 0))
                                         path.addLine(to: CGPoint(x: 0, y: row.displayHeight(zoom: zoom)))
@@ -74,7 +85,6 @@ struct EditorRowView: View {
                                     .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
                                     .foregroundStyle(.black)
 
-                                    // White dashes offset to fill the gaps
                                     Path { path in
                                         path.move(to: CGPoint(x: 0, y: 0))
                                         path.addLine(to: CGPoint(x: 0, y: row.displayHeight(zoom: zoom)))
@@ -84,19 +94,8 @@ struct EditorRowView: View {
                                 }
                                 .frame(width: 1, height: row.displayHeight(zoom: zoom))
                                 .offset(x: row.displayWidth(zoom: zoom) * CGFloat(i))
+                                .allowsHitTesting(false)
                             }
-                        }
-
-                        // Shared shapes layer
-                        ForEach(row.shapes) { shape in
-                            CanvasShapeView(
-                                shape: shape,
-                                displayScale: row.displayScale(zoom: zoom),
-                                isSelected: shape.id == state.selectedShapeId,
-                                onSelect: { state.selectedRowId = row.id; state.selectedShapeId = shape.id },
-                                onUpdate: { state.updateShape($0) },
-                                onDelete: { state.deleteShape(shape.id) }
-                            )
                         }
                     }
                     .frame(

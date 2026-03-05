@@ -262,11 +262,12 @@ struct CanvasShapeModel: Identifiable, Codable {
         CanvasShapeModel(type: .image, x: centerX - 150, y: centerY - 150, width: 300, height: 300, color: .gray)
     }
 
-    static func defaultDevice(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
+    static func defaultDevice(centerX: CGFloat, centerY: CGFloat, templateHeight: CGFloat = 2688) -> CanvasShapeModel {
         let dims = DeviceCategory.iphone.baseDimensions
-        let scale: CGFloat = 2.0
+        // Device should fill ~80% of template height, like typical App Store screenshots
+        let h = templateHeight * 0.8
+        let scale = h / dims.height
         let w = dims.width * scale
-        let h = dims.height * scale
         return CanvasShapeModel(
             type: .device, x: centerX - w / 2, y: centerY - h / 2,
             width: w, height: h,

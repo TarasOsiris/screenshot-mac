@@ -52,6 +52,7 @@ struct ExportService {
     static func renderTemplateImage(index: Int, row: ScreenshotRow) -> NSImage {
         let tLeft = CGFloat(index) * row.templateWidth
         let visibleShapes = row.visibleShapes(forTemplateAt: index)
+            .filter { row.showDevice || $0.type != .device }
 
         let view = ZStack {
             Rectangle().fill(row.bgColor.gradient)
