@@ -23,8 +23,8 @@ struct ExportService {
                 destFolder = rootFolder
             }
 
-            for (index, template) in row.templates.enumerated() {
-                let image = renderTemplate(template: template, row: row)
+            for (index, _) in row.templates.enumerated() {
+                let image = renderTemplate(index: index, row: row)
                 let filename = "screenshot-\(index + 1).png"
                 let fileURL = destFolder.appendingPathComponent(filename)
                 try savePNG(image: image, to: fileURL)
@@ -39,10 +39,28 @@ struct ExportService {
     }
 
     @MainActor
-    private static func renderTemplate(template: ScreenshotTemplate, row: ScreenshotRow) -> NSImage {
-        let view = Rectangle()
-            .fill(row.bgColor.gradient)
-            .frame(width: row.templateWidth, height: row.templateHeight)
+    private static func renderTemplate(index: Int, row: ScreenshotRow) -> NSImage {
+        let tLeft = CGFloat(index) * row.templateWidth
+        let tRight = tLeft + row.templateWidth
+        let templateShapes = row.shapes.filter { s in
+            let cx = s.x + s.width / 2
+            return cx >= tLeft && cx < tRight
+        }
+
+        let view = ZStack {
+            Rectangle().fill(row.bgColor.gradient)
+            ForEach(templateShapes) { shape in
+                CanvasShapeView(
+                    shape: shape.duplicated(offsetX: -tLeft),
+                    displayScale: 1.0,
+                    isSelected: false,
+                    onSelect: {},
+                    onUpdate: { _ in },
+                    onDelete: {}
+                )
+            }
+        }
+        .frame(width: row.templateWidth, height: row.templateHeight)
 
         let renderer = ImageRenderer(content: view)
         renderer.scale = 1.0
