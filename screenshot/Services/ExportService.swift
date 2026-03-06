@@ -2,7 +2,8 @@ import SwiftUI
 import AppKit
 
 struct ExportService {
-    static func exportAll(rows: [ScreenshotRow], projectName: String, to folderURL: URL) throws {
+    @MainActor
+    static func exportAll(rows: [ScreenshotRow], projectName: String, to folderURL: URL, screenshotImages: [String: NSImage] = [:]) throws {
         let rootName = projectName.isEmpty ? "Screenshots" : projectName
         let rootFolder = folderURL.appendingPathComponent(rootName)
         try FileManager.default.createDirectory(at: rootFolder, withIntermediateDirectories: true)
@@ -24,7 +25,7 @@ struct ExportService {
             }
 
             for (index, _) in row.templates.enumerated() {
-                guard let pngData = renderTemplatePNG(index: index, row: row) else {
+                guard let pngData = renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else {
                     throw ExportError.renderFailed
                 }
                 let filename = "screenshot-\(index + 1).png"
@@ -43,24 +44,28 @@ struct ExportService {
     // MARK: - Shared Rendering
 
     @MainActor
-    static func renderTemplatePNG(index: Int, row: ScreenshotRow) -> Data? {
-        let image = renderTemplateImage(index: index, row: row)
+    static func renderTemplatePNG(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:]) -> Data? {
+        let image = renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
         return pngData(from: image)
     }
 
     @MainActor
-    static func renderTemplateImage(index: Int, row: ScreenshotRow) -> NSImage {
+    static func renderTemplateImage(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:]) -> NSImage {
         let tLeft = CGFloat(index) * row.templateWidth
         let visibleShapes = row.visibleShapes(forTemplateAt: index)
             .filter { row.showDevice || $0.type != .device }
+            .map { normalizeDeviceAspectIfNeeded($0) }
 
         let view = ZStack {
-            Rectangle().fill(row.bgColor.gradient)
+            row.backgroundFill
             ForEach(visibleShapes) { shape in
                 CanvasShapeView(
                     shape: shape.duplicated(offsetX: -tLeft),
                     displayScale: 1.0,
                     isSelected: false,
+                    screenshotImage: shape.screenshotFileName.flatMap { screenshotImages[$0] },
+
+                    showsEditorHelpers: false,
                     onSelect: {},
                     onUpdate: { _ in },
                     onDelete: {}
@@ -81,6 +86,33 @@ struct ExportService {
             return NSImage(cgImage: cgImage, size: NSSize(width: row.templateWidth, height: row.templateHeight))
         }
         return NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
+    }
+
+    private static func normalizeDeviceAspectIfNeeded(_ shape: CanvasShapeModel) -> CanvasShapeModel {
+        guard shape.type == .device else { return shape }
+
+        let category = shape.deviceCategory ?? .iphone
+        let base = category.baseDimensions
+        let targetAspect = base.width / base.height
+
+        guard shape.width > 0, shape.height > 0 else { return shape }
+
+        var adjusted = shape
+        let currentAspect = shape.width / shape.height
+
+        if currentAspect > targetAspect {
+            // Too wide: preserve height, reduce width, keep center.
+            let newWidth = shape.height * targetAspect
+            adjusted.x += (shape.width - newWidth) / 2
+            adjusted.width = newWidth
+        } else if currentAspect < targetAspect {
+            // Too tall: preserve width, reduce height, keep center.
+            let newHeight = shape.width / targetAspect
+            adjusted.y += (shape.height - newHeight) / 2
+            adjusted.height = newHeight
+        }
+
+        return adjusted
     }
 
     static func pngData(from image: NSImage) -> Data? {

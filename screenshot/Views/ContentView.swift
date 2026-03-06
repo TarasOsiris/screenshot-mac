@@ -231,7 +231,7 @@ struct ContentView: View {
         exportSuccessMessage = nil
         do {
             let projectName = state.activeProject?.name ?? "Screenshots"
-            try ExportService.exportAll(rows: state.rows, projectName: projectName, to: url)
+            try ExportService.exportAll(rows: state.rows, projectName: projectName, to: url, screenshotImages: state.screenshotImages)
             let totalScreenshots = state.rows.reduce(0) { $0 + $1.templates.count }
             let destinationFolder = url.appendingPathComponent(projectName.isEmpty ? "Screenshots" : projectName).path
             exportSuccessMessage = "Exported \(totalScreenshots) screenshot\(totalScreenshots == 1 ? "" : "s") to \(destinationFolder)."

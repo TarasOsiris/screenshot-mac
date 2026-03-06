@@ -69,6 +69,18 @@ struct ShapePropertiesBar: View {
                             .labelsHidden()
                             .frame(width: 30)
                     }
+
+                    if shape.screenshotFileName != nil {
+                        separator
+
+                        Button {
+                            state.removeScreenshot(for: shape.id)
+                        } label: {
+                            Label("Remove Image", systemImage: "photo.badge.minus")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                    }
                 }
 
                 // Text properties

@@ -8,6 +8,7 @@ final class AppState {
     var selectedRowId: UUID?
     var selectedShapeId: UUID?
     var zoomLevel: CGFloat = 1.0
+    var screenshotImages: [String: NSImage] = [:]
 
     private var saveTask: DispatchWorkItem?
 
@@ -37,6 +38,7 @@ final class AppState {
 
             if let activeId = activeProjectId {
                 loadRowsForProject(activeId)
+                loadScreenshotImages()
             }
         }
 
@@ -97,7 +99,9 @@ final class AppState {
         saveCurrentProject()
 
         activeProjectId = id
+        screenshotImages.removeAll()
         loadRowsForProject(id)
+        loadScreenshotImages()
         saveIndex()
     }
 
@@ -158,6 +162,8 @@ final class AppState {
             templateWidth: source.templateWidth,
             templateHeight: source.templateHeight,
             bgColor: source.bgColor,
+            backgroundStyle: source.backgroundStyle,
+            gradientConfig: source.gradientConfig,
             showDevice: source.showDevice,
             showBorders: source.showBorders,
             shapes: source.shapes.map { $0.duplicated() }
@@ -211,6 +217,10 @@ final class AppState {
 
     func deleteShape(_ id: UUID) {
         guard let rowIdx = selectedRowIndex else { return }
+        if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
+           let fileName = rows[rowIdx].shapes[shapeIdx].screenshotFileName {
+            screenshotImages.removeValue(forKey: fileName)
+        }
         rows[rowIdx].shapes.removeAll { $0.id == id }
         if selectedShapeId == id {
             selectedShapeId = nil
@@ -264,6 +274,59 @@ final class AppState {
 
     func deselectShape() {
         selectedShapeId = nil
+    }
+
+    // MARK: - Screenshot Images
+
+    func saveScreenshot(_ image: NSImage, for shapeId: UUID) {
+        guard let activeId = activeProjectId else { return }
+        let fileName = "\(shapeId.uuidString).png"
+        let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+
+        guard let pngData = ExportService.pngData(from: image) else { return }
+
+        try? pngData.write(to: url, options: .atomic)
+        screenshotImages[fileName] = image
+
+        // Update shape with the filename
+        for rowIdx in rows.indices {
+            if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) {
+                rows[rowIdx].shapes[shapeIdx].screenshotFileName = fileName
+                scheduleSave()
+                return
+            }
+        }
+    }
+
+    func removeScreenshot(for shapeId: UUID) {
+        guard let activeId = activeProjectId else { return }
+        for rowIdx in rows.indices {
+            if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) {
+                if let fileName = rows[rowIdx].shapes[shapeIdx].screenshotFileName {
+                    let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+                    try? FileManager.default.removeItem(at: url)
+                    screenshotImages.removeValue(forKey: fileName)
+                }
+                rows[rowIdx].shapes[shapeIdx].screenshotFileName = nil
+                scheduleSave()
+                return
+            }
+        }
+    }
+
+    func loadScreenshotImages() {
+        guard let activeId = activeProjectId else { return }
+        let resourcesURL = PersistenceService.resourcesDir(activeId)
+        for row in rows {
+            for shape in row.shapes {
+                if let fileName = shape.screenshotFileName, screenshotImages[fileName] == nil {
+                    let url = resourcesURL.appendingPathComponent(fileName)
+                    if let image = NSImage(contentsOf: url) {
+                        screenshotImages[fileName] = image
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Helpers

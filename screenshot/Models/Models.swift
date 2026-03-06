@@ -56,6 +56,80 @@ let displayCategories: [DisplayCategory] = [
     ),
 ]
 
+// MARK: - Background Style
+
+enum BackgroundStyle: String, Codable, CaseIterable {
+    case color
+    case gradient
+}
+
+struct GradientConfig: Codable, Equatable {
+    var color1Data: CodableColor
+    var color2Data: CodableColor
+    var angle: Double // degrees
+
+    init(color1: Color = Color(red: 0.4, green: 0.49, blue: 0.92),
+         color2: Color = Color(red: 0.46, green: 0.29, blue: 0.64),
+         angle: Double = 135) {
+        self.color1Data = CodableColor(color1)
+        self.color2Data = CodableColor(color2)
+        self.angle = angle
+    }
+
+    var color1: Color {
+        get { color1Data.color }
+        set { color1Data = CodableColor(newValue) }
+    }
+
+    var color2: Color {
+        get { color2Data.color }
+        set { color2Data = CodableColor(newValue) }
+    }
+
+    private var radians: Double {
+        (angle - 90) * .pi / 180
+    }
+
+    var startPoint: UnitPoint {
+        UnitPoint(x: 0.5 - cos(radians) * 0.5, y: 0.5 - sin(radians) * 0.5)
+    }
+
+    var endPoint: UnitPoint {
+        UnitPoint(x: 0.5 + cos(radians) * 0.5, y: 0.5 + sin(radians) * 0.5)
+    }
+
+    var linearGradient: LinearGradient {
+        LinearGradient(colors: [color1, color2], startPoint: startPoint, endPoint: endPoint)
+    }
+}
+
+struct GradientPreset: Identifiable {
+    let id = UUID()
+    let label: String
+    let color1: Color
+    let color2: Color
+    let angle: Double
+
+    var config: GradientConfig {
+        GradientConfig(color1: color1, color2: color2, angle: angle)
+    }
+}
+
+let gradientPresets: [GradientPreset] = [
+    GradientPreset(label: "Ocean", color1: Color(red: 0.4, green: 0.49, blue: 0.92), color2: Color(red: 0.46, green: 0.29, blue: 0.64), angle: 135),
+    GradientPreset(label: "Sunset", color1: Color(red: 0.94, green: 0.58, blue: 0.98), color2: Color(red: 0.96, green: 0.34, blue: 0.42), angle: 135),
+    GradientPreset(label: "Peach", color1: Color(red: 0.96, green: 0.83, blue: 0.40), color2: Color(red: 0.99, green: 0.63, blue: 0.52), angle: 135),
+    GradientPreset(label: "Mint", color1: Color(red: 0.63, green: 0.77, blue: 0.99), color2: Color(red: 0.76, green: 0.91, blue: 0.98), angle: 135),
+    GradientPreset(label: "Berry", color1: Color(red: 0.63, green: 0.55, blue: 0.82), color2: Color(red: 0.98, green: 0.76, blue: 0.92), angle: 135),
+    GradientPreset(label: "Flame", color1: Color(red: 0.97, green: 0.21, blue: 0.0), color2: Color(red: 0.98, green: 0.83, blue: 0.14), angle: 135),
+    GradientPreset(label: "Sky", color1: Color(red: 0.54, green: 0.97, blue: 1.0), color2: Color(red: 0.40, green: 0.65, blue: 1.0), angle: 135),
+    GradientPreset(label: "Forest", color1: Color(red: 0.07, green: 0.60, blue: 0.56), color2: Color(red: 0.22, green: 0.94, blue: 0.49), angle: 135),
+    GradientPreset(label: "Night", color1: Color(red: 0.06, green: 0.13, blue: 0.15), color2: Color(red: 0.17, green: 0.33, blue: 0.39), angle: 135),
+    GradientPreset(label: "Rose", color1: Color(red: 0.93, green: 0.61, blue: 0.65), color2: Color(red: 1.0, green: 0.87, blue: 0.88), angle: 135),
+    GradientPreset(label: "Indigo", color1: Color(red: 0.26, green: 0.22, blue: 0.79), color2: Color(red: 0.39, green: 0.40, blue: 0.95), angle: 135),
+    GradientPreset(label: "Emerald", color1: Color(red: 0.02, green: 0.59, blue: 0.41), color2: Color(red: 0.20, green: 0.83, blue: 0.60), angle: 135),
+]
+
 // MARK: - Codable Color
 
 struct CodableColor: Codable, Equatable {
@@ -180,6 +254,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     // Device properties
     var deviceCategory: DeviceCategory?
     var deviceBodyColorData: CodableColor?
+    var screenshotFileName: String?
 
     init(
         id: UUID = UUID(),
@@ -198,7 +273,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         textAlign: TextAlign? = nil,
         imageFileName: String? = nil,
         deviceCategory: DeviceCategory? = nil,
-        deviceBodyColor: Color? = nil
+        deviceBodyColor: Color? = nil,
+        screenshotFileName: String? = nil
     ) {
         self.id = id
         self.type = type
@@ -217,6 +293,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.imageFileName = imageFileName
         self.deviceCategory = deviceCategory
         self.deviceBodyColorData = deviceBodyColor.map { CodableColor($0) }
+        self.screenshotFileName = screenshotFileName
     }
 
     var color: Color {
@@ -239,7 +316,8 @@ struct CanvasShapeModel: Identifiable, Codable {
             fontWeight: fontWeight, textAlign: textAlign,
             imageFileName: imageFileName,
             deviceCategory: deviceCategory,
-            deviceBodyColor: deviceBodyColorData?.color
+            deviceBodyColor: deviceBodyColorData?.color,
+            screenshotFileName: screenshotFileName
         )
     }
 
@@ -286,6 +364,8 @@ struct ScreenshotRow: Identifiable, Codable {
     var templateWidth: CGFloat
     var templateHeight: CGFloat
     var backgroundColorData: CodableColor
+    var backgroundStyle: BackgroundStyle
+    var gradientConfig: GradientConfig
     var showDevice: Bool
     var showBorders: Bool
     var shapes: [CanvasShapeModel]
@@ -297,6 +377,8 @@ struct ScreenshotRow: Identifiable, Codable {
         templateWidth: CGFloat = 1242,
         templateHeight: CGFloat = 2688,
         bgColor: Color = .blue,
+        backgroundStyle: BackgroundStyle = .color,
+        gradientConfig: GradientConfig = GradientConfig(),
         showDevice: Bool = true,
         showBorders: Bool = true,
         shapes: [CanvasShapeModel] = []
@@ -307,6 +389,8 @@ struct ScreenshotRow: Identifiable, Codable {
         self.templateWidth = templateWidth
         self.templateHeight = templateHeight
         self.backgroundColorData = CodableColor(bgColor)
+        self.backgroundStyle = backgroundStyle
+        self.gradientConfig = gradientConfig
         self.showDevice = showDevice
         self.showBorders = showBorders
         self.shapes = shapes
@@ -314,7 +398,8 @@ struct ScreenshotRow: Identifiable, Codable {
 
     enum CodingKeys: String, CodingKey {
         case id, label, templates, templateWidth, templateHeight
-        case backgroundColorData, showDevice, showBorders, shapes
+        case backgroundColorData, backgroundStyle, gradientConfig
+        case showDevice, showBorders, shapes
     }
 
     init(from decoder: Decoder) throws {
@@ -325,6 +410,8 @@ struct ScreenshotRow: Identifiable, Codable {
         templateWidth = try c.decode(CGFloat.self, forKey: .templateWidth)
         templateHeight = try c.decode(CGFloat.self, forKey: .templateHeight)
         backgroundColorData = try c.decode(CodableColor.self, forKey: .backgroundColorData)
+        backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
+        gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
         showDevice = try c.decodeIfPresent(Bool.self, forKey: .showDevice) ?? true
         showBorders = try c.decodeIfPresent(Bool.self, forKey: .showBorders) ?? true
         shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []
@@ -333,6 +420,16 @@ struct ScreenshotRow: Identifiable, Codable {
     var bgColor: Color {
         get { backgroundColorData.color }
         set { backgroundColorData = CodableColor(newValue) }
+    }
+
+    @ViewBuilder
+    var backgroundFill: some View {
+        switch backgroundStyle {
+        case .color:
+            Rectangle().fill(bgColor)
+        case .gradient:
+            Rectangle().fill(gradientConfig.linearGradient)
+        }
     }
 
     func displayScale(zoom: CGFloat = 1.0) -> CGFloat {

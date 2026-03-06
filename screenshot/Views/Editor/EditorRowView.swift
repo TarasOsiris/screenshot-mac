@@ -63,8 +63,7 @@ struct EditorRowView: View {
                         // Background tiles (one per template, no gap)
                         HStack(spacing: 0) {
                             ForEach(row.templates) { _ in
-                                Rectangle()
-                                    .fill(row.bgColor.gradient)
+                                row.backgroundFill
                                     .frame(width: dw, height: dh)
                             }
                         }
@@ -75,9 +74,13 @@ struct EditorRowView: View {
                                 shape: shape,
                                 displayScale: ds,
                                 isSelected: shape.id == state.selectedShapeId,
+                                screenshotImage: shape.screenshotFileName.flatMap { state.screenshotImages[$0] },
                                 onSelect: { state.selectedRowId = row.id; state.selectedShapeId = shape.id },
                                 onUpdate: { state.updateShape($0) },
-                                onDelete: { state.deleteShape(shape.id) }
+                                onDelete: { state.deleteShape(shape.id) },
+                                onScreenshotDrop: shape.type == .device ? { image in
+                                    state.saveScreenshot(image, for: shape.id)
+                                } : nil
                             )
                         }
 
@@ -140,6 +143,7 @@ struct EditorRowView: View {
                             row: row,
                             index: index,
                             zoom: zoom,
+                            screenshotImages: state.screenshotImages,
                             onDelete: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     state.removeTemplate(template.id, from: row.id)
@@ -187,6 +191,7 @@ private struct TemplateControlBar: View {
     let row: ScreenshotRow
     let index: Int
     let zoom: CGFloat
+    var screenshotImages: [String: NSImage] = [:]
     var onDelete: () -> Void
     @State private var isDeletingTemplate = false
 
@@ -230,7 +235,7 @@ private struct TemplateControlBar: View {
     }
 
     private func previewScreenshot() {
-        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row) else { return }
+        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else { return }
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("screenshot-\(index + 1).png")
         try? pngData.write(to: tempURL)
@@ -244,7 +249,7 @@ private struct TemplateControlBar: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row) else { return }
+        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else { return }
         try? pngData.write(to: url)
     }
 }

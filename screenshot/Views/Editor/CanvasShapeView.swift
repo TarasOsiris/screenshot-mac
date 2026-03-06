@@ -1,16 +1,23 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct CanvasShapeView: View {
     let shape: CanvasShapeModel
     let displayScale: CGFloat
     let isSelected: Bool
+    var screenshotImage: NSImage?
+
+    var showsEditorHelpers: Bool = true
     var onSelect: () -> Void
     var onUpdate: (CanvasShapeModel) -> Void
     var onDelete: () -> Void
+    var onScreenshotDrop: ((NSImage) -> Void)?
 
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
     @State private var resizeState: ResizeState?
+    @State private var isDropTargeted = false
+    @State private var isPickerPresented = false
 
     private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
 
@@ -29,8 +36,9 @@ struct CanvasShapeView: View {
     private var displayW: CGFloat { effectiveW * displayScale }
     private var displayH: CGFloat { effectiveH * displayScale }
 
+    @ViewBuilder
     var body: some View {
-        ZStack {
+        let base = ZStack {
             shapeContent
                 .frame(width: displayW, height: displayH)
                 .opacity(shape.opacity)
@@ -43,8 +51,24 @@ struct CanvasShapeView: View {
                 resizeHandles
             }
         }
-        .gesture(dragGesture)
-        .onTapGesture { onSelect() }
+        
+        if showsEditorHelpers {
+            base
+                .fileImporter(isPresented: $isPickerPresented, allowedContentTypes: [.image]) { result in
+                    if case .success(let url) = result,
+                       let image = loadImportedImage(from: url) {
+                        onScreenshotDrop?(image)
+                    }
+                }
+                .gesture(dragGesture, including: .gesture)
+                .simultaneousGesture(
+                    TapGesture().onEnded { onSelect() }
+                )
+        } else {
+            base
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
     }
 
     @ViewBuilder
@@ -78,12 +102,59 @@ struct CanvasShapeView: View {
                 }
 
         case .device:
-            DeviceFrameView(
-                category: shape.deviceCategory ?? .iphone,
-                bodyColor: shape.deviceBodyColor,
-                width: displayW,
-                height: displayH
-            )
+            let deviceView = ZStack {
+                DeviceFrameView(
+                    category: shape.deviceCategory ?? .iphone,
+                    bodyColor: shape.deviceBodyColor,
+                    width: displayW,
+                    height: displayH,
+                    screenshotImage: screenshotImage
+                )
+
+                if screenshotImage == nil && showsEditorHelpers {
+                    let iconSize = max(14, 20 * displayScale)
+                    let labelSize = max(10, 10 * displayScale)
+                    let spacing = max(4, 4 * displayScale)
+                    let padding = max(10, 12 * displayScale)
+                    let cornerRadius = max(8, 8 * displayScale)
+                    let buttonBackgroundOpacity = isDropTargeted ? 0.9 : 1.0
+
+                    Button {
+                        isPickerPresented = true
+                    } label: {
+                        VStack(spacing: spacing) {
+                            Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
+                                .font(.system(size: iconSize))
+                            Text(isDropTargeted ? "Drop image" : "Add image")
+                                .font(.system(size: labelSize, weight: .medium))
+                        }
+                        .foregroundStyle(.primary)
+                        .padding(padding)
+                        .background(
+                            .thinMaterial.opacity(buttonBackgroundOpacity),
+                            in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
+                }
+
+                if isDropTargeted && showsEditorHelpers {
+                    RoundedRectangle(cornerRadius: max(8, 8 * displayScale), style: .continuous)
+                        .fill(Color.accentColor.opacity(0.12))
+                    RoundedRectangle(cornerRadius: max(8, 8 * displayScale), style: .continuous)
+                        .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
+                }
+            }
+            .frame(width: displayW, height: displayH)
+
+            if showsEditorHelpers {
+                deviceView.onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
+                    handleDrop(providers)
+                }
+            } else {
+                deviceView
+            }
         }
     }
 
@@ -151,7 +222,7 @@ struct CanvasShapeView: View {
                 .onChanged { value in
                     let tx = value.translation.width / displayScale
                     let ty = value.translation.height / displayScale
-                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift)
+                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift) || shape.type == .device
                     resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
                 }
                 .onEnded { _ in
@@ -262,6 +333,34 @@ struct CanvasShapeView: View {
                 isDragging = false
                 onUpdate(updated)
             }
+    }
+
+    private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
+        guard let provider = providers.first else { return false }
+        provider.loadObject(ofClass: NSImage.self) { image, _ in
+            if let image = image as? NSImage {
+                DispatchQueue.main.async {
+                    onScreenshotDrop?(image)
+                }
+            }
+        }
+        return true
+    }
+
+    private func loadImportedImage(from url: URL) -> NSImage? {
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        if let image = NSImage(contentsOf: url) {
+            return image
+        }
+
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return NSImage(data: data)
     }
 
     private func fontWeight(_ weight: Int) -> Font.Weight {

@@ -17,6 +17,7 @@ struct DeviceFrameView: View {
     let bodyColor: Color
     let width: CGFloat
     let height: CGFloat
+    var screenshotImage: NSImage? = nil
 
     private var scale: CGFloat {
         let base = category.baseDimensions
@@ -49,7 +50,10 @@ struct DeviceFrameView: View {
 
         // Corner radii — body ~11mm → 33.8, screen 62pt@3x on 1206px display → 32.6
         let bodyCornerR: CGFloat = 34 * s
-        let screenCornerR: CGFloat = 33 * s
+        // The screen is inset by bezels, so its effective radius must also be inset.
+        // If this is too large, rendered pixels can protrude past the body corners on export.
+        let maxScreenCornerR = max(0, bodyCornerR - max(bezelLR, bezelTB))
+        let screenCornerR = min(33 * s, maxScreenCornerR)
 
         // Dynamic Island: ~126 × 37 pts @ 3x = 378 × 111 px on 1206 × 2622 display
         // Proportional to screen: 31.3% W, 4.2% H
@@ -87,15 +91,18 @@ struct DeviceFrameView: View {
 
         let btnColor = buttonColor
 
+        let bodyShape = RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
+        let screenShape = RoundedRectangle(cornerRadius: screenCornerR, style: .continuous)
+
         return ZStack {
             // Body
-            RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
+            bodyShape
                 .fill(bodyColor)
                 .frame(width: bodyW, height: bodyH)
                 .shadow(color: .black.opacity(0.25), radius: 4 * s, y: 2 * s)
 
             // Subtle edge highlight
-            RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
+            bodyShape
                 .strokeBorder(
                     LinearGradient(
                         colors: [.white.opacity(0.12), .white.opacity(0.03)],
@@ -106,10 +113,27 @@ struct DeviceFrameView: View {
                 )
                 .frame(width: bodyW, height: bodyH)
 
-            // Screen area
-            RoundedRectangle(cornerRadius: screenCornerR, style: .continuous)
-                .fill(.white)
-                .frame(width: screenW, height: screenH)
+            // Screen area (must be hard-clipped to rounded corners)
+            Group {
+                if let screenshotImage {
+                    Image(nsImage: screenshotImage)
+                        .resizable()
+                        .interpolation(.high)
+                        .scaledToFill()
+                } else {
+                    Color.white
+                }
+            }
+            .frame(width: screenW, height: screenH)
+            .clipShape(screenShape)
+            .mask {
+                bodyShape
+                    .frame(width: bodyW, height: bodyH)
+            }
+            .overlay {
+                screenShape
+                    .strokeBorder(.black.opacity(0.08), lineWidth: max(0.5, 0.5 * s))
+            }
 
             // Dynamic Island
             Capsule()
@@ -150,7 +174,7 @@ struct DeviceFrameView: View {
                 .offset(x: bodyW / 2 + btnDepth * 0.35, y: -(bodyH / 2 - camCtrlY))
 
             // Shine overlay
-            RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
+            bodyShape
                 .fill(
                     LinearGradient(
                         stops: [

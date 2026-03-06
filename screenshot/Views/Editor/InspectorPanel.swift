@@ -81,14 +81,73 @@ struct InspectorPanel: View {
 
                     Divider()
 
-                    // Background color
+                    // Background
                     inspectorSection("Background") {
-                        ColorPicker(
-                            "Color",
-                            selection: $state.rows[rowIndex].bgColor.onSet { state.scheduleSave() },
-                            supportsOpacity: false
-                        )
-                        .font(.system(size: 12))
+                        Picker("Style", selection: $state.rows[rowIndex].backgroundStyle.onSet { state.scheduleSave() }) {
+                            Text("Color").tag(BackgroundStyle.color)
+                            Text("Gradient").tag(BackgroundStyle.gradient)
+                        }
+                        .pickerStyle(.segmented)
+                        .controlSize(.small)
+
+                        if state.rows[rowIndex].backgroundStyle == .color {
+                            ColorPicker(
+                                "Color",
+                                selection: $state.rows[rowIndex].bgColor.onSet { state.scheduleSave() },
+                                supportsOpacity: false
+                            )
+                            .font(.system(size: 12))
+                        } else {
+                            // Gradient presets grid
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
+                                ForEach(gradientPresets) { preset in
+                                    Button {
+                                        state.rows[rowIndex].gradientConfig = preset.config
+                                        state.scheduleSave()
+                                    } label: {
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(preset.config.linearGradient)
+                                            .frame(height: 28)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help(preset.label)
+                                }
+                            }
+
+                            // Custom gradient controls
+                            ColorPicker(
+                                "Color 1",
+                                selection: $state.rows[rowIndex].gradientConfig.color1.onSet { state.scheduleSave() },
+                                supportsOpacity: false
+                            )
+                            .font(.system(size: 12))
+
+                            ColorPicker(
+                                "Color 2",
+                                selection: $state.rows[rowIndex].gradientConfig.color2.onSet { state.scheduleSave() },
+                                supportsOpacity: false
+                            )
+                            .font(.system(size: 12))
+
+                            HStack {
+                                Text("Angle")
+                                    .font(.system(size: 12))
+                                Slider(
+                                    value: $state.rows[rowIndex].gradientConfig.angle.onSet { state.scheduleSave() },
+                                    in: 0...360,
+                                    step: 1
+                                )
+                                .controlSize(.small)
+                                Text("\(Int(state.rows[rowIndex].gradientConfig.angle))°")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 30, alignment: .trailing)
+                            }
+                        }
                     }
 
                     Divider()
