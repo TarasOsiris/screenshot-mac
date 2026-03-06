@@ -320,21 +320,6 @@ final class AppState {
         }
     }
 
-    func removeScreenshot(for shapeId: UUID) {
-        guard let activeId = activeProjectId else { return }
-        for rowIdx in rows.indices {
-            if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) {
-                if let fileName = rows[rowIdx].shapes[shapeIdx].screenshotFileName {
-                    let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
-                    try? FileManager.default.removeItem(at: url)
-                    screenshotImages.removeValue(forKey: fileName)
-                }
-                rows[rowIdx].shapes[shapeIdx].screenshotFileName = nil
-                scheduleSave()
-                return
-            }
-        }
-    }
 
     func loadScreenshotImages() {
         guard let activeId = activeProjectId else { return }

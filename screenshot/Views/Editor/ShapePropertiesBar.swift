@@ -1,8 +1,10 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ShapePropertiesBar: View {
     @Bindable var state: AppState
     @State private var isDeletingShape = false
+    @State private var isReplacingImage = false
 
     private var rowIndex: Int? { state.selectedRowIndex }
     private var shapeIndex: Int? {
@@ -74,12 +76,21 @@ struct ShapePropertiesBar: View {
                         separator
 
                         Button {
-                            state.removeScreenshot(for: shape.id)
+                            isReplacingImage = true
                         } label: {
-                            Label("Remove Image", systemImage: "photo.badge.minus")
+                            Label("Replace Image", systemImage: "photo.badge.arrow.down")
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
+                        .fileImporter(isPresented: $isReplacingImage, allowedContentTypes: [.image]) { result in
+                            if case .success(let url) = result {
+                                let didAccess = url.startAccessingSecurityScopedResource()
+                                defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+                                if let image = NSImage(contentsOf: url) {
+                                    state.saveScreenshot(image, for: shape.id)
+                                }
+                            }
+                        }
                     }
                 }
 
