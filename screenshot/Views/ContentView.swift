@@ -105,7 +105,7 @@ struct ContentView: View {
             }
 
             ToolbarItem(placement: .navigation) {
-                ZoomControls(zoomLevel: $state.zoomLevel)
+                ZoomControls()
                     .padding(.leading, 8)
             }
 
@@ -230,10 +230,11 @@ struct ContentView: View {
         exportError = nil
         exportSuccessMessage = nil
         do {
-            let projectName = state.activeProject?.name ?? "Screenshots"
+            let projectName = state.activeProject?.name ?? ""
             try ExportService.exportAll(rows: state.rows, projectName: projectName, to: url, screenshotImages: state.screenshotImages)
             let totalScreenshots = state.rows.reduce(0) { $0 + $1.templates.count }
-            let destinationFolder = url.appendingPathComponent(projectName.isEmpty ? "Screenshots" : projectName).path
+            let exportFolderName = projectName.isEmpty ? "Screenshots" : projectName
+            let destinationFolder = url.appendingPathComponent(exportFolderName).path
             exportSuccessMessage = "Exported \(totalScreenshots) screenshot\(totalScreenshots == 1 ? "" : "s") to \(destinationFolder)."
         } catch {
             exportError = error.localizedDescription
@@ -251,34 +252,29 @@ enum ZoomConstants {
 }
 
 private struct ZoomControls: View {
-    @Binding var zoomLevel: CGFloat
+    @Environment(AppState.self) private var state
 
     var body: some View {
+        @Bindable var state = state
         HStack(spacing: 4) {
-            zoomButton("minus", disabled: zoomLevel <= ZoomConstants.min) {
-                withAnimation(.smooth(duration: 0.3)) {
-                    zoomLevel = Swift.max(ZoomConstants.min, zoomLevel - ZoomConstants.step)
-                }
+            zoomButton("minus", disabled: state.zoomLevel <= ZoomConstants.min) {
+                state.zoomOut()
             }
 
-            Slider(value: $zoomLevel, in: ZoomConstants.min...ZoomConstants.max)
+            Slider(value: $state.zoomLevel, in: ZoomConstants.min...ZoomConstants.max)
                 .frame(width: 80)
                 .controlSize(.small)
 
-            zoomButton("plus", disabled: zoomLevel >= ZoomConstants.max) {
-                withAnimation(.smooth(duration: 0.3)) {
-                    zoomLevel = Swift.min(ZoomConstants.max, zoomLevel + ZoomConstants.step)
-                }
+            zoomButton("plus", disabled: state.zoomLevel >= ZoomConstants.max) {
+                state.zoomIn()
             }
 
             Button {
-                withAnimation(.smooth(duration: 0.3)) {
-                    zoomLevel = 1.0
-                }
+                state.resetZoom()
             } label: {
-                Text(verbatim: "\(Int(zoomLevel * 100))%")
+                Text(verbatim: "\(Int(state.zoomLevel * 100))%")
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
-                    .foregroundStyle(zoomLevel == 1.0 ? .tertiary : .secondary)
+                    .foregroundStyle(state.zoomLevel == 1.0 ? .tertiary : .secondary)
                     .frame(width: 34)
                     .contentShape(Rectangle())
             }

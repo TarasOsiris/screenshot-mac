@@ -35,25 +35,13 @@ struct ScreenshotBroApp: App {
 
             CommandGroup(before: .toolbar) {
                 Section {
-                    Button("Zoom In") {
-                        withAnimation(.smooth(duration: 0.3)) {
-                            appState.zoomLevel = min(ZoomConstants.max, appState.zoomLevel + ZoomConstants.step)
-                        }
-                    }
+                    Button("Zoom In") { appState.zoomIn() }
                     .keyboardShortcut("+", modifiers: .command)
 
-                    Button("Zoom Out") {
-                        withAnimation(.smooth(duration: 0.3)) {
-                            appState.zoomLevel = max(ZoomConstants.min, appState.zoomLevel - ZoomConstants.step)
-                        }
-                    }
+                    Button("Zoom Out") { appState.zoomOut() }
                     .keyboardShortcut("-", modifiers: .command)
 
-                    Button("Actual Size") {
-                        withAnimation(.smooth(duration: 0.3)) {
-                            appState.zoomLevel = 1.0
-                        }
-                    }
+                    Button("Actual Size") { appState.resetZoom() }
                     .keyboardShortcut("0", modifiers: .command)
                 }
             }

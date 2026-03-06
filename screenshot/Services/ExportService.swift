@@ -53,7 +53,6 @@ struct ExportService {
     static func renderTemplateImage(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:]) -> NSImage {
         let tLeft = CGFloat(index) * row.templateWidth
         let visibleShapes = row.visibleShapes(forTemplateAt: index)
-            .filter { row.showDevice || $0.type != .device }
             .map { normalizeDeviceAspectIfNeeded($0) }
 
         let view = ZStack {

@@ -10,6 +10,26 @@ final class AppState {
     var zoomLevel: CGFloat = 1.0
     var screenshotImages: [String: NSImage] = [:]
 
+    // MARK: - Zoom
+
+    func zoomIn() {
+        withAnimation(.smooth(duration: 0.3)) {
+            zoomLevel = min(ZoomConstants.max, zoomLevel + ZoomConstants.step)
+        }
+    }
+
+    func zoomOut() {
+        withAnimation(.smooth(duration: 0.3)) {
+            zoomLevel = max(ZoomConstants.min, zoomLevel - ZoomConstants.step)
+        }
+    }
+
+    func resetZoom() {
+        withAnimation(.smooth(duration: 0.3)) {
+            zoomLevel = 1.0
+        }
+    }
+
     private var saveTask: DispatchWorkItem?
 
     var activeProject: Project? {
@@ -117,9 +137,11 @@ final class AppState {
         PersistenceService.deleteProject(id)
 
         if activeProjectId == id {
+            screenshotImages.removeAll()
             activeProjectId = projects.first?.id
             if let activeId = activeProjectId {
                 loadRowsForProject(activeId)
+                loadScreenshotImages()
             } else {
                 rows = [makeDefaultRow()]
                 selectedRowId = rows.first?.id

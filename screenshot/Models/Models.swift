@@ -106,12 +106,11 @@ struct GradientConfig: Codable, Equatable {
 struct GradientPreset: Identifiable {
     let id = UUID()
     let label: String
-    let color1: Color
-    let color2: Color
-    let angle: Double
+    let config: GradientConfig
 
-    var config: GradientConfig {
-        GradientConfig(color1: color1, color2: color2, angle: angle)
+    init(label: String, color1: Color, color2: Color, angle: Double) {
+        self.label = label
+        self.config = GradientConfig(color1: color1, color2: color2, angle: angle)
     }
 }
 
@@ -460,7 +459,7 @@ struct ScreenshotRow: Identifiable, Codable {
     func visibleShapes(forTemplateAt index: Int) -> [CanvasShapeModel] {
         let tLeft = CGFloat(index) * templateWidth
         let tRight = tLeft + templateWidth
-        return shapes.filter { s in
+        return activeShapes.filter { s in
             let sRight = s.x + s.width
             return sRight > tLeft && s.x < tRight
         }

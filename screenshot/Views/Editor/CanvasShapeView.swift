@@ -354,18 +354,12 @@ struct CanvasShapeView: View {
                 url.stopAccessingSecurityScopedResource()
             }
         }
-
-        if let image = NSImage(contentsOf: url) {
-            return image
-        }
-
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return NSImage(data: data)
+        return NSImage(contentsOf: url)
     }
 
     private func fontWeight(_ weight: Int) -> Font.Weight {
         switch weight {
-        case ...299: .light
+        case ...299: .thin
         case 300...399: .light
         case 400...499: .regular
         case 500...599: .medium
