@@ -256,19 +256,25 @@ private struct ZoomControls: View {
     var body: some View {
         HStack(spacing: 4) {
             zoomButton("minus", disabled: zoomLevel <= ZoomConstants.min) {
-                zoomLevel = Swift.max(ZoomConstants.min, zoomLevel - ZoomConstants.step)
+                withAnimation(.smooth(duration: 0.3)) {
+                    zoomLevel = Swift.max(ZoomConstants.min, zoomLevel - ZoomConstants.step)
+                }
             }
 
-            Slider(value: $zoomLevel, in: ZoomConstants.min...ZoomConstants.max, step: ZoomConstants.step)
+            Slider(value: $zoomLevel, in: ZoomConstants.min...ZoomConstants.max)
                 .frame(width: 80)
                 .controlSize(.small)
 
             zoomButton("plus", disabled: zoomLevel >= ZoomConstants.max) {
-                zoomLevel = Swift.min(ZoomConstants.max, zoomLevel + ZoomConstants.step)
+                withAnimation(.smooth(duration: 0.3)) {
+                    zoomLevel = Swift.min(ZoomConstants.max, zoomLevel + ZoomConstants.step)
+                }
             }
 
             Button {
-                zoomLevel = 1.0
+                withAnimation(.smooth(duration: 0.3)) {
+                    zoomLevel = 1.0
+                }
             } label: {
                 Text(verbatim: "\(Int(zoomLevel * 100))%")
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
