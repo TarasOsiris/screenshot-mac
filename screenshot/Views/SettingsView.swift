@@ -5,6 +5,7 @@ struct SettingsView: View {
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("exportScale") private var exportScale = 1.0
     @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
+    @AppStorage("defaultZoomLevel") private var defaultZoomLevel = 1.0
 
     var body: some View {
         TabView {
@@ -36,6 +37,17 @@ struct SettingsView: View {
                 ForEach(1...6, id: \.self) { count in
                     Text(verbatim: "\(count)").tag(count)
                 }
+            }
+
+            Picker("Default zoom level", selection: $defaultZoomLevel) {
+                Text("25%").tag(0.25)
+                Text("50%").tag(0.50)
+                Text("75%").tag(0.75)
+                Text("100%").tag(1.0)
+                Text("125%").tag(1.25)
+                Text("150%").tag(1.50)
+                Text("175%").tag(1.75)
+                Text("200%").tag(2.0)
             }
         }
         .formStyle(.grouped)

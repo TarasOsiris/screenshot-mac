@@ -25,8 +25,9 @@ final class AppState {
     }
 
     func resetZoom() {
+        let defaultLevel = UserDefaults.standard.double(forKey: "defaultZoomLevel")
         withAnimation(.smooth(duration: 0.3)) {
-            zoomLevel = 1.0
+            zoomLevel = defaultLevel > 0 ? defaultLevel : 1.0
         }
     }
 
@@ -45,6 +46,8 @@ final class AppState {
     }
 
     init() {
+        let stored = UserDefaults.standard.double(forKey: "defaultZoomLevel")
+        if stored > 0 { zoomLevel = stored }
         PersistenceService.ensureDirectories()
         load()
     }
