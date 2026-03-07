@@ -20,14 +20,23 @@ struct ShapePropertiesBar: View {
         return shapeIndex > 0
     }
 
+    /// Safely resolve current index for a shape by ID; returns nil if shape or row disappeared.
+    private func idx(for shapeId: UUID) -> (row: Int, shape: Int)? {
+        guard let ri = rowIndex, ri < state.rows.count,
+              let si = state.rows[ri].shapes.firstIndex(where: { $0.id == shapeId })
+        else { return nil }
+        return (ri, si)
+    }
+
     var body: some View {
         if let rowIndex, let shapeIdx = shapeIndex {
             let shape = state.rows[rowIndex].shapes[shapeIdx]
+            let shapeId = shape.id
 
             HStack(spacing: 0) {
                 // Color (not shown for devices or SVGs — they have their own color controls)
                 if shape.type != .device && shape.type != .svg {
-                    ColorPicker("", selection: $state.rows[rowIndex].shapes[shapeIdx].color.onSet { state.scheduleSave() }, supportsOpacity: false)
+                    ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
                     .labelsHidden()
                     .frame(width: 30)
 
@@ -36,10 +45,10 @@ struct ShapePropertiesBar: View {
 
                 // Opacity
                 controlGroup("Opacity") {
-                    Slider(value: $state.rows[rowIndex].shapes[shapeIdx].opacity.onSet { state.scheduleSave() }, in: 0...1)
+                    Slider(value: shapeBinding(shapeId, \.opacity), in: 0...1)
                     .frame(width: 80)
 
-                    Text(verbatim: "\(Int(state.rows[rowIndex].shapes[shapeIdx].opacity * 100))%")
+                    Text(verbatim: "\(Int((idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].opacity } ?? 1) * 100))%")
                         .frame(width: 32, alignment: .trailing)
                 }
 
@@ -47,10 +56,10 @@ struct ShapePropertiesBar: View {
                 separator
 
                 controlGroup("Rotation") {
-                    Slider(value: $state.rows[rowIndex].shapes[shapeIdx].rotation.onSet { state.scheduleSave() }, in: 0...360)
+                    Slider(value: shapeBinding(shapeId, \.rotation), in: 0...360)
                     .frame(width: 80)
 
-                    Text(verbatim: "\(Int(state.rows[rowIndex].shapes[shapeIdx].rotation))°")
+                    Text(verbatim: "\(Int(idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].rotation } ?? 0))°")
                         .frame(width: 28, alignment: .trailing)
                 }
 
@@ -59,7 +68,7 @@ struct ShapePropertiesBar: View {
                     separator
 
                     controlGroup("Radius") {
-                        Slider(value: $state.rows[rowIndex].shapes[shapeIdx].borderRadius.onSet { state.scheduleSave() }, in: 0...100)
+                        Slider(value: shapeBinding(shapeId, \.borderRadius), in: 0...100)
                         .frame(width: 80)
                     }
                 }
@@ -69,7 +78,7 @@ struct ShapePropertiesBar: View {
                     separator
 
                     controlGroup("Body") {
-                        ColorPicker("", selection: $state.rows[rowIndex].shapes[shapeIdx].deviceBodyColor.onSet { state.scheduleSave() }, supportsOpacity: false)
+                        ColorPicker("", selection: shapeBinding(shapeId, \.deviceBodyColor), supportsOpacity: false)
                             .labelsHidden()
                             .frame(width: 30)
                     }
@@ -89,7 +98,7 @@ struct ShapePropertiesBar: View {
                                 let didAccess = url.startAccessingSecurityScopedResource()
                                 defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
                                 if let image = NSImage(contentsOf: url) {
-                                    state.saveScreenshot(image, for: shape.id)
+                                    state.saveScreenshot(image, for: shapeId)
                                 }
                             }
                         }
@@ -102,8 +111,12 @@ struct ShapePropertiesBar: View {
 
                     HStack(spacing: 4) {
                         Toggle(isOn: Binding(
-                            get: { state.rows[rowIndex].shapes[shapeIdx].svgUseColor ?? false },
-                            set: { state.rows[rowIndex].shapes[shapeIdx].svgUseColor = $0; state.scheduleSave() }
+                            get: { idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].svgUseColor ?? false } ?? false },
+                            set: { newVal in
+                                guard let i = idx(for: shapeId) else { return }
+                                state.rows[i.row].shapes[i.shape].svgUseColor = newVal
+                                state.scheduleSave()
+                            }
                         )) {
                             Text("Custom color")
                                 .foregroundStyle(.secondary)
@@ -111,7 +124,7 @@ struct ShapePropertiesBar: View {
                         .toggleStyle(.switch)
 
                         if shape.svgUseColor == true {
-                            ColorPicker("", selection: $state.rows[rowIndex].shapes[shapeIdx].color.onSet { state.scheduleSave() }, supportsOpacity: false)
+                            ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
                                 .labelsHidden()
                                 .frame(width: 30)
                         }
@@ -134,8 +147,12 @@ struct ShapePropertiesBar: View {
 
                     controlGroup("Size") {
                         Slider(value: Binding(
-                            get: { state.rows[rowIndex].shapes[shapeIdx].fontSize ?? 72 },
-                            set: { state.rows[rowIndex].shapes[shapeIdx].fontSize = $0; state.scheduleSave() }
+                            get: { idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].fontSize ?? 72 } ?? 72 },
+                            set: { newVal in
+                                guard let i = idx(for: shapeId) else { return }
+                                state.rows[i.row].shapes[i.shape].fontSize = newVal
+                                state.scheduleSave()
+                            }
                         ), in: 12...200)
                         .frame(width: 70)
                     }
@@ -143,8 +160,12 @@ struct ShapePropertiesBar: View {
                     separator
 
                     Picker("", selection: Binding(
-                        get: { state.rows[rowIndex].shapes[shapeIdx].fontWeight ?? 400 },
-                        set: { state.rows[rowIndex].shapes[shapeIdx].fontWeight = $0; state.scheduleSave() }
+                        get: { idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].fontWeight ?? 400 } ?? 400 },
+                        set: { newVal in
+                            guard let i = idx(for: shapeId) else { return }
+                            state.rows[i.row].shapes[i.shape].fontWeight = newVal
+                            state.scheduleSave()
+                        }
                     )) {
                         Text("Light").tag(300)
                         Text("Regular").tag(400)
@@ -176,7 +197,7 @@ struct ShapePropertiesBar: View {
                     .help("Duplicate")
 
                     barButton("trash") {
-                        state.deleteShape(shape.id)
+                        state.deleteShape(shapeId)
                     }
                     .foregroundStyle(.red.opacity(0.8))
                     .help("Delete")
@@ -188,16 +209,31 @@ struct ShapePropertiesBar: View {
             .padding(.vertical, 8)
             .background(.bar)
             .sheet(isPresented: $isReplacingSvg) {
-                let capturedRowIndex = rowIndex
-                let capturedShapeIdx = shapeIdx
                 SvgPasteDialog(isPresented: $isReplacingSvg) { svgContent, _ in
-                    guard capturedRowIndex < state.rows.count,
-                          capturedShapeIdx < state.rows[capturedRowIndex].shapes.count else { return }
-                    state.rows[capturedRowIndex].shapes[capturedShapeIdx].svgContent = svgContent
+                    guard let i = idx(for: shapeId) else { return }
+                    state.rows[i.row].shapes[i.shape].svgContent = svgContent
                     state.scheduleSave()
                 }
             }
         }
+    }
+
+    /// Creates a Binding that always resolves the shape index by ID at access time.
+    private func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> where T: Sendable {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else {
+                    // Fallback: return default from a temporary shape — body will re-evaluate shortly
+                    return CanvasShapeModel.placeholder[keyPath: keyPath]
+                }
+                return state.rows[i.row].shapes[i.shape][keyPath: keyPath]
+            },
+            set: { newValue in
+                guard let i = idx(for: shapeId) else { return }
+                state.rows[i.row].shapes[i.shape][keyPath: keyPath] = newValue
+                state.scheduleSave()
+            }
+        )
     }
 
     private var separator: some View {

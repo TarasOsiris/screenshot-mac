@@ -51,10 +51,15 @@ struct InspectorPanel: View {
                         )
                         .font(.system(size: 12))
                     } else {
+                        // Gradient stop editor (preview bar + stop handles + color picker)
+                        GradientStopEditor(
+                            config: $state.rows[rowIndex].gradientConfig,
+                            onChanged: { state.scheduleSave() }
+                        )
+
+                        // Preset grid
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
                             ForEach(gradientPresets) { preset in
-                                let isSelected = state.rows[rowIndex].gradientConfig == preset.config
-
                                 Button {
                                     state.rows[rowIndex].gradientConfig = preset.config
                                     state.scheduleSave()
@@ -64,7 +69,7 @@ struct InspectorPanel: View {
                                         .frame(height: 28)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 4)
-                                                .strokeBorder(isSelected ? Color.accentColor : .white.opacity(0.2), lineWidth: isSelected ? 1.5 : 1)
+                                                .strokeBorder(.white.opacity(0.2), lineWidth: 1)
                                         )
                                 }
                                 .buttonStyle(.plain)
@@ -72,32 +77,39 @@ struct InspectorPanel: View {
                             }
                         }
 
-                        ColorPicker(
-                            "Color 1",
-                            selection: $state.rows[rowIndex].gradientConfig.color1.onSet { state.scheduleSave() },
-                            supportsOpacity: false
-                        )
-                        .font(.system(size: 12))
-
-                        ColorPicker(
-                            "Color 2",
-                            selection: $state.rows[rowIndex].gradientConfig.color2.onSet { state.scheduleSave() },
-                            supportsOpacity: false
-                        )
-                        .font(.system(size: 12))
-
-                        LabeledContent("Angle") {
-                            HStack(spacing: 8) {
-                                Slider(
-                                    value: $state.rows[rowIndex].gradientConfig.angle.onSet { state.scheduleSave() },
-                                    in: 0...360,
-                                    step: 1
+                        // Angle: wheel + value + quick presets
+                        VStack(spacing: 6) {
+                            HStack(spacing: 12) {
+                                GradientAngleWheel(
+                                    angle: $state.rows[rowIndex].gradientConfig.angle.onSet { state.scheduleSave() }
                                 )
-                                .controlSize(.small)
-                                Text("\(Int(state.rows[rowIndex].gradientConfig.angle))°")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 34, alignment: .trailing)
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("\(Int(state.rows[rowIndex].gradientConfig.angle))°")
+                                        .font(.system(size: 18, weight: .medium).monospacedDigit())
+                                        .foregroundStyle(.primary)
+
+                                    // Quick angle buttons
+                                    HStack(spacing: 2) {
+                                        ForEach([0, 45, 90, 135, 180, 225, 270, 315], id: \.self) { a in
+                                            Button {
+                                                state.rows[rowIndex].gradientConfig.angle = Double(a)
+                                                state.scheduleSave()
+                                            } label: {
+                                                Image(systemName: "arrow.up")
+                                                    .font(.system(size: 8))
+                                                    .rotationEffect(.degrees(Double(a)))
+                                                    .frame(width: 18, height: 18)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 3)
+                                                            .fill(Int(state.rows[rowIndex].gradientConfig.angle) == a ? Color.accentColor.opacity(0.3) : Color.clear)
+                                                    )
+                                            }
+                                            .buttonStyle(.plain)
+                                            .help("\(a)°")
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -123,6 +135,8 @@ struct InspectorPanel: View {
             .onAppear { isLabelFocused = false }
             .onChange(of: state.selectedRowId) { isLabelFocused = false }
             .onChange(of: state.selectedShapeId) { if state.selectedShapeId != nil { isLabelFocused = false } }
+            .onChange(of: state.rows[rowIndex].gradientConfig) { isLabelFocused = false }
+            .onChange(of: state.rows[rowIndex].backgroundStyle) { isLabelFocused = false }
         } else {
             ContentUnavailableView(
                 "No Row Selected",

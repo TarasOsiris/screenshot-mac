@@ -124,6 +124,9 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.svgUseColor = svgUseColor
     }
 
+    /// Used as a fallback when a Binding's get is called after the shape has been removed.
+    static let placeholder = CanvasShapeModel(type: .rectangle)
+
     var color: Color {
         get { colorData.color }
         set { colorData = CodableColor(newValue) }
