@@ -26,6 +26,14 @@ struct ScreenshotBroApp: App {
                     .keyboardShortcut("d", modifiers: .command)
                     .disabled(appState.selectedShapeId == nil && appState.selectedRowId == nil)
 
+                    Button("Delete") {
+                        if appState.selectedShapeId != nil {
+                            appState.deleteSelectedShape()
+                        }
+                    }
+                    .keyboardShortcut(.delete, modifiers: [])
+                    .disabled(appState.selectedShapeId == nil)
+
                     Button("Deselect") {
                         if appState.selectedShapeId != nil {
                             appState.selectedShapeId = nil
@@ -35,6 +43,22 @@ struct ScreenshotBroApp: App {
                     }
                     .keyboardShortcut(.escape, modifiers: [])
                     .disabled(appState.selectedShapeId == nil && appState.selectedRowId == nil)
+                }
+
+                Divider()
+
+                Section {
+                    Button("Bring to Front") {
+                        appState.bringSelectedShapeToFront()
+                    }
+                    .keyboardShortcut("]", modifiers: [.command, .shift])
+                    .disabled(appState.selectedShapeId == nil)
+
+                    Button("Send to Back") {
+                        appState.sendSelectedShapeToBack()
+                    }
+                    .keyboardShortcut("[", modifiers: [.command, .shift])
+                    .disabled(appState.selectedShapeId == nil)
                 }
             }
 

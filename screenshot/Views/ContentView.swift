@@ -10,9 +10,6 @@ struct ContentView: View {
     @State private var isRenamingProject = false
     @State private var renameText = ""
     @State private var isDeletingProject = false
-    @State private var keyMonitor: Any?
-    @State private var exportSuccessMessage: String?
-    @State private var exportSuccessFolderURL: URL?
     @State private var gestureZoomStartLevel: CGFloat?
 
     private var selectedContextSummary: String {
@@ -156,13 +153,11 @@ struct ContentView: View {
             }
 
             ToolbarItem(placement: .primaryAction) {
-                Button {
+                Button("Export") {
                     exportScreenshots()
-                } label: {
-                    Text("Export")
-                        .font(.system(size: 12, weight: .medium))
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
                 .disabled(isExporting || state.rows.isEmpty)
                 .keyboardShortcut("e", modifiers: .command)
                 .help("Export screenshots (\u{2318}E)")
@@ -184,19 +179,6 @@ struct ContentView: View {
             Button("OK") { exportError = nil }
         } message: {
             Text(exportError ?? "")
-        }
-        .alert("Export Complete", isPresented: .init(
-            get: { exportSuccessMessage != nil },
-            set: {
-                if !$0 {
-                    exportSuccessMessage = nil
-                    exportSuccessFolderURL = nil
-                }
-            }
-        )) {
-            Button("OK") { acknowledgeExportSuccess() }
-        } message: {
-            Text(exportSuccessMessage ?? "")
         }
         .alert("Delete Project", isPresented: $isDeletingProject) {
             Button("Delete", role: .destructive) {
@@ -220,47 +202,6 @@ struct ContentView: View {
         }
         .onAppear {
             state.undoManager = undoManager
-            // Remove any existing monitor to guard against double-registration
-            if let monitor = keyMonitor {
-                NSEvent.removeMonitor(monitor)
-            }
-            keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                // Don't intercept when a text field has focus
-                if let responder = event.window?.firstResponder,
-                   responder.isKind(of: NSText.self) {
-                    return event
-                }
-
-                guard state.selectedShapeId != nil else { return event }
-
-                if event.keyCode == 51 { // Delete key
-                    state.deleteSelectedShape()
-                    return nil
-                }
-
-                let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-                let isCommandShift = flags.contains([.command, .shift]) &&
-                    !flags.contains(.option) &&
-                    !flags.contains(.control)
-
-                if isCommandShift {
-                    if event.keyCode == 30 { // ] key
-                        state.bringSelectedShapeToFront()
-                        return nil
-                    }
-                    if event.keyCode == 33 { // [ key
-                        state.sendSelectedShapeToBack()
-                        return nil
-                    }
-                }
-                return event
-            }
-        }
-        .onDisappear {
-            if let monitor = keyMonitor {
-                NSEvent.removeMonitor(monitor)
-                keyMonitor = nil
-            }
         }
     }
 
@@ -280,32 +221,20 @@ struct ContentView: View {
 
         isExporting = true
         exportError = nil
-        exportSuccessMessage = nil
-        exportSuccessFolderURL = nil
         do {
             let projectName = state.activeProject?.name ?? ""
             try ExportService.exportAll(rows: state.rows, projectName: projectName, to: url, screenshotImages: state.screenshotImages)
-            let totalScreenshots = state.rows.reduce(0) { $0 + $1.templates.count }
             let exportFolderName = projectName.isEmpty ? "Screenshots" : projectName
             let destinationFolderURL = url.appendingPathComponent(exportFolderName, isDirectory: true)
-            let destinationFolder = destinationFolderURL.path
-            exportSuccessMessage = "Exported \(totalScreenshots) screenshot\(totalScreenshots == 1 ? "" : "s") to \(destinationFolder)."
-            exportSuccessFolderURL = destinationFolderURL
+            if openExportFolderOnSuccess {
+                NSWorkspace.shared.open(destinationFolderURL)
+            }
         } catch {
             exportError = error.localizedDescription
-            exportSuccessFolderURL = nil
         }
         isExporting = false
     }
 
-    private func acknowledgeExportSuccess() {
-        let destinationURL = exportSuccessFolderURL
-        exportSuccessMessage = nil
-        exportSuccessFolderURL = nil
-
-        guard openExportFolderOnSuccess, let destinationURL else { return }
-        NSWorkspace.shared.open(destinationURL)
-    }
 }
 
 #Preview {
