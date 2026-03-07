@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @Environment(AppState.self) private var state
     @Environment(\.undoManager) private var undoManager
+    @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
     @State private var isInspectorPresented = true
     @State private var isExporting = false
     @State private var exportError: String?
@@ -11,6 +12,7 @@ struct ContentView: View {
     @State private var isDeletingProject = false
     @State private var keyMonitor: Any?
     @State private var exportSuccessMessage: String?
+    @State private var exportSuccessFolderURL: URL?
     @State private var gestureZoomStartLevel: CGFloat?
 
     private var selectedContextSummary: String {
@@ -185,9 +187,14 @@ struct ContentView: View {
         }
         .alert("Export Complete", isPresented: .init(
             get: { exportSuccessMessage != nil },
-            set: { if !$0 { exportSuccessMessage = nil } }
+            set: {
+                if !$0 {
+                    exportSuccessMessage = nil
+                    exportSuccessFolderURL = nil
+                }
+            }
         )) {
-            Button("OK") { exportSuccessMessage = nil }
+            Button("OK") { acknowledgeExportSuccess() }
         } message: {
             Text(exportSuccessMessage ?? "")
         }
@@ -274,17 +281,30 @@ struct ContentView: View {
         isExporting = true
         exportError = nil
         exportSuccessMessage = nil
+        exportSuccessFolderURL = nil
         do {
             let projectName = state.activeProject?.name ?? ""
             try ExportService.exportAll(rows: state.rows, projectName: projectName, to: url, screenshotImages: state.screenshotImages)
             let totalScreenshots = state.rows.reduce(0) { $0 + $1.templates.count }
             let exportFolderName = projectName.isEmpty ? "Screenshots" : projectName
-            let destinationFolder = url.appendingPathComponent(exportFolderName).path
+            let destinationFolderURL = url.appendingPathComponent(exportFolderName, isDirectory: true)
+            let destinationFolder = destinationFolderURL.path
             exportSuccessMessage = "Exported \(totalScreenshots) screenshot\(totalScreenshots == 1 ? "" : "s") to \(destinationFolder)."
+            exportSuccessFolderURL = destinationFolderURL
         } catch {
             exportError = error.localizedDescription
+            exportSuccessFolderURL = nil
         }
         isExporting = false
+    }
+
+    private func acknowledgeExportSuccess() {
+        let destinationURL = exportSuccessFolderURL
+        exportSuccessMessage = nil
+        exportSuccessFolderURL = nil
+
+        guard openExportFolderOnSuccess, let destinationURL else { return }
+        NSWorkspace.shared.open(destinationURL)
     }
 }
 

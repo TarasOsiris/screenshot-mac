@@ -258,6 +258,7 @@ struct ShapePropertiesBar: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
+        .focusable(false)
         .foregroundStyle(disabled ? .tertiary : .secondary)
         .disabled(disabled)
     }

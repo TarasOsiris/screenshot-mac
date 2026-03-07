@@ -128,7 +128,7 @@ struct EditorRowView: View {
                     .clipped()
                     .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
                     .contentShape(Rectangle())
-                    .onTapGesture { state.selectRow(row.id) }
+                    .onTapGesture { tapSelectRow() }
 
                     // Add button
                     AddTemplateButton(width: dw, height: dh) {
@@ -165,9 +165,7 @@ struct EditorRowView: View {
             }
         }
         .contentShape(Rectangle())
-        .onTapGesture {
-            state.selectRow(row.id)
-        }
+        .onTapGesture { tapSelectRow() }
         .background(isSelected ? Color.accentColor.opacity(0.04) : Color.clear)
         .overlay {
             if isSelected {
@@ -212,6 +210,11 @@ struct EditorRowView: View {
         }
     }
 
+    private func tapSelectRow() {
+        NSApp.keyWindow?.makeFirstResponder(nil)
+        state.selectRow(row.id)
+    }
+
     private func rowActionButton(_ icon: String, tooltip: String, disabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
@@ -220,6 +223,7 @@ struct EditorRowView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
+        .focusable(false)
         .foregroundStyle(disabled ? .tertiary : .secondary)
         .disabled(disabled)
         .help(tooltip)

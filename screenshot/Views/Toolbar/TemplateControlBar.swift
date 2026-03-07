@@ -60,6 +60,7 @@ struct TemplateControlBar: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
+        .focusable(false)
         .foregroundStyle(.secondary)
         .help(tooltip)
     }

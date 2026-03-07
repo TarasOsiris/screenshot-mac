@@ -186,6 +186,7 @@ struct CanvasShapeView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .focusable(false)
                     .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
                 }
 

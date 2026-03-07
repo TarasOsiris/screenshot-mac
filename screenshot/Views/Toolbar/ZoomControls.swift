@@ -34,6 +34,7 @@ struct ZoomControls: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
+            .focusable(false)
             .help("Reset to 100%")
         }
         .controlSize(.small)
@@ -47,6 +48,7 @@ struct ZoomControls: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
+        .focusable(false)
         .foregroundStyle(.secondary)
         .disabled(disabled)
     }

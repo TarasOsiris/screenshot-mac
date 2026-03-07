@@ -91,6 +91,7 @@ struct GradientStopEditor: View {
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
+                    .focusable(false)
                     .disabled(config.stops.count <= 2)
                     .help("Remove stop (min 2)")
                 } else {
@@ -114,11 +115,13 @@ struct GradientStopEditor: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .focusable(false)
                 .help("Reverse gradient")
             }
         }
         .focusable(true)
         .focused($isEditorFocused)
+        .focusEffectDisabled()
         .onAppear {
             ensureSelectedStopIsValid()
         }

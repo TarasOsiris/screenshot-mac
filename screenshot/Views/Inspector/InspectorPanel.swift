@@ -12,6 +12,7 @@ struct InspectorPanel: View {
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12))
                         .focused($isLabelFocused)
+                        .onSubmit { isLabelFocused = false }
                 }
 
                 Section("Screenshot Size") {
@@ -73,6 +74,7 @@ struct InspectorPanel: View {
                                         )
                                 }
                                 .buttonStyle(.plain)
+                                .focusable(false)
                                 .help(preset.label)
                             }
                         }
@@ -106,6 +108,7 @@ struct InspectorPanel: View {
                                                     )
                                             }
                                             .buttonStyle(.plain)
+                                            .focusable(false)
                                             .help("\(a)°")
                                         }
                                     }
@@ -135,8 +138,6 @@ struct InspectorPanel: View {
             .onAppear { isLabelFocused = false }
             .onChange(of: state.selectedRowId) { isLabelFocused = false }
             .onChange(of: state.selectedShapeId) { if state.selectedShapeId != nil { isLabelFocused = false } }
-            .onChange(of: state.rows[rowIndex].gradientConfig) { isLabelFocused = false }
-            .onChange(of: state.rows[rowIndex].backgroundStyle) { isLabelFocused = false }
         } else {
             ContentUnavailableView(
                 "No Row Selected",

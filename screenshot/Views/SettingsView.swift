@@ -4,6 +4,7 @@ struct SettingsView: View {
     @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("exportScale") private var exportScale = 1.0
+    @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
     @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
     @AppStorage("defaultZoomLevel") private var defaultZoomLevel = 1.0
 
@@ -65,6 +66,8 @@ struct SettingsView: View {
                 Text("2x").tag(2.0)
                 Text("3x").tag(3.0)
             }
+
+            Toggle("Open export folder after completion", isOn: $openExportFolderOnSuccess)
         }
         .formStyle(.grouped)
     }

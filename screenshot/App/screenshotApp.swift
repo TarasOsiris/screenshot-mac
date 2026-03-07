@@ -26,10 +26,15 @@ struct ScreenshotBroApp: App {
                     .keyboardShortcut("d", modifiers: .command)
                     .disabled(appState.selectedShapeId == nil && appState.selectedRowId == nil)
 
-                    Button("Deselect All") {
-                        appState.deselectAll()
+                    Button("Deselect") {
+                        if appState.selectedShapeId != nil {
+                            appState.selectedShapeId = nil
+                        } else {
+                            appState.deselectAll()
+                        }
                     }
                     .keyboardShortcut(.escape, modifiers: [])
+                    .disabled(appState.selectedShapeId == nil && appState.selectedRowId == nil)
                 }
             }
 
