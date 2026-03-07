@@ -1,6 +1,8 @@
 import Foundation
 
 struct PersistenceService {
+    private static let rootDirectoryOverrideKey = "SCREENSHOT_DATA_DIR"
+
     private static let encoder: JSONEncoder = {
         let e = JSONEncoder()
         e.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -10,7 +12,10 @@ struct PersistenceService {
     private static let decoder = JSONDecoder()
 
     static var rootURL: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
+            return URL(fileURLWithPath: override, isDirectory: true)
+        }
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("screenshot", isDirectory: true)
     }
 

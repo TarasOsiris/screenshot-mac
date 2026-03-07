@@ -103,6 +103,7 @@ struct ContentView: View {
                 .pickerStyle(.menu)
                 .frame(width: 200)
                 .help("Select project")
+                .accessibilityIdentifier("projectPicker")
             }
 
             ToolbarItem(placement: .navigation) {
@@ -125,6 +126,7 @@ struct ContentView: View {
                     Image(systemName: "ellipsis.circle")
                 }
                 .help("Project actions")
+                .accessibilityIdentifier("projectActionsMenu")
             }
 
             ToolbarItem(placement: .navigation) {
@@ -143,6 +145,7 @@ struct ContentView: View {
                 .disabled(state.activeProjectId == nil)
                 .keyboardShortcut("r", modifiers: [.command, .shift])
                 .help("Add row (\u{21e7}\u{2318}R)")
+                .accessibilityIdentifier("toolbarAddRowButton")
             }
 
             ToolbarItem(placement: .automatic) {
