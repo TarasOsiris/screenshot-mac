@@ -49,7 +49,9 @@ struct CanvasShapeView: View {
                 .frame(width: displayW, height: displayH)
                 .opacity(shape.opacity)
                 .rotationEffect(.degrees(shape.rotation))
+                .contentShape(Rectangle())
         }
+        .frame(width: displayW, height: displayH)
         .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
         .overlay {
             if isSelected {
@@ -57,7 +59,6 @@ struct CanvasShapeView: View {
                 resizeHandles
             }
         }
-        .zIndex(isSelected ? 1 : 0)
 
         let svgAware = base
             .onAppear { updateSvgCache() }
@@ -119,10 +120,7 @@ struct CanvasShapeView: View {
                 textEditor
             } else {
                 Text(shape.text ?? "")
-                    .font(.system(
-                        size: (shape.fontSize ?? 72) * displayScale,
-                        weight: fontWeight(shape.fontWeight ?? 700)
-                    ))
+                    .font(resolvedFont(size: (shape.fontSize ?? 72) * displayScale, weight: fontWeight(shape.fontWeight ?? 700)))
                     .italic(shape.italic ?? false)
                     .tracking((shape.letterSpacing ?? 0) * displayScale)
                     .lineSpacing((shape.lineSpacing ?? 0) * displayScale)
@@ -477,7 +475,7 @@ struct CanvasShapeView: View {
     private var textEditor: some View {
         let fontSize = (shape.fontSize ?? 72) * displayScale
         let weight = fontWeight(shape.fontWeight ?? 700)
-        let nsFont = NSFont.systemFont(ofSize: fontSize, weight: weight.nsWeight)
+        let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight)
         return InlineTextEditor(
             text: $editingTextValue,
             font: nsFont,
@@ -494,6 +492,20 @@ struct CanvasShapeView: View {
         var updated = shape
         updated.text = editingTextValue
         onUpdate(updated)
+    }
+
+    private func resolvedFont(size: CGFloat, weight: Font.Weight) -> Font {
+        Font(resolvedNSFont(size: size, weight: weight.nsWeight))
+    }
+
+    private func resolvedNSFont(size: CGFloat, weight: NSFont.Weight) -> NSFont {
+        if let name = shape.fontName, !name.isEmpty {
+            let fm = NSFontManager.shared
+            let nsFontWeight = fm.weight(of: NSFont.systemFont(ofSize: size, weight: weight))
+            return fm.font(withFamily: name, traits: [], weight: nsFontWeight, size: size)
+                ?? NSFont.systemFont(ofSize: size, weight: weight)
+        }
+        return NSFont.systemFont(ofSize: size, weight: weight)
     }
 
     private func fontWeight(_ weight: Int) -> Font.Weight {

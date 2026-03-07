@@ -142,6 +142,10 @@ struct ShapePropertiesBar: View {
                 if shape.type == .text {
                     separator
 
+                    FontPicker(selection: shapeBinding(shapeId, \.fontName, default: ""))
+
+                    separator
+
                     controlGroup("Size") {
                         Slider(value: shapeBinding(shapeId, \.fontSize, default: 72), in: 12...200)
                             .frame(width: 70)

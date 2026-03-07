@@ -64,6 +64,7 @@ struct CanvasShapeModel: Identifiable, Codable {
 
     // Text properties
     var text: String?
+    var fontName: String?
     var fontSize: CGFloat?
     var fontWeight: Int?
     var textAlign: TextAlign?
@@ -95,6 +96,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         color: Color = .white,
         opacity: Double = 1.0,
         text: String? = nil,
+        fontName: String? = nil,
         fontSize: CGFloat? = nil,
         fontWeight: Int? = nil,
         textAlign: TextAlign? = nil,
@@ -119,6 +121,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.colorData = CodableColor(color)
         self.opacity = opacity
         self.text = text
+        self.fontName = fontName
         self.fontSize = fontSize
         self.fontWeight = fontWeight
         self.textAlign = textAlign
@@ -162,7 +165,7 @@ struct CanvasShapeModel: Identifiable, Codable {
             width: width, height: height,
             rotation: rotation, borderRadius: borderRadius,
             color: color, opacity: opacity,
-            text: text, fontSize: fontSize,
+            text: text, fontName: fontName, fontSize: fontSize,
             fontWeight: fontWeight, textAlign: textAlign,
             italic: italic, letterSpacing: letterSpacing, lineSpacing: lineSpacing,
             imageFileName: imageFileName,

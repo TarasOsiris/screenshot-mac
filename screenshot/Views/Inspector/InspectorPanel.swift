@@ -8,9 +8,10 @@ struct InspectorPanel: View {
         if let rowIndex = state.selectedRowIndex {
             Form {
                 Section("Row") {
-                    TextField("Row label", text: $state.rows[rowIndex].label.onSet { state.scheduleSave() })
+                    TextField("Row label", text: $state.rows[rowIndex].label.onSet { state.scheduleSave() }, prompt: Text("Row label"))
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12))
+                        .labelsHidden()
                         .focused($isLabelFocused)
                         .onSubmit { isLabelFocused = false }
                 }
