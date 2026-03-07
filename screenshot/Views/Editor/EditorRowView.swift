@@ -88,12 +88,12 @@ struct EditorRowView: View {
                                 shape: shape,
                                 displayScale: ds,
                                 isSelected: shape.id == state.selectedShapeId,
-                                screenshotImage: shape.screenshotFileName.flatMap { state.screenshotImages[$0] },
+                                screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
                                 onSelect: { state.selectShape(shape.id, in: row.id) },
                                 onUpdate: { state.updateShape($0) },
                                 onDelete: { state.deleteShape(shape.id) },
-                                onScreenshotDrop: shape.type == .device ? { image in
-                                    state.saveScreenshot(image, for: shape.id)
+                                onScreenshotDrop: (shape.type == .device || shape.type == .image) ? { image in
+                                    state.saveImage(image, for: shape.id)
                                 } : nil,
                                 onDragSnap: { draggedShape, rawOffset in
                                     let others = row.activeShapes.filter { $0.id != draggedShape.id }

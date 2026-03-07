@@ -141,6 +141,16 @@ struct CanvasShapeModel: Identifiable, Codable {
         set { colorData = CodableColor(newValue) }
     }
 
+    /// The filename for the shape's display image (device screenshot or standalone image).
+    var displayImageFileName: String? {
+        type == .image ? imageFileName : screenshotFileName
+    }
+
+    /// All image filenames associated with this shape (for cleanup).
+    var allImageFileNames: [String] {
+        [screenshotFileName, imageFileName].compactMap { $0 }
+    }
+
     var deviceBodyColor: Color {
         get { deviceBodyColorData?.color ?? Color(red: 0.11, green: 0.11, blue: 0.12) }
         set { deviceBodyColorData = CodableColor(newValue) }

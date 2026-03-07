@@ -132,13 +132,19 @@ struct CanvasShapeView: View {
             }
 
         case .image:
-            RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
-                .fill(shape.color.opacity(0.3))
-                .overlay {
-                    Image(systemName: "photo")
-                        .font(.system(size: 24 * displayScale))
-                        .foregroundStyle(.secondary)
+            if let image = screenshotImage {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: displayW, height: displayH)
+                    .clipShape(RoundedRectangle(cornerRadius: shape.borderRadius * displayScale))
+            } else {
+                imageDropPlaceholder {
+                    RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
+                        .fill(Color.gray.opacity(0.3))
                 }
+            }
 
         case .svg:
             if let image = cachedSvgImage {
@@ -157,7 +163,7 @@ struct CanvasShapeView: View {
             }
 
         case .device:
-            let deviceView = ZStack {
+            if screenshotImage != nil {
                 DeviceFrameView(
                     category: shape.deviceCategory ?? .iphone,
                     bodyColor: shape.deviceBodyColor,
@@ -165,51 +171,16 @@ struct CanvasShapeView: View {
                     height: displayH,
                     screenshotImage: screenshotImage
                 )
-
-                if screenshotImage == nil && showsEditorHelpers {
-                    let iconSize = max(14, 20 * displayScale)
-                    let labelSize = max(10, 10 * displayScale)
-                    let spacing = max(4, 4 * displayScale)
-                    let padding = max(10, 12 * displayScale)
-                    let cornerRadius = max(8, 8 * displayScale)
-                    let buttonBackgroundOpacity = isDropTargeted ? 0.9 : 1.0
-
-                    Button {
-                        isPickerPresented = true
-                    } label: {
-                        VStack(spacing: spacing) {
-                            Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
-                                .font(.system(size: iconSize))
-                            Text(isDropTargeted ? "Drop image" : "Add image")
-                                .font(.system(size: labelSize, weight: .medium))
-                        }
-                        .foregroundStyle(.primary)
-                        .padding(padding)
-                        .background(
-                            .thinMaterial.opacity(buttonBackgroundOpacity),
-                            in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .focusable(false)
-                    .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
-                }
-
-                if isDropTargeted && showsEditorHelpers {
-                    RoundedRectangle(cornerRadius: max(8, 8 * displayScale), style: .continuous)
-                        .fill(Color.accentColor.opacity(0.12))
-                    RoundedRectangle(cornerRadius: max(8, 8 * displayScale), style: .continuous)
-                        .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
-                }
-            }
-            .frame(width: displayW, height: displayH)
-
-            if showsEditorHelpers {
-                deviceView.onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
-                    handleDrop(providers)
-                }
             } else {
-                deviceView
+                imageDropPlaceholder {
+                    DeviceFrameView(
+                        category: shape.deviceCategory ?? .iphone,
+                        bodyColor: shape.deviceBodyColor,
+                        width: displayW,
+                        height: displayH,
+                        screenshotImage: nil
+                    )
+                }
             }
         }
     }
@@ -417,6 +388,61 @@ struct CanvasShapeView: View {
             }
         }
         return NSImage(contentsOf: url)
+    }
+
+    @ViewBuilder
+    private func imageDropPlaceholder<Background: View>(@ViewBuilder background: () -> Background) -> some View {
+        let content = ZStack {
+            background()
+
+            if showsEditorHelpers {
+                let iconSize = max(14, 20 * displayScale)
+                let labelSize = max(10, 10 * displayScale)
+                let spacing = max(4, 4 * displayScale)
+                let padding = max(10, 12 * displayScale)
+                let cr = max(8, 8 * displayScale)
+
+                Button {
+                    isPickerPresented = true
+                } label: {
+                    VStack(spacing: spacing) {
+                        Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
+                            .font(.system(size: iconSize))
+                        Text(isDropTargeted ? "Drop image" : "Add image")
+                            .font(.system(size: labelSize, weight: .medium))
+                    }
+                    .foregroundStyle(.primary)
+                    .padding(padding)
+                    .background(
+                        .thinMaterial.opacity(isDropTargeted ? 0.9 : 1.0),
+                        in: RoundedRectangle(cornerRadius: cr, style: .continuous)
+                    )
+                }
+                .buttonStyle(.plain)
+                .focusable(false)
+                .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
+
+                if isDropTargeted {
+                    RoundedRectangle(cornerRadius: cr, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.12))
+                    RoundedRectangle(cornerRadius: cr, style: .continuous)
+                        .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
+                }
+            } else {
+                Image(systemName: "photo")
+                    .font(.system(size: 24 * displayScale))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(width: displayW, height: displayH)
+
+        if showsEditorHelpers {
+            content.onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
+                handleDrop(providers)
+            }
+        } else {
+            content
+        }
     }
 
     private func updateSvgCache() {

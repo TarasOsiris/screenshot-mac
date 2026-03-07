@@ -62,7 +62,7 @@ struct ExportService {
                     shape: shape.duplicated(offsetX: -tLeft),
                     displayScale: 1.0,
                     isSelected: false,
-                    screenshotImage: shape.screenshotFileName.flatMap { screenshotImages[$0] },
+                    screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
 
                     showsEditorHelpers: false,
                     onSelect: {},

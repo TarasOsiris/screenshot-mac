@@ -34,8 +34,8 @@ struct ShapePropertiesBar: View {
             let shapeId = shape.id
 
             HStack(spacing: 0) {
-                // Color (not shown for devices or SVGs — they have their own color controls)
-                if shape.type != .device && shape.type != .svg {
+                // Color (not shown for devices, SVGs, or images)
+                if shape.type != .device && shape.type != .svg && shape.type != .image {
                     ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
                     .labelsHidden()
                     .frame(width: 30)
@@ -63,8 +63,8 @@ struct ShapePropertiesBar: View {
                         .frame(width: 28, alignment: .trailing)
                 }
 
-                // Border radius (rectangle)
-                if shape.type == .rectangle {
+                // Border radius (rectangle or image)
+                if shape.type == .rectangle || shape.type == .image {
                     separator
 
                     controlGroup("Radius") {
@@ -93,16 +93,20 @@ struct ShapePropertiesBar: View {
                         }
                         .buttonStyle(.borderless)
                         .foregroundStyle(.secondary)
-                        .fileImporter(isPresented: $isReplacingImage, allowedContentTypes: [.image]) { result in
-                            if case .success(let url) = result {
-                                let didAccess = url.startAccessingSecurityScopedResource()
-                                defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-                                if let image = NSImage(contentsOf: url) {
-                                    state.saveScreenshot(image, for: shapeId)
-                                }
-                            }
-                        }
                     }
+                }
+
+                // Image properties
+                if shape.type == .image {
+                    separator
+
+                    Button {
+                        isReplacingImage = true
+                    } label: {
+                        Label(shape.imageFileName != nil ? "Replace Image" : "Choose Image", systemImage: "photo.badge.arrow.down")
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
                 }
 
                 // SVG properties
@@ -216,6 +220,15 @@ struct ShapePropertiesBar: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(.bar)
+            .fileImporter(isPresented: $isReplacingImage, allowedContentTypes: [.image]) { result in
+                if case .success(let url) = result {
+                    let didAccess = url.startAccessingSecurityScopedResource()
+                    defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+                    if let image = NSImage(contentsOf: url) {
+                        state.saveImage(image, for: shapeId)
+                    }
+                }
+            }
             .sheet(isPresented: $isReplacingSvg) {
                 SvgPasteDialog(isPresented: $isReplacingSvg) { svgContent, _ in
                     guard let i = idx(for: shapeId) else { return }

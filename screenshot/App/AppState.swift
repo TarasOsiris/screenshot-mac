@@ -280,9 +280,10 @@ final class AppState {
     func deleteShape(_ id: UUID) {
         guard let rowIdx = selectedRowIndex else { return }
         registerUndo("Delete Shape")
-        if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
-           let fileName = rows[rowIdx].shapes[shapeIdx].screenshotFileName {
-            screenshotImages.removeValue(forKey: fileName)
+        if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }) {
+            for fileName in rows[rowIdx].shapes[shapeIdx].allImageFileNames {
+                screenshotImages.removeValue(forKey: fileName)
+            }
         }
         rows[rowIdx].shapes.removeAll { $0.id == id }
         if selectedShapeId == id {
@@ -362,7 +363,7 @@ final class AppState {
 
     // MARK: - Screenshot Images
 
-    func saveScreenshot(_ image: NSImage, for shapeId: UUID) {
+    func saveImage(_ image: NSImage, for shapeId: UUID) {
         guard let activeId = activeProjectId else { return }
         let fileName = "\(shapeId.uuidString).png"
         let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
@@ -375,7 +376,11 @@ final class AppState {
         // Update shape with the filename
         for rowIdx in rows.indices {
             if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) {
-                rows[rowIdx].shapes[shapeIdx].screenshotFileName = fileName
+                if rows[rowIdx].shapes[shapeIdx].type == .image {
+                    rows[rowIdx].shapes[shapeIdx].imageFileName = fileName
+                } else {
+                    rows[rowIdx].shapes[shapeIdx].screenshotFileName = fileName
+                }
                 scheduleSave()
                 return
             }
@@ -388,10 +393,12 @@ final class AppState {
         let resourcesURL = PersistenceService.resourcesDir(activeId)
         for row in rows {
             for shape in row.shapes {
-                if let fileName = shape.screenshotFileName, screenshotImages[fileName] == nil {
-                    let url = resourcesURL.appendingPathComponent(fileName)
-                    if let image = NSImage(contentsOf: url) {
-                        screenshotImages[fileName] = image
+                for fileName in shape.allImageFileNames {
+                    if screenshotImages[fileName] == nil {
+                        let url = resourcesURL.appendingPathComponent(fileName)
+                        if let image = NSImage(contentsOf: url) {
+                            screenshotImages[fileName] = image
+                        }
                     }
                 }
             }
