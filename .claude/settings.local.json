@@ -19,7 +19,8 @@
       "Bash(wc:*)",
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(xargs ls:*)"
     ]
   }
 }

@@ -22,10 +22,12 @@ final class AppState {
             let redoRows = target.rows
             target.undoManager?.registerUndo(withTarget: target) { t in
                 t.rows = redoRows
+                t.normalizeSelection()
                 t.scheduleSave()
                 t.undoManager?.setActionName(actionName)
             }
             target.rows = savedRows
+            target.normalizeSelection()
             target.scheduleSave()
             target.undoManager?.setActionName(actionName)
         }
@@ -93,7 +95,7 @@ final class AppState {
             activeProjectId = project.id
             PersistenceService.ensureProjectDirs(project.id)
             rows = [makeDefaultRow()]
-            selectedRowId = rows.first?.id
+            selectRow(rows.first?.id)
             saveAll()
         }
     }
@@ -134,7 +136,7 @@ final class AppState {
         activeProjectId = project.id
         PersistenceService.ensureProjectDirs(project.id)
         rows = [makeDefaultRow()]
-        selectedRowId = rows.first?.id
+        selectRow(rows.first?.id)
         saveAll()
     }
 
@@ -200,7 +202,7 @@ final class AppState {
         registerUndo("Add Row")
         let row = makeDefaultRow(label: "Screenshot \(rows.count + 1)")
         rows.append(row)
-        selectedRowId = row.id
+        selectRow(row.id)
         scheduleSave()
     }
 
@@ -221,7 +223,7 @@ final class AppState {
             shapes: source.shapes.map { $0.duplicated() }
         )
         rows.insert(copy, at: idx + 1)
-        selectedRowId = copy.id
+        selectRow(copy.id)
         scheduleSave()
     }
 
@@ -229,13 +231,16 @@ final class AppState {
         guard rows.count > 1 else { return }
         registerUndo("Delete Row")
         let idx = rows.firstIndex { $0.id == id }
+        let wasSelectedRow = selectedRowId == id
         rows.removeAll { $0.id == id }
-        if selectedRowId == id {
+        if wasSelectedRow {
             if let idx, idx < rows.count {
-                selectedRowId = rows[idx].id
+                selectRow(rows[idx].id)
             } else {
-                selectedRowId = rows.last?.id
+                selectRow(rows.last?.id)
             }
+        } else {
+            normalizeSelection()
         }
         scheduleSave()
     }
@@ -260,7 +265,7 @@ final class AppState {
         guard let idx = selectedRowIndex else { return }
         registerUndo("Add Shape")
         rows[idx].shapes.append(shape)
-        selectedShapeId = shape.id
+        selectShape(shape.id, in: rows[idx].id)
         scheduleSave()
     }
 
@@ -292,7 +297,7 @@ final class AppState {
         registerUndo("Duplicate Shape")
         let copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: 50, offsetY: 50)
         rows[rowIdx].shapes.append(copy)
-        selectedShapeId = copy.id
+        selectShape(copy.id, in: rows[rowIdx].id)
         scheduleSave()
     }
 
@@ -303,7 +308,7 @@ final class AppState {
         registerUndo("Bring to Front")
         let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
         rows[rowIdx].shapes.append(shape)
-        selectedShapeId = id
+        selectShape(id, in: rows[rowIdx].id)
         scheduleSave()
     }
 
@@ -314,8 +319,25 @@ final class AppState {
         registerUndo("Send to Back")
         let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
         rows[rowIdx].shapes.insert(shape, at: 0)
-        selectedShapeId = id
+        selectShape(id, in: rows[rowIdx].id)
         scheduleSave()
+    }
+
+    func selectRow(_ id: UUID?) {
+        guard let id else {
+            deselectAll()
+            return
+        }
+        guard rows.contains(where: { $0.id == id }) else { return }
+        selectedRowId = id
+        selectedShapeId = nil
+    }
+
+    func selectShape(_ shapeId: UUID, in rowId: UUID) {
+        guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
+              rows[rowIdx].shapes.contains(where: { $0.id == shapeId }) else { return }
+        selectedRowId = rowId
+        selectedShapeId = shapeId
     }
 
     func bringSelectedShapeToFront() {
@@ -333,8 +355,9 @@ final class AppState {
         deleteShape(id)
     }
 
-    func deselectShape() {
+    func deselectAll() {
         selectedShapeId = nil
+        selectedRowId = nil
     }
 
     // MARK: - Screenshot Images
@@ -383,7 +406,21 @@ final class AppState {
         } else {
             rows = [makeDefaultRow()]
         }
-        selectedRowId = rows.first?.id
+        selectRow(rows.first?.id)
+    }
+
+    private func normalizeSelection() {
+        if let selectedRowId, !rows.contains(where: { $0.id == selectedRowId }) {
+            self.selectedRowId = rows.first?.id
+        }
+
+        if let selectedShapeId {
+            guard let rowIdx = selectedRowIndex,
+                  rows[rowIdx].shapes.contains(where: { $0.id == selectedShapeId }) else {
+                self.selectedShapeId = nil
+                return
+            }
+        }
     }
 
     private func makeDefaultRow(label: String = "Screenshot 1") -> ScreenshotRow {

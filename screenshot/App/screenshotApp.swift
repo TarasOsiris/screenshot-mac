@@ -27,7 +27,7 @@ struct ScreenshotBroApp: App {
                     .disabled(appState.selectedShapeId == nil && appState.selectedRowId == nil)
 
                     Button("Deselect All") {
-                        appState.deselectShape()
+                        appState.deselectAll()
                     }
                     .keyboardShortcut(.escape, modifiers: [])
                 }

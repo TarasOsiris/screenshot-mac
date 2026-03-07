@@ -64,6 +64,11 @@ struct CanvasShapeView: View {
                     commitTextEdit()
                 }
             }
+            .onDisappear {
+                if isEditingText {
+                    commitTextEdit()
+                }
+            }
             .onChange(of: shape.svgContent) { updateSvgCache() }
             .onChange(of: shape.svgUseColor) { updateSvgCache() }
             .onChange(of: shape.color) { updateSvgCache() }
@@ -465,5 +470,4 @@ struct CanvasShapeView: View {
         }
     }
 }
-
 

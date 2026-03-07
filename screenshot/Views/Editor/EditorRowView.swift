@@ -88,7 +88,7 @@ struct EditorRowView: View {
                                 displayScale: ds,
                                 isSelected: shape.id == state.selectedShapeId,
                                 screenshotImage: shape.screenshotFileName.flatMap { state.screenshotImages[$0] },
-                                onSelect: { state.selectedRowId = row.id; state.selectedShapeId = shape.id },
+                                onSelect: { state.selectShape(shape.id, in: row.id) },
                                 onUpdate: { state.updateShape($0) },
                                 onDelete: { state.deleteShape(shape.id) },
                                 onScreenshotDrop: shape.type == .device ? { image in
@@ -128,7 +128,7 @@ struct EditorRowView: View {
                     .clipped()
                     .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
                     .contentShape(Rectangle())
-                    .onTapGesture { state.deselectShape() }
+                    .onTapGesture { state.selectRow(row.id) }
 
                     // Add button
                     AddTemplateButton(width: dw, height: dh) {
@@ -166,7 +166,7 @@ struct EditorRowView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            state.selectedRowId = row.id
+            state.selectRow(row.id)
         }
         .background(isSelected ? Color.accentColor.opacity(0.04) : Color.clear)
         .overlay {

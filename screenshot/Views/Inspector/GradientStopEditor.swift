@@ -4,6 +4,7 @@ struct GradientStopEditor: View {
     @Binding var config: GradientConfig
     var onChanged: () -> Void
     @State private var selectedStopId: UUID?
+    @FocusState private var isEditorFocused: Bool
 
     private let barHeight: CGFloat = 24
     private let handleSize: CGFloat = 14
@@ -22,6 +23,15 @@ struct GradientStopEditor: View {
                             RoundedRectangle(cornerRadius: 6)
                                 .strokeBorder(.white.opacity(0.15), lineWidth: 1)
                         )
+                        .contentShape(RoundedRectangle(cornerRadius: 6))
+                        .onTapGesture { location in
+                            focusEditor()
+                            let loc = location.x / barWidth
+                            let newColor = interpolatedColor(at: loc)
+                            let newId = config.addStop(color: newColor, at: loc)
+                            selectedStopId = newId
+                            onChanged()
+                        }
 
                     ForEach(config.stops) { stop in
                         let isSelected = selectedStopId == stop.id
@@ -33,7 +43,7 @@ struct GradientStopEditor: View {
                             .gesture(
                                 DragGesture(minimumDistance: 1)
                                     .onChanged { value in
-                                        selectedStopId = stop.id
+                                        selectStop(stop.id)
                                         guard let idx = config.stops.firstIndex(where: { $0.id == stop.id }) else { return }
                                         config.stops[idx].location = max(0, min(1, value.location.x / barWidth))
                                         onChanged()
@@ -44,17 +54,9 @@ struct GradientStopEditor: View {
                                     }
                             )
                             .onTapGesture {
-                                selectedStopId = stop.id
+                                selectStop(stop.id)
                             }
                     }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture { location in
-                    let loc = location.x / barWidth
-                    let newColor = interpolatedColor(at: loc)
-                    let newId = config.addStop(color: newColor, at: loc)
-                    selectedStopId = newId
-                    onChanged()
                 }
             }
             .frame(height: barHeight)
@@ -69,6 +71,7 @@ struct GradientStopEditor: View {
                         supportsOpacity: false
                     )
                     .labelsHidden()
+                    .simultaneousGesture(TapGesture().onEnded { focusEditor() })
 
                     Text("\(selectedLocationPercent(for: selectedId))%")
                         .font(.system(size: 11).monospacedDigit())
@@ -78,6 +81,7 @@ struct GradientStopEditor: View {
                     Spacer()
 
                     Button {
+                        focusEditor()
                         config.removeStop(id: selectedId)
                         selectedStopId = config.stops.first?.id
                         onChanged()
@@ -101,6 +105,7 @@ struct GradientStopEditor: View {
                     .foregroundStyle(.tertiary)
 
                 Button {
+                    focusEditor()
                     config.reverseStops()
                     onChanged()
                 } label: {
@@ -111,6 +116,14 @@ struct GradientStopEditor: View {
                 .buttonStyle(.plain)
                 .help("Reverse gradient")
             }
+        }
+        .focusable(true)
+        .focused($isEditorFocused)
+        .onAppear {
+            ensureSelectedStopIsValid()
+        }
+        .onChange(of: config.stops) {
+            ensureSelectedStopIsValid()
         }
         .onDeleteCommand {
             deleteSelectedStop()
@@ -127,9 +140,27 @@ struct GradientStopEditor: View {
 
     private func deleteSelectedStop() {
         guard let selectedId = selectedStopId, config.stops.count > 2 else { return }
+        focusEditor()
         config.removeStop(id: selectedId)
         selectedStopId = config.stops.first?.id
         onChanged()
+    }
+
+    private func focusEditor() {
+        isEditorFocused = true
+    }
+
+    private func selectStop(_ id: UUID) {
+        focusEditor()
+        selectedStopId = id
+    }
+
+    private func ensureSelectedStopIsValid() {
+        if let selectedStopId,
+           config.stops.contains(where: { $0.id == selectedStopId }) {
+            return
+        }
+        selectedStopId = config.stops.first?.id
     }
 
     private func selectedColorBinding(for id: UUID) -> Binding<Color> {
