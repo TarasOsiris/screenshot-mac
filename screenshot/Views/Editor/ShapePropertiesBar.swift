@@ -196,8 +196,12 @@ struct ShapePropertiesBar: View {
             .padding(.vertical, 8)
             .background(.bar)
             .sheet(isPresented: $isReplacingSvg) {
+                let capturedRowIndex = rowIndex
+                let capturedShapeIdx = shapeIdx
                 SvgPasteDialog(isPresented: $isReplacingSvg) { svgContent, _ in
-                    state.rows[rowIndex].shapes[shapeIdx].svgContent = svgContent
+                    guard capturedRowIndex < state.rows.count,
+                          capturedShapeIdx < state.rows[capturedRowIndex].shapes.count else { return }
+                    state.rows[capturedRowIndex].shapes[capturedShapeIdx].svgContent = svgContent
                     state.scheduleSave()
                 }
             }

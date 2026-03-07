@@ -99,15 +99,20 @@ struct SvgPasteDialog: View {
 
     private func sanitizeSvg(_ svg: String) -> String {
         var result = svg
-        // Remove script elements
+        // Remove script elements (case-insensitive)
         result = result.replacingOccurrences(
             of: "<script[^>]*>[\\s\\S]*?</script>",
             with: "",
-            options: .regularExpression
+            options: [.regularExpression, .caseInsensitive]
         )
-        // Remove event handlers
+        // Remove event handlers (double and single quoted)
         result = result.replacingOccurrences(
             of: "\\s+on\\w+\\s*=\\s*\"[^\"]*\"",
+            with: "",
+            options: .regularExpression
+        )
+        result = result.replacingOccurrences(
+            of: "\\s+on\\w+\\s*=\\s*'[^']*'",
             with: "",
             options: .regularExpression
         )

@@ -138,7 +138,7 @@ struct CodableColor: Codable, Equatable {
     var opacity: Double
 
     init(_ color: Color) {
-        let nsColor = NSColor(color).usingColorSpace(.sRGB) ?? NSColor(color)
+        let nsColor = NSColor(color).usingColorSpace(.sRGB) ?? .black
         self.red = Double(nsColor.redComponent)
         self.green = Double(nsColor.greenComponent)
         self.blue = Double(nsColor.blueComponent)
@@ -160,7 +160,7 @@ func parseSizeString(_ value: String) -> (width: CGFloat, height: CGFloat)? {
 
 extension Color {
     var hexString: String {
-        let nsColor = NSColor(self).usingColorSpace(.sRGB) ?? NSColor(self)
+        let nsColor = NSColor(self).usingColorSpace(.sRGB) ?? .black
         let r = Int(round(nsColor.redComponent * 255))
         let g = Int(round(nsColor.greenComponent * 255))
         let b = Int(round(nsColor.blueComponent * 255))

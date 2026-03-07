@@ -11,6 +11,8 @@ final class AppState {
     var screenshotImages: [String: NSImage] = [:]
     var undoManager: UndoManager?
 
+    private static let templateColors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
+
     // MARK: - Undo
 
     private func registerUndo(_ actionName: String) {
@@ -162,13 +164,14 @@ final class AppState {
 
         if activeProjectId == id {
             screenshotImages.removeAll()
-            activeProjectId = projects.first?.id
-            if let activeId = activeProjectId {
-                loadRowsForProject(activeId)
+            if let nextProject = projects.first {
+                activeProjectId = nextProject.id
+                loadRowsForProject(nextProject.id)
                 loadScreenshotImages()
             } else {
-                rows = [makeDefaultRow()]
-                selectedRowId = rows.first?.id
+                // No projects left — create a new one
+                createProject(name: "Project 1")
+                return
             }
         }
         saveAll()
@@ -179,8 +182,7 @@ final class AppState {
     func addTemplate(to rowId: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == rowId }) else { return }
         registerUndo("Add Template")
-        let colors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
-        let color = colors[rows[idx].templates.count % colors.count]
+        let color = Self.templateColors[rows[idx].templates.count % Self.templateColors.count]
         rows[idx].templates.append(ScreenshotTemplate(backgroundColor: color))
         scheduleSave()
     }
@@ -391,14 +393,15 @@ final class AppState {
         let h: CGFloat = parsedSize?.height ?? 2688
         let storedTemplateCount = UserDefaults.standard.integer(forKey: "defaultTemplateCount")
         let templateCount = storedTemplateCount > 0 ? storedTemplateCount : 3
-        let colors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
         let templates = (0..<templateCount).map { index in
-            ScreenshotTemplate(backgroundColor: colors[index % colors.count])
+            ScreenshotTemplate(backgroundColor: Self.templateColors[index % Self.templateColors.count])
         }
         let device = CanvasShapeModel.defaultDevice(centerX: w / 2, centerY: h / 2, templateHeight: h)
         return ScreenshotRow(
             label: label,
             templates: templates,
+            templateWidth: w,
+            templateHeight: h,
             shapes: [device]
         )
     }

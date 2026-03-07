@@ -69,6 +69,7 @@ struct EditorRowView: View {
                 let dh = row.displayHeight(zoom: zoom)
                 let ds = row.displayScale(zoom: zoom)
 
+                VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top, spacing: 0) {
                     // Unified canvas
                     ZStack(alignment: .topLeading) {
@@ -97,7 +98,7 @@ struct EditorRowView: View {
                         }
 
                         // Guideline separators (always on top)
-                        if row.showBorders {
+                        if row.showBorders && row.templates.count > 1 {
                             ForEach(1..<row.templates.count, id: \.self) { i in
                                 ZStack {
                                     Path { path in
@@ -135,16 +136,9 @@ struct EditorRowView: View {
                             state.addTemplate(to: row.id)
                         }
                     }
-                    .padding(.leading, 12)
-
-                    // Per-template control bars
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
 
-            // Per-template control bars
-            ScrollView(.horizontal, showsIndicators: false) {
+                // Per-template control bars (inside same ScrollView)
                 HStack(spacing: 0) {
                     ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
                         if index > 0 {
@@ -164,8 +158,10 @@ struct EditorRowView: View {
                         )
                     }
                 }
-                .padding(.horizontal, 16)
                 .padding(.bottom, 8)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
         }
         .contentShape(Rectangle())

@@ -8,12 +8,12 @@ struct AddTemplateButton: View {
 
     var body: some View {
         Button(action: action) {
-            RoundedRectangle(cornerRadius: 8)
+            Rectangle()
                 .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
                 .foregroundStyle(isHovered ? .primary : .secondary)
                 .frame(width: width, height: height)
                 .background(
-                    RoundedRectangle(cornerRadius: 8)
+                    Rectangle()
                         .fill(.primary.opacity(isHovered ? 0.04 : 0))
                 )
                 .contentShape(Rectangle())
