@@ -290,7 +290,7 @@ final class AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == selectedShapeId }) else { return }
         registerUndo("Duplicate Shape")
-        let copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: 20, offsetY: 20)
+        let copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: 50, offsetY: 50)
         rows[rowIdx].shapes.append(copy)
         selectedShapeId = copy.id
         scheduleSave()

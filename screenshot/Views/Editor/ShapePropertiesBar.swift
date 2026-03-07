@@ -100,21 +100,22 @@ struct ShapePropertiesBar: View {
                 if shape.type == .svg {
                     separator
 
-                    Toggle(isOn: Binding(
-                        get: { state.rows[rowIndex].shapes[shapeIdx].svgUseColor ?? false },
-                        set: { state.rows[rowIndex].shapes[shapeIdx].svgUseColor = $0; state.scheduleSave() }
-                    )) {
-                        HStack(spacing: 4) {
+                    HStack(spacing: 4) {
+                        Toggle(isOn: Binding(
+                            get: { state.rows[rowIndex].shapes[shapeIdx].svgUseColor ?? false },
+                            set: { state.rows[rowIndex].shapes[shapeIdx].svgUseColor = $0; state.scheduleSave() }
+                        )) {
                             Text("Custom color")
                                 .foregroundStyle(.secondary)
-                            if shape.svgUseColor == true {
-                                ColorPicker("", selection: $state.rows[rowIndex].shapes[shapeIdx].color.onSet { state.scheduleSave() }, supportsOpacity: false)
-                                    .labelsHidden()
-                                    .frame(width: 30)
-                            }
+                        }
+                        .toggleStyle(.switch)
+
+                        if shape.svgUseColor == true {
+                            ColorPicker("", selection: $state.rows[rowIndex].shapes[shapeIdx].color.onSet { state.scheduleSave() }, supportsOpacity: false)
+                                .labelsHidden()
+                                .frame(width: 30)
                         }
                     }
-                    .toggleStyle(.switch)
 
                     separator
 
@@ -129,15 +130,6 @@ struct ShapePropertiesBar: View {
 
                 // Text properties
                 if shape.type == .text {
-                    separator
-
-                    TextField("Text", text: Binding(
-                        get: { state.rows[rowIndex].shapes[shapeIdx].text ?? "" },
-                        set: { state.rows[rowIndex].shapes[shapeIdx].text = $0; state.scheduleSave() }
-                    ))
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 120)
-
                     separator
 
                     controlGroup("Size") {
@@ -167,7 +159,7 @@ struct ShapePropertiesBar: View {
 
                 separator
 
-                ControlGroup {
+                HStack(spacing: 4) {
                     barButton("square.3.layers.3d.top.filled", disabled: !canBringToFront) {
                         state.bringSelectedShapeToFront()
                     }

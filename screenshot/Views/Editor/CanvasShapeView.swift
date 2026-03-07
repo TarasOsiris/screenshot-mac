@@ -18,6 +18,8 @@ struct CanvasShapeView: View {
     @State private var resizeState: ResizeState?
     @State private var isDropTargeted = false
     @State private var isPickerPresented = false
+    @State private var isEditingText = false
+    @State private var editingTextValue = ""
     @State private var cachedSvgImage: NSImage?
     @State private var svgCacheKey = ""
 
@@ -53,9 +55,15 @@ struct CanvasShapeView: View {
                 resizeHandles
             }
         }
-        
+        .zIndex(isSelected ? 1 : 0)
+
         let svgAware = base
             .onAppear { updateSvgCache() }
+            .onChange(of: isSelected) { _, selected in
+                if !selected && isEditingText {
+                    commitTextEdit()
+                }
+            }
             .onChange(of: shape.svgContent) { updateSvgCache() }
             .onChange(of: shape.svgUseColor) { updateSvgCache() }
             .onChange(of: shape.color) { updateSvgCache() }
@@ -69,6 +77,15 @@ struct CanvasShapeView: View {
                     }
                 }
                 .gesture(dragGesture, including: .gesture)
+                .simultaneousGesture(
+                    TapGesture(count: 2).onEnded {
+                        if shape.type == .text {
+                            editingTextValue = shape.text ?? ""
+                            isEditingText = true
+                            onSelect()
+                        }
+                    }
+                )
                 .simultaneousGesture(
                     TapGesture().onEnded { onSelect() }
                 )
@@ -91,14 +108,18 @@ struct CanvasShapeView: View {
                 .fill(shape.color)
 
         case .text:
-            Text(shape.text ?? "")
-                .font(.system(
-                    size: (shape.fontSize ?? 72) * displayScale,
-                    weight: fontWeight(shape.fontWeight ?? 700)
-                ))
-                .foregroundStyle(shape.color)
-                .multilineTextAlignment(shape.textAlign.textAlignment)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if isEditingText {
+                textEditor
+            } else {
+                Text(shape.text ?? "")
+                    .font(.system(
+                        size: (shape.fontSize ?? 72) * displayScale,
+                        weight: fontWeight(shape.fontWeight ?? 700)
+                    ))
+                    .foregroundStyle(shape.color)
+                    .multilineTextAlignment(shape.textAlign.textAlignment)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
 
         case .image:
             RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
@@ -410,6 +431,28 @@ struct CanvasShapeView: View {
         return NSImage(data: data)
     }
 
+    private var textEditor: some View {
+        let fontSize = (shape.fontSize ?? 72) * displayScale
+        let weight = fontWeight(shape.fontWeight ?? 700)
+        let nsFont = NSFont.systemFont(ofSize: fontSize, weight: weight.nsWeight)
+        return InlineTextEditor(
+            text: $editingTextValue,
+            font: nsFont,
+            color: NSColor(shape.color),
+            alignment: shape.textAlign.nsTextAlignment,
+            onCommit: { commitTextEdit() }
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func commitTextEdit() {
+        guard isEditingText else { return }
+        isEditingText = false
+        var updated = shape
+        updated.text = editingTextValue
+        onUpdate(updated)
+    }
+
     private func fontWeight(_ weight: Int) -> Font.Weight {
         switch weight {
         case ...299: .thin
@@ -419,6 +462,154 @@ struct CanvasShapeView: View {
         case 600...699: .semibold
         case 700...799: .bold
         default: .heavy
+        }
+    }
+}
+
+// MARK: - Inline Text Editor
+
+private struct InlineTextEditor: NSViewRepresentable {
+    @Binding var text: String
+    var font: NSFont
+    var color: NSColor
+    var alignment: NSTextAlignment
+    var onCommit: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    func makeNSView(context: Context) -> CenteringScrollView {
+        let textView = CommitTextView()
+        textView.isRichText = false
+        textView.allowsUndo = true
+        textView.drawsBackground = false
+        textView.backgroundColor = .clear
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.font = font
+        textView.textColor = color
+        textView.alignment = alignment
+        textView.string = text
+        textView.delegate = context.coordinator
+        textView.onCommit = onCommit
+        textView.textContainerInset = .zero
+        textView.textContainer?.lineFragmentPadding = 0
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.textContainer?.widthTracksTextView = true
+        if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
+
+        let scrollView = CenteringScrollView()
+        scrollView.hasVerticalScroller = false
+        scrollView.hasHorizontalScroller = false
+        scrollView.drawsBackground = false
+        scrollView.documentView = textView
+        scrollView.autohidesScrollers = true
+        scrollView.centerTextView = textView
+
+        DispatchQueue.main.async {
+            scrollView.centerDocumentView()
+            textView.window?.makeFirstResponder(textView)
+            textView.selectAll(nil)
+        }
+
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: CenteringScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        if textView.string != text {
+            textView.string = text
+        }
+        textView.font = font
+        textView.textColor = color
+        textView.alignment = alignment
+        if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
+        scrollView.centerDocumentView()
+    }
+
+    class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: InlineTextEditor
+
+        init(_ parent: InlineTextEditor) {
+            self.parent = parent
+        }
+
+        func textDidChange(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            parent.text = textView.string
+            if let scrollView = textView.enclosingScrollView as? CenteringScrollView {
+                if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
+                scrollView.centerDocumentView()
+            }
+        }
+    }
+}
+
+private class CenteringScrollView: NSScrollView {
+    weak var centerTextView: NSTextView?
+
+    func centerDocumentView() {
+        guard let textView = centerTextView else { return }
+        guard let tc = textView.textContainer else { return }
+        let textHeight = textView.layoutManager?.usedRect(for: tc).height ?? 0
+        let viewHeight = contentSize.height
+        if textHeight < viewHeight {
+            let topInset = (viewHeight - textHeight) / 2
+            textView.textContainerInset = NSSize(width: 0, height: topInset)
+        } else {
+            textView.textContainerInset = .zero
+        }
+    }
+
+    override func layout() {
+        super.layout()
+        centerDocumentView()
+    }
+}
+
+private class CommitTextView: NSTextView {
+    var onCommit: (() -> Void)?
+
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 36 && !event.modifierFlags.contains(.shift) {
+            // Return without shift → commit
+            onCommit?()
+            return
+        }
+        if event.keyCode == 53 {
+            // Escape → commit
+            onCommit?()
+            return
+        }
+        super.keyDown(with: event)
+    }
+}
+
+extension Font.Weight {
+    var nsWeight: NSFont.Weight {
+        switch self {
+        case .ultraLight: return .ultraLight
+        case .thin: return .thin
+        case .light: return .light
+        case .regular: return .regular
+        case .medium: return .medium
+        case .semibold: return .semibold
+        case .bold: return .bold
+        case .heavy: return .heavy
+        case .black: return .black
+        default: return .regular
+        }
+    }
+}
+
+extension Optional where Wrapped == TextAlign {
+    var nsTextAlignment: NSTextAlignment {
+        switch self {
+        case .left: return .left
+        case .right: return .right
+        case .center, .none: return .center
         }
     }
 }
