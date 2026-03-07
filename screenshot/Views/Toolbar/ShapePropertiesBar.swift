@@ -110,14 +110,7 @@ struct ShapePropertiesBar: View {
                     separator
 
                     HStack(spacing: 4) {
-                        Toggle(isOn: Binding(
-                            get: { idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].svgUseColor ?? false } ?? false },
-                            set: { newVal in
-                                guard let i = idx(for: shapeId) else { return }
-                                state.rows[i.row].shapes[i.shape].svgUseColor = newVal
-                                state.scheduleSave()
-                            }
-                        )) {
+                        Toggle(isOn: shapeBinding(shapeId, \.svgUseColor, default: false)) {
                             Text("Custom color")
                                 .foregroundStyle(.secondary)
                         }
@@ -146,27 +139,13 @@ struct ShapePropertiesBar: View {
                     separator
 
                     controlGroup("Size") {
-                        Slider(value: Binding(
-                            get: { idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].fontSize ?? 72 } ?? 72 },
-                            set: { newVal in
-                                guard let i = idx(for: shapeId) else { return }
-                                state.rows[i.row].shapes[i.shape].fontSize = newVal
-                                state.scheduleSave()
-                            }
-                        ), in: 12...200)
-                        .frame(width: 70)
+                        Slider(value: shapeBinding(shapeId, \.fontSize, default: 72), in: 12...200)
+                            .frame(width: 70)
                     }
 
                     separator
 
-                    Picker("", selection: Binding(
-                        get: { idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].fontWeight ?? 400 } ?? 400 },
-                        set: { newVal in
-                            guard let i = idx(for: shapeId) else { return }
-                            state.rows[i.row].shapes[i.shape].fontWeight = newVal
-                            state.scheduleSave()
-                        }
-                    )) {
+                    Picker("", selection: shapeBinding(shapeId, \.fontWeight, default: 400)) {
                         Text("Light").tag(300)
                         Text("Regular").tag(400)
                         Text("Medium").tag(500)
@@ -174,6 +153,35 @@ struct ShapePropertiesBar: View {
                     }
                     .labelsHidden()
                     .frame(width: 90)
+
+                    Picker("", selection: shapeBinding(shapeId, \.textAlign, default: .center)) {
+                        Image(systemName: "text.alignleft").tag(TextAlign.left)
+                        Image(systemName: "text.aligncenter").tag(TextAlign.center)
+                        Image(systemName: "text.alignright").tag(TextAlign.right)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 90)
+
+                    Toggle(isOn: shapeBinding(shapeId, \.italic, default: false)) {
+                        Image(systemName: "italic")
+                    }
+                    .toggleStyle(.button)
+                    .help("Italic")
+
+                    separator
+
+                    controlGroup("Tracking") {
+                        Slider(value: shapeBinding(shapeId, \.letterSpacing, default: 0), in: -5...30)
+                            .frame(width: 70)
+                    }
+
+                    separator
+
+                    controlGroup("Line") {
+                        Slider(value: shapeBinding(shapeId, \.lineSpacing, default: 0), in: 0...50)
+                            .frame(width: 70)
+                    }
                 }
 
                 Spacer()
@@ -223,10 +231,24 @@ struct ShapePropertiesBar: View {
         Binding(
             get: {
                 guard let i = idx(for: shapeId) else {
-                    // Fallback: return default from a temporary shape — body will re-evaluate shortly
                     return CanvasShapeModel.placeholder[keyPath: keyPath]
                 }
                 return state.rows[i.row].shapes[i.shape][keyPath: keyPath]
+            },
+            set: { newValue in
+                guard let i = idx(for: shapeId) else { return }
+                state.rows[i.row].shapes[i.shape][keyPath: keyPath] = newValue
+                state.scheduleSave()
+            }
+        )
+    }
+
+    /// Overload for optional properties with a default value.
+    private func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T) -> Binding<T> where T: Sendable {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else { return defaultValue }
+                return state.rows[i.row].shapes[i.shape][keyPath: keyPath] ?? defaultValue
             },
             set: { newValue in
                 guard let i = idx(for: shapeId) else { return }

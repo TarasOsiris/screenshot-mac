@@ -67,6 +67,9 @@ struct CanvasShapeModel: Identifiable, Codable {
     var fontSize: CGFloat?
     var fontWeight: Int?
     var textAlign: TextAlign?
+    var italic: Bool?
+    var letterSpacing: CGFloat?
+    var lineSpacing: CGFloat?
 
     // Image properties
     var imageFileName: String?
@@ -95,6 +98,9 @@ struct CanvasShapeModel: Identifiable, Codable {
         fontSize: CGFloat? = nil,
         fontWeight: Int? = nil,
         textAlign: TextAlign? = nil,
+        italic: Bool? = nil,
+        letterSpacing: CGFloat? = nil,
+        lineSpacing: CGFloat? = nil,
         imageFileName: String? = nil,
         deviceCategory: DeviceCategory? = nil,
         deviceBodyColor: Color? = nil,
@@ -116,6 +122,9 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.fontSize = fontSize
         self.fontWeight = fontWeight
         self.textAlign = textAlign
+        self.italic = italic
+        self.letterSpacing = letterSpacing
+        self.lineSpacing = lineSpacing
         self.imageFileName = imageFileName
         self.deviceCategory = deviceCategory
         self.deviceBodyColorData = deviceBodyColor.map { CodableColor($0) }
@@ -145,6 +154,7 @@ struct CanvasShapeModel: Identifiable, Codable {
             color: color, opacity: opacity,
             text: text, fontSize: fontSize,
             fontWeight: fontWeight, textAlign: textAlign,
+            italic: italic, letterSpacing: letterSpacing, lineSpacing: lineSpacing,
             imageFileName: imageFileName,
             deviceCategory: deviceCategory,
             deviceBodyColor: deviceBodyColorData?.color,
@@ -177,7 +187,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         CanvasShapeModel(
             type: .svg, x: centerX - size.width / 2, y: centerY - size.height / 2,
             width: size.width, height: size.height,
-            color: .white, svgContent: svgContent, svgUseColor: true
+            color: .white, svgContent: svgContent, svgUseColor: false
         )
     }
 

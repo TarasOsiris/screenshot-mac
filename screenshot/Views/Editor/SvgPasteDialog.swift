@@ -8,6 +8,7 @@ struct SvgPasteDialog: View {
     @State private var svgText = ""
     @State private var errorMessage: String?
     @State private var previewImage: NSImage?
+    @State private var isValidSvg = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -54,7 +55,7 @@ struct SvgPasteDialog: View {
                     addSvg()
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(svgText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(!isValidSvg)
             }
         }
         .padding()
@@ -62,12 +63,32 @@ struct SvgPasteDialog: View {
     }
 
     private func updatePreview() {
-        guard let data = svgText.data(using: .utf8),
-              let image = NSImage(data: data) else {
+        let trimmed = svgText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
             previewImage = nil
+            errorMessage = nil
+            isValidSvg = false
             return
         }
+
+        guard trimmed.contains("<svg") else {
+            previewImage = nil
+            errorMessage = "Not a valid SVG — must contain an <svg> element"
+            isValidSvg = false
+            return
+        }
+
+        guard let data = trimmed.data(using: .utf8),
+              let image = NSImage(data: data) else {
+            previewImage = nil
+            errorMessage = "Could not render SVG — check for syntax errors"
+            isValidSvg = false
+            return
+        }
+
         previewImage = image
+        errorMessage = nil
+        isValidSvg = true
     }
 
     private func addSvg() {

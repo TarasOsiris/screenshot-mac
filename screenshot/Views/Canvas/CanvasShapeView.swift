@@ -121,6 +121,9 @@ struct CanvasShapeView: View {
                         size: (shape.fontSize ?? 72) * displayScale,
                         weight: fontWeight(shape.fontWeight ?? 700)
                     ))
+                    .italic(shape.italic ?? false)
+                    .tracking((shape.letterSpacing ?? 0) * displayScale)
+                    .lineSpacing((shape.lineSpacing ?? 0) * displayScale)
                     .foregroundStyle(shape.color)
                     .multilineTextAlignment(shape.textAlign.textAlignment)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
