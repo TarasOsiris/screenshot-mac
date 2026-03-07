@@ -9,6 +9,26 @@ final class AppState {
     var selectedShapeId: UUID?
     var zoomLevel: CGFloat = 1.0
     var screenshotImages: [String: NSImage] = [:]
+    var undoManager: UndoManager?
+
+    // MARK: - Undo
+
+    private func registerUndo(_ actionName: String) {
+        guard let undoManager else { return }
+        let savedRows = rows
+        undoManager.registerUndo(withTarget: self) { target in
+            let redoRows = target.rows
+            target.undoManager?.registerUndo(withTarget: target) { t in
+                t.rows = redoRows
+                t.scheduleSave()
+                t.undoManager?.setActionName(actionName)
+            }
+            target.rows = savedRows
+            target.scheduleSave()
+            target.undoManager?.setActionName(actionName)
+        }
+        undoManager.setActionName(actionName)
+    }
 
     // MARK: - Zoom
 
@@ -120,6 +140,7 @@ final class AppState {
         guard id != activeProjectId else { return }
 
         saveCurrentProject()
+        undoManager?.removeAllActions()
 
         activeProjectId = id
         screenshotImages.removeAll()
@@ -157,6 +178,7 @@ final class AppState {
 
     func addTemplate(to rowId: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == rowId }) else { return }
+        registerUndo("Add Template")
         let colors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
         let color = colors[rows[idx].templates.count % colors.count]
         rows[idx].templates.append(ScreenshotTemplate(backgroundColor: color))
@@ -165,6 +187,7 @@ final class AppState {
 
     func removeTemplate(_ templateId: UUID, from rowId: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == rowId }) else { return }
+        registerUndo("Remove Template")
         rows[idx].templates.removeAll { $0.id == templateId }
         scheduleSave()
     }
@@ -172,6 +195,7 @@ final class AppState {
     // MARK: - Rows
 
     func addRow() {
+        registerUndo("Add Row")
         let row = makeDefaultRow(label: "Screenshot \(rows.count + 1)")
         rows.append(row)
         selectedRowId = row.id
@@ -180,6 +204,7 @@ final class AppState {
 
     func duplicateRow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
+        registerUndo("Duplicate Row")
         let source = rows[idx]
         let copy = ScreenshotRow(
             label: "\(source.label) copy",
@@ -200,6 +225,7 @@ final class AppState {
 
     func deleteRow(_ id: UUID) {
         guard rows.count > 1 else { return }
+        registerUndo("Delete Row")
         let idx = rows.firstIndex { $0.id == id }
         rows.removeAll { $0.id == id }
         if selectedRowId == id {
@@ -214,12 +240,14 @@ final class AppState {
 
     func moveRowUp(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }), idx > 0 else { return }
+        registerUndo("Move Row Up")
         rows.swapAt(idx, idx - 1)
         scheduleSave()
     }
 
     func moveRowDown(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }), idx < rows.count - 1 else { return }
+        registerUndo("Move Row Down")
         rows.swapAt(idx, idx + 1)
         scheduleSave()
     }
@@ -228,6 +256,7 @@ final class AppState {
 
     func addShape(_ shape: CanvasShapeModel) {
         guard let idx = selectedRowIndex else { return }
+        registerUndo("Add Shape")
         rows[idx].shapes.append(shape)
         selectedShapeId = shape.id
         scheduleSave()
@@ -236,12 +265,14 @@ final class AppState {
     func updateShape(_ shape: CanvasShapeModel) {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shape.id }) else { return }
+        registerUndo("Edit Shape")
         rows[rowIdx].shapes[shapeIdx] = shape
         scheduleSave()
     }
 
     func deleteShape(_ id: UUID) {
         guard let rowIdx = selectedRowIndex else { return }
+        registerUndo("Delete Shape")
         if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
            let fileName = rows[rowIdx].shapes[shapeIdx].screenshotFileName {
             screenshotImages.removeValue(forKey: fileName)
@@ -256,6 +287,7 @@ final class AppState {
     func duplicateSelectedShape() {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == selectedShapeId }) else { return }
+        registerUndo("Duplicate Shape")
         let copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: 20, offsetY: 20)
         rows[rowIdx].shapes.append(copy)
         selectedShapeId = copy.id
@@ -266,6 +298,7 @@ final class AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
               shapeIdx < rows[rowIdx].shapes.count - 1 else { return }
+        registerUndo("Bring to Front")
         let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
         rows[rowIdx].shapes.append(shape)
         selectedShapeId = id
@@ -276,6 +309,7 @@ final class AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
               shapeIdx > 0 else { return }
+        registerUndo("Send to Back")
         let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
         rows[rowIdx].shapes.insert(shape, at: 0)
         selectedShapeId = id
@@ -351,13 +385,25 @@ final class AppState {
     }
 
     private func makeDefaultRow(label: String = "Screenshot 1") -> ScreenshotRow {
-        ScreenshotRow(
+        let defaultSize = UserDefaults.standard.string(forKey: "defaultScreenshotSize") ?? "1242x2688"
+        let parsedSize = parseSize(defaultSize)
+        let w: CGFloat = parsedSize?.width ?? 1242
+        let h: CGFloat = parsedSize?.height ?? 2688
+        let storedTemplateCount = UserDefaults.standard.integer(forKey: "defaultTemplateCount")
+        let templateCount = storedTemplateCount > 0 ? storedTemplateCount : 3
+        let colors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
+        let templates = (0..<templateCount).map { index in
+            ScreenshotTemplate(backgroundColor: colors[index % colors.count])
+        }
+        let device = CanvasShapeModel.defaultDevice(centerX: w / 2, centerY: h / 2, templateHeight: h)
+        return ScreenshotRow(
             label: label,
-            templates: [
-                ScreenshotTemplate(backgroundColor: .blue),
-                ScreenshotTemplate(backgroundColor: .purple),
-                ScreenshotTemplate(backgroundColor: .orange)
-            ]
+            templates: templates,
+            shapes: [device]
         )
+    }
+
+    private func parseSize(_ value: String) -> (width: CGFloat, height: CGFloat)? {
+        parseSizeString(value)
     }
 }

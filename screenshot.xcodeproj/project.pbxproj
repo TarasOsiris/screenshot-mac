@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		768DF30B2F596DAB0072F7A4 /* screenshot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = screenshot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		768DF30B2F596DAB0072F7A4 /* screenshot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = screenshot.app; path = "Screenshot Bro.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */

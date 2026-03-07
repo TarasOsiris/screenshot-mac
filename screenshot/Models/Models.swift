@@ -150,6 +150,24 @@ struct CodableColor: Codable, Equatable {
     }
 }
 
+func parseSizeString(_ value: String) -> (width: CGFloat, height: CGFloat)? {
+    let parts = value.split(separator: "x")
+    guard parts.count == 2,
+          let w = Double(parts[0]),
+          let h = Double(parts[1]) else { return nil }
+    return (CGFloat(w), CGFloat(h))
+}
+
+extension Color {
+    var hexString: String {
+        let nsColor = NSColor(self).usingColorSpace(.sRGB) ?? NSColor(self)
+        let r = Int(round(nsColor.redComponent * 255))
+        let g = Int(round(nsColor.greenComponent * 255))
+        let b = Int(round(nsColor.blueComponent * 255))
+        return String(format: "#%02x%02x%02x", r, g, b)
+    }
+}
+
 // MARK: - Project
 
 struct Project: Identifiable, Codable {
@@ -187,6 +205,7 @@ enum ShapeType: String, Codable, CaseIterable {
     case text
     case image
     case device
+    case svg
 }
 
 enum DeviceCategory: String, Codable, CaseIterable {
@@ -255,6 +274,10 @@ struct CanvasShapeModel: Identifiable, Codable {
     var deviceBodyColorData: CodableColor?
     var screenshotFileName: String?
 
+    // SVG properties
+    var svgContent: String?
+    var svgUseColor: Bool?
+
     init(
         id: UUID = UUID(),
         type: ShapeType,
@@ -273,7 +296,9 @@ struct CanvasShapeModel: Identifiable, Codable {
         imageFileName: String? = nil,
         deviceCategory: DeviceCategory? = nil,
         deviceBodyColor: Color? = nil,
-        screenshotFileName: String? = nil
+        screenshotFileName: String? = nil,
+        svgContent: String? = nil,
+        svgUseColor: Bool? = nil
     ) {
         self.id = id
         self.type = type
@@ -293,6 +318,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.deviceCategory = deviceCategory
         self.deviceBodyColorData = deviceBodyColor.map { CodableColor($0) }
         self.screenshotFileName = screenshotFileName
+        self.svgContent = svgContent
+        self.svgUseColor = svgUseColor
     }
 
     var color: Color {
@@ -316,7 +343,9 @@ struct CanvasShapeModel: Identifiable, Codable {
             imageFileName: imageFileName,
             deviceCategory: deviceCategory,
             deviceBodyColor: deviceBodyColorData?.color,
-            screenshotFileName: screenshotFileName
+            screenshotFileName: screenshotFileName,
+            svgContent: svgContent,
+            svgUseColor: svgUseColor
         )
     }
 
@@ -337,6 +366,14 @@ struct CanvasShapeModel: Identifiable, Codable {
 
     static func defaultImage(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
         CanvasShapeModel(type: .image, x: centerX - 150, y: centerY - 150, width: 300, height: 300, color: .gray)
+    }
+
+    static func defaultSvg(centerX: CGFloat, centerY: CGFloat, svgContent: String, size: CGSize) -> CanvasShapeModel {
+        CanvasShapeModel(
+            type: .svg, x: centerX - size.width / 2, y: centerY - size.height / 2,
+            width: size.width, height: size.height,
+            color: .white, svgContent: svgContent, svgUseColor: true
+        )
     }
 
     static func defaultDevice(centerX: CGFloat, centerY: CGFloat, templateHeight: CGFloat = 2688) -> CanvasShapeModel {

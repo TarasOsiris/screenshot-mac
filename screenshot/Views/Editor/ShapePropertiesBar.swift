@@ -3,8 +3,8 @@ import UniformTypeIdentifiers
 
 struct ShapePropertiesBar: View {
     @Bindable var state: AppState
-    @State private var isDeletingShape = false
     @State private var isReplacingImage = false
+    @State private var isReplacingSvg = false
 
     private var rowIndex: Int? { state.selectedRowIndex }
     private var shapeIndex: Int? {
@@ -25,12 +25,14 @@ struct ShapePropertiesBar: View {
             let shape = state.rows[rowIndex].shapes[shapeIdx]
 
             HStack(spacing: 0) {
-                // Color
-                ColorPicker("", selection: $state.rows[rowIndex].shapes[shapeIdx].color.onSet { state.scheduleSave() }, supportsOpacity: false)
-                .labelsHidden()
-                .frame(width: 30)
+                // Color (not shown for devices or SVGs — they have their own color controls)
+                if shape.type != .device && shape.type != .svg {
+                    ColorPicker("", selection: $state.rows[rowIndex].shapes[shapeIdx].color.onSet { state.scheduleSave() }, supportsOpacity: false)
+                    .labelsHidden()
+                    .frame(width: 30)
 
-                separator
+                    separator
+                }
 
                 // Opacity
                 controlGroup("Opacity") {
@@ -80,7 +82,7 @@ struct ShapePropertiesBar: View {
                         } label: {
                             Label("Replace Image", systemImage: "photo.badge.arrow.down")
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.borderless)
                         .foregroundStyle(.secondary)
                         .fileImporter(isPresented: $isReplacingImage, allowedContentTypes: [.image]) { result in
                             if case .success(let url) = result {
@@ -92,6 +94,37 @@ struct ShapePropertiesBar: View {
                             }
                         }
                     }
+                }
+
+                // SVG properties
+                if shape.type == .svg {
+                    separator
+
+                    Toggle(isOn: Binding(
+                        get: { state.rows[rowIndex].shapes[shapeIdx].svgUseColor ?? false },
+                        set: { state.rows[rowIndex].shapes[shapeIdx].svgUseColor = $0; state.scheduleSave() }
+                    )) {
+                        HStack(spacing: 4) {
+                            Text("Custom color")
+                                .foregroundStyle(.secondary)
+                            if shape.svgUseColor == true {
+                                ColorPicker("", selection: $state.rows[rowIndex].shapes[shapeIdx].color.onSet { state.scheduleSave() }, supportsOpacity: false)
+                                    .labelsHidden()
+                                    .frame(width: 30)
+                            }
+                        }
+                    }
+                    .toggleStyle(.switch)
+
+                    separator
+
+                    Button {
+                        isReplacingSvg = true
+                    } label: {
+                        Label("Replace SVG", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
                 }
 
                 // Text properties
@@ -132,40 +165,41 @@ struct ShapePropertiesBar: View {
 
                 Spacer()
 
-                // Layer order
-                barButton("square.3.layers.3d.top.filled", disabled: !canBringToFront) {
-                    state.bringSelectedShapeToFront()
-                }
-                .help("Bring to front")
+                separator
 
-                barButton("square.3.layers.3d.bottom.filled", disabled: !canSendToBack) {
-                    state.sendSelectedShapeToBack()
-                }
-                .help("Send to back")
+                ControlGroup {
+                    barButton("square.3.layers.3d.top.filled", disabled: !canBringToFront) {
+                        state.bringSelectedShapeToFront()
+                    }
+                    .help("Bring to front")
 
-                // Duplicate
-                barButton("doc.on.doc") {
-                    state.duplicateSelectedShape()
-                }
+                    barButton("square.3.layers.3d.bottom.filled", disabled: !canSendToBack) {
+                        state.sendSelectedShapeToBack()
+                    }
+                    .help("Send to back")
 
-                // Delete
-                barButton("trash") {
-                    isDeletingShape = true
+                    barButton("doc.on.doc") {
+                        state.duplicateSelectedShape()
+                    }
+                    .help("Duplicate")
+
+                    barButton("trash") {
+                        state.deleteShape(shape.id)
+                    }
+                    .foregroundStyle(.red.opacity(0.8))
+                    .help("Delete")
                 }
-                .foregroundStyle(.red.opacity(0.8))
             }
             .font(.system(size: 11))
             .controlSize(.small)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(.bar)
-            .alert("Delete Shape", isPresented: $isDeletingShape) {
-                Button("Delete", role: .destructive) {
-                    state.deleteShape(shape.id)
+            .sheet(isPresented: $isReplacingSvg) {
+                SvgPasteDialog(isPresented: $isReplacingSvg) { svgContent, _ in
+                    state.rows[rowIndex].shapes[shapeIdx].svgContent = svgContent
+                    state.scheduleSave()
                 }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Are you sure you want to delete this shape?")
             }
         }
     }
@@ -191,7 +225,7 @@ struct ShapePropertiesBar: View {
                 .frame(width: 24, height: 24)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderless)
         .foregroundStyle(disabled ? .tertiary : .secondary)
         .disabled(disabled)
     }

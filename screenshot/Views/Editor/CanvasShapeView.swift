@@ -18,6 +18,8 @@ struct CanvasShapeView: View {
     @State private var resizeState: ResizeState?
     @State private var isDropTargeted = false
     @State private var isPickerPresented = false
+    @State private var cachedSvgImage: NSImage?
+    @State private var svgCacheKey = ""
 
     private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
 
@@ -52,8 +54,14 @@ struct CanvasShapeView: View {
             }
         }
         
+        let svgAware = base
+            .onAppear { updateSvgCache() }
+            .onChange(of: shape.svgContent) { updateSvgCache() }
+            .onChange(of: shape.svgUseColor) { updateSvgCache() }
+            .onChange(of: shape.color) { updateSvgCache() }
+
         if showsEditorHelpers {
-            base
+            svgAware
                 .fileImporter(isPresented: $isPickerPresented, allowedContentTypes: [.image]) { result in
                     if case .success(let url) = result,
                        let image = loadImportedImage(from: url) {
@@ -65,7 +73,7 @@ struct CanvasShapeView: View {
                     TapGesture().onEnded { onSelect() }
                 )
         } else {
-            base
+            svgAware
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
         }
@@ -100,6 +108,22 @@ struct CanvasShapeView: View {
                         .font(.system(size: 24 * displayScale))
                         .foregroundStyle(.secondary)
                 }
+
+        case .svg:
+            if let image = cachedSvgImage {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                RoundedRectangle(cornerRadius: 4 * displayScale)
+                    .fill(Color.gray.opacity(0.2))
+                    .overlay {
+                        Image(systemName: "chevron.left.forwardslash.chevron.right")
+                            .font(.system(size: 24 * displayScale))
+                            .foregroundStyle(.secondary)
+                    }
+            }
 
         case .device:
             let deviceView = ZStack {
@@ -355,6 +379,35 @@ struct CanvasShapeView: View {
             }
         }
         return NSImage(contentsOf: url)
+    }
+
+    private func updateSvgCache() {
+        guard shape.type == .svg, let content = shape.svgContent else { return }
+        let key = "\(content.hashValue)-\(shape.svgUseColor ?? false)-\(shape.color.hexString)"
+        guard key != svgCacheKey else { return }
+        svgCacheKey = key
+        cachedSvgImage = Self.svgImage(from: content, useColor: shape.svgUseColor == true, color: shape.color)
+    }
+
+    static func svgImage(from svgContent: String, useColor: Bool, color: Color) -> NSImage? {
+        var svg = svgContent
+        if useColor {
+            let hex = color.hexString
+            // Replace fill attributes with the chosen color, preserving fill="none"
+            svg = svg.replacingOccurrences(
+                of: "fill\\s*=\\s*\"(?!none\")[^\"]*\"",
+                with: "fill=\"\(hex)\"",
+                options: .regularExpression
+            )
+            // Replace stroke attributes, preserving stroke="none"
+            svg = svg.replacingOccurrences(
+                of: "stroke\\s*=\\s*\"(?!none\")[^\"]*\"",
+                with: "stroke=\"\(hex)\"",
+                options: .regularExpression
+            )
+        }
+        guard let data = svg.data(using: .utf8) else { return nil }
+        return NSImage(data: data)
     }
 
     private func fontWeight(_ weight: Int) -> Font.Weight {

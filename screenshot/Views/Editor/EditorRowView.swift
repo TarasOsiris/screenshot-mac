@@ -11,6 +11,18 @@ struct EditorRowView: View {
         state.selectedRowId == row.id
     }
 
+    private var canMoveUp: Bool {
+        state.rows.first?.id != row.id
+    }
+
+    private var canMoveDown: Bool {
+        state.rows.last?.id != row.id
+    }
+
+    private var canDelete: Bool {
+        state.rows.count > 1
+    }
+
     private var zoom: CGFloat { state.zoomLevel }
 
     var body: some View {
@@ -31,20 +43,20 @@ struct EditorRowView: View {
                 Spacer()
 
                 HStack(spacing: 4) {
-                    rowActionButton("chevron.up", tooltip: "Move up", disabled: state.rows.first?.id == row.id) {
+                    rowActionButton("chevron.up", tooltip: "Move up", disabled: !canMoveUp) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
                     }
-                    rowActionButton("chevron.down", tooltip: "Move down", disabled: state.rows.last?.id == row.id) {
+                    rowActionButton("chevron.down", tooltip: "Move down", disabled: !canMoveDown) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
                     }
                     rowActionButton("doc.on.doc", tooltip: "Duplicate row", disabled: false) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
                     }
-                    rowActionButton("trash", tooltip: "Delete row", disabled: state.rows.count <= 1) {
+                    rowActionButton("trash", tooltip: "Delete row", disabled: !canDelete) {
                         isDeletingRow = true
                     }
                 }
-                .opacity(isSelected || isRowHovered ? 1 : 0.35)
+                .opacity(isSelected || isRowHovered ? 1 : 0.65)
                 .animation(.easeInOut(duration: 0.15), value: isSelected || isRowHovered)
             }
             .padding(.horizontal, 16)
@@ -161,6 +173,39 @@ struct EditorRowView: View {
             state.selectedRowId = row.id
         }
         .background(isSelected ? Color.accentColor.opacity(0.04) : Color.clear)
+        .overlay {
+            if isSelected {
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(Color.accentColor.opacity(0.45), lineWidth: 1)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .allowsHitTesting(false)
+            }
+        }
+        .contextMenu {
+            Button("Add Screenshot") {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    state.addTemplate(to: row.id)
+                }
+            }
+            Divider()
+            Button("Move Up") {
+                withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
+            }
+            .disabled(!canMoveUp)
+            Button("Move Down") {
+                withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
+            }
+            .disabled(!canMoveDown)
+            Button("Duplicate Row") {
+                withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+            }
+            Divider()
+            Button("Delete Row", role: .destructive) {
+                isDeletingRow = true
+            }
+            .disabled(!canDelete)
+        }
         .alert("Delete Row", isPresented: $isDeletingRow) {
             Button("Delete", role: .destructive) {
                 withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
@@ -178,10 +223,9 @@ struct EditorRowView: View {
                 .frame(width: 22, height: 22)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderless)
         .foregroundStyle(disabled ? .tertiary : .secondary)
         .disabled(disabled)
         .help(tooltip)
     }
 }
-

@@ -20,12 +20,28 @@ struct TemplateControlBar: View {
                 downloadScreenshot()
             }
             Spacer()
-            if canDelete {
-                templateActionButton("trash", tooltip: "Delete") {
-                    isDeletingTemplate = true
+            Menu {
+                Button("Preview", systemImage: "eye") {
+                    previewScreenshot()
                 }
+                Button("Download PNG...", systemImage: "square.and.arrow.down") {
+                    downloadScreenshot()
+                }
+                if canDelete {
+                    Divider()
+                    Button("Delete Screenshot", systemImage: "trash", role: .destructive) {
+                        isDeletingTemplate = true
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 12))
+                    .frame(width: 22, height: 22)
             }
+            .menuStyle(.borderlessButton)
+            .help("More actions")
         }
+        .controlSize(.small)
         .padding(.horizontal, 4)
         .frame(width: row.displayWidth(zoom: zoom))
         .alert("Delete Screenshot", isPresented: $isDeletingTemplate) {
@@ -43,7 +59,7 @@ struct TemplateControlBar: View {
                 .frame(width: 22, height: 22)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderless)
         .foregroundStyle(.secondary)
         .help(tooltip)
     }

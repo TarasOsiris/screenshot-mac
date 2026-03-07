@@ -14,7 +14,12 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git check-ignore:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git:*)"
     ]
   }
 }

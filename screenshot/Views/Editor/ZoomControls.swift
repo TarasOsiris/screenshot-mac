@@ -30,12 +30,13 @@ struct ZoomControls: View {
                 Text(verbatim: "\(Int(state.zoomLevel * 100))%")
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
                     .foregroundStyle(state.zoomLevel == 1.0 ? .tertiary : .secondary)
-                    .frame(width: 34)
+                    .frame(width: 38)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderless)
             .help("Reset to 100%")
         }
+        .controlSize(.small)
     }
 
     private func zoomButton(_ icon: String, disabled: Bool, action: @escaping () -> Void) -> some View {
@@ -45,7 +46,7 @@ struct ZoomControls: View {
                 .frame(width: 20, height: 20)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderless)
         .foregroundStyle(.secondary)
         .disabled(disabled)
     }
