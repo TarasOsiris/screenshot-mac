@@ -3,6 +3,8 @@ import SwiftUI
 struct ContentView: View {
     @Environment(AppState.self) private var state
     @Environment(\.undoManager) private var undoManager
+    @AppStorage("exportFormat") private var exportFormat = "png"
+    @AppStorage("exportScale") private var exportScale = 1.0
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
     @State private var isInspectorPresented = true
     @State private var isExporting = false
@@ -223,9 +225,15 @@ struct ContentView: View {
         exportError = nil
         do {
             let projectName = state.activeProject?.name ?? ""
-            try ExportService.exportAll(rows: state.rows, projectName: projectName, to: url, screenshotImages: state.screenshotImages)
-            let exportFolderName = projectName.isEmpty ? "Screenshots" : projectName
-            let destinationFolderURL = url.appendingPathComponent(exportFolderName, isDirectory: true)
+            let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
+            let destinationFolderURL = try ExportService.exportAll(
+                rows: state.rows,
+                projectName: projectName,
+                to: url,
+                format: format,
+                scale: CGFloat(exportScale),
+                screenshotImages: state.screenshotImages
+            )
             if openExportFolderOnSuccess {
                 NSWorkspace.shared.open(destinationFolderURL)
             }

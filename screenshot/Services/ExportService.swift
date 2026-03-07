@@ -1,15 +1,35 @@
 import SwiftUI
 import AppKit
 
+enum ExportImageFormat: String {
+    case png
+    case jpeg
+
+    var fileExtension: String {
+        switch self {
+        case .png: return "png"
+        case .jpeg: return "jpeg"
+        }
+    }
+}
+
 struct ExportService {
     @MainActor
-    static func exportAll(rows: [ScreenshotRow], projectName: String, to folderURL: URL, screenshotImages: [String: NSImage] = [:]) throws {
-        let rootName = projectName.isEmpty ? "Screenshots" : projectName
+    static func exportAll(
+        rows: [ScreenshotRow],
+        projectName: String,
+        to folderURL: URL,
+        format: ExportImageFormat = .png,
+        scale: CGFloat = 1.0,
+        screenshotImages: [String: NSImage] = [:]
+    ) throws -> URL {
+        let rootName = sanitizedRootFolderName(projectName)
         let rootFolder = folderURL.appendingPathComponent(rootName)
         try FileManager.default.createDirectory(at: rootFolder, withIntermediateDirectories: true)
 
         let multiRow = rows.count > 1
         var usedFolderNames: [String: Int] = [:]
+        let exportScale = max(0.1, scale)
 
         for row in rows {
             let destFolder: URL
@@ -25,20 +45,37 @@ struct ExportService {
             }
 
             for (index, _) in row.templates.enumerated() {
-                guard let pngData = renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else {
+                guard let imageData = renderTemplateData(
+                    index: index,
+                    row: row,
+                    format: format,
+                    scale: exportScale,
+                    screenshotImages: screenshotImages
+                ) else {
                     throw ExportError.renderFailed
                 }
-                let filename = "screenshot-\(index + 1).png"
+                let filename = "screenshot-\(index + 1).\(format.fileExtension)"
                 let fileURL = destFolder.appendingPathComponent(filename)
-                try pngData.write(to: fileURL)
+                try imageData.write(to: fileURL)
             }
         }
+
+        return rootFolder
     }
 
     private static func exportFolderName(for row: ScreenshotRow) -> String {
         let name = "\(row.label) — \(Int(row.templateWidth))x\(Int(row.templateHeight))"
         return name.replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: "\\", with: "-")
+    }
+
+    private static func sanitizedRootFolderName(_ projectName: String) -> String {
+        let trimmed = projectName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let candidate = trimmed.isEmpty ? "Screenshots" : trimmed
+        let sanitized = candidate
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: "\\", with: "-")
+        return sanitized.isEmpty ? "Screenshots" : sanitized
     }
 
     // MARK: - Shared Rendering
@@ -50,7 +87,24 @@ struct ExportService {
     }
 
     @MainActor
-    static func renderTemplateImage(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:]) -> NSImage {
+    static func renderTemplateData(
+        index: Int,
+        row: ScreenshotRow,
+        format: ExportImageFormat,
+        scale: CGFloat,
+        screenshotImages: [String: NSImage] = [:]
+    ) -> Data? {
+        let image = renderTemplateImage(index: index, row: row, scale: scale, screenshotImages: screenshotImages)
+        switch format {
+        case .png:
+            return pngData(from: image)
+        case .jpeg:
+            return jpegData(from: image)
+        }
+    }
+
+    @MainActor
+    static func renderTemplateImage(index: Int, row: ScreenshotRow, scale: CGFloat = 1.0, screenshotImages: [String: NSImage] = [:]) -> NSImage {
         let tLeft = CGFloat(index) * row.templateWidth
         let visibleShapes = row.visibleShapes(forTemplateAt: index)
             .map { normalizeDeviceAspectIfNeeded($0) }
@@ -75,7 +129,7 @@ struct ExportService {
         .clipped()
 
         let renderer = ImageRenderer(content: view)
-        renderer.scale = 1.0
+        renderer.scale = max(0.1, scale)
         renderer.proposedSize = ProposedViewSize(
             width: row.templateWidth,
             height: row.templateHeight
@@ -119,6 +173,13 @@ struct ExportService {
               let bitmap = NSBitmapImageRep(data: tiffData),
               let pngData = bitmap.representation(using: .png, properties: [:]) else { return nil }
         return pngData
+    }
+
+    static func jpegData(from image: NSImage, compression: CGFloat = 0.9) -> Data? {
+        guard let tiffData = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiffData) else { return nil }
+        let properties: [NSBitmapImageRep.PropertyKey: Any] = [.compressionFactor: compression]
+        return bitmap.representation(using: .jpeg, properties: properties)
     }
 }
 

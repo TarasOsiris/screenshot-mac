@@ -278,14 +278,12 @@ final class AppState {
     }
 
     func deleteShape(_ id: UUID) {
-        guard let rowIdx = selectedRowIndex else { return }
+        guard let location = shapeLocation(for: id) else { return }
         registerUndo("Delete Shape")
-        if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }) {
-            for fileName in rows[rowIdx].shapes[shapeIdx].allImageFileNames {
-                screenshotImages.removeValue(forKey: fileName)
-            }
+        let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
+        for fileName in removedShape.allImageFileNames where !isImageFileReferenced(fileName) {
+            screenshotImages.removeValue(forKey: fileName)
         }
-        rows[rowIdx].shapes.removeAll { $0.id == id }
         if selectedShapeId == id {
             selectedShapeId = nil
         }
@@ -365,6 +363,7 @@ final class AppState {
 
     func saveImage(_ image: NSImage, for shapeId: UUID) {
         guard let activeId = activeProjectId else { return }
+        guard let location = shapeLocation(for: shapeId) else { return }
         let fileName = "\(shapeId.uuidString).png"
         let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
 
@@ -373,18 +372,20 @@ final class AppState {
         try? pngData.write(to: url, options: .atomic)
         screenshotImages[fileName] = image
 
-        // Update shape with the filename
-        for rowIdx in rows.indices {
-            if let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) {
-                if rows[rowIdx].shapes[shapeIdx].type == .image {
-                    rows[rowIdx].shapes[shapeIdx].imageFileName = fileName
-                } else {
-                    rows[rowIdx].shapes[shapeIdx].screenshotFileName = fileName
-                }
-                scheduleSave()
-                return
-            }
+        // Update the shape's image reference if it still exists.
+        var shape = rows[location.rowIndex].shapes[location.shapeIndex]
+        let previousFiles = shape.allImageFileNames
+        if shape.type == .image {
+            shape.imageFileName = fileName
+        } else {
+            shape.screenshotFileName = fileName
         }
+        rows[location.rowIndex].shapes[location.shapeIndex] = shape
+
+        for oldFile in previousFiles where oldFile != fileName && !isImageFileReferenced(oldFile) {
+            screenshotImages.removeValue(forKey: oldFile)
+        }
+        scheduleSave()
     }
 
 
@@ -426,6 +427,23 @@ final class AppState {
                   rows[rowIdx].shapes.contains(where: { $0.id == selectedShapeId }) else {
                 self.selectedShapeId = nil
                 return
+            }
+        }
+    }
+
+    private func shapeLocation(for shapeId: UUID) -> (rowIndex: Int, shapeIndex: Int)? {
+        for rowIndex in rows.indices {
+            if let shapeIndex = rows[rowIndex].shapes.firstIndex(where: { $0.id == shapeId }) {
+                return (rowIndex, shapeIndex)
+            }
+        }
+        return nil
+    }
+
+    private func isImageFileReferenced(_ fileName: String) -> Bool {
+        rows.contains { row in
+            row.shapes.contains { shape in
+                shape.allImageFileNames.contains(fileName)
             }
         }
     }
