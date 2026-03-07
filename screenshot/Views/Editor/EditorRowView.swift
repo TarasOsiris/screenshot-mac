@@ -6,6 +6,7 @@ struct EditorRowView: View {
     let row: ScreenshotRow
     @State private var isDeletingRow = false
     @State private var isRowHovered = false
+    @State private var activeGuides: [AlignmentGuide] = []
 
     private var isSelected: Bool {
         state.selectedRowId == row.id
@@ -93,9 +94,31 @@ struct EditorRowView: View {
                                 onDelete: { state.deleteShape(shape.id) },
                                 onScreenshotDrop: shape.type == .device ? { image in
                                     state.saveScreenshot(image, for: shape.id)
-                                } : nil
+                                } : nil,
+                                onDragSnap: { draggedShape, rawOffset in
+                                    let others = row.activeShapes.filter { $0.id != draggedShape.id }
+                                    let threshold = 4 / ds
+                                    let result = AlignmentService.computeSnap(
+                                        draggedShape: draggedShape,
+                                        dragOffset: rawOffset,
+                                        otherShapes: others,
+                                        templateWidth: row.templateWidth,
+                                        templateHeight: row.templateHeight,
+                                        templateCount: row.templates.count,
+                                        snapThreshold: threshold
+                                    )
+                                    activeGuides = result.guides
+                                    return result
+                                },
+                                onDragEnd: { activeGuides = [] }
                             )
                         }
+
+                        // Alignment guide lines
+                        ForEach(activeGuides) { guide in
+                            AlignmentGuideLineView(guide: guide, displayScale: ds)
+                        }
+                        .zIndex(100)
 
                         // Guideline separators (always on top)
                         if row.showBorders && row.templates.count > 1 {

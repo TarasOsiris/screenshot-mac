@@ -12,6 +12,8 @@ struct CanvasShapeView: View {
     var onUpdate: (CanvasShapeModel) -> Void
     var onDelete: () -> Void
     var onScreenshotDrop: ((NSImage) -> Void)?
+    var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
+    var onDragEnd: (() -> Void)?
 
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
@@ -374,10 +376,15 @@ struct CanvasShapeView: View {
                     isDragging = true
                     onSelect()
                 }
-                dragOffset = CGSize(
+                let rawOffset = CGSize(
                     width: value.translation.width / displayScale,
                     height: value.translation.height / displayScale
                 )
+                if let snap = onDragSnap?(shape, rawOffset) {
+                    dragOffset = snap.snappedOffset
+                } else {
+                    dragOffset = rawOffset
+                }
             }
             .onEnded { _ in
                 var updated = shape
@@ -386,6 +393,7 @@ struct CanvasShapeView: View {
                 dragOffset = .zero
                 isDragging = false
                 onUpdate(updated)
+                onDragEnd?()
             }
     }
 
