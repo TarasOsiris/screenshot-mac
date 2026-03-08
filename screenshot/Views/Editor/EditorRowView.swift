@@ -24,8 +24,6 @@ struct EditorRowView: View {
         state.rows.count > 1
     }
 
-    private var rowIndex: Int? { state.rows.firstIndex { $0.id == row.id } }
-
     private var zoom: CGFloat { state.zoomLevel }
 
     var body: some View {
@@ -168,7 +166,6 @@ struct EditorRowView: View {
                 }
 
                 // Per-template control bars (inside same ScrollView)
-                if let rowIndex {
                 HStack(spacing: 0) {
                     ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
                         if index > 0 {
@@ -176,7 +173,7 @@ struct EditorRowView: View {
                                 .frame(height: 20)
                         }
                         TemplateControlBar(
-                            template: $state.rows[rowIndex].templates[index],
+                            template: safeTemplateBinding(rowId: row.id, templateIndex: index),
                             row: row,
                             index: index,
                             zoom: zoom,
@@ -191,7 +188,6 @@ struct EditorRowView: View {
                     }
                 }
                 .padding(.bottom, 8)
-                }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
@@ -247,6 +243,26 @@ struct EditorRowView: View {
     private func tapSelectRow() {
         NSApp.keyWindow?.makeFirstResponder(nil)
         state.selectRow(row.id)
+    }
+
+    private static let placeholderTemplate = ScreenshotTemplate()
+
+    private func safeTemplateBinding(rowId: UUID, templateIndex: Int) -> Binding<ScreenshotTemplate> {
+        Binding(
+            get: {
+                guard let ri = state.rows.firstIndex(where: { $0.id == rowId }),
+                      templateIndex < state.rows[ri].templates.count else {
+                    assertionFailure("safeTemplateBinding: stale row/template index")
+                    return Self.placeholderTemplate
+                }
+                return state.rows[ri].templates[templateIndex]
+            },
+            set: { newValue in
+                guard let ri = state.rows.firstIndex(where: { $0.id == rowId }),
+                      templateIndex < state.rows[ri].templates.count else { return }
+                state.rows[ri].templates[templateIndex] = newValue
+            }
+        )
     }
 
     private func rowActionButton(_ icon: String, tooltip: String, disabled: Bool, action: @escaping () -> Void) -> some View {

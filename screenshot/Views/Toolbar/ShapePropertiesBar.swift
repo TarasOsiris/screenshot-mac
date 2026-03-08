@@ -80,7 +80,7 @@ struct ShapePropertiesBar: View {
                     controlGroup("Body") {
                         ColorPicker("", selection: shapeBinding(shapeId, \.deviceBodyColor), supportsOpacity: false)
                             .labelsHidden()
-                            .frame(width: 30)
+                            .padding(.horizontal, 4)
                     }
 
                     if shape.screenshotFileName != nil {

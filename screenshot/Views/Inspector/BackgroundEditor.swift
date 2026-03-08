@@ -16,11 +16,13 @@ struct BackgroundEditor: View {
         .controlSize(compact ? .mini : .small)
 
         if backgroundStyle == .color {
-            ColorPicker(
-                "Color",
-                selection: $bgColor.onSet { onChanged() },
-                supportsOpacity: false
-            )
+            HStack {
+                Text("Color")
+                Spacer()
+                ColorPicker("", selection: $bgColor.onSet { onChanged() }, supportsOpacity: false)
+                    .labelsHidden()
+                    .fixedSize()
+            }
             .font(.system(size: compact ? 10 : 12))
         } else {
             GradientStopEditor(
@@ -28,21 +30,17 @@ struct BackgroundEditor: View {
                 onChanged: onChanged
             )
 
-            let gridSpacing: CGFloat = compact ? 2 : 4
-            let swatchHeight: CGFloat = compact ? 20 : 28
-            let cornerRadius: CGFloat = compact ? 3 : 4
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: 4), spacing: gridSpacing) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
                 ForEach(gradientPresets) { preset in
                     Button {
                         gradientConfig = preset.config
                         onChanged()
                     } label: {
-                        RoundedRectangle(cornerRadius: cornerRadius)
+                        RoundedRectangle(cornerRadius: 4)
                             .fill(preset.config.linearGradient)
-                            .frame(height: swatchHeight)
+                            .frame(height: compact ? 24 : 28)
                             .overlay(
-                                RoundedRectangle(cornerRadius: cornerRadius)
+                                RoundedRectangle(cornerRadius: 4)
                                     .strokeBorder(.white.opacity(0.2), lineWidth: 1)
                             )
                     }

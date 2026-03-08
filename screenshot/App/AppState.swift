@@ -135,7 +135,8 @@ final class AppState {
         saveCurrentProject()
 
         let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(50))
-        let project = Project(name: sanitized.isEmpty ? "Project" : sanitized)
+        let baseName = sanitized.isEmpty ? "Project" : sanitized
+        let project = Project(name: uniqueProjectName(baseName))
         projects.append(project)
         activeProjectId = project.id
         PersistenceService.ensureProjectDirs(project.id)
@@ -161,9 +162,19 @@ final class AppState {
         let trimmed = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(50))
         guard !trimmed.isEmpty else { return }
         if let idx = projects.firstIndex(where: { $0.id == id }) {
-            projects[idx].name = trimmed
+            projects[idx].name = uniqueProjectName(trimmed, excludingId: id)
             scheduleSave()
         }
+    }
+
+    private func uniqueProjectName(_ baseName: String, excludingId: UUID? = nil) -> String {
+        let existingNames = Set(projects.filter { $0.id != excludingId }.map { $0.name })
+        if !existingNames.contains(baseName) { return baseName }
+        var counter = 2
+        while existingNames.contains("\(baseName) \(counter)") {
+            counter += 1
+        }
+        return "\(baseName) \(counter)"
     }
 
     func resetProject(_ id: UUID) {
