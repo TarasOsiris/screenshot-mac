@@ -16,8 +16,11 @@ final class AppState {
     // MARK: - Undo
 
     private func registerUndo(_ actionName: String) {
+        registerUndoWithBase(actionName, base: rows)
+    }
+
+    private func registerUndoWithBase(_ actionName: String, base: [ScreenshotRow]) {
         guard let undoManager else { return }
-        let savedRows = rows
         undoManager.registerUndo(withTarget: self) { target in
             let redoRows = target.rows
             target.undoManager?.registerUndo(withTarget: target) { t in
@@ -26,7 +29,7 @@ final class AppState {
                 t.scheduleSave()
                 t.undoManager?.setActionName(actionName)
             }
-            target.rows = savedRows
+            target.rows = base
             target.normalizeSelection()
             target.scheduleSave()
             target.undoManager?.setActionName(actionName)
@@ -291,13 +294,20 @@ final class AppState {
     }
 
     func duplicateSelectedShape() {
+        guard let id = selectedShapeId else { return }
+        _ = insertDuplicate(of: id, offsetX: 50, offsetY: 50, undoName: "Duplicate Shape")
+    }
+
+    @discardableResult
+    private func insertDuplicate(of shapeId: UUID, offsetX: CGFloat = 0, offsetY: CGFloat = 0, undoName: String) -> UUID? {
         guard let rowIdx = selectedRowIndex,
-              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == selectedShapeId }) else { return }
-        registerUndo("Duplicate Shape")
-        let copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: 50, offsetY: 50)
+              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) else { return nil }
+        registerUndo(undoName)
+        let copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: offsetX, offsetY: offsetY)
         rows[rowIdx].shapes.append(copy)
         selectShape(copy.id, in: rows[rowIdx].id)
         scheduleSave()
+        return copy.id
     }
 
     func bringShapeToFront(_ id: UUID) {
@@ -357,6 +367,61 @@ final class AppState {
     func deselectAll() {
         selectedShapeId = nil
         selectedRowId = nil
+    }
+
+    // MARK: - Clipboard
+
+    var clipboard: CanvasShapeModel?
+
+    func copySelectedShape() {
+        guard let rowIdx = selectedRowIndex,
+              let shape = rows[rowIdx].shapes.first(where: { $0.id == selectedShapeId }) else { return }
+        clipboard = shape
+    }
+
+    func pasteShape() {
+        guard let source = clipboard, let rowIdx = selectedRowIndex else { return }
+        registerUndo("Paste Shape")
+        let pasted = source.duplicated(offsetX: 20, offsetY: 20)
+        rows[rowIdx].shapes.append(pasted)
+        selectShape(pasted.id, in: rows[rowIdx].id)
+        scheduleSave()
+    }
+
+    // MARK: - Nudge
+
+    private var nudgeUndoTask: DispatchWorkItem?
+    private var nudgeBaseRows: [ScreenshotRow]?
+
+    func nudgeSelectedShape(dx: CGFloat, dy: CGFloat) {
+        guard let rowIdx = selectedRowIndex,
+              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == selectedShapeId }) else { return }
+
+        // Capture undo state only at the start of a nudge sequence
+        if nudgeBaseRows == nil {
+            nudgeBaseRows = rows
+        }
+
+        rows[rowIdx].shapes[shapeIdx].x += dx
+        rows[rowIdx].shapes[shapeIdx].y += dy
+        scheduleSave()
+
+        // Debounce the undo registration so rapid key repeats collapse into one entry
+        nudgeUndoTask?.cancel()
+        guard let savedBase = nudgeBaseRows else { return }
+        let nudgeTask = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.registerUndoWithBase("Move Shape", base: savedBase)
+            self.nudgeBaseRows = nil
+        }
+        nudgeUndoTask = nudgeTask
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: nudgeTask)
+    }
+
+    // MARK: - Option+Drag Duplicate
+
+    func duplicateShapeForOptionDrag(_ shapeId: UUID) -> UUID? {
+        insertDuplicate(of: shapeId, undoName: "Duplicate Shape")
     }
 
     // MARK: - Screenshot Images

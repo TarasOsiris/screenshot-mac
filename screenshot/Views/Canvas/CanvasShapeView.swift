@@ -14,9 +14,11 @@ struct CanvasShapeView: View {
     var onScreenshotDrop: ((NSImage) -> Void)?
     var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
     var onDragEnd: (() -> Void)?
+    var onOptionDragDuplicate: ((UUID) -> UUID?)?
 
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
+    @State private var isHovered = false
     @State private var resizeState: ResizeState?
     @State private var isDropTargeted = false
     @State private var isPickerPresented = false
@@ -55,11 +57,23 @@ struct CanvasShapeView: View {
                 .contentShape(Rectangle())
         }
         .frame(width: displayW, height: displayH)
+        .onHover { hovering in
+            isHovered = hovering
+            if showsEditorHelpers && isSelected && !isDragging {
+                if hovering {
+                    NSCursor.openHand.set()
+                } else {
+                    NSCursor.arrow.set()
+                }
+            }
+        }
         .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
         .overlay {
             if isSelected {
                 selectionOverlay
                 resizeHandles
+            } else if isHovered && showsEditorHelpers {
+                hoverOverlay
             }
         }
 
@@ -187,8 +201,16 @@ struct CanvasShapeView: View {
     }
 
     private var selectionOverlay: some View {
+        borderOverlay(opacity: 1.0, lineWidth: 1.5)
+    }
+
+    private var hoverOverlay: some View {
+        borderOverlay(opacity: 0.5, lineWidth: 1)
+    }
+
+    private func borderOverlay(opacity: Double, lineWidth: CGFloat) -> some View {
         Rectangle()
-            .strokeBorder(Color.accentColor, lineWidth: 1.5)
+            .strokeBorder(Color.accentColor.opacity(opacity), lineWidth: lineWidth)
             .frame(width: displayW, height: displayH)
             .rotationEffect(.degrees(currentRotation))
             .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
@@ -438,6 +460,13 @@ struct CanvasShapeView: View {
             .onChanged { value in
                 if !isDragging {
                     isDragging = true
+                    NSCursor.closedHand.set()
+
+                    // Option+drag: leave original in place, create & drag a copy
+                    if NSEvent.modifierFlags.contains(.option) {
+                        _ = onOptionDragDuplicate?(shape.id)
+                    }
+
                     onSelect()
                 }
                 let rawOffset = CGSize(
@@ -451,6 +480,7 @@ struct CanvasShapeView: View {
                 }
             }
             .onEnded { _ in
+                NSCursor.arrow.set()
                 var updated = shape
                 updated.x += dragOffset.width
                 updated.y += dragOffset.height

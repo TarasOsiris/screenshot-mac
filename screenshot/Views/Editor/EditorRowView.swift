@@ -110,7 +110,10 @@ struct EditorRowView: View {
                                     activeGuides = result.guides
                                     return result
                                 },
-                                onDragEnd: { activeGuides = [] }
+                                onDragEnd: { activeGuides = [] },
+                                onOptionDragDuplicate: { shapeId in
+                                    state.duplicateShapeForOptionDrag(shapeId)
+                                }
                             )
                         }
 
