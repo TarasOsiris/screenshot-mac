@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum ZoomConstants {
-    static let min: CGFloat = 0.25
+    static let min: CGFloat = 0.75
     static let max: CGFloat = 2.0
     static let step: CGFloat = 0.25
 }

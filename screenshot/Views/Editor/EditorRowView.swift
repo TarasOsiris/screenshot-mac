@@ -63,7 +63,8 @@ struct EditorRowView: View {
                 .animation(.easeInOut(duration: 0.15), value: isSelected || isRowHovered)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.top, 8)
+            .padding(.bottom, 4)
             .onHover { isRowHovered = $0 }
 
             // Unified canvas + add button
@@ -193,7 +194,8 @@ struct EditorRowView: View {
                 }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.top, 4)
+                .padding(.bottom, 12)
             }
         }
         .contentShape(Rectangle())
