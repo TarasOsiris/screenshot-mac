@@ -201,6 +201,13 @@ final class AppState {
         registerUndo("Add Template")
         let color = Self.templateColors[rows[idx].templates.count % Self.templateColors.count]
         rows[idx].templates.append(ScreenshotTemplate(backgroundColor: color))
+        let templateIndex = rows[idx].templates.count - 1
+        let device = CanvasShapeModel.defaultDevice(
+            centerX: rows[idx].templateCenterX(at: templateIndex),
+            centerY: rows[idx].templateHeight / 2,
+            templateHeight: rows[idx].templateHeight
+        )
+        rows[idx].shapes.append(device)
         scheduleSave()
     }
 
@@ -535,13 +542,19 @@ final class AppState {
         let templates = (0..<templateCount).map { index in
             ScreenshotTemplate(backgroundColor: Self.templateColors[index % Self.templateColors.count])
         }
-        let device = CanvasShapeModel.defaultDevice(centerX: w / 2, centerY: h / 2, templateHeight: h)
+        let shapes = (0..<templateCount).map { index in
+            CanvasShapeModel.defaultDevice(
+                centerX: CGFloat(index) * w + w / 2,
+                centerY: h / 2,
+                templateHeight: h
+            )
+        }
         return ScreenshotRow(
             label: label,
             templates: templates,
             templateWidth: w,
             templateHeight: h,
-            shapes: [device]
+            shapes: shapes
         )
     }
 

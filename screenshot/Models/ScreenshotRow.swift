@@ -101,6 +101,10 @@ struct ScreenshotRow: Identifiable, Codable {
         shapes.filter { showDevice || $0.type != .device }
     }
 
+    func templateCenterX(at index: Int) -> CGFloat {
+        CGFloat(index) * templateWidth + templateWidth / 2
+    }
+
     func visibleShapes(forTemplateAt index: Int) -> [CanvasShapeModel] {
         let tLeft = CGFloat(index) * templateWidth
         let tRight = tLeft + templateWidth
