@@ -55,8 +55,8 @@ struct CanvasShapeView: View {
             shapeContent
                 .frame(width: displayW, height: displayH)
                 .opacity(shape.opacity)
-                .rotationEffect(.degrees(currentRotation))
                 .contentShape(Rectangle())
+                .rotationEffect(.degrees(currentRotation))
         }
         .frame(width: displayW, height: displayH)
         .onHover { hovering in
