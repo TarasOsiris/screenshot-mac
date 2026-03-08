@@ -134,7 +134,8 @@ final class AppState {
     func createProject(name: String) {
         saveCurrentProject()
 
-        let project = Project(name: name)
+        let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(50))
+        let project = Project(name: sanitized.isEmpty ? "Project" : sanitized)
         projects.append(project)
         activeProjectId = project.id
         PersistenceService.ensureProjectDirs(project.id)
@@ -157,8 +158,10 @@ final class AppState {
     }
 
     func renameProject(_ id: UUID, to name: String) {
+        let trimmed = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(50))
+        guard !trimmed.isEmpty else { return }
         if let idx = projects.firstIndex(where: { $0.id == id }) {
-            projects[idx].name = name
+            projects[idx].name = trimmed
             scheduleSave()
         }
     }
@@ -515,7 +518,7 @@ final class AppState {
 
     private func makeDefaultRow(label: String = "Screenshot 1") -> ScreenshotRow {
         let defaultSize = UserDefaults.standard.string(forKey: "defaultScreenshotSize") ?? "1242x2688"
-        let parsedSize = parseSize(defaultSize)
+        let parsedSize = parseSizeString(defaultSize)
         let w: CGFloat = parsedSize?.width ?? 1242
         let h: CGFloat = parsedSize?.height ?? 2688
         let storedTemplateCount = UserDefaults.standard.integer(forKey: "defaultTemplateCount")
@@ -533,7 +536,4 @@ final class AppState {
         )
     }
 
-    private func parseSize(_ value: String) -> (width: CGFloat, height: CGFloat)? {
-        parseSizeString(value)
-    }
 }

@@ -71,6 +71,14 @@ struct SvgPasteDialog: View {
             return
         }
 
+        let maxSvgSize = 512 * 1024 // 512 KB
+        guard trimmed.utf8.count <= maxSvgSize else {
+            previewImage = nil
+            errorMessage = "SVG content is too large (max 512 KB)"
+            isValidSvg = false
+            return
+        }
+
         guard trimmed.contains("<svg") else {
             previewImage = nil
             errorMessage = "Not a valid SVG — must contain an <svg> element"

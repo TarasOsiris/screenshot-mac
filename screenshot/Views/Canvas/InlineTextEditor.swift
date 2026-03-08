@@ -70,6 +70,10 @@ struct InlineTextEditor: NSViewRepresentable {
 
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
+            let maxLength = 5000
+            if textView.string.count > maxLength {
+                textView.string = String(textView.string.prefix(maxLength))
+            }
             parent.text = textView.string
             if let scrollView = textView.enclosingScrollView as? CenteringScrollView {
                 if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }

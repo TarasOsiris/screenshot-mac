@@ -8,3 +8,12 @@ extension Binding {
         )
     }
 }
+
+extension Binding where Value == String {
+    func limited(to maxLength: Int) -> Binding<String> {
+        Binding<String>(
+            get: { wrappedValue },
+            set: { wrappedValue = String($0.prefix(maxLength)) }
+        )
+    }
+}

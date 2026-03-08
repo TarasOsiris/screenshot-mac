@@ -233,17 +233,12 @@ struct GradientStopEditor: View {
     }
 
     private func blendColors(_ c1: Color, _ c2: Color, t: Double) -> Color {
-        let ns1 = NSColor(c1).usingColorSpace(.sRGB) ?? NSColor(c1)
-        let ns2 = NSColor(c2).usingColorSpace(.sRGB) ?? NSColor(c2)
-        var r1: CGFloat = 0, g1: CGFloat = 0, b1: CGFloat = 0, a1: CGFloat = 0
-        var r2: CGFloat = 0, g2: CGFloat = 0, b2: CGFloat = 0, a2: CGFloat = 0
-        ns1.getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
-        ns2.getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
+        let a = c1.sRGBComponents, b = c2.sRGBComponents
         let cg = CGFloat(t)
         return Color(
-            red: Double(r1 + (r2 - r1) * cg),
-            green: Double(g1 + (g2 - g1) * cg),
-            blue: Double(b1 + (b2 - b1) * cg)
+            red: Double(a.r + (b.r - a.r) * cg),
+            green: Double(a.g + (b.g - a.g) * cg),
+            blue: Double(a.b + (b.b - a.b) * cg)
         )
     }
 }

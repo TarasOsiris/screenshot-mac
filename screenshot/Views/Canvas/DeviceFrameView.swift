@@ -200,10 +200,7 @@ struct DeviceFrameView: View {
     }
 
     private var buttonColor: Color {
-        let nsColor = NSColor(bodyColor).usingColorSpace(.sRGB) ?? NSColor(bodyColor)
-        let r = min(1.0, nsColor.redComponent + 0.055)
-        let g = min(1.0, nsColor.greenComponent + 0.055)
-        let b = min(1.0, nsColor.blueComponent + 0.055)
-        return Color(red: r, green: g, blue: b)
+        let c = bodyColor.sRGBComponents
+        return Color(red: min(1.0, c.r + 0.055), green: min(1.0, c.g + 0.055), blue: min(1.0, c.b + 0.055))
     }
 }

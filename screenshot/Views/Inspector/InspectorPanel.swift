@@ -8,7 +8,7 @@ struct InspectorPanel: View {
         if let rowIndex = state.selectedRowIndex {
             Form {
                 Section("Row") {
-                    TextField("Row label", text: $state.rows[rowIndex].label.onSet { state.scheduleSave() }, prompt: Text("Row label"))
+                    TextField("Row label", text: $state.rows[rowIndex].label.limited(to: 50).onSet { state.scheduleSave() }, prompt: Text("Row label"))
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12))
                         .labelsHidden()
@@ -153,10 +153,6 @@ struct InspectorPanel: View {
         "\(Int(size.width))x\(Int(size.height))"
     }
 
-    private func parseSizeTag(_ tag: String) -> (width: CGFloat, height: CGFloat)? {
-        parseSizeString(tag)
-    }
-
     private func sizePresetBinding(for rowIndex: Int) -> Binding<String> {
         Binding(
             get: {
@@ -166,7 +162,7 @@ struct InspectorPanel: View {
                 ))
             },
             set: { newValue in
-                guard let size = parseSizeTag(newValue) else { return }
+                guard let size = parseSizeString(newValue) else { return }
                 state.rows[rowIndex].templateWidth = size.width
                 state.rows[rowIndex].templateHeight = size.height
                 state.scheduleSave()

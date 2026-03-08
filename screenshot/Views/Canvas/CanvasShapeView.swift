@@ -504,13 +504,7 @@ struct CanvasShapeView: View {
     }
 
     private func loadImportedImage(from url: URL) -> NSImage? {
-        let didAccess = url.startAccessingSecurityScopedResource()
-        defer {
-            if didAccess {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-        return NSImage(contentsOf: url)
+        NSImage.fromSecurityScopedURL(url)
     }
 
     @ViewBuilder

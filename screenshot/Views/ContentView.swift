@@ -196,7 +196,7 @@ struct ContentView: View {
             Text("Are you sure you want to delete \"\(state.activeProject?.name ?? "")\"? This cannot be undone.")
         }
         .alert("Rename Project", isPresented: $isRenamingProject) {
-            TextField("Project name", text: $renameText)
+            TextField("Project name", text: $renameText.limited(to: 50))
             Button("Rename") {
                 let trimmedName = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
                 if let id = state.activeProjectId, !trimmedName.isEmpty {
@@ -207,6 +207,7 @@ struct ContentView: View {
         }
         .onAppear {
             state.undoManager = undoManager
+            undoManager?.levelsOfUndo = 50
         }
     }
 

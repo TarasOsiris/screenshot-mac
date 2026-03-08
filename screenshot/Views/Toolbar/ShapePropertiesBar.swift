@@ -225,12 +225,9 @@ struct ShapePropertiesBar: View {
             .padding(.vertical, 8)
             .background(.bar)
             .fileImporter(isPresented: $isReplacingImage, allowedContentTypes: [.image]) { result in
-                if case .success(let url) = result {
-                    let didAccess = url.startAccessingSecurityScopedResource()
-                    defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-                    if let image = NSImage(contentsOf: url) {
-                        state.saveImage(image, for: shapeId)
-                    }
+                if case .success(let url) = result,
+                   let image = NSImage.fromSecurityScopedURL(url) {
+                    state.saveImage(image, for: shapeId)
                 }
             }
             .sheet(isPresented: $isReplacingSvg) {
