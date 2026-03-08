@@ -28,6 +28,8 @@ struct CanvasShapeView: View {
     @State private var svgCacheKey = ""
     @State private var rotationDelta: Double = 0
 
+    private let handleDiameter: CGFloat = 8
+
     private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
 
     // Current effective geometry (accounts for in-progress resize or drag)
@@ -244,14 +246,14 @@ struct CanvasShapeView: View {
         let hitSize: CGFloat = 24
 
         return ZStack {
-            // Stem line from top center upward
+            // Stem line behind the knob (starts below the resize handle's edge)
             Path { path in
-                path.move(to: CGPoint(x: displayW / 2, y: 0))
+                path.move(to: CGPoint(x: displayW / 2, y: -handleDiameter / 2))
                 path.addLine(to: CGPoint(x: displayW / 2, y: -stemLength))
             }
             .stroke(Color.accentColor, lineWidth: 1)
 
-            // Rotate handle circle
+            // Rotate handle circle (on top of stem)
             ZStack {
                 Color.clear
                     .frame(width: hitSize, height: hitSize)
@@ -259,6 +261,9 @@ struct CanvasShapeView: View {
 
                 Circle()
                     .fill(Color.white)
+                    .frame(width: handleSize, height: handleSize)
+
+                Circle()
                     .strokeBorder(Color.accentColor, lineWidth: 1.5)
                     .frame(width: handleSize, height: handleSize)
             }
@@ -336,7 +341,7 @@ struct CanvasShapeView: View {
     }
 
     private func resizeHandle(edge: ResizeEdge) -> some View {
-        let handleSize: CGFloat = 8
+        let handleSize = handleDiameter
         let hitSize: CGFloat = 20
         let pos = handlePosition(for: edge)
 

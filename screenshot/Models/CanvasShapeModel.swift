@@ -25,12 +25,25 @@ enum DeviceCategory: String, Codable, CaseIterable {
         }
     }
 
-    /// Base dimensions for the device frame (body including bezels).
-    /// iPhone 17: 71.5 x 149.6 mm at scale 3.077 px/mm -> 220 x 460.
-    var baseDimensions: (width: CGFloat, height: CGFloat) {
+    /// Body dimensions (without side buttons).
+    /// iPhone 17: 71.5 x 149.6 mm at scale 3.077 px/mm → 220 x 460.
+    var bodyDimensions: (width: CGFloat, height: CGFloat) {
         switch self {
         case .iphone: (220, 460)
         }
+    }
+
+    /// Depth of side buttons protruding from body edge.
+    var buttonDepth: CGFloat {
+        switch self {
+        case .iphone: 2.5
+        }
+    }
+
+    /// Total bounding box including side buttons.
+    var baseDimensions: (width: CGFloat, height: CGFloat) {
+        let body = bodyDimensions
+        return (body.width + buttonDepth * 2, body.height)
     }
 }
 

@@ -35,10 +35,11 @@ struct DeviceFrameView: View {
 
     private var iPhoneFrame: some View {
         let s = scale
+        let dims = category.bodyDimensions
 
-        // Body: 71.5 × 149.6 mm → 220 × 460
-        let bodyW: CGFloat = 220 * s
-        let bodyH: CGFloat = 460 * s
+        // Body
+        let bodyW: CGFloat = dims.width * s
+        let bodyH: CGFloat = dims.height * s
 
         // Bezels: 1.41mm L/R → 4.34, 1.44mm T/B → 4.43
         let bezelLR: CGFloat = 4.34 * s
@@ -68,7 +69,7 @@ struct DeviceFrameView: View {
         let homeOffsetFromScreenBottom: CGFloat = 8 * s + homeH / 2
 
         // Button dimensions (protruding from body edge)
-        let btnDepth: CGFloat = 2.5 * s
+        let btnDepth: CGFloat = category.buttonDepth * s
 
         // Left side buttons (Action + Volume Up + Volume Down)
         // Action button: ~9.5mm tall, center at ~35% from top
@@ -93,6 +94,9 @@ struct DeviceFrameView: View {
 
         let bodyShape = RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
         let screenShape = RoundedRectangle(cornerRadius: screenCornerR, style: .continuous)
+
+        // Total width includes side buttons protruding from body
+        let totalW = bodyW + btnDepth * 2
 
         return ZStack {
             // Body
@@ -189,6 +193,7 @@ struct DeviceFrameView: View {
                 .frame(width: bodyW, height: bodyH)
                 .allowsHitTesting(false)
         }
+        .frame(width: totalW, height: bodyH)
     }
 
     // MARK: - Button Helpers

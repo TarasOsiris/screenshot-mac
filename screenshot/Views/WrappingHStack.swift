@@ -23,16 +23,18 @@ struct WrappingHStack: Layout {
         let rowHeights = rows.map { row in
             row.map { cache.sizes[$0].height }.max() ?? 0
         }
-        let rowWidths = rows.map { row in
-            row.enumerated().reduce(CGFloat(0)) { partial, pair in
-                partial + (pair.offset > 0 ? spacing : 0) + cache.sizes[pair.element].width
-            }
-        }
-
         let height = rowHeights.enumerated().reduce(CGFloat(0)) { total, pair in
             total + pair.element + (pair.offset > 0 ? lineSpacing : 0)
         }
-        let width = proposal.width ?? (rowWidths.max() ?? 0)
+        let width: CGFloat = if let proposedWidth = proposal.width {
+            proposedWidth
+        } else {
+            rows.map { row in
+                row.enumerated().reduce(CGFloat(0)) { partial, pair in
+                    partial + (pair.offset > 0 ? spacing : 0) + cache.sizes[pair.element].width
+                }
+            }.max() ?? 0
+        }
         return CGSize(width: width, height: height)
     }
 
