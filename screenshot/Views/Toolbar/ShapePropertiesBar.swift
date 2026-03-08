@@ -2,6 +2,9 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ShapePropertiesBar: View {
+    private static let defaultFontSize: CGFloat = 72
+    private static let fontSizeRange: ClosedRange<CGFloat> = 12...200
+
     @Bindable var state: AppState
     @State private var isReplacingImage = false
     @State private var isReplacingSvg = false
@@ -33,7 +36,7 @@ struct ShapePropertiesBar: View {
             let shape = state.rows[rowIndex].shapes[shapeIdx]
             let shapeId = shape.id
 
-            HStack(spacing: 0) {
+            WrappingHStack(spacing: 6, lineSpacing: 6) {
                 // Color (not shown for devices, SVGs, or images)
                 if shape.type != .device && shape.type != .svg && shape.type != .image {
                     ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
@@ -147,8 +150,23 @@ struct ShapePropertiesBar: View {
                     separator
 
                     controlGroup("Size") {
-                        Slider(value: shapeBinding(shapeId, \.fontSize, default: 72), in: 12...200)
+                        Slider(value: shapeBinding(shapeId, \.fontSize, default: Self.defaultFontSize), in: Self.fontSizeRange)
                             .frame(width: 70)
+                        TextField("", value: Binding(
+                            get: {
+                                guard let i = idx(for: shapeId) else { return Int(Self.defaultFontSize) }
+                                return Int(state.rows[i.row].shapes[i.shape].fontSize ?? Self.defaultFontSize)
+                            },
+                            set: { newValue in
+                                let clamped = min(max(CGFloat(newValue), Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
+                                guard let i = idx(for: shapeId) else { return }
+                                state.rows[i.row].shapes[i.shape].fontSize = clamped
+                                state.scheduleSave()
+                            }
+                        ), format: .number)
+                        .frame(width: 40)
+                        .textFieldStyle(.roundedBorder)
+                        .multilineTextAlignment(.center)
                     }
 
                     separator
@@ -273,9 +291,10 @@ struct ShapePropertiesBar: View {
     }
 
     private var separator: some View {
-        Divider()
-            .frame(height: 16)
-            .padding(.horizontal, 8)
+        Rectangle()
+            .fill(.separator)
+            .frame(width: 1, height: 18)
+            .padding(.horizontal, 4)
     }
 
     private func controlGroup<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {

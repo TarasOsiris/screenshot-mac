@@ -70,12 +70,15 @@ struct ContentView: View {
                     }
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .layoutPriority(0)
             .background(Color(nsColor: .windowBackgroundColor))
 
             // Shape properties bottom bar
             if state.selectedShapeId != nil {
                 Divider()
                 ShapePropertiesBar(state: state)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(1)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
