@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var isRenamingProject = false
     @State private var renameText = ""
     @State private var isDeletingProject = false
+    @State private var isResettingProject = false
     @State private var gestureZoomStartLevel: CGFloat?
 
     private var selectedContextSummary: String {
@@ -116,8 +117,12 @@ struct ContentView: View {
                         isRenamingProject = true
                     }
                     .disabled(state.activeProjectId == nil)
+                    Divider()
+                    Button("Reset Project...", role: .destructive) {
+                        isResettingProject = true
+                    }
+                    .disabled(state.activeProjectId == nil)
                     if state.projects.count > 1 {
-                        Divider()
                         Button("Delete Project...", role: .destructive) {
                             isDeletingProject = true
                         }
@@ -184,6 +189,16 @@ struct ContentView: View {
             Button("OK") { exportError = nil }
         } message: {
             Text(exportError ?? "")
+        }
+        .alert("Reset Project", isPresented: $isResettingProject) {
+            Button("Reset", role: .destructive) {
+                if let id = state.activeProjectId {
+                    state.resetProject(id)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to reset \"\(state.activeProject?.name ?? "")\"? All rows and shapes will be removed. This cannot be undone.")
         }
         .alert("Delete Project", isPresented: $isDeletingProject) {
             Button("Delete", role: .destructive) {

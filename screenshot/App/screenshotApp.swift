@@ -12,18 +12,18 @@ struct ScreenshotBroApp: App {
         .defaultSize(width: 1100, height: 700)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .commands {
-            CommandGroup(after: .pasteboard) {
+            CommandGroup(replacing: .pasteboard) {
                 Section {
                     Button("Copy Shape") {
                         appState.copySelectedShape()
                     }
-                    .keyboardShortcut("c", modifiers: [.command, .shift])
+                    .keyboardShortcut("c", modifiers: .command)
                     .disabled(appState.selectedShapeId == nil)
 
                     Button("Paste Shape") {
                         appState.pasteShape()
                     }
-                    .keyboardShortcut("v", modifiers: [.command, .shift])
+                    .keyboardShortcut("v", modifiers: .command)
                     .disabled(appState.clipboard == nil || appState.selectedRowId == nil)
 
                     Button("Duplicate") {

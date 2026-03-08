@@ -166,6 +166,15 @@ final class AppState {
         }
     }
 
+    func resetProject(_ id: UUID) {
+        guard id == activeProjectId else { return }
+        undoManager?.removeAllActions()
+        screenshotImages.removeAll()
+        rows = [makeDefaultRow()]
+        selectRow(rows.first?.id)
+        saveAll()
+    }
+
     func deleteProject(_ id: UUID) {
         projects.removeAll { $0.id == id }
         PersistenceService.deleteProject(id)
