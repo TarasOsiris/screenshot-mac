@@ -24,6 +24,7 @@ struct CanvasShapeView: View {
     @State private var editingTextValue = ""
     @State private var cachedSvgImage: NSImage?
     @State private var svgCacheKey = ""
+    @State private var rotationDelta: Double = 0
 
     private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
 
@@ -42,13 +43,15 @@ struct CanvasShapeView: View {
     private var displayW: CGFloat { effectiveW * displayScale }
     private var displayH: CGFloat { effectiveH * displayScale }
 
+    private var currentRotation: Double { shape.rotation + rotationDelta }
+
     @ViewBuilder
     var body: some View {
         let base = ZStack {
             shapeContent
                 .frame(width: displayW, height: displayH)
                 .opacity(shape.opacity)
-                .rotationEffect(.degrees(shape.rotation))
+                .rotationEffect(.degrees(currentRotation))
                 .contentShape(Rectangle())
         }
         .frame(width: displayW, height: displayH)
@@ -187,7 +190,7 @@ struct CanvasShapeView: View {
         Rectangle()
             .strokeBorder(Color.accentColor, lineWidth: 1.5)
             .frame(width: displayW, height: displayH)
-            .rotationEffect(.degrees(shape.rotation))
+            .rotationEffect(.degrees(currentRotation))
             .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
             .allowsHitTesting(false)
     }
@@ -204,10 +207,85 @@ struct CanvasShapeView: View {
             resizeHandle(edge: .bottom)
             resizeHandle(edge: .left)
             resizeHandle(edge: .right)
+            rotateHandleContent
         }
         .frame(width: displayW, height: displayH)
-        .rotationEffect(.degrees(shape.rotation))
+        .rotationEffect(.degrees(currentRotation))
         .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+    }
+
+    // MARK: - Rotate Handle
+
+    private var rotateHandleContent: some View {
+        let stemLength: CGFloat = 24
+        let handleSize: CGFloat = 10
+        let hitSize: CGFloat = 24
+
+        return ZStack {
+            // Stem line from top center upward
+            Path { path in
+                path.move(to: CGPoint(x: displayW / 2, y: 0))
+                path.addLine(to: CGPoint(x: displayW / 2, y: -stemLength))
+            }
+            .stroke(Color.accentColor, lineWidth: 1)
+
+            // Rotate handle circle
+            ZStack {
+                Color.clear
+                    .frame(width: hitSize, height: hitSize)
+                    .contentShape(Rectangle())
+
+                Circle()
+                    .fill(Color.white)
+                    .strokeBorder(Color.accentColor, lineWidth: 1.5)
+                    .frame(width: handleSize, height: handleSize)
+            }
+            .position(x: displayW / 2, y: -stemLength)
+            .gesture(rotateGesture(stemLength: stemLength))
+        }
+    }
+
+    /// Rotation gesture using translation-only math (no need for global center position).
+    /// The handle starts at a known offset from center in screen space; we compute angle change
+    /// from the translation vector applied to that initial offset.
+    private func rotateGesture(stemLength: CGFloat) -> some Gesture {
+        let handleDist = displayH / 2 + stemLength
+        let baseAngleRad = (shape.rotation - 90) * .pi / 180
+        // Pre-compute invariant vector from center to handle start position
+        let handleVecX = handleDist * cos(baseAngleRad)
+        let handleVecY = handleDist * sin(baseAngleRad)
+        let startAngle = atan2(handleVecY, handleVecX) * 180 / .pi
+
+        return DragGesture(coordinateSpace: .global)
+            .onChanged { value in
+                // Current vector: initial + drag translation
+                let curX = handleVecX + value.translation.width
+                let curY = handleVecY + value.translation.height
+                let currentAngle = atan2(curY, curX) * 180 / .pi
+
+                var delta = currentAngle - startAngle
+
+                // Snap to 15° increments when holding Shift
+                if NSEvent.modifierFlags.contains(.shift) {
+                    let target = shape.rotation + delta
+                    let snapped = (target / 15).rounded() * 15
+                    delta = snapped - shape.rotation
+                }
+
+                rotationDelta = delta
+            }
+            .onEnded { _ in
+                var updated = shape
+                updated.rotation = normalizeAngle(shape.rotation + rotationDelta)
+                rotationDelta = 0
+                onUpdate(updated)
+            }
+    }
+
+    private func normalizeAngle(_ angle: Double) -> Double {
+        var a = angle.truncatingRemainder(dividingBy: 360)
+        if a < 0 { a += 360 }
+        return a
     }
 
     private func handlePosition(for edge: ResizeEdge) -> CGPoint {
@@ -520,4 +598,5 @@ struct CanvasShapeView: View {
         }
     }
 }
+
 
