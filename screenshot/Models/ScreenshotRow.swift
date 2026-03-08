@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct ScreenshotRow: Identifiable, Codable {
+struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     let id: UUID
     var label: String
     var templates: [ScreenshotTemplate]
@@ -67,12 +67,12 @@ struct ScreenshotRow: Identifiable, Codable {
     }
 
     @ViewBuilder
-    var backgroundFill: some View {
-        switch backgroundStyle {
-        case .color:
-            Rectangle().fill(bgColor)
-        case .gradient:
-            Rectangle().fill(gradientConfig.linearGradient)
+    func effectiveBackgroundFill(forTemplateAt index: Int) -> some View {
+        let template = templates[index]
+        if template.overrideBackground {
+            template.backgroundFill
+        } else {
+            backgroundFill
         }
     }
 

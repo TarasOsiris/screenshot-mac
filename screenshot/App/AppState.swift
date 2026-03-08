@@ -234,7 +234,7 @@ final class AppState {
         let source = rows[idx]
         let copy = ScreenshotRow(
             label: "\(source.label) copy",
-            templates: source.templates.map { ScreenshotTemplate(backgroundColor: $0.bgColor) },
+            templates: source.templates.map { $0.duplicated() },
             templateWidth: source.templateWidth,
             templateHeight: source.templateHeight,
             bgColor: source.bgColor,

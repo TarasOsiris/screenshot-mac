@@ -110,7 +110,7 @@ struct ExportService {
             .map { normalizeDeviceAspectIfNeeded($0) }
 
         let view = ZStack {
-            row.backgroundFill
+            row.effectiveBackgroundFill(forTemplateAt: index)
             ForEach(visibleShapes) { shape in
                 CanvasShapeView(
                     shape: shape.duplicated(offsetX: -tLeft),

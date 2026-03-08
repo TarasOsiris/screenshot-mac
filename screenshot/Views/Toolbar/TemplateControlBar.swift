@@ -2,12 +2,15 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct TemplateControlBar: View {
+    @Binding var template: ScreenshotTemplate
     let row: ScreenshotRow
     let index: Int
     let zoom: CGFloat
     var screenshotImages: [String: NSImage] = [:]
+    var onSave: () -> Void
     var onDelete: () -> Void
     @State private var isDeletingTemplate = false
+    @State private var showBackgroundPopover = false
 
     private var canDelete: Bool { row.templates.count > 1 }
 
@@ -19,6 +22,57 @@ struct TemplateControlBar: View {
             templateActionButton("arrow.down.circle", tooltip: "Download") {
                 downloadScreenshot()
             }
+
+            // Background override button
+            Button {
+                showBackgroundPopover = true
+            } label: {
+                HStack(spacing: 3) {
+                    if template.overrideBackground {
+                        template.backgroundFill
+                            .frame(width: 12, height: 12)
+                            .clipShape(RoundedRectangle(cornerRadius: 2))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 2)
+                                    .strokeBorder(.secondary.opacity(0.5), lineWidth: 0.5)
+                            )
+                    } else {
+                        Image(systemName: "paintbrush")
+                            .font(.system(size: 11))
+                    }
+                }
+                .frame(width: 22, height: 22)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .focusable(false)
+            .foregroundStyle(template.overrideBackground ? .primary : .secondary)
+            .help("Background override")
+            .popover(isPresented: $showBackgroundPopover, arrowEdge: .bottom) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Toggle(
+                        "Override background",
+                        isOn: $template.overrideBackground.onSet { onSave() }
+                    )
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .font(.system(size: 12))
+
+                    if template.overrideBackground {
+                        Divider()
+                        BackgroundEditor(
+                            backgroundStyle: $template.backgroundStyle,
+                            bgColor: $template.bgColor,
+                            gradientConfig: $template.gradientConfig,
+                            compact: true,
+                            onChanged: onSave
+                        )
+                    }
+                }
+                .padding(12)
+                .frame(width: 240)
+            }
+
             Spacer()
             Menu {
                 Button("Preview", systemImage: "eye") {

@@ -24,6 +24,8 @@ struct EditorRowView: View {
         state.rows.count > 1
     }
 
+    private var rowIndex: Int? { state.rows.firstIndex { $0.id == row.id } }
+
     private var zoom: CGFloat { state.zoomLevel }
 
     var body: some View {
@@ -76,8 +78,8 @@ struct EditorRowView: View {
                     ZStack(alignment: .topLeading) {
                         // Background tiles (one per template, no gap)
                         HStack(spacing: 0) {
-                            ForEach(row.templates) { _ in
-                                row.backgroundFill
+                            ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, _ in
+                                row.effectiveBackgroundFill(forTemplateAt: index)
                                     .frame(width: dw, height: dh)
                             }
                         }
@@ -165,6 +167,7 @@ struct EditorRowView: View {
                 }
 
                 // Per-template control bars (inside same ScrollView)
+                if let rowIndex {
                 HStack(spacing: 0) {
                     ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
                         if index > 0 {
@@ -172,10 +175,12 @@ struct EditorRowView: View {
                                 .frame(height: 20)
                         }
                         TemplateControlBar(
+                            template: $state.rows[rowIndex].templates[index],
                             row: row,
                             index: index,
                             zoom: zoom,
                             screenshotImages: state.screenshotImages,
+                            onSave: { state.scheduleSave() },
                             onDelete: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     state.removeTemplate(template.id, from: row.id)
@@ -185,6 +190,7 @@ struct EditorRowView: View {
                     }
                 }
                 .padding(.bottom, 8)
+                }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)

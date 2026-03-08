@@ -5,6 +5,24 @@ enum BackgroundStyle: String, Codable, CaseIterable {
     case gradient
 }
 
+protocol BackgroundFillable {
+    var backgroundStyle: BackgroundStyle { get }
+    var bgColor: Color { get }
+    var gradientConfig: GradientConfig { get }
+}
+
+extension BackgroundFillable {
+    @ViewBuilder
+    var backgroundFill: some View {
+        switch backgroundStyle {
+        case .color:
+            Rectangle().fill(bgColor)
+        case .gradient:
+            Rectangle().fill(gradientConfig.linearGradient)
+        }
+    }
+}
+
 struct GradientColorStop: Codable, Equatable, Identifiable {
     var id: UUID
     var colorData: CodableColor
