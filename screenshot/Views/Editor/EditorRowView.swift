@@ -65,7 +65,7 @@ struct EditorRowView: View {
             .onHover { isRowHovered = $0 }
 
             // Unified canvas + add button
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal, showsIndicators: true) {
                 let dw = row.displayWidth(zoom: zoom)
                 let dh = row.displayHeight(zoom: zoom)
                 let ds = row.displayScale(zoom: zoom)

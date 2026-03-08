@@ -3,11 +3,21 @@ import SwiftUI
 @main
 struct ScreenshotBroApp: App {
     @State private var appState = AppState()
+    @AppStorage("appearance") private var appearance = "auto"
+
+    private var preferredColorScheme: ColorScheme? {
+        switch appearance {
+        case "light": .light
+        case "dark": .dark
+        default: nil
+        }
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(appState)
+                .preferredColorScheme(preferredColorScheme)
         }
         .defaultSize(width: 1100, height: 700)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))

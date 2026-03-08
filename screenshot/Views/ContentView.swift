@@ -15,16 +15,6 @@ struct ContentView: View {
     @State private var isResettingProject = false
     @State private var gestureZoomStartLevel: CGFloat?
 
-    private var selectedContextSummary: String {
-        if state.selectedShapeId != nil {
-            return "Editing shape"
-        }
-        if let row = state.selectedRow {
-            return "Selected: \(row.label)"
-        }
-        return "\(state.rows.count) row\(state.rows.count == 1 ? "" : "s")"
-    }
-
     private var projectSelectionBinding: Binding<UUID?> {
         Binding(
             get: { state.activeProjectId },
@@ -154,6 +144,10 @@ struct ContentView: View {
             }
 
             ToolbarItem(placement: .automatic) {
+                Spacer()
+            }
+
+            ToolbarItem(placement: .automatic) {
                 Button {
                     isInspectorPresented.toggle()
                 } label: {
@@ -173,13 +167,6 @@ struct ContentView: View {
                 .help("Export screenshots (\u{2318}E)")
             }
 
-            ToolbarItem(placement: .status) {
-                Text(selectedContextSummary)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .help("Current editing context")
-            }
         }
         .toolbarRole(.editor)
         .alert("Export Failed", isPresented: .init(

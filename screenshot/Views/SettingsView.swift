@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @AppStorage("appearance") private var appearance = "auto"
     @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("exportScale") private var exportScale = 1.0
@@ -23,6 +24,12 @@ struct SettingsView: View {
 
     private var generalSettings: some View {
         Form {
+            Picker("Appearance", selection: $appearance) {
+                Text("Auto").tag("auto")
+                Text("Light").tag("light")
+                Text("Dark").tag("dark")
+            }
+
             Picker("Default screenshot size", selection: $defaultScreenshotSize) {
                 ForEach(displayCategories) { category in
                     Section(category.name) {
