@@ -240,6 +240,13 @@ struct CanvasShapeView: View {
                     .strokeBorder(Color.accentColor, lineWidth: 1.5)
                     .frame(width: handleSize, height: handleSize)
             }
+            .onHover { hovering in
+                if hovering {
+                    CursorHelper.rotateCursor.push()
+                } else {
+                    NSCursor.pop()
+                }
+            }
             .position(x: displayW / 2, y: -stemLength)
             .gesture(rotateGesture(stemLength: stemLength))
         }
@@ -258,6 +265,8 @@ struct CanvasShapeView: View {
 
         return DragGesture(coordinateSpace: .global)
             .onChanged { value in
+                CursorHelper.rotateCursor.set()
+
                 // Current vector: initial + drag translation
                 let curX = handleVecX + value.translation.width
                 let curY = handleVecY + value.translation.height
@@ -275,6 +284,7 @@ struct CanvasShapeView: View {
                 rotationDelta = delta
             }
             .onEnded { _ in
+                NSCursor.arrow.set()
                 var updated = shape
                 updated.rotation = normalizeAngle(shape.rotation + rotationDelta)
                 rotationDelta = 0
@@ -318,6 +328,13 @@ struct CanvasShapeView: View {
                 .strokeBorder(Color.accentColor, lineWidth: 1.5)
                 .frame(width: handleSize, height: handleSize)
                 .allowsHitTesting(false)
+        }
+        .onHover { hovering in
+            if hovering {
+                CursorHelper.resizeCursor(for: edge, rotation: currentRotation).push()
+            } else {
+                NSCursor.pop()
+            }
         }
         .position(pos)
         .gesture(
