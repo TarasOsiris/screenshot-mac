@@ -130,7 +130,7 @@ struct CanvasShapeView: View {
 
         case .circle:
             Ellipse()
-                .fill(shape.color)
+                .fill(shape.color, style: FillStyle(eoFill: false, antialiased: true))
 
         case .text:
             if isEditingText {
@@ -639,5 +639,3 @@ struct CanvasShapeView: View {
         }
     }
 }
-
-
