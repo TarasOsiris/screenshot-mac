@@ -24,17 +24,33 @@ struct ScreenshotBroApp: App {
         .commands {
             CommandGroup(replacing: .pasteboard) {
                 Section {
-                    Button("Copy Shape") {
-                        appState.copySelectedShape()
+                    Button("Cut") {
+                        NSApp.sendAction(#selector(NSText.cut(_:)), to: nil, from: nil)
+                    }
+                    .keyboardShortcut("x", modifiers: .command)
+
+                    Button("Copy") {
+                        if let responder = NSApp.keyWindow?.firstResponder, responder is NSTextView {
+                            NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: nil)
+                        } else {
+                            appState.copySelectedShape()
+                        }
                     }
                     .keyboardShortcut("c", modifiers: .command)
-                    .disabled(appState.selectedShapeId == nil)
 
-                    Button("Paste Shape") {
-                        appState.pasteShape()
+                    Button("Paste") {
+                        if let responder = NSApp.keyWindow?.firstResponder, responder is NSTextView {
+                            NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: nil)
+                        } else {
+                            appState.pasteShape()
+                        }
                     }
                     .keyboardShortcut("v", modifiers: .command)
-                    .disabled(appState.clipboard == nil || appState.selectedRowId == nil)
+
+                    Button("Select All") {
+                        NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: nil)
+                    }
+                    .keyboardShortcut("a", modifiers: .command)
 
                     Button("Duplicate") {
                         if appState.selectedShapeId != nil {
@@ -131,6 +147,28 @@ struct ScreenshotBroApp: App {
                     Button("Actual Size") { appState.resetZoom() }
                     .keyboardShortcut("0", modifiers: .command)
                 }
+            }
+
+            CommandMenu("Locale") {
+                Button("Previous Locale") {
+                    appState.cycleLocaleBackward()
+                }
+                .keyboardShortcut("[", modifiers: .command)
+                .disabled(appState.localeState.locales.count < 2)
+
+                Button("Next Locale") {
+                    appState.cycleLocaleForward()
+                }
+                .keyboardShortcut("]", modifiers: .command)
+                .disabled(appState.localeState.locales.count < 2)
+
+                Divider()
+
+                Button("Switch to Base Locale") {
+                    appState.setActiveLocale(appState.localeState.baseLocaleCode)
+                }
+                .keyboardShortcut("0", modifiers: [.command, .option])
+                .disabled(appState.localeState.isBaseLocale)
             }
         }
 

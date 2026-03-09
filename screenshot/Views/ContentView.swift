@@ -28,6 +28,8 @@ struct ContentView: View {
     var body: some View {
         @Bindable var state = state
         VStack(spacing: 0) {
+            LocaleBanner(state: state)
+
             ScrollView(.vertical) {
                 LazyVStack(spacing: 0) {
                     ForEach(state.rows) { row in
@@ -130,6 +132,10 @@ struct ContentView: View {
             ToolbarItem(placement: .navigation) {
                 ZoomControls()
                     .padding(.leading, 2)
+            }
+
+            ToolbarItem(placement: .navigation) {
+                LocaleToolbarMenu(state: state)
             }
 
             ToolbarItem(placement: .automatic) {
@@ -241,7 +247,8 @@ struct ContentView: View {
                 to: url,
                 format: format,
                 scale: CGFloat(exportScale),
-                screenshotImages: state.screenshotImages
+                screenshotImages: state.screenshotImages,
+                localeState: state.localeState
             )
             if openExportFolderOnSuccess {
                 NSWorkspace.shared.open(destinationFolderURL)

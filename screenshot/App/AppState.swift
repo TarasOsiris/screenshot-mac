@@ -5,6 +5,7 @@ final class AppState {
     var projects: [Project] = []
     var activeProjectId: UUID?
     var rows: [ScreenshotRow] = []
+    var localeState: LocaleState = .default
     var selectedRowId: UUID?
     var selectedShapeId: UUID?
     var zoomLevel: CGFloat = 1.0
@@ -16,20 +17,24 @@ final class AppState {
     // MARK: - Undo
 
     private func registerUndo(_ actionName: String) {
-        registerUndoWithBase(actionName, base: rows)
+        registerUndoWithBase(actionName, base: rows, baseLocaleState: localeState)
     }
 
-    private func registerUndoWithBase(_ actionName: String, base: [ScreenshotRow]) {
+    private func registerUndoWithBase(_ actionName: String, base: [ScreenshotRow], baseLocaleState: LocaleState? = nil) {
         guard let undoManager else { return }
+        let savedLocaleState = baseLocaleState ?? localeState
         undoManager.registerUndo(withTarget: self) { target in
             let redoRows = target.rows
+            let redoLocaleState = target.localeState
             target.undoManager?.registerUndo(withTarget: target) { t in
                 t.rows = redoRows
+                t.localeState = redoLocaleState
                 t.normalizeSelection()
                 t.scheduleSave()
                 t.undoManager?.setActionName(actionName)
             }
             target.rows = base
+            target.localeState = savedLocaleState
             target.normalizeSelection()
             target.scheduleSave()
             target.undoManager?.setActionName(actionName)
@@ -124,9 +129,18 @@ final class AppState {
         PersistenceService.saveIndex(index)
     }
 
+    private func cancelPendingDebounceTasks() {
+        translationUndoTask?.cancel()
+        translationUndoTask = nil
+        translationBaseLocaleState = nil
+        nudgeUndoTask?.cancel()
+        nudgeUndoTask = nil
+        nudgeBaseRows = nil
+    }
+
     private func saveCurrentProject() {
         guard let activeId = activeProjectId else { return }
-        PersistenceService.saveProject(activeId, data: ProjectData(rows: rows))
+        PersistenceService.saveProject(activeId, data: ProjectData(rows: rows, localeState: localeState))
     }
 
     // MARK: - Projects
@@ -140,7 +154,9 @@ final class AppState {
         projects.append(project)
         activeProjectId = project.id
         PersistenceService.ensureProjectDirs(project.id)
+        cancelPendingDebounceTasks()
         rows = [makeDefaultRow()]
+        localeState = .default
         selectRow(rows.first?.id)
         saveAll()
     }
@@ -150,6 +166,7 @@ final class AppState {
 
         saveCurrentProject()
         undoManager?.removeAllActions()
+        cancelPendingDebounceTasks()
 
         activeProjectId = id
         screenshotImages.removeAll()
@@ -180,8 +197,10 @@ final class AppState {
     func resetProject(_ id: UUID) {
         guard id == activeProjectId else { return }
         undoManager?.removeAllActions()
+        cancelPendingDebounceTasks()
         screenshotImages.removeAll()
         rows = [makeDefaultRow()]
+        localeState = .default
         selectRow(rows.first?.id)
         saveAll()
     }
@@ -191,6 +210,7 @@ final class AppState {
         PersistenceService.deleteProject(id)
 
         if activeProjectId == id {
+            cancelPendingDebounceTasks()
             screenshotImages.removeAll()
             if let nextProject = projects.first {
                 activeProjectId = nextProject.id
@@ -243,6 +263,7 @@ final class AppState {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         registerUndo("Duplicate Row")
         let source = rows[idx]
+        let newShapes = source.shapes.map { $0.duplicated() }
         let copy = ScreenshotRow(
             label: "\(source.label) copy",
             templates: source.templates.map { $0.duplicated() },
@@ -253,8 +274,12 @@ final class AppState {
             gradientConfig: source.gradientConfig,
             showDevice: source.showDevice,
             showBorders: source.showBorders,
-            shapes: source.shapes.map { $0.duplicated() }
+            shapes: newShapes
         )
+        // Copy locale overrides for each duplicated shape
+        for (originalShape, newShape) in zip(source.shapes, newShapes) {
+            LocaleService.copyShapeOverrides(&localeState, fromId: originalShape.id, toId: newShape.id)
+        }
         rows.insert(copy, at: idx + 1)
         selectRow(copy.id)
         scheduleSave()
@@ -306,7 +331,8 @@ final class AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shape.id }) else { return }
         registerUndo("Edit Shape")
-        rows[rowIdx].shapes[shapeIdx] = shape
+        let baseShape = rows[rowIdx].shapes[shapeIdx]
+        rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
         scheduleSave()
     }
 
@@ -317,6 +343,7 @@ final class AppState {
         for fileName in removedShape.allImageFileNames where !isImageFileReferenced(fileName) {
             screenshotImages.removeValue(forKey: fileName)
         }
+        LocaleService.removeShapeOverrides(&localeState, shapeId: id)
         if selectedShapeId == id {
             selectedShapeId = nil
         }
@@ -335,6 +362,7 @@ final class AppState {
         registerUndo(undoName)
         let copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: offsetX, offsetY: offsetY)
         rows[rowIdx].shapes.append(copy)
+        LocaleService.copyShapeOverrides(&localeState, fromId: shapeId, toId: copy.id)
         selectShape(copy.id, in: rows[rowIdx].id)
         scheduleSave()
         return copy.id
@@ -399,6 +427,125 @@ final class AppState {
         selectedRowId = nil
     }
 
+    // MARK: - Locales
+
+    func setActiveLocale(_ code: String) {
+        guard code != localeState.activeLocaleCode else { return }
+        guard localeState.locales.contains(where: { $0.code == code }) else { return }
+        localeState.activeLocaleCode = code
+        scheduleSave()
+    }
+
+    func cycleLocaleForward() {
+        let locales = localeState.locales
+        guard locales.count > 1 else { return }
+        guard let idx = locales.firstIndex(where: { $0.code == localeState.activeLocaleCode }) else { return }
+        let next = locales[(idx + 1) % locales.count]
+        setActiveLocale(next.code)
+    }
+
+    func cycleLocaleBackward() {
+        let locales = localeState.locales
+        guard locales.count > 1 else { return }
+        guard let idx = locales.firstIndex(where: { $0.code == localeState.activeLocaleCode }) else { return }
+        let prev = locales[(idx - 1 + locales.count) % locales.count]
+        setActiveLocale(prev.code)
+    }
+
+    func moveLocale(from source: IndexSet, to destination: Int) {
+        guard let fromIdx = source.first, fromIdx != 0, destination != 0 else { return }
+        registerUndo("Reorder Locale")
+        localeState.locales.move(fromOffsets: source, toOffset: destination)
+        scheduleSave()
+    }
+
+    /// All text shapes across all rows with their base text and override for the active locale.
+    func textShapesForTranslation() -> [(shape: CanvasShapeModel, rowLabel: String, overrideText: String?)] {
+        var results: [(shape: CanvasShapeModel, rowLabel: String, overrideText: String?)] = []
+        let code = localeState.activeLocaleCode
+        for row in rows {
+            for shape in row.shapes where shape.type == .text {
+                let overrideText = localeState.overrides[code]?[shape.id.uuidString]?.text
+                results.append((shape: shape, rowLabel: row.label, overrideText: overrideText))
+            }
+        }
+        return results
+    }
+
+    /// Translation progress for a locale (defaults to active locale).
+    func translationProgress(for localeCode: String? = nil) -> (translated: Int, total: Int) {
+        let code = localeCode ?? localeState.activeLocaleCode
+        let textShapes = allTextShapes()
+        let total = textShapes.count
+        guard total > 0 else { return (0, 0) }
+
+        if code == localeState.baseLocaleCode {
+            return (total, total)
+        }
+
+        let overrides = localeState.overrides[code] ?? [:]
+        let translated = textShapes.reduce(into: 0) { count, shape in
+            let key = shape.id.uuidString
+            if let text = overrides[key]?.text,
+               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                count += 1
+            }
+        }
+        return (translated, total)
+    }
+
+    private var translationUndoTask: DispatchWorkItem?
+    private var translationBaseLocaleState: LocaleState?
+
+    func updateTranslationText(shapeId: UUID, text: String) {
+        let code = localeState.activeLocaleCode
+        guard code != localeState.baseLocaleCode else { return }
+
+        // Capture undo state only at the start of a translation editing sequence
+        if translationBaseLocaleState == nil {
+            translationBaseLocaleState = localeState
+        }
+
+        let key = shapeId.uuidString
+        var override = localeState.overrides[code]?[key] ?? ShapeLocaleOverride()
+        override.text = text.isEmpty ? nil : text
+        LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override.isEmpty ? nil : override)
+        scheduleSave()
+
+        // Debounce undo registration so rapid keystrokes collapse into one entry
+        translationUndoTask?.cancel()
+        guard let savedBase = translationBaseLocaleState else { return }
+        let task = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.registerUndoWithBase("Edit Translation", base: self.rows, baseLocaleState: savedBase)
+            self.translationBaseLocaleState = nil
+        }
+        translationUndoTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: task)
+    }
+
+    func resetLocaleOverride(shapeId: UUID) {
+        registerUndo("Reset Override")
+        LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
+        scheduleSave()
+    }
+
+    func addLocale(_ locale: LocaleDefinition) {
+        guard !localeState.locales.contains(where: { $0.code == locale.code }) else { return }
+        registerUndo("Add Locale")
+        LocaleService.addLocale(&localeState, locale: locale)
+        localeState.activeLocaleCode = locale.code
+        scheduleSave()
+    }
+
+    func removeLocale(_ code: String) {
+        guard code != localeState.baseLocaleCode else { return }
+        guard localeState.locales.contains(where: { $0.code == code }) else { return }
+        registerUndo("Remove Locale")
+        LocaleService.removeLocale(&localeState, code: code)
+        scheduleSave()
+    }
+
     // MARK: - Clipboard
 
     var clipboard: CanvasShapeModel?
@@ -414,6 +561,7 @@ final class AppState {
         registerUndo("Paste Shape")
         let pasted = source.duplicated(offsetX: 20, offsetY: 20)
         rows[rowIdx].shapes.append(pasted)
+        LocaleService.copyShapeOverrides(&localeState, fromId: source.id, toId: pasted.id)
         selectShape(pasted.id, in: rows[rowIdx].id)
         scheduleSave()
     }
@@ -506,8 +654,10 @@ final class AppState {
     private func loadRowsForProject(_ id: UUID) {
         if let data = PersistenceService.loadProject(id) {
             rows = data.rows
+            localeState = data.localeState ?? .default
         } else {
             rows = [makeDefaultRow()]
+            localeState = .default
         }
         selectRow(rows.first?.id)
     }
@@ -533,6 +683,12 @@ final class AppState {
             }
         }
         return nil
+    }
+
+    private func allTextShapes() -> [CanvasShapeModel] {
+        rows.flatMap { row in
+            row.shapes.filter { $0.type == .text }
+        }
     }
 
     private func isImageFileReferenced(_ fileName: String) -> Bool {

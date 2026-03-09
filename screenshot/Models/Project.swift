@@ -17,4 +17,5 @@ struct ProjectIndex: Codable {
 
 struct ProjectData: Codable {
     var rows: [ScreenshotRow]
+    var localeState: LocaleState?
 }

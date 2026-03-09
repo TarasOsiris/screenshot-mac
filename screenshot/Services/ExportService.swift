@@ -21,42 +21,58 @@ struct ExportService {
         to folderURL: URL,
         format: ExportImageFormat = .png,
         scale: CGFloat = 1.0,
-        screenshotImages: [String: NSImage] = [:]
+        screenshotImages: [String: NSImage] = [:],
+        localeState: LocaleState = .default
     ) throws -> URL {
         let rootName = sanitizedRootFolderName(projectName)
         let rootFolder = folderURL.appendingPathComponent(rootName)
         try FileManager.default.createDirectory(at: rootFolder, withIntermediateDirectories: true)
 
-        let multiRow = rows.count > 1
-        var usedFolderNames: [String: Int] = [:]
+        let multiLocale = localeState.locales.count > 1
+        let localesToExport = multiLocale ? localeState.locales : [localeState.locales.first ?? LocaleDefinition(code: "en", label: "English")]
         let exportScale = max(0.1, scale)
 
-        for row in rows {
-            let destFolder: URL
-            if multiRow {
-                let baseName = exportFolderName(for: row)
-                let count = usedFolderNames[baseName, default: 0]
-                usedFolderNames[baseName] = count + 1
-                let folderName = count == 0 ? baseName : "\(baseName) (\(count + 1))"
-                destFolder = rootFolder.appendingPathComponent(folderName)
-                try FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
+        for locale in localesToExport {
+            let localeFolder: URL
+            if multiLocale {
+                localeFolder = rootFolder.appendingPathComponent(locale.code)
+                try FileManager.default.createDirectory(at: localeFolder, withIntermediateDirectories: true)
             } else {
-                destFolder = rootFolder
+                localeFolder = rootFolder
             }
 
-            for (index, _) in row.templates.enumerated() {
-                guard let imageData = renderTemplateData(
-                    index: index,
-                    row: row,
-                    format: format,
-                    scale: exportScale,
-                    screenshotImages: screenshotImages
-                ) else {
-                    throw ExportError.renderFailed
+            let multiRow = rows.count > 1
+            var usedFolderNames: [String: Int] = [:]
+
+            for row in rows {
+                let destFolder: URL
+                if multiRow {
+                    let baseName = exportFolderName(for: row)
+                    let count = usedFolderNames[baseName, default: 0]
+                    usedFolderNames[baseName] = count + 1
+                    let folderName = count == 0 ? baseName : "\(baseName) (\(count + 1))"
+                    destFolder = localeFolder.appendingPathComponent(folderName)
+                    try FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
+                } else {
+                    destFolder = localeFolder
                 }
-                let filename = "screenshot-\(index + 1).\(format.fileExtension)"
-                let fileURL = destFolder.appendingPathComponent(filename)
-                try imageData.write(to: fileURL)
+
+                for (index, _) in row.templates.enumerated() {
+                    guard let imageData = renderTemplateData(
+                        index: index,
+                        row: row,
+                        format: format,
+                        scale: exportScale,
+                        screenshotImages: screenshotImages,
+                        localeCode: locale.code,
+                        localeState: localeState
+                    ) else {
+                        throw ExportError.renderFailed
+                    }
+                    let filename = "screenshot-\(index + 1).\(format.fileExtension)"
+                    let fileURL = destFolder.appendingPathComponent(filename)
+                    try imageData.write(to: fileURL)
+                }
             }
         }
 
@@ -92,9 +108,11 @@ struct ExportService {
         row: ScreenshotRow,
         format: ExportImageFormat,
         scale: CGFloat,
-        screenshotImages: [String: NSImage] = [:]
+        screenshotImages: [String: NSImage] = [:],
+        localeCode: String? = nil,
+        localeState: LocaleState = .default
     ) -> Data? {
-        let image = renderTemplateImage(index: index, row: row, scale: scale, screenshotImages: screenshotImages)
+        let image = renderTemplateImage(index: index, row: row, scale: scale, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
         switch format {
         case .png:
             return pngData(from: image)
@@ -104,10 +122,16 @@ struct ExportService {
     }
 
     @MainActor
-    static func renderTemplateImage(index: Int, row: ScreenshotRow, scale: CGFloat = 1.0, screenshotImages: [String: NSImage] = [:]) -> NSImage {
+    static func renderTemplateImage(index: Int, row: ScreenshotRow, scale: CGFloat = 1.0, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default) -> NSImage {
         let tLeft = CGFloat(index) * row.templateWidth
-        let visibleShapes = row.visibleShapes(forTemplateAt: index)
-            .map { normalizeDeviceAspectIfNeeded($0) }
+        let rawShapes = row.visibleShapes(forTemplateAt: index)
+        let resolvedShapes: [CanvasShapeModel]
+        if let localeCode {
+            resolvedShapes = rawShapes.map { LocaleService.resolveShape($0, localeCode: localeCode, localeState: localeState) }
+        } else {
+            resolvedShapes = rawShapes
+        }
+        let visibleShapes = resolvedShapes.map { normalizeDeviceAspectIfNeeded($0) }
 
         let view = ZStack {
             row.effectiveBackgroundFill(forTemplateAt: index)

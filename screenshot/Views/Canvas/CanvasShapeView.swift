@@ -138,12 +138,15 @@ struct CanvasShapeView: View {
             if isEditingText {
                 textEditor
             } else {
-                Text(shape.text ?? "")
+                let rawText = shape.text ?? ""
+                let showPlaceholder = showsEditorHelpers && rawText.isEmpty
+                let displayText = showPlaceholder ? "Text" : rawText
+                Text(displayText)
                     .font(resolvedFont(size: shape.fontSize ?? 72, weight: fontWeight(shape.fontWeight ?? 700)))
-                    .italic(shape.italic ?? false)
+                    .italic(showPlaceholder ? true : (shape.italic ?? false))
                     .tracking(shape.letterSpacing ?? 0)
                     .lineSpacing(shape.lineSpacing ?? 0)
-                    .foregroundStyle(shape.color)
+                    .foregroundStyle(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
                     .multilineTextAlignment(shape.textAlign.textAlignment)
                     .frame(width: effectiveW, height: effectiveH)
                     .scaleEffect(displayScale, anchor: .topLeading)

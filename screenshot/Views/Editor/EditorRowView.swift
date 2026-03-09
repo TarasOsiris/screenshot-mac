@@ -83,8 +83,8 @@ struct EditorRowView: View {
                             }
                         }
 
-                        // Shared shapes layer
-                        ForEach(row.activeShapes) { shape in
+                        // Shared shapes layer (resolved for active locale)
+                        ForEach(LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)) { shape in
                             CanvasShapeView(
                                 shape: shape,
                                 displayScale: ds,
@@ -252,7 +252,6 @@ struct EditorRowView: View {
             get: {
                 guard let ri = state.rows.firstIndex(where: { $0.id == rowId }),
                       templateIndex < state.rows[ri].templates.count else {
-                    assertionFailure("safeTemplateBinding: stale row/template index")
                     return Self.placeholderTemplate
                 }
                 return state.rows[ri].templates[templateIndex]

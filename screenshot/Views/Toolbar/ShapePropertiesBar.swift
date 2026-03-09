@@ -31,9 +31,21 @@ struct ShapePropertiesBar: View {
         return (ri, si)
     }
 
+    /// The selected shape with locale overrides applied (for display).
+    private func resolvedShape(at rowIndex: Int, shapeIdx: Int) -> CanvasShapeModel {
+        let base = state.rows[rowIndex].shapes[shapeIdx]
+        return LocaleService.resolveShape(base, localeState: state.localeState)
+    }
+
+    /// Whether the selected shape has any locale override for the active locale.
+    private var hasLocaleOverride: Bool {
+        guard let shapeId = state.selectedShapeId, !state.localeState.isBaseLocale else { return false }
+        return state.localeState.hasOverride(shapeId: shapeId)
+    }
+
     var body: some View {
         if let rowIndex, let shapeIdx = shapeIndex {
-            let shape = state.rows[rowIndex].shapes[shapeIdx]
+            let shape = resolvedShape(at: rowIndex, shapeIdx: shapeIdx)
             let shapeId = shape.id
 
             WrappingHStack(spacing: 6, lineSpacing: 6) {
@@ -143,6 +155,11 @@ struct ShapePropertiesBar: View {
 
                 // Text properties
                 if shape.type == .text {
+                    // Override indicator for non-base locale
+                    if !state.localeState.isBaseLocale && hasLocaleOverride {
+                        overrideIndicator(shapeId: shapeId)
+                    }
+
                     separator
 
                     FontPicker(selection: shapeBinding(shapeId, \.fontName, default: ""))
@@ -155,13 +172,14 @@ struct ShapePropertiesBar: View {
                         TextField("", value: Binding(
                             get: {
                                 guard let i = idx(for: shapeId) else { return Int(Self.defaultFontSize) }
-                                return Int(state.rows[i.row].shapes[i.shape].fontSize ?? Self.defaultFontSize)
+                                return Int(resolvedShape(at: i.row, shapeIdx: i.shape).fontSize ?? Self.defaultFontSize)
                             },
                             set: { newValue in
                                 let clamped = min(max(CGFloat(newValue), Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
                                 guard let i = idx(for: shapeId) else { return }
-                                state.rows[i.row].shapes[i.shape].fontSize = clamped
-                                state.scheduleSave()
+                                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                                resolved.fontSize = clamped
+                                state.updateShape(resolved)
                             }
                         ), format: .number)
                         .frame(width: 40)
@@ -259,18 +277,20 @@ struct ShapePropertiesBar: View {
     }
 
     /// Creates a Binding that always resolves the shape index by ID at access time.
+    /// Reads the resolved (locale-aware) value; writes go through `updateShape` which handles locale splitting.
     private func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> where T: Sendable {
         Binding(
             get: {
                 guard let i = idx(for: shapeId) else {
                     return CanvasShapeModel.placeholder[keyPath: keyPath]
                 }
-                return state.rows[i.row].shapes[i.shape][keyPath: keyPath]
+                return resolvedShape(at: i.row, shapeIdx: i.shape)[keyPath: keyPath]
             },
             set: { newValue in
                 guard let i = idx(for: shapeId) else { return }
-                state.rows[i.row].shapes[i.shape][keyPath: keyPath] = newValue
-                state.scheduleSave()
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                resolved[keyPath: keyPath] = newValue
+                state.updateShape(resolved)
             }
         )
     }
@@ -280,12 +300,13 @@ struct ShapePropertiesBar: View {
         Binding(
             get: {
                 guard let i = idx(for: shapeId) else { return defaultValue }
-                return state.rows[i.row].shapes[i.shape][keyPath: keyPath] ?? defaultValue
+                return resolvedShape(at: i.row, shapeIdx: i.shape)[keyPath: keyPath] ?? defaultValue
             },
             set: { newValue in
                 guard let i = idx(for: shapeId) else { return }
-                state.rows[i.row].shapes[i.shape][keyPath: keyPath] = newValue
-                state.scheduleSave()
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                resolved[keyPath: keyPath] = newValue
+                state.updateShape(resolved)
             }
         )
     }
@@ -302,6 +323,25 @@ struct ShapePropertiesBar: View {
             Text(label)
                 .foregroundStyle(.secondary)
             content()
+        }
+    }
+
+    private func overrideIndicator(shapeId: UUID) -> some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(Color.accentColor)
+                .frame(width: 5, height: 5)
+            Text("Overridden")
+                .font(.system(size: 10))
+                .foregroundStyle(Color.accentColor)
+            Button {
+                state.resetLocaleOverride(shapeId: shapeId)
+            } label: {
+                Text("Reset")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color.accentColor.opacity(0.8))
+            }
+            .buttonStyle(.borderless)
         }
     }
 
