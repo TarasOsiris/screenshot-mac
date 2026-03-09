@@ -167,6 +167,25 @@ struct CanvasShapeModel: Identifiable, Codable {
         [screenshotFileName, imageFileName].compactMap { $0 }
     }
 
+    /// Axis-aligned bounding box accounting for rotation.
+    var aabb: (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
+        let cx = x + width / 2
+        let cy = y + height / 2
+        let hw = width / 2
+        let hh = height / 2
+
+        guard rotation != 0 else {
+            return (x, y, x + width, y + height)
+        }
+
+        let rad = rotation * .pi / 180
+        let cosA = abs(cos(rad))
+        let sinA = abs(sin(rad))
+        let newHW = hw * cosA + hh * sinA
+        let newHH = hw * sinA + hh * cosA
+        return (cx - newHW, cy - newHH, cx + newHW, cy + newHH)
+    }
+
     var deviceBodyColor: Color {
         get { deviceBodyColorData?.color ?? Color(red: 0.11, green: 0.11, blue: 0.12) }
         set { deviceBodyColorData = CodableColor(newValue) }

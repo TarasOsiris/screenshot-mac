@@ -14,7 +14,7 @@ enum AlignmentService {
         var proposed = draggedShape
         proposed.x += dragOffset.width
         proposed.y += dragOffset.height
-        let dragBB = aabb(for: proposed)
+        let dragBB = proposed.aabb
 
         let dragLeft = dragBB.minX
         let dragRight = dragBB.maxX
@@ -31,7 +31,7 @@ enum AlignmentService {
         var targetHorizontals: [(position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat)] = []
 
         for shape in otherShapes {
-            let bb = aabb(for: shape)
+            let bb = shape.aabb
             let cx = (bb.minX + bb.maxX) / 2
             let cy = (bb.minY + bb.maxY) / 2
             targetVerticals.append((bb.minX, bb.minY, bb.maxY))
@@ -112,22 +112,4 @@ enum AlignmentService {
         return (match.target.position - match.dragLine, match.target.position, match.target.rangeMin, match.target.rangeMax)
     }
 
-    /// Compute axis-aligned bounding box for a shape (accounts for rotation).
-    private static func aabb(for shape: CanvasShapeModel) -> (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
-        let cx = shape.x + shape.width / 2
-        let cy = shape.y + shape.height / 2
-        let hw = shape.width / 2
-        let hh = shape.height / 2
-
-        guard shape.rotation != 0 else {
-            return (shape.x, shape.y, shape.x + shape.width, shape.y + shape.height)
-        }
-
-        let rad = shape.rotation * .pi / 180
-        let cosA = abs(cos(rad))
-        let sinA = abs(sin(rad))
-        let newHW = hw * cosA + hh * sinA
-        let newHH = hw * sinA + hh * cosA
-        return (cx - newHW, cy - newHH, cx + newHW, cy + newHH)
-    }
 }

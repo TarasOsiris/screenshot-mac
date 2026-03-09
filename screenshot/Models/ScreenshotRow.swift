@@ -109,8 +109,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         let tLeft = CGFloat(index) * templateWidth
         let tRight = tLeft + templateWidth
         return activeShapes.filter { s in
-            let sRight = s.x + s.width
-            return sRight > tLeft && s.x < tRight
+            let bb = s.aabb
+            return bb.maxX > tLeft && bb.minX < tRight
         }
     }
 }

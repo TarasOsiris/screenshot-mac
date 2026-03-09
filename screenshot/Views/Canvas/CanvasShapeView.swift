@@ -139,13 +139,15 @@ struct CanvasShapeView: View {
                 textEditor
             } else {
                 Text(shape.text ?? "")
-                    .font(resolvedFont(size: (shape.fontSize ?? 72) * displayScale, weight: fontWeight(shape.fontWeight ?? 700)))
+                    .font(resolvedFont(size: shape.fontSize ?? 72, weight: fontWeight(shape.fontWeight ?? 700)))
                     .italic(shape.italic ?? false)
-                    .tracking((shape.letterSpacing ?? 0) * displayScale)
-                    .lineSpacing((shape.lineSpacing ?? 0) * displayScale)
+                    .tracking(shape.letterSpacing ?? 0)
+                    .lineSpacing(shape.lineSpacing ?? 0)
                     .foregroundStyle(shape.color)
                     .multilineTextAlignment(shape.textAlign.textAlignment)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(width: effectiveW, height: effectiveH)
+                    .scaleEffect(displayScale, anchor: .topLeading)
+                    .frame(width: displayW, height: displayH, alignment: .topLeading)
             }
 
         case .image:
@@ -156,7 +158,7 @@ struct CanvasShapeView: View {
                     .aspectRatio(contentMode: .fill)
                     .frame(width: displayW, height: displayH)
                     .clipShape(RoundedRectangle(cornerRadius: shape.borderRadius * displayScale))
-            } else {
+            } else if showsEditorHelpers {
                 imageDropPlaceholder {
                     RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
                         .fill(Color.gray.opacity(0.3))
@@ -169,7 +171,7 @@ struct CanvasShapeView: View {
                     .resizable()
                     .interpolation(.high)
                     .aspectRatio(contentMode: .fit)
-            } else {
+            } else if showsEditorHelpers {
                 RoundedRectangle(cornerRadius: 4 * displayScale)
                     .fill(Color.gray.opacity(0.2))
                     .overlay {
@@ -180,24 +182,17 @@ struct CanvasShapeView: View {
             }
 
         case .device:
-            if screenshotImage != nil {
-                DeviceFrameView(
-                    category: shape.deviceCategory ?? .iphone,
-                    bodyColor: shape.deviceBodyColor,
-                    width: displayW,
-                    height: displayH,
-                    screenshotImage: screenshotImage
-                )
+            let frame = DeviceFrameView(
+                category: shape.deviceCategory ?? .iphone,
+                bodyColor: shape.deviceBodyColor,
+                width: displayW,
+                height: displayH,
+                screenshotImage: screenshotImage
+            )
+            if screenshotImage == nil && showsEditorHelpers {
+                imageDropPlaceholder { frame }
             } else {
-                imageDropPlaceholder {
-                    DeviceFrameView(
-                        category: shape.deviceCategory ?? .iphone,
-                        bodyColor: shape.deviceBodyColor,
-                        width: displayW,
-                        height: displayH,
-                        screenshotImage: nil
-                    )
-                }
+                frame
             }
         }
     }
@@ -514,56 +509,45 @@ struct CanvasShapeView: View {
 
     @ViewBuilder
     private func imageDropPlaceholder<Background: View>(@ViewBuilder background: () -> Background) -> some View {
-        let content = ZStack {
+        let iconSize = max(14, 20 * displayScale)
+        let labelSize = max(10, 10 * displayScale)
+        let spacing = max(4, 4 * displayScale)
+        let padding = max(10, 12 * displayScale)
+        let cr = max(8, 8 * displayScale)
+
+        ZStack {
             background()
 
-            if showsEditorHelpers {
-                let iconSize = max(14, 20 * displayScale)
-                let labelSize = max(10, 10 * displayScale)
-                let spacing = max(4, 4 * displayScale)
-                let padding = max(10, 12 * displayScale)
-                let cr = max(8, 8 * displayScale)
-
-                Button {
-                    isPickerPresented = true
-                } label: {
-                    VStack(spacing: spacing) {
-                        Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
-                            .font(.system(size: iconSize))
-                        Text(isDropTargeted ? "Drop image" : "Add image")
-                            .font(.system(size: labelSize, weight: .medium))
-                    }
-                    .foregroundStyle(.primary)
-                    .padding(padding)
-                    .background(
-                        .thinMaterial.opacity(isDropTargeted ? 0.9 : 1.0),
-                        in: RoundedRectangle(cornerRadius: cr, style: .continuous)
-                    )
+            Button {
+                isPickerPresented = true
+            } label: {
+                VStack(spacing: spacing) {
+                    Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
+                        .font(.system(size: iconSize))
+                    Text(isDropTargeted ? "Drop image" : "Add image")
+                        .font(.system(size: labelSize, weight: .medium))
                 }
-                .buttonStyle(.plain)
-                .focusable(false)
-                .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
+                .foregroundStyle(.primary)
+                .padding(padding)
+                .background(
+                    .thinMaterial.opacity(isDropTargeted ? 0.9 : 1.0),
+                    in: RoundedRectangle(cornerRadius: cr, style: .continuous)
+                )
+            }
+            .buttonStyle(.plain)
+            .focusable(false)
+            .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
 
-                if isDropTargeted {
-                    RoundedRectangle(cornerRadius: cr, style: .continuous)
-                        .fill(Color.accentColor.opacity(0.12))
-                    RoundedRectangle(cornerRadius: cr, style: .continuous)
-                        .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
-                }
-            } else {
-                Image(systemName: "photo")
-                    .font(.system(size: 24 * displayScale))
-                    .foregroundStyle(.secondary)
+            if isDropTargeted {
+                RoundedRectangle(cornerRadius: cr, style: .continuous)
+                    .fill(Color.accentColor.opacity(0.12))
+                RoundedRectangle(cornerRadius: cr, style: .continuous)
+                    .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
             }
         }
         .frame(width: displayW, height: displayH)
-
-        if showsEditorHelpers {
-            content.onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
-                handleDrop(providers)
-            }
-        } else {
-            content
+        .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
+            handleDrop(providers)
         }
     }
 
@@ -597,7 +581,7 @@ struct CanvasShapeView: View {
     }
 
     private var textEditor: some View {
-        let fontSize = (shape.fontSize ?? 72) * displayScale
+        let fontSize = shape.fontSize ?? 72
         let weight = fontWeight(shape.fontWeight ?? 700)
         let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight)
         return InlineTextEditor(
@@ -607,7 +591,9 @@ struct CanvasShapeView: View {
             alignment: shape.textAlign.nsTextAlignment,
             onCommit: { commitTextEdit() }
         )
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(width: effectiveW, height: effectiveH)
+        .scaleEffect(displayScale, anchor: .topLeading)
+        .frame(width: displayW, height: displayH, alignment: .topLeading)
     }
 
     private func commitTextEdit() {
