@@ -6,23 +6,14 @@ struct ShapeToolbar: View {
 
     var body: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 2), spacing: 6) {
-            shapeButton("rectangle.fill", label: "Rectangle") {
-                addShape(.rectangle)
-            }
-            shapeButton("circle.fill", label: "Circle") {
-                addShape(.circle)
-            }
-            shapeButton("textformat", label: "Text") {
-                addShape(.text)
-            }
-            shapeButton("photo", label: "Image") {
-                addShape(.image)
-            }
-            shapeButton("iphone", label: "Device") {
-                addShape(.device)
-            }
-            shapeButton("chevron.left.forwardslash.chevron.right", label: "SVG") {
-                isSvgDialogPresented = true
+            ForEach(ShapeType.allCases, id: \.self) { type in
+                shapeButton(type) {
+                    if type == .svg {
+                        isSvgDialogPresented = true
+                    } else {
+                        addShape(type)
+                    }
+                }
             }
         }
         .sheet(isPresented: $isSvgDialogPresented) {
@@ -32,16 +23,16 @@ struct ShapeToolbar: View {
         }
     }
 
-    private func shapeButton(_ icon: String, label: String, action: @escaping () -> Void) -> some View {
+    private func shapeButton(_ type: ShapeType, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Label(label, systemImage: icon)
+            Label(type.label, systemImage: type.icon)
                 .labelStyle(.titleAndIcon)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
-        .help("Add \(label)")
+        .help("Add \(type.label)")
     }
 
     private func addShape(_ type: ShapeType) {

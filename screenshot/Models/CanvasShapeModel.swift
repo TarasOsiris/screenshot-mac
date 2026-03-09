@@ -8,6 +8,28 @@ enum ShapeType: String, Codable, CaseIterable {
     case image
     case device
     case svg
+
+    var icon: String {
+        switch self {
+        case .rectangle: "rectangle.fill"
+        case .circle: "circle.fill"
+        case .text: "textformat"
+        case .image: "photo"
+        case .device: "iphone"
+        case .svg: "chevron.left.forwardslash.chevron.right"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .rectangle: "Rectangle"
+        case .circle: "Circle"
+        case .text: "Text"
+        case .image: "Image"
+        case .device: "Device"
+        case .svg: "SVG"
+        }
+    }
 }
 
 enum DeviceCategory: String, Codable, CaseIterable {
@@ -97,6 +119,9 @@ struct CanvasShapeModel: Identifiable, Codable {
     var svgContent: String?
     var svgUseColor: Bool?
 
+    // Clipping
+    var clipToTemplate: Bool?
+
     init(
         id: UUID = UUID(),
         type: ShapeType,
@@ -121,7 +146,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         deviceBodyColor: Color? = nil,
         screenshotFileName: String? = nil,
         svgContent: String? = nil,
-        svgUseColor: Bool? = nil
+        svgUseColor: Bool? = nil,
+        clipToTemplate: Bool? = nil
     ) {
         self.id = id
         self.type = type
@@ -147,6 +173,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.screenshotFileName = screenshotFileName
         self.svgContent = svgContent
         self.svgUseColor = svgUseColor
+        self.clipToTemplate = clipToTemplate
     }
 
     /// Used as a fallback when a Binding's get is called after the shape has been removed.
@@ -205,7 +232,8 @@ struct CanvasShapeModel: Identifiable, Codable {
             deviceBodyColor: deviceBodyColorData?.color,
             screenshotFileName: screenshotFileName,
             svgContent: svgContent,
-            svgUseColor: svgUseColor
+            svgUseColor: svgUseColor,
+            clipToTemplate: clipToTemplate
         )
     }
 

@@ -181,6 +181,9 @@ private struct ManageLocalesSheet: View {
                                     .font(.system(size: 11))
                             }
                             .buttonStyle(.borderless)
+                            .focusable(false)
+                            .foregroundStyle(.red.opacity(0.8))
+                            .help("Delete locale")
                         }
                     }
                 }

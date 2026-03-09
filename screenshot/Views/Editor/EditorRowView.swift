@@ -53,7 +53,7 @@ struct EditorRowView: View {
                     rowActionButton("doc.on.doc", tooltip: "Duplicate row", disabled: false) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
                     }
-                    rowActionButton("trash", tooltip: "Delete row", disabled: !canDelete) {
+                    rowActionButton("trash", tooltip: "Delete row", disabled: !canDelete, isDestructive: true) {
                         isDeletingRow = true
                     }
                 }
@@ -85,7 +85,7 @@ struct EditorRowView: View {
 
                         // Shared shapes layer (resolved for active locale)
                         ForEach(LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)) { shape in
-                            CanvasShapeView(
+                            let shapeView = CanvasShapeView(
                                 shape: shape,
                                 displayScale: ds,
                                 isSelected: shape.id == state.selectedShapeId,
@@ -116,6 +116,18 @@ struct EditorRowView: View {
                                     state.duplicateShapeForOptionDrag(shapeId)
                                 }
                             )
+
+                            if shape.clipToTemplate == true {
+                                let ti = row.owningTemplateIndex(for: shape)
+                                shapeView
+                                    .mask {
+                                        Rectangle()
+                                            .frame(width: dw, height: dh)
+                                            .position(x: CGFloat(ti) * dw + dw / 2, y: dh / 2)
+                                    }
+                            } else {
+                                shapeView
+                            }
                         }
 
                         // Alignment guide lines
@@ -264,7 +276,13 @@ struct EditorRowView: View {
         )
     }
 
-    private func rowActionButton(_ icon: String, tooltip: String, disabled: Bool, action: @escaping () -> Void) -> some View {
+    private func rowActionButton(
+        _ icon: String,
+        tooltip: String,
+        disabled: Bool,
+        isDestructive: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 10))
@@ -273,7 +291,11 @@ struct EditorRowView: View {
         }
         .buttonStyle(.borderless)
         .focusable(false)
-        .foregroundStyle(disabled ? .tertiary : .secondary)
+        .foregroundStyle(
+            disabled
+            ? AnyShapeStyle(.tertiary)
+            : (isDestructive ? AnyShapeStyle(Color.red.opacity(0.8)) : AnyShapeStyle(.secondary))
+        )
         .disabled(disabled)
         .help(tooltip)
     }

@@ -105,10 +105,21 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         CGFloat(index) * templateWidth + templateWidth / 2
     }
 
+    /// Returns the template index a shape belongs to, based on its center X (rotation-invariant).
+    func owningTemplateIndex(for shape: CanvasShapeModel) -> Int {
+        let centerX = shape.x + shape.width / 2
+        let index = Int(floor(centerX / templateWidth))
+        return max(0, min(index, templates.count - 1))
+    }
+
     func visibleShapes(forTemplateAt index: Int) -> [CanvasShapeModel] {
         let tLeft = CGFloat(index) * templateWidth
         let tRight = tLeft + templateWidth
         return activeShapes.filter { s in
+            // Shapes clipped to their template only appear in the owning template
+            if s.clipToTemplate == true {
+                return owningTemplateIndex(for: s) == index
+            }
             let bb = s.aabb
             return bb.maxX > tLeft && bb.minX < tRight
         }

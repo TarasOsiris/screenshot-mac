@@ -436,20 +436,16 @@ final class AppState {
         scheduleSave()
     }
 
-    func cycleLocaleForward() {
-        let locales = localeState.locales
-        guard locales.count > 1 else { return }
-        guard let idx = locales.firstIndex(where: { $0.code == localeState.activeLocaleCode }) else { return }
-        let next = locales[(idx + 1) % locales.count]
-        setActiveLocale(next.code)
-    }
+    func cycleLocaleForward() { cycleLocale(forward: true) }
+    func cycleLocaleBackward() { cycleLocale(forward: false) }
 
-    func cycleLocaleBackward() {
+    private func cycleLocale(forward: Bool) {
         let locales = localeState.locales
         guard locales.count > 1 else { return }
         guard let idx = locales.firstIndex(where: { $0.code == localeState.activeLocaleCode }) else { return }
-        let prev = locales[(idx - 1 + locales.count) % locales.count]
-        setActiveLocale(prev.code)
+        let offset = forward ? 1 : locales.count - 1
+        let target = locales[(idx + offset) % locales.count]
+        setActiveLocale(target.code)
     }
 
     func moveLocale(from source: IndexSet, to destination: Int) {
@@ -465,7 +461,7 @@ final class AppState {
         let code = localeState.activeLocaleCode
         for row in rows {
             for shape in row.shapes where shape.type == .text {
-                let overrideText = localeState.overrides[code]?[shape.id.uuidString]?.text
+                let overrideText = localeState.override(forCode: code, shapeId: shape.id)?.text
                 results.append((shape: shape, rowLabel: row.label, overrideText: overrideText))
             }
         }
@@ -483,10 +479,8 @@ final class AppState {
             return (total, total)
         }
 
-        let overrides = localeState.overrides[code] ?? [:]
         let translated = textShapes.reduce(into: 0) { count, shape in
-            let key = shape.id.uuidString
-            if let text = overrides[key]?.text,
+            if let text = localeState.override(forCode: code, shapeId: shape.id)?.text,
                !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 count += 1
             }

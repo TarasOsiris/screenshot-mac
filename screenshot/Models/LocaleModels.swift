@@ -39,7 +39,12 @@ struct LocaleState: Codable, Equatable {
 
     /// Check if a shape has any override for the active locale.
     func hasOverride(shapeId: UUID) -> Bool {
-        overrides[activeLocaleCode]?[shapeId.uuidString] != nil
+        override(forCode: activeLocaleCode, shapeId: shapeId) != nil
+    }
+
+    /// Get the override for a shape in a specific locale.
+    func override(forCode code: String, shapeId: UUID) -> ShapeLocaleOverride? {
+        overrides[code]?[shapeId.uuidString]
     }
 
 }

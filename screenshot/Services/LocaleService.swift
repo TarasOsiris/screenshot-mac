@@ -16,8 +16,7 @@ enum LocaleService {
     /// Resolve a single shape for a specific locale code.
     static func resolveShape(_ shape: CanvasShapeModel, localeCode: String, localeState: LocaleState) -> CanvasShapeModel {
         guard localeCode != localeState.baseLocaleCode else { return shape }
-        guard let overrides = localeState.overrides[localeCode],
-              let override = overrides[shape.id.uuidString] else { return shape }
+        guard let override = localeState.override(forCode: localeCode, shapeId: shape.id) else { return shape }
         return applyOverride(override, to: shape)
     }
 
@@ -67,9 +66,7 @@ enum LocaleService {
             state.overrides[code, default: [:]][key] = override
         } else {
             state.overrides[code]?.removeValue(forKey: key)
-            if state.overrides[code]?.isEmpty == true {
-                state.overrides.removeValue(forKey: code)
-            }
+            cleanupEmptyOverrides(&state, forCode: code)
         }
     }
 
@@ -78,9 +75,13 @@ enum LocaleService {
         let key = shapeId.uuidString
         for localeCode in state.overrides.keys {
             state.overrides[localeCode]?.removeValue(forKey: key)
-            if state.overrides[localeCode]?.isEmpty == true {
-                state.overrides.removeValue(forKey: localeCode)
-            }
+            cleanupEmptyOverrides(&state, forCode: localeCode)
+        }
+    }
+
+    private static func cleanupEmptyOverrides(_ state: inout LocaleState, forCode code: String) {
+        if state.overrides[code]?.isEmpty == true {
+            state.overrides.removeValue(forKey: code)
         }
     }
 
