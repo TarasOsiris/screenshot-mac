@@ -290,9 +290,13 @@ private struct LocalePresetsSheet: View {
 private struct TranslationOverviewSheet: View {
     @Bindable var state: AppState
     @Environment(\.dismiss) private var dismiss
+    @State private var showUntranslatedOnly = false
 
     var body: some View {
-        let items = state.textShapesForTranslation()
+        let allItems = state.textShapesForTranslation()
+        let items = showUntranslatedOnly
+            ? allItems.filter { ($0.overrideText ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            : allItems
         let activeLabel = state.localeState.activeLocaleLabel
         let progress = state.translationProgress()
 
@@ -302,15 +306,29 @@ private struct TranslationOverviewSheet: View {
                 .padding(.top, 16)
                 .padding(.bottom, 4)
 
-            if !items.isEmpty {
-                Text("\(progress.translated) of \(progress.total) text layers translated")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .padding(.bottom, 8)
+            if !allItems.isEmpty {
+                HStack(alignment: .center, spacing: 10) {
+                    Text("\(progress.translated) of \(progress.total) text layers translated")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    Toggle("Untranslated only", isOn: $showUntranslatedOnly)
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                        .font(.system(size: 11))
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
             }
 
-            if items.isEmpty {
+            if allItems.isEmpty {
                 Text("No text shapes in this project.")
+                    .foregroundStyle(.secondary)
+                    .frame(maxHeight: .infinity)
+            } else if items.isEmpty {
+                Text("All text layers are translated.")
                     .foregroundStyle(.secondary)
                     .frame(maxHeight: .infinity)
             } else {
@@ -337,6 +355,10 @@ private struct TranslationOverviewSheet: View {
                             localeLabel: activeLabel,
                             onUpdate: { newText in
                                 state.updateTranslationText(shapeId: item.shape.id, text: newText)
+                            },
+                            onJump: {
+                                state.focusShapeOnCanvas(shapeId: item.shape.id, rowId: item.rowId)
+                                dismiss()
                             }
                         )
                     }
@@ -362,14 +384,23 @@ private struct TranslationRow: View {
     @State private var overrideText: String
     let localeLabel: String
     let onUpdate: (String) -> Void
+    let onJump: () -> Void
 
-    init(baseText: String, rowLabel: String, overrideText: String, localeLabel: String, onUpdate: @escaping (String) -> Void) {
+    init(
+        baseText: String,
+        rowLabel: String,
+        overrideText: String,
+        localeLabel: String,
+        onUpdate: @escaping (String) -> Void,
+        onJump: @escaping () -> Void
+    ) {
         self.baseText = baseText
         self.rowLabel = rowLabel
         self.initialOverrideText = overrideText
         self._overrideText = State(initialValue: overrideText)
         self.localeLabel = localeLabel
         self.onUpdate = onUpdate
+        self.onJump = onJump
     }
 
     var body: some View {
@@ -417,6 +448,16 @@ private struct TranslationRow: View {
                     .disabled(overrideText.isEmpty)
 
                     Spacer()
+
+                    Button {
+                        onJump()
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help("Jump to canvas")
+                    .accessibilityLabel("Jump to canvas")
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

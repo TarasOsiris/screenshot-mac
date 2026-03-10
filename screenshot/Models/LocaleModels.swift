@@ -7,6 +7,13 @@ struct LocaleDefinition: Codable, Identifiable, Equatable {
 }
 
 struct ShapeLocaleOverride: Codable, Equatable {
+    // Position & size (all shape types)
+    var x: CGFloat?
+    var y: CGFloat?
+    var width: CGFloat?
+    var height: CGFloat?
+
+    // Text properties (text shapes only)
     var text: String?
     var fontName: String?
     var fontSize: CGFloat?
@@ -17,7 +24,8 @@ struct ShapeLocaleOverride: Codable, Equatable {
     var lineSpacing: CGFloat?
 
     var isEmpty: Bool {
-        text == nil && fontName == nil && fontSize == nil && fontWeight == nil
+        x == nil && y == nil && width == nil && height == nil
+            && text == nil && fontName == nil && fontSize == nil && fontWeight == nil
             && textAlign == nil && italic == nil && letterSpacing == nil && lineSpacing == nil
     }
 }

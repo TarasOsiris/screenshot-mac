@@ -31,50 +31,60 @@ struct ContentView: View {
         VStack(spacing: 0) {
             LocaleBanner(state: state)
 
-            ScrollView(.vertical) {
-                LazyVStack(spacing: 0) {
-                    ForEach(state.rows) { row in
-                        EditorRowView(state: state, row: row)
-                        Divider()
-                    }
+            ScrollViewReader { proxy in
+                ScrollView(.vertical) {
+                    LazyVStack(spacing: 0) {
+                        ForEach(state.rows) { row in
+                            EditorRowView(state: state, row: row)
+                                .id(row.id)
+                            Divider()
+                        }
 
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            state.addRow()
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                state.addRow()
+                            }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 12))
+                                Text("Add Row")
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 16)
                         }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 12))
-                            Text("Add Row")
-                                .font(.system(size: 12, weight: .medium))
-                        }
-                        .foregroundStyle(.secondary)
-                        .padding(.vertical, 16)
+                        .buttonStyle(.borderless)
+                        .help("Add row")
                     }
-                    .buttonStyle(.borderless)
-                    .help("Add row")
                 }
-            }
-            .simultaneousGesture(
-                MagnificationGesture()
-                    .onChanged { value in
-                        let startLevel = gestureZoomStartLevel ?? state.zoomLevel
-                        if gestureZoomStartLevel == nil {
-                            gestureZoomStartLevel = startLevel
+                .simultaneousGesture(
+                    MagnificationGesture()
+                        .onChanged { value in
+                            let startLevel = gestureZoomStartLevel ?? state.zoomLevel
+                            if gestureZoomStartLevel == nil {
+                                gestureZoomStartLevel = startLevel
+                            }
+                            state.zoomLevel = min(
+                                ZoomConstants.max,
+                                max(ZoomConstants.min, startLevel * value)
+                            )
                         }
-                        state.zoomLevel = min(
-                            ZoomConstants.max,
-                            max(ZoomConstants.min, startLevel * value)
-                        )
+                        .onEnded { _ in
+                            gestureZoomStartLevel = nil
+                        }
+                )
+                .onChange(of: state.canvasFocusRequestNonce) { _, _ in
+                    guard let rowId = state.canvasFocusRowId else { return }
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        proxy.scrollTo(rowId, anchor: .center)
                     }
-                    .onEnded { _ in
-                        gestureZoomStartLevel = nil
-                    }
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .layoutPriority(0)
-            .background(Color(nsColor: .windowBackgroundColor))
+                    state.canvasFocusRowId = nil
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .layoutPriority(0)
+                .background(Color(nsColor: .windowBackgroundColor))
+            }
 
             // Shape properties bottom bar
             if state.selectedShapeId != nil {

@@ -27,32 +27,40 @@ enum LocaleService {
             return updated
         }
 
-        // Only text shapes have overridable properties
-        guard updated.type == .text else {
-            return updated
-        }
-
-        // Start from updated, restore base's text properties (overridable props stay on base)
+        // Start from updated, restore overridable properties to base values
         var baseResult = updated
-        baseResult.text = base.text
-        baseResult.fontName = base.fontName
-        baseResult.fontSize = base.fontSize
-        baseResult.fontWeight = base.fontWeight
-        baseResult.textAlign = base.textAlign
-        baseResult.italic = base.italic
-        baseResult.letterSpacing = base.letterSpacing
-        baseResult.lineSpacing = base.lineSpacing
+        baseResult.x = base.x
+        baseResult.y = base.y
+        baseResult.width = base.width
+        baseResult.height = base.height
 
-        // Build override from text property differences vs base
+        // Build override from position/size differences vs base
         var override = ShapeLocaleOverride()
-        if updated.text != base.text { override.text = updated.text }
-        if updated.fontName != base.fontName { override.fontName = updated.fontName }
-        if updated.fontSize != base.fontSize { override.fontSize = updated.fontSize }
-        if updated.fontWeight != base.fontWeight { override.fontWeight = updated.fontWeight }
-        if updated.textAlign != base.textAlign { override.textAlign = updated.textAlign }
-        if updated.italic != base.italic { override.italic = updated.italic }
-        if updated.letterSpacing != base.letterSpacing { override.letterSpacing = updated.letterSpacing }
-        if updated.lineSpacing != base.lineSpacing { override.lineSpacing = updated.lineSpacing }
+        if updated.x != base.x { override.x = updated.x }
+        if updated.y != base.y { override.y = updated.y }
+        if updated.width != base.width { override.width = updated.width }
+        if updated.height != base.height { override.height = updated.height }
+
+        // Text shapes also have text property overrides
+        if updated.type == .text {
+            baseResult.text = base.text
+            baseResult.fontName = base.fontName
+            baseResult.fontSize = base.fontSize
+            baseResult.fontWeight = base.fontWeight
+            baseResult.textAlign = base.textAlign
+            baseResult.italic = base.italic
+            baseResult.letterSpacing = base.letterSpacing
+            baseResult.lineSpacing = base.lineSpacing
+
+            if updated.text != base.text { override.text = updated.text }
+            if updated.fontName != base.fontName { override.fontName = updated.fontName }
+            if updated.fontSize != base.fontSize { override.fontSize = updated.fontSize }
+            if updated.fontWeight != base.fontWeight { override.fontWeight = updated.fontWeight }
+            if updated.textAlign != base.textAlign { override.textAlign = updated.textAlign }
+            if updated.italic != base.italic { override.italic = updated.italic }
+            if updated.letterSpacing != base.letterSpacing { override.letterSpacing = updated.letterSpacing }
+            if updated.lineSpacing != base.lineSpacing { override.lineSpacing = updated.lineSpacing }
+        }
 
         setShapeOverride(&localeState, shapeId: base.id, override: override.isEmpty ? nil : override)
         return baseResult
@@ -116,6 +124,10 @@ enum LocaleService {
 
     private static func applyOverride(_ override: ShapeLocaleOverride, to shape: CanvasShapeModel) -> CanvasShapeModel {
         var result = shape
+        if let x = override.x { result.x = x }
+        if let y = override.y { result.y = y }
+        if let width = override.width { result.width = width }
+        if let height = override.height { result.height = height }
         if let text = override.text { result.text = text }
         if let fontName = override.fontName { result.fontName = fontName }
         if let fontSize = override.fontSize { result.fontSize = fontSize }
