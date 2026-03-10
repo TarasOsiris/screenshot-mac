@@ -250,6 +250,49 @@ final class AppState {
         scheduleSave()
     }
 
+    func moveTemplateLeft(_ templateId: UUID, in rowId: UUID) {
+        guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }),
+              let templateIndex = rows[rowIndex].templates.firstIndex(where: { $0.id == templateId }),
+              templateIndex > 0 else { return }
+        moveTemplate(inRowAt: rowIndex, from: templateIndex, to: templateIndex - 1, undoName: "Move Screenshot Left")
+    }
+
+    func moveTemplateRight(_ templateId: UUID, in rowId: UUID) {
+        guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }),
+              let templateIndex = rows[rowIndex].templates.firstIndex(where: { $0.id == templateId }),
+              templateIndex < rows[rowIndex].templates.count - 1 else { return }
+        moveTemplate(inRowAt: rowIndex, from: templateIndex, to: templateIndex + 1, undoName: "Move Screenshot Right")
+    }
+
+    private func moveTemplate(inRowAt rowIndex: Int, from sourceIndex: Int, to destinationIndex: Int, undoName: String) {
+        guard sourceIndex != destinationIndex else { return }
+
+        var row = rows[rowIndex]
+        guard row.templates.indices.contains(sourceIndex),
+              row.templates.indices.contains(destinationIndex) else { return }
+
+        registerUndo(undoName)
+
+        // Keep each shape visually attached to its screenshot column while columns are reordered.
+        let columnWidth = row.templateWidth
+        let lo = min(sourceIndex, destinationIndex)
+        let hi = max(sourceIndex, destinationIndex)
+        let betweenShift = sourceIndex < destinationIndex ? -columnWidth : columnWidth
+        for shapeIndex in row.shapes.indices {
+            let owner = row.owningTemplateIndex(for: row.shapes[shapeIndex])
+            if owner == sourceIndex {
+                row.shapes[shapeIndex].x += columnWidth * CGFloat(destinationIndex - sourceIndex)
+            } else if owner > lo && owner <= hi {
+                row.shapes[shapeIndex].x += betweenShift
+            }
+        }
+
+        let movedTemplate = row.templates.remove(at: sourceIndex)
+        row.templates.insert(movedTemplate, at: destinationIndex)
+        rows[rowIndex] = row
+        scheduleSave()
+    }
+
     // MARK: - Rows
 
     func addRow() {

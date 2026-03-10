@@ -7,6 +7,10 @@ struct TemplateControlBar: View {
     let index: Int
     let zoom: CGFloat
     var screenshotImages: [String: NSImage] = [:]
+    var canMoveLeft: Bool = false
+    var canMoveRight: Bool = false
+    var onMoveLeft: () -> Void = {}
+    var onMoveRight: () -> Void = {}
     var onSave: () -> Void
     var onDelete: () -> Void
     @State private var isDeletingTemplate = false
@@ -21,6 +25,12 @@ struct TemplateControlBar: View {
             }
             templateActionButton("arrow.down.circle", tooltip: "Download") {
                 downloadScreenshot()
+            }
+            templateActionButton("chevron.left", tooltip: "Move left", disabled: !canMoveLeft) {
+                onMoveLeft()
+            }
+            templateActionButton("chevron.right", tooltip: "Move right", disabled: !canMoveRight) {
+                onMoveRight()
             }
 
             // Background override button
@@ -81,6 +91,14 @@ struct TemplateControlBar: View {
                 Button("Download PNG...", systemImage: "square.and.arrow.down") {
                     downloadScreenshot()
                 }
+                Button("Move Left", systemImage: "chevron.left") {
+                    onMoveLeft()
+                }
+                .disabled(!canMoveLeft)
+                Button("Move Right", systemImage: "chevron.right") {
+                    onMoveRight()
+                }
+                .disabled(!canMoveRight)
                 if canDelete {
                     Divider()
                     Button("Delete Screenshot", systemImage: "trash", role: .destructive) {
@@ -106,7 +124,12 @@ struct TemplateControlBar: View {
         }
     }
 
-    private func templateActionButton(_ icon: String, tooltip: String, action: @escaping () -> Void) -> some View {
+    private func templateActionButton(
+        _ icon: String,
+        tooltip: String,
+        disabled: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 11))
@@ -116,6 +139,7 @@ struct TemplateControlBar: View {
         .buttonStyle(.borderless)
         .focusable(false)
         .foregroundStyle(.secondary)
+        .disabled(disabled)
         .help(tooltip)
     }
 

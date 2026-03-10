@@ -208,6 +208,18 @@ struct EditorRowView: View {
                             index: index,
                             zoom: zoom,
                             screenshotImages: state.screenshotImages,
+                            canMoveLeft: index > 0,
+                            canMoveRight: index < row.templates.count - 1,
+                            onMoveLeft: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    state.moveTemplateLeft(template.id, in: row.id)
+                                }
+                            },
+                            onMoveRight: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    state.moveTemplateRight(template.id, in: row.id)
+                                }
+                            },
                             onSave: { state.scheduleSave() },
                             onDelete: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
