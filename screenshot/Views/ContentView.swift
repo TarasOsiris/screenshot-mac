@@ -9,8 +9,9 @@ struct ContentView: View {
     @State private var isInspectorPresented = true
     @State private var isExporting = false
     @State private var exportError: String?
+    @State private var isCreatingProject = false
     @State private var isRenamingProject = false
-    @State private var renameText = ""
+    @State private var dialogText = ""
     @State private var isDeletingProject = false
     @State private var isResettingProject = false
     @State private var gestureZoomStartLevel: CGFloat?
@@ -91,12 +92,27 @@ struct ContentView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                Picker("Project", selection: projectSelectionBinding) {
+                Menu {
                     ForEach(state.projects) { project in
-                        Text(project.name).tag(Optional(project.id))
+                        Button {
+                            state.selectProject(project.id)
+                        } label: {
+                            if project.id == state.activeProjectId {
+                                Label(project.name, systemImage: "checkmark")
+                            } else {
+                                Text(project.name)
+                            }
+                        }
                     }
+                    Divider()
+                    Button("New Project...") {
+                        dialogText = "Project \(state.projects.count + 1)"
+                        isCreatingProject = true
+                    }
+                } label: {
+                    Text(state.activeProject?.name ?? "No Project")
+                        .frame(width: 160, alignment: .leading)
                 }
-                .pickerStyle(.menu)
                 .frame(width: 200)
                 .help("Select project")
                 .accessibilityIdentifier("projectPicker")
@@ -104,11 +120,8 @@ struct ContentView: View {
 
             ToolbarItem(placement: .navigation) {
                 Menu {
-                    Button("New Project...") {
-                        state.createProject(name: "Project \(state.projects.count + 1)")
-                    }
                     Button("Rename Project...") {
-                        renameText = state.activeProject?.name ?? ""
+                        dialogText = state.activeProject?.name ?? ""
                         isRenamingProject = true
                     }
                     .disabled(state.activeProjectId == nil)
@@ -207,12 +220,18 @@ struct ContentView: View {
             Text("Are you sure you want to delete \"\(state.activeProject?.name ?? "")\"? This cannot be undone.")
         }
         .alert("Rename Project", isPresented: $isRenamingProject) {
-            TextField("Project name", text: $renameText.limited(to: 50))
+            TextField("Project name", text: $dialogText.limited(to: 50))
             Button("Rename") {
-                let trimmedName = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
-                if let id = state.activeProjectId, !trimmedName.isEmpty {
-                    state.renameProject(id, to: trimmedName)
+                if let id = state.activeProjectId {
+                    state.renameProject(id, to: dialogText)
                 }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("New Project", isPresented: $isCreatingProject) {
+            TextField("Project name", text: $dialogText.limited(to: 50))
+            Button("Create") {
+                state.createProject(name: dialogText)
             }
             Button("Cancel", role: .cancel) {}
         }

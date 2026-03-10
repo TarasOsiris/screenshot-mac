@@ -88,8 +88,11 @@ struct ShapePropertiesBar: View {
                             separator
 
                             controlGroup("Radius") {
-                                Slider(value: shapeBinding(shapeId, \.borderRadius), in: 0...100)
+                                Slider(value: shapeBinding(shapeId, \.borderRadius), in: 0...500)
                                     .frame(width: 80)
+
+                                Text(verbatim: "\(Int(shape.borderRadius))")
+                                    .frame(width: 28, alignment: .trailing)
                             }
                         }
                     }
