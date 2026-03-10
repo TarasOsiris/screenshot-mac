@@ -14,11 +14,19 @@
 			remoteGlobalIDString = 768DF30A2F596DAB0072F7A4;
 			remoteInfo = screenshot;
 		};
+		768DF32C2F596DAC0072F7A4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 768DF3032F596DAB0072F7A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 768DF30A2F596DAB0072F7A4;
+			remoteInfo = screenshot;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		768DF30B2F596DAB0072F7A4 /* screenshot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = screenshot.app; path = "Screenshot Bro.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		768DF31B2F596DAC0072F7A4 /* screenshotUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = screenshotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		768DF3262F596DAC0072F7A4 /* screenshotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = screenshotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -30,6 +38,11 @@
 		768DF31C2F596DAC0072F7A4 /* screenshotUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = screenshotUITests;
+			sourceTree = "<group>";
+		};
+		768DF3272F596DAC0072F7A4 /* screenshotTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = screenshotTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -49,6 +62,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		768DF3292F596DAC0072F7A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -56,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				768DF30D2F596DAB0072F7A4 /* screenshot */,
+				768DF3272F596DAC0072F7A4 /* screenshotTests */,
 				768DF31C2F596DAC0072F7A4 /* screenshotUITests */,
 				768DF30C2F596DAB0072F7A4 /* Products */,
 			);
@@ -65,6 +86,7 @@
 			isa = PBXGroup;
 			children = (
 				768DF30B2F596DAB0072F7A4 /* screenshot.app */,
+				768DF3262F596DAC0072F7A4 /* screenshotTests.xctest */,
 				768DF31B2F596DAC0072F7A4 /* screenshotUITests.xctest */,
 			);
 			name = Products;
@@ -118,6 +140,29 @@
 			productReference = 768DF31B2F596DAC0072F7A4 /* screenshotUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		768DF32B2F596DAC0072F7A4 /* screenshotTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 768DF3302F596DAC0072F7A4 /* Build configuration list for PBXNativeTarget "screenshotTests" */;
+			buildPhases = (
+				768DF3282F596DAC0072F7A4 /* Sources */,
+				768DF3292F596DAC0072F7A4 /* Frameworks */,
+				768DF32A2F596DAC0072F7A4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				768DF32D2F596DAC0072F7A4 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				768DF3272F596DAC0072F7A4 /* screenshotTests */,
+			);
+			name = screenshotTests;
+			packageProductDependencies = (
+			);
+			productName = screenshotTests;
+			productReference = 768DF3262F596DAC0072F7A4 /* screenshotTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -132,6 +177,10 @@
 						CreatedOnToolsVersion = 26.2;
 					};
 					768DF31E2F596DAC0072F7A4 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 768DF30A2F596DAB0072F7A4;
+					};
+					768DF32B2F596DAC0072F7A4 = {
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = 768DF30A2F596DAB0072F7A4;
 					};
@@ -152,6 +201,7 @@
 			projectRoot = "";
 			targets = (
 				768DF30A2F596DAB0072F7A4 /* screenshot */,
+				768DF32B2F596DAC0072F7A4 /* screenshotTests */,
 				768DF31E2F596DAC0072F7A4 /* screenshotUITests */,
 			);
 		};
@@ -166,6 +216,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		768DF3202F596DAC0072F7A4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		768DF32A2F596DAC0072F7A4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -189,6 +246,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		768DF3282F596DAC0072F7A4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -196,6 +260,11 @@
 			isa = PBXTargetDependency;
 			target = 768DF30A2F596DAB0072F7A4 /* screenshot */;
 			targetProxy = 768DF3212F596DAC0072F7A4 /* PBXContainerItemProxy */;
+		};
+		768DF32D2F596DAC0072F7A4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 768DF30A2F596DAB0072F7A4 /* screenshot */;
+			targetProxy = 768DF32C2F596DAC0072F7A4 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -424,6 +493,42 @@
 			};
 			name = Release;
 		};
+		768DF32E2F596DAC0072F7A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = XW3GM347XY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Screenshot Bro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Screenshot Bro";
+			};
+			name = Debug;
+		};
+		768DF32F2F596DAC0072F7A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = XW3GM347XY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Screenshot Bro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Screenshot Bro";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -450,6 +555,15 @@
 			buildConfigurations = (
 				768DF3232F596DAC0072F7A4 /* Debug */,
 				768DF3242F596DAC0072F7A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		768DF3302F596DAC0072F7A4 /* Build configuration list for PBXNativeTarget "screenshotTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				768DF32E2F596DAC0072F7A4 /* Debug */,
+				768DF32F2F596DAC0072F7A4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

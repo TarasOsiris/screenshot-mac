@@ -15,6 +15,7 @@ struct TemplateControlBar: View {
     var onDelete: () -> Void
     @State private var isDeletingTemplate = false
     @State private var showBackgroundPopover = false
+    @State private var renderError: String?
 
     private var canDelete: Bool { row.templates.count > 1 }
 
@@ -122,6 +123,14 @@ struct TemplateControlBar: View {
         } message: {
             Text("Are you sure you want to delete this screenshot?")
         }
+        .alert("Render Failed", isPresented: .init(
+            get: { renderError != nil },
+            set: { if !$0 { renderError = nil } }
+        )) {
+            Button("OK") { renderError = nil }
+        } message: {
+            Text(renderError ?? "")
+        }
     }
 
     private func templateActionButton(
@@ -144,10 +153,18 @@ struct TemplateControlBar: View {
     }
 
     private func previewScreenshot() {
-        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else { return }
+        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else {
+            renderError = "Could not render screenshot for preview."
+            return
+        }
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("screenshot-\(index + 1).png")
-        try? pngData.write(to: tempURL)
+        do {
+            try pngData.write(to: tempURL)
+        } catch {
+            renderError = "Could not write preview file: \(error.localizedDescription)"
+            return
+        }
         QuickLookCoordinator.shared.preview(imageAt: tempURL)
     }
 
@@ -158,7 +175,14 @@ struct TemplateControlBar: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else { return }
-        try? pngData.write(to: url)
+        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else {
+            renderError = "Could not render screenshot."
+            return
+        }
+        do {
+            try pngData.write(to: url)
+        } catch {
+            renderError = "Could not save file: \(error.localizedDescription)"
+        }
     }
 }

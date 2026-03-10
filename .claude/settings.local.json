@@ -22,7 +22,13 @@
       "Bash(git:*)",
       "Bash(xargs ls:*)",
       "Bash(open /Users/taras/repo/experiments/screenshot-mac/build/screenshot.xcarchive)",
-      "WebFetch(domain:www.ios-resolution.com)"
+      "WebFetch(domain:www.ios-resolution.com)",
+      "Bash(ls /Users/taras/repo/experiments/screenshot-mac/screenshot*Tests* /Users/taras/repo/experiments/screenshot-mac/*Tests* 2>/dev/null; find /Users/taras/repo/experiments/screenshot-mac -name \"*Tests*\" -maxdepth 2 2>/dev/null)",
+      "Read(//Applications/Xcode.app/**)",
+      "Bash(2)",
+      "Bash(xcodebuild test:*)",
+      "Bash(xcresulttool get:*)",
+      "Bash(xcrun xcresulttool:*)"
     ]
   }
 }

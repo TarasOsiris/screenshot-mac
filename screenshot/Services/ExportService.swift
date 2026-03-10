@@ -209,59 +209,38 @@ struct ExportService {
 
     /// Encode PNG with no alpha channel by flattening onto an opaque white background.
     static func opaquePNGData(from image: NSImage) -> Data? {
-        guard let bitmap = opaqueBitmap(from: image) else { return nil }
-        return bitmap.representation(using: .png, properties: [:])
+        guard let opaqueImage = opaqueImage(from: image) else { return nil }
+        return pngData(from: opaqueImage)
     }
 
     /// Encode JPEG from an opaque bitmap so transparent pixels are composited consistently.
     static func opaqueJPEGData(from image: NSImage, compression: CGFloat = 0.9) -> Data? {
-        guard let bitmap = opaqueBitmap(from: image) else { return nil }
-        let properties: [NSBitmapImageRep.PropertyKey: Any] = [.compressionFactor: compression]
-        return bitmap.representation(using: .jpeg, properties: properties)
+        guard let opaqueImage = opaqueImage(from: image) else { return nil }
+        return jpegData(from: opaqueImage, compression: compression)
     }
 
-    private static func opaqueBitmap(from image: NSImage) -> NSBitmapImageRep? {
-        guard let sourceBitmap = bitmap(from: image) else { return nil }
+    /// Composite onto white background using CGContext, stripping the alpha channel.
+    private static func opaqueImage(from image: NSImage) -> NSImage? {
+        guard let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        let w = source.width
+        let h = source.height
+        guard w > 0, h > 0 else { return nil }
 
-        let pixelWidth = max(sourceBitmap.pixelsWide, 1)
-        let pixelHeight = max(sourceBitmap.pixelsHigh, 1)
-        guard let destination = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: pixelWidth,
-            pixelsHigh: pixelHeight,
-            bitsPerSample: 8,
-            samplesPerPixel: 3,
-            hasAlpha: false,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ) else {
-            return nil
-        }
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        guard let ctx = CGContext(
+            data: nil, width: w, height: h,
+            bitsPerComponent: 8, bytesPerRow: w * 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ) else { return nil }
 
-        let rect = NSRect(x: 0, y: 0, width: CGFloat(pixelWidth), height: CGFloat(pixelHeight))
-        NSGraphicsContext.saveGraphicsState()
-        defer { NSGraphicsContext.restoreGraphicsState() }
-        guard let context = NSGraphicsContext(bitmapImageRep: destination) else { return nil }
-        NSGraphicsContext.current = context
+        let rect = CGRect(x: 0, y: 0, width: w, height: h)
+        ctx.setFillColor(CGColor.white)
+        ctx.fill(rect)
+        ctx.draw(source, in: rect)
 
-        NSColor.white.setFill()
-        rect.fill()
-        sourceBitmap.draw(in: rect)
-        context.flushGraphics()
-
-        return destination
-    }
-
-    private static func bitmap(from image: NSImage) -> NSBitmapImageRep? {
-        if let tiffData = image.tiffRepresentation, let bitmap = NSBitmapImageRep(data: tiffData) {
-            return bitmap
-        }
-
-        return image.representations
-            .compactMap { $0 as? NSBitmapImageRep }
-            .max { lhs, rhs in (lhs.pixelsWide * lhs.pixelsHigh) < (rhs.pixelsWide * rhs.pixelsHigh) }
+        guard let opaqueRef = ctx.makeImage() else { return nil }
+        return NSImage(cgImage: opaqueRef, size: image.size)
     }
 }
 
