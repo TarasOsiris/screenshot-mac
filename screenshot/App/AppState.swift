@@ -327,6 +327,7 @@ final class AppState {
             templateWidth: source.templateWidth,
             templateHeight: source.templateHeight,
             bgColor: source.bgColor,
+            defaultDeviceBodyColor: source.defaultDeviceBodyColor,
             backgroundStyle: source.backgroundStyle,
             gradientConfig: source.gradientConfig,
             showDevice: source.showDevice,
@@ -402,6 +403,26 @@ final class AppState {
         row.templateWidth = newWidth
         row.templateHeight = newHeight
         rows[rowIndex] = row
+        scheduleSave()
+    }
+
+    func updateRowDefaultDeviceBodyColor(_ color: Color, for rowId: UUID) {
+        guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
+        let oldDefault = rows[rowIndex].defaultDeviceBodyColorData
+        let newDefault = CodableColor(color)
+        guard oldDefault != newDefault else { return }
+
+        rows[rowIndex].defaultDeviceBodyColorData = newDefault
+
+        // Legacy projects stored the default frame color on each device shape.
+        // When row default changes, convert matching legacy values to inheritance.
+        for shapeIndex in rows[rowIndex].shapes.indices {
+            guard rows[rowIndex].shapes[shapeIndex].type == .device else { continue }
+            if rows[rowIndex].shapes[shapeIndex].deviceBodyColorData == oldDefault {
+                rows[rowIndex].shapes[shapeIndex].deviceBodyColorData = nil
+            }
+        }
+
         scheduleSave()
     }
 

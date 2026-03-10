@@ -6,6 +6,7 @@ struct CanvasShapeView: View {
     let displayScale: CGFloat
     let isSelected: Bool
     var screenshotImage: NSImage?
+    var defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor
 
     var showsEditorHelpers: Bool = true
     var onSelect: () -> Void
@@ -187,7 +188,7 @@ struct CanvasShapeView: View {
         case .device:
             let frame = DeviceFrameView(
                 category: shape.deviceCategory ?? .iphone,
-                bodyColor: shape.deviceBodyColor,
+                bodyColor: shape.resolvedDeviceBodyColor(default: defaultDeviceBodyColor),
                 width: displayW,
                 height: displayH,
                 screenshotImage: screenshotImage

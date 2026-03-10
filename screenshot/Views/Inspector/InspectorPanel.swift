@@ -51,6 +51,13 @@ struct InspectorPanel: View {
                 }
 
                 Section("Options") {
+                    LabeledContent("Default device body") {
+                        ColorPicker("", selection: rowDefaultDeviceBodyColorBinding(for: rowIndex), supportsOpacity: false)
+                            .labelsHidden()
+                            .help("Default device body color for this row")
+                    }
+                    .font(.system(size: 12))
+
                     Toggle("Show devices", isOn: $state.rows[rowIndex].showDevice.onSet { state.scheduleSave() })
                         .font(.system(size: 12))
                         .toggleStyle(.switch)
@@ -92,6 +99,13 @@ struct InspectorPanel: View {
                 guard let size = parseSizeString(newValue) else { return }
                 state.resizeRow(at: rowIndex, newWidth: size.width, newHeight: size.height)
             }
+        )
+    }
+
+    private func rowDefaultDeviceBodyColorBinding(for rowIndex: Int) -> Binding<Color> {
+        Binding(
+            get: { state.rows[rowIndex].defaultDeviceBodyColor },
+            set: { state.updateRowDefaultDeviceBodyColor($0, for: state.rows[rowIndex].id) }
         )
     }
 }

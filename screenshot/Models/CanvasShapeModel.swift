@@ -86,6 +86,8 @@ extension Optional where Wrapped == TextAlign {
 }
 
 struct CanvasShapeModel: Identifiable, Codable {
+    static let defaultDeviceBodyColor = Color(red: 0.11, green: 0.11, blue: 0.12)
+
     let id: UUID
     var type: ShapeType
     var x: CGFloat
@@ -214,8 +216,12 @@ struct CanvasShapeModel: Identifiable, Codable {
     }
 
     var deviceBodyColor: Color {
-        get { deviceBodyColorData?.color ?? Color(red: 0.11, green: 0.11, blue: 0.12) }
+        get { deviceBodyColorData?.color ?? Self.defaultDeviceBodyColor }
         set { deviceBodyColorData = CodableColor(newValue) }
+    }
+
+    func resolvedDeviceBodyColor(default defaultColor: Color) -> Color {
+        deviceBodyColorData?.color ?? defaultColor
     }
 
     func duplicated(offsetX: CGFloat = 0, offsetY: CGFloat = 0) -> CanvasShapeModel {
@@ -273,8 +279,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         return CanvasShapeModel(
             type: .device, x: centerX - w / 2, y: centerY - h / 2,
             width: w, height: h,
-            color: .clear, deviceCategory: .iphone,
-            deviceBodyColor: Color(red: 0.11, green: 0.11, blue: 0.12)
+            color: .clear, deviceCategory: .iphone
         )
     }
 }

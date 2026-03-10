@@ -90,6 +90,7 @@ struct EditorRowView: View {
                                 displayScale: ds,
                                 isSelected: shape.id == state.selectedShapeId,
                                 screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
+                                defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                                 onSelect: { state.selectShape(shape.id, in: row.id) },
                                 onUpdate: { state.updateShape($0) },
                                 onDelete: { state.deleteShape(shape.id) },
@@ -449,4 +450,3 @@ struct EditorRowView: View {
         .help(tooltip)
     }
 }
-

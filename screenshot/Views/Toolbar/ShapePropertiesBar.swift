@@ -101,10 +101,20 @@ struct ShapePropertiesBar: View {
                     if shape.type == .device {
                         section {
                             controlGroup("Body") {
-                                ColorPicker("", selection: shapeBinding(shapeId, \.deviceBodyColor), supportsOpacity: false)
-                                    .labelsHidden()
-                                    .padding(.horizontal, 4)
-                                    .help("Device body color")
+                                HStack(spacing: 4) {
+                                    ColorPicker("", selection: deviceBodyColorBinding(shapeId), supportsOpacity: false)
+                                        .labelsHidden()
+                                        .padding(.horizontal, 4)
+                                        .help("Device body color")
+
+                                    barButton(
+                                        "arrow.counterclockwise",
+                                        help: "Reset to row default device body color",
+                                        disabled: !hasDeviceBodyColorOverride(shapeId)
+                                    ) {
+                                        resetDeviceBodyColor(shapeId)
+                                    }
+                                }
                             }
 
                             if shape.screenshotFileName != nil {
@@ -333,6 +343,35 @@ struct ShapePropertiesBar: View {
         )
     }
 
+    private func deviceBodyColorBinding(_ shapeId: UUID) -> Binding<Color> {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else { return CanvasShapeModel.defaultDeviceBodyColor }
+                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+                return shape.deviceBodyColorData?.color ?? state.rows[i.row].defaultDeviceBodyColor
+            },
+            set: { newValue in
+                guard let i = idx(for: shapeId) else { return }
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                resolved.deviceBodyColorData = CodableColor(newValue)
+                state.updateShape(resolved)
+            }
+        )
+    }
+
+    private func hasDeviceBodyColorOverride(_ shapeId: UUID) -> Bool {
+        guard let i = idx(for: shapeId) else { return false }
+        return state.rows[i.row].shapes[i.shape].deviceBodyColorData != nil
+    }
+
+    private func resetDeviceBodyColor(_ shapeId: UUID) {
+        guard let i = idx(for: shapeId) else { return }
+        guard state.rows[i.row].shapes[i.shape].type == .device else { return }
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        resolved.deviceBodyColorData = nil
+        state.updateShape(resolved)
+    }
+
     private var separator: some View {
         Rectangle()
             .fill(.separator)
@@ -390,14 +429,10 @@ struct ShapePropertiesBar: View {
             Text("Overridden")
                 .font(.system(size: 10))
                 .foregroundStyle(Color.accentColor)
-            Button {
+
+            barButton("arrow.counterclockwise", help: "Reset locale override") {
                 state.resetLocaleOverride(shapeId: shapeId)
-            } label: {
-                Text("Reset")
-                    .font(.system(size: 10))
-                    .foregroundStyle(Color.accentColor.opacity(0.8))
             }
-            .buttonStyle(.borderless)
         }
     }
 
