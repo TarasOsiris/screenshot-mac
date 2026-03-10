@@ -15,6 +15,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     var showDevice: Bool
     var showBorders: Bool
     var shapes: [CanvasShapeModel]
+    var isLabelManuallySet: Bool
 
     init(
         id: UUID = UUID(),
@@ -29,7 +30,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         gradientConfig: GradientConfig = GradientConfig(),
         showDevice: Bool = true,
         showBorders: Bool = true,
-        shapes: [CanvasShapeModel] = []
+        shapes: [CanvasShapeModel] = [],
+        isLabelManuallySet: Bool = false
     ) {
         self.id = id
         self.label = label
@@ -44,13 +46,14 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         self.showDevice = showDevice
         self.showBorders = showBorders
         self.shapes = shapes
+        self.isLabelManuallySet = isLabelManuallySet
     }
 
     enum CodingKeys: String, CodingKey {
         case id, label, templates, templateWidth, templateHeight
         case backgroundColorData, defaultDeviceBodyColorData, defaultDeviceCategory
         case backgroundStyle, gradientConfig
-        case showDevice, showBorders, shapes
+        case showDevice, showBorders, shapes, isLabelManuallySet
     }
 
     init(from decoder: Decoder) throws {
@@ -69,6 +72,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         showDevice = try c.decodeIfPresent(Bool.self, forKey: .showDevice) ?? true
         showBorders = try c.decodeIfPresent(Bool.self, forKey: .showBorders) ?? true
         shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []
+        isLabelManuallySet = try c.decodeIfPresent(Bool.self, forKey: .isLabelManuallySet) ?? false
     }
 
     var bgColor: Color {
@@ -109,7 +113,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     }
 
     var resolutionLabel: String {
-        "\(Int(templateWidth))x\(Int(templateHeight))"
+        "\(Int(templateWidth))\u{00d7}\(Int(templateHeight))"
     }
 
     var activeShapes: [CanvasShapeModel] {

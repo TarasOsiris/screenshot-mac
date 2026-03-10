@@ -313,7 +313,7 @@ final class AppState {
 
     func addRow() {
         registerUndo("Add Row")
-        let row = makeDefaultRow(label: "Screenshot \(rows.count + 1)")
+        let row = makeDefaultRow()
         rows.append(row)
         selectRow(row.id)
         scheduleSave()
@@ -335,7 +335,8 @@ final class AppState {
             gradientConfig: source.gradientConfig,
             showDevice: source.showDevice,
             showBorders: source.showBorders,
-            shapes: newShapes
+            shapes: newShapes,
+            isLabelManuallySet: true
         )
         // Copy locale overrides for each duplicated shape
         for (originalShape, newShape) in zip(source.shapes, newShapes) {
@@ -405,6 +406,9 @@ final class AppState {
 
         row.templateWidth = newWidth
         row.templateHeight = newHeight
+        if !row.isLabelManuallySet {
+            row.label = presetLabel(forWidth: newWidth, height: newHeight)
+        }
         rows[rowIndex] = row
         scheduleSave()
     }
@@ -818,7 +822,7 @@ final class AppState {
         }
     }
 
-    private func makeDefaultRow(label: String = "Screenshot 1") -> ScreenshotRow {
+    private func makeDefaultRow(label: String? = nil) -> ScreenshotRow {
         let defaultSize = UserDefaults.standard.string(forKey: "defaultScreenshotSize") ?? "1242x2688"
         let parsedSize = parseSizeString(defaultSize)
         let w: CGFloat = parsedSize?.width ?? 1242
@@ -835,12 +839,14 @@ final class AppState {
                 templateHeight: h
             )
         }
+        let resolvedLabel = label ?? presetLabel(forWidth: w, height: h)
         return ScreenshotRow(
-            label: label,
+            label: resolvedLabel,
             templates: templates,
             templateWidth: w,
             templateHeight: h,
-            shapes: shapes
+            shapes: shapes,
+            isLabelManuallySet: label != nil
         )
     }
 

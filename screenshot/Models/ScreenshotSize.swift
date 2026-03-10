@@ -62,3 +62,13 @@ func parseSizeString(_ value: String) -> (width: CGFloat, height: CGFloat)? {
           let h = Double(parts[1]) else { return nil }
     return (CGFloat(w), CGFloat(h))
 }
+
+func presetLabel(forWidth width: CGFloat, height: CGFloat) -> String {
+    for category in displayCategories {
+        if let size = category.sizes.first(where: { $0.width == width && $0.height == height }) {
+            let orientation = size.isLandscape ? "Landscape" : "Portrait"
+            return "\(category.name) \(orientation)"
+        }
+    }
+    return "\(Int(width))\u{00d7}\(Int(height))"
+}

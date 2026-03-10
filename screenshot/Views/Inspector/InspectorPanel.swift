@@ -8,12 +8,23 @@ struct InspectorPanel: View {
         if let rowIndex = state.selectedRowIndex {
             Form {
                 Section("Row") {
-                    TextField("Row label", text: $state.rows[rowIndex].label.limited(to: 50).onSet { state.scheduleSave() }, prompt: Text("Row label"))
+                    TextField("Row label", text: $state.rows[rowIndex].label.limited(to: 50).onSet {
+                        state.rows[rowIndex].isLabelManuallySet = true
+                        state.scheduleSave()
+                    }, prompt: Text("Row label"))
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12))
                         .labelsHidden()
                         .focused($isLabelFocused)
-                        .onSubmit { isLabelFocused = false }
+                        .onSubmit {
+                            if state.rows[rowIndex].label.trimmingCharacters(in: .whitespaces).isEmpty {
+                                let row = state.rows[rowIndex]
+                                state.rows[rowIndex].label = presetLabel(forWidth: row.templateWidth, height: row.templateHeight)
+                                state.rows[rowIndex].isLabelManuallySet = false
+                                state.scheduleSave()
+                            }
+                            isLabelFocused = false
+                        }
                 }
 
                 Section("Screenshot Size") {

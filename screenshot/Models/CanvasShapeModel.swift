@@ -251,11 +251,6 @@ struct CanvasShapeModel: Identifiable, Codable {
         return (cx - newHW, cy - newHH, cx + newHW, cy + newHH)
     }
 
-    var deviceBodyColor: Color {
-        get { deviceBodyColorData?.color ?? Self.defaultDeviceBodyColor }
-        set { deviceBodyColorData = CodableColor(newValue) }
-    }
-
     func resolvedDeviceBodyColor(default defaultColor: Color) -> Color {
         deviceBodyColorData?.color ?? defaultColor
     }
