@@ -78,6 +78,13 @@ struct PersistenceService {
         try? jsonData.write(to: projectDataURL(id), options: .atomic)
     }
 
+    static func copyProject(from sourceId: UUID, to destId: UUID) {
+        let fm = FileManager.default
+        let src = projectDir(sourceId)
+        let dst = projectDir(destId)
+        try? fm.copyItem(at: src, to: dst)
+    }
+
     static func deleteProject(_ id: UUID) {
         try? FileManager.default.removeItem(at: projectDir(id))
     }

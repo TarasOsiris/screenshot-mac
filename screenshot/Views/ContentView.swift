@@ -135,6 +135,12 @@ struct ContentView: View {
                         isRenamingProject = true
                     }
                     .disabled(state.activeProjectId == nil)
+                    Button("Duplicate Project") {
+                        if let id = state.activeProjectId {
+                            state.duplicateProject(id)
+                        }
+                    }
+                    .disabled(state.activeProjectId == nil)
                     Divider()
                     Button("Reset Project...", role: .destructive) {
                         isResettingProject = true

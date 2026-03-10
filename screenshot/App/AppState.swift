@@ -168,14 +168,17 @@ final class AppState {
         guard id != activeProjectId else { return }
 
         saveCurrentProject()
+        switchToProject(id)
+        saveIndex()
+    }
+
+    private func switchToProject(_ id: UUID) {
         undoManager?.removeAllActions()
         cancelPendingDebounceTasks()
-
         activeProjectId = id
         screenshotImages.removeAll()
         loadRowsForProject(id)
         loadScreenshotImages()
-        saveIndex()
     }
 
     func renameProject(_ id: UUID, to name: String) {
@@ -195,6 +198,18 @@ final class AppState {
             counter += 1
         }
         return "\(baseName) \(counter)"
+    }
+
+    func duplicateProject(_ id: UUID) {
+        saveCurrentProject()
+
+        guard let source = projects.first(where: { $0.id == id }) else { return }
+        let newProject = Project(name: uniqueProjectName(source.name + " Copy"))
+        PersistenceService.copyProject(from: id, to: newProject.id)
+        projects.append(newProject)
+
+        switchToProject(newProject.id)
+        saveAll()
     }
 
     func resetProject(_ id: UUID) {
