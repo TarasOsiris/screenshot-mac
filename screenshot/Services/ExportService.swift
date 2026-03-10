@@ -200,27 +200,21 @@ struct ExportService {
         return pngData
     }
 
-    static func jpegData(from image: NSImage, compression: CGFloat = 0.9) -> Data? {
-        guard let tiffData = image.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData) else { return nil }
-        let properties: [NSBitmapImageRep.PropertyKey: Any] = [.compressionFactor: compression]
-        return bitmap.representation(using: .jpeg, properties: properties)
-    }
-
     /// Encode PNG with no alpha channel by flattening onto an opaque white background.
     static func opaquePNGData(from image: NSImage) -> Data? {
-        guard let opaqueImage = opaqueImage(from: image) else { return nil }
-        return pngData(from: opaqueImage)
+        guard let bitmap = opaqueBitmap(from: image) else { return nil }
+        return bitmap.representation(using: .png, properties: [:])
     }
 
     /// Encode JPEG from an opaque bitmap so transparent pixels are composited consistently.
     static func opaqueJPEGData(from image: NSImage, compression: CGFloat = 0.9) -> Data? {
-        guard let opaqueImage = opaqueImage(from: image) else { return nil }
-        return jpegData(from: opaqueImage, compression: compression)
+        guard let bitmap = opaqueBitmap(from: image) else { return nil }
+        let properties: [NSBitmapImageRep.PropertyKey: Any] = [.compressionFactor: compression]
+        return bitmap.representation(using: .jpeg, properties: properties)
     }
 
-    /// Composite onto white background using CGContext, stripping the alpha channel.
-    private static func opaqueImage(from image: NSImage) -> NSImage? {
+    /// Composite onto white background via CGContext, returning an opaque NSBitmapImageRep directly.
+    private static func opaqueBitmap(from image: NSImage) -> NSBitmapImageRep? {
         guard let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
         let w = source.width
         let h = source.height
@@ -240,7 +234,7 @@ struct ExportService {
         ctx.draw(source, in: rect)
 
         guard let opaqueRef = ctx.makeImage() else { return nil }
-        return NSImage(cgImage: opaqueRef, size: image.size)
+        return NSBitmapImageRep(cgImage: opaqueRef)
     }
 }
 
