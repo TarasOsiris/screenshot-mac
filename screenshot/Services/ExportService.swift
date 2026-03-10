@@ -99,7 +99,7 @@ struct ExportService {
     @MainActor
     static func renderTemplatePNG(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:]) -> Data? {
         let image = renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
-        return pngData(from: image)
+        return opaquePNGData(from: image)
     }
 
     @MainActor
@@ -115,9 +115,9 @@ struct ExportService {
         let image = renderTemplateImage(index: index, row: row, scale: scale, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
         switch format {
         case .png:
-            return pngData(from: image)
+            return opaquePNGData(from: image)
         case .jpeg:
-            return jpegData(from: image)
+            return opaqueJPEGData(from: image)
         }
     }
 
@@ -205,6 +205,63 @@ struct ExportService {
               let bitmap = NSBitmapImageRep(data: tiffData) else { return nil }
         let properties: [NSBitmapImageRep.PropertyKey: Any] = [.compressionFactor: compression]
         return bitmap.representation(using: .jpeg, properties: properties)
+    }
+
+    /// Encode PNG with no alpha channel by flattening onto an opaque white background.
+    static func opaquePNGData(from image: NSImage) -> Data? {
+        guard let bitmap = opaqueBitmap(from: image) else { return nil }
+        return bitmap.representation(using: .png, properties: [:])
+    }
+
+    /// Encode JPEG from an opaque bitmap so transparent pixels are composited consistently.
+    static func opaqueJPEGData(from image: NSImage, compression: CGFloat = 0.9) -> Data? {
+        guard let bitmap = opaqueBitmap(from: image) else { return nil }
+        let properties: [NSBitmapImageRep.PropertyKey: Any] = [.compressionFactor: compression]
+        return bitmap.representation(using: .jpeg, properties: properties)
+    }
+
+    private static func opaqueBitmap(from image: NSImage) -> NSBitmapImageRep? {
+        guard let sourceBitmap = bitmap(from: image) else { return nil }
+
+        let pixelWidth = max(sourceBitmap.pixelsWide, 1)
+        let pixelHeight = max(sourceBitmap.pixelsHigh, 1)
+        guard let destination = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: pixelWidth,
+            pixelsHigh: pixelHeight,
+            bitsPerSample: 8,
+            samplesPerPixel: 3,
+            hasAlpha: false,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else {
+            return nil
+        }
+
+        let rect = NSRect(x: 0, y: 0, width: CGFloat(pixelWidth), height: CGFloat(pixelHeight))
+        NSGraphicsContext.saveGraphicsState()
+        defer { NSGraphicsContext.restoreGraphicsState() }
+        guard let context = NSGraphicsContext(bitmapImageRep: destination) else { return nil }
+        NSGraphicsContext.current = context
+
+        NSColor.white.setFill()
+        rect.fill()
+        sourceBitmap.draw(in: rect)
+        context.flushGraphics()
+
+        return destination
+    }
+
+    private static func bitmap(from image: NSImage) -> NSBitmapImageRep? {
+        if let tiffData = image.tiffRepresentation, let bitmap = NSBitmapImageRep(data: tiffData) {
+            return bitmap
+        }
+
+        return image.representations
+            .compactMap { $0 as? NSBitmapImageRep }
+            .max { lhs, rhs in (lhs.pixelsWide * lhs.pixelsHigh) < (rhs.pixelsWide * rhs.pixelsHigh) }
     }
 }
 

@@ -50,14 +50,25 @@ struct InspectorPanel: View {
                     ShapeToolbar(state: state)
                 }
 
-                Section("Options") {
-                    LabeledContent("Default device body") {
+                Section("Device") {
+                    Picker("Default device", selection: $state.rows[rowIndex].defaultDeviceCategory.onSet { state.scheduleSave() }) {
+                        ForEach(DeviceCategory.allCases, id: \.self) { cat in
+                            Label(cat.label, systemImage: cat.icon).tag(cat)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                    .font(.system(size: 12))
+
+                    LabeledContent("Default body color") {
                         ColorPicker("", selection: rowDefaultDeviceBodyColorBinding(for: rowIndex), supportsOpacity: false)
                             .labelsHidden()
                             .help("Default device body color for this row")
                     }
                     .font(.system(size: 12))
+                }
 
+                Section("Options") {
                     Toggle("Show devices", isOn: $state.rows[rowIndex].showDevice.onSet { state.scheduleSave() })
                         .font(.system(size: 12))
                         .toggleStyle(.switch)

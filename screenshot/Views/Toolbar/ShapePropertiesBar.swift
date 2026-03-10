@@ -100,6 +100,16 @@ struct ShapePropertiesBar: View {
                     // Device properties
                     if shape.type == .device {
                         section {
+                            Picker("", selection: deviceCategoryBinding(shapeId)) {
+                                ForEach(DeviceCategory.allCases, id: \.self) { cat in
+                                    Label(cat.label, systemImage: cat.icon).tag(cat)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 140)
+
+                            separator
+
                             controlGroup("Body") {
                                 HStack(spacing: 4) {
                                     ColorPicker("", selection: deviceBodyColorBinding(shapeId), supportsOpacity: false)
@@ -338,6 +348,27 @@ struct ShapePropertiesBar: View {
                 guard let i = idx(for: shapeId) else { return }
                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                 resolved[keyPath: keyPath] = newValue
+                state.updateShape(resolved)
+            }
+        )
+    }
+
+    private func deviceCategoryBinding(_ shapeId: UUID) -> Binding<DeviceCategory> {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else { return .iphone }
+                return resolvedShape(at: i.row, shapeIdx: i.shape).deviceCategory ?? .iphone
+            },
+            set: { newCategory in
+                guard let i = idx(for: shapeId) else { return }
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                let oldCategory = resolved.deviceCategory ?? .iphone
+                guard newCategory != oldCategory else { return }
+                resolved.deviceCategory = newCategory
+                // Adjust width to maintain correct aspect ratio for new device
+                let newBase = newCategory.baseDimensions
+                let newAspect = newBase.width / newBase.height
+                resolved.width = resolved.height * newAspect
                 state.updateShape(resolved)
             }
         )

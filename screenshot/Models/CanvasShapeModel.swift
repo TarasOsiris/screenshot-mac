@@ -34,31 +34,67 @@ enum ShapeType: String, Codable, CaseIterable {
 
 enum DeviceCategory: String, Codable, CaseIterable {
     case iphone
+    case ipadPro11
+    case ipadPro13
 
     var label: String {
         switch self {
         case .iphone: "iPhone"
+        case .ipadPro11: "iPad Pro 11\""
+        case .ipadPro13: "iPad Pro 13\""
         }
     }
 
     var icon: String {
         switch self {
         case .iphone: "iphone"
+        case .ipadPro11, .ipadPro13: "ipad"
         }
     }
 
     /// Body dimensions (without side buttons).
     /// iPhone 17: 71.5 x 149.6 mm at scale 3.077 px/mm → 220 x 460.
+    /// iPad Pro 11": 177.5 x 249.7 mm → 546 x 768.
+    /// iPad Pro 13": 215.5 x 281.6 mm → 663 x 867.
     var bodyDimensions: (width: CGFloat, height: CGFloat) {
         switch self {
         case .iphone: (220, 460)
+        case .ipadPro11: (546, 768)
+        case .ipadPro13: (663, 867)
         }
     }
 
     /// Depth of side buttons protruding from body edge.
+    /// iPads have flush buttons (no protrusion).
     var buttonDepth: CGFloat {
         switch self {
         case .iphone: 2.5
+        case .ipadPro11, .ipadPro13: 0
+        }
+    }
+
+    /// Bezel dimensions in base units (px at 3.077 px/mm scale).
+    var bezels: (lr: CGFloat, tb: CGFloat) {
+        switch self {
+        case .iphone: (4.34, 4.43)
+        case .ipadPro11: (26.5, 25.8)
+        case .ipadPro13: (27.0, 26.0)
+        }
+    }
+
+    /// Body corner radius in base units.
+    var bodyCornerRadius: CGFloat {
+        switch self {
+        case .iphone: 34
+        case .ipadPro11, .ipadPro13: 55
+        }
+    }
+
+    /// Screen corner radius in base units.
+    var screenCornerRadius: CGFloat {
+        switch self {
+        case .iphone: 33
+        case .ipadPro11, .ipadPro13: 50
         }
     }
 
@@ -270,8 +306,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         )
     }
 
-    static func defaultDevice(centerX: CGFloat, centerY: CGFloat, templateHeight: CGFloat = 2688) -> CanvasShapeModel {
-        let dims = DeviceCategory.iphone.baseDimensions
+    static func defaultDevice(centerX: CGFloat, centerY: CGFloat, templateHeight: CGFloat = 2688, category: DeviceCategory = .iphone) -> CanvasShapeModel {
+        let dims = category.baseDimensions
         // Device should fill ~80% of template height, like typical App Store screenshots
         let h = templateHeight * 0.8
         let scale = h / dims.height
@@ -279,7 +315,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         return CanvasShapeModel(
             type: .device, x: centerX - w / 2, y: centerY - h / 2,
             width: w, height: h,
-            color: .clear, deviceCategory: .iphone
+            color: .clear, deviceCategory: category
         )
     }
 }

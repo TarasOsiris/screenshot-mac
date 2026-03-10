@@ -9,6 +9,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     var templateHeight: CGFloat
     var backgroundColorData: CodableColor
     var defaultDeviceBodyColorData: CodableColor
+    var defaultDeviceCategory: DeviceCategory
     var backgroundStyle: BackgroundStyle
     var gradientConfig: GradientConfig
     var showDevice: Bool
@@ -23,6 +24,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         templateHeight: CGFloat = 2688,
         bgColor: Color = .blue,
         defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor,
+        defaultDeviceCategory: DeviceCategory = .iphone,
         backgroundStyle: BackgroundStyle = .color,
         gradientConfig: GradientConfig = GradientConfig(),
         showDevice: Bool = true,
@@ -36,6 +38,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         self.templateHeight = templateHeight
         self.backgroundColorData = CodableColor(bgColor)
         self.defaultDeviceBodyColorData = CodableColor(defaultDeviceBodyColor)
+        self.defaultDeviceCategory = defaultDeviceCategory
         self.backgroundStyle = backgroundStyle
         self.gradientConfig = gradientConfig
         self.showDevice = showDevice
@@ -45,7 +48,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
 
     enum CodingKeys: String, CodingKey {
         case id, label, templates, templateWidth, templateHeight
-        case backgroundColorData, defaultDeviceBodyColorData, backgroundStyle, gradientConfig
+        case backgroundColorData, defaultDeviceBodyColorData, defaultDeviceCategory
+        case backgroundStyle, gradientConfig
         case showDevice, showBorders, shapes
     }
 
@@ -59,6 +63,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         backgroundColorData = try c.decode(CodableColor.self, forKey: .backgroundColorData)
         defaultDeviceBodyColorData = try c.decodeIfPresent(CodableColor.self, forKey: .defaultDeviceBodyColorData)
             ?? CodableColor(CanvasShapeModel.defaultDeviceBodyColor)
+        defaultDeviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .defaultDeviceCategory) ?? .iphone
         backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
         gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
         showDevice = try c.decodeIfPresent(Bool.self, forKey: .showDevice) ?? true

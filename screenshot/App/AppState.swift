@@ -237,7 +237,8 @@ final class AppState {
         let device = CanvasShapeModel.defaultDevice(
             centerX: rows[idx].templateCenterX(at: templateIndex),
             centerY: rows[idx].templateHeight / 2,
-            templateHeight: rows[idx].templateHeight
+            templateHeight: rows[idx].templateHeight,
+            category: rows[idx].defaultDeviceCategory
         )
         rows[idx].shapes.append(device)
         scheduleSave()
