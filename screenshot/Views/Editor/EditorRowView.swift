@@ -181,11 +181,9 @@ struct EditorRowView: View {
                             break
                         }
                     }
-                    .onDrop(of: [.image, .svg], delegate: CanvasDropDelegate(
-                        onDrop: { providers, location in
-                            handleCanvasDrop(providers, at: location, displayScale: ds)
-                        }
-                    ))
+                    .onDrop(of: [.image, .svg, .fileURL], isTargeted: nil) { providers, location in
+                        handleCanvasDrop(providers, at: location, displayScale: ds)
+                    }
 
                     // Add button
                     AddTemplateButton(width: dw, height: dh) {
@@ -309,36 +307,59 @@ struct EditorRowView: View {
             return true
         }
 
-        // Fall back to image
-        provider.loadObject(ofClass: NSImage.self) { image, _ in
-            guard let image = image as? NSImage else { return }
-            DispatchQueue.main.async {
-                state.selectRow(row.id)
-                let imgW = image.size.width
-                let imgH = image.size.height
-                let maxW = row.templateWidth * 0.8
-                let maxH = row.templateHeight * 0.8
-                let scale = min(maxW / imgW, maxH / imgH, 1.0)
-                let w = imgW * scale
-                let h = imgH * scale
-                let shape = CanvasShapeModel(
-                    type: .image,
-                    x: modelX - w / 2,
-                    y: modelY - h / 2,
-                    width: w,
-                    height: h,
-                    color: .clear
-                )
-                state.addShape(shape)
-                state.saveImage(image, for: shape.id)
+        // Try loading as image data first
+        if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
+                guard let url = url, let image = NSImage(contentsOf: url) else { return }
+                DispatchQueue.main.async {
+                    self.createImageShape(image: image, modelX: modelX, modelY: modelY)
+                }
             }
+            return true
         }
-        return true
+
+        // Fall back to file URL (Finder drops) — load URL, check if it's an image
+        if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { url, _ in
+                guard let url = url,
+                      let typeId = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
+                      let uttype = UTType(typeId),
+                      uttype.conforms(to: .image),
+                      let image = NSImage.fromSecurityScopedURL(url) else { return }
+                DispatchQueue.main.async {
+                    self.createImageShape(image: image, modelX: modelX, modelY: modelY)
+                }
+            }
+            return true
+        }
+
+        return false
     }
 
     private func tapSelectRow() {
         NSApp.keyWindow?.makeFirstResponder(nil)
         state.selectRow(row.id)
+    }
+
+    private func createImageShape(image: NSImage, modelX: CGFloat, modelY: CGFloat) {
+        state.selectRow(row.id)
+        let imgW = image.size.width
+        let imgH = image.size.height
+        let maxW = row.templateWidth * 0.8
+        let maxH = row.templateHeight * 0.8
+        let scale = min(maxW / imgW, maxH / imgH, 1.0)
+        let w = imgW * scale
+        let h = imgH * scale
+        let shape = CanvasShapeModel(
+            type: .image,
+            x: modelX - w / 2,
+            y: modelY - h / 2,
+            width: w,
+            height: h,
+            color: .clear
+        )
+        state.addShape(shape)
+        state.saveImage(image, for: shape.id)
     }
 
     private static let placeholderTemplate = ScreenshotTemplate()
@@ -385,16 +406,3 @@ struct EditorRowView: View {
     }
 }
 
-private struct CanvasDropDelegate: DropDelegate {
-    let onDrop: ([NSItemProvider], CGPoint) -> Bool
-
-    func validateDrop(info: DropInfo) -> Bool {
-        info.hasItemsConforming(to: [.image, .svg])
-    }
-
-    func performDrop(info: DropInfo) -> Bool {
-        let providers = info.itemProviders(for: [.svg]) + info.itemProviders(for: [.image])
-        guard !providers.isEmpty else { return false }
-        return onDrop(providers, info.location)
-    }
-}

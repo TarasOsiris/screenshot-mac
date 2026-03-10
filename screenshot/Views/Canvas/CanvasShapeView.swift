@@ -169,7 +169,7 @@ struct CanvasShapeView: View {
             }
 
         case .svg:
-            if let image = cachedSvgImage {
+            if let image = cachedSvgImage ?? Self.svgImage(from: shape.svgContent ?? "", useColor: shape.svgUseColor == true, color: shape.color) {
                 Image(nsImage: image)
                     .resizable()
                     .interpolation(.high)
