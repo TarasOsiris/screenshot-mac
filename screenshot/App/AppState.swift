@@ -244,9 +244,22 @@ final class AppState {
     }
 
     func removeTemplate(_ templateId: UUID, from rowId: UUID) {
-        guard let idx = rows.firstIndex(where: { $0.id == rowId }) else { return }
+        guard let idx = rows.firstIndex(where: { $0.id == rowId }),
+              let templateIndex = rows[idx].templates.firstIndex(where: { $0.id == templateId }) else { return }
         registerUndo("Remove Template")
-        rows[idx].templates.removeAll { $0.id == templateId }
+        let shapesToRemove = rows[idx].shapes.filter { rows[idx].owningTemplateIndex(for: $0) == templateIndex }
+        for shape in shapesToRemove {
+            for fileName in shape.allImageFileNames where !isImageFileReferenced(fileName) {
+                screenshotImages.removeValue(forKey: fileName)
+            }
+            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+        }
+        let shapeIdsToRemove = Set(shapesToRemove.map(\.id))
+        if let selectedId = selectedShapeId, shapeIdsToRemove.contains(selectedId) {
+            selectedShapeId = nil
+        }
+        rows[idx].shapes.removeAll { shapeIdsToRemove.contains($0.id) }
+        rows[idx].templates.remove(at: templateIndex)
         scheduleSave()
     }
 
