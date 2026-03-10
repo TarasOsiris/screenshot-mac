@@ -43,6 +43,16 @@ let displayCategories: [DisplayCategory] = [
             ScreenshotSize(width: 2732, height: 2048),
         ]
     ),
+    DisplayCategory(
+        name: "Mac Desktop",
+        icon: "macbook",
+        sizes: [
+            ScreenshotSize(width: 1280, height: 800),
+            ScreenshotSize(width: 1440, height: 900),
+            ScreenshotSize(width: 2560, height: 1600),
+            ScreenshotSize(width: 2880, height: 1800),
+        ]
+    ),
 ]
 
 func parseSizeString(_ value: String) -> (width: CGFloat, height: CGFloat)? {

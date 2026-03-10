@@ -57,10 +57,7 @@ struct ShapeToolbar: View {
         guard let row = state.selectedRow else { return }
         let centerX = row.templateWidth / 2
         let centerY = row.templateHeight / 2
-        // Scale SVG to fit reasonably (max 400px in either dimension)
-        let maxDim: CGFloat = 400
-        let scale = min(maxDim / max(size.width, 1), maxDim / max(size.height, 1), 1)
-        let scaledSize = CGSize(width: size.width * scale, height: size.height * scale)
+        let scaledSize = SvgHelper.scaledSize(size)
         let shape = CanvasShapeModel.defaultSvg(centerX: centerX, centerY: centerY, svgContent: svgContent, size: scaledSize)
         state.addShape(shape)
     }

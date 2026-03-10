@@ -90,9 +90,7 @@ struct InspectorPanel: View {
             },
             set: { newValue in
                 guard let size = parseSizeString(newValue) else { return }
-                state.rows[rowIndex].templateWidth = size.width
-                state.rows[rowIndex].templateHeight = size.height
-                state.scheduleSave()
+                state.resizeRow(at: rowIndex, newWidth: size.width, newHeight: size.height)
             }
         )
     }

@@ -101,13 +101,13 @@ struct SvgPasteDialog: View {
 
     private func addSvg() {
         let trimmed = svgText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let sanitized = sanitizeSvg(trimmed)
+        let sanitized = SvgHelper.sanitize(trimmed)
         guard let data = sanitized.data(using: .utf8),
               let image = NSImage(data: data) else {
             errorMessage = "Invalid SVG content"
             return
         }
-        let size = parseSvgSize(sanitized, fallbackImage: image)
+        let size = SvgHelper.parseSize(sanitized, fallbackImage: image)
         onConfirm(sanitized, size)
         isPresented = false
     }
@@ -126,48 +126,6 @@ struct SvgPasteDialog: View {
         }
     }
 
-    private func sanitizeSvg(_ svg: String) -> String {
-        var result = svg
-        // Remove script elements (case-insensitive)
-        result = result.replacingOccurrences(
-            of: "<script[^>]*>[\\s\\S]*?</script>",
-            with: "",
-            options: [.regularExpression, .caseInsensitive]
-        )
-        // Remove event handlers (double and single quoted)
-        result = result.replacingOccurrences(
-            of: "\\s+on\\w+\\s*=\\s*\"[^\"]*\"",
-            with: "",
-            options: .regularExpression
-        )
-        result = result.replacingOccurrences(
-            of: "\\s+on\\w+\\s*=\\s*'[^']*'",
-            with: "",
-            options: .regularExpression
-        )
-        return result
-    }
-
-    private func parseSvgSize(_ svg: String, fallbackImage: NSImage) -> CGSize {
-        // Try viewBox first
-        if let viewBoxMatch = svg.range(of: "viewBox\\s*=\\s*\"([^\"]+)\"", options: .regularExpression) {
-            let attrValue = svg[viewBoxMatch]
-            if let quoteStart = attrValue.firstIndex(of: "\""),
-               let quoteEnd = attrValue[attrValue.index(after: quoteStart)...].firstIndex(of: "\"") {
-                let parts = svg[attrValue.index(after: quoteStart)..<quoteEnd]
-                    .split(whereSeparator: { $0 == " " || $0 == "," })
-                    .compactMap { Double($0) }
-                if parts.count == 4 {
-                    return CGSize(width: max(parts[2], 20), height: max(parts[3], 20))
-                }
-            }
-        }
-        // Fallback to image size
-        let rep = fallbackImage.representations.first
-        let w = CGFloat(rep?.pixelsWide ?? Int(fallbackImage.size.width))
-        let h = CGFloat(rep?.pixelsHigh ?? Int(fallbackImage.size.height))
-        return CGSize(width: max(w, 20), height: max(h, 20))
-    }
 }
 
 struct CheckerboardPattern: View {

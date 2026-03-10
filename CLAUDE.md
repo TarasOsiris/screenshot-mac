@@ -21,6 +21,7 @@ UI tests exist (`screenshotUITests` scheme) but no unit tests. No linter configu
 ## Custom Commands
 
 - `/gwip` — Stage all changes, commit with a WIP message summarizing changes, and push to current branch.
+- `/ship [version]` — Bump build number (and optionally marketing version), build, and upload to App Store Connect.
 
 ## Architecture
 

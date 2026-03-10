@@ -20,7 +20,8 @@
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
       "Bash(git:*)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(open /Users/taras/repo/experiments/screenshot-mac/build/screenshot.xcarchive)"
     ]
   }
 }

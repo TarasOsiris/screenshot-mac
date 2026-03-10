@@ -168,6 +168,24 @@ struct EditorRowView: View {
                     .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
                     .contentShape(Rectangle())
                     .onTapGesture { tapSelectRow() }
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case .active(let location):
+                            state.canvasMouseModelPosition = CGPoint(
+                                x: location.x / ds,
+                                y: location.y / ds
+                            )
+                        case .ended:
+                            state.canvasMouseModelPosition = nil
+                        @unknown default:
+                            break
+                        }
+                    }
+                    .onDrop(of: [.image, .svg], delegate: CanvasDropDelegate(
+                        onDrop: { providers, location in
+                            handleCanvasDrop(providers, at: location, displayScale: ds)
+                        }
+                    ))
 
                     // Add button
                     AddTemplateButton(width: dw, height: dh) {
@@ -252,6 +270,60 @@ struct EditorRowView: View {
         }
     }
 
+    private func handleCanvasDrop(_ providers: [NSItemProvider], at displayLocation: CGPoint, displayScale ds: CGFloat) -> Bool {
+        guard let provider = providers.first else { return false }
+        let modelX = displayLocation.x / ds
+        let modelY = displayLocation.y / ds
+
+        // Try SVG file first
+        if provider.hasItemConformingToTypeIdentifier(UTType.svg.identifier) {
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { url, _ in
+                guard let url = url,
+                      let content = try? String(contentsOf: url, encoding: .utf8) else { return }
+                let sanitized = SvgHelper.sanitize(content)
+                guard let data = sanitized.data(using: .utf8),
+                      let image = NSImage(data: data) else { return }
+                let size = SvgHelper.parseSize(sanitized, fallbackImage: image)
+                DispatchQueue.main.async {
+                    state.selectRow(row.id)
+                    let scaledSize = SvgHelper.scaledSize(size)
+                    let shape = CanvasShapeModel.defaultSvg(
+                        centerX: modelX, centerY: modelY,
+                        svgContent: sanitized, size: scaledSize
+                    )
+                    state.addShape(shape)
+                }
+            }
+            return true
+        }
+
+        // Fall back to image
+        provider.loadObject(ofClass: NSImage.self) { image, _ in
+            guard let image = image as? NSImage else { return }
+            DispatchQueue.main.async {
+                state.selectRow(row.id)
+                let imgW = image.size.width
+                let imgH = image.size.height
+                let maxW = row.templateWidth * 0.8
+                let maxH = row.templateHeight * 0.8
+                let scale = min(maxW / imgW, maxH / imgH, 1.0)
+                let w = imgW * scale
+                let h = imgH * scale
+                let shape = CanvasShapeModel(
+                    type: .image,
+                    x: modelX - w / 2,
+                    y: modelY - h / 2,
+                    width: w,
+                    height: h,
+                    color: .clear
+                )
+                state.addShape(shape)
+                state.saveImage(image, for: shape.id)
+            }
+        }
+        return true
+    }
+
     private func tapSelectRow() {
         NSApp.keyWindow?.makeFirstResponder(nil)
         state.selectRow(row.id)
@@ -298,5 +370,19 @@ struct EditorRowView: View {
         )
         .disabled(disabled)
         .help(tooltip)
+    }
+}
+
+private struct CanvasDropDelegate: DropDelegate {
+    let onDrop: ([NSItemProvider], CGPoint) -> Bool
+
+    func validateDrop(info: DropInfo) -> Bool {
+        info.hasItemsConforming(to: [.image, .svg])
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        let providers = info.itemProviders(for: [.svg]) + info.itemProviders(for: [.image])
+        guard !providers.isEmpty else { return false }
+        return onDrop(providers, info.location)
     }
 }

@@ -194,6 +194,11 @@ struct CanvasShapeView: View {
             )
             if screenshotImage == nil && showsEditorHelpers {
                 imageDropPlaceholder { frame }
+            } else if showsEditorHelpers {
+                frame
+                    .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
+                        handleDrop(providers)
+                    }
             } else {
                 frame
             }

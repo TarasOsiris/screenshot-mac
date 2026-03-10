@@ -9,6 +9,7 @@ final class AppState {
     var selectedRowId: UUID?
     var selectedShapeId: UUID?
     var zoomLevel: CGFloat = 1.0
+    var canvasMouseModelPosition: CGPoint?
     var screenshotImages: [String: NSImage] = [:]
     var undoManager: UndoManager?
 
@@ -317,6 +318,37 @@ final class AppState {
         scheduleSave()
     }
 
+    func resizeRow(at rowIndex: Int, newWidth: CGFloat, newHeight: CGFloat) {
+        var row = rows[rowIndex]
+        guard row.templateWidth != newWidth || row.templateHeight != newHeight else { return }
+
+        registerUndo("Resize Row")
+
+        let scaleX = newWidth / row.templateWidth
+        let scaleY = newHeight / row.templateHeight
+
+        for i in row.shapes.indices {
+            let shape = row.shapes[i]
+            let templateIndex = row.owningTemplateIndex(for: shape)
+            let oldOriginX = CGFloat(templateIndex) * row.templateWidth
+            let newOriginX = CGFloat(templateIndex) * newWidth
+            // Devices keep aspect ratio; other shapes stretch with the template
+            let sx = shape.type == .device ? min(scaleX, scaleY) : scaleX
+            let sy = shape.type == .device ? min(scaleX, scaleY) : scaleY
+
+            let relX = shape.x - oldOriginX
+            row.shapes[i].x = newOriginX + relX * scaleX
+            row.shapes[i].y = shape.y * scaleY
+            row.shapes[i].width = shape.width * sx
+            row.shapes[i].height = shape.height * sy
+        }
+
+        row.templateWidth = newWidth
+        row.templateHeight = newHeight
+        rows[rowIndex] = row
+        scheduleSave()
+    }
+
     // MARK: - Shapes
 
     func addShape(_ shape: CanvasShapeModel) {
@@ -553,7 +585,14 @@ final class AppState {
     func pasteShape() {
         guard let source = clipboard, let rowIdx = selectedRowIndex else { return }
         registerUndo("Paste Shape")
-        let pasted = source.duplicated(offsetX: 20, offsetY: 20)
+        var pasted: CanvasShapeModel
+        if let mousePos = canvasMouseModelPosition {
+            pasted = source.duplicated()
+            pasted.x = mousePos.x - pasted.width / 2
+            pasted.y = mousePos.y - pasted.height / 2
+        } else {
+            pasted = source.duplicated(offsetX: 20, offsetY: 20)
+        }
         rows[rowIdx].shapes.append(pasted)
         LocaleService.copyShapeOverrides(&localeState, fromId: source.id, toId: pasted.id)
         selectShape(pasted.id, in: rows[rowIdx].id)
