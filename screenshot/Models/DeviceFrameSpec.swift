@@ -92,6 +92,16 @@ struct DeviceFrameCatalog {
         screenLeft: 60, screenTop: 72, screenRight: 60, screenBottom: 72,
         screenCornerRadius: 165
     )
+    private static let ipadPro11Spec = DeviceFrameImageSpec(
+        frameWidth: 1880, frameHeight: 2640,
+        screenLeft: 106, screenTop: 110, screenRight: 106, screenBottom: 110,
+        screenCornerRadius: 55
+    )
+    private static let ipadPro13Spec = DeviceFrameImageSpec(
+        frameWidth: 2300, frameHeight: 3000,
+        screenLeft: 118, screenTop: 124, screenRight: 118, screenBottom: 124,
+        screenCornerRadius: 54
+    )
 
     /// All available real device frames, grouped by model.
     static let groups: [DeviceFrameGroup] = buildGroups()
@@ -130,6 +140,18 @@ struct DeviceFrameCatalog {
                 id: "iphoneair", name: "iPhone Air",
                 colors: ["Cloud White", "Light Gold", "Sky Blue", "Space Black"],
                 portraitSpec: iphoneAirSpec
+            ),
+            buildGroup(
+                id: "ipadpro11", name: "iPad Pro 11\"",
+                colors: ["Silver", "Space Gray"],
+                portraitSpec: ipadPro11Spec,
+                fallbackCategory: .ipadPro11
+            ),
+            buildGroup(
+                id: "ipadpro13", name: "iPad Pro 13\"",
+                colors: ["Silver", "Space Gray"],
+                portraitSpec: ipadPro13Spec,
+                fallbackCategory: .ipadPro13
             ),
         ]
     }

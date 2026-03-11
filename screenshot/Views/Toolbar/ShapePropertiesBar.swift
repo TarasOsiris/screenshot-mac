@@ -43,6 +43,21 @@ struct ShapePropertiesBar: View {
         return state.localeState.hasOverride(shapeId: shapeId)
     }
 
+    /// Whether a shape has a locale image override for the active locale.
+    private func hasLocaleImageOverride(_ shapeId: UUID) -> Bool {
+        guard !state.localeState.isBaseLocale else { return false }
+        return state.localeState.override(forCode: state.localeState.activeLocaleCode, shapeId: shapeId)?.overrideImageFileName != nil
+    }
+
+    @ViewBuilder
+    private func localeImageResetButton(shapeId: UUID) -> some View {
+        if hasLocaleImageOverride(shapeId) {
+            barButton("arrow.counterclockwise", help: "Reset to default locale image") {
+                state.resetLocaleImageOverride(shapeId: shapeId)
+            }
+        }
+    }
+
     var body: some View {
         if let rowIndex, let shapeIdx = shapeIndex {
             let shape = resolvedShape(at: rowIndex, shapeIdx: shapeIdx)
@@ -134,6 +149,8 @@ struct ShapePropertiesBar: View {
                                 }
                                 .buttonStyle(.borderless)
                                 .foregroundStyle(.secondary)
+
+                                localeImageResetButton(shapeId: shapeId)
                             }
                         }
                     }
@@ -148,6 +165,8 @@ struct ShapePropertiesBar: View {
                             }
                             .buttonStyle(.borderless)
                             .foregroundStyle(.secondary)
+
+                            localeImageResetButton(shapeId: shapeId)
                         }
                     }
 

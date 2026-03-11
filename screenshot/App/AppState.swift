@@ -321,12 +321,23 @@ final class AppState {
         registerUndo(undoName)
 
         // Keep each shape visually attached to its screenshot column while columns are reordered.
+        // Shapes that span multiple templates stay in place — they aren't tied to one column.
         let columnWidth = row.templateWidth
         let lo = min(sourceIndex, destinationIndex)
         let hi = max(sourceIndex, destinationIndex)
         let betweenShift = sourceIndex < destinationIndex ? -columnWidth : columnWidth
         for shapeIndex in row.shapes.indices {
-            let owner = row.owningTemplateIndex(for: row.shapes[shapeIndex])
+            let shape = row.shapes[shapeIndex]
+
+            // Shapes spanning multiple templates stay in place unless clipped to one template.
+            if shape.clipToTemplate != true {
+                let bb = shape.aabb
+                let firstTemplate = max(0, Int(floor(bb.minX / columnWidth)))
+                let lastTemplate = min(row.templates.count - 1, Int(floor((bb.maxX - 0.5) / columnWidth)))
+                if firstTemplate != lastTemplate { continue }
+            }
+
+            let owner = row.owningTemplateIndex(for: shape)
             if owner == sourceIndex {
                 row.shapes[shapeIndex].x += columnWidth * CGFloat(destinationIndex - sourceIndex)
             } else if owner >= lo && owner <= hi {
@@ -683,6 +694,21 @@ final class AppState {
     func resetLocaleOverride(shapeId: UUID) {
         registerUndo("Reset Override")
         LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
+        scheduleSave()
+    }
+
+    func resetLocaleImageOverride(shapeId: UUID) {
+        let code = localeState.activeLocaleCode
+        guard var override = localeState.override(forCode: code, shapeId: shapeId),
+              let oldFile = override.overrideImageFileName else { return }
+        registerUndo("Reset Image Override")
+        override.overrideImageFileName = nil
+        if override.isEmpty {
+            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
+        } else {
+            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override)
+        }
+        cleanupUnreferencedImage(oldFile)
         scheduleSave()
     }
 
