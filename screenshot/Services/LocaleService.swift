@@ -34,12 +34,16 @@ enum LocaleService {
         baseResult.width = base.width
         baseResult.height = base.height
 
-        // Build override from position/size differences vs base
+        // Build override from position/size deltas vs base
         var override = ShapeLocaleOverride()
-        if updated.x != base.x { override.x = updated.x }
-        if updated.y != base.y { override.y = updated.y }
-        if updated.width != base.width { override.width = updated.width }
-        if updated.height != base.height { override.height = updated.height }
+        let dx = updated.x - base.x
+        let dy = updated.y - base.y
+        let dw = updated.width - base.width
+        let dh = updated.height - base.height
+        if dx != 0 { override.offsetX = dx }
+        if dy != 0 { override.offsetY = dy }
+        if dw != 0 { override.offsetWidth = dw }
+        if dh != 0 { override.offsetHeight = dh }
 
         // Text shapes also have text property overrides
         if updated.type == .text {
@@ -132,10 +136,10 @@ enum LocaleService {
 
     private static func applyOverride(_ override: ShapeLocaleOverride, to shape: CanvasShapeModel) -> CanvasShapeModel {
         var result = shape
-        if let x = override.x { result.x = x }
-        if let y = override.y { result.y = y }
-        if let width = override.width { result.width = width }
-        if let height = override.height { result.height = height }
+        if let dx = override.offsetX { result.x = shape.x + dx }
+        if let dy = override.offsetY { result.y = shape.y + dy }
+        if let dw = override.offsetWidth { result.width = shape.width + dw }
+        if let dh = override.offsetHeight { result.height = shape.height + dh }
         if let text = override.text { result.text = text }
         if let fontName = override.fontName { result.fontName = fontName }
         if let fontSize = override.fontSize { result.fontSize = fontSize }

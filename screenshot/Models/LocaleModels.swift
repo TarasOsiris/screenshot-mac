@@ -7,11 +7,12 @@ struct LocaleDefinition: Codable, Identifiable, Equatable {
 }
 
 struct ShapeLocaleOverride: Codable, Equatable {
-    // Position & size (all shape types)
-    var x: CGFloat?
-    var y: CGFloat?
-    var width: CGFloat?
-    var height: CGFloat?
+    // Position & size offsets from base shape (all shape types)
+    // These are deltas: resolved value = base value + offset
+    var offsetX: CGFloat?
+    var offsetY: CGFloat?
+    var offsetWidth: CGFloat?
+    var offsetHeight: CGFloat?
 
     // Text properties (text shapes only)
     var text: String?
@@ -27,7 +28,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
     var overrideImageFileName: String?
 
     var isEmpty: Bool {
-        x == nil && y == nil && width == nil && height == nil
+        offsetX == nil && offsetY == nil && offsetWidth == nil && offsetHeight == nil
             && text == nil && fontName == nil && fontSize == nil && fontWeight == nil
             && textAlign == nil && italic == nil && letterSpacing == nil && lineSpacing == nil
             && overrideImageFileName == nil
