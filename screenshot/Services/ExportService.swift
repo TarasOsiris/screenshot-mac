@@ -133,8 +133,20 @@ struct ExportService {
         }
         let visibleShapes = resolvedShapes.map { normalizeDeviceAspectIfNeeded($0) }
 
+        let template = row.templates[index]
+
         let view = ZStack {
-            row.effectiveBackgroundFill(forTemplateAt: index)
+            // Background
+            if row.isSpanningBackground && !template.overrideBackground {
+                let totalWidth = row.templateWidth * CGFloat(row.templates.count)
+                row.resolvedBackgroundView(screenshotImages: screenshotImages)
+                    .frame(width: totalWidth, height: row.templateHeight)
+                    .offset(x: (totalWidth - row.templateWidth) / 2 - tLeft)
+            } else if template.overrideBackground {
+                template.resolvedBackgroundView(screenshotImages: screenshotImages)
+            } else {
+                row.resolvedBackgroundView(screenshotImages: screenshotImages)
+            }
             ForEach(visibleShapes) { shape in
                 CanvasShapeView(
                     shape: shape.duplicated(offsetX: -tLeft),

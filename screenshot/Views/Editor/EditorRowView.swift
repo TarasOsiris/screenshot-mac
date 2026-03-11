@@ -74,117 +74,7 @@ struct EditorRowView: View {
                 VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top, spacing: 0) {
                     // Unified canvas
-                    ZStack(alignment: .topLeading) {
-                        // Background tiles (one per template, no gap)
-                        HStack(spacing: 0) {
-                            ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, _ in
-                                row.effectiveBackgroundFill(forTemplateAt: index)
-                                    .frame(width: dw, height: dh)
-                            }
-                        }
-
-                        // Shared shapes layer (resolved for active locale)
-                        ForEach(LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)) { shape in
-                            let shapeView = CanvasShapeView(
-                                shape: shape,
-                                displayScale: ds,
-                                isSelected: shape.id == state.selectedShapeId,
-                                screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
-                                defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-                                onSelect: { state.selectShape(shape.id, in: row.id) },
-                                onUpdate: { state.updateShape($0) },
-                                onDelete: { state.deleteShape(shape.id) },
-                                onScreenshotDrop: (shape.type == .device || shape.type == .image) ? { image in
-                                    state.saveImage(image, for: shape.id)
-                                } : nil,
-                                onDragSnap: { draggedShape, rawOffset in
-                                    let others = row.activeShapes.filter { $0.id != draggedShape.id }
-                                    let threshold = 4 / ds
-                                    let result = AlignmentService.computeSnap(
-                                        draggedShape: draggedShape,
-                                        dragOffset: rawOffset,
-                                        otherShapes: others,
-                                        templateWidth: row.templateWidth,
-                                        templateHeight: row.templateHeight,
-                                        templateCount: row.templates.count,
-                                        snapThreshold: threshold
-                                    )
-                                    activeGuides = result.guides
-                                    return result
-                                },
-                                onDragEnd: { activeGuides = [] },
-                                onOptionDragDuplicate: { shapeId in
-                                    state.duplicateShapeForOptionDrag(shapeId)
-                                }
-                            )
-
-                            if shape.clipToTemplate == true {
-                                let ti = row.owningTemplateIndex(for: shape)
-                                shapeView
-                                    .mask {
-                                        Rectangle()
-                                            .frame(width: dw, height: dh)
-                                            .position(x: CGFloat(ti) * dw + dw / 2, y: dh / 2)
-                                    }
-                            } else {
-                                shapeView
-                            }
-                        }
-
-                        // Alignment guide lines
-                        ForEach(activeGuides) { guide in
-                            AlignmentGuideLineView(guide: guide, displayScale: ds)
-                        }
-                        .zIndex(100)
-
-                        // Guideline separators (always on top)
-                        if row.showBorders && row.templates.count > 1 {
-                            ForEach(1..<row.templates.count, id: \.self) { i in
-                                ZStack {
-                                    Path { path in
-                                        path.move(to: CGPoint(x: 0, y: 0))
-                                        path.addLine(to: CGPoint(x: 0, y: dh))
-                                    }
-                                    .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                                    .foregroundStyle(.black)
-
-                                    Path { path in
-                                        path.move(to: CGPoint(x: 0, y: 0))
-                                        path.addLine(to: CGPoint(x: 0, y: dh))
-                                    }
-                                    .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4], dashPhase: 4))
-                                    .foregroundStyle(.white)
-                                }
-                                .frame(width: 1, height: dh)
-                                .offset(x: dw * CGFloat(i))
-                                .allowsHitTesting(false)
-                            }
-                        }
-                    }
-                    .frame(
-                        width: row.totalDisplayWidth(zoom: zoom),
-                        height: dh
-                    )
-                    .clipped()
-                    .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
-                    .contentShape(Rectangle())
-                    .onTapGesture { tapSelectRow() }
-                    .onContinuousHover { phase in
-                        switch phase {
-                        case .active(let location):
-                            state.canvasMouseModelPosition = CGPoint(
-                                x: location.x / ds,
-                                y: location.y / ds
-                            )
-                        case .ended:
-                            state.canvasMouseModelPosition = nil
-                        @unknown default:
-                            break
-                        }
-                    }
-                    .onDrop(of: [.image, .svg, .fileURL], isTargeted: nil) { providers, location in
-                        handleCanvasDrop(providers, at: location, displayScale: ds)
-                    }
+                    canvasView(dw: dw, dh: dh, ds: ds)
 
                     // Add button
                     AddTemplateButton(width: dw, height: dh) {
@@ -220,6 +110,11 @@ struct EditorRowView: View {
                                 }
                             },
                             onSave: { state.scheduleSave() },
+                            onPickBackgroundImage: { state.pickAndSaveBackgroundImage(for: row.id, templateIndex: index) },
+                            onRemoveBackgroundImage: { state.removeBackgroundImage(for: row.id, templateIndex: index) },
+                            onDropBackgroundImage: { image in
+                                state.saveBackgroundImage(image, for: row.id, templateIndex: index)
+                            },
                             onDelete: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     state.removeTemplate(template.id, from: row.id)
@@ -335,6 +230,150 @@ struct EditorRowView: View {
         }
 
         return handled
+    }
+
+    @ViewBuilder
+    private func canvasView(dw: CGFloat, dh: CGFloat, ds: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            backgroundLayer(dw: dw, dh: dh)
+
+            // Shared shapes layer (resolved for active locale)
+            ForEach(LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)) { shape in
+                let shapeView = CanvasShapeView(
+                    shape: shape,
+                    displayScale: ds,
+                    isSelected: shape.id == state.selectedShapeId,
+                    screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
+                    defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                    onSelect: { state.selectShape(shape.id, in: row.id) },
+                    onUpdate: { state.updateShape($0) },
+                    onDelete: { state.deleteShape(shape.id) },
+                    onScreenshotDrop: (shape.type == .device || shape.type == .image) ? { image in
+                        state.saveImage(image, for: shape.id)
+                    } : nil,
+                    onDragSnap: { draggedShape, rawOffset in
+                        let others = row.activeShapes.filter { $0.id != draggedShape.id }
+                        let threshold = 4 / ds
+                        let result = AlignmentService.computeSnap(
+                            draggedShape: draggedShape,
+                            dragOffset: rawOffset,
+                            otherShapes: others,
+                            templateWidth: row.templateWidth,
+                            templateHeight: row.templateHeight,
+                            templateCount: row.templates.count,
+                            snapThreshold: threshold
+                        )
+                        activeGuides = result.guides
+                        return result
+                    },
+                    onDragEnd: { activeGuides = [] },
+                    onOptionDragDuplicate: { shapeId in
+                        state.duplicateShapeForOptionDrag(shapeId)
+                    }
+                )
+
+                if shape.clipToTemplate == true {
+                    let ti = row.owningTemplateIndex(for: shape)
+                    shapeView
+                        .mask {
+                            Rectangle()
+                                .frame(width: dw, height: dh)
+                                .position(x: CGFloat(ti) * dw + dw / 2, y: dh / 2)
+                        }
+                } else {
+                    shapeView
+                }
+            }
+
+            // Alignment guide lines
+            ForEach(activeGuides) { guide in
+                AlignmentGuideLineView(guide: guide, displayScale: ds)
+            }
+            .zIndex(100)
+
+            // Guideline separators
+            if row.showBorders && row.templates.count > 1 {
+                ForEach(1..<row.templates.count, id: \.self) { i in
+                    ZStack {
+                        Path { path in
+                            path.move(to: CGPoint(x: 0, y: 0))
+                            path.addLine(to: CGPoint(x: 0, y: dh))
+                        }
+                        .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                        .foregroundStyle(.black)
+
+                        Path { path in
+                            path.move(to: CGPoint(x: 0, y: 0))
+                            path.addLine(to: CGPoint(x: 0, y: dh))
+                        }
+                        .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4], dashPhase: 4))
+                        .foregroundStyle(.white)
+                    }
+                    .frame(width: 1, height: dh)
+                    .offset(x: dw * CGFloat(i))
+                    .allowsHitTesting(false)
+                }
+            }
+        }
+        .frame(
+            width: row.totalDisplayWidth(zoom: zoom),
+            height: dh
+        )
+        .clipped()
+        .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+        .contentShape(Rectangle())
+        .onTapGesture { tapSelectRow() }
+        .onContinuousHover { phase in
+            switch phase {
+            case .active(let location):
+                state.canvasMouseModelPosition = CGPoint(
+                    x: location.x / ds,
+                    y: location.y / ds
+                )
+            case .ended:
+                state.canvasMouseModelPosition = nil
+            @unknown default:
+                break
+            }
+        }
+        .onDrop(of: [.image, .svg, .fileURL], isTargeted: nil) { providers, location in
+            handleCanvasDrop(providers, at: location, displayScale: ds)
+        }
+    }
+
+    @ViewBuilder
+    private func backgroundLayer(dw: CGFloat, dh: CGFloat) -> some View {
+        let templateModelSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+        if row.isSpanningBackground {
+            let totalWidth = dw * CGFloat(row.templates.count)
+            let spanModelSize = CGSize(width: row.templateWidth * CGFloat(row.templates.count), height: row.templateHeight)
+            ZStack(alignment: .topLeading) {
+                row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: spanModelSize)
+                    .frame(width: totalWidth, height: dh)
+                HStack(spacing: 0) {
+                    ForEach(Array(row.templates.enumerated()), id: \.element.id) { _, template in
+                        if template.overrideBackground {
+                            template.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
+                                .frame(width: dw, height: dh)
+                        } else {
+                            Color.clear.frame(width: dw, height: dh)
+                        }
+                    }
+                }
+            }
+        } else {
+            HStack(spacing: 0) {
+                ForEach(Array(row.templates.enumerated()), id: \.element.id) { _, template in
+                    if template.overrideBackground {
+                        template.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
+                            .frame(width: dw, height: dh)
+                    } else {
+                        row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
+                            .frame(width: dw, height: dh)
+                    }
+                }
+            }
+        }
     }
 
     private func tapSelectRow() {

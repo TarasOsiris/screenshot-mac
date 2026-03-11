@@ -12,6 +12,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     var defaultDeviceCategory: DeviceCategory
     var backgroundStyle: BackgroundStyle
     var gradientConfig: GradientConfig
+    var spanBackgroundAcrossRow: Bool
+    var backgroundImageConfig: BackgroundImageConfig
     var showDevice: Bool
     var showBorders: Bool
     var shapes: [CanvasShapeModel]
@@ -28,6 +30,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         defaultDeviceCategory: DeviceCategory = .iphone,
         backgroundStyle: BackgroundStyle = .color,
         gradientConfig: GradientConfig = GradientConfig(),
+        spanBackgroundAcrossRow: Bool = false,
+        backgroundImageConfig: BackgroundImageConfig = BackgroundImageConfig(),
         showDevice: Bool = true,
         showBorders: Bool = true,
         shapes: [CanvasShapeModel] = [],
@@ -43,6 +47,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         self.defaultDeviceCategory = defaultDeviceCategory
         self.backgroundStyle = backgroundStyle
         self.gradientConfig = gradientConfig
+        self.spanBackgroundAcrossRow = spanBackgroundAcrossRow
+        self.backgroundImageConfig = backgroundImageConfig
         self.showDevice = showDevice
         self.showBorders = showBorders
         self.shapes = shapes
@@ -52,7 +58,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     enum CodingKeys: String, CodingKey {
         case id, label, templates, templateWidth, templateHeight
         case backgroundColorData, defaultDeviceBodyColorData, defaultDeviceCategory
-        case backgroundStyle, gradientConfig
+        case backgroundStyle, gradientConfig, backgroundImageConfig
+        case spanBackgroundAcrossRow = "spanGradientAcrossRow"
         case showDevice, showBorders, shapes, isLabelManuallySet
     }
 
@@ -69,6 +76,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         defaultDeviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .defaultDeviceCategory) ?? .iphone
         backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
         gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
+        spanBackgroundAcrossRow = try c.decodeIfPresent(Bool.self, forKey: .spanBackgroundAcrossRow) ?? false
+        backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? BackgroundImageConfig()
         showDevice = try c.decodeIfPresent(Bool.self, forKey: .showDevice) ?? true
         showBorders = try c.decodeIfPresent(Bool.self, forKey: .showBorders) ?? true
         shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []
@@ -85,14 +94,9 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         set { defaultDeviceBodyColorData = CodableColor(newValue) }
     }
 
-    @ViewBuilder
-    func effectiveBackgroundFill(forTemplateAt index: Int) -> some View {
-        let template = templates[index]
-        if template.overrideBackground {
-            template.backgroundFill
-        } else {
-            backgroundFill
-        }
+    /// Whether the row background should span as one continuous fill across all templates.
+    var isSpanningBackground: Bool {
+        spanBackgroundAcrossRow && backgroundStyle != .color
     }
 
     func displayScale(zoom: CGFloat = 1.0) -> CGFloat {

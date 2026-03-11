@@ -3,23 +3,113 @@ import SwiftUI
 enum BackgroundStyle: String, Codable, CaseIterable {
     case color
     case gradient
+    case image
+}
+
+enum ImageFillMode: String, Codable, CaseIterable {
+    case fill
+    case fit
+    case stretch
+    case tile
+}
+
+struct BackgroundImageConfig: Codable, Equatable {
+    var fileName: String?
+    var fillMode: ImageFillMode
+    var opacity: Double
+
+    init(fileName: String? = nil, fillMode: ImageFillMode = .fill, opacity: Double = 1.0) {
+        self.fileName = fileName
+        self.fillMode = fillMode
+        self.opacity = opacity
+    }
 }
 
 protocol BackgroundFillable {
     var backgroundStyle: BackgroundStyle { get }
     var bgColor: Color { get }
     var gradientConfig: GradientConfig { get }
+    var backgroundImageConfig: BackgroundImageConfig { get }
 }
 
 extension BackgroundFillable {
     @ViewBuilder
-    var backgroundFill: some View {
+    func backgroundFillView(image: NSImage? = nil, modelSize: CGSize? = nil) -> some View {
         switch backgroundStyle {
         case .color:
             Rectangle().fill(bgColor)
         case .gradient:
             Rectangle().fill(gradientConfig.linearGradient)
+        case .image:
+            if let image {
+                ZStack {
+                    Rectangle().fill(bgColor)
+                    BackgroundImageView(image: image, config: backgroundImageConfig, modelSize: modelSize)
+                }
+            } else {
+                Rectangle().fill(bgColor)
+            }
         }
+    }
+
+    @ViewBuilder
+    func resolvedBackgroundView(screenshotImages: [String: NSImage], modelSize: CGSize? = nil) -> some View {
+        let bgImage = backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
+        backgroundFillView(image: bgImage, modelSize: modelSize)
+    }
+}
+
+struct BackgroundImageView: View {
+    let image: NSImage
+    let config: BackgroundImageConfig
+    var modelSize: CGSize?
+
+    var body: some View {
+        GeometryReader { geo in
+            let swiftImage = Image(nsImage: image)
+
+            switch config.fillMode {
+            case .fill:
+                swiftImage
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
+            case .fit:
+                swiftImage
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: geo.size.width, height: geo.size.height)
+            case .stretch:
+                swiftImage
+                    .resizable()
+                    .frame(width: geo.size.width, height: geo.size.height)
+            case .tile:
+                let imageSize = image.size
+                let refSize = modelSize ?? geo.size
+                if imageSize.width > 0, imageSize.height > 0, refSize.width > 0, refSize.height > 0 {
+                    let cols = min(50, max(1, Int(ceil(refSize.width / imageSize.width))))
+                    let rows = min(50, max(1, Int(ceil(refSize.height / imageSize.height))))
+                    let scaleX = geo.size.width / (CGFloat(cols) * imageSize.width)
+                    let scaleY = geo.size.height / (CGFloat(rows) * imageSize.height)
+                    VStack(spacing: 0) {
+                        ForEach(0..<rows, id: \.self) { _ in
+                            HStack(spacing: 0) {
+                                ForEach(0..<cols, id: \.self) { _ in
+                                    swiftImage
+                                        .resizable()
+                                        .frame(width: imageSize.width, height: imageSize.height)
+                                }
+                            }
+                        }
+                    }
+                    .scaleEffect(x: scaleX, y: scaleY, anchor: .topLeading)
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+                    .clipped()
+                }
+            }
+        }
+        .opacity(config.opacity)
     }
 }
 

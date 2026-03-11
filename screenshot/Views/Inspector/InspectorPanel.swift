@@ -53,8 +53,31 @@ struct InspectorPanel: View {
                         backgroundStyle: $state.rows[rowIndex].backgroundStyle,
                         bgColor: $state.rows[rowIndex].bgColor,
                         gradientConfig: $state.rows[rowIndex].gradientConfig,
-                        onChanged: { state.scheduleSave() }
+                        backgroundImageConfig: $state.rows[rowIndex].backgroundImageConfig,
+                        backgroundImage: state.rows[rowIndex].backgroundImageConfig.fileName.flatMap { state.screenshotImages[$0] },
+                        onChanged: { state.scheduleSave() },
+                        onPickImage: { state.pickAndSaveBackgroundImage(for: state.rows[rowIndex].id) },
+                        onRemoveImage: { state.removeBackgroundImage(for: state.rows[rowIndex].id) },
+                        onDropImage: { image in
+                            state.saveBackgroundImage(image, for: state.rows[rowIndex].id)
+                        }
                     )
+
+                    if state.rows[rowIndex].backgroundStyle != .color {
+                        let canSpanAcrossRow = state.rows[rowIndex].templates.count > 1
+                        Toggle("Span across row", isOn: $state.rows[rowIndex].spanBackgroundAcrossRow.onSet { state.scheduleSave() })
+                            .font(.system(size: 12))
+                            .toggleStyle(.switch)
+                            .controlSize(.small)
+                            .disabled(!canSpanAcrossRow)
+                            .help(spanAcrossRowHelp(for: rowIndex, canSpanAcrossRow: canSpanAcrossRow))
+
+                        if !canSpanAcrossRow {
+                            Text("Add at least two screenshots to span across row.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
 
                 Section("Elements") {
@@ -129,5 +152,11 @@ struct InspectorPanel: View {
             get: { state.rows[rowIndex].defaultDeviceBodyColor },
             set: { state.updateRowDefaultDeviceBodyColor($0, for: state.rows[rowIndex].id) }
         )
+    }
+
+    private func spanAcrossRowHelp(for rowIndex: Int, canSpanAcrossRow: Bool) -> String {
+        canSpanAcrossRow
+            ? "Apply background across the entire row instead of repeating per screenshot"
+            : "Requires at least two screenshots in the row"
     }
 }

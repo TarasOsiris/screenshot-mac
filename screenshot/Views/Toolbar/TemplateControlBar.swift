@@ -12,12 +12,37 @@ struct TemplateControlBar: View {
     var onMoveLeft: () -> Void = {}
     var onMoveRight: () -> Void = {}
     var onSave: () -> Void
+    var onPickBackgroundImage: (() -> Void)?
+    var onRemoveBackgroundImage: (() -> Void)?
+    var onDropBackgroundImage: ((NSImage) -> Void)? = nil
     var onDelete: () -> Void
     @State private var isDeletingTemplate = false
     @State private var showBackgroundPopover = false
     @State private var renderError: String?
 
     private var canDelete: Bool { row.templates.count > 1 }
+    private var backgroundPreviewImage: NSImage? {
+        template.backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
+    }
+    private var isImageBackgroundMissing: Bool {
+        template.overrideBackground &&
+        template.backgroundStyle == .image &&
+        backgroundPreviewImage == nil
+    }
+    private var backgroundButtonHelp: String {
+        if isImageBackgroundMissing {
+            return "Background override (image not selected)"
+        }
+        return "Background override"
+    }
+    private var backgroundButtonStyle: AnyShapeStyle {
+        if isImageBackgroundMissing {
+            return AnyShapeStyle(Color.orange)
+        }
+        return template.overrideBackground
+            ? AnyShapeStyle(.primary)
+            : AnyShapeStyle(.secondary)
+    }
 
     var body: some View {
         HStack(spacing: 6) {
@@ -40,13 +65,31 @@ struct TemplateControlBar: View {
             } label: {
                 HStack(spacing: 3) {
                     if template.overrideBackground {
-                        template.backgroundFill
-                            .frame(width: 12, height: 12)
-                            .clipShape(RoundedRectangle(cornerRadius: 2))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 2)
-                                    .strokeBorder(.secondary.opacity(0.5), lineWidth: 0.5)
-                            )
+                        if template.backgroundStyle == .image {
+                            if let image = backgroundPreviewImage {
+                                Image(nsImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 12, height: 12)
+                                    .clipShape(RoundedRectangle(cornerRadius: 2))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .strokeBorder(.secondary.opacity(0.5), lineWidth: 0.5)
+                                    )
+                            } else {
+                                Image(systemName: "photo.badge.plus")
+                                    .font(.system(size: 10))
+                                    .frame(width: 12, height: 12)
+                            }
+                        } else {
+                            template.backgroundFillView()
+                                .frame(width: 12, height: 12)
+                                .clipShape(RoundedRectangle(cornerRadius: 2))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .strokeBorder(.secondary.opacity(0.5), lineWidth: 0.5)
+                                )
+                        }
                     } else {
                         Image(systemName: "paintbrush")
                             .font(.system(size: 11))
@@ -57,8 +100,8 @@ struct TemplateControlBar: View {
             }
             .buttonStyle(.borderless)
             .focusable(false)
-            .foregroundStyle(template.overrideBackground ? .primary : .secondary)
-            .help("Background override")
+            .foregroundStyle(backgroundButtonStyle)
+            .help(backgroundButtonHelp)
             .popover(isPresented: $showBackgroundPopover, arrowEdge: .bottom) {
                 VStack(alignment: .leading, spacing: 8) {
                     Toggle(
@@ -75,13 +118,18 @@ struct TemplateControlBar: View {
                             backgroundStyle: $template.backgroundStyle,
                             bgColor: $template.bgColor,
                             gradientConfig: $template.gradientConfig,
+                            backgroundImageConfig: $template.backgroundImageConfig,
+                            backgroundImage: backgroundPreviewImage,
                             compact: true,
-                            onChanged: onSave
+                            onChanged: onSave,
+                            onPickImage: onPickBackgroundImage,
+                            onRemoveImage: onRemoveBackgroundImage,
+                            onDropImage: onDropBackgroundImage
                         )
                     }
                 }
                 .padding(12)
-                .frame(width: 240)
+                .frame(width: 260)
             }
 
             Spacer()

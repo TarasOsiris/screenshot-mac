@@ -28,7 +28,8 @@
       "Bash(2)",
       "Bash(xcodebuild test:*)",
       "Bash(xcresulttool get:*)",
-      "Bash(xcrun xcresulttool:*)"
+      "Bash(xcrun xcresulttool:*)",
+      "Bash(find /Users/taras/repo/experiments/screenshot-mac -name \"*.swift\" -exec grep -l \"NSImage\" {} \\\\; | xargs grep -l \"extension NSImage\" | head -5)"
     ]
   }
 }

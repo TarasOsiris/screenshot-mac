@@ -7,6 +7,7 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
     var overrideBackground: Bool
     var backgroundStyle: BackgroundStyle
     var gradientConfig: GradientConfig
+    var backgroundImageConfig: BackgroundImageConfig
 
     init(id: UUID = UUID(), backgroundColor: Color = .blue) {
         self.id = id
@@ -14,10 +15,11 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
         self.overrideBackground = false
         self.backgroundStyle = .color
         self.gradientConfig = GradientConfig()
+        self.backgroundImageConfig = BackgroundImageConfig()
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, backgroundColor, overrideBackground, backgroundStyle, gradientConfig
+        case id, backgroundColor, overrideBackground, backgroundStyle, gradientConfig, backgroundImageConfig
     }
 
     init(from decoder: Decoder) throws {
@@ -27,6 +29,7 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
         overrideBackground = try c.decodeIfPresent(Bool.self, forKey: .overrideBackground) ?? false
         backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
         gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
+        backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? BackgroundImageConfig()
     }
 
     var bgColor: Color {
@@ -39,6 +42,7 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
         copy.overrideBackground = overrideBackground
         copy.backgroundStyle = backgroundStyle
         copy.gradientConfig = gradientConfig
+        copy.backgroundImageConfig = backgroundImageConfig
         return copy
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 @Observable
 final class AppState {
@@ -266,10 +267,8 @@ final class AppState {
               let templateIndex = rows[idx].templates.firstIndex(where: { $0.id == templateId }) else { return }
         registerUndo("Remove Template")
         let shapesToRemove = rows[idx].shapes.filter { rows[idx].owningTemplateIndex(for: $0) == templateIndex }
+        let templateBgImage = rows[idx].templates[templateIndex].backgroundImageConfig.fileName
         for shape in shapesToRemove {
-            for fileName in shape.allImageFileNames where !isImageFileReferenced(fileName) {
-                screenshotImages.removeValue(forKey: fileName)
-            }
             LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
         }
         let shapeIdsToRemove = Set(shapesToRemove.map(\.id))
@@ -278,6 +277,11 @@ final class AppState {
         }
         rows[idx].shapes.removeAll { shapeIdsToRemove.contains($0.id) }
         rows[idx].templates.remove(at: templateIndex)
+        // Cleanup orphaned images after removal
+        for shape in shapesToRemove {
+            for fileName in shape.allImageFileNames { cleanupUnreferencedImage(fileName) }
+        }
+        cleanupUnreferencedImage(templateBgImage)
         scheduleSave()
     }
 
@@ -471,8 +475,8 @@ final class AppState {
         guard let location = shapeLocation(for: id) else { return }
         registerUndo("Delete Shape")
         let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
-        for fileName in removedShape.allImageFileNames where !isImageFileReferenced(fileName) {
-            screenshotImages.removeValue(forKey: fileName)
+        for fileName in removedShape.allImageFileNames {
+            cleanupUnreferencedImage(fileName)
         }
         LocaleService.removeShapeOverrides(&localeState, shapeId: id)
         if selectedShapeId == id {
@@ -763,8 +767,8 @@ final class AppState {
         }
         rows[location.rowIndex].shapes[location.shapeIndex] = shape
 
-        for oldFile in previousFiles where oldFile != fileName && !isImageFileReferenced(oldFile) {
-            screenshotImages.removeValue(forKey: oldFile)
+        for oldFile in previousFiles where oldFile != fileName {
+            cleanupUnreferencedImage(oldFile)
         }
         scheduleSave()
     }
@@ -773,18 +777,78 @@ final class AppState {
     func loadScreenshotImages() {
         guard let activeId = activeProjectId else { return }
         let resourcesURL = PersistenceService.resourcesDir(activeId)
-        for row in rows {
-            for shape in row.shapes {
-                for fileName in shape.allImageFileNames {
-                    if screenshotImages[fileName] == nil {
-                        let url = resourcesURL.appendingPathComponent(fileName)
-                        if let image = NSImage(contentsOf: url) {
-                            screenshotImages[fileName] = image
-                        }
-                    }
-                }
+
+        func loadIfNeeded(_ fileName: String?) {
+            guard let fileName, screenshotImages[fileName] == nil else { return }
+            let url = resourcesURL.appendingPathComponent(fileName)
+            if let image = NSImage(contentsOf: url) {
+                screenshotImages[fileName] = image
             }
         }
+
+        for row in rows {
+            // Shape images
+            for shape in row.shapes {
+                for fileName in shape.allImageFileNames {
+                    loadIfNeeded(fileName)
+                }
+            }
+            // Row background image
+            loadIfNeeded(row.backgroundImageConfig.fileName)
+            // Template background images
+            for template in row.templates {
+                loadIfNeeded(template.backgroundImageConfig.fileName)
+            }
+        }
+    }
+
+    func saveBackgroundImage(_ image: NSImage, for rowId: UUID, templateIndex: Int? = nil) {
+        guard let activeId = activeProjectId,
+              let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
+
+        let fileId = UUID().uuidString
+        let fileName = "bg-\(fileId).png"
+        let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+
+        guard let pngData = ExportService.pngData(from: image) else { return }
+        try? pngData.write(to: url, options: .atomic)
+        screenshotImages[fileName] = image
+
+        setBackgroundImageFileName(fileName, rowIndex: rowIndex, templateIndex: templateIndex)
+        scheduleSave()
+    }
+
+    func removeBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
+        guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
+        setBackgroundImageFileName(nil, rowIndex: rowIndex, templateIndex: templateIndex)
+        scheduleSave()
+    }
+
+    private func setBackgroundImageFileName(_ newFile: String?, rowIndex: Int, templateIndex: Int?) {
+        let oldFile: String?
+        if let templateIndex, templateIndex < rows[rowIndex].templates.count {
+            oldFile = rows[rowIndex].templates[templateIndex].backgroundImageConfig.fileName
+            rows[rowIndex].templates[templateIndex].backgroundImageConfig.fileName = newFile
+        } else {
+            oldFile = rows[rowIndex].backgroundImageConfig.fileName
+            rows[rowIndex].backgroundImageConfig.fileName = newFile
+        }
+        cleanupUnreferencedImage(oldFile)
+    }
+
+    private func cleanupUnreferencedImage(_ fileName: String?) {
+        guard let fileName, !isImageFileReferenced(fileName) else { return }
+        screenshotImages.removeValue(forKey: fileName)
+    }
+
+    func pickAndSaveBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let image = NSImage.fromSecurityScopedURL(url) else { return }
+        saveBackgroundImage(image, for: rowId, templateIndex: templateIndex)
     }
 
     // MARK: - Helpers
@@ -831,6 +895,8 @@ final class AppState {
 
     private func isImageFileReferenced(_ fileName: String) -> Bool {
         rows.contains { row in
+            row.backgroundImageConfig.fileName == fileName ||
+            row.templates.contains { $0.backgroundImageConfig.fileName == fileName } ||
             row.shapes.contains { shape in
                 shape.allImageFileNames.contains(fileName)
             }
