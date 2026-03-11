@@ -34,7 +34,7 @@ UI tests exist (`screenshotUITests` scheme) but no unit tests. No linter configu
 - `ScreenshotRow` → has `templates: [ScreenshotTemplate]` (columns) + `shapes: [CanvasShapeModel]` (canvas elements). Implements `BackgroundFillable`.
 - `ScreenshotTemplate` → per-column background/gradient settings. Implements `BackgroundFillable`.
 - `CanvasShapeModel` → union type via `ShapeType` enum (rectangle, circle, text, image, device, svg). Type-specific properties are optionals on the same struct.
-- `BackgroundStyle` → enum (color, gradient) with `GradientConfig` (color stops, angle, 12 presets).
+- `BackgroundStyle` → enum (color, gradient, image) with `GradientConfig` (color stops, angle, 12 presets) and `BackgroundImageConfig` (fileName, fillMode, opacity). `BackgroundFillable` protocol provides `backgroundFillView(image:modelSize:)` and `resolvedBackgroundView(screenshotImages:modelSize:)` for rendering.
 - `LocaleState` → locale definitions + active locale + per-shape overrides (`ShapeLocaleOverride` for text properties).
 
 **Services:**
@@ -67,3 +67,43 @@ UI tests exist (`screenshotUITests` scheme) but no unit tests. No linter configu
 - The display scale maps large pixel dimensions (e.g., 1242×2688) down to ~500px height for editing, adjustable via zoom
 - Option+Drag creates duplicate shape
 - Keyboard shortcuts: Cmd+C/V/X copy/paste/cut, Cmd+D duplicate, Delete delete, Esc deselect, Cmd+Shift+]/[ z-order, arrow keys nudge (Shift ×10), Cmd+E export, Cmd+Shift+R add row, Cmd+]/[ cycle locale
+
+## Regression Prevention
+
+**Export/preview parity (CRITICAL):**
+- Exported images must always match exactly what the editor shows. After implementing any visual feature (backgrounds, shapes, effects, layout), always verify that `ExportService.renderTemplateImage` produces the same result as the editor canvas.
+- The export ZStack must use `ZStack(alignment: .topLeading)` — same as the editor — because `CanvasShapeView` uses `.position()` which is relative to the parent's coordinate origin.
+- All background views in export must have explicit `.frame(width:height:)` — `GeometryReader` inside `resolvedBackgroundView` is greedy and will break layout without it.
+- When views depend on container size (e.g., tiling), pass `modelSize` so rendering is consistent across editor (display-scale) and export (model-scale) contexts.
+- Zoom must never affect screenshot content — use model-space dimensions for any size-dependent rendering logic.
+
+**Coordinate spaces — model vs display:**
+- Model space = actual pixel dimensions (e.g., 1242×2688). All shape positions, sizes, and template dimensions are stored in model space.
+- Display space = model space × `displayScale` (which includes zoom). The editor renders at display scale; export renders at model scale (displayScale=1.0).
+- Never use display-space values for logic that affects visual output (tile counts, shape filtering, background sizing). Always derive from model-space values.
+- `CanvasShapeView` multiplies by `displayScale` internally — pass `1.0` in export, the actual display scale in the editor.
+
+**Backward-compatible persistence:**
+- All new model properties must use `decodeIfPresent` with a sensible default in the `init(from decoder:)`. Users have existing saved projects — adding a required field will crash on load.
+- When renaming a stored property, use `case newName = "oldName"` in CodingKeys to keep reading old data.
+- Test that existing project files still load after model changes.
+
+**Image resource lifecycle:**
+- Images (screenshots, backgrounds) are stored as PNG files in `projects/<uuid>/resources/` and referenced by filename strings in the model.
+- When replacing or removing an image reference, always call `cleanupUnreferencedImage()` to remove orphaned files and evict from `screenshotImages` cache.
+- When deleting a template or row, clean up all associated image references (shape images, background images).
+- `isImageFileReferenced()` checks all shapes, rows, and templates — update it when adding new image-bearing properties.
+- Use `NSImage.fromSecurityScopedURL()` (in `Extensions/CodableColor.swift`) when loading images from user-picked file URLs.
+
+**Exhaustive switch coverage:**
+- `BackgroundStyle`, `ShapeType`, `ImageFillMode`, `DeviceCategory` are enums used in switch statements across the codebase. Adding a new case requires updating every switch — check `EditorRowView`, `ExportService`, `BackgroundEditor`, `CanvasShapeView`, `ShapePropertiesBar`, and `InspectorPanel`.
+- The `BackgroundFillable` protocol extension (`backgroundFillView`) must handle all `BackgroundStyle` cases. Both editor and export use this same code path.
+
+**SwiftUI type-checker limits:**
+- Large `@ViewBuilder` bodies cause "unable to type-check in reasonable time" errors. If a view body grows complex, extract sub-views into separate `@ViewBuilder` methods (see `EditorRowView.canvasView`, `backgroundLayer` as examples).
+- Prefer `if/else` over complex ternaries in view builders.
+
+**Spanning backgrounds:**
+- `row.isSpanningBackground` controls whether a background renders once across all templates or repeats per-template. This applies to both gradient and image styles (not color).
+- In the editor, spanning renders a full-width background behind the HStack of templates. In export, it renders at full row width with an offset per template.
+- Per-template overrides (`template.overrideBackground`) always take priority over the row spanning background.

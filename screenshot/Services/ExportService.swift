@@ -135,17 +135,26 @@ struct ExportService {
 
         let template = row.templates[index]
 
-        let view = ZStack {
+        let templateSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+        let view = ZStack(alignment: .topLeading) {
             // Background
             if row.isSpanningBackground && !template.overrideBackground {
                 let totalWidth = row.templateWidth * CGFloat(row.templates.count)
-                row.resolvedBackgroundView(screenshotImages: screenshotImages)
-                    .frame(width: totalWidth, height: row.templateHeight)
-                    .offset(x: (totalWidth - row.templateWidth) / 2 - tLeft)
+                let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
+                Color.clear
+                    .frame(width: row.templateWidth, height: row.templateHeight)
+                    .overlay(alignment: .topLeading) {
+                        row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanSize)
+                            .frame(width: totalWidth, height: row.templateHeight)
+                            .offset(x: -tLeft)
+                    }
+                    .clipped()
             } else if template.overrideBackground {
-                template.resolvedBackgroundView(screenshotImages: screenshotImages)
+                template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateSize)
+                    .frame(width: row.templateWidth, height: row.templateHeight)
             } else {
-                row.resolvedBackgroundView(screenshotImages: screenshotImages)
+                row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateSize)
+                    .frame(width: row.templateWidth, height: row.templateHeight)
             }
             ForEach(visibleShapes) { shape in
                 CanvasShapeView(
