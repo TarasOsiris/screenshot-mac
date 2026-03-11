@@ -256,12 +256,17 @@ final class AppState {
         let color = Self.templateColors[rows[idx].templates.count % Self.templateColors.count]
         rows[idx].templates.append(ScreenshotTemplate(backgroundColor: color))
         let templateIndex = rows[idx].templates.count - 1
-        let device = CanvasShapeModel.defaultDevice(
+        var device = CanvasShapeModel.defaultDevice(
             centerX: rows[idx].templateCenterX(at: templateIndex),
             centerY: rows[idx].templateHeight / 2,
             templateHeight: rows[idx].templateHeight,
             category: rows[idx].defaultDeviceCategory
         )
+        if let frameId = rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            device.deviceCategory = frame.fallbackCategory
+            device.deviceFrameId = frame.id
+            device.adjustToDeviceAspectRatio(centerX: rows[idx].templateCenterX(at: templateIndex))
+        }
         rows[idx].shapes.append(device)
         scheduleSave()
     }
@@ -354,8 +359,12 @@ final class AppState {
             templateHeight: source.templateHeight,
             bgColor: source.bgColor,
             defaultDeviceBodyColor: source.defaultDeviceBodyColor,
+            defaultDeviceCategory: source.defaultDeviceCategory,
             backgroundStyle: source.backgroundStyle,
             gradientConfig: source.gradientConfig,
+            spanBackgroundAcrossRow: source.spanBackgroundAcrossRow,
+            backgroundImageConfig: source.backgroundImageConfig,
+            defaultDeviceFrameId: source.defaultDeviceFrameId,
             showDevice: source.showDevice,
             showBorders: source.showBorders,
             shapes: newShapes,

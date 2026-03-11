@@ -191,7 +191,8 @@ struct CanvasShapeView: View {
                 bodyColor: shape.resolvedDeviceBodyColor(default: defaultDeviceBodyColor),
                 width: displayW,
                 height: displayH,
-                screenshotImage: screenshotImage
+                screenshotImage: screenshotImage,
+                deviceFrameId: shape.deviceFrameId
             )
             if screenshotImage == nil && showsEditorHelpers {
                 imageDropPlaceholder { frame }

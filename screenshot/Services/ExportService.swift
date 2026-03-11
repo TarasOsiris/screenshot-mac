@@ -190,8 +190,7 @@ struct ExportService {
     private static func normalizeDeviceAspectIfNeeded(_ shape: CanvasShapeModel) -> CanvasShapeModel {
         guard shape.type == .device else { return shape }
 
-        let category = shape.deviceCategory ?? .iphone
-        let base = category.baseDimensions
+        let base = shape.resolvedBaseDimensions
         let targetAspect = base.width / base.height
 
         guard shape.width > 0, shape.height > 0 else { return shape }

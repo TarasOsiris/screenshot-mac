@@ -91,7 +91,6 @@ enum DeviceCategory: String, Codable, CaseIterable {
     }
 
     /// Screen corner radius in base units.
-    /// iPad: _displayCornerRadius = 18 pts × 2x = 36 px → 3.46 mm × 3.077 = 10.66.
     var screenCornerRadius: CGFloat {
         switch self {
         case .iphone: 33
@@ -152,6 +151,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     // Device properties
     var deviceCategory: DeviceCategory?
     var deviceBodyColorData: CodableColor?
+    var deviceFrameId: String?
     var screenshotFileName: String?
 
     // SVG properties
@@ -183,6 +183,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         imageFileName: String? = nil,
         deviceCategory: DeviceCategory? = nil,
         deviceBodyColor: Color? = nil,
+        deviceFrameId: String? = nil,
         screenshotFileName: String? = nil,
         svgContent: String? = nil,
         svgUseColor: Bool? = nil,
@@ -209,6 +210,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.imageFileName = imageFileName
         self.deviceCategory = deviceCategory
         self.deviceBodyColorData = deviceBodyColor.map { CodableColor($0) }
+        self.deviceFrameId = deviceFrameId
         self.screenshotFileName = screenshotFileName
         self.svgContent = svgContent
         self.svgUseColor = svgUseColor
@@ -268,6 +270,7 @@ struct CanvasShapeModel: Identifiable, Codable {
             imageFileName: imageFileName,
             deviceCategory: deviceCategory,
             deviceBodyColor: deviceBodyColorData?.color,
+            deviceFrameId: deviceFrameId,
             screenshotFileName: screenshotFileName,
             svgContent: svgContent,
             svgUseColor: svgUseColor,
@@ -300,6 +303,30 @@ struct CanvasShapeModel: Identifiable, Codable {
             width: size.width, height: size.height,
             color: .white, svgContent: svgContent, svgUseColor: false
         )
+    }
+
+    var resolvedDeviceFrame: DeviceFrame? {
+        guard let frameId = deviceFrameId else { return nil }
+        return DeviceFrameCatalog.frame(for: frameId)
+    }
+
+    /// Resolved base dimensions accounting for real device frames.
+    var resolvedBaseDimensions: (width: CGFloat, height: CGFloat) {
+        if let frame = resolvedDeviceFrame {
+            return frame.baseDimensions
+        }
+        return (deviceCategory ?? .iphone).baseDimensions
+    }
+
+    /// Adjusts width to match the correct aspect ratio for the current device type.
+    /// Optionally re-centers horizontally at `centerX`.
+    mutating func adjustToDeviceAspectRatio(centerX: CGFloat? = nil) {
+        let base = resolvedBaseDimensions
+        let aspect = base.width / base.height
+        width = height * aspect
+        if let cx = centerX {
+            x = cx - width / 2
+        }
     }
 
     static func defaultDevice(centerX: CGFloat, centerY: CGFloat, templateHeight: CGFloat = 2688, category: DeviceCategory = .iphone) -> CanvasShapeModel {

@@ -14,6 +14,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     var gradientConfig: GradientConfig
     var spanBackgroundAcrossRow: Bool
     var backgroundImageConfig: BackgroundImageConfig
+    var defaultDeviceFrameId: String?
     var showDevice: Bool
     var showBorders: Bool
     var shapes: [CanvasShapeModel]
@@ -32,6 +33,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         gradientConfig: GradientConfig = GradientConfig(),
         spanBackgroundAcrossRow: Bool = false,
         backgroundImageConfig: BackgroundImageConfig = BackgroundImageConfig(),
+        defaultDeviceFrameId: String? = nil,
         showDevice: Bool = true,
         showBorders: Bool = true,
         shapes: [CanvasShapeModel] = [],
@@ -49,6 +51,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         self.gradientConfig = gradientConfig
         self.spanBackgroundAcrossRow = spanBackgroundAcrossRow
         self.backgroundImageConfig = backgroundImageConfig
+        self.defaultDeviceFrameId = defaultDeviceFrameId
         self.showDevice = showDevice
         self.showBorders = showBorders
         self.shapes = shapes
@@ -60,6 +63,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         case backgroundColorData, defaultDeviceBodyColorData, defaultDeviceCategory
         case backgroundStyle, gradientConfig, backgroundImageConfig
         case spanBackgroundAcrossRow = "spanGradientAcrossRow"
+        case defaultDeviceFrameId
         case showDevice, showBorders, shapes, isLabelManuallySet
     }
 
@@ -78,6 +82,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
         spanBackgroundAcrossRow = try c.decodeIfPresent(Bool.self, forKey: .spanBackgroundAcrossRow) ?? false
         backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? BackgroundImageConfig()
+        defaultDeviceFrameId = try c.decodeIfPresent(String.self, forKey: .defaultDeviceFrameId)
         showDevice = try c.decodeIfPresent(Bool.self, forKey: .showDevice) ?? true
         showBorders = try c.decodeIfPresent(Bool.self, forKey: .showBorders) ?? true
         shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []

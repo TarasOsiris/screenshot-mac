@@ -100,29 +100,26 @@ struct ShapePropertiesBar: View {
                     // Device properties
                     if shape.type == .device {
                         section {
-                            Picker("", selection: deviceCategoryBinding(shapeId)) {
-                                ForEach(DeviceCategory.allCases, id: \.self) { cat in
-                                    Label(cat.label, systemImage: cat.icon).tag(cat)
-                                }
-                            }
-                            .labelsHidden()
-                            .frame(width: 140)
+                            devicePicker(shape: shape, shapeId: shapeId)
 
-                            separator
+                            // Body color for abstract devices only
+                            if shape.resolvedDeviceFrame == nil {
+                                separator
 
-                            controlGroup("Body") {
-                                HStack(spacing: 4) {
-                                    ColorPicker("", selection: deviceBodyColorBinding(shapeId), supportsOpacity: false)
-                                        .labelsHidden()
-                                        .padding(.horizontal, 4)
-                                        .help("Device body color")
+                                controlGroup("Body") {
+                                    HStack(spacing: 4) {
+                                        ColorPicker("", selection: deviceBodyColorBinding(shapeId), supportsOpacity: false)
+                                            .labelsHidden()
+                                            .padding(.horizontal, 4)
+                                            .help("Device body color")
 
-                                    barButton(
-                                        "arrow.counterclockwise",
-                                        help: "Reset to row default device body color",
-                                        disabled: !hasDeviceBodyColorOverride(shapeId)
-                                    ) {
-                                        resetDeviceBodyColor(shapeId)
+                                        barButton(
+                                            "arrow.counterclockwise",
+                                            help: "Reset to row default device body color",
+                                            disabled: !hasDeviceBodyColorOverride(shapeId)
+                                        ) {
+                                            resetDeviceBodyColor(shapeId)
+                                        }
                                     }
                                 }
                             }
@@ -353,25 +350,64 @@ struct ShapePropertiesBar: View {
         )
     }
 
-    private func deviceCategoryBinding(_ shapeId: UUID) -> Binding<DeviceCategory> {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else { return .iphone }
-                return resolvedShape(at: i.row, shapeIdx: i.shape).deviceCategory ?? .iphone
-            },
-            set: { newCategory in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                let oldCategory = resolved.deviceCategory ?? .iphone
-                guard newCategory != oldCategory else { return }
-                resolved.deviceCategory = newCategory
-                // Adjust width to maintain correct aspect ratio for new device
-                let newBase = newCategory.baseDimensions
-                let newAspect = newBase.width / newBase.height
-                resolved.width = resolved.height * newAspect
-                state.updateShape(resolved)
+    // MARK: - Device Picker
+
+    /// Unified device picker: abstract devices first, separator, then real frames grouped by model with submenus.
+    @ViewBuilder
+    private func devicePicker(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        Menu {
+            DeviceMenuContent(
+                onSelectCategory: { cat in
+                    selectAbstractDevice(shapeId: shapeId, category: cat)
+                },
+                onSelectFrame: { frame in
+                    selectRealFrame(shapeId: shapeId, frame: frame)
+                }
+            )
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: devicePickerIcon(shape: shape))
+                Text(devicePickerLabel(shape: shape))
+                    .lineLimit(1)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 8))
+                    .foregroundStyle(.secondary)
             }
-        )
+        }
+        .menuStyle(.borderlessButton)
+        .frame(width: 220)
+    }
+
+    private func devicePickerLabel(shape: CanvasShapeModel) -> String {
+        if let frameId = shape.deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            return frame.label
+        }
+        return (shape.deviceCategory ?? .iphone).label
+    }
+
+    private func devicePickerIcon(shape: CanvasShapeModel) -> String {
+        if shape.resolvedDeviceFrame != nil {
+            return "iphone"
+        }
+        return (shape.deviceCategory ?? .iphone).icon
+    }
+
+    private func selectAbstractDevice(shapeId: UUID, category: DeviceCategory) {
+        guard let i = idx(for: shapeId) else { return }
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        resolved.deviceFrameId = nil
+        resolved.deviceCategory = category
+        resolved.adjustToDeviceAspectRatio()
+        state.updateShape(resolved)
+    }
+
+    private func selectRealFrame(shapeId: UUID, frame: DeviceFrame) {
+        guard let i = idx(for: shapeId) else { return }
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        resolved.deviceCategory = frame.fallbackCategory
+        resolved.deviceFrameId = frame.id
+        resolved.adjustToDeviceAspectRatio()
+        state.updateShape(resolved)
     }
 
     private func deviceBodyColorBinding(_ shapeId: UUID) -> Binding<Color> {

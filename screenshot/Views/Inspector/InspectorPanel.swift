@@ -117,22 +117,57 @@ struct InspectorPanel: View {
     @ViewBuilder
     private func deviceSection(rowId: UUID) -> some View {
         Section("Device") {
-            Picker("Default device", selection: safeRowBinding(rowId, keyPath: \.defaultDeviceCategory, default: .iphone).onSet { state.scheduleSave() }) {
-                ForEach(DeviceCategory.allCases, id: \.self) { cat in
-                    Label(cat.label, systemImage: cat.icon).tag(cat)
+            LabeledContent("Default device") {
+                Menu {
+                    DeviceMenuContent(
+                        onSelectCategory: { cat in
+                            guard let idx = state.rowIndex(for: rowId) else { return }
+                            state.rows[idx].defaultDeviceCategory = cat
+                            state.rows[idx].defaultDeviceFrameId = nil
+                            state.scheduleSave()
+                        },
+                        onSelectFrame: { frame in
+                            guard let idx = state.rowIndex(for: rowId) else { return }
+                            state.rows[idx].defaultDeviceCategory = frame.fallbackCategory
+                            state.rows[idx].defaultDeviceFrameId = frame.id
+                            state.scheduleSave()
+                        }
+                    )
+                } label: {
+                    Text(defaultDeviceLabel(for: rowId))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
             }
-            .pickerStyle(.menu)
             .controlSize(.small)
             .font(.system(size: 12))
 
-            LabeledContent("Default body color") {
-                ColorPicker("", selection: rowDefaultDeviceBodyColorBinding(for: rowId), supportsOpacity: false)
-                    .labelsHidden()
-                    .help("Default device body color for this row")
+            // Body color only for abstract devices
+            if defaultDeviceIsAbstract(for: rowId) {
+                LabeledContent("Default body color") {
+                    ColorPicker("", selection: rowDefaultDeviceBodyColorBinding(for: rowId), supportsOpacity: false)
+                        .labelsHidden()
+                        .help("Default device body color for this row")
+                }
+                .font(.system(size: 12))
             }
-            .font(.system(size: 12))
         }
+    }
+
+    private func defaultDeviceLabel(for rowId: UUID) -> String {
+        guard let idx = state.rowIndex(for: rowId) else { return "iPhone" }
+        if let frameId = state.rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            return frame.label
+        }
+        return state.rows[idx].defaultDeviceCategory.label
+    }
+
+    private func defaultDeviceIsAbstract(for rowId: UUID) -> Bool {
+        guard let idx = state.rowIndex(for: rowId) else { return true }
+        guard let frameId = state.rows[idx].defaultDeviceFrameId else { return true }
+        return DeviceFrameCatalog.frame(for: frameId) == nil
     }
 
     @ViewBuilder

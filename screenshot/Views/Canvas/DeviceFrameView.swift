@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Device frame rendering with accurate physical proportions.
+// Device frame rendering — image-based (real frames) or programmatic.
 //
 // iPhone 17 physical specs (mm):
 //   Body: 149.6 H × 71.5 W × 7.95 D
@@ -16,6 +16,8 @@ struct DeviceFrameView: View {
     let width: CGFloat
     let height: CGFloat
     var screenshotImage: NSImage? = nil
+    /// When set, renders using a real PNG frame from the catalog instead of programmatic drawing.
+    var deviceFrameId: String? = nil
 
     private var scale: CGFloat {
         let base = category.baseDimensions
@@ -23,6 +25,59 @@ struct DeviceFrameView: View {
     }
 
     var body: some View {
+        if let frameId = deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            imageBasedFrame(frame: frame)
+        } else {
+            programmaticFrame
+        }
+    }
+
+    // MARK: - Image-Based Frame
+
+    @ViewBuilder
+    private func imageBasedFrame(frame: DeviceFrame) -> some View {
+        let spec = frame.spec
+
+        ZStack(alignment: .topLeading) {
+            // Screenshot placed at the screen area position
+            Group {
+                if let screenshotImage {
+                    Image(nsImage: screenshotImage)
+                        .resizable()
+                        .interpolation(.high)
+                        .scaledToFill()
+                } else {
+                    Color.white
+                }
+            }
+            .frame(
+                width: width * (1 - spec.leftFraction - spec.rightFraction),
+                height: height * (1 - spec.topFraction - spec.bottomFraction)
+            )
+            .clipShape(RoundedRectangle(
+                cornerRadius: height * spec.cornerRadiusFraction,
+                style: .continuous
+            ))
+            .offset(
+                x: width * spec.leftFraction,
+                y: height * spec.topFraction
+            )
+
+            // Frame overlay
+            if let frameImage = NSImage(named: frame.imageName) {
+                Image(nsImage: frameImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: width, height: height)
+            }
+        }
+        .frame(width: width, height: height)
+    }
+
+    // MARK: - Programmatic Frame
+
+    @ViewBuilder
+    private var programmaticFrame: some View {
         switch category {
         case .iphone:
             iPhoneFrame
