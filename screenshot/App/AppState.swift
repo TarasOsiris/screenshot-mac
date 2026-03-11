@@ -277,6 +277,8 @@ final class AppState {
         registerUndo("Remove Template")
         let shapesToRemove = rows[idx].shapes.filter { rows[idx].owningTemplateIndex(for: $0) == templateIndex }
         let templateBgImage = rows[idx].templates[templateIndex].backgroundImageConfig.fileName
+        // Collect locale override images before removing overrides
+        let localeImages = shapesToRemove.flatMap { localeOverrideImageFileNames(for: $0.id) }
         for shape in shapesToRemove {
             LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
         }
@@ -290,6 +292,7 @@ final class AppState {
         for shape in shapesToRemove {
             for fileName in shape.allImageFileNames { cleanupUnreferencedImage(fileName) }
         }
+        for fileName in localeImages { cleanupUnreferencedImage(fileName) }
         cleanupUnreferencedImage(templateBgImage)
         scheduleSave()
     }
@@ -488,10 +491,15 @@ final class AppState {
         guard let location = shapeLocation(for: id) else { return }
         registerUndo("Delete Shape")
         let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
+        // Collect locale override image filenames before removing overrides
+        let localeImageFiles = localeOverrideImageFileNames(for: id)
+        LocaleService.removeShapeOverrides(&localeState, shapeId: id)
         for fileName in removedShape.allImageFileNames {
             cleanupUnreferencedImage(fileName)
         }
-        LocaleService.removeShapeOverrides(&localeState, shapeId: id)
+        for fileName in localeImageFiles {
+            cleanupUnreferencedImage(fileName)
+        }
         if selectedShapeId == id {
             selectedShapeId = nil
         }
@@ -690,7 +698,12 @@ final class AppState {
         guard code != localeState.baseLocaleCode else { return }
         guard localeState.locales.contains(where: { $0.code == code }) else { return }
         registerUndo("Remove Locale")
+        // Collect override image filenames before removing the locale
+        let overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
         LocaleService.removeLocale(&localeState, code: code)
+        for fileName in overrideImages {
+            cleanupUnreferencedImage(fileName)
+        }
         scheduleSave()
     }
 
@@ -762,7 +775,10 @@ final class AppState {
     func saveImage(_ image: NSImage, for shapeId: UUID) {
         guard let activeId = activeProjectId else { return }
         guard let location = shapeLocation(for: shapeId) else { return }
-        let fileName = "\(shapeId.uuidString).png"
+
+        let isNonBaseLocale = !localeState.isBaseLocale
+        let suffix = isNonBaseLocale ? "-\(localeState.activeLocaleCode)" : ""
+        let fileName = "\(shapeId.uuidString)\(suffix).png"
         let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
 
         guard let pngData = ExportService.pngData(from: image) else { return }
@@ -770,18 +786,27 @@ final class AppState {
         try? pngData.write(to: url, options: .atomic)
         screenshotImages[fileName] = image
 
-        // Update the shape's image reference if it still exists.
-        var shape = rows[location.rowIndex].shapes[location.shapeIndex]
-        let previousFiles = shape.allImageFileNames
-        if shape.type == .image {
-            shape.imageFileName = fileName
+        if isNonBaseLocale {
+            // Store as locale override instead of modifying the base shape
+            let shape = rows[location.rowIndex].shapes[location.shapeIndex]
+            let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
+            var override = existingOverride ?? ShapeLocaleOverride()
+            let previousOverrideFile = override.overrideImageFileName
+            override.overrideImageFileName = fileName
+            LocaleService.setShapeOverride(&localeState, shapeId: shape.id, override: override)
+            if let oldFile = previousOverrideFile, oldFile != fileName {
+                cleanupUnreferencedImage(oldFile)
+            }
         } else {
-            shape.screenshotFileName = fileName
-        }
-        rows[location.rowIndex].shapes[location.shapeIndex] = shape
+            // Update the shape's image reference directly (base locale)
+            var shape = rows[location.rowIndex].shapes[location.shapeIndex]
+            let previousFile = shape.displayImageFileName
+            shape.displayImageFileName = fileName
+            rows[location.rowIndex].shapes[location.shapeIndex] = shape
 
-        for oldFile in previousFiles where oldFile != fileName {
-            cleanupUnreferencedImage(oldFile)
+            if let oldFile = previousFile, oldFile != fileName {
+                cleanupUnreferencedImage(oldFile)
+            }
         }
         scheduleSave()
     }
@@ -811,6 +836,13 @@ final class AppState {
             // Template background images
             for template in row.templates {
                 loadIfNeeded(template.backgroundImageConfig.fileName)
+            }
+        }
+
+        // Locale override screenshot images
+        for (_, shapeOverrides) in localeState.overrides {
+            for (_, override) in shapeOverrides {
+                loadIfNeeded(override.overrideImageFileName)
             }
         }
     }
@@ -891,6 +923,12 @@ final class AppState {
         }
     }
 
+    /// Collect all screenshot filenames from locale overrides for a shape.
+    private func localeOverrideImageFileNames(for shapeId: UUID) -> [String] {
+        let key = shapeId.uuidString
+        return localeState.overrides.values.compactMap { $0[key]?.overrideImageFileName }
+    }
+
     private func shapeLocation(for shapeId: UUID) -> (rowIndex: Int, shapeIndex: Int)? {
         for rowIndex in rows.indices {
             if let shapeIndex = rows[rowIndex].shapes.firstIndex(where: { $0.id == shapeId }) {
@@ -907,12 +945,19 @@ final class AppState {
     }
 
     private func isImageFileReferenced(_ fileName: String) -> Bool {
-        rows.contains { row in
+        // Check base shape and background references
+        let referencedInRows = rows.contains { row in
             row.backgroundImageConfig.fileName == fileName ||
             row.templates.contains { $0.backgroundImageConfig.fileName == fileName } ||
             row.shapes.contains { shape in
                 shape.allImageFileNames.contains(fileName)
             }
+        }
+        if referencedInRows { return true }
+
+        // Check locale override image references
+        return localeState.overrides.values.contains { shapeOverrides in
+            shapeOverrides.values.contains { $0.overrideImageFileName == fileName }
         }
     }
 

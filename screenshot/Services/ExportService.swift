@@ -97,8 +97,8 @@ struct ExportService {
     // MARK: - Shared Rendering
 
     @MainActor
-    static func renderTemplatePNG(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:]) -> Data? {
-        let image = renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
+    static func renderTemplatePNG(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeState: LocaleState = .default) -> Data? {
+        let image = renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeState.activeLocaleCode, localeState: localeState)
         return opaquePNGData(from: image)
     }
 

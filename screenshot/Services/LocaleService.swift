@@ -62,6 +62,14 @@ enum LocaleService {
             if updated.lineSpacing != base.lineSpacing { override.lineSpacing = updated.lineSpacing }
         }
 
+        // Device/image shapes have display image overrides
+        if updated.type == .device || updated.type == .image {
+            if updated.displayImageFileName != base.displayImageFileName {
+                override.overrideImageFileName = updated.displayImageFileName
+            }
+            baseResult.displayImageFileName = base.displayImageFileName
+        }
+
         setShapeOverride(&localeState, shapeId: base.id, override: override.isEmpty ? nil : override)
         return baseResult
     }
@@ -136,6 +144,9 @@ enum LocaleService {
         if let italic = override.italic { result.italic = italic }
         if let letterSpacing = override.letterSpacing { result.letterSpacing = letterSpacing }
         if let lineSpacing = override.lineSpacing { result.lineSpacing = lineSpacing }
+        if let fileName = override.overrideImageFileName {
+            result.displayImageFileName = fileName
+        }
         return result
     }
 }

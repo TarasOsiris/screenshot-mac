@@ -23,10 +23,14 @@ struct ShapeLocaleOverride: Codable, Equatable {
     var letterSpacing: CGFloat?
     var lineSpacing: CGFloat?
 
+    // Display image override (device screenshot or standalone image)
+    var overrideImageFileName: String?
+
     var isEmpty: Bool {
         x == nil && y == nil && width == nil && height == nil
             && text == nil && fontName == nil && fontSize == nil && fontWeight == nil
             && textAlign == nil && italic == nil && letterSpacing == nil && lineSpacing == nil
+            && overrideImageFileName == nil
     }
 }
 

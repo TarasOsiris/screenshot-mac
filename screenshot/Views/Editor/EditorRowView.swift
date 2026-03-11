@@ -97,6 +97,7 @@ struct EditorRowView: View {
                             index: index,
                             zoom: zoom,
                             screenshotImages: state.screenshotImages,
+                            localeState: state.localeState,
                             canMoveLeft: index > 0,
                             canMoveRight: index < row.templates.count - 1,
                             onMoveLeft: {

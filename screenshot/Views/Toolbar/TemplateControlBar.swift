@@ -7,6 +7,7 @@ struct TemplateControlBar: View {
     let index: Int
     let zoom: CGFloat
     var screenshotImages: [String: NSImage] = [:]
+    var localeState: LocaleState = .default
     var canMoveLeft: Bool = false
     var canMoveRight: Bool = false
     var onMoveLeft: () -> Void = {}
@@ -201,12 +202,12 @@ struct TemplateControlBar: View {
     }
 
     private func previewScreenshot() {
-        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else {
+        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages, localeState: localeState) else {
             renderError = "Could not render screenshot for preview."
             return
         }
         let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("screenshot-\(index + 1).png")
+            .appendingPathComponent("screenshot-\(index + 1)-\(localeState.activeLocaleCode).png")
         do {
             try pngData.write(to: tempURL)
         } catch {
@@ -223,7 +224,7 @@ struct TemplateControlBar: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages) else {
+        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages, localeState: localeState) else {
             renderError = "Could not render screenshot."
             return
         }

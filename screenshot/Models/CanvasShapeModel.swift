@@ -227,7 +227,14 @@ struct CanvasShapeModel: Identifiable, Codable {
 
     /// The filename for the shape's display image (device screenshot or standalone image).
     var displayImageFileName: String? {
-        type == .image ? imageFileName : screenshotFileName
+        get { type == .image ? imageFileName : screenshotFileName }
+        set {
+            if type == .image {
+                imageFileName = newValue
+            } else {
+                screenshotFileName = newValue
+            }
+        }
     }
 
     /// All image filenames associated with this shape (for cleanup).
