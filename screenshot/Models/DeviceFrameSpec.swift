@@ -58,10 +58,19 @@ struct DeviceFrame: Identifiable, Equatable {
 }
 
 /// A group of real frames for one device model (e.g. "iPhone 17 Pro").
+struct DeviceFrameColorGroup: Identifiable {
+    let id: String        // "iphone17pro-deepblue"
+    let name: String      // "Deep Blue"
+    let frames: [DeviceFrame]
+}
+
+/// A group of real frames for one device model (e.g. "iPhone 17 Pro").
 struct DeviceFrameGroup: Identifiable {
     let id: String        // "iphone17pro"
     let name: String      // "iPhone 17 Pro"
-    let frames: [DeviceFrame]
+    let colorGroups: [DeviceFrameColorGroup]
+
+    var frames: [DeviceFrame] { colorGroups.flatMap(\.frames) }
 }
 
 // MARK: - Catalog
@@ -71,17 +80,17 @@ struct DeviceFrameCatalog {
     private static let iphone17Spec = DeviceFrameImageSpec(
         frameWidth: 1350, frameHeight: 2760,
         screenLeft: 72, screenTop: 69, screenRight: 72, screenBottom: 69,
-        screenCornerRadius: 55
+        screenCornerRadius: 165
     )
     private static let iphone17ProMaxSpec = DeviceFrameImageSpec(
         frameWidth: 1470, frameHeight: 3000,
         screenLeft: 75, screenTop: 66, screenRight: 75, screenBottom: 66,
-        screenCornerRadius: 60
+        screenCornerRadius: 170
     )
     private static let iphoneAirSpec = DeviceFrameImageSpec(
         frameWidth: 1380, frameHeight: 2880,
         screenLeft: 60, screenTop: 72, screenRight: 60, screenBottom: 72,
-        screenCornerRadius: 55
+        screenCornerRadius: 165
     )
 
     /// All available real device frames, grouped by model.
@@ -133,13 +142,12 @@ struct DeviceFrameCatalog {
         fallbackCategory: DeviceCategory = .iphone
     ) -> DeviceFrameGroup {
         let landscapeSpec = portraitSpec.landscape
-        var frames: [DeviceFrame] = []
-        for color in colors {
+        let colorGroups = colors.map { color -> DeviceFrameColorGroup in
             let slug = color.lowercased().replacingOccurrences(of: " ", with: "")
-            for isLandscape in [false, true] {
+            let frames = [false, true].map { isLandscape -> DeviceFrame in
                 let orient = isLandscape ? "landscape" : "portrait"
                 let frameId = "\(id)-\(slug)-\(orient)"
-                frames.append(DeviceFrame(
+                return DeviceFrame(
                     id: frameId,
                     modelName: name,
                     colorName: color,
@@ -147,9 +155,10 @@ struct DeviceFrameCatalog {
                     fallbackCategory: fallbackCategory,
                     imageName: "DeviceFrames/\(frameId)",
                     spec: isLandscape ? landscapeSpec : portraitSpec
-                ))
+                )
             }
+            return DeviceFrameColorGroup(id: "\(id)-\(slug)", name: color, frames: frames)
         }
-        return DeviceFrameGroup(id: id, name: name, frames: frames)
+        return DeviceFrameGroup(id: id, name: name, colorGroups: colorGroups)
     }
 }
