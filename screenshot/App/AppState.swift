@@ -81,6 +81,10 @@ final class AppState {
         rows.firstIndex { $0.id == selectedRowId }
     }
 
+    func rowIndex(for rowId: UUID) -> Int? {
+        rows.firstIndex { $0.id == rowId }
+    }
+
     init() {
         let stored = UserDefaults.standard.double(forKey: "defaultZoomLevel")
         if stored > 0 { zoomLevel = stored }
@@ -317,7 +321,7 @@ final class AppState {
             let owner = row.owningTemplateIndex(for: row.shapes[shapeIndex])
             if owner == sourceIndex {
                 row.shapes[shapeIndex].x += columnWidth * CGFloat(destinationIndex - sourceIndex)
-            } else if owner > lo && owner <= hi {
+            } else if owner >= lo && owner <= hi {
                 row.shapes[shapeIndex].x += betweenShift
             }
         }

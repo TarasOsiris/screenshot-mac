@@ -91,10 +91,11 @@ enum DeviceCategory: String, Codable, CaseIterable {
     }
 
     /// Screen corner radius in base units.
+    /// iPad: _displayCornerRadius = 18 pts × 2x = 36 px → 3.46 mm × 3.077 = 10.66.
     var screenCornerRadius: CGFloat {
         switch self {
         case .iphone: 33
-        case .ipadPro11, .ipadPro13: 50
+        case .ipadPro11, .ipadPro13: 11
         }
     }
 

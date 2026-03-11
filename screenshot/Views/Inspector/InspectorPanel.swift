@@ -5,114 +5,16 @@ struct InspectorPanel: View {
     @FocusState private var isLabelFocused: Bool
 
     var body: some View {
-        if let rowIndex = state.selectedRowIndex {
+        if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId {
             Form {
-                Section("Row") {
-                    TextField("Row label", text: $state.rows[rowIndex].label.limited(to: 50).onSet {
-                        state.rows[rowIndex].isLabelManuallySet = true
-                        state.scheduleSave()
-                    }, prompt: Text("Row label"))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(size: 12))
-                        .labelsHidden()
-                        .focused($isLabelFocused)
-                        .onSubmit {
-                            if state.rows[rowIndex].label.trimmingCharacters(in: .whitespaces).isEmpty {
-                                let row = state.rows[rowIndex]
-                                state.rows[rowIndex].label = presetLabel(forWidth: row.templateWidth, height: row.templateHeight)
-                                state.rows[rowIndex].isLabelManuallySet = false
-                                state.scheduleSave()
-                            }
-                            isLabelFocused = false
-                        }
-                }
-
-                Section("Screenshot Size") {
-                    Picker("Preset", selection: sizePresetBinding(for: rowIndex)) {
-                        ForEach(displayCategories) { category in
-                            Section(category.name) {
-                                ForEach(category.sizes, id: \.label) { size in
-                                    Text("\(size.label) \(size.isLandscape ? "Landscape" : "Portrait")")
-                                        .tag(sizePresetTag(for: size))
-                                }
-                            }
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .controlSize(.small)
-
-                    LabeledContent("Size") {
-                        Text(verbatim: state.rows[rowIndex].resolutionLabel)
-                            .font(.system(size: 11).monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Section("Background") {
-                    BackgroundEditor(
-                        backgroundStyle: $state.rows[rowIndex].backgroundStyle,
-                        bgColor: $state.rows[rowIndex].bgColor,
-                        gradientConfig: $state.rows[rowIndex].gradientConfig,
-                        backgroundImageConfig: $state.rows[rowIndex].backgroundImageConfig,
-                        backgroundImage: state.rows[rowIndex].backgroundImageConfig.fileName.flatMap { state.screenshotImages[$0] },
-                        onChanged: { state.scheduleSave() },
-                        onPickImage: { state.pickAndSaveBackgroundImage(for: state.rows[rowIndex].id) },
-                        onRemoveImage: { state.removeBackgroundImage(for: state.rows[rowIndex].id) },
-                        onDropImage: { image in
-                            state.saveBackgroundImage(image, for: state.rows[rowIndex].id)
-                        }
-                    )
-
-                    if state.rows[rowIndex].backgroundStyle != .color {
-                        let canSpanAcrossRow = state.rows[rowIndex].templates.count > 1
-                        Toggle("Span across row", isOn: $state.rows[rowIndex].spanBackgroundAcrossRow.onSet { state.scheduleSave() })
-                            .font(.system(size: 12))
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                            .disabled(!canSpanAcrossRow)
-                            .help(spanAcrossRowHelp(for: rowIndex, canSpanAcrossRow: canSpanAcrossRow))
-
-                        if !canSpanAcrossRow {
-                            Text("Add at least two screenshots to span across row.")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-
+                rowSection(rowId: rowId)
+                sizeSection(rowIndex: rowIndex, rowId: rowId)
+                backgroundSection(rowIndex: rowIndex, rowId: rowId)
                 Section("Elements") {
                     ShapeToolbar(state: state)
                 }
-
-                Section("Device") {
-                    Picker("Default device", selection: $state.rows[rowIndex].defaultDeviceCategory.onSet { state.scheduleSave() }) {
-                        ForEach(DeviceCategory.allCases, id: \.self) { cat in
-                            Label(cat.label, systemImage: cat.icon).tag(cat)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .controlSize(.small)
-                    .font(.system(size: 12))
-
-                    LabeledContent("Default body color") {
-                        ColorPicker("", selection: rowDefaultDeviceBodyColorBinding(for: rowIndex), supportsOpacity: false)
-                            .labelsHidden()
-                            .help("Default device body color for this row")
-                    }
-                    .font(.system(size: 12))
-                }
-
-                Section("Options") {
-                    Toggle("Show devices", isOn: $state.rows[rowIndex].showDevice.onSet { state.scheduleSave() })
-                        .font(.system(size: 12))
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-
-                    Toggle("Show borders", isOn: $state.rows[rowIndex].showBorders.onSet { state.scheduleSave() })
-                        .font(.system(size: 12))
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                }
+                deviceSection(rowId: rowId)
+                optionsSection(rowId: rowId)
             }
             .formStyle(.grouped)
             .onAppear { isLabelFocused = false }
@@ -128,29 +30,169 @@ struct InspectorPanel: View {
         }
     }
 
+    @ViewBuilder
+    private func rowSection(rowId: UUID) -> some View {
+        Section("Row") {
+            TextField("Row label", text: safeRowBinding(rowId, keyPath: \.label, default: "").limited(to: 50).onSet {
+                guard let ri = state.rowIndex(for: rowId) else { return }
+                state.rows[ri].isLabelManuallySet = true
+                state.scheduleSave()
+            }, prompt: Text("Row label"))
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: 12))
+                .labelsHidden()
+                .focused($isLabelFocused)
+                .onSubmit {
+                    guard let ri = state.rowIndex(for: rowId) else { return }
+                    if state.rows[ri].label.trimmingCharacters(in: .whitespaces).isEmpty {
+                        let row = state.rows[ri]
+                        state.rows[ri].label = presetLabel(forWidth: row.templateWidth, height: row.templateHeight)
+                        state.rows[ri].isLabelManuallySet = false
+                        state.scheduleSave()
+                    }
+                    isLabelFocused = false
+                }
+        }
+    }
+
+    @ViewBuilder
+    private func sizeSection(rowIndex: Int, rowId: UUID) -> some View {
+        Section("Screenshot Size") {
+            Picker("Preset", selection: sizePresetBinding(for: rowId)) {
+                ForEach(displayCategories) { category in
+                    Section(category.name) {
+                        ForEach(category.sizes, id: \.label) { size in
+                            Text("\(size.label) \(size.isLandscape ? "Landscape" : "Portrait")")
+                                .tag(sizePresetTag(for: size))
+                        }
+                    }
+                }
+            }
+            .pickerStyle(.menu)
+            .controlSize(.small)
+
+            LabeledContent("Size") {
+                Text(verbatim: state.rows[rowIndex].resolutionLabel)
+                    .font(.system(size: 11).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func backgroundSection(rowIndex: Int, rowId: UUID) -> some View {
+        Section("Background") {
+            BackgroundEditor(
+                backgroundStyle: safeRowBinding(rowId, keyPath: \.backgroundStyle, default: .color),
+                bgColor: safeRowBinding(rowId, keyPath: \.bgColor, default: .blue),
+                gradientConfig: safeRowBinding(rowId, keyPath: \.gradientConfig, default: GradientConfig()),
+                backgroundImageConfig: safeRowBinding(rowId, keyPath: \.backgroundImageConfig, default: BackgroundImageConfig()),
+                backgroundImage: state.rows[rowIndex].backgroundImageConfig.fileName.flatMap { state.screenshotImages[$0] },
+                onChanged: { state.scheduleSave() },
+                onPickImage: { state.pickAndSaveBackgroundImage(for: rowId) },
+                onRemoveImage: { state.removeBackgroundImage(for: rowId) },
+                onDropImage: { image in
+                    state.saveBackgroundImage(image, for: rowId)
+                }
+            )
+
+            if state.rows[rowIndex].backgroundStyle != .color {
+                let canSpanAcrossRow = state.rows[rowIndex].templates.count > 1
+                Toggle("Span across row", isOn: safeRowBinding(rowId, keyPath: \.spanBackgroundAcrossRow, default: false).onSet { state.scheduleSave() })
+                    .font(.system(size: 12))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .disabled(!canSpanAcrossRow)
+                    .help(spanAcrossRowHelp(for: rowIndex, canSpanAcrossRow: canSpanAcrossRow))
+
+                if !canSpanAcrossRow {
+                    Text("Add at least two screenshots to span across row.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func deviceSection(rowId: UUID) -> some View {
+        Section("Device") {
+            Picker("Default device", selection: safeRowBinding(rowId, keyPath: \.defaultDeviceCategory, default: .iphone).onSet { state.scheduleSave() }) {
+                ForEach(DeviceCategory.allCases, id: \.self) { cat in
+                    Label(cat.label, systemImage: cat.icon).tag(cat)
+                }
+            }
+            .pickerStyle(.menu)
+            .controlSize(.small)
+            .font(.system(size: 12))
+
+            LabeledContent("Default body color") {
+                ColorPicker("", selection: rowDefaultDeviceBodyColorBinding(for: rowId), supportsOpacity: false)
+                    .labelsHidden()
+                    .help("Default device body color for this row")
+            }
+            .font(.system(size: 12))
+        }
+    }
+
+    @ViewBuilder
+    private func optionsSection(rowId: UUID) -> some View {
+        Section("Options") {
+            Toggle("Show devices", isOn: safeRowBinding(rowId, keyPath: \.showDevice, default: true).onSet { state.scheduleSave() })
+                .font(.system(size: 12))
+                .toggleStyle(.switch)
+                .controlSize(.small)
+
+            Toggle("Show borders", isOn: safeRowBinding(rowId, keyPath: \.showBorders, default: true).onSet { state.scheduleSave() })
+                .font(.system(size: 12))
+                .toggleStyle(.switch)
+                .controlSize(.small)
+        }
+    }
+
     private func sizePresetTag(for size: ScreenshotSize) -> String {
         "\(Int(size.width))x\(Int(size.height))"
     }
 
-    private func sizePresetBinding(for rowIndex: Int) -> Binding<String> {
+    private func safeRowBinding<T>(_ rowId: UUID, keyPath: WritableKeyPath<ScreenshotRow, T>, default defaultValue: T) -> Binding<T> {
         Binding(
             get: {
-                sizePresetTag(for: ScreenshotSize(
-                    width: state.rows[rowIndex].templateWidth,
-                    height: state.rows[rowIndex].templateHeight
-                ))
+                guard let idx = state.rowIndex(for: rowId) else { return defaultValue }
+                return state.rows[idx][keyPath: keyPath]
             },
             set: { newValue in
-                guard let size = parseSizeString(newValue) else { return }
-                state.resizeRow(at: rowIndex, newWidth: size.width, newHeight: size.height)
+                guard let idx = state.rowIndex(for: rowId) else { return }
+                state.rows[idx][keyPath: keyPath] = newValue
             }
         )
     }
 
-    private func rowDefaultDeviceBodyColorBinding(for rowIndex: Int) -> Binding<Color> {
+    private func sizePresetBinding(for rowId: UUID) -> Binding<String> {
         Binding(
-            get: { state.rows[rowIndex].defaultDeviceBodyColor },
-            set: { state.updateRowDefaultDeviceBodyColor($0, for: state.rows[rowIndex].id) }
+            get: {
+                guard let idx = state.rowIndex(for: rowId) else { return "" }
+                return sizePresetTag(for: ScreenshotSize(
+                    width: state.rows[idx].templateWidth,
+                    height: state.rows[idx].templateHeight
+                ))
+            },
+            set: { newValue in
+                guard let size = parseSizeString(newValue),
+                      let idx = state.rowIndex(for: rowId) else { return }
+                state.resizeRow(at: idx, newWidth: size.width, newHeight: size.height)
+            }
+        )
+    }
+
+    private func rowDefaultDeviceBodyColorBinding(for rowId: UUID) -> Binding<Color> {
+        Binding(
+            get: {
+                guard let idx = state.rowIndex(for: rowId) else { return CanvasShapeModel.defaultDeviceBodyColor }
+                return state.rows[idx].defaultDeviceBodyColor
+            },
+            set: {
+                state.updateRowDefaultDeviceBodyColor($0, for: rowId)
+            }
         )
     }
 
