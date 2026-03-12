@@ -92,6 +92,21 @@ struct DeviceFrameCatalog {
         screenLeft: 60, screenTop: 72, screenRight: 60, screenBottom: 72,
         screenCornerRadius: 165
     )
+    private static let macbookAir13Spec = DeviceFrameImageSpec(
+        frameWidth: 3220, frameHeight: 2100,
+        screenLeft: 330, screenTop: 218, screenRight: 330, screenBottom: 218,
+        screenCornerRadius: 34
+    )
+    private static let macbookPro14Spec = DeviceFrameImageSpec(
+        frameWidth: 3944, frameHeight: 2564,
+        screenLeft: 460, screenTop: 300, screenRight: 460, screenBottom: 300,
+        screenCornerRadius: 40
+    )
+    private static let macbookPro16Spec = DeviceFrameImageSpec(
+        frameWidth: 4340, frameHeight: 2860,
+        screenLeft: 442, screenTop: 313, screenRight: 442, screenBottom: 313,
+        screenCornerRadius: 38
+    )
     private static let ipadPro11Spec = DeviceFrameImageSpec(
         frameWidth: 1880, frameHeight: 2640,
         screenLeft: 106, screenTop: 110, screenRight: 106, screenBottom: 110,
@@ -124,34 +139,55 @@ struct DeviceFrameCatalog {
             buildGroup(
                 id: "iphone17", name: "iPhone 17",
                 colors: ["Black", "Lavender", "Mist Blue", "Sage", "White"],
-                portraitSpec: iphone17Spec
+                baseSpec: iphone17Spec
             ),
             buildGroup(
                 id: "iphone17pro", name: "iPhone 17 Pro",
                 colors: ["Cosmic Orange", "Deep Blue", "Silver"],
-                portraitSpec: iphone17Spec  // Same frame dimensions as iPhone 17
+                baseSpec: iphone17Spec  // Same frame dimensions as iPhone 17
             ),
             buildGroup(
                 id: "iphone17promax", name: "iPhone 17 Pro Max",
                 colors: ["Cosmic Orange", "Deep Blue", "Silver"],
-                portraitSpec: iphone17ProMaxSpec
+                baseSpec: iphone17ProMaxSpec
             ),
             buildGroup(
                 id: "iphoneair", name: "iPhone Air",
                 colors: ["Cloud White", "Light Gold", "Sky Blue", "Space Black"],
-                portraitSpec: iphoneAirSpec
+                baseSpec: iphoneAirSpec
             ),
             buildGroup(
                 id: "ipadpro11", name: "iPad Pro 11\"",
                 colors: ["Silver", "Space Gray"],
-                portraitSpec: ipadPro11Spec,
+                baseSpec: ipadPro11Spec,
                 fallbackCategory: .ipadPro11
             ),
             buildGroup(
                 id: "ipadpro13", name: "iPad Pro 13\"",
                 colors: ["Silver", "Space Gray"],
-                portraitSpec: ipadPro13Spec,
+                baseSpec: ipadPro13Spec,
                 fallbackCategory: .ipadPro13
+            ),
+            buildGroup(
+                id: "macbookair13", name: "MacBook Air 13\"",
+                colors: ["Midnight"],
+                baseSpec: macbookAir13Spec,
+                fallbackCategory: .macbook,
+                landscapeOnly: true
+            ),
+            buildGroup(
+                id: "macbookpro14", name: "MacBook Pro 14\"",
+                colors: ["Silver"],
+                baseSpec: macbookPro14Spec,
+                fallbackCategory: .macbook,
+                landscapeOnly: true
+            ),
+            buildGroup(
+                id: "macbookpro16", name: "MacBook Pro 16\"",
+                colors: ["Silver"],
+                baseSpec: macbookPro16Spec,
+                fallbackCategory: .macbook,
+                landscapeOnly: true
             ),
         ]
     }
@@ -160,13 +196,15 @@ struct DeviceFrameCatalog {
         id: String,
         name: String,
         colors: [String],
-        portraitSpec: DeviceFrameImageSpec,
-        fallbackCategory: DeviceCategory = .iphone
+        baseSpec: DeviceFrameImageSpec,
+        fallbackCategory: DeviceCategory = .iphone,
+        landscapeOnly: Bool = false
     ) -> DeviceFrameGroup {
-        let landscapeSpec = portraitSpec.landscape
+        let landscapeSpec = landscapeOnly ? baseSpec : baseSpec.landscape
+        let orientations: [Bool] = landscapeOnly ? [true] : [false, true]
         let colorGroups = colors.map { color -> DeviceFrameColorGroup in
             let slug = color.lowercased().replacingOccurrences(of: " ", with: "")
-            let frames = [false, true].map { isLandscape -> DeviceFrame in
+            let frames = orientations.map { isLandscape -> DeviceFrame in
                 let orient = isLandscape ? "landscape" : "portrait"
                 let frameId = "\(id)-\(slug)-\(orient)"
                 return DeviceFrame(
@@ -176,7 +214,7 @@ struct DeviceFrameCatalog {
                     isLandscape: isLandscape,
                     fallbackCategory: fallbackCategory,
                     imageName: "DeviceFrames/\(frameId)",
-                    spec: isLandscape ? landscapeSpec : portraitSpec
+                    spec: isLandscape ? landscapeSpec : baseSpec
                 )
             }
             return DeviceFrameColorGroup(id: "\(id)-\(slug)", name: color, frames: frames)

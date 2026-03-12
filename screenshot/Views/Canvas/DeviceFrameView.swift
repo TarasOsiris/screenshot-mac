@@ -54,8 +54,11 @@ struct DeviceFrameView: View {
                 width: width * (1 - spec.leftFraction - spec.rightFraction),
                 height: height * (1 - spec.topFraction - spec.bottomFraction)
             )
-            .clipShape(RoundedRectangle(
-                cornerRadius: height * spec.cornerRadiusFraction,
+            .clipShape(UnevenRoundedRectangle(
+                topLeadingRadius: height * spec.cornerRadiusFraction,
+                bottomLeadingRadius: frame.fallbackCategory == .macbook ? 0 : height * spec.cornerRadiusFraction,
+                bottomTrailingRadius: frame.fallbackCategory == .macbook ? 0 : height * spec.cornerRadiusFraction,
+                topTrailingRadius: height * spec.cornerRadiusFraction,
                 style: .continuous
             ))
             .offset(
@@ -83,6 +86,8 @@ struct DeviceFrameView: View {
             iPhoneFrame
         case .ipadPro11, .ipadPro13:
             iPadFrame
+        case .macbook:
+            macBookFrame
         }
     }
 
@@ -238,6 +243,80 @@ struct DeviceFrameView: View {
                 .offset(x: bodyW / 2 + volBtnW / 2, y: -(bodyH / 2 - volDownY))
 
             shineOverlay(bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH)
+        }
+        .frame(width: bodyW, height: bodyH)
+    }
+
+    // MARK: - MacBook Frame
+
+    private var macBookFrame: some View {
+        let s = scale
+        let dims = category.bodyDimensions
+        let bodyW: CGFloat = dims.width * s
+        let bodyH: CGFloat = dims.height * s
+
+        let bezels = category.bezels
+        let bezelLR: CGFloat = bezels.lr * s
+        let bezelTB: CGFloat = bezels.tb * s
+
+        // Lid (display portion) is ~85% of total height, base is ~15%
+        let lidH: CGFloat = bodyH * 0.85
+        let baseH: CGFloat = bodyH * 0.15
+
+        // Screen lives in the lid, not the full body
+        let screenW: CGFloat = bodyW - bezelLR * 2
+        let screenH: CGFloat = lidH - bezelTB * 2
+
+        let bodyCornerR: CGFloat = category.bodyCornerRadius * s
+        let maxScreenCornerR = max(0, bodyCornerR - max(bezelLR, bezelTB))
+        let screenCornerR = min(category.screenCornerRadius * s, maxScreenCornerR)
+
+        let bodyShape = RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
+        let screenShape = RoundedRectangle(cornerRadius: screenCornerR, style: .continuous)
+
+        // Camera notch
+        let notchW: CGFloat = 14 * s
+        let notchH: CGFloat = 14 * s
+
+        return VStack(spacing: 0) {
+            // Lid
+            ZStack {
+                deviceBody(bodyShape: bodyShape, bodyW: bodyW, bodyH: lidH, s: s)
+                screenArea(screenShape: screenShape, screenW: screenW, screenH: screenH, bodyShape: bodyShape, bodyW: bodyW, bodyH: lidH, s: s)
+
+                // Camera notch
+                RoundedRectangle(cornerRadius: 3 * s, style: .continuous)
+                    .fill(.black.opacity(0.5))
+                    .frame(width: notchW, height: notchH)
+                    .offset(y: -(lidH / 2 - bezelTB / 2))
+
+                shineOverlay(bodyShape: bodyShape, bodyW: bodyW, bodyH: lidH)
+            }
+
+            // Base/keyboard area
+            ZStack {
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 1 * s,
+                    bottomLeadingRadius: bodyCornerR * 0.5,
+                    bottomTrailingRadius: bodyCornerR * 0.5,
+                    topTrailingRadius: 1 * s
+                )
+                .fill(bodyColor)
+                .frame(width: bodyW, height: baseH)
+                .shadow(color: .black.opacity(0.2), radius: 2 * s, y: 1 * s)
+
+                // Hinge line
+                Rectangle()
+                    .fill(.black.opacity(0.15))
+                    .frame(width: bodyW * 0.98, height: 1 * s)
+                    .offset(y: -(baseH / 2))
+
+                // Trackpad
+                RoundedRectangle(cornerRadius: 4 * s, style: .continuous)
+                    .strokeBorder(.black.opacity(0.08), lineWidth: 0.5 * s)
+                    .frame(width: bodyW * 0.35, height: baseH * 0.55)
+                    .offset(y: 2 * s)
+            }
         }
         .frame(width: bodyW, height: bodyH)
     }

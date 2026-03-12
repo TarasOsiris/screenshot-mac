@@ -405,9 +405,6 @@ struct ShapePropertiesBar: View {
     }
 
     private func devicePickerIcon(shape: CanvasShapeModel) -> String {
-        if shape.resolvedDeviceFrame != nil {
-            return "iphone"
-        }
         return (shape.deviceCategory ?? .iphone).icon
     }
 

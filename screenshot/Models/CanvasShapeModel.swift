@@ -36,12 +36,14 @@ enum DeviceCategory: String, Codable, CaseIterable {
     case iphone
     case ipadPro11
     case ipadPro13
+    case macbook
 
     var label: String {
         switch self {
         case .iphone: "iPhone"
         case .ipadPro11: "iPad Pro 11\""
         case .ipadPro13: "iPad Pro 13\""
+        case .macbook: "MacBook"
         }
     }
 
@@ -49,6 +51,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         switch self {
         case .iphone: "iphone"
         case .ipadPro11, .ipadPro13: "ipad"
+        case .macbook: "laptopcomputer"
         }
     }
 
@@ -56,20 +59,22 @@ enum DeviceCategory: String, Codable, CaseIterable {
     /// iPhone 17: 71.5 x 149.6 mm at scale 3.077 px/mm → 220 x 460.
     /// iPad Pro 11": 177.5 x 249.7 mm → 546 x 768.
     /// iPad Pro 13": 215.5 x 281.6 mm → 663 x 867.
+    /// MacBook: generic 16:10 landscape proportion.
     var bodyDimensions: (width: CGFloat, height: CGFloat) {
         switch self {
         case .iphone: (220, 460)
         case .ipadPro11: (546, 768)
         case .ipadPro13: (663, 867)
+        case .macbook: (640, 420)
         }
     }
 
     /// Depth of side buttons protruding from body edge.
-    /// iPads have flush buttons (no protrusion).
+    /// iPads and MacBooks have flush buttons (no protrusion).
     var buttonDepth: CGFloat {
         switch self {
         case .iphone: 2.5
-        case .ipadPro11, .ipadPro13: 0
+        case .ipadPro11, .ipadPro13, .macbook: 0
         }
     }
 
@@ -79,6 +84,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .iphone: (4.34, 4.43)
         case .ipadPro11: (26.5, 25.8)
         case .ipadPro13: (27.0, 26.0)
+        case .macbook: (40, 40)
         }
     }
 
@@ -87,6 +93,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         switch self {
         case .iphone: 34
         case .ipadPro11, .ipadPro13: 55
+        case .macbook: 20
         }
     }
 
@@ -95,6 +102,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         switch self {
         case .iphone: 33
         case .ipadPro11, .ipadPro13: 11
+        case .macbook: 10
         }
     }
 
