@@ -31,7 +31,7 @@ struct DeviceMenuContent: View {
                 groups: allGroups.filter { Self.ipadCategories.contains($0.frames.first?.fallbackCategory ?? .iphone) }
             ),
             DeviceFamily(
-                name: "MacBook",
+                name: "Mac",
                 categories: [],
                 groups: allGroups.filter { $0.frames.first?.fallbackCategory == .macbook }
             ),

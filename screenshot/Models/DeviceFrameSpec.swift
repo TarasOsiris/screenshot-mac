@@ -107,6 +107,11 @@ struct DeviceFrameCatalog {
         screenLeft: 442, screenTop: 313, screenRight: 442, screenBottom: 313,
         screenCornerRadius: 38
     )
+    private static let imac24Spec = DeviceFrameImageSpec(
+        frameWidth: 4760, frameHeight: 4040,
+        screenLeft: 140, screenTop: 160, screenRight: 140, screenBottom: 1360,
+        screenCornerRadius: 0
+    )
     private static let ipadPro11Spec = DeviceFrameImageSpec(
         frameWidth: 1880, frameHeight: 2640,
         screenLeft: 106, screenTop: 110, screenRight: 106, screenBottom: 110,
@@ -186,6 +191,13 @@ struct DeviceFrameCatalog {
                 id: "macbookpro16", name: "MacBook Pro 16\"",
                 colors: ["Silver"],
                 baseSpec: macbookPro16Spec,
+                fallbackCategory: .macbook,
+                landscapeOnly: true
+            ),
+            buildGroup(
+                id: "imac24", name: "iMac 24\"",
+                colors: ["Silver"],
+                baseSpec: imac24Spec,
                 fallbackCategory: .macbook,
                 landscapeOnly: true
             ),
