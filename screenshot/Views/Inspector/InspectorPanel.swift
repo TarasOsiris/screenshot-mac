@@ -43,13 +43,7 @@ struct InspectorPanel: View {
                 .labelsHidden()
                 .focused($isLabelFocused)
                 .onSubmit {
-                    guard let ri = state.rowIndex(for: rowId) else { return }
-                    if state.rows[ri].label.trimmingCharacters(in: .whitespaces).isEmpty {
-                        let row = state.rows[ri]
-                        state.rows[ri].label = presetLabel(forWidth: row.templateWidth, height: row.templateHeight)
-                        state.rows[ri].isLabelManuallySet = false
-                        state.scheduleSave()
-                    }
+                    state.updateRowLabel(rowId, text: state.rows[state.rowIndex(for: rowId) ?? 0].label)
                     isLabelFocused = false
                 }
         }

@@ -5,8 +5,12 @@ struct EditorRowView: View {
     @Bindable var state: AppState
     let row: ScreenshotRow
     @State private var isDeletingRow = false
+    @State private var isResettingRow = false
     @State private var isRowHovered = false
     @State private var activeGuides: [AlignmentGuide] = []
+    @State private var isEditingLabel = false
+    @State private var editingLabelText = ""
+    @FocusState private var isLabelFieldFocused: Bool
 
     private var isSelected: Bool {
         state.selectedRowId == row.id
@@ -34,8 +38,26 @@ struct EditorRowView: View {
                     .fill(isSelected ? .blue : .gray.opacity(0.4))
                     .frame(width: 6, height: 6)
 
-                Text(row.label)
-                    .font(.system(size: 12, weight: .medium))
+                if isEditingLabel {
+                    TextField("Row label", text: $editingLabelText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12, weight: .medium))
+                        .frame(minWidth: 60, maxWidth: 200)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(Color(nsColor: .controlBackgroundColor))
+                        .cornerRadius(4)
+                        .focused($isLabelFieldFocused)
+                        .onSubmit { commitLabelEdit() }
+                        .onChange(of: isLabelFieldFocused) {
+                            if !isLabelFieldFocused { commitLabelEdit() }
+                        }
+                        .onExitCommand { cancelLabelEdit() }
+                } else {
+                    Text(row.label)
+                        .font(.system(size: 12, weight: .medium))
+                        .onTapGesture(count: 2) { startLabelEdit() }
+                }
 
                 Text(verbatim: row.resolutionLabel)
                     .font(.system(size: 10))
@@ -52,6 +74,9 @@ struct EditorRowView: View {
                     }
                     rowActionButton("doc.on.doc", tooltip: "Duplicate row", disabled: false) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+                    }
+                    rowActionButton("arrow.counterclockwise", tooltip: "Reset row", disabled: false, isDestructive: true) {
+                        isResettingRow = true
                     }
                     rowActionButton("trash", tooltip: "Delete row", disabled: !canDelete, isDestructive: true) {
                         isDeletingRow = true
@@ -162,6 +187,9 @@ struct EditorRowView: View {
                 withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
             }
             Divider()
+            Button("Reset Row", role: .destructive) {
+                isResettingRow = true
+            }
             Button("Delete Row", role: .destructive) {
                 isDeletingRow = true
             }
@@ -174,6 +202,14 @@ struct EditorRowView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Are you sure you want to delete \"\(row.label)\"?")
+        }
+        .alert("Reset Row", isPresented: $isResettingRow) {
+            Button("Reset", role: .destructive) {
+                withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will remove all screenshots and shapes from \"\(row.label)\" and restore default settings.")
         }
     }
 
@@ -380,6 +416,22 @@ struct EditorRowView: View {
     private func tapSelectRow() {
         NSApp.keyWindow?.makeFirstResponder(nil)
         state.selectRow(row.id)
+    }
+
+    private func startLabelEdit() {
+        editingLabelText = row.label
+        isEditingLabel = true
+        isLabelFieldFocused = true
+    }
+
+    private func commitLabelEdit() {
+        guard isEditingLabel else { return }
+        isEditingLabel = false
+        state.updateRowLabel(row.id, text: editingLabelText)
+    }
+
+    private func cancelLabelEdit() {
+        isEditingLabel = false
     }
 
     private func createImageShape(image: NSImage, modelX: CGFloat, modelY: CGFloat) {

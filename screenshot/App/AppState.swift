@@ -411,6 +411,55 @@ final class AppState {
         scheduleSave()
     }
 
+    func resetRow(_ id: UUID) {
+        guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
+        registerUndo("Reset Row")
+        let oldRow = rows[idx]
+
+        // Collect all image filenames to clean up
+        let shapeImages = oldRow.shapes.flatMap { $0.allImageFileNames }
+        let localeImages = oldRow.shapes.flatMap { localeOverrideImageFileNames(for: $0.id) }
+        let templateBgImages = oldRow.templates.compactMap { $0.backgroundImageConfig.fileName }
+        let rowBgImage = oldRow.backgroundImageConfig.fileName
+
+        // Remove locale overrides for all shapes
+        for shape in oldRow.shapes {
+            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+        }
+
+        // Replace with a fresh default row, preserving id and dimensions
+        rows[idx] = makeDefaultRow(
+            id: oldRow.id,
+            label: oldRow.isLabelManuallySet ? oldRow.label : nil,
+            width: oldRow.templateWidth,
+            height: oldRow.templateHeight
+        )
+
+        selectedShapeId = nil
+
+        // Cleanup orphaned images
+        for fileName in shapeImages { cleanupUnreferencedImage(fileName) }
+        for fileName in localeImages { cleanupUnreferencedImage(fileName) }
+        for fileName in templateBgImages { cleanupUnreferencedImage(fileName) }
+        cleanupUnreferencedImage(rowBgImage)
+
+        scheduleSave()
+    }
+
+    func updateRowLabel(_ rowId: UUID, text: String) {
+        guard let ri = rowIndex(for: rowId) else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty {
+            let row = rows[ri]
+            rows[ri].label = presetLabel(forWidth: row.templateWidth, height: row.templateHeight)
+            rows[ri].isLabelManuallySet = false
+        } else {
+            rows[ri].label = String(trimmed.prefix(50))
+            rows[ri].isLabelManuallySet = true
+        }
+        scheduleSave()
+    }
+
     func moveRowUp(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }), idx > 0 else { return }
         registerUndo("Move Row Up")
@@ -987,11 +1036,11 @@ final class AppState {
         }
     }
 
-    private func makeDefaultRow(label: String? = nil) -> ScreenshotRow {
+    private func makeDefaultRow(id: UUID = UUID(), label: String? = nil, width: CGFloat? = nil, height: CGFloat? = nil) -> ScreenshotRow {
         let defaultSize = UserDefaults.standard.string(forKey: "defaultScreenshotSize") ?? "1242x2688"
         let parsedSize = parseSizeString(defaultSize)
-        let w: CGFloat = parsedSize?.width ?? 1242
-        let h: CGFloat = parsedSize?.height ?? 2688
+        let w: CGFloat = width ?? parsedSize?.width ?? 1242
+        let h: CGFloat = height ?? parsedSize?.height ?? 2688
         let storedTemplateCount = UserDefaults.standard.integer(forKey: "defaultTemplateCount")
         let templateCount = storedTemplateCount > 0 ? storedTemplateCount : 3
         let templates = (0..<templateCount).map { index in
@@ -1006,6 +1055,7 @@ final class AppState {
         }
         let resolvedLabel = label ?? presetLabel(forWidth: w, height: h)
         return ScreenshotRow(
+            id: id,
             label: resolvedLabel,
             templates: templates,
             templateWidth: w,
