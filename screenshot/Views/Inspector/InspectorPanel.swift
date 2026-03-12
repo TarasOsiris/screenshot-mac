@@ -134,12 +134,18 @@ struct InspectorPanel: View {
                         }
                     )
                 } label: {
-                    Text(defaultDeviceLabel(for: rowId))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
+                    HStack(spacing: 6) {
+                        Image(systemName: defaultDeviceIcon(for: rowId))
+                        Text(defaultDeviceLabel(for: rowId))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .menuStyle(.borderlessButton)
-                .fixedSize()
+                .help(defaultDeviceHelp(for: rowId))
             }
             .controlSize(.small)
             .font(.system(size: 12))
@@ -159,9 +165,25 @@ struct InspectorPanel: View {
     private func defaultDeviceLabel(for rowId: UUID) -> String {
         guard let idx = state.rowIndex(for: rowId) else { return "iPhone" }
         if let frameId = state.rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-            return frame.label
+            return "\(frame.modelName) - \(frame.shortLabel)"
         }
         return state.rows[idx].defaultDeviceCategory.label
+    }
+
+    private func defaultDeviceIcon(for rowId: UUID) -> String {
+        guard let idx = state.rowIndex(for: rowId) else { return "iphone" }
+        if let frameId = state.rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            return frame.isLandscape ? "rectangle" : "rectangle.portrait"
+        }
+        return state.rows[idx].defaultDeviceCategory.icon
+    }
+
+    private func defaultDeviceHelp(for rowId: UUID) -> String {
+        guard let idx = state.rowIndex(for: rowId) else { return "Current default device: iPhone" }
+        if let frameId = state.rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            return "Current default device frame: \(frame.label)"
+        }
+        return "Current default abstract device: \(state.rows[idx].defaultDeviceCategory.label)"
     }
 
     private func defaultDeviceIsAbstract(for rowId: UUID) -> Bool {

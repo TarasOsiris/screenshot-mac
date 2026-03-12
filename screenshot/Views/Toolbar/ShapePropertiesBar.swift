@@ -384,28 +384,39 @@ struct ShapePropertiesBar: View {
                 }
             )
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Image(systemName: devicePickerIcon(shape: shape))
                 Text(devicePickerLabel(shape: shape))
                     .lineLimit(1)
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 8))
+                    .font(.system(size: 8, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
         }
         .menuStyle(.borderlessButton)
-        .frame(width: 220)
+        .frame(width: 260, alignment: .leading)
+        .help(devicePickerHelp(shape: shape))
     }
 
     private func devicePickerLabel(shape: CanvasShapeModel) -> String {
         if let frameId = shape.deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-            return frame.label
+            return "\(frame.modelName) - \(frame.shortLabel)"
         }
         return (shape.deviceCategory ?? .iphone).label
     }
 
     private func devicePickerIcon(shape: CanvasShapeModel) -> String {
+        if let frameId = shape.deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            return frame.isLandscape ? "rectangle" : "rectangle.portrait"
+        }
         return (shape.deviceCategory ?? .iphone).icon
+    }
+
+    private func devicePickerHelp(shape: CanvasShapeModel) -> String {
+        if let frameId = shape.deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            return "Current device frame: \(frame.label)"
+        }
+        return "Current abstract device: \((shape.deviceCategory ?? .iphone).label)"
     }
 
     private func selectAbstractDevice(shapeId: UUID, category: DeviceCategory) {

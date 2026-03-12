@@ -38,41 +38,63 @@ struct DeviceMenuContent: View {
         ]
     }
 
+    private func menuRowLabel(_ title: String, icon: String) -> some View {
+        Label {
+            Text(title)
+        } icon: {
+            Image(systemName: icon)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func categoryButton(_ category: DeviceCategory) -> some View {
+        Button {
+            onSelectCategory(category)
+        } label: {
+            menuRowLabel(
+                "Abstract \(category.label)",
+                icon: category.icon
+            )
+        }
+    }
+
     private func frameButton(_ frame: DeviceFrame, label: String) -> some View {
         Button {
             onSelectFrame(frame)
         } label: {
-            Label(label, systemImage: frame.isLandscape ? "rectangle" : "rectangle.portrait")
+            menuRowLabel(
+                label,
+                icon: frame.isLandscape ? "rectangle" : "rectangle.portrait"
+            )
         }
     }
 
     var body: some View {
         ForEach(families) { family in
             Section(family.name) {
-                // Abstract devices
                 ForEach(family.categories, id: \.self) { cat in
-                    Button {
-                        onSelectCategory(cat)
-                    } label: {
-                        Label("\(cat.label) (abstract)", systemImage: cat.icon)
-                    }
+                    categoryButton(cat)
                 }
 
-                // Real frames
+                if !family.categories.isEmpty && !family.groups.isEmpty {
+                    Divider()
+                }
+
                 ForEach(family.groups) { group in
                     if group.frames.count == 1, let frame = group.frames.first {
                         frameButton(frame, label: group.name)
                     } else {
                         Menu(group.name) {
-                            ForEach(group.colorGroups) { colorGroup in
+                            ForEach(Array(group.colorGroups.enumerated()), id: \.element.id) { index, colorGroup in
                                 if colorGroup.frames.count == 1, let frame = colorGroup.frames.first {
                                     frameButton(frame, label: colorGroup.name)
                                 } else {
-                                    Menu(colorGroup.name) {
-                                        ForEach(colorGroup.frames) { frame in
-                                            frameButton(frame, label: frame.orientationLabel)
-                                        }
+                                    ForEach(colorGroup.frames) { frame in
+                                        frameButton(frame, label: "\(colorGroup.name) - \(frame.orientationLabel)")
                                     }
+                                }
+                                if index < group.colorGroups.count - 1 {
+                                    Divider()
                                 }
                             }
                         }
