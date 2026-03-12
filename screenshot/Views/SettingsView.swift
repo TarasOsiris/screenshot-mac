@@ -60,6 +60,13 @@ struct SettingsView: View {
                 Text("175%").tag(1.75)
                 Text("200%").tag(2.0)
             }
+            Section("Storage") {
+                LabeledContent("Project storage") {
+                    Button("Open in Finder") {
+                        NSWorkspace.shared.open(PersistenceService.rootURL)
+                    }
+                }
+            }
         }
         .formStyle(.grouped)
     }

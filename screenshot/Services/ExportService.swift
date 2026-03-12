@@ -25,7 +25,7 @@ struct ExportService {
         localeState: LocaleState = .default
     ) throws -> URL {
         let rootName = sanitizedRootFolderName(projectName)
-        let rootFolder = folderURL.appendingPathComponent(rootName)
+        let rootFolder = uniqueFolder(named: rootName, in: folderURL)
         try FileManager.default.createDirectory(at: rootFolder, withIntermediateDirectories: true)
 
         let multiLocale = localeState.locales.count > 1
@@ -92,6 +92,18 @@ struct ExportService {
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: "\\", with: "-")
         return sanitized.isEmpty ? "Screenshots" : sanitized
+    }
+
+    private static func uniqueFolder(named baseName: String, in parent: URL) -> URL {
+        let fm = FileManager.default
+        let candidate = parent.appendingPathComponent(baseName)
+        if !fm.fileExists(atPath: candidate.path) { return candidate }
+        var counter = 1
+        while true {
+            counter += 1
+            let numbered = parent.appendingPathComponent("\(baseName) (\(counter))")
+            if !fm.fileExists(atPath: numbered.path) { return numbered }
+        }
     }
 
     // MARK: - Shared Rendering
