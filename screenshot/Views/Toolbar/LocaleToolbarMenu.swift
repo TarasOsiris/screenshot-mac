@@ -111,31 +111,34 @@ struct LocaleBanner: View {
         if !localeState.isBaseLocale {
             let label = localeState.activeLocaleLabel
             let progress = state.translationProgress()
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Image(systemName: "globe")
-                    .font(.system(size: 10))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
                 Text("Editing: \(label)")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
                 Text("Text changes apply to this locale only")
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.accentColor.opacity(0.7))
                 if progress.total > 0 {
                     Text("• \(progress.translated)/\(progress.total) translated")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color.accentColor.opacity(0.7))
                 }
                 Spacer(minLength: 8)
                 Button("Base Locale") {
                     state.setActiveLocale(localeState.baseLocaleCode)
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
                 .font(.system(size: 11, weight: .medium))
                 .help("Switch to base locale (\u{2325}\u{2318}0)")
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 4)
+            .padding(.vertical, 6)
             .frame(maxWidth: .infinity)
-            .background(Color.accentColor.opacity(0.08))
+            .background(Color.accentColor.opacity(0.15))
         }
     }
 }
