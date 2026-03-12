@@ -37,55 +37,27 @@ If the build fails, stop and report the error. Do not proceed.
 xcodebuild -scheme screenshot -destination 'platform=macOS,arch=arm64' -archivePath build/screenshot.xcarchive archive
 ```
 
-## Step 5: Export for App Store
+## Step 5: Upload to App Store Connect
 
+`ExportOptions.plist` already exists with `method: app-store-connect` and `destination: export`. To upload:
+
+1. Temporarily change `destination` from `export` to `upload` in `ExportOptions.plist`
+2. Run the upload:
 ```bash
-xcodebuild -exportArchive -archivePath build/screenshot.xcarchive -exportPath build/export -exportOptionsPlist ExportOptions.plist
+xcodebuild -exportArchive -archivePath build/screenshot.xcarchive -exportPath build/upload -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates
 ```
+3. Revert `ExportOptions.plist` back to `destination: export`
 
-If `ExportOptions.plist` does not exist, create it first:
+## Step 6: Commit and tag
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>method</key>
-    <string>app-store-connect</string>
-    <key>teamID</key>
-    <string>XW3GM347XY</string>
-    <key>destination</key>
-    <string>upload</string>
-    <key>signingStyle</key>
-    <string>automatic</string>
-</dict>
-</plist>
-```
-
-## Step 6: Upload to App Store Connect
-
-```bash
-xcrun altool --upload-app --type macos --file "build/export/Screenshot Bro.pkg" --apiKey "$APP_STORE_API_KEY" --apiIssuer "$APP_STORE_API_ISSUER" 2>&1 || \
-xcrun notarytool submit "build/export/Screenshot Bro.pkg" --keychain-profile "AC_PASSWORD" --wait 2>&1
-```
-
-If `altool` and `notarytool` both fail, try the newer `xcodebuild` upload approach:
-
-```bash
-xcodebuild -exportArchive -archivePath build/screenshot.xcarchive -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates
-```
-
-The `-exportOptionsPlist` with `destination: upload` and `method: app-store-connect` should handle the upload directly.
-
-## Step 7: Commit version bump
-
-Stage and commit the version changes:
+Stage and commit the version changes, then create a git tag:
 ```
 git add screenshot.xcodeproj/project.pbxproj
 git commit -m "Bump version to <MARKETING_VERSION> (<CURRENT_PROJECT_VERSION>)"
+git tag v<MARKETING_VERSION>-<CURRENT_PROJECT_VERSION>
 ```
 
-## Step 8: Report
+## Step 7: Report
 
 Print a summary:
 - Previous version and build number
