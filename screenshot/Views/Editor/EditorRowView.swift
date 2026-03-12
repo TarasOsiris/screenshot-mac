@@ -36,8 +36,8 @@ struct EditorRowView: View {
             // Row header
             HStack(spacing: 8) {
                 Circle()
-                    .fill(isSelected ? .blue : .gray.opacity(0.4))
-                    .frame(width: 6, height: 6)
+                    .fill(isSelected ? Color.accentColor : .gray.opacity(0.4))
+                    .frame(width: isSelected ? 7 : 6, height: isSelected ? 7 : 6)
 
                 if isEditingLabel {
                     TextField("Row label", text: $editingLabelText)
@@ -56,7 +56,8 @@ struct EditorRowView: View {
                         .onExitCommand { cancelLabelEdit() }
                 } else {
                     Text(row.label)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
+                        .foregroundStyle(isSelected ? Color.primary : .secondary)
                         .onTapGesture(count: 2) { startLabelEdit() }
                 }
 
@@ -167,13 +168,13 @@ struct EditorRowView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { tapSelectRow() }
-        .background(isSelected ? Color.accentColor.opacity(0.04) : Color.clear)
-        .overlay {
+        .background(isSelected ? Color.accentColor.opacity(0.06) : Color.clear)
+        .overlay(alignment: .leading) {
             if isSelected {
-                RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(Color.accentColor.opacity(0.45), lineWidth: 1)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 4)
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(Color.accentColor.opacity(0.8))
+                    .frame(width: 3)
+                    .padding(.vertical, 8)
                     .allowsHitTesting(false)
             }
         }
