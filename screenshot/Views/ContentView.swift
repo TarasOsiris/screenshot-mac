@@ -6,6 +6,7 @@ struct ContentView: View {
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("exportScale") private var exportScale = 1.0
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
+    @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @State private var isInspectorPresented = true
     @State private var isExporting = false
     @State private var exportError: String?
@@ -143,12 +144,20 @@ struct ContentView: View {
                     .disabled(state.activeProjectId == nil)
                     Divider()
                     Button("Reset Project...", role: .destructive) {
-                        isResettingProject = true
+                        if confirmBeforeDeleting {
+                            isResettingProject = true
+                        } else if let id = state.activeProjectId {
+                            state.resetProject(id)
+                        }
                     }
                     .disabled(state.activeProjectId == nil)
                     if state.projects.count > 1 {
                         Button("Delete Project...", role: .destructive) {
-                            isDeletingProject = true
+                            if confirmBeforeDeleting {
+                                isDeletingProject = true
+                            } else if let id = state.activeProjectId {
+                                state.deleteProject(id)
+                            }
                         }
                     }
                 } label: {

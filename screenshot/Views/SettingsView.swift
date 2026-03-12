@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
     @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
     @AppStorage("defaultZoomLevel") private var defaultZoomLevel = 1.0
+    @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
 
     var body: some View {
         TabView {
@@ -46,6 +47,8 @@ struct SettingsView: View {
                     Text(verbatim: "\(count)").tag(count)
                 }
             }
+
+            Toggle("Confirm before deleting", isOn: $confirmBeforeDeleting)
 
             Picker("Default zoom level", selection: $defaultZoomLevel) {
                 Text("25%").tag(0.25)

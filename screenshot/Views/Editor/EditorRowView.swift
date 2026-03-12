@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct EditorRowView: View {
     @Bindable var state: AppState
     let row: ScreenshotRow
+    @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @State private var isDeletingRow = false
     @State private var isResettingRow = false
     @State private var isRowHovered = false
@@ -76,10 +77,18 @@ struct EditorRowView: View {
                         withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
                     }
                     rowActionButton("arrow.counterclockwise", tooltip: "Reset row", disabled: false, isDestructive: true) {
-                        isResettingRow = true
+                        if confirmBeforeDeleting {
+                            isResettingRow = true
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
+                        }
                     }
                     rowActionButton("trash", tooltip: "Delete row", disabled: !canDelete, isDestructive: true) {
-                        isDeletingRow = true
+                        if confirmBeforeDeleting {
+                            isDeletingRow = true
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
+                        }
                     }
                 }
                 .opacity(isSelected || isRowHovered ? 1 : 0.65)
@@ -188,10 +197,18 @@ struct EditorRowView: View {
             }
             Divider()
             Button("Reset Row", role: .destructive) {
-                isResettingRow = true
+                if confirmBeforeDeleting {
+                    isResettingRow = true
+                } else {
+                    withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
+                }
             }
             Button("Delete Row", role: .destructive) {
-                isDeletingRow = true
+                if confirmBeforeDeleting {
+                    isDeletingRow = true
+                } else {
+                    withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
+                }
             }
             .disabled(!canDelete)
         }

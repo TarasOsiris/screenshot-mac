@@ -17,6 +17,7 @@ struct TemplateControlBar: View {
     var onRemoveBackgroundImage: (() -> Void)?
     var onDropBackgroundImage: ((NSImage) -> Void)? = nil
     var onDelete: () -> Void
+    @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @State private var isDeletingTemplate = false
     @State private var showBackgroundPopover = false
     @State private var renderError: String?
@@ -152,7 +153,11 @@ struct TemplateControlBar: View {
                 if canDelete {
                     Divider()
                     Button("Delete Screenshot", systemImage: "trash", role: .destructive) {
-                        isDeletingTemplate = true
+                        if confirmBeforeDeleting {
+                            isDeletingTemplate = true
+                        } else {
+                            onDelete()
+                        }
                     }
                 }
             } label: {
