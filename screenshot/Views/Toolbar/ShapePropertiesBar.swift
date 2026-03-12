@@ -67,6 +67,49 @@ struct ShapePropertiesBar: View {
                 HStack(spacing: 8) {
                     shapeBadge(shape)
 
+                    // Device properties (frame first)
+                    if shape.type == .device {
+                        section {
+                            devicePicker(shape: shape, shapeId: shapeId)
+
+                            // Body color for abstract devices only
+                            if shape.resolvedDeviceFrame == nil {
+                                separator
+
+                                controlGroup("Body") {
+                                    HStack(spacing: 4) {
+                                        ColorPicker("", selection: deviceBodyColorBinding(shapeId), supportsOpacity: false)
+                                            .labelsHidden()
+                                            .padding(.horizontal, 4)
+                                            .help("Device body color")
+
+                                        barButton(
+                                            "arrow.counterclockwise",
+                                            help: "Reset to row default device body color",
+                                            disabled: !hasDeviceBodyColorOverride(shapeId)
+                                        ) {
+                                            resetDeviceBodyColor(shapeId)
+                                        }
+                                    }
+                                }
+                            }
+
+                            if shape.screenshotFileName != nil {
+                                separator
+
+                                Button {
+                                    isReplacingImage = true
+                                } label: {
+                                    Label("Replace Image", systemImage: "photo.badge.arrow.down")
+                                }
+                                .buttonStyle(.borderless)
+                                .foregroundStyle(.secondary)
+
+                                localeImageResetButton(shapeId: shapeId)
+                            }
+                        }
+                    }
+
                     section {
                         // Color (not shown for devices, SVGs, or images)
                         if shape.type != .device && shape.type != .svg && shape.type != .image {
@@ -108,49 +151,6 @@ struct ShapePropertiesBar: View {
 
                                 Text(verbatim: "\(Int(shape.borderRadius))")
                                     .frame(width: 28, alignment: .trailing)
-                            }
-                        }
-                    }
-
-                    // Device properties
-                    if shape.type == .device {
-                        section {
-                            devicePicker(shape: shape, shapeId: shapeId)
-
-                            // Body color for abstract devices only
-                            if shape.resolvedDeviceFrame == nil {
-                                separator
-
-                                controlGroup("Body") {
-                                    HStack(spacing: 4) {
-                                        ColorPicker("", selection: deviceBodyColorBinding(shapeId), supportsOpacity: false)
-                                            .labelsHidden()
-                                            .padding(.horizontal, 4)
-                                            .help("Device body color")
-
-                                        barButton(
-                                            "arrow.counterclockwise",
-                                            help: "Reset to row default device body color",
-                                            disabled: !hasDeviceBodyColorOverride(shapeId)
-                                        ) {
-                                            resetDeviceBodyColor(shapeId)
-                                        }
-                                    }
-                                }
-                            }
-
-                            if shape.screenshotFileName != nil {
-                                separator
-
-                                Button {
-                                    isReplacingImage = true
-                                } label: {
-                                    Label("Replace Image", systemImage: "photo.badge.arrow.down")
-                                }
-                                .buttonStyle(.borderless)
-                                .foregroundStyle(.secondary)
-
-                                localeImageResetButton(shapeId: shapeId)
                             }
                         }
                     }
@@ -200,13 +200,13 @@ struct ShapePropertiesBar: View {
                         }
                     }
 
+                    // Locale override indicator (any shape type)
+                    if !state.localeState.isBaseLocale && hasLocaleOverride {
+                        overrideIndicator(shapeId: shapeId)
+                    }
+
                     // Text properties
                     if shape.type == .text {
-                        // Override indicator for non-base locale
-                        if !state.localeState.isBaseLocale && hasLocaleOverride {
-                            overrideIndicator(shapeId: shapeId)
-                        }
-
                         section {
                             FontPicker(selection: shapeBinding(shapeId, \.fontName, default: ""))
 

@@ -3,6 +3,8 @@ import UniformTypeIdentifiers
 
 @Observable
 final class AppState {
+    private static let maxProjectNameLength = 100
+
     var projects: [Project] = []
     var activeProjectId: UUID?
     var rows: [ScreenshotRow] = []
@@ -156,7 +158,7 @@ final class AppState {
     func createProject(name: String) {
         saveCurrentProject()
 
-        let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(50))
+        let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
         let baseName = sanitized.isEmpty ? "Project" : sanitized
         let project = Project(name: uniqueProjectName(baseName))
         projects.append(project)
@@ -187,7 +189,7 @@ final class AppState {
     }
 
     func renameProject(_ id: UUID, to name: String) {
-        let trimmed = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(50))
+        let trimmed = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
         guard !trimmed.isEmpty else { return }
         if let idx = projects.firstIndex(where: { $0.id == id }) {
             projects[idx].name = uniqueProjectName(trimmed, excludingId: id)
@@ -196,13 +198,19 @@ final class AppState {
     }
 
     private func uniqueProjectName(_ baseName: String, excludingId: UUID? = nil) -> String {
+        let cappedBase = String(baseName.prefix(Self.maxProjectNameLength))
         let existingNames = Set(projects.filter { $0.id != excludingId }.map { $0.name })
-        if !existingNames.contains(baseName) { return baseName }
+        if !existingNames.contains(cappedBase) { return cappedBase }
         var counter = 2
-        while existingNames.contains("\(baseName) \(counter)") {
+        while true {
+            let suffix = " \(counter)"
+            let availableCount = max(0, Self.maxProjectNameLength - suffix.count)
+            let candidate = String(cappedBase.prefix(availableCount)) + suffix
+            if !existingNames.contains(candidate) {
+                return candidate
+            }
             counter += 1
         }
-        return "\(baseName) \(counter)"
     }
 
     func duplicateProject(_ id: UUID) {

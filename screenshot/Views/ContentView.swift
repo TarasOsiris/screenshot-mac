@@ -17,16 +17,6 @@ struct ContentView: View {
     @State private var isResettingProject = false
     @State private var gestureZoomStartLevel: CGFloat?
 
-    private var projectSelectionBinding: Binding<UUID?> {
-        Binding(
-            get: { state.activeProjectId },
-            set: { newValue in
-                guard let newValue else { return }
-                state.selectProject(newValue)
-            }
-        )
-    }
-
     var body: some View {
         @Bindable var state = state
         VStack(spacing: 0) {
@@ -41,22 +31,11 @@ struct ContentView: View {
                             Divider()
                         }
 
-                        Button {
+                        AddRowButton {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 state.addRow()
                             }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.system(size: 12))
-                                Text("Add Row")
-                                    .font(.system(size: 12, weight: .medium))
-                            }
-                            .foregroundStyle(.secondary)
-                            .padding(.vertical, 16)
                         }
-                        .buttonStyle(.borderless)
-                        .help("Add row")
                     }
                 }
                 .simultaneousGesture(
@@ -104,54 +83,52 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Menu {
-                    ForEach(state.projects) { project in
-                        Button {
-                            state.selectProject(project.id)
-                        } label: {
-                            if project.id == state.activeProjectId {
-                                Label(project.name, systemImage: "checkmark")
-                            } else {
-                                Text(project.name)
+                    Section("Switch Project") {
+                        ForEach(state.projects) { project in
+                            Button {
+                                state.selectProject(project.id)
+                            } label: {
+                                if project.id == state.activeProjectId {
+                                    Label(project.name, systemImage: "checkmark")
+                                } else {
+                                    Text(project.name)
+                                }
                             }
                         }
                     }
+
                     Divider()
+
                     Button("New Project...") {
                         dialogText = "Project \(state.projects.count + 1)"
                         isCreatingProject = true
                     }
-                } label: {
-                    Text(state.activeProject?.name ?? "No Project")
-                        .frame(width: 160, alignment: .leading)
-                }
-                .frame(width: 200)
-                .help("Select project")
-                .accessibilityIdentifier("projectPicker")
-            }
 
-            ToolbarItem(placement: .navigation) {
-                Menu {
-                    Button("Rename Project...") {
-                        dialogText = state.activeProject?.name ?? ""
-                        isRenamingProject = true
-                    }
-                    .disabled(state.activeProjectId == nil)
-                    Button("Duplicate Project") {
-                        if let id = state.activeProjectId {
-                            state.duplicateProject(id)
-                        }
-                    }
-                    .disabled(state.activeProjectId == nil)
                     Divider()
-                    Button("Reset Project...", role: .destructive) {
-                        if confirmBeforeDeleting {
-                            isResettingProject = true
-                        } else if let id = state.activeProjectId {
-                            state.resetProject(id)
+
+                    Section("Current Project") {
+                        Button("Rename Project...") {
+                            dialogText = state.activeProject?.name ?? ""
+                            isRenamingProject = true
                         }
-                    }
-                    .disabled(state.activeProjectId == nil)
-                    if state.projects.count > 1 {
+                        .disabled(state.activeProjectId == nil)
+
+                        Button("Duplicate Project") {
+                            if let id = state.activeProjectId {
+                                state.duplicateProject(id)
+                            }
+                        }
+                        .disabled(state.activeProjectId == nil)
+
+                        Button("Reset Project...", role: .destructive) {
+                            if confirmBeforeDeleting {
+                                isResettingProject = true
+                            } else if let id = state.activeProjectId {
+                                state.resetProject(id)
+                            }
+                        }
+                        .disabled(state.activeProjectId == nil)
+
                         Button("Delete Project...", role: .destructive) {
                             if confirmBeforeDeleting {
                                 isDeletingProject = true
@@ -159,35 +136,29 @@ struct ContentView: View {
                                 state.deleteProject(id)
                             }
                         }
+                        .disabled(state.activeProjectId == nil || state.projects.count <= 1)
                     }
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    HStack(spacing: 6) {
+                        Image(systemName: "folder")
+                            .foregroundStyle(.secondary)
+                        Text(state.activeProject?.name ?? "No Project")
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .frame(minWidth: 180, idealWidth: 240, maxWidth: 320, alignment: .leading)
+                    }
                 }
-                .help("Project actions")
-                .accessibilityIdentifier("projectActionsMenu")
-            }
-
-            ToolbarItem(placement: .navigation) {
-                ZoomControls()
-                    .padding(.leading, 2)
+                .help(state.activeProject?.name ?? "No Project")
+                .accessibilityIdentifier("projectPicker")
             }
 
             ToolbarItem(placement: .navigation) {
                 LocaleToolbarMenu(state: state)
             }
 
-            ToolbarItem(placement: .automatic) {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        state.addRow()
-                    }
-                } label: {
-                    Label("Add Row", systemImage: "plus")
-                }
-                .disabled(state.activeProjectId == nil)
-                .keyboardShortcut("r", modifiers: [.command, .shift])
-                .help("Add row (\u{21e7}\u{2318}R)")
-                .accessibilityIdentifier("toolbarAddRowButton")
+            ToolbarItem(placement: .navigation) {
+                ZoomControls()
+                    .padding(.leading, 2)
             }
 
             ToolbarItem(placement: .automatic) {
@@ -245,7 +216,7 @@ struct ContentView: View {
             Text("Are you sure you want to delete \"\(state.activeProject?.name ?? "")\"? This cannot be undone.")
         }
         .alert("Rename Project", isPresented: $isRenamingProject) {
-            TextField("Project name", text: $dialogText.limited(to: 50))
+            TextField("Project name", text: $dialogText.limited(to: 100))
             Button("Rename") {
                 if let id = state.activeProjectId {
                     state.renameProject(id, to: dialogText)
@@ -254,7 +225,7 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) {}
         }
         .alert("New Project", isPresented: $isCreatingProject) {
-            TextField("Project name", text: $dialogText.limited(to: 50))
+            TextField("Project name", text: $dialogText.limited(to: 100))
             Button("Create") {
                 state.createProject(name: dialogText)
             }
