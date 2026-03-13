@@ -15,6 +15,7 @@ final class AppState {
     var zoomLevel: CGFloat = 1.0
     var canvasMouseModelPosition: CGPoint?
     var screenshotImages: [String: NSImage] = [:]
+    var customFonts: [String: String] = [:]  // fileName → familyName
     var undoManager: UndoManager?
     var canvasFocusRowId: UUID?
     var canvasFocusRequestNonce = 0
@@ -110,6 +111,7 @@ final class AppState {
         if let activeId = activeProjectId {
             loadRowsForProject(activeId)
             loadScreenshotImages()
+            loadCustomFonts()
         }
 
         if projects.isEmpty {
@@ -192,10 +194,12 @@ final class AppState {
     private func switchToProject(_ id: UUID) {
         undoManager?.removeAllActions()
         cancelPendingDebounceTasks()
+        unregisterCustomFonts()
         activeProjectId = id
         screenshotImages.removeAll()
         loadRowsForProject(id)
         loadScreenshotImages()
+        loadCustomFonts()
     }
 
     func renameProject(_ id: UUID, to name: String) {
@@ -274,6 +278,7 @@ final class AppState {
         guard id == activeProjectId else { return }
         undoManager?.removeAllActions()
         cancelPendingDebounceTasks()
+        unregisterCustomFonts()
         screenshotImages.removeAll()
         rows = [makeDefaultRow()]
         localeState = .default
@@ -287,11 +292,13 @@ final class AppState {
 
         if activeProjectId == id {
             cancelPendingDebounceTasks()
+            unregisterCustomFonts()
             screenshotImages.removeAll()
             if let nextProject = projects.first {
                 activeProjectId = nextProject.id
                 loadRowsForProject(nextProject.id)
                 loadScreenshotImages()
+                loadCustomFonts()
             } else {
                 // No projects left — create a new one
                 createProject(name: "Project 1")
@@ -1044,6 +1051,82 @@ final class AppState {
                 loadIfNeeded(override.overrideImageFileName)
             }
         }
+    }
+
+    // MARK: - Custom Fonts
+
+    private static let fontExtensions: Set<String> = ["ttf", "otf", "ttc"]
+
+    private func loadCustomFonts() {
+        guard let activeId = activeProjectId else { return }
+        let resourcesURL = PersistenceService.resourcesDir(activeId)
+        let fm = FileManager.default
+        guard let files = try? fm.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
+
+        for file in files where Self.fontExtensions.contains(file.pathExtension.lowercased()) {
+            let fileName = file.lastPathComponent
+            guard customFonts[fileName] == nil else { continue }
+            if let familyName = registerFont(at: file) {
+                customFonts[fileName] = familyName
+            }
+        }
+    }
+
+    private func unregisterCustomFonts() {
+        guard let activeId = activeProjectId else {
+            customFonts.removeAll()
+            return
+        }
+        let resourcesURL = PersistenceService.resourcesDir(activeId)
+        for fileName in customFonts.keys {
+            let url = resourcesURL.appendingPathComponent(fileName) as CFURL
+            CTFontManagerUnregisterFontsForURL(url, .process, nil)
+        }
+        customFonts.removeAll()
+    }
+
+    func importCustomFont(from url: URL) {
+        guard let activeId = activeProjectId else { return }
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+
+        let fileName = url.lastPathComponent
+        let destURL = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+        let fm = FileManager.default
+
+        if fm.fileExists(atPath: destURL.path) {
+            // Already imported — just make sure it's registered
+            if customFonts[fileName] == nil, let familyName = registerFont(at: destURL) {
+                customFonts[fileName] = familyName
+            }
+            return
+        }
+
+        guard (try? fm.copyItem(at: url, to: destURL)) != nil else { return }
+        if let familyName = registerFont(at: destURL) {
+            customFonts[fileName] = familyName
+        }
+    }
+
+    func removeCustomFont(_ fileName: String) {
+        guard let activeId = activeProjectId else { return }
+        let resourcesURL = PersistenceService.resourcesDir(activeId)
+        let url = resourcesURL.appendingPathComponent(fileName)
+
+        CTFontManagerUnregisterFontsForURL(url as CFURL, .process, nil)
+        try? FileManager.default.removeItem(at: url)
+        customFonts.removeValue(forKey: fileName)
+    }
+
+    private func registerFont(at url: URL) -> String? {
+        // May fail if already registered — that's OK
+        _ = CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        guard let descriptors = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor],
+              let first = descriptors.first,
+              let familyName = CTFontDescriptorCopyAttribute(first, kCTFontFamilyNameAttribute) as? String else {
+            return nil
+        }
+        return familyName
     }
 
     func saveBackgroundImage(_ image: NSImage, for rowId: UUID, templateIndex: Int? = nil) {

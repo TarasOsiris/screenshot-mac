@@ -211,7 +211,11 @@ struct ShapePropertiesBar: View {
                     // Text properties
                     if shape.type == .text {
                         section {
-                            FontPicker(selection: shapeBinding(shapeId, \.fontName, default: ""))
+                            FontPicker(
+                                selection: shapeBinding(shapeId, \.fontName, default: ""),
+                                customFonts: state.customFonts,
+                                onImportFont: { url in state.importCustomFont(from: url) }
+                            )
 
                             separator
 
