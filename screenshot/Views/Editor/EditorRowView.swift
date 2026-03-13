@@ -151,6 +151,11 @@ struct EditorRowView: View {
                             onDropBackgroundImage: { image in
                                 state.saveBackgroundImage(image, for: row.id, templateIndex: index)
                             },
+                            onDuplicate: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    state.duplicateTemplate(template.id, in: row.id)
+                                }
+                            },
                             onDelete: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     state.removeTemplate(template.id, from: row.id)

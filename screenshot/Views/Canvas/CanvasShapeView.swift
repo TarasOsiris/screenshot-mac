@@ -634,6 +634,7 @@ struct CanvasShapeView: View {
             font: nsFont,
             color: NSColor(shape.color),
             alignment: shape.textAlign.nsTextAlignment,
+            uppercase: shape.uppercase ?? false,
             onCommit: { commitTextEdit() }
         )
         .frame(width: effectiveW, height: effectiveH)

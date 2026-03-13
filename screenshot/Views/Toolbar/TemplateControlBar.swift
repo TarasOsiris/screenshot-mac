@@ -16,6 +16,7 @@ struct TemplateControlBar: View {
     var onPickBackgroundImage: (() -> Void)?
     var onRemoveBackgroundImage: (() -> Void)?
     var onDropBackgroundImage: ((NSImage) -> Void)? = nil
+    var onDuplicate: () -> Void = {}
     var onDelete: () -> Void
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @State private var isDeletingTemplate = false
@@ -23,6 +24,9 @@ struct TemplateControlBar: View {
     @State private var renderError: String?
 
     private var canDelete: Bool { row.templates.count > 1 }
+    private var barWidth: CGFloat { row.displayWidth(zoom: zoom) }
+    private var showDuplicateIcon: Bool { barWidth >= 210 }
+    private var showDeleteIcon: Bool { barWidth >= 240 && canDelete }
     private var backgroundPreviewImage: NSImage? {
         template.backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
     }
@@ -134,6 +138,17 @@ struct TemplateControlBar: View {
                 .frame(width: 260)
             }
 
+            if showDuplicateIcon {
+                templateActionButton("plus.square.on.square", tooltip: "Duplicate screenshot") {
+                    onDuplicate()
+                }
+            }
+            if showDeleteIcon {
+                templateActionButton("trash", tooltip: "Delete screenshot", isDestructive: true) {
+                    confirmDeleteTemplate()
+                }
+            }
+
             Spacer()
             Menu {
                 Button("Preview", systemImage: "eye") {
@@ -150,14 +165,13 @@ struct TemplateControlBar: View {
                     onMoveRight()
                 }
                 .disabled(!canMoveRight)
+                Button("Duplicate Screenshot", systemImage: "plus.square.on.square") {
+                    onDuplicate()
+                }
                 if canDelete {
                     Divider()
                     Button("Delete Screenshot", systemImage: "trash", role: .destructive) {
-                        if confirmBeforeDeleting {
-                            isDeletingTemplate = true
-                        } else {
-                            onDelete()
-                        }
+                        confirmDeleteTemplate()
                     }
                 }
             } label: {
@@ -187,10 +201,19 @@ struct TemplateControlBar: View {
         }
     }
 
+    private func confirmDeleteTemplate() {
+        if confirmBeforeDeleting {
+            isDeletingTemplate = true
+        } else {
+            onDelete()
+        }
+    }
+
     private func templateActionButton(
         _ icon: String,
         tooltip: String,
         disabled: Bool = false,
+        isDestructive: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -201,7 +224,11 @@ struct TemplateControlBar: View {
         }
         .buttonStyle(.borderless)
         .focusable(false)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(
+            disabled
+            ? AnyShapeStyle(.tertiary)
+            : (isDestructive ? AnyShapeStyle(Color.red.opacity(0.8)) : AnyShapeStyle(.secondary))
+        )
         .disabled(disabled)
         .help(tooltip)
     }

@@ -357,6 +357,58 @@ final class AppState {
         scheduleSave()
     }
 
+    func duplicateTemplate(_ templateId: UUID, in rowId: UUID) {
+        guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }),
+              let templateIndex = rows[rowIndex].templates.firstIndex(where: { $0.id == templateId }) else { return }
+        registerUndo("Duplicate Screenshot")
+        let sourceTemplate = rows[rowIndex].templates[templateIndex]
+        var newTemplate = sourceTemplate.duplicated()
+
+        // Copy template background image if present
+        if let bgFileName = sourceTemplate.backgroundImageConfig.fileName,
+           let activeId = activeProjectId {
+            let resourcesURL = PersistenceService.resourcesDir(activeId)
+            let newBgFile = "\(newTemplate.id.uuidString)-bg.png"
+            let srcURL = resourcesURL.appendingPathComponent(bgFileName)
+            let dstURL = resourcesURL.appendingPathComponent(newBgFile)
+            if FileManager.default.fileExists(atPath: srcURL.path) {
+                try? FileManager.default.copyItem(at: srcURL, to: dstURL)
+                newTemplate.backgroundImageConfig.fileName = newBgFile
+                screenshotImages[newBgFile] = screenshotImages[bgFileName]
+            }
+        }
+
+        // Insert the new template right after the original
+        rows[rowIndex].templates.insert(newTemplate, at: templateIndex + 1)
+
+        // Duplicate shapes belonging to this template and shift to the new column
+        let columnWidth = rows[rowIndex].templateWidth
+        let sourceShapes = rows[rowIndex].shapes.filter {
+            rows[rowIndex].owningTemplateIndex(for: $0) == templateIndex
+        }
+
+        // Shift existing shapes in templates after the insertion point to the right
+        for i in rows[rowIndex].shapes.indices {
+            let owner = rows[rowIndex].owningTemplateIndex(for: rows[rowIndex].shapes[i])
+            if owner > templateIndex {
+                rows[rowIndex].shapes[i].x += columnWidth
+            }
+        }
+
+        // Create duplicated shapes for the new template
+        var newShapes: [CanvasShapeModel] = []
+        for shape in sourceShapes {
+            var copy = shape.duplicated()
+            copy.x += columnWidth
+            LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
+            copyImageFiles(for: &copy, originalId: shape.id)
+            newShapes.append(copy)
+        }
+        rows[rowIndex].shapes.append(contentsOf: newShapes)
+
+        scheduleSave()
+    }
+
     func moveTemplateLeft(_ templateId: UUID, in rowId: UUID) {
         guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }),
               let templateIndex = rows[rowIndex].templates.firstIndex(where: { $0.id == templateId }),

@@ -5,6 +5,7 @@ struct InlineTextEditor: NSViewRepresentable {
     var font: NSFont
     var color: NSColor
     var alignment: NSTextAlignment
+    var uppercase: Bool = false
     var onCommit: () -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -22,7 +23,7 @@ struct InlineTextEditor: NSViewRepresentable {
         textView.font = font
         textView.textColor = color
         textView.alignment = alignment
-        textView.string = text
+        textView.string = uppercase ? text.uppercased() : text
         textView.delegate = context.coordinator
         textView.onCommit = onCommit
         textView.textContainerInset = .zero
@@ -51,8 +52,9 @@ struct InlineTextEditor: NSViewRepresentable {
 
     func updateNSView(_ scrollView: CenteringScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
-        if textView.string != text {
-            textView.string = text
+        let displayText = uppercase ? text.uppercased() : text
+        if textView.string != displayText {
+            textView.string = displayText
         }
         textView.font = font
         textView.textColor = color
@@ -73,6 +75,14 @@ struct InlineTextEditor: NSViewRepresentable {
             let maxLength = 5000
             if textView.string.count > maxLength {
                 textView.string = String(textView.string.prefix(maxLength))
+            }
+            if parent.uppercase {
+                let uppercased = textView.string.uppercased()
+                if textView.string != uppercased {
+                    let selectedRanges = textView.selectedRanges
+                    textView.string = uppercased
+                    textView.selectedRanges = selectedRanges
+                }
             }
             parent.text = textView.string
             if let scrollView = textView.enclosingScrollView as? CenteringScrollView {
