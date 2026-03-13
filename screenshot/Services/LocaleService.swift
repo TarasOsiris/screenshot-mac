@@ -53,6 +53,7 @@ enum LocaleService {
             baseResult.fontWeight = base.fontWeight
             baseResult.textAlign = base.textAlign
             baseResult.italic = base.italic
+            baseResult.uppercase = base.uppercase
             baseResult.letterSpacing = base.letterSpacing
             baseResult.lineSpacing = base.lineSpacing
 
@@ -62,6 +63,7 @@ enum LocaleService {
             if updated.fontWeight != base.fontWeight { override.fontWeight = updated.fontWeight }
             if updated.textAlign != base.textAlign { override.textAlign = updated.textAlign }
             if updated.italic != base.italic { override.italic = updated.italic }
+            if updated.uppercase != base.uppercase { override.uppercase = updated.uppercase }
             if updated.letterSpacing != base.letterSpacing { override.letterSpacing = updated.letterSpacing }
             if updated.lineSpacing != base.lineSpacing { override.lineSpacing = updated.lineSpacing }
         }
@@ -150,6 +152,7 @@ enum LocaleService {
         if let fontWeight = override.fontWeight { result.fontWeight = fontWeight }
         if let textAlign = override.textAlign { result.textAlign = textAlign }
         if let italic = override.italic { result.italic = italic }
+        if let uppercase = override.uppercase { result.uppercase = uppercase }
         if let letterSpacing = override.letterSpacing { result.letterSpacing = letterSpacing }
         if let lineSpacing = override.lineSpacing { result.lineSpacing = lineSpacing }
         if let fileName = override.overrideImageFileName {

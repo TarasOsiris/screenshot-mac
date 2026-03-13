@@ -21,6 +21,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
     var fontWeight: Int?
     var textAlign: TextAlign?
     var italic: Bool?
+    var uppercase: Bool?
     var letterSpacing: CGFloat?
     var lineSpacing: CGFloat?
 
@@ -30,7 +31,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
     var isEmpty: Bool {
         offsetX == nil && offsetY == nil && offsetWidth == nil && offsetHeight == nil
             && text == nil && fontName == nil && fontSize == nil && fontWeight == nil
-            && textAlign == nil && italic == nil && letterSpacing == nil && lineSpacing == nil
+            && textAlign == nil && italic == nil && uppercase == nil && letterSpacing == nil && lineSpacing == nil
             && overrideImageFileName == nil
     }
 }

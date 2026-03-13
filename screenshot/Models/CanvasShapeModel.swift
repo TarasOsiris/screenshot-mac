@@ -150,6 +150,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     var fontWeight: Int?
     var textAlign: TextAlign?
     var italic: Bool?
+    var uppercase: Bool?
     var letterSpacing: CGFloat?
     var lineSpacing: CGFloat?
 
@@ -186,6 +187,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         fontWeight: Int? = nil,
         textAlign: TextAlign? = nil,
         italic: Bool? = nil,
+        uppercase: Bool? = nil,
         letterSpacing: CGFloat? = nil,
         lineSpacing: CGFloat? = nil,
         imageFileName: String? = nil,
@@ -213,6 +215,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.fontWeight = fontWeight
         self.textAlign = textAlign
         self.italic = italic
+        self.uppercase = uppercase
         self.letterSpacing = letterSpacing
         self.lineSpacing = lineSpacing
         self.imageFileName = imageFileName
@@ -281,7 +284,7 @@ struct CanvasShapeModel: Identifiable, Codable {
             color: color, opacity: opacity,
             text: text, fontName: fontName, fontSize: fontSize,
             fontWeight: fontWeight, textAlign: textAlign,
-            italic: italic, letterSpacing: letterSpacing, lineSpacing: lineSpacing,
+            italic: italic, uppercase: uppercase, letterSpacing: letterSpacing, lineSpacing: lineSpacing,
             imageFileName: imageFileName,
             deviceCategory: deviceCategory,
             deviceBodyColor: deviceBodyColorData?.color,

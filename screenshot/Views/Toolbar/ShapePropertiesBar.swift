@@ -262,6 +262,13 @@ struct ShapePropertiesBar: View {
                             }
                             .toggleStyle(.button)
                             .help("Italic")
+
+                            Toggle(isOn: shapeBinding(shapeId, \.uppercase, default: false)) {
+                                Text("AA")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .toggleStyle(.button)
+                            .help("Uppercase")
                         }
 
                         section {

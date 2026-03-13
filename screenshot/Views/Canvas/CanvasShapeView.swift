@@ -95,6 +95,8 @@ struct CanvasShapeView: View {
             .onChange(of: shape.svgContent) { updateSvgCache() }
             .onChange(of: shape.svgUseColor) { updateSvgCache() }
             .onChange(of: shape.color) { updateSvgCache() }
+            .onChange(of: shape.width) { updateSvgCache() }
+            .onChange(of: shape.height) { updateSvgCache() }
 
         if showsEditorHelpers {
             svgAware
@@ -145,6 +147,7 @@ struct CanvasShapeView: View {
                 Text(displayText)
                     .font(resolvedFont(size: shape.fontSize ?? 72, weight: fontWeight(shape.fontWeight ?? 700)))
                     .italic(showPlaceholder ? true : (shape.italic ?? false))
+                    .textCase((shape.uppercase ?? false) ? .uppercase : nil)
                     .tracking(shape.letterSpacing ?? 0)
                     .lineSpacing(shape.lineSpacing ?? 0)
                     .foregroundStyle(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
@@ -170,7 +173,7 @@ struct CanvasShapeView: View {
             }
 
         case .svg:
-            if let image = cachedSvgImage ?? Self.svgImage(from: shape.svgContent ?? "", useColor: shape.svgUseColor == true, color: shape.color) {
+            if let image = cachedSvgImage ?? Self.svgImage(from: shape.svgContent ?? "", useColor: shape.svgUseColor == true, color: shape.color, targetSize: CGSize(width: effectiveW, height: effectiveH)) {
                 Image(nsImage: image)
                     .resizable()
                     .interpolation(.high)
@@ -563,13 +566,16 @@ struct CanvasShapeView: View {
 
     private func updateSvgCache() {
         guard shape.type == .svg, let content = shape.svgContent else { return }
-        let key = "\(content.hashValue)-\(shape.svgUseColor ?? false)-\(shape.color.hexString)"
+        let w = Int(effectiveW)
+        let h = Int(effectiveH)
+        let key = "\(content.hashValue)-\(shape.svgUseColor ?? false)-\(shape.color.hexString)-\(w)x\(h)"
         guard key != svgCacheKey else { return }
         svgCacheKey = key
-        cachedSvgImage = Self.svgImage(from: content, useColor: shape.svgUseColor == true, color: shape.color)
+        let targetSize = CGSize(width: effectiveW, height: effectiveH)
+        cachedSvgImage = Self.svgImage(from: content, useColor: shape.svgUseColor == true, color: shape.color, targetSize: targetSize)
     }
 
-    static func svgImage(from svgContent: String, useColor: Bool, color: Color) -> NSImage? {
+    static func svgImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
         var svg = svgContent
         if useColor {
             let hex = color.hexString
@@ -587,7 +593,36 @@ struct CanvasShapeView: View {
             )
         }
         guard let data = svg.data(using: .utf8) else { return nil }
-        return NSImage(data: data)
+        guard let baseImage = NSImage(data: data) else { return nil }
+
+        // Re-rasterize at target size so the SVG stays crisp when scaled up
+        guard let targetSize, targetSize.width > 0, targetSize.height > 0 else {
+            return baseImage
+        }
+        let pixelW = Int(targetSize.width)
+        let pixelH = Int(targetSize.height)
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: pixelW,
+            pixelsHigh: pixelH,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else { return baseImage }
+        rep.size = targetSize
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        NSGraphicsContext.current?.imageInterpolation = .high
+        baseImage.draw(in: NSRect(origin: .zero, size: targetSize),
+                       from: .zero, operation: .copy, fraction: 1.0)
+        NSGraphicsContext.restoreGraphicsState()
+        let result = NSImage(size: targetSize)
+        result.addRepresentation(rep)
+        return result
     }
 
     private var textEditor: some View {
