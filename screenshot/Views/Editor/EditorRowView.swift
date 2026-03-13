@@ -299,12 +299,18 @@ struct EditorRowView: View {
 
             // Shared shapes layer (resolved for active locale)
             ForEach(LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)) { shape in
-                let shapeView = CanvasShapeView(
+                let clipRect: CGRect? = shape.clipToTemplate == true ? {
+                    let ti = row.owningTemplateIndex(for: shape)
+                    return CGRect(x: CGFloat(ti) * dw, y: 0, width: dw, height: dh)
+                }() : nil
+
+                CanvasShapeView(
                     shape: shape,
                     displayScale: ds,
                     isSelected: shape.id == state.selectedShapeId,
                     screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                    clipBounds: clipRect,
                     onSelect: { state.selectShape(shape.id, in: row.id) },
                     onUpdate: { state.updateShape($0) },
                     onDelete: { state.deleteShape(shape.id) },
@@ -331,18 +337,6 @@ struct EditorRowView: View {
                         state.duplicateShapeForOptionDrag(shapeId)
                     }
                 )
-
-                if shape.clipToTemplate == true {
-                    let ti = row.owningTemplateIndex(for: shape)
-                    shapeView
-                        .mask {
-                            Rectangle()
-                                .frame(width: dw, height: dh)
-                                .position(x: CGFloat(ti) * dw + dw / 2, y: dh / 2)
-                        }
-                } else {
-                    shapeView
-                }
             }
 
             // Alignment guide lines

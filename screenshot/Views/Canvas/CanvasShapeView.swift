@@ -8,6 +8,7 @@ struct CanvasShapeView: View {
     var screenshotImage: NSImage?
     var defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor
 
+    var clipBounds: CGRect?
     var showsEditorHelpers: Bool = true
     var onSelect: () -> Void
     var onUpdate: (CanvasShapeModel) -> Void
@@ -80,7 +81,28 @@ struct CanvasShapeView: View {
             }
         }
 
-        let svgAware = base
+        let clippedBase: some View = {
+            if let cb = clipBounds {
+                let shapeRect = CGRect(x: displayX, y: displayY, width: displayW, height: displayH)
+                let hit = shapeRect.intersection(cb)
+                if hit.isEmpty {
+                    return AnyView(base.allowsHitTesting(false).opacity(0))
+                } else {
+                    return AnyView(
+                        base
+                            .contentShape(Path(hit))
+                            .mask {
+                                Rectangle()
+                                    .frame(width: cb.width, height: cb.height)
+                                    .position(x: cb.midX, y: cb.midY)
+                            }
+                    )
+                }
+            } else {
+                return AnyView(base)
+            }
+        }()
+        let svgAware = clippedBase
             .onAppear { updateSvgCache() }
             .onChange(of: isSelected) { _, selected in
                 if !selected && isEditingText {
