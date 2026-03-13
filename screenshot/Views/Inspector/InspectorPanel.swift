@@ -112,33 +112,29 @@ struct InspectorPanel: View {
     private func deviceSection(rowId: UUID) -> some View {
         Section("Device") {
             LabeledContent("Default device") {
-                Menu {
-                    DeviceMenuContent(
-                        onSelectCategory: { cat in
-                            guard let idx = state.rowIndex(for: rowId) else { return }
-                            state.rows[idx].defaultDeviceCategory = cat
-                            state.rows[idx].defaultDeviceFrameId = nil
-                            state.scheduleSave()
-                        },
-                        onSelectFrame: { frame in
-                            guard let idx = state.rowIndex(for: rowId) else { return }
-                            state.rows[idx].defaultDeviceCategory = frame.fallbackCategory
-                            state.rows[idx].defaultDeviceFrameId = frame.id
-                            state.scheduleSave()
-                        }
-                    )
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: defaultDeviceIcon(for: rowId))
-                        Text(defaultDeviceLabel(for: rowId))
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.system(size: 8, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                DevicePickerMenu(
+                    category: defaultDeviceCategory(for: rowId),
+                    frameId: defaultDeviceFrameId(for: rowId),
+                    onSelectNone: {
+                        guard let idx = state.rowIndex(for: rowId) else { return }
+                        guard state.rows[idx].defaultDeviceCategory != nil || state.rows[idx].defaultDeviceFrameId != nil else { return }
+                        state.rows[idx].defaultDeviceCategory = nil
+                        state.rows[idx].defaultDeviceFrameId = nil
+                        state.scheduleSave()
+                    },
+                    onSelectCategory: { cat in
+                        guard let idx = state.rowIndex(for: rowId) else { return }
+                        state.rows[idx].defaultDeviceCategory = cat
+                        state.rows[idx].defaultDeviceFrameId = nil
+                        state.scheduleSave()
+                    },
+                    onSelectFrame: { frame in
+                        guard let idx = state.rowIndex(for: rowId) else { return }
+                        state.rows[idx].defaultDeviceCategory = frame.fallbackCategory
+                        state.rows[idx].defaultDeviceFrameId = frame.id
+                        state.scheduleSave()
                     }
-                }
-                .menuStyle(.borderlessButton)
+                )
                 .help(defaultDeviceHelp(for: rowId))
             }
             .controlSize(.small)
@@ -156,20 +152,14 @@ struct InspectorPanel: View {
         }
     }
 
-    private func defaultDeviceLabel(for rowId: UUID) -> String {
-        guard let idx = state.rowIndex(for: rowId) else { return "iPhone" }
-        if let frameId = state.rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-            return "\(frame.modelName) - \(frame.shortLabel)"
-        }
-        return state.rows[idx].defaultDeviceCategory.label
+    private func defaultDeviceCategory(for rowId: UUID) -> DeviceCategory? {
+        guard let idx = state.rowIndex(for: rowId) else { return .iphone }
+        return state.rows[idx].defaultDeviceCategory
     }
 
-    private func defaultDeviceIcon(for rowId: UUID) -> String {
-        guard let idx = state.rowIndex(for: rowId) else { return "iphone" }
-        if let frameId = state.rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-            return frame.isLandscape ? "rectangle" : "rectangle.portrait"
-        }
-        return state.rows[idx].defaultDeviceCategory.icon
+    private func defaultDeviceFrameId(for rowId: UUID) -> String? {
+        guard let idx = state.rowIndex(for: rowId) else { return nil }
+        return state.rows[idx].defaultDeviceFrameId
     }
 
     private func defaultDeviceHelp(for rowId: UUID) -> String {
@@ -177,11 +167,13 @@ struct InspectorPanel: View {
         if let frameId = state.rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
             return "Current default device frame: \(frame.label)"
         }
-        return "Current default abstract device: \(state.rows[idx].defaultDeviceCategory.label)"
+        guard let category = state.rows[idx].defaultDeviceCategory else { return "No default device" }
+        return "Current default abstract device: \(category.label)"
     }
 
     private func defaultDeviceIsAbstract(for rowId: UUID) -> Bool {
         guard let idx = state.rowIndex(for: rowId) else { return true }
+        guard state.rows[idx].defaultDeviceCategory != nil else { return false }
         guard let frameId = state.rows[idx].defaultDeviceFrameId else { return true }
         return DeviceFrameCatalog.frame(for: frameId) == nil
     }

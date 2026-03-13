@@ -9,7 +9,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     var templateHeight: CGFloat
     var backgroundColorData: CodableColor
     var defaultDeviceBodyColorData: CodableColor
-    var defaultDeviceCategory: DeviceCategory
+    var defaultDeviceCategory: DeviceCategory?
     var backgroundStyle: BackgroundStyle
     var gradientConfig: GradientConfig
     var spanBackgroundAcrossRow: Bool
@@ -28,7 +28,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         templateHeight: CGFloat = 2688,
         bgColor: Color = .blue,
         defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor,
-        defaultDeviceCategory: DeviceCategory = .iphone,
+        defaultDeviceCategory: DeviceCategory? = .iphone,
         backgroundStyle: BackgroundStyle = .color,
         gradientConfig: GradientConfig = GradientConfig(),
         spanBackgroundAcrossRow: Bool = false,
@@ -77,7 +77,12 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         backgroundColorData = try c.decode(CodableColor.self, forKey: .backgroundColorData)
         defaultDeviceBodyColorData = try c.decodeIfPresent(CodableColor.self, forKey: .defaultDeviceBodyColorData)
             ?? CodableColor(CanvasShapeModel.defaultDeviceBodyColor)
-        defaultDeviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .defaultDeviceCategory) ?? .iphone
+        // Legacy projects without this key default to .iphone; explicit null means "No device"
+        if c.contains(.defaultDeviceCategory) {
+            defaultDeviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .defaultDeviceCategory)
+        } else {
+            defaultDeviceCategory = .iphone
+        }
         backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
         gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
         spanBackgroundAcrossRow = try c.decodeIfPresent(Bool.self, forKey: .spanBackgroundAcrossRow) ?? false
@@ -87,6 +92,28 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         showBorders = try c.decodeIfPresent(Bool.self, forKey: .showBorders) ?? true
         shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []
         isLabelManuallySet = try c.decodeIfPresent(Bool.self, forKey: .isLabelManuallySet) ?? false
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(label, forKey: .label)
+        try c.encode(templates, forKey: .templates)
+        try c.encode(templateWidth, forKey: .templateWidth)
+        try c.encode(templateHeight, forKey: .templateHeight)
+        try c.encode(backgroundColorData, forKey: .backgroundColorData)
+        try c.encode(defaultDeviceBodyColorData, forKey: .defaultDeviceBodyColorData)
+        // Encode null explicitly so decoder can distinguish "no device" from missing key
+        try c.encode(defaultDeviceCategory, forKey: .defaultDeviceCategory)
+        try c.encode(backgroundStyle, forKey: .backgroundStyle)
+        try c.encode(gradientConfig, forKey: .gradientConfig)
+        try c.encode(spanBackgroundAcrossRow, forKey: .spanBackgroundAcrossRow)
+        try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig)
+        try c.encodeIfPresent(defaultDeviceFrameId, forKey: .defaultDeviceFrameId)
+        try c.encode(showDevice, forKey: .showDevice)
+        try c.encode(showBorders, forKey: .showBorders)
+        try c.encode(shapes, forKey: .shapes)
+        try c.encode(isLabelManuallySet, forKey: .isLabelManuallySet)
     }
 
     var bgColor: Color {

@@ -9,6 +9,8 @@ struct SettingsView: View {
     @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
     @AppStorage("defaultZoomLevel") private var defaultZoomLevel = 1.0
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
+    @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
+    @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
 
     var body: some View {
         TabView {
@@ -20,7 +22,7 @@ struct SettingsView: View {
                 exportSettings
             }
         }
-        .frame(width: 420, height: 260)
+        .frame(width: 420, height: 310)
     }
 
     private var generalSettings: some View {
@@ -34,12 +36,32 @@ struct SettingsView: View {
             Picker("Default screenshot size", selection: $defaultScreenshotSize) {
                 ForEach(displayCategories) { category in
                     Section(category.name) {
-                        ForEach(category.sizes) { size in
-                            Text(size.label)
+                        ForEach(category.sizes, id: \.label) { size in
+                            Text("\(size.label) \(size.isLandscape ? "Landscape" : "Portrait")")
                                 .tag("\(Int(size.width))x\(Int(size.height))")
                         }
                     }
                 }
+            }
+            .pickerStyle(.menu)
+
+            LabeledContent("Default device") {
+                DevicePickerMenu(
+                    category: DeviceCategory(rawValue: defaultDeviceCategoryRaw),
+                    frameId: defaultDeviceFrameId.isEmpty ? nil : defaultDeviceFrameId,
+                    onSelectNone: {
+                        defaultDeviceCategoryRaw = ""
+                        defaultDeviceFrameId = ""
+                    },
+                    onSelectCategory: { cat in
+                        defaultDeviceCategoryRaw = cat.rawValue
+                        defaultDeviceFrameId = ""
+                    },
+                    onSelectFrame: { frame in
+                        defaultDeviceCategoryRaw = frame.fallbackCategory.rawValue
+                        defaultDeviceFrameId = frame.id
+                    }
+                )
             }
 
             Picker("Screenshots per new row", selection: $defaultTemplateCount) {

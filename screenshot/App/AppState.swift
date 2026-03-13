@@ -316,18 +316,20 @@ final class AppState {
         let color = Self.templateColors[rows[idx].templates.count % Self.templateColors.count]
         rows[idx].templates.append(ScreenshotTemplate(backgroundColor: color))
         let templateIndex = rows[idx].templates.count - 1
-        var device = CanvasShapeModel.defaultDevice(
-            centerX: rows[idx].templateCenterX(at: templateIndex),
-            centerY: rows[idx].templateHeight / 2,
-            templateHeight: rows[idx].templateHeight,
-            category: rows[idx].defaultDeviceCategory
-        )
-        if let frameId = rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-            device.deviceCategory = frame.fallbackCategory
-            device.deviceFrameId = frame.id
-            device.adjustToDeviceAspectRatio(centerX: rows[idx].templateCenterX(at: templateIndex))
+        if let defaultCategory = rows[idx].defaultDeviceCategory {
+            var device = CanvasShapeModel.defaultDevice(
+                centerX: rows[idx].templateCenterX(at: templateIndex),
+                centerY: rows[idx].templateHeight / 2,
+                templateHeight: rows[idx].templateHeight,
+                category: defaultCategory
+            )
+            if let frameId = rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+                device.deviceCategory = frame.fallbackCategory
+                device.deviceFrameId = frame.id
+                device.adjustToDeviceAspectRatio(centerX: rows[idx].templateCenterX(at: templateIndex))
+            }
+            rows[idx].shapes.append(device)
         }
-        rows[idx].shapes.append(device)
         scheduleSave()
     }
 
@@ -1422,12 +1424,27 @@ final class AppState {
         let templates = (0..<templateCount).map { index in
             ScreenshotTemplate(backgroundColor: Self.templateColors[index % Self.templateColors.count])
         }
-        let shapes = (0..<templateCount).map { index in
-            CanvasShapeModel.defaultDevice(
-                centerX: CGFloat(index) * w + w / 2,
-                centerY: h / 2,
-                templateHeight: h
-            )
+        let deviceCategoryRaw = UserDefaults.standard.string(forKey: "defaultDeviceCategory") ?? "iphone"
+        let deviceCategory = DeviceCategory(rawValue: deviceCategoryRaw)
+        let deviceFrameId = UserDefaults.standard.string(forKey: "defaultDeviceFrameId").flatMap { $0.isEmpty ? nil : $0 }
+        let resolvedFrame = deviceFrameId.flatMap { DeviceFrameCatalog.frame(for: $0) }
+
+        var shapes: [CanvasShapeModel] = []
+        if let deviceCategory {
+            shapes = (0..<templateCount).map { index in
+                var device = CanvasShapeModel.defaultDevice(
+                    centerX: CGFloat(index) * w + w / 2,
+                    centerY: h / 2,
+                    templateHeight: h,
+                    category: deviceCategory
+                )
+                if let resolvedFrame {
+                    device.deviceCategory = resolvedFrame.fallbackCategory
+                    device.deviceFrameId = resolvedFrame.id
+                    device.adjustToDeviceAspectRatio(centerX: CGFloat(index) * w + w / 2)
+                }
+                return device
+            }
         }
         let resolvedLabel = label ?? presetLabel(forWidth: w, height: h)
         return ScreenshotRow(
@@ -1436,6 +1453,8 @@ final class AppState {
             templates: templates,
             templateWidth: w,
             templateHeight: h,
+            defaultDeviceCategory: deviceCategory,
+            defaultDeviceFrameId: deviceFrameId,
             shapes: shapes,
             isLabelManuallySet: label != nil
         )
