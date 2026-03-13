@@ -6,6 +6,7 @@ final class AppState {
     private static let maxProjectNameLength = 100
 
     var projects: [Project] = []
+    var projectTemplates: [ProjectTemplate] = []
     var activeProjectId: UUID?
     var rows: [ScreenshotRow] = []
     var localeState: LocaleState = .default
@@ -100,11 +101,15 @@ final class AppState {
         if let index = PersistenceService.loadIndex() {
             projects = index.projects
             activeProjectId = index.activeProjectId
+        }
 
-            if let activeId = activeProjectId {
-                loadRowsForProject(activeId)
-                loadScreenshotImages()
-            }
+        if let templateIndex = PersistenceService.loadTemplateIndex() {
+            projectTemplates = templateIndex.templates
+        }
+
+        if let activeId = activeProjectId {
+            loadRowsForProject(activeId)
+            loadScreenshotImages()
         }
 
         if projects.isEmpty {
@@ -137,6 +142,11 @@ final class AppState {
     private func saveIndex() {
         let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
         PersistenceService.saveIndex(index)
+    }
+
+    private func saveTemplateIndex() {
+        let index = ProjectTemplateIndex(templates: projectTemplates)
+        PersistenceService.saveTemplateIndex(index)
     }
 
     private func cancelPendingDebounceTasks() {
@@ -198,13 +208,22 @@ final class AppState {
     }
 
     private func uniqueProjectName(_ baseName: String, excludingId: UUID? = nil) -> String {
-        let cappedBase = String(baseName.prefix(Self.maxProjectNameLength))
         let existingNames = Set(projects.filter { $0.id != excludingId }.map { $0.name })
+        return Self.uniqueName(baseName, among: existingNames)
+    }
+
+    private func uniqueTemplateName(_ baseName: String, excludingId: UUID? = nil) -> String {
+        let existingNames = Set(projectTemplates.filter { $0.id != excludingId }.map { $0.name })
+        return Self.uniqueName(baseName, among: existingNames)
+    }
+
+    private static func uniqueName(_ baseName: String, among existingNames: Set<String>) -> String {
+        let cappedBase = String(baseName.prefix(maxProjectNameLength))
         if !existingNames.contains(cappedBase) { return cappedBase }
         var counter = 2
         while true {
             let suffix = " \(counter)"
-            let availableCount = max(0, Self.maxProjectNameLength - suffix.count)
+            let availableCount = max(0, maxProjectNameLength - suffix.count)
             let candidate = String(cappedBase.prefix(availableCount)) + suffix
             if !existingNames.contains(candidate) {
                 return candidate
@@ -219,6 +238,32 @@ final class AppState {
         guard let source = projects.first(where: { $0.id == id }) else { return }
         let newProject = Project(name: uniqueProjectName(source.name + " Copy"))
         PersistenceService.copyProject(from: id, to: newProject.id)
+        projects.append(newProject)
+
+        switchToProject(newProject.id)
+        saveAll()
+    }
+
+    func saveCurrentProjectAsTemplate(name: String) {
+        guard let activeId = activeProjectId else { return }
+
+        saveCurrentProject()
+
+        let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
+        let fallbackName = activeProject?.name ?? "Template"
+        let baseName = sanitized.isEmpty ? fallbackName : sanitized
+        let template = ProjectTemplate(name: uniqueTemplateName(baseName))
+        PersistenceService.copyProjectToTemplate(from: activeId, to: template.id)
+        projectTemplates.append(template)
+        saveTemplateIndex()
+    }
+
+    func createProject(fromTemplate templateId: UUID) {
+        saveCurrentProject()
+
+        guard let template = projectTemplates.first(where: { $0.id == templateId }) else { return }
+        let newProject = Project(name: uniqueProjectName(template.name))
+        PersistenceService.copyTemplateToProject(from: templateId, to: newProject.id)
         projects.append(newProject)
 
         switchToProject(newProject.id)
@@ -373,7 +418,13 @@ final class AppState {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         registerUndo("Duplicate Row")
         let source = rows[idx]
-        let newShapes = source.shapes.map { $0.duplicated() }
+        var newShapes = source.shapes.map { $0.duplicated() }
+        // Copy locale overrides and image files for each duplicated shape
+        for i in newShapes.indices {
+            let originalId = source.shapes[i].id
+            LocaleService.copyShapeOverrides(&localeState, fromId: originalId, toId: newShapes[i].id)
+            copyImageFiles(for: &newShapes[i], originalId: originalId)
+        }
         let copy = ScreenshotRow(
             label: "\(source.label) copy",
             templates: source.templates.map { $0.duplicated() },
@@ -392,10 +443,6 @@ final class AppState {
             shapes: newShapes,
             isLabelManuallySet: true
         )
-        // Copy locale overrides for each duplicated shape
-        for (originalShape, newShape) in zip(source.shapes, newShapes) {
-            LocaleService.copyShapeOverrides(&localeState, fromId: originalShape.id, toId: newShape.id)
-        }
         rows.insert(copy, at: idx + 1)
         selectRow(copy.id)
         scheduleSave()
@@ -584,9 +631,10 @@ final class AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) else { return nil }
         registerUndo(undoName)
-        let copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: offsetX, offsetY: offsetY)
-        rows[rowIdx].shapes.append(copy)
+        var copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: offsetX, offsetY: offsetY)
         LocaleService.copyShapeOverrides(&localeState, fromId: shapeId, toId: copy.id)
+        copyImageFiles(for: &copy, originalId: shapeId)
+        rows[rowIdx].shapes.append(copy)
         selectShape(copy.id, in: rows[rowIdx].id)
         scheduleSave()
         return copy.id
@@ -811,8 +859,9 @@ final class AppState {
         } else {
             pasted = source.duplicated(offsetX: 20, offsetY: 20)
         }
-        rows[rowIdx].shapes.append(pasted)
         LocaleService.copyShapeOverrides(&localeState, fromId: source.id, toId: pasted.id)
+        copyImageFiles(for: &pasted, originalId: source.id)
+        rows[rowIdx].shapes.append(pasted)
         selectShape(pasted.id, in: rows[rowIdx].id)
         scheduleSave()
     }
@@ -1002,6 +1051,42 @@ final class AppState {
                   rows[rowIdx].shapes.contains(where: { $0.id == selectedShapeId }) else {
                 self.selectedShapeId = nil
                 return
+            }
+        }
+    }
+
+    /// Copy image files for a duplicated shape so it has its own independent files.
+    /// Updates the shape's image references in-place and copies locale override image files.
+    private func copyImageFiles(for newShape: inout CanvasShapeModel, originalId: UUID) {
+        guard let activeId = activeProjectId else { return }
+        let resourcesURL = PersistenceService.resourcesDir(activeId)
+        let fm = FileManager.default
+
+        // Copy base image file (imageFileName or screenshotFileName)
+        if let originalFile = newShape.displayImageFileName {
+            let srcURL = resourcesURL.appendingPathComponent(originalFile)
+            let newFile = "\(newShape.id.uuidString).png"
+            let dstURL = resourcesURL.appendingPathComponent(newFile)
+            if fm.fileExists(atPath: srcURL.path) {
+                try? fm.copyItem(at: srcURL, to: dstURL)
+                newShape.displayImageFileName = newFile
+                screenshotImages[newFile] = screenshotImages[originalFile]
+            }
+        }
+
+        // Copy locale override image files
+        let newKey = newShape.id.uuidString
+        for localeCode in localeState.overrides.keys {
+            guard var override = localeState.overrides[localeCode]?[newKey],
+                  let originalFile = override.overrideImageFileName else { continue }
+            let srcURL = resourcesURL.appendingPathComponent(originalFile)
+            let newFile = "\(newShape.id.uuidString)-\(localeCode).png"
+            let dstURL = resourcesURL.appendingPathComponent(newFile)
+            if fm.fileExists(atPath: srcURL.path) {
+                try? fm.copyItem(at: srcURL, to: dstURL)
+                override.overrideImageFileName = newFile
+                localeState.overrides[localeCode]?[newKey] = override
+                screenshotImages[newFile] = screenshotImages[originalFile]
             }
         }
     }

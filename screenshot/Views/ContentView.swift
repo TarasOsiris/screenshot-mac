@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var isExporting = false
     @State private var exportError: String?
     @State private var isCreatingProject = false
+    @State private var isSavingTemplate = false
     @State private var isRenamingProject = false
     @State private var dialogText = ""
     @State private var isDeletingProject = false
@@ -18,7 +19,6 @@ struct ContentView: View {
     @State private var gestureZoomStartLevel: CGFloat?
 
     var body: some View {
-        @Bindable var state = state
         VStack(spacing: 0) {
             LocaleBanner(state: state)
 
@@ -83,73 +83,12 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Menu {
-                    Section("Switch Project") {
-                        ForEach(state.projects) { project in
-                            Button {
-                                state.selectProject(project.id)
-                            } label: {
-                                if project.id == state.activeProjectId {
-                                    Label(project.name, systemImage: "checkmark")
-                                } else {
-                                    Text(project.name)
-                                }
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    Button("New Project...") {
-                        dialogText = "Project \(state.projects.count + 1)"
-                        isCreatingProject = true
-                    }
-
-                    Divider()
-
-                    Section("Current Project") {
-                        Button("Rename Project...") {
-                            dialogText = state.activeProject?.name ?? ""
-                            isRenamingProject = true
-                        }
-                        .disabled(state.activeProjectId == nil)
-
-                        Button("Duplicate Project") {
-                            if let id = state.activeProjectId {
-                                state.duplicateProject(id)
-                            }
-                        }
-                        .disabled(state.activeProjectId == nil)
-
-                        Button("Reset Project...", role: .destructive) {
-                            if confirmBeforeDeleting {
-                                isResettingProject = true
-                            } else if let id = state.activeProjectId {
-                                state.resetProject(id)
-                            }
-                        }
-                        .disabled(state.activeProjectId == nil)
-
-                        Button("Delete Project...", role: .destructive) {
-                            if confirmBeforeDeleting {
-                                isDeletingProject = true
-                            } else if let id = state.activeProjectId {
-                                state.deleteProject(id)
-                            }
-                        }
-                        .disabled(state.activeProjectId == nil || state.projects.count <= 1)
-                    }
+                    projectMenuContent
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "folder")
-                            .foregroundStyle(.secondary)
-                        Text(state.activeProject?.name ?? "No Project")
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                            .frame(minWidth: 180, idealWidth: 240, maxWidth: 320, alignment: .leading)
-                    }
+                    projectMenuLabel
                 }
                 .help(state.activeProject?.name ?? "No Project")
-                .accessibilityIdentifier("projectPicker")
+                .accessibilityIdentifier("projectActionsMenu")
             }
 
             ToolbarItem(placement: .navigation) {
@@ -159,6 +98,19 @@ struct ContentView: View {
             ToolbarItem(placement: .navigation) {
                 ZoomControls()
                     .padding(.leading, 2)
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Spacer()
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Image("Logo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 16)
+                    .padding(.horizontal, 8)
+                    .accessibilityLabel("Screenshot Bro")
             }
 
             ToolbarItem(placement: .automatic) {
@@ -231,10 +183,124 @@ struct ContentView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+        .alert("Save as Template", isPresented: $isSavingTemplate) {
+            TextField("Template name", text: $dialogText.limited(to: 100))
+            Button("Save") {
+                state.saveCurrentProjectAsTemplate(name: dialogText)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Save the current project as a reusable template.")
+        }
         .onAppear {
             state.undoManager = undoManager
             undoManager?.levelsOfUndo = 50
         }
+    }
+
+    @ViewBuilder
+    private var projectMenuContent: some View {
+        projectSwitcherSection
+
+        Divider()
+
+        Button("New Project...") {
+            dialogText = "Project \(state.projects.count + 1)"
+            isCreatingProject = true
+        }
+
+        templateProjectMenu
+
+        Divider()
+
+        currentProjectSection
+    }
+
+    @ViewBuilder
+    private var projectSwitcherSection: some View {
+        Section("Switch Project") {
+            ForEach(state.projects) { project in
+                Button {
+                    state.selectProject(project.id)
+                } label: {
+                    if project.id == state.activeProjectId {
+                        Label(project.name, systemImage: "checkmark")
+                    } else {
+                        Text(project.name)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var templateProjectMenu: some View {
+        Menu("New Project from Template") {
+            if state.projectTemplates.isEmpty {
+                Button("No Saved Templates") {}
+                    .disabled(true)
+            } else {
+                ForEach(state.projectTemplates) { template in
+                    Button(template.name) {
+                        state.createProject(fromTemplate: template.id)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var currentProjectSection: some View {
+        Section("Current Project") {
+            Button("Save as Template...") {
+                dialogText = state.activeProject?.name ?? ""
+                isSavingTemplate = true
+            }
+            .disabled(state.activeProjectId == nil)
+
+            Button("Rename Project...") {
+                dialogText = state.activeProject?.name ?? ""
+                isRenamingProject = true
+            }
+            .disabled(state.activeProjectId == nil)
+
+            Button("Duplicate Project") {
+                if let id = state.activeProjectId {
+                    state.duplicateProject(id)
+                }
+            }
+            .disabled(state.activeProjectId == nil)
+
+            Button("Reset Project...", role: .destructive) {
+                if confirmBeforeDeleting {
+                    isResettingProject = true
+                } else if let id = state.activeProjectId {
+                    state.resetProject(id)
+                }
+            }
+            .disabled(state.activeProjectId == nil)
+
+            Button("Delete Project...", role: .destructive) {
+                if confirmBeforeDeleting {
+                    isDeletingProject = true
+                } else if let id = state.activeProjectId {
+                    state.deleteProject(id)
+                }
+            }
+            .disabled(state.activeProjectId == nil || state.projects.count <= 1)
+        }
+    }
+
+    private var projectMenuLabel: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "folder")
+                .foregroundStyle(.secondary)
+            Text(state.activeProject?.name ?? "No Project")
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .frame(minWidth: 180, idealWidth: 240, maxWidth: 320, alignment: .leading)
+        }
+        .accessibilityIdentifier("projectPicker")
     }
 
     private func exportScreenshots() {

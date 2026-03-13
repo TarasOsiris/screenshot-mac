@@ -27,12 +27,28 @@ struct PersistenceService {
         rootURL.appendingPathComponent("projects.json")
     }
 
+    private static var templatesDir: URL {
+        rootURL.appendingPathComponent("templates", isDirectory: true)
+    }
+
+    private static var templateIndexURL: URL {
+        rootURL.appendingPathComponent("templates.json")
+    }
+
     private static func projectDir(_ id: UUID) -> URL {
         projectsDir.appendingPathComponent(id.uuidString, isDirectory: true)
     }
 
     private static func projectDataURL(_ id: UUID) -> URL {
         projectDir(id).appendingPathComponent("project.json")
+    }
+
+    private static func templateDir(_ id: UUID) -> URL {
+        templatesDir.appendingPathComponent(id.uuidString, isDirectory: true)
+    }
+
+    private static func templateDataURL(_ id: UUID) -> URL {
+        templateDir(id).appendingPathComponent("project.json")
     }
 
     static func resourcesDir(_ id: UUID) -> URL {
@@ -45,6 +61,7 @@ struct PersistenceService {
         let fm = FileManager.default
         try? fm.createDirectory(at: rootURL, withIntermediateDirectories: true)
         try? fm.createDirectory(at: projectsDir, withIntermediateDirectories: true)
+        try? fm.createDirectory(at: templatesDir, withIntermediateDirectories: true)
     }
 
     static func ensureProjectDirs(_ id: UUID) {
@@ -65,6 +82,18 @@ struct PersistenceService {
         try? data.write(to: indexURL, options: .atomic)
     }
 
+    // MARK: - Template index
+
+    static func loadTemplateIndex() -> ProjectTemplateIndex? {
+        guard let data = try? Data(contentsOf: templateIndexURL) else { return nil }
+        return try? decoder.decode(ProjectTemplateIndex.self, from: data)
+    }
+
+    static func saveTemplateIndex(_ index: ProjectTemplateIndex) {
+        guard let data = try? encoder.encode(index) else { return }
+        try? data.write(to: templateIndexURL, options: .atomic)
+    }
+
     // MARK: - Project data
 
     static func loadProject(_ id: UUID) -> ProjectData? {
@@ -78,14 +107,40 @@ struct PersistenceService {
         try? jsonData.write(to: projectDataURL(id), options: .atomic)
     }
 
+    static func loadTemplate(_ id: UUID) -> ProjectData? {
+        let url = templateDataURL(id)
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return try? decoder.decode(ProjectData.self, from: data)
+    }
+
+    static func saveTemplate(_ id: UUID, data: ProjectData) {
+        guard let jsonData = try? encoder.encode(data) else { return }
+        try? jsonData.write(to: templateDataURL(id), options: .atomic)
+    }
+
     static func copyProject(from sourceId: UUID, to destId: UUID) {
-        let fm = FileManager.default
-        let src = projectDir(sourceId)
-        let dst = projectDir(destId)
-        try? fm.copyItem(at: src, to: dst)
+        copyDirectory(from: projectDir(sourceId), to: projectDir(destId))
+    }
+
+    static func copyProjectToTemplate(from sourceId: UUID, to destId: UUID) {
+        copyDirectory(from: projectDir(sourceId), to: templateDir(destId))
+    }
+
+    static func copyTemplateToProject(from sourceId: UUID, to destId: UUID) {
+        copyDirectory(from: templateDir(sourceId), to: projectDir(destId))
     }
 
     static func deleteProject(_ id: UUID) {
         try? FileManager.default.removeItem(at: projectDir(id))
+    }
+
+    static func deleteTemplate(_ id: UUID) {
+        try? FileManager.default.removeItem(at: templateDir(id))
+    }
+
+    private static func copyDirectory(from src: URL, to dst: URL) {
+        let fm = FileManager.default
+        try? fm.removeItem(at: dst)
+        try? fm.copyItem(at: src, to: dst)
     }
 }

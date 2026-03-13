@@ -69,7 +69,8 @@ struct ExportService {
                     ) else {
                         throw ExportError.renderFailed
                     }
-                    let filename = "screenshot-\(index + 1).\(format.fileExtension)"
+                    let padded = String(format: "%02d", index + 1)
+                    let filename = "\(padded)_screenshot.\(format.fileExtension)"
                     let fileURL = destFolder.appendingPathComponent(filename)
                     try imageData.write(to: fileURL)
                 }

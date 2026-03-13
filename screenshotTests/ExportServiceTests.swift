@@ -121,29 +121,4 @@ struct ExportServiceTests {
         )
     }
 
-    private func makeTestImage(width: Int, height: Int) -> NSImage {
-        let bitmap = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: width,
-            pixelsHigh: height,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: width * 4,
-            bitsPerPixel: 32
-        )!
-        let ctx = NSGraphicsContext(bitmapImageRep: bitmap)!
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = ctx
-        NSColor.blue.setFill()
-        NSRect(x: 0, y: 0, width: width, height: height).fill()
-        ctx.flushGraphics()
-        NSGraphicsContext.restoreGraphicsState()
-
-        let image = NSImage(size: NSSize(width: width, height: height))
-        image.addRepresentation(bitmap)
-        return image
-    }
 }
