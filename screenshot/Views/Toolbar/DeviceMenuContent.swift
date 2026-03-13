@@ -17,7 +17,7 @@ struct DeviceMenuContent: View {
 
     private static let ipadCategories: Set<DeviceCategory> = [.ipadPro11, .ipadPro13]
 
-    private var families: [DeviceFamily] {
+    private static let families: [DeviceFamily] = {
         let allGroups = DeviceFrameCatalog.groups
         return [
             DeviceFamily(
@@ -28,7 +28,7 @@ struct DeviceMenuContent: View {
             DeviceFamily(
                 name: "iPad",
                 categories: [.ipadPro11, .ipadPro13],
-                groups: allGroups.filter { Self.ipadCategories.contains($0.frames.first?.fallbackCategory ?? .iphone) }
+                groups: allGroups.filter { ipadCategories.contains($0.frames.first?.fallbackCategory ?? .iphone) }
             ),
             DeviceFamily(
                 name: "Mac",
@@ -36,7 +36,7 @@ struct DeviceMenuContent: View {
                 groups: allGroups.filter { $0.frames.first?.fallbackCategory == .macbook }
             ),
         ]
-    }
+    }()
 
     private func menuRowLabel(_ title: String, icon: String) -> some View {
         Label {
@@ -70,7 +70,7 @@ struct DeviceMenuContent: View {
     }
 
     var body: some View {
-        ForEach(families) { family in
+        ForEach(Self.families) { family in
             Section(family.name) {
                 ForEach(family.categories, id: \.self) { cat in
                     categoryButton(cat)

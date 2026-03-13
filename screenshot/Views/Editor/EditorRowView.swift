@@ -405,7 +405,7 @@ struct EditorRowView: View {
                 row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: spanModelSize)
                     .frame(width: totalWidth, height: dh)
                 HStack(spacing: 0) {
-                    ForEach(Array(row.templates.enumerated()), id: \.element.id) { _, template in
+                    ForEach(row.templates) { template in
                         if template.overrideBackground {
                             template.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
                                 .frame(width: dw, height: dh)
@@ -417,7 +417,7 @@ struct EditorRowView: View {
             }
         } else {
             HStack(spacing: 0) {
-                ForEach(Array(row.templates.enumerated()), id: \.element.id) { _, template in
+                ForEach(row.templates) { template in
                     if template.overrideBackground {
                         template.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
                             .frame(width: dw, height: dh)

@@ -1295,6 +1295,10 @@ final class AppState {
     private func cleanupUnreferencedImage(_ fileName: String?) {
         guard let fileName, !isImageFileReferenced(fileName) else { return }
         screenshotImages.removeValue(forKey: fileName)
+        if let projectId = activeProjectId {
+            let fileURL = PersistenceService.resourcesDir(projectId).appendingPathComponent(fileName)
+            try? FileManager.default.removeItem(at: fileURL)
+        }
     }
 
     func pickAndSaveBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {

@@ -53,55 +53,6 @@ struct CanvasShapeView: View {
 
     @ViewBuilder
     var body: some View {
-        let base = ZStack {
-            shapeContent
-                .frame(width: displayW, height: displayH)
-                .opacity(shape.opacity)
-                .contentShape(Rectangle())
-                .rotationEffect(.degrees(currentRotation))
-        }
-        .frame(width: displayW, height: displayH)
-        .onHover { hovering in
-            isHovered = hovering
-            if showsEditorHelpers && isSelected && !isDragging {
-                if hovering {
-                    NSCursor.openHand.set()
-                } else {
-                    NSCursor.arrow.set()
-                }
-            }
-        }
-        .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
-        .overlay {
-            if isSelected {
-                selectionOverlay
-                resizeHandles
-            } else if isHovered && showsEditorHelpers {
-                hoverOverlay
-            }
-        }
-
-        let clippedBase: some View = {
-            if let cb = clipBounds {
-                let shapeRect = CGRect(x: displayX, y: displayY, width: displayW, height: displayH)
-                let hit = shapeRect.intersection(cb)
-                if hit.isEmpty {
-                    return AnyView(base.allowsHitTesting(false).opacity(0))
-                } else {
-                    return AnyView(
-                        base
-                            .contentShape(Path(hit))
-                            .mask {
-                                Rectangle()
-                                    .frame(width: cb.width, height: cb.height)
-                                    .position(x: cb.midX, y: cb.midY)
-                            }
-                    )
-                }
-            } else {
-                return AnyView(base)
-            }
-        }()
         let svgAware = clippedBase
             .onAppear { updateSvgCache() }
             .onChange(of: isSelected) { _, selected in
@@ -145,6 +96,55 @@ struct CanvasShapeView: View {
             svgAware
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder
+    private var clippedBase: some View {
+        let base = ZStack {
+            shapeContent
+                .frame(width: displayW, height: displayH)
+                .opacity(shape.opacity)
+                .contentShape(Rectangle())
+                .rotationEffect(.degrees(currentRotation))
+        }
+        .frame(width: displayW, height: displayH)
+        .onHover { hovering in
+            isHovered = hovering
+            if showsEditorHelpers && isSelected && !isDragging {
+                if hovering {
+                    NSCursor.openHand.set()
+                } else {
+                    NSCursor.arrow.set()
+                }
+            }
+        }
+        .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+        .overlay {
+            if isSelected {
+                selectionOverlay
+                resizeHandles
+            } else if isHovered && showsEditorHelpers {
+                hoverOverlay
+            }
+        }
+
+        if let cb = clipBounds {
+            let shapeRect = CGRect(x: displayX, y: displayY, width: displayW, height: displayH)
+            let hit = shapeRect.intersection(cb)
+            if hit.isEmpty {
+                base.allowsHitTesting(false).opacity(0)
+            } else {
+                base
+                    .contentShape(Path(hit))
+                    .mask {
+                        Rectangle()
+                            .frame(width: cb.width, height: cb.height)
+                            .position(x: cb.midX, y: cb.midY)
+                    }
+            }
+        } else {
+            base
         }
     }
 
