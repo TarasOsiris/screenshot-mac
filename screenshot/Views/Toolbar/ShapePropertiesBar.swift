@@ -1,4 +1,5 @@
 import SwiftUI
+import Translation
 import UniformTypeIdentifiers
 
 struct ShapePropertiesBar: View {
@@ -8,6 +9,8 @@ struct ShapePropertiesBar: View {
     @Bindable var state: AppState
     @State private var isReplacingImage = false
     @State private var isReplacingSvg = false
+    @State private var translationConfig: TranslationSession.Configuration?
+    @State private var isTranslating = false
 
     private var rowIndex: Int? { state.selectedRowIndex }
     private var shapeIndex: Int? {
@@ -273,6 +276,25 @@ struct ShapePropertiesBar: View {
                                 Slider(value: shapeBinding(shapeId, \.lineSpacing, default: 0), in: 0...50)
                                     .frame(width: 70)
                             }
+
+                            if !state.localeState.isBaseLocale {
+                                separator
+
+                                Button {
+                                    triggerTranslation()
+                                } label: {
+                                    if isTranslating {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                            .frame(width: 16, height: 16)
+                                    } else {
+                                        Label("Translate", systemImage: "globe")
+                                    }
+                                }
+                                .buttonStyle(.borderless)
+                                .disabled(isTranslating || (state.rows[rowIndex].shapes[shapeIdx].text ?? "").isEmpty)
+                                .help("Translate from base locale")
+                            }
                         }
                     }
 
@@ -331,7 +353,30 @@ struct ShapePropertiesBar: View {
                     state.scheduleSave()
                 }
             }
+            .translationTask(translationConfig) { session in
+                guard let ri = state.selectedRowIndex,
+                      let shapeId = state.selectedShapeId,
+                      let si = state.rows[ri].shapes.firstIndex(where: { $0.id == shapeId })
+                else { return }
+                let baseShape = state.rows[ri].shapes[si]
+                guard baseShape.type == .text, let baseText = baseShape.text, !baseText.isEmpty else { return }
+                isTranslating = true
+                defer { isTranslating = false }
+                do {
+                    let response = try await session.translate(baseText)
+                    state.updateTranslationText(shapeId: baseShape.id, text: response.targetText)
+                } catch {
+                    print("Translation failed: \(error)")
+                }
+            }
         }
+    }
+
+    private func triggerTranslation() {
+        translationConfig.refresh(
+            source: state.localeState.baseLocaleCode,
+            target: state.localeState.activeLocaleCode
+        )
     }
 
     /// Creates a Binding that always resolves the shape index by ID at access time.

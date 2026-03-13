@@ -1,4 +1,5 @@
 import SwiftUI
+import Translation
 
 struct LocaleToolbarMenu: View {
     @Bindable var state: AppState
@@ -294,6 +295,8 @@ private struct TranslationOverviewSheet: View {
     @Bindable var state: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var showUntranslatedOnly = false
+    @State private var translationConfig: TranslationSession.Configuration?
+    @State private var translatingShapeIds: Set<UUID> = []
 
     var body: some View {
         let allItems = state.textShapesForTranslation()
@@ -316,6 +319,29 @@ private struct TranslationOverviewSheet: View {
                         .foregroundStyle(.secondary)
 
                     Spacer()
+
+                    if progress.translated < progress.total {
+                        Button {
+                            let untranslated = allItems.filter {
+                                ($0.overrideText ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                && !(($0.shape.text ?? "").isEmpty)
+                            }
+                            translateShapes(Set(untranslated.map { $0.shape.id }))
+                        } label: {
+                            if !translatingShapeIds.isEmpty {
+                                HStack(spacing: 4) {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                    Text("Translating...")
+                                }
+                            } else {
+                                Label("Translate All", systemImage: "globe")
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(!translatingShapeIds.isEmpty)
+                    }
 
                     Toggle("Untranslated only", isOn: $showUntranslatedOnly)
                         .toggleStyle(.switch)
@@ -356,8 +382,12 @@ private struct TranslationOverviewSheet: View {
                             rowLabel: item.rowLabel,
                             overrideText: item.overrideText ?? "",
                             localeLabel: activeLabel,
+                            isTranslating: translatingShapeIds.contains(item.shape.id),
                             onUpdate: { newText in
                                 state.updateTranslationText(shapeId: item.shape.id, text: newText)
+                            },
+                            onTranslate: {
+                                translateShapes([item.shape.id])
                             },
                             onJump: {
                                 state.focusShapeOnCanvas(shapeId: item.shape.id, rowId: item.rowId)
@@ -377,6 +407,27 @@ private struct TranslationOverviewSheet: View {
             .padding(.bottom, 12)
         }
         .frame(width: 600, height: 420)
+        .translationTask(translationConfig) { session in
+            defer { translatingShapeIds.removeAll() }
+            let allItems = state.textShapesForTranslation()
+            for item in allItems where translatingShapeIds.contains(item.shape.id) {
+                guard let baseText = item.shape.text, !baseText.isEmpty else { continue }
+                do {
+                    let response = try await session.translate(baseText)
+                    state.updateTranslationText(shapeId: item.shape.id, text: response.targetText)
+                } catch {
+                    print("Translation failed for shape \(item.shape.id): \(error)")
+                }
+            }
+        }
+    }
+
+    private func translateShapes(_ shapeIds: Set<UUID>) {
+        translatingShapeIds = shapeIds
+        translationConfig.refresh(
+            source: state.localeState.baseLocaleCode,
+            target: state.localeState.activeLocaleCode
+        )
     }
 }
 
@@ -386,7 +437,9 @@ private struct TranslationRow: View {
     private let initialOverrideText: String
     @State private var overrideText: String
     let localeLabel: String
+    let isTranslating: Bool
     let onUpdate: (String) -> Void
+    let onTranslate: () -> Void
     let onJump: () -> Void
 
     init(
@@ -394,7 +447,9 @@ private struct TranslationRow: View {
         rowLabel: String,
         overrideText: String,
         localeLabel: String,
+        isTranslating: Bool,
         onUpdate: @escaping (String) -> Void,
+        onTranslate: @escaping () -> Void,
         onJump: @escaping () -> Void
     ) {
         self.baseText = baseText
@@ -402,7 +457,9 @@ private struct TranslationRow: View {
         self.initialOverrideText = overrideText
         self._overrideText = State(initialValue: overrideText)
         self.localeLabel = localeLabel
+        self.isTranslating = isTranslating
         self.onUpdate = onUpdate
+        self.onTranslate = onTranslate
         self.onJump = onJump
     }
 
@@ -434,6 +491,21 @@ private struct TranslationRow: View {
                     }
 
                 HStack(spacing: 8) {
+                    Button {
+                        onTranslate()
+                    } label: {
+                        if isTranslating {
+                            ProgressView()
+                                .controlSize(.small)
+                                .frame(width: 12, height: 12)
+                        } else {
+                            Label("Translate", systemImage: "globe")
+                        }
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.system(size: 11))
+                    .disabled(baseText.isEmpty || isTranslating)
+
                     Button("Use Base") {
                         overrideText = baseText
                         onUpdate(baseText)
