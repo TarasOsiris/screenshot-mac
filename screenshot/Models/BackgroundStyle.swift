@@ -90,21 +90,22 @@ struct BackgroundImageView: View {
                 if imageSize.width > 0, imageSize.height > 0, refSize.width > 0, refSize.height > 0 {
                     let cols = min(50, max(1, Int(ceil(refSize.width / imageSize.width))))
                     let rows = min(50, max(1, Int(ceil(refSize.height / imageSize.height))))
-                    let scaleX = geo.size.width / (CGFloat(cols) * imageSize.width)
-                    let scaleY = geo.size.height / (CGFloat(rows) * imageSize.height)
-                    VStack(spacing: 0) {
-                        ForEach(0..<rows, id: \.self) { _ in
-                            HStack(spacing: 0) {
-                                ForEach(0..<cols, id: \.self) { _ in
-                                    swiftImage
-                                        .resizable()
-                                        .frame(width: imageSize.width, height: imageSize.height)
-                                }
+                    let tileW = geo.size.width / CGFloat(cols)
+                    let tileH = geo.size.height / CGFloat(rows)
+                    Canvas { context, size in
+                        for row in 0..<rows {
+                            for col in 0..<cols {
+                                let rect = CGRect(
+                                    x: CGFloat(col) * tileW,
+                                    y: CGFloat(row) * tileH,
+                                    width: tileW + 1,
+                                    height: tileH + 1
+                                )
+                                context.draw(Image(nsImage: image), in: rect)
                             }
                         }
                     }
-                    .scaleEffect(x: scaleX, y: scaleY, anchor: .topLeading)
-                    .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+                    .frame(width: geo.size.width, height: geo.size.height)
                     .clipped()
                 }
             }
