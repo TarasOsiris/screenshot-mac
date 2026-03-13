@@ -80,7 +80,11 @@ enum LocaleService {
 
     /// Set or remove a shape's override for the active locale.
     static func setShapeOverride(_ state: inout LocaleState, shapeId: UUID, override: ShapeLocaleOverride?) {
-        let code = state.activeLocaleCode
+        setShapeOverride(&state, localeCode: state.activeLocaleCode, shapeId: shapeId, override: override)
+    }
+
+    /// Set or remove a shape's override for a specific locale.
+    static func setShapeOverride(_ state: inout LocaleState, localeCode code: String, shapeId: UUID, override: ShapeLocaleOverride?) {
         let key = shapeId.uuidString
         if let override {
             state.overrides[code, default: [:]][key] = override

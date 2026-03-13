@@ -164,7 +164,7 @@ struct ScreenshotBroApp: App {
 
                 Divider()
 
-                Button("Switch to Base Locale") {
+                Button("Switch to Base Language") {
                     appState.setActiveLocale(appState.localeState.baseLocaleCode)
                 }
                 .keyboardShortcut("0", modifiers: [.command, .option])

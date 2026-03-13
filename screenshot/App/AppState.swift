@@ -740,6 +740,10 @@ final class AppState {
         return results
     }
 
+    func textShapesForTranslationMatrix() -> [(shape: CanvasShapeModel, rowLabel: String)] {
+        textShapesForTranslation().map { (shape: $0.shape, rowLabel: $0.rowLabel) }
+    }
+
     func focusShapeOnCanvas(shapeId: UUID, rowId: UUID) {
         selectShape(shapeId, in: rowId)
         canvasFocusRowId = rowId
@@ -768,9 +772,37 @@ final class AppState {
 
     private var translationUndoTask: DispatchWorkItem?
     private var translationBaseLocaleState: LocaleState?
+    private var baseTextUndoTask: DispatchWorkItem?
+    private var baseTextBaseRows: [ScreenshotRow]?
+
+    func updateBaseText(shapeId: UUID, text: String) {
+        guard let loc = shapeLocation(for: shapeId) else { return }
+
+        // Capture undo state only at the start of a base text editing sequence
+        if baseTextBaseRows == nil {
+            baseTextBaseRows = rows
+        }
+
+        rows[loc.rowIndex].shapes[loc.shapeIndex].text = text
+        scheduleSave()
+
+        // Debounce undo registration so rapid keystrokes collapse into one entry
+        baseTextUndoTask?.cancel()
+        guard let savedRows = baseTextBaseRows else { return }
+        let task = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.registerUndoWithBase("Edit Base Text", base: savedRows, baseLocaleState: self.localeState)
+            self.baseTextBaseRows = nil
+        }
+        baseTextUndoTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: task)
+    }
 
     func updateTranslationText(shapeId: UUID, text: String) {
-        let code = localeState.activeLocaleCode
+        updateTranslationText(shapeId: shapeId, localeCode: localeState.activeLocaleCode, text: text)
+    }
+
+    func updateTranslationText(shapeId: UUID, localeCode code: String, text: String) {
         guard code != localeState.baseLocaleCode else { return }
 
         // Capture undo state only at the start of a translation editing sequence
@@ -781,7 +813,7 @@ final class AppState {
         let key = shapeId.uuidString
         var override = localeState.overrides[code]?[key] ?? ShapeLocaleOverride()
         override.text = text.isEmpty ? nil : text
-        LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override.isEmpty ? nil : override)
+        LocaleService.setShapeOverride(&localeState, localeCode: code, shapeId: shapeId, override: override.isEmpty ? nil : override)
         scheduleSave()
 
         // Debounce undo registration so rapid keystrokes collapse into one entry
@@ -802,6 +834,23 @@ final class AppState {
         scheduleSave()
     }
 
+    func resetTranslationText(shapeId: UUID) {
+        resetTranslationText(shapeId: shapeId, localeCode: localeState.activeLocaleCode)
+    }
+
+    func resetTranslationText(shapeId: UUID, localeCode code: String) {
+        guard code != localeState.baseLocaleCode else { return }
+        guard var override = localeState.override(forCode: code, shapeId: shapeId) else { return }
+
+        registerUndo("Reset Translation")
+        translationUndoTask?.cancel()
+        translationUndoTask = nil
+        translationBaseLocaleState = nil
+        override.text = nil
+        LocaleService.setShapeOverride(&localeState, localeCode: code, shapeId: shapeId, override: override.isEmpty ? nil : override)
+        scheduleSave()
+    }
+
     func resetLocaleImageOverride(shapeId: UUID) {
         let code = localeState.activeLocaleCode
         guard var override = localeState.override(forCode: code, shapeId: shapeId),
@@ -814,6 +863,24 @@ final class AppState {
             LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override)
         }
         cleanupUnreferencedImage(oldFile)
+        scheduleSave()
+    }
+
+    func resetActiveLocaleToBase() {
+        let code = localeState.activeLocaleCode
+        guard code != localeState.baseLocaleCode else { return }
+        guard let localeOverrides = localeState.overrides[code], !localeOverrides.isEmpty else { return }
+
+        registerUndo("Reset Locale to Base")
+        translationUndoTask?.cancel()
+        translationUndoTask = nil
+        translationBaseLocaleState = nil
+
+        let overrideImages = localeOverrides.values.compactMap(\.overrideImageFileName)
+        localeState.overrides.removeValue(forKey: code)
+        for fileName in overrideImages {
+            cleanupUnreferencedImage(fileName)
+        }
         scheduleSave()
     }
 
