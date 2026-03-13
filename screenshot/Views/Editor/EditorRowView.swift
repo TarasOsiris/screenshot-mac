@@ -453,67 +453,7 @@ struct EditorRowView: View {
 
     private func createImageShape(image: NSImage, modelX: CGFloat, modelY: CGFloat) {
         state.selectRow(row.id)
-
-        if Self.looksLikePhoneScreenshot(image) {
-            let shape = CanvasShapeModel.defaultDevice(
-                centerX: modelX, centerY: modelY,
-                templateHeight: row.templateHeight
-            )
-            state.addShape(shape)
-            state.saveImage(image, for: shape.id)
-            return
-        }
-
-        let imgW = image.size.width
-        let imgH = image.size.height
-        let maxW = row.templateWidth * 0.8
-        let maxH = row.templateHeight * 0.8
-        let scale = min(maxW / imgW, maxH / imgH, 1.0)
-        let w = imgW * scale
-        let h = imgH * scale
-        let shape = CanvasShapeModel(
-            type: .image,
-            x: modelX - w / 2,
-            y: modelY - h / 2,
-            width: w,
-            height: h,
-            color: .clear
-        )
-        state.addShape(shape)
-        state.saveImage(image, for: shape.id)
-    }
-
-    // Known iPhone screenshot pixel sizes (portrait): "WxH"
-    private static let knownPhoneScreenshotSizes: Set<String> = [
-        "750x1334",   // iPhone SE / 8
-        "828x1792",   // iPhone XR / 11
-        "1080x1920",  // iPhone 6/7/8 Plus
-        "1125x2436",  // iPhone X / XS / 11 Pro
-        "1080x2340",  // iPhone 12 mini / 13 mini
-        "1170x2532",  // iPhone 12 / 13 / 14
-        "1179x2556",  // iPhone 14 Pro / 15 / 16
-        "1206x2622",  // iPhone 16 Pro / 17 / 17 Pro
-        "1260x2736",  // iPhone Air
-        "1242x2688",  // iPhone XS Max / 11 Pro Max
-        "1284x2778",  // iPhone 12/13 Pro Max
-        "1290x2796",  // iPhone 14 Pro Max / 15 Pro Max / 16 Plus
-        "1320x2868",  // iPhone 16 Pro Max / 17 Pro Max
-    ]
-
-    /// Heuristic: detect if an image looks like a phone screenshot.
-    private static func looksLikePhoneScreenshot(_ image: NSImage) -> Bool {
-        guard let rep = image.representations.first else { return false }
-        let pw = rep.pixelsWide
-        let ph = rep.pixelsHigh
-        guard pw > 0, ph > 0, ph > pw else { return false }
-
-        // Exact match against known iPhone resolutions
-        if knownPhoneScreenshotSizes.contains("\(pw)x\(ph)") { return true }
-
-        // General heuristic: portrait, phone-like width (640–1600px),
-        // aspect ratio 16:9 (~1.78) to ~21.5:9 (~2.4) — covers most phones
-        let ratio = CGFloat(ph) / CGFloat(pw)
-        return pw >= 640 && pw <= 1600 && ratio >= 1.7 && ratio <= 2.4
+        state.addImageShape(image: image, centerX: modelX, centerY: modelY)
     }
 
     private static let placeholderTemplate = ScreenshotTemplate()
