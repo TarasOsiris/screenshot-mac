@@ -16,7 +16,12 @@ Sketch is the main reference project. UX patterns (cursors, handles, interaction
 xcodebuild -scheme screenshot -destination 'platform=macOS' build
 ```
 
-UI tests exist (`screenshotUITests` scheme) but no unit tests. No linter configured.
+Run unit tests:
+```
+xcodebuild -scheme screenshot -destination 'platform=macOS' test
+```
+
+Unit tests cover `AppState` template operations and `ExportService` rendering (`screenshotTests/`). UI tests exist (`screenshotUITests` scheme). No linter configured.
 
 ## Custom Commands
 
@@ -33,7 +38,7 @@ UI tests exist (`screenshotUITests` scheme) but no unit tests. No linter configu
 - `Project` → has many `ScreenshotRow` (stored in `ProjectData`)
 - `ScreenshotRow` → has `templates: [ScreenshotTemplate]` (columns) + `shapes: [CanvasShapeModel]` (canvas elements). Implements `BackgroundFillable`.
 - `ScreenshotTemplate` → per-column background/gradient settings. Implements `BackgroundFillable`.
-- `CanvasShapeModel` → union type via `ShapeType` enum (rectangle, circle, text, image, device, svg). Type-specific properties are optionals on the same struct.
+- `CanvasShapeModel` → union type via `ShapeType` enum (rectangle, circle, star, text, image, device, svg). Type-specific properties are optionals on the same struct.
 - `BackgroundStyle` → enum (color, gradient, image) with `GradientConfig` (color stops, angle, 12 presets) and `BackgroundImageConfig` (fileName, fillMode, opacity). `BackgroundFillable` protocol provides `backgroundFillView(image:modelSize:)` and `resolvedBackgroundView(screenshotImages:modelSize:)` for rendering.
 - `LocaleState` → locale definitions + active locale + per-shape overrides (`ShapeLocaleOverride` for text properties).
 
@@ -46,12 +51,12 @@ UI tests exist (`screenshotUITests` scheme) but no unit tests. No linter configu
 **View hierarchy:**
 - `ContentView` — toolbar (project selector, zoom, locale menu, export), vertical scroll of rows, shape properties bar (bottom), inspector panel (right sidebar)
 - `EditorRowView` — single row with header controls, horizontal scroll of template canvases, per-template control bars
-- `CanvasShapeView` — renders individual shapes with drag/resize/rotate, selection overlay, hover state; handles SVG caching, inline text editing, image/screenshot drops
+- `CanvasShapeView` — renders individual shapes with drag/resize/rotate, selection overlay, hover state; handles SVG caching (debounced during resize), inline text editing, image/screenshot drops
 - `LocaleBanner` — top contextual banner when editing a non-base locale
 - `InspectorPanel` — right sidebar: row label, screenshot size presets, background editor, shape toolbar, device/border toggles
 - `BackgroundEditor` — background style picker, gradient preset picker, gradient stop editor, angle wheel
 - `ShapeToolbar` — grid of 6 shape type buttons (Rectangle, Circle, Text, Image, Device, SVG)
-- `ShapePropertiesBar` — bottom bar: color, opacity, rotation, size, position, border radius, text properties, image/device properties
+- `ShapePropertiesBar` — bottom bar: color, opacity, rotation, border radius, text properties, image/device properties, outline, clip. All toggles use `.toggleStyle(.switch)` with `.controlSize(.small)`. Sections use a shared `section()` helper with consistent min height.
 - `TemplateControlBar` — per-template controls: background color/style/gradient, device screenshot, export preview
 - `DeviceFrameView` — iPhone device frame rendering with accurate bezel/screen/button specs
 - `InlineTextEditor` — NSViewRepresentable for text editing with centering
@@ -90,9 +95,8 @@ UI tests exist (`screenshotUITests` scheme) but no unit tests. No linter configu
 
 **Image resource lifecycle:**
 - Images (screenshots, backgrounds) are stored as PNG files in `projects/<uuid>/resources/` and referenced by filename strings in the model.
-- When replacing or removing an image reference, always call `cleanupUnreferencedImage()` to remove orphaned files and evict from `screenshotImages` cache.
-- When deleting a template or row, clean up all associated image references (shape images, background images).
-- `isImageFileReferenced()` checks all shapes, rows, and templates — update it when adding new image-bearing properties.
+- When replacing a single image reference, call `cleanupUnreferencedImage()`. When removing multiple references at once (deleting a template, row, or shape), use `cleanupUnreferencedImages()` which collects all referenced filenames via `allReferencedImageFileNames()` in a single pass then removes orphans.
+- `allReferencedImageFileNames()` and `isImageFileReferenced()` check all shapes, rows, templates, and locale overrides — update them when adding new image-bearing properties.
 - Use `NSImage.fromSecurityScopedURL()` (in `Extensions/CodableColor.swift`) when loading images from user-picked file URLs.
 
 **Exhaustive switch coverage:**

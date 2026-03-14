@@ -350,12 +350,9 @@ final class AppState {
         }
         rows[idx].shapes.removeAll { shapeIdsToRemove.contains($0.id) }
         rows[idx].templates.remove(at: templateIndex)
-        // Cleanup orphaned images after removal
-        for shape in shapesToRemove {
-            for fileName in shape.allImageFileNames { cleanupUnreferencedImage(fileName) }
-        }
-        for fileName in localeImages { cleanupUnreferencedImage(fileName) }
-        cleanupUnreferencedImage(templateBgImage)
+        // Cleanup orphaned images after removal (single-pass batch check)
+        let allCandidates: [String?] = shapesToRemove.flatMap { $0.allImageFileNames } + localeImages + [templateBgImage]
+        cleanupUnreferencedImages(allCandidates)
         scheduleSave()
     }
 
@@ -553,11 +550,9 @@ final class AppState {
 
         selectedShapeId = nil
 
-        // Cleanup orphaned images
-        for fileName in shapeImages { cleanupUnreferencedImage(fileName) }
-        for fileName in localeImages { cleanupUnreferencedImage(fileName) }
-        for fileName in templateBgImages { cleanupUnreferencedImage(fileName) }
-        cleanupUnreferencedImage(rowBgImage)
+        // Cleanup orphaned images (single-pass batch check)
+        let allCandidates: [String?] = shapeImages + localeImages + templateBgImages + [rowBgImage]
+        cleanupUnreferencedImages(allCandidates)
 
         scheduleSave()
     }
@@ -670,12 +665,9 @@ final class AppState {
         // Collect locale override image filenames before removing overrides
         let localeImageFiles = localeOverrideImageFileNames(for: id)
         LocaleService.removeShapeOverrides(&localeState, shapeId: id)
-        for fileName in removedShape.allImageFileNames {
-            cleanupUnreferencedImage(fileName)
-        }
-        for fileName in localeImageFiles {
-            cleanupUnreferencedImage(fileName)
-        }
+        // Cleanup orphaned images (single-pass batch check)
+        let allCandidates: [String?] = removedShape.allImageFileNames + localeImageFiles
+        cleanupUnreferencedImages(allCandidates)
         if selectedShapeId == id {
             selectedShapeId = nil
         }
@@ -939,9 +931,7 @@ final class AppState {
 
         let overrideImages = localeOverrides.values.compactMap(\.overrideImageFileName)
         localeState.overrides.removeValue(forKey: code)
-        for fileName in overrideImages {
-            cleanupUnreferencedImage(fileName)
-        }
+        cleanupUnreferencedImages(overrideImages)
         scheduleSave()
     }
 
@@ -960,9 +950,7 @@ final class AppState {
         // Collect override image filenames before removing the locale
         let overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
         LocaleService.removeLocale(&localeState, code: code)
-        for fileName in overrideImages {
-            cleanupUnreferencedImage(fileName)
-        }
+        cleanupUnreferencedImages(overrideImages)
         scheduleSave()
     }
 
@@ -1293,6 +1281,20 @@ final class AppState {
 
     private func cleanupUnreferencedImage(_ fileName: String?) {
         guard let fileName, !isImageFileReferenced(fileName) else { return }
+        removeImageFile(fileName)
+    }
+
+    /// Batch cleanup: collects all referenced filenames once, then removes any candidate that is unreferenced.
+    private func cleanupUnreferencedImages(_ fileNames: [String?]) {
+        let candidates = Set(fileNames.compactMap { $0 })
+        guard !candidates.isEmpty else { return }
+        let referenced = allReferencedImageFileNames()
+        for fileName in candidates where !referenced.contains(fileName) {
+            removeImageFile(fileName)
+        }
+    }
+
+    private func removeImageFile(_ fileName: String) {
         screenshotImages.removeValue(forKey: fileName)
         if let projectId = activeProjectId {
             let fileURL = PersistenceService.resourcesDir(projectId).appendingPathComponent(fileName)
@@ -1409,6 +1411,26 @@ final class AppState {
         return localeState.overrides.values.contains { shapeOverrides in
             shapeOverrides.values.contains { $0.overrideImageFileName == fileName }
         }
+    }
+
+    /// Collect all referenced image filenames in a single pass (for batch cleanup).
+    private func allReferencedImageFileNames() -> Set<String> {
+        var result = Set<String>()
+        for row in rows {
+            if let f = row.backgroundImageConfig.fileName { result.insert(f) }
+            for template in row.templates {
+                if let f = template.backgroundImageConfig.fileName { result.insert(f) }
+            }
+            for shape in row.shapes {
+                for f in shape.allImageFileNames { result.insert(f) }
+            }
+        }
+        for shapeOverrides in localeState.overrides.values {
+            for override in shapeOverrides.values {
+                if let f = override.overrideImageFileName { result.insert(f) }
+            }
+        }
+        return result
     }
 
     private func makeDefaultRow(id: UUID = UUID(), label: String? = nil, width: CGFloat? = nil, height: CGFloat? = nil) -> ScreenshotRow {

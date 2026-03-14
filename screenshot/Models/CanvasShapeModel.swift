@@ -164,7 +164,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     static let defaultOutlineColor: Color = .black
     static let defaultOutlineWidth: CGFloat = 4
 
-    let id: UUID
+    var id: UUID
     var type: ShapeType
     var x: CGFloat
     var y: CGFloat
@@ -327,26 +327,11 @@ struct CanvasShapeModel: Identifiable, Codable {
     }
 
     func duplicated(offsetX: CGFloat = 0, offsetY: CGFloat = 0) -> CanvasShapeModel {
-        CanvasShapeModel(
-            type: type, x: x + offsetX, y: y + offsetY,
-            width: width, height: height,
-            rotation: rotation, borderRadius: borderRadius,
-            color: color, opacity: opacity,
-            text: text, fontName: fontName, fontSize: fontSize,
-            fontWeight: fontWeight, textAlign: textAlign,
-            italic: italic, uppercase: uppercase, letterSpacing: letterSpacing, lineSpacing: lineSpacing,
-            imageFileName: imageFileName,
-            deviceCategory: deviceCategory,
-            deviceBodyColor: deviceBodyColorData?.color,
-            deviceFrameId: deviceFrameId,
-            screenshotFileName: screenshotFileName,
-            svgContent: svgContent,
-            svgUseColor: svgUseColor,
-            outlineColor: outlineColorData?.color,
-            outlineWidth: outlineWidth,
-            starPointCount: starPointCount,
-            clipToTemplate: clipToTemplate
-        )
+        var copy = self
+        copy.id = UUID()
+        copy.x += offsetX
+        copy.y += offsetY
+        return copy
     }
 
     static func defaultRectangle(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {

@@ -82,7 +82,6 @@ struct ShapePropertiesBar: View {
                                     HStack(spacing: 4) {
                                         ColorPicker("", selection: deviceBodyColorBinding(shapeId), supportsOpacity: false)
                                             .labelsHidden()
-                                            .padding(.horizontal, 4)
                                             .help("Device body color")
 
                                         barButton(
@@ -198,11 +197,10 @@ struct ShapePropertiesBar: View {
                     if shape.type == .svg {
                         section {
                             HStack(spacing: 4) {
-                                Toggle(isOn: shapeBinding(shapeId, \.svgUseColor, default: false)) {
-                                    Text("Custom color")
-                                        .foregroundStyle(.secondary)
-                                }
-                                .toggleStyle(.switch)
+                                Toggle("Custom color", isOn: shapeBinding(shapeId, \.svgUseColor, default: false))
+                                    .toggleStyle(.switch)
+                                    .controlSize(.small)
+                                    .help("Use custom color for SVG")
 
                                 if shape.svgUseColor == true {
                                     ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
@@ -282,18 +280,15 @@ struct ShapePropertiesBar: View {
                             .frame(width: 90)
                             .help("Text alignment")
 
-                            Toggle(isOn: shapeBinding(shapeId, \.italic, default: false)) {
-                                Image(systemName: "italic")
-                            }
-                            .toggleStyle(.button)
-                            .help("Italic")
+                            Toggle("Italic", isOn: shapeBinding(shapeId, \.italic, default: false))
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .help("Italic")
 
-                            Toggle(isOn: shapeBinding(shapeId, \.uppercase, default: false)) {
-                                Text("AA")
-                                    .font(.system(size: 10, weight: .bold))
-                            }
-                            .toggleStyle(.button)
-                            .help("Uppercase")
+                            Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .help("Uppercase")
                         }
 
                         section {
@@ -331,11 +326,10 @@ struct ShapePropertiesBar: View {
                     }
 
                     section {
-                        Toggle(isOn: shapeBinding(shapeId, \.clipToTemplate, default: false)) {
-                            Label("Clip", systemImage: "rectangle.on.rectangle.slash")
-                        }
-                        .toggleStyle(.button)
-                        .help("Clip to screenshot")
+                        Toggle("Clip", isOn: shapeBinding(shapeId, \.clipToTemplate, default: false))
+                            .toggleStyle(.switch)
+                            .controlSize(.small)
+                            .help("Clip to screenshot")
                     }
 
                     section {
@@ -562,8 +556,9 @@ struct ShapePropertiesBar: View {
         HStack(spacing: 6) {
             content()
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 10)
         .padding(.vertical, 4)
+        .frame(minHeight: 28)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Color.primary.opacity(0.05))
@@ -578,7 +573,7 @@ struct ShapePropertiesBar: View {
     private func outlineControls(shape: CanvasShapeModel, shapeId: UUID) -> some View {
         let hasOutline = (shape.outlineWidth ?? 0) > 0
 
-        Toggle(isOn: Binding(
+        Toggle("Outline", isOn: Binding(
             get: { hasOutline },
             set: { enabled in
                 var updated = shape
@@ -586,16 +581,16 @@ struct ShapePropertiesBar: View {
                 updated.outlineWidth = enabled ? CanvasShapeModel.defaultOutlineWidth : nil
                 state.updateShape(updated)
             }
-        )) {
-            Label("Outline", systemImage: "square.dashed")
-        }
-        .toggleStyle(.button)
+        ))
+        .toggleStyle(.switch)
+        .controlSize(.small)
         .help(hasOutline ? "Disable outline" : "Enable outline")
 
         if hasOutline {
             ColorPicker("", selection: shapeBinding(shapeId, \.outlineColor, default: CanvasShapeModel.defaultOutlineColor), supportsOpacity: false)
                 .labelsHidden()
                 .frame(width: 30)
+                .padding(.horizontal, 4)
                 .help("Outline color")
 
             separator

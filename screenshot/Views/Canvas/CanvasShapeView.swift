@@ -31,6 +31,7 @@ struct CanvasShapeView: View {
     @State private var cachedSvgImage: NSImage?
     @State private var svgCacheKey = ""
     @State private var rotationDelta: Double = 0
+    @State private var svgResizeDebounceTask: Task<Void, Never>?
 
     private let handleDiameter: CGFloat = 8
 
@@ -93,8 +94,8 @@ struct CanvasShapeView: View {
             .onChange(of: shape.svgContent) { updateSvgCache() }
             .onChange(of: shape.svgUseColor) { updateSvgCache() }
             .onChange(of: shape.color) { updateSvgCache() }
-            .onChange(of: shape.width) { updateSvgCache() }
-            .onChange(of: shape.height) { updateSvgCache() }
+            .onChange(of: shape.width) { debounceSvgCacheUpdate() }
+            .onChange(of: shape.height) { debounceSvgCacheUpdate() }
 
         if showsEditorHelpers {
             svgAware
@@ -625,6 +626,15 @@ struct CanvasShapeView: View {
         .frame(width: displayW, height: displayH)
         .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
             handleDrop(providers)
+        }
+    }
+
+    private func debounceSvgCacheUpdate() {
+        svgResizeDebounceTask?.cancel()
+        svgResizeDebounceTask = Task {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
+            guard !Task.isCancelled else { return }
+            updateSvgCache()
         }
     }
 

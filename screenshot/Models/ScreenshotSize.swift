@@ -18,14 +18,12 @@ struct ScreenshotSize: Identifiable {
 struct DisplayCategory: Identifiable {
     let id = UUID()
     let name: String
-    let icon: String
     let sizes: [ScreenshotSize]
 }
 
 let displayCategories: [DisplayCategory] = [
     DisplayCategory(
         name: "iPhone 6.5\" Display",
-        icon: "iphone",
         sizes: [
             ScreenshotSize(width: 1242, height: 2688),
             ScreenshotSize(width: 2688, height: 1242),
@@ -35,7 +33,6 @@ let displayCategories: [DisplayCategory] = [
     ),
     DisplayCategory(
         name: "iPad 13\" Display",
-        icon: "ipad",
         sizes: [
             ScreenshotSize(width: 2064, height: 2752),
             ScreenshotSize(width: 2752, height: 2064),
@@ -45,7 +42,6 @@ let displayCategories: [DisplayCategory] = [
     ),
     DisplayCategory(
         name: "Mac Desktop",
-        icon: "macbook",
         sizes: [
             ScreenshotSize(width: 1280, height: 800),
             ScreenshotSize(width: 1440, height: 900),
