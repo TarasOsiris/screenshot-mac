@@ -89,6 +89,10 @@ struct DeviceFrameView: View {
             iPadFrame
         case .macbook:
             macBookFrame
+        case .androidPhone:
+            androidPhoneFrame
+        case .androidTablet:
+            androidTabletFrame
         }
     }
 
@@ -318,6 +322,134 @@ struct DeviceFrameView: View {
                     .frame(width: bodyW * 0.35, height: baseH * 0.55)
                     .offset(y: 2 * s)
             }
+        }
+        .frame(width: bodyW, height: bodyH)
+    }
+
+    // MARK: - Android Phone Frame
+
+    private var androidPhoneFrame: some View {
+        let s = scale
+        let dims = category.bodyDimensions
+        let bodyW: CGFloat = dims.width * s
+        let bodyH: CGFloat = dims.height * s
+
+        let bezels = category.bezels
+        let bezelLR: CGFloat = bezels.lr * s
+        let bezelTB: CGFloat = bezels.tb * s
+        let screenW: CGFloat = bodyW - bezelLR * 2
+        let screenH: CGFloat = bodyH - bezelTB * 2
+
+        let bodyCornerR: CGFloat = category.bodyCornerRadius * s
+        let maxScreenCornerR = max(0, bodyCornerR - max(bezelLR, bezelTB))
+        let screenCornerR = min(category.screenCornerRadius * s, maxScreenCornerR)
+
+        // Punch-hole camera: small circle top-center
+        let cameraD: CGFloat = 8 * s
+        let cameraOffsetFromScreenTop: CGFloat = screenH * 0.022 + cameraD / 2
+
+        // Gesture bar at bottom
+        let gestureW: CGFloat = screenW * 0.30
+        let gestureH: CGFloat = 2.5 * s
+        let gestureOffsetFromScreenBottom: CGFloat = 6 * s + gestureH / 2
+
+        // Button dimensions
+        let btnDepth: CGFloat = category.buttonDepth * s
+        let btnColor = buttonColor
+
+        // Right side: volume up, volume down, power
+        let volUpH: CGFloat = 30 * s
+        let volUpY: CGFloat = bodyH * 0.32
+        let volDownH: CGFloat = 30 * s
+        let volDownY: CGFloat = bodyH * 0.42
+        let powerH: CGFloat = 38 * s
+        let powerY: CGFloat = bodyH * 0.55
+
+        let bodyShape = RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
+        let screenShape = RoundedRectangle(cornerRadius: screenCornerR, style: .continuous)
+
+        let totalW = bodyW + btnDepth * 2
+
+        return ZStack {
+            deviceBody(bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH, s: s)
+            screenArea(screenShape: screenShape, screenW: screenW, screenH: screenH, bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH, s: s)
+
+            // Punch-hole camera
+            Circle()
+                .fill(.black)
+                .frame(width: cameraD, height: cameraD)
+                .overlay(
+                    Circle()
+                        .strokeBorder(.black.opacity(0.06), lineWidth: 0.5 * s)
+                )
+                .offset(y: -(screenH / 2 - cameraOffsetFromScreenTop))
+
+            // Gesture bar
+            Capsule()
+                .fill(.black.opacity(0.15))
+                .frame(width: gestureW, height: gestureH)
+                .offset(y: screenH / 2 - gestureOffsetFromScreenBottom)
+
+            // Right side buttons (volume up, volume down, power)
+            sideButton(width: btnDepth, height: volUpH, color: btnColor)
+                .offset(x: bodyW / 2 + btnDepth / 2, y: -(bodyH / 2 - volUpY))
+            sideButton(width: btnDepth, height: volDownH, color: btnColor)
+                .offset(x: bodyW / 2 + btnDepth / 2, y: -(bodyH / 2 - volDownY))
+            sideButton(width: btnDepth, height: powerH, color: btnColor)
+                .offset(x: bodyW / 2 + btnDepth / 2, y: -(bodyH / 2 - powerY))
+
+            shineOverlay(bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH)
+        }
+        .frame(width: totalW, height: bodyH)
+    }
+
+    // MARK: - Android Tablet Frame
+
+    private var androidTabletFrame: some View {
+        let s = scale
+        let dims = category.bodyDimensions
+        let bodyW: CGFloat = dims.width * s
+        let bodyH: CGFloat = dims.height * s
+
+        let bezels = category.bezels
+        let bezelLR: CGFloat = bezels.lr * s
+        let bezelTB: CGFloat = bezels.tb * s
+        let screenW: CGFloat = bodyW - bezelLR * 2
+        let screenH: CGFloat = bodyH - bezelTB * 2
+
+        let bodyCornerR: CGFloat = category.bodyCornerRadius * s
+        let maxScreenCornerR = max(0, bodyCornerR - max(bezelLR, bezelTB))
+        let screenCornerR = min(category.screenCornerRadius * s, maxScreenCornerR)
+
+        // Front camera: small dot centered on top edge
+        let cameraD: CGFloat = 6 * s
+        let cameraOffsetFromTop: CGFloat = bezelTB / 2
+
+        // Gesture bar at bottom
+        let gestureW: CGFloat = screenW * 0.25
+        let gestureH: CGFloat = 2.5 * s
+        let gestureOffsetFromScreenBottom: CGFloat = 6 * s + gestureH / 2
+
+        let bodyShape = RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
+        let screenShape = RoundedRectangle(cornerRadius: screenCornerR, style: .continuous)
+
+        return ZStack {
+            deviceBody(bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH, s: s)
+            screenArea(screenShape: screenShape, screenW: screenW, screenH: screenH, bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH, s: s)
+
+            // Front camera (dot at top center)
+            Circle()
+                .fill(.black.opacity(0.35))
+                .frame(width: cameraD, height: cameraD)
+                .offset(y: -(bodyH / 2 - cameraOffsetFromTop))
+
+            // Gesture bar
+            Capsule()
+                .fill(.black.opacity(0.15))
+                .frame(width: gestureW, height: gestureH)
+                .offset(y: screenH / 2 - gestureOffsetFromScreenBottom)
+
+            shineOverlay(bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH)
         }
         .frame(width: bodyW, height: bodyH)
     }

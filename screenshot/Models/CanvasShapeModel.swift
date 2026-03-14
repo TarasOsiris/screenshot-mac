@@ -37,6 +37,8 @@ enum DeviceCategory: String, Codable, CaseIterable {
     case ipadPro11
     case ipadPro13
     case macbook
+    case androidPhone = "android"
+    case androidTablet
 
     var label: String {
         switch self {
@@ -44,6 +46,8 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .ipadPro11: "iPad Pro 11\""
         case .ipadPro13: "iPad Pro 13\""
         case .macbook: "MacBook"
+        case .androidPhone: "Android Phone"
+        case .androidTablet: "Android Tablet"
         }
     }
 
@@ -52,6 +56,8 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .iphone: "iphone"
         case .ipadPro11, .ipadPro13: "ipad"
         case .macbook: "laptopcomputer"
+        case .androidPhone: "rectangle.portrait"
+        case .androidTablet: "rectangle.landscape"
         }
     }
 
@@ -60,12 +66,16 @@ enum DeviceCategory: String, Codable, CaseIterable {
     /// iPad Pro 11": 177.5 x 249.7 mm → 546 x 768.
     /// iPad Pro 13": 215.5 x 281.6 mm → 663 x 867.
     /// MacBook: generic 16:10 landscape proportion.
+    /// Android Phone: generic modern phone ~72 x 153 mm → 221 x 470.
+    /// Android Tablet: generic tablet ~165 x 254 mm → 508 x 782.
     var bodyDimensions: (width: CGFloat, height: CGFloat) {
         switch self {
         case .iphone: (220, 460)
         case .ipadPro11: (546, 768)
         case .ipadPro13: (663, 867)
         case .macbook: (640, 420)
+        case .androidPhone: (221, 470)
+        case .androidTablet: (508, 782)
         }
     }
 
@@ -73,8 +83,8 @@ enum DeviceCategory: String, Codable, CaseIterable {
     /// iPads and MacBooks have flush buttons (no protrusion).
     var buttonDepth: CGFloat {
         switch self {
-        case .iphone: 2.5
-        case .ipadPro11, .ipadPro13, .macbook: 0
+        case .iphone, .androidPhone: 2.5
+        case .ipadPro11, .ipadPro13, .macbook, .androidTablet: 0
         }
     }
 
@@ -85,6 +95,8 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .ipadPro11: (26.5, 25.8)
         case .ipadPro13: (27.0, 26.0)
         case .macbook: (40, 40)
+        case .androidPhone: (4.0, 4.0)
+        case .androidTablet: (18.0, 18.0)
         }
     }
 
@@ -94,6 +106,8 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .iphone: 34
         case .ipadPro11, .ipadPro13: 55
         case .macbook: 20
+        case .androidPhone: 30
+        case .androidTablet: 40
         }
     }
 
@@ -103,6 +117,8 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .iphone: 33
         case .ipadPro11, .ipadPro13: 11
         case .macbook: 10
+        case .androidPhone: 28
+        case .androidTablet: 20
         }
     }
 
@@ -358,5 +374,20 @@ struct CanvasShapeModel: Identifiable, Codable {
             width: w, height: h,
             color: .clear, deviceCategory: category
         )
+    }
+
+    /// Creates a device shape using the row's default device category and frame.
+    static func defaultDeviceFromRow(_ row: ScreenshotRow, centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
+        var shape = defaultDevice(
+            centerX: centerX, centerY: centerY,
+            templateHeight: row.templateHeight,
+            category: row.defaultDeviceCategory ?? .iphone
+        )
+        if let frameId = row.defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            shape.deviceCategory = frame.fallbackCategory
+            shape.deviceFrameId = frame.id
+            shape.adjustToDeviceAspectRatio(centerX: centerX)
+        }
+        return shape
     }
 }

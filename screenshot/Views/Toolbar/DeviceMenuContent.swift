@@ -16,6 +16,7 @@ struct DeviceMenuContent: View {
     }
 
     private static let ipadCategories: Set<DeviceCategory> = [.ipadPro11, .ipadPro13]
+    private static let androidCategories: Set<DeviceCategory> = [.androidPhone, .androidTablet]
 
     private static let families: [DeviceFamily] = {
         let allGroups = DeviceFrameCatalog.groups
@@ -24,6 +25,11 @@ struct DeviceMenuContent: View {
                 name: "iPhone",
                 categories: [.iphone],
                 groups: allGroups.filter { $0.frames.first?.fallbackCategory == .iphone }
+            ),
+            DeviceFamily(
+                name: "Android",
+                categories: [.androidPhone, .androidTablet],
+                groups: allGroups.filter { androidCategories.contains($0.frames.first?.fallbackCategory ?? .iphone) }
             ),
             DeviceFamily(
                 name: "iPad",

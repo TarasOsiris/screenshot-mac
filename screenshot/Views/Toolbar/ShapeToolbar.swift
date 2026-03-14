@@ -47,13 +47,7 @@ struct ShapeToolbar: View {
         case .text: shape = .defaultText(centerX: centerX, centerY: centerY)
         case .image: shape = .defaultImage(centerX: centerX, centerY: centerY)
         case .device:
-            var device = CanvasShapeModel.defaultDevice(centerX: centerX, centerY: centerY, templateHeight: row.templateHeight, category: row.defaultDeviceCategory ?? .iphone)
-            if let frameId = row.defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-                device.deviceCategory = frame.fallbackCategory
-                device.deviceFrameId = frame.id
-                device.adjustToDeviceAspectRatio(centerX: centerX)
-            }
-            shape = device
+            shape = .defaultDeviceFromRow(row, centerX: centerX, centerY: centerY)
         case .svg: return
         }
 

@@ -1015,10 +1015,7 @@ final class AppState {
         let row = rows[rowIdx]
 
         if Self.looksLikePhoneScreenshot(image) {
-            let shape = CanvasShapeModel.defaultDevice(
-                centerX: centerX, centerY: centerY,
-                templateHeight: row.templateHeight
-            )
+            let shape = CanvasShapeModel.defaultDeviceFromRow(row, centerX: centerX, centerY: centerY)
             addShape(shape)
             saveImage(image, for: shape.id)
             return

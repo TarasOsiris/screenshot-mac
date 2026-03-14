@@ -240,7 +240,7 @@ struct EditorRowView: View {
         guard !providers.isEmpty else { return false }
         let baseX = displayLocation.x / ds
         let baseY = displayLocation.y / ds
-        let offset: CGFloat = 20 // stagger offset per item
+        let offset: CGFloat = 60 // stagger offset per item in model space
         var handled = false
 
         for (i, provider) in providers.enumerated() {
