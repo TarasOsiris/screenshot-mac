@@ -56,8 +56,8 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .iphone: "iphone"
         case .ipadPro11, .ipadPro13: "ipad"
         case .macbook: "laptopcomputer"
-        case .androidPhone: "rectangle.portrait"
-        case .androidTablet: "rectangle.landscape"
+        case .androidPhone: "iphone.gen3"
+        case .androidTablet: "ipad.gen2"
         }
     }
 

@@ -53,7 +53,7 @@ struct DevicePickerMenu: View {
 
     private var resolvedIcon: String {
         if let frame = resolvedFrame {
-            return frame.isLandscape ? "rectangle" : "rectangle.portrait"
+            return frame.icon
         }
         guard let category else { return "rectangle.dashed" }
         return category.icon

@@ -463,7 +463,7 @@ struct ShapePropertiesBar: View {
 
     private func devicePickerIcon(shape: CanvasShapeModel) -> String {
         if let frameId = shape.deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-            return frame.isLandscape ? "rectangle" : "rectangle.portrait"
+            return frame.icon
         }
         return (shape.deviceCategory ?? .iphone).icon
     }

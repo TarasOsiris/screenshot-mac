@@ -46,6 +46,22 @@ struct DeviceFrame: Identifiable, Equatable {
     let spec: DeviceFrameImageSpec
 
     var orientationLabel: String { isLandscape ? "Landscape" : "Portrait" }
+
+    /// SF Symbol icon name based on device type and orientation.
+    var icon: String {
+        switch fallbackCategory {
+        case .iphone:
+            return isLandscape ? "iphone.landscape" : "iphone"
+        case .ipadPro11, .ipadPro13:
+            return isLandscape ? "ipad.landscape" : "ipad"
+        case .macbook:
+            return "laptopcomputer"
+        case .androidPhone:
+            return isLandscape ? "iphone.gen3.landscape" : "iphone.gen3"
+        case .androidTablet:
+            return isLandscape ? "ipad.gen2.landscape" : "ipad.gen2"
+        }
+    }
     var label: String { "\(modelName) - \(colorName) - \(orientationLabel)" }
     var shortLabel: String { "\(colorName) - \(orientationLabel)" }
 

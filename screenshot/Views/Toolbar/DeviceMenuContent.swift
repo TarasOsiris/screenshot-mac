@@ -70,7 +70,7 @@ struct DeviceMenuContent: View {
         } label: {
             menuRowLabel(
                 label,
-                icon: frame.isLandscape ? "rectangle" : "rectangle.portrait"
+                icon: frame.icon
             )
         }
     }
