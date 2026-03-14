@@ -284,7 +284,7 @@ struct ShapePropertiesBar: View {
                             separator
 
                             controlGroup("Line") {
-                                Slider(value: shapeBinding(shapeId, \.lineSpacing, default: 0), in: 0...50)
+                                Slider(value: shapeBinding(shapeId, \.lineSpacing, default: 0), in: -20...50)
                                     .frame(width: 70)
                             }
 

@@ -166,17 +166,27 @@ struct CanvasShapeView: View {
                 let rawText = shape.text ?? ""
                 let showPlaceholder = showsEditorHelpers && rawText.isEmpty
                 let displayText = showPlaceholder ? "Text" : rawText
-                Text(displayText)
-                    .font(resolvedFont(size: shape.fontSize ?? 72, weight: fontWeight(shape.fontWeight ?? 700)))
-                    .italic(showPlaceholder ? true : (shape.italic ?? false))
-                    .textCase((shape.uppercase ?? false) ? .uppercase : nil)
-                    .tracking(shape.letterSpacing ?? 0)
-                    .lineSpacing(shape.lineSpacing ?? 0)
-                    .foregroundStyle(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
-                    .multilineTextAlignment(shape.textAlign.textAlignment)
-                    .frame(width: effectiveW, height: effectiveH)
-                    .scaleEffect(displayScale, anchor: .topLeading)
-                    .frame(width: displayW, height: displayH, alignment: .topLeading)
+                let lineSpacing = shape.lineSpacing ?? 0
+                if lineSpacing < 0 {
+                    tightText(displayText: displayText, showPlaceholder: showPlaceholder)
+                        .italic(showPlaceholder ? true : (shape.italic ?? false))
+                        .multilineTextAlignment(shape.textAlign.textAlignment)
+                        .frame(width: effectiveW, height: effectiveH)
+                        .scaleEffect(displayScale, anchor: .topLeading)
+                        .frame(width: displayW, height: displayH, alignment: .topLeading)
+                } else {
+                    Text(displayText)
+                        .font(resolvedFont(size: shape.fontSize ?? 72, weight: fontWeight(shape.fontWeight ?? 700)))
+                        .italic(showPlaceholder ? true : (shape.italic ?? false))
+                        .textCase((shape.uppercase ?? false) ? .uppercase : nil)
+                        .tracking(shape.letterSpacing ?? 0)
+                        .lineSpacing(lineSpacing)
+                        .foregroundStyle(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
+                        .multilineTextAlignment(shape.textAlign.textAlignment)
+                        .frame(width: effectiveW, height: effectiveH)
+                        .scaleEffect(displayScale, anchor: .topLeading)
+                        .frame(width: displayW, height: displayH, alignment: .topLeading)
+                }
             }
 
         case .image:
@@ -670,6 +680,32 @@ struct CanvasShapeView: View {
         var updated = shape
         updated.text = editingTextValue
         onUpdate(updated)
+    }
+
+    private func tightText(displayText: String, showPlaceholder: Bool) -> Text {
+        let fontSize = shape.fontSize ?? 72
+        let weight = fontWeight(shape.fontWeight ?? 700)
+        let lineSpacing = shape.lineSpacing ?? 0
+        let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight)
+        let naturalLineHeight = nsFont.ascender - nsFont.descender + nsFont.leading
+
+        let paraStyle = NSMutableParagraphStyle()
+        let lineHeight = max(1, naturalLineHeight + lineSpacing)
+        paraStyle.minimumLineHeight = lineHeight
+        paraStyle.maximumLineHeight = lineHeight
+        paraStyle.alignment = shape.textAlign.nsTextAlignment
+
+        var processedText = displayText
+        if shape.uppercase ?? false { processedText = processedText.uppercased() }
+
+        var attrStr = AttributedString(processedText)
+        attrStr.font = Font(nsFont)
+        attrStr.foregroundColor = Color(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
+        attrStr.paragraphStyle = paraStyle
+        if let tracking = shape.letterSpacing, tracking != 0 {
+            attrStr.kern = tracking
+        }
+        return Text(attrStr)
     }
 
     private func resolvedFont(size: CGFloat, weight: Font.Weight) -> Font {
