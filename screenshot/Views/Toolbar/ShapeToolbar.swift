@@ -26,13 +26,11 @@ struct ShapeToolbar: View {
         }
     }
 
+    @State private var isShapesMenuPresented = false
+
     private var shapesMenu: some View {
-        Menu {
-            ForEach(ShapeType.shapeMenuTypes, id: \.self) { type in
-                Button(action: { addShape(type) }) {
-                    Label(type.label, systemImage: type.icon)
-                }
-            }
+        Button {
+            isShapesMenuPresented = true
         } label: {
             Label("Shapes", systemImage: "square.on.circle")
                 .labelStyle(.titleAndIcon)
@@ -42,6 +40,25 @@ struct ShapeToolbar: View {
         .buttonStyle(.bordered)
         .controlSize(.small)
         .help("Add shape")
+        .popover(isPresented: $isShapesMenuPresented, arrowEdge: .bottom) {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(ShapeType.shapeMenuTypes, id: \.self) { type in
+                    Button(action: {
+                        isShapesMenuPresented = false
+                        addShape(type)
+                    }) {
+                        Label(type.label, systemImage: type.icon)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 8)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(4)
+            .frame(minWidth: 140)
+        }
     }
 
     private func shapeButton(_ type: ShapeType, action: @escaping () -> Void) -> some View {
