@@ -27,6 +27,21 @@ func makeTestImage(width: Int, height: Int) -> NSImage {
     return image
 }
 
+@testable import Screenshot_Bro
+
+@MainActor
+func makeTestState() -> (AppState, URL) {
+    let tempDir = makeTemporaryDataDirectory()
+    setenv("SCREENSHOT_DATA_DIR", tempDir.path, 1)
+    let state = AppState()
+    return (state, tempDir)
+}
+
+func cleanupTestState(_ tempDir: URL) {
+    unsetenv("SCREENSHOT_DATA_DIR")
+    try? FileManager.default.removeItem(at: tempDir)
+}
+
 func makeTemporaryDataDirectory(label: String = "screenshot-tests") -> URL {
     let root = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
     let directory = root

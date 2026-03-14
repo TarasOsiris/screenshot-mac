@@ -1,0 +1,385 @@
+import Testing
+import AppKit
+@testable import Screenshot_Bro
+
+@MainActor
+struct AppStateTests {
+
+    private func makeState() -> (AppState, URL) { makeTestState() }
+    private func cleanup(_ tempDir: URL) { cleanupTestState(tempDir) }
+
+    // MARK: - Initial state
+
+    @Test func initialStateHasOneProjectAndOneRow() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        #expect(state.projects.count == 1)
+        #expect(state.rows.count == 1)
+        #expect(state.activeProjectId != nil)
+        #expect(state.selectedRowId == state.rows.first?.id)
+    }
+
+    // MARK: - Row operations
+
+    @Test func addRowIncreasesCount() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let initialCount = state.rows.count
+        state.addRow()
+        #expect(state.rows.count == initialCount + 1)
+        #expect(state.selectedRowId == state.rows.last?.id, "New row should be selected")
+    }
+
+    @Test func deleteRowRequiresAtLeastOne() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let onlyRowId = state.rows.first!.id
+        state.deleteRow(onlyRowId)
+        #expect(state.rows.count == 1, "Cannot delete last row")
+    }
+
+    @Test func deleteRowRemovesAndSelectsAdjacent() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.addRow()
+        state.addRow()
+        #expect(state.rows.count == 3)
+
+        let middleRowId = state.rows[1].id
+        state.selectRow(middleRowId)
+        state.deleteRow(middleRowId)
+
+        #expect(state.rows.count == 2)
+        #expect(!state.rows.contains { $0.id == middleRowId })
+        #expect(state.selectedRowId != nil, "Should auto-select another row")
+    }
+
+    @Test func duplicateRowCopiesProperties() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let sourceId = state.rows.first!.id
+        state.selectRow(sourceId)
+
+        // Add a shape to the source row
+        state.addShape(CanvasShapeModel.defaultRectangle(centerX: 621, centerY: 1344))
+
+        state.duplicateRow(sourceId)
+        #expect(state.rows.count == 2)
+
+        let copy = state.rows[1]
+        let source = state.rows[0]
+        #expect(copy.templateWidth == source.templateWidth)
+        #expect(copy.templateHeight == source.templateHeight)
+        #expect(copy.shapes.count == source.shapes.count)
+        #expect(copy.label == "\(source.label) copy")
+        // Shapes should have different IDs
+        #expect(copy.shapes.first?.id != source.shapes.first?.id)
+    }
+
+    @Test func moveRowUpAndDown() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.addRow()
+        let firstId = state.rows[0].id
+        let secondId = state.rows[1].id
+
+        state.moveRowDown(firstId)
+        #expect(state.rows[0].id == secondId)
+        #expect(state.rows[1].id == firstId)
+
+        state.moveRowUp(firstId)
+        #expect(state.rows[0].id == firstId)
+        #expect(state.rows[1].id == secondId)
+    }
+
+    @Test func moveRowUpAtTopIsNoOp() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.addRow()
+        let firstId = state.rows[0].id
+        state.moveRowUp(firstId)
+        #expect(state.rows[0].id == firstId, "Already at top, no change")
+    }
+
+    @Test func resizeRowScalesShapes() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        state.addShape(CanvasShapeModel(type: .rectangle, x: 100, y: 200, width: 300, height: 400))
+
+        let originalWidth = state.rows[0].templateWidth
+        let originalHeight = state.rows[0].templateHeight
+        let newWidth = originalWidth * 2
+        let newHeight = originalHeight * 2
+
+        state.resizeRow(at: 0, newWidth: newWidth, newHeight: newHeight)
+
+        #expect(state.rows[0].templateWidth == newWidth)
+        #expect(state.rows[0].templateHeight == newHeight)
+
+        let shape = state.rows[0].shapes.first { $0.type == .rectangle }!
+        #expect(abs(shape.x - 200) < 0.01, "X should scale by 2x")
+        #expect(abs(shape.y - 400) < 0.01, "Y should scale by 2x")
+        #expect(abs(shape.width - 600) < 0.01, "Width should scale by 2x")
+        #expect(abs(shape.height - 800) < 0.01, "Height should scale by 2x")
+    }
+
+    @Test func updateRowLabelSetsManualFlag() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.updateRowLabel(rowId, text: "Custom Label")
+        #expect(state.rows[0].label == "Custom Label")
+        #expect(state.rows[0].isLabelManuallySet == true)
+    }
+
+    @Test func updateRowLabelEmptyResetsToPreset() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.updateRowLabel(rowId, text: "Custom")
+        state.updateRowLabel(rowId, text: "  ")
+        #expect(state.rows[0].isLabelManuallySet == false)
+    }
+
+    // MARK: - Shape operations
+
+    @Test func addShapeAppendsAndSelects() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        let shape = CanvasShapeModel.defaultRectangle(centerX: 621, centerY: 1344)
+        state.addShape(shape)
+
+        let row = state.rows.first!
+        #expect(row.shapes.contains { $0.id == shape.id })
+        #expect(state.selectedShapeId == shape.id)
+    }
+
+    @Test func addShapeRequiresSelectedRow() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.deselectAll()
+        let shape = CanvasShapeModel.defaultRectangle(centerX: 621, centerY: 1344)
+        let countBefore = state.rows.first!.shapes.count
+        state.addShape(shape)
+        #expect(state.rows.first!.shapes.count == countBefore, "No row selected, shape not added")
+    }
+
+    @Test func deleteShapeClearsSelection() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        let shape = CanvasShapeModel.defaultRectangle(centerX: 621, centerY: 1344)
+        state.addShape(shape)
+        #expect(state.selectedShapeId == shape.id)
+
+        state.deleteShape(shape.id)
+        #expect(state.selectedShapeId == nil)
+        #expect(!state.rows.first!.shapes.contains { $0.id == shape.id })
+    }
+
+    @Test func bringShapeToFrontMovesToEnd() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+
+        let s1 = CanvasShapeModel(id: UUID(), type: .rectangle, x: 0, y: 0)
+        let s2 = CanvasShapeModel(id: UUID(), type: .rectangle, x: 100, y: 100)
+        let s3 = CanvasShapeModel(id: UUID(), type: .rectangle, x: 200, y: 200)
+        state.addShape(s1)
+        state.addShape(s2)
+        state.addShape(s3)
+
+        // s1 is at index 0 (could also be at different index due to default device)
+        state.selectShape(s1.id, in: state.rows.first!.id)
+        state.bringShapeToFront(s1.id)
+
+        let shapes = state.rows.first!.shapes
+        #expect(shapes.last?.id == s1.id, "s1 should be at the end (front)")
+    }
+
+    @Test func sendShapeToBackMovesToStart() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+
+        let s1 = CanvasShapeModel(id: UUID(), type: .rectangle, x: 0, y: 0)
+        let s2 = CanvasShapeModel(id: UUID(), type: .rectangle, x: 100, y: 100)
+        state.addShape(s1)
+        state.addShape(s2)
+
+        state.selectShape(s2.id, in: state.rows.first!.id)
+        state.sendShapeToBack(s2.id)
+
+        let shapes = state.rows.first!.shapes
+        #expect(shapes.first?.id == s2.id, "s2 should be at the start (back)")
+    }
+
+    // MARK: - Selection
+
+    @Test func selectRowClearsShapeSelection() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        let shape = CanvasShapeModel.defaultRectangle(centerX: 621, centerY: 1344)
+        state.addShape(shape)
+        #expect(state.selectedShapeId == shape.id)
+
+        state.addRow()
+        state.selectRow(state.rows.last!.id)
+        #expect(state.selectedShapeId == nil, "Shape selection cleared when switching rows")
+    }
+
+    @Test func deselectAllClearsEverything() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        state.addShape(CanvasShapeModel.defaultRectangle(centerX: 621, centerY: 1344))
+
+        state.deselectAll()
+        #expect(state.selectedRowId == nil)
+        #expect(state.selectedShapeId == nil)
+    }
+
+    @Test func selectShapeAlsoSelectsRow() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.addRow()
+        let row2Id = state.rows[1].id
+        state.selectRow(row2Id)
+        let shape = CanvasShapeModel.defaultRectangle(centerX: 621, centerY: 1344)
+        state.addShape(shape)
+
+        // Select a shape in row 2 while row 1 is selected
+        state.selectRow(state.rows[0].id)
+        state.selectShape(shape.id, in: row2Id)
+        #expect(state.selectedRowId == row2Id)
+        #expect(state.selectedShapeId == shape.id)
+    }
+
+    // MARK: - Template operations
+
+    @Test func addTemplateIncreasesCount() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        let initialCount = state.rows.first!.templates.count
+        state.addTemplate(to: rowId)
+        #expect(state.rows.first!.templates.count == initialCount + 1)
+    }
+
+    @Test func removeTemplateDecreasesCount() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.addTemplate(to: rowId)
+        let countAfterAdd = state.rows.first!.templates.count
+        let templateId = try #require(state.rows.first!.templates.last?.id)
+        state.removeTemplate(templateId, from: rowId)
+        #expect(state.rows.first!.templates.count == countAfterAdd - 1)
+    }
+
+    // MARK: - Locale operations via AppState
+
+    @Test func addLocaleUpdatesState() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        #expect(state.localeState.locales.count == 1)
+        state.addLocale(.init(code: "fr", label: "French"))
+        #expect(state.localeState.locales.count == 2)
+        #expect(state.localeState.locales.last?.code == "fr")
+    }
+
+    @Test func cycleLocaleForwardAndBackward() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.addLocale(.init(code: "fr", label: "French"))
+        state.addLocale(.init(code: "de", label: "German"))
+        // addLocale sets active to the newly added locale
+        state.setActiveLocale("en")
+        #expect(state.localeState.activeLocaleCode == "en")
+
+        state.cycleLocaleForward()
+        #expect(state.localeState.activeLocaleCode == "fr")
+
+        state.cycleLocaleForward()
+        #expect(state.localeState.activeLocaleCode == "de")
+
+        state.cycleLocaleForward()
+        #expect(state.localeState.activeLocaleCode == "en", "Should wrap around")
+
+        state.cycleLocaleBackward()
+        #expect(state.localeState.activeLocaleCode == "de", "Should wrap backward")
+    }
+
+    // MARK: - Zoom
+
+    @Test func zoomInAndOut() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let initial = state.zoomLevel
+        state.zoomLevel = 1.0
+        state.zoomLevel = min(2.0, state.zoomLevel + 0.25)
+        #expect(state.zoomLevel == 1.25)
+        state.zoomLevel = max(0.75, state.zoomLevel - 0.25)
+        #expect(state.zoomLevel == 1.0)
+    }
+
+    @Test func zoomClampsToRange() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.zoomLevel = 2.0
+        state.zoomLevel = min(2.0, state.zoomLevel + 0.25)
+        #expect(state.zoomLevel == 2.0, "Cannot exceed max")
+
+        state.zoomLevel = 0.75
+        state.zoomLevel = max(0.75, state.zoomLevel - 0.25)
+        #expect(state.zoomLevel == 0.75, "Cannot go below min")
+    }
+
+    // MARK: - Nudge
+
+    @Test func nudgeSelectedShapeMovesPosition() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 200, width: 50, height: 50)
+        state.addShape(shape)
+
+        state.nudgeSelectedShape(dx: 10, dy: -5)
+
+        let updated = state.rows.first!.shapes.first { $0.id == shape.id }!
+        #expect(updated.x == 110)
+        #expect(updated.y == 195)
+    }
+
+    // MARK: - Project operations
+
+    @Test func createProjectSwitchesToNew() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let initialId = state.activeProjectId
+        state.createProject(name: "New Project")
+        #expect(state.projects.count == 2)
+        #expect(state.activeProjectId != initialId)
+        #expect(state.activeProject?.name == "New Project")
+    }
+
+    @Test func renameProjectUpdatesName() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let projectId = try #require(state.activeProjectId)
+        state.renameProject(projectId, to: "Renamed")
+        #expect(state.activeProject?.name == "Renamed")
+    }
+
+    @Test func deleteProjectCreatesNewIfLast() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let projectId = state.activeProjectId!
+        state.deleteProject(projectId)
+        #expect(state.projects.count == 1, "Should create fallback project")
+        #expect(state.activeProjectId != nil)
+    }
+}

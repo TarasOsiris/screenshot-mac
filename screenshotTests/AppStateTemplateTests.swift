@@ -6,14 +6,8 @@ import AppKit
 struct AppStateTemplateTests {
 
     @Test func savingProjectAsTemplateCreatesReusableProjectSnapshot() throws {
-        let tempDirectory = makeTemporaryDataDirectory()
-        setenv("SCREENSHOT_DATA_DIR", tempDirectory.path, 1)
-        defer {
-            unsetenv("SCREENSHOT_DATA_DIR")
-            try? FileManager.default.removeItem(at: tempDirectory)
-        }
-
-        let state = AppState()
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
         state.addRow()
         state.addLocale(.init(code: "fr", label: "French"))
         let firstRowId = try #require(state.rows.first?.id)
@@ -44,14 +38,8 @@ struct AppStateTemplateTests {
     }
 
     @Test func resetTranslationRemovesOverrideFromProgress() throws {
-        let tempDirectory = makeTemporaryDataDirectory()
-        setenv("SCREENSHOT_DATA_DIR", tempDirectory.path, 1)
-        defer {
-            unsetenv("SCREENSHOT_DATA_DIR")
-            try? FileManager.default.removeItem(at: tempDirectory)
-        }
-
-        let state = AppState()
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
         let row = try #require(state.rows.first)
         state.addShape(
             CanvasShapeModel.defaultText(
