@@ -5,7 +5,6 @@ import UniformTypeIdentifiers
 struct ShapePropertiesBar: View {
     private static let defaultFontSize: CGFloat = 72
     private static let fontSizeRange: ClosedRange<CGFloat> = 12...200
-
     @Bindable var state: AppState
     @State private var isReplacingImage = false
     @State private var isReplacingSvg = false
@@ -154,6 +153,28 @@ struct ShapePropertiesBar: View {
 
                                 Text(verbatim: "\(Int(shape.borderRadius))")
                                     .frame(width: 28, alignment: .trailing)
+                            }
+                        }
+                    }
+
+                    // Outline
+                    if shape.type.supportsOutline {
+                        section {
+                            outlineControls(shape: shape, shapeId: shapeId)
+                        }
+                    }
+
+                    // Star properties
+                    if shape.type == .star {
+                        section {
+                            controlGroup("Points") {
+                                Stepper(
+                                    value: shapeBinding(shapeId, \.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
+                                    in: 3...20
+                                ) {
+                                    Text(verbatim: "\(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)")
+                                        .frame(width: 20, alignment: .trailing)
+                                }
                             }
                         }
                     }
@@ -551,6 +572,42 @@ struct ShapePropertiesBar: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(.separator.opacity(0.35), lineWidth: 0.5)
         )
+    }
+
+    @ViewBuilder
+    private func outlineControls(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        let hasOutline = (shape.outlineWidth ?? 0) > 0
+
+        Toggle(isOn: Binding(
+            get: { hasOutline },
+            set: { enabled in
+                var updated = shape
+                updated.outlineColor = enabled ? CanvasShapeModel.defaultOutlineColor : nil
+                updated.outlineWidth = enabled ? CanvasShapeModel.defaultOutlineWidth : nil
+                state.updateShape(updated)
+            }
+        )) {
+            Label("Outline", systemImage: "square.dashed")
+        }
+        .toggleStyle(.button)
+        .help(hasOutline ? "Disable outline" : "Enable outline")
+
+        if hasOutline {
+            ColorPicker("", selection: shapeBinding(shapeId, \.outlineColor, default: CanvasShapeModel.defaultOutlineColor), supportsOpacity: false)
+                .labelsHidden()
+                .frame(width: 30)
+                .help("Outline color")
+
+            separator
+
+            controlGroup("Width") {
+                Slider(value: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth), in: 1...50)
+                    .frame(width: 80)
+
+                Text(verbatim: "\(Int((shape.outlineWidth ?? CanvasShapeModel.defaultOutlineWidth).rounded()))")
+                    .frame(width: 28, alignment: .trailing)
+            }
+        }
     }
 
     private func shapeBadge(_ shape: CanvasShapeModel) -> some View {

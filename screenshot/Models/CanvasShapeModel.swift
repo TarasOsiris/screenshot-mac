@@ -4,6 +4,7 @@ import SwiftUI
 enum ShapeType: String, Codable, CaseIterable {
     case rectangle
     case circle
+    case star
     case text
     case image
     case device
@@ -13,6 +14,7 @@ enum ShapeType: String, Codable, CaseIterable {
         switch self {
         case .rectangle: "rectangle.fill"
         case .circle: "circle.fill"
+        case .star: "star.fill"
         case .text: "textformat"
         case .image: "photo"
         case .device: "iphone"
@@ -24,10 +26,21 @@ enum ShapeType: String, Codable, CaseIterable {
         switch self {
         case .rectangle: "Rectangle"
         case .circle: "Circle"
+        case .star: "Star"
         case .text: "Text"
         case .image: "Image"
         case .device: "Device"
         case .svg: "SVG"
+        }
+    }
+
+    /// Shape types grouped under the "Shapes" menu in the toolbar.
+    static let shapeMenuTypes: [ShapeType] = [.rectangle, .circle, .star]
+
+    var supportsOutline: Bool {
+        switch self {
+        case .rectangle, .circle, .star: true
+        case .text, .image, .device, .svg: false
         }
     }
 }
@@ -147,6 +160,9 @@ extension Optional where Wrapped == TextAlign {
 
 struct CanvasShapeModel: Identifiable, Codable {
     static let defaultDeviceBodyColor = Color(red: 0.11, green: 0.11, blue: 0.12)
+    static let defaultStarPointCount = 5
+    static let defaultOutlineColor: Color = .black
+    static let defaultOutlineWidth: CGFloat = 4
 
     let id: UUID
     var type: ShapeType
@@ -183,6 +199,13 @@ struct CanvasShapeModel: Identifiable, Codable {
     var svgContent: String?
     var svgUseColor: Bool?
 
+    // Outline properties
+    var outlineColorData: CodableColor?
+    var outlineWidth: CGFloat?
+
+    // Star properties
+    var starPointCount: Int?
+
     // Clipping
     var clipToTemplate: Bool?
 
@@ -213,6 +236,9 @@ struct CanvasShapeModel: Identifiable, Codable {
         screenshotFileName: String? = nil,
         svgContent: String? = nil,
         svgUseColor: Bool? = nil,
+        outlineColor: Color? = nil,
+        outlineWidth: CGFloat? = nil,
+        starPointCount: Int? = nil,
         clipToTemplate: Bool? = nil
     ) {
         self.id = id
@@ -241,6 +267,9 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.screenshotFileName = screenshotFileName
         self.svgContent = svgContent
         self.svgUseColor = svgUseColor
+        self.outlineColorData = outlineColor.map { CodableColor($0) }
+        self.outlineWidth = outlineWidth
+        self.starPointCount = starPointCount
         self.clipToTemplate = clipToTemplate
     }
 
@@ -250,6 +279,11 @@ struct CanvasShapeModel: Identifiable, Codable {
     var color: Color {
         get { colorData.color }
         set { colorData = CodableColor(newValue) }
+    }
+
+    var outlineColor: Color? {
+        get { outlineColorData?.color }
+        set { outlineColorData = newValue.map { CodableColor($0) } }
     }
 
     /// The filename for the shape's display image (device screenshot or standalone image).
@@ -308,6 +342,9 @@ struct CanvasShapeModel: Identifiable, Codable {
             screenshotFileName: screenshotFileName,
             svgContent: svgContent,
             svgUseColor: svgUseColor,
+            outlineColor: outlineColorData?.color,
+            outlineWidth: outlineWidth,
+            starPointCount: starPointCount,
             clipToTemplate: clipToTemplate
         )
     }
@@ -318,6 +355,10 @@ struct CanvasShapeModel: Identifiable, Codable {
 
     static func defaultCircle(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
         CanvasShapeModel(type: .circle, x: centerX - 100, y: centerY - 100, width: 200, height: 200, color: .purple)
+    }
+
+    static func defaultStar(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
+        CanvasShapeModel(type: .star, x: centerX - 100, y: centerY - 100, width: 200, height: 200, color: .yellow, starPointCount: defaultStarPointCount)
     }
 
     static func defaultText(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {

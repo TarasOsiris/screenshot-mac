@@ -4,9 +4,12 @@ struct ShapeToolbar: View {
     @Bindable var state: AppState
     @State private var isSvgDialogPresented = false
 
+    private static let nonMenuTypes = ShapeType.allCases.filter { !ShapeType.shapeMenuTypes.contains($0) }
+
     var body: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 2), spacing: 6) {
-            ForEach(ShapeType.allCases, id: \.self) { type in
+            shapesMenu
+            ForEach(Self.nonMenuTypes, id: \.self) { type in
                 shapeButton(type) {
                     if type == .svg {
                         isSvgDialogPresented = true
@@ -21,6 +24,24 @@ struct ShapeToolbar: View {
                 addSvgShape(svgContent: svgContent, size: size)
             }
         }
+    }
+
+    private var shapesMenu: some View {
+        Menu {
+            ForEach(ShapeType.shapeMenuTypes, id: \.self) { type in
+                Button(action: { addShape(type) }) {
+                    Label(type.label, systemImage: type.icon)
+                }
+            }
+        } label: {
+            Label("Shapes", systemImage: "square.on.circle")
+                .labelStyle(.titleAndIcon)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .help("Add shape")
     }
 
     private func shapeButton(_ type: ShapeType, action: @escaping () -> Void) -> some View {
@@ -44,6 +65,7 @@ struct ShapeToolbar: View {
         switch type {
         case .rectangle: shape = .defaultRectangle(centerX: centerX, centerY: centerY)
         case .circle: shape = .defaultCircle(centerX: centerX, centerY: centerY)
+        case .star: shape = .defaultStar(centerX: centerX, centerY: centerY)
         case .text: shape = .defaultText(centerX: centerX, centerY: centerY)
         case .image: shape = .defaultImage(centerX: centerX, centerY: centerY)
         case .device:

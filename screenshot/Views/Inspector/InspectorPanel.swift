@@ -10,7 +10,7 @@ struct InspectorPanel: View {
                 rowSection(rowId: rowId)
                 sizeSection(rowIndex: rowIndex, rowId: rowId)
                 backgroundSection(rowIndex: rowIndex, rowId: rowId)
-                Section("Elements") {
+                Section("Add new element") {
                     ShapeToolbar(state: state)
                 }
                 deviceSection(rowId: rowId)

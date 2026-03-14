@@ -2,6 +2,8 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct CanvasShapeView: View {
+    @Environment(\.displayScale) private var screenScale
+
     let shape: CanvasShapeModel
     let displayScale: CGFloat
     let isSelected: Bool
@@ -33,6 +35,7 @@ struct CanvasShapeView: View {
     private let handleDiameter: CGFloat = 8
 
     private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
+    private var displayPixelStep: CGFloat { 1 / max(screenScale, 1) }
 
     // Current effective geometry (accounts for in-progress resize or drag)
     private var effectiveX: CGFloat {
@@ -44,10 +47,32 @@ struct CanvasShapeView: View {
     private var effectiveW: CGFloat { resizeState?.newW ?? shape.width }
     private var effectiveH: CGFloat { resizeState?.newH ?? shape.height }
 
-    private var displayX: CGFloat { effectiveX * displayScale }
-    private var displayY: CGFloat { effectiveY * displayScale }
-    private var displayW: CGFloat { effectiveW * displayScale }
-    private var displayH: CGFloat { effectiveH * displayScale }
+    private var displayRect: CGRect {
+        let rawMinX = effectiveX * displayScale
+        let rawMinY = effectiveY * displayScale
+        let rawMaxX = (effectiveX + effectiveW) * displayScale
+        let rawMaxY = (effectiveY + effectiveH) * displayScale
+
+        let minX = snapToDisplayPixel(rawMinX)
+        let minY = snapToDisplayPixel(rawMinY)
+        let maxX = snapToDisplayPixel(rawMaxX)
+        let maxY = snapToDisplayPixel(rawMaxY)
+
+        return CGRect(
+            x: minX,
+            y: minY,
+            width: max(displayPixelStep, maxX - minX),
+            height: max(displayPixelStep, maxY - minY)
+        )
+    }
+    private var displayX: CGFloat { displayRect.minX }
+    private var displayY: CGFloat { displayRect.minY }
+    private var displayW: CGFloat { displayRect.width }
+    private var displayH: CGFloat { displayRect.height }
+    private var displayOutlineWidth: CGFloat {
+        guard let outlineWidth = shape.outlineWidth, outlineWidth > 0 else { return 0 }
+        return max(displayPixelStep, snapToDisplayPixel(outlineWidth * displayScale))
+    }
 
     private var currentRotation: Double { shape.rotation + rotationDelta }
 
@@ -119,7 +144,7 @@ struct CanvasShapeView: View {
                 }
             }
         }
-        .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+        .offset(x: displayX, y: displayY)
         .overlay {
             if isSelected {
                 selectionOverlay
@@ -152,12 +177,15 @@ struct CanvasShapeView: View {
     private var shapeContent: some View {
         switch shape.type {
         case .rectangle:
-            RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
-                .fill(shape.color)
+            let rr = RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
+            outlinedShape(rr)
 
         case .circle:
-            Ellipse()
-                .fill(shape.color, style: FillStyle(eoFill: false, antialiased: true))
+            outlinedShape(Ellipse())
+
+        case .star:
+            let star = StarShape(pointCount: shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)
+            outlinedShape(star)
 
         case .text:
             if isEditingText {
@@ -363,6 +391,10 @@ struct CanvasShapeView: View {
         var a = angle.truncatingRemainder(dividingBy: 360)
         if a < 0 { a += 360 }
         return a
+    }
+
+    private func snapToDisplayPixel(_ value: CGFloat) -> CGFloat {
+        (value / displayPixelStep).rounded() * displayPixelStep
     }
 
     private func handlePosition(for edge: ResizeEdge) -> CGPoint {
@@ -680,6 +712,19 @@ struct CanvasShapeView: View {
         var updated = shape
         updated.text = editingTextValue
         onUpdate(updated)
+    }
+
+    private func outlinedShape<S: InsettableShape>(_ outline: S) -> some View {
+        outline
+            .fill(shape.color)
+            .overlay {
+                if let outlineColor = shape.outlineColor, displayOutlineWidth > 0 {
+                    outline.strokeBorder(
+                        outlineColor,
+                        style: StrokeStyle(lineWidth: displayOutlineWidth, lineJoin: .miter)
+                    )
+                }
+            }
     }
 
     private func tightText(displayText: String, showPlaceholder: Bool) -> Text {
