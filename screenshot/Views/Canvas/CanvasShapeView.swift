@@ -238,7 +238,6 @@ struct CanvasShapeView: View {
                 Image(nsImage: image)
                     .resizable()
                     .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
             } else if showsEditorHelpers {
                 RoundedRectangle(cornerRadius: 4 * displayScale)
                     .fill(Color.gray.opacity(0.2))
@@ -650,53 +649,7 @@ struct CanvasShapeView: View {
     }
 
     static func svgImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
-        var svg = svgContent
-        if useColor {
-            let hex = color.hexString
-            // Replace fill attributes with the chosen color, preserving fill="none"
-            svg = svg.replacingOccurrences(
-                of: "fill\\s*=\\s*\"(?!none\")[^\"]*\"",
-                with: "fill=\"\(hex)\"",
-                options: .regularExpression
-            )
-            // Replace stroke attributes, preserving stroke="none"
-            svg = svg.replacingOccurrences(
-                of: "stroke\\s*=\\s*\"(?!none\")[^\"]*\"",
-                with: "stroke=\"\(hex)\"",
-                options: .regularExpression
-            )
-        }
-        guard let data = svg.data(using: .utf8) else { return nil }
-        guard let baseImage = NSImage(data: data) else { return nil }
-
-        // Re-rasterize at target size so the SVG stays crisp when scaled up
-        guard let targetSize, targetSize.width > 0, targetSize.height > 0 else {
-            return baseImage
-        }
-        let pixelW = Int(targetSize.width)
-        let pixelH = Int(targetSize.height)
-        guard let rep = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: pixelW,
-            pixelsHigh: pixelH,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ) else { return baseImage }
-        rep.size = targetSize
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-        NSGraphicsContext.current?.imageInterpolation = .high
-        baseImage.draw(in: NSRect(origin: .zero, size: targetSize),
-                       from: .zero, operation: .copy, fraction: 1.0)
-        NSGraphicsContext.restoreGraphicsState()
-        let result = NSImage(size: targetSize)
-        result.addRepresentation(rep)
-        return result
+        SvgHelper.renderImage(from: svgContent, useColor: useColor, color: color, targetSize: targetSize)
     }
 
     private var textEditor: some View {

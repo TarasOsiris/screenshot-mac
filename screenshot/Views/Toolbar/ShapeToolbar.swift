@@ -20,8 +20,8 @@ struct ShapeToolbar: View {
             }
         }
         .sheet(isPresented: $isSvgDialogPresented) {
-            SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size in
-                addSvgShape(svgContent: svgContent, size: size)
+            SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
+                addSvgShape(svgContent: svgContent, size: size, useColor: useColor, color: color)
             }
         }
     }
@@ -93,12 +93,16 @@ struct ShapeToolbar: View {
         state.addShape(shape)
     }
 
-    private func addSvgShape(svgContent: String, size: CGSize) {
+    private func addSvgShape(svgContent: String, size: CGSize, useColor: Bool, color: Color) {
         guard let row = state.selectedRow else { return }
         let centerX = row.templateWidth / 2
         let centerY = row.templateHeight / 2
         let scaledSize = SvgHelper.scaledSize(size)
-        let shape = CanvasShapeModel.defaultSvg(centerX: centerX, centerY: centerY, svgContent: svgContent, size: scaledSize)
+        var shape = CanvasShapeModel.defaultSvg(centerX: centerX, centerY: centerY, svgContent: svgContent, size: scaledSize)
+        if useColor {
+            shape.svgUseColor = true
+            shape.color = color
+        }
         state.addShape(shape)
     }
 }

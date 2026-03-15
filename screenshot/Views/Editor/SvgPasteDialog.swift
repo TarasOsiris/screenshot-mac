@@ -3,23 +3,36 @@ import UniformTypeIdentifiers
 
 struct SvgPasteDialog: View {
     @Binding var isPresented: Bool
-    var onConfirm: (String, CGSize) -> Void
+    var onConfirm: (String, CGSize, Bool, Color) -> Void
 
     @State private var svgText = ""
     @State private var errorMessage: String?
     @State private var previewImage: NSImage?
     @State private var isValidSvg = false
+    @State private var useColorOverride = false
+    @State private var overrideColor: Color = .white
 
     var body: some View {
         VStack(spacing: 12) {
             Text("Add SVG")
                 .font(.headline)
 
-            TextEditor(text: $svgText)
-                .font(.system(size: 11, design: .monospaced))
-                .frame(minHeight: 120)
-                .border(Color.secondary.opacity(0.3))
-                .onChange(of: svgText) { updatePreview() }
+            ZStack(alignment: .topLeading) {
+                TextEditor(text: $svgText)
+                    .font(.system(size: 11, design: .monospaced))
+                    .frame(minHeight: 120)
+                    .border(Color.secondary.opacity(0.3))
+                    .onChange(of: svgText) { updatePreview() }
+
+                if svgText.isEmpty {
+                    Text("Paste your SVG here...")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.tertiary)
+                        .padding(.top, 7)
+                        .padding(.leading, 5)
+                        .allowsHitTesting(false)
+                }
+            }
 
             // Preview
             if let previewImage {
@@ -37,6 +50,20 @@ struct SvgPasteDialog: View {
                 Text(errorMessage)
                     .font(.caption)
                     .foregroundStyle(.red)
+            }
+
+            HStack(spacing: 8) {
+                Toggle("Override color", isOn: $useColorOverride)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .onChange(of: useColorOverride) { updatePreview() }
+
+                ColorPicker("", selection: $overrideColor, supportsOpacity: false)
+                    .labelsHidden()
+                    .disabled(!useColorOverride)
+                    .onChange(of: overrideColor) {
+                        if useColorOverride { updatePreview() }
+                    }
             }
 
             HStack {
@@ -86,8 +113,7 @@ struct SvgPasteDialog: View {
             return
         }
 
-        guard let data = trimmed.data(using: .utf8),
-              let image = NSImage(data: data) else {
+        guard let image = SvgHelper.renderImage(from: trimmed, useColor: useColorOverride, color: overrideColor) else {
             previewImage = nil
             errorMessage = "Could not render SVG — check for syntax errors"
             isValidSvg = false
@@ -108,7 +134,7 @@ struct SvgPasteDialog: View {
             return
         }
         let size = SvgHelper.parseSize(sanitized, fallbackImage: image)
-        onConfirm(sanitized, size)
+        onConfirm(sanitized, size, useColorOverride, overrideColor)
         isPresented = false
     }
 
