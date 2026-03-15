@@ -21,6 +21,14 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             LocaleBanner(state: state)
+                .alert("Save Failed", isPresented: .init(
+                    get: { state.saveError != nil },
+                    set: { if !$0 { state.saveError = nil } }
+                )) {
+                    Button("OK") { state.saveError = nil }
+                } message: {
+                    Text(state.saveError ?? "")
+                }
 
             ScrollViewReader { proxy in
                 ScrollView(.vertical) {

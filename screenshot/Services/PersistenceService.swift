@@ -77,9 +77,9 @@ struct PersistenceService {
         return try? decoder.decode(ProjectIndex.self, from: data)
     }
 
-    static func saveIndex(_ index: ProjectIndex) {
-        guard let data = try? encoder.encode(index) else { return }
-        try? data.write(to: indexURL, options: .atomic)
+    static func saveIndex(_ index: ProjectIndex) throws {
+        let data = try encoder.encode(index)
+        try data.write(to: indexURL, options: .atomic)
     }
 
     // MARK: - Template index
@@ -89,9 +89,9 @@ struct PersistenceService {
         return try? decoder.decode(ProjectTemplateIndex.self, from: data)
     }
 
-    static func saveTemplateIndex(_ index: ProjectTemplateIndex) {
-        guard let data = try? encoder.encode(index) else { return }
-        try? data.write(to: templateIndexURL, options: .atomic)
+    static func saveTemplateIndex(_ index: ProjectTemplateIndex) throws {
+        let data = try encoder.encode(index)
+        try data.write(to: templateIndexURL, options: .atomic)
     }
 
     // MARK: - Project data
@@ -102,9 +102,9 @@ struct PersistenceService {
         return try? decoder.decode(ProjectData.self, from: data)
     }
 
-    static func saveProject(_ id: UUID, data: ProjectData) {
-        guard let jsonData = try? encoder.encode(data) else { return }
-        try? jsonData.write(to: projectDataURL(id), options: .atomic)
+    static func saveProject(_ id: UUID, data: ProjectData) throws {
+        let jsonData = try encoder.encode(data)
+        try jsonData.write(to: projectDataURL(id), options: .atomic)
     }
 
     static func loadTemplate(_ id: UUID) -> ProjectData? {
@@ -113,9 +113,9 @@ struct PersistenceService {
         return try? decoder.decode(ProjectData.self, from: data)
     }
 
-    static func saveTemplate(_ id: UUID, data: ProjectData) {
-        guard let jsonData = try? encoder.encode(data) else { return }
-        try? jsonData.write(to: templateDataURL(id), options: .atomic)
+    static func saveTemplate(_ id: UUID, data: ProjectData) throws {
+        let jsonData = try encoder.encode(data)
+        try jsonData.write(to: templateDataURL(id), options: .atomic)
     }
 
     static func copyProject(from sourceId: UUID, to destId: UUID) {

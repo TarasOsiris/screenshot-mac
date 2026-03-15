@@ -17,6 +17,7 @@ final class AppState {
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: String] = [:]  // fileName → familyName
     var undoManager: UndoManager?
+    var saveError: String?
     var canvasFocusRowId: UUID?
     var canvasFocusRequestNonce = 0
 
@@ -143,12 +144,20 @@ final class AppState {
 
     private func saveIndex() {
         let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
-        PersistenceService.saveIndex(index)
+        do {
+            try PersistenceService.saveIndex(index)
+        } catch {
+            saveError = "Failed to save project index: \(error.localizedDescription)"
+        }
     }
 
     private func saveTemplateIndex() {
         let index = ProjectTemplateIndex(templates: projectTemplates)
-        PersistenceService.saveTemplateIndex(index)
+        do {
+            try PersistenceService.saveTemplateIndex(index)
+        } catch {
+            saveError = "Failed to save template index: \(error.localizedDescription)"
+        }
     }
 
     private func cancelPendingDebounceTasks() {
@@ -162,7 +171,11 @@ final class AppState {
 
     private func saveCurrentProject() {
         guard let activeId = activeProjectId else { return }
-        PersistenceService.saveProject(activeId, data: ProjectData(rows: rows, localeState: localeState))
+        do {
+            try PersistenceService.saveProject(activeId, data: ProjectData(rows: rows, localeState: localeState))
+        } catch {
+            saveError = "Failed to save project: \(error.localizedDescription)"
+        }
     }
 
     // MARK: - Projects
