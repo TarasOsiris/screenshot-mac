@@ -12,7 +12,7 @@ struct LocaleToolbarMenu: View {
     @State private var showResetToBaseConfirmation = false
 
     var body: some View {
-        let progress = translationProgress
+        let progress = state.translationProgress()
         Menu {
             ForEach(state.localeState.locales) { locale in
                 Button {
@@ -79,7 +79,7 @@ struct LocaleToolbarMenu: View {
                 Text(state.localeState.activeLocaleLabel)
                     .font(.system(size: 11))
                     .foregroundStyle(state.localeState.isBaseLocale ? .secondary : Color.accentColor)
-                if let untranslatedLabel = untranslatedLabel {
+                if let untranslatedLabel = untranslatedLabel(progress: progress) {
                     Text(untranslatedLabel)
                         .font(.system(size: 10, design: .monospaced))
                         .padding(.horizontal, 5)
@@ -87,7 +87,7 @@ struct LocaleToolbarMenu: View {
                         .background(Color.orange.opacity(0.14), in: Capsule())
                         .foregroundStyle(Color.orange)
                 }
-                if let activeProgress = activeProgressLabel {
+                if let activeProgress = activeProgressLabel(progress: progress) {
                     Text(activeProgress)
                         .font(.system(size: 10, design: .monospaced))
                         .padding(.horizontal, 5)
@@ -146,21 +146,17 @@ struct LocaleToolbarMenu: View {
         return "Language"
     }
 
-    private var activeProgressLabel: String? {
+    private func activeProgressLabel(progress: (translated: Int, total: Int)) -> String? {
         guard !state.localeState.isBaseLocale else { return nil }
-        guard translationProgress.total > 0 else { return nil }
-        return "\(translationProgress.translated)/\(translationProgress.total)"
+        guard progress.total > 0 else { return nil }
+        return "\(progress.translated)/\(progress.total)"
     }
 
-    private var untranslatedLabel: String? {
+    private func untranslatedLabel(progress: (translated: Int, total: Int)) -> String? {
         guard !state.localeState.isBaseLocale else { return nil }
-        let missing = max(translationProgress.total - translationProgress.translated, 0)
+        let missing = max(progress.total - progress.translated, 0)
         guard missing > 0 else { return nil }
         return "\(missing) left"
-    }
-
-    private var translationProgress: (translated: Int, total: Int) {
-        state.translationProgress()
     }
 
     private var activeLocaleHasOverrides: Bool {

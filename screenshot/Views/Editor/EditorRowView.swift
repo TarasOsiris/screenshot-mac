@@ -295,11 +295,12 @@ struct EditorRowView: View {
 
     @ViewBuilder
     private func canvasView(dw: CGFloat, dh: CGFloat, ds: CGFloat) -> some View {
+        let resolvedShapes = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
         ZStack(alignment: .topLeading) {
             backgroundLayer(dw: dw, dh: dh)
 
             // Shared shapes layer (resolved for active locale)
-            ForEach(LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)) { shape in
+            ForEach(resolvedShapes) { shape in
                 let clipRect: CGRect? = shape.clipToTemplate == true ? {
                     let ti = row.owningTemplateIndex(for: shape)
                     return CGRect(x: CGFloat(ti) * dw, y: 0, width: dw, height: dh)
@@ -319,7 +320,7 @@ struct EditorRowView: View {
                         state.saveImage(image, for: shape.id)
                     } : nil,
                     onDragSnap: { draggedShape, rawOffset in
-                        let others = row.activeShapes.filter { $0.id != draggedShape.id }
+                        let others = resolvedShapes.filter { $0.id != draggedShape.id }
                         let threshold = 4 / ds
                         let result = AlignmentService.computeSnap(
                             draggedShape: draggedShape,

@@ -13,7 +13,7 @@ final class AppState {
     var selectedRowId: UUID?
     var selectedShapeId: UUID?
     var zoomLevel: CGFloat = 1.0
-    var canvasMouseModelPosition: CGPoint?
+    @ObservationIgnored var canvasMouseModelPosition: CGPoint?
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: String] = [:]  // fileName → familyName
     var undoManager: UndoManager?
