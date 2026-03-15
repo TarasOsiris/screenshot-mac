@@ -128,7 +128,7 @@ struct ExportServiceTests {
         #expect(bitmap.pixelsHigh == Int(th))
 
         // Bottom-center must be red, not white (the centering-shift symptom).
-        try expectRedBackground(bitmap, at: (Int(tw) / 2, Int(th) - 3), label: "bottom-center")
+        try expectDominant(bitmap, at: (Int(tw) / 2, Int(th) - 3), channel: .r, label: "bottom-center")
     }
 
     /// Same regression test but for the second template in a multi-template row,
@@ -141,17 +141,244 @@ struct ExportServiceTests {
         let bitmap = try renderTemplateBitmap(index: 1, row: row)
 
         for (label, x, y) in [("bottom-left", 2, Int(th) - 3), ("bottom-right", Int(tw) - 3, Int(th) - 3)] {
-            try expectRedBackground(bitmap, at: (x, y), label: label)
+            try expectDominant(bitmap, at: (x, y), channel: .r, label: label)
         }
+    }
+
+    // MARK: - Export / editor parity
+    //
+    // These tests verify that ExportService.renderTemplateImage produces pixel-accurate
+    // output matching what the editor canvas shows. Each test creates a row with known
+    // geometry, renders via the export path, and samples specific pixels.
+    //
+    // Color assertions use dominant-channel checks (e.g. "red > green + margin")
+    // instead of absolute sRGB thresholds, because SwiftUI colors may render in
+    // Display P3 and convert slightly during the PNG round-trip.
+
+    @Test func solidColorBackgroundFillsEntireTemplate() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 400
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate()],
+            templateWidth: tw, templateHeight: th,
+            bgColor: .red
+        )
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+
+        // All four corners + center must be red-dominant
+        for (label, x, y) in [
+            ("top-left", 2, 2), ("top-right", Int(tw) - 3, 2),
+            ("bottom-left", 2, Int(th) - 3), ("bottom-right", Int(tw) - 3, Int(th) - 3),
+            ("center", Int(tw) / 2, Int(th) / 2),
+        ] {
+            try expectDominant(bitmap, at: (x, y), channel: .r, label: label)
+        }
+    }
+
+    @Test func shapeAppearsAtCorrectPositionInTemplate() throws {
+        let tw: CGFloat = 400
+        let th: CGFloat = 400
+        var row = makeTestRow(width: tw, height: th, bgColor: Self.testBlue)
+        row.shapes = [CanvasShapeModel(
+            type: .rectangle, x: 150, y: 150, width: 100, height: 100,
+            color: Self.testRed
+        )]
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+
+        try expectDominant(bitmap, at: (200, 200), channel: .r, label: "shape center")
+        try expectDominant(bitmap, at: (50, 50), channel: .b, label: "outside shape")
+        try expectDominant(bitmap, at: (300, 300), channel: .b, label: "below shape")
+    }
+
+    @Test func shapeStraddlingTwoTemplatesAppearsInBoth() throws {
+        let tw: CGFloat = 400
+        let th: CGFloat = 400
+        var row = makeTestRow(width: tw, height: th, templateCount: 2, bgColor: Self.testBlue)
+        row.shapes = [CanvasShapeModel(
+            type: .rectangle, x: 350, y: 150, width: 100, height: 100,
+            color: Self.testRed
+        )]
+
+        let bmp0 = try renderTemplateBitmap(index: 0, row: row)
+        try expectDominant(bmp0, at: (375, 200), channel: .r, label: "t0: shape visible")
+        try expectDominant(bmp0, at: (100, 200), channel: .b, label: "t0: background")
+
+        let bmp1 = try renderTemplateBitmap(index: 1, row: row)
+        try expectDominant(bmp1, at: (25, 200), channel: .r, label: "t1: shape visible")
+        try expectDominant(bmp1, at: (200, 200), channel: .b, label: "t1: background")
+    }
+
+    @Test func templateOverrideBackgroundReplacesRowBackground() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        var t1 = ScreenshotTemplate(backgroundColor: Color(red: 0, green: 0.8, blue: 0))
+        t1.overrideBackground = true
+        t1.backgroundStyle = .color
+
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), t1],
+            templateWidth: tw, templateHeight: th,
+            bgColor: Self.testRed
+        )
+
+        let bmp0 = try renderTemplateBitmap(index: 0, row: row)
+        try expectDominant(bmp0, at: (100, 100), channel: .r, label: "t0: row bg red")
+
+        let bmp1 = try renderTemplateBitmap(index: 1, row: row)
+        try expectDominant(bmp1, at: (100, 100), channel: .g, label: "t1: override bg green")
+    }
+
+    @Test func spanningGradientIsContinuousAcrossTemplates() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        let gradient = GradientConfig(
+            stops: [
+                GradientColorStop(color: Self.testRed, location: 0),
+                GradientColorStop(color: Self.testBlue, location: 1),
+            ],
+            angle: 90 // left to right
+        )
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw, templateHeight: th,
+            backgroundStyle: .gradient,
+            gradientConfig: gradient,
+            spanBackgroundAcrossRow: true
+        )
+
+        let bmp0 = try renderTemplateBitmap(index: 0, row: row)
+        let bmp1 = try renderTemplateBitmap(index: 1, row: row)
+
+        // Template 0 center should be red-dominant, template 1 blue-dominant
+        let c0 = try pixelColor(bmp0, at: (100, 100))
+        #expect(c0.r > c0.b, "t0 center should be red-dominant, got r=\(c0.r) b=\(c0.b)")
+        let c1 = try pixelColor(bmp1, at: (100, 100))
+        #expect(c1.b > c1.r, "t1 center should be blue-dominant, got r=\(c1.r) b=\(c1.b)")
+
+        // Continuity: right edge of t0 should approximate left edge of t1
+        let t0Right = try pixelColor(bmp0, at: (Int(tw) - 2, 100))
+        let t1Left = try pixelColor(bmp1, at: (1, 100))
+        let delta = abs(t0Right.r - t1Left.r) + abs(t0Right.g - t1Left.g) + abs(t0Right.b - t1Left.b)
+        #expect(delta < 0.15, "Spanning gradient should be continuous at boundary, delta=\(delta)")
+    }
+
+    @Test func clipToTemplateRestrictsShapeToOwningTemplate() throws {
+        let tw: CGFloat = 400
+        let th: CGFloat = 400
+        var row = makeTestRow(width: tw, height: th, templateCount: 2, bgColor: Self.testBlue)
+        // Shape center at x=400 → owningTemplate = floor(400/400) = 1
+        row.shapes = [CanvasShapeModel(
+            type: .rectangle, x: 350, y: 150, width: 100, height: 100,
+            color: Self.testRed, clipToTemplate: true
+        )]
+
+        // Template 0: shape should NOT appear
+        let bmp0 = try renderTemplateBitmap(index: 0, row: row)
+        try expectDominant(bmp0, at: (375, 200), channel: .b, label: "t0: clipped away")
+
+        // Template 1: shape visible
+        let bmp1 = try renderTemplateBitmap(index: 1, row: row)
+        try expectDominant(bmp1, at: (25, 200), channel: .r, label: "t1: shape visible")
+    }
+
+    @Test func opacityBlendingCompositsCorrectly() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        var row = makeTestRow(width: tw, height: th, bgColor: Self.testBlue)
+        row.shapes = [CanvasShapeModel(
+            type: .rectangle, x: 0, y: 0, width: tw, height: th,
+            color: Self.testRed, opacity: 0.5
+        )]
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+
+        // Blend of red over blue → both channels present
+        let c = try pixelColor(bitmap, at: (100, 100))
+        #expect(c.r > 0.2, "Should have red from shape, got r=\(c.r)")
+        #expect(c.b > 0.2, "Should have blue from background, got b=\(c.b)")
+    }
+
+    @Test func borderRadiusCutsCorners() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        var row = makeTestRow(width: tw, height: th, bgColor: Self.testBlue)
+        row.shapes = [CanvasShapeModel(
+            type: .rectangle, x: 0, y: 0, width: 200, height: 200,
+            borderRadius: 60, color: Color(red: 0.9, green: 0, blue: 0)
+        )]
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+
+        // Corner: outside radius → background (blue)
+        try expectDominant(bitmap, at: (3, 3), channel: .b, label: "corner: outside radius")
+        // Center: inside shape → red
+        try expectDominant(bitmap, at: (100, 100), channel: .r, label: "center: inside shape")
+    }
+
+    @Test func rotatedShapeRendersAtCorrectLocation() throws {
+        let tw: CGFloat = 400
+        let th: CGFloat = 400
+        var row = makeTestRow(width: tw, height: th, bgColor: Self.testBlue)
+        row.shapes = [CanvasShapeModel(
+            type: .rectangle, x: 100, y: 150, width: 200, height: 100,
+            rotation: 45, color: Color(red: 0.9, green: 0, blue: 0)
+        )]
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+
+        // Center of shape should be red
+        try expectDominant(bitmap, at: (200, 200), channel: .r, label: "rotated shape center")
+        // Far corner should be background
+        try expectDominant(bitmap, at: (10, 10), channel: .b, label: "far corner: background")
+    }
+
+    @Test func deviceAspectRatioIsNormalizedInExport() throws {
+        let tw: CGFloat = 400
+        let th: CGFloat = 800
+        var row = makeTestRow(width: tw, height: th, bgColor: Self.testBlue)
+        // iPhone aspect ~0.489. Square shape → normalization narrows it.
+        row.shapes = [CanvasShapeModel(
+            type: .device, x: 50, y: 100, width: 300, height: 300,
+            color: .clear, deviceCategory: .iphone
+        )]
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+
+        // After normalization the device is narrower; original right edge (350) is background
+        try expectDominant(bitmap, at: (340, 250), channel: .b, label: "right of normalized device")
+    }
+
+    @Test func outlineRendersAtShapeEdge() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        var row = makeTestRow(width: tw, height: th, bgColor: Self.testBlue)
+        row.shapes = [CanvasShapeModel(
+            type: .rectangle, x: 30, y: 30, width: 140, height: 140,
+            color: .white, outlineColor: .black, outlineWidth: 10
+        )]
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+
+        // Center: white fill
+        let center = try pixelColor(bitmap, at: (100, 100))
+        #expect(center.r > 0.8 && center.g > 0.8 && center.b > 0.8, "Center should be white")
+        // Edge: dark outline
+        let edge = try pixelColor(bitmap, at: (33, 100))
+        let brightness = (edge.r + edge.g + edge.b) / 3
+        #expect(brightness < 0.4, "Edge should be dark (outline), got brightness=\(brightness)")
     }
 
     // MARK: - Helpers
 
-    private func makeTestRow(width: CGFloat = 200, height: CGFloat = 400) -> ScreenshotRow {
+    private static let testBlue = Color(red: 0, green: 0, blue: 0.9)
+    private static let testRed = Color(red: 0.9, green: 0, blue: 0)
+
+    private func makeTestRow(
+        width: CGFloat = 200,
+        height: CGFloat = 400,
+        templateCount: Int = 1,
+        bgColor: Color = .blue
+    ) -> ScreenshotRow {
         ScreenshotRow(
-            templates: [ScreenshotTemplate()],
+            templates: (0..<templateCount).map { _ in ScreenshotTemplate() },
             templateWidth: width,
-            templateHeight: height
+            templateHeight: height,
+            bgColor: bgColor
         )
     }
 
@@ -183,10 +410,38 @@ struct ExportServiceTests {
         return try #require(NSBitmapImageRep(data: pngData))
     }
 
-    private func expectRedBackground(_ bitmap: NSBitmapImageRep, at point: (Int, Int), label: String) throws {
-        let color = try #require(bitmap.colorAt(x: point.0, y: point.1), "No color at \(label)")
-        let srgb = try #require(color.usingColorSpace(.sRGB), "Cannot convert \(label) to sRGB")
-        #expect(srgb.redComponent > 0.5, "Expected red background at \(label), got r=\(srgb.redComponent) g=\(srgb.greenComponent) b=\(srgb.blueComponent)")
+    private struct PixelRGB {
+        let r: CGFloat, g: CGFloat, b: CGFloat
+    }
+
+    private enum Channel { case r, g, b }
+
+    private func pixelColor(_ bitmap: NSBitmapImageRep, at point: (Int, Int)) throws -> PixelRGB {
+        let color = try #require(bitmap.colorAt(x: point.0, y: point.1), "No color at (\(point.0),\(point.1))")
+        let srgb = try #require(color.usingColorSpace(.sRGB), "Cannot convert to sRGB")
+        return PixelRGB(r: srgb.redComponent, g: srgb.greenComponent, b: srgb.blueComponent)
+    }
+
+    /// Asserts that the given channel is the dominant one at a pixel, tolerant of color-space shifts.
+    private func expectDominant(
+        _ bitmap: NSBitmapImageRep,
+        at point: (Int, Int),
+        channel: Channel,
+        margin: CGFloat = 0.15,
+        label: String
+    ) throws {
+        let c = try pixelColor(bitmap, at: point)
+        switch channel {
+        case .r:
+            #expect(c.r > c.g + margin && c.r > c.b + margin,
+                    "\(label): red should dominate, got rgb=(\(c.r),\(c.g),\(c.b))")
+        case .g:
+            #expect(c.g > c.r + margin && c.g > c.b + margin,
+                    "\(label): green should dominate, got rgb=(\(c.r),\(c.g),\(c.b))")
+        case .b:
+            #expect(c.b > c.r + margin && c.b > c.g + margin,
+                    "\(label): blue should dominate, got rgb=(\(c.r),\(c.g),\(c.b))")
+        }
     }
 
 }

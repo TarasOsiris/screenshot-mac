@@ -195,15 +195,23 @@ struct BackgroundImageEditor: View {
         .controlSize(compact ? .mini : .small)
         .disabled(!hasImage)
 
-        // Opacity
+        percentSlider("Opacity", value: $config.opacity)
+
+        if config.fillMode == .tile {
+            percentSlider("Spacing", value: $config.tileSpacing)
+            percentSlider("Offset", value: $config.tileOffset)
+        }
+    }
+
+    private func percentSlider(_ label: String, value: Binding<Double>) -> some View {
         HStack(spacing: 4) {
-            Text("Opacity")
+            Text(label)
                 .font(.system(size: compact ? 10 : 12))
             Spacer()
-            Slider(value: $config.opacity.onSet { onChanged() }, in: 0...1.0)
+            Slider(value: value.onSet { onChanged() }, in: 0...1.0)
                 .frame(width: compact ? 80 : 100)
                 .disabled(!hasImage)
-            Text("\(Int(config.opacity * 100))%")
+            Text("\(Int(value.wrappedValue * 100))%")
                 .font(.system(size: compact ? 9 : 11).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

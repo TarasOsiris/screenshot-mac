@@ -17,11 +17,25 @@ struct BackgroundImageConfig: Codable, Equatable {
     var fileName: String?
     var fillMode: ImageFillMode
     var opacity: Double
+    var tileSpacing: Double // 0-1 relative to image size
+    var tileOffset: Double  // 0-1 relative to image size
 
-    init(fileName: String? = nil, fillMode: ImageFillMode = .fill, opacity: Double = 1.0) {
+    init(fileName: String? = nil, fillMode: ImageFillMode = .fill, opacity: Double = 1.0,
+         tileSpacing: Double = 0.0, tileOffset: Double = 0.0) {
         self.fileName = fileName
         self.fillMode = fillMode
         self.opacity = opacity
+        self.tileSpacing = tileSpacing
+        self.tileOffset = tileOffset
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        fileName = try c.decodeIfPresent(String.self, forKey: .fileName)
+        fillMode = try c.decodeIfPresent(ImageFillMode.self, forKey: .fillMode) ?? .fill
+        opacity = try c.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
+        tileSpacing = try c.decodeIfPresent(Double.self, forKey: .tileSpacing) ?? 0.0
+        tileOffset = try c.decodeIfPresent(Double.self, forKey: .tileOffset) ?? 0.0
     }
 }
 
@@ -85,22 +99,31 @@ struct BackgroundImageView: View {
                     .resizable()
                     .frame(width: geo.size.width, height: geo.size.height)
             case .tile:
-                let imageSize = image.size
+                let imgW = image.size.width
+                let imgH = image.size.height
                 let refSize = modelSize ?? geo.size
-                if imageSize.width > 0, imageSize.height > 0, refSize.width > 0, refSize.height > 0 {
-                    let cols = min(50, max(1, Int(ceil(refSize.width / imageSize.width))))
-                    let rows = min(50, max(1, Int(ceil(refSize.height / imageSize.height))))
-                    let tileW = geo.size.width / CGFloat(cols)
-                    let tileH = geo.size.height / CGFloat(rows)
+                if imgW > 0, imgH > 0, refSize.width > 0, refSize.height > 0 {
+                    let spacing = config.tileSpacing
+                    let offset = config.tileOffset
+                    let stepW = imgW * (1 + spacing)
+                    let stepH = imgH * (1 + spacing)
+                    let offW = imgW * offset
+                    let offH = imgH * offset
+                    let rawCols = max(1, Int(ceil((refSize.width + offW) / stepW)) + 1)
+                    let rawRows = max(1, Int(ceil((refSize.height + offH) / stepH)) + 1)
+                    let drawScale = rawCols * rawRows > 10_000
+                        ? sqrt(Double(rawCols * rawRows) / 10_000.0) : 1.0
+                    let cols = max(1, Int(Double(rawCols) / drawScale))
+                    let rows = max(1, Int(Double(rawRows) / drawScale))
+                    let toDisplay = geo.size.width / refSize.width
+                    let tileW = imgW * toDisplay
+                    let tileH = imgH * toDisplay
                     Canvas { context, size in
-                        for row in 0..<rows {
-                            for col in 0..<cols {
-                                let rect = CGRect(
-                                    x: CGFloat(col) * tileW,
-                                    y: CGFloat(row) * tileH,
-                                    width: tileW + 1,
-                                    height: tileH + 1
-                                )
+                        for r in 0..<rows {
+                            for c in 0..<cols {
+                                let x = (CGFloat(c) * stepW - offW) * toDisplay
+                                let y = (CGFloat(r) * stepH - offH) * toDisplay
+                                let rect = CGRect(x: x, y: y, width: tileW, height: tileH)
                                 context.draw(Image(nsImage: image), in: rect)
                             }
                         }
