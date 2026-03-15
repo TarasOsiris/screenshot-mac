@@ -55,9 +55,10 @@ struct EditorRowView: View {
                         }
                         .onExitCommand { cancelLabelEdit() }
                 } else {
-                    Text(row.label)
+                    Text(row.label.isEmpty ? "Untitled Row" : row.label)
                         .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
                         .foregroundStyle(isSelected ? Color.primary : .secondary)
+                        .opacity(row.label.isEmpty ? 0.5 : 1)
                         .onTapGesture(count: 2) { startLabelEdit() }
                 }
 

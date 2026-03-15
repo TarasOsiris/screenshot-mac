@@ -20,6 +20,8 @@ struct BackgroundEditor: View {
             Text("Image").tag(BackgroundStyle.image)
         }
         .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(maxWidth: .infinity)
         .controlSize(compact ? .mini : .small)
 
         switch backgroundStyle {
@@ -40,6 +42,8 @@ struct BackgroundEditor: View {
                 Text("Angular").tag(GradientType.angular)
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(maxWidth: .infinity)
             .controlSize(compact ? .mini : .small)
 
             GradientStopEditor(
@@ -256,26 +260,36 @@ struct BackgroundImageEditor: View {
             Text("Tile").tag(ImageFillMode.tile)
         }
         .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(maxWidth: .infinity)
         .controlSize(compact ? .mini : .small)
         .disabled(!hasImage)
 
-        percentSlider("Opacity", value: $config.opacity)
+        sliderRow("Opacity", value: $config.opacity)
 
         if config.fillMode == .tile {
-            percentSlider("Spacing", value: $config.tileSpacing)
-            percentSlider("Offset", value: $config.tileOffset)
+            sliderRow("Scale", value: $config.tileScale, range: 0.1...3.0) {
+                "\(String(format: "%.1f", config.tileScale))x"
+            }
+            sliderRow("Spacing", value: $config.tileSpacing)
+            sliderRow("Offset", value: $config.tileOffset)
         }
     }
 
-    private func percentSlider(_ label: String, value: Binding<Double>) -> some View {
+    private func sliderRow(
+        _ label: String,
+        value: Binding<Double>,
+        range: ClosedRange<Double> = 0...1.0,
+        formatLabel: (() -> String)? = nil
+    ) -> some View {
         HStack(spacing: 4) {
             Text(label)
                 .font(.system(size: compact ? 10 : 12))
             Spacer()
-            Slider(value: value.onSet { onChanged() }, in: 0...1.0)
+            Slider(value: value.onSet { onChanged() }, in: range)
                 .frame(width: compact ? 80 : 100)
                 .disabled(!hasImage)
-            Text("\(Int(value.wrappedValue * 100))%")
+            Text(formatLabel?() ?? "\(Int(value.wrappedValue * 100))%")
                 .font(.system(size: compact ? 9 : 11).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

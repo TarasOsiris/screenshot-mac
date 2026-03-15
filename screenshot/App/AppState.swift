@@ -593,21 +593,29 @@ final class AppState {
 
         let scaleX = newWidth / row.templateWidth
         let scaleY = newHeight / row.templateHeight
+        // Devices keep aspect ratio using geometric mean — round-trip stable
+        // unlike min(scaleX, scaleY) which shrinks on every aspect-ratio change
+        let uniformScale = sqrt(scaleX * scaleY)
 
         for i in row.shapes.indices {
             let shape = row.shapes[i]
             let templateIndex = row.owningTemplateIndex(for: shape)
             let oldOriginX = CGFloat(templateIndex) * row.templateWidth
             let newOriginX = CGFloat(templateIndex) * newWidth
-            // Devices keep aspect ratio; other shapes stretch with the template
-            let sx = shape.type == .device ? min(scaleX, scaleY) : scaleX
-            let sy = shape.type == .device ? min(scaleX, scaleY) : scaleY
+            let sx = shape.type == .device ? uniformScale : scaleX
+            let sy = shape.type == .device ? uniformScale : scaleY
+
+            let scaledW = shape.width * sx
+            let scaledH = shape.height * sy
+            let clampDevice = shape.type == .device && (scaledW < CanvasShapeModel.deviceMinSize || scaledH < CanvasShapeModel.deviceMinSize)
+            if !clampDevice {
+                row.shapes[i].width = scaledW
+                row.shapes[i].height = scaledH
+            }
 
             let relX = shape.x - oldOriginX
             row.shapes[i].x = newOriginX + relX * scaleX
             row.shapes[i].y = shape.y * scaleY
-            row.shapes[i].width = shape.width * sx
-            row.shapes[i].height = shape.height * sy
         }
 
         row.templateWidth = newWidth
@@ -1002,8 +1010,8 @@ final class AppState {
         guard let rowIdx = selectedRowIndex else { return }
         let row = rows[rowIdx]
 
-        if Self.looksLikePhoneScreenshot(image) {
-            let shape = CanvasShapeModel.defaultDeviceFromRow(row, centerX: centerX, centerY: centerY)
+        if let detectedCategory = Self.detectScreenshotDevice(image) {
+            let shape = CanvasShapeModel.defaultDeviceFromRow(row, centerX: centerX, centerY: centerY, detectedCategory: detectedCategory)
             addShape(shape)
             saveImage(image, for: shape.id)
             return
@@ -1028,32 +1036,53 @@ final class AppState {
         saveImage(image, for: shape.id)
     }
 
-    // Known iPhone screenshot pixel sizes (portrait): "WxH"
-    private static let knownPhoneScreenshotSizes: Set<String> = [
-        "750x1334",   // iPhone SE / 8
-        "828x1792",   // iPhone XR / 11
-        "1080x1920",  // iPhone 6/7/8 Plus
-        "1125x2436",  // iPhone X / XS / 11 Pro
-        "1080x2340",  // iPhone 12 mini / 13 mini
-        "1170x2532",  // iPhone 12 / 13 / 14
-        "1179x2556",  // iPhone 14 Pro / 15 / 16
-        "1206x2622",  // iPhone 16 Pro / 17 / 17 Pro
-        "1260x2736",  // iPhone Air
-        "1242x2688",  // iPhone XS Max / 11 Pro Max
-        "1284x2778",  // iPhone 12/13 Pro Max
-        "1290x2796",  // iPhone 14 Pro Max / 15 Pro Max / 16 Plus
-        "1320x2868",  // iPhone 16 Pro Max / 17 Pro Max
-    ]
+    // Known screenshot pixel sizes (portrait "WxH") → device category
+    private static let knownScreenshotSizes: [String: DeviceCategory] = {
+        var map = [String: DeviceCategory]()
+        // iPhone
+        for size in [
+            "750x1334",   // iPhone SE / 8
+            "828x1792",   // iPhone XR / 11
+            "1080x1920",  // iPhone 6/7/8 Plus
+            "1125x2436",  // iPhone X / XS / 11 Pro
+            "1080x2340",  // iPhone 12 mini / 13 mini
+            "1170x2532",  // iPhone 12 / 13 / 14
+            "1179x2556",  // iPhone 14 Pro / 15 / 16
+            "1206x2622",  // iPhone 16 Pro / 17 / 17 Pro
+            "1260x2736",  // iPhone Air
+            "1242x2688",  // iPhone XS Max / 11 Pro Max
+            "1284x2778",  // iPhone 12/13 Pro Max
+            "1290x2796",  // iPhone 14 Pro Max / 15 Pro Max / 16 Plus
+            "1320x2868",  // iPhone 16 Pro Max / 17 Pro Max
+        ] { map[size] = .iphone }
+        // iPad Pro 11"
+        for size in [
+            "1668x2388",  // iPad Pro 11" (3rd/4th gen)
+            "1668x2420",  // iPad Pro 11" (M4)
+        ] { map[size] = .ipadPro11 }
+        // iPad Pro 13"
+        for size in [
+            "2048x2732",  // iPad Pro 12.9" (3rd-6th gen)
+            "2064x2752",  // iPad Pro 13" (M4)
+        ] { map[size] = .ipadPro13 }
+        return map
+    }()
 
-    /// Heuristic: detect if an image looks like a phone screenshot.
-    static func looksLikePhoneScreenshot(_ image: NSImage) -> Bool {
-        guard let rep = image.representations.first else { return false }
+    /// Detect if an image looks like a device screenshot. Returns the matching category or nil.
+    static func detectScreenshotDevice(_ image: NSImage) -> DeviceCategory? {
+        guard let rep = image.representations.first else { return nil }
         let pw = rep.pixelsWide
         let ph = rep.pixelsHigh
-        guard pw > 0, ph > 0, ph > pw else { return false }
-        if knownPhoneScreenshotSizes.contains("\(pw)x\(ph)") { return true }
-        let ratio = CGFloat(ph) / CGFloat(pw)
-        return pw >= 640 && pw <= 1600 && ratio >= 1.7 && ratio <= 2.4
+        guard pw > 0, ph > 0 else { return nil }
+        // Normalize to portrait for lookup
+        let (w, h) = pw > ph ? (ph, pw) : (pw, ph)
+        if let category = knownScreenshotSizes["\(w)x\(h)"] { return category }
+        // Heuristic fallback for phones
+        let ratio = CGFloat(h) / CGFloat(w)
+        if w >= 640 && w <= 1600 && ratio >= 1.7 && ratio <= 2.4 { return .iphone }
+        // Heuristic fallback for iPads
+        if w >= 1600 && w <= 2200 && ratio >= 1.2 && ratio <= 1.5 { return w >= 2000 ? .ipadPro13 : .ipadPro11 }
+        return nil
     }
 
     // MARK: - Nudge

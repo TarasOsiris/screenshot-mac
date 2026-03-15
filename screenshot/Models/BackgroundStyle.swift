@@ -19,14 +19,16 @@ struct BackgroundImageConfig: Codable, Equatable {
     var opacity: Double
     var tileSpacing: Double // 0-1 relative to image size
     var tileOffset: Double  // 0-1 relative to image size
+    var tileScale: Double   // 0.1-3.0 scale factor for tile images
 
     init(fileName: String? = nil, fillMode: ImageFillMode = .fill, opacity: Double = 1.0,
-         tileSpacing: Double = 0.0, tileOffset: Double = 0.0) {
+         tileSpacing: Double = 0.0, tileOffset: Double = 0.0, tileScale: Double = 1.0) {
         self.fileName = fileName
         self.fillMode = fillMode
         self.opacity = opacity
         self.tileSpacing = tileSpacing
         self.tileOffset = tileOffset
+        self.tileScale = tileScale
     }
 
     init(from decoder: Decoder) throws {
@@ -36,6 +38,7 @@ struct BackgroundImageConfig: Codable, Equatable {
         opacity = try c.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
         tileSpacing = try c.decodeIfPresent(Double.self, forKey: .tileSpacing) ?? 0.0
         tileOffset = try c.decodeIfPresent(Double.self, forKey: .tileOffset) ?? 0.0
+        tileScale = try c.decodeIfPresent(Double.self, forKey: .tileScale) ?? 1.0
     }
 }
 
@@ -99,8 +102,9 @@ struct BackgroundImageView: View {
                     .resizable()
                     .frame(width: geo.size.width, height: geo.size.height)
             case .tile:
-                let imgW = image.size.width
-                let imgH = image.size.height
+                let scale = max(config.tileScale, 0.1)
+                let imgW = image.size.width * scale
+                let imgH = image.size.height * scale
                 let refSize = modelSize ?? geo.size
                 if imgW > 0, imgH > 0, refSize.width > 0, refSize.height > 0 {
                     let spacing = config.tileSpacing

@@ -462,7 +462,7 @@ struct CanvasShapeView: View {
 
     /// Compute new x, y, width, height for a resize drag, keeping the anchor point fixed in canvas space.
     private func computeResize(edge: ResizeEdge, tx: CGFloat, ty: CGFloat, lockAspectRatio: Bool = false) -> ResizeState {
-        let minSize: CGFloat = 20
+        let minSize: CGFloat = shape.type == .device ? CanvasShapeModel.deviceMinSize : 20
         let cosA = cos(rotationRadians)
         let sinA = sin(rotationRadians)
 
@@ -586,11 +586,14 @@ struct CanvasShapeView: View {
 
     @ViewBuilder
     private func imageDropPlaceholder<Background: View>(@ViewBuilder background: () -> Background) -> some View {
-        let iconSize = max(14, 20 * displayScale)
-        let labelSize = max(10, 10 * displayScale)
-        let spacing = max(4, 4 * displayScale)
-        let padding = max(10, 12 * displayScale)
-        let cr = max(8, 8 * displayScale)
+        // Scale button to fit within shape, capped at comfortable max
+        let sizeRef = min(displayW, displayH)
+        let iconSize = min(20, max(10, sizeRef * 0.12))
+        let labelSize = min(11, max(8, sizeRef * 0.06))
+        let spacing = min(4, max(2, sizeRef * 0.02))
+        let padding = min(12, max(4, sizeRef * 0.05))
+        let cr = min(8, max(4, sizeRef * 0.04))
+        let showLabel = displayH > 40
 
         ZStack {
             background()
@@ -601,8 +604,10 @@ struct CanvasShapeView: View {
                 VStack(spacing: spacing) {
                     Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
                         .font(.system(size: iconSize))
-                    Text(isDropTargeted ? "Drop image" : "Add image")
-                        .font(.system(size: labelSize, weight: .medium))
+                    if showLabel {
+                        Text(isDropTargeted ? "Drop image" : "Add image")
+                            .font(.system(size: labelSize, weight: .medium))
+                    }
                 }
                 .foregroundStyle(.primary)
                 .padding(padding)

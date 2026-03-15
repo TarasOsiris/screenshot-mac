@@ -2,12 +2,9 @@ import SwiftUI
 
 struct InspectorPanel: View {
     @Bindable var state: AppState
-    @FocusState private var isLabelFocused: Bool
-
     var body: some View {
         if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId {
             Form {
-                rowSection(rowId: rowId)
                 sizeSection(rowIndex: rowIndex, rowId: rowId)
                 backgroundSection(rowIndex: rowIndex, rowId: rowId)
                 Section("Add new element") {
@@ -17,9 +14,6 @@ struct InspectorPanel: View {
                 optionsSection(rowId: rowId)
             }
             .formStyle(.grouped)
-            .onAppear { isLabelFocused = false }
-            .onChange(of: state.selectedRowId) { isLabelFocused = false }
-            .onChange(of: state.selectedShapeId) { if state.selectedShapeId != nil { isLabelFocused = false } }
         } else {
             ContentUnavailableView(
                 "No Row Selected",
@@ -27,25 +21,6 @@ struct InspectorPanel: View {
                 description: Text("Select a row to edit its settings.")
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-    }
-
-    @ViewBuilder
-    private func rowSection(rowId: UUID) -> some View {
-        Section("Row") {
-            TextField("Row label", text: safeRowBinding(rowId, keyPath: \.label, default: "").limited(to: 50).onSet {
-                guard let ri = state.rowIndex(for: rowId) else { return }
-                state.rows[ri].isLabelManuallySet = true
-                state.scheduleSave()
-            }, prompt: Text("Row label"))
-                .textFieldStyle(.roundedBorder)
-                .font(.system(size: 12))
-                .labelsHidden()
-                .focused($isLabelFocused)
-                .onSubmit {
-                    state.updateRowLabel(rowId, text: state.rows[state.rowIndex(for: rowId) ?? 0].label)
-                    isLabelFocused = false
-                }
         }
     }
 
@@ -111,7 +86,10 @@ struct InspectorPanel: View {
     @ViewBuilder
     private func deviceSection(rowId: UUID) -> some View {
         Section("Device") {
-            LabeledContent("Default device") {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Default device")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
                 DevicePickerMenu(
                     category: defaultDeviceCategory(for: rowId),
                     frameId: defaultDeviceFrameId(for: rowId),
@@ -138,7 +116,6 @@ struct InspectorPanel: View {
                 .help(defaultDeviceHelp(for: rowId))
             }
             .controlSize(.small)
-            .font(.system(size: 12))
 
             // Body color only for abstract devices
             if defaultDeviceIsAbstract(for: rowId) {

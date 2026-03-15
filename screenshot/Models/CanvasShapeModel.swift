@@ -159,6 +159,7 @@ extension Optional where Wrapped == TextAlign {
 }
 
 struct CanvasShapeModel: Identifiable, Codable {
+    static let deviceMinSize: CGFloat = 200
     static let defaultDeviceBodyColor = Color(red: 0.11, green: 0.11, blue: 0.12)
     static let defaultStarPointCount = 5
     static let defaultOutlineColor: Color = .black
@@ -402,14 +403,20 @@ struct CanvasShapeModel: Identifiable, Codable {
         )
     }
 
-    /// Creates a device shape using the row's default device category and frame.
-    static func defaultDeviceFromRow(_ row: ScreenshotRow, centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
+    /// Creates a device shape using the row's default device settings.
+    /// If `detectedCategory` is provided, it overrides the row default category
+    /// (but a row-level real device frame still takes priority).
+    static func defaultDeviceFromRow(_ row: ScreenshotRow, centerX: CGFloat, centerY: CGFloat, detectedCategory: DeviceCategory? = nil) -> CanvasShapeModel {
+        let category = detectedCategory ?? row.defaultDeviceCategory ?? .iphone
         var shape = defaultDevice(
             centerX: centerX, centerY: centerY,
             templateHeight: row.templateHeight,
-            category: row.defaultDeviceCategory ?? .iphone
+            category: category
         )
-        if let frameId = row.defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+        // Only apply the row's default frame if it matches the detected category
+        if let frameId = row.defaultDeviceFrameId,
+           let frame = DeviceFrameCatalog.frame(for: frameId),
+           detectedCategory == nil || frame.fallbackCategory == detectedCategory {
             shape.deviceCategory = frame.fallbackCategory
             shape.deviceFrameId = frame.id
             shape.adjustToDeviceAspectRatio(centerX: centerX)
