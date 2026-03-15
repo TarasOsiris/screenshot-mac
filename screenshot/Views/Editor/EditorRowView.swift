@@ -69,23 +69,23 @@ struct EditorRowView: View {
                 Spacer()
 
                 HStack(spacing: 4) {
-                    rowActionButton("chevron.up", tooltip: "Move up", disabled: !canMoveUp) {
+                    ActionButton(icon: "chevron.up", tooltip: "Move up", disabled: !canMoveUp) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
                     }
-                    rowActionButton("chevron.down", tooltip: "Move down", disabled: !canMoveDown) {
+                    ActionButton(icon: "chevron.down", tooltip: "Move down", disabled: !canMoveDown) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
                     }
-                    rowActionButton("doc.on.doc", tooltip: "Duplicate row", disabled: false) {
+                    ActionButton(icon: "doc.on.doc", tooltip: "Duplicate row", disabled: false) {
                         withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
                     }
-                    rowActionButton("arrow.counterclockwise", tooltip: "Reset row", disabled: false, isDestructive: true) {
+                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset row", isDestructive: true, disabled: false) {
                         if confirmBeforeDeleting {
                             isResettingRow = true
                         } else {
                             withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
                         }
                     }
-                    rowActionButton("trash", tooltip: "Delete row", disabled: !canDelete, isDestructive: true) {
+                    ActionButton(icon: "trash", tooltip: "Delete row", isDestructive: true, disabled: !canDelete) {
                         if confirmBeforeDeleting {
                             isDeletingRow = true
                         } else {
@@ -478,27 +478,4 @@ struct EditorRowView: View {
         )
     }
 
-    private func rowActionButton(
-        _ icon: String,
-        tooltip: String,
-        disabled: Bool,
-        isDestructive: Bool = false,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 10))
-                .frame(width: 22, height: 22)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.borderless)
-        .focusable(false)
-        .foregroundStyle(
-            disabled
-            ? AnyShapeStyle(.tertiary)
-            : (isDestructive ? AnyShapeStyle(Color.red.opacity(0.8)) : AnyShapeStyle(.secondary))
-        )
-        .disabled(disabled)
-        .help(tooltip)
-    }
 }

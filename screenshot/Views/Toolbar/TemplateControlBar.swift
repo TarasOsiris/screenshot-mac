@@ -52,16 +52,16 @@ struct TemplateControlBar: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            templateActionButton("eye", tooltip: "Preview") {
+            ActionButton(icon: "eye", tooltip: "Preview") {
                 previewScreenshot()
             }
-            templateActionButton("arrow.down.circle", tooltip: "Download") {
+            ActionButton(icon: "arrow.down.circle", tooltip: "Download") {
                 downloadScreenshot()
             }
-            templateActionButton("chevron.left", tooltip: "Move left", disabled: !canMoveLeft) {
+            ActionButton(icon: "chevron.left", tooltip: "Move left", disabled: !canMoveLeft) {
                 onMoveLeft()
             }
-            templateActionButton("chevron.right", tooltip: "Move right", disabled: !canMoveRight) {
+            ActionButton(icon: "chevron.right", tooltip: "Move right", disabled: !canMoveRight) {
                 onMoveRight()
             }
 
@@ -139,12 +139,12 @@ struct TemplateControlBar: View {
             }
 
             if showDuplicateIcon {
-                templateActionButton("plus.square.on.square", tooltip: "Duplicate screenshot") {
+                ActionButton(icon: "plus.square.on.square", tooltip: "Duplicate screenshot") {
                     onDuplicate()
                 }
             }
             if showDeleteIcon {
-                templateActionButton("trash", tooltip: "Delete screenshot", isDestructive: true) {
+                ActionButton(icon: "trash", tooltip: "Delete screenshot", isDestructive: true) {
                     confirmDeleteTemplate()
                 }
             }
@@ -208,30 +208,6 @@ struct TemplateControlBar: View {
         } else {
             onDelete()
         }
-    }
-
-    private func templateActionButton(
-        _ icon: String,
-        tooltip: String,
-        disabled: Bool = false,
-        isDestructive: Bool = false,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 11))
-                .frame(width: 22, height: 22)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.borderless)
-        .focusable(false)
-        .foregroundStyle(
-            disabled
-            ? AnyShapeStyle(.tertiary)
-            : (isDestructive ? AnyShapeStyle(Color.red.opacity(0.8)) : AnyShapeStyle(.secondary))
-        )
-        .disabled(disabled)
-        .help(tooltip)
     }
 
     private func previewScreenshot() {

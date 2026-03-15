@@ -54,7 +54,7 @@ struct ShapePropertiesBar: View {
     @ViewBuilder
     private func localeImageResetButton(shapeId: UUID) -> some View {
         if hasLocaleImageOverride(shapeId) {
-            barButton("arrow.counterclockwise", help: "Reset to default locale image") {
+            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to default locale image", frameSize: 24) {
                 state.resetLocaleImageOverride(shapeId: shapeId)
             }
         }
@@ -84,9 +84,10 @@ struct ShapePropertiesBar: View {
                                             .labelsHidden()
                                             .help("Device body color")
 
-                                        barButton(
-                                            "arrow.counterclockwise",
-                                            help: "Reset to row default device body color",
+                                        ActionButton(
+                                            icon: "arrow.counterclockwise",
+                                            tooltip: "Reset to row default device body color",
+                                            frameSize: 24,
                                             disabled: !hasDeviceBodyColorOverride(shapeId)
                                         ) {
                                             resetDeviceBodyColor(shapeId)
@@ -334,19 +335,19 @@ struct ShapePropertiesBar: View {
 
                     section {
                         HStack(spacing: 4) {
-                            barButton("square.3.layers.3d.top.filled", help: "Bring to front (⇧⌘])", disabled: !canBringToFront) {
+                            ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front (⇧⌘])", frameSize: 24, disabled: !canBringToFront) {
                                 state.bringSelectedShapeToFront()
                             }
 
-                            barButton("square.3.layers.3d.bottom.filled", help: "Send to back (⇧⌘[)", disabled: !canSendToBack) {
+                            ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back (⇧⌘[)", frameSize: 24, disabled: !canSendToBack) {
                                 state.sendSelectedShapeToBack()
                             }
 
-                            barButton("doc.on.doc", help: "Duplicate (⌘D)") {
+                            ActionButton(icon: "doc.on.doc", tooltip: "Duplicate (⌘D)", frameSize: 24) {
                                 state.duplicateSelectedShape()
                             }
 
-                            barButton("trash", help: "Delete (⌫)", isDestructive: true) {
+                            ActionButton(icon: "trash", tooltip: "Delete (⌫)", frameSize: 24, isDestructive: true) {
                                 state.deleteShape(shapeId)
                             }
                         }
@@ -641,33 +642,10 @@ struct ShapePropertiesBar: View {
                 .font(.system(size: 10))
                 .foregroundStyle(Color.accentColor)
 
-            barButton("arrow.counterclockwise", help: "Reset locale override") {
+            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset locale override", frameSize: 24) {
                 state.resetLocaleOverride(shapeId: shapeId)
             }
         }
     }
 
-    private func barButton(
-        _ icon: String,
-        help: String,
-        isDestructive: Bool = false,
-        disabled: Bool = false,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 11))
-                .frame(width: 24, height: 24)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.borderless)
-        .focusable(false)
-        .foregroundStyle(
-            disabled
-            ? AnyShapeStyle(.tertiary)
-            : (isDestructive ? AnyShapeStyle(Color.red.opacity(0.8)) : AnyShapeStyle(.secondary))
-        )
-        .disabled(disabled)
-        .help(help)
-    }
 }
