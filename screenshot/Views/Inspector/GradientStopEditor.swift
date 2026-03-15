@@ -186,7 +186,7 @@ struct GradientStopEditor: View {
 
     private var horizontalGradient: LinearGradient {
         LinearGradient(
-            stops: config.stops.map { Gradient.Stop(color: $0.color, location: $0.location) },
+            stops: config.swiftUIStops,
             startPoint: .leading,
             endPoint: .trailing
         )

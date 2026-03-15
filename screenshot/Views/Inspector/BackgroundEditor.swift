@@ -34,6 +34,14 @@ struct BackgroundEditor: View {
             .font(.system(size: compact ? 10 : 12))
 
         case .gradient:
+            Picker("Type", selection: $gradientConfig.gradientType.onSet { onChanged() }) {
+                Text("Linear").tag(GradientType.linear)
+                Text("Radial").tag(GradientType.radial)
+                Text("Angular").tag(GradientType.angular)
+            }
+            .pickerStyle(.segmented)
+            .controlSize(compact ? .mini : .small)
+
             GradientStopEditor(
                 config: $gradientConfig,
                 onChanged: onChanged
@@ -42,7 +50,11 @@ struct BackgroundEditor: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
                 ForEach(gradientPresets) { preset in
                     Button {
-                        gradientConfig = preset.config
+                        var presetConfig = preset.config
+                        presetConfig.gradientType = gradientConfig.gradientType
+                        presetConfig.centerX = gradientConfig.centerX
+                        presetConfig.centerY = gradientConfig.centerY
+                        gradientConfig = presetConfig
                         onChanged()
                     } label: {
                         RoundedRectangle(cornerRadius: 4)
@@ -59,43 +71,15 @@ struct BackgroundEditor: View {
                 }
             }
 
-            let angleFontSize: CGFloat = compact ? 14 : 18
-            let buttonSize: CGFloat = compact ? 14 : 18
-            let arrowSize: CGFloat = compact ? 7 : 8
+            switch gradientConfig.gradientType {
+            case .linear:
+                angleControls
 
-            VStack(spacing: 6) {
-                HStack(spacing: compact ? 8 : 12) {
-                    GradientAngleWheel(
-                        angle: $gradientConfig.angle.onSet { onChanged() }
-                    )
-                    .frame(width: compact ? 36 : nil, height: compact ? 36 : nil)
+            case .radial, .angular:
+                centerControls
 
-                    VStack(alignment: .leading, spacing: compact ? 2 : 4) {
-                        Text("\(Int(gradientConfig.angle))°")
-                            .font(.system(size: angleFontSize, weight: .medium).monospacedDigit())
-                            .foregroundStyle(.primary)
-
-                        HStack(spacing: compact ? 1 : 2) {
-                            ForEach([0, 45, 90, 135, 180, 225, 270, 315], id: \.self) { a in
-                                Button {
-                                    gradientConfig.angle = Double(a)
-                                    onChanged()
-                                } label: {
-                                    Image(systemName: "arrow.up")
-                                        .font(.system(size: arrowSize))
-                                        .rotationEffect(.degrees(Double(a)))
-                                        .frame(width: buttonSize, height: buttonSize)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: compact ? 2 : 3)
-                                                .fill(Int(gradientConfig.angle) == a ? Color.accentColor.opacity(0.3) : Color.clear)
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                                .focusable(false)
-                                .help("\(a)°")
-                            }
-                        }
-                    }
+                if gradientConfig.gradientType == .angular {
+                    angleControls
                 }
             }
 
@@ -109,6 +93,86 @@ struct BackgroundEditor: View {
                 onRemoveImage: onRemoveImage ?? {},
                 onDropImage: onDropImage
             )
+        }
+    }
+
+    @ViewBuilder
+    private var angleControls: some View {
+        let angleFontSize: CGFloat = compact ? 14 : 18
+        let buttonSize: CGFloat = compact ? 14 : 18
+        let arrowSize: CGFloat = compact ? 7 : 8
+
+        VStack(spacing: 6) {
+            HStack(spacing: compact ? 8 : 12) {
+                GradientAngleWheel(
+                    angle: $gradientConfig.angle.onSet { onChanged() }
+                )
+                .frame(width: compact ? 36 : nil, height: compact ? 36 : nil)
+
+                VStack(alignment: .leading, spacing: compact ? 2 : 4) {
+                    Text("\(Int(gradientConfig.angle))°")
+                        .font(.system(size: angleFontSize, weight: .medium).monospacedDigit())
+                        .foregroundStyle(.primary)
+
+                    HStack(spacing: compact ? 1 : 2) {
+                        ForEach([0, 45, 90, 135, 180, 225, 270, 315], id: \.self) { a in
+                            Button {
+                                gradientConfig.angle = Double(a)
+                                onChanged()
+                            } label: {
+                                Image(systemName: "arrow.up")
+                                    .font(.system(size: arrowSize))
+                                    .rotationEffect(.degrees(Double(a)))
+                                    .frame(width: buttonSize, height: buttonSize)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: compact ? 2 : 3)
+                                            .fill(Int(gradientConfig.angle.rounded()) == a ? Color.accentColor.opacity(0.3) : Color.clear)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                            .focusable(false)
+                            .help("\(a)°")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var centerControls: some View {
+        HStack(spacing: compact ? 8 : 12) {
+            GradientCenterPicker(
+                centerX: $gradientConfig.centerX.onSet { onChanged() },
+                centerY: $gradientConfig.centerY.onSet { onChanged() }
+            )
+
+            VStack(alignment: .leading, spacing: compact ? 2 : 4) {
+                Text("Center")
+                    .font(.system(size: compact ? 10 : 12))
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: compact ? 4 : 8) {
+                    Text("X: \(Int(gradientConfig.centerX * 100))%")
+                    Text("Y: \(Int(gradientConfig.centerY * 100))%")
+                }
+                .font(.system(size: compact ? 10 : 11).monospacedDigit())
+                .foregroundStyle(.primary)
+
+                Button {
+                    gradientConfig.centerX = 0.5
+                    gradientConfig.centerY = 0.5
+                    onChanged()
+                } label: {
+                    Text("Reset")
+                        .font(.system(size: compact ? 9 : 10))
+                }
+                .buttonStyle(.plain)
+                .focusable(false)
+                .foregroundStyle(.secondary)
+                .opacity(gradientConfig.centerX == 0.5 && gradientConfig.centerY == 0.5 ? 0.3 : 1)
+                .disabled(gradientConfig.centerX == 0.5 && gradientConfig.centerY == 0.5)
+            }
         }
     }
 }

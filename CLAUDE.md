@@ -39,7 +39,8 @@ Unit tests cover `AppState` template operations and `ExportService` rendering (`
 - `ScreenshotRow` → has `templates: [ScreenshotTemplate]` (columns) + `shapes: [CanvasShapeModel]` (canvas elements). Implements `BackgroundFillable`.
 - `ScreenshotTemplate` → per-column background/gradient settings. Implements `BackgroundFillable`.
 - `CanvasShapeModel` → union type via `ShapeType` enum (rectangle, circle, star, text, image, device, svg). Type-specific properties are optionals on the same struct.
-- `BackgroundStyle` → enum (color, gradient, image) with `GradientConfig` (color stops, angle, 12 presets) and `BackgroundImageConfig` (fileName, fillMode, opacity). `BackgroundFillable` protocol provides `backgroundFillView(image:modelSize:)` and `resolvedBackgroundView(screenshotImages:modelSize:)` for rendering.
+- `BackgroundStyle` → enum (color, gradient, image) with `GradientConfig` (color stops, angle, type, center) and `BackgroundImageConfig` (fileName, fillMode, opacity). `BackgroundFillable` protocol provides `backgroundFillView(image:modelSize:)` and `resolvedBackgroundView(screenshotImages:modelSize:)` for rendering.
+- `GradientType` → enum (linear, radial, angular). Linear uses `LinearGradient` with angle-derived start/end points. Radial uses `RadialGradient` inside a `GeometryReader` for size-aware `endRadius`. Angular uses `AngularGradient` with center and angle offset.
 - `LocaleState` → locale definitions + active locale + per-shape overrides (`ShapeLocaleOverride` for text properties).
 
 **Services:**
@@ -81,12 +82,15 @@ Unit tests cover `AppState` template operations and `ExportService` rendering (`
 - All background views in export must have explicit `.frame(width:height:)` — `GeometryReader` inside `resolvedBackgroundView` is greedy and will break layout without it.
 - When views depend on container size (e.g., tiling), pass `modelSize` so rendering is consistent across editor (display-scale) and export (model-scale) contexts.
 - Zoom must never affect screenshot content — use model-space dimensions for any size-dependent rendering logic.
+- **Prefer scale-independent SwiftUI APIs** (e.g., `UnitPoint`, `LinearGradient` start/end points, `AngularGradient` angle) over absolute-value APIs (e.g., `RadialGradient.endRadius`). Scale-independent APIs produce identical results at any frame size, guaranteeing editor/export parity without extra work. When an absolute-value API is unavoidable, use `GeometryReader` to read the actual rendered frame — never derive absolute values from `modelSize`, which doesn't match the editor's display-space frame.
+- When adding a new visual feature, write an export test in `ExportServiceTests` that verifies both spanning and non-spanning rendering produce valid, distinct output per template.
 
 **Coordinate spaces — model vs display:**
 - Model space = actual pixel dimensions (e.g., 1242×2688). All shape positions, sizes, and template dimensions are stored in model space.
 - Display space = model space × `displayScale` (which includes zoom). The editor renders at display scale; export renders at model scale (displayScale=1.0).
 - Never use display-space values for logic that affects visual output (tile counts, shape filtering, background sizing). Always derive from model-space values.
 - `CanvasShapeView` multiplies by `displayScale` internally — pass `1.0` in export, the actual display scale in the editor.
+- **`modelSize` ≠ rendered frame size in the editor.** `modelSize` is always in model space, but the editor view frame is in display space (model × displayScale × zoom). If a SwiftUI API requires absolute point values in the view's coordinate system (e.g., `RadialGradient.endRadius`), you MUST use `GeometryReader` to read the actual rendered size — do NOT use `modelSize`. APIs that use relative coordinates (`UnitPoint`, angles) are safe with any frame size. This distinction is critical: using `modelSize` for absolute values causes the editor to render differently from export.
 
 **Backward-compatible persistence:**
 - All new model properties must use `decodeIfPresent` with a sensible default in the `init(from decoder:)`. Users have existing saved projects — adding a required field will crash on load.
@@ -100,7 +104,7 @@ Unit tests cover `AppState` template operations and `ExportService` rendering (`
 - Use `NSImage.fromSecurityScopedURL()` (in `Extensions/CodableColor.swift`) when loading images from user-picked file URLs.
 
 **Exhaustive switch coverage:**
-- `BackgroundStyle`, `ShapeType`, `ImageFillMode`, `DeviceCategory` are enums used in switch statements across the codebase. Adding a new case requires updating every switch — check `EditorRowView`, `ExportService`, `BackgroundEditor`, `CanvasShapeView`, `ShapePropertiesBar`, and `InspectorPanel`.
+- `BackgroundStyle`, `ShapeType`, `ImageFillMode`, `DeviceCategory`, `GradientType` are enums used in switch statements across the codebase. Adding a new case requires updating every switch — check `EditorRowView`, `ExportService`, `BackgroundEditor`, `CanvasShapeView`, `ShapePropertiesBar`, and `InspectorPanel`.
 - The `BackgroundFillable` protocol extension (`backgroundFillView`) must handle all `BackgroundStyle` cases. Both editor and export use this same code path.
 
 **SwiftUI type-checker limits:**

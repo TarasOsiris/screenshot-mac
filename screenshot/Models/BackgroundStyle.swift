@@ -53,7 +53,7 @@ extension BackgroundFillable {
         case .color:
             Rectangle().fill(bgColor)
         case .gradient:
-            Rectangle().fill(gradientConfig.linearGradient)
+            gradientConfig.gradientFill
         case .image:
             if let image {
                 ZStack {
@@ -119,12 +119,13 @@ struct BackgroundImageView: View {
                     let tileW = imgW * toDisplay
                     let tileH = imgH * toDisplay
                     Canvas { context, size in
+                        let resolved = context.resolve(Image(nsImage: image))
                         for r in 0..<rows {
                             for c in 0..<cols {
                                 let x = (CGFloat(c) * stepW - offW) * toDisplay
                                 let y = (CGFloat(r) * stepH - offH) * toDisplay
                                 let rect = CGRect(x: x, y: y, width: tileW, height: tileH)
-                                context.draw(Image(nsImage: image), in: rect)
+                                context.draw(resolved, in: rect)
                             }
                         }
                     }
@@ -154,34 +155,50 @@ struct GradientColorStop: Codable, Equatable, Identifiable {
     }
 }
 
+enum GradientType: String, Codable, CaseIterable {
+    case linear
+    case radial
+    case angular
+}
+
 struct GradientConfig: Codable, Equatable {
     var stops: [GradientColorStop]
     var angle: Double // degrees
+    var gradientType: GradientType
+    var centerX: Double // 0.0-1.0, used by radial and angular
+    var centerY: Double // 0.0-1.0, used by radial and angular
 
-    init(stops: [GradientColorStop], angle: Double = 135) {
+    init(stops: [GradientColorStop], angle: Double = 135, gradientType: GradientType = .linear,
+         centerX: Double = 0.5, centerY: Double = 0.5) {
         self.stops = stops.sorted { $0.location < $1.location }
         self.angle = angle
+        self.gradientType = gradientType
+        self.centerX = centerX
+        self.centerY = centerY
     }
 
     init(color1: Color = Color(red: 0.4, green: 0.49, blue: 0.92),
          color2: Color = Color(red: 0.46, green: 0.29, blue: 0.64),
-         angle: Double = 135) {
-        self.stops = [
+         angle: Double = 135,
+         gradientType: GradientType = .linear) {
+        self.init(stops: [
             GradientColorStop(color: color1, location: 0),
             GradientColorStop(color: color2, location: 1),
-        ]
-        self.angle = angle
+        ], angle: angle, gradientType: gradientType)
     }
 
     // Backward-compatible decoding
     enum CodingKeys: String, CodingKey {
-        case stops, angle
+        case stops, angle, gradientType, centerX, centerY
         case color1Data, color2Data // legacy
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         angle = try c.decode(Double.self, forKey: .angle)
+        gradientType = try c.decodeIfPresent(GradientType.self, forKey: .gradientType) ?? .linear
+        centerX = try c.decodeIfPresent(Double.self, forKey: .centerX) ?? 0.5
+        centerY = try c.decodeIfPresent(Double.self, forKey: .centerY) ?? 0.5
 
         if let stops = try c.decodeIfPresent([GradientColorStop].self, forKey: .stops) {
             self.stops = stops.sorted { $0.location < $1.location }
@@ -200,6 +217,9 @@ struct GradientConfig: Codable, Equatable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(stops, forKey: .stops)
         try c.encode(angle, forKey: .angle)
+        try c.encode(gradientType, forKey: .gradientType)
+        try c.encode(centerX, forKey: .centerX)
+        try c.encode(centerY, forKey: .centerY)
     }
 
     private var radians: Double {
@@ -214,13 +234,48 @@ struct GradientConfig: Codable, Equatable {
         UnitPoint(x: 0.5 + cos(radians) * 0.5, y: 0.5 + sin(radians) * 0.5)
     }
 
+    var swiftUIStops: [Gradient.Stop] {
+        stops.map { Gradient.Stop(color: $0.color, location: $0.location) }
+    }
+
     var linearGradient: LinearGradient {
-        let swiftUIStops = stops.map { Gradient.Stop(color: $0.color, location: $0.location) }
-        return LinearGradient(
+        LinearGradient(
             stops: swiftUIStops,
             startPoint: startPoint,
             endPoint: endPoint
         )
+    }
+
+    @ViewBuilder
+    var gradientFill: some View {
+        switch gradientType {
+        case .linear:
+            Rectangle().fill(linearGradient)
+        case .radial:
+            // GeometryReader reads the actual rendered frame size (display-space in editor,
+            // model-space in export) so endRadius is always correct for the view's coordinates.
+            GeometryReader { geo in
+                let w = geo.size.width
+                let h = geo.size.height
+                let cx = w * centerX
+                let cy = h * centerY
+                let dx = max(cx, w - cx)
+                let dy = max(cy, h - cy)
+                let endRadius = sqrt(dx * dx + dy * dy)
+                Rectangle().fill(RadialGradient(
+                    stops: swiftUIStops,
+                    center: UnitPoint(x: centerX, y: centerY),
+                    startRadius: 0,
+                    endRadius: endRadius
+                ))
+            }
+        case .angular:
+            Rectangle().fill(AngularGradient(
+                stops: swiftUIStops,
+                center: UnitPoint(x: centerX, y: centerY),
+                angle: .degrees(angle - 90)
+            ))
+        }
     }
 
     @discardableResult

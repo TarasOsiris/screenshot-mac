@@ -262,6 +262,95 @@ struct ExportServiceTests {
         #expect(delta < 0.15, "Spanning gradient should be continuous at boundary, delta=\(delta)")
     }
 
+    @Test func spanningRadialGradientIsContinuousAcrossTemplates() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        let gradient = GradientConfig(
+            stops: [
+                GradientColorStop(color: Self.testRed, location: 0),
+                GradientColorStop(color: Self.testBlue, location: 1),
+            ],
+            angle: 0,
+            gradientType: .radial
+        )
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw, templateHeight: th,
+            backgroundStyle: .gradient,
+            gradientConfig: gradient,
+            spanBackgroundAcrossRow: true
+        )
+
+        let bmp0 = try renderTemplateBitmap(index: 0, row: row)
+        let bmp1 = try renderTemplateBitmap(index: 1, row: row)
+
+        // Continuity: right edge of t0 should approximate left edge of t1
+        let t0Right = try pixelColor(bmp0, at: (Int(tw) - 2, 100))
+        let t1Left = try pixelColor(bmp1, at: (1, 100))
+        let delta = abs(t0Right.r - t1Left.r) + abs(t0Right.g - t1Left.g) + abs(t0Right.b - t1Left.b)
+        #expect(delta < 0.15, "Spanning radial gradient should be continuous at boundary, delta=\(delta)")
+    }
+
+    @Test func spanningAngularGradientRendersAcrossTemplates() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        let gradient = GradientConfig(
+            stops: [
+                GradientColorStop(color: Self.testRed, location: 0),
+                GradientColorStop(color: Self.testBlue, location: 1),
+            ],
+            angle: 0,
+            gradientType: .angular
+        )
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw, templateHeight: th,
+            backgroundStyle: .gradient,
+            gradientConfig: gradient,
+            spanBackgroundAcrossRow: true
+        )
+
+        let bmp0 = try renderTemplateBitmap(index: 0, row: row)
+        let bmp1 = try renderTemplateBitmap(index: 1, row: row)
+
+        // Templates should show different slices of the spanning gradient
+        let c0 = try pixelColor(bmp0, at: (50, 50))
+        let c1 = try pixelColor(bmp1, at: (50, 50))
+        let sampleDelta = abs(c0.r - c1.r) + abs(c0.g - c1.g) + abs(c0.b - c1.b)
+        #expect(sampleDelta > 0.05, "Spanning angular templates should show different colors at same position")
+    }
+
+    @Test func nonSpanningGradientRendersPerTemplate() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        for gradType in [GradientType.linear, .radial, .angular] {
+            let gradient = GradientConfig(
+                stops: [
+                    GradientColorStop(color: Self.testRed, location: 0),
+                    GradientColorStop(color: Self.testBlue, location: 1),
+                ],
+                angle: 90,
+                gradientType: gradType
+            )
+            let row = ScreenshotRow(
+                templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+                templateWidth: tw, templateHeight: th,
+                backgroundStyle: .gradient,
+                gradientConfig: gradient,
+                spanBackgroundAcrossRow: false
+            )
+
+            let bmp0 = try renderTemplateBitmap(index: 0, row: row)
+            let bmp1 = try renderTemplateBitmap(index: 1, row: row)
+
+            // Non-spanning: both templates should look identical at their centers
+            let c0 = try pixelColor(bmp0, at: (100, 100))
+            let c1 = try pixelColor(bmp1, at: (100, 100))
+            let delta = abs(c0.r - c1.r) + abs(c0.g - c1.g) + abs(c0.b - c1.b)
+            #expect(delta < 0.05, "\(gradType): non-spanning templates should be identical, delta=\(delta)")
+        }
+    }
+
     @Test func clipToTemplateRestrictsShapeToOwningTemplate() throws {
         let tw: CGFloat = 400
         let th: CGFloat = 400
