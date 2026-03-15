@@ -116,8 +116,11 @@ struct BackgroundImageView: View {
                     let cols = max(1, Int(Double(rawCols) / drawScale))
                     let rows = max(1, Int(Double(rawRows) / drawScale))
                     let toDisplay = geo.size.width / refSize.width
-                    let tileW = imgW * toDisplay
-                    let tileH = imgH * toDisplay
+                    // When spacing is near 0, add a small overlap to prevent
+                    // sub-pixel gaps caused by floating-point rounding.
+                    let overlap: CGFloat = spacing < 0.001 ? 0.5 : 0
+                    let tileW = imgW * toDisplay + overlap
+                    let tileH = imgH * toDisplay + overlap
                     Canvas { context, size in
                         let resolved = context.resolve(Image(nsImage: image))
                         for r in 0..<rows {
