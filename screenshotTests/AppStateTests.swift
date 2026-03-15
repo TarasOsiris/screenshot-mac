@@ -313,6 +313,60 @@ struct AppStateTests {
         #expect(state.localeState.activeLocaleCode == "de", "Should wrap backward")
     }
 
+    @Test func translateShapesUsesRequestedLocaleForMissingCheck() async {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        state.addLocale(.init(code: "fr", label: "French"))
+        state.addLocale(.init(code: "de", label: "German"))
+        state.selectRow(state.rows.first!.id)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.text = "Hello"
+        state.addShape(shape)
+
+        state.updateTranslationText(shapeId: shape.id, localeCode: "de", text: "Hallo")
+        state.setActiveLocale("de")
+
+        await translateShapes(
+            state: state,
+            targetLocaleCode: "fr",
+            onlyUntranslated: true
+        ) { _ in
+            "Bonjour"
+        }
+
+        #expect(state.localeState.override(forCode: "fr", shapeId: shape.id)?.text == "Bonjour")
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id)?.text == "Hallo")
+    }
+
+    @Test func translateShapesWritesToRequestedLocaleEvenIfActiveLocaleChanges() async {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        state.addLocale(.init(code: "fr", label: "French"))
+        state.addLocale(.init(code: "de", label: "German"))
+        state.selectRow(state.rows.first!.id)
+        state.setActiveLocale("fr")
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.text = "Hello"
+        state.addShape(shape)
+
+        await translateShapes(
+            state: state,
+            targetLocaleCode: "fr",
+            onlyUntranslated: false
+        ) { text in
+            state.setActiveLocale("de")
+            return "\(text)-fr"
+        }
+
+        #expect(state.localeState.activeLocaleCode == "de")
+        #expect(state.localeState.override(forCode: "fr", shapeId: shape.id)?.text == "Hello-fr")
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id)?.text == nil)
+    }
+
     // MARK: - Zoom
 
     @Test func zoomInAndOut() {

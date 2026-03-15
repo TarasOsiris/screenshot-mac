@@ -371,7 +371,8 @@ struct EditorRowView: View {
         }
         .frame(
             width: row.totalDisplayWidth(zoom: zoom),
-            height: dh
+            height: dh,
+            alignment: .topLeading
         )
         .clipped()
         .shadow(color: .black.opacity(0.15), radius: 4, y: 2)

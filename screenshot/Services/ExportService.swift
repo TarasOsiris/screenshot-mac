@@ -184,7 +184,7 @@ struct ExportService {
                 )
             }
         }
-        .frame(width: row.templateWidth, height: row.templateHeight)
+        .frame(width: row.templateWidth, height: row.templateHeight, alignment: .topLeading)
         .clipped()
 
         let renderer = ImageRenderer(content: view)

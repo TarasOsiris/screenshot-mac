@@ -780,10 +780,10 @@ final class AppState {
         scheduleSave()
     }
 
-    /// All text shapes across all rows with their base text and override for the active locale.
-    func textShapesForTranslation() -> [(shape: CanvasShapeModel, rowId: UUID, rowLabel: String, overrideText: String?)] {
+    /// All text shapes across all rows with their base text and override for the requested locale.
+    func textShapesForTranslation(localeCode: String? = nil) -> [(shape: CanvasShapeModel, rowId: UUID, rowLabel: String, overrideText: String?)] {
         var results: [(shape: CanvasShapeModel, rowId: UUID, rowLabel: String, overrideText: String?)] = []
-        let code = localeState.activeLocaleCode
+        let code = localeCode ?? localeState.activeLocaleCode
         for row in rows {
             for shape in row.shapes where shape.type == .text {
                 let overrideText = localeState.override(forCode: code, shapeId: shape.id)?.text

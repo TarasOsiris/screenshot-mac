@@ -129,9 +129,11 @@ struct LocaleToolbarMenu: View {
         .translationTask(quickTranslationConfig) { session in
             isQuickTranslating = true
             defer { isQuickTranslating = false }
+            let targetLocaleCode = state.localeState.activeLocaleCode
             await translateShapes(
                 session: session,
                 state: state,
+                targetLocaleCode: targetLocaleCode,
                 onlyUntranslated: quickTranslateOnlyUntranslated
             )
         }
@@ -318,9 +320,11 @@ struct LocaleBanner: View {
             .translationTask(translationConfig) { session in
                 isTranslating = true
                 defer { isTranslating = false }
+                let targetLocaleCode = state.localeState.activeLocaleCode
                 await translateShapes(
                     session: session,
                     state: state,
+                    targetLocaleCode: targetLocaleCode,
                     onlyUntranslated: translateOnlyUntranslated
                 )
             }

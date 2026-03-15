@@ -386,11 +386,16 @@ struct ShapePropertiesBar: View {
                 else { return }
                 let baseShape = state.rows[ri].shapes[si]
                 guard baseShape.type == .text, let baseText = baseShape.text, !baseText.isEmpty else { return }
+                let targetLocaleCode = state.localeState.activeLocaleCode
                 isTranslating = true
                 defer { isTranslating = false }
                 do {
                     let response = try await session.translate(baseText)
-                    state.updateTranslationText(shapeId: baseShape.id, text: response.targetText)
+                    state.updateTranslationText(
+                        shapeId: baseShape.id,
+                        localeCode: targetLocaleCode,
+                        text: response.targetText
+                    )
                 } catch {
                     print("Translation failed: \(error)")
                 }
