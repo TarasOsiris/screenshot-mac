@@ -180,6 +180,7 @@ struct TemplateControlBar: View {
                     .frame(width: 22, height: 22)
             }
             .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
             .help("More actions")
         }
         .controlSize(.small)
