@@ -16,8 +16,8 @@ struct ZoomControls: View {
 
     var body: some View {
         @Bindable var state = state
-        HStack(spacing: 2) {
-            zoomButton("minus", disabled: state.zoomLevel <= ZoomConstants.min) {
+        HStack(spacing: 0) {
+            zoomButton("minus.magnifyingglass", disabled: state.zoomLevel <= ZoomConstants.min) {
                 state.zoomOut()
             }
 
@@ -27,7 +27,7 @@ struct ZoomControls: View {
                 Text(verbatim: "\(Int(state.zoomLevel * 100))%")
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
                     .foregroundStyle(state.zoomLevel == 1.0 ? .tertiary : .secondary)
-                    .frame(minWidth: 40)
+                    .frame(minWidth: 32)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
@@ -73,7 +73,7 @@ struct ZoomControls: View {
                 .padding(12)
             }
 
-            zoomButton("plus", disabled: state.zoomLevel >= ZoomConstants.max) {
+            zoomButton("plus.magnifyingglass", disabled: state.zoomLevel >= ZoomConstants.max) {
                 state.zoomIn()
             }
         }
@@ -83,7 +83,7 @@ struct ZoomControls: View {
     private func zoomButton(_ icon: String, disabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 9, weight: .semibold))
+                .font(.system(size: 11, weight: .semibold))
                 .frame(width: 20, height: 20)
                 .contentShape(Rectangle())
         }

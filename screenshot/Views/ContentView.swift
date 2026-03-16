@@ -11,6 +11,8 @@ struct ContentView: View {
     @AppStorage("lastExportFolderPath") private var lastExportFolderPath = ""
     @State private var isInspectorPresented = true
     @State private var isExporting = false
+    @State private var exportSuccess = false
+    @State private var exportSuccessTimer: DispatchWorkItem?
     @State private var exportError: String?
     @State private var isCreatingProject = false
     @State private var isSavingTemplate = false
@@ -112,11 +114,7 @@ struct ContentView: View {
                 LocaleToolbarMenu(state: state)
             }
 
-            ToolbarItem(id: "zoom", placement: .automatic) {
-                ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
-            }
-
-            ToolbarItem(id: "export", placement: .automatic) {
+            ToolbarItem(id: "export", placement: .principal) {
                 exportControlGroup
             }
 
@@ -124,8 +122,13 @@ struct ContentView: View {
                 Spacer()
             }
 
-            ToolbarItem(id: "inspector", placement: .primaryAction) {
-                inspectorToggleButton
+            ToolbarItem(id: "trailingControls", placement: .primaryAction) {
+                HStack(spacing: 6) {
+                    ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
+                    Divider()
+                        .frame(height: 16)
+                    inspectorToggleButton
+                }
             }
 
         }
@@ -323,29 +326,57 @@ struct ContentView: View {
         .help(isInspectorPresented ? "Hide inspector" : "Show inspector")
     }
 
-    private var exportButton: some View {
-        Button(hasLastExportDestination ? "Export" : "Export...") {
-            exportScreenshots()
+    private var exportButtonLabel: some View {
+        HStack(spacing: 4) {
+            if isExporting {
+                ProgressView()
+                    .controlSize(.small)
+                    .scaleEffect(0.7)
+            } else if exportSuccess {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .semibold))
+            } else {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 11))
+            }
+            Text(exportButtonText)
         }
-        .buttonStyle(.plain)
-        .keyboardShortcut("e", modifiers: .command)
-        .help(exportHelpText)
     }
 
     private var exportControlGroup: some View {
-        ControlGroup {
-            exportButton
+        HStack(spacing: 0) {
+            Button {
+                exportScreenshots()
+            } label: {
+                exportButtonLabel
+            }
+            .keyboardShortcut("e", modifiers: .command)
+            .help(exportHelpText)
+
+            Rectangle()
+                .fill(.white.opacity(0.3))
+                .frame(width: 1, height: 16)
 
             Menu {
                 exportMenuContent
             } label: {
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 10, weight: .semibold))
-                    .frame(width: 14)
+                Label {
+                    Text("")
+                } icon: {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: 16, height: 22)
+                .contentShape(Rectangle())
             }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
             .help("Export options")
         }
-        .controlGroupStyle(.navigation)
+        .buttonStyle(.borderedProminent)
         .controlSize(.regular)
         .disabled(isExporting || state.rows.isEmpty)
     }
@@ -357,13 +388,13 @@ struct ContentView: View {
         }
 
         if hasLastExportDestination {
-            Button("Open Last Export Folder") {
+            Button("Open Export Folder") {
                 openLastExportFolder()
             }
 
             Divider()
 
-            Text(lastExportFolderPath)
+            Text(lastExportFolderName)
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }
@@ -376,6 +407,12 @@ struct ContentView: View {
     private var lastExportFolderName: String {
         guard !lastExportFolderPath.isEmpty else { return "selected folder" }
         return URL(fileURLWithPath: lastExportFolderPath).lastPathComponent
+    }
+
+    private var exportButtonText: String {
+        if isExporting { return "Exporting..." }
+        if exportSuccess { return "Exported" }
+        return hasLastExportDestination ? "Export" : "Export..."
     }
 
     private var exportHelpText: String {
@@ -435,10 +472,20 @@ struct ContentView: View {
 
     private func exportScreenshots(to url: URL) {
         let didAccess = url.startAccessingSecurityScopedResource()
-        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+        guard didAccess else {
+            // Permission lost — clear stale bookmark and ask user to pick again
+            lastExportFolderBookmark = Data()
+            lastExportFolderPath = ""
+            exportScreenshotsAs()
+            return
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
 
+        exportSuccessTimer?.cancel()
         isExporting = true
+        exportSuccess = false
         exportError = nil
+        defer { isExporting = false }
         do {
             let projectName = state.activeProject?.name ?? ""
             let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
@@ -451,13 +498,16 @@ struct ContentView: View {
                 screenshotImages: state.screenshotImages,
                 localeState: state.localeState
             )
+            exportSuccess = true
+            let timer = DispatchWorkItem { exportSuccess = false }
+            exportSuccessTimer = timer
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timer)
             if openExportFolderOnSuccess {
                 NSWorkspace.shared.open(destinationFolderURL)
             }
         } catch {
             exportError = error.localizedDescription
         }
-        isExporting = false
     }
 
     private func lastExportFolderURL() -> URL? {
