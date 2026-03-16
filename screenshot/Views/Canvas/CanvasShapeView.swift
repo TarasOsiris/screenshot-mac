@@ -19,7 +19,9 @@ struct CanvasShapeView: View {
     var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
     var onDragEnd: (() -> Void)?
     var onOptionDragDuplicate: ((UUID) -> UUID?)?
+    var onDidAppearAfterAdd: (() -> Void)?
 
+    @State private var addBumpScale: CGFloat = 1.0
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
     @State private var isHovered = false
@@ -80,7 +82,19 @@ struct CanvasShapeView: View {
     @ViewBuilder
     var body: some View {
         let svgAware = clippedBase
-            .onAppear { updateSvgCache() }
+            .onAppear {
+                updateSvgCache()
+                if let onDidAppearAfterAdd {
+                    withAnimation(.easeOut(duration: 0.08)) {
+                        addBumpScale = 1.12
+                    } completion: {
+                        withAnimation(.easeInOut(duration: 0.08)) {
+                            addBumpScale = 1.0
+                        }
+                    }
+                    onDidAppearAfterAdd()
+                }
+            }
             .onChange(of: isSelected) { _, selected in
                 if !selected && isEditingText {
                     commitTextEdit()
@@ -135,6 +149,7 @@ struct CanvasShapeView: View {
                 .rotationEffect(.degrees(currentRotation))
         }
         .frame(width: displayW, height: displayH)
+        .scaleEffect(addBumpScale)
         .onHover { hovering in
             isHovered = hovering
             if showsEditorHelpers && isSelected && !isDragging {

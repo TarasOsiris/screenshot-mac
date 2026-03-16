@@ -30,6 +30,7 @@ struct EditorRowView: View {
     }
 
     private var zoom: CGFloat { state.zoomLevel }
+    private let canvasHorizontalPadding: CGFloat = 16
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -171,6 +172,17 @@ struct EditorRowView: View {
                 .padding(.top, 4)
                 .padding(.bottom, 12)
             }
+        }
+        .onScrollGeometryChange(for: CGRect.self) { geo in
+            geo.visibleRect
+        } action: { _, visibleRect in
+            guard isSelected else { return }
+            let ds = row.displayScale(zoom: zoom)
+            let canvasX = max(0, visibleRect.midX - canvasHorizontalPadding)
+            state.visibleCanvasModelCenter = CGPoint(
+                x: canvasX / ds,
+                y: row.templateHeight / 2
+            )
         }
         .contentShape(Rectangle())
         .onTapGesture { tapSelectRow() }
@@ -337,7 +349,8 @@ struct EditorRowView: View {
                     onDragEnd: { activeGuides = [] },
                     onOptionDragDuplicate: { shapeId in
                         state.duplicateShapeForOptionDrag(shapeId)
-                    }
+                    },
+                    onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil
                 )
             }
 

@@ -73,10 +73,18 @@ struct ShapeToolbar: View {
         .help("Add \(type.label)")
     }
 
+    private func shapeCenter(for row: ScreenshotRow) -> CGPoint {
+        CGPoint(
+            x: state.visibleCanvasModelCenter?.x ?? row.templateWidth / 2,
+            y: state.visibleCanvasModelCenter?.y ?? row.templateHeight / 2
+        )
+    }
+
     private func addShape(_ type: ShapeType) {
         guard let row = state.selectedRow else { return }
-        let centerX = row.templateWidth / 2
-        let centerY = row.templateHeight / 2
+        let center = shapeCenter(for: row)
+        let centerX = center.x
+        let centerY = center.y
 
         let shape: CanvasShapeModel
         switch type {
@@ -95,10 +103,9 @@ struct ShapeToolbar: View {
 
     private func addSvgShape(svgContent: String, size: CGSize, useColor: Bool, color: Color) {
         guard let row = state.selectedRow else { return }
-        let centerX = row.templateWidth / 2
-        let centerY = row.templateHeight / 2
+        let center = shapeCenter(for: row)
         let scaledSize = SvgHelper.scaledSize(size)
-        var shape = CanvasShapeModel.defaultSvg(centerX: centerX, centerY: centerY, svgContent: svgContent, size: scaledSize)
+        var shape = CanvasShapeModel.defaultSvg(centerX: center.x, centerY: center.y, svgContent: svgContent, size: scaledSize)
         if useColor {
             shape.svgUseColor = true
             shape.color = color

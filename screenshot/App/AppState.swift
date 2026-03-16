@@ -14,6 +14,8 @@ final class AppState {
     var selectedShapeId: UUID?
     var zoomLevel: CGFloat = 1.0
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
+    @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
+    @ObservationIgnored var justAddedShapeId: UUID?
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: String] = [:]  // fileName → familyName
     var undoManager: UndoManager?
@@ -667,6 +669,7 @@ final class AppState {
         registerUndo("Add Shape")
         rows[idx].shapes.append(shape)
         selectShape(shape.id, in: rows[idx].id)
+        justAddedShapeId = shape.id
         scheduleSave()
     }
 
@@ -744,6 +747,7 @@ final class AppState {
         guard rows.contains(where: { $0.id == id }) else { return }
         selectedRowId = id
         selectedShapeId = nil
+        visibleCanvasModelCenter = nil
     }
 
     func selectShape(_ shapeId: UUID, in rowId: UUID) {
