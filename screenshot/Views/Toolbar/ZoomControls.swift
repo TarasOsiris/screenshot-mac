@@ -8,6 +8,11 @@ enum ZoomConstants {
 
 struct ZoomControls: View {
     @Environment(AppState.self) private var state
+    @State private var isPopoverPresented = false
+    var onFit: (() -> Void)? = nil
+    var fitHelpText = "Fit canvas to the window"
+
+    private let presets: [CGFloat] = [0.75, 1.0, 1.25, 1.5, 2.0]
 
     var body: some View {
         @Bindable var state = state
@@ -17,17 +22,56 @@ struct ZoomControls: View {
             }
 
             Button {
-                state.resetZoom()
+                isPopoverPresented.toggle()
             } label: {
                 Text(verbatim: "\(Int(state.zoomLevel * 100))%")
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
                     .foregroundStyle(state.zoomLevel == 1.0 ? .tertiary : .secondary)
-                    .frame(width: 32)
+                    .frame(minWidth: 40)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
             .focusable(false)
-            .help("Reset to 100%")
+            .help("Zoom options")
+            .popover(isPresented: $isPopoverPresented, arrowEdge: .bottom) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Zoom")
+                        .font(.system(size: 12, weight: .semibold))
+
+                    HStack(spacing: 6) {
+                        ForEach(presets, id: \.self) { preset in
+                            Button("\(Int(preset * 100))%") {
+                                state.setZoomLevel(preset)
+                                isPopoverPresented = false
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .tint(state.zoomLevel == preset ? .accentColor : nil)
+                        }
+                    }
+
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        if let onFit {
+                            Button("Fit") {
+                                onFit()
+                                isPopoverPresented = false
+                            }
+                            .buttonStyle(.borderless)
+                            .help(fitHelpText)
+                        }
+
+                        Button("Actual Size") {
+                            state.resetZoom()
+                            isPopoverPresented = false
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    .font(.system(size: 12))
+                }
+                .padding(12)
+            }
 
             zoomButton("plus", disabled: state.zoomLevel >= ZoomConstants.max) {
                 state.zoomIn()

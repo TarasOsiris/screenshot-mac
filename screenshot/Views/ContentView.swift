@@ -7,6 +7,8 @@ struct ContentView: View {
     @AppStorage("exportScale") private var exportScale = 1.0
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
+    @AppStorage("lastExportFolderBookmark") private var lastExportFolderBookmark = Data()
+    @AppStorage("lastExportFolderPath") private var lastExportFolderPath = ""
     @State private var isInspectorPresented = true
     @State private var isExporting = false
     @State private var exportError: String?
@@ -17,6 +19,7 @@ struct ContentView: View {
     @State private var isDeletingProject = false
     @State private var isResettingProject = false
     @State private var gestureZoomStartLevel: CGFloat?
+    @State private var editorViewportHeight: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -53,10 +56,7 @@ struct ContentView: View {
                             if gestureZoomStartLevel == nil {
                                 gestureZoomStartLevel = startLevel
                             }
-                            state.zoomLevel = min(
-                                ZoomConstants.max,
-                                max(ZoomConstants.min, startLevel * value)
-                            )
+                            state.setZoomLevel(startLevel * value, animated: false)
                         }
                         .onEnded { _ in
                             gestureZoomStartLevel = nil
@@ -72,6 +72,17 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .layoutPriority(0)
                 .background(Color(nsColor: .windowBackgroundColor))
+                .background {
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear {
+                                editorViewportHeight = proxy.size.height
+                            }
+                            .onChange(of: proxy.size.height) { _, newValue in
+                                editorViewportHeight = newValue
+                            }
+                    }
+                }
             }
 
             // Shape properties bottom bar
@@ -89,8 +100,12 @@ struct ContentView: View {
                 .inspectorColumnWidth(min: 220, ideal: 260, max: 320)
         }
         .toolbar(id: "main") {
-            ToolbarItem(id: "project", placement: .navigation) {
-                projectToolbarMenu
+            ToolbarItem(id: "projectSwitcher", placement: .navigation) {
+                projectSwitcherToolbarMenu
+            }
+
+            ToolbarItem(id: "projectActions", placement: .navigation) {
+                projectActionsToolbarMenu
             }
 
             ToolbarItem(id: "locale", placement: .navigation) {
@@ -98,19 +113,19 @@ struct ContentView: View {
             }
 
             ToolbarItem(id: "zoom", placement: .automatic) {
-                ZoomControls()
+                ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
             }
 
-            ToolbarItem(id: "spacer", placement: .automatic) {
+            ToolbarItem(id: "export", placement: .automatic) {
+                exportControlGroup
+            }
+
+            ToolbarItem(id: "trailingSpacer", placement: .automatic) {
                 Spacer()
             }
 
             ToolbarItem(id: "inspector", placement: .primaryAction) {
                 inspectorToggleButton
-            }
-
-            ToolbarItem(id: "export", placement: .primaryAction) {
-                exportButton
             }
 
         }
@@ -175,35 +190,15 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private var projectMenuContent: some View {
-        projectSwitcherSection
-
-        Divider()
-
-        Button("New Project...") {
-            dialogText = "Project \(state.projects.count + 1)"
-            isCreatingProject = true
-        }
-
-        templateProjectMenu
-
-        Divider()
-
-        currentProjectSection
-    }
-
-    @ViewBuilder
     private var projectSwitcherSection: some View {
-        Section("Switch Project") {
-            ForEach(state.projects) { project in
-                Button {
-                    state.selectProject(project.id)
-                } label: {
-                    if project.id == state.activeProjectId {
-                        Label(project.name, systemImage: "checkmark")
-                    } else {
-                        Text(project.name)
-                    }
+        ForEach(state.projects) { project in
+            Button {
+                state.selectProject(project.id)
+            } label: {
+                if project.id == state.activeProjectId {
+                    Label(project.name, systemImage: "checkmark")
+                } else {
+                    Text(project.name)
                 }
             }
         }
@@ -275,17 +270,47 @@ struct ContentView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .frame(minWidth: 180, idealWidth: 240, maxWidth: 320, alignment: .leading)
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.system(size: 8, weight: .semibold))
+                .foregroundStyle(.secondary)
         }
         .accessibilityIdentifier("projectPicker")
     }
 
-    private var projectToolbarMenu: some View {
+    private var projectSwitcherToolbarMenu: some View {
         Menu {
             projectMenuContent
         } label: {
             projectMenuLabel
         }
-        .help(state.activeProject?.name ?? "No Project")
+        .help(state.activeProject?.name ?? "Switch project")
+        .accessibilityIdentifier("projectSwitcherMenu")
+    }
+
+    @ViewBuilder
+    private var projectMenuContent: some View {
+        projectSwitcherSection
+    }
+
+    private var projectActionsToolbarMenu: some View {
+        Menu {
+            Button("New Project...") {
+                dialogText = "Project \(state.projects.count + 1)"
+                isCreatingProject = true
+            }
+
+            templateProjectMenu
+
+            Divider()
+
+            currentProjectSection
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .foregroundStyle(.secondary)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .help("Project actions")
         .accessibilityIdentifier("projectActionsMenu")
     }
 
@@ -299,17 +324,103 @@ struct ContentView: View {
     }
 
     private var exportButton: some View {
-        Button("Export") {
+        Button(hasLastExportDestination ? "Export" : "Export...") {
             exportScreenshots()
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(.plain)
+        .keyboardShortcut("e", modifiers: .command)
+        .help(exportHelpText)
+    }
+
+    private var exportControlGroup: some View {
+        ControlGroup {
+            exportButton
+
+            Menu {
+                exportMenuContent
+            } label: {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .frame(width: 14)
+            }
+            .help("Export options")
+        }
+        .controlGroupStyle(.navigation)
         .controlSize(.regular)
         .disabled(isExporting || state.rows.isEmpty)
-        .keyboardShortcut("e", modifiers: .command)
-        .help("Export screenshots (\u{2318}E)")
+    }
+
+    @ViewBuilder
+    private var exportMenuContent: some View {
+        Button("Export As...") {
+            exportScreenshotsAs()
+        }
+
+        if hasLastExportDestination {
+            Button("Open Last Export Folder") {
+                openLastExportFolder()
+            }
+
+            Divider()
+
+            Text(lastExportFolderPath)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var hasLastExportDestination: Bool {
+        !lastExportFolderBookmark.isEmpty
+    }
+
+    private var lastExportFolderName: String {
+        guard !lastExportFolderPath.isEmpty else { return "selected folder" }
+        return URL(fileURLWithPath: lastExportFolderPath).lastPathComponent
+    }
+
+    private var exportHelpText: String {
+        if hasLastExportDestination {
+            return "Export screenshots to \(lastExportFolderName) (\u{2318}E)"
+        }
+        return "Choose a folder and export screenshots (\u{2318}E)"
+    }
+
+    private var fitZoomHelpText: String {
+        if let row = selectedZoomRow {
+            return "Fit \(row.label.isEmpty ? "selected row" : row.label) to the editor"
+        }
+        return "Fit the selected row to the editor"
+    }
+
+    private var selectedZoomRow: ScreenshotRow? {
+        if let selectedRowId = state.selectedRowId {
+            return state.rows.first(where: { $0.id == selectedRowId })
+        }
+        return state.rows.first
+    }
+
+    private func fitZoomToWindow() {
+        guard let row = selectedZoomRow, editorViewportHeight > 0 else { return }
+        let baseHeight = row.displayHeight(zoom: 1.0)
+        guard baseHeight > 0 else { return }
+        state.setZoomLevel(editorViewportHeight / baseHeight)
     }
 
     private func exportScreenshots() {
+        if let savedURL = lastExportFolderURL() {
+            exportScreenshots(to: savedURL)
+        } else {
+            exportScreenshotsAs()
+        }
+    }
+
+    private func exportScreenshotsAs() {
+        guard let url = chooseExportDestination() else { return }
+        saveLastExportFolder(url)
+        exportScreenshots(to: url)
+    }
+
+    private func chooseExportDestination() -> URL? {
         let panel = NSOpenPanel()
         panel.title = "Export Screenshots"
         panel.message = "Choose a folder to export screenshots"
@@ -318,8 +429,11 @@ struct ContentView: View {
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
 
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        return url
+    }
 
+    private func exportScreenshots(to url: URL) {
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
 
@@ -344,6 +458,40 @@ struct ContentView: View {
             exportError = error.localizedDescription
         }
         isExporting = false
+    }
+
+    private func lastExportFolderURL() -> URL? {
+        guard !lastExportFolderBookmark.isEmpty else { return nil }
+        do {
+            var isStale = false
+            let url = try URL(
+                resolvingBookmarkData: lastExportFolderBookmark,
+                options: [.withSecurityScope, .withoutUI],
+                relativeTo: nil,
+                bookmarkDataIsStale: &isStale
+            )
+            if isStale {
+                saveLastExportFolder(url)
+            }
+            return url
+        } catch {
+            lastExportFolderBookmark = Data()
+            return nil
+        }
+    }
+
+    private func saveLastExportFolder(_ url: URL) {
+        do {
+            lastExportFolderBookmark = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+            lastExportFolderPath = url.path
+        } catch {
+            exportError = "Failed to remember export folder: \(error.localizedDescription)"
+        }
+    }
+
+    private func openLastExportFolder() {
+        guard let url = lastExportFolderURL() else { return }
+        NSWorkspace.shared.open(url)
     }
 
 }

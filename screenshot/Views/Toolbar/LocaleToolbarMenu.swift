@@ -12,79 +12,93 @@ struct LocaleToolbarMenu: View {
     @State private var showResetToBaseConfirmation = false
 
     var body: some View {
-        HStack(spacing: 2) {
+        Menu {
             ForEach(state.localeState.locales) { locale in
-                let isActive = locale.code == state.localeState.activeLocaleCode
                 Button {
                     state.setActiveLocale(locale.code)
                 } label: {
-                    Text(locale.code.uppercased())
-                        .font(.system(size: 10, weight: isActive ? .semibold : .regular, design: .monospaced))
-                        .foregroundStyle(isActive ? .white : .secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(isActive ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 4))
-                }
-                .buttonStyle(.plain)
-                .help(locale.label)
-            }
-
-            Menu {
-                ForEach(state.localeState.locales) { locale in
-                    Button {
-                        state.setActiveLocale(locale.code)
-                    } label: {
-                        HStack {
-                            Text(locale.code == state.localeState.baseLocaleCode ? "\(locale.label) (base)" : locale.label)
-                            Spacer()
-                            if locale.code == state.localeState.activeLocaleCode {
-                                Image(systemName: "checkmark")
-                            }
+                    HStack {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(locale.label)
+                            Text(locale.code.uppercased())
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if locale.code == state.localeState.baseLocaleCode {
+                            Text("Base")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        if locale.code == state.localeState.activeLocaleCode {
+                            Image(systemName: "checkmark")
                         }
                     }
                 }
-                Divider()
-                let progress = state.translationProgress()
-                if !state.localeState.isBaseLocale {
-                    Button("Fill Missing Text with Translation") {
-                        startQuickTranslation(onlyUntranslated: true)
-                    }
-                    .disabled(
-                        isQuickTranslating ||
-                        progress.total == 0 ||
-                        progress.translated >= progress.total
-                    )
-
-                    Button("Replace All Text with Translation...") {
-                        showReplaceAllConfirmation = true
-                    }
-                    .disabled(isQuickTranslating || progress.total == 0)
-
-                    Button("Reset All Text and Images to Base Language...", role: .destructive) {
-                        showResetToBaseConfirmation = true
-                    }
-                    .disabled(isQuickTranslating || !activeLocaleHasOverrides)
-
-                    Divider()
-                }
-                if state.localeState.locales.count > 1 {
-                    Button("Edit Translation Table...") {
-                        isTranslationOverview = true
-                    }
-                    .disabled(progress.total == 0)
-                }
-                Button("Manage Locales...") {
-                    isManagingLocales = true
-                }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
+            Divider()
+            let progress = state.translationProgress()
+            if !state.localeState.isBaseLocale {
+                Button("Fill Missing Text with Translation") {
+                    startQuickTranslation(onlyUntranslated: true)
+                }
+                .disabled(
+                    isQuickTranslating ||
+                    progress.total == 0 ||
+                    progress.translated >= progress.total
+                )
+
+                Button("Replace All Text with Translation...") {
+                    showReplaceAllConfirmation = true
+                }
+                .disabled(isQuickTranslating || progress.total == 0)
+
+                Button("Reset All Text and Images to Base Language...", role: .destructive) {
+                    showResetToBaseConfirmation = true
+                }
+                .disabled(isQuickTranslating || !activeLocaleHasOverrides)
+
+                Divider()
+            }
+            if state.localeState.locales.count > 1 {
+                Button("Edit Translation Table...") {
+                    isTranslationOverview = true
+                }
+                .disabled(progress.total == 0)
+            }
+            Button("Manage Locales...") {
+                isManagingLocales = true
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "globe")
+                    .foregroundStyle(.secondary)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 6) {
+                        Text(state.localeState.activeLocaleCode.uppercased())
+                            .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(.primary)
+
+                        if state.localeState.locales.count > 1 {
+                            Text("\(state.localeState.locales.count)")
+                                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(Color.secondary.opacity(0.12), in: Capsule())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    let status = activeLocaleStatus
+                    Text(status.text)
+                        .font(.system(size: 9))
+                        .foregroundStyle(status.color)
+                        .lineLimit(1)
+                }
+            }
         }
+        .menuStyle(.borderlessButton)
         .help(localeHelpText)
         .sheet(isPresented: $isManagingLocales) {
             ManageLocalesSheet(state: state)
@@ -132,6 +146,24 @@ struct LocaleToolbarMenu: View {
             return "Language (\u{2318}[ / \u{2318}], \u{2325}\u{2318}0 to switch to the base language)"
         }
         return "Language"
+    }
+
+    private var activeLocaleStatus: (text: String, color: Color) {
+        if state.localeState.isBaseLocale {
+            let text = state.localeState.locales.count > 1 ? "Base language" : state.localeState.activeLocaleLabel
+            return (text, .secondary)
+        }
+
+        let progress = state.translationProgress()
+        if progress.total == 0 {
+            return ("Locale-specific editing", .secondary)
+        }
+
+        let missingCount = max(progress.total - progress.translated, 0)
+        if missingCount > 0 {
+            return ("\(missingCount) untranslated", .orange)
+        }
+        return ("Translations complete", .secondary)
     }
 
     private var activeLocaleHasOverrides: Bool {

@@ -24,9 +24,6 @@ struct TemplateControlBar: View {
     @State private var renderError: String?
 
     private var canDelete: Bool { row.templates.count > 1 }
-    private var barWidth: CGFloat { row.displayWidth(zoom: zoom) }
-    private var showDuplicateIcon: Bool { barWidth >= 210 }
-    private var showDeleteIcon: Bool { barWidth >= 240 && canDelete }
     private var backgroundPreviewImage: NSImage? {
         template.backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
     }
@@ -136,17 +133,6 @@ struct TemplateControlBar: View {
                 }
                 .padding(12)
                 .frame(width: 260)
-            }
-
-            if showDuplicateIcon {
-                ActionButton(icon: "plus.square.on.square", tooltip: "Duplicate screenshot") {
-                    onDuplicate()
-                }
-            }
-            if showDeleteIcon {
-                ActionButton(icon: "trash", tooltip: "Delete screenshot", isDestructive: true) {
-                    confirmDeleteTemplate()
-                }
             }
 
             Spacer()

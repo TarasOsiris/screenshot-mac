@@ -55,23 +55,28 @@ final class AppState {
 
     // MARK: - Zoom
 
-    func zoomIn() {
-        withAnimation(.smooth(duration: 0.3)) {
-            zoomLevel = min(ZoomConstants.max, zoomLevel + ZoomConstants.step)
+    func setZoomLevel(_ level: CGFloat, animated: Bool = true) {
+        let clamped = min(ZoomConstants.max, max(ZoomConstants.min, level))
+        if animated {
+            withAnimation(.smooth(duration: 0.3)) {
+                zoomLevel = clamped
+            }
+        } else {
+            zoomLevel = clamped
         }
     }
 
+    func zoomIn() {
+        setZoomLevel(zoomLevel + ZoomConstants.step)
+    }
+
     func zoomOut() {
-        withAnimation(.smooth(duration: 0.3)) {
-            zoomLevel = max(ZoomConstants.min, zoomLevel - ZoomConstants.step)
-        }
+        setZoomLevel(zoomLevel - ZoomConstants.step)
     }
 
     func resetZoom() {
         let defaultLevel = UserDefaults.standard.double(forKey: "defaultZoomLevel")
-        withAnimation(.smooth(duration: 0.3)) {
-            zoomLevel = defaultLevel > 0 ? defaultLevel : 1.0
-        }
+        setZoomLevel(defaultLevel > 0 ? defaultLevel : 1.0)
     }
 
     private var saveTask: DispatchWorkItem?
