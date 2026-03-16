@@ -88,61 +88,29 @@ struct ContentView: View {
             InspectorPanel(state: state)
                 .inspectorColumnWidth(min: 220, ideal: 260, max: 320)
         }
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Menu {
-                    projectMenuContent
-                } label: {
-                    projectMenuLabel
-                }
-                .help(state.activeProject?.name ?? "No Project")
-                .accessibilityIdentifier("projectActionsMenu")
+        .toolbar(id: "main") {
+            ToolbarItem(id: "project", placement: .navigation) {
+                projectToolbarMenu
             }
 
-            ToolbarItem(placement: .navigation) {
+            ToolbarItem(id: "locale", placement: .navigation) {
                 LocaleToolbarMenu(state: state)
             }
 
-            ToolbarItem(placement: .navigation) {
+            ToolbarItem(id: "zoom", placement: .automatic) {
                 ZoomControls()
-                    .padding(.leading, 2)
             }
 
-            ToolbarItem(placement: .automatic) {
+            ToolbarItem(id: "spacer", placement: .automatic) {
                 Spacer()
             }
 
-            ToolbarItem(placement: .automatic) {
-                Image("Logo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 16)
-                    .padding(.horizontal, 8)
-                    .accessibilityLabel("Screenshot Bro")
+            ToolbarItem(id: "inspector", placement: .primaryAction) {
+                inspectorToggleButton
             }
 
-            ToolbarItem(placement: .automatic) {
-                Spacer()
-            }
-
-            ToolbarItem(placement: .automatic) {
-                Button {
-                    isInspectorPresented.toggle()
-                } label: {
-                    Label("Inspector", systemImage: "sidebar.trailing")
-                }
-                .help(isInspectorPresented ? "Hide inspector" : "Show inspector")
-            }
-
-            ToolbarItem(placement: .primaryAction) {
-                Button("Export") {
-                    exportScreenshots()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .disabled(isExporting || state.rows.isEmpty)
-                .keyboardShortcut("e", modifiers: .command)
-                .help("Export screenshots (\u{2318}E)")
+            ToolbarItem(id: "export", placement: .primaryAction) {
+                exportButton
             }
 
         }
@@ -309,6 +277,36 @@ struct ContentView: View {
                 .frame(minWidth: 180, idealWidth: 240, maxWidth: 320, alignment: .leading)
         }
         .accessibilityIdentifier("projectPicker")
+    }
+
+    private var projectToolbarMenu: some View {
+        Menu {
+            projectMenuContent
+        } label: {
+            projectMenuLabel
+        }
+        .help(state.activeProject?.name ?? "No Project")
+        .accessibilityIdentifier("projectActionsMenu")
+    }
+
+    private var inspectorToggleButton: some View {
+        Button {
+            isInspectorPresented.toggle()
+        } label: {
+            Label("Inspector", systemImage: "sidebar.trailing")
+        }
+        .help(isInspectorPresented ? "Hide inspector" : "Show inspector")
+    }
+
+    private var exportButton: some View {
+        Button("Export") {
+            exportScreenshots()
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.regular)
+        .disabled(isExporting || state.rows.isEmpty)
+        .keyboardShortcut("e", modifiers: .command)
+        .help("Export screenshots (\u{2318}E)")
     }
 
     private func exportScreenshots() {

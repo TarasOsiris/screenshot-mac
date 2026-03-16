@@ -12,90 +12,78 @@ struct LocaleToolbarMenu: View {
     @State private var showResetToBaseConfirmation = false
 
     var body: some View {
-        let progress = state.translationProgress()
-        Menu {
+        HStack(spacing: 2) {
             ForEach(state.localeState.locales) { locale in
+                let isActive = locale.code == state.localeState.activeLocaleCode
                 Button {
                     state.setActiveLocale(locale.code)
                 } label: {
-                    HStack(spacing: 8) {
-                        Text(locale.code == state.localeState.baseLocaleCode ? "\(locale.label) (base)" : locale.label)
-                        Text(locale.code.uppercased())
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundStyle(.tertiary)
-                        Spacer()
-                        if let progressLabel = progressLabel(for: locale.code) {
-                            Text(progressLabel)
-                                .font(.system(size: 10, design: .monospaced))
-                                .foregroundStyle(.secondary)
-                        }
-                        if locale.code == state.localeState.activeLocaleCode {
-                            Image(systemName: "checkmark")
+                    Text(locale.code.uppercased())
+                        .font(.system(size: 10, weight: isActive ? .semibold : .regular, design: .monospaced))
+                        .foregroundStyle(isActive ? .white : .secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(isActive ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 4))
+                }
+                .buttonStyle(.plain)
+                .help(locale.label)
+            }
+
+            Menu {
+                ForEach(state.localeState.locales) { locale in
+                    Button {
+                        state.setActiveLocale(locale.code)
+                    } label: {
+                        HStack {
+                            Text(locale.code == state.localeState.baseLocaleCode ? "\(locale.label) (base)" : locale.label)
+                            Spacer()
+                            if locale.code == state.localeState.activeLocaleCode {
+                                Image(systemName: "checkmark")
+                            }
                         }
                     }
                 }
-            }
-            Divider()
-            if !state.localeState.isBaseLocale {
-                Button("Switch to Base Language") {
-                    state.setActiveLocale(state.localeState.baseLocaleCode)
-                }
-            }
-            if !state.localeState.isBaseLocale {
                 Divider()
-                Button("Fill Missing Text with Translation") {
-                    startQuickTranslation(onlyUntranslated: true)
-                }
-                .disabled(
-                    isQuickTranslating ||
-                    progress.total == 0 ||
-                    progress.translated >= progress.total
-                )
+                let progress = state.translationProgress()
+                if !state.localeState.isBaseLocale {
+                    Button("Fill Missing Text with Translation") {
+                        startQuickTranslation(onlyUntranslated: true)
+                    }
+                    .disabled(
+                        isQuickTranslating ||
+                        progress.total == 0 ||
+                        progress.translated >= progress.total
+                    )
 
-                Button("Replace All Text with Translation...") {
-                    showReplaceAllConfirmation = true
-                }
-                .disabled(isQuickTranslating || progress.total == 0)
+                    Button("Replace All Text with Translation...") {
+                        showReplaceAllConfirmation = true
+                    }
+                    .disabled(isQuickTranslating || progress.total == 0)
 
-                Button("Reset All Text and Images to Base Language...", role: .destructive) {
-                    showResetToBaseConfirmation = true
+                    Button("Reset All Text and Images to Base Language...", role: .destructive) {
+                        showResetToBaseConfirmation = true
+                    }
+                    .disabled(isQuickTranslating || !activeLocaleHasOverrides)
+
+                    Divider()
                 }
-                .disabled(isQuickTranslating || !activeLocaleHasOverrides)
-            }
-            Divider()
-            if state.localeState.locales.count > 1 {
-                Button("Edit Translation Table...") {
-                    isTranslationOverview = true
+                if state.localeState.locales.count > 1 {
+                    Button("Edit Translation Table...") {
+                        isTranslationOverview = true
+                    }
+                    .disabled(progress.total == 0)
                 }
-                .disabled(progress.total == 0)
-            }
-            Button("Manage Locales...") {
-                isManagingLocales = true
-            }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "globe")
-                    .foregroundStyle(state.localeState.isBaseLocale ? .secondary : Color.accentColor)
-                Text(state.localeState.activeLocaleLabel)
+                Button("Manage Locales...") {
+                    isManagingLocales = true
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
                     .font(.system(size: 11))
-                    .foregroundStyle(state.localeState.isBaseLocale ? .secondary : Color.accentColor)
-                if let untranslatedLabel = untranslatedLabel(progress: progress) {
-                    Text(untranslatedLabel)
-                        .font(.system(size: 10, design: .monospaced))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .background(Color.orange.opacity(0.14), in: Capsule())
-                        .foregroundStyle(Color.orange)
-                }
-                if let activeProgress = activeProgressLabel(progress: progress) {
-                    Text(activeProgress)
-                        .font(.system(size: 10, design: .monospaced))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .background(Color.accentColor.opacity(0.12), in: Capsule())
-                        .foregroundStyle(Color.accentColor)
-                }
+                    .foregroundStyle(.secondary)
             }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
         }
         .help(localeHelpText)
         .sheet(isPresented: $isManagingLocales) {
@@ -146,29 +134,9 @@ struct LocaleToolbarMenu: View {
         return "Language"
     }
 
-    private func activeProgressLabel(progress: (translated: Int, total: Int)) -> String? {
-        guard !state.localeState.isBaseLocale else { return nil }
-        guard progress.total > 0 else { return nil }
-        return "\(progress.translated)/\(progress.total)"
-    }
-
-    private func untranslatedLabel(progress: (translated: Int, total: Int)) -> String? {
-        guard !state.localeState.isBaseLocale else { return nil }
-        let missing = max(progress.total - progress.translated, 0)
-        guard missing > 0 else { return nil }
-        return "\(missing) left"
-    }
-
     private var activeLocaleHasOverrides: Bool {
         guard !state.localeState.isBaseLocale else { return false }
         return !(state.localeState.overrides[state.localeState.activeLocaleCode]?.isEmpty ?? true)
-    }
-
-    private func progressLabel(for code: String) -> String? {
-        guard code != state.localeState.baseLocaleCode else { return nil }
-        let progress = state.translationProgress(for: code)
-        guard progress.total > 0 else { return nil }
-        return "\(progress.translated)/\(progress.total)"
     }
 
     private func startQuickTranslation(onlyUntranslated: Bool) {

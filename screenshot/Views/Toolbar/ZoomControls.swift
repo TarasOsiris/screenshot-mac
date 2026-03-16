@@ -11,17 +11,9 @@ struct ZoomControls: View {
 
     var body: some View {
         @Bindable var state = state
-        HStack(spacing: 4) {
+        HStack(spacing: 2) {
             zoomButton("minus", disabled: state.zoomLevel <= ZoomConstants.min) {
                 state.zoomOut()
-            }
-
-            Slider(value: $state.zoomLevel, in: ZoomConstants.min...ZoomConstants.max)
-                .frame(width: 80)
-                .controlSize(.small)
-
-            zoomButton("plus", disabled: state.zoomLevel >= ZoomConstants.max) {
-                state.zoomIn()
             }
 
             Button {
@@ -30,12 +22,16 @@ struct ZoomControls: View {
                 Text(verbatim: "\(Int(state.zoomLevel * 100))%")
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
                     .foregroundStyle(state.zoomLevel == 1.0 ? .tertiary : .secondary)
-                    .frame(width: 38)
+                    .frame(width: 32)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
             .focusable(false)
             .help("Reset to 100%")
+
+            zoomButton("plus", disabled: state.zoomLevel >= ZoomConstants.max) {
+                state.zoomIn()
+            }
         }
         .controlSize(.small)
     }
