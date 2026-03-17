@@ -1518,9 +1518,10 @@ final class AppState {
         }
 
         // Copy locale override image files
+        let originalKey = originalId.uuidString
         let newKey = newShape.id.uuidString
         for localeCode in localeState.overrides.keys {
-            guard var override = localeState.overrides[localeCode]?[newKey],
+            guard var override = localeState.overrides[localeCode]?[originalKey],
                   let originalFile = override.overrideImageFileName else { continue }
             let srcURL = resourcesURL.appendingPathComponent(originalFile)
             let newFile = "\(newShape.id.uuidString)-\(localeCode).png"

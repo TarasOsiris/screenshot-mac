@@ -179,27 +179,4 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
             return bb.maxX > tLeft && bb.minX < tRight
         }
     }
-
-    /// Bins all active shapes into per-template arrays in a single pass.
-    /// More efficient than calling `visibleShapes(forTemplateAt:)` for each template.
-    func visibleShapesByTemplate() -> [[CanvasShapeModel]] {
-        let count = templates.count
-        var bins = [[CanvasShapeModel]](repeating: [], count: count)
-        for shape in activeShapes {
-            if shape.clipToTemplate == true {
-                let idx = owningTemplateIndex(for: shape)
-                bins[idx].append(shape)
-            } else {
-                let bb = shape.aabb
-                for i in 0..<count {
-                    let tLeft = CGFloat(i) * templateWidth
-                    let tRight = tLeft + templateWidth
-                    if bb.maxX > tLeft && bb.minX < tRight {
-                        bins[i].append(shape)
-                    }
-                }
-            }
-        }
-        return bins
-    }
 }
