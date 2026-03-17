@@ -221,8 +221,14 @@ final class AppState {
     private func saveAll() {
         saveIndex()
         saveCurrentProject()
-        // Mark save timestamp so iCloud monitor ignores self-triggered updates
-        iCloudMonitor?.lastLocalSaveDate = Date()
+        // Record file modification dates so the iCloud monitor can
+        // distinguish our own writes from genuine remote changes.
+        if let activeId = activeProjectId {
+            iCloudMonitor?.recordSavedFiles([
+                PersistenceService.indexURL,
+                PersistenceService.projectDataURL(activeId)
+            ])
+        }
     }
 
     private func saveIndex() {

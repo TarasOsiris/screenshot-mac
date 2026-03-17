@@ -8,8 +8,9 @@ final class ICloudMonitor: NSObject {
     /// Called when remote changes are detected.
     var onRemoteChange: (() -> Void)?
 
-    /// Timestamp of the last local save, used to ignore self-triggered updates.
-    var lastLocalSaveDate: Date?
+    /// Modification dates of files we last wrote, keyed by file path.
+    /// Used to distinguish our own saves from genuine remote changes.
+    private var lastSavedFileDates: [String: Date] = [:]
 
     override init() {
         super.init()
@@ -58,11 +59,35 @@ final class ICloudMonitor: NSObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: task)
     }
 
+    private func modificationDate(atPath path: String) -> Date? {
+        let attrs = try? FileManager.default.attributesOfItem(atPath: path)
+        return attrs?[.modificationDate] as? Date
+    }
+
     private func handleRemoteChange() {
-        if let lastSave = lastLocalSaveDate,
-           Date().timeIntervalSince(lastSave) < 2.0 {
-            return
+        // Check if any monitored files have actually changed since our last save.
+        // If all file modification dates match what we wrote, this is our own
+        // save echoed back by iCloud — not a remote change.
+        if !lastSavedFileDates.isEmpty {
+            let allUnchanged = lastSavedFileDates.allSatisfy { path, savedDate in
+                guard let modDate = modificationDate(atPath: path) else { return false }
+                return abs(modDate.timeIntervalSince(savedDate)) < 0.01
+            }
+            if allUnchanged { return }
         }
         onRemoteChange?()
+    }
+
+    /// Record the current modification dates of the given file URLs.
+    /// Replaces all previously tracked files — only the active project's files are tracked.
+    func recordSavedFiles(_ urls: [URL]) {
+        var newDates: [String: Date] = [:]
+        for url in urls {
+            let path = url.path
+            if let modDate = modificationDate(atPath: path) {
+                newDates[path] = modDate
+            }
+        }
+        lastSavedFileDates = newDates
     }
 }
