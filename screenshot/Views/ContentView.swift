@@ -119,10 +119,6 @@ struct ContentView: View {
                 exportControlGroup
             }
 
-            ToolbarItem(id: "trailingSpacer", placement: .automatic) {
-                Spacer()
-            }
-
             ToolbarItem(id: "trailingControls", placement: .primaryAction) {
                 HStack(spacing: 6) {
                     ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)

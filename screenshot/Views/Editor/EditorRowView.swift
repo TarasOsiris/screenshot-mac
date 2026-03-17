@@ -232,11 +232,11 @@ struct EditorRowView: View {
                 }
             }
             Divider()
-            Button("Move Up") {
+            Button("Move Row Up") {
                 withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
             }
             .disabled(!canMoveUp)
-            Button("Move Down") {
+            Button("Move Row Down") {
                 withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
             }
             .disabled(!canMoveDown)
