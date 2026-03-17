@@ -5,7 +5,6 @@ struct OnboardingView: View {
     @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
     @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
     @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
-    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = false
     @AppStorage("onboardingCompleted") private var onboardingCompleted = false
 
     var body: some View {
@@ -49,7 +48,6 @@ struct OnboardingView: View {
             ScreenshotSizePicker(selection: $defaultScreenshotSize, label: "Screenshot size")
             DefaultDevicePicker(categoryRaw: $defaultDeviceCategoryRaw, frameId: $defaultDeviceFrameId)
             TemplateCountPicker(selection: $defaultTemplateCount, label: "Screenshots per row")
-            Toggle("Sync projects via iCloud Drive", isOn: $iCloudSyncEnabled)
         }
         .formStyle(.grouped)
     }

@@ -11,7 +11,6 @@ struct SettingsView: View {
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
     @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
-    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = false
 
     var body: some View {
         TabView {
@@ -52,25 +51,9 @@ struct SettingsView: View {
                 Text("175%").tag(1.75)
                 Text("200%").tag(2.0)
             }
-            Section("Storage") {
-                Toggle("Sync via iCloud Drive", isOn: $iCloudSyncEnabled)
-                if iCloudSyncEnabled && ICloudSyncService.shared.isUsingICloud {
-                    Text("Projects are stored in iCloud Drive")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else if iCloudSyncEnabled {
-                    Text("iCloud is not available. Projects are stored locally.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("Projects are stored locally. Restart app to apply changes.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                LabeledContent("Project storage") {
-                    Button("Open in Finder") {
-                        NSWorkspace.shared.open(PersistenceService.rootURL)
-                    }
+            LabeledContent("Project storage") {
+                Button("Open in Finder") {
+                    NSWorkspace.shared.open(PersistenceService.rootURL)
                 }
             }
         }

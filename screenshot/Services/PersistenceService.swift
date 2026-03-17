@@ -11,26 +11,12 @@ struct PersistenceService {
 
     static let decoder = JSONDecoder()
 
-    /// Local Application Support path (used as fallback and migration source).
-    static var localRootURL: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("screenshot", isDirectory: true)
-    }
-
     static var rootURL: URL {
         if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
             return URL(fileURLWithPath: override, isDirectory: true)
         }
-        if ICloudSyncService.shared.isEnabled,
-           let iCloudURL = ICloudSyncService.shared.iCloudContainerURL {
-            return iCloudURL
-        }
-        return localRootURL
-    }
-
-    static var isUsingICloud: Bool {
-        let hasOverride = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey].map { !$0.isEmpty } ?? false
-        return !hasOverride && ICloudSyncService.shared.isUsingICloud
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("screenshot", isDirectory: true)
     }
 
     private static var projectsDir: URL {

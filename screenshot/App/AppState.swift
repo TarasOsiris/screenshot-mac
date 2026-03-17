@@ -81,7 +81,6 @@ final class AppState {
     }
 
     private var saveTask: DispatchWorkItem?
-    @ObservationIgnored private var iCloudMonitor: ICloudMonitor?
     @ObservationIgnored private var imageLoadTask: Task<Void, Never>?
     var isLoadingImages = false
 
@@ -105,44 +104,13 @@ final class AppState {
         let stored = UserDefaults.standard.double(forKey: "defaultZoomLevel")
         if stored > 0 { zoomLevel = stored }
 
-        // Load from local first so the UI has data immediately
         PersistenceService.ensureDirectories()
         load()
-
-        // Resolve iCloud container in background, then migrate and start monitoring
-        guard ICloudSyncService.shared.isEnabled else { return }
-        ICloudSyncService.shared.resolveContainer { [weak self] iCloudURL in
-            guard let self, let iCloudURL else { return }
-
-            // Migrate local data to iCloud if needed
-            ICloudSyncService.shared.migrateLocalToICloudIfNeeded(
-                localURL: PersistenceService.localRootURL,
-                iCloudURL: iCloudURL
-            )
-
-            // Ensure iCloud directories exist
-            PersistenceService.ensureDirectories()
-
-            // Reload from iCloud (which is now rootURL)
-            self.load()
-
-            // Start monitoring for remote changes
-            let monitor = ICloudMonitor()
-            monitor.onRemoteChange = { [weak self] in
-                self?.reloadFromDisk()
-            }
-            self.iCloudMonitor = monitor
-        }
     }
 
     // MARK: - Load
 
     private func load() {
-        // Resolve any iCloud conflicts before loading
-        if PersistenceService.isUsingICloud {
-            resolveICloudConflicts()
-        }
-
         if let index = PersistenceService.loadIndex() {
             projects = index.projects
             activeProjectId = index.activeProjectId
@@ -169,45 +137,6 @@ final class AppState {
         }
     }
 
-    /// Reload data from disk when a remote iCloud change is detected.
-    private func reloadFromDisk() {
-        resolveICloudConflicts()
-
-        if let index = PersistenceService.loadIndex() {
-            projects = index.projects
-            // Don't change activeProjectId if current project still exists
-            if let current = activeProjectId, !projects.contains(where: { $0.id == current }) {
-                activeProjectId = index.activeProjectId
-            }
-        }
-
-        if let templateIndex = PersistenceService.loadTemplateIndex() {
-            projectTemplates = templateIndex.templates
-        }
-
-        if let activeId = activeProjectId {
-            loadRowsForProject(activeId)
-            loadScreenshotImages()
-            loadCustomFonts()
-        }
-
-        // Remote changes invalidate undo history
-        undoManager?.removeAllActions()
-
-        normalizeSelection()
-    }
-
-    private func resolveICloudConflicts() {
-        if let mergedIndex = ICloudSyncService.resolveIndexConflicts(at: PersistenceService.indexURL) {
-            try? PersistenceService.saveIndex(mergedIndex)
-        }
-
-        if let activeId = activeProjectId {
-            if let mergedProject = ICloudSyncService.resolveProjectConflicts(at: PersistenceService.projectDataURL(activeId)) {
-                try? PersistenceService.saveProject(activeId, data: mergedProject)
-            }
-        }
-    }
 
     // MARK: - Save
 
@@ -223,14 +152,6 @@ final class AppState {
     private func saveAll() {
         saveIndex()
         saveCurrentProject()
-        // Record file modification dates so the iCloud monitor can
-        // distinguish our own writes from genuine remote changes.
-        if let activeId = activeProjectId {
-            iCloudMonitor?.recordSavedFiles([
-                PersistenceService.indexURL,
-                PersistenceService.projectDataURL(activeId)
-            ])
-        }
     }
 
     private func saveIndex() {
@@ -262,10 +183,6 @@ final class AppState {
 
     private func saveCurrentProject() {
         guard let activeId = activeProjectId else { return }
-        // Update project's modifiedAt in index
-        if let idx = projects.firstIndex(where: { $0.id == activeId }) {
-            projects[idx].modifiedAt = Date()
-        }
         do {
             try PersistenceService.saveProject(activeId, data: ProjectData(rows: rows, localeState: localeState))
         } catch {
