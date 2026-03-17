@@ -670,6 +670,13 @@ final class AppState {
 
     // MARK: - Shapes
 
+    func shapeCenter(for row: ScreenshotRow) -> CGPoint {
+        CGPoint(
+            x: visibleCanvasModelCenter?.x ?? row.templateWidth / 2,
+            y: visibleCanvasModelCenter?.y ?? row.templateHeight / 2
+        )
+    }
+
     func addShape(_ shape: CanvasShapeModel) {
         guard let idx = selectedRowIndex else { return }
         registerUndo("Add Shape")

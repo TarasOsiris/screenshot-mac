@@ -8,6 +8,8 @@ struct EditorRowView: View {
     @State private var isDeletingRow = false
     @State private var isResettingRow = false
     @State private var isRowHovered = false
+    @State private var isSvgDialogPresented = false
+    @State private var rightClickModelPoint: CGPoint?
     @State private var activeGuides: [AlignmentGuide] = []
     @State private var isEditingLabel = false
     @State private var editingLabelText = ""
@@ -202,6 +204,33 @@ struct EditorRowView: View {
                     state.addTemplate(to: row.id)
                 }
             }
+            Menu("Add Element") {
+                ForEach(ShapeType.allCases, id: \.self) { type in
+                    Button {
+                        if type == .svg {
+                            state.selectRow(row.id)
+                            isSvgDialogPresented = true
+                        } else {
+                            addShapeFromMenu(type)
+                        }
+                    } label: {
+                        Label(type.label, systemImage: type.icon)
+                    }
+                }
+            }
+            Divider()
+            Button(row.showDevice ? "Hide Devices" : "Show Devices") {
+                if let idx = state.rows.firstIndex(where: { $0.id == row.id }) {
+                    state.rows[idx].showDevice.toggle()
+                    state.scheduleSave()
+                }
+            }
+            Button(row.showBorders ? "Hide Borders" : "Show Borders") {
+                if let idx = state.rows.firstIndex(where: { $0.id == row.id }) {
+                    state.rows[idx].showBorders.toggle()
+                    state.scheduleSave()
+                }
+            }
             Divider()
             Button("Move Up") {
                 withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
@@ -246,6 +275,18 @@ struct EditorRowView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will remove all screenshots and shapes from \"\(row.label)\" and restore default settings.")
+        }
+        .sheet(isPresented: $isSvgDialogPresented) {
+            SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
+                let center = rightClickModelPoint ?? state.shapeCenter(for: row)
+                let scaledSize = SvgHelper.scaledSize(size)
+                var shape = CanvasShapeModel.defaultSvg(centerX: center.x, centerY: center.y, svgContent: svgContent, size: scaledSize)
+                if useColor {
+                    shape.svgUseColor = true
+                    shape.color = color
+                }
+                state.addShape(shape)
+            }
         }
     }
 
@@ -399,10 +440,14 @@ struct EditorRowView: View {
         .onContinuousHover { phase in
             switch phase {
             case .active(let location):
-                state.canvasMouseModelPosition = CGPoint(
+                let modelPoint = CGPoint(
                     x: location.x / ds,
                     y: location.y / ds
                 )
+                state.canvasMouseModelPosition = modelPoint
+                // Keep right-click position up-to-date while hovering,
+                // so it reflects cursor position when context menu opens.
+                rightClickModelPoint = modelPoint
             case .ended:
                 state.canvasMouseModelPosition = nil
             @unknown default:
@@ -492,6 +537,15 @@ struct EditorRowView: View {
                 state.rows[ri].templates[templateIndex] = newValue
             }
         )
+    }
+
+    // MARK: - Add Element helpers
+
+    private func addShapeFromMenu(_ type: ShapeType) {
+        let center = rightClickModelPoint ?? state.shapeCenter(for: row)
+        state.selectRow(row.id)
+        guard let shape = CanvasShapeModel.defaultShape(for: type, row: row, centerX: center.x, centerY: center.y) else { return }
+        state.addShape(shape)
     }
 
 }

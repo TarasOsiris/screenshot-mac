@@ -73,37 +73,16 @@ struct ShapeToolbar: View {
         .help("Add \(type.label)")
     }
 
-    private func shapeCenter(for row: ScreenshotRow) -> CGPoint {
-        CGPoint(
-            x: state.visibleCanvasModelCenter?.x ?? row.templateWidth / 2,
-            y: state.visibleCanvasModelCenter?.y ?? row.templateHeight / 2
-        )
-    }
-
     private func addShape(_ type: ShapeType) {
         guard let row = state.selectedRow else { return }
-        let center = shapeCenter(for: row)
-        let centerX = center.x
-        let centerY = center.y
-
-        let shape: CanvasShapeModel
-        switch type {
-        case .rectangle: shape = .defaultRectangle(centerX: centerX, centerY: centerY)
-        case .circle: shape = .defaultCircle(centerX: centerX, centerY: centerY)
-        case .star: shape = .defaultStar(centerX: centerX, centerY: centerY)
-        case .text: shape = .defaultText(centerX: centerX, centerY: centerY)
-        case .image: shape = .defaultImage(centerX: centerX, centerY: centerY)
-        case .device:
-            shape = .defaultDeviceFromRow(row, centerX: centerX, centerY: centerY)
-        case .svg: return
-        }
-
+        let center = state.shapeCenter(for: row)
+        guard let shape = CanvasShapeModel.defaultShape(for: type, row: row, centerX: center.x, centerY: center.y) else { return }
         state.addShape(shape)
     }
 
     private func addSvgShape(svgContent: String, size: CGSize, useColor: Bool, color: Color) {
         guard let row = state.selectedRow else { return }
-        let center = shapeCenter(for: row)
+        let center = state.shapeCenter(for: row)
         let scaledSize = SvgHelper.scaledSize(size)
         var shape = CanvasShapeModel.defaultSvg(centerX: center.x, centerY: center.y, svgContent: svgContent, size: scaledSize)
         if useColor {

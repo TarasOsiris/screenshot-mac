@@ -434,4 +434,18 @@ struct CanvasShapeModel: Identifiable, Codable {
         }
         return shape
     }
+
+    /// Creates a default shape for the given type, placed at the specified center.
+    /// Returns `nil` for `.svg` which requires additional parameters.
+    static func defaultShape(for type: ShapeType, row: ScreenshotRow, centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel? {
+        switch type {
+        case .rectangle: return defaultRectangle(centerX: centerX, centerY: centerY)
+        case .circle: return defaultCircle(centerX: centerX, centerY: centerY)
+        case .star: return defaultStar(centerX: centerX, centerY: centerY)
+        case .text: return defaultText(centerX: centerX, centerY: centerY)
+        case .image: return defaultImage(centerX: centerX, centerY: centerY)
+        case .device: return defaultDeviceFromRow(row, centerX: centerX, centerY: centerY)
+        case .svg: return nil
+        }
+    }
 }
