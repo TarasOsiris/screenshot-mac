@@ -5,7 +5,7 @@ struct OnboardingView: View {
     @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
     @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
     @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
-    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = true
+    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = false
     @AppStorage("onboardingCompleted") private var onboardingCompleted = false
 
     var body: some View {

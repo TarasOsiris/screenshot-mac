@@ -11,7 +11,7 @@ struct SettingsView: View {
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
     @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
-    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = true
+    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = false
 
     var body: some View {
         TabView {

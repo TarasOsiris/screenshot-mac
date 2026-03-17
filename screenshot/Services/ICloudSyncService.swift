@@ -20,8 +20,7 @@ final class ICloudSyncService: Sendable {
     private static let iCloudEnabledKey = "iCloudSyncEnabled"
 
     var isEnabled: Bool {
-        UserDefaults.standard.object(forKey: Self.iCloudEnabledKey) == nil
-            || UserDefaults.standard.bool(forKey: Self.iCloudEnabledKey)
+        UserDefaults.standard.bool(forKey: Self.iCloudEnabledKey)
     }
 
     var isUsingICloud: Bool {
