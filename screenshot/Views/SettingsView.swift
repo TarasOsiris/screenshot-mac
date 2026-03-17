@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
     @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
+    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = true
 
     var body: some View {
         TabView {
@@ -22,7 +23,7 @@ struct SettingsView: View {
                 exportSettings
             }
         }
-        .frame(width: 420, height: 310)
+        .frame(width: 420, height: 380)
     }
 
     private var generalSettings: some View {
@@ -33,42 +34,11 @@ struct SettingsView: View {
                 Text("Dark").tag("dark")
             }
 
-            Picker("Default screenshot size", selection: $defaultScreenshotSize) {
-                ForEach(displayCategories) { category in
-                    Section(category.name) {
-                        ForEach(category.sizes, id: \.label) { size in
-                            Text("\(size.label) \(size.isLandscape ? "Landscape" : "Portrait")")
-                                .tag("\(Int(size.width))x\(Int(size.height))")
-                        }
-                    }
-                }
-            }
-            .pickerStyle(.menu)
+            ScreenshotSizePicker(selection: $defaultScreenshotSize)
 
-            LabeledContent("Default device") {
-                DevicePickerMenu(
-                    category: DeviceCategory(rawValue: defaultDeviceCategoryRaw),
-                    frameId: defaultDeviceFrameId.isEmpty ? nil : defaultDeviceFrameId,
-                    onSelectNone: {
-                        defaultDeviceCategoryRaw = ""
-                        defaultDeviceFrameId = ""
-                    },
-                    onSelectCategory: { cat in
-                        defaultDeviceCategoryRaw = cat.rawValue
-                        defaultDeviceFrameId = ""
-                    },
-                    onSelectFrame: { frame in
-                        defaultDeviceCategoryRaw = frame.fallbackCategory.rawValue
-                        defaultDeviceFrameId = frame.id
-                    }
-                )
-            }
+            DefaultDevicePicker(categoryRaw: $defaultDeviceCategoryRaw, frameId: $defaultDeviceFrameId)
 
-            Picker("Screenshots per new row", selection: $defaultTemplateCount) {
-                ForEach(1...6, id: \.self) { count in
-                    Text(verbatim: "\(count)").tag(count)
-                }
-            }
+            TemplateCountPicker(selection: $defaultTemplateCount)
 
             Toggle("Confirm before deleting", isOn: $confirmBeforeDeleting)
 
@@ -83,6 +53,20 @@ struct SettingsView: View {
                 Text("200%").tag(2.0)
             }
             Section("Storage") {
+                Toggle("Sync via iCloud Drive", isOn: $iCloudSyncEnabled)
+                if iCloudSyncEnabled && ICloudSyncService.shared.isUsingICloud {
+                    Text("Projects are stored in iCloud Drive")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else if iCloudSyncEnabled {
+                    Text("iCloud is not available. Projects are stored locally.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Projects are stored locally. Restart app to apply changes.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 LabeledContent("Project storage") {
                     Button("Open in Finder") {
                         NSWorkspace.shared.open(PersistenceService.rootURL)

@@ -108,6 +108,7 @@ final class AppState {
         load()
 
         // Resolve iCloud container in background, then migrate and start monitoring
+        guard ICloudSyncService.shared.isEnabled else { return }
         ICloudSyncService.shared.resolveContainer { [weak self] iCloudURL in
             guard let self, let iCloudURL else { return }
 

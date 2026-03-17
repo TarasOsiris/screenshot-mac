@@ -17,8 +17,15 @@ final class ICloudSyncService: Sendable {
         return _iCloudURL
     }
 
+    private static let iCloudEnabledKey = "iCloudSyncEnabled"
+
+    var isEnabled: Bool {
+        UserDefaults.standard.object(forKey: Self.iCloudEnabledKey) == nil
+            || UserDefaults.standard.bool(forKey: Self.iCloudEnabledKey)
+    }
+
     var isUsingICloud: Bool {
-        iCloudContainerURL != nil
+        isEnabled && iCloudContainerURL != nil
     }
 
     /// Resolve iCloud container on a background thread, then call completion on main.

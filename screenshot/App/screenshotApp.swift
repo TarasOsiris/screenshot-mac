@@ -4,6 +4,7 @@ import SwiftUI
 struct ScreenshotBroApp: App {
     @State private var appState = AppState()
     @AppStorage("appearance") private var appearance = "auto"
+    @AppStorage("onboardingCompleted") private var onboardingCompleted = false
 
     private var preferredColorScheme: ColorScheme? {
         switch appearance {
@@ -18,6 +19,13 @@ struct ScreenshotBroApp: App {
             ContentView()
                 .environment(appState)
                 .preferredColorScheme(preferredColorScheme)
+                .sheet(isPresented: Binding(
+                    get: { !onboardingCompleted },
+                    set: { if !$0 { onboardingCompleted = true } }
+                )) {
+                    OnboardingView()
+                        .interactiveDismissDisabled()
+                }
         }
         .defaultSize(width: 1100, height: 700)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))

@@ -21,7 +21,8 @@ struct PersistenceService {
         if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
             return URL(fileURLWithPath: override, isDirectory: true)
         }
-        if let iCloudURL = ICloudSyncService.shared.iCloudContainerURL {
+        if ICloudSyncService.shared.isEnabled,
+           let iCloudURL = ICloudSyncService.shared.iCloudContainerURL {
             return iCloudURL
         }
         return localRootURL
