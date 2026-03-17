@@ -98,6 +98,13 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: state.selectedShapeId != nil)
+        .overlay {
+            if !state.localeState.isBaseLocale {
+                Rectangle()
+                    .strokeBorder(Color.localeWarning.opacity(0.5), lineWidth: 2)
+                    .allowsHitTesting(false)
+            }
+        }
         .inspector(isPresented: $isInspectorPresented) {
             InspectorPanel(state: state)
                 .inspectorColumnWidth(min: 220, ideal: 260, max: 320)
@@ -394,7 +401,7 @@ struct ContentView: View {
 
     @ViewBuilder
     private var exportMenuContent: some View {
-        Button("Export As...") {
+        Button("Choose Folder and Export...") {
             exportScreenshotsAs()
         }
 

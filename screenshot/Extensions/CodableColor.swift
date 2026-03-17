@@ -29,6 +29,9 @@ extension NSImage {
 }
 
 extension Color {
+    /// Accent color used for non-base locale UI (banner, window border).
+    static let localeWarning = Color.orange
+
     /// Extract sRGB components from a Color. Returns (0,0,0,1) on conversion failure.
     var sRGBComponents: (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) {
         let nsColor = NSColor(self).usingColorSpace(.sRGB) ?? .black

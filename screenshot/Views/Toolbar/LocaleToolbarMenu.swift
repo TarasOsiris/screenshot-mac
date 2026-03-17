@@ -201,33 +201,33 @@ struct LocaleBanner: View {
                 HStack(alignment: .center, spacing: 10) {
                     Image(systemName: "globe")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(Color.localeWarning)
 
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
                             Text("Editing \(label)")
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(Color.accentColor)
+                                .foregroundStyle(Color.localeWarning)
                             if progress.total > 0 {
                                 Text("\(progress.translated)/\(progress.total)")
                                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(Color.accentColor.opacity(0.12), in: Capsule())
-                                    .foregroundStyle(Color.accentColor)
+                                    .background(Color.localeWarning.opacity(0.12), in: Capsule())
+                                    .foregroundStyle(Color.localeWarning)
                             }
                             if missingCount > 0 {
                                 Text("\(missingCount) left")
                                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(Color.orange.opacity(0.14), in: Capsule())
-                                    .foregroundStyle(Color.orange)
+                                    .background(Color.localeWarning.opacity(0.14), in: Capsule())
+                                    .foregroundStyle(Color.localeWarning)
                             }
                         }
                         Text("Changes here affect only \(label). Edit translations manually, fill in missing text automatically, or switch back to the base language.")
                             .font(.system(size: 11))
-                            .foregroundStyle(Color.accentColor.opacity(0.72))
+                            .foregroundStyle(Color.localeWarning.opacity(0.72))
                     }
 
                     Spacer(minLength: 8)
@@ -287,7 +287,7 @@ struct LocaleBanner: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
-            .background(Color.accentColor.opacity(0.15))
+            .background(Color.localeWarning.opacity(0.15))
             .sheet(isPresented: $isTranslationOverviewPresented) {
                 TranslationOverviewSheet(state: state)
             }
