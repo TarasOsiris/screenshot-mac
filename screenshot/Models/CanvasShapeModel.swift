@@ -390,6 +390,20 @@ struct CanvasShapeModel: Identifiable, Codable {
         return (deviceCategory ?? .iphone).baseDimensions
     }
 
+    /// Selects an abstract device category (no specific frame).
+    mutating func selectAbstractDevice(_ category: DeviceCategory) {
+        deviceFrameId = nil
+        deviceCategory = category
+        adjustToDeviceAspectRatio()
+    }
+
+    /// Selects a specific device frame from the catalog.
+    mutating func selectRealFrame(_ frame: DeviceFrame) {
+        deviceCategory = frame.fallbackCategory
+        deviceFrameId = frame.id
+        adjustToDeviceAspectRatio()
+    }
+
     /// Adjusts width to match the correct aspect ratio for the current device type.
     /// Optionally re-centers horizontally at `centerX`.
     mutating func adjustToDeviceAspectRatio(centerX: CGFloat? = nil) {

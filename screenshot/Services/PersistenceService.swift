@@ -84,52 +84,54 @@ struct PersistenceService {
         try? fm.createDirectory(at: resourcesDir(id), withIntermediateDirectories: true)
     }
 
+    // MARK: - Generic load/save
+
+    static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return try? decoder.decode(type, from: data)
+    }
+
+    static func save<T: Encodable>(_ value: T, to url: URL) throws {
+        let data = try encoder.encode(value)
+        try data.write(to: url, options: .atomic)
+    }
+
     // MARK: - Project index
 
     static func loadIndex() -> ProjectIndex? {
-        guard let data = try? Data(contentsOf: indexURL) else { return nil }
-        return try? decoder.decode(ProjectIndex.self, from: data)
+        load(ProjectIndex.self, from: indexURL)
     }
 
     static func saveIndex(_ index: ProjectIndex) throws {
-        let data = try encoder.encode(index)
-        try data.write(to: indexURL, options: .atomic)
+        try save(index, to: indexURL)
     }
 
     // MARK: - Template index
 
     static func loadTemplateIndex() -> ProjectTemplateIndex? {
-        guard let data = try? Data(contentsOf: templateIndexURL) else { return nil }
-        return try? decoder.decode(ProjectTemplateIndex.self, from: data)
+        load(ProjectTemplateIndex.self, from: templateIndexURL)
     }
 
     static func saveTemplateIndex(_ index: ProjectTemplateIndex) throws {
-        let data = try encoder.encode(index)
-        try data.write(to: templateIndexURL, options: .atomic)
+        try save(index, to: templateIndexURL)
     }
 
     // MARK: - Project data
 
     static func loadProject(_ id: UUID) -> ProjectData? {
-        let url = projectDataURL(id)
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? decoder.decode(ProjectData.self, from: data)
+        load(ProjectData.self, from: projectDataURL(id))
     }
 
     static func saveProject(_ id: UUID, data: ProjectData) throws {
-        let jsonData = try encoder.encode(data)
-        try jsonData.write(to: projectDataURL(id), options: .atomic)
+        try save(data, to: projectDataURL(id))
     }
 
     static func loadTemplate(_ id: UUID) -> ProjectData? {
-        let url = templateDataURL(id)
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? decoder.decode(ProjectData.self, from: data)
+        load(ProjectData.self, from: templateDataURL(id))
     }
 
     static func saveTemplate(_ id: UUID, data: ProjectData) throws {
-        let jsonData = try encoder.encode(data)
-        try jsonData.write(to: templateDataURL(id), options: .atomic)
+        try save(data, to: templateDataURL(id))
     }
 
     static func copyProject(from sourceId: UUID, to destId: UUID) {

@@ -503,18 +503,14 @@ struct ShapePropertiesBar: View {
     private func selectAbstractDevice(shapeId: UUID, category: DeviceCategory) {
         guard let i = idx(for: shapeId) else { return }
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        resolved.deviceFrameId = nil
-        resolved.deviceCategory = category
-        resolved.adjustToDeviceAspectRatio()
+        resolved.selectAbstractDevice(category)
         state.updateShape(resolved)
     }
 
     private func selectRealFrame(shapeId: UUID, frame: DeviceFrame) {
         guard let i = idx(for: shapeId) else { return }
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        resolved.deviceCategory = frame.fallbackCategory
-        resolved.deviceFrameId = frame.id
-        resolved.adjustToDeviceAspectRatio()
+        resolved.selectRealFrame(frame)
         state.updateShape(resolved)
     }
 

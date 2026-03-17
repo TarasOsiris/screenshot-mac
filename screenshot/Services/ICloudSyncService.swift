@@ -116,54 +116,33 @@ final class ICloudSyncService: Sendable {
 
     // MARK: - Conflict Resolution
 
-    /// Resolves NSFileVersion conflicts for a project data file.
-    static func resolveProjectConflicts(at url: URL) -> ProjectData? {
+    /// Resolves NSFileVersion conflicts for a file, merging each conflict version into the current version.
+    private static func resolveConflicts<T: Decodable>(at url: URL, merge: (T, T) -> T) -> T? {
         guard let conflicts = NSFileVersion.unresolvedConflictVersionsOfItem(at: url),
               !conflicts.isEmpty else { return nil }
 
-        let decoder = PersistenceService.decoder
-
-        guard let currentData = try? Data(contentsOf: url),
-              var merged = try? decoder.decode(ProjectData.self, from: currentData) else {
+        guard let current = PersistenceService.load(T.self, from: url) else {
             resolveAndRemoveConflicts(conflicts)
             return nil
         }
 
+        var merged = current
         for conflict in conflicts {
-            guard let conflictData = try? Data(contentsOf: conflict.url),
-                  let conflictProject = try? decoder.decode(ProjectData.self, from: conflictData) else {
-                continue
+            if let conflictVersion = PersistenceService.load(T.self, from: conflict.url) {
+                merged = merge(merged, conflictVersion)
             }
-            merged = mergeProjectData(merged, conflictProject)
         }
 
         resolveAndRemoveConflicts(conflicts)
         return merged
     }
 
-    /// Resolves NSFileVersion conflicts for the project index.
+    static func resolveProjectConflicts(at url: URL) -> ProjectData? {
+        resolveConflicts(at: url, merge: mergeProjectData)
+    }
+
     static func resolveIndexConflicts(at url: URL) -> ProjectIndex? {
-        guard let conflicts = NSFileVersion.unresolvedConflictVersionsOfItem(at: url),
-              !conflicts.isEmpty else { return nil }
-
-        let decoder = PersistenceService.decoder
-
-        guard let currentData = try? Data(contentsOf: url),
-              var merged = try? decoder.decode(ProjectIndex.self, from: currentData) else {
-            resolveAndRemoveConflicts(conflicts)
-            return nil
-        }
-
-        for conflict in conflicts {
-            guard let conflictData = try? Data(contentsOf: conflict.url),
-                  let conflictIndex = try? decoder.decode(ProjectIndex.self, from: conflictData) else {
-                continue
-            }
-            merged = mergeProjectIndex(merged, conflictIndex)
-        }
-
-        resolveAndRemoveConflicts(conflicts)
-        return merged
+        resolveConflicts(at: url, merge: mergeProjectIndex)
     }
 
     private static func resolveAndRemoveConflicts(_ conflicts: [NSFileVersion]) {

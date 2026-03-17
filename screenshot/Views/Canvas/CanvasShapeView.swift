@@ -306,16 +306,12 @@ struct CanvasShapeView: View {
                 DeviceMenuContent(
                     onSelectCategory: { category in
                         var updated = shape
-                        updated.deviceFrameId = nil
-                        updated.deviceCategory = category
-                        updated.adjustToDeviceAspectRatio()
+                        updated.selectAbstractDevice(category)
                         onUpdate(updated)
                     },
                     onSelectFrame: { frame in
                         var updated = shape
-                        updated.deviceCategory = frame.fallbackCategory
-                        updated.deviceFrameId = frame.id
-                        updated.adjustToDeviceAspectRatio()
+                        updated.selectRealFrame(frame)
                         onUpdate(updated)
                     }
                 )
