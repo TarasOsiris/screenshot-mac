@@ -21,7 +21,7 @@ Run unit tests:
 xcodebuild -scheme screenshot -destination 'platform=macOS' test
 ```
 
-Unit tests cover `AppState` template operations and `ExportService` rendering (`screenshotTests/`). UI tests exist (`screenshotUITests` scheme). No linter configured.
+Unit tests cover `AppState` operations and `ExportService` rendering (`screenshotTests/`). UI tests exist (`screenshotUITests` scheme). No linter configured.
 
 ## Custom Commands
 
@@ -32,7 +32,7 @@ Unit tests cover `AppState` template operations and `ExportService` rendering (`
 
 **App entry:** `screenshotApp.swift` — injects `AppState` into the SwiftUI environment via `@State` + `.environment()`. Defines keyboard shortcuts and menu items (Edit, View, Locale menus).
 
-**State management:** `AppState` (`@Observable`) is the single source of truth. All mutations (projects, rows, shapes, templates, locales) go through AppState methods, which call `scheduleSave()` to debounce persistence (0.3s). Undo/redo via macOS `UndoManager`.
+**State management:** `AppState` (`@Observable`) is the single source of truth. All mutations (projects, rows, shapes, screenshot columns, locales) go through AppState methods, which call `scheduleSave()` to debounce persistence (0.3s). Undo/redo via macOS `UndoManager`.
 
 **Data model hierarchy:**
 - `Project` → has many `ScreenshotRow` (stored in `ProjectData`)

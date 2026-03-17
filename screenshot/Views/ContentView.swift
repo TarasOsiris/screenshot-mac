@@ -17,7 +17,6 @@ struct ContentView: View {
     @State private var exportProgress = 0
     @State private var exportTotal = 0
     @State private var isCreatingProject = false
-    @State private var isSavingTemplate = false
     @State private var isRenamingProject = false
     @State private var dialogText = ""
     @State private var isDeletingProject = false
@@ -218,15 +217,6 @@ struct ContentView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
-        .alert("Save as Template", isPresented: $isSavingTemplate) {
-            TextField("Template name", text: $dialogText.limited(to: 100))
-            Button("Save") {
-                state.saveCurrentProjectAsTemplate(name: dialogText)
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Save the current project as a reusable template.")
-        }
         .onAppear {
             state.undoManager = undoManager
             undoManager?.levelsOfUndo = 50
@@ -263,30 +253,8 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private var templateProjectMenu: some View {
-        Menu("New Project from Template") {
-            if state.projectTemplates.isEmpty {
-                Button("No Saved Templates") {}
-                    .disabled(true)
-            } else {
-                ForEach(state.projectTemplates) { template in
-                    Button(template.name) {
-                        state.createProject(fromTemplate: template.id)
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
     private var currentProjectSection: some View {
         Section("Current Project") {
-            Button("Save as Template...") {
-                dialogText = state.activeProject?.name ?? ""
-                isSavingTemplate = true
-            }
-            .disabled(state.activeProjectId == nil)
-
             Button("Rename Project...") {
                 dialogText = state.activeProject?.name ?? ""
                 isRenamingProject = true
@@ -356,8 +324,6 @@ struct ContentView: View {
                 dialogText = "Project \(state.projects.count + 1)"
                 isCreatingProject = true
             }
-
-            templateProjectMenu
 
             Divider()
 

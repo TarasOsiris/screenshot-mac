@@ -27,28 +27,12 @@ struct PersistenceService {
         rootURL.appendingPathComponent("projects.json")
     }
 
-    private static var templatesDir: URL {
-        rootURL.appendingPathComponent("templates", isDirectory: true)
-    }
-
-    private static var templateIndexURL: URL {
-        rootURL.appendingPathComponent("templates.json")
-    }
-
     private static func projectDir(_ id: UUID) -> URL {
         projectsDir.appendingPathComponent(id.uuidString, isDirectory: true)
     }
 
     static func projectDataURL(_ id: UUID) -> URL {
         projectDir(id).appendingPathComponent("project.json")
-    }
-
-    private static func templateDir(_ id: UUID) -> URL {
-        templatesDir.appendingPathComponent(id.uuidString, isDirectory: true)
-    }
-
-    private static func templateDataURL(_ id: UUID) -> URL {
-        templateDir(id).appendingPathComponent("project.json")
     }
 
     static func resourcesDir(_ id: UUID) -> URL {
@@ -61,7 +45,6 @@ struct PersistenceService {
         let fm = FileManager.default
         try? fm.createDirectory(at: rootURL, withIntermediateDirectories: true)
         try? fm.createDirectory(at: projectsDir, withIntermediateDirectories: true)
-        try? fm.createDirectory(at: templatesDir, withIntermediateDirectories: true)
     }
 
     static func ensureProjectDirs(_ id: UUID) {
@@ -92,16 +75,6 @@ struct PersistenceService {
         try save(index, to: indexURL)
     }
 
-    // MARK: - Template index
-
-    static func loadTemplateIndex() -> ProjectTemplateIndex? {
-        load(ProjectTemplateIndex.self, from: templateIndexURL)
-    }
-
-    static func saveTemplateIndex(_ index: ProjectTemplateIndex) throws {
-        try save(index, to: templateIndexURL)
-    }
-
     // MARK: - Project data
 
     static func loadProject(_ id: UUID) -> ProjectData? {
@@ -112,32 +85,12 @@ struct PersistenceService {
         try save(data, to: projectDataURL(id))
     }
 
-    static func loadTemplate(_ id: UUID) -> ProjectData? {
-        load(ProjectData.self, from: templateDataURL(id))
-    }
-
-    static func saveTemplate(_ id: UUID, data: ProjectData) throws {
-        try save(data, to: templateDataURL(id))
-    }
-
     static func copyProject(from sourceId: UUID, to destId: UUID) {
         copyDirectory(from: projectDir(sourceId), to: projectDir(destId))
     }
 
-    static func copyProjectToTemplate(from sourceId: UUID, to destId: UUID) {
-        copyDirectory(from: projectDir(sourceId), to: templateDir(destId))
-    }
-
-    static func copyTemplateToProject(from sourceId: UUID, to destId: UUID) {
-        copyDirectory(from: templateDir(sourceId), to: projectDir(destId))
-    }
-
     static func deleteProject(_ id: UUID) {
         try? FileManager.default.removeItem(at: projectDir(id))
-    }
-
-    static func deleteTemplate(_ id: UUID) {
-        try? FileManager.default.removeItem(at: templateDir(id))
     }
 
     private static func copyDirectory(from src: URL, to dst: URL) {

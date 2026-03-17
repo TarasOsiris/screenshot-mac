@@ -6,7 +6,6 @@ final class AppState {
     private static let maxProjectNameLength = 100
 
     var projects: [Project] = []
-    var projectTemplates: [ProjectTemplate] = []
     var activeProjectId: UUID?
     var rows: [ScreenshotRow] = []
     var localeState: LocaleState = .default
@@ -116,10 +115,6 @@ final class AppState {
             activeProjectId = index.activeProjectId
         }
 
-        if let templateIndex = PersistenceService.loadTemplateIndex() {
-            projectTemplates = templateIndex.templates
-        }
-
         if let activeId = activeProjectId {
             loadRowsForProject(activeId)
             loadScreenshotImages()
@@ -160,15 +155,6 @@ final class AppState {
             try PersistenceService.saveIndex(index)
         } catch {
             saveError = "Failed to save project index: \(error.localizedDescription)"
-        }
-    }
-
-    private func saveTemplateIndex() {
-        let index = ProjectTemplateIndex(templates: projectTemplates)
-        do {
-            try PersistenceService.saveTemplateIndex(index)
-        } catch {
-            saveError = "Failed to save template index: \(error.localizedDescription)"
         }
     }
 
@@ -241,11 +227,6 @@ final class AppState {
         return Self.uniqueName(baseName, among: existingNames)
     }
 
-    private func uniqueTemplateName(_ baseName: String, excludingId: UUID? = nil) -> String {
-        let existingNames = Set(projectTemplates.filter { $0.id != excludingId }.map { $0.name })
-        return Self.uniqueName(baseName, among: existingNames)
-    }
-
     private static func uniqueName(_ baseName: String, among existingNames: Set<String>) -> String {
         let cappedBase = String(baseName.prefix(maxProjectNameLength))
         if !existingNames.contains(cappedBase) { return cappedBase }
@@ -267,32 +248,6 @@ final class AppState {
         guard let source = projects.first(where: { $0.id == id }) else { return }
         let newProject = Project(name: uniqueProjectName(source.name + " Copy"))
         PersistenceService.copyProject(from: id, to: newProject.id)
-        projects.append(newProject)
-
-        switchToProject(newProject.id)
-        saveAll()
-    }
-
-    func saveCurrentProjectAsTemplate(name: String) {
-        guard let activeId = activeProjectId else { return }
-
-        saveCurrentProject()
-
-        let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
-        let fallbackName = activeProject?.name ?? "Template"
-        let baseName = sanitized.isEmpty ? fallbackName : sanitized
-        let template = ProjectTemplate(name: uniqueTemplateName(baseName))
-        PersistenceService.copyProjectToTemplate(from: activeId, to: template.id)
-        projectTemplates.append(template)
-        saveTemplateIndex()
-    }
-
-    func createProject(fromTemplate templateId: UUID) {
-        saveCurrentProject()
-
-        guard let template = projectTemplates.first(where: { $0.id == templateId }) else { return }
-        let newProject = Project(name: uniqueProjectName(template.name))
-        PersistenceService.copyTemplateToProject(from: templateId, to: newProject.id)
         projects.append(newProject)
 
         switchToProject(newProject.id)
