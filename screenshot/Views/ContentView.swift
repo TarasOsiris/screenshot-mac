@@ -14,6 +14,8 @@ struct ContentView: View {
     @State private var exportSuccess = false
     @State private var exportSuccessTimer: DispatchWorkItem?
     @State private var exportError: String?
+    @State private var exportProgress = 0
+    @State private var exportTotal = 0
     @State private var isCreatingProject = false
     @State private var isSavingTemplate = false
     @State private var isRenamingProject = false
@@ -103,6 +105,25 @@ struct ContentView: View {
                 Rectangle()
                     .strokeBorder(Color.localeWarning.opacity(0.5), lineWidth: 2)
                     .allowsHitTesting(false)
+            }
+        }
+        .overlay {
+            if isExporting {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        Text("Exporting Screenshots...")
+                            .font(.headline)
+                        ProgressView(value: Double(exportProgress), total: Double(max(1, exportTotal)))
+                            .frame(width: 200)
+                        Text("\(exportProgress) of \(exportTotal)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(24)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                }
             }
         }
         .inspector(isPresented: $isInspectorPresented) {
@@ -497,34 +518,46 @@ struct ContentView: View {
             exportScreenshotsAs()
             return
         }
-        defer { url.stopAccessingSecurityScopedResource() }
 
         exportSuccessTimer?.cancel()
         isExporting = true
         exportSuccess = false
         exportError = nil
-        defer { isExporting = false }
-        do {
-            let projectName = state.activeProject?.name ?? ""
-            let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
-            let destinationFolderURL = try ExportService.exportAll(
-                rows: state.rows,
-                projectName: projectName,
-                to: url,
-                format: format,
-                scale: CGFloat(exportScale),
-                screenshotImages: state.screenshotImages,
-                localeState: state.localeState
-            )
-            exportSuccess = true
-            let timer = DispatchWorkItem { exportSuccess = false }
-            exportSuccessTimer = timer
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timer)
-            if openExportFolderOnSuccess {
-                NSWorkspace.shared.open(destinationFolderURL)
+        exportProgress = 0
+
+        let localeCount = max(1, state.localeState.locales.count)
+        exportTotal = localeCount * state.rows.reduce(0) { $0 + $1.templates.count }
+
+        Task {
+            defer {
+                url.stopAccessingSecurityScopedResource()
+                isExporting = false
             }
-        } catch {
-            exportError = error.localizedDescription
+            do {
+                let projectName = state.activeProject?.name ?? ""
+                let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
+                let destinationFolderURL = try await ExportService.exportAll(
+                    rows: state.rows,
+                    projectName: projectName,
+                    to: url,
+                    format: format,
+                    scale: CGFloat(exportScale),
+                    screenshotImages: state.screenshotImages,
+                    localeState: state.localeState,
+                    onProgress: { completed in
+                        exportProgress = completed
+                    }
+                )
+                exportSuccess = true
+                let timer = DispatchWorkItem { exportSuccess = false }
+                exportSuccessTimer = timer
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timer)
+                if openExportFolderOnSuccess {
+                    NSWorkspace.shared.open(destinationFolderURL)
+                }
+            } catch {
+                exportError = error.localizedDescription
+            }
         }
     }
 

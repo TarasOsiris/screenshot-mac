@@ -14,6 +14,9 @@ enum ExportImageFormat: String {
 }
 
 struct ExportService {
+    /// Async export that yields between templates so the UI stays responsive.
+    /// Rendering happens on @MainActor (required by ImageRenderer);
+    /// image encoding and file I/O are pipelined on a background thread.
     @MainActor
     static func exportAll(
         rows: [ScreenshotRow],
@@ -22,8 +25,9 @@ struct ExportService {
         format: ExportImageFormat = .png,
         scale: CGFloat = 1.0,
         screenshotImages: [String: NSImage] = [:],
-        localeState: LocaleState = .default
-    ) throws -> URL {
+        localeState: LocaleState = .default,
+        onProgress: (@MainActor (Int) -> Void)? = nil
+    ) async throws -> URL {
         let rootName = sanitizedRootFolderName(projectName)
         let rootFolder = uniqueFolder(named: rootName, in: folderURL)
         try FileManager.default.createDirectory(at: rootFolder, withIntermediateDirectories: true)
@@ -31,6 +35,11 @@ struct ExportService {
         let multiLocale = localeState.locales.count > 1
         let localesToExport = multiLocale ? localeState.locales : [localeState.locales.first ?? LocaleDefinition(code: "en", label: "English")]
         let exportScale = max(0.1, scale)
+
+        var completed = 0
+        // Track the previous encoding task so we can pipeline:
+        // render template N on main while encoding template N-1 in background.
+        var previousEncodeTask: Task<Void, any Error>?
 
         for locale in localesToExport {
             let localeFolder: URL
@@ -58,24 +67,41 @@ struct ExportService {
                 }
 
                 for (index, _) in row.templates.enumerated() {
-                    guard let imageData = renderTemplateData(
+                    // Render on main (ImageRenderer requirement) — runs concurrently
+                    // with the previous template's background encoding.
+                    let image = renderTemplateImage(
                         index: index,
                         row: row,
-                        format: format,
                         scale: exportScale,
                         screenshotImages: screenshotImages,
                         localeCode: locale.code,
                         localeState: localeState
-                    ) else {
-                        throw ExportError.renderFailed
-                    }
+                    )
+
+                    // Await the previous encoding before starting a new one
+                    try await previousEncodeTask?.value
+
                     let padded = String(format: "%02d", index + 1)
                     let filename = "\(padded)_screenshot.\(format.fileExtension)"
                     let fileURL = destFolder.appendingPathComponent(filename)
-                    try imageData.write(to: fileURL)
+
+                    // Offload encoding + file write to background
+                    let fmt = format
+                    previousEncodeTask = Task.detached {
+                        guard let imageData = encodeImage(image, format: fmt) else {
+                            throw ExportError.renderFailed
+                        }
+                        try imageData.write(to: fileURL)
+                    }
+
+                    completed += 1
+                    onProgress?(completed)
                 }
             }
         }
+
+        // Await the final encoding task
+        try await previousEncodeTask?.value
 
         return rootFolder
     }
@@ -126,6 +152,10 @@ struct ExportService {
         localeState: LocaleState = .default
     ) -> Data? {
         let image = renderTemplateImage(index: index, row: row, scale: scale, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
+        return encodeImage(image, format: format)
+    }
+
+    static func encodeImage(_ image: NSImage, format: ExportImageFormat) -> Data? {
         switch format {
         case .png:
             return opaquePNGData(from: image)
