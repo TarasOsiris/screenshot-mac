@@ -16,6 +16,7 @@ struct CanvasShapeView: View {
     var onUpdate: (CanvasShapeModel) -> Void
     var onDelete: () -> Void
     var onScreenshotDrop: ((NSImage) -> Void)?
+    var onClearImage: (() -> Void)?
     var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
     var onDragEnd: (() -> Void)?
     var onOptionDragDuplicate: ((UUID) -> UUID?)?
@@ -126,12 +127,15 @@ struct CanvasShapeView: View {
                             editingTextValue = shape.text ?? ""
                             isEditingText = true
                             onSelect()
+                        } else if shape.type == .device || shape.type == .image {
+                            isPickerPresented = true
                         }
                     }
                 )
                 .simultaneousGesture(
                     TapGesture().onEnded { onSelect() }
                 )
+                .contextMenu { shapeContextMenu }
         } else {
             svgAware
                 .allowsHitTesting(false)
@@ -282,6 +286,44 @@ struct CanvasShapeView: View {
             } else {
                 frame
             }
+        }
+    }
+
+    @ViewBuilder
+    private var shapeContextMenu: some View {
+        if shape.type == .device || shape.type == .image {
+            Button("Replace Image...") {
+                isPickerPresented = true
+            }
+            Button("Reset Image") {
+                onClearImage?()
+            }
+            .disabled(shape.displayImageFileName == nil)
+            Divider()
+        }
+        if shape.type == .device {
+            Menu("Device") {
+                DeviceMenuContent(
+                    onSelectCategory: { category in
+                        var updated = shape
+                        updated.deviceFrameId = nil
+                        updated.deviceCategory = category
+                        updated.adjustToDeviceAspectRatio()
+                        onUpdate(updated)
+                    },
+                    onSelectFrame: { frame in
+                        var updated = shape
+                        updated.deviceCategory = frame.fallbackCategory
+                        updated.deviceFrameId = frame.id
+                        updated.adjustToDeviceAspectRatio()
+                        onUpdate(updated)
+                    }
+                )
+            }
+            Divider()
+        }
+        Button("Delete", role: .destructive) {
+            onDelete()
         }
     }
 

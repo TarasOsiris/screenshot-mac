@@ -328,9 +328,12 @@ struct EditorRowView: View {
                     onSelect: { state.selectShape(shape.id, in: row.id) },
                     onUpdate: { state.updateShape($0) },
                     onDelete: { state.deleteShape(shape.id) },
-                    onScreenshotDrop: (shape.type == .device || shape.type == .image) ? { image in
+                    onScreenshotDrop: { image in
                         state.saveImage(image, for: shape.id)
-                    } : nil,
+                    },
+                    onClearImage: {
+                        state.clearImage(for: shape.id)
+                    },
                     onDragSnap: { draggedShape, rawOffset in
                         let others = resolvedShapes.filter { $0.id != draggedShape.id }
                         let threshold = 4 / ds

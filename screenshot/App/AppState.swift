@@ -1184,6 +1184,25 @@ final class AppState {
         scheduleSave()
     }
 
+    func clearImage(for shapeId: UUID) {
+        guard let location = shapeLocation(for: shapeId) else { return }
+
+        if !localeState.isBaseLocale {
+            let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
+            guard var override = existingOverride, override.overrideImageFileName != nil else { return }
+            let oldFile = override.overrideImageFileName
+            override.overrideImageFileName = nil
+            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override)
+            if let oldFile { cleanupUnreferencedImage(oldFile) }
+        } else {
+            var shape = rows[location.rowIndex].shapes[location.shapeIndex]
+            let previousFile = shape.displayImageFileName
+            shape.displayImageFileName = nil
+            rows[location.rowIndex].shapes[location.shapeIndex] = shape
+            if let oldFile = previousFile { cleanupUnreferencedImage(oldFile) }
+        }
+        scheduleSave()
+    }
 
     func loadScreenshotImages() {
         guard let activeId = activeProjectId else { return }
