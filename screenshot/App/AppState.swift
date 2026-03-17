@@ -82,6 +82,7 @@ final class AppState {
 
     private var saveTask: DispatchWorkItem?
     @ObservationIgnored private var iCloudMonitor: ICloudMonitor?
+    @ObservationIgnored private var imageLoadTask: Task<Void, Never>?
 
     var activeProject: Project? {
         projects.first { $0.id == activeProjectId }
@@ -1301,33 +1302,28 @@ final class AppState {
         guard let activeId = activeProjectId else { return }
         let resourcesURL = PersistenceService.resourcesDir(activeId)
 
-        func loadIfNeeded(_ fileName: String?) {
-            guard let fileName, screenshotImages[fileName] == nil else { return }
-            let url = resourcesURL.appendingPathComponent(fileName)
-            if let image = NSImage(contentsOf: url) {
-                screenshotImages[fileName] = image
-            }
-        }
+        // Cancel any in-flight load from a previous call
+        imageLoadTask?.cancel()
 
-        for row in rows {
-            // Shape images
-            for shape in row.shapes {
-                for fileName in shape.allImageFileNames {
-                    loadIfNeeded(fileName)
+        let toLoad = allReferencedImageFileNames().filter { screenshotImages[$0] == nil }
+        guard !toLoad.isEmpty else { return }
+
+        // Load images on a background thread, then update on main
+        imageLoadTask = Task.detached { [weak self] in
+            var loaded: [String: NSImage] = [:]
+            for fileName in toLoad {
+                if Task.isCancelled { return }
+                let url = resourcesURL.appendingPathComponent(fileName)
+                if let image = NSImage(contentsOf: url) {
+                    loaded[fileName] = image
                 }
             }
-            // Row background image
-            loadIfNeeded(row.backgroundImageConfig.fileName)
-            // Template background images
-            for template in row.templates {
-                loadIfNeeded(template.backgroundImageConfig.fileName)
-            }
-        }
-
-        // Locale override screenshot images
-        for (_, shapeOverrides) in localeState.overrides {
-            for (_, override) in shapeOverrides {
-                loadIfNeeded(override.overrideImageFileName)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard let self, self.activeProjectId == activeId else { return }
+                for (key, image) in loaded {
+                    self.screenshotImages[key] = image
+                }
             }
         }
     }
