@@ -126,6 +126,20 @@ struct ContentView: View {
                 }
             }
         }
+        .overlay {
+            if !isExporting && state.isLoadingImages {
+                VStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Loading images…")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(16)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            }
+        }
         .inspector(isPresented: $isInspectorPresented) {
             InspectorPanel(state: state)
                 .inspectorColumnWidth(min: 220, ideal: 260, max: 320)

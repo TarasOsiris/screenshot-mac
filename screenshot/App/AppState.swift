@@ -83,6 +83,7 @@ final class AppState {
     private var saveTask: DispatchWorkItem?
     @ObservationIgnored private var iCloudMonitor: ICloudMonitor?
     @ObservationIgnored private var imageLoadTask: Task<Void, Never>?
+    var isLoadingImages = false
 
     var activeProject: Project? {
         projects.first { $0.id == activeProjectId }
@@ -1308,6 +1309,8 @@ final class AppState {
         let toLoad = allReferencedImageFileNames().filter { screenshotImages[$0] == nil }
         guard !toLoad.isEmpty else { return }
 
+        isLoadingImages = true
+
         // Load images on a background thread, then update on main
         imageLoadTask = Task.detached { [weak self] in
             var loaded: [String: NSImage] = [:]
@@ -1324,6 +1327,7 @@ final class AppState {
                 for (key, image) in loaded {
                     self.screenshotImages[key] = image
                 }
+                self.isLoadingImages = false
             }
         }
     }
