@@ -22,6 +22,7 @@ struct ContentView: View {
     @State private var isResettingProject = false
     @State private var gestureZoomStartLevel: CGFloat?
     @State private var editorViewportHeight: CGFloat = 0
+    @State private var scrollWheelMonitor: Any?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -189,6 +190,20 @@ struct ContentView: View {
         .onAppear {
             state.undoManager = undoManager
             undoManager?.levelsOfUndo = 50
+            scrollWheelMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
+                guard event.modifierFlags.contains(.command) else { return event }
+                let delta = event.hasPreciseScrollingDeltas
+                    ? event.scrollingDeltaY * 0.005
+                    : event.scrollingDeltaY * 0.05
+                state.setZoomLevel(state.zoomLevel + delta, animated: false)
+                return nil
+            }
+        }
+        .onDisappear {
+            if let monitor = scrollWheelMonitor {
+                NSEvent.removeMonitor(monitor)
+                scrollWheelMonitor = nil
+            }
         }
     }
 

@@ -57,6 +57,7 @@ final class AppState {
 
     func setZoomLevel(_ level: CGFloat, animated: Bool = true) {
         let clamped = min(ZoomConstants.max, max(ZoomConstants.min, level))
+        guard clamped != zoomLevel else { return }
         if animated {
             withAnimation(.smooth(duration: 0.3)) {
                 zoomLevel = clamped
