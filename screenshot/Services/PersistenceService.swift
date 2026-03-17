@@ -3,27 +3,40 @@ import Foundation
 struct PersistenceService {
     private static let rootDirectoryOverrideKey = "SCREENSHOT_DATA_DIR"
 
-    private static let encoder: JSONEncoder = {
+    static let encoder: JSONEncoder = {
         let e = JSONEncoder()
         e.outputFormatting = [.prettyPrinted, .sortedKeys]
         return e
     }()
 
-    private static let decoder = JSONDecoder()
+    static let decoder = JSONDecoder()
+
+    /// Local Application Support path (used as fallback and migration source).
+    static var localRootURL: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("screenshot", isDirectory: true)
+    }
 
     static var rootURL: URL {
         if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
             return URL(fileURLWithPath: override, isDirectory: true)
         }
-        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("screenshot", isDirectory: true)
+        if let iCloudURL = ICloudSyncService.shared.iCloudContainerURL {
+            return iCloudURL
+        }
+        return localRootURL
+    }
+
+    static var isUsingICloud: Bool {
+        let hasOverride = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey].map { !$0.isEmpty } ?? false
+        return !hasOverride && ICloudSyncService.shared.isUsingICloud
     }
 
     private static var projectsDir: URL {
         rootURL.appendingPathComponent("projects", isDirectory: true)
     }
 
-    private static var indexURL: URL {
+    static var indexURL: URL {
         rootURL.appendingPathComponent("projects.json")
     }
 
@@ -39,7 +52,7 @@ struct PersistenceService {
         projectsDir.appendingPathComponent(id.uuidString, isDirectory: true)
     }
 
-    private static func projectDataURL(_ id: UUID) -> URL {
+    static func projectDataURL(_ id: UUID) -> URL {
         projectDir(id).appendingPathComponent("project.json")
     }
 
