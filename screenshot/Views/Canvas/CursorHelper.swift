@@ -1,10 +1,6 @@
 import AppKit
 
 enum CursorHelper {
-    private static let positions: [NSCursor.FrameResizePosition] = [
-        .top, .topRight, .right, .bottomRight, .bottom, .bottomLeft, .left, .topLeft
-    ]
-
     /// Returns a resize cursor for the given edge, adjusted for the shape's rotation.
     static func resizeCursor(for edge: ResizeEdge, rotation: Double) -> NSCursor {
         let baseIndex: Int = switch edge {
@@ -21,6 +17,9 @@ enum CursorHelper {
         let steps = Int((rotation / 45).rounded())
         let effectiveIndex = ((baseIndex + steps) % 8 + 8) % 8
 
+        let positions: [NSCursor.FrameResizePosition] = [
+            .top, .topRight, .right, .bottomRight, .bottom, .bottomLeft, .left, .topLeft
+        ]
         return NSCursor.frameResize(position: positions[effectiveIndex], directions: .all)
     }
 
