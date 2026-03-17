@@ -128,16 +128,18 @@ struct ContentView: View {
         }
         .overlay {
             if !isExporting && state.isLoadingImages {
-                VStack(spacing: 8) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Loading images…")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .controlSize(.large)
+                        Text("Loading Images…")
+                            .font(.headline)
+                    }
+                    .padding(24)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
-                .padding(16)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
         }
         .inspector(isPresented: $isInspectorPresented) {
