@@ -210,11 +210,9 @@ final class AppState {
 
         if let index = PersistenceService.loadIndex() {
             if PersistenceService.isUsingICloud && !projects.isEmpty {
-                // Merge: union by UUID, last-writer-wins for duplicates
-                let merged = mergeProjects(local: projects, remote: index.projects)
+                let merged = index.projects.merged(with: projects)
                 let changed = merged.count != index.projects.count
                 projects = merged
-                // Persist the merged index so both Macs converge
                 if changed {
                     iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL])
                     saveIndex()
@@ -248,37 +246,6 @@ final class AppState {
         activeProjectDataModifiedAt = data.modifiedAt
         selectRow(rows.first?.id)
         cleanupOrphanedResourceFiles(for: projectId)
-    }
-
-    /// Merge two project lists by UUID. For projects present in both, keep the one
-    /// with the newer `modifiedAt` (last-writer-wins). Projects unique to either
-    /// side are included in the result.
-    private func mergeProjects(local: [Project], remote: [Project]) -> [Project] {
-        var byId: [UUID: Project] = [:]
-        for project in local {
-            byId[project.id] = project
-        }
-        for project in remote {
-            if let existing = byId[project.id] {
-                // Last-writer-wins
-                if project.modifiedAt > existing.modifiedAt {
-                    byId[project.id] = project
-                }
-            } else {
-                byId[project.id] = project
-            }
-        }
-        // Preserve ordering: remote order first, then local-only projects appended
-        var seen = Set<UUID>()
-        var result: [Project] = []
-        for project in remote {
-            result.append(byId[project.id]!)
-            seen.insert(project.id)
-        }
-        for project in local where !seen.contains(project.id) {
-            result.append(byId[project.id]!)
-        }
-        return result
     }
 
     // MARK: - Save

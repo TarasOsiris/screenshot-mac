@@ -23,6 +23,36 @@ struct Project: Identifiable, Codable {
     }
 }
 
+extension Array where Element == Project {
+    /// Merge two project lists by UUID. Union of both; last-writer-wins for duplicates.
+    /// `base` ordering is preserved first, then `incoming`-only projects are appended.
+    func merged(with incoming: [Project]) -> [Project] {
+        var byId: [UUID: Project] = [:]
+        for project in self {
+            byId[project.id] = project
+        }
+        for project in incoming {
+            if let existing = byId[project.id] {
+                if project.modifiedAt > existing.modifiedAt {
+                    byId[project.id] = project
+                }
+            } else {
+                byId[project.id] = project
+            }
+        }
+        var seen = Set<UUID>()
+        var result: [Project] = []
+        for project in self {
+            result.append(byId[project.id]!)
+            seen.insert(project.id)
+        }
+        for project in incoming where !seen.contains(project.id) {
+            result.append(byId[project.id]!)
+        }
+        return result
+    }
+}
+
 struct ProjectIndex: Codable {
     var projects: [Project]
     var activeProjectId: UUID?

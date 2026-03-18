@@ -31,12 +31,15 @@ struct PersistenceService {
         return ICloudSyncService.shared.activeRootURL
     }
 
+    private static let indexFileName = "projects.json"
+    private static let projectsDirName = "projects"
+
     private static var projectsDir: URL {
-        rootURL.appendingPathComponent("projects", isDirectory: true)
+        rootURL.appendingPathComponent(projectsDirName, isDirectory: true)
     }
 
     static var indexURL: URL {
-        rootURL.appendingPathComponent("projects.json")
+        rootURL.appendingPathComponent(indexFileName)
     }
 
     private static func projectDir(_ id: UUID) -> URL {
@@ -119,5 +122,60 @@ struct PersistenceService {
         let fm = FileManager.default
         try? fm.removeItem(at: dst)
         try? fm.copyItem(at: src, to: dst)
+    }
+
+    // MARK: - Explicit-root helpers (for iCloud migration)
+    // These bypass file coordination intentionally — they are only called during
+    // the single-threaded enable/disable migration in ICloudSyncService.
+
+    static func indexURL(at root: URL) -> URL {
+        root.appendingPathComponent(indexFileName)
+    }
+
+    private static func projectsDir(at root: URL) -> URL {
+        root.appendingPathComponent(projectsDirName, isDirectory: true)
+    }
+
+    private static func projectDir(_ id: UUID, at root: URL) -> URL {
+        projectsDir(at: root).appendingPathComponent(id.uuidString, isDirectory: true)
+    }
+
+    static func loadIndex(at root: URL) -> ProjectIndex? {
+        let url = indexURL(at: root)
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return try? decoder.decode(ProjectIndex.self, from: data)
+    }
+
+    static func saveIndex(_ index: ProjectIndex, at root: URL) throws {
+        let url = indexURL(at: root)
+        let data = try encoder.encode(index)
+        try data.write(to: url, options: .atomic)
+    }
+
+    static func ensureDirectories(at root: URL) {
+        let fm = FileManager.default
+        try? fm.createDirectory(at: root, withIntermediateDirectories: true)
+        try? fm.createDirectory(at: projectsDir(at: root), withIntermediateDirectories: true)
+    }
+
+    /// Safely replace a project directory at destination with source.
+    /// Copies to a temp location first, then swaps, to avoid data loss if the copy fails.
+    static func replaceProjectDir(_ id: UUID, from sourceRoot: URL, to destRoot: URL) throws {
+        let fm = FileManager.default
+        let srcDir = projectDir(id, at: sourceRoot)
+        let dstDir = projectDir(id, at: destRoot)
+        guard fm.fileExists(atPath: srcDir.path) else { return }
+
+        if !fm.fileExists(atPath: dstDir.path) {
+            try fm.copyItem(at: srcDir, to: dstDir)
+        } else {
+            // Copy to temp first, then swap — if copy fails, destination is preserved
+            let tmpDir = dstDir.deletingLastPathComponent()
+                .appendingPathComponent(id.uuidString + ".tmp", isDirectory: true)
+            try? fm.removeItem(at: tmpDir)
+            try fm.copyItem(at: srcDir, to: tmpDir)
+            try? fm.removeItem(at: dstDir)
+            try fm.moveItem(at: tmpDir, to: dstDir)
+        }
     }
 }

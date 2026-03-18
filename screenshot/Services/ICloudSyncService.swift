@@ -73,7 +73,7 @@ final class ICloudSyncService: @unchecked Sendable {
 
     // MARK: - Enable / Disable
 
-    /// Enable iCloud sync: copies local data to iCloud container, posts notification.
+    /// Enable iCloud sync: merges local projects into iCloud, then switches to iCloud.
     func enable(progressHandler: @escaping @Sendable (Double) -> Void) async throws {
         if iCloudContainerURL == nil {
             _ = await resolveContainer()
@@ -82,11 +82,10 @@ final class ICloudSyncService: @unchecked Sendable {
             throw ICloudSyncError.containerUnavailable
         }
 
-        try copyDataDirectory(from: PersistenceService.localRootURL, to: dataURL, progressHandler: progressHandler)
+        let localRoot = PersistenceService.localRootURL
+        try mergeProjects(from: localRoot, into: dataURL, progressHandler: progressHandler)
 
-        // Create marker file in the local directory (per-machine, never synced)
-        let markerURL = Self.enabledMarkerURL
-        FileManager.default.createFile(atPath: markerURL.path, contents: nil)
+        FileManager.default.createFile(atPath: Self.enabledMarkerURL.path, contents: nil)
 
         await MainActor.run {
             PersistenceService.ensureDirectories()
@@ -94,15 +93,15 @@ final class ICloudSyncService: @unchecked Sendable {
         }
     }
 
-    /// Disable iCloud sync: copies iCloud data back to local, posts notification.
+    /// Disable iCloud sync: merges iCloud projects back to local, then switches to local.
     func disable(progressHandler: @escaping @Sendable (Double) -> Void) async throws {
         guard let dataURL = iCloudDataURL else {
             throw ICloudSyncError.containerUnavailable
         }
 
-        try copyDataDirectory(from: dataURL, to: PersistenceService.localRootURL, progressHandler: progressHandler)
+        let localRoot = PersistenceService.localRootURL
+        try mergeProjects(from: dataURL, into: localRoot, progressHandler: progressHandler)
 
-        // Remove marker file
         try? FileManager.default.removeItem(at: Self.enabledMarkerURL)
 
         await MainActor.run {
@@ -159,47 +158,57 @@ final class ICloudSyncService: @unchecked Sendable {
 
     // MARK: - Private
 
-    private func copyDataDirectory(
+    /// Merge projects from source into destination. Union by UUID, last-writer-wins
+    /// for projects in both. Project data directories are copied for the winning version.
+    private func mergeProjects(
         from source: URL,
-        to destination: URL,
+        into destination: URL,
         progressHandler: @escaping @Sendable (Double) -> Void
     ) throws {
-        let fm = FileManager.default
-        try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+        PersistenceService.ensureDirectories(at: destination)
 
-        guard let enumerator = fm.enumerator(at: source, includingPropertiesForKeys: [.isRegularFileKey]) else {
+        let sourceIndex = PersistenceService.loadIndex(at: source)
+        let destIndex = PersistenceService.loadIndex(at: destination)
+
+        let sourceProjects = sourceIndex?.projects ?? []
+        let destProjects = destIndex?.projects ?? []
+
+        let merged = destProjects.merged(with: sourceProjects)
+
+        guard !merged.isEmpty else {
             progressHandler(1.0)
             return
         }
 
-        var files: [URL] = []
-        for case let fileURL as URL in enumerator {
-            let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey])
-            if values?.isRegularFile == true {
-                files.append(fileURL)
+        // Determine which root has the winning version of each project
+        let destIds = Set(destProjects.map(\.id))
+        let sourceIds = Set(sourceProjects.map(\.id))
+        let destByModDate = Dictionary(destProjects.map { ($0.id, $0.modifiedAt) }, uniquingKeysWith: { a, _ in a })
+
+        for (index, project) in merged.enumerated() {
+            let sourceWins: Bool
+            if !destIds.contains(project.id) {
+                // Only in source
+                sourceWins = true
+            } else if !sourceIds.contains(project.id) {
+                // Only in destination — no copy needed
+                sourceWins = false
+            } else {
+                // In both — source wins if it has a newer timestamp
+                sourceWins = project.modifiedAt > (destByModDate[project.id] ?? .distantPast)
             }
-        }
 
-        guard !files.isEmpty else {
-            progressHandler(1.0)
-            return
-        }
-
-        let sourcePathCount = source.path.count
-        for (index, fileURL) in files.enumerated() {
-            let relativePath = String(fileURL.path.dropFirst(sourcePathCount))
-            let destURL = destination.appendingPathComponent(relativePath)
-
-            let destDir = destURL.deletingLastPathComponent()
-            try fm.createDirectory(at: destDir, withIntermediateDirectories: true)
-
-            if fm.fileExists(atPath: destURL.path) {
-                try fm.removeItem(at: destURL)
+            if sourceWins {
+                try PersistenceService.replaceProjectDir(project.id, from: source, to: destination)
             }
-            try fm.copyItem(at: fileURL, to: destURL)
-
-            progressHandler(Double(index + 1) / Double(files.count))
+            progressHandler(Double(index + 1) / Double(merged.count))
         }
+
+        let mergedIndex = ProjectIndex(
+            projects: merged,
+            activeProjectId: destIndex?.activeProjectId ?? sourceIndex?.activeProjectId
+        )
+        try PersistenceService.saveIndex(mergedIndex, at: destination)
     }
 }
 
