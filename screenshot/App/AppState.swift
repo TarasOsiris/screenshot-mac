@@ -176,6 +176,19 @@ final class AppState {
         }
     }
 
+    /// Scans the resources directory and removes any files not referenced by the current project data.
+    private func cleanupOrphanedResourceFiles(for projectId: UUID) {
+        let resourcesURL = PersistenceService.resourcesDir(projectId)
+        guard let files = try? FileManager.default.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
+        let referenced = allReferencedImageFileNames()
+        for fileURL in files {
+            let fileName = fileURL.lastPathComponent
+            if !referenced.contains(fileName) {
+                removeImageFile(fileName)
+            }
+        }
+    }
+
     // MARK: - Projects
 
     func createProject(name: String) {
@@ -487,20 +500,34 @@ final class AppState {
     }
 
     func deleteRow(_ id: UUID) {
-        guard rows.count > 1 else { return }
+        guard rows.count > 1,
+              let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         registerUndo("Delete Row")
-        let idx = rows.firstIndex { $0.id == id }
+        let row = rows[idx]
+
+        // Collect all image filenames to clean up before removing the row
+        let shapeImages = row.shapes.flatMap { $0.allImageFileNames }
+        let localeImages = row.shapes.flatMap { localeOverrideImageFileNames(for: $0.id) }
+        let templateBgImages = row.templates.compactMap { $0.backgroundImageConfig.fileName }
+        let rowBgImage = row.backgroundImageConfig.fileName
+
+        // Remove locale overrides for all shapes in the row
+        for shape in row.shapes {
+            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+        }
+
         let wasSelectedRow = selectedRowId == id
-        rows.removeAll { $0.id == id }
+        rows.remove(at: idx)
         if wasSelectedRow {
-            if let idx, idx < rows.count {
-                selectRow(rows[idx].id)
-            } else {
-                selectRow(rows.last?.id)
-            }
+            let newIdx = min(idx, rows.count - 1)
+            selectRow(rows[newIdx].id)
         } else {
             normalizeSelection()
         }
+
+        // Cleanup orphaned images
+        let allCandidates: [String?] = shapeImages + localeImages + templateBgImages + [rowBgImage]
+        cleanupUnreferencedImages(allCandidates)
         scheduleSave()
     }
 
@@ -1358,6 +1385,8 @@ final class AppState {
             localeState = .default
         }
         selectRow(rows.first?.id)
+        // Safety net: remove any orphaned image files left from prior sessions
+        cleanupOrphanedResourceFiles(for: id)
     }
 
     private func normalizeSelection() {

@@ -133,6 +133,45 @@ struct ExportService {
         }
     }
 
+    // MARK: - Row-level rendering (single demo image)
+
+    @MainActor
+    static func renderRowImage(row: ScreenshotRow, scale: CGFloat = 1.0, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default) -> NSImage {
+        let count = row.templates.count
+        guard count > 0 else {
+            return NSImage(size: NSSize(width: 1, height: 1))
+        }
+
+        let exportScale = max(0.1, scale)
+        let totalWidth = row.templateWidth * CGFloat(count)
+        let height = row.templateHeight
+        let pixelW = Int(totalWidth * exportScale)
+        let pixelH = Int(height * exportScale)
+
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        guard let ctx = CGContext(
+            data: nil, width: pixelW, height: pixelH,
+            bitsPerComponent: 8, bytesPerRow: pixelW * 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return NSImage(size: NSSize(width: totalWidth, height: height))
+        }
+
+        // Render each template and draw immediately so intermediate images are freed
+        for i in 0..<count {
+            let img = renderTemplateImage(index: i, row: row, scale: scale, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
+            guard let cgImg = img.cgImage(forProposedRect: nil, context: nil, hints: nil) else { continue }
+            let x = CGFloat(i) * row.templateWidth * exportScale
+            ctx.draw(cgImg, in: CGRect(x: x, y: 0, width: CGFloat(cgImg.width), height: CGFloat(cgImg.height)))
+        }
+
+        guard let composited = ctx.makeImage() else {
+            return NSImage(size: NSSize(width: totalWidth, height: height))
+        }
+        return NSImage(cgImage: composited, size: NSSize(width: totalWidth, height: height))
+    }
+
     // MARK: - Shared Rendering
 
     @MainActor

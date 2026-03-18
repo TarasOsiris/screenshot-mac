@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Environment(AppState.self) private var state
@@ -418,6 +419,11 @@ struct ContentView: View {
             exportScreenshotsAs()
         }
 
+        Button("Export as Single Demo Image...") {
+            exportSingleDemoImage()
+        }
+        .disabled(currentExportRow == nil)
+
         if hasLastExportDestination {
             Button("Open Export Folder") {
                 openLastExportFolder()
@@ -454,13 +460,13 @@ struct ContentView: View {
     }
 
     private var fitZoomHelpText: String {
-        if let row = selectedZoomRow {
+        if let row = currentExportRow {
             return "Fit \(row.label.isEmpty ? "selected row" : row.label) to the editor"
         }
         return "Fit the selected row to the editor"
     }
 
-    private var selectedZoomRow: ScreenshotRow? {
+    private var currentExportRow: ScreenshotRow? {
         if let selectedRowId = state.selectedRowId {
             return state.rows.first(where: { $0.id == selectedRowId })
         }
@@ -468,7 +474,7 @@ struct ContentView: View {
     }
 
     private func fitZoomToWindow() {
-        guard let row = selectedZoomRow, editorViewportHeight > 0 else { return }
+        guard let row = currentExportRow, editorViewportHeight > 0 else { return }
         let baseHeight = row.displayHeight(zoom: 1.0)
         guard baseHeight > 0 else { return }
         state.setZoomLevel(editorViewportHeight / baseHeight)
@@ -486,6 +492,47 @@ struct ContentView: View {
         guard let url = chooseExportDestination() else { return }
         saveLastExportFolder(url)
         exportScreenshots(to: url)
+    }
+
+    private func exportSingleDemoImage() {
+        guard let row = currentExportRow else { return }
+
+        let panel = NSSavePanel()
+        panel.title = "Export Single Demo Image"
+        panel.nameFieldStringValue = "\(row.label.isEmpty ? "demo" : row.label)_demo.png"
+        panel.allowedContentTypes = [.png, .jpeg]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        let utType = UTType(filenameExtension: url.pathExtension)
+        let format: ExportImageFormat = utType == .jpeg ? .jpeg : .png
+
+        Task {
+            let image = ExportService.renderRowImage(
+                row: row,
+                scale: CGFloat(exportScale),
+                screenshotImages: state.screenshotImages,
+                localeCode: state.localeState.activeLocaleCode,
+                localeState: state.localeState
+            )
+            guard let data = ExportService.encodeImage(image, format: format) else {
+                exportError = "Failed to render demo image"
+                return
+            }
+            do {
+                try data.write(to: url)
+                showExportSuccess()
+            } catch {
+                exportError = error.localizedDescription
+            }
+        }
+    }
+
+    private func showExportSuccess() {
+        exportSuccessTimer?.cancel()
+        exportSuccess = true
+        let timer = DispatchWorkItem { exportSuccess = false }
+        exportSuccessTimer = timer
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timer)
     }
 
     private func chooseExportDestination() -> URL? {
@@ -540,10 +587,7 @@ struct ContentView: View {
                         exportProgress = completed
                     }
                 )
-                exportSuccess = true
-                let timer = DispatchWorkItem { exportSuccess = false }
-                exportSuccessTimer = timer
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timer)
+                showExportSuccess()
                 if openExportFolderOnSuccess {
                     NSWorkspace.shared.open(destinationFolderURL)
                 }
