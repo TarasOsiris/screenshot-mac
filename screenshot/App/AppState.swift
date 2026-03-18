@@ -188,7 +188,15 @@ final class AppState {
 
         let monitor = ICloudMonitor()
         monitor.onRemoteChange = { [weak self] in
-            self?.reloadFromDisk()
+            guard let self else { return }
+            // Flush any pending save so locally-created projects are persisted
+            // before we reload (otherwise the remote index would drop them).
+            if self.saveTask != nil {
+                self.saveTask?.cancel()
+                self.saveTask = nil
+                self.saveAll()
+            }
+            self.reloadFromDisk()
         }
         monitor.startMonitoring(url: url)
         iCloudMonitor = monitor
@@ -210,10 +218,19 @@ final class AppState {
 
         if let index = PersistenceService.loadIndex() {
             if PersistenceService.isUsingICloud && !projects.isEmpty {
-                let merged = index.projects.merged(with: projects)
-                let changed = merged.count != index.projects.count
-                projects = merged
-                if changed {
+                // Remote index is authoritative for which projects exist (handles deletions).
+                // For projects in both, use last-writer-wins on metadata.
+                let localById = Dictionary(projects.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+                var anyLocalWins = false
+                projects = index.projects.map { remote in
+                    if let local = localById[remote.id], local.modifiedAt > remote.modifiedAt {
+                        anyLocalWins = true
+                        return local
+                    }
+                    return remote
+                }
+                // Persist LWW wins so the local metadata is written back to the shared index
+                if anyLocalWins {
                     iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL])
                     saveIndex()
                 }
