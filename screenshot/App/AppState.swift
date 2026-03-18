@@ -338,6 +338,8 @@ final class AppState {
         guard let files = try? FileManager.default.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
         let referenced = allReferencedImageFileNames()
         for fileURL in files {
+            let ext = fileURL.pathExtension.lowercased()
+            guard !Self.fontExtensions.contains(ext) else { continue }
             let fileName = fileURL.lastPathComponent
             if !referenced.contains(fileName) {
                 removeImageFile(fileName)
