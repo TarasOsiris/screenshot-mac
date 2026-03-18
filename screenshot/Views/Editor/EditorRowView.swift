@@ -96,6 +96,34 @@ struct EditorRowView: View {
                             withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
                         }
                     }
+                    Menu {
+                        Menu("Change all devices to") {
+                            DeviceMenuContent(
+                                onSelectCategory: { category in
+                                    state.changeAllDevices(in: row.id, toCategory: category)
+                                },
+                                onSelectFrame: { frame in
+                                    state.changeAllDevices(in: row.id, toFrame: frame)
+                                }
+                            )
+                        }
+                        Divider()
+                        Menu("Delete all") {
+                            ForEach(ShapeType.allCases, id: \.self) { type in
+                                Button(type.pluralLabel, role: .destructive) {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        state.deleteAllShapes(ofType: type, in: row.id)
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
                 }
                 .opacity(isSelected || isRowHovered ? 1 : 0.65)
                 .animation(.easeInOut(duration: 0.15), value: isSelected || isRowHovered)
@@ -300,7 +328,8 @@ struct EditorRowView: View {
         .sheet(isPresented: $isSvgDialogPresented) {
             SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
                 let center = rightClickModelPoint ?? state.shapeCenter(for: row)
-                let scaledSize = SvgHelper.scaledSize(size)
+                let maxDim = row.svgMaxDimension
+                let scaledSize = SvgHelper.scaledSize(size, maxDim: maxDim)
                 var shape = CanvasShapeModel.defaultSvg(centerX: center.x, centerY: center.y, svgContent: svgContent, size: scaledSize)
                 if useColor {
                     shape.svgUseColor = true
@@ -313,58 +342,111 @@ struct EditorRowView: View {
 
     private func handleCanvasDrop(_ providers: [NSItemProvider], at displayLocation: CGPoint, displayScale ds: CGFloat) -> Bool {
         guard !providers.isEmpty else { return false }
-        let baseX = displayLocation.x / ds
-        let baseY = displayLocation.y / ds
-        let offset: CGFloat = 60 // stagger offset per item in model space
-        var handled = false
 
-        for (i, provider) in providers.enumerated() {
-            let modelX = baseX + CGFloat(i) * offset
-            let modelY = baseY + CGFloat(i) * offset
-
+        // Separate SVG providers from image providers
+        var svgProviders: [NSItemProvider] = []
+        var imageProviders: [NSItemProvider] = []
+        for provider in providers {
             if provider.hasItemConformingToTypeIdentifier(UTType.svg.identifier) {
-                provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { url, _ in
-                    guard let url = url,
-                          let content = try? String(contentsOf: url, encoding: .utf8) else { return }
-                    let sanitized = SvgHelper.sanitize(content)
-                    guard let data = sanitized.data(using: .utf8),
-                          let image = NSImage(data: data) else { return }
-                    let size = SvgHelper.parseSize(sanitized, fallbackImage: image)
-                    DispatchQueue.main.async {
-                        state.selectRow(row.id)
-                        let scaledSize = SvgHelper.scaledSize(size)
-                        let shape = CanvasShapeModel.defaultSvg(
-                            centerX: modelX, centerY: modelY,
-                            svgContent: sanitized, size: scaledSize
-                        )
-                        state.addShape(shape)
-                    }
-                }
-                handled = true
-            } else if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
-                provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
-                    guard let url = url, let image = NSImage(contentsOf: url) else { return }
-                    DispatchQueue.main.async {
-                        self.createImageShape(image: image, modelX: modelX, modelY: modelY)
-                    }
-                }
-                handled = true
-            } else if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-                provider.loadFileRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { url, _ in
-                    guard let url = url,
-                          let typeId = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
-                          let uttype = UTType(typeId),
-                          uttype.conforms(to: .image),
-                          let image = NSImage.fromSecurityScopedURL(url) else { return }
-                    DispatchQueue.main.async {
-                        self.createImageShape(image: image, modelX: modelX, modelY: modelY)
-                    }
-                }
-                handled = true
+                svgProviders.append(provider)
+            } else if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) ||
+                      provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+                imageProviders.append(provider)
             }
         }
 
+        var handled = false
+        let baseX = displayLocation.x / ds
+        let baseY = displayLocation.y / ds
+
+        // Handle SVGs with stagger behavior
+        for (i, provider) in svgProviders.enumerated() {
+            let modelX = baseX + CGFloat(i) * 60
+            let modelY = baseY + CGFloat(i) * 60
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { url, _ in
+                guard let url = url,
+                      let content = try? String(contentsOf: url, encoding: .utf8) else { return }
+                let sanitized = SvgHelper.sanitize(content)
+                guard let data = sanitized.data(using: .utf8),
+                      let image = NSImage(data: data) else { return }
+                let size = SvgHelper.parseSize(sanitized, fallbackImage: image)
+                DispatchQueue.main.async {
+                    state.selectRow(row.id)
+                    let maxDim = row.svgMaxDimension
+                    let scaledSize = SvgHelper.scaledSize(size, maxDim: maxDim)
+                    let shape = CanvasShapeModel.defaultSvg(
+                        centerX: modelX, centerY: modelY,
+                        svgContent: sanitized, size: scaledSize
+                    )
+                    state.addShape(shape)
+                }
+            }
+            handled = true
+        }
+
+        // Handle image providers: batch = one per template, single = at drop location
+        if imageProviders.count > 1 {
+            handleBatchImageDrop(imageProviders)
+            handled = true
+        } else if let provider = imageProviders.first {
+            let modelX = baseX
+            let modelY = baseY
+            loadImageFromProvider(provider) { image in
+                guard let image else { return }
+                self.createImageShape(image: image, modelX: modelX, modelY: modelY)
+            }
+            handled = true
+        }
+
         return handled
+    }
+
+    /// Loads an image from an NSItemProvider, calling completion on the main queue with nil on failure.
+    private func loadImageFromProvider(_ provider: NSItemProvider, completion: @escaping (NSImage?) -> Void) {
+        if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
+                let image = url.flatMap { NSImage(contentsOf: $0) }
+                DispatchQueue.main.async { completion(image) }
+            }
+        } else if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { url, _ in
+                guard let url = url,
+                      let typeId = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
+                      let uttype = UTType(typeId),
+                      uttype.conforms(to: .image) else {
+                    DispatchQueue.main.async { completion(nil) }
+                    return
+                }
+                let image = NSImage.fromSecurityScopedURL(url)
+                DispatchQueue.main.async { completion(image) }
+            }
+        } else {
+            DispatchQueue.main.async { completion(nil) }
+        }
+    }
+
+    private func handleBatchImageDrop(_ providers: [NSItemProvider]) {
+        let group = DispatchGroup()
+        var loadedImages: [(Int, NSImage)] = []
+        let lock = NSLock()
+
+        for (i, provider) in providers.enumerated() {
+            group.enter()
+            loadImageFromProvider(provider) { image in
+                if let image {
+                    lock.lock()
+                    loadedImages.append((i, image))
+                    lock.unlock()
+                }
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) { [self] in
+            let images = loadedImages.sorted(by: { $0.0 < $1.0 }).map(\.1)
+            guard !images.isEmpty else { return }
+            state.batchImportImages(images, into: row.id)
+        }
     }
 
     @ViewBuilder

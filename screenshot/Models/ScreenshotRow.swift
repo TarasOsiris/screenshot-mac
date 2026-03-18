@@ -160,6 +160,10 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         CGFloat(index) * templateWidth + templateWidth / 2
     }
 
+    var svgMaxDimension: CGFloat {
+        min(templateWidth, templateHeight) * 0.4
+    }
+
     /// Returns the template index a shape belongs to, based on its center X (rotation-invariant).
     func owningTemplateIndex(for shape: CanvasShapeModel) -> Int {
         let centerX = shape.x + shape.width / 2

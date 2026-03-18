@@ -463,24 +463,30 @@ final class AppState {
     func addTemplate(to rowId: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == rowId }) else { return }
         registerUndo("Add Template")
-        let color = Self.templateColors[rows[idx].templates.count % Self.templateColors.count]
-        rows[idx].templates.append(ScreenshotTemplate(backgroundColor: color))
-        let templateIndex = rows[idx].templates.count - 1
-        if let defaultCategory = rows[idx].defaultDeviceCategory {
+        appendTemplate(to: idx)
+        scheduleSave()
+    }
+
+    /// Appends a new template (and its default device shape) to the row at the given index.
+    /// Does not register undo or schedule save — callers handle that.
+    private func appendTemplate(to rowIndex: Int) {
+        let color = Self.templateColors[rows[rowIndex].templates.count % Self.templateColors.count]
+        rows[rowIndex].templates.append(ScreenshotTemplate(backgroundColor: color))
+        let templateIndex = rows[rowIndex].templates.count - 1
+        if let defaultCategory = rows[rowIndex].defaultDeviceCategory {
             var device = CanvasShapeModel.defaultDevice(
-                centerX: rows[idx].templateCenterX(at: templateIndex),
-                centerY: rows[idx].templateHeight / 2,
-                templateHeight: rows[idx].templateHeight,
+                centerX: rows[rowIndex].templateCenterX(at: templateIndex),
+                centerY: rows[rowIndex].templateHeight / 2,
+                templateHeight: rows[rowIndex].templateHeight,
                 category: defaultCategory
             )
-            if let frameId = rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            if let frameId = rows[rowIndex].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
                 device.deviceCategory = frame.fallbackCategory
                 device.deviceFrameId = frame.id
-                device.adjustToDeviceAspectRatio(centerX: rows[idx].templateCenterX(at: templateIndex))
+                device.adjustToDeviceAspectRatio(centerX: rows[rowIndex].templateCenterX(at: templateIndex))
             }
-            rows[idx].shapes.append(device)
+            rows[rowIndex].shapes.append(device)
         }
-        scheduleSave()
     }
 
     func removeTemplate(_ templateId: UUID, from rowId: UUID) {
@@ -838,6 +844,44 @@ final class AppState {
         scheduleSave()
     }
 
+    func deleteAllShapes(ofType type: ShapeType, in rowId: UUID) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        let matching = rows[idx].shapes.filter { $0.type == type }
+        guard !matching.isEmpty else { return }
+        registerUndo("Delete All \(type.pluralLabel)")
+        let localeImages = matching.flatMap { localeOverrideImageFileNames(for: $0.id) }
+        for shape in matching {
+            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+        }
+        if let selectedId = selectedShapeId, matching.contains(where: { $0.id == selectedId }) {
+            selectedShapeId = nil
+        }
+        rows[idx].shapes.removeAll { $0.type == type }
+        let allCandidates: [String] = matching.flatMap { $0.allImageFileNames } + localeImages
+        cleanupUnreferencedImages(allCandidates)
+        scheduleSave()
+    }
+
+    func changeAllDevices(in rowId: UUID, toCategory category: DeviceCategory) {
+        changeAllDevices(in: rowId) { $0.selectAbstractDevice(category) }
+    }
+
+    func changeAllDevices(in rowId: UUID, toFrame frame: DeviceFrame) {
+        changeAllDevices(in: rowId) { $0.selectRealFrame(frame) }
+    }
+
+    private func changeAllDevices(in rowId: UUID, mutate: (inout CanvasShapeModel) -> Void) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        let shapes = rows[idx].shapes
+        let deviceIndices = shapes.indices.filter { shapes[$0].type == .device }
+        guard !deviceIndices.isEmpty else { return }
+        registerUndo("Change All Row Devices")
+        for i in deviceIndices {
+            mutate(&rows[idx].shapes[i])
+        }
+        scheduleSave()
+    }
+
     func deleteShape(_ id: UUID) {
         guard let location = shapeLocation(for: id) else { return }
         registerUndo("Delete Shape")
@@ -1181,15 +1225,16 @@ final class AppState {
 
     func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat) {
         guard let rowIdx = selectedRowIndex else { return }
-        let row = rows[rowIdx]
+        let shape = makeImageShape(image: image, row: rows[rowIdx], centerX: centerX, centerY: centerY)
+        addShape(shape)
+        saveImage(image, for: shape.id)
+    }
 
+    /// Creates an image or device shape sized for the given row, without side effects.
+    private func makeImageShape(image: NSImage, row: ScreenshotRow, centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
         if let detectedCategory = Self.detectScreenshotDevice(image) {
-            let shape = CanvasShapeModel.defaultDeviceFromRow(row, centerX: centerX, centerY: centerY, detectedCategory: detectedCategory)
-            addShape(shape)
-            saveImage(image, for: shape.id)
-            return
+            return CanvasShapeModel.defaultDeviceFromRow(row, centerX: centerX, centerY: centerY, detectedCategory: detectedCategory)
         }
-
         let imgW = image.size.width
         let imgH = image.size.height
         let maxW = row.templateWidth * 0.8
@@ -1197,7 +1242,7 @@ final class AppState {
         let scale = min(maxW / imgW, maxH / imgH, 1.0)
         let w = imgW * scale
         let h = imgH * scale
-        let shape = CanvasShapeModel(
+        return CanvasShapeModel(
             type: .image,
             x: centerX - w / 2,
             y: centerY - h / 2,
@@ -1205,8 +1250,32 @@ final class AppState {
             height: h,
             color: .clear
         )
-        addShape(shape)
-        saveImage(image, for: shape.id)
+    }
+
+    /// Import multiple images into a row, one per template. Creates new templates if needed.
+    /// Registers a single undo operation for the entire batch.
+    func batchImportImages(_ images: [NSImage], into rowId: UUID) {
+        guard let idx = rowIndex(for: rowId), !images.isEmpty else { return }
+        registerUndo("Import Screenshots")
+        selectRow(rowId)
+
+        // Create additional templates if needed
+        let needed = images.count - rows[idx].templates.count
+        for _ in 0..<max(0, needed) {
+            appendTemplate(to: idx)
+        }
+
+        // Place one image per template
+        for (i, image) in images.enumerated() {
+            let row = rows[idx]
+            let centerX = row.templateCenterX(at: i)
+            let centerY = row.templateHeight / 2
+            let shape = makeImageShape(image: image, row: row, centerX: centerX, centerY: centerY)
+            rows[idx].shapes.append(shape)
+            saveImage(image, for: shape.id)
+        }
+
+        scheduleSave()
     }
 
     // Known screenshot pixel sizes (portrait "WxH") → device category

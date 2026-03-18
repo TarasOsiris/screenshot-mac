@@ -83,7 +83,7 @@ struct ShapeToolbar: View {
     private func addSvgShape(svgContent: String, size: CGSize, useColor: Bool, color: Color) {
         guard let row = state.selectedRow else { return }
         let center = state.shapeCenter(for: row)
-        let scaledSize = SvgHelper.scaledSize(size)
+        let scaledSize = SvgHelper.scaledSize(size, maxDim: row.svgMaxDimension)
         var shape = CanvasShapeModel.defaultSvg(centerX: center.x, centerY: center.y, svgContent: svgContent, size: scaledSize)
         if useColor {
             shape.svgUseColor = true

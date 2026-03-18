@@ -34,6 +34,13 @@ enum ShapeType: String, Codable, CaseIterable {
         }
     }
 
+    var pluralLabel: String {
+        switch self {
+        case .text: "Text"
+        default: label + "s"
+        }
+    }
+
     /// Shape types grouped under the "Shapes" menu in the toolbar.
     static let shapeMenuTypes: [ShapeType] = [.rectangle, .circle, .star]
 

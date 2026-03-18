@@ -23,10 +23,11 @@ enum SvgHelper {
     }
 
     static func parseSize(_ svg: String, fallbackImage: NSImage) -> CGSize {
-        if let viewBoxMatch = svg.range(of: "viewBox\\s*=\\s*\"([^\"]+)\"", options: .regularExpression) {
+        // Match viewBox with either single or double quotes
+        if let viewBoxMatch = svg.range(of: "viewBox\\s*=\\s*[\"']([^\"']+)[\"']", options: .regularExpression) {
             let attrValue = svg[viewBoxMatch]
-            if let quoteStart = attrValue.firstIndex(of: "\""),
-               let quoteEnd = attrValue[attrValue.index(after: quoteStart)...].firstIndex(of: "\"") {
+            if let quoteStart = attrValue.firstIndex(where: { $0 == "\"" || $0 == "'" }),
+               let quoteEnd = attrValue[attrValue.index(after: quoteStart)...].firstIndex(where: { $0 == "\"" || $0 == "'" }) {
                 let parts = svg[attrValue.index(after: quoteStart)..<quoteEnd]
                     .split(whereSeparator: { $0 == " " || $0 == "," })
                     .compactMap { Double($0) }
