@@ -14,6 +14,13 @@ struct SettingsView: View {
     @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
     @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
 
+    @State private var iCloudEnabled = ICloudSyncService.shared.isEnabled
+    @State private var iCloudAvailable = ICloudSyncService.shared.isAvailable
+    @State private var showEnableConfirmation = false
+    @State private var showDisableConfirmation = false
+    @State private var iCloudMigrationProgress: Double?
+    @State private var iCloudError: String?
+
     var body: some View {
         TabView {
             Tab("General", systemImage: "gear") {
@@ -28,7 +35,7 @@ struct SettingsView: View {
                 purchaseSettings
             }
         }
-        .frame(width: 420, height: 380)
+        .frame(width: 520, height: 560)
     }
 
     private var generalSettings: some View {
@@ -57,13 +64,108 @@ struct SettingsView: View {
                 Text("175%").tag(1.75)
                 Text("200%").tag(2.0)
             }
+            Section("iCloud Sync") {
+                if !iCloudAvailable {
+                    Label("iCloud is not available. Sign in to iCloud in System Settings.",
+                          systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Toggle("Sync with iCloud", isOn: Binding(
+                        get: { iCloudEnabled },
+                        set: { newValue in
+                            if newValue {
+                                showEnableConfirmation = true
+                            } else {
+                                showDisableConfirmation = true
+                            }
+                        }
+                    ))
+                    .disabled(iCloudMigrationProgress != nil)
+
+                    if let progress = iCloudMigrationProgress {
+                        HStack(spacing: 8) {
+                            ProgressView(value: progress)
+                            Text("\(Int(progress * 100))%")
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if iCloudEnabled {
+                        LabeledContent("Status") {
+                            iCloudStatusLabel
+                        }
+                    }
+
+                    if let error = iCloudError {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
+                }
+            }
+            .confirmationDialog(
+                "Enable iCloud Sync",
+                isPresented: $showEnableConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Enable iCloud Sync") { toggleICloud(enable: true) }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("All projects will be copied to iCloud. Initial sync may take time for large projects.")
+            }
+            .confirmationDialog(
+                "Disable iCloud Sync",
+                isPresented: $showDisableConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Disable iCloud Sync", role: .destructive) { toggleICloud(enable: false) }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Projects will be kept locally. Other Macs will no longer see updates.")
+            }
+
             LabeledContent("Project storage") {
                 Button("Open in Finder") {
-                    NSWorkspace.shared.open(PersistenceService.rootURL)
+                    NSWorkspace.shared.activateFileViewerSelecting([PersistenceService.rootURL])
                 }
             }
         }
         .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private var iCloudStatusLabel: some View {
+        let monitor = ICloudSyncService.shared
+        if monitor.isUsingICloud {
+            Label("Syncing via iCloud", systemImage: "checkmark.icloud")
+                .foregroundStyle(.green)
+        } else {
+            Label("Connecting...", systemImage: "arrow.triangle.2.circlepath")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func toggleICloud(enable: Bool) {
+        let sync = ICloudSyncService.shared
+        iCloudMigrationProgress = 0
+        iCloudError = nil
+
+        Task {
+            do {
+                let operation = enable ? sync.enable : sync.disable
+                try await operation { progress in
+                    Task { @MainActor in
+                        iCloudMigrationProgress = progress
+                    }
+                }
+                iCloudEnabled = enable
+                iCloudMigrationProgress = nil
+            } catch {
+                iCloudError = error.localizedDescription
+                iCloudMigrationProgress = nil
+            }
+        }
     }
 
     private var exportSettings: some View {
@@ -96,6 +198,23 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+
+                LabeledContent("Purchase type") {
+                    Text("One-time in-app purchase")
+                        .foregroundStyle(.secondary)
+                }
+
+                if let product = store.proProduct {
+                    LabeledContent("Price") {
+                        Text(product.displayPrice)
+                            .fontWeight(.semibold)
+                    }
+                } else if !store.didFinishLoadingProducts {
+                    LabeledContent("Price") {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+                }
             }
 
             if store.isProUnlocked {
@@ -103,6 +222,13 @@ struct SettingsView: View {
                     proFeatureRow("Unlimited projects")
                     proFeatureRow("Unlimited rows per project")
                     proFeatureRow("Unlimited screenshots per row")
+                }
+
+                Section("Purchase Status") {
+                    PurchaseStatusStack(store: store)
+                    Text("Your unlock is managed by the App Store for this Apple Account.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
             } else {
                 freeTierSections
@@ -113,65 +239,31 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var freeTierSections: some View {
-        Section("Free plan limits") {
-            limitRow("Projects", value: "1")
-            limitRow("Rows per project", value: "\(StoreService.freeMaxRows)")
-            limitRow("Screenshots per row", value: "\(StoreService.freeMaxTemplatesPerRow)")
+        Section("Compare Plans") {
+            comparisonRow(
+                title: "Projects",
+                freeValue: "1",
+                proValue: "Unlimited"
+            )
+            comparisonRow(
+                title: "Rows per project",
+                freeValue: "\(StoreService.freeMaxRows)",
+                proValue: "Unlimited"
+            )
+            comparisonRow(
+                title: "Screenshots per row",
+                freeValue: "\(StoreService.freeMaxTemplatesPerRow)",
+                proValue: "Unlimited"
+            )
         }
 
-        Section {
-            upgradeRow
-            LabeledContent("Already purchased?") {
-                Button("Restore Purchase") {
-                    Task { await store.restore() }
-                }
-                .disabled(store.isLoading)
-            }
-        }
+        Section("Upgrade") {
+            VStack(alignment: .leading, spacing: 14) {
+                ProPurchaseCard(store: store, style: .compact)
 
-        if let error = store.purchaseError {
-            Section {
-                Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
-                    .font(.callout)
-            }
-        }
-
-        if let info = store.purchaseInfo {
-            Section {
-                Label(info, systemImage: "info.circle")
+                Text("The billed amount shown above comes directly from the App Store.")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .font(.callout)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var upgradeRow: some View {
-        if let product = store.proProduct {
-            LabeledContent("Upgrade to Pro") {
-                Button {
-                    Task { await store.purchase() }
-                } label: {
-                    if store.isLoading {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Text("Buy — \(product.displayPrice)")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(store.isLoading)
-            }
-        } else if store.didFinishLoadingProducts {
-            LabeledContent("Upgrade to Pro") {
-                Text("Unavailable")
-                    .foregroundStyle(.secondary)
-            }
-        } else {
-            LabeledContent("Upgrade to Pro") {
-                ProgressView()
-                    .controlSize(.small)
             }
         }
     }
@@ -181,9 +273,15 @@ struct SettingsView: View {
             .foregroundStyle(.primary)
     }
 
-    private func limitRow(_ label: String, value: String) -> some View {
-        LabeledContent(label) {
-            Text(value)
+    private func comparisonRow(title: String, freeValue: String, proValue: String) -> some View {
+        HStack(spacing: 16) {
+            Text(title)
+            Spacer()
+            Text("Free: \(freeValue)")
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+            Text("Pro: \(proValue)")
+                .fontWeight(.semibold)
                 .monospacedDigit()
         }
     }

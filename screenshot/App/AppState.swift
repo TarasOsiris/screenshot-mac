@@ -21,6 +21,7 @@ final class AppState {
     var saveError: String?
     var canvasFocusRowId: UUID?
     var canvasFocusRequestNonce = 0
+    @ObservationIgnored var iCloudMonitor: ICloudMonitor?
 
     private static let templateColors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
 
@@ -105,21 +106,13 @@ final class AppState {
 
         PersistenceService.ensureDirectories()
         load()
+        setupICloudIfNeeded()
     }
 
     // MARK: - Load
 
     private func load() {
-        if let index = PersistenceService.loadIndex() {
-            projects = index.projects
-            activeProjectId = index.activeProjectId
-        }
-
-        if let activeId = activeProjectId {
-            loadRowsForProject(activeId)
-            loadScreenshotImages()
-            loadCustomFonts()
-        }
+        reloadFromDisk()
 
         if projects.isEmpty {
             let project = Project(name: "My App")
@@ -133,6 +126,83 @@ final class AppState {
     }
 
 
+    // MARK: - iCloud
+
+    private func setupICloudIfNeeded() {
+        // Listen for enable/disable from Settings
+        NotificationCenter.default.addObserver(
+            forName: .iCloudSyncDidEnable,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let url = notification.object as? URL {
+                self?.startICloudMonitoring(at: url)
+                self?.reloadFromDisk()
+            }
+        }
+        NotificationCenter.default.addObserver(
+            forName: .iCloudSyncDidDisable,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.stopICloudMonitoring()
+            self?.reloadFromDisk()
+        }
+
+        let sync = ICloudSyncService.shared
+        guard sync.isEnabled else { return }
+
+        Task {
+            _ = await sync.resolveContainer()
+            guard let dataURL = sync.iCloudDataURL else { return }
+
+            try? FileManager.default.createDirectory(at: dataURL, withIntermediateDirectories: true)
+            startICloudMonitoring(at: dataURL)
+
+            PersistenceService.ensureDirectories()
+            reloadFromDisk()
+        }
+    }
+
+    func startICloudMonitoring(at url: URL) {
+        stopICloudMonitoring()
+
+        let monitor = ICloudMonitor()
+        monitor.onRemoteChange = { [weak self] in
+            self?.reloadFromDisk()
+        }
+        monitor.startMonitoring(url: url)
+        iCloudMonitor = monitor
+    }
+
+    func stopICloudMonitoring() {
+        iCloudMonitor?.stopMonitoring()
+        iCloudMonitor = nil
+    }
+
+    func reloadFromDisk() {
+        // Resolve conflicts on iCloud files before reading
+        if PersistenceService.isUsingICloud {
+            ICloudSyncService.shared.resolveConflicts(at: PersistenceService.indexURL)
+            if let activeId = activeProjectId {
+                ICloudSyncService.shared.resolveConflicts(at: PersistenceService.projectDataURL(activeId))
+            }
+        }
+
+        if let index = PersistenceService.loadIndex() {
+            projects = index.projects
+            if activeProjectId == nil || !projects.contains(where: { $0.id == activeProjectId }) {
+                activeProjectId = index.activeProjectId
+            }
+        }
+
+        if let activeId = activeProjectId {
+            loadRowsForProject(activeId)
+            loadScreenshotImages()
+            loadCustomFonts()
+        }
+    }
+
     // MARK: - Save
 
     func scheduleSave() {
@@ -145,6 +215,15 @@ final class AppState {
     }
 
     private func saveAll() {
+        // Record own writes so iCloud monitor ignores them
+        if let monitor = iCloudMonitor {
+            var urls = [PersistenceService.indexURL]
+            if let activeId = activeProjectId {
+                urls.append(PersistenceService.projectDataURL(activeId))
+            }
+            monitor.recordOwnWrite(urls)
+        }
+
         saveIndex()
         saveCurrentProject()
     }

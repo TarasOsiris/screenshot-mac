@@ -11,12 +11,20 @@ struct PersistenceService {
 
     static let decoder = JSONDecoder()
 
+    static var localRootURL: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("screenshot", isDirectory: true)
+    }
+
+    static var isUsingICloud: Bool {
+        ICloudSyncService.shared.isUsingICloud
+    }
+
     static var rootURL: URL {
         if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
             return URL(fileURLWithPath: override, isDirectory: true)
         }
-        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("screenshot", isDirectory: true)
+        return ICloudSyncService.shared.activeRootURL
     }
 
     private static var projectsDir: URL {
@@ -56,13 +64,23 @@ struct PersistenceService {
     // MARK: - Generic load/save
 
     static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
+        let data: Data?
+        if isUsingICloud {
+            data = ICloudSyncService.shared.coordinatedRead(from: url)
+        } else {
+            data = try? Data(contentsOf: url)
+        }
+        guard let data else { return nil }
         return try? decoder.decode(type, from: data)
     }
 
     static func save<T: Encodable>(_ value: T, to url: URL) throws {
         let data = try encoder.encode(value)
-        try data.write(to: url, options: .atomic)
+        if isUsingICloud {
+            try ICloudSyncService.shared.coordinatedWrite(data, to: url)
+        } else {
+            try data.write(to: url, options: .atomic)
+        }
     }
 
     // MARK: - Project index

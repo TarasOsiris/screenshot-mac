@@ -118,7 +118,10 @@ struct EditorRowView: View {
 
                     // Add button
                     AddTemplateButton(width: dw, height: dh) {
-                        store.requirePro(allowed: store.canAddTemplate(currentCount: row.templates.count)) {
+                        store.requirePro(
+                            allowed: store.canAddTemplate(currentCount: row.templates.count),
+                            context: .templateLimit
+                        ) {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 state.addTemplate(to: row.id)
                             }
@@ -159,7 +162,10 @@ struct EditorRowView: View {
                                 state.saveBackgroundImage(image, for: row.id, templateIndex: index)
                             },
                             onDuplicate: {
-                                store.requirePro(allowed: store.canAddTemplate(currentCount: row.templates.count)) {
+                                store.requirePro(
+                                    allowed: store.canAddTemplate(currentCount: row.templates.count),
+                                    context: .templateLimit
+                                ) {
                                     withAnimation(.easeInOut(duration: 0.2)) {
                                         state.duplicateTemplate(template.id, in: row.id)
                                     }
@@ -205,7 +211,10 @@ struct EditorRowView: View {
         }
         .contextMenu {
             Button("Add Screenshot") {
-                store.requirePro(allowed: store.canAddTemplate(currentCount: row.templates.count)) {
+                store.requirePro(
+                    allowed: store.canAddTemplate(currentCount: row.templates.count),
+                    context: .templateLimit
+                ) {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         state.addTemplate(to: row.id)
                     }
@@ -248,7 +257,10 @@ struct EditorRowView: View {
             }
             .disabled(!canMoveDown)
             Button("Duplicate Row") {
-                store.requirePro(allowed: store.canAddRow(currentCount: state.rows.count)) {
+                store.requirePro(
+                    allowed: store.canAddRow(currentCount: state.rows.count),
+                    context: .rowLimit
+                ) {
                     withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
                 }
             }

@@ -49,7 +49,10 @@ struct ContentView: View {
                         }
 
                         AddRowButton {
-                            store.requirePro(allowed: store.canAddRow(currentCount: state.rows.count)) {
+                            store.requirePro(
+                                allowed: store.canAddRow(currentCount: state.rows.count),
+                                context: .rowLimit
+                            ) {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     state.addRow()
                                 }
@@ -269,7 +272,10 @@ struct ContentView: View {
             .disabled(state.activeProjectId == nil)
 
             Button("Duplicate Project") {
-                store.requirePro(allowed: store.canCreateProject()) {
+                store.requirePro(
+                    allowed: store.canCreateProject(),
+                    context: .projectLimit
+                ) {
                     if let id = state.activeProjectId {
                         state.duplicateProject(id)
                     }
@@ -330,7 +336,10 @@ struct ContentView: View {
     private var projectActionsToolbarMenu: some View {
         Menu {
             Button("New Project...") {
-                store.requirePro(allowed: store.canCreateProject()) {
+                store.requirePro(
+                    allowed: store.canCreateProject(),
+                    context: .projectLimit
+                ) {
                     dialogText = "Project \(state.projects.count + 1)"
                     isCreatingProject = true
                 }
@@ -589,7 +598,7 @@ struct ContentView: View {
                 )
                 showExportSuccess()
                 if openExportFolderOnSuccess {
-                    NSWorkspace.shared.open(destinationFolderURL)
+                    NSWorkspace.shared.activateFileViewerSelecting([destinationFolderURL])
                 }
             } catch {
                 exportError = error.localizedDescription
@@ -628,7 +637,7 @@ struct ContentView: View {
 
     private func openLastExportFolder() {
         guard let url = lastExportFolderURL() else { return }
-        NSWorkspace.shared.open(url)
+        NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
 }

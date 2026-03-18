@@ -67,7 +67,10 @@ struct ScreenshotBroApp: App {
                         if appState.selectedShapeId != nil {
                             appState.duplicateSelectedShape()
                         } else if let rowId = appState.selectedRowId {
-                            storeService.requirePro(allowed: storeService.canAddRow(currentCount: appState.rows.count)) {
+                            storeService.requirePro(
+                                allowed: storeService.canAddRow(currentCount: appState.rows.count),
+                                context: .rowLimit
+                            ) {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     appState.duplicateRow(rowId)
                                 }
