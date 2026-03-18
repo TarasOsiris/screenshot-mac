@@ -51,6 +51,7 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     }
 
     /// Mark URLs as own writes so we can ignore the resulting NSFilePresenter callbacks.
+    /// Call this BEFORE writing so `presentedSubitemDidChange` can filter own writes.
     func recordOwnWrite(_ urls: [URL]) {
         writeURLLock.lock()
         for url in urls { recentWriteURLs.insert(url) }
@@ -62,8 +63,11 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
             for url in urls { self?.recentWriteURLs.remove(url) }
             self?.writeURLLock.unlock()
         }
+    }
 
-        // Update our snapshot so we don't re-trigger for our own save
+    /// Update the index mod-date snapshot AFTER writing, so `hasIndexChanged()`
+    /// correctly returns false for our own saves.
+    func snapshotAfterWrite() {
         snapshotIndexModDate()
     }
 

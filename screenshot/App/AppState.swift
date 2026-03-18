@@ -211,8 +211,10 @@ final class AppState {
         // Resolve conflicts on iCloud files before reading
         if PersistenceService.isUsingICloud {
             ICloudSyncService.shared.resolveConflicts(at: PersistenceService.indexURL)
-            if let activeId = activeProjectId {
-                ICloudSyncService.shared.resolveConflicts(at: PersistenceService.projectDataURL(activeId))
+            // Resolve conflicts on all known projects, not just the active one,
+            // so switching projects later doesn't hit stale conflicts.
+            for project in projects {
+                ICloudSyncService.shared.resolveConflicts(at: PersistenceService.projectDataURL(project.id))
             }
         }
 
@@ -233,6 +235,7 @@ final class AppState {
                 if anyLocalWins {
                     iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL])
                     saveIndex()
+                    iCloudMonitor?.snapshotAfterWrite()
                 }
             } else {
                 projects = index.projects
@@ -288,6 +291,9 @@ final class AppState {
 
         saveIndex()
         saveCurrentProject()
+
+        // Snapshot AFTER writing so hasIndexChanged() returns false for our own saves
+        iCloudMonitor?.snapshotAfterWrite()
     }
 
     private func saveIndex() {
