@@ -9,8 +9,14 @@ final class ICloudSyncService: @unchecked Sendable {
     static let shared = ICloudSyncService()
 
     private let containerID = "iCloud.xyz.tleskiv.screenshot"
-    private let enabledKey = "iCloudSyncEnabled"
     private static let dataSubpath = "Documents/screenshot"
+
+    /// Marker file in the LOCAL app support directory (never synced via iCloud).
+    /// Using a file instead of UserDefaults because sandboxed apps with iCloud
+    /// entitlements can have their UserDefaults synced across Macs.
+    private static var enabledMarkerURL: URL {
+        PersistenceService.localRootURL.appendingPathComponent(".icloud-sync-enabled")
+    }
 
     private let containerLock = NSLock()
     private var _iCloudContainerURL: URL?
@@ -21,7 +27,7 @@ final class ICloudSyncService: @unchecked Sendable {
         return _iCloudContainerURL
     }
 
-    var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }
+    var isEnabled: Bool { FileManager.default.fileExists(atPath: Self.enabledMarkerURL.path) }
 
     var isAvailable: Bool { FileManager.default.ubiquityIdentityToken != nil }
 
@@ -40,7 +46,17 @@ final class ICloudSyncService: @unchecked Sendable {
         return PersistenceService.localRootURL
     }
 
-    private init() {}
+    private init() {
+        // Migrate from UserDefaults (which syncs across Macs) to local marker file
+        let legacyKey = "iCloudSyncEnabled"
+        if UserDefaults.standard.bool(forKey: legacyKey) {
+            let fm = FileManager.default
+            let dir = PersistenceService.localRootURL
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            fm.createFile(atPath: Self.enabledMarkerURL.path, contents: nil)
+            UserDefaults.standard.removeObject(forKey: legacyKey)
+        }
+    }
 
     // MARK: - Container Resolution
 
@@ -68,8 +84,11 @@ final class ICloudSyncService: @unchecked Sendable {
 
         try copyDataDirectory(from: PersistenceService.localRootURL, to: dataURL, progressHandler: progressHandler)
 
+        // Create marker file in the local directory (per-machine, never synced)
+        let markerURL = Self.enabledMarkerURL
+        FileManager.default.createFile(atPath: markerURL.path, contents: nil)
+
         await MainActor.run {
-            UserDefaults.standard.set(true, forKey: self.enabledKey)
             PersistenceService.ensureDirectories()
             NotificationCenter.default.post(name: .iCloudSyncDidEnable, object: dataURL)
         }
@@ -83,8 +102,10 @@ final class ICloudSyncService: @unchecked Sendable {
 
         try copyDataDirectory(from: dataURL, to: PersistenceService.localRootURL, progressHandler: progressHandler)
 
+        // Remove marker file
+        try? FileManager.default.removeItem(at: Self.enabledMarkerURL)
+
         await MainActor.run {
-            UserDefaults.standard.set(false, forKey: self.enabledKey)
             PersistenceService.ensureDirectories()
             NotificationCenter.default.post(name: .iCloudSyncDidDisable, object: nil)
         }
