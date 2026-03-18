@@ -22,6 +22,8 @@ final class AppState {
     var canvasFocusRowId: UUID?
     var canvasFocusRequestNonce = 0
     @ObservationIgnored var iCloudMonitor: ICloudMonitor?
+    /// Tracks when the active project data was last saved/loaded, for merge decisions.
+    @ObservationIgnored private var activeProjectDataModifiedAt: Date?
 
     private static let templateColors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
 
@@ -104,9 +106,17 @@ final class AppState {
         let stored = UserDefaults.standard.double(forKey: "defaultZoomLevel")
         if stored > 0 { zoomLevel = stored }
 
-        PersistenceService.ensureDirectories()
-        load()
-        setupICloudIfNeeded()
+        // If iCloud is enabled (and we're not in test mode), defer loading until
+        // the container is resolved — setupICloudIfNeeded will call load() after.
+        let iCloudPending = !PersistenceService.hasDataDirOverride && ICloudSyncService.shared.isEnabled
+        if !iCloudPending {
+            PersistenceService.ensureDirectories()
+            load()
+        }
+
+        if !PersistenceService.hasDataDirOverride {
+            setupICloudIfNeeded()
+        }
     }
 
     // MARK: - Load
@@ -135,18 +145,22 @@ final class AppState {
             object: nil,
             queue: .main
         ) { [weak self] notification in
+            guard let self else { return }
+            self.saveTask?.cancel()
             if let url = notification.object as? URL {
-                self?.startICloudMonitoring(at: url)
-                self?.reloadFromDisk()
+                self.startICloudMonitoring(at: url)
             }
+            self.reloadFromDisk()
         }
         NotificationCenter.default.addObserver(
             forName: .iCloudSyncDidDisable,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.stopICloudMonitoring()
-            self?.reloadFromDisk()
+            guard let self else { return }
+            self.saveTask?.cancel()
+            self.stopICloudMonitoring()
+            self.reloadFromDisk()
         }
 
         let sync = ICloudSyncService.shared
@@ -154,13 +168,18 @@ final class AppState {
 
         Task {
             _ = await sync.resolveContainer()
-            guard let dataURL = sync.iCloudDataURL else { return }
+            guard let dataURL = sync.iCloudDataURL else {
+                // Container resolution failed — fall back to local
+                PersistenceService.ensureDirectories()
+                load()
+                return
+            }
 
             try? FileManager.default.createDirectory(at: dataURL, withIntermediateDirectories: true)
             startICloudMonitoring(at: dataURL)
 
             PersistenceService.ensureDirectories()
-            reloadFromDisk()
+            load()
         }
     }
 
@@ -190,17 +209,76 @@ final class AppState {
         }
 
         if let index = PersistenceService.loadIndex() {
-            projects = index.projects
+            if PersistenceService.isUsingICloud && !projects.isEmpty {
+                // Merge: union by UUID, last-writer-wins for duplicates
+                let merged = mergeProjects(local: projects, remote: index.projects)
+                let changed = merged.count != index.projects.count
+                projects = merged
+                // Persist the merged index so both Macs converge
+                if changed {
+                    iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL])
+                    saveIndex()
+                }
+            } else {
+                projects = index.projects
+            }
             if activeProjectId == nil || !projects.contains(where: { $0.id == activeProjectId }) {
                 activeProjectId = index.activeProjectId
             }
         }
 
         if let activeId = activeProjectId {
-            loadRowsForProject(activeId)
+            if PersistenceService.isUsingICloud, let localModified = activeProjectDataModifiedAt {
+                // Only reload if the on-disk version is newer than our in-memory version
+                if let diskData = PersistenceService.loadProject(activeId),
+                   diskData.modifiedAt > localModified {
+                    applyProjectData(diskData, for: activeId)
+                }
+            } else {
+                loadRowsForProject(activeId)
+            }
             loadScreenshotImages()
             loadCustomFonts()
         }
+    }
+
+    private func applyProjectData(_ data: ProjectData, for projectId: UUID) {
+        rows = data.rows
+        localeState = data.localeState ?? .default
+        activeProjectDataModifiedAt = data.modifiedAt
+        selectRow(rows.first?.id)
+        cleanupOrphanedResourceFiles(for: projectId)
+    }
+
+    /// Merge two project lists by UUID. For projects present in both, keep the one
+    /// with the newer `modifiedAt` (last-writer-wins). Projects unique to either
+    /// side are included in the result.
+    private func mergeProjects(local: [Project], remote: [Project]) -> [Project] {
+        var byId: [UUID: Project] = [:]
+        for project in local {
+            byId[project.id] = project
+        }
+        for project in remote {
+            if let existing = byId[project.id] {
+                // Last-writer-wins
+                if project.modifiedAt > existing.modifiedAt {
+                    byId[project.id] = project
+                }
+            } else {
+                byId[project.id] = project
+            }
+        }
+        // Preserve ordering: remote order first, then local-only projects appended
+        var seen = Set<UUID>()
+        var result: [Project] = []
+        for project in remote {
+            result.append(byId[project.id]!)
+            seen.insert(project.id)
+        }
+        for project in local where !seen.contains(project.id) {
+            result.append(byId[project.id]!)
+        }
+        return result
     }
 
     // MARK: - Save
@@ -229,6 +307,10 @@ final class AppState {
     }
 
     private func saveIndex() {
+        // Update modifiedAt for the active project
+        if let idx = projects.firstIndex(where: { $0.id == activeProjectId }) {
+            projects[idx].modifiedAt = Date()
+        }
         let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
         do {
             try PersistenceService.saveIndex(index)
@@ -248,8 +330,10 @@ final class AppState {
 
     private func saveCurrentProject() {
         guard let activeId = activeProjectId else { return }
+        let data = ProjectData(rows: rows, localeState: localeState)
         do {
-            try PersistenceService.saveProject(activeId, data: ProjectData(rows: rows, localeState: localeState))
+            try PersistenceService.saveProject(activeId, data: data)
+            activeProjectDataModifiedAt = data.modifiedAt
         } catch {
             saveError = "Failed to save project: \(error.localizedDescription)"
         }
@@ -1457,15 +1541,13 @@ final class AppState {
 
     private func loadRowsForProject(_ id: UUID) {
         if let data = PersistenceService.loadProject(id) {
-            rows = data.rows
-            localeState = data.localeState ?? .default
+            applyProjectData(data, for: id)
         } else {
             rows = [makeDefaultRow()]
             localeState = .default
+            activeProjectDataModifiedAt = nil
+            selectRow(rows.first?.id)
         }
-        selectRow(rows.first?.id)
-        // Safety net: remove any orphaned image files left from prior sessions
-        cleanupOrphanedResourceFiles(for: id)
     }
 
     private func normalizeSelection() {

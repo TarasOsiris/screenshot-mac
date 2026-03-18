@@ -3,6 +3,10 @@ import Foundation
 struct PersistenceService {
     private static let rootDirectoryOverrideKey = "SCREENSHOT_DATA_DIR"
 
+    static var hasDataDirOverride: Bool {
+        ProcessInfo.processInfo.environment[rootDirectoryOverrideKey]?.isEmpty == false
+    }
+
     static let encoder: JSONEncoder = {
         let e = JSONEncoder()
         e.outputFormatting = [.prettyPrinted, .sortedKeys]

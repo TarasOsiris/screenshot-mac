@@ -70,16 +70,19 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     // MARK: - NSFilePresenter
 
     func presentedSubitemDidChange(at url: URL) {
-        writeURLLock.lock()
-        let isOwn = recentWriteURLs.contains(url)
-        writeURLLock.unlock()
-
-        guard !isOwn else { return }
+        guard !isOwnWrite(url) else { return }
         scheduleDebouncedReload()
     }
 
     func presentedItemDidChange() {
+        // The debounced reload checks hasIndexChanged(), which catches own writes
         scheduleDebouncedReload()
+    }
+
+    private func isOwnWrite(_ url: URL) -> Bool {
+        writeURLLock.lock()
+        defer { writeURLLock.unlock() }
+        return recentWriteURLs.contains(url)
     }
 
     func presentedSubitemDidAppear(at url: URL) {
@@ -174,18 +177,18 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
 
     // MARK: - Change Detection
 
-    private var indexFileURL: URL? {
-        presentedItemURL?.appendingPathComponent("projects.json")
+    private var indexFileURL: URL {
+        PersistenceService.indexURL
     }
 
     private func snapshotIndexModDate() {
-        guard let url = indexFileURL else { return }
+        let url = indexFileURL
         lastKnownIndexModDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
     }
 
     /// Returns true if the index file has been modified since our last snapshot.
     private func hasIndexChanged() -> Bool {
-        guard let url = indexFileURL else { return true }
+        let url = indexFileURL
         let currentDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
         return currentDate != lastKnownIndexModDate
     }
