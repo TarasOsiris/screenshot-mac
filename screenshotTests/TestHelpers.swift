@@ -30,10 +30,10 @@ func makeTestImage(width: Int, height: Int) -> NSImage {
 @testable import Screenshot_Bro
 
 @MainActor
-func makeTestState() -> (AppState, URL) {
+func makeTestState(iCloudSyncOverride: Bool? = nil) -> (AppState, URL) {
     let tempDir = makeTemporaryDataDirectory()
     setenv("SCREENSHOT_DATA_DIR", tempDir.path, 1)
-    let state = AppState()
+    let state = AppState(iCloudSyncOverride: iCloudSyncOverride)
     return (state, tempDir)
 }
 

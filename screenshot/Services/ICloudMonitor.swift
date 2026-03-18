@@ -21,8 +21,8 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     private var debounceTimer: DispatchWorkItem?
     private let debounceInterval: TimeInterval = 1.0
 
-    /// Track last-known mod date of the index file to skip no-op reloads.
-    private var lastKnownIndexModDate: Date?
+    /// Track last-known mod dates of the index and active project payload files.
+    private var lastKnownTrackedModDates: [URL: Date] = [:]
 
     override init() {
         super.init()
@@ -39,7 +39,7 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     func startMonitoring(url: URL) {
         presentedItemURL = url
         NSFileCoordinator.addFilePresenter(self)
-        snapshotIndexModDate()
+        snapshotTrackedFileDates()
         startMetadataQuery()
     }
 
@@ -68,7 +68,16 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     /// Update the index mod-date snapshot AFTER writing, so `hasIndexChanged()`
     /// correctly returns false for our own saves.
     func snapshotAfterWrite() {
-        snapshotIndexModDate()
+        snapshotTrackedFileDates()
+    }
+
+    func setTrackedProjectDataURL(_ url: URL?) {
+        let previousURLs = Set(trackedFileURLs)
+        trackedProjectDataURL = url
+        for trackedURL in previousURLs.subtracting(trackedFileURLs) {
+            lastKnownTrackedModDates.removeValue(forKey: trackedURL)
+        }
+        snapshotTrackedFileDates()
     }
 
     // MARK: - NSFilePresenter
@@ -185,16 +194,38 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
         PersistenceService.indexURL
     }
 
-    private func snapshotIndexModDate() {
-        let url = indexFileURL
-        lastKnownIndexModDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
+    private var trackedProjectDataURL: URL?
+
+    private var trackedFileURLs: [URL] {
+        var urls = [indexFileURL]
+        if let trackedProjectDataURL {
+            urls.append(trackedProjectDataURL)
+        }
+        return urls
     }
 
-    /// Returns true if the index file has been modified since our last snapshot.
-    private func hasIndexChanged() -> Bool {
-        let url = indexFileURL
-        let currentDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
-        return currentDate != lastKnownIndexModDate
+    private func snapshotTrackedFileDates() {
+        for url in trackedFileURLs {
+            lastKnownTrackedModDates[url] = trackedModificationDate(for: url)
+        }
+    }
+
+    /// Returns true if any tracked file has been modified since our last snapshot.
+    private func hasTrackedFileChanged() -> Bool {
+        for url in trackedFileURLs {
+            if trackedModificationDate(for: url) != lastKnownTrackedModDates[url] {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func trackedModificationDate(for url: URL) -> Date {
+        modificationDate(for: url) ?? .distantPast
+    }
+
+    private func modificationDate(for url: URL) -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
     }
 
     // MARK: - Private
@@ -203,8 +234,8 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
         debounceTimer?.cancel()
         let task = DispatchWorkItem { [weak self] in
             DispatchQueue.main.async {
-                guard let self, self.hasIndexChanged() else { return }
-                self.snapshotIndexModDate()
+                guard let self, self.hasTrackedFileChanged() else { return }
+                self.snapshotTrackedFileDates()
                 self.onRemoteChange?()
             }
         }
