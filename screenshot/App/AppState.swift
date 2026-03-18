@@ -505,6 +505,13 @@ final class AppState {
             selectedShapeId = nil
         }
         rows[idx].shapes.removeAll { shapeIdsToRemove.contains($0.id) }
+        // Shift shapes from later templates left by one template width
+        let tw = rows[idx].templateWidth
+        for i in rows[idx].shapes.indices {
+            if rows[idx].owningTemplateIndex(for: rows[idx].shapes[i]) > templateIndex {
+                rows[idx].shapes[i].x -= tw
+            }
+        }
         rows[idx].templates.remove(at: templateIndex)
         // Cleanup orphaned images after removal (single-pass batch check)
         let allCandidates: [String?] = shapesToRemove.flatMap { $0.allImageFileNames } + localeImages + [templateBgImage]
@@ -1489,8 +1496,9 @@ final class AppState {
         customFonts.removeAll()
     }
 
-    func importCustomFont(from url: URL) {
-        guard let activeId = activeProjectId else { return }
+    @discardableResult
+    func importCustomFont(from url: URL) -> String? {
+        guard let activeId = activeProjectId else { return nil }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
 
@@ -1503,13 +1511,15 @@ final class AppState {
             if customFonts[fileName] == nil, let familyName = registerFont(at: destURL) {
                 customFonts[fileName] = familyName
             }
-            return
+            return customFonts[fileName]
         }
 
-        guard (try? fm.copyItem(at: url, to: destURL)) != nil else { return }
+        guard (try? fm.copyItem(at: url, to: destURL)) != nil else { return nil }
         if let familyName = registerFont(at: destURL) {
             customFonts[fileName] = familyName
+            return familyName
         }
+        return nil
     }
 
     func removeCustomFont(_ fileName: String) {
