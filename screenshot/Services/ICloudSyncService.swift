@@ -186,6 +186,13 @@ final class ICloudSyncService: @unchecked Sendable {
         let destByModDate = Dictionary(destProjects.map { ($0.id, $0.modifiedAt) }, uniquingKeysWith: { a, _ in a })
 
         for (index, project) in merged.enumerated() {
+            // Clean up directory for tombstones, then skip copy logic
+            if project.isDeleted {
+                PersistenceService.deleteProject(project.id, at: destination)
+                progressHandler(Double(index + 1) / Double(merged.count))
+                continue
+            }
+
             let sourceWins: Bool
             if !destIds.contains(project.id) {
                 // Only in source
@@ -204,9 +211,11 @@ final class ICloudSyncService: @unchecked Sendable {
             progressHandler(Double(index + 1) / Double(merged.count))
         }
 
+        let purged = merged.purgingOldTombstones()
+        let activeId = purged.first(where: { !$0.isDeleted })?.id
         let mergedIndex = ProjectIndex(
-            projects: merged,
-            activeProjectId: destIndex?.activeProjectId ?? sourceIndex?.activeProjectId
+            projects: purged,
+            activeProjectId: destIndex?.activeProjectId ?? sourceIndex?.activeProjectId ?? activeId
         )
         try PersistenceService.saveIndex(mergedIndex, at: destination)
     }

@@ -118,6 +118,10 @@ struct PersistenceService {
         try? FileManager.default.removeItem(at: projectDir(id))
     }
 
+    static func deleteProject(_ id: UUID, at root: URL) {
+        try? FileManager.default.removeItem(at: projectDir(id, at: root))
+    }
+
     private static func copyDirectory(from src: URL, to dst: URL) {
         let fm = FileManager.default
         try? fm.removeItem(at: dst)

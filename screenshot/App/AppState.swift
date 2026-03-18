@@ -87,7 +87,11 @@ final class AppState {
     var isLoadingImages = false
 
     var activeProject: Project? {
-        projects.first { $0.id == activeProjectId }
+        visibleProjects.first { $0.id == activeProjectId }
+    }
+
+    var visibleProjects: [Project] {
+        projects.filter { !$0.isDeleted }
     }
 
     var selectedRow: ScreenshotRow? {
@@ -124,7 +128,7 @@ final class AppState {
     private func load() {
         reloadFromDisk()
 
-        if projects.isEmpty {
+        if visibleProjects.isEmpty {
             let project = Project(name: "My App")
             projects = [project]
             activeProjectId = project.id
@@ -220,28 +224,26 @@ final class AppState {
 
         if let index = PersistenceService.loadIndex() {
             if PersistenceService.isUsingICloud && !projects.isEmpty {
-                // Remote index is authoritative for which projects exist (handles deletions).
-                // For projects in both, use last-writer-wins on metadata.
-                let localById = Dictionary(projects.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-                var anyLocalWins = false
-                projects = index.projects.map { remote in
-                    if let local = localById[remote.id], local.modifiedAt > remote.modifiedAt {
-                        anyLocalWins = true
-                        return local
-                    }
-                    return remote
-                }
-                // Persist LWW wins so the local metadata is written back to the shared index
-                if anyLocalWins {
+                // Tombstone-aware merge: union by UUID with LWW + resurrection semantics.
+                let mergedRaw = projects.merged(with: index.projects)
+                let changed = mergedRaw != projects
+                projects = mergedRaw.purgingOldTombstones()
+                // Persist merge result so tombstones propagate back
+                if changed {
                     iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL])
                     saveIndex()
                     iCloudMonitor?.snapshotAfterWrite()
                 }
             } else {
-                projects = index.projects
+                projects = index.projects.purgingOldTombstones()
             }
-            if activeProjectId == nil || !projects.contains(where: { $0.id == activeProjectId }) {
-                activeProjectId = index.activeProjectId
+            if activeProjectId == nil || !visibleProjects.contains(where: { $0.id == activeProjectId }) {
+                if let preferredId = index.activeProjectId,
+                   visibleProjects.contains(where: { $0.id == preferredId }) {
+                    activeProjectId = preferredId
+                } else {
+                    activeProjectId = visibleProjects.first?.id
+                }
             }
         }
 
@@ -297,10 +299,11 @@ final class AppState {
     }
 
     private func saveIndex() {
-        // Update modifiedAt for the active project
-        if let idx = projects.firstIndex(where: { $0.id == activeProjectId }) {
+        // Update modifiedAt for the active project (skip tombstones)
+        if let idx = projects.firstIndex(where: { $0.id == activeProjectId && !$0.isDeleted }) {
             projects[idx].modifiedAt = Date()
         }
+        projects = projects.purgingOldTombstones()
         let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
         do {
             try PersistenceService.saveIndex(index)
@@ -389,7 +392,7 @@ final class AppState {
     }
 
     private func uniqueProjectName(_ baseName: String, excludingId: UUID? = nil) -> String {
-        let existingNames = Set(projects.filter { $0.id != excludingId }.map { $0.name })
+        let existingNames = Set(visibleProjects.filter { $0.id != excludingId }.map { $0.name })
         return Self.uniqueName(baseName, among: existingNames)
     }
 
@@ -433,20 +436,21 @@ final class AppState {
     }
 
     func deleteProject(_ id: UUID) {
-        projects.removeAll { $0.id == id }
+        guard let idx = projects.firstIndex(where: { $0.id == id }) else { return }
+        projects[idx].markDeleted()
         PersistenceService.deleteProject(id)
 
         if activeProjectId == id {
             cancelPendingDebounceTasks()
             unregisterCustomFonts()
             screenshotImages.removeAll()
-            if let nextProject = projects.first {
+            if let nextProject = visibleProjects.first {
                 activeProjectId = nextProject.id
                 loadRowsForProject(nextProject.id)
                 loadScreenshotImages()
                 loadCustomFonts()
             } else {
-                // No projects left — create a new one
+                // No visible projects left — create a new one
                 createProject(name: "Project 1")
                 return
             }

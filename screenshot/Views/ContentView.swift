@@ -249,7 +249,7 @@ struct ContentView: View {
 
     @ViewBuilder
     private var projectSwitcherSection: some View {
-        ForEach(state.projects) { project in
+        ForEach(state.visibleProjects) { project in
             Button {
                 state.selectProject(project.id)
             } label: {
@@ -299,7 +299,7 @@ struct ContentView: View {
                     state.deleteProject(id)
                 }
             }
-            .disabled(state.activeProjectId == nil || state.projects.count <= 1)
+            .disabled(state.activeProjectId == nil || state.visibleProjects.count <= 1)
         }
     }
 
@@ -340,7 +340,7 @@ struct ContentView: View {
                     allowed: store.canCreateProject(),
                     context: .projectLimit
                 ) {
-                    dialogText = "Project \(state.projects.count + 1)"
+                    dialogText = "Project \(state.visibleProjects.count + 1)"
                     isCreatingProject = true
                 }
             }

@@ -433,7 +433,7 @@ struct AppStateTests {
         defer { cleanup(tempDir) }
         let projectId = state.activeProjectId!
         state.deleteProject(projectId)
-        #expect(state.projects.count == 1, "Should create fallback project")
+        #expect(state.visibleProjects.count == 1, "Should create fallback project")
         #expect(state.activeProjectId != nil)
     }
 }
