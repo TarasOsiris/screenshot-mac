@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct ScreenshotBroApp: App {
     @State private var appState = AppState()
+    @State private var storeService = StoreService()
     @AppStorage("appearance") private var appearance = "auto"
     @AppStorage("onboardingCompleted") private var onboardingCompleted = false
 
@@ -18,7 +19,9 @@ struct ScreenshotBroApp: App {
         WindowGroup {
             ContentView()
                 .environment(appState)
+                .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
+                .task { storeService.start() }
                 .sheet(isPresented: Binding(
                     get: { !onboardingCompleted },
                     set: { if !$0 { onboardingCompleted = true } }
@@ -64,8 +67,10 @@ struct ScreenshotBroApp: App {
                         if appState.selectedShapeId != nil {
                             appState.duplicateSelectedShape()
                         } else if let rowId = appState.selectedRowId {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                appState.duplicateRow(rowId)
+                            storeService.requirePro(allowed: storeService.canAddRow(currentCount: appState.rows.count)) {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    appState.duplicateRow(rowId)
+                                }
                             }
                         }
                     }
@@ -182,6 +187,7 @@ struct ScreenshotBroApp: App {
 
         Settings {
             SettingsView()
+                .environment(storeService)
         }
     }
 }

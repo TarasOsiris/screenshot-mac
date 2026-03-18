@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(AppState.self) private var state
+    @Environment(StoreService.self) private var store
     @Environment(\.undoManager) private var undoManager
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("exportScale") private var exportScale = 1.0
@@ -47,8 +48,10 @@ struct ContentView: View {
                         }
 
                         AddRowButton {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                state.addRow()
+                            store.requirePro(allowed: store.canAddRow(currentCount: state.rows.count)) {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    state.addRow()
+                                }
                             }
                         }
                     }
@@ -217,6 +220,9 @@ struct ContentView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+        .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
+            PaywallView()
+        }
         .onAppear {
             state.undoManager = undoManager
             undoManager?.levelsOfUndo = 50
@@ -262,8 +268,10 @@ struct ContentView: View {
             .disabled(state.activeProjectId == nil)
 
             Button("Duplicate Project") {
-                if let id = state.activeProjectId {
-                    state.duplicateProject(id)
+                store.requirePro(allowed: store.canCreateProject()) {
+                    if let id = state.activeProjectId {
+                        state.duplicateProject(id)
+                    }
                 }
             }
             .disabled(state.activeProjectId == nil)
@@ -321,8 +329,10 @@ struct ContentView: View {
     private var projectActionsToolbarMenu: some View {
         Menu {
             Button("New Project...") {
-                dialogText = "Project \(state.projects.count + 1)"
-                isCreatingProject = true
+                store.requirePro(allowed: store.canCreateProject()) {
+                    dialogText = "Project \(state.projects.count + 1)"
+                    isCreatingProject = true
+                }
             }
 
             Divider()
@@ -582,4 +592,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(AppState())
+        .environment(StoreService())
 }

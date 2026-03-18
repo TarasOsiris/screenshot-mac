@@ -1,6 +1,8 @@
 import SwiftUI
+import StoreKit
 
 struct SettingsView: View {
+    @Environment(StoreService.self) private var store
     @AppStorage("appearance") private var appearance = "auto"
     @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
     @AppStorage("exportFormat") private var exportFormat = "png"
@@ -20,6 +22,10 @@ struct SettingsView: View {
 
             Tab("Export", systemImage: "square.and.arrow.up") {
                 exportSettings
+            }
+
+            Tab("Purchase", systemImage: "star") {
+                purchaseSettings
             }
         }
         .frame(width: 420, height: 380)
@@ -77,8 +83,113 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
     }
+
+    private var purchaseSettings: some View {
+        Form {
+            Section {
+                LabeledContent("Plan") {
+                    if store.isProUnlocked {
+                        Label("Pro", systemImage: "checkmark.seal.fill")
+                            .foregroundStyle(.green)
+                    } else {
+                        Text("Free")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if store.isProUnlocked {
+                Section("Included") {
+                    proFeatureRow("Unlimited projects")
+                    proFeatureRow("Unlimited rows per project")
+                    proFeatureRow("Unlimited screenshots per row")
+                }
+            } else {
+                freeTierSections
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private var freeTierSections: some View {
+        Section("Free plan limits") {
+            limitRow("Projects", value: "1")
+            limitRow("Rows per project", value: "\(StoreService.freeMaxRows)")
+            limitRow("Screenshots per row", value: "\(StoreService.freeMaxTemplatesPerRow)")
+        }
+
+        Section {
+            upgradeRow
+            LabeledContent("Already purchased?") {
+                Button("Restore Purchase") {
+                    Task { await store.restore() }
+                }
+                .disabled(store.isLoading)
+            }
+        }
+
+        if let error = store.purchaseError {
+            Section {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red)
+                    .font(.callout)
+            }
+        }
+
+        if let info = store.purchaseInfo {
+            Section {
+                Label(info, systemImage: "info.circle")
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var upgradeRow: some View {
+        if let product = store.proProduct {
+            LabeledContent("Upgrade to Pro") {
+                Button {
+                    Task { await store.purchase() }
+                } label: {
+                    if store.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Text("Buy — \(product.displayPrice)")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(store.isLoading)
+            }
+        } else if store.didFinishLoadingProducts {
+            LabeledContent("Upgrade to Pro") {
+                Text("Unavailable")
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            LabeledContent("Upgrade to Pro") {
+                ProgressView()
+                    .controlSize(.small)
+            }
+        }
+    }
+
+    private func proFeatureRow(_ text: String) -> some View {
+        Label(text, systemImage: "checkmark")
+            .foregroundStyle(.primary)
+    }
+
+    private func limitRow(_ label: String, value: String) -> some View {
+        LabeledContent(label) {
+            Text(value)
+                .monospacedDigit()
+        }
+    }
 }
 
 #Preview {
     SettingsView()
+        .environment(StoreService())
 }

@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 struct EditorRowView: View {
     @Bindable var state: AppState
+    @Environment(StoreService.self) private var store
     let row: ScreenshotRow
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @State private var isDeletingRow = false
@@ -117,8 +118,10 @@ struct EditorRowView: View {
 
                     // Add button
                     AddTemplateButton(width: dw, height: dh) {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            state.addTemplate(to: row.id)
+                        store.requirePro(allowed: store.canAddTemplate(currentCount: row.templates.count)) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                state.addTemplate(to: row.id)
+                            }
                         }
                     }
                 }
@@ -156,8 +159,10 @@ struct EditorRowView: View {
                                 state.saveBackgroundImage(image, for: row.id, templateIndex: index)
                             },
                             onDuplicate: {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.duplicateTemplate(template.id, in: row.id)
+                                store.requirePro(allowed: store.canAddTemplate(currentCount: row.templates.count)) {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        state.duplicateTemplate(template.id, in: row.id)
+                                    }
                                 }
                             },
                             onDelete: {
@@ -200,8 +205,10 @@ struct EditorRowView: View {
         }
         .contextMenu {
             Button("Add Screenshot") {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    state.addTemplate(to: row.id)
+                store.requirePro(allowed: store.canAddTemplate(currentCount: row.templates.count)) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        state.addTemplate(to: row.id)
+                    }
                 }
             }
             Menu("Add Element") {
@@ -241,7 +248,9 @@ struct EditorRowView: View {
             }
             .disabled(!canMoveDown)
             Button("Duplicate Row") {
-                withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+                store.requirePro(allowed: store.canAddRow(currentCount: state.rows.count)) {
+                    withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+                }
             }
             Divider()
             Button("Reset Row", role: .destructive) {
