@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 struct FontPicker: View {
     @Binding var selection: String
     var customFonts: [String: String] = [:]  // fileName → familyName
-    var onImportFont: ((URL) -> Void)?
+    var onImportFont: ((URL) -> String?)?
 
     private static let fontFamilies: [String] = {
         NSFontManager.shared.availableFontFamilies.sorted()
@@ -42,8 +42,14 @@ struct FontPicker: View {
                 panel.allowsMultipleSelection = true
                 panel.canChooseDirectories = false
                 guard panel.runModal() == .OK else { return }
+                var lastFamily: String?
                 for url in panel.urls {
-                    onImportFont?(url)
+                    if let family = onImportFont?(url) {
+                        lastFamily = family
+                    }
+                }
+                if let family = lastFamily {
+                    selection = family
                 }
             } label: {
                 Image(systemName: "plus")
