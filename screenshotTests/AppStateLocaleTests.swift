@@ -3,7 +3,6 @@ import AppKit
 @testable import Screenshot_Bro
 
 @MainActor
-@Suite(.serialized)
 struct AppStateLocaleTests {
 
     @Test func resetTranslationRemovesOverrideFromProgress() throws {

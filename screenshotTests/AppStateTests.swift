@@ -1,14 +1,11 @@
 import Testing
 import AppKit
-import SwiftUI
 @testable import Screenshot_Bro
 
 @MainActor
-@Suite(.serialized)
 struct AppStateTests {
 
     private func makeState() -> (AppState, URL) { makeTestState() }
-    private func makeSyncedState() -> (AppState, URL) { makeTestState(iCloudSyncOverride: true) }
     private func cleanup(_ tempDir: URL) { cleanupTestState(tempDir) }
 
     // MARK: - Initial state
@@ -429,82 +426,6 @@ struct AppStateTests {
         let projectId = try #require(state.activeProjectId)
         state.renameProject(projectId, to: "Renamed")
         #expect(state.activeProject?.name == "Renamed")
-    }
-
-    @Test func renameProjectUpdatesMetadataTimestamp() throws {
-        let (state, tempDir) = makeState()
-        defer { cleanup(tempDir) }
-        let projectId = try #require(state.activeProjectId)
-        let before = try #require(state.activeProject).modifiedAt
-
-        Thread.sleep(forTimeInterval: 0.01)
-        state.renameProject(projectId, to: "Renamed")
-
-        let after = try #require(state.activeProject).modifiedAt
-        #expect(after > before)
-    }
-
-    @Test func selectingProjectDoesNotUpdateMetadataTimestamp() throws {
-        let (state, tempDir) = makeState()
-        defer { cleanup(tempDir) }
-
-        let firstProjectId = try #require(state.activeProjectId)
-        Thread.sleep(forTimeInterval: 0.01)
-        state.createProject(name: "Second Project")
-        let secondProjectId = try #require(state.activeProjectId)
-
-        let firstBefore = try #require(state.projects.first { $0.id == firstProjectId }).modifiedAt
-        let secondBefore = try #require(state.projects.first { $0.id == secondProjectId }).modifiedAt
-
-        Thread.sleep(forTimeInterval: 0.01)
-        state.selectProject(firstProjectId)
-
-        let firstAfter = try #require(state.projects.first { $0.id == firstProjectId }).modifiedAt
-        let secondAfter = try #require(state.projects.first { $0.id == secondProjectId }).modifiedAt
-        #expect(firstAfter == firstBefore)
-        #expect(secondAfter == secondBefore)
-    }
-
-    @Test func syncedReloadDoesNotCreatePlaceholderRowsWhenProjectPayloadIsMissing() throws {
-        let (state, tempDir) = makeSyncedState()
-        defer { cleanup(tempDir) }
-
-        let remoteProject = Project(name: "Remote")
-        let remoteIndex = ProjectIndex(projects: [remoteProject], activeProjectId: remoteProject.id)
-        try PersistenceService.saveIndex(remoteIndex, at: tempDir)
-
-        state.reloadFromDisk()
-
-        #expect(state.projects.map(\.id) == [remoteProject.id])
-        #expect(state.activeProjectId == remoteProject.id)
-        #expect(state.rows.isEmpty)
-        #expect(state.selectedRowId == nil)
-        #expect(state.selectedShapeId == nil)
-    }
-
-    @Test func syncedReloadLoadsProjectWhenPayloadArrivesLater() throws {
-        let (state, tempDir) = makeSyncedState()
-        defer { cleanup(tempDir) }
-
-        let remoteProject = Project(name: "Remote")
-        let remoteIndex = ProjectIndex(projects: [remoteProject], activeProjectId: remoteProject.id)
-        try PersistenceService.saveIndex(remoteIndex, at: tempDir)
-
-        state.reloadFromDisk()
-        #expect(state.rows.isEmpty)
-
-        let expectedRow = ScreenshotRow(
-            label: "Remote Row",
-            templates: [ScreenshotTemplate(backgroundColor: .orange)]
-        )
-        let projectData = ProjectData(rows: [expectedRow], localeState: .default)
-        try PersistenceService.saveProject(remoteProject.id, data: projectData, at: tempDir)
-
-        state.reloadFromDisk()
-
-        #expect(state.rows.count == 1)
-        #expect(state.rows.first?.id == expectedRow.id)
-        #expect(state.selectedRowId == expectedRow.id)
     }
 
     @Test func deleteProjectCreatesNewIfLast() {

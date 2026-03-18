@@ -31,9 +31,7 @@ final class ICloudSyncService: @unchecked Sendable {
 
     var isAvailable: Bool { FileManager.default.ubiquityIdentityToken != nil }
 
-    var isUsingICloud: Bool {
-        return isEnabled && iCloudContainerURL != nil
-    }
+    var isUsingICloud: Bool { isEnabled && iCloudContainerURL != nil }
 
     /// The iCloud data directory URL, or nil if iCloud container is not resolved.
     var iCloudDataURL: URL? {
@@ -158,14 +156,6 @@ final class ICloudSyncService: @unchecked Sendable {
         try? NSFileVersion.removeOtherVersionsOfItem(at: url)
     }
 
-    func requestDownloadIfNeeded(at url: URL) {
-        let values = try? url.resourceValues(forKeys: [.isUbiquitousItemKey, .ubiquitousItemDownloadingStatusKey])
-        guard values?.isUbiquitousItem == true else { return }
-        if values?.ubiquitousItemDownloadingStatus != .current {
-            try? FileManager.default.startDownloadingUbiquitousItem(at: url)
-        }
-    }
-
     // MARK: - Private
 
     /// Merge projects from source into destination. Union by UUID, last-writer-wins
@@ -191,17 +181,22 @@ final class ICloudSyncService: @unchecked Sendable {
         }
 
         // Determine which root has the winning version of each project
-        let destById = Dictionary(destProjects.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        let sourceById = Dictionary(sourceProjects.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let destIds = Set(destProjects.map(\.id))
+        let sourceIds = Set(sourceProjects.map(\.id))
+        let destByModDate = Dictionary(destProjects.map { ($0.id, $0.modifiedAt) }, uniquingKeysWith: { a, _ in a })
 
         for (index, project) in merged.enumerated() {
-            let sourceWins = Self.sourceProjectVersionWins(
-                project.id,
-                sourceProjects: sourceById,
-                destinationProjects: destById,
-                sourceRoot: source,
-                destinationRoot: destination
-            )
+            let sourceWins: Bool
+            if !destIds.contains(project.id) {
+                // Only in source
+                sourceWins = true
+            } else if !sourceIds.contains(project.id) {
+                // Only in destination — no copy needed
+                sourceWins = false
+            } else {
+                // In both — source wins if it has a newer timestamp
+                sourceWins = project.modifiedAt > (destByModDate[project.id] ?? .distantPast)
+            }
 
             if sourceWins {
                 try PersistenceService.replaceProjectDir(project.id, from: source, to: destination)
@@ -214,25 +209,6 @@ final class ICloudSyncService: @unchecked Sendable {
             activeProjectId: destIndex?.activeProjectId ?? sourceIndex?.activeProjectId
         )
         try PersistenceService.saveIndex(mergedIndex, at: destination)
-    }
-
-    static func sourceProjectVersionWins(
-        _ projectId: UUID,
-        sourceProjects: [UUID: Project],
-        destinationProjects: [UUID: Project],
-        sourceRoot: URL,
-        destinationRoot: URL
-    ) -> Bool {
-        guard let sourceProject = sourceProjects[projectId] else { return false }
-        guard let destinationProject = destinationProjects[projectId] else { return true }
-
-        let sourceModifiedAt = projectVersionModifiedAt(sourceProject, at: sourceRoot)
-        let destinationModifiedAt = projectVersionModifiedAt(destinationProject, at: destinationRoot)
-        return sourceModifiedAt > destinationModifiedAt
-    }
-
-    private static func projectVersionModifiedAt(_ project: Project, at root: URL) -> Date {
-        PersistenceService.loadProject(project.id, at: root)?.modifiedAt ?? project.modifiedAt
     }
 }
 

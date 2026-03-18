@@ -24,8 +24,6 @@ final class AppState {
     @ObservationIgnored var iCloudMonitor: ICloudMonitor?
     /// Tracks when the active project data was last saved/loaded, for merge decisions.
     @ObservationIgnored private var activeProjectDataModifiedAt: Date?
-    @ObservationIgnored private var awaitingICloudProjectDataIds: Set<UUID> = []
-    @ObservationIgnored private let iCloudSyncOverride: Bool?
 
     private static let templateColors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
 
@@ -104,18 +102,13 @@ final class AppState {
         rows.firstIndex { $0.id == rowId }
     }
 
-    private var isUsingICloudStorage: Bool {
-        iCloudSyncOverride ?? PersistenceService.isUsingICloud
-    }
-
-    init(iCloudSyncOverride: Bool? = nil) {
-        self.iCloudSyncOverride = iCloudSyncOverride
+    init() {
         let stored = UserDefaults.standard.double(forKey: "defaultZoomLevel")
         if stored > 0 { zoomLevel = stored }
 
         // If iCloud is enabled (and we're not in test mode), defer loading until
         // the container is resolved — setupICloudIfNeeded will call load() after.
-        let iCloudPending = !PersistenceService.hasDataDirOverride && (iCloudSyncOverride ?? ICloudSyncService.shared.isEnabled)
+        let iCloudPending = !PersistenceService.hasDataDirOverride && ICloudSyncService.shared.isEnabled
         if !iCloudPending {
             PersistenceService.ensureDirectories()
             load()
@@ -207,7 +200,6 @@ final class AppState {
         }
         monitor.startMonitoring(url: url)
         iCloudMonitor = monitor
-        updateTrackedICloudProjectURL()
     }
 
     func stopICloudMonitoring() {
@@ -216,10 +208,8 @@ final class AppState {
     }
 
     func reloadFromDisk() {
-        let previousActiveProjectId = activeProjectId
-
         // Resolve conflicts on iCloud files before reading
-        if isUsingICloudStorage {
+        if PersistenceService.isUsingICloud {
             ICloudSyncService.shared.resolveConflicts(at: PersistenceService.indexURL)
             // Resolve conflicts on all known projects, not just the active one,
             // so switching projects later doesn't hit stale conflicts.
@@ -229,7 +219,7 @@ final class AppState {
         }
 
         if let index = PersistenceService.loadIndex() {
-            if isUsingICloudStorage && !projects.isEmpty {
+            if PersistenceService.isUsingICloud && !projects.isEmpty {
                 // Remote index is authoritative for which projects exist (handles deletions).
                 // For projects in both, use last-writer-wins on metadata.
                 let localById = Dictionary(projects.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
@@ -251,23 +241,12 @@ final class AppState {
                 projects = index.projects
             }
             if activeProjectId == nil || !projects.contains(where: { $0.id == activeProjectId }) {
-                if let preferredId = index.activeProjectId,
-                   projects.contains(where: { $0.id == preferredId }) {
-                    activeProjectId = preferredId
-                } else {
-                    activeProjectId = projects.first?.id
-                }
+                activeProjectId = index.activeProjectId
             }
         }
 
-        if activeProjectId != previousActiveProjectId {
-            activeProjectDataModifiedAt = nil
-        }
-
-        updateTrackedICloudProjectURL()
-
         if let activeId = activeProjectId {
-            if isUsingICloudStorage, let localModified = activeProjectDataModifiedAt {
+            if PersistenceService.isUsingICloud, let localModified = activeProjectDataModifiedAt {
                 // Only reload if the on-disk version is newer than our in-memory version
                 if let diskData = PersistenceService.loadProject(activeId),
                    diskData.modifiedAt > localModified {
@@ -282,7 +261,6 @@ final class AppState {
     }
 
     private func applyProjectData(_ data: ProjectData, for projectId: UUID) {
-        awaitingICloudProjectDataIds.remove(projectId)
         rows = data.rows
         localeState = data.localeState ?? .default
         activeProjectDataModifiedAt = data.modifiedAt
@@ -319,6 +297,10 @@ final class AppState {
     }
 
     private func saveIndex() {
+        // Update modifiedAt for the active project
+        if let idx = projects.firstIndex(where: { $0.id == activeProjectId }) {
+            projects[idx].modifiedAt = Date()
+        }
         let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
         do {
             try PersistenceService.saveIndex(index)
@@ -338,7 +320,6 @@ final class AppState {
 
     private func saveCurrentProject() {
         guard let activeId = activeProjectId else { return }
-        guard !awaitingICloudProjectDataIds.contains(activeId) else { return }
         let data = ProjectData(rows: rows, localeState: localeState)
         do {
             try PersistenceService.saveProject(activeId, data: data)
@@ -370,14 +351,12 @@ final class AppState {
         let baseName = sanitized.isEmpty ? "Project" : sanitized
         let project = Project(name: uniqueProjectName(baseName))
         projects.append(project)
-        awaitingICloudProjectDataIds.remove(project.id)
         activeProjectId = project.id
         PersistenceService.ensureProjectDirs(project.id)
         cancelPendingDebounceTasks()
         rows = [makeDefaultRow()]
         localeState = .default
         selectRow(rows.first?.id)
-        updateTrackedICloudProjectURL()
         saveAll()
     }
 
@@ -394,7 +373,6 @@ final class AppState {
         cancelPendingDebounceTasks()
         unregisterCustomFonts()
         activeProjectId = id
-        updateTrackedICloudProjectURL()
         screenshotImages.removeAll()
         loadRowsForProject(id)
         loadScreenshotImages()
@@ -406,7 +384,6 @@ final class AppState {
         guard !trimmed.isEmpty else { return }
         if let idx = projects.firstIndex(where: { $0.id == id }) {
             projects[idx].name = uniqueProjectName(trimmed, excludingId: id)
-            projects[idx].modifiedAt = Date()
             scheduleSave()
         }
     }
@@ -457,19 +434,23 @@ final class AppState {
 
     func deleteProject(_ id: UUID) {
         projects.removeAll { $0.id == id }
-        awaitingICloudProjectDataIds.remove(id)
         PersistenceService.deleteProject(id)
 
         if activeProjectId == id {
+            cancelPendingDebounceTasks()
+            unregisterCustomFonts()
+            screenshotImages.removeAll()
             if let nextProject = projects.first {
-                switchToProject(nextProject.id)
+                activeProjectId = nextProject.id
+                loadRowsForProject(nextProject.id)
+                loadScreenshotImages()
+                loadCustomFonts()
             } else {
                 // No projects left — create a new one
                 createProject(name: "Project 1")
                 return
             }
         }
-        updateTrackedICloudProjectURL()
         saveAll()
     }
 
@@ -1552,26 +1533,11 @@ final class AppState {
         if let data = PersistenceService.loadProject(id) {
             applyProjectData(data, for: id)
         } else {
-            if isUsingICloudStorage,
-               projects.contains(where: { $0.id == id }) {
-                awaitingICloudProjectDataIds.insert(id)
-                ICloudSyncService.shared.requestDownloadIfNeeded(at: PersistenceService.projectDataURL(id))
-                rows = []
-                localeState = .default
-                activeProjectDataModifiedAt = nil
-                deselectAll()
-            } else {
-                awaitingICloudProjectDataIds.remove(id)
-                rows = [makeDefaultRow()]
-                localeState = .default
-                activeProjectDataModifiedAt = nil
-                selectRow(rows.first?.id)
-            }
+            rows = [makeDefaultRow()]
+            localeState = .default
+            activeProjectDataModifiedAt = nil
+            selectRow(rows.first?.id)
         }
-    }
-
-    private func updateTrackedICloudProjectURL() {
-        iCloudMonitor?.setTrackedProjectDataURL(activeProjectId.map(PersistenceService.projectDataURL))
     }
 
     private func normalizeSelection() {

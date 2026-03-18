@@ -140,10 +140,6 @@ struct PersistenceService {
         projectsDir(at: root).appendingPathComponent(id.uuidString, isDirectory: true)
     }
 
-    static func projectDataURL(_ id: UUID, at root: URL) -> URL {
-        projectDir(id, at: root).appendingPathComponent("project.json")
-    }
-
     static func loadIndex(at root: URL) -> ProjectIndex? {
         let url = indexURL(at: root)
         guard let data = try? Data(contentsOf: url) else { return nil }
@@ -154,19 +150,6 @@ struct PersistenceService {
         let url = indexURL(at: root)
         let data = try encoder.encode(index)
         try data.write(to: url, options: .atomic)
-    }
-
-    static func loadProject(_ id: UUID, at root: URL) -> ProjectData? {
-        let url = projectDataURL(id, at: root)
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? decoder.decode(ProjectData.self, from: data)
-    }
-
-    static func saveProject(_ id: UUID, data: ProjectData, at root: URL) throws {
-        let url = projectDataURL(id, at: root)
-        let fm = FileManager.default
-        try fm.createDirectory(at: projectDir(id, at: root), withIntermediateDirectories: true, attributes: nil)
-        try encoder.encode(data).write(to: url, options: .atomic)
     }
 
     static func ensureDirectories(at root: URL) {
