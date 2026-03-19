@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum ZoomConstants {
-    static let min: CGFloat = 0.75
+    static let min: CGFloat = 0.50
     static let max: CGFloat = 2.0
     static let step: CGFloat = 0.25
 }
@@ -12,7 +12,7 @@ struct ZoomControls: View {
     var onFit: (() -> Void)? = nil
     var fitHelpText = "Fit canvas to the window"
 
-    private let presets: [CGFloat] = [0.75, 1.0, 1.25, 1.5, 2.0]
+    private let presets: [CGFloat] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
 
     var body: some View {
         @Bindable var state = state

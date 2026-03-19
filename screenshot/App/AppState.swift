@@ -39,6 +39,7 @@ final class AppState {
     var baseTextBaseRows: [ScreenshotRow]?
     var nudgeUndoTask: DispatchWorkItem?
     var nudgeBaseRows: [ScreenshotRow]?
+    var zoomPersistTask: DispatchWorkItem?
 
     // Clipboard
     var clipboard: CanvasShapeModel?
@@ -65,8 +66,13 @@ final class AppState {
     }
 
     init() {
-        let stored = UserDefaults.standard.double(forKey: "defaultZoomLevel")
-        if stored > 0 { zoomLevel = stored }
+        let lastZoom = UserDefaults.standard.double(forKey: "lastZoomLevel")
+        if lastZoom > 0 {
+            zoomLevel = lastZoom
+        } else {
+            let defaultZoom = UserDefaults.standard.double(forKey: "defaultZoomLevel")
+            if defaultZoom > 0 { zoomLevel = defaultZoom }
+        }
 
         // If iCloud is enabled (and we're not in test mode), defer loading until
         // the container is resolved — setupICloudIfNeeded will call load() after.
@@ -121,6 +127,12 @@ final class AppState {
         } else {
             zoomLevel = clamped
         }
+        zoomPersistTask?.cancel()
+        let task = DispatchWorkItem {
+            UserDefaults.standard.set(clamped, forKey: "lastZoomLevel")
+        }
+        zoomPersistTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
     }
 
     func zoomIn() {
@@ -134,6 +146,8 @@ final class AppState {
     func resetZoom() {
         let defaultLevel = UserDefaults.standard.double(forKey: "defaultZoomLevel")
         setZoomLevel(defaultLevel > 0 ? defaultLevel : 1.0)
+        zoomPersistTask?.cancel()
+        UserDefaults.standard.removeObject(forKey: "lastZoomLevel")
     }
 
     // MARK: - Selection

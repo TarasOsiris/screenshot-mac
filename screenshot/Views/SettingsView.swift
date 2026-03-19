@@ -61,7 +61,6 @@ struct SettingsView: View {
             }
 
             Picker("Default zoom level", selection: $defaultZoomLevel) {
-                Text("25%").tag(0.25)
                 Text("50%").tag(0.50)
                 Text("75%").tag(0.75)
                 Text("100%").tag(1.0)
