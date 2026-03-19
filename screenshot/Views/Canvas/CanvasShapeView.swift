@@ -214,27 +214,10 @@ struct CanvasShapeView: View {
                 let rawText = shape.text ?? ""
                 let showPlaceholder = showsEditorHelpers && rawText.isEmpty
                 let displayText = showPlaceholder ? "Text" : rawText
-                let lineSpacing = shape.lineSpacing ?? 0
-                if lineSpacing < 0 {
-                    tightText(displayText: displayText, showPlaceholder: showPlaceholder)
-                        .italic(showPlaceholder ? true : (shape.italic ?? false))
-                        .multilineTextAlignment(shape.textAlign.textAlignment)
-                        .frame(width: effectiveW, height: effectiveH)
-                        .scaleEffect(displayScale, anchor: .topLeading)
-                        .frame(width: displayW, height: displayH, alignment: .topLeading)
-                } else {
-                    Text(displayText)
-                        .font(resolvedFont(size: shape.fontSize ?? 72, weight: fontWeight(shape.fontWeight ?? 700)))
-                        .italic(showPlaceholder ? true : (shape.italic ?? false))
-                        .textCase((shape.uppercase ?? false) ? .uppercase : nil)
-                        .tracking(shape.letterSpacing ?? 0)
-                        .lineSpacing(lineSpacing)
-                        .foregroundStyle(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
-                        .multilineTextAlignment(shape.textAlign.textAlignment)
-                        .frame(width: effectiveW, height: effectiveH)
-                        .scaleEffect(displayScale, anchor: .topLeading)
-                        .frame(width: displayW, height: displayH, alignment: .topLeading)
-                }
+                AttributedTextView(attributedString: buildAttributedText(displayText: displayText, showPlaceholder: showPlaceholder))
+                    .frame(width: effectiveW, height: effectiveH)
+                    .scaleEffect(displayScale, anchor: .topLeading)
+                    .frame(width: displayW, height: displayH, alignment: .topLeading)
             }
 
         case .image:
@@ -739,7 +722,7 @@ struct CanvasShapeView: View {
             }
     }
 
-    private func tightText(displayText: String, showPlaceholder: Bool) -> Text {
+    private func buildAttributedText(displayText: String, showPlaceholder: Bool) -> NSAttributedString {
         let fontSize = shape.fontSize ?? 72
         let weight = fontWeight(shape.fontWeight ?? 700)
         let lineSpacing = shape.lineSpacing ?? 0
@@ -747,22 +730,39 @@ struct CanvasShapeView: View {
         let naturalLineHeight = nsFont.ascender - nsFont.descender + nsFont.leading
 
         let paraStyle = NSMutableParagraphStyle()
-        let lineHeight = max(1, naturalLineHeight + lineSpacing)
-        paraStyle.minimumLineHeight = lineHeight
-        paraStyle.maximumLineHeight = lineHeight
+        let targetLineHeight = max(1, naturalLineHeight + lineSpacing)
+        paraStyle.minimumLineHeight = targetLineHeight
+        paraStyle.maximumLineHeight = targetLineHeight
         paraStyle.alignment = shape.textAlign.nsTextAlignment
 
         var processedText = displayText
         if shape.uppercase ?? false { processedText = processedText.uppercased() }
 
-        var attrStr = AttributedString(processedText)
-        attrStr.font = Font(nsFont)
-        attrStr.foregroundColor = Color(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
-        attrStr.paragraphStyle = paraStyle
-        if let tracking = shape.letterSpacing, tracking != 0 {
-            attrStr.kern = tracking
+        let useItalic = showPlaceholder || (shape.italic ?? false)
+        var syntheticItalic = false
+        var finalFont = nsFont
+        if useItalic {
+            let converted = NSFontManager.shared.convert(nsFont, toHaveTrait: .italicFontMask)
+            if converted.fontDescriptor.symbolicTraits.contains(.italic) {
+                finalFont = converted
+            } else {
+                syntheticItalic = true
+            }
         }
-        return Text(attrStr)
+
+        var attrs: [NSAttributedString.Key: Any] = [
+            .font: finalFont,
+            .foregroundColor: NSColor(shape.color.opacity(showPlaceholder ? 0.4 : 1.0)),
+            .paragraphStyle: paraStyle
+        ]
+        if syntheticItalic { attrs[.obliqueness] = 0.2 }
+        if targetLineHeight != naturalLineHeight {
+            attrs[.baselineOffset] = (naturalLineHeight - targetLineHeight) / 2
+        }
+        if let tracking = shape.letterSpacing, tracking != 0 {
+            attrs[.kern] = tracking
+        }
+        return NSAttributedString(string: processedText, attributes: attrs)
     }
 
     private func resolvedFont(size: CGFloat, weight: Font.Weight) -> Font {

@@ -294,15 +294,27 @@ struct ShapePropertiesBar: View {
 
                         section {
                             controlGroup("Tracking") {
-                                Slider(value: shapeBinding(shapeId, \.letterSpacing, default: 0), in: -5...30)
+                                let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0)
+                                Slider(value: trackingBinding, in: -5...30)
                                     .frame(width: 70)
+
+                                Text(verbatim: String(format: "%.1f", trackingBinding.wrappedValue))
+                                    .frame(width: 32, alignment: .trailing)
+                                    .onTapGesture(count: 2) { trackingBinding.wrappedValue = 0 }
+                                    .help("Double-click to reset")
                             }
 
                             separator
 
                             controlGroup("Line") {
-                                Slider(value: shapeBinding(shapeId, \.lineSpacing, default: 0), in: -20...50)
+                                let lineBinding = shapeBinding(shapeId, \.lineSpacing, default: 0)
+                                Slider(value: lineBinding, in: -20...50)
                                     .frame(width: 70)
+
+                                Text(verbatim: String(format: "%.1f", lineBinding.wrappedValue))
+                                    .frame(width: 32, alignment: .trailing)
+                                    .onTapGesture(count: 2) { lineBinding.wrappedValue = 0 }
+                                    .help("Double-click to reset")
                             }
 
                             if !state.localeState.isBaseLocale {
