@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
     @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
+    @AppStorage("projectSortOrder") private var projectSortOrder = "creation"
 
     @State private var iCloudEnabled = ICloudSyncService.shared.isEnabled
     @State private var iCloudAvailable = ICloudSyncService.shared.isAvailable
@@ -53,6 +54,11 @@ struct SettingsView: View {
             TemplateCountPicker(selection: $defaultTemplateCount)
 
             Toggle("Confirm before deleting", isOn: $confirmBeforeDeleting)
+
+            Picker("Sort projects", selection: $projectSortOrder) {
+                Text("By creation date").tag("creation")
+                Text("Alphabetically").tag("alphabetical")
+            }
 
             Picker("Default zoom level", selection: $defaultZoomLevel) {
                 Text("25%").tag(0.25)

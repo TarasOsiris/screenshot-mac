@@ -11,6 +11,7 @@ struct ContentView: View {
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @AppStorage("lastExportFolderBookmark") private var lastExportFolderBookmark = Data()
     @AppStorage("lastExportFolderPath") private var lastExportFolderPath = ""
+    @AppStorage("projectSortOrder") private var projectSortOrder = "creation"
     @State private var isInspectorPresented = true
     @State private var isExporting = false
     @State private var exportSuccess = false
@@ -248,9 +249,16 @@ struct ContentView: View {
         }
     }
 
+    private var sortedProjects: [Project] {
+        if projectSortOrder == "alphabetical" {
+            return state.visibleProjects.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        }
+        return state.visibleProjects
+    }
+
     @ViewBuilder
     private var projectSwitcherSection: some View {
-        ForEach(state.visibleProjects) { project in
+        ForEach(sortedProjects) { project in
             Button {
                 state.selectProject(project.id)
             } label: {
@@ -268,7 +276,10 @@ struct ContentView: View {
         Section("Current Project") {
             Button("Rename Project...") {
                 dialogText = state.activeProject?.name ?? ""
-                isRenamingProject = true
+                // Defer to next tick so menu dismisses before alert presents
+                Task { @MainActor in
+                    isRenamingProject = true
+                }
             }
             .disabled(state.activeProjectId == nil)
 
