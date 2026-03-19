@@ -253,8 +253,23 @@ struct InspectorPanel: View {
             .font(.system(size: 11))
             .controlSize(.small)
         } header: {
-            Text("Visibility")
+            HStack(spacing: 4) {
+                Text("Visibility")
+                Spacer()
+                Button("All") { setVisibility(rowId: rowId, visible: true) }
+                Button("None") { setVisibility(rowId: rowId, visible: false) }
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 10))
+            .foregroundStyle(.secondary)
         }
+    }
+
+    private func setVisibility(rowId: UUID, visible: Bool) {
+        guard let idx = state.rowIndex(for: rowId) else { return }
+        state.rows[idx].showBorders = visible
+        state.rows[idx].hiddenShapeTypes = visible ? [] : Set(ShapeType.allCases)
+        state.scheduleSave()
     }
 
     private func shapeTypeVisibilityBinding(rowId: UUID, type: ShapeType) -> Binding<Bool> {
