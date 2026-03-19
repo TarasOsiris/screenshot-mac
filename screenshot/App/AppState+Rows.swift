@@ -36,7 +36,7 @@ extension AppState {
             spanBackgroundAcrossRow: source.spanBackgroundAcrossRow,
             backgroundImageConfig: source.backgroundImageConfig,
             defaultDeviceFrameId: source.defaultDeviceFrameId,
-            showDevice: source.showDevice,
+            hiddenShapeTypes: source.hiddenShapeTypes,
             showBorders: source.showBorders,
             shapes: newShapes,
             isLabelManuallySet: true

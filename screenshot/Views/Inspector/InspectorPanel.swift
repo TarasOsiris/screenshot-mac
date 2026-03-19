@@ -157,17 +157,39 @@ struct InspectorPanel: View {
 
     @ViewBuilder
     private func optionsSection(rowId: UUID) -> some View {
-        Section("Options") {
-            Toggle("Show devices", isOn: safeRowBinding(rowId, keyPath: \.showDevice, default: true).onSet { state.scheduleSave() })
-                .font(.system(size: 12))
-                .toggleStyle(.switch)
-                .controlSize(.small)
-
-            Toggle("Show borders", isOn: safeRowBinding(rowId, keyPath: \.showBorders, default: true).onSet { state.scheduleSave() })
-                .font(.system(size: 12))
-                .toggleStyle(.switch)
-                .controlSize(.small)
+        Section("Visibility") {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 4) {
+                Toggle(isOn: safeRowBinding(rowId, keyPath: \.showBorders, default: true).onSet { state.scheduleSave() }) {
+                    Label("Borders", systemImage: "rectangle.split.3x3")
+                }
+                ForEach(ShapeType.allCases, id: \.self) { type in
+                    Toggle(isOn: shapeTypeVisibilityBinding(rowId: rowId, type: type)) {
+                        Label(type.pluralLabel, systemImage: type.icon)
+                    }
+                }
+            }
+            .toggleStyle(.checkbox)
+            .font(.system(size: 11))
+            .controlSize(.small)
         }
+    }
+
+    private func shapeTypeVisibilityBinding(rowId: UUID, type: ShapeType) -> Binding<Bool> {
+        Binding(
+            get: {
+                guard let idx = state.rowIndex(for: rowId) else { return true }
+                return !state.rows[idx].hiddenShapeTypes.contains(type)
+            },
+            set: { visible in
+                guard let idx = state.rowIndex(for: rowId) else { return }
+                if visible {
+                    state.rows[idx].hiddenShapeTypes.remove(type)
+                } else {
+                    state.rows[idx].hiddenShapeTypes.insert(type)
+                }
+                state.scheduleSave()
+            }
+        )
     }
 
     private func sizePresetTag(for size: ScreenshotSize) -> String {

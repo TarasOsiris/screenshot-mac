@@ -15,7 +15,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     var spanBackgroundAcrossRow: Bool
     var backgroundImageConfig: BackgroundImageConfig
     var defaultDeviceFrameId: String?
-    var showDevice: Bool
+    var hiddenShapeTypes: Set<ShapeType>
     var showBorders: Bool
     var shapes: [CanvasShapeModel]
     var isLabelManuallySet: Bool
@@ -35,6 +35,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         backgroundImageConfig: BackgroundImageConfig = BackgroundImageConfig(),
         defaultDeviceFrameId: String? = nil,
         showDevice: Bool = true,
+        hiddenShapeTypes: Set<ShapeType> = [],
         showBorders: Bool = true,
         shapes: [CanvasShapeModel] = [],
         isLabelManuallySet: Bool = false
@@ -52,7 +53,9 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         self.spanBackgroundAcrossRow = spanBackgroundAcrossRow
         self.backgroundImageConfig = backgroundImageConfig
         self.defaultDeviceFrameId = defaultDeviceFrameId
-        self.showDevice = showDevice
+        var hidden = hiddenShapeTypes
+        if !showDevice { hidden.insert(.device) }
+        self.hiddenShapeTypes = hidden
         self.showBorders = showBorders
         self.shapes = shapes
         self.isLabelManuallySet = isLabelManuallySet
@@ -64,7 +67,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         case backgroundStyle, gradientConfig, backgroundImageConfig
         case spanBackgroundAcrossRow = "spanGradientAcrossRow"
         case defaultDeviceFrameId
-        case showDevice, showBorders, shapes, isLabelManuallySet
+        case showDevice, hiddenShapeTypes, showBorders, shapes, isLabelManuallySet
     }
 
     init(from decoder: Decoder) throws {
@@ -88,7 +91,11 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         spanBackgroundAcrossRow = try c.decodeIfPresent(Bool.self, forKey: .spanBackgroundAcrossRow) ?? false
         backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? BackgroundImageConfig()
         defaultDeviceFrameId = try c.decodeIfPresent(String.self, forKey: .defaultDeviceFrameId)
-        showDevice = try c.decodeIfPresent(Bool.self, forKey: .showDevice) ?? true
+        // Migrate legacy showDevice bool into hiddenShapeTypes set
+        var hidden = try c.decodeIfPresent(Set<ShapeType>.self, forKey: .hiddenShapeTypes) ?? []
+        let showDevice = try c.decodeIfPresent(Bool.self, forKey: .showDevice) ?? true
+        if !showDevice { hidden.insert(.device) }
+        hiddenShapeTypes = hidden
         showBorders = try c.decodeIfPresent(Bool.self, forKey: .showBorders) ?? true
         shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []
         isLabelManuallySet = try c.decodeIfPresent(Bool.self, forKey: .isLabelManuallySet) ?? false
@@ -110,7 +117,9 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         try c.encode(spanBackgroundAcrossRow, forKey: .spanBackgroundAcrossRow)
         try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig)
         try c.encodeIfPresent(defaultDeviceFrameId, forKey: .defaultDeviceFrameId)
-        try c.encode(showDevice, forKey: .showDevice)
+        try c.encode(hiddenShapeTypes, forKey: .hiddenShapeTypes)
+        // Write showDevice for backward compatibility with older versions
+        try c.encode(!hiddenShapeTypes.contains(.device), forKey: .showDevice)
         try c.encode(showBorders, forKey: .showBorders)
         try c.encode(shapes, forKey: .shapes)
         try c.encode(isLabelManuallySet, forKey: .isLabelManuallySet)
@@ -152,8 +161,16 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         "\(Int(templateWidth))\u{00d7}\(Int(templateHeight))"
     }
 
+    var showDevice: Bool {
+        get { !hiddenShapeTypes.contains(.device) }
+        set {
+            if newValue { hiddenShapeTypes.remove(.device) }
+            else { hiddenShapeTypes.insert(.device) }
+        }
+    }
+
     var activeShapes: [CanvasShapeModel] {
-        shapes.filter { showDevice || $0.type != .device }
+        hiddenShapeTypes.isEmpty ? shapes : shapes.filter { !hiddenShapeTypes.contains($0.type) }
     }
 
     func templateCenterX(at index: Int) -> CGFloat {
