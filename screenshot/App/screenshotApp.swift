@@ -6,6 +6,12 @@ struct ScreenshotBroApp: App {
     @State private var storeService = StoreService()
     @AppStorage("appearance") private var appearance = "auto"
     @AppStorage("onboardingCompleted") private var onboardingCompleted = false
+    #if DEBUG
+    @State private var isDebugTemplateSavePresented = false
+    @State private var debugTemplateName = ""
+    @State private var debugTemplateError: String?
+    @State private var debugExistingTemplates: [String] = []
+    #endif
 
     private var preferredColorScheme: ColorScheme? {
         switch appearance {
@@ -29,6 +35,33 @@ struct ScreenshotBroApp: App {
                     OnboardingView()
                         .interactiveDismissDisabled()
                 }
+                #if DEBUG
+                .task {
+                    debugRefreshExistingTemplates()
+                }
+                .alert("Save as New Template", isPresented: $isDebugTemplateSavePresented) {
+                    TextField("Template name", text: $debugTemplateName)
+                    Button("Save") {
+                        let name = debugTemplateName
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            .replacingOccurrences(of: " ", with: "_")
+                            .lowercased()
+                        guard !name.isEmpty else { return }
+                        debugSaveTemplate(name: name)
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Enter a directory name for the template (e.g. my_template).")
+                }
+                .alert("Template Error", isPresented: Binding(
+                    get: { debugTemplateError != nil },
+                    set: { if !$0 { debugTemplateError = nil } }
+                )) {
+                    Button("OK") { debugTemplateError = nil }
+                } message: {
+                    Text(debugTemplateError ?? "")
+                }
+                #endif
         }
         .defaultSize(width: 1100, height: 700)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
@@ -186,6 +219,31 @@ struct ScreenshotBroApp: App {
                 .keyboardShortcut("0", modifiers: [.command, .option])
                 .disabled(appState.localeState.isBaseLocale)
             }
+
+            #if DEBUG
+            CommandMenu("Debug") {
+                Menu("Save Current Project as Template") {
+                    Button("New Template...") {
+                        debugTemplateName = ""
+                        debugTemplateError = nil
+                        isDebugTemplateSavePresented = true
+                    }
+                    .disabled(appState.activeProjectId == nil)
+
+                    if !debugExistingTemplates.isEmpty {
+                        Divider()
+                        Section("Override Existing") {
+                            ForEach(debugExistingTemplates, id: \.self) { name in
+                                Button(name) {
+                                    debugSaveTemplate(name: name)
+                                }
+                            }
+                        }
+                    }
+                }
+                .disabled(appState.activeProjectId == nil)
+            }
+            #endif
         }
 
         Settings {
@@ -193,4 +251,32 @@ struct ScreenshotBroApp: App {
                 .environment(storeService)
         }
     }
+
+    #if DEBUG
+    private func withDebugBundleAccess<T>(_ body: (URL) throws -> T) rethrows -> T? {
+        guard let bundleURL = DebugTemplateService.getTemplatesBundleURL() else { return nil }
+        let didAccess = bundleURL.startAccessingSecurityScopedResource()
+        defer { if didAccess { bundleURL.stopAccessingSecurityScopedResource() } }
+        return try body(bundleURL)
+    }
+
+    private func debugRefreshExistingTemplates() {
+        debugExistingTemplates = withDebugBundleAccess { bundleURL in
+            DebugTemplateService.existingTemplateNames(at: bundleURL)
+        } ?? []
+    }
+
+    private func debugSaveTemplate(name: String) {
+        appState.saveCurrentProject()
+        guard let projectId = appState.activeProjectId else { return }
+        _ = withDebugBundleAccess { bundleURL in
+            do {
+                try DebugTemplateService.saveProjectAsTemplate(projectId: projectId, templateName: name, bundleURL: bundleURL)
+                debugExistingTemplates = DebugTemplateService.existingTemplateNames(at: bundleURL)
+            } catch {
+                debugTemplateError = error.localizedDescription
+            }
+        }
+    }
+    #endif
 }
