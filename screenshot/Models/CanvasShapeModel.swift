@@ -155,6 +155,12 @@ enum TextAlign: String, Codable {
     case right
 }
 
+enum TextVerticalAlign: String, Codable {
+    case top
+    case center
+    case bottom
+}
+
 extension Optional where Wrapped == TextAlign {
     var textAlignment: TextAlignment {
         switch self {
@@ -162,6 +168,22 @@ extension Optional where Wrapped == TextAlign {
         case .right: .trailing
         default: .center
         }
+    }
+}
+
+extension CanvasShapeModel {
+    var resolvedFrameAlignment: Alignment {
+        let h: HorizontalAlignment = switch textAlign {
+        case .left: .leading
+        case .right: .trailing
+        default: .center
+        }
+        let v: VerticalAlignment = switch textVerticalAlign {
+        case .top: .top
+        case .bottom: .bottom
+        default: .center
+        }
+        return Alignment(horizontal: h, vertical: v)
     }
 }
 
@@ -189,6 +211,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     var fontSize: CGFloat?
     var fontWeight: Int?
     var textAlign: TextAlign?
+    var textVerticalAlign: TextVerticalAlign?
     var italic: Bool?
     var uppercase: Bool?
     var letterSpacing: CGFloat?
@@ -224,7 +247,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         case rotation = "rot", borderRadius = "br"
         case colorData = "c", opacity = "o"
         case text = "txt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
-        case textAlign = "ta", italic = "it", uppercase = "uc"
+        case textAlign = "ta", textVerticalAlign = "tva", italic = "it", uppercase = "uc"
         case letterSpacing = "ls", lineSpacing = "lns"
         case imageFileName = "ifn"
         case deviceCategory = "dc", deviceBodyColorData = "dbc"
@@ -252,6 +275,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         fontSize = try c.opt(CGFloat.self, "fs", "fontSize")
         fontWeight = try c.opt(Int.self, "fw", "fontWeight")
         textAlign = try c.opt(TextAlign.self, "ta", "textAlign")
+        textVerticalAlign = try c.opt(TextVerticalAlign.self, "tva", "textVerticalAlign")
         italic = try c.opt(Bool.self, "it", "italic")
         uppercase = try c.opt(Bool.self, "uc", "uppercase")
         letterSpacing = try c.opt(CGFloat.self, "ls", "letterSpacing")
@@ -287,6 +311,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         try c.encodeIfPresent(fontSize, forKey: .fontSize)
         try c.encodeIfPresent(fontWeight, forKey: .fontWeight)
         try c.encodeIfPresent(textAlign, forKey: .textAlign)
+        try c.encodeIfPresent(textVerticalAlign, forKey: .textVerticalAlign)
         try c.encodeIfPresent(italic, forKey: .italic)
         try c.encodeIfPresent(uppercase, forKey: .uppercase)
         try c.encodeIfPresent(letterSpacing, forKey: .letterSpacing)
@@ -326,6 +351,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         fontSize: CGFloat? = nil,
         fontWeight: Int? = nil,
         textAlign: TextAlign? = nil,
+        textVerticalAlign: TextVerticalAlign? = nil,
         italic: Bool? = nil,
         uppercase: Bool? = nil,
         letterSpacing: CGFloat? = nil,
@@ -357,6 +383,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.fontSize = fontSize
         self.fontWeight = fontWeight
         self.textAlign = textAlign
+        self.textVerticalAlign = textVerticalAlign
         self.italic = italic
         self.uppercase = uppercase
         self.letterSpacing = letterSpacing

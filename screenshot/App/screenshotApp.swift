@@ -119,7 +119,7 @@ struct ScreenshotBroApp: App {
                         }
                     }
                     .keyboardShortcut(.delete, modifiers: [])
-                    .disabled(appState.selectedShapeId == nil)
+                    .disabled(appState.selectedShapeId == nil || appState.isEditingText)
 
                     Button("Deselect") {
                         if appState.selectedShapeId != nil {
@@ -151,37 +151,39 @@ struct ScreenshotBroApp: App {
                 Divider()
 
                 Section {
+                    let noShape = appState.selectedShapeId == nil || appState.isEditingText
+
                     Button("Nudge Left") { appState.nudgeSelectedShape(dx: -1, dy: 0) }
                     .keyboardShortcut(.leftArrow, modifiers: [])
-                    .disabled(appState.selectedShapeId == nil)
+                    .disabled(noShape)
 
                     Button("Nudge Right") { appState.nudgeSelectedShape(dx: 1, dy: 0) }
                     .keyboardShortcut(.rightArrow, modifiers: [])
-                    .disabled(appState.selectedShapeId == nil)
+                    .disabled(noShape)
 
                     Button("Nudge Up") { appState.nudgeSelectedShape(dx: 0, dy: -1) }
                     .keyboardShortcut(.upArrow, modifiers: [])
-                    .disabled(appState.selectedShapeId == nil)
+                    .disabled(noShape)
 
                     Button("Nudge Down") { appState.nudgeSelectedShape(dx: 0, dy: 1) }
                     .keyboardShortcut(.downArrow, modifiers: [])
-                    .disabled(appState.selectedShapeId == nil)
+                    .disabled(noShape)
 
                     Button("Nudge Left ×10") { appState.nudgeSelectedShape(dx: -10, dy: 0) }
                     .keyboardShortcut(.leftArrow, modifiers: .shift)
-                    .disabled(appState.selectedShapeId == nil)
+                    .disabled(noShape)
 
                     Button("Nudge Right ×10") { appState.nudgeSelectedShape(dx: 10, dy: 0) }
                     .keyboardShortcut(.rightArrow, modifiers: .shift)
-                    .disabled(appState.selectedShapeId == nil)
+                    .disabled(noShape)
 
                     Button("Nudge Up ×10") { appState.nudgeSelectedShape(dx: 0, dy: -10) }
                     .keyboardShortcut(.upArrow, modifiers: .shift)
-                    .disabled(appState.selectedShapeId == nil)
+                    .disabled(noShape)
 
                     Button("Nudge Down ×10") { appState.nudgeSelectedShape(dx: 0, dy: 10) }
                     .keyboardShortcut(.downArrow, modifiers: .shift)
-                    .disabled(appState.selectedShapeId == nil)
+                    .disabled(noShape)
                 }
             }
 

@@ -13,6 +13,7 @@ final class AppState {
     var localeState: LocaleState = .default
     var selectedRowId: UUID?
     var selectedShapeId: UUID?
+    var isEditingText = false
     var zoomLevel: CGFloat = 1.0
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
@@ -161,6 +162,7 @@ final class AppState {
     func deselectAll() {
         selectedShapeId = nil
         selectedRowId = nil
+        isEditingText = false
     }
 
     // MARK: - Helpers
@@ -174,6 +176,7 @@ final class AppState {
             guard let rowIdx = selectedRowIndex,
                   rows[rowIdx].shapes.contains(where: { $0.id == selectedShapeId }) else {
                 self.selectedShapeId = nil
+                isEditingText = false
                 return
             }
         }

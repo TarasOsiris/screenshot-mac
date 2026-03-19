@@ -279,7 +279,17 @@ struct ShapePropertiesBar: View {
                             .pickerStyle(.segmented)
                             .labelsHidden()
                             .frame(width: 90)
-                            .help("Text alignment")
+                            .help("Horizontal alignment")
+
+                            Picker("", selection: shapeBinding(shapeId, \.textVerticalAlign, default: .center)) {
+                                Image(systemName: "arrow.up.to.line").tag(TextVerticalAlign.top)
+                                Image(systemName: "arrow.up.and.down").tag(TextVerticalAlign.center)
+                                Image(systemName: "arrow.down.to.line").tag(TextVerticalAlign.bottom)
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            .frame(width: 90)
+                            .help("Vertical alignment")
 
                             Toggle("Italic", isOn: shapeBinding(shapeId, \.italic, default: false))
                                 .toggleStyle(.switch)

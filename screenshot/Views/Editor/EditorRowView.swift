@@ -497,7 +497,8 @@ struct EditorRowView: View {
                     onOptionDragDuplicate: { shapeId in
                         state.duplicateShapeForOptionDrag(shapeId)
                     },
-                    onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil
+                    onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
+                    onEditingTextChanged: { state.isEditingText = $0 }
                 )
             }
 
