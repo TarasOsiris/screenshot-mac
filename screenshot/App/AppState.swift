@@ -143,9 +143,12 @@ final class AppState {
             return
         }
         guard rows.contains(where: { $0.id == id }) else { return }
+        let rowChanged = selectedRowId != id
         selectedRowId = id
         selectedShapeId = nil
-        visibleCanvasModelCenter = nil
+        if rowChanged {
+            visibleCanvasModelCenter = nil
+        }
     }
 
     func selectShape(_ shapeId: UUID, in rowId: UUID) {
