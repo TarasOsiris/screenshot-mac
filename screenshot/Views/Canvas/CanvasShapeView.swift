@@ -83,6 +83,41 @@ struct CanvasShapeView: View {
         isEditingText ? 0 : shape.rotation + rotationDelta
     }
 
+    /// Axis-aligned bounding box size for the rotated display rect.
+    private var rotatedDisplaySize: CGSize {
+        let rot = currentRotation.truncatingRemainder(dividingBy: 360)
+        guard abs(rot) > 1e-6 else { return CGSize(width: displayW, height: displayH) }
+        let rad = rot * .pi / 180
+        let cosA = abs(cos(rad))
+        let sinA = abs(sin(rad))
+        return CGSize(
+            width: displayW * cosA + displayH * sinA,
+            height: displayW * sinA + displayH * cosA
+        )
+    }
+
+    /// Path of the rotated rectangle within the AABB frame, for `.contentShape()`.
+    private func rotatedRectangleHitPath(in bounds: CGSize) -> Path {
+        let cx = bounds.width / 2
+        let cy = bounds.height / 2
+        let rad = currentRotation * .pi / 180
+        let cosA = cos(rad)
+        let sinA = sin(rad)
+        let hw = displayW / 2
+        let hh = displayH / 2
+        let corners = [
+            CGPoint(x: cx + (-hw) * cosA - (-hh) * sinA, y: cy + (-hw) * sinA + (-hh) * cosA),
+            CGPoint(x: cx + ( hw) * cosA - (-hh) * sinA, y: cy + ( hw) * sinA + (-hh) * cosA),
+            CGPoint(x: cx + ( hw) * cosA - ( hh) * sinA, y: cy + ( hw) * sinA + ( hh) * cosA),
+            CGPoint(x: cx + (-hw) * cosA - ( hh) * sinA, y: cy + (-hw) * sinA + ( hh) * cosA),
+        ]
+        var path = Path()
+        path.move(to: corners[0])
+        for i in 1..<corners.count { path.addLine(to: corners[i]) }
+        path.closeSubpath()
+        return path
+    }
+
     @ViewBuilder
     var body: some View {
         let svgAware = clippedBase
@@ -151,6 +186,12 @@ struct CanvasShapeView: View {
 
     @ViewBuilder
     private var clippedBase: some View {
+        let aabb = rotatedDisplaySize
+        let dx = (aabb.width - displayW) / 2
+        let dy = (aabb.height - displayH) / 2
+        let offsetX = displayX - dx
+        let offsetY = displayY - dy
+        let hitPath = rotatedRectangleHitPath(in: aabb)
         let base = ZStack {
             shapeContent
                 .frame(width: displayW, height: displayH)
@@ -158,19 +199,33 @@ struct CanvasShapeView: View {
                 .contentShape(Rectangle())
                 .rotationEffect(.degrees(currentRotation))
         }
-        .frame(width: displayW, height: displayH)
+        .frame(width: aabb.width, height: aabb.height)
+        .contentShape(hitPath)
         .scaleEffect(addBumpScale)
-        .onHover { hovering in
-            isHovered = hovering
-            if showsEditorHelpers && isSelected && !isDragging {
-                if hovering {
-                    NSCursor.openHand.set()
-                } else {
-                    NSCursor.arrow.set()
+        .onContinuousHover { phase in
+            switch phase {
+            case .active(let location):
+                let inside = hitPath.contains(location)
+                if inside != isHovered {
+                    isHovered = inside
+                    if showsEditorHelpers && isSelected && !isDragging {
+                        if inside {
+                            NSCursor.openHand.set()
+                        } else {
+                            NSCursor.arrow.set()
+                        }
+                    }
+                }
+            case .ended:
+                if isHovered {
+                    isHovered = false
+                    if showsEditorHelpers && isSelected && !isDragging {
+                        NSCursor.arrow.set()
+                    }
                 }
             }
         }
-        .offset(x: displayX, y: displayY)
+        .offset(x: offsetX, y: offsetY)
         .overlay {
             if isSelected {
                 selectionOverlay
@@ -181,18 +236,24 @@ struct CanvasShapeView: View {
         }
 
         if let cb = clipBounds {
-            let shapeRect = CGRect(x: displayX, y: displayY, width: displayW, height: displayH)
-            let hit = shapeRect.intersection(cb)
-            if hit.isEmpty {
+            let aabbRect = CGRect(x: offsetX, y: offsetY, width: aabb.width, height: aabb.height)
+            if aabbRect.intersection(cb).isEmpty {
                 base.allowsHitTesting(false).opacity(0)
             } else {
-                base
-                    .contentShape(Path(hit))
-                    .mask {
-                        Rectangle()
-                            .frame(width: cb.width, height: cb.height)
-                            .position(x: cb.midX, y: cb.midY)
-                    }
+                let clippedCGPath = hitPath.offsetBy(dx: offsetX, dy: offsetY)
+                    .cgPath.intersection(CGPath(rect: cb, transform: nil))
+                let clippedHitPath = Path(clippedCGPath)
+                if clippedHitPath.isEmpty {
+                    base.allowsHitTesting(false).opacity(0)
+                } else {
+                    base
+                        .contentShape(clippedHitPath)
+                        .mask {
+                            Rectangle()
+                                .frame(width: cb.width, height: cb.height)
+                                .position(x: cb.midX, y: cb.midY)
+                        }
+                }
             }
         } else {
             base

@@ -76,6 +76,7 @@ struct DeviceFrameView: View {
         }
         .frame(width: width, height: height)
         .clipped()
+        .contentShape(Rectangle())
     }
 
     // MARK: - Programmatic Frame
