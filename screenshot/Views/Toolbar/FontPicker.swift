@@ -14,10 +14,24 @@ struct FontPicker: View {
         Set(customFonts.values).sorted()
     }
 
+    /// True when the current selection is a non-system font that isn't in the
+    /// custom fonts list (e.g. custom fonts dict was cleared momentarily).
+    private var selectionMissingFromOptions: Bool {
+        !selection.isEmpty
+            && !sortedCustomFamilies.contains(selection)
+            && !Self.fontFamilies.contains(selection)
+    }
+
     var body: some View {
         HStack(spacing: 4) {
             Picker("", selection: $selection) {
                 Text("System").tag("")
+
+                // Keep the current selection as a tag so SwiftUI never
+                // resets the binding when the font list changes.
+                if selectionMissingFromOptions {
+                    Text(selection).tag(selection)
+                }
 
                 if !sortedCustomFamilies.isEmpty {
                     Divider()
