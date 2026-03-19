@@ -2,13 +2,21 @@ import SwiftUI
 
 struct InspectorPanel: View {
     @Bindable var state: AppState
+    @State private var isSizeExpanded = true
+    @State private var isBackgroundExpanded = true
+    @State private var isAddElementExpanded = true
+    @State private var isDeviceExpanded = true
+    @State private var isVisibilityExpanded = true
+
     var body: some View {
         if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId {
             Form {
                 sizeSection(rowIndex: rowIndex, rowId: rowId)
                 backgroundSection(rowIndex: rowIndex, rowId: rowId)
-                Section("Add new element") {
+                Section(isExpanded: $isAddElementExpanded) {
                     ShapeToolbar(state: state)
+                } header: {
+                    Text("Add new element")
                 }
                 deviceSection(rowId: rowId)
                 optionsSection(rowId: rowId)
@@ -26,7 +34,7 @@ struct InspectorPanel: View {
 
     @ViewBuilder
     private func sizeSection(rowIndex: Int, rowId: UUID) -> some View {
-        Section("Screenshot Size") {
+        Section(isExpanded: $isSizeExpanded) {
             Picker("Preset", selection: sizePresetBinding(for: rowId)) {
                 ForEach(displayCategories) { category in
                     Section(category.name) {
@@ -45,12 +53,14 @@ struct InspectorPanel: View {
                     .font(.system(size: 11).monospacedDigit())
                     .foregroundStyle(.secondary)
             }
+        } header: {
+            Text("Screenshot Size")
         }
     }
 
     @ViewBuilder
     private func backgroundSection(rowIndex: Int, rowId: UUID) -> some View {
-        Section("Background") {
+        Section(isExpanded: $isBackgroundExpanded) {
             BackgroundEditor(
                 backgroundStyle: safeRowBinding(rowId, keyPath: \.backgroundStyle, default: .color),
                 bgColor: safeRowBinding(rowId, keyPath: \.bgColor, default: .blue),
@@ -80,12 +90,14 @@ struct InspectorPanel: View {
                         .foregroundStyle(.secondary)
                 }
             }
+        } header: {
+            Text("Background")
         }
     }
 
     @ViewBuilder
     private func deviceSection(rowId: UUID) -> some View {
-        Section("Device") {
+        Section(isExpanded: $isDeviceExpanded) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Default device")
                     .font(.system(size: 12))
@@ -126,6 +138,8 @@ struct InspectorPanel: View {
                 }
                 .font(.system(size: 12))
             }
+        } header: {
+            Text("Device")
         }
     }
 
@@ -157,7 +171,7 @@ struct InspectorPanel: View {
 
     @ViewBuilder
     private func optionsSection(rowId: UUID) -> some View {
-        Section("Visibility") {
+        Section(isExpanded: $isVisibilityExpanded) {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 4) {
                 Toggle(isOn: safeRowBinding(rowId, keyPath: \.showBorders, default: true).onSet { state.scheduleSave() }) {
                     Label("Borders", systemImage: "rectangle.split.3x3")
@@ -171,6 +185,8 @@ struct InspectorPanel: View {
             .toggleStyle(.checkbox)
             .font(.system(size: 11))
             .controlSize(.small)
+        } header: {
+            Text("Visibility")
         }
     }
 
