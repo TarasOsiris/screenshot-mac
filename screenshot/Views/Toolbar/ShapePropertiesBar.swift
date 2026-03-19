@@ -318,7 +318,7 @@ struct ShapePropertiesBar: View {
 
                             controlGroup("Line") {
                                 let lineBinding = shapeBinding(shapeId, \.lineSpacing, default: 0)
-                                Slider(value: lineBinding, in: -20...50)
+                                Slider(value: lineBinding, in: 0...50)
                                     .frame(width: 70)
 
                                 Text(verbatim: String(format: "%.1f", lineBinding.wrappedValue))

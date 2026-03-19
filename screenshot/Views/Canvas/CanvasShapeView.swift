@@ -225,7 +225,7 @@ struct CanvasShapeView: View {
                     .italic(showPlaceholder ? true : (shape.italic ?? false))
                     .textCase((shape.uppercase ?? false) ? .uppercase : nil)
                     .tracking(shape.letterSpacing ?? 0)
-                    .lineSpacing(shape.lineSpacing ?? 0)
+                    .lineSpacing(max(0, shape.lineSpacing ?? 0))
                     .foregroundStyle(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
                     .multilineTextAlignment(shape.textAlign.textAlignment)
                     .frame(maxWidth: effectiveW, maxHeight: effectiveH, alignment: shape.resolvedFrameAlignment)
