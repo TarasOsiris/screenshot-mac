@@ -641,12 +641,9 @@ struct CanvasShapeView: View {
     private func imageDropPlaceholder<Background: View>(@ViewBuilder background: () -> Background) -> some View {
         // Scale button to fit within shape, capped at comfortable max
         let sizeRef = min(displayW, displayH)
-        let iconSize = min(20, max(10, sizeRef * 0.12))
-        let labelSize = min(11, max(8, sizeRef * 0.06))
-        let spacing = min(4, max(2, sizeRef * 0.02))
+        let iconSize = min(28, max(14, sizeRef * 0.18))
         let padding = min(12, max(4, sizeRef * 0.05))
         let cr = min(8, max(4, sizeRef * 0.04))
-        let showLabel = displayH > 40
 
         ZStack {
             background()
@@ -654,14 +651,8 @@ struct CanvasShapeView: View {
             Button {
                 isPickerPresented = true
             } label: {
-                VStack(spacing: spacing) {
-                    Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
-                        .font(.system(size: iconSize))
-                    if showLabel {
-                        Text(isDropTargeted ? "Drop image" : "Add image")
-                            .font(.system(size: labelSize, weight: .medium))
-                    }
-                }
+                Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
+                    .font(.system(size: iconSize))
                 .foregroundStyle(.primary)
                 .padding(padding)
                 .background(

@@ -7,6 +7,10 @@ extension AppState {
     func load() {
         reloadFromDisk()
 
+        if PersistenceService.needsFormatMigration {
+            PersistenceService.migrateAllProjectsToCompactFormat(projectIds: projects.map(\.id))
+        }
+
         if visibleProjects.isEmpty {
             let project = Project(name: "My App")
             projects = [project]

@@ -9,7 +9,7 @@ struct PersistenceService {
 
     static let encoder: JSONEncoder = {
         let e = JSONEncoder()
-        e.outputFormatting = [.prettyPrinted, .sortedKeys]
+        e.outputFormatting = [.sortedKeys]
         return e
     }()
 
@@ -68,6 +68,33 @@ struct PersistenceService {
         try? fm.createDirectory(at: resourcesDir(id), withIntermediateDirectories: true)
     }
 
+    // MARK: - Format migration
+
+    private static var formatMarkerURL: URL {
+        rootURL.appendingPathComponent(".format-v2")
+    }
+
+    static var needsFormatMigration: Bool {
+        !FileManager.default.fileExists(atPath: formatMarkerURL.path)
+    }
+
+    static func migrateAllProjectsToCompactFormat(projectIds: [UUID]) {
+        var allSucceeded = true
+        for id in projectIds {
+            if let data = loadProject(id) {
+                do { try saveProject(id, data: data) }
+                catch { allSucceeded = false }
+            }
+        }
+        if let index = loadIndex() {
+            do { try saveIndex(index) }
+            catch { allSucceeded = false }
+        }
+        if allSucceeded {
+            FileManager.default.createFile(atPath: formatMarkerURL.path, contents: nil)
+        }
+    }
+
     // MARK: - Generic load/save
 
     static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {
@@ -112,6 +139,15 @@ struct PersistenceService {
 
     static func copyProject(from sourceId: UUID, to destId: UUID) {
         copyDirectory(from: projectDir(sourceId), to: projectDir(destId))
+    }
+
+    static func copyProjectFromURL(_ sourceURL: URL, to destId: UUID) {
+        copyDirectory(from: sourceURL, to: projectDir(destId))
+        // Update modifiedAt so iCloud sync treats this as a fresh project
+        if var data = loadProject(destId) {
+            data.modifiedAt = Date()
+            try? saveProject(destId, data: data)
+        }
     }
 
     static func deleteProject(_ id: UUID) {

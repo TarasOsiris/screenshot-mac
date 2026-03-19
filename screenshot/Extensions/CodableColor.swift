@@ -14,6 +14,51 @@ struct CodableColor: Codable, Equatable {
         self.opacity = Double(c.a)
     }
 
+    // Encode as hex string: "#RRGGBB" (opaque) or "#RRGGBBAA"
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        let r = Int(round(red * 255))
+        let g = Int(round(green * 255))
+        let b = Int(round(blue * 255))
+        let a = Int(round(opacity * 255))
+        if a == 255 {
+            try container.encode(String(format: "#%02X%02X%02X", r, g, b))
+        } else {
+            try container.encode(String(format: "#%02X%02X%02X%02X", r, g, b, a))
+        }
+    }
+
+    // Decode from hex string or legacy object {"r":...,"g":...,"b":...,"a":...}
+    init(from decoder: Decoder) throws {
+        if let container = try? decoder.singleValueContainer(),
+           let hex = try? container.decode(String.self) {
+            guard hex.hasPrefix("#") else {
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid hex color")
+            }
+            let hexStr = String(hex.dropFirst())
+            let scanner = Scanner(string: hexStr)
+            var value: UInt64 = 0
+            scanner.scanHexInt64(&value)
+            if hexStr.count == 6 {
+                red = Double((value >> 16) & 0xFF) / 255.0
+                green = Double((value >> 8) & 0xFF) / 255.0
+                blue = Double(value & 0xFF) / 255.0
+                opacity = 1.0
+            } else {
+                red = Double((value >> 24) & 0xFF) / 255.0
+                green = Double((value >> 16) & 0xFF) / 255.0
+                blue = Double((value >> 8) & 0xFF) / 255.0
+                opacity = Double(value & 0xFF) / 255.0
+            }
+        } else {
+            let c = try decoder.flexContainer()
+            red = try c.decode(Double.self, "r", "red")
+            green = try c.decode(Double.self, "g", "green")
+            blue = try c.decode(Double.self, "b", "blue")
+            opacity = try c.decode(Double.self, "a", "opacity")
+        }
+    }
+
     var color: Color {
         Color(red: red, green: green, blue: blue, opacity: opacity)
     }

@@ -19,17 +19,30 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, backgroundColor, overrideBackground, backgroundStyle, gradientConfig, backgroundImageConfig
+        case id, backgroundColor = "bgc", overrideBackground = "ob"
+        case backgroundStyle = "bgs", gradientConfig = "gc", backgroundImageConfig = "bgic"
     }
 
     init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decode(UUID.self, forKey: .id)
-        backgroundColor = try c.decode(CodableColor.self, forKey: .backgroundColor)
-        overrideBackground = try c.decodeIfPresent(Bool.self, forKey: .overrideBackground) ?? false
-        backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
-        gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
-        backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? BackgroundImageConfig()
+        let c = try decoder.flexContainer()
+        id = try c.decode(UUID.self, "id")
+        backgroundColor = try c.decode(CodableColor.self, "bgc", "backgroundColor")
+        overrideBackground = try c.opt(Bool.self, "ob", "overrideBackground") ?? false
+        backgroundStyle = try c.opt(BackgroundStyle.self, "bgs", "backgroundStyle") ?? .color
+        gradientConfig = try c.opt(GradientConfig.self, "gc", "gradientConfig") ?? GradientConfig()
+        backgroundImageConfig = try c.opt(BackgroundImageConfig.self, "bgic", "backgroundImageConfig") ?? BackgroundImageConfig()
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(backgroundColor, forKey: .backgroundColor)
+        if overrideBackground {
+            try c.encode(true, forKey: .overrideBackground)
+            if backgroundStyle != .color { try c.encode(backgroundStyle, forKey: .backgroundStyle) }
+            if backgroundStyle == .gradient { try c.encode(gradientConfig, forKey: .gradientConfig) }
+            if backgroundStyle == .image { try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig) }
+        }
     }
 
     var bgColor: Color {

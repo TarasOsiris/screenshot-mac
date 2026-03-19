@@ -23,6 +23,7 @@ struct ContentView: View {
     @State private var dialogText = ""
     @State private var isDeletingProject = false
     @State private var isResettingProject = false
+    @State private var projectTemplates: [ProjectTemplate] = TemplateService.availableTemplates()
     @State private var gestureZoomStartLevel: CGFloat?
     @State private var editorViewportHeight: CGFloat = 0
     @State private var scrollWheelMonitor: Any?
@@ -342,6 +343,21 @@ struct ContentView: View {
                 ) {
                     dialogText = "Project \(state.visibleProjects.count + 1)"
                     isCreatingProject = true
+                }
+            }
+
+            if !projectTemplates.isEmpty {
+                Menu("New Project from Template") {
+                    ForEach(projectTemplates) { template in
+                        Button(template.name) {
+                            store.requirePro(
+                                allowed: store.canCreateProject(),
+                                context: .projectLimit
+                            ) {
+                                state.createProjectFromTemplate(template)
+                            }
+                        }
+                    }
                 }
             }
 

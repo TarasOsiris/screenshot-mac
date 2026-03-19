@@ -62,43 +62,46 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, label, templates, templateWidth, templateHeight
-        case backgroundColorData, defaultDeviceBodyColorData, defaultDeviceCategory
-        case backgroundStyle, gradientConfig, backgroundImageConfig
-        case spanBackgroundAcrossRow = "spanGradientAcrossRow"
-        case defaultDeviceFrameId
-        case showDevice, hiddenShapeTypes, showBorders, shapes, isLabelManuallySet
+        case id, label = "l", templates = "tp"
+        case templateWidth = "tw", templateHeight = "th"
+        case backgroundColorData = "bgc", defaultDeviceBodyColorData = "ddbc"
+        case defaultDeviceCategory = "ddc"
+        case backgroundStyle = "bgs", gradientConfig = "gc", backgroundImageConfig = "bgic"
+        case spanBackgroundAcrossRow = "span"
+        case defaultDeviceFrameId = "ddfi"
+        case showDevice = "sd", hiddenShapeTypes = "hst"
+        case showBorders = "sb", shapes = "s", isLabelManuallySet = "lm"
     }
 
     init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decode(UUID.self, forKey: .id)
-        label = try c.decode(String.self, forKey: .label)
-        templates = try c.decode([ScreenshotTemplate].self, forKey: .templates)
-        templateWidth = try c.decode(CGFloat.self, forKey: .templateWidth)
-        templateHeight = try c.decode(CGFloat.self, forKey: .templateHeight)
-        backgroundColorData = try c.decode(CodableColor.self, forKey: .backgroundColorData)
-        defaultDeviceBodyColorData = try c.decodeIfPresent(CodableColor.self, forKey: .defaultDeviceBodyColorData)
+        let c = try decoder.flexContainer()
+        id = try c.decode(UUID.self, "id")
+        label = try c.decode(String.self, "l", "label")
+        templates = try c.decode([ScreenshotTemplate].self, "tp", "templates")
+        templateWidth = try c.decode(CGFloat.self, "tw", "templateWidth")
+        templateHeight = try c.decode(CGFloat.self, "th", "templateHeight")
+        backgroundColorData = try c.decode(CodableColor.self, "bgc", "backgroundColorData")
+        defaultDeviceBodyColorData = try c.opt(CodableColor.self, "ddbc", "defaultDeviceBodyColorData")
             ?? CodableColor(CanvasShapeModel.defaultDeviceBodyColor)
         // Legacy projects without this key default to .iphone; explicit null means "No device"
-        if c.contains(.defaultDeviceCategory) {
-            defaultDeviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .defaultDeviceCategory)
+        if c.has("ddc", "defaultDeviceCategory") {
+            defaultDeviceCategory = try c.opt(DeviceCategory.self, "ddc", "defaultDeviceCategory")
         } else {
             defaultDeviceCategory = .iphone
         }
-        backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
-        gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
-        spanBackgroundAcrossRow = try c.decodeIfPresent(Bool.self, forKey: .spanBackgroundAcrossRow) ?? false
-        backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? BackgroundImageConfig()
-        defaultDeviceFrameId = try c.decodeIfPresent(String.self, forKey: .defaultDeviceFrameId)
+        backgroundStyle = try c.opt(BackgroundStyle.self, "bgs", "backgroundStyle") ?? .color
+        gradientConfig = try c.opt(GradientConfig.self, "gc", "gradientConfig") ?? GradientConfig()
+        spanBackgroundAcrossRow = try c.opt(Bool.self, "span", "spanGradientAcrossRow", "spanBackgroundAcrossRow") ?? false
+        backgroundImageConfig = try c.opt(BackgroundImageConfig.self, "bgic", "backgroundImageConfig") ?? BackgroundImageConfig()
+        defaultDeviceFrameId = try c.opt(String.self, "ddfi", "defaultDeviceFrameId")
         // Migrate legacy showDevice bool into hiddenShapeTypes set
-        var hidden = try c.decodeIfPresent(Set<ShapeType>.self, forKey: .hiddenShapeTypes) ?? []
-        let showDevice = try c.decodeIfPresent(Bool.self, forKey: .showDevice) ?? true
+        var hidden = try c.opt(Set<ShapeType>.self, "hst", "hiddenShapeTypes") ?? []
+        let showDevice = try c.opt(Bool.self, "sd", "showDevice") ?? true
         if !showDevice { hidden.insert(.device) }
         hiddenShapeTypes = hidden
-        showBorders = try c.decodeIfPresent(Bool.self, forKey: .showBorders) ?? true
-        shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []
-        isLabelManuallySet = try c.decodeIfPresent(Bool.self, forKey: .isLabelManuallySet) ?? false
+        showBorders = try c.opt(Bool.self, "sb", "showBorders") ?? true
+        shapes = try c.opt([CanvasShapeModel].self, "s", "shapes") ?? []
+        isLabelManuallySet = try c.opt(Bool.self, "lm", "isLabelManuallySet") ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -112,17 +115,17 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         try c.encode(defaultDeviceBodyColorData, forKey: .defaultDeviceBodyColorData)
         // Encode null explicitly so decoder can distinguish "no device" from missing key
         try c.encode(defaultDeviceCategory, forKey: .defaultDeviceCategory)
-        try c.encode(backgroundStyle, forKey: .backgroundStyle)
-        try c.encode(gradientConfig, forKey: .gradientConfig)
-        try c.encode(spanBackgroundAcrossRow, forKey: .spanBackgroundAcrossRow)
-        try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig)
+        if backgroundStyle != .color { try c.encode(backgroundStyle, forKey: .backgroundStyle) }
+        if backgroundStyle == .gradient { try c.encode(gradientConfig, forKey: .gradientConfig) }
+        if spanBackgroundAcrossRow { try c.encode(true, forKey: .spanBackgroundAcrossRow) }
+        if backgroundStyle == .image { try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig) }
         try c.encodeIfPresent(defaultDeviceFrameId, forKey: .defaultDeviceFrameId)
-        try c.encode(hiddenShapeTypes, forKey: .hiddenShapeTypes)
-        // Write showDevice for backward compatibility with older versions
-        try c.encode(!hiddenShapeTypes.contains(.device), forKey: .showDevice)
-        try c.encode(showBorders, forKey: .showBorders)
+        if !hiddenShapeTypes.isEmpty { try c.encode(hiddenShapeTypes, forKey: .hiddenShapeTypes) }
+        // Write showDevice for backward compatibility with older app versions
+        if !showDevice { try c.encode(false, forKey: .showDevice) }
+        if !showBorders { try c.encode(false, forKey: .showBorders) }
         try c.encode(shapes, forKey: .shapes)
-        try c.encode(isLabelManuallySet, forKey: .isLabelManuallySet)
+        if isLabelManuallySet { try c.encode(true, forKey: .isLabelManuallySet) }
     }
 
     var bgColor: Color {

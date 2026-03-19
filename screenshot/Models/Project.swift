@@ -104,20 +104,20 @@ struct ProjectData: Codable {
     var localeState: LocaleState?
     var modifiedAt: Date
 
+    enum CodingKeys: String, CodingKey {
+        case rows = "r", localeState = "ls", modifiedAt = "m"
+    }
+
     init(rows: [ScreenshotRow], localeState: LocaleState? = nil) {
         self.rows = rows
         self.localeState = localeState
         self.modifiedAt = Date()
     }
 
-    enum CodingKeys: String, CodingKey {
-        case rows, localeState, modifiedAt
-    }
-
     init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        rows = try c.decode([ScreenshotRow].self, forKey: .rows)
-        localeState = try c.decodeIfPresent(LocaleState.self, forKey: .localeState)
-        modifiedAt = try c.decodeIfPresent(Date.self, forKey: .modifiedAt) ?? .distantPast
+        let c = try decoder.flexContainer()
+        rows = try c.decode([ScreenshotRow].self, "r", "rows")
+        localeState = try c.opt(LocaleState.self, "ls", "localeState")
+        modifiedAt = try c.opt(Date.self, "m", "modifiedAt") ?? .distantPast
     }
 }

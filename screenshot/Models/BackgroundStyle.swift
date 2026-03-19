@@ -21,6 +21,11 @@ struct BackgroundImageConfig: Codable, Equatable {
     var tileOffset: Double  // 0-1 relative to image size
     var tileScale: Double   // 0.1-3.0 scale factor for tile images
 
+    enum CodingKeys: String, CodingKey {
+        case fileName = "f", fillMode = "fm", opacity = "a"
+        case tileSpacing = "ts", tileOffset = "to", tileScale = "tsc"
+    }
+
     init(fileName: String? = nil, fillMode: ImageFillMode = .fill, opacity: Double = 1.0,
          tileSpacing: Double = 0.0, tileOffset: Double = 0.0, tileScale: Double = 1.0) {
         self.fileName = fileName
@@ -32,13 +37,23 @@ struct BackgroundImageConfig: Codable, Equatable {
     }
 
     init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        fileName = try c.decodeIfPresent(String.self, forKey: .fileName)
-        fillMode = try c.decodeIfPresent(ImageFillMode.self, forKey: .fillMode) ?? .fill
-        opacity = try c.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
-        tileSpacing = try c.decodeIfPresent(Double.self, forKey: .tileSpacing) ?? 0.0
-        tileOffset = try c.decodeIfPresent(Double.self, forKey: .tileOffset) ?? 0.0
-        tileScale = try c.decodeIfPresent(Double.self, forKey: .tileScale) ?? 1.0
+        let c = try decoder.flexContainer()
+        fileName = try c.opt(String.self, "f", "fileName")
+        fillMode = try c.opt(ImageFillMode.self, "fm", "fillMode") ?? .fill
+        opacity = try c.opt(Double.self, "a", "opacity") ?? 1.0
+        tileSpacing = try c.opt(Double.self, "ts", "tileSpacing") ?? 0.0
+        tileOffset = try c.opt(Double.self, "to", "tileOffset") ?? 0.0
+        tileScale = try c.opt(Double.self, "tsc", "tileScale") ?? 1.0
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encodeIfPresent(fileName, forKey: .fileName)
+        if fillMode != .fill { try c.encode(fillMode, forKey: .fillMode) }
+        if opacity != 1.0 { try c.encode(opacity, forKey: .opacity) }
+        if tileSpacing != 0 { try c.encode(tileSpacing, forKey: .tileSpacing) }
+        if tileOffset != 0 { try c.encode(tileOffset, forKey: .tileOffset) }
+        if tileScale != 1.0 { try c.encode(tileScale, forKey: .tileScale) }
     }
 }
 
@@ -150,10 +165,21 @@ struct GradientColorStop: Codable, Equatable, Identifiable {
     var colorData: CodableColor
     var location: Double // 0.0 to 1.0
 
+    enum CodingKeys: String, CodingKey {
+        case id, colorData = "c", location = "l"
+    }
+
     init(id: UUID = UUID(), color: Color, location: Double) {
         self.id = id
         self.colorData = CodableColor(color)
         self.location = min(max(location, 0), 1)
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.flexContainer()
+        id = try c.decode(UUID.self, "id")
+        colorData = try c.decode(CodableColor.self, "c", "colorData")
+        location = try c.decode(Double.self, "l", "location")
     }
 
     var color: Color {
@@ -194,25 +220,24 @@ struct GradientConfig: Codable, Equatable {
         ], angle: angle, gradientType: gradientType)
     }
 
-    // Backward-compatible decoding
     enum CodingKeys: String, CodingKey {
-        case stops, angle, gradientType, centerX, centerY
-        case color1Data, color2Data // legacy
+        case stops = "s", angle = "a", gradientType = "gt"
+        case centerX = "cx", centerY = "cy"
     }
 
     init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        angle = try c.decode(Double.self, forKey: .angle)
-        gradientType = try c.decodeIfPresent(GradientType.self, forKey: .gradientType) ?? .linear
-        centerX = try c.decodeIfPresent(Double.self, forKey: .centerX) ?? 0.5
-        centerY = try c.decodeIfPresent(Double.self, forKey: .centerY) ?? 0.5
+        let c = try decoder.flexContainer()
+        angle = try c.decode(Double.self, "a", "angle")
+        gradientType = try c.opt(GradientType.self, "gt", "gradientType") ?? .linear
+        centerX = try c.opt(Double.self, "cx", "centerX") ?? 0.5
+        centerY = try c.opt(Double.self, "cy", "centerY") ?? 0.5
 
-        if let stops = try c.decodeIfPresent([GradientColorStop].self, forKey: .stops) {
+        if let stops = try c.opt([GradientColorStop].self, "s", "stops") {
             self.stops = stops.sorted { $0.location < $1.location }
         } else {
             // Migrate from old color1Data/color2Data format
-            let c1 = try c.decode(CodableColor.self, forKey: .color1Data)
-            let c2 = try c.decode(CodableColor.self, forKey: .color2Data)
+            let c1 = try c.decode(CodableColor.self, "color1Data")
+            let c2 = try c.decode(CodableColor.self, "color2Data")
             self.stops = [
                 GradientColorStop(color: c1.color, location: 0),
                 GradientColorStop(color: c2.color, location: 1),
@@ -224,9 +249,9 @@ struct GradientConfig: Codable, Equatable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(stops, forKey: .stops)
         try c.encode(angle, forKey: .angle)
-        try c.encode(gradientType, forKey: .gradientType)
-        try c.encode(centerX, forKey: .centerX)
-        try c.encode(centerY, forKey: .centerY)
+        if gradientType != .linear { try c.encode(gradientType, forKey: .gradientType) }
+        if centerX != 0.5 { try c.encode(centerX, forKey: .centerX) }
+        if centerY != 0.5 { try c.encode(centerY, forKey: .centerY) }
     }
 
     private var radians: Double {

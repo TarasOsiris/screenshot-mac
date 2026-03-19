@@ -20,6 +20,17 @@ extension AppState {
         saveAll()
     }
 
+    func createProjectFromTemplate(_ template: ProjectTemplate) {
+        saveCurrentProject()
+
+        let project = Project(name: uniqueProjectName(template.name))
+        PersistenceService.copyProjectFromURL(template.url, to: project.id)
+        projects.append(project)
+
+        switchToProject(project.id)
+        saveAll()
+    }
+
     func selectProject(_ id: UUID) {
         guard id != activeProjectId else { return }
 

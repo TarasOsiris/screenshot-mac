@@ -217,6 +217,99 @@ struct CanvasShapeModel: Identifiable, Codable {
     // Clipping
     var clipToTemplate: Bool?
 
+    enum CodingKeys: String, CodingKey {
+        case id, x, y
+        case type = "t"
+        case width = "w", height = "h"
+        case rotation = "rot", borderRadius = "br"
+        case colorData = "c", opacity = "o"
+        case text = "txt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
+        case textAlign = "ta", italic = "it", uppercase = "uc"
+        case letterSpacing = "ls", lineSpacing = "lns"
+        case imageFileName = "ifn"
+        case deviceCategory = "dc", deviceBodyColorData = "dbc"
+        case deviceFrameId = "dfi", screenshotFileName = "sfn"
+        case svgContent = "svg", svgUseColor = "suc"
+        case outlineColorData = "olc", outlineWidth = "olw"
+        case starPointCount = "spc"
+        case clipToTemplate = "ct"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.flexContainer()
+        id = try c.decode(UUID.self, "id")
+        type = try c.decode(ShapeType.self, "t", "type")
+        x = try c.decode(CGFloat.self, "x")
+        y = try c.decode(CGFloat.self, "y")
+        width = try c.decode(CGFloat.self, "w", "width")
+        height = try c.decode(CGFloat.self, "h", "height")
+        rotation = try c.opt(Double.self, "rot", "rotation") ?? 0
+        borderRadius = try c.opt(CGFloat.self, "br", "borderRadius") ?? 0
+        colorData = try c.decode(CodableColor.self, "c", "colorData")
+        opacity = try c.opt(Double.self, "o", "opacity") ?? 1.0
+        text = try c.opt(String.self, "txt", "text")
+        fontName = try c.opt(String.self, "fn", "fontName")
+        fontSize = try c.opt(CGFloat.self, "fs", "fontSize")
+        fontWeight = try c.opt(Int.self, "fw", "fontWeight")
+        textAlign = try c.opt(TextAlign.self, "ta", "textAlign")
+        italic = try c.opt(Bool.self, "it", "italic")
+        uppercase = try c.opt(Bool.self, "uc", "uppercase")
+        letterSpacing = try c.opt(CGFloat.self, "ls", "letterSpacing")
+        lineSpacing = try c.opt(CGFloat.self, "lns", "lineSpacing")
+        imageFileName = try c.opt(String.self, "ifn", "imageFileName")
+        deviceCategory = try c.opt(DeviceCategory.self, "dc", "deviceCategory")
+        deviceBodyColorData = try c.opt(CodableColor.self, "dbc", "deviceBodyColorData")
+        deviceFrameId = try c.opt(String.self, "dfi", "deviceFrameId")
+        screenshotFileName = try c.opt(String.self, "sfn", "screenshotFileName")
+        svgContent = try c.opt(String.self, "svg", "svgContent")
+        svgUseColor = try c.opt(Bool.self, "suc", "svgUseColor")
+        outlineColorData = try c.opt(CodableColor.self, "olc", "outlineColorData")
+        outlineWidth = try c.opt(CGFloat.self, "olw", "outlineWidth")
+        starPointCount = try c.opt(Int.self, "spc", "starPointCount")
+        clipToTemplate = try c.opt(Bool.self, "ct", "clipToTemplate")
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(type, forKey: .type)
+        try c.encode(x, forKey: .x)
+        try c.encode(y, forKey: .y)
+        try c.encode(width, forKey: .width)
+        try c.encode(height, forKey: .height)
+        if rotation != 0 { try c.encode(rotation, forKey: .rotation) }
+        if borderRadius != 0 { try c.encode(borderRadius, forKey: .borderRadius) }
+        try c.encode(colorData, forKey: .colorData)
+        if opacity != 1.0 { try c.encode(opacity, forKey: .opacity) }
+        // Text properties
+        try c.encodeIfPresent(text, forKey: .text)
+        try c.encodeIfPresent(fontName, forKey: .fontName)
+        try c.encodeIfPresent(fontSize, forKey: .fontSize)
+        try c.encodeIfPresent(fontWeight, forKey: .fontWeight)
+        try c.encodeIfPresent(textAlign, forKey: .textAlign)
+        try c.encodeIfPresent(italic, forKey: .italic)
+        try c.encodeIfPresent(uppercase, forKey: .uppercase)
+        try c.encodeIfPresent(letterSpacing, forKey: .letterSpacing)
+        try c.encodeIfPresent(lineSpacing, forKey: .lineSpacing)
+        // Image
+        try c.encodeIfPresent(imageFileName, forKey: .imageFileName)
+        // Device
+        try c.encodeIfPresent(deviceCategory, forKey: .deviceCategory)
+        try c.encodeIfPresent(deviceBodyColorData, forKey: .deviceBodyColorData)
+        try c.encodeIfPresent(deviceFrameId, forKey: .deviceFrameId)
+        try c.encodeIfPresent(screenshotFileName, forKey: .screenshotFileName)
+        // SVG
+        try c.encodeIfPresent(svgContent, forKey: .svgContent)
+        try c.encodeIfPresent(svgUseColor, forKey: .svgUseColor)
+        // Outline
+        try c.encodeIfPresent(outlineColorData, forKey: .outlineColorData)
+        try c.encodeIfPresent(outlineWidth, forKey: .outlineWidth)
+        // Star
+        try c.encodeIfPresent(starPointCount, forKey: .starPointCount)
+        // Clipping
+        try c.encodeIfPresent(clipToTemplate, forKey: .clipToTemplate)
+    }
+
     init(
         id: UUID = UUID(),
         type: ShapeType,

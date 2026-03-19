@@ -26,35 +26,43 @@ enum AlignmentService {
         let dragVerticals = [dragLeft, dragCenterX, dragRight]
         let dragHorizontals = [dragTop, dragCenterY, dragBottom]
 
-        // Collect target lines from other shapes
-        var targetVerticals: [(position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat)] = []
-        var targetHorizontals: [(position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat)] = []
+        // Only snap to nearest neighbor templates
+        let dragTemplateCenterIndex = max(0, min(templateCount - 1, Int(dragCenterX / templateWidth)))
+        let minTemplateIndex = max(0, dragTemplateCenterIndex - 1)
+        let maxTemplateIndex = min(templateCount - 1, dragTemplateCenterIndex + 1)
+        let neighborLeft = CGFloat(minTemplateIndex) * templateWidth
+        let neighborRight = CGFloat(maxTemplateIndex + 1) * templateWidth
+
+        // Collect target lines from shapes in nearby templates only
+        var targetVerticals: [(position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat, isCenter: Bool)] = []
+        var targetHorizontals: [(position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat, isCenter: Bool)] = []
 
         for shape in otherShapes {
             let bb = shape.aabb
+            // Skip shapes that don't overlap the neighbor template range
+            guard bb.maxX > neighborLeft && bb.minX < neighborRight else { continue }
             let cx = (bb.minX + bb.maxX) / 2
             let cy = (bb.minY + bb.maxY) / 2
-            targetVerticals.append((bb.minX, bb.minY, bb.maxY))
-            targetVerticals.append((cx, bb.minY, bb.maxY))
-            targetVerticals.append((bb.maxX, bb.minY, bb.maxY))
-            targetHorizontals.append((bb.minY, bb.minX, bb.maxX))
-            targetHorizontals.append((cy, bb.minX, bb.maxX))
-            targetHorizontals.append((bb.maxY, bb.minX, bb.maxX))
+            targetVerticals.append((bb.minX, bb.minY, bb.maxY, false))
+            targetVerticals.append((cx, bb.minY, bb.maxY, true))
+            targetVerticals.append((bb.maxX, bb.minY, bb.maxY, false))
+            targetHorizontals.append((bb.minY, bb.minX, bb.maxX, false))
+            targetHorizontals.append((cy, bb.minX, bb.maxX, true))
+            targetHorizontals.append((bb.maxY, bb.minX, bb.maxX, false))
         }
 
-        // Template boundary lines
-        for i in 0..<templateCount {
+        // Template boundary lines for nearby templates
+        for i in minTemplateIndex...maxTemplateIndex {
             let left = CGFloat(i) * templateWidth
             let right = left + templateWidth
             let center = left + templateWidth / 2
-            targetVerticals.append((left, 0, templateHeight))
-            targetVerticals.append((center, 0, templateHeight))
-            targetVerticals.append((right, 0, templateHeight))
+            targetVerticals.append((left, 0, templateHeight, false))
+            targetVerticals.append((center, 0, templateHeight, true))
+            targetVerticals.append((right, 0, templateHeight, false))
         }
-        let totalWidth = templateWidth * CGFloat(templateCount)
-        targetHorizontals.append((0, 0, totalWidth))
-        targetHorizontals.append((templateHeight / 2, 0, totalWidth))
-        targetHorizontals.append((templateHeight, 0, totalWidth))
+        targetHorizontals.append((0, neighborLeft, neighborRight, false))
+        targetHorizontals.append((templateHeight / 2, neighborLeft, neighborRight, true))
+        targetHorizontals.append((templateHeight, neighborLeft, neighborRight, false))
 
         var snapDX: CGFloat = 0
         var snapDY: CGFloat = 0
@@ -92,23 +100,30 @@ enum AlignmentService {
 
     private static func findBestSnap(
         dragLines: [CGFloat],
-        targets: [(position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat)],
+        targets: [(position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat, isCenter: Bool)],
         threshold: CGFloat
     ) -> (delta: CGFloat, targetPosition: CGFloat, targetRangeMin: CGFloat, targetRangeMax: CGFloat)? {
         var bestDist = threshold + 1.0
-        var bestMatch: (dragLine: CGFloat, target: (position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat))?
+        var bestIsCenter = false
+        var bestMatch: (dragLine: CGFloat, target: (position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat, isCenter: Bool))?
 
         for dLine in dragLines {
             for target in targets {
                 let dist = abs(dLine - target.position)
-                if dist < bestDist {
+                guard dist <= threshold else { continue }
+                // Center targets take priority over edges within threshold
+                let isBetter = bestMatch == nil ||
+                    (target.isCenter && !bestIsCenter) ||
+                    (target.isCenter == bestIsCenter && dist < bestDist)
+                if isBetter {
                     bestDist = dist
+                    bestIsCenter = target.isCenter
                     bestMatch = (dLine, target)
                 }
             }
         }
 
-        guard let match = bestMatch, bestDist <= threshold else { return nil }
+        guard let match = bestMatch else { return nil }
         return (match.target.position - match.dragLine, match.target.position, match.target.rangeMin, match.target.rangeMax)
     }
 
