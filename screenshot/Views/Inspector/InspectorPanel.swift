@@ -3,6 +3,9 @@ import SwiftUI
 struct InspectorPanel: View {
     @Bindable var state: AppState
     @State private var isSizeExpanded = true
+    @State private var useCustomSize = false
+    @State private var customWidth: String = ""
+    @State private var customHeight: String = ""
     @State private var isBackgroundExpanded = true
     @State private var isAddElementExpanded = true
     @State private var isDeviceExpanded = true
@@ -35,27 +38,91 @@ struct InspectorPanel: View {
     @ViewBuilder
     private func sizeSection(rowIndex: Int, rowId: UUID) -> some View {
         Section(isExpanded: $isSizeExpanded) {
-            Picker("Preset", selection: sizePresetBinding(for: rowId)) {
-                ForEach(displayCategories) { category in
-                    Section(category.name) {
-                        ForEach(category.sizes, id: \.label) { size in
-                            Text("\(size.label) \(size.isLandscape ? "Landscape" : "Portrait")")
-                                .tag(sizePresetTag(for: size))
-                        }
-                    }
-                }
+            Picker("Mode", selection: $useCustomSize) {
+                Text("Presets").tag(false)
+                Text("Custom").tag(true)
             }
-            .pickerStyle(.menu)
+            .pickerStyle(.segmented)
             .controlSize(.small)
-
-            LabeledContent("Size") {
-                Text(verbatim: state.rows[rowIndex].resolutionLabel)
-                    .font(.system(size: 11).monospacedDigit())
-                    .foregroundStyle(.secondary)
+            .onChange(of: useCustomSize) { _, isCustom in
+                if isCustom { syncCustomFields(rowId: rowId) }
             }
+            .onChange(of: rowId) { _, newRowId in
+                if useCustomSize { syncCustomFields(rowId: newRowId) }
+            }
+
+            if useCustomSize {
+                customSizeFields(rowId: rowId)
+            } else {
+                presetPicker(rowId: rowId)
+            }
+
+            sizeLabel(rowIndex: rowIndex)
         } header: {
             Text("Screenshot Size")
         }
+    }
+
+    @ViewBuilder
+    private func presetPicker(rowId: UUID) -> some View {
+        Picker("Preset", selection: sizePresetBinding(for: rowId)) {
+            ForEach(displayCategories) { category in
+                Section(category.name) {
+                    ForEach(category.sizes, id: \.label) { size in
+                        Text("\(size.label) \(size.isLandscape ? "Landscape" : "Portrait")")
+                            .tag(sizePresetTag(for: size))
+                    }
+                }
+            }
+        }
+        .pickerStyle(.menu)
+        .controlSize(.small)
+    }
+
+    @ViewBuilder
+    private func customSizeFields(rowId: UUID) -> some View {
+        Grid(alignment: .leading, horizontalSpacing: 6, verticalSpacing: 4) {
+            GridRow {
+                Text("W")
+                    .frame(width: 14, alignment: .trailing)
+                    .foregroundStyle(.secondary)
+                TextField("", text: $customWidth)
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.trailing)
+                    .onSubmit { applyCustomSize(rowId: rowId) }
+                Text("H")
+                    .frame(width: 14, alignment: .trailing)
+                    .foregroundStyle(.secondary)
+                TextField("", text: $customHeight)
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.trailing)
+                    .onSubmit { applyCustomSize(rowId: rowId) }
+            }
+        }
+        .font(.system(size: 11).monospacedDigit())
+        .controlSize(.small)
+    }
+
+    @ViewBuilder
+    private func sizeLabel(rowIndex: Int) -> some View {
+        LabeledContent("Size") {
+            Text(verbatim: state.rows[rowIndex].resolutionLabel)
+                .font(.system(size: 11).monospacedDigit())
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func syncCustomFields(rowId: UUID) {
+        guard let idx = state.rowIndex(for: rowId) else { return }
+        customWidth = "\(Int(state.rows[idx].templateWidth))"
+        customHeight = "\(Int(state.rows[idx].templateHeight))"
+    }
+
+    private func applyCustomSize(rowId: UUID) {
+        guard let w = Double(customWidth), let h = Double(customHeight),
+              w >= 100, h >= 100,
+              let idx = state.rowIndex(for: rowId) else { return }
+        state.resizeRow(at: idx, newWidth: CGFloat(w), newHeight: CGFloat(h))
     }
 
     @ViewBuilder
