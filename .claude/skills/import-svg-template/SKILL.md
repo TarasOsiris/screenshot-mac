@@ -68,7 +68,7 @@ Do NOT use independent `scaleX`/`scaleY` for positions — this distorts centeri
 
 ## Step 4: Parse SVG elements
 
-**IMPORTANT — Write a Python script** to parse SVG files and generate project.json. Manual JSON construction is error-prone for complex templates. The script should use `xml.etree.ElementTree` for parsing and `json` for output.
+**IMPORTANT — Use the existing generator script** at `tools/gen_template.py`. It handles SVG parsing, uniform scaling, device pairing, text classification, and project.json generation. Update its `main()` function to specify which template numbers and SVG paths to generate, then run it. Do NOT write a new script from scratch.
 
 Parse the SVG file to extract:
 
@@ -226,6 +226,7 @@ Each row:
 
 ## Step 7: Validate
 
-1. Validate JSON: `python3 -c "import json; json.load(open('<path>'))"`.
-2. Build from project root: `cd <project_root> && xcodebuild -scheme screenshot -destination 'platform=macOS' build`.
-3. Report template name, rows (with device type, shape count, template count, dimensions).
+1. Run `python3 tools/gen_template.py` from the project root.
+2. Validate JSON: `python3 -c "import json; json.load(open('<path>'))"`.
+3. Build: `xcodebuild -scheme screenshot -destination 'platform=macOS' build`.
+4. Report template name, rows (with device type, shape count, template count, dimensions).
