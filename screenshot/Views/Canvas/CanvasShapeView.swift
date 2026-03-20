@@ -22,6 +22,7 @@ struct CanvasShapeView: View {
     var onOptionDragDuplicate: ((UUID) -> UUID?)?
     var onDidAppearAfterAdd: (() -> Void)?
     var onEditingTextChanged: ((Bool) -> Void)?
+    var availableFontFamilies: Set<String> = []
 
     @State private var addBumpScale: CGFloat = 1.0
     @State private var dragOffset: CGSize = .zero
@@ -802,7 +803,8 @@ struct CanvasShapeView: View {
     }
 
     private func resolvedNSFont(size: CGFloat, weight: NSFont.Weight) -> NSFont {
-        if let name = shape.fontName, !name.isEmpty {
+        if let name = shape.fontName, !name.isEmpty,
+           availableFontFamilies.contains(name) {
             let fm = NSFontManager.shared
             let nsFontWeight = fm.weight(of: NSFont.systemFont(ofSize: size, weight: weight))
             return fm.font(withFamily: name, traits: [], weight: nsFontWeight, size: size)

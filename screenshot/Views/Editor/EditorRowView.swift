@@ -498,7 +498,8 @@ struct EditorRowView: View {
                         state.duplicateShapeForOptionDrag(shapeId)
                     },
                     onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
-                    onEditingTextChanged: { state.isEditingText = $0 }
+                    onEditingTextChanged: { state.isEditingText = $0 },
+                    availableFontFamilies: state.availableFontFamilySet
                 )
             }
 

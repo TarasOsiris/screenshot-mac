@@ -244,6 +244,16 @@ struct ScreenshotBroApp: App {
                     }
                 }
                 .disabled(appState.activeProjectId == nil)
+
+                if !debugExistingTemplates.isEmpty {
+                    Menu("Open Template") {
+                        ForEach(debugExistingTemplates, id: \.self) { name in
+                            Button(name) {
+                                debugOpenTemplate(name: name)
+                            }
+                        }
+                    }
+                }
             }
             #endif
         }
@@ -266,6 +276,15 @@ struct ScreenshotBroApp: App {
         debugExistingTemplates = withDebugBundleAccess { bundleURL in
             DebugTemplateService.existingTemplateNames(at: bundleURL)
         } ?? []
+    }
+
+    private func debugOpenTemplate(name: String) {
+        _ = withDebugBundleAccess { bundleURL in
+            let templateURL = bundleURL.appendingPathComponent(name, isDirectory: true)
+            let template = ProjectTemplate(id: name, name: name, url: templateURL)
+            appState.createProjectFromTemplate(template)
+            debugRefreshExistingTemplates()
+        }
     }
 
     private func debugSaveTemplate(name: String) {

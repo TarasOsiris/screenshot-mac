@@ -135,14 +135,14 @@ extension AppState {
                 // Only reload if the on-disk version is newer than our in-memory version
                 if let diskData = PersistenceService.loadProject(activeId),
                    diskData.modifiedAt > localModified {
+                    loadCustomFonts()
                     applyProjectData(diskData, for: activeId)
                     loadScreenshotImages()
-                    loadCustomFonts()
                 }
             } else {
+                loadCustomFonts()
                 loadRowsForProject(activeId)
                 loadScreenshotImages()
-                loadCustomFonts()
             }
         }
     }

@@ -63,6 +63,7 @@ enum DebugTemplateService {
         return contents
             .filter { url in
                 (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+                    && fm.fileExists(atPath: url.appendingPathComponent("project.json").path)
             }
             .map { $0.lastPathComponent }
             .sorted()
@@ -80,7 +81,28 @@ enum DebugTemplateService {
         let sourceURL = PersistenceService.projectDataURL(projectId).deletingLastPathComponent()
         try fm.copyItem(at: sourceURL, to: destURL)
 
+        // Move fonts from template resources into the shared fonts directory
+        moveFontsToShared(templateResources: destURL.appendingPathComponent("resources", isDirectory: true), bundleURL: bundleURL)
+
         print("[DebugTemplateService] Saved template '\(templateName)' to \(destURL.path)")
+    }
+
+    /// Moves font files from a template's resources into the shared/fonts directory,
+    /// removing duplicates that already exist there.
+    private static func moveFontsToShared(templateResources: URL, bundleURL: URL) {
+        let fm = FileManager.default
+        let sharedFontsURL = bundleURL.appendingPathComponent(TemplateService.sharedFontsSubpath, isDirectory: true)
+        try? fm.createDirectory(at: sharedFontsURL, withIntermediateDirectories: true)
+
+        guard let files = try? fm.contentsOfDirectory(at: templateResources, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return }
+
+        for file in files where AppState.fontExtensions.contains(file.pathExtension.lowercased()) {
+            let sharedDest = sharedFontsURL.appendingPathComponent(file.lastPathComponent)
+            if !fm.fileExists(atPath: sharedDest.path) {
+                guard (try? fm.copyItem(at: file, to: sharedDest)) != nil else { continue }
+            }
+            try? fm.removeItem(at: file)
+        }
     }
 }
 #endif

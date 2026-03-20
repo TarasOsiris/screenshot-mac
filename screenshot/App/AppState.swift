@@ -20,6 +20,12 @@ final class AppState {
     @ObservationIgnored var justAddedShapeId: UUID?
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: String] = [:]  // fileName → familyName
+    /// Cached set of all available font family names for O(1) lookups during rendering.
+    @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = Set(NSFontManager.shared.availableFontFamilies)
+
+    func refreshAvailableFontFamilies() {
+        availableFontFamilySet = Set(NSFontManager.shared.availableFontFamilies)
+    }
     var undoManager: UndoManager?
     var saveError: String?
     var canvasFocusRowId: UUID?

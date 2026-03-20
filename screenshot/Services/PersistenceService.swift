@@ -143,10 +143,26 @@ struct PersistenceService {
 
     static func copyProjectFromURL(_ sourceURL: URL, to destId: UUID) {
         copyDirectory(from: sourceURL, to: projectDir(destId))
+        // Copy shared fonts from Templates.bundle into the project's resources
+        copySharedFontsIfNeeded(to: destId)
         // Update modifiedAt so iCloud sync treats this as a fresh project
         if var data = loadProject(destId) {
             data.modifiedAt = Date()
             try? saveProject(destId, data: data)
+        }
+    }
+
+    private static func copySharedFontsIfNeeded(to projectId: UUID) {
+        guard let sharedFontsURL = TemplateService.sharedFontsURL else { return }
+        let fm = FileManager.default
+        guard let fonts = try? fm.contentsOfDirectory(at: sharedFontsURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return }
+        let destResources = resourcesDir(projectId)
+        try? fm.createDirectory(at: destResources, withIntermediateDirectories: true)
+        for fontURL in fonts {
+            let destURL = destResources.appendingPathComponent(fontURL.lastPathComponent)
+            if !fm.fileExists(atPath: destURL.path) {
+                try? fm.copyItem(at: fontURL, to: destURL)
+            }
         }
     }
 

@@ -249,7 +249,8 @@ struct ExportService {
                     showsEditorHelpers: false,
                     onSelect: {},
                     onUpdate: { _ in },
-                    onDelete: {}
+                    onDelete: {},
+                    availableFontFamilies: Set(NSFontManager.shared.availableFontFamilies)
                 )
             }
         }

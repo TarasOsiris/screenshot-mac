@@ -255,18 +255,22 @@ extension AppState {
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
 
+        var changed = false
         for file in files where Self.fontExtensions.contains(file.pathExtension.lowercased()) {
             let fileName = file.lastPathComponent
             guard customFonts[fileName] == nil else { continue }
             if let familyName = registerFont(at: file) {
                 customFonts[fileName] = familyName
+                changed = true
             }
         }
+        if changed { refreshAvailableFontFamilies() }
     }
 
     func unregisterCustomFonts() {
         guard let activeId = activeProjectId else {
             customFonts.removeAll()
+            refreshAvailableFontFamilies()
             return
         }
         let resourcesURL = PersistenceService.resourcesDir(activeId)
@@ -275,6 +279,7 @@ extension AppState {
             CTFontManagerUnregisterFontsForURL(url, .process, nil)
         }
         customFonts.removeAll()
+        refreshAvailableFontFamilies()
     }
 
     @discardableResult
@@ -298,6 +303,7 @@ extension AppState {
         guard (try? fm.copyItem(at: url, to: destURL)) != nil else { return nil }
         if let familyName = registerFont(at: destURL) {
             customFonts[fileName] = familyName
+            refreshAvailableFontFamilies()
             return familyName
         }
         return nil
@@ -311,6 +317,7 @@ extension AppState {
         CTFontManagerUnregisterFontsForURL(url as CFURL, .process, nil)
         try? FileManager.default.removeItem(at: url)
         customFonts.removeValue(forKey: fileName)
+        refreshAvailableFontFamilies()
     }
 
     private func registerFont(at url: URL) -> String? {

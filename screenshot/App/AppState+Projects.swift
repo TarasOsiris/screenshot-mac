@@ -45,9 +45,9 @@ extension AppState {
         unregisterCustomFonts()
         activeProjectId = id
         screenshotImages.removeAll()
+        loadCustomFonts()
         loadRowsForProject(id)
         loadScreenshotImages()
-        loadCustomFonts()
     }
 
     func renameProject(_ id: UUID, to name: String) {

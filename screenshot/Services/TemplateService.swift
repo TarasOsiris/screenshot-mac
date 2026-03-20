@@ -7,6 +7,15 @@ struct ProjectTemplate: Identifiable {
 }
 
 enum TemplateService {
+    /// Relative path for shared fonts within any Templates.bundle root.
+    static let sharedFontsSubpath = "shared/fonts"
+
+    /// URL of the shared fonts directory inside the app's Templates.bundle.
+    static var sharedFontsURL: URL? {
+        Bundle.main.url(forResource: "Templates", withExtension: "bundle")?
+            .appendingPathComponent(sharedFontsSubpath, isDirectory: true)
+    }
+
     static func availableTemplates() -> [ProjectTemplate] {
         guard let bundleURL = Bundle.main.url(forResource: "Templates", withExtension: "bundle") else {
             return []

@@ -10,7 +10,7 @@ struct ScreenshotSizePicker: View {
             ForEach(displayCategories) { category in
                 Section(category.name) {
                     ForEach(category.sizes, id: \.label) { size in
-                        Text("\(size.label) \(size.isLandscape ? "Landscape" : "Portrait")")
+                        Text(size.displayLabel)
                             .tag("\(Int(size.width))x\(Int(size.height))")
                     }
                 }
