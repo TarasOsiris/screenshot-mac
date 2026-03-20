@@ -44,15 +44,27 @@ Pick the preset whose aspect ratio best matches the SVG slice aspect ratio for t
 
 **Selecting the best preset**: Compute the SVG slice aspect ratio (`slice_h / slice_w`). For each portrait preset in the matching device category, compute its aspect ratio (`th / tw`). Pick the preset with the smallest absolute difference. If multiple are close, prefer the default above.
 
-**Slice width inference**: Determine the number of slices from the SVG viewBox width. Try dividing by likely slice widths (viewBox width must divide evenly or nearly evenly). Common patterns:
-- iPhone SVG viewBox 12900 wide → 12900/1290 = 10 slices (1290 ≈ 1242 preset)
-- iPad SVG viewBox 8192 wide → 8192/2048 = 4 slices (2048 matches preset exactly)
+**Slice count inference**: Determine slice count from SVG viewBox width by finding clean integer divisions (remainder < 1px). The slice count comes from SVG structure, NOT from the preset. When the user overrides the preset (e.g., `force_preset`), keep the SVG-derived slice count — only the output dimensions change.
+
+Common patterns:
+- iPhone SVG viewBox 12900 wide → 12900/1290 = 10 slices
+- iPad SVG viewBox 8192 wide → 8192/2048 = 4 slices
 - Android SVG viewBox 11520 wide → 11520/1440 = 8 slices
 
-Compute scale factors from SVG slice to preset:
-- `scaleX = preset_tw / figma_slice_width`
-- `scaleY = preset_th / figma_slice_height`
-- `s_min = min(scaleX, scaleY)` — used for font sizes and border radii
+**Uniform scaling with centering offset** (CRITICAL for correct positioning):
+When SVG slice and preset have different aspect ratios, use **uniform scale** (`s = min(scaleX, scaleY)`) for all shape sizes and positions. This preserves proportions — a device centered in the SVG stays centered in the output.
+
+Compute centering offsets for the dimension with extra space:
+- `s = min(preset_tw / slice_w, preset_th / slice_h)`
+- `ox = (preset_tw - slice_w * s) / 2` — horizontal offset per slice
+- `oy = (preset_th - slice_h * s) / 2` — vertical offset
+
+Transform SVG coordinates to model space:
+- `model_x = slice_index * preset_tw + local_x * s + ox`
+- `model_y = svg_y * s + oy`
+- `model_w = svg_w * s`, `model_h = svg_h * s`
+
+Do NOT use independent `scaleX`/`scaleY` for positions — this distorts centering when aspect ratios differ.
 
 ## Step 4: Parse SVG elements
 
@@ -114,7 +126,7 @@ Use the **path bounding box** to determine position and approximate font size, t
    - **y**: `frame_y = (bbox_min_y - fontSize * 0.15) * scaleY` (adjust from glyph top to text frame top)
    - **x** (center-aligned): `frame_x = ((bbox_min_x + bbox_max_x) / 2) * scaleX - frame_w / 2`
    - **x** (left-aligned): `frame_x = bbox_min_x * scaleX`
-   - **w**: Use `bbox_width * scaleX` for multi-line text, but ensure single-line text (≤15 chars) has `w >= len(txt) * fs * 0.6 * 1.1`. When widening center-aligned text, adjust x to maintain center.
+   - **w**: Start with `bbox_width * s` (uniform scale). Ensure minimum width for target line count: `min_w = len(txt) * fs * 0.55 / max_lines * 1.1` where max_lines is 1 for labels, 2 for titles/headlines, 3 for descriptions. Cap at `preset_tw * 0.85` to leave margins. Never exceed template width. When widening center-aligned text, adjust x to maintain center.
 4. Ensure full visibility:
    - Estimate lines: `chars_per_line = w / (fs * 0.55)`, `lines = ceil(len(txt) / chars_per_line)`
    - Set `h = lines * fs * 1.5`
@@ -124,9 +136,9 @@ Use the **path bounding box** to determine position and approximate font size, t
 ### Device frames
 `<rect>` elements with `fill="url(#patternN_...)"` are device screen/frame images. They come in pairs per device position:
 
-**iPhone/Android**: Two non-rotated rects at similar position — the **smaller** one (or the one with `rx`) is the screen content area.
+**Pairing is cross-rotation**: Device rects come in pairs (screen + frame) that may have DIFFERENT rotation angles (e.g., 0° screen + -90° frame for iPad, or 45° screen + -45° frame for tilted devices). Pair by center proximity regardless of angle, then pick the smaller-area rect as the screen.
 
-**iPad**: One non-rotated portrait rect (screen content) + one `transform="rotate(-90 ...)"` landscape rect (device frame overlay). **Only use the non-rotated rects** as device positions. Filter out all rotated rects.
+**Tilted devices**: Some templates have devices at arbitrary angles (35°, 45°, etc.). These must be imported with `"rot": <angle>` in the shape JSON. Use the unrotated rect dimensions for shape w/h (the app applies rotation), but use the **rotated bounding box** for x/y positioning.
 
 **Hero devices**: Some templates have a 2x-sized device spanning 2 slices (e.g., slices 4+5). These have significantly larger width/height than regular devices. Include them as normal device shapes.
 
@@ -136,16 +148,31 @@ Use the **path bounding box** to determine position and approximate font size, t
 3. In each pair, pick the smaller-area rect as the screen
 4. If no pairs found (each rect is isolated), each rect is its own screen position
 
+**Device frame aspect ratio enforcement** (CRITICAL): After computing device w/h from SVG scaling, enforce the correct aspect ratio from `DeviceFrameSpec.swift`. SVG screen rects have different ratios than the actual device frame PNGs. Keep the height, adjust width to match the frame spec ratio, and re-center horizontally:
+
+| dfi | Frame ratio (w/h) |
+|---|---|
+| `iphone17promax-*-portrait` | 1470/3000 = 0.4900 |
+| `ipadpro11-*-portrait` | 1880/2640 = 0.7121 |
+| `ipadpro13-*-portrait` | 2300/3000 = 0.7667 |
+| Android (no dfi) | No enforcement — uses abstract bezel |
+
+```python
+correct_w = dev_h * target_ratio
+dev_x += (dev_w - correct_w) / 2  # re-center
+dev_w = correct_w
+```
+
 ```json
 {
   "t": "device",
   "c": "#00000000",
   "dc": "<device category>",
   "dfi": "<device frame id or omit for android>",
-  "x": <rect_x * scaleX>,
-  "y": <rect_y * scaleY>,
-  "w": <rect_w * scaleX>,
-  "h": <rect_h * scaleY>,
+  "x": <adjusted_x>,
+  "y": <model_y>,
+  "w": <ratio-corrected width>,
+  "h": <model_h>,
   "id": "<UUID>"
 }
 ```
