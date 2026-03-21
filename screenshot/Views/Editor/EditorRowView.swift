@@ -12,6 +12,8 @@ struct EditorRowView: View {
     @State private var isSvgDialogPresented = false
     @State private var rightClickModelPoint: CGPoint?
     @State private var activeGuides: [AlignmentGuide] = []
+    @State private var activeDragOffset: CGSize = .zero
+    @State private var draggingShapeId: UUID?
     @State private var isEditingLabel = false
     @State private var editingLabelText = ""
     @FocusState private var isLabelFieldFocused: Bool
@@ -461,16 +463,22 @@ struct EditorRowView: View {
                     let ti = row.owningTemplateIndex(for: shape)
                     return CGRect(x: CGFloat(ti) * dw, y: 0, width: dw, height: dh)
                 }() : nil
+                let isInSelection = state.selectedShapeIds.contains(shape.id)
+                let isMulti = isInSelection && state.selectedShapeIds.count > 1
+                let groupOffset: CGSize = (isMulti && draggingShapeId != nil && draggingShapeId != shape.id) ? activeDragOffset : .zero
 
                 CanvasShapeView(
                     shape: shape,
                     displayScale: ds,
-                    isSelected: shape.id == state.selectedShapeId,
+                    isSelected: isInSelection,
+                    isMultiSelected: isMulti,
                     screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
                     fillImage: shape.fillImageConfig?.fileName.flatMap { state.screenshotImages[$0] },
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                    groupDragOffset: groupOffset,
                     clipBounds: clipRect,
                     onSelect: { state.selectShape(shape.id, in: row.id) },
+                    onShiftSelect: { state.toggleShapeSelection(shape.id, in: row.id) },
                     onUpdate: { state.updateShape($0) },
                     onDelete: { state.deleteShape(shape.id) },
                     onScreenshotDrop: { image in
@@ -480,7 +488,8 @@ struct EditorRowView: View {
                         state.clearImage(for: shape.id)
                     },
                     onDragSnap: { draggedShape, rawOffset in
-                        let others = resolvedShapes.filter { $0.id != draggedShape.id }
+                        let selectedIds = state.selectedShapeIds
+                        let others = resolvedShapes.filter { !selectedIds.contains($0.id) }
                         let threshold = 4 / ds
                         let result = AlignmentService.computeSnap(
                             draggedShape: draggedShape,
@@ -494,9 +503,27 @@ struct EditorRowView: View {
                         activeGuides = result.guides
                         return result
                     },
-                    onDragEnd: { activeGuides = [] },
+                    onDragEnd: {
+                        activeGuides = []
+                        activeDragOffset = .zero
+                        draggingShapeId = nil
+                    },
                     onOptionDragDuplicate: { shapeId in
-                        state.duplicateShapeForOptionDrag(shapeId)
+                        if isMulti {
+                            // Option+drag with multi-selection: duplicate all selected
+                            state.duplicateShapesForOptionDrag()
+                            return nil
+                        }
+                        return state.duplicateShapeForOptionDrag(shapeId)
+                    },
+                    onDragProgress: { offset in
+                        draggingShapeId = shape.id
+                        activeDragOffset = offset
+                    },
+                    onGroupDragEnd: { offset in
+                        state.applyGroupDrag(offset: offset)
+                        activeDragOffset = .zero
+                        draggingShapeId = nil
                     },
                     onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
                     onEditingTextChanged: { state.isEditingText = $0 },

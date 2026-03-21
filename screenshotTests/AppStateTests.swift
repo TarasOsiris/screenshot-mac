@@ -401,7 +401,7 @@ struct AppStateTests {
         let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 200, width: 50, height: 50)
         state.addShape(shape)
 
-        state.nudgeSelectedShape(dx: 10, dy: -5)
+        state.nudgeSelectedShapes(dx: 10, dy: -5)
 
         let updated = state.rows.first!.shapes.first { $0.id == shape.id }!
         #expect(updated.x == 110)

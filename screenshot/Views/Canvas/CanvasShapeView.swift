@@ -7,13 +7,16 @@ struct CanvasShapeView: View {
     let shape: CanvasShapeModel
     let displayScale: CGFloat
     let isSelected: Bool
+    var isMultiSelected: Bool = false
     var screenshotImage: NSImage?
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor
+    var groupDragOffset: CGSize = .zero
 
     var clipBounds: CGRect?
     var showsEditorHelpers: Bool = true
     var onSelect: () -> Void
+    var onShiftSelect: (() -> Void)?
     var onUpdate: (CanvasShapeModel) -> Void
     var onDelete: () -> Void
     var onScreenshotDrop: ((NSImage) -> Void)?
@@ -21,6 +24,8 @@ struct CanvasShapeView: View {
     var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
     var onDragEnd: (() -> Void)?
     var onOptionDragDuplicate: ((UUID) -> UUID?)?
+    var onDragProgress: ((CGSize) -> Void)?
+    var onGroupDragEnd: ((CGSize) -> Void)?
     var onDidAppearAfterAdd: (() -> Void)?
     var onEditingTextChanged: ((Bool) -> Void)?
     var availableFontFamilies: Set<String> = []
@@ -46,10 +51,10 @@ struct CanvasShapeView: View {
 
     // Current effective geometry (accounts for in-progress resize or drag)
     private var effectiveX: CGFloat {
-        if let rs = resizeState { return rs.newX } else { return shape.x + dragOffset.width }
+        if let rs = resizeState { return rs.newX } else { return shape.x + dragOffset.width + groupDragOffset.width }
     }
     private var effectiveY: CGFloat {
-        if let rs = resizeState { return rs.newY } else { return shape.y + dragOffset.height }
+        if let rs = resizeState { return rs.newY } else { return shape.y + dragOffset.height + groupDragOffset.height }
     }
     private var effectiveW: CGFloat { resizeState?.newW ?? shape.width }
     private var effectiveH: CGFloat { resizeState?.newH ?? shape.height }
@@ -176,7 +181,13 @@ struct CanvasShapeView: View {
                     }
                 )
                 .simultaneousGesture(
-                    TapGesture().onEnded { onSelect() }
+                    TapGesture().onEnded {
+                        if NSEvent.modifierFlags.contains(.shift) {
+                            onShiftSelect?()
+                        } else {
+                            onSelect()
+                        }
+                    }
                 )
                 .contextMenu { shapeContextMenu }
         } else {
@@ -657,7 +668,10 @@ struct CanvasShapeView: View {
                         _ = onOptionDragDuplicate?(shape.id)
                     }
 
-                    onSelect()
+                    // Don't call onSelect if shape is already part of a multi-selection
+                    if !isMultiSelected {
+                        onSelect()
+                    }
                 }
                 let rawOffset = CGSize(
                     width: value.translation.width / displayScale,
@@ -668,15 +682,24 @@ struct CanvasShapeView: View {
                 } else {
                     dragOffset = rawOffset
                 }
+                // Report drag progress for group drag
+                if isMultiSelected {
+                    onDragProgress?(dragOffset)
+                }
             }
             .onEnded { _ in
                 NSCursor.arrow.set()
-                var updated = shape
-                updated.x += dragOffset.width
-                updated.y += dragOffset.height
+                let finalOffset = dragOffset
                 dragOffset = .zero
                 isDragging = false
-                onUpdate(updated)
+                if isMultiSelected {
+                    onGroupDragEnd?(finalOffset)
+                } else {
+                    var updated = shape
+                    updated.x += finalOffset.width
+                    updated.y += finalOffset.height
+                    onUpdate(updated)
+                }
                 onDragEnd?()
             }
     }

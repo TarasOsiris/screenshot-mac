@@ -35,12 +35,11 @@ extension AppState {
         guard !matching.isEmpty else { return }
         registerUndo("Delete All \(type.pluralLabel)")
         let allCandidates = imageFileNames(for: matching)
+        let matchingIds = Set(matching.map(\.id))
         for shape in matching {
             LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
         }
-        if let selectedId = selectedShapeId, matching.contains(where: { $0.id == selectedId }) {
-            selectedShapeId = nil
-        }
+        selectedShapeIds.subtract(matchingIds)
         rows[idx].shapes.removeAll { $0.type == type }
         cleanupUnreferencedImages(allCandidates)
         scheduleSave()
@@ -76,15 +75,52 @@ extension AppState {
         // Cleanup orphaned images (single-pass batch check)
         let allCandidates: [String?] = removedShape.allImageFileNames + localeImageFiles
         cleanupUnreferencedImages(allCandidates)
-        if selectedShapeId == id {
-            selectedShapeId = nil
+        selectedShapeIds.remove(id)
+        scheduleSave()
+    }
+
+    func deleteSelectedShapes() {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
+        let idsToDelete = selectedShapeIds
+        let matching = rows[rowIdx].shapes.filter { idsToDelete.contains($0.id) }
+        guard !matching.isEmpty else { return }
+        registerUndo("Delete Shapes")
+        var allCandidates: [String?] = []
+        for shape in matching {
+            allCandidates.append(contentsOf: shape.allImageFileNames)
+            allCandidates.append(contentsOf: localeOverrideImageFileNames(for: shape.id))
+            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
         }
+        rows[rowIdx].shapes.removeAll { idsToDelete.contains($0.id) }
+        selectedShapeIds = []
+        cleanupUnreferencedImages(allCandidates)
         scheduleSave()
     }
 
     func duplicateSelectedShape() {
         guard let id = selectedShapeId else { return }
         _ = insertDuplicate(of: id, offsetX: 50, offsetY: 50, undoName: "Duplicate Shape")
+    }
+
+    func duplicateSelectedShapes() {
+        guard let rowIdx = selectedRowIndex, selectedShapeIds.count > 1 else {
+            duplicateSelectedShape()
+            return
+        }
+        let ids = selectedShapeIds
+        let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) }
+        guard !shapes.isEmpty else { return }
+        registerUndo("Duplicate Shapes")
+        var newIds: Set<UUID> = []
+        for shape in shapes {
+            var copy = shape.duplicated(offsetX: 50, offsetY: 50)
+            LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
+            copyImageFiles(for: &copy, originalId: shape.id)
+            rows[rowIdx].shapes.append(copy)
+            newIds.insert(copy.id)
+        }
+        selectedShapeIds = newIds
+        scheduleSave()
     }
 
     @discardableResult
@@ -123,19 +159,37 @@ extension AppState {
         scheduleSave()
     }
 
-    func bringSelectedShapeToFront() {
-        guard let id = selectedShapeId else { return }
-        bringShapeToFront(id)
+    func bringSelectedShapesToFront() {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
+        let ids = selectedShapeIds
+        // Check if already at front
+        let suffixIds = Set(rows[rowIdx].shapes.suffix(ids.count).map(\.id))
+        guard suffixIds != ids else { return }
+        registerUndo("Bring to Front")
+        let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
+        rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
+        rows[rowIdx].shapes.append(contentsOf: selected)
+        scheduleSave()
     }
 
-    func sendSelectedShapeToBack() {
-        guard let id = selectedShapeId else { return }
-        sendShapeToBack(id)
+    func sendSelectedShapesToBack() {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
+        let ids = selectedShapeIds
+        let prefixIds = Set(rows[rowIdx].shapes.prefix(ids.count).map(\.id))
+        guard prefixIds != ids else { return }
+        registerUndo("Send to Back")
+        let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
+        rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
+        rows[rowIdx].shapes.insert(contentsOf: selected, at: 0)
+        scheduleSave()
     }
 
     func deleteSelectedShape() {
-        guard let id = selectedShapeId else { return }
-        deleteShape(id)
+        if selectedShapeIds.count > 1 {
+            deleteSelectedShapes()
+        } else if let id = selectedShapeId {
+            deleteShape(id)
+        }
     }
 
     func focusShapeOnCanvas(shapeId: UUID, rowId: UUID) {
@@ -146,25 +200,30 @@ extension AppState {
 
     // MARK: - Nudge
 
-    func nudgeSelectedShape(dx: CGFloat, dy: CGFloat) {
-        guard let rowIdx = selectedRowIndex,
-              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == selectedShapeId }) else { return }
+    func nudgeSelectedShapes(dx: CGFloat, dy: CGFloat) {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
 
         // Capture undo state only at the start of a nudge sequence
         if nudgeBaseRows == nil {
             nudgeBaseRows = rows
         }
 
-        rows[rowIdx].shapes[shapeIdx].x += dx
-        rows[rowIdx].shapes[shapeIdx].y += dy
+        let ids = selectedShapeIds
+        for i in rows[rowIdx].shapes.indices {
+            if ids.contains(rows[rowIdx].shapes[i].id) {
+                rows[rowIdx].shapes[i].x += dx
+                rows[rowIdx].shapes[i].y += dy
+            }
+        }
         scheduleSave()
 
         // Debounce the undo registration so rapid key repeats collapse into one entry
         nudgeUndoTask?.cancel()
         guard let savedBase = nudgeBaseRows else { return }
+        let actionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
         let nudgeTask = DispatchWorkItem { [weak self] in
             guard let self else { return }
-            self.registerUndoWithBase("Move Shape", base: savedBase)
+            self.registerUndoWithBase(actionName, base: savedBase)
             self.nudgeBaseRows = nil
         }
         nudgeUndoTask = nudgeTask
@@ -179,14 +238,14 @@ extension AppState {
 
     // MARK: - Clipboard
 
-    func copySelectedShape() {
-        guard let rowIdx = selectedRowIndex,
-              let shape = rows[rowIdx].shapes.first(where: { $0.id == selectedShapeId }) else { return }
-        clipboard = shape
+    func copySelectedShapes() {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
+        let ids = selectedShapeIds
+        clipboard = rows[rowIdx].shapes.filter { ids.contains($0.id) }
         clipboardPasteboardChangeCount = NSPasteboard.general.changeCount
     }
 
-    func pasteShape() {
+    func pasteShapes() {
         guard let rowIdx = selectedRowIndex else { return }
 
         let pasteboardChanged = NSPasteboard.general.changeCount != clipboardPasteboardChangeCount
@@ -201,20 +260,89 @@ extension AppState {
         }
 
         // Otherwise paste from internal shape clipboard
-        guard let source = clipboard else { return }
-        registerUndo("Paste Shape")
-        var pasted: CanvasShapeModel
-        if let mousePos = canvasMouseModelPosition {
-            pasted = source.duplicated()
-            pasted.x = mousePos.x - pasted.width / 2
-            pasted.y = mousePos.y - pasted.height / 2
-        } else {
-            pasted = source.duplicated(offsetX: 20, offsetY: 20)
+        guard !clipboard.isEmpty else { return }
+        registerUndo(clipboard.count == 1 ? "Paste Shape" : "Paste Shapes")
+        var newIds: Set<UUID> = []
+        // Compute group center for mouse-relative positioning
+        let groupMinX = clipboard.map(\.x).min() ?? 0
+        let groupMinY = clipboard.map(\.y).min() ?? 0
+        let groupMaxX = clipboard.map { $0.x + $0.width }.max() ?? 0
+        let groupMaxY = clipboard.map { $0.y + $0.height }.max() ?? 0
+        let groupCenterX = (groupMinX + groupMaxX) / 2
+        let groupCenterY = (groupMinY + groupMaxY) / 2
+
+        for source in clipboard {
+            var pasted: CanvasShapeModel
+            if let mousePos = canvasMouseModelPosition, clipboard.count == 1 {
+                pasted = source.duplicated()
+                pasted.x = mousePos.x - pasted.width / 2
+                pasted.y = mousePos.y - pasted.height / 2
+            } else if let mousePos = canvasMouseModelPosition {
+                pasted = source.duplicated()
+                pasted.x = mousePos.x + (source.x - groupCenterX)
+                pasted.y = mousePos.y + (source.y - groupCenterY)
+            } else {
+                pasted = source.duplicated(offsetX: 20, offsetY: 20)
+            }
+            LocaleService.copyShapeOverrides(&localeState, fromId: source.id, toId: pasted.id)
+            copyImageFiles(for: &pasted, originalId: source.id)
+            rows[rowIdx].shapes.append(pasted)
+            newIds.insert(pasted.id)
         }
-        LocaleService.copyShapeOverrides(&localeState, fromId: source.id, toId: pasted.id)
-        copyImageFiles(for: &pasted, originalId: source.id)
-        rows[rowIdx].shapes.append(pasted)
-        selectShape(pasted.id, in: rows[rowIdx].id)
+        selectedShapeIds = newIds
+        scheduleSave()
+    }
+
+    // MARK: - Group Drag
+
+    func applyGroupDrag(offset: CGSize) {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
+        let ids = selectedShapeIds
+        registerUndo(ids.count > 1 ? "Move Shapes" : "Move Shape")
+        for i in rows[rowIdx].shapes.indices {
+            if ids.contains(rows[rowIdx].shapes[i].id) {
+                rows[rowIdx].shapes[i].x += offset.width
+                rows[rowIdx].shapes[i].y += offset.height
+            }
+        }
+        scheduleSave()
+    }
+
+    // MARK: - Option+Drag Duplicate for Multi-Selection
+
+    func duplicateShapesForOptionDrag() {
+        guard let rowIdx = selectedRowIndex, selectedShapeIds.count > 1 else { return }
+        let ids = selectedShapeIds
+        let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) }
+        guard !shapes.isEmpty else { return }
+        registerUndo("Duplicate Shapes")
+        var newIds: Set<UUID> = []
+        for shape in shapes {
+            var copy = shape.duplicated()
+            copy.x = shape.x  // No offset — drag will position them
+            copy.y = shape.y
+            LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
+            copyImageFiles(for: &copy, originalId: shape.id)
+            rows[rowIdx].shapes.append(copy)
+            newIds.insert(copy.id)
+        }
+        selectedShapeIds = newIds
+        scheduleSave()
+    }
+
+    // MARK: - Batch Property Update
+
+    func updateShapes(_ ids: Set<UUID>, update: (inout CanvasShapeModel) -> Void) {
+        guard let rowIdx = selectedRowIndex else { return }
+        registerUndo("Edit Shapes")
+        for i in rows[rowIdx].shapes.indices {
+            if ids.contains(rows[rowIdx].shapes[i].id) {
+                let baseShape = rows[rowIdx].shapes[i]
+                var resolved = LocaleService.resolveShape(baseShape, localeState: localeState)
+                update(&resolved)
+                rows[rowIdx].shapes[i] = LocaleService.splitUpdate(base: baseShape, updated: resolved, localeState: &localeState)
+            }
+        }
         scheduleSave()
     }
 }

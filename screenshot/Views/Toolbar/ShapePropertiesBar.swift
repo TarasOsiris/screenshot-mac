@@ -62,8 +62,18 @@ struct ShapePropertiesBar: View {
         }
     }
 
+    private var selectedShapes: [CanvasShapeModel] {
+        guard let rowIndex else { return [] }
+        let ids = state.selectedShapeIds
+        return state.rows[rowIndex].shapes
+            .filter { ids.contains($0.id) }
+            .map { LocaleService.resolveShape($0, localeState: state.localeState) }
+    }
+
     var body: some View {
-        if let rowIndex, let shapeIdx = shapeIndex {
+        if state.selectedShapeIds.count > 1 {
+            multiSelectionBody
+        } else if let rowIndex, let shapeIdx = shapeIndex {
             let shape = resolvedShape(at: rowIndex, shapeIdx: shapeIdx)
             let shapeId = shape.id
 
@@ -364,15 +374,15 @@ struct ShapePropertiesBar: View {
                     section {
                         HStack(spacing: 4) {
                             ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front (⇧⌘])", frameSize: 24, disabled: !canBringToFront) {
-                                state.bringSelectedShapeToFront()
+                                state.bringSelectedShapesToFront()
                             }
 
                             ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back (⇧⌘[)", frameSize: 24, disabled: !canSendToBack) {
-                                state.sendSelectedShapeToBack()
+                                state.sendSelectedShapesToBack()
                             }
 
                             ActionButton(icon: "doc.on.doc", tooltip: "Duplicate (⌘D)", frameSize: 24) {
-                                state.duplicateSelectedShape()
+                                state.duplicateSelectedShapes()
                             }
 
                             ActionButton(icon: "trash", tooltip: "Delete (⌫)", frameSize: 24, isDestructive: true) {
@@ -382,7 +392,7 @@ struct ShapePropertiesBar: View {
                     }
 
                     Button {
-                        state.selectedShapeId = nil
+                        state.selectedShapeIds = []
                     } label: {
                         Label("Done", systemImage: "checkmark")
                     }
@@ -760,6 +770,104 @@ struct ShapePropertiesBar: View {
                 state.resetLocaleOverride(shapeId: shapeId)
             }
         }
+    }
+
+    // MARK: - Multi-Selection
+
+    @ViewBuilder
+    private var multiSelectionBody: some View {
+        let shapes = selectedShapes
+        let count = shapes.count
+        let commonType = shapes.dropFirst().allSatisfy({ $0.type == shapes.first?.type }) ? shapes.first?.type : nil
+
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                // Badge
+                HStack(spacing: 6) {
+                    if let type = commonType {
+                        Image(systemName: type.icon)
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    Text("\(count) shapes")
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(Color.accentColor.opacity(0.14))
+                )
+
+                // Common controls: opacity
+                if commonType != nil {
+                    section {
+                        controlGroup("Opacity") {
+                            Slider(value: multiShapeBinding(\.opacity), in: 0...1)
+                                .frame(width: 80)
+                        }
+
+                        separator
+
+                        controlGroup("Rotation") {
+                            Slider(value: multiShapeBinding(\.rotation), in: 0...360)
+                                .frame(width: 80)
+                        }
+                    }
+                }
+
+                // Actions
+                section {
+                    HStack(spacing: 4) {
+                        ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front (⇧⌘])", frameSize: 24) {
+                            state.bringSelectedShapesToFront()
+                        }
+
+                        ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back (⇧⌘[)", frameSize: 24) {
+                            state.sendSelectedShapesToBack()
+                        }
+
+                        ActionButton(icon: "doc.on.doc", tooltip: "Duplicate (⌘D)", frameSize: 24) {
+                            state.duplicateSelectedShapes()
+                        }
+
+                        ActionButton(icon: "trash", tooltip: "Delete (⌫)", frameSize: 24, isDestructive: true) {
+                            state.deleteSelectedShapes()
+                        }
+                    }
+                }
+
+                Button {
+                    state.selectedShapeIds = []
+                } label: {
+                    Label("Done", systemImage: "checkmark")
+                }
+                .buttonStyle(.bordered)
+                .help("Deselect all (Esc)")
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+        }
+        .font(.system(size: 11))
+        .controlSize(.small)
+        .background(.bar)
+    }
+
+    /// Creates a Binding that reads a common value across all selected shapes.
+    /// Returns the first shape's value. Writes apply to all selected via batch update.
+    private func multiShapeBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> {
+        Binding(
+            get: {
+                guard let rowIndex,
+                      let first = state.rows[rowIndex].shapes.first(where: { state.selectedShapeIds.contains($0.id) })
+                else { return CanvasShapeModel.placeholder[keyPath: keyPath] }
+                return LocaleService.resolveShape(first, localeState: state.localeState)[keyPath: keyPath]
+            },
+            set: { newValue in
+                state.updateShapes(state.selectedShapeIds) { shape in
+                    shape[keyPath: keyPath] = newValue
+                }
+            }
+        )
     }
 
 }

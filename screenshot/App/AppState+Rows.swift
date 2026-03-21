@@ -100,7 +100,7 @@ extension AppState {
             height: oldRow.templateHeight
         )
 
-        selectedShapeId = nil
+        selectedShapeIds = []
 
         // Cleanup orphaned images (single-pass batch check)
         let allCandidates: [String?] = shapeImageCandidates + templateBgImages + [rowBgImage]

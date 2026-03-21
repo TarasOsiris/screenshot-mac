@@ -12,7 +12,7 @@ final class AppState {
     var rows: [ScreenshotRow] = []
     var localeState: LocaleState = .default
     var selectedRowId: UUID?
-    var selectedShapeId: UUID?
+    var selectedShapeIds: Set<UUID> = []
     var isEditingText = false
     var zoomLevel: CGFloat = 1.0
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
@@ -47,8 +47,22 @@ final class AppState {
     var nudgeBaseRows: [ScreenshotRow]?
     var zoomPersistTask: DispatchWorkItem?
 
+    /// Single-selection convenience: returns the sole selected shape ID, or nil.
+    var selectedShapeId: UUID? {
+        get { selectedShapeIds.count == 1 ? selectedShapeIds.first : nil }
+        set {
+            if let id = newValue {
+                selectedShapeIds = [id]
+            } else {
+                selectedShapeIds = []
+            }
+        }
+    }
+
+    var hasSelection: Bool { !selectedShapeIds.isEmpty }
+
     // Clipboard
-    var clipboard: CanvasShapeModel?
+    var clipboard: [CanvasShapeModel] = []
     var clipboardPasteboardChangeCount: Int = 0
 
     var activeProject: Project? {
@@ -166,7 +180,7 @@ final class AppState {
         guard rows.contains(where: { $0.id == id }) else { return }
         let rowChanged = selectedRowId != id
         selectedRowId = id
-        selectedShapeId = nil
+        selectedShapeIds = []
         if rowChanged {
             visibleCanvasModelCenter = nil
         }
@@ -176,11 +190,36 @@ final class AppState {
         guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
               rows[rowIdx].shapes.contains(where: { $0.id == shapeId }) else { return }
         selectedRowId = rowId
-        selectedShapeId = shapeId
+        selectedShapeIds = [shapeId]
+    }
+
+    func toggleShapeSelection(_ shapeId: UUID, in rowId: UUID) {
+        guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
+              rows[rowIdx].shapes.contains(where: { $0.id == shapeId }) else { return }
+        // Different row → switch row and select just this shape
+        if selectedRowId != rowId {
+            selectedRowId = rowId
+            selectedShapeIds = [shapeId]
+            visibleCanvasModelCenter = nil
+            return
+        }
+        if isEditingText {
+            isEditingText = false
+        }
+        if selectedShapeIds.contains(shapeId) {
+            selectedShapeIds.remove(shapeId)
+        } else {
+            selectedShapeIds.insert(shapeId)
+        }
+    }
+
+    func selectAllShapesInRow() {
+        guard let rowIdx = selectedRowIndex else { return }
+        selectedShapeIds = Set(rows[rowIdx].activeShapes.map(\.id))
     }
 
     func deselectAll() {
-        selectedShapeId = nil
+        selectedShapeIds = []
         selectedRowId = nil
         isEditingText = false
     }
@@ -192,12 +231,16 @@ final class AppState {
             self.selectedRowId = rows.first?.id
         }
 
-        if let selectedShapeId {
-            guard let rowIdx = selectedRowIndex,
-                  rows[rowIdx].shapes.contains(where: { $0.id == selectedShapeId }) else {
-                self.selectedShapeId = nil
+        if !selectedShapeIds.isEmpty {
+            guard let rowIdx = selectedRowIndex else {
+                selectedShapeIds = []
                 isEditingText = false
                 return
+            }
+            let existingIds = Set(rows[rowIdx].shapes.map(\.id))
+            selectedShapeIds = selectedShapeIds.intersection(existingIds)
+            if selectedShapeIds.isEmpty {
+                isEditingText = false
             }
         }
     }

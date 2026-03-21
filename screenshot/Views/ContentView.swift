@@ -101,7 +101,7 @@ struct ContentView: View {
             }
 
             // Shape properties bottom bar
-            if state.selectedShapeId != nil {
+            if state.hasSelection {
                 Divider()
                 ShapePropertiesBar(state: state)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -109,7 +109,7 @@ struct ContentView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: state.selectedShapeId != nil)
+        .animation(.easeInOut(duration: 0.2), value: state.hasSelection)
         .overlay {
             if !state.localeState.isBaseLocale {
                 Rectangle()

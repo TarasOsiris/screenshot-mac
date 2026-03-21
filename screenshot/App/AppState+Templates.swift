@@ -44,9 +44,7 @@ extension AppState {
             LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
         }
         let shapeIdsToRemove = Set(shapesToRemove.map(\.id))
-        if let selectedId = selectedShapeId, shapeIdsToRemove.contains(selectedId) {
-            selectedShapeId = nil
-        }
+        selectedShapeIds.subtract(shapeIdsToRemove)
         rows[idx].shapes.removeAll { shapeIdsToRemove.contains($0.id) }
         // Shift shapes from later templates left by one template width
         let tw = rows[idx].templateWidth
