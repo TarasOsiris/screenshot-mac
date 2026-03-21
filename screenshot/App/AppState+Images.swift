@@ -201,6 +201,42 @@ extension AppState {
         return nil
     }
 
+    // MARK: - Shape Fill Images
+
+    func saveShapeFillImage(_ image: NSImage, for shapeId: UUID) {
+        guard let activeId = activeProjectId,
+              let location = shapeLocation(for: shapeId) else { return }
+
+        let fileId = UUID().uuidString
+        let fileName = "fill-\(fileId).png"
+        let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+
+        guard let pngData = ExportService.pngData(from: image) else { return }
+        try? pngData.write(to: url, options: .atomic)
+        screenshotImages[fileName] = image
+
+        var shape = rows[location.rowIndex].shapes[location.shapeIndex]
+        let oldFile = shape.fillImageConfig?.fileName
+        if shape.fillImageConfig == nil {
+            shape.fillImageConfig = BackgroundImageConfig()
+        }
+        shape.fillImageConfig?.fileName = fileName
+        if shape.fillStyle == nil {
+            shape.fillStyle = .image
+        }
+        rows[location.rowIndex].shapes[location.shapeIndex] = shape
+        if let oldFile { cleanupUnreferencedImage(oldFile) }
+        scheduleSave()
+    }
+
+    func removeShapeFillImage(for shapeId: UUID) {
+        guard let location = shapeLocation(for: shapeId) else { return }
+        let oldFile = rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName
+        rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName = nil
+        if let oldFile { cleanupUnreferencedImage(oldFile) }
+        scheduleSave()
+    }
+
     // MARK: - Background Images
 
     func saveBackgroundImage(_ image: NSImage, for rowId: UUID, templateIndex: Int? = nil) {
@@ -393,6 +429,18 @@ extension AppState {
                 try? fm.copyItem(at: srcURL, to: dstURL)
                 newShape.displayImageFileName = newFile
                 screenshotImages[newFile] = screenshotImages[originalFile]
+            }
+        }
+
+        // Copy fill image file
+        if let originalFillFile = newShape.fillImageConfig?.fileName {
+            let srcURL = resourcesURL.appendingPathComponent(originalFillFile)
+            let newFillFile = "fill-\(newShape.id.uuidString).png"
+            let dstURL = resourcesURL.appendingPathComponent(newFillFile)
+            if fm.fileExists(atPath: srcURL.path) {
+                try? fm.copyItem(at: srcURL, to: dstURL)
+                newShape.fillImageConfig?.fileName = newFillFile
+                screenshotImages[newFillFile] = screenshotImages[originalFillFile]
             }
         }
 

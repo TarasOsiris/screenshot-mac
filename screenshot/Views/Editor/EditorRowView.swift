@@ -467,6 +467,7 @@ struct EditorRowView: View {
                     displayScale: ds,
                     isSelected: shape.id == state.selectedShapeId,
                     screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
+                    fillImage: shape.fillImageConfig?.fileName.flatMap { state.screenshotImages[$0] },
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                     clipBounds: clipRect,
                     onSelect: { state.selectShape(shape.id, in: row.id) },

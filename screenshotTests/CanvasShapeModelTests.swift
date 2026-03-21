@@ -111,6 +111,87 @@ struct CanvasShapeModelTests {
         #expect(shape.allImageFileNames.isEmpty)
     }
 
+    @Test func allImageFileNamesIncludesFillImage() {
+        var shape = CanvasShapeModel(type: .rectangle)
+        shape.fillImageConfig = BackgroundImageConfig(fileName: "fill-abc.png")
+        let names = shape.allImageFileNames
+        #expect(names.contains("fill-abc.png"))
+        #expect(names.count == 1)
+    }
+
+    @Test func allImageFileNamesCollectsAllIncludingFill() {
+        var shape = CanvasShapeModel(type: .device, deviceCategory: .iphone)
+        shape.screenshotFileName = "screenshot.png"
+        shape.imageFileName = "image.png"
+        shape.fillImageConfig = BackgroundImageConfig(fileName: "fill.png")
+        let names = shape.allImageFileNames
+        #expect(names.contains("screenshot.png"))
+        #expect(names.contains("image.png"))
+        #expect(names.contains("fill.png"))
+        #expect(names.count == 3)
+    }
+
+    // MARK: - Fill style properties
+
+    @Test func resolvedFillStyleDefaultsToColor() {
+        let shape = CanvasShapeModel(type: .rectangle)
+        #expect(shape.resolvedFillStyle == .color)
+        #expect(shape.fillStyle == nil)
+    }
+
+    @Test func resolvedFillStyleReturnsExplicitValue() {
+        var shape = CanvasShapeModel(type: .rectangle)
+        shape.fillStyle = .gradient
+        #expect(shape.resolvedFillStyle == .gradient)
+    }
+
+    @Test func fillPropertiesRoundTripThroughCodable() throws {
+        var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 100, height: 100)
+        shape.fillStyle = .gradient
+        shape.fillGradientConfig = GradientConfig(
+            color1: .red, color2: .blue, angle: 90
+        )
+        shape.fillImageConfig = BackgroundImageConfig(fileName: "test.png", fillMode: .tile)
+
+        let data = try JSONEncoder().encode(shape)
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+
+        #expect(decoded.fillStyle == .gradient)
+        #expect(decoded.fillGradientConfig?.angle == 90)
+        #expect(decoded.fillGradientConfig?.stops.count == 2)
+        #expect(decoded.fillImageConfig?.fileName == "test.png")
+        #expect(decoded.fillImageConfig?.fillMode == .tile)
+    }
+
+    @Test func fillPropertiesNilByDefaultAfterDecode() throws {
+        let shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 100, height: 100)
+        let data = try JSONEncoder().encode(shape)
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+
+        #expect(decoded.fillStyle == nil)
+        #expect(decoded.fillGradientConfig == nil)
+        #expect(decoded.fillImageConfig == nil)
+    }
+
+    @Test func duplicatedPreservesFillProperties() {
+        var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 100, height: 100)
+        shape.fillStyle = .gradient
+        shape.fillGradientConfig = GradientConfig()
+        shape.fillImageConfig = BackgroundImageConfig(fileName: "fill.png")
+
+        let copy = shape.duplicated(offsetX: 10, offsetY: 20)
+        #expect(copy.fillStyle == .gradient)
+        #expect(copy.fillGradientConfig != nil)
+        #expect(copy.fillImageConfig?.fileName == "fill.png")
+        #expect(copy.id != shape.id)
+    }
+
+    @Test func supportsFillMatchesSupportsOutline() {
+        for type in ShapeType.allCases {
+            #expect(type.supportsFill == type.supportsOutline)
+        }
+    }
+
     // MARK: - Factory methods produce correct defaults
 
     @Test func defaultRectangleCentered() {

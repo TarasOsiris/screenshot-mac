@@ -244,6 +244,7 @@ struct ExportService {
                     displayScale: 1.0,
                     isSelected: false,
                     screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
+                    fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
 
                     showsEditorHelpers: false,

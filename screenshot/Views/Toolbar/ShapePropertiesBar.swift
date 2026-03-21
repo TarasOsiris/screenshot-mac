@@ -8,6 +8,8 @@ struct ShapePropertiesBar: View {
     @Bindable var state: AppState
     @State private var isReplacingImage = false
     @State private var isReplacingSvg = false
+    @State private var isReplacingFillImage = false
+    @State private var isFillPopoverPresented = false
     @State private var translationConfig: TranslationSession.Configuration?
     @State private var isTranslating = false
 
@@ -113,8 +115,12 @@ struct ShapePropertiesBar: View {
                     }
 
                     section {
-                        // Color (not shown for devices, SVGs, or images)
-                        if shape.type != .device && shape.type != .svg && shape.type != .image {
+                        // Fill (shapes get full editor, text gets simple color picker)
+                        if shape.type.supportsFill {
+                            fillSwatchButton(shape: shape, shapeId: shapeId)
+
+                            separator
+                        } else if shape.type != .device && shape.type != .svg && shape.type != .image {
                             ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
                                 .labelsHidden()
                                 .frame(width: 30)
@@ -395,6 +401,12 @@ struct ShapePropertiesBar: View {
                     state.saveImage(image, for: shapeId)
                 }
             }
+            .fileImporter(isPresented: $isReplacingFillImage, allowedContentTypes: [.image]) { result in
+                if case .success(let url) = result,
+                   let image = NSImage.fromSecurityScopedURL(url) {
+                    state.saveShapeFillImage(image, for: shapeId)
+                }
+            }
             .sheet(isPresented: $isReplacingSvg) {
                 SvgPasteDialog(isPresented: $isReplacingSvg) { svgContent, _, useColor, color in
                     guard let i = idx(for: shapeId) else { return }
@@ -563,6 +575,90 @@ struct ShapePropertiesBar: View {
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         resolved.deviceBodyColorData = nil
         state.updateShape(resolved)
+    }
+
+    // MARK: - Fill Swatch
+
+    @ViewBuilder
+    private func fillSwatchButton(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        Button {
+            isFillPopoverPresented.toggle()
+        } label: {
+            fillSwatchPreview(shape: shape)
+                .frame(width: 24, height: 24)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .strokeBorder(.separator, lineWidth: 0.5)
+                )
+        }
+        .buttonStyle(.plain)
+        .help("Fill style")
+        .popover(isPresented: $isFillPopoverPresented, arrowEdge: .top) {
+            VStack(spacing: 8) {
+                BackgroundEditor(
+                    backgroundStyle: fillStyleBinding(shapeId),
+                    bgColor: shapeBinding(shapeId, \.color),
+                    gradientConfig: shapeBinding(shapeId, \.fillGradientConfig, default: GradientConfig()),
+                    backgroundImageConfig: shapeBinding(shapeId, \.fillImageConfig, default: BackgroundImageConfig()),
+                    backgroundImage: (idx(for: shapeId).flatMap { i in
+                        state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
+                    }).flatMap { state.screenshotImages[$0] },
+                    compact: true,
+                    onChanged: { state.scheduleSave() },
+                    onPickImage: { isReplacingFillImage = true },
+                    onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
+                    onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
+                )
+            }
+            .padding(12)
+            .frame(width: 260)
+        }
+    }
+
+    @ViewBuilder
+    private func fillSwatchPreview(shape: CanvasShapeModel) -> some View {
+        switch shape.resolvedFillStyle {
+        case .color:
+            Rectangle().fill(shape.color)
+        case .gradient:
+            (shape.fillGradientConfig ?? GradientConfig()).gradientFill
+        case .image:
+            if let fileName = shape.fillImageConfig?.fileName,
+               let image = state.screenshotImages[fileName] {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Rectangle().fill(shape.color)
+                    .overlay {
+                        Image(systemName: "photo")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+            }
+        }
+    }
+
+    private func fillStyleBinding(_ shapeId: UUID) -> Binding<BackgroundStyle> {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else { return .color }
+                return state.rows[i.row].shapes[i.shape].resolvedFillStyle
+            },
+            set: { newValue in
+                guard let i = idx(for: shapeId) else { return }
+                var shape = state.rows[i.row].shapes[i.shape]
+                shape.fillStyle = newValue == .color ? nil : newValue
+                if newValue == .gradient && shape.fillGradientConfig == nil {
+                    shape.fillGradientConfig = GradientConfig()
+                }
+                if newValue == .image && shape.fillImageConfig == nil {
+                    shape.fillImageConfig = BackgroundImageConfig()
+                }
+                state.updateShape(shape)
+            }
+        )
     }
 
     private var separator: some View {

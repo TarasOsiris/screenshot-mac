@@ -8,6 +8,7 @@ struct CanvasShapeView: View {
     let displayScale: CGFloat
     let isSelected: Bool
     var screenshotImage: NSImage?
+    var fillImage: NSImage?
     var defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor
 
     var clipBounds: CGRect?
@@ -785,17 +786,35 @@ struct CanvasShapeView: View {
         onUpdate(updated)
     }
 
+    @ViewBuilder
     private func outlinedShape<S: InsettableShape>(_ outline: S) -> some View {
-        outline
-            .fill(shape.color)
-            .overlay {
-                if let outlineColor = shape.outlineColor, displayOutlineWidth > 0 {
-                    outline.strokeBorder(
-                        outlineColor,
-                        style: StrokeStyle(lineWidth: displayOutlineWidth, lineJoin: .miter)
-                    )
+        if shape.resolvedFillStyle == .color {
+            outline
+                .fill(shape.color)
+                .overlay {
+                    if let outlineColor = shape.outlineColor, displayOutlineWidth > 0 {
+                        outline.strokeBorder(
+                            outlineColor,
+                            style: StrokeStyle(lineWidth: displayOutlineWidth, lineJoin: .miter)
+                        )
+                    }
                 }
-            }
+        } else {
+            outline
+                .fill(.clear)
+                .overlay {
+                    shape.fillView(image: fillImage, modelSize: CGSize(width: shape.width, height: shape.height))
+                        .clipShape(outline)
+                }
+                .overlay {
+                    if let outlineColor = shape.outlineColor, displayOutlineWidth > 0 {
+                        outline.strokeBorder(
+                            outlineColor,
+                            style: StrokeStyle(lineWidth: displayOutlineWidth, lineJoin: .miter)
+                        )
+                    }
+                }
+        }
     }
 
     private func resolvedFont(size: CGFloat, weight: Font.Weight) -> Font {

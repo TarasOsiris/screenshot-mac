@@ -50,6 +50,8 @@ enum ShapeType: String, Codable, CaseIterable {
         case .text, .image, .device, .svg: false
         }
     }
+
+    var supportsFill: Bool { supportsOutline }
 }
 
 enum DeviceCategory: String, Codable, CaseIterable {
@@ -237,6 +239,11 @@ struct CanvasShapeModel: Identifiable, Codable {
     // Star properties
     var starPointCount: Int?
 
+    // Fill style (for rectangle, circle, star)
+    var fillStyle: BackgroundStyle?
+    var fillGradientConfig: GradientConfig?
+    var fillImageConfig: BackgroundImageConfig?
+
     // Clipping
     var clipToTemplate: Bool?
 
@@ -255,6 +262,9 @@ struct CanvasShapeModel: Identifiable, Codable {
         case svgContent = "svg", svgUseColor = "suc"
         case outlineColorData = "olc", outlineWidth = "olw"
         case starPointCount = "spc"
+        case fillStyle = "fst"
+        case fillGradientConfig = "fgc"
+        case fillImageConfig = "fic"
         case clipToTemplate = "ct"
     }
 
@@ -290,6 +300,9 @@ struct CanvasShapeModel: Identifiable, Codable {
         outlineColorData = try c.opt(CodableColor.self, "olc", "outlineColorData")
         outlineWidth = try c.opt(CGFloat.self, "olw", "outlineWidth")
         starPointCount = try c.opt(Int.self, "spc", "starPointCount")
+        fillStyle = try c.opt(BackgroundStyle.self, "fst", "fillStyle")
+        fillGradientConfig = try c.opt(GradientConfig.self, "fgc", "fillGradientConfig")
+        fillImageConfig = try c.opt(BackgroundImageConfig.self, "fic", "fillImageConfig")
         clipToTemplate = try c.opt(Bool.self, "ct", "clipToTemplate")
     }
 
@@ -331,6 +344,10 @@ struct CanvasShapeModel: Identifiable, Codable {
         try c.encodeIfPresent(outlineWidth, forKey: .outlineWidth)
         // Star
         try c.encodeIfPresent(starPointCount, forKey: .starPointCount)
+        // Fill style
+        try c.encodeIfPresent(fillStyle, forKey: .fillStyle)
+        try c.encodeIfPresent(fillGradientConfig, forKey: .fillGradientConfig)
+        try c.encodeIfPresent(fillImageConfig, forKey: .fillImageConfig)
         // Clipping
         try c.encodeIfPresent(clipToTemplate, forKey: .clipToTemplate)
     }
@@ -428,7 +445,30 @@ struct CanvasShapeModel: Identifiable, Codable {
 
     /// All image filenames associated with this shape (for cleanup).
     var allImageFileNames: [String] {
-        [screenshotFileName, imageFileName].compactMap { $0 }
+        [screenshotFileName, imageFileName, fillImageConfig?.fileName].compactMap { $0 }
+    }
+
+    var resolvedFillStyle: BackgroundStyle {
+        fillStyle ?? .color
+    }
+
+    @ViewBuilder
+    func fillView(image: NSImage? = nil, modelSize: CGSize? = nil) -> some View {
+        switch resolvedFillStyle {
+        case .color:
+            Rectangle().fill(color)
+        case .gradient:
+            (fillGradientConfig ?? GradientConfig()).gradientFill
+        case .image:
+            if let image, let config = fillImageConfig {
+                ZStack {
+                    Rectangle().fill(color)
+                    BackgroundImageView(image: image, config: config, modelSize: modelSize)
+                }
+            } else {
+                Rectangle().fill(color)
+            }
+        }
     }
 
     /// Axis-aligned bounding box accounting for rotation.
