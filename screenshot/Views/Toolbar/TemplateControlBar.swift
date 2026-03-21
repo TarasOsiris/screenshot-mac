@@ -24,6 +24,7 @@ struct TemplateControlBar: View {
     @State private var renderError: String?
 
     private var canDelete: Bool { row.templates.count > 1 }
+    private var isCompact: Bool { row.displayWidth(zoom: zoom) < 200 }
     private var backgroundPreviewImage: NSImage? {
         template.backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
     }
@@ -49,17 +50,19 @@ struct TemplateControlBar: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            ActionButton(icon: "eye", tooltip: "Preview") {
-                previewScreenshot()
-            }
-            ActionButton(icon: "arrow.down.circle", tooltip: "Download") {
-                downloadScreenshot()
-            }
-            ActionButton(icon: "chevron.left", tooltip: "Move left", disabled: !canMoveLeft) {
-                onMoveLeft()
-            }
-            ActionButton(icon: "chevron.right", tooltip: "Move right", disabled: !canMoveRight) {
-                onMoveRight()
+            if !isCompact {
+                ActionButton(icon: "eye", tooltip: "Preview") {
+                    previewScreenshot()
+                }
+                ActionButton(icon: "arrow.down.circle", tooltip: "Download") {
+                    downloadScreenshot()
+                }
+                ActionButton(icon: "chevron.left", tooltip: "Move left", disabled: !canMoveLeft) {
+                    onMoveLeft()
+                }
+                ActionButton(icon: "chevron.right", tooltip: "Move right", disabled: !canMoveRight) {
+                    onMoveRight()
+                }
             }
 
             // Background override button
@@ -136,6 +139,11 @@ struct TemplateControlBar: View {
             }
 
             Spacer()
+            if canDelete {
+                ActionButton(icon: "trash", tooltip: "Delete Screenshot", isDestructive: true) {
+                    confirmDeleteTemplate()
+                }
+            }
             Menu {
                 Button("Preview", systemImage: "eye") {
                     previewScreenshot()
@@ -172,6 +180,13 @@ struct TemplateControlBar: View {
         .controlSize(.small)
         .padding(.horizontal, 4)
         .frame(width: row.displayWidth(zoom: zoom))
+        .overlay(alignment: .leading) {
+            if index > 0 {
+                Rectangle()
+                    .fill(.separator)
+                    .frame(width: 1, height: 20)
+            }
+        }
         .alert("Delete Screenshot", isPresented: $isDeletingTemplate) {
             Button("Delete", role: .destructive) { onDelete() }
             Button("Cancel", role: .cancel) {}

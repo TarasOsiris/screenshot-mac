@@ -162,10 +162,6 @@ struct EditorRowView: View {
                 // Per-template control bars (inside same ScrollView)
                 HStack(spacing: 0) {
                     ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
-                        if index > 0 {
-                            Divider()
-                                .frame(height: 20)
-                        }
                         TemplateControlBar(
                             template: safeTemplateBinding(rowId: row.id, templateIndex: index),
                             row: row,
