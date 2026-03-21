@@ -11,6 +11,7 @@ struct ScreenshotBroApp: App {
     @State private var debugTemplateName = ""
     @State private var debugTemplateError: String?
     @State private var debugExistingTemplates: [String] = []
+    @State private var isDebugProjectManagerPresented = false
     #endif
 
     private var preferredColorScheme: ColorScheme? {
@@ -52,6 +53,9 @@ struct ScreenshotBroApp: App {
                     Button("Cancel", role: .cancel) {}
                 } message: {
                     Text("Enter a directory name for the template (e.g. my_template).")
+                }
+                .sheet(isPresented: $isDebugProjectManagerPresented) {
+                    DebugProjectManagerView(state: appState)
                 }
                 .alert("Template Error", isPresented: Binding(
                     get: { debugTemplateError != nil },
@@ -224,6 +228,12 @@ struct ScreenshotBroApp: App {
 
             #if DEBUG
             CommandMenu("Debug") {
+                Button("Manage Projects...") {
+                    isDebugProjectManagerPresented = true
+                }
+
+                Divider()
+
                 Menu("Save Current Project as Template") {
                     Button("New Template...") {
                         debugTemplateName = ""

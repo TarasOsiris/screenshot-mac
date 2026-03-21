@@ -282,6 +282,9 @@ def parse_svg(path):
                     'x': eff_x, 'y': eff_y, 'w': w, 'h': h, 'fill': effective,
                     'rx': float(rx) if rx else 0,
                 }
+                # Attach gradient info if this rect has a gradient fill
+                if is_gradient and grad_ref and grad_ref in gradient_defs:
+                    rect_info['gradient'] = gradient_defs[grad_ref]
                 # Full-slice-height rects are potential slice overrides (checked later)
                 # Smaller rects are decorative shapes (rounded rects behind devices, etc.)
                 if h >= vh * 0.9:
@@ -294,8 +297,7 @@ def parse_svg(path):
             bbox = parse_path_bbox(d)
             if not bbox:
                 continue
-            # Resolve gradient fills on paths to their first stop color
-            resolved_path_color, _, _ = resolve_fill(fill)
+            resolved_path_color, path_is_gradient, path_grad_ref = resolve_fill(fill)
             effective_fill = resolved_path_color or fill
             fill_norm = effective_fill.strip().lower()
             if fill_norm in ('#ffffff', 'white', '#fff'):
@@ -303,29 +305,39 @@ def parse_svg(path):
                     'd': d, 'fill': effective_fill, 'bbox': bbox,
                 })
             elif effective_fill and effective_fill != 'none' and effective_fill != elements.get('bg_color', ''):
-                elements['paths'].append({
+                path_info = {
                     'd': d, 'fill': effective_fill, 'bbox': bbox,
-                })
+                }
+                if path_is_gradient and path_grad_ref and path_grad_ref in gradient_defs:
+                    path_info['gradient'] = gradient_defs[path_grad_ref]
+                elements['paths'].append(path_info)
 
         elif tag == 'circle':
-            elements['circles'].append({
+            circ_color, circ_is_grad, circ_grad_ref = resolve_fill(fill)
+            circ_info = {
                 'cx': float(elem.get('cx', '0')),
                 'cy': float(elem.get('cy', '0')),
                 'r': float(elem.get('r', '0')),
-                'fill': fill,
-            })
+                'fill': circ_color or fill,
+            }
+            if circ_is_grad and circ_grad_ref and circ_grad_ref in gradient_defs:
+                circ_info['gradient'] = gradient_defs[circ_grad_ref]
+            elements['circles'].append(circ_info)
 
         elif tag == 'ellipse':
-            resolved_color, is_gradient, _ = resolve_fill(fill)
+            resolved_color, is_gradient, ell_grad_ref = resolve_fill(fill)
             eff_fill = resolved_color or fill
             if eff_fill and eff_fill != 'none' and not fill.startswith('url(#pattern'):
-                elements['ellipses'].append({
+                ell_info = {
                     'cx': float(elem.get('cx', '0')),
                     'cy': float(elem.get('cy', '0')),
                     'rx': float(elem.get('rx', '0')),
                     'ry': float(elem.get('ry', '0')),
                     'fill': eff_fill,
-                })
+                }
+                if is_gradient and ell_grad_ref and ell_grad_ref in gradient_defs:
+                    ell_info['gradient'] = gradient_defs[ell_grad_ref]
+                elements['ellipses'].append(ell_info)
 
     return elements
 
@@ -384,6 +396,27 @@ def infer_slice_count(vw, vh):
         if remainder < 1:
             candidates.append((n, round(sw)))
     return candidates
+
+
+def gradient_to_shape_fill(gradient_info):
+    """Convert a gradient_defs entry to shape fill JSON fields (fst + fgc)."""
+    return {
+        "fst": "gradient",
+        "fgc": {
+            "s": [
+                {"id": uid(), "c": normalize_color(color), "l": loc}
+                for color, loc in gradient_info['stops']
+            ],
+            "a": gradient_info['angle'],
+        },
+    }
+
+
+def apply_gradient_to_shape(shape, element_data):
+    """If element_data has a gradient, add fill style fields to shape dict."""
+    gradient = element_data.get('gradient')
+    if gradient:
+        shape.update(gradient_to_shape_fill(gradient))
 
 
 def build_shapes_for_row(data, preset_w, preset_h, num_slices, device_category, device_frame_id):
@@ -461,6 +494,7 @@ def build_shapes_for_row(data, preset_w, preset_h, num_slices, device_category, 
         }
         if r['rx'] > 0:
             shape["br"] = r['rx'] * s
+        apply_gradient_to_shape(shape, r)
         shapes.append(shape)
 
     # 2. Circles: pattern-filled = app icon placeholder, colored = decorative
@@ -478,7 +512,7 @@ def build_shapes_for_row(data, preset_w, preset_h, num_slices, device_category, 
                 "id": uid(),
             })
         elif c['fill'] and c['fill'] != 'none':
-            shapes.append({
+            circ_shape = {
                 "t": "circle",
                 "c": c['fill'],
                 "x": tx(c['cx'] - r),
@@ -486,12 +520,13 @@ def build_shapes_for_row(data, preset_w, preset_h, num_slices, device_category, 
                 "w": 2 * r * s,
                 "h": 2 * r * s,
                 "id": uid(),
-            })
+            }
+            apply_gradient_to_shape(circ_shape, c)
+            shapes.append(circ_shape)
 
     # 2b. Decorative ellipses (colored circles/ovals)
     for e in data['ellipses']:
-        r_avg = (e['rx'] + e['ry']) / 2
-        shapes.append({
+        ell_shape = {
             "t": "circle",
             "c": e['fill'],
             "x": tx(e['cx'] - e['rx']),
@@ -499,7 +534,9 @@ def build_shapes_for_row(data, preset_w, preset_h, num_slices, device_category, 
             "w": tw(2 * e['rx']),
             "h": th(2 * e['ry']),
             "id": uid(),
-        })
+        }
+        apply_gradient_to_shape(ell_shape, e)
+        shapes.append(ell_shape)
 
     # 3. Text elements
     texts = classify_white_paths(data['white_paths'], slice_w, scale_x, scale_y, device_category)
@@ -740,6 +777,16 @@ def build_row(data, device_category, device_frame_id, row_label_override=None, f
                     abs(r['x'] - i * slice_w) < slice_w * 0.1):
                 tp["bgc"] = r['fill']
                 tp["ob"] = True
+                # If the override rect has a gradient, set template background gradient
+                if r.get('gradient'):
+                    tp["bgs"] = "gradient"
+                    tp["gc"] = {
+                        "s": [
+                            {"id": uid(), "c": normalize_color(color), "l": loc}
+                            for color, loc in r['gradient']['stops']
+                        ],
+                        "a": r['gradient']['angle'],
+                    }
                 break
         if "bgc" not in tp:
             tp["bgc"] = bgc
@@ -971,7 +1018,7 @@ def main():
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     bundle = os.path.join(project_root, "screenshot", "Templates.bundle")
 
-    for tmpl_num, svg_num in [(n, n) for n in range(4, 28)]:
+    for tmpl_num, svg_num in [(n, n) for n in range(1, 28)]:
         generate_template(
             tmpl_num,
             f"{base}/iphone/{svg_num}.svg",
