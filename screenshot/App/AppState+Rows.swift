@@ -111,6 +111,7 @@ extension AppState {
 
     func updateRowLabel(_ rowId: UUID, text: String) {
         guard let ri = rowIndex(for: rowId) else { return }
+        registerUndo("Edit Row Label")
         let trimmed = text.trimmingCharacters(in: .whitespaces)
         if trimmed.isEmpty {
             let row = rows[ri]
@@ -185,6 +186,7 @@ extension AppState {
         let newDefault = CodableColor(color)
         guard oldDefault != newDefault else { return }
 
+        registerUndo("Change Device Color")
         rows[rowIndex].defaultDeviceBodyColorData = newDefault
 
         // Legacy projects stored the default frame color on each device shape.
@@ -198,4 +200,53 @@ extension AppState {
 
         scheduleSave()
     }
+
+    // MARK: - Default Device
+
+    func setDefaultDevice(for rowId: UUID, category: DeviceCategory?, frameId: String?) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        let row = rows[idx]
+        guard row.defaultDeviceCategory != category || row.defaultDeviceFrameId != frameId else { return }
+        registerUndo("Change Default Device")
+        rows[idx].defaultDeviceCategory = category
+        rows[idx].defaultDeviceFrameId = frameId
+        scheduleSave()
+    }
+
+    // MARK: - Visibility
+
+    func toggleShowDevice(for rowId: UUID) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        registerUndo(rows[idx].showDevice ? "Hide Devices" : "Show Devices")
+        rows[idx].showDevice.toggle()
+        scheduleSave()
+    }
+
+    func toggleShowBorders(for rowId: UUID) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        registerUndo(rows[idx].showBorders ? "Hide Borders" : "Show Borders")
+        rows[idx].showBorders.toggle()
+        scheduleSave()
+    }
+
+    func setAllShapeTypesVisibility(for rowId: UUID, visible: Bool) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        registerUndo(visible ? "Show All" : "Hide All")
+        rows[idx].showBorders = visible
+        rows[idx].hiddenShapeTypes = visible ? [] : Set(ShapeType.allCases)
+        scheduleSave()
+    }
+
+    func toggleShapeTypeVisibility(for rowId: UUID, type: ShapeType) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        let isCurrentlyVisible = !rows[idx].hiddenShapeTypes.contains(type)
+        registerUndo(isCurrentlyVisible ? "Hide \(type.pluralLabel)" : "Show \(type.pluralLabel)")
+        if isCurrentlyVisible {
+            rows[idx].hiddenShapeTypes.insert(type)
+        } else {
+            rows[idx].hiddenShapeTypes.remove(type)
+        }
+        scheduleSave()
+    }
+
 }

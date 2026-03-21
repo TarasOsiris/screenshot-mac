@@ -6,8 +6,40 @@ extension AppState {
     // MARK: - Screenshot Images
 
     func saveImage(_ image: NSImage, for shapeId: UUID) {
-        guard let activeId = activeProjectId else { return }
+        guard let activeId = activeProjectId,
+              let location = shapeLocation(for: shapeId) else { return }
+        registerUndo("Assign Screenshot")
+        performSaveImage(image, for: shapeId, activeId: activeId, location: location)
+        scheduleSave()
+    }
+
+    func clearImage(for shapeId: UUID) {
         guard let location = shapeLocation(for: shapeId) else { return }
+
+        if !localeState.isBaseLocale {
+            let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
+            guard var override = existingOverride, override.overrideImageFileName != nil else { return }
+            registerUndo("Clear Screenshot")
+            let oldFile = override.overrideImageFileName
+            override.overrideImageFileName = nil
+            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override.isEmpty ? nil : override)
+            if let oldFile { cleanupUnreferencedImage(oldFile) }
+        } else {
+            let shape = rows[location.rowIndex].shapes[location.shapeIndex]
+            guard shape.displayImageFileName != nil else { return }
+            registerUndo("Clear Screenshot")
+            rows[location.rowIndex].shapes[location.shapeIndex].displayImageFileName = nil
+            if let oldFile = shape.displayImageFileName { cleanupUnreferencedImage(oldFile) }
+        }
+        scheduleSave()
+    }
+
+    /// Saves image file and updates state without registering undo or scheduling save.
+    /// Used by compound operations that manage their own undo (addImageShape, batchImportImages).
+    private func performSaveImage(_ image: NSImage, for shapeId: UUID,
+                                  activeId: UUID? = nil, location: (rowIndex: Int, shapeIndex: Int)? = nil) {
+        guard let activeId = activeId ?? activeProjectId else { return }
+        guard let location = location ?? shapeLocation(for: shapeId) else { return }
 
         let isNonBaseLocale = !localeState.isBaseLocale
         let suffix = isNonBaseLocale ? "-\(localeState.activeLocaleCode)" : ""
@@ -20,7 +52,6 @@ extension AppState {
         screenshotImages[fileName] = image
 
         if isNonBaseLocale {
-            // Store as locale override instead of modifying the base shape
             let shape = rows[location.rowIndex].shapes[location.shapeIndex]
             let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
             var override = existingOverride ?? ShapeLocaleOverride()
@@ -31,7 +62,6 @@ extension AppState {
                 cleanupUnreferencedImage(oldFile)
             }
         } else {
-            // Update the shape's image reference directly (base locale)
             var shape = rows[location.rowIndex].shapes[location.shapeIndex]
             let previousFile = shape.displayImageFileName
             shape.displayImageFileName = fileName
@@ -41,27 +71,6 @@ extension AppState {
                 cleanupUnreferencedImage(oldFile)
             }
         }
-        scheduleSave()
-    }
-
-    func clearImage(for shapeId: UUID) {
-        guard let location = shapeLocation(for: shapeId) else { return }
-
-        if !localeState.isBaseLocale {
-            let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
-            guard var override = existingOverride, override.overrideImageFileName != nil else { return }
-            let oldFile = override.overrideImageFileName
-            override.overrideImageFileName = nil
-            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override)
-            if let oldFile { cleanupUnreferencedImage(oldFile) }
-        } else {
-            var shape = rows[location.rowIndex].shapes[location.shapeIndex]
-            let previousFile = shape.displayImageFileName
-            shape.displayImageFileName = nil
-            rows[location.rowIndex].shapes[location.shapeIndex] = shape
-            if let oldFile = previousFile { cleanupUnreferencedImage(oldFile) }
-        }
-        scheduleSave()
     }
 
     func loadScreenshotImages() {
@@ -100,8 +109,12 @@ extension AppState {
     func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat) {
         guard let rowIdx = selectedRowIndex else { return }
         let shape = makeImageShape(image: image, row: rows[rowIdx], centerX: centerX, centerY: centerY)
-        addShape(shape)
-        saveImage(image, for: shape.id)
+        registerUndo("Add Image")
+        rows[rowIdx].shapes.append(shape)
+        selectShape(shape.id, in: rows[rowIdx].id)
+        justAddedShapeId = shape.id
+        performSaveImage(image, for: shape.id)
+        scheduleSave()
     }
 
     /// Creates an image or device shape sized for the given row, without side effects.
@@ -146,7 +159,7 @@ extension AppState {
             let centerY = row.templateHeight / 2
             let shape = makeImageShape(image: image, row: row, centerX: centerX, centerY: centerY)
             rows[idx].shapes.append(shape)
-            saveImage(image, for: shape.id)
+            performSaveImage(image, for: shape.id)
         }
 
         scheduleSave()
@@ -207,6 +220,8 @@ extension AppState {
         guard let activeId = activeProjectId,
               let location = shapeLocation(for: shapeId) else { return }
 
+        registerUndo("Set Fill Image")
+
         let fileId = UUID().uuidString
         let fileName = "fill-\(fileId).png"
         let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
@@ -231,6 +246,7 @@ extension AppState {
 
     func removeShapeFillImage(for shapeId: UUID) {
         guard let location = shapeLocation(for: shapeId) else { return }
+        registerUndo("Remove Fill Image")
         let oldFile = rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName
         rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName = nil
         if let oldFile { cleanupUnreferencedImage(oldFile) }
@@ -242,6 +258,8 @@ extension AppState {
     func saveBackgroundImage(_ image: NSImage, for rowId: UUID, templateIndex: Int? = nil) {
         guard let activeId = activeProjectId,
               let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
+
+        registerUndo("Set Background Image")
 
         let fileId = UUID().uuidString
         let fileName = "bg-\(fileId).png"
@@ -257,6 +275,7 @@ extension AppState {
 
     func removeBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
         guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
+        registerUndo("Remove Background Image")
         setBackgroundImageFileName(nil, rowIndex: rowIndex, templateIndex: templateIndex)
         scheduleSave()
     }

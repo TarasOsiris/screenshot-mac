@@ -266,16 +266,10 @@ struct EditorRowView: View {
             }
             Divider()
             Button(row.showDevice ? "Hide Devices" : "Show Devices") {
-                if let idx = state.rows.firstIndex(where: { $0.id == row.id }) {
-                    state.rows[idx].showDevice.toggle()
-                    state.scheduleSave()
-                }
+                state.toggleShowDevice(for: row.id)
             }
             Button(row.showBorders ? "Hide Borders" : "Show Borders") {
-                if let idx = state.rows.firstIndex(where: { $0.id == row.id }) {
-                    state.rows[idx].showBorders.toggle()
-                    state.scheduleSave()
-                }
+                state.toggleShowBorders(for: row.id)
             }
             Divider()
             Button("Move Row Up") {
@@ -667,7 +661,9 @@ struct EditorRowView: View {
             set: { newValue in
                 guard let ri = state.rows.firstIndex(where: { $0.id == rowId }),
                       templateIndex < state.rows[ri].templates.count else { return }
+                state.registerUndo("Edit Template")
                 state.rows[ri].templates[templateIndex] = newValue
+                state.scheduleSave()
             }
         )
     }

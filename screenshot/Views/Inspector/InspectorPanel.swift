@@ -134,7 +134,7 @@ struct InspectorPanel: View {
                 gradientConfig: safeRowBinding(rowId, keyPath: \.gradientConfig, default: GradientConfig()),
                 backgroundImageConfig: safeRowBinding(rowId, keyPath: \.backgroundImageConfig, default: BackgroundImageConfig()),
                 backgroundImage: state.rows[rowIndex].backgroundImageConfig.fileName.flatMap { state.screenshotImages[$0] },
-                onChanged: { state.scheduleSave() },
+                onChanged: { },
                 onPickImage: { state.pickAndSaveBackgroundImage(for: rowId) },
                 onRemoveImage: { state.removeBackgroundImage(for: rowId) },
                 onDropImage: { image in
@@ -144,7 +144,7 @@ struct InspectorPanel: View {
 
             if state.rows[rowIndex].backgroundStyle != .color {
                 let canSpanAcrossRow = state.rows[rowIndex].templates.count > 1
-                Toggle("Span across row", isOn: safeRowBinding(rowId, keyPath: \.spanBackgroundAcrossRow, default: false).onSet { state.scheduleSave() })
+                Toggle("Span across row", isOn: safeRowBinding(rowId, keyPath: \.spanBackgroundAcrossRow, default: false))
                     .font(.system(size: 12))
                     .toggleStyle(.switch)
                     .controlSize(.small)
@@ -173,23 +173,13 @@ struct InspectorPanel: View {
                     category: defaultDeviceCategory(for: rowId),
                     frameId: defaultDeviceFrameId(for: rowId),
                     onSelectNone: {
-                        guard let idx = state.rowIndex(for: rowId) else { return }
-                        guard state.rows[idx].defaultDeviceCategory != nil || state.rows[idx].defaultDeviceFrameId != nil else { return }
-                        state.rows[idx].defaultDeviceCategory = nil
-                        state.rows[idx].defaultDeviceFrameId = nil
-                        state.scheduleSave()
+                        state.setDefaultDevice(for: rowId, category: nil, frameId: nil)
                     },
                     onSelectCategory: { cat in
-                        guard let idx = state.rowIndex(for: rowId) else { return }
-                        state.rows[idx].defaultDeviceCategory = cat
-                        state.rows[idx].defaultDeviceFrameId = nil
-                        state.scheduleSave()
+                        state.setDefaultDevice(for: rowId, category: cat, frameId: nil)
                     },
                     onSelectFrame: { frame in
-                        guard let idx = state.rowIndex(for: rowId) else { return }
-                        state.rows[idx].defaultDeviceCategory = frame.fallbackCategory
-                        state.rows[idx].defaultDeviceFrameId = frame.id
-                        state.scheduleSave()
+                        state.setDefaultDevice(for: rowId, category: frame.fallbackCategory, frameId: frame.id)
                     }
                 )
                 .help(defaultDeviceHelp(for: rowId))
@@ -240,7 +230,7 @@ struct InspectorPanel: View {
     private func optionsSection(rowId: UUID) -> some View {
         Section(isExpanded: $isVisibilityExpanded) {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 4) {
-                Toggle(isOn: safeRowBinding(rowId, keyPath: \.showBorders, default: true).onSet { state.scheduleSave() }) {
+                Toggle(isOn: safeRowBinding(rowId, keyPath: \.showBorders, default: true)) {
                     Label("Borders", systemImage: "rectangle.split.3x3")
                 }
                 ForEach(ShapeType.allCases, id: \.self) { type in
@@ -266,10 +256,7 @@ struct InspectorPanel: View {
     }
 
     private func setVisibility(rowId: UUID, visible: Bool) {
-        guard let idx = state.rowIndex(for: rowId) else { return }
-        state.rows[idx].showBorders = visible
-        state.rows[idx].hiddenShapeTypes = visible ? [] : Set(ShapeType.allCases)
-        state.scheduleSave()
+        state.setAllShapeTypesVisibility(for: rowId, visible: visible)
     }
 
     private func shapeTypeVisibilityBinding(rowId: UUID, type: ShapeType) -> Binding<Bool> {
@@ -278,14 +265,8 @@ struct InspectorPanel: View {
                 guard let idx = state.rowIndex(for: rowId) else { return true }
                 return !state.rows[idx].hiddenShapeTypes.contains(type)
             },
-            set: { visible in
-                guard let idx = state.rowIndex(for: rowId) else { return }
-                if visible {
-                    state.rows[idx].hiddenShapeTypes.remove(type)
-                } else {
-                    state.rows[idx].hiddenShapeTypes.insert(type)
-                }
-                state.scheduleSave()
+            set: { _ in
+                state.toggleShapeTypeVisibility(for: rowId, type: type)
             }
         )
     }
@@ -302,7 +283,9 @@ struct InspectorPanel: View {
             },
             set: { newValue in
                 guard let idx = state.rowIndex(for: rowId) else { return }
+                state.registerUndo("Edit Row")
                 state.rows[idx][keyPath: keyPath] = newValue
+                state.scheduleSave()
             }
         )
     }
