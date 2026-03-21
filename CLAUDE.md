@@ -28,6 +28,18 @@ Unit tests cover `AppState` operations (including locale tests), `ExportService`
 - `/gwip` — Stage all changes, commit with a WIP message summarizing changes, and push to current branch.
 - `/ship [version]` — Bump build number (and optionally marketing version), build, and upload to App Store Connect.
 
+## Git Workflow
+
+When I say 'push', always commit first if there are uncommitted changes, then push. Never say 'nothing to push' if there are uncommitted changes.
+
+## Build & Architecture
+
+This is a macOS/SwiftUI app. Always verify builds pass after changes with `xcodebuild`. Be cautious with NSViewRepresentable overlays as they can break scrolling, and .position()/.offset() swaps cause visual regressions.
+
+## Testing & Verification
+
+After implementing a fix, verify it covers ALL variants: image-based frames, clipped mode, rotated elements, dark mode, and export/preview parity. Don't assume a fix for one case covers all cases.
+
 ## Architecture
 
 **App entry:** `screenshotApp.swift` — injects `AppState` into the SwiftUI environment via `@State` + `.environment()`. Defines keyboard shortcuts and menu items (Edit, View, Locale menus).
