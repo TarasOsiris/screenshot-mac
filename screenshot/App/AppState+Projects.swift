@@ -20,13 +20,22 @@ extension AppState {
         saveAll()
     }
 
-    func createProjectFromTemplate(_ template: ProjectTemplate) {
+    func createProjectFromTemplate(_ template: ProjectTemplate, name: String? = nil) {
         saveCurrentProject()
 
-        let project = Project(name: uniqueProjectName(template.name))
+        let trimmed = name.map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength)) } ?? ""
+        let baseName = trimmed.isEmpty ? template.name : trimmed
+        let project = Project(name: uniqueProjectName(baseName))
         PersistenceService.copyProjectFromURL(template.url, to: project.id)
-        projects.append(project)
 
+        // Verify the template data can be loaded before committing
+        guard PersistenceService.loadProject(project.id) != nil else {
+            PersistenceService.deleteProject(project.id)
+            saveError = "Failed to create project from template \"\(template.name)\". The template data could not be loaded."
+            return
+        }
+
+        projects.append(project)
         switchToProject(project.id)
         saveAll()
     }
@@ -106,12 +115,13 @@ extension AppState {
     func deleteProject(_ id: UUID) {
         guard let idx = projects.firstIndex(where: { $0.id == id }) else { return }
         projects[idx].markDeleted()
-        PersistenceService.deleteProject(id)
 
         if activeProjectId == id {
             cancelPendingDebounceTasks()
+            // Unregister fonts BEFORE deleting files so Core Text can clean up properly
             unregisterCustomFonts()
             screenshotImages.removeAll()
+            PersistenceService.deleteProject(id)
             if let nextProject = visibleProjects.first {
                 activeProjectId = nextProject.id
                 loadRowsForProject(nextProject.id)
@@ -122,6 +132,8 @@ extension AppState {
                 createProject(name: "Project 1")
                 return
             }
+        } else {
+            PersistenceService.deleteProject(id)
         }
         saveAll()
     }

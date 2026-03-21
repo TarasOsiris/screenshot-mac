@@ -20,6 +20,8 @@ struct ContentView: View {
     @State private var exportProgress = 0
     @State private var exportTotal = 0
     @State private var isCreatingProject = false
+    @State private var isCreatingFromTemplate = false
+    @State private var pendingTemplate: ProjectTemplate?
     @State private var isRenamingProject = false
     @State private var dialogText = ""
     @State private var isDeletingProject = false
@@ -226,6 +228,16 @@ struct ContentView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+        .alert("New Project from Template", isPresented: $isCreatingFromTemplate) {
+            TextField("Project name", text: $dialogText.limited(to: 100))
+            Button("Create") {
+                if let template = pendingTemplate {
+                    state.createProjectFromTemplate(template, name: dialogText)
+                    pendingTemplate = nil
+                }
+            }
+            Button("Cancel", role: .cancel) { pendingTemplate = nil }
+        }
         .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
             PaywallView()
         }
@@ -360,12 +372,24 @@ struct ContentView: View {
             if !projectTemplates.isEmpty {
                 Menu("New Project from Template") {
                     ForEach(projectTemplates) { template in
-                        Button(template.name) {
+                        Button {
                             store.requirePro(
                                 allowed: store.canCreateProject(),
                                 context: .projectLimit
                             ) {
-                                state.createProjectFromTemplate(template)
+                                pendingTemplate = template
+                                dialogText = template.name
+                                isCreatingFromTemplate = true
+                            }
+                        } label: {
+                            Label {
+                                Text(template.name)
+                            } icon: {
+                                if let nsImage = template.previewImage {
+                                    Image(nsImage: nsImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                }
                             }
                         }
                     }

@@ -37,6 +37,25 @@ DEVICE_FRAME_RATIOS = {
 }
 
 
+COLOR_NAMES = {
+    'black': '#000000', 'white': '#FFFFFF', 'red': '#FF0000',
+    'green': '#00FF00', 'blue': '#0000FF', 'none': '#00000000',
+}
+
+
+def normalize_color(c):
+    """Ensure color is a hex string (#RRGGBB or #RRGGBBAA)."""
+    if not c:
+        return '#000000'
+    cl = c.strip().lower()
+    if cl in COLOR_NAMES:
+        return COLOR_NAMES[cl]
+    if c.startswith('#'):
+        return c
+    # Unknown — fallback to black
+    return '#000000'
+
+
 def uid():
     return str(uuid.uuid4()).upper()
 
@@ -54,7 +73,7 @@ def best_preset(device_category, svg_slice_w, svg_slice_h):
 def parse_path_bbox(d):
     """Parse SVG path d attribute and compute bounding box."""
     xs, ys = [], []
-    tokens = re.findall(r'[MmLlHhVvCcSsQqTtAaZz]|[-+]?\d*\.?\d+', d)
+    tokens = re.findall(r'[MmLlHhVvCcSsQqTtAaZz]|[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?', d)
     cmd = 'M'
     cx, cy = 0, 0
     ti = 0
@@ -162,6 +181,43 @@ def parse_svg(path):
             if '}' in k:
                 elem.attrib[k.split('}', 1)[1]] = elem.attrib.pop(k)
 
+    # Build gradient lookup: id -> first stop color, and full gradient info
+    import math as _math_parse
+    gradient_colors = {}
+    gradient_defs = {}  # id -> {'stops': [(color, location), ...], 'angle': degrees}
+    for elem in root.iter():
+        if elem.tag in ('linearGradient', 'radialGradient'):
+            gid = elem.get('id', '')
+            stops = []
+            for stop in elem:
+                sc = stop.get('stop-color', '')
+                offset = float(stop.get('offset', '0'))
+                if sc:
+                    stops.append((sc, offset))
+            if stops:
+                gradient_colors[gid] = stops[0][0]
+            if elem.tag == 'linearGradient' and stops:
+                x1 = float(elem.get('x1', '0'))
+                y1 = float(elem.get('y1', '0'))
+                x2 = float(elem.get('x2', '0'))
+                y2 = float(elem.get('y2', '0'))
+                # SVG angle: atan2(dy, dx) in degrees. Convert to app convention (0=up, clockwise)
+                svg_angle = _math_parse.degrees(_math_parse.atan2(y2 - y1, x2 - x1))
+                app_angle = (svg_angle + 90) % 360
+                gradient_defs[gid] = {'stops': stops, 'angle': app_angle}
+
+    def resolve_fill(fill_attr):
+        """Resolve fill attribute to a color. Returns (color, is_gradient, gradient_ref_id)."""
+        if not fill_attr or fill_attr == 'none':
+            return None, False, None
+        if fill_attr.startswith('url(#'):
+            ref_id = fill_attr[5:].rstrip(')')
+            if ref_id.startswith('pattern'):
+                return None, False, None  # pattern fill = device image
+            color = gradient_colors.get(ref_id)
+            return color, True, ref_id
+        return fill_attr, False, None
+
     vb = root.get('viewBox', '').split()
     vw, vh = float(vb[2]), float(vb[3])
 
@@ -177,6 +233,8 @@ def parse_svg(path):
         'circles': [],
         'white_paths': [],
         'device_rects': [],
+        'ellipses': [],
+        'bg_gradient': None,  # gradient_defs entry if bg is a gradient
     }
 
     for elem in children:
@@ -190,18 +248,38 @@ def parse_svg(path):
             y = float(elem.get('y', '0'))
             rx = elem.get('rx')
 
-            if fill.startswith('url('):
+            resolved_color, is_gradient, grad_ref = resolve_fill(fill)
+
+            if fill.startswith('url(#pattern'):
+                # Pattern fills are device frame/screen images
                 elements['device_rects'].append({
                     'x': x, 'y': y, 'w': w, 'h': h,
                     'rx': float(rx) if rx else None,
                     'fill': fill,
                     'transform': elem.get('transform', ''),
                 })
-            elif w >= vw * 0.95 and h >= vh * 0.95 and elements['bg_color'] is None:
-                elements['bg_color'] = fill
-            elif fill and fill != elements.get('bg_color', '') and fill != 'none':
+            elif fill.startswith('url(') and resolved_color is None:
+                # Unknown url ref — skip
+                pass
+            elif w >= vw * 0.95 and h >= vh * 0.95:
+                # Full-viewBox rect = background; last opaque one wins (top layer covers previous)
+                elements['bg_color'] = resolved_color or fill or elements['bg_color']
+                if grad_ref and grad_ref in gradient_defs:
+                    elements['bg_gradient'] = gradient_defs[grad_ref]
+            elif (resolved_color or fill) and (resolved_color or fill) != elements.get('bg_color', '') and fill != 'none':
+                effective = resolved_color or fill
+                # Apply rotate(-180) transforms to get effective position
+                eff_x, eff_y = x, y
+                transform = elem.get('transform', '')
+                rot_m = re.match(r'rotate\(([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\)', transform)
+                if rot_m and abs(float(rot_m.group(1)) + 180) < 0.1:
+                    # rotate(-180 cx cy) => effective x = 2*cx - x - w
+                    rcx = float(rot_m.group(2))
+                    rcy = float(rot_m.group(3))
+                    eff_x = 2 * rcx - x - w
+                    eff_y = 2 * rcy - y - h
                 rect_info = {
-                    'x': x, 'y': y, 'w': w, 'h': h, 'fill': fill,
+                    'x': eff_x, 'y': eff_y, 'w': w, 'h': h, 'fill': effective,
                     'rx': float(rx) if rx else 0,
                 }
                 # Full-slice-height rects are potential slice overrides (checked later)
@@ -216,14 +294,17 @@ def parse_svg(path):
             bbox = parse_path_bbox(d)
             if not bbox:
                 continue
-            fill_norm = fill.strip().lower()
+            # Resolve gradient fills on paths to their first stop color
+            resolved_path_color, _, _ = resolve_fill(fill)
+            effective_fill = resolved_path_color or fill
+            fill_norm = effective_fill.strip().lower()
             if fill_norm in ('#ffffff', 'white', '#fff'):
                 elements['white_paths'].append({
-                    'd': d, 'fill': fill, 'bbox': bbox,
+                    'd': d, 'fill': effective_fill, 'bbox': bbox,
                 })
-            elif fill and fill != 'none' and fill != elements.get('bg_color', ''):
+            elif effective_fill and effective_fill != 'none' and effective_fill != elements.get('bg_color', ''):
                 elements['paths'].append({
-                    'd': d, 'fill': fill, 'bbox': bbox,
+                    'd': d, 'fill': effective_fill, 'bbox': bbox,
                 })
 
         elif tag == 'circle':
@@ -233,6 +314,18 @@ def parse_svg(path):
                 'r': float(elem.get('r', '0')),
                 'fill': fill,
             })
+
+        elif tag == 'ellipse':
+            resolved_color, is_gradient, _ = resolve_fill(fill)
+            eff_fill = resolved_color or fill
+            if eff_fill and eff_fill != 'none' and not fill.startswith('url(#pattern'):
+                elements['ellipses'].append({
+                    'cx': float(elem.get('cx', '0')),
+                    'cy': float(elem.get('cy', '0')),
+                    'rx': float(elem.get('rx', '0')),
+                    'ry': float(elem.get('ry', '0')),
+                    'fill': eff_fill,
+                })
 
     return elements
 
@@ -370,17 +463,41 @@ def build_shapes_for_row(data, preset_w, preset_h, num_slices, device_category, 
             shape["br"] = r['rx'] * s
         shapes.append(shape)
 
-    # 2. Circle (app icon placeholder)
+    # 2. Circles: pattern-filled = app icon placeholder, colored = decorative
     for c in data['circles']:
         r = c['r']
+        if c['fill'].startswith('url(#pattern'):
+            shapes.append({
+                "t": "image",
+                "c": "#98989D",
+                "br": r * s,
+                "x": tx(c['cx'] - r),
+                "y": ty(c['cy'] - r),
+                "w": 2 * r * s,
+                "h": 2 * r * s,
+                "id": uid(),
+            })
+        elif c['fill'] and c['fill'] != 'none':
+            shapes.append({
+                "t": "circle",
+                "c": c['fill'],
+                "x": tx(c['cx'] - r),
+                "y": ty(c['cy'] - r),
+                "w": 2 * r * s,
+                "h": 2 * r * s,
+                "id": uid(),
+            })
+
+    # 2b. Decorative ellipses (colored circles/ovals)
+    for e in data['ellipses']:
+        r_avg = (e['rx'] + e['ry']) / 2
         shapes.append({
-            "t": "image",
-            "c": "#98989D",
-            "br": r * s,
-            "x": tx(c['cx'] - r),
-            "y": ty(c['cy'] - r),
-            "w": 2 * r * s,
-            "h": 2 * r * s,
+            "t": "circle",
+            "c": e['fill'],
+            "x": tx(e['cx'] - e['rx']),
+            "y": ty(e['cy'] - e['ry']),
+            "w": tw(2 * e['rx']),
+            "h": th(2 * e['ry']),
             "id": uid(),
         })
 
@@ -650,6 +767,18 @@ def build_row(data, device_category, device_frame_id, row_label_override=None, f
     }
     row_label = row_label_override or label_map.get((preset_w, preset_h), f"{preset_w}\u00d7{preset_h}")
 
+    # Normalize all color values in shapes
+    color_keys = {'c', 'bgc'}
+    for s in shapes:
+        for k in color_keys:
+            if k in s:
+                s[k] = normalize_color(s[k])
+    for tp in templates:
+        for k in color_keys:
+            if k in tp:
+                tp[k] = normalize_color(tp[k])
+    bgc = normalize_color(bgc)
+
     row = {
         "bgc": bgc,
         "ddbc": "#1C1C1F",
@@ -661,6 +790,20 @@ def build_row(data, device_category, device_frame_id, row_label_override=None, f
         "tp": templates,
         "tw": preset_w,
     }
+
+    # Add gradient background if present
+    bg_gradient = data.get('bg_gradient')
+    if bg_gradient:
+        row["bgs"] = "gradient"
+        row["gc"] = {
+            "s": [
+                {"id": uid(), "c": normalize_color(color), "l": loc}
+                for color, loc in bg_gradient['stops']
+            ],
+            "a": bg_gradient['angle'],
+            "gt": "linear",
+        }
+        row["span"] = True
     if device_frame_id:
         row["ddfi"] = device_frame_id
     return row
@@ -704,15 +847,144 @@ def generate_template(template_num, iphone_svg, ipad_svg, android_svg, project_r
         print(f"  {name}: {row['tw']}x{row['th']} ({row['l']}), {len(row['tp'])} templates, shapes: {types}")
 
 
+def generate_preview(project_json_path, preview_path, num_slices_shown=5):
+    """Generate a tiny preview PNG from a project.json showing first N iPhone slices."""
+    from PIL import Image, ImageDraw
+
+    with open(project_json_path) as f:
+        project = json.load(f)
+
+    row = project['r'][0]  # iPhone row
+    tw, th = row['tw'], row['th']
+    templates = row['tp']
+    shapes = row['s']
+
+    # Preview dimensions: show first N slices, scale to ~preview height
+    n = min(num_slices_shown, len(templates))
+    preview_h = 36
+    scale = preview_h / th
+    slice_w = int(tw * scale)
+    gap = 3  # gap between slices
+    preview_w = slice_w * n + gap * (n - 1)
+
+    img = Image.new('RGBA', (preview_w, preview_h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    def parse_color(c):
+        if not c:
+            return (128, 128, 128, 255)
+        c = c.strip().lower()
+        if c == 'black':
+            return (0, 0, 0, 255)
+        if c == 'white':
+            return (255, 255, 255, 255)
+        if c.startswith('#') and len(c) >= 7:
+            try:
+                r = int(c[1:3], 16)
+                g = int(c[3:5], 16)
+                b = int(c[5:7], 16)
+                a = int(c[7:9], 16) if len(c) >= 9 else 255
+                return (r, g, b, a)
+            except ValueError:
+                return (128, 128, 128, 255)
+        return (128, 128, 128, 255)
+
+    row_bg = parse_color(row.get('bgc'))
+
+    for i in range(n):
+        tp = templates[i]
+        bg = parse_color(tp['bgc']) if tp.get('ob') else row_bg
+        x_off = i * (slice_w + gap)
+        # Draw slice background with rounded corners
+        draw.rounded_rectangle(
+            [x_off, 0, x_off + slice_w - 1, preview_h - 1],
+            radius=6, fill=bg
+        )
+
+    # Draw shapes that fall within shown slices
+    shown_width = tw * n
+    for s in shapes:
+        sx, sy = s.get('x', 0), s.get('y', 0)
+        sw, sh = s.get('w', 0), s.get('h', 0)
+
+        # Skip shapes outside shown slices
+        if sx + sw < 0 or sx > shown_width or sy + sh < 0 or sy > th:
+            continue
+
+        # Map to preview coordinates
+        slice_idx = max(0, int(sx / tw))
+        if slice_idx >= n:
+            continue
+        local_x = sx - slice_idx * tw
+        px = int(slice_idx * (slice_w + gap) + local_x * scale)
+        py = int(sy * scale)
+        pw = max(1, int(sw * scale))
+        ph = max(1, int(sh * scale))
+
+        color = parse_color(s.get('c'))
+        t = s.get('t')
+
+        if t in ('svg', 'rectangle'):
+            draw.rectangle([px, py, px + pw, py + ph], fill=color)
+        elif t == 'circle':
+            draw.ellipse([px, py, px + pw, py + ph], fill=color)
+        elif t == 'device':
+            # Draw a dark rounded rect as device placeholder
+            dev_color = (28, 28, 31, 200)
+            br = max(2, int(min(pw, ph) * 0.08))
+            draw.rounded_rectangle([px, py, px + pw, py + ph], radius=br, fill=dev_color)
+            # Inner screen area (slightly lighter)
+            inset = max(1, int(min(pw, ph) * 0.04))
+            draw.rounded_rectangle(
+                [px + inset, py + inset, px + pw - inset, py + ph - inset],
+                radius=max(1, br - 1), fill=(60, 60, 66, 200)
+            )
+        elif t == 'text':
+            # Draw text lines as thin white/colored bars
+            fs = s.get('fs', 60)
+            line_h = max(1, int(fs * scale * 0.6))
+            line_gap = max(1, int(fs * scale * 0.4))
+            text_color = (*color[:3], min(color[3], 180))
+            cy = py
+            for _ in range(min(3, max(1, ph // max(1, line_h + line_gap)))):
+                lw = pw * 0.8 if _ == 2 else pw  # last line shorter
+                lx = px + int((pw - lw) / 2) if s.get('ta') == 'center' else px
+                draw.rounded_rectangle(
+                    [int(lx), cy, int(lx + lw), cy + line_h],
+                    radius=max(1, line_h // 2), fill=text_color
+                )
+                cy += line_h + line_gap
+                if cy > py + ph:
+                    break
+        elif t == 'image':
+            # App icon placeholder
+            br = int(s.get('br', 0) * scale)
+            draw.rounded_rectangle([px, py, px + pw, py + ph], radius=br, fill=(152, 152, 157, 200))
+
+    img.save(preview_path, 'PNG')
+    print(f"  Preview: {preview_path}")
+
+
 def main():
+    import os
     base = "/Users/taras/Library/CloudStorage/Dropbox/hustle/tempates"
-    for tmpl_num, svg_num in [(1, 1), (2, 2), (3, 3)]:
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    bundle = os.path.join(project_root, "screenshot", "Templates.bundle")
+
+    for tmpl_num, svg_num in [(n, n) for n in range(4, 28)]:
         generate_template(
             tmpl_num,
             f"{base}/iphone/{svg_num}.svg",
             f"{base}/ipad/{svg_num}.svg",
             f"{base}/android-phone/{svg_num}.svg",
         )
+
+    # Generate previews for ALL templates (including 1-3)
+    for tmpl_dir in sorted(os.listdir(bundle)):
+        pj = os.path.join(bundle, tmpl_dir, "project.json")
+        if os.path.isfile(pj):
+            preview = os.path.join(bundle, tmpl_dir, "preview.png")
+            generate_preview(pj, preview)
 
 
 if __name__ == '__main__':

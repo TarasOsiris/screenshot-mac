@@ -1,9 +1,11 @@
+import AppKit
 import Foundation
 
 struct ProjectTemplate: Identifiable {
     let id: String
     let name: String
     let url: URL
+    let previewImage: NSImage?
 }
 
 enum TemplateService {
@@ -40,8 +42,9 @@ enum TemplateService {
                     .replacingOccurrences(of: "_", with: " ")
                     .replacingOccurrences(of: "-", with: " ")
                     .localizedCapitalized
-                return ProjectTemplate(id: dirName, name: displayName, url: url)
+                let previewImage = NSImage(contentsOf: url.appendingPathComponent("preview.png"))
+                return ProjectTemplate(id: dirName, name: displayName, url: url, previewImage: previewImage)
             }
-            .sorted { $0.name < $1.name }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 }
