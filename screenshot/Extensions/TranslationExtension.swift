@@ -2,21 +2,17 @@ import Translation
 
 extension Optional where Wrapped == TranslationSession.Configuration {
     /// Creates or re-triggers a configuration for the language pair.
-    /// First call creates a new config; subsequent calls invalidate to re-trigger `.translationTask`.
+    /// First call creates a new config; subsequent calls invalidate the existing
+    /// tracked config so `.translationTask` re-fires reliably.
     mutating func refresh(source: String, target: String) {
-        if self != nil {
-            // Recreate with new language pair and invalidate to ensure re-trigger
-            var config = TranslationSession.Configuration(
-                source: .init(identifier: source),
-                target: .init(identifier: target)
-            )
-            config.invalidate()
-            self = config
+        let newSource = Locale.Language(identifier: source)
+        let newTarget = Locale.Language(identifier: target)
+        if let existing = self, existing.source == newSource, existing.target == newTarget {
+            // Same language pair — invalidate in-place so .translationTask re-fires.
+            // Creating a new config doesn't work: SwiftUI treats same-source/target as equal.
+            self?.invalidate()
         } else {
-            self = .init(
-                source: .init(identifier: source),
-                target: .init(identifier: target)
-            )
+            self = .init(source: newSource, target: newTarget)
         }
     }
 }
