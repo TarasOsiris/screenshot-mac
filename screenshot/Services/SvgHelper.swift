@@ -27,6 +27,7 @@ enum SvgHelper {
         if let viewBoxMatch = svg.range(of: "viewBox\\s*=\\s*[\"']([^\"']+)[\"']", options: .regularExpression) {
             let attrValue = svg[viewBoxMatch]
             if let quoteStart = attrValue.firstIndex(where: { $0 == "\"" || $0 == "'" }),
+               quoteStart < attrValue.endIndex,
                let quoteEnd = attrValue[attrValue.index(after: quoteStart)...].firstIndex(where: { $0 == "\"" || $0 == "'" }) {
                 let parts = svg[attrValue.index(after: quoteStart)..<quoteEnd]
                     .split(whereSeparator: { $0 == " " || $0 == "," })

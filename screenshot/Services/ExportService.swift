@@ -268,6 +268,7 @@ struct ExportService {
         if let cgImage = renderer.cgImage {
             return NSImage(cgImage: cgImage, size: NSSize(width: row.templateWidth, height: row.templateHeight))
         }
+        print("[ExportService] Warning: ImageRenderer.cgImage returned nil for template \(index) in row '\(row.label)'")
         return NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
     }
 

@@ -31,6 +31,8 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     }
 
     deinit {
+        debounceTimer?.cancel()
+        debounceTimer = nil
         stopMonitoring()
     }
 

@@ -214,12 +214,12 @@ struct GradientStopEditor: View {
 
     private func interpolatedColor(at location: Double) -> Color {
         let stops = config.stops
-        guard stops.count >= 2 else {
+        guard let first = stops.first, let last = stops.last, stops.count >= 2 else {
             return stops.first?.color ?? .white
         }
 
-        if location <= stops.first!.location { return stops.first!.color }
-        if location >= stops.last!.location { return stops.last!.color }
+        if location <= first.location { return first.color }
+        if location >= last.location { return last.color }
 
         for i in 0..<stops.count - 1 {
             if location >= stops[i].location && location <= stops[i + 1].location {
@@ -229,7 +229,7 @@ struct GradientStopEditor: View {
                 return blendColors(stops[i].color, stops[i + 1].color, t: t)
             }
         }
-        return stops.last!.color
+        return last.color
     }
 
     private func blendColors(_ c1: Color, _ c2: Color, t: Double) -> Color {

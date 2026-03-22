@@ -234,13 +234,18 @@ struct GradientConfig: Codable, Equatable {
 
         if let stops = try c.opt([GradientColorStop].self, "s", "stops") {
             self.stops = stops.sorted { $0.location < $1.location }
-        } else {
+        } else if let c1 = try c.opt(CodableColor.self, "color1Data"),
+                  let c2 = try c.opt(CodableColor.self, "color2Data") {
             // Migrate from old color1Data/color2Data format
-            let c1 = try c.decode(CodableColor.self, "color1Data")
-            let c2 = try c.decode(CodableColor.self, "color2Data")
             self.stops = [
                 GradientColorStop(color: c1.color, location: 0),
                 GradientColorStop(color: c2.color, location: 1),
+            ]
+        } else {
+            // Fallback default gradient when data is missing or corrupt
+            self.stops = [
+                GradientColorStop(color: Color(red: 0.4, green: 0.49, blue: 0.92), location: 0),
+                GradientColorStop(color: Color(red: 0.46, green: 0.29, blue: 0.64), location: 1),
             ]
         }
     }
