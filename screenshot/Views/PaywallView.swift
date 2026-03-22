@@ -72,8 +72,8 @@ struct PaywallView: View {
             ),
             ProFeature(
                 icon: "creditcard.trianglebadge.exclamationmark",
-                title: "App Store checkout",
-                message: "Payments and restores are handled directly by StoreKit."
+                title: "Secure checkout",
+                message: "Payments and restores handled by the App Store."
             )
         ]
     }

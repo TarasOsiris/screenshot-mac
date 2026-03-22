@@ -529,11 +529,11 @@ struct ContentView: View {
 
     @ViewBuilder
     private var exportMenuContent: some View {
-        Button("Choose Folder and Export...") {
+        Button("Export to Folder...") {
             exportScreenshotsAs()
         }
 
-        Button("Export as Single Demo Image...") {
+        Button("Export as Preview Image...") {
             exportSingleDemoImage()
         }
         .disabled(currentExportRow == nil)

@@ -145,10 +145,10 @@ struct TemplateControlBar: View {
                 }
             }
             Menu {
-                Button("Preview", systemImage: "eye") {
+                Button("Quick Look", systemImage: "eye") {
                     previewScreenshot()
                 }
-                Button("Download PNG...", systemImage: "square.and.arrow.down") {
+                Button("Save as PNG...", systemImage: "square.and.arrow.down") {
                     downloadScreenshot()
                 }
                 Button("Move Left", systemImage: "chevron.left") {

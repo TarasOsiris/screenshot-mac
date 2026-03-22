@@ -247,7 +247,7 @@ struct BackgroundImageEditor: View {
         }
 
         if !hasImage {
-            Text("Add an image to enable fill and opacity controls.")
+            Text("Drop or paste an image to configure fill and opacity.")
                 .font(.system(size: compact ? 9 : 11))
                 .foregroundStyle(.secondary)
         }

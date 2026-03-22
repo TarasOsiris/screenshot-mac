@@ -102,7 +102,7 @@ struct ShapePropertiesBar: View {
                                     HStack(spacing: 4) {
                                         ColorPicker("", selection: deviceBodyColorBinding(shapeId), supportsOpacity: false)
                                             .labelsHidden()
-                                            .help("Device body color")
+                                            .help("Device color")
 
                                         ActionButton(
                                             icon: "arrow.counterclockwise",
@@ -279,10 +279,9 @@ struct ShapePropertiesBar: View {
                     }
 
                     section {
-                        Toggle("Clip", isOn: shapeBinding(shapeId, \.clipToTemplate, default: false))
+                        Toggle("Clip to Frame", isOn: shapeBinding(shapeId, \.clipToTemplate, default: false))
                             .toggleStyle(.switch)
                             .controlSize(.small)
-                            .help("Clip to screenshot")
                     }
 
                     section {
@@ -625,7 +624,7 @@ struct ShapePropertiesBar: View {
                 )
         }
         .buttonStyle(.plain)
-        .help("Fill style")
+        .help("Fill")
         .popover(isPresented: $isFillPopoverPresented, arrowEdge: .top) {
             VStack(spacing: 8) {
                 BackgroundEditor(
@@ -709,7 +708,7 @@ struct ShapePropertiesBar: View {
             }
         }
         .buttonStyle(.borderless)
-        .help("Text properties")
+        .help("Text")
         .popover(isPresented: $isTextPopoverPresented, arrowEdge: .top) {
             textPopoverContent(shape: shape, shapeId: shapeId)
                 .padding(12)
@@ -847,7 +846,7 @@ struct ShapePropertiesBar: View {
             Divider()
 
             // Tracking
-            LabeledContent("Tracking") {
+            LabeledContent("Letter Spacing") {
                 let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0)
                 HStack(spacing: 4) {
                     Slider(value: trackingBinding, in: -5...30)
@@ -861,7 +860,7 @@ struct ShapePropertiesBar: View {
             }
 
             // Line height
-            LabeledContent("Line Height") {
+            LabeledContent("Line Spacing") {
                 HStack(spacing: 0) {
                     TextField("", text: $editingLineHeight, onEditingChanged: { editing in
                         if editing {
@@ -977,7 +976,7 @@ struct ShapePropertiesBar: View {
                 .labelsHidden()
                 .frame(width: 30)
                 .padding(.horizontal, 4)
-                .help("Outline color")
+                .help("Outline")
 
             separator
 

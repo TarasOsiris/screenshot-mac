@@ -399,7 +399,7 @@ struct CanvasShapeView: View {
                 )
             }
             if let onMatchDeviceSizes {
-                Button("Match Size to All Devices") {
+                Button("Resize to Fit All Devices") {
                     onMatchDeviceSizes()
                 }
             }

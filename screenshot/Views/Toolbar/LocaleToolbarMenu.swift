@@ -39,7 +39,7 @@ struct LocaleToolbarMenu: View {
             Divider()
             let progress = state.translationProgress()
             if !state.localeState.isBaseLocale {
-                Button("Fill Missing Text with Translation") {
+                Button("Auto-Translate Missing Text") {
                     startQuickTranslation(onlyUntranslated: true)
                 }
                 .disabled(
@@ -48,12 +48,12 @@ struct LocaleToolbarMenu: View {
                     progress.translated >= progress.total
                 )
 
-                Button("Replace All Text with Translation...") {
+                Button("Re-Translate All Text...") {
                     showReplaceAllConfirmation = true
                 }
                 .disabled(isQuickTranslating || progress.total == 0)
 
-                Button("Reset All Text and Images to Base Language...", role: .destructive) {
+                Button("Revert to Base Language...", role: .destructive) {
                     showResetToBaseConfirmation = true
                 }
                 .disabled(isQuickTranslating || !activeLocaleHasOverrides)
@@ -121,7 +121,7 @@ struct LocaleToolbarMenu: View {
             "Reset all \(state.localeState.activeLocaleLabel) text and image overrides?",
             isPresented: $showResetToBaseConfirmation
         ) {
-            Button("Reset to Base Language", role: .destructive) {
+            Button("Revert to Base", role: .destructive) {
                 state.resetActiveLocaleToBase()
             }
             Button("Cancel", role: .cancel) {}
@@ -209,7 +209,7 @@ struct LocaleBanner: View {
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(Color.localeWarning)
                             if progress.total > 0 {
-                                Text("\(progress.translated)/\(progress.total)")
+                                Text("\(progress.translated) of \(progress.total)")
                                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -233,7 +233,7 @@ struct LocaleBanner: View {
                     Spacer(minLength: 8)
 
                     if progress.total > 0 {
-                        Button("Edit Table") {
+                        Button("Edit Translations") {
                             isTranslationOverviewPresented = true
                         }
                         .buttonStyle(.bordered)
@@ -241,7 +241,7 @@ struct LocaleBanner: View {
                         .font(.system(size: 11, weight: .medium))
 
                         Menu {
-                            Button("Fill Missing Text with Translation") {
+                            Button("Auto-Translate Missing Text") {
                                 startTranslation(onlyUntranslated: true)
                             }
                             .disabled(isTranslating || missingCount == 0)
@@ -258,7 +258,7 @@ struct LocaleBanner: View {
                                     Text("Translating text…")
                                 }
                             } else {
-                                Label("Translate Text", systemImage: "globe")
+                                Label("Auto-Translate", systemImage: "globe")
                             }
                         }
                         .buttonStyle(.bordered)
@@ -267,7 +267,7 @@ struct LocaleBanner: View {
                         .disabled(isTranslating)
                     }
 
-                    Button("Switch to Base Language") {
+                    Button("Switch to Base") {
                         state.setActiveLocale(localeState.baseLocaleCode)
                     }
                     .buttonStyle(.bordered)
@@ -275,7 +275,7 @@ struct LocaleBanner: View {
                     .font(.system(size: 11, weight: .medium))
                     .help("Switch to the base language (\u{2325}\u{2318}0)")
 
-                    Button("Reset to Base Language", role: .destructive) {
+                    Button("Revert to Base", role: .destructive) {
                         showResetToBaseConfirmation = true
                     }
                     .buttonStyle(.bordered)
@@ -306,7 +306,7 @@ struct LocaleBanner: View {
                 "Reset all \(label) text and image overrides?",
                 isPresented: $showResetToBaseConfirmation
             ) {
-                Button("Reset to Base Language", role: .destructive) {
+                Button("Revert to Base", role: .destructive) {
                     state.resetActiveLocaleToBase()
                 }
                 Button("Cancel", role: .cancel) {}
@@ -366,7 +366,7 @@ private struct ManageLocalesSheet: View {
                                 .foregroundStyle(.secondary)
                         } else {
                             if progress.total > 0 {
-                                Text("\(progress.translated)/\(progress.total)")
+                                Text("\(progress.translated) of \(progress.total)")
                                     .font(.system(size: 11, design: .monospaced))
                                     .foregroundStyle(.secondary)
                             }
@@ -389,7 +389,7 @@ private struct ManageLocalesSheet: View {
             }
             .frame(minHeight: 120)
 
-            Text("First locale is base. Drag other locales to reorder export folders.")
+            Text("First language is the default. Drag to reorder.")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)

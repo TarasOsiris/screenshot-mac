@@ -31,7 +31,7 @@ struct OnboardingView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            Text("Set up your defaults to get started. You can change these later in Settings.")
+            Text("Choose your screenshot size and device to get started. You can change these anytime in Settings.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

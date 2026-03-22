@@ -19,7 +19,7 @@ struct InspectorPanel: View {
                 Section(isExpanded: $isAddElementExpanded) {
                     ShapeToolbar(state: state)
                 } header: {
-                    Text("Add new element")
+                    Text("Shapes")
                 }
                 deviceSection(rowId: rowId)
                 optionsSection(rowId: rowId)
@@ -144,7 +144,7 @@ struct InspectorPanel: View {
 
             if state.rows[rowIndex].backgroundStyle != .color {
                 let canSpanAcrossRow = state.rows[rowIndex].templates.count > 1
-                Toggle("Span across row", isOn: safeRowBinding(rowId, keyPath: \.spanBackgroundAcrossRow, default: false))
+                Toggle("Stretch across all screenshots", isOn: safeRowBinding(rowId, keyPath: \.spanBackgroundAcrossRow, default: false))
                     .font(.system(size: 12))
                     .toggleStyle(.switch)
                     .controlSize(.small)
@@ -152,7 +152,7 @@ struct InspectorPanel: View {
                     .help(spanAcrossRowHelp(for: rowIndex, canSpanAcrossRow: canSpanAcrossRow))
 
                 if !canSpanAcrossRow {
-                    Text("Add at least two screenshots to span across row.")
+                    Text("Add at least two screenshots to stretch background across row.")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
@@ -188,10 +188,10 @@ struct InspectorPanel: View {
 
             // Body color only for abstract devices
             if defaultDeviceIsAbstract(for: rowId) {
-                LabeledContent("Default body color") {
+                LabeledContent("Default color") {
                     ColorPicker("", selection: rowDefaultDeviceBodyColorBinding(for: rowId), supportsOpacity: false)
                         .labelsHidden()
-                        .help("Default device body color for this row")
+                        .help("Default device color for this row")
                 }
                 .font(.system(size: 12))
             }
@@ -246,8 +246,8 @@ struct InspectorPanel: View {
             HStack(spacing: 4) {
                 Text("Visibility")
                 Spacer()
-                Button("All") { setVisibility(rowId: rowId, visible: true) }
-                Button("None") { setVisibility(rowId: rowId, visible: false) }
+                Button("Show All") { setVisibility(rowId: rowId, visible: true) }
+                Button("Hide All") { setVisibility(rowId: rowId, visible: false) }
             }
             .buttonStyle(.plain)
             .font(.system(size: 10))

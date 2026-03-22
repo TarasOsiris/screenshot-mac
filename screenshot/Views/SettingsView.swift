@@ -52,9 +52,9 @@ struct SettingsView: View {
 
             TemplateCountPicker(selection: $defaultTemplateCount)
 
-            Toggle("Confirm before deleting", isOn: $confirmBeforeDeleting)
+            Toggle("Ask before deleting rows and screenshots", isOn: $confirmBeforeDeleting)
 
-            Picker("Sort projects", selection: $projectSortOrder) {
+            Picker("Project order", selection: $projectSortOrder) {
                 Text("By creation date").tag("creation")
                 Text("Alphabetically").tag("alphabetical")
             }
@@ -179,7 +179,7 @@ struct SettingsView: View {
                 Text("JPEG").tag("jpeg")
             }
 
-            Toggle("Open export folder after completion", isOn: $openExportFolderOnSuccess)
+            Toggle("Reveal in Finder after export", isOn: $openExportFolderOnSuccess)
         }
         .formStyle(.grouped)
     }
