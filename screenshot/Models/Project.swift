@@ -19,15 +19,6 @@ struct Project: Identifiable, Codable, Equatable {
         case id, name, modifiedAt, isDeleted, deletedAt
     }
 
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decode(UUID.self, forKey: .id)
-        name = try c.decode(String.self, forKey: .name)
-        modifiedAt = try c.decodeIfPresent(Date.self, forKey: .modifiedAt) ?? .distantPast
-        isDeleted = try c.decodeIfPresent(Bool.self, forKey: .isDeleted) ?? false
-        deletedAt = try c.decodeIfPresent(Date.self, forKey: .deletedAt)
-    }
-
     mutating func markDeleted() {
         let now = Date()
         isDeleted = true
@@ -115,9 +106,9 @@ struct ProjectData: Codable {
     }
 
     init(from decoder: Decoder) throws {
-        let c = try decoder.flexContainer()
-        rows = try c.decode([ScreenshotRow].self, "r", "rows")
-        localeState = try c.opt(LocaleState.self, "ls", "localeState")
-        modifiedAt = try c.opt(Date.self, "m", "modifiedAt") ?? .distantPast
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        rows = try c.decode([ScreenshotRow].self, forKey: .rows)
+        localeState = try c.decodeIfPresent(LocaleState.self, forKey: .localeState)
+        modifiedAt = try c.decodeIfPresent(Date.self, forKey: .modifiedAt) ?? .distantPast
     }
 }

@@ -68,33 +68,6 @@ struct PersistenceService {
         try? fm.createDirectory(at: resourcesDir(id), withIntermediateDirectories: true)
     }
 
-    // MARK: - Format migration
-
-    private static var formatMarkerURL: URL {
-        rootURL.appendingPathComponent(".format-v2")
-    }
-
-    static var needsFormatMigration: Bool {
-        !FileManager.default.fileExists(atPath: formatMarkerURL.path)
-    }
-
-    static func migrateAllProjectsToCompactFormat(projectIds: [UUID]) {
-        var allSucceeded = true
-        for id in projectIds {
-            if let data = loadProject(id) {
-                do { try saveProject(id, data: data) }
-                catch { allSucceeded = false }
-            }
-        }
-        if let index = loadIndex() {
-            do { try saveIndex(index) }
-            catch { allSucceeded = false }
-        }
-        if allSucceeded {
-            FileManager.default.createFile(atPath: formatMarkerURL.path, contents: nil)
-        }
-    }
-
     // MARK: - Generic load/save
 
     static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {

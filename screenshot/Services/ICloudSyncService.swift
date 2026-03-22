@@ -46,17 +46,7 @@ final class ICloudSyncService: @unchecked Sendable {
         return PersistenceService.localRootURL
     }
 
-    private init() {
-        // Migrate from UserDefaults (which syncs across Macs) to local marker file
-        let legacyKey = "iCloudSyncEnabled"
-        if UserDefaults.standard.bool(forKey: legacyKey) {
-            let fm = FileManager.default
-            let dir = PersistenceService.localRootURL
-            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-            fm.createFile(atPath: Self.enabledMarkerURL.path, contents: nil)
-            UserDefaults.standard.removeObject(forKey: legacyKey)
-        }
-    }
+    private init() {}
 
     // MARK: - Container Resolution
 

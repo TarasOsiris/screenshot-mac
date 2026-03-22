@@ -110,18 +110,6 @@ struct ProjectMergeTests {
         #expect(!purged.contains(where: { $0.name == "Old" }))
     }
 
-    // MARK: - Backward-compatible decoding
-
-    @Test func decodingWithoutTombstoneFields() throws {
-        let json = """
-        {"id": "12345678-1234-1234-1234-123456789ABC", "name": "Test", "modifiedAt": 100.0}
-        """
-        let data = json.data(using: .utf8)!
-        let project = try JSONDecoder().decode(Project.self, from: data)
-        #expect(project.isDeleted == false)
-        #expect(project.deletedAt == nil)
-    }
-
     // MARK: - Ordering preserved
 
     @Test func mergePreservesBaseOrdering() {

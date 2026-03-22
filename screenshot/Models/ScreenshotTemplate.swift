@@ -24,13 +24,13 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
     }
 
     init(from decoder: Decoder) throws {
-        let c = try decoder.flexContainer()
-        id = try c.decode(UUID.self, "id")
-        backgroundColor = try c.decode(CodableColor.self, "bgc", "backgroundColor")
-        overrideBackground = try c.opt(Bool.self, "ob", "overrideBackground") ?? false
-        backgroundStyle = try c.opt(BackgroundStyle.self, "bgs", "backgroundStyle") ?? .color
-        gradientConfig = try c.opt(GradientConfig.self, "gc", "gradientConfig") ?? GradientConfig()
-        backgroundImageConfig = try c.opt(BackgroundImageConfig.self, "bgic", "backgroundImageConfig") ?? BackgroundImageConfig()
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        backgroundColor = try c.decode(CodableColor.self, forKey: .backgroundColor)
+        overrideBackground = try c.decodeIfPresent(Bool.self, forKey: .overrideBackground) ?? false
+        backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
+        gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
+        backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? BackgroundImageConfig()
     }
 
     func encode(to encoder: Encoder) throws {

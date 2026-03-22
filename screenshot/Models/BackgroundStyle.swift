@@ -37,13 +37,13 @@ struct BackgroundImageConfig: Codable, Equatable {
     }
 
     init(from decoder: Decoder) throws {
-        let c = try decoder.flexContainer()
-        fileName = try c.opt(String.self, "f", "fileName")
-        fillMode = try c.opt(ImageFillMode.self, "fm", "fillMode") ?? .fill
-        opacity = try c.opt(Double.self, "a", "opacity") ?? 1.0
-        tileSpacing = try c.opt(Double.self, "ts", "tileSpacing") ?? 0.0
-        tileOffset = try c.opt(Double.self, "to", "tileOffset") ?? 0.0
-        tileScale = try c.opt(Double.self, "tsc", "tileScale") ?? 1.0
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        fileName = try c.decodeIfPresent(String.self, forKey: .fileName)
+        fillMode = try c.decodeIfPresent(ImageFillMode.self, forKey: .fillMode) ?? .fill
+        opacity = try c.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
+        tileSpacing = try c.decodeIfPresent(Double.self, forKey: .tileSpacing) ?? 0.0
+        tileOffset = try c.decodeIfPresent(Double.self, forKey: .tileOffset) ?? 0.0
+        tileScale = try c.decodeIfPresent(Double.self, forKey: .tileScale) ?? 1.0
     }
 
     func encode(to encoder: Encoder) throws {
@@ -175,13 +175,6 @@ struct GradientColorStop: Codable, Equatable, Identifiable {
         self.location = min(max(location, 0), 1)
     }
 
-    init(from decoder: Decoder) throws {
-        let c = try decoder.flexContainer()
-        id = try c.decode(UUID.self, "id")
-        colorData = try c.decode(CodableColor.self, "c", "colorData")
-        location = try c.decode(Double.self, "l", "location")
-    }
-
     var color: Color {
         get { colorData.color }
         set { colorData = CodableColor(newValue) }
@@ -226,28 +219,12 @@ struct GradientConfig: Codable, Equatable {
     }
 
     init(from decoder: Decoder) throws {
-        let c = try decoder.flexContainer()
-        angle = try c.decode(Double.self, "a", "angle")
-        gradientType = try c.opt(GradientType.self, "gt", "gradientType") ?? .linear
-        centerX = try c.opt(Double.self, "cx", "centerX") ?? 0.5
-        centerY = try c.opt(Double.self, "cy", "centerY") ?? 0.5
-
-        if let stops = try c.opt([GradientColorStop].self, "s", "stops") {
-            self.stops = stops.sorted { $0.location < $1.location }
-        } else if let c1 = try c.opt(CodableColor.self, "color1Data"),
-                  let c2 = try c.opt(CodableColor.self, "color2Data") {
-            // Migrate from old color1Data/color2Data format
-            self.stops = [
-                GradientColorStop(color: c1.color, location: 0),
-                GradientColorStop(color: c2.color, location: 1),
-            ]
-        } else {
-            // Fallback default gradient when data is missing or corrupt
-            self.stops = [
-                GradientColorStop(color: Color(red: 0.4, green: 0.49, blue: 0.92), location: 0),
-                GradientColorStop(color: Color(red: 0.46, green: 0.29, blue: 0.64), location: 1),
-            ]
-        }
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        angle = try c.decode(Double.self, forKey: .angle)
+        gradientType = try c.decodeIfPresent(GradientType.self, forKey: .gradientType) ?? .linear
+        centerX = try c.decodeIfPresent(Double.self, forKey: .centerX) ?? 0.5
+        centerY = try c.decodeIfPresent(Double.self, forKey: .centerY) ?? 0.5
+        stops = (try c.decode([GradientColorStop].self, forKey: .stops)).sorted { $0.location < $1.location }
     }
 
     func encode(to encoder: Encoder) throws {

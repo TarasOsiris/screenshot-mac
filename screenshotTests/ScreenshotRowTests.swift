@@ -206,28 +206,4 @@ struct ScreenshotRowTests {
         #expect(decoded.isLabelManuallySet == true)
     }
 
-    @Test func backwardCompatibleDecoding() throws {
-        // Simulate JSON from old version without new fields
-        let json = """
-        {
-            "id": "00000000-0000-0000-0000-000000000001",
-            "label": "Old Row",
-            "templates": [],
-            "templateWidth": 1242,
-            "templateHeight": 2688,
-            "backgroundColorData": {"red": 0, "green": 0, "blue": 1, "opacity": 1}
-        }
-        """
-        let data = try #require(json.data(using: .utf8))
-        let row = try JSONDecoder().decode(ScreenshotRow.self, from: data)
-
-        // New fields should get sensible defaults
-        #expect(row.backgroundStyle == .color)
-        #expect(row.spanBackgroundAcrossRow == false)
-        #expect(row.showDevice == true)
-        #expect(row.showBorders == true)
-        #expect(row.shapes.isEmpty)
-        #expect(row.isLabelManuallySet == false)
-        #expect(row.defaultDeviceCategory == .iphone, "Missing key defaults to .iphone")
-    }
 }

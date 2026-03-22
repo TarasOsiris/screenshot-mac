@@ -14,11 +14,6 @@ struct LocaleDefinition: Codable, Identifiable, Equatable {
         self.label = label
     }
 
-    init(from decoder: Decoder) throws {
-        let c = try decoder.flexContainer()
-        code = try c.decode(String.self, "c", "code")
-        label = try c.decode(String.self, "l", "label")
-    }
 }
 
 struct ShapeLocaleOverride: Codable, Equatable {
@@ -65,24 +60,6 @@ struct ShapeLocaleOverride: Codable, Equatable {
         self.lineSpacing = lineSpacing; self.overrideImageFileName = overrideImageFileName
     }
 
-    init(from decoder: Decoder) throws {
-        let c = try decoder.flexContainer()
-        offsetX = try c.opt(CGFloat.self, "ox", "offsetX")
-        offsetY = try c.opt(CGFloat.self, "oy", "offsetY")
-        offsetWidth = try c.opt(CGFloat.self, "ow", "offsetWidth")
-        offsetHeight = try c.opt(CGFloat.self, "oh", "offsetHeight")
-        text = try c.opt(String.self, "txt", "text")
-        fontName = try c.opt(String.self, "fn", "fontName")
-        fontSize = try c.opt(CGFloat.self, "fs", "fontSize")
-        fontWeight = try c.opt(Int.self, "fw", "fontWeight")
-        textAlign = try c.opt(TextAlign.self, "ta", "textAlign")
-        italic = try c.opt(Bool.self, "it", "italic")
-        uppercase = try c.opt(Bool.self, "uc", "uppercase")
-        letterSpacing = try c.opt(CGFloat.self, "ls", "letterSpacing")
-        lineSpacing = try c.opt(CGFloat.self, "lns", "lineSpacing")
-        overrideImageFileName = try c.opt(String.self, "oifn", "overrideImageFileName")
-    }
-
     var isEmpty: Bool {
         offsetX == nil && offsetY == nil && offsetWidth == nil && offsetHeight == nil
             && text == nil && fontName == nil && fontSize == nil && fontWeight == nil
@@ -107,10 +84,10 @@ struct LocaleState: Codable, Equatable {
     }
 
     init(from decoder: Decoder) throws {
-        let c = try decoder.flexContainer()
-        locales = try c.decode([LocaleDefinition].self, "l", "locales")
-        activeLocaleCode = try c.decode(String.self, "alc", "activeLocaleCode")
-        overrides = try c.opt([String: [String: ShapeLocaleOverride]].self, "o", "overrides") ?? [:]
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        locales = try c.decode([LocaleDefinition].self, forKey: .locales)
+        activeLocaleCode = try c.decode(String.self, forKey: .activeLocaleCode)
+        overrides = try c.decodeIfPresent([String: [String: ShapeLocaleOverride]].self, forKey: .overrides) ?? [:]
     }
 
     static let `default` = LocaleState(
