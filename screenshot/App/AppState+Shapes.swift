@@ -326,8 +326,15 @@ extension AppState {
 
     // MARK: - Batch Property Update
 
-    func updateShapes(_ ids: Set<UUID>, update: (inout CanvasShapeModel) -> Void) {
-        guard let rowIdx = selectedRowIndex else { return }
+    func updateShapes(_ ids: Set<UUID>, in rowId: UUID? = nil, update: (inout CanvasShapeModel) -> Void) {
+        let rowIdx: Int
+        if let rowId, let idx = rowIndex(for: rowId) {
+            rowIdx = idx
+        } else if let idx = selectedRowIndex {
+            rowIdx = idx
+        } else {
+            return
+        }
         registerUndo("Edit Shapes")
         for i in rows[rowIdx].shapes.indices {
             if ids.contains(rows[rowIdx].shapes[i].id) {

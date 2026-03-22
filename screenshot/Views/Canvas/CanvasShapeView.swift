@@ -28,6 +28,7 @@ struct CanvasShapeView: View {
     var onGroupDragEnd: ((CGSize) -> Void)?
     var onDidAppearAfterAdd: (() -> Void)?
     var onEditingTextChanged: ((Bool) -> Void)?
+    var onMatchDeviceSizes: (() -> Void)?
     var availableFontFamilies: Set<String> = []
 
     @State private var addBumpScale: CGFloat = 1.0
@@ -386,6 +387,11 @@ struct CanvasShapeView: View {
                         onUpdate(updated)
                     }
                 )
+            }
+            if let onMatchDeviceSizes {
+                Button("Match Size to All Devices") {
+                    onMatchDeviceSizes()
+                }
             }
             Divider()
         }

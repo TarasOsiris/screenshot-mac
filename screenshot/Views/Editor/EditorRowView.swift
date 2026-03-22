@@ -155,9 +155,8 @@ struct EditorRowView: View {
         .overlay(alignment: .leading) {
             if isSelected {
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Color.accentColor.opacity(0.8))
+                    .fill(Color.accentColor)
                     .frame(width: 3)
-                    .padding(.vertical, 8)
                     .allowsHitTesting(false)
             }
         }
@@ -548,6 +547,18 @@ struct EditorRowView: View {
                     },
                     onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
                     onEditingTextChanged: { state.isEditingText = $0 },
+                    onMatchDeviceSizes: shape.type == .device ? {
+                        let matchingIds = Set(row.activeShapes.filter { other in
+                            other.id != shape.id &&
+                            other.type == .device &&
+                            other.deviceCategory == shape.deviceCategory
+                        }.map(\.id))
+                        guard !matchingIds.isEmpty else { return }
+                        state.updateShapes(matchingIds, in: row.id) { other in
+                            other.width = shape.width
+                            other.height = shape.height
+                        }
+                    } : nil,
                     availableFontFamilies: state.availableFontFamilySet
                 )
             }
