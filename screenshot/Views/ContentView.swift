@@ -263,6 +263,7 @@ struct ContentView: View {
         .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
             PaywallView()
         }
+        .middleMousePan()
         .onAppear {
             state.undoManager = undoManager
             undoManager?.levelsOfUndo = 50
