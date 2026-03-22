@@ -4,7 +4,8 @@ import UniformTypeIdentifiers
 
 struct ShapePropertiesBar: View {
     private static let defaultFontSize: CGFloat = 72
-    private static let fontSizeRange: ClosedRange<CGFloat> = 12...200
+    private static let fontSizeRange: ClosedRange<CGFloat> = 8...400
+    private static let fontSizePresets: [Int] = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96, 128, 144, 192, 256]
     @Bindable var state: AppState
     @State private var isReplacingImage = false
     @State private var isReplacingSvg = false
@@ -13,6 +14,8 @@ struct ShapePropertiesBar: View {
     @State private var translationConfig: TranslationSession.Configuration?
     @State private var isTranslating = false
     @State private var isTextPopoverPresented = false
+    @State private var editingFontSize: String = ""
+    @State private var isFontSizeFieldActive = false
 
     private var rowIndex: Int? { state.selectedRowIndex }
     private var shapeIndex: Int? {
@@ -368,6 +371,29 @@ struct ShapePropertiesBar: View {
         }
     }
 
+    private func currentFontSizeString(for shapeId: UUID) -> String {
+        guard let i = idx(for: shapeId) else { return "\(Int(Self.defaultFontSize))" }
+        return "\(Int(resolvedShape(at: i.row, shapeIdx: i.shape).fontSize ?? Self.defaultFontSize))"
+    }
+
+    private func clampedFontSize(_ value: Int) -> CGFloat {
+        min(max(CGFloat(value), Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
+    }
+
+    private func commitFontSize(shapeId: UUID) {
+        isFontSizeFieldActive = false
+        guard let i = idx(for: shapeId) else { return }
+        guard let value = Int(editingFontSize) else {
+            editingFontSize = currentFontSizeString(for: shapeId)
+            return
+        }
+        let clamped = clampedFontSize(value)
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        resolved.fontSize = clamped
+        state.updateShape(resolved)
+        editingFontSize = "\(Int(clamped))"
+    }
+
     private func triggerTranslation() {
         translationConfig.refresh(
             source: state.localeState.baseLocaleCode,
@@ -644,40 +670,68 @@ struct ShapePropertiesBar: View {
                 )
             }
 
-            // Size
+            // Size & Weight
             LabeledContent("Size") {
                 HStack(spacing: 4) {
-                    Slider(value: shapeBinding(shapeId, \.fontSize, default: Self.defaultFontSize, continuous: true), in: Self.fontSizeRange)
-                        .frame(width: 120)
-                    TextField("", value: Binding(
-                        get: {
-                            guard let i = idx(for: shapeId) else { return Int(Self.defaultFontSize) }
-                            return Int(resolvedShape(at: i.row, shapeIdx: i.shape).fontSize ?? Self.defaultFontSize)
-                        },
-                        set: { newValue in
-                            let clamped = min(max(CGFloat(newValue), Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
-                            guard let i = idx(for: shapeId) else { return }
-                            var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                            resolved.fontSize = clamped
-                            state.updateShape(resolved)
+                    HStack(spacing: 0) {
+                        TextField("", text: $editingFontSize, onEditingChanged: { editing in
+                            if editing {
+                                isFontSizeFieldActive = true
+                            } else {
+                                commitFontSize(shapeId: shapeId)
+                            }
+                        })
+                        .frame(width: 48)
+                        .textFieldStyle(.roundedBorder)
+                        .multilineTextAlignment(.center)
+                        .onAppear {
+                            editingFontSize = currentFontSizeString(for: shapeId)
                         }
-                    ), format: .number)
-                    .frame(width: 40)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.center)
-                }
-            }
+                        .onChange(of: shapeId) {
+                            isFontSizeFieldActive = false
+                            editingFontSize = currentFontSizeString(for: shapeId)
+                        }
+                        .onChange(of: shape.fontSize) {
+                            guard !isFontSizeFieldActive else { return }
+                            editingFontSize = currentFontSizeString(for: shapeId)
+                        }
+                        .onChange(of: editingFontSize) {
+                            guard isFontSizeFieldActive else { return }
+                            if let value = Int(editingFontSize), let i = idx(for: shapeId) {
+                                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                                resolved.fontSize = clampedFontSize(value)
+                                state.updateShapeContinuous(resolved)
+                            }
+                        }
 
-            // Weight
-            LabeledContent("Weight") {
-                Picker("", selection: shapeBinding(shapeId, \.fontWeight, default: 400)) {
-                    Text("Light").tag(300)
-                    Text("Regular").tag(400)
-                    Text("Medium").tag(500)
-                    Text("Bold").tag(700)
+                        Menu {
+                            ForEach(Self.fontSizePresets, id: \.self) { size in
+                                Button("\(size)") {
+                                    editingFontSize = "\(size)"
+                                    commitFontSize(shapeId: shapeId)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 14, height: 20)
+                                .contentShape(Rectangle())
+                        }
+                        .menuStyle(.borderlessButton)
+                        .menuIndicator(.hidden)
+                        .fixedSize()
+                    }
+
+                    Picker("", selection: shapeBinding(shapeId, \.fontWeight, default: 400)) {
+                        Text("Light").tag(300)
+                        Text("Regular").tag(400)
+                        Text("Medium").tag(500)
+                        Text("Bold").tag(700)
+                    }
+                    .labelsHidden()
+                    .frame(width: 100)
                 }
-                .labelsHidden()
-                .frame(width: 100)
             }
 
             Divider()
