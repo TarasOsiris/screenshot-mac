@@ -30,6 +30,9 @@ final class AppState {
     var saveError: String?
     var canvasFocusRowId: UUID?
     var canvasFocusRequestNonce = 0
+    var canvasFocusAnimated = true
+    var focusShapeId: UUID?
+    var focusRequestNonce = 0
     @ObservationIgnored var iCloudMonitor: ICloudMonitor?
     /// Tracks when the active project data was last saved/loaded, for merge decisions.
     @ObservationIgnored var activeProjectDataModifiedAt: Date?
@@ -222,6 +225,18 @@ final class AppState {
         selectedShapeIds = []
         selectedRowId = nil
         isEditingText = false
+    }
+
+    /// Scroll to center the selected shape(s) on screen.
+    func focusOnSelection() {
+        guard let rowId = selectedRowId,
+              !selectedShapeIds.isEmpty else { return }
+        guard rows.contains(where: { $0.id == rowId }) else { return }
+        canvasFocusAnimated = false
+        canvasFocusRowId = rowId
+        canvasFocusRequestNonce += 1
+        focusShapeId = selectedShapeIds.first
+        focusRequestNonce += 1
     }
 
     // MARK: - Helpers

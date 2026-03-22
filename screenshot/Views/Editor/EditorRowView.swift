@@ -136,81 +136,7 @@ struct EditorRowView: View {
             .onHover { isRowHovered = $0 }
 
             // Unified canvas + add button
-            ScrollView(.horizontal, showsIndicators: true) {
-                let dw = row.displayWidth(zoom: zoom)
-                let dh = row.displayHeight(zoom: zoom)
-                let ds = row.displayScale(zoom: zoom)
-
-                VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top, spacing: 0) {
-                    // Unified canvas
-                    canvasView(dw: dw, dh: dh, ds: ds)
-
-                    // Add button
-                    AddTemplateButton(width: dw, height: dh) {
-                        store.requirePro(
-                            allowed: store.canAddTemplate(currentCount: row.templates.count),
-                            context: .templateLimit
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                state.addTemplate(to: row.id)
-                            }
-                        }
-                    }
-                }
-
-                // Per-template control bars (inside same ScrollView)
-                HStack(spacing: 0) {
-                    ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
-                        TemplateControlBar(
-                            template: safeTemplateBinding(rowId: row.id, templateIndex: index),
-                            row: row,
-                            index: index,
-                            zoom: zoom,
-                            screenshotImages: state.screenshotImages,
-                            localeState: state.localeState,
-                            canMoveLeft: index > 0,
-                            canMoveRight: index < row.templates.count - 1,
-                            onMoveLeft: {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.moveTemplateLeft(template.id, in: row.id)
-                                }
-                            },
-                            onMoveRight: {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.moveTemplateRight(template.id, in: row.id)
-                                }
-                            },
-                            onSave: { state.scheduleSave() },
-                            onPickBackgroundImage: { state.pickAndSaveBackgroundImage(for: row.id, templateIndex: index) },
-                            onRemoveBackgroundImage: { state.removeBackgroundImage(for: row.id, templateIndex: index) },
-                            onDropBackgroundImage: { image in
-                                state.saveBackgroundImage(image, for: row.id, templateIndex: index)
-                            },
-                            onDuplicate: {
-                                store.requirePro(
-                                    allowed: store.canAddTemplate(currentCount: row.templates.count),
-                                    context: .templateLimit
-                                ) {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        state.duplicateTemplate(template.id, in: row.id)
-                                    }
-                                }
-                            },
-                            onDelete: {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.removeTemplate(template.id, from: row.id)
-                                }
-                            }
-                        )
-                    }
-                }
-                .padding(.bottom, 8)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-                .padding(.bottom, 12)
-            }
+            horizontalScrollArea
         }
         .onScrollGeometryChange(for: CGRect.self) { geo in
             geo.visibleRect
@@ -438,6 +364,111 @@ struct EditorRowView: View {
             let images = loadedImages.sorted(by: { $0.0 < $1.0 }).map(\.1)
             guard !images.isEmpty else { return }
             state.batchImportImages(images, into: row.id)
+        }
+    }
+
+    @ViewBuilder
+    private var horizontalScrollArea: some View {
+        ScrollViewReader { hProxy in
+            ScrollView(.horizontal, showsIndicators: true) {
+                let dw = row.displayWidth(zoom: zoom)
+                let dh = row.displayHeight(zoom: zoom)
+                let ds = row.displayScale(zoom: zoom)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .top, spacing: 0) {
+                        // Unified canvas with per-template scroll anchors
+                        canvasView(dw: dw, dh: dh, ds: ds)
+                            .overlay(alignment: .topLeading) {
+                                HStack(spacing: 0) {
+                                    ForEach(row.templates) { template in
+                                        Color.clear
+                                            .frame(width: dw, height: 1)
+                                            .id("focus_\(template.id)")
+                                    }
+                                }
+                            }
+
+                        // Add button
+                        AddTemplateButton(width: dw, height: dh) {
+                            store.requirePro(
+                                allowed: store.canAddTemplate(currentCount: row.templates.count),
+                                context: .templateLimit
+                            ) {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    state.addTemplate(to: row.id)
+                                }
+                            }
+                        }
+                    }
+
+                    // Per-template control bars (inside same ScrollView)
+                    controlBarsRow
+                        .padding(.bottom, 8)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+                .padding(.bottom, 12)
+            }
+            .onChange(of: state.focusRequestNonce) { _, _ in
+                guard state.selectedRowId == row.id,
+                      let shapeId = state.focusShapeId,
+                      let shape = row.shapes.first(where: { $0.id == shapeId }) else { return }
+                let templateIndex = row.owningTemplateIndex(for: shape)
+                guard templateIndex < row.templates.count else { return }
+                let templateId = row.templates[templateIndex].id
+                hProxy.scrollTo("focus_\(templateId)", anchor: .center)
+                state.focusShapeId = nil
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var controlBarsRow: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
+                TemplateControlBar(
+                    template: safeTemplateBinding(rowId: row.id, templateIndex: index),
+                    row: row,
+                    index: index,
+                    zoom: zoom,
+                    screenshotImages: state.screenshotImages,
+                    localeState: state.localeState,
+                    canMoveLeft: index > 0,
+                    canMoveRight: index < row.templates.count - 1,
+                    onMoveLeft: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            state.moveTemplateLeft(template.id, in: row.id)
+                        }
+                    },
+                    onMoveRight: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            state.moveTemplateRight(template.id, in: row.id)
+                        }
+                    },
+                    onSave: { state.scheduleSave() },
+                    onPickBackgroundImage: { state.pickAndSaveBackgroundImage(for: row.id, templateIndex: index) },
+                    onRemoveBackgroundImage: { state.removeBackgroundImage(for: row.id, templateIndex: index) },
+                    onDropBackgroundImage: { image in
+                        state.saveBackgroundImage(image, for: row.id, templateIndex: index)
+                    },
+                    onDuplicate: {
+                        store.requirePro(
+                            allowed: store.canAddTemplate(currentCount: row.templates.count),
+                            context: .templateLimit
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                state.duplicateTemplate(template.id, in: row.id)
+                            }
+                        }
+                    },
+                    onDelete: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            state.removeTemplate(template.id, from: row.id)
+                        }
+                    }
+                )
+            }
         }
     }
 

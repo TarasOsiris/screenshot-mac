@@ -66,7 +66,7 @@ enum DebugTemplateService {
                     && fm.fileExists(atPath: url.appendingPathComponent("project.json").path)
             }
             .map { $0.lastPathComponent }
-            .sorted()
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
 
     static func saveProjectAsTemplate(projectId: UUID, templateName: String, bundleURL: URL) throws {

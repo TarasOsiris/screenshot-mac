@@ -205,6 +205,10 @@ struct ScreenshotBroApp: App {
 
                     Button("Actual Size") { appState.resetZoom() }
                     .keyboardShortcut("0", modifiers: .command)
+
+                    Button("Focus on Selection") { appState.focusOnSelection() }
+                    .keyboardShortcut("f", modifiers: [])
+                    .disabled(!appState.hasSelection || appState.isEditingText)
                 }
             }
 

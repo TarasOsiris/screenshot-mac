@@ -192,12 +192,6 @@ extension AppState {
         }
     }
 
-    func focusShapeOnCanvas(shapeId: UUID, rowId: UUID) {
-        selectShape(shapeId, in: rowId)
-        canvasFocusRowId = rowId
-        canvasFocusRequestNonce += 1
-    }
-
     // MARK: - Nudge
 
     func nudgeSelectedShapes(dx: CGFloat, dy: CGFloat) {

@@ -79,8 +79,13 @@ struct ContentView: View {
                 )
                 .onChange(of: state.canvasFocusRequestNonce) { _, _ in
                     guard let rowId = state.canvasFocusRowId else { return }
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    if state.canvasFocusAnimated {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            proxy.scrollTo(rowId, anchor: .center)
+                        }
+                    } else {
                         proxy.scrollTo(rowId, anchor: .center)
+                        state.canvasFocusAnimated = true
                     }
                     state.canvasFocusRowId = nil
                 }
@@ -263,7 +268,7 @@ struct ContentView: View {
 
     private var sortedProjects: [Project] {
         if projectSortOrder == "alphabetical" {
-            return state.visibleProjects.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            return state.visibleProjects.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         }
         return state.visibleProjects
     }

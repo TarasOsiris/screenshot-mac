@@ -8,7 +8,7 @@ struct DebugProjectManagerView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var sortedProjects: [Project] {
-        state.visibleProjects.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        state.visibleProjects.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     var body: some View {
