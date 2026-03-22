@@ -698,6 +698,7 @@ struct ContentView: View {
                     scale: CGFloat(exportScale),
                     screenshotImages: state.screenshotImages,
                     localeState: state.localeState,
+                    availableFontFamilies: state.availableFontFamilySet,
                     onProgress: { completed in
                         exportProgress = completed
                     }

@@ -25,7 +25,13 @@ final class AppState {
     @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = Set(NSFontManager.shared.availableFontFamilies)
 
     func refreshAvailableFontFamilies() {
-        availableFontFamilySet = Set(NSFontManager.shared.availableFontFamilies)
+        var families = Set(NSFontManager.shared.availableFontFamilies)
+        // Process-registered fonts (via CTFontManager) may not appear in
+        // NSFontManager.availableFontFamilies. Include them explicitly.
+        for familyName in customFonts.values {
+            families.insert(familyName)
+        }
+        availableFontFamilySet = families
     }
     var undoManager: UndoManager?
     var saveError: String?

@@ -26,6 +26,7 @@ struct ExportService {
         scale: CGFloat = 1.0,
         screenshotImages: [String: NSImage] = [:],
         localeState: LocaleState = .default,
+        availableFontFamilies: Set<String>? = nil,
         onProgress: (@MainActor (Int) -> Void)? = nil
     ) async throws -> URL {
         let rootName = sanitizedRootFolderName(projectName)
@@ -75,7 +76,8 @@ struct ExportService {
                         scale: exportScale,
                         screenshotImages: screenshotImages,
                         localeCode: locale.code,
-                        localeState: localeState
+                        localeState: localeState,
+                        availableFontFamilies: availableFontFamilies
                     )
 
                     // Await the previous encoding before starting a new one
@@ -204,7 +206,7 @@ struct ExportService {
     }
 
     @MainActor
-    static func renderTemplateImage(index: Int, row: ScreenshotRow, scale: CGFloat = 1.0, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default) -> NSImage {
+    static func renderTemplateImage(index: Int, row: ScreenshotRow, scale: CGFloat = 1.0, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default, availableFontFamilies: Set<String>? = nil) -> NSImage {
         let tLeft = CGFloat(index) * row.templateWidth
         let rawShapes = row.visibleShapes(forTemplateAt: index)
         let resolvedShapes: [CanvasShapeModel]
@@ -251,24 +253,46 @@ struct ExportService {
                     onSelect: {},
                     onUpdate: { _ in },
                     onDelete: {},
-                    availableFontFamilies: Set(NSFontManager.shared.availableFontFamilies)
+                    availableFontFamilies: availableFontFamilies ?? Set(NSFontManager.shared.availableFontFamilies)
                 )
             }
         }
         .frame(width: row.templateWidth, height: row.templateHeight, alignment: .topLeading)
         .clipped()
 
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = max(0.1, scale)
-        renderer.proposedSize = ProposedViewSize(
-            width: row.templateWidth,
-            height: row.templateHeight
-        )
+        // Use NSHostingView + layer rendering instead of ImageRenderer.
+        // ImageRenderer can produce slightly different text glyph metrics than
+        // on-screen rendering, causing line-break differences in export.
+        // NSHostingView uses the same AppKit/CoreText pipeline as the editor.
+        let effectiveScale = max(0.1, scale)
+        let hostingView = NSHostingView(rootView: view)
+        hostingView.frame = NSRect(x: 0, y: 0, width: row.templateWidth, height: row.templateHeight)
+        hostingView.wantsLayer = true
+        hostingView.layer?.contentsScale = effectiveScale
+        hostingView.layoutSubtreeIfNeeded()
+        hostingView.displayIfNeeded()
 
-        if let cgImage = renderer.cgImage {
+        let pixelW = Int(ceil(row.templateWidth * effectiveScale))
+        let pixelH = Int(ceil(row.templateHeight * effectiveScale))
+        guard let ctx = CGContext(
+            data: nil, width: pixelW, height: pixelH,
+            bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
+        ) else {
+            print("[ExportService] Warning: Failed to create CGContext for template \(index) in row '\(row.label)'")
+            return NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
+        }
+
+        ctx.scaleBy(x: effectiveScale, y: effectiveScale)
+        ctx.translateBy(x: 0, y: row.templateHeight)
+        ctx.scaleBy(x: 1, y: -1)
+        hostingView.layer!.render(in: ctx)
+
+        if let cgImage = ctx.makeImage() {
             return NSImage(cgImage: cgImage, size: NSSize(width: row.templateWidth, height: row.templateHeight))
         }
-        print("[ExportService] Warning: ImageRenderer.cgImage returned nil for template \(index) in row '\(row.label)'")
+        print("[ExportService] Warning: CGContext.makeImage() returned nil for template \(index) in row '\(row.label)'")
         return NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
     }
 

@@ -452,6 +452,31 @@ struct ExportServiceTests {
         #expect(brightness < 0.4, "Edge should be dark (outline), got brightness=\(brightness)")
     }
 
+    // MARK: - Text rendering
+
+    @Test func textShapeRendersInExport() throws {
+        var row = makeTestRow(width: 400, height: 400, bgColor: .white)
+        row.shapes = [CanvasShapeModel(
+            type: .text, x: 0, y: 0, width: 400, height: 400,
+            color: Color(red: 0.9, green: 0, blue: 0),
+            text: "WWWW\nWWWW\nWWWW", fontSize: 80, fontWeight: 700
+        )]
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+        try expectHasNonWhitePixel(bitmap, label: "Text should render visible pixels in export")
+    }
+
+    @Test func textShapeWithTrackingRendersInExport() throws {
+        var row = makeTestRow(width: 400, height: 400, bgColor: .white)
+        row.shapes = [CanvasShapeModel(
+            type: .text, x: 0, y: 0, width: 400, height: 400,
+            color: Color(red: 0.9, green: 0, blue: 0),
+            text: "WWWW\nWWWW\nWWWW", fontSize: 80, fontWeight: 700,
+            letterSpacing: 5
+        )]
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+        try expectHasNonWhitePixel(bitmap, label: "Text with tracking should render in export")
+    }
+
     // MARK: - Helpers
 
     private static let testBlue = Color(red: 0, green: 0, blue: 0.9)
@@ -531,6 +556,18 @@ struct ExportServiceTests {
             #expect(c.b > c.r + margin && c.b > c.g + margin,
                     "\(label): blue should dominate, got rgb=(\(c.r),\(c.g),\(c.b))")
         }
+    }
+
+    /// Scans a grid of pixels and asserts at least one is non-white (i.e. visible content was rendered).
+    private func expectHasNonWhitePixel(_ bitmap: NSBitmapImageRep, label: String) throws {
+        let w = bitmap.pixelsWide, h = bitmap.pixelsHigh
+        for y in stride(from: h / 8, to: h * 7 / 8, by: 20) {
+            for x in stride(from: w / 8, to: w * 7 / 8, by: 20) {
+                let c = try pixelColor(bitmap, at: (x, y))
+                if c.r < 0.95 || c.g < 0.95 || c.b < 0.95 { return }
+            }
+        }
+        Issue.record("\(label): all sampled pixels were white")
     }
 
 }

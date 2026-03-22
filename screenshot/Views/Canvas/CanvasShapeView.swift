@@ -909,19 +909,59 @@ struct CanvasShapeView: View {
         }
     }
 
+    /// The custom font family name, if the shape specifies one that's available.
+    private var customFontName: String? {
+        guard let name = shape.fontName, !name.isEmpty,
+              availableFontFamilies.contains(name) else { return nil }
+        return name
+    }
+
     private func resolvedFont(size: CGFloat, weight: Font.Weight) -> Font {
-        Font(resolvedNSFont(size: size, weight: weight.nsWeight))
+        // Use Font.custom for custom fonts — Font(NSFont) can lose variable font
+        // weight variations. Font.custom lets SwiftUI resolve weight axes natively.
+        if let name = customFontName {
+            return Font.custom(name, size: size).weight(weight)
+        }
+        return .system(size: size, weight: weight)
     }
 
     private func resolvedNSFont(size: CGFloat, weight: NSFont.Weight) -> NSFont {
-        if let name = shape.fontName, !name.isEmpty,
-           availableFontFamilies.contains(name) {
-            let fm = NSFontManager.shared
-            let nsFontWeight = fm.weight(of: NSFont.systemFont(ofSize: size, weight: weight))
-            return fm.font(withFamily: name, traits: [], weight: nsFontWeight, size: size)
-                ?? NSFont.systemFont(ofSize: size, weight: weight)
+        guard let name = customFontName else {
+            return NSFont.systemFont(ofSize: size, weight: weight)
         }
-        return NSFont.systemFont(ofSize: size, weight: weight)
+        let fm = NSFontManager.shared
+        let fmWeight = Self.fontManagerWeight(for: weight)
+        // Try exact weight
+        if let font = fm.font(withFamily: name, traits: [], weight: fmWeight, size: size) {
+            return font
+        }
+        // Font family exists but doesn't have the requested weight.
+        // Try regular weight (5), then apply bold trait if needed.
+        if let font = fm.font(withFamily: name, traits: [], weight: 5, size: size) {
+            if fmWeight >= 9 {
+                return fm.convert(font, toHaveTrait: .boldFontMask)
+            }
+            return font
+        }
+        // Last resort: CTFont with family name (picks the default face)
+        return CTFontCreateWithName(name as CFString, size, nil) as NSFont
+    }
+
+    /// Maps NSFont.Weight to the 0–15 integer scale used by NSFontManager,
+    /// avoiding creation of a throwaway system font just to query its weight.
+    private static func fontManagerWeight(for weight: NSFont.Weight) -> Int {
+        switch weight {
+        case .ultraLight: return 2
+        case .thin:       return 3
+        case .light:      return 4
+        case .regular:    return 5
+        case .medium:     return 6
+        case .semibold:   return 8
+        case .bold:       return 9
+        case .heavy:      return 11
+        case .black:      return 14
+        default:          return 5
+        }
     }
 
     private func fontWeight(_ weight: Int) -> Font.Weight {
