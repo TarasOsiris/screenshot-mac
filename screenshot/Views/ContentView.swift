@@ -6,7 +6,6 @@ struct ContentView: View {
     @Environment(StoreService.self) private var store
     @Environment(\.undoManager) private var undoManager
     @AppStorage("exportFormat") private var exportFormat = "png"
-    @AppStorage("exportScale") private var exportScale = 1.0
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @AppStorage("lastExportFolderBookmark") private var lastExportFolderBookmark = Data()
@@ -624,7 +623,6 @@ struct ContentView: View {
         Task {
             let image = ExportService.renderRowImage(
                 row: row,
-                scale: CGFloat(exportScale),
                 screenshotImages: state.screenshotImages,
                 localeCode: state.localeState.activeLocaleCode,
                 localeState: state.localeState
@@ -635,6 +633,7 @@ struct ContentView: View {
             }
             do {
                 try data.write(to: url)
+                NSWorkspace.shared.activateFileViewerSelecting([url])
                 showExportSuccess()
             } catch {
                 exportError = error.localizedDescription
@@ -695,7 +694,6 @@ struct ContentView: View {
                     projectName: projectName,
                     to: url,
                     format: format,
-                    scale: CGFloat(exportScale),
                     screenshotImages: state.screenshotImages,
                     localeState: state.localeState,
                     availableFontFamilies: state.availableFontFamilySet,

@@ -23,7 +23,6 @@ struct ExportService {
         projectName: String,
         to folderURL: URL,
         format: ExportImageFormat = .png,
-        scale: CGFloat = 1.0,
         screenshotImages: [String: NSImage] = [:],
         localeState: LocaleState = .default,
         availableFontFamilies: Set<String>? = nil,
@@ -35,7 +34,6 @@ struct ExportService {
 
         let multiLocale = localeState.locales.count > 1
         let localesToExport = multiLocale ? localeState.locales : [localeState.locales.first ?? LocaleDefinition(code: "en", label: "English")]
-        let exportScale = max(0.1, scale)
 
         var completed = 0
         // Track the previous encoding task so we can pipeline:
@@ -73,7 +71,6 @@ struct ExportService {
                     let image = renderTemplateImage(
                         index: index,
                         row: row,
-                        scale: exportScale,
                         screenshotImages: screenshotImages,
                         localeCode: locale.code,
                         localeState: localeState,
@@ -138,17 +135,16 @@ struct ExportService {
     // MARK: - Row-level rendering (single demo image)
 
     @MainActor
-    static func renderRowImage(row: ScreenshotRow, scale: CGFloat = 1.0, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default) -> NSImage {
+    static func renderRowImage(row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default) -> NSImage {
         let count = row.templates.count
         guard count > 0 else {
             return NSImage(size: NSSize(width: 1, height: 1))
         }
 
-        let exportScale = max(0.1, scale)
         let totalWidth = row.templateWidth * CGFloat(count)
         let height = row.templateHeight
-        let pixelW = Int(totalWidth * exportScale)
-        let pixelH = Int(height * exportScale)
+        let pixelW = Int(totalWidth)
+        let pixelH = Int(height)
 
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         guard let ctx = CGContext(
@@ -162,9 +158,9 @@ struct ExportService {
 
         // Render each template and draw immediately so intermediate images are freed
         for i in 0..<count {
-            let img = renderTemplateImage(index: i, row: row, scale: scale, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
+            let img = renderTemplateImage(index: i, row: row, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
             guard let cgImg = img.cgImage(forProposedRect: nil, context: nil, hints: nil) else { continue }
-            let x = CGFloat(i) * row.templateWidth * exportScale
+            let x = CGFloat(i) * row.templateWidth
             ctx.draw(cgImg, in: CGRect(x: x, y: 0, width: CGFloat(cgImg.width), height: CGFloat(cgImg.height)))
         }
 
@@ -187,12 +183,11 @@ struct ExportService {
         index: Int,
         row: ScreenshotRow,
         format: ExportImageFormat,
-        scale: CGFloat,
         screenshotImages: [String: NSImage] = [:],
         localeCode: String? = nil,
         localeState: LocaleState = .default
     ) -> Data? {
-        let image = renderTemplateImage(index: index, row: row, scale: scale, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
+        let image = renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
         return encodeImage(image, format: format)
     }
 
@@ -206,7 +201,7 @@ struct ExportService {
     }
 
     @MainActor
-    static func renderTemplateImage(index: Int, row: ScreenshotRow, scale: CGFloat = 1.0, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default, availableFontFamilies: Set<String>? = nil) -> NSImage {
+    static func renderTemplateImage(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default, availableFontFamilies: Set<String>? = nil) -> NSImage {
         let tLeft = CGFloat(index) * row.templateWidth
         let rawShapes = row.visibleShapes(forTemplateAt: index)
         let resolvedShapes: [CanvasShapeModel]
@@ -264,16 +259,14 @@ struct ExportService {
         // ImageRenderer can produce slightly different text glyph metrics than
         // on-screen rendering, causing line-break differences in export.
         // NSHostingView uses the same AppKit/CoreText pipeline as the editor.
-        let effectiveScale = max(0.1, scale)
         let hostingView = NSHostingView(rootView: view)
         hostingView.frame = NSRect(x: 0, y: 0, width: row.templateWidth, height: row.templateHeight)
         hostingView.wantsLayer = true
-        hostingView.layer?.contentsScale = effectiveScale
         hostingView.layoutSubtreeIfNeeded()
         hostingView.displayIfNeeded()
 
-        let pixelW = Int(ceil(row.templateWidth * effectiveScale))
-        let pixelH = Int(ceil(row.templateHeight * effectiveScale))
+        let pixelW = Int(ceil(row.templateWidth))
+        let pixelH = Int(ceil(row.templateHeight))
         guard let ctx = CGContext(
             data: nil, width: pixelW, height: pixelH,
             bitsPerComponent: 8, bytesPerRow: 0,
@@ -284,7 +277,6 @@ struct ExportService {
             return NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
         }
 
-        ctx.scaleBy(x: effectiveScale, y: effectiveScale)
         ctx.translateBy(x: 0, y: row.templateHeight)
         ctx.scaleBy(x: 1, y: -1)
         hostingView.layer!.render(in: ctx)

@@ -87,7 +87,7 @@ struct ExportServiceTests {
     @Test func renderTemplateDataPNG() throws {
         let row = makeTestRow(width: 100, height: 200)
         let data = try #require(ExportService.renderTemplateData(
-            index: 0, row: row, format: .png, scale: 1.0
+            index: 0, row: row, format: .png
         ))
         let decoded = try #require(NSBitmapImageRep(data: data))
         #expect(decoded.hasAlpha == false)
@@ -96,19 +96,9 @@ struct ExportServiceTests {
     @Test func renderTemplateDataJPEG() throws {
         let row = makeTestRow(width: 100, height: 200)
         let data = try #require(ExportService.renderTemplateData(
-            index: 0, row: row, format: .jpeg, scale: 1.0
+            index: 0, row: row, format: .jpeg
         ))
         #expect(data.count > 0)
-    }
-
-    @Test func renderTemplateAtScale2x() throws {
-        let row = makeTestRow(width: 100, height: 200)
-        let data = try #require(ExportService.renderTemplateData(
-            index: 0, row: row, format: .png, scale: 2.0
-        ))
-        let decoded = try #require(NSBitmapImageRep(data: data))
-        #expect(decoded.pixelsWide == 200)
-        #expect(decoded.pixelsHigh == 400)
     }
 
     // MARK: - Oversized shapes must not shift layout
