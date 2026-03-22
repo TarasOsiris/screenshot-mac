@@ -209,6 +209,7 @@ struct CanvasShapeView: View {
         let base = ZStack {
             shapeContent
                 .frame(width: displayW, height: displayH)
+                .compositingGroup()
                 .opacity(shape.opacity)
                 .contentShape(Rectangle())
                 .rotationEffect(.degrees(currentRotation))
