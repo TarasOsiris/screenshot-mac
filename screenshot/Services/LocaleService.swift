@@ -56,6 +56,7 @@ enum LocaleService {
             baseResult.uppercase = base.uppercase
             baseResult.letterSpacing = base.letterSpacing
             baseResult.lineSpacing = base.lineSpacing
+            baseResult.lineHeightMultiple = base.lineHeightMultiple
 
             if updated.text != base.text { override.text = updated.text }
             if updated.fontName != base.fontName { override.fontName = updated.fontName }
@@ -66,6 +67,7 @@ enum LocaleService {
             if updated.uppercase != base.uppercase { override.uppercase = updated.uppercase }
             if updated.letterSpacing != base.letterSpacing { override.letterSpacing = updated.letterSpacing }
             if updated.lineSpacing != base.lineSpacing { override.lineSpacing = updated.lineSpacing }
+            if updated.lineHeightMultiple != base.lineHeightMultiple { override.lineHeightMultiple = updated.lineHeightMultiple }
         }
 
         // Device/image shapes have display image overrides
@@ -155,6 +157,7 @@ enum LocaleService {
         if let uppercase = override.uppercase { result.uppercase = uppercase }
         if let letterSpacing = override.letterSpacing { result.letterSpacing = letterSpacing }
         if let lineSpacing = override.lineSpacing { result.lineSpacing = lineSpacing }
+        if let lineHeightMultiple = override.lineHeightMultiple { result.lineHeightMultiple = lineHeightMultiple }
         if let fileName = override.overrideImageFileName {
             result.displayImageFileName = fileName
         }

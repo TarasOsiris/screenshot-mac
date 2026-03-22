@@ -31,6 +31,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
     var uppercase: Bool?
     var letterSpacing: CGFloat?
     var lineSpacing: CGFloat?
+    var lineHeightMultiple: CGFloat?
 
     var overrideImageFileName: String?
 
@@ -38,7 +39,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
         case offsetX = "ox", offsetY = "oy", offsetWidth = "ow", offsetHeight = "oh"
         case text = "txt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
         case textAlign = "ta", italic = "it", uppercase = "uc"
-        case letterSpacing = "ls", lineSpacing = "lns"
+        case letterSpacing = "ls", lineSpacing = "lns", lineHeightMultiple = "lhm"
         case overrideImageFileName = "oifn"
     }
 
@@ -49,7 +50,8 @@ struct ShapeLocaleOverride: Codable, Equatable {
         fontSize: CGFloat? = nil, fontWeight: Int? = nil,
         textAlign: TextAlign? = nil, italic: Bool? = nil,
         uppercase: Bool? = nil, letterSpacing: CGFloat? = nil,
-        lineSpacing: CGFloat? = nil, overrideImageFileName: String? = nil
+        lineSpacing: CGFloat? = nil, lineHeightMultiple: CGFloat? = nil,
+        overrideImageFileName: String? = nil
     ) {
         self.offsetX = offsetX; self.offsetY = offsetY
         self.offsetWidth = offsetWidth; self.offsetHeight = offsetHeight
@@ -57,13 +59,15 @@ struct ShapeLocaleOverride: Codable, Equatable {
         self.fontSize = fontSize; self.fontWeight = fontWeight
         self.textAlign = textAlign; self.italic = italic
         self.uppercase = uppercase; self.letterSpacing = letterSpacing
-        self.lineSpacing = lineSpacing; self.overrideImageFileName = overrideImageFileName
+        self.lineSpacing = lineSpacing; self.lineHeightMultiple = lineHeightMultiple
+        self.overrideImageFileName = overrideImageFileName
     }
 
     var isEmpty: Bool {
         offsetX == nil && offsetY == nil && offsetWidth == nil && offsetHeight == nil
             && text == nil && fontName == nil && fontSize == nil && fontWeight == nil
-            && textAlign == nil && italic == nil && uppercase == nil && letterSpacing == nil && lineSpacing == nil
+            && textAlign == nil && italic == nil && uppercase == nil
+            && letterSpacing == nil && lineSpacing == nil && lineHeightMultiple == nil
             && overrideImageFileName == nil
     }
 }

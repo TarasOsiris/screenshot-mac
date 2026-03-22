@@ -218,6 +218,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     var uppercase: Bool?
     var letterSpacing: CGFloat?
     var lineSpacing: CGFloat?
+    var lineHeightMultiple: CGFloat?
 
     // Image properties
     var imageFileName: String?
@@ -255,7 +256,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         case colorData = "c", opacity = "o"
         case text = "txt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
         case textAlign = "ta", textVerticalAlign = "tva", italic = "it", uppercase = "uc"
-        case letterSpacing = "ls", lineSpacing = "lns"
+        case letterSpacing = "ls", lineSpacing = "lns", lineHeightMultiple = "lhm"
         case imageFileName = "ifn"
         case deviceCategory = "dc", deviceBodyColorData = "dbc"
         case deviceFrameId = "dfi", screenshotFileName = "sfn"
@@ -290,6 +291,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         uppercase = try c.decodeIfPresent(Bool.self, forKey: .uppercase)
         letterSpacing = try c.decodeIfPresent(CGFloat.self, forKey: .letterSpacing)
         lineSpacing = try c.decodeIfPresent(CGFloat.self, forKey: .lineSpacing)
+        lineHeightMultiple = try c.decodeIfPresent(CGFloat.self, forKey: .lineHeightMultiple)
         imageFileName = try c.decodeIfPresent(String.self, forKey: .imageFileName)
         deviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .deviceCategory)
         deviceBodyColorData = try c.decodeIfPresent(CodableColor.self, forKey: .deviceBodyColorData)
@@ -329,6 +331,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         try c.encodeIfPresent(uppercase, forKey: .uppercase)
         try c.encodeIfPresent(letterSpacing, forKey: .letterSpacing)
         try c.encodeIfPresent(lineSpacing, forKey: .lineSpacing)
+        try c.encodeIfPresent(lineHeightMultiple, forKey: .lineHeightMultiple)
         // Image
         try c.encodeIfPresent(imageFileName, forKey: .imageFileName)
         // Device
@@ -373,6 +376,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         uppercase: Bool? = nil,
         letterSpacing: CGFloat? = nil,
         lineSpacing: CGFloat? = nil,
+        lineHeightMultiple: CGFloat? = nil,
         imageFileName: String? = nil,
         deviceCategory: DeviceCategory? = nil,
         deviceBodyColor: Color? = nil,
@@ -405,6 +409,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.uppercase = uppercase
         self.letterSpacing = letterSpacing
         self.lineSpacing = lineSpacing
+        self.lineHeightMultiple = lineHeightMultiple
         self.imageFileName = imageFileName
         self.deviceCategory = deviceCategory
         self.deviceBodyColorData = deviceBodyColor.map { CodableColor($0) }

@@ -42,6 +42,20 @@ struct LocaleServiceTests {
         #expect(resolved.fontWeight == 400, "Non-overridden properties stay at base value")
     }
 
+    @Test func resolveShapeAppliesLineHeightMultipleOverride() {
+        let shape = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello", fontSize: 24, lineSpacing: 12)
+        let state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "ja", label: "Japanese")],
+            activeLocaleCode: "ja",
+            overrides: ["ja": [shape.id.uuidString: ShapeLocaleOverride(lineHeightMultiple: 0.8)]]
+        )
+
+        let resolved = LocaleService.resolveShape(shape, localeState: state)
+
+        #expect(resolved.lineHeightMultiple == 0.8)
+        #expect(resolved.lineSpacing == 12)
+    }
+
     @Test func resolveShapeAppliesImageOverride() {
         var shape = CanvasShapeModel(type: .device, x: 0, y: 0, width: 200, height: 400, deviceCategory: .iphone)
         shape.screenshotFileName = "base-screenshot.png"
@@ -139,6 +153,25 @@ struct LocaleServiceTests {
         #expect(override?.fontSize == 20)
     }
 
+    @Test func splitUpdateStoresLineHeightMultipleOverrideForNonBaseLocale() {
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: [:]
+        )
+        let base = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello", fontSize: 24, lineSpacing: 10)
+        var updated = base
+        updated.lineHeightMultiple = 0.8
+        updated.lineSpacing = nil
+
+        let result = LocaleService.splitUpdate(base: base, updated: updated, localeState: &state)
+        let override = state.override(forCode: "fr", shapeId: base.id)
+
+        #expect(result.lineHeightMultiple == nil)
+        #expect(result.lineSpacing == 10)
+        #expect(override?.lineHeightMultiple == 0.8)
+    }
+
     @Test func splitUpdateClearsOverrideWhenValuesMatchBase() {
         var state = LocaleState(
             locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
@@ -147,7 +180,7 @@ struct LocaleServiceTests {
         )
         let base = CanvasShapeModel(type: .text, x: 100, y: 100, width: 300, height: 50, text: "Hello")
         // Updated matches base exactly — override should be nil
-        let result = LocaleService.splitUpdate(base: base, updated: base, localeState: &state)
+        _ = LocaleService.splitUpdate(base: base, updated: base, localeState: &state)
         let override = state.override(forCode: "fr", shapeId: base.id)
         #expect(override == nil, "No override needed when values match base")
     }

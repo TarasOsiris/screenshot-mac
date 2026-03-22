@@ -299,16 +299,21 @@ struct CanvasShapeView: View {
             } else {
                 let rawText = shape.text ?? ""
                 let showPlaceholder = showsEditorHelpers && rawText.isEmpty
-                let displayText = showPlaceholder ? "Text" : rawText
-                Text(displayText)
-                    .font(resolvedFont(size: shape.fontSize ?? 72, weight: fontWeight(shape.fontWeight ?? 700)))
-                    .italic(showPlaceholder ? true : (shape.italic ?? false))
-                    .textCase((shape.uppercase ?? false) ? .uppercase : nil)
-                    .tracking(shape.letterSpacing ?? 0)
-                    .lineSpacing(max(0, shape.lineSpacing ?? 0))
-                    .foregroundStyle(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
-                    .multilineTextAlignment(shape.textAlign.textAlignment)
-                    .frame(maxWidth: effectiveW, maxHeight: effectiveH, alignment: shape.resolvedFrameAlignment)
+                let fontSize = shape.fontSize ?? 72
+                let weight = fontWeight(shape.fontWeight ?? 700)
+                let isItalic = showPlaceholder ? true : (shape.italic ?? false)
+                let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight, italic: isItalic)
+                DisplayTextView(
+                    text: showPlaceholder ? "Text" : rawText,
+                    font: nsFont,
+                    color: NSColor(shape.color.opacity(showPlaceholder ? 0.4 : 1.0)),
+                    alignment: shape.textAlign.nsTextAlignment,
+                    verticalAlignment: shape.textVerticalAlign ?? .center,
+                    uppercase: shape.uppercase ?? false,
+                    letterSpacing: shape.letterSpacing,
+                    lineHeightMultiple: shape.lineHeightMultiple,
+                    legacyLineSpacing: shape.lineSpacing
+                )
                     .frame(width: effectiveW, height: effectiveH)
                     .scaleEffect(displayScale, anchor: .topLeading)
                     .frame(width: displayW, height: displayH, alignment: .topLeading)
@@ -856,13 +861,16 @@ struct CanvasShapeView: View {
     private var textEditor: some View {
         let fontSize = shape.fontSize ?? 72
         let weight = fontWeight(shape.fontWeight ?? 700)
-        let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight)
+        let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight, italic: shape.italic ?? false)
         return InlineTextEditor(
             text: $editingTextValue,
             font: nsFont,
             color: NSColor(shape.color),
             alignment: shape.textAlign.nsTextAlignment,
             uppercase: shape.uppercase ?? false,
+            letterSpacing: shape.letterSpacing,
+            lineHeightMultiple: shape.lineHeightMultiple,
+            legacyLineSpacing: shape.lineSpacing,
             onCommit: { commitTextEdit() }
         )
         .frame(width: effectiveW, height: effectiveH)
@@ -925,26 +933,27 @@ struct CanvasShapeView: View {
         return .system(size: size, weight: weight)
     }
 
-    private func resolvedNSFont(size: CGFloat, weight: NSFont.Weight) -> NSFont {
-        guard let name = customFontName else {
-            return NSFont.systemFont(ofSize: size, weight: weight)
-        }
-        let fm = NSFontManager.shared
-        let fmWeight = Self.fontManagerWeight(for: weight)
-        // Try exact weight
-        if let font = fm.font(withFamily: name, traits: [], weight: fmWeight, size: size) {
-            return font
-        }
-        // Font family exists but doesn't have the requested weight.
-        // Try regular weight (5), then apply bold trait if needed.
-        if let font = fm.font(withFamily: name, traits: [], weight: 5, size: size) {
-            if fmWeight >= 9 {
-                return fm.convert(font, toHaveTrait: .boldFontMask)
+    private func resolvedNSFont(size: CGFloat, weight: NSFont.Weight, italic: Bool = false) -> NSFont {
+        let baseFont: NSFont
+        if let name = customFontName {
+            let fm = NSFontManager.shared
+            let fmWeight = Self.fontManagerWeight(for: weight)
+            if let font = fm.font(withFamily: name, traits: [], weight: fmWeight, size: size) {
+                baseFont = font
+            } else if let font = fm.font(withFamily: name, traits: [], weight: 5, size: size) {
+                baseFont = fmWeight >= 9 ? fm.convert(font, toHaveTrait: .boldFontMask) : font
+            } else {
+                baseFont = CTFontCreateWithName(name as CFString, size, nil) as NSFont
             }
-            return font
+        } else {
+            baseFont = NSFont.systemFont(ofSize: size, weight: weight)
         }
-        // Last resort: CTFont with family name (picks the default face)
-        return CTFontCreateWithName(name as CFString, size, nil) as NSFont
+        return italicized(baseFont, italic: italic)
+    }
+
+    private func italicized(_ font: NSFont, italic: Bool) -> NSFont {
+        guard italic else { return font }
+        return NSFontManager.shared.convert(font, toHaveTrait: .italicFontMask)
     }
 
     /// Maps NSFont.Weight to the 0–15 integer scale used by NSFontManager,

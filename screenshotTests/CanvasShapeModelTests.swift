@@ -173,6 +173,35 @@ struct CanvasShapeModelTests {
         #expect(decoded.fillImageConfig == nil)
     }
 
+    @Test func lineHeightMultipleRoundTripsThroughCodable() throws {
+        let shape = CanvasShapeModel(
+            type: .text,
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            text: "Hello",
+            fontSize: 32,
+            lineHeightMultiple: 0.85
+        )
+
+        let data = try JSONEncoder().encode(shape)
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+
+        #expect(decoded.lineHeightMultiple == 0.85)
+        #expect(decoded.lineSpacing == nil)
+    }
+
+    @Test func lineHeightMultipleDefaultsToNilAfterDecode() throws {
+        let json = """
+        {"id":"00000000-0000-0000-0000-000000000001","t":"text","x":0,"y":0,"w":100,"h":100,"c":"#FFFFFF","txt":"Hello"}
+        """
+        let data = json.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+
+        #expect(decoded.lineHeightMultiple == nil)
+    }
+
     @Test func duplicatedPreservesFillProperties() {
         var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 100, height: 100)
         shape.fillStyle = .gradient

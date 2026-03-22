@@ -1,11 +1,50 @@
 import SwiftUI
 
+struct DisplayTextView: View {
+    var text: String
+    var font: NSFont
+    var color: NSColor
+    var alignment: NSTextAlignment
+    var verticalAlignment: TextVerticalAlign
+    var uppercase: Bool = false
+    var letterSpacing: CGFloat? = nil
+    var lineHeightMultiple: CGFloat? = nil
+    var legacyLineSpacing: CGFloat? = nil
+
+    var body: some View {
+        GeometryReader { proxy in
+            if let image = TextLayoutStyle.renderImage(
+                size: proxy.size,
+                text: text,
+                font: font,
+                color: color,
+                alignment: alignment,
+                verticalAlignment: verticalAlignment,
+                uppercase: uppercase,
+                letterSpacing: letterSpacing,
+                lineHeightMultiple: lineHeightMultiple,
+                legacyLineSpacing: legacyLineSpacing
+            ) {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+            } else {
+                Color.clear
+            }
+        }
+    }
+}
+
 struct InlineTextEditor: NSViewRepresentable {
     @Binding var text: String
     var font: NSFont
     var color: NSColor
     var alignment: NSTextAlignment
     var uppercase: Bool = false
+    var letterSpacing: CGFloat? = nil
+    var lineHeightMultiple: CGFloat? = nil
+    var legacyLineSpacing: CGFloat? = nil
     var onCommit: () -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -23,7 +62,6 @@ struct InlineTextEditor: NSViewRepresentable {
         textView.font = font
         textView.textColor = color
         textView.alignment = alignment
-        textView.string = uppercase ? text.uppercased() : text
         textView.delegate = context.coordinator
         textView.onCommit = onCommit
         textView.textContainerInset = .zero
@@ -31,6 +69,7 @@ struct InlineTextEditor: NSViewRepresentable {
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.textContainer?.widthTracksTextView = true
+        applyTextStyle(to: textView, preserveSelection: false)
         if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
 
         let scrollView = CenteringScrollView()
@@ -52,15 +91,45 @@ struct InlineTextEditor: NSViewRepresentable {
 
     func updateNSView(_ scrollView: CenteringScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
+        applyTextStyle(to: textView)
+        if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
+        scrollView.centerDocumentView()
+    }
+
+    private func applyTextStyle(to textView: NSTextView, preserveSelection: Bool = true) {
         let displayText = uppercase ? text.uppercased() : text
-        if textView.string != displayText {
+        let selectedRanges = textView.selectedRanges
+        let attributes = TextLayoutStyle.textAttributes(
+            font: font,
+            color: color,
+            alignment: alignment,
+            letterSpacing: letterSpacing,
+            includeBaselineOffset: false,
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing
+        )
+        let glyphPadding = TextLayoutStyle.editorVerticalPadding(
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing,
+            font: font
+        )
+
+        if let storage = textView.textStorage {
+            storage.setAttributedString(NSAttributedString(string: displayText, attributes: attributes))
+        } else {
             textView.string = displayText
         }
+
         textView.font = font
         textView.textColor = color
         textView.alignment = alignment
-        if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
-        scrollView.centerDocumentView()
+        textView.defaultParagraphStyle = attributes[.paragraphStyle] as? NSParagraphStyle
+        textView.typingAttributes = attributes
+        (textView as? CommitTextView)?.verticalGlyphPadding = glyphPadding
+
+        if preserveSelection {
+            textView.selectedRanges = selectedRanges
+        }
     }
 
     class Coordinator: NSObject, NSTextViewDelegate {
@@ -85,11 +154,115 @@ struct InlineTextEditor: NSViewRepresentable {
                 }
             }
             parent.text = textView.string
+            // typingAttributes ensure the next keystroke uses correct style;
+            // full restyling happens in updateNSView triggered by the binding change above.
+            textView.typingAttributes = TextLayoutStyle.textAttributes(
+                font: parent.font,
+                color: parent.color,
+                alignment: parent.alignment,
+                letterSpacing: parent.letterSpacing,
+                includeBaselineOffset: false,
+                lineHeightMultiple: parent.lineHeightMultiple,
+                legacyLineSpacing: parent.legacyLineSpacing
+            )
             if let scrollView = textView.enclosingScrollView as? CenteringScrollView {
                 if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
                 scrollView.centerDocumentView()
             }
         }
+    }
+}
+
+final class TextLayoutNSView: NSView {
+    private let textStorage = NSTextStorage()
+    private let layoutManager = NSLayoutManager()
+    private let textContainer = NSTextContainer(size: .zero)
+    private var verticalAlignment: TextVerticalAlign = .center
+    private var verticalGlyphPadding: CGFloat = 0
+
+    override var isFlipped: Bool { true }
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        commonInit()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    private func commonInit() {
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.clear.cgColor
+        textContainer.lineFragmentPadding = 0
+        textContainer.lineBreakMode = .byWordWrapping
+        layoutManager.addTextContainer(textContainer)
+        textStorage.addLayoutManager(layoutManager)
+    }
+
+    func configure(
+        text: String,
+        font: NSFont,
+        color: NSColor,
+        alignment: NSTextAlignment,
+        verticalAlignment: TextVerticalAlign,
+        uppercase: Bool,
+        letterSpacing: CGFloat?,
+        lineHeightMultiple: CGFloat?,
+        legacyLineSpacing: CGFloat?
+    ) {
+        self.verticalAlignment = verticalAlignment
+        self.verticalGlyphPadding = TextLayoutStyle.verticalGlyphPadding(
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing,
+            font: font
+        )
+        let displayText = uppercase ? text.uppercased() : text
+        let attributedText = NSAttributedString(
+            string: displayText,
+            attributes: TextLayoutStyle.textAttributes(
+                font: font,
+                color: color,
+                alignment: alignment,
+                letterSpacing: letterSpacing,
+                lineHeightMultiple: lineHeightMultiple,
+                legacyLineSpacing: legacyLineSpacing
+            )
+        )
+        if textStorage != attributedText {
+            textStorage.setAttributedString(attributedText)
+        }
+        needsDisplay = true
+    }
+
+    override func layout() {
+        super.layout()
+        textContainer.size = bounds.size
+        needsDisplay = true
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+
+        textContainer.size = bounds.size
+        layoutManager.ensureLayout(for: textContainer)
+        let glyphRange = layoutManager.glyphRange(for: textContainer)
+        let usedRect = layoutManager.usedRect(for: textContainer)
+        let paddedTextHeight = usedRect.height + (verticalGlyphPadding * 2)
+
+        let yOffset: CGFloat = switch verticalAlignment {
+        case .top:
+            verticalGlyphPadding
+        case .center:
+            max(0, (bounds.height - paddedTextHeight) / 2) + verticalGlyphPadding
+        case .bottom:
+            max(0, bounds.height - paddedTextHeight) + verticalGlyphPadding
+        }
+
+        let origin = NSPoint(x: 0, y: yOffset)
+        layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
+        layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
     }
 }
 
@@ -99,13 +272,20 @@ class CenteringScrollView: NSScrollView {
     func centerDocumentView() {
         guard let textView = centerTextView else { return }
         guard let tc = textView.textContainer else { return }
+        let glyphPadding = (textView as? CommitTextView)?.verticalGlyphPadding ?? 0
         let textHeight = textView.layoutManager?.usedRect(for: tc).height ?? 0
+        let paddedTextHeight = textHeight + glyphPadding
         let viewHeight = contentSize.height
-        if textHeight < viewHeight {
-            let topInset = (viewHeight - textHeight) / 2
+        let targetHeight = max(viewHeight, paddedTextHeight)
+        let targetSize = NSSize(width: contentSize.width, height: targetHeight)
+        if textView.frame.size != targetSize {
+            textView.setFrameSize(targetSize)
+        }
+        if paddedTextHeight < viewHeight {
+            let topInset = glyphPadding + ((viewHeight - paddedTextHeight) / 2)
             textView.textContainerInset = NSSize(width: 0, height: topInset)
         } else {
-            textView.textContainerInset = .zero
+            textView.textContainerInset = NSSize(width: 0, height: glyphPadding)
         }
     }
 
@@ -117,6 +297,7 @@ class CenteringScrollView: NSScrollView {
 
 private class CommitTextView: NSTextView {
     var onCommit: (() -> Void)?
+    var verticalGlyphPadding: CGFloat = 0
 
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 36 && !event.modifierFlags.contains(.shift) {

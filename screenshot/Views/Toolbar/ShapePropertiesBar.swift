@@ -16,6 +16,9 @@ struct ShapePropertiesBar: View {
     @State private var isTextPopoverPresented = false
     @State private var editingFontSize: String = ""
     @State private var isFontSizeFieldActive = false
+    @State private var editingLineHeight: String = ""
+    @State private var isLineHeightFieldActive = false
+    private static let lineHeightPresets: [Int] = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 175, 200]
 
     private var rowIndex: Int? { state.selectedRowIndex }
     private var shapeIndex: Int? {
@@ -394,6 +397,36 @@ struct ShapePropertiesBar: View {
         editingFontSize = "\(Int(clamped))"
     }
 
+    private func currentLineHeightString(for shapeId: UUID) -> String {
+        guard let i = idx(for: shapeId) else { return "\(Int(TextLayoutStyle.defaultLineHeightMultiple * 100))" }
+        let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+        let font = NSFont.systemFont(
+            ofSize: shape.fontSize ?? Self.defaultFontSize,
+            weight: nsFontWeight(shape.fontWeight ?? 400)
+        )
+        let multiple = TextLayoutStyle.effectiveLineHeightMultiple(
+            lineHeightMultiple: shape.lineHeightMultiple,
+            legacyLineSpacing: shape.lineSpacing,
+            font: font
+        )
+        return "\(Int((multiple * 100).rounded()))"
+    }
+
+    private func commitLineHeight(shapeId: UUID) {
+        isLineHeightFieldActive = false
+        guard let i = idx(for: shapeId) else { return }
+        guard let value = Int(editingLineHeight) else {
+            editingLineHeight = currentLineHeightString(for: shapeId)
+            return
+        }
+        let clamped = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        resolved.lineHeightMultiple = clamped
+        resolved.lineSpacing = nil
+        state.updateShape(resolved)
+        editingLineHeight = "\(Int((clamped * 100).rounded()))"
+    }
+
     private func triggerTranslation() {
         translationConfig.refresh(
             source: state.localeState.baseLocaleCode,
@@ -442,6 +475,45 @@ struct ShapePropertiesBar: View {
                 }
             }
         )
+    }
+
+    private func lineHeightBinding(_ shapeId: UUID) -> Binding<CGFloat> {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else {
+                    return TextLayoutStyle.defaultLineHeightMultiple
+                }
+                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+                let font = NSFont.systemFont(
+                    ofSize: shape.fontSize ?? Self.defaultFontSize,
+                    weight: nsFontWeight(shape.fontWeight ?? 400)
+                )
+                return TextLayoutStyle.effectiveLineHeightMultiple(
+                    lineHeightMultiple: shape.lineHeightMultiple,
+                    legacyLineSpacing: shape.lineSpacing,
+                    font: font
+                )
+            },
+            set: { newValue in
+                guard let i = idx(for: shapeId) else { return }
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(newValue)
+                resolved.lineSpacing = nil
+                state.updateShape(resolved)
+            }
+        )
+    }
+
+    private func nsFontWeight(_ weight: Int) -> NSFont.Weight {
+        switch weight {
+        case ...299: .thin
+        case 300...399: .light
+        case 400...499: .regular
+        case 500...599: .medium
+        case 600...699: .semibold
+        case 700...799: .bold
+        default: .heavy
+        }
     }
 
     // MARK: - Device Picker
@@ -788,17 +860,61 @@ struct ShapePropertiesBar: View {
                 }
             }
 
-            // Line spacing
-            LabeledContent("Line") {
-                let lineBinding = shapeBinding(shapeId, \.lineSpacing, default: 0)
-                HStack(spacing: 4) {
-                    Slider(value: lineBinding, in: 0...50)
-                        .frame(width: 120)
+            // Line height
+            LabeledContent("Line Height") {
+                HStack(spacing: 0) {
+                    TextField("", text: $editingLineHeight, onEditingChanged: { editing in
+                        if editing {
+                            isLineHeightFieldActive = true
+                        } else {
+                            commitLineHeight(shapeId: shapeId)
+                        }
+                    })
+                    .frame(width: 48)
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.center)
+                    .onAppear {
+                        editingLineHeight = currentLineHeightString(for: shapeId)
+                    }
+                    .onChange(of: shapeId) {
+                        isLineHeightFieldActive = false
+                        editingLineHeight = currentLineHeightString(for: shapeId)
+                    }
+                    .onChange(of: shape.lineHeightMultiple) {
+                        guard !isLineHeightFieldActive else { return }
+                        editingLineHeight = currentLineHeightString(for: shapeId)
+                    }
+                    .onChange(of: editingLineHeight) {
+                        guard isLineHeightFieldActive else { return }
+                        if let value = Int(editingLineHeight), let i = idx(for: shapeId) {
+                            var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                            resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
+                            resolved.lineSpacing = nil
+                            state.updateShapeContinuous(resolved)
+                        }
+                    }
 
-                    Text(verbatim: String(format: "%.1f", lineBinding.wrappedValue))
-                        .frame(width: 32, alignment: .trailing)
-                        .onTapGesture(count: 2) { lineBinding.wrappedValue = 0 }
-                        .help("Double-click to reset")
+                    Menu {
+                        ForEach(Self.lineHeightPresets, id: \.self) { preset in
+                            Button("\(preset)%") {
+                                editingLineHeight = "\(preset)"
+                                commitLineHeight(shapeId: shapeId)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 14, height: 20)
+                            .contentShape(Rectangle())
+                    }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+
+                    Text("%")
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 2)
                 }
             }
 
