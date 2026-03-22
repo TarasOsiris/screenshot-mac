@@ -241,14 +241,6 @@ struct CanvasShapeView: View {
             }
         }
         .offset(x: offsetX, y: offsetY)
-        .overlay {
-            if isSelected {
-                selectionOverlay
-                resizeHandles
-            } else if isHovered && showsEditorHelpers {
-                hoverOverlay
-            }
-        }
 
         if let cb = clipBounds {
             let aabbRect = CGRect(x: offsetX, y: offsetY, width: aabb.width, height: aabb.height)
@@ -268,10 +260,12 @@ struct CanvasShapeView: View {
                                 .frame(width: cb.width, height: cb.height)
                                 .position(x: cb.midX, y: cb.midY)
                         }
+                        .overlay { handlesContent }
                 }
             }
         } else {
             base
+                .overlay { handlesContent }
         }
     }
 
@@ -398,6 +392,16 @@ struct CanvasShapeView: View {
         }
         Button("Delete", role: .destructive) {
             onDelete()
+        }
+    }
+
+    @ViewBuilder
+    private var handlesContent: some View {
+        if isSelected {
+            selectionOverlay
+            resizeHandles
+        } else if isHovered && showsEditorHelpers {
+            hoverOverlay
         }
     }
 
