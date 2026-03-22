@@ -69,6 +69,7 @@ struct InlineTextEditor: NSViewRepresentable {
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.textContainer?.widthTracksTextView = true
+        textView.layoutManager?.delegate = context.coordinator.compactDelegate
         applyTextStyle(to: textView, preserveSelection: false)
         if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
 
@@ -97,6 +98,9 @@ struct InlineTextEditor: NSViewRepresentable {
     }
 
     private func applyTextStyle(to textView: NSTextView, preserveSelection: Bool = true) {
+        if let delegate = textView.layoutManager?.delegate as? CompactLineLayoutDelegate {
+            delegate.lineHeightMultiple = lineHeightMultiple ?? TextLayoutStyle.defaultLineHeightMultiple
+        }
         let displayText = uppercase ? text.uppercased() : text
         let selectedRanges = textView.selectedRanges
         let attributes = TextLayoutStyle.textAttributes(
@@ -134,6 +138,7 @@ struct InlineTextEditor: NSViewRepresentable {
 
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: InlineTextEditor
+        let compactDelegate = CompactLineLayoutDelegate()
 
         init(_ parent: InlineTextEditor) {
             self.parent = parent
@@ -177,6 +182,7 @@ final class TextLayoutNSView: NSView {
     private let textStorage = NSTextStorage()
     private let layoutManager = NSLayoutManager()
     private let textContainer = NSTextContainer(size: .zero)
+    private let compactDelegate = CompactLineLayoutDelegate()
     private var verticalAlignment: TextVerticalAlign = .center
     private var verticalGlyphPadding: CGFloat = 0
 
@@ -198,6 +204,7 @@ final class TextLayoutNSView: NSView {
         textContainer.lineFragmentPadding = 0
         textContainer.lineBreakMode = .byWordWrapping
         layoutManager.addTextContainer(textContainer)
+        layoutManager.delegate = compactDelegate
         textStorage.addLayoutManager(layoutManager)
     }
 
@@ -213,6 +220,7 @@ final class TextLayoutNSView: NSView {
         legacyLineSpacing: CGFloat?
     ) {
         self.verticalAlignment = verticalAlignment
+        compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
         self.verticalGlyphPadding = TextLayoutStyle.verticalGlyphPadding(
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,

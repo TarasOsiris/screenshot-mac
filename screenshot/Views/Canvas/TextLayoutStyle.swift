@@ -1,6 +1,40 @@
 import AppKit
 import Foundation
 
+/// Layout manager delegate that compresses line spacing for lineHeightMultiple < 1.0
+/// without clipping glyphs. Instead of setting paragraphStyle.lineHeightMultiple (which
+/// shrinks line fragment rects and clips ascenders), this delegate keeps full-height
+/// fragments and repositions them at the desired compressed y-positions.
+final class CompactLineLayoutDelegate: NSObject, NSLayoutManagerDelegate {
+    var lineHeightMultiple: CGFloat = 1.0
+
+    func layoutManager(
+        _ layoutManager: NSLayoutManager,
+        shouldSetLineFragmentRect lineFragmentRect: UnsafeMutablePointer<NSRect>,
+        lineFragmentUsedRect: UnsafeMutablePointer<NSRect>,
+        baselineOffset: UnsafeMutablePointer<CGFloat>,
+        in textContainer: NSTextContainer,
+        forGlyphRange glyphRange: NSRange
+    ) -> Bool {
+        guard lineHeightMultiple < 1.0 else { return false }
+
+        let naturalHeight = lineFragmentRect.pointee.height
+        guard naturalHeight > 0 else { return false }
+
+        // Assumes uniform line height (single font per shape). If mixed font sizes
+        // are ever supported, this derivation would need per-line tracking.
+        let lineIndex = Int(round(lineFragmentRect.pointee.origin.y / naturalHeight))
+        let desiredSpacing = naturalHeight * lineHeightMultiple
+        let desiredY = CGFloat(lineIndex) * desiredSpacing
+        let delta = desiredY - lineFragmentRect.pointee.origin.y
+
+        lineFragmentRect.pointee.origin.y += delta
+        lineFragmentUsedRect.pointee.origin.y += delta
+
+        return true
+    }
+}
+
 enum TextLayoutStyle {
     static let defaultLineHeightMultiple: CGFloat = 1.0
     static let lineHeightRange: ClosedRange<CGFloat> = 0.5...2.0
@@ -52,6 +86,9 @@ enum TextLayoutStyle {
 
         let effectiveLineHeight: CGFloat
         if let lineHeightMultiple {
+            // For < 1.0, CompactLineLayoutDelegate keeps full-height line fragments,
+            // so no glyph padding is needed.
+            guard lineHeightMultiple >= 1.0 else { return 0 }
             effectiveLineHeight = defaultLineHeight * clampLineHeightMultiple(lineHeightMultiple)
         } else {
             effectiveLineHeight = defaultLineHeight + (legacyLineSpacing ?? 0)
@@ -97,7 +134,12 @@ enum TextLayoutStyle {
         let style = NSMutableParagraphStyle()
         style.alignment = alignment
         if let lineHeightMultiple {
-            style.lineHeightMultiple = max(0.01, lineHeightMultiple)
+            // For < 1.0, don't set lineHeightMultiple on the paragraph style — it shrinks
+            // line fragment rects and causes glyph clipping. CompactLineLayoutDelegate
+            // handles the compressed positioning instead.
+            if lineHeightMultiple >= 1.0 {
+                style.lineHeightMultiple = lineHeightMultiple
+            }
         } else if let legacyLineSpacing {
             style.lineSpacing = legacyLineSpacing
         }
