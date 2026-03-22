@@ -12,6 +12,7 @@ struct ShapePropertiesBar: View {
     @State private var isFillPopoverPresented = false
     @State private var translationConfig: TranslationSession.Configuration?
     @State private var isTranslating = false
+    @State private var isTextPopoverPresented = false
 
     private var rowIndex: Int? { state.selectedRowIndex }
     private var shapeIndex: Int? {
@@ -77,6 +78,7 @@ struct ShapePropertiesBar: View {
             let shape = resolvedShape(at: rowIndex, shapeIdx: shapeIdx)
             let shapeId = shape.id
 
+            HStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     shapeBadge(shape)
@@ -247,105 +249,11 @@ struct ShapePropertiesBar: View {
                     // Text properties
                     if shape.type == .text {
                         section {
-                            FontPicker(
-                                selection: shapeBinding(shapeId, \.fontName, default: ""),
-                                customFonts: state.customFonts,
-                                onImportFont: { url in state.importCustomFont(from: url) }
-                            )
-
-                            separator
-
-                            controlGroup("Size") {
-                                Slider(value: shapeBinding(shapeId, \.fontSize, default: Self.defaultFontSize), in: Self.fontSizeRange)
-                                    .frame(width: 70)
-                                TextField("", value: Binding(
-                                    get: {
-                                        guard let i = idx(for: shapeId) else { return Int(Self.defaultFontSize) }
-                                        return Int(resolvedShape(at: i.row, shapeIdx: i.shape).fontSize ?? Self.defaultFontSize)
-                                    },
-                                    set: { newValue in
-                                        let clamped = min(max(CGFloat(newValue), Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
-                                        guard let i = idx(for: shapeId) else { return }
-                                        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                                        resolved.fontSize = clamped
-                                        state.updateShape(resolved)
-                                    }
-                                ), format: .number)
-                                .frame(width: 40)
-                                .textFieldStyle(.roundedBorder)
-                                .multilineTextAlignment(.center)
-                            }
-
-                            separator
-
-                            Picker("", selection: shapeBinding(shapeId, \.fontWeight, default: 400)) {
-                                Text("Light").tag(300)
-                                Text("Regular").tag(400)
-                                Text("Medium").tag(500)
-                                Text("Bold").tag(700)
-                            }
-                            .labelsHidden()
-                            .frame(width: 90)
-
-                            Picker("", selection: shapeBinding(shapeId, \.textAlign, default: .center)) {
-                                Image(systemName: "text.alignleft").tag(TextAlign.left)
-                                Image(systemName: "text.aligncenter").tag(TextAlign.center)
-                                Image(systemName: "text.alignright").tag(TextAlign.right)
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                            .frame(width: 90)
-                            .help("Horizontal alignment")
-
-                            Picker("", selection: shapeBinding(shapeId, \.textVerticalAlign, default: .center)) {
-                                Image(systemName: "arrow.up.to.line").tag(TextVerticalAlign.top)
-                                Image(systemName: "arrow.up.and.down").tag(TextVerticalAlign.center)
-                                Image(systemName: "arrow.down.to.line").tag(TextVerticalAlign.bottom)
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                            .frame(width: 90)
-                            .help("Vertical alignment")
-
-                            Toggle("Italic", isOn: shapeBinding(shapeId, \.italic, default: false))
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
-                                .help("Italic")
-
-                            Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
-                                .help("Uppercase")
+                            textPopoverButton(shape: shape, shapeId: shapeId)
                         }
 
-                        section {
-                            controlGroup("Tracking") {
-                                let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0)
-                                Slider(value: trackingBinding, in: -5...30)
-                                    .frame(width: 70)
-
-                                Text(verbatim: String(format: "%.1f", trackingBinding.wrappedValue))
-                                    .frame(width: 32, alignment: .trailing)
-                                    .onTapGesture(count: 2) { trackingBinding.wrappedValue = 0 }
-                                    .help("Double-click to reset")
-                            }
-
-                            separator
-
-                            controlGroup("Line") {
-                                let lineBinding = shapeBinding(shapeId, \.lineSpacing, default: 0)
-                                Slider(value: lineBinding, in: 0...50)
-                                    .frame(width: 70)
-
-                                Text(verbatim: String(format: "%.1f", lineBinding.wrappedValue))
-                                    .frame(width: 32, alignment: .trailing)
-                                    .onTapGesture(count: 2) { lineBinding.wrappedValue = 0 }
-                                    .help("Double-click to reset")
-                            }
-
-                            if !state.localeState.isBaseLocale {
-                                separator
-
+                        if !state.localeState.isBaseLocale {
+                            section {
                                 Button {
                                     triggerTranslation()
                                 } label: {
@@ -391,20 +299,26 @@ struct ShapePropertiesBar: View {
                         }
                     }
 
-                    Button {
-                        state.selectedShapeIds = []
-                    } label: {
-                        Label("Done", systemImage: "checkmark")
-                    }
-                    .buttonStyle(.bordered)
-                    .help("Deselect shape (Esc)")
                 }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.vertical, 4)
+            }
+
+            Spacer(minLength: 0)
+
+            ActionButton(icon: "xmark", tooltip: "Deselect shape (Esc)", frameSize: 24) {
+                state.selectedShapeIds = []
+            }
+            .padding(.trailing, 8)
             }
             .font(.system(size: 11))
             .controlSize(.small)
             .background(.bar)
+            .onChange(of: state.pendingTranslateShapeId) { _, newValue in
+                if newValue != nil {
+                    triggerTranslation()
+                }
+            }
             .fileImporter(isPresented: $isReplacingImage, allowedContentTypes: [.image]) { result in
                 if case .success(let url) = result,
                    let image = NSImage.fromSecurityScopedURL(url) {
@@ -429,8 +343,10 @@ struct ShapePropertiesBar: View {
                 }
             }
             .translationTask(translationConfig) { session in
+                let targetShapeId = state.pendingTranslateShapeId ?? state.selectedShapeId
+                defer { state.pendingTranslateShapeId = nil }
                 guard let ri = state.selectedRowIndex,
-                      let shapeId = state.selectedShapeId,
+                      let shapeId = targetShapeId,
                       let si = state.rows[ri].shapes.firstIndex(where: { $0.id == shapeId })
                 else { return }
                 let baseShape = state.rows[ri].shapes[si]
@@ -671,6 +587,162 @@ struct ShapePropertiesBar: View {
         )
     }
 
+    // MARK: - Text Popover
+
+    @ViewBuilder
+    private func textPopoverButton(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        Button {
+            isTextPopoverPresented.toggle()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "textformat")
+                Text(textPopoverSummary(shape: shape))
+                    .lineLimit(1)
+            }
+        }
+        .buttonStyle(.borderless)
+        .help("Text properties")
+        .popover(isPresented: $isTextPopoverPresented, arrowEdge: .top) {
+            textPopoverContent(shape: shape, shapeId: shapeId)
+                .padding(12)
+                .frame(width: 280)
+        }
+    }
+
+    private func textPopoverSummary(shape: CanvasShapeModel) -> String {
+        let fontName = shape.fontName?.isEmpty == false ? shape.fontName! : "System"
+        let size = Int(shape.fontSize ?? Self.defaultFontSize)
+        let weight: String
+        switch shape.fontWeight ?? 400 {
+        case 300: weight = "Light"
+        case 500: weight = "Medium"
+        case 700: weight = "Bold"
+        default: weight = "Regular"
+        }
+        return "\(fontName) \(size) \(weight)"
+    }
+
+    @ViewBuilder
+    private func textPopoverContent(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Font
+            LabeledContent("Font") {
+                FontPicker(
+                    selection: shapeBinding(shapeId, \.fontName, default: ""),
+                    customFonts: state.customFonts,
+                    onImportFont: { url in state.importCustomFont(from: url) }
+                )
+            }
+
+            // Size
+            LabeledContent("Size") {
+                HStack(spacing: 4) {
+                    Slider(value: shapeBinding(shapeId, \.fontSize, default: Self.defaultFontSize), in: Self.fontSizeRange)
+                        .frame(width: 120)
+                    TextField("", value: Binding(
+                        get: {
+                            guard let i = idx(for: shapeId) else { return Int(Self.defaultFontSize) }
+                            return Int(resolvedShape(at: i.row, shapeIdx: i.shape).fontSize ?? Self.defaultFontSize)
+                        },
+                        set: { newValue in
+                            let clamped = min(max(CGFloat(newValue), Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
+                            guard let i = idx(for: shapeId) else { return }
+                            var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                            resolved.fontSize = clamped
+                            state.updateShape(resolved)
+                        }
+                    ), format: .number)
+                    .frame(width: 40)
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.center)
+                }
+            }
+
+            // Weight
+            LabeledContent("Weight") {
+                Picker("", selection: shapeBinding(shapeId, \.fontWeight, default: 400)) {
+                    Text("Light").tag(300)
+                    Text("Regular").tag(400)
+                    Text("Medium").tag(500)
+                    Text("Bold").tag(700)
+                }
+                .labelsHidden()
+                .frame(width: 100)
+            }
+
+            Divider()
+
+            // Alignment
+            LabeledContent("Align") {
+                HStack(spacing: 8) {
+                    Picker("", selection: shapeBinding(shapeId, \.textAlign, default: .center)) {
+                        Image(systemName: "text.alignleft").tag(TextAlign.left)
+                        Image(systemName: "text.aligncenter").tag(TextAlign.center)
+                        Image(systemName: "text.alignright").tag(TextAlign.right)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 90)
+                    .help("Horizontal alignment")
+
+                    Picker("", selection: shapeBinding(shapeId, \.textVerticalAlign, default: .center)) {
+                        Image(systemName: "arrow.up.to.line").tag(TextVerticalAlign.top)
+                        Image(systemName: "arrow.up.and.down").tag(TextVerticalAlign.center)
+                        Image(systemName: "arrow.down.to.line").tag(TextVerticalAlign.bottom)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 90)
+                    .help("Vertical alignment")
+                }
+            }
+
+            // Style toggles
+            HStack(spacing: 12) {
+                Toggle("Italic", isOn: shapeBinding(shapeId, \.italic, default: false))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+
+                Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+            }
+
+            Divider()
+
+            // Tracking
+            LabeledContent("Tracking") {
+                let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0)
+                HStack(spacing: 4) {
+                    Slider(value: trackingBinding, in: -5...30)
+                        .frame(width: 120)
+
+                    Text(verbatim: String(format: "%.1f", trackingBinding.wrappedValue))
+                        .frame(width: 32, alignment: .trailing)
+                        .onTapGesture(count: 2) { trackingBinding.wrappedValue = 0 }
+                        .help("Double-click to reset")
+                }
+            }
+
+            // Line spacing
+            LabeledContent("Line") {
+                let lineBinding = shapeBinding(shapeId, \.lineSpacing, default: 0)
+                HStack(spacing: 4) {
+                    Slider(value: lineBinding, in: 0...50)
+                        .frame(width: 120)
+
+                    Text(verbatim: String(format: "%.1f", lineBinding.wrappedValue))
+                        .frame(width: 32, alignment: .trailing)
+                        .onTapGesture(count: 2) { lineBinding.wrappedValue = 0 }
+                        .help("Double-click to reset")
+                }
+            }
+
+        }
+        .font(.system(size: 11))
+        .controlSize(.small)
+    }
+
     private var separator: some View {
         Rectangle()
             .fill(.separator)
@@ -780,6 +852,7 @@ struct ShapePropertiesBar: View {
         let count = shapes.count
         let commonType = shapes.dropFirst().allSatisfy({ $0.type == shapes.first?.type }) ? shapes.first?.type : nil
 
+        HStack(spacing: 0) {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 // Badge
@@ -835,17 +908,17 @@ struct ShapePropertiesBar: View {
                         }
                     }
                 }
-
-                Button {
-                    state.selectedShapeIds = []
-                } label: {
-                    Label("Done", systemImage: "checkmark")
-                }
-                .buttonStyle(.bordered)
-                .help("Deselect all (Esc)")
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.vertical, 4)
+        }
+
+        Spacer(minLength: 0)
+
+        ActionButton(icon: "xmark", tooltip: "Deselect all (Esc)", frameSize: 24) {
+            state.selectedShapeIds = []
+        }
+        .padding(.trailing, 8)
         }
         .font(.system(size: 11))
         .controlSize(.small)

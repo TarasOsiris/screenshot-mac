@@ -115,6 +115,13 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: state.hasSelection)
+        .onExitCommand {
+            if state.hasSelection {
+                state.selectedShapeIds = []
+            } else if state.selectedRowId != nil {
+                state.deselectAll()
+            }
+        }
         .overlay {
             if !state.localeState.isBaseLocale {
                 Rectangle()

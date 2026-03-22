@@ -474,6 +474,8 @@ struct EditorRowView: View {
     @ViewBuilder
     private func canvasView(dw: CGFloat, dh: CGFloat, ds: CGFloat) -> some View {
         let resolvedShapes = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
+        let isNonBaseLocale = !state.localeState.isBaseLocale
+        let currentLocaleName: String? = isNonBaseLocale ? state.localeState.activeLocaleLabel : nil
         ZStack(alignment: .topLeading) {
             backgroundLayer(dw: dw, dh: dh)
 
@@ -559,6 +561,10 @@ struct EditorRowView: View {
                             other.height = shape.height
                         }
                     } : nil,
+                    onTranslate: (shape.type == .text && isNonBaseLocale) ? {
+                        state.pendingTranslateShapeId = shape.id
+                    } : nil,
+                    translateLocaleName: currentLocaleName,
                     availableFontFamilies: state.availableFontFamilySet
                 )
             }

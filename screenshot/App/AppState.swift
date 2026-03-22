@@ -18,6 +18,7 @@ final class AppState {
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
     @ObservationIgnored var justAddedShapeId: UUID?
+    var pendingTranslateShapeId: UUID?
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: String] = [:]  // fileName → familyName
     /// Cached set of all available font family names for O(1) lookups during rendering.

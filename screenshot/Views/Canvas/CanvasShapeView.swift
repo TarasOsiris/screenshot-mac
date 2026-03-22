@@ -29,6 +29,8 @@ struct CanvasShapeView: View {
     var onDidAppearAfterAdd: (() -> Void)?
     var onEditingTextChanged: ((Bool) -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
+    var onTranslate: (() -> Void)?
+    var translateLocaleName: String?
     var availableFontFamilies: Set<String> = []
 
     @State private var addBumpScale: CGFloat = 1.0
@@ -191,6 +193,11 @@ struct CanvasShapeView: View {
                     }
                 )
                 .contextMenu { shapeContextMenu }
+
+            if isSelected {
+                handlesContent
+                    .zIndex(99)
+            }
         } else {
             svgAware
                 .allowsHitTesting(false)
@@ -241,6 +248,11 @@ struct CanvasShapeView: View {
             }
         }
         .offset(x: offsetX, y: offsetY)
+        .overlay {
+            if !isSelected && isHovered && showsEditorHelpers {
+                hoverOverlay
+            }
+        }
 
         if let cb = clipBounds {
             let aabbRect = CGRect(x: offsetX, y: offsetY, width: aabb.width, height: aabb.height)
@@ -260,12 +272,10 @@ struct CanvasShapeView: View {
                                 .frame(width: cb.width, height: cb.height)
                                 .position(x: cb.midX, y: cb.midY)
                         }
-                        .overlay { handlesContent }
                 }
             }
         } else {
             base
-                .overlay { handlesContent }
         }
     }
 
@@ -369,7 +379,7 @@ struct CanvasShapeView: View {
             Divider()
         }
         if shape.type == .device {
-            Menu("Device") {
+            Menu("Change Device") {
                 DeviceMenuContent(
                     onSelectCategory: { category in
                         var updated = shape
@@ -390,6 +400,13 @@ struct CanvasShapeView: View {
             }
             Divider()
         }
+        if shape.type == .text, let onTranslate, let localeName = translateLocaleName {
+            Button("Translate into \(localeName)") {
+                onTranslate()
+            }
+            .disabled((shape.text ?? "").isEmpty)
+            Divider()
+        }
         Button("Delete", role: .destructive) {
             onDelete()
         }
@@ -400,8 +417,6 @@ struct CanvasShapeView: View {
         if isSelected {
             selectionOverlay
             resizeHandles
-        } else if isHovered && showsEditorHelpers {
-            hoverOverlay
         }
     }
 
