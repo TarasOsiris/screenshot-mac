@@ -112,6 +112,22 @@ extension AppState {
         saveAll()
     }
 
+    func resetProjectFromTemplate(_ id: UUID, template: ProjectTemplate) {
+        guard id == activeProjectId else { return }
+        undoManager?.removeAllActions()
+        cancelPendingDebounceTasks()
+        unregisterCustomFonts()
+        screenshotImages.removeAll()
+
+        // Replace project contents with template data
+        PersistenceService.copyProjectFromURL(template.url, to: id)
+
+        // Reload from disk (font registration before row load, matching switchToProject order)
+        loadCustomFonts()
+        loadRowsForProject(id)
+        loadScreenshotImages()
+    }
+
     func deleteProject(_ id: UUID) {
         guard let idx = projects.firstIndex(where: { $0.id == id }) else { return }
         projects[idx].markDeleted()

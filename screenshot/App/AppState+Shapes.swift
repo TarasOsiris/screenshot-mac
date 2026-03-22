@@ -29,6 +29,67 @@ extension AppState {
         scheduleSave()
     }
 
+    private static let continuousEditInterval: CFAbsoluteTime = 1.0 / 30
+
+    /// Update shape without registering undo on every call — undo is captured once
+    /// at the start and finalized after changes stop (debounced). Throttled to ~30fps
+    /// to avoid expensive re-renders on every slider tick.
+    func updateShapeContinuous(_ shape: CanvasShapeModel) {
+        if continuousEditBaseRows == nil {
+            continuousEditBaseRows = rows
+            continuousEditBaseLocaleState = localeState
+        }
+
+        let now = CFAbsoluteTimeGetCurrent()
+        let interval = Self.continuousEditInterval
+
+        if now - continuousEditLastApply >= interval {
+            applyContinuousEdit(shape)
+            continuousEditLastApply = now
+            flushPendingContinuousEdit()
+        } else {
+            continuousEditPending = shape
+            if continuousEditFlushTask == nil {
+                let task = DispatchWorkItem { [weak self] in
+                    guard let self else { return }
+                    self.flushPendingContinuousEdit()
+                }
+                continuousEditFlushTask = task
+                let delay = interval - (now - continuousEditLastApply)
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: task)
+            }
+        }
+
+        // Debounced undo registration
+        continuousEditUndoTask?.cancel()
+        let undoTask = DispatchWorkItem { [weak self] in
+            guard let self, let base = self.continuousEditBaseRows else { return }
+            self.flushPendingContinuousEdit()
+            self.registerUndoWithBase("Edit Shape", base: base, baseLocaleState: self.continuousEditBaseLocaleState)
+            self.continuousEditBaseRows = nil
+            self.continuousEditBaseLocaleState = nil
+        }
+        continuousEditUndoTask = undoTask
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: undoTask)
+    }
+
+    private func flushPendingContinuousEdit() {
+        guard let pending = continuousEditPending else { return }
+        applyContinuousEdit(pending)
+        continuousEditPending = nil
+        continuousEditFlushTask?.cancel()
+        continuousEditFlushTask = nil
+        continuousEditLastApply = CFAbsoluteTimeGetCurrent()
+    }
+
+    private func applyContinuousEdit(_ shape: CanvasShapeModel) {
+        guard let rowIdx = selectedRowIndex,
+              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shape.id }) else { return }
+        let baseShape = rows[rowIdx].shapes[shapeIdx]
+        rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
+        scheduleSave()
+    }
+
     func deleteAllShapes(ofType type: ShapeType, in rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
         let matching = rows[idx].shapes.filter { $0.type == type }

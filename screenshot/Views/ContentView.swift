@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var dialogText = ""
     @State private var isDeletingProject = false
     @State private var isResettingProject = false
+    @State private var resetTemplate: ProjectTemplate?
     @State private var projectTemplates: [ProjectTemplate] = TemplateService.availableTemplates()
     @State private var gestureZoomStartLevel: CGFloat?
     @State private var editorViewportHeight: CGFloat = 0
@@ -204,15 +205,24 @@ struct ContentView: View {
         } message: {
             Text(exportError ?? "")
         }
-        .alert("Reset Project", isPresented: $isResettingProject) {
+        .alert(resetTemplate != nil ? "Reset Project from Template" : "Reset Project", isPresented: $isResettingProject) {
             Button("Reset", role: .destructive) {
                 if let id = state.activeProjectId {
-                    state.resetProject(id)
+                    if let template = resetTemplate {
+                        state.resetProjectFromTemplate(id, template: template)
+                        resetTemplate = nil
+                    } else {
+                        state.resetProject(id)
+                    }
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) { resetTemplate = nil }
         } message: {
-            Text("Are you sure you want to reset \"\(state.activeProject?.name ?? "")\"? All rows and shapes will be removed. This cannot be undone.")
+            if let template = resetTemplate {
+                Text("Are you sure you want to reset \"\(state.activeProject?.name ?? "")\" using the \"\(template.name)\" template? All current rows and shapes will be replaced. This cannot be undone.")
+            } else {
+                Text("Are you sure you want to reset \"\(state.activeProject?.name ?? "")\"? All rows and shapes will be removed. This cannot be undone.")
+            }
         }
         .alert("Delete Project", isPresented: $isDeletingProject) {
             Button("Delete", role: .destructive) {
@@ -328,6 +338,8 @@ struct ContentView: View {
             }
             .disabled(state.activeProjectId == nil)
 
+            resetFromTemplateMenu
+
             Button("Delete Project...", role: .destructive) {
                 if confirmBeforeDeleting {
                     isDeletingProject = true
@@ -336,6 +348,36 @@ struct ContentView: View {
                 }
             }
             .disabled(state.activeProjectId == nil || state.visibleProjects.count <= 1)
+        }
+    }
+
+    @ViewBuilder
+    private var resetFromTemplateMenu: some View {
+        if !projectTemplates.isEmpty {
+            Menu("Reset Project from Template") {
+                ForEach(projectTemplates) { template in
+                    Button {
+                        resetTemplate = template
+                        if confirmBeforeDeleting {
+                            isResettingProject = true
+                        } else if let id = state.activeProjectId {
+                            state.resetProjectFromTemplate(id, template: template)
+                            resetTemplate = nil
+                        }
+                    } label: {
+                        Label {
+                            Text(template.name)
+                        } icon: {
+                            if let nsImage = template.previewImage {
+                                Image(nsImage: nsImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                            }
+                        }
+                    }
+                }
+            }
+            .disabled(state.activeProjectId == nil)
         }
     }
 

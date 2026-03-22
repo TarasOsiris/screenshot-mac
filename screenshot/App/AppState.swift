@@ -38,18 +38,24 @@ final class AppState {
     /// Tracks when the active project data was last saved/loaded, for merge decisions.
     @ObservationIgnored var activeProjectDataModifiedAt: Date?
 
-    var saveTask: DispatchWorkItem?
+    @ObservationIgnored var saveTask: DispatchWorkItem?
     @ObservationIgnored var imageLoadTask: Task<Void, Never>?
     var isLoadingImages = false
 
     // Debounce state for undo grouping
-    var translationUndoTask: DispatchWorkItem?
-    var translationBaseLocaleState: LocaleState?
-    var baseTextUndoTask: DispatchWorkItem?
-    var baseTextBaseRows: [ScreenshotRow]?
-    var nudgeUndoTask: DispatchWorkItem?
-    var nudgeBaseRows: [ScreenshotRow]?
-    var zoomPersistTask: DispatchWorkItem?
+    @ObservationIgnored var translationUndoTask: DispatchWorkItem?
+    @ObservationIgnored var translationBaseLocaleState: LocaleState?
+    @ObservationIgnored var baseTextUndoTask: DispatchWorkItem?
+    @ObservationIgnored var baseTextBaseRows: [ScreenshotRow]?
+    @ObservationIgnored var nudgeUndoTask: DispatchWorkItem?
+    @ObservationIgnored var nudgeBaseRows: [ScreenshotRow]?
+    @ObservationIgnored var continuousEditUndoTask: DispatchWorkItem?
+    @ObservationIgnored var continuousEditBaseRows: [ScreenshotRow]?
+    @ObservationIgnored var continuousEditBaseLocaleState: LocaleState?
+    @ObservationIgnored var continuousEditLastApply: CFAbsoluteTime = 0
+    @ObservationIgnored var continuousEditPending: CanvasShapeModel?
+    @ObservationIgnored var continuousEditFlushTask: DispatchWorkItem?
+    @ObservationIgnored var zoomPersistTask: DispatchWorkItem?
 
     /// Single-selection convenience: returns the sole selected shape ID, or nil.
     var selectedShapeId: UUID? {
@@ -139,127 +145,7 @@ final class AppState {
         undoManager.setActionName(actionName)
     }
 
-    // MARK: - Zoom
-
-    func setZoomLevel(_ level: CGFloat, animated: Bool = true) {
-        let clamped = min(ZoomConstants.max, max(ZoomConstants.min, level))
-        guard clamped != zoomLevel else { return }
-        if animated {
-            withAnimation(.smooth(duration: 0.3)) {
-                zoomLevel = clamped
-            }
-        } else {
-            zoomLevel = clamped
-        }
-        zoomPersistTask?.cancel()
-        let task = DispatchWorkItem {
-            UserDefaults.standard.set(clamped, forKey: "lastZoomLevel")
-        }
-        zoomPersistTask = task
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
-    }
-
-    func zoomIn() {
-        setZoomLevel(zoomLevel + ZoomConstants.step)
-    }
-
-    func zoomOut() {
-        setZoomLevel(zoomLevel - ZoomConstants.step)
-    }
-
-    func resetZoom() {
-        let defaultLevel = UserDefaults.standard.double(forKey: "defaultZoomLevel")
-        setZoomLevel(defaultLevel > 0 ? defaultLevel : 1.0)
-        zoomPersistTask?.cancel()
-        UserDefaults.standard.removeObject(forKey: "lastZoomLevel")
-    }
-
-    // MARK: - Selection
-
-    func selectRow(_ id: UUID?) {
-        guard let id else {
-            deselectAll()
-            return
-        }
-        guard rows.contains(where: { $0.id == id }) else { return }
-        let rowChanged = selectedRowId != id
-        selectedRowId = id
-        selectedShapeIds = []
-        if rowChanged {
-            visibleCanvasModelCenter = nil
-        }
-    }
-
-    func selectShape(_ shapeId: UUID, in rowId: UUID) {
-        guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
-              rows[rowIdx].shapes.contains(where: { $0.id == shapeId }) else { return }
-        selectedRowId = rowId
-        selectedShapeIds = [shapeId]
-    }
-
-    func toggleShapeSelection(_ shapeId: UUID, in rowId: UUID) {
-        guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
-              rows[rowIdx].shapes.contains(where: { $0.id == shapeId }) else { return }
-        // Different row → switch row and select just this shape
-        if selectedRowId != rowId {
-            selectedRowId = rowId
-            selectedShapeIds = [shapeId]
-            visibleCanvasModelCenter = nil
-            return
-        }
-        if isEditingText {
-            isEditingText = false
-        }
-        if selectedShapeIds.contains(shapeId) {
-            selectedShapeIds.remove(shapeId)
-        } else {
-            selectedShapeIds.insert(shapeId)
-        }
-    }
-
-    func selectAllShapesInRow() {
-        guard let rowIdx = selectedRowIndex else { return }
-        selectedShapeIds = Set(rows[rowIdx].activeShapes.map(\.id))
-    }
-
-    func deselectAll() {
-        selectedShapeIds = []
-        selectedRowId = nil
-        isEditingText = false
-    }
-
-    /// Scroll to center the selected shape(s) on screen.
-    func focusOnSelection() {
-        guard let rowId = selectedRowId,
-              !selectedShapeIds.isEmpty else { return }
-        guard rows.contains(where: { $0.id == rowId }) else { return }
-        canvasFocusAnimated = false
-        canvasFocusRowId = rowId
-        canvasFocusRequestNonce += 1
-        focusShapeId = selectedShapeIds.first
-        focusRequestNonce += 1
-    }
-
     // MARK: - Helpers
-
-    func normalizeSelection() {
-        if let selectedRowId, !rows.contains(where: { $0.id == selectedRowId }) {
-            self.selectedRowId = rows.first?.id
-        }
-
-        if !selectedShapeIds.isEmpty {
-            guard let rowIdx = selectedRowIndex else {
-                selectedShapeIds = []
-                isEditingText = false
-                return
-            }
-            let existingIds = Set(rows[rowIdx].shapes.map(\.id))
-            selectedShapeIds = selectedShapeIds.intersection(existingIds)
-            if selectedShapeIds.isEmpty {
-                isEditingText = false
-            }
-        }
-    }
 
     func shapeLocation(for shapeId: UUID) -> (rowIndex: Int, shapeIndex: Int)? {
         for rowIndex in rows.indices {
@@ -283,6 +169,16 @@ final class AppState {
         nudgeUndoTask?.cancel()
         nudgeUndoTask = nil
         nudgeBaseRows = nil
+        baseTextUndoTask?.cancel()
+        baseTextUndoTask = nil
+        baseTextBaseRows = nil
+        continuousEditUndoTask?.cancel()
+        continuousEditUndoTask = nil
+        continuousEditBaseRows = nil
+        continuousEditBaseLocaleState = nil
+        continuousEditFlushTask?.cancel()
+        continuousEditFlushTask = nil
+        continuousEditPending = nil
     }
 
     func makeDefaultRow(id: UUID = UUID(), label: String? = nil, width: CGFloat? = nil, height: CGFloat? = nil) -> ScreenshotRow {

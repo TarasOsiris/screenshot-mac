@@ -400,13 +400,56 @@ struct CanvasShapeView: View {
             }
             Divider()
         }
-        if shape.type == .text, let onTranslate, let localeName = translateLocaleName {
-            Button("Translate into \(localeName)") {
-                onTranslate()
+        if shape.type == .text {
+            Picker("Align", selection: Binding(
+                get: { shape.textAlign ?? .center },
+                set: { var updated = shape; updated.textAlign = $0; onUpdate(updated) }
+            )) {
+                Label("Left", systemImage: "text.alignleft").tag(TextAlign.left)
+                Label("Center", systemImage: "text.aligncenter").tag(TextAlign.center)
+                Label("Right", systemImage: "text.alignright").tag(TextAlign.right)
             }
-            .disabled((shape.text ?? "").isEmpty)
+            Toggle("Italic", isOn: Binding(
+                get: { shape.italic ?? false },
+                set: { var updated = shape; updated.italic = $0; onUpdate(updated) }
+            ))
+            Toggle("Uppercase", isOn: Binding(
+                get: { shape.uppercase ?? false },
+                set: { var updated = shape; updated.uppercase = $0; onUpdate(updated) }
+            ))
+            if let onTranslate, let localeName = translateLocaleName {
+                Divider()
+                Button("Translate into \(localeName)") {
+                    onTranslate()
+                }
+                .disabled((shape.text ?? "").isEmpty)
+            }
             Divider()
         }
+        if shape.type == .svg {
+            Toggle("Use Custom Color", isOn: Binding(
+                get: { shape.svgUseColor ?? false },
+                set: { var updated = shape; updated.svgUseColor = $0; onUpdate(updated) }
+            ))
+            Divider()
+        }
+        if shape.type == .star {
+            Menu("Points: \(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)") {
+                ForEach(3...12, id: \.self) { count in
+                    Button("\(count)") {
+                        var updated = shape
+                        updated.starPointCount = count
+                        onUpdate(updated)
+                    }
+                }
+            }
+            Divider()
+        }
+        Toggle("Clip to Screenshot", isOn: Binding(
+            get: { shape.clipToTemplate ?? false },
+            set: { var updated = shape; updated.clipToTemplate = $0; onUpdate(updated) }
+        ))
+        Divider()
         Button("Delete", role: .destructive) {
             onDelete()
         }

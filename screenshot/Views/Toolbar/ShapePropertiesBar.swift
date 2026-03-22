@@ -143,7 +143,7 @@ struct ShapePropertiesBar: View {
 
                         // Opacity
                         controlGroup("Opacity") {
-                            Slider(value: shapeBinding(shapeId, \.opacity), in: 0...1)
+                            Slider(value: shapeBinding(shapeId, \.opacity, continuous: true), in: 0...1)
                                 .frame(width: 80)
 
                             Text(verbatim: "\(Int((idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].opacity } ?? 1) * 100))%")
@@ -154,7 +154,7 @@ struct ShapePropertiesBar: View {
                         separator
 
                         controlGroup("Rotation") {
-                            Slider(value: shapeBinding(shapeId, \.rotation), in: 0...360)
+                            Slider(value: shapeBinding(shapeId, \.rotation, continuous: true), in: 0...360)
                                 .frame(width: 80)
 
                             Text(verbatim: "\(Int(idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].rotation } ?? 0))°")
@@ -166,7 +166,7 @@ struct ShapePropertiesBar: View {
                             separator
 
                             controlGroup("Radius") {
-                                Slider(value: shapeBinding(shapeId, \.borderRadius), in: 0...500)
+                                Slider(value: shapeBinding(shapeId, \.borderRadius, continuous: true), in: 0...500)
                                     .frame(width: 80)
 
                                 Text(verbatim: "\(Int(shape.borderRadius))")
@@ -377,7 +377,7 @@ struct ShapePropertiesBar: View {
 
     /// Creates a Binding that always resolves the shape index by ID at access time.
     /// Reads the resolved (locale-aware) value; writes go through `updateShape` which handles locale splitting.
-    private func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> where T: Sendable {
+    private func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T>, continuous: Bool = false) -> Binding<T> where T: Sendable {
         Binding(
             get: {
                 guard let i = idx(for: shapeId) else {
@@ -389,13 +389,17 @@ struct ShapePropertiesBar: View {
                 guard let i = idx(for: shapeId) else { return }
                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                 resolved[keyPath: keyPath] = newValue
-                state.updateShape(resolved)
+                if continuous {
+                    state.updateShapeContinuous(resolved)
+                } else {
+                    state.updateShape(resolved)
+                }
             }
         )
     }
 
     /// Overload for optional properties with a default value.
-    private func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T) -> Binding<T> where T: Sendable {
+    private func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T, continuous: Bool = false) -> Binding<T> where T: Sendable {
         Binding(
             get: {
                 guard let i = idx(for: shapeId) else { return defaultValue }
@@ -405,7 +409,11 @@ struct ShapePropertiesBar: View {
                 guard let i = idx(for: shapeId) else { return }
                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                 resolved[keyPath: keyPath] = newValue
-                state.updateShape(resolved)
+                if continuous {
+                    state.updateShapeContinuous(resolved)
+                } else {
+                    state.updateShape(resolved)
+                }
             }
         )
     }
@@ -597,7 +605,9 @@ struct ShapePropertiesBar: View {
             HStack(spacing: 4) {
                 Image(systemName: "textformat")
                 Text(textPopoverSummary(shape: shape))
+                    .monospacedDigit()
                     .lineLimit(1)
+                    .transaction { $0.animation = nil }
             }
         }
         .buttonStyle(.borderless)
@@ -637,7 +647,7 @@ struct ShapePropertiesBar: View {
             // Size
             LabeledContent("Size") {
                 HStack(spacing: 4) {
-                    Slider(value: shapeBinding(shapeId, \.fontSize, default: Self.defaultFontSize), in: Self.fontSizeRange)
+                    Slider(value: shapeBinding(shapeId, \.fontSize, default: Self.defaultFontSize, continuous: true), in: Self.fontSizeRange)
                         .frame(width: 120)
                     TextField("", value: Binding(
                         get: {
@@ -802,7 +812,7 @@ struct ShapePropertiesBar: View {
             separator
 
             controlGroup("Width") {
-                Slider(value: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth), in: 1...50)
+                Slider(value: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true), in: 1...50)
                     .frame(width: 80)
 
                 Text(verbatim: "\(Int((shape.outlineWidth ?? CanvasShapeModel.defaultOutlineWidth).rounded()))")
@@ -820,6 +830,7 @@ struct ShapePropertiesBar: View {
             Text(verbatim: "\(Int(shape.width))×\(Int(shape.height))")
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(.secondary)
+                .transaction { $0.animation = nil }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
