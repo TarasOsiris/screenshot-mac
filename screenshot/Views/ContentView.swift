@@ -295,7 +295,12 @@ struct ContentView: View {
     private var projectSwitcherSection: some View {
         ForEach(sortedProjects) { project in
             Button {
-                state.selectProject(project.id)
+                guard project.id != state.activeProjectId else { return }
+                state.beginProjectOpening()
+                Task { @MainActor in
+                    await Task.yield()
+                    state.selectProject(project.id)
+                }
             } label: {
                 if project.id == state.activeProjectId {
                     Label(project.name, systemImage: "checkmark")
