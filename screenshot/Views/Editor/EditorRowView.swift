@@ -159,10 +159,9 @@ struct EditorRowView: View {
             geo.visibleRect
         } action: { _, visibleRect in
             guard isSelected else { return }
-            let ds = row.displayScale(zoom: zoom)
             let canvasX = max(0, visibleRect.midX - canvasHorizontalPadding)
             state.visibleCanvasModelCenter = CGPoint(
-                x: canvasX / ds,
+                x: canvasX / row.displayScale(zoom: zoom),
                 y: row.templateHeight / 2
             )
         }
@@ -391,8 +390,6 @@ struct EditorRowView: View {
                 let dw = row.displayWidth(zoom: 1.0)
                 let dh = row.displayHeight(zoom: 1.0)
                 let ds = row.displayScale(zoom: 1.0)
-                let zoomedW = dw * zoom
-                let zoomedH = dh * zoom
 
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .top, spacing: 0) {
@@ -401,21 +398,21 @@ struct EditorRowView: View {
                             .scaleEffect(zoom, anchor: .topLeading)
                             .frame(
                                 width: row.totalDisplayWidth(zoom: zoom),
-                                height: zoomedH,
+                                height: row.displayHeight(zoom: zoom),
                                 alignment: .topLeading
                             )
                             .overlay(alignment: .topLeading) {
                                 HStack(spacing: 0) {
                                     ForEach(row.templates) { template in
                                         Color.clear
-                                            .frame(width: zoomedW, height: 1)
+                                            .frame(width: row.displayWidth(zoom: zoom), height: 1)
                                             .id("focus_\(template.id)")
                                     }
                                 }
                             }
 
                         // Add button
-                        AddTemplateButton(width: zoomedW, height: zoomedH) {
+                        AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
                             store.requirePro(
                                 allowed: store.canAddTemplate(currentCount: row.templates.count),
                                 context: .templateLimit
@@ -524,6 +521,7 @@ struct EditorRowView: View {
                 CanvasShapeView(
                     shape: shape,
                     displayScale: ds,
+                    zoom: zoom,
                     isSelected: isInSelection,
                     isMultiSelected: isMulti,
                     screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
@@ -544,7 +542,7 @@ struct EditorRowView: View {
                     onDragSnap: { draggedShape, rawOffset in
                         let selectedIds = state.selectedShapeIds
                         let others = resolvedShapes.filter { !selectedIds.contains($0.id) }
-                        let threshold = 4 / ds
+                        let threshold = 4 / row.displayScale(zoom: zoom)
                         let result = AlignmentService.computeSnap(
                             draggedShape: draggedShape,
                             dragOffset: rawOffset,

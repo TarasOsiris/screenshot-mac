@@ -2,6 +2,7 @@ import Testing
 import AppKit
 @testable import Screenshot_Bro
 
+@Suite(.serialized)
 @MainActor
 struct AppStateTests {
 

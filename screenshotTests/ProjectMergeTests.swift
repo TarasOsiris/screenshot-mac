@@ -2,6 +2,7 @@ import Testing
 import Foundation
 @testable import Screenshot_Bro
 
+@Suite(.serialized)
 struct ProjectMergeTests {
 
     private func project(_ name: String, modifiedAt: Date, isDeleted: Bool = false, deletedAt: Date? = nil) -> Project {

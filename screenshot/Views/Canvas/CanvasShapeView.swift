@@ -14,6 +14,7 @@ struct CanvasShapeView: View {
 
     let shape: CanvasShapeModel
     let displayScale: CGFloat
+    var zoom: CGFloat = 1.0
     let isSelected: Bool
     var isMultiSelected: Bool = false
     var screenshotImage: NSImage?
@@ -561,7 +562,7 @@ struct CanvasShapeView: View {
     /// The handle starts at a known offset from center in screen space; we compute angle change
     /// from the translation vector applied to that initial offset.
     private func rotateGesture(stemLength: CGFloat) -> some Gesture {
-        let handleDist = displayH / 2 + stemLength
+        let handleDist = (displayH / 2 + stemLength) * zoom
         let baseAngleRad = (shape.rotation - 90) * .pi / 180
         // Pre-compute invariant vector from center to handle start position
         let handleVecX = handleDist * cos(baseAngleRad)
@@ -649,8 +650,9 @@ struct CanvasShapeView: View {
         .gesture(
             DragGesture(coordinateSpace: .global)
                 .onChanged { value in
-                    let tx = value.translation.width / displayScale
-                    let ty = value.translation.height / displayScale
+                    let effectiveScale = displayScale * zoom
+                    let tx = value.translation.width / effectiveScale
+                    let ty = value.translation.height / effectiveScale
                     let lockAspectRatio = NSEvent.modifierFlags.contains(.shift) || shape.type == .device
                     resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
                 }
