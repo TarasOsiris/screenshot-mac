@@ -18,6 +18,7 @@ struct TemplateControlBar: View {
     var onDropBackgroundImage: ((NSImage) -> Void)? = nil
     var onDuplicate: () -> Void = {}
     var onDelete: () -> Void
+    var onLoadFullResImages: (() -> [String: NSImage])? = nil
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @State private var isDeletingTemplate = false
     @State private var showBackgroundPopover = false
@@ -234,7 +235,8 @@ struct TemplateControlBar: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages, localeState: localeState) else {
+        let exportImages = onLoadFullResImages?() ?? screenshotImages
+        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: exportImages, localeState: localeState) else {
             renderError = "Could not render screenshot."
             return
         }

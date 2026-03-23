@@ -1,7 +1,14 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import ImageIO
 
 extension AppState {
+
+    /// Maximum pixel dimension for images stored in `screenshotImages` (editor display).
+    /// Full-resolution images are loaded from disk on-demand for export.
+    /// 1200px is enough for editor display at 2x zoom on retina, while
+    /// reducing memory ~10x vs full App Store screenshot resolution.
+    static let editorImageMaxDimension: CGFloat = 1200
 
     // MARK: - Screenshot Images
 
@@ -49,7 +56,7 @@ extension AppState {
         guard let pngData = ExportService.pngData(from: image) else { return }
 
         try? pngData.write(to: url, options: .atomic)
-        screenshotImages[fileName] = image
+        screenshotImages[fileName] = Self.editorThumbnail(for: image)
 
         if isNonBaseLocale {
             let shape = rows[location.rowIndex].shapes[location.shapeIndex]
@@ -85,14 +92,19 @@ extension AppState {
 
         isLoadingImages = true
 
-        // Load images on a background thread, then update on main
+        // Load downsampled images on a background thread, then update on main.
+        // Full-resolution images are loaded from disk on-demand in export paths.
+        let maxDim = Self.editorImageMaxDimension
         imageLoadTask = Task.detached { [weak self] in
             var loaded: [String: NSImage] = [:]
             for fileName in toLoad {
                 if Task.isCancelled { return }
                 let url = resourcesURL.appendingPathComponent(fileName)
-                if let image = NSImage(contentsOf: url) {
-                    loaded[fileName] = image
+                autoreleasepool {
+                    if let image = Self.downsampledImage(at: url, maxDimension: maxDim)
+                        ?? NSImage(contentsOf: url) {
+                        loaded[fileName] = image
+                    }
                 }
             }
             guard !Task.isCancelled else { return }
@@ -228,7 +240,7 @@ extension AppState {
 
         guard let pngData = ExportService.pngData(from: image) else { return }
         try? pngData.write(to: url, options: .atomic)
-        screenshotImages[fileName] = image
+        screenshotImages[fileName] = Self.editorThumbnail(for: image)
 
         var shape = rows[location.rowIndex].shapes[location.shapeIndex]
         let oldFile = shape.fillImageConfig?.fileName
@@ -267,7 +279,7 @@ extension AppState {
 
         guard let pngData = ExportService.pngData(from: image) else { return }
         try? pngData.write(to: url, options: .atomic)
-        screenshotImages[fileName] = image
+        screenshotImages[fileName] = Self.editorThumbnail(for: image)
 
         setBackgroundImageFileName(fileName, rowIndex: rowIndex, templateIndex: templateIndex)
         scheduleSave()
@@ -502,6 +514,56 @@ extension AppState {
         return localeState.overrides.values.contains { shapeOverrides in
             shapeOverrides.values.contains { $0.overrideImageFileName == fileName }
         }
+    }
+
+    // MARK: - Downsampled Image Loading
+
+    /// Returns a downsampled thumbnail for editor display, falling back to the original image.
+    static func editorThumbnail(for image: NSImage) -> NSImage {
+        guard let tiffData = image.tiffRepresentation else { return image }
+        return downsampledImage(from: tiffData, maxDimension: editorImageMaxDimension) ?? image
+    }
+
+    /// Efficiently loads a downsampled image from a file URL using CGImageSource.
+    static func downsampledImage(at url: URL, maxDimension: CGFloat) -> NSImage? {
+        let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, sourceOptions) else { return nil }
+        return downsampledImage(from: source, maxDimension: maxDimension)
+    }
+
+    /// Downsamples from in-memory image data using CGImageSource (avoids disk round-trip).
+    static func downsampledImage(from data: Data, maxDimension: CGFloat) -> NSImage? {
+        let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else { return nil }
+        return downsampledImage(from: source, maxDimension: maxDimension)
+    }
+
+    private static func downsampledImage(from source: CGImageSource, maxDimension: CGFloat) -> NSImage? {
+        let options = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxDimension
+        ] as CFDictionary
+
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options) else { return nil }
+        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+    }
+
+    /// Loads all referenced images at full resolution from disk. Used for export only.
+    func loadFullResolutionImages() -> [String: NSImage] {
+        guard let activeId = activeProjectId else { return [:] }
+        let resourcesURL = PersistenceService.resourcesDir(activeId)
+        var images: [String: NSImage] = [:]
+        for fileName in allReferencedImageFileNames() {
+            autoreleasepool {
+                let url = resourcesURL.appendingPathComponent(fileName)
+                if let image = NSImage(contentsOf: url) {
+                    images[fileName] = image
+                }
+            }
+        }
+        return images
     }
 
     /// Collect all referenced image filenames in a single pass (for batch cleanup).

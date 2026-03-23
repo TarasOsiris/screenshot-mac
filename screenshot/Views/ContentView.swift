@@ -64,6 +64,7 @@ struct ContentView: View {
                         }
                     }
                 }
+                .id(state.activeProjectId)
                 .simultaneousGesture(
                     MagnificationGesture()
                         .onChanged { value in
@@ -621,9 +622,10 @@ struct ContentView: View {
         let format: ExportImageFormat = utType == .jpeg ? .jpeg : .png
 
         Task {
+            let fullResImages = state.loadFullResolutionImages()
             let image = ExportService.renderRowImage(
                 row: row,
-                screenshotImages: state.screenshotImages,
+                screenshotImages: fullResImages,
                 localeCode: state.localeState.activeLocaleCode,
                 localeState: state.localeState
             )
@@ -689,12 +691,13 @@ struct ContentView: View {
             do {
                 let projectName = state.activeProject?.name ?? ""
                 let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
+                let fullResImages = state.loadFullResolutionImages()
                 let destinationFolderURL = try await ExportService.exportAll(
                     rows: state.rows,
                     projectName: projectName,
                     to: url,
                     format: format,
-                    screenshotImages: state.screenshotImages,
+                    screenshotImages: fullResImages,
                     localeState: state.localeState,
                     availableFontFamilies: state.availableFontFamilySet,
                     onProgress: { completed in

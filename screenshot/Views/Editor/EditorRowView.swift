@@ -482,6 +482,9 @@ struct EditorRowView: View {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             state.removeTemplate(template.id, from: row.id)
                         }
+                    },
+                    onLoadFullResImages: { [weak state] in
+                        state?.loadFullResolutionImages() ?? [:]
                     }
                 )
             }

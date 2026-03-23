@@ -1,6 +1,14 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+private extension View {
+    /// Only applies `.compositingGroup()` when needed, avoiding offscreen bitmap allocation for shapes at full opacity.
+    @ViewBuilder
+    func compositingGroupIfNeeded(_ enabled: Bool) -> some View {
+        if enabled { self.compositingGroup() } else { self }
+    }
+}
+
 struct CanvasShapeView: View {
     @Environment(\.displayScale) private var screenScale
 
@@ -213,10 +221,11 @@ struct CanvasShapeView: View {
         let offsetX = displayX - dx
         let offsetY = displayY - dy
         let hitPath = rotatedRectangleHitPath(in: aabb)
+        let needsCompositing = shape.opacity < 1.0
         let base = ZStack {
             shapeContent
                 .frame(width: displayW, height: displayH)
-                .compositingGroup()
+                .compositingGroupIfNeeded(needsCompositing)
                 .opacity(shape.opacity)
                 .contentShape(Rectangle())
                 .rotationEffect(.degrees(currentRotation))

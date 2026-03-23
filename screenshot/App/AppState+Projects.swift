@@ -50,10 +50,8 @@ extension AppState {
 
     func switchToProject(_ id: UUID) {
         undoManager?.removeAllActions()
-        cancelPendingDebounceTasks()
-        unregisterCustomFonts()
+        teardownActiveProject()
         activeProjectId = id
-        screenshotImages.removeAll()
         loadCustomFonts()
         loadRowsForProject(id)
         loadScreenshotImages()
@@ -103,9 +101,7 @@ extension AppState {
     func resetProject(_ id: UUID) {
         guard id == activeProjectId else { return }
         undoManager?.removeAllActions()
-        cancelPendingDebounceTasks()
-        unregisterCustomFonts()
-        screenshotImages.removeAll()
+        teardownActiveProject()
         rows = [makeDefaultRow()]
         localeState = .default
         selectRow(rows.first?.id)
@@ -115,9 +111,7 @@ extension AppState {
     func resetProjectFromTemplate(_ id: UUID, template: ProjectTemplate) {
         guard id == activeProjectId else { return }
         undoManager?.removeAllActions()
-        cancelPendingDebounceTasks()
-        unregisterCustomFonts()
-        screenshotImages.removeAll()
+        teardownActiveProject()
 
         // Replace project contents with template data
         PersistenceService.copyProjectFromURL(template.url, to: id)
@@ -133,10 +127,7 @@ extension AppState {
         projects[idx].markDeleted()
 
         if activeProjectId == id {
-            cancelPendingDebounceTasks()
-            // Unregister fonts BEFORE deleting files so Core Text can clean up properly
-            unregisterCustomFonts()
-            screenshotImages.removeAll()
+            teardownActiveProject()
             PersistenceService.deleteProject(id)
             if let nextProject = visibleProjects.first {
                 activeProjectId = nextProject.id
@@ -152,5 +143,14 @@ extension AppState {
             PersistenceService.deleteProject(id)
         }
         saveAll()
+    }
+
+    /// Cancels in-flight work, unregisters fonts, and clears images for the current project.
+    private func teardownActiveProject() {
+        cancelPendingDebounceTasks()
+        imageLoadTask?.cancel()
+        imageLoadTask = nil
+        unregisterCustomFonts()
+        screenshotImages = [:]
     }
 }
