@@ -491,7 +491,7 @@ struct CanvasShapeView: View {
 
     private func borderOverlay(opacity: Double, lineWidth: CGFloat) -> some View {
         Rectangle()
-            .strokeBorder(Color.accentColor.opacity(opacity), lineWidth: lineWidth)
+            .strokeBorder(Color.accentColor.opacity(opacity), lineWidth: lineWidth / zoom)
             .frame(width: displayW, height: displayH)
             .rotationEffect(.degrees(currentRotation))
             .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
@@ -520,17 +520,17 @@ struct CanvasShapeView: View {
     // MARK: - Rotate Handle
 
     private var rotateHandleContent: some View {
-        let stemLength: CGFloat = 24
-        let handleSize: CGFloat = 10
-        let hitSize: CGFloat = 24
+        let stemLength: CGFloat = 24 / zoom
+        let handleSize: CGFloat = 10 / zoom
+        let hitSize: CGFloat = 24 / zoom
 
         return ZStack {
             // Stem line behind the knob (starts below the resize handle's edge)
             Path { path in
-                path.move(to: CGPoint(x: displayW / 2, y: -handleDiameter / 2))
+                path.move(to: CGPoint(x: displayW / 2, y: -handleDiameter / (2 * zoom)))
                 path.addLine(to: CGPoint(x: displayW / 2, y: -stemLength))
             }
-            .stroke(Color.accentColor, lineWidth: 1)
+            .stroke(Color.accentColor, lineWidth: 1 / zoom)
 
             // Rotate handle circle (on top of stem)
             ZStack {
@@ -543,7 +543,7 @@ struct CanvasShapeView: View {
                     .frame(width: handleSize, height: handleSize)
 
                 Circle()
-                    .strokeBorder(Color.accentColor, lineWidth: 1.5)
+                    .strokeBorder(Color.accentColor, lineWidth: 1.5 / zoom)
                     .frame(width: handleSize, height: handleSize)
             }
             .onHover { hovering in
@@ -624,8 +624,8 @@ struct CanvasShapeView: View {
     }
 
     private func resizeHandle(edge: ResizeEdge) -> some View {
-        let handleSize = handleDiameter
-        let hitSize: CGFloat = 20
+        let handleSize = handleDiameter / zoom
+        let hitSize: CGFloat = 20 / zoom
         let pos = handlePosition(for: edge)
 
         return ZStack {
@@ -635,7 +635,7 @@ struct CanvasShapeView: View {
 
             Circle()
                 .fill(Color.white)
-                .strokeBorder(Color.accentColor, lineWidth: 1.5)
+                .strokeBorder(Color.accentColor, lineWidth: 1.5 / zoom)
                 .frame(width: handleSize, height: handleSize)
                 .allowsHitTesting(false)
         }
@@ -881,6 +881,7 @@ struct CanvasShapeView: View {
             font: nsFont,
             color: NSColor(shape.color),
             alignment: shape.textAlign.nsTextAlignment,
+            verticalAlignment: shape.textVerticalAlign ?? .center,
             uppercase: shape.uppercase ?? false,
             letterSpacing: shape.letterSpacing,
             lineHeightMultiple: shape.lineHeightMultiple,

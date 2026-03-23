@@ -41,6 +41,7 @@ struct InlineTextEditor: NSViewRepresentable {
     var font: NSFont
     var color: NSColor
     var alignment: NSTextAlignment
+    var verticalAlignment: TextVerticalAlign = .center
     var uppercase: Bool = false
     var letterSpacing: CGFloat? = nil
     var lineHeightMultiple: CGFloat? = nil
@@ -80,6 +81,7 @@ struct InlineTextEditor: NSViewRepresentable {
         scrollView.documentView = textView
         scrollView.autohidesScrollers = true
         scrollView.centerTextView = textView
+        scrollView.verticalAlignment = verticalAlignment
 
         DispatchQueue.main.async {
             scrollView.centerDocumentView()
@@ -94,6 +96,7 @@ struct InlineTextEditor: NSViewRepresentable {
         guard let textView = scrollView.documentView as? NSTextView else { return }
         applyTextStyle(to: textView)
         if let tc = textView.textContainer { textView.layoutManager?.ensureLayout(for: tc) }
+        scrollView.verticalAlignment = verticalAlignment
         scrollView.centerDocumentView()
     }
 
@@ -276,6 +279,7 @@ final class TextLayoutNSView: NSView {
 
 class CenteringScrollView: NSScrollView {
     weak var centerTextView: NSTextView?
+    var verticalAlignment: TextVerticalAlign = .center
 
     func centerDocumentView() {
         guard let textView = centerTextView else { return }
@@ -290,7 +294,15 @@ class CenteringScrollView: NSScrollView {
             textView.setFrameSize(targetSize)
         }
         if paddedTextHeight < viewHeight {
-            let topInset = glyphPadding + ((viewHeight - paddedTextHeight) / 2)
+            let topInset: CGFloat
+            switch verticalAlignment {
+            case .top:
+                topInset = glyphPadding
+            case .center:
+                topInset = glyphPadding + ((viewHeight - paddedTextHeight) / 2)
+            case .bottom:
+                topInset = glyphPadding + (viewHeight - paddedTextHeight)
+            }
             textView.textContainerInset = NSSize(width: 0, height: topInset)
         } else {
             textView.textContainerInset = NSSize(width: 0, height: glyphPadding)
