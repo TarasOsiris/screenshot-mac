@@ -150,14 +150,14 @@ struct ContentView: View {
             }
         }
         .overlay {
-            if !isExporting && state.isLoadingImages {
+            if !isExporting && (state.isOpeningProject || state.isLoadingImages) {
                 ZStack {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
                     VStack(spacing: 12) {
                         ProgressView()
                             .controlSize(.large)
-                        Text("Loading Images…")
+                        Text(state.isOpeningProject ? "Opening Project…" : "Loading Images…")
                             .font(.headline)
                     }
                     .padding(24)

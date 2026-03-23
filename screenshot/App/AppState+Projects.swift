@@ -37,7 +37,7 @@ extension AppState {
 
         projects.append(project)
         switchToProject(project.id)
-        saveAll()
+        saveIndex()
     }
 
     func selectProject(_ id: UUID) {
@@ -50,11 +50,16 @@ extension AppState {
 
     func switchToProject(_ id: UUID) {
         undoManager?.removeAllActions()
+        projectOpenTask?.cancel()
+        beginProjectOpening()
         teardownActiveProject()
         activeProjectId = id
-        loadCustomFonts()
-        loadRowsForProject(id)
-        loadScreenshotImages()
+        projectOpenTask = Task { @MainActor [weak self] in
+            await Task.yield()
+            guard let self, !Task.isCancelled else { return }
+            self.loadProjectContents(for: id)
+            self.projectOpenTask = nil
+        }
     }
 
     func renameProject(_ id: UUID, to name: String) {
@@ -95,7 +100,7 @@ extension AppState {
         projects.append(newProject)
 
         switchToProject(newProject.id)
-        saveAll()
+        saveIndex()
     }
 
     func resetProject(_ id: UUID) {
@@ -111,15 +116,14 @@ extension AppState {
     func resetProjectFromTemplate(_ id: UUID, template: ProjectTemplate) {
         guard id == activeProjectId else { return }
         undoManager?.removeAllActions()
+        beginProjectOpening()
         teardownActiveProject()
 
         // Replace project contents with template data
         PersistenceService.copyProjectFromURL(template.url, to: id)
 
         // Reload from disk (font registration before row load, matching switchToProject order)
-        loadCustomFonts()
-        loadRowsForProject(id)
-        loadScreenshotImages()
+        loadProjectContents(for: id)
     }
 
     func deleteProject(_ id: UUID) {
@@ -130,10 +134,7 @@ extension AppState {
             teardownActiveProject()
             PersistenceService.deleteProject(id)
             if let nextProject = visibleProjects.first {
-                activeProjectId = nextProject.id
-                loadRowsForProject(nextProject.id)
-                loadScreenshotImages()
-                loadCustomFonts()
+                switchToProject(nextProject.id)
             } else {
                 // No visible projects left — create a new one
                 createProject(name: "Project 1")
@@ -142,7 +143,7 @@ extension AppState {
         } else {
             PersistenceService.deleteProject(id)
         }
-        saveAll()
+        saveIndex()
     }
 
     /// Cancels in-flight work, unregisters fonts, and clears images for the current project.
@@ -150,7 +151,23 @@ extension AppState {
         cancelPendingDebounceTasks()
         imageLoadTask?.cancel()
         imageLoadTask = nil
+        isLoadingImages = false
         unregisterCustomFonts()
         screenshotImages = [:]
+    }
+
+    func beginProjectOpening() {
+        isOpeningProject = true
+    }
+
+    func finishProjectOpening() {
+        isOpeningProject = false
+    }
+
+    private func loadProjectContents(for id: UUID) {
+        guard activeProjectId == id else { return }
+        loadCustomFonts()
+        loadRowsForProject(id)
+        loadScreenshotImages()
     }
 }

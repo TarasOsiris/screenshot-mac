@@ -81,11 +81,16 @@ extension AppState {
     }
 
     func loadScreenshotImages() {
-        guard let activeId = activeProjectId else { return }
+        guard let activeId = activeProjectId else {
+            isLoadingImages = false
+            finishProjectOpening()
+            return
+        }
         let resourcesURL = PersistenceService.resourcesDir(activeId)
 
         // Cancel any in-flight load from a previous call
         imageLoadTask?.cancel()
+        imageLoadTask = nil
 
         let needed = editorReferencedImageFileNames()
 
@@ -96,7 +101,11 @@ extension AppState {
         }
 
         let toLoad = needed.filter { screenshotImages[$0] == nil }
-        guard !toLoad.isEmpty else { return }
+        guard !toLoad.isEmpty else {
+            isLoadingImages = false
+            finishProjectOpening()
+            return
+        }
 
         isLoadingImages = true
 
@@ -122,6 +131,7 @@ extension AppState {
                     self.screenshotImages[key] = image
                 }
                 self.isLoadingImages = false
+                self.finishProjectOpening()
             }
         }
     }

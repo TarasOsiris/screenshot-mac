@@ -420,6 +420,24 @@ struct AppStateTests {
         #expect(state.activeProject?.name == "New Project")
     }
 
+    @Test func duplicateProjectSwitchesToCopy() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let sourceId = try #require(state.activeProjectId)
+        state.duplicateProject(sourceId)
+
+        for _ in 0..<10 {
+            if state.activeProject?.name.hasSuffix("Copy") == true {
+                break
+            }
+            await Task.yield()
+        }
+
+        #expect(state.projects.count == 2)
+        #expect(state.activeProject?.name.hasSuffix("Copy") == true)
+    }
+
     @Test func renameProjectUpdatesName() throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
@@ -435,5 +453,30 @@ struct AppStateTests {
         state.deleteProject(projectId)
         #expect(state.visibleProjects.count == 1, "Should create fallback project")
         #expect(state.activeProjectId != nil)
+    }
+
+    @Test func selectProjectSetsOpeningIndicatorUntilImagesFinishLoading() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let originalProjectId = try #require(state.activeProjectId)
+        let firstShapeId = try #require(state.rows.first?.shapes.first?.id)
+        state.saveImage(makeTestImage(width: 1200, height: 2600), for: firstShapeId)
+        state.saveAll()
+
+        state.createProject(name: "Second")
+        state.selectProject(originalProjectId)
+
+        #expect(state.isOpeningProject)
+
+        for _ in 0..<50 {
+            if !state.isOpeningProject {
+                break
+            }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+
+        #expect(!state.isOpeningProject)
+        #expect(!state.screenshotImages.isEmpty)
     }
 }

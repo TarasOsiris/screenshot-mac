@@ -46,7 +46,9 @@ final class AppState {
 
     @ObservationIgnored var saveTask: DispatchWorkItem?
     @ObservationIgnored var imageLoadTask: Task<Void, Never>?
+    @ObservationIgnored var projectOpenTask: Task<Void, Never>?
     var isLoadingImages = false
+    var isOpeningProject = false
 
     // Debounce state for undo grouping
     @ObservationIgnored var translationUndoTask: DispatchWorkItem?

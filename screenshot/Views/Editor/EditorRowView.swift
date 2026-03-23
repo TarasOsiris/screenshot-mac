@@ -387,26 +387,35 @@ struct EditorRowView: View {
     private var horizontalScrollArea: some View {
         ScrollViewReader { hProxy in
             ScrollView(.horizontal, showsIndicators: true) {
-                let dw = row.displayWidth(zoom: zoom)
-                let dh = row.displayHeight(zoom: zoom)
-                let ds = row.displayScale(zoom: zoom)
+                // Render canvas at base scale (zoom=1); apply zoom as a GPU transform
+                let dw = row.displayWidth(zoom: 1.0)
+                let dh = row.displayHeight(zoom: 1.0)
+                let ds = row.displayScale(zoom: 1.0)
+                let zoomedW = dw * zoom
+                let zoomedH = dh * zoom
 
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .top, spacing: 0) {
                         // Unified canvas with per-template scroll anchors
                         canvasView(dw: dw, dh: dh, ds: ds)
+                            .scaleEffect(zoom, anchor: .topLeading)
+                            .frame(
+                                width: row.totalDisplayWidth(zoom: zoom),
+                                height: zoomedH,
+                                alignment: .topLeading
+                            )
                             .overlay(alignment: .topLeading) {
                                 HStack(spacing: 0) {
                                     ForEach(row.templates) { template in
                                         Color.clear
-                                            .frame(width: dw, height: 1)
+                                            .frame(width: zoomedW, height: 1)
                                             .id("focus_\(template.id)")
                                     }
                                 }
                             }
 
                         // Add button
-                        AddTemplateButton(width: dw, height: dh) {
+                        AddTemplateButton(width: zoomedW, height: zoomedH) {
                             store.requirePro(
                                 allowed: store.canAddTemplate(currentCount: row.templates.count),
                                 context: .templateLimit
@@ -623,7 +632,7 @@ struct EditorRowView: View {
             }
         }
         .frame(
-            width: row.totalDisplayWidth(zoom: zoom),
+            width: dw * CGFloat(row.templates.count),
             height: dh,
             alignment: .topLeading
         )
