@@ -635,4 +635,11 @@ extension AppState {
         let localeOverrides = localeState.overrides[localeCode].map { [localeCode: $0] } ?? [:]
         return referencedImageFileNames(rows: [row], localeOverrides: localeOverrides)
     }
+
+    /// Loads full-resolution images for a single row and locale from disk.
+    func loadFullResolutionImages(forRow row: ScreenshotRow, localeCode: String) -> [String: NSImage] {
+        let fileNames = referencedImageFileNames(forRow: row, localeCode: localeCode)
+        var cache: [String: NSImage] = [:]
+        return loadFullResolutionImages(fileNames: fileNames, cache: &cache)
+    }
 }

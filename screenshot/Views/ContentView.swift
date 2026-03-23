@@ -296,11 +296,7 @@ struct ContentView: View {
         ForEach(sortedProjects) { project in
             Button {
                 guard project.id != state.activeProjectId else { return }
-                state.beginProjectOpening()
-                Task { @MainActor in
-                    await Task.yield()
-                    state.selectProject(project.id)
-                }
+                state.selectProject(project.id)
             } label: {
                 if project.id == state.activeProjectId {
                     Label(project.name, systemImage: "checkmark")
@@ -628,9 +624,7 @@ struct ContentView: View {
 
         Task {
             let localeCode = state.localeState.activeLocaleCode
-            let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
-            var cache: [String: NSImage] = [:]
-            let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &cache)
+            let rowImages = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
             let image = ExportService.renderRowImage(
                 row: row,
                 screenshotImages: rowImages,
