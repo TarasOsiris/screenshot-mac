@@ -14,63 +14,77 @@ struct FontPicker: View {
         Set(customFonts.values).sorted()
     }
 
-    /// True when the current selection is a non-system font that isn't in the
-    /// custom fonts list (e.g. custom fonts dict was cleared momentarily).
-    private var selectionMissingFromOptions: Bool {
-        !selection.isEmpty
-            && !sortedCustomFamilies.contains(selection)
-            && !Self.fontFamilies.contains(selection)
+    @ViewBuilder
+    private func fontButton(_ label: String, value: String) -> some View {
+        Button {
+            selection = value
+        } label: {
+            if selection == value {
+                Label(label, systemImage: "checkmark")
+            } else {
+                Text(label)
+            }
+        }
+    }
+
+    private var displayName: String {
+        if selection.isEmpty { return "System" }
+        return selection
+    }
+
+    private func pickCustomFont() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.font]
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        guard panel.runModal() == .OK else { return }
+        var lastFamily: String?
+        for url in panel.urls {
+            if let family = onImportFont?(url) {
+                lastFamily = family
+            }
+        }
+        if let family = lastFamily {
+            selection = family
+        }
     }
 
     var body: some View {
         HStack(spacing: 4) {
-            Picker("", selection: $selection) {
-                Text("System").tag("")
-
-                // Keep the current selection as a tag so SwiftUI never
-                // resets the binding when the font list changes.
-                if selectionMissingFromOptions {
-                    Text(selection).tag(selection)
+            Menu {
+                Button {
+                    pickCustomFont()
+                } label: {
+                    Label("Pick custom font", systemImage: "plus")
                 }
+
+                Divider()
+
+                fontButton("System", value: "")
 
                 if !sortedCustomFamilies.isEmpty {
                     Divider()
                     ForEach(sortedCustomFamilies, id: \.self) { family in
-                        Text(family)
-                            .tag(family)
+                        fontButton(family, value: family)
                     }
                 }
 
                 Divider()
                 ForEach(Self.fontFamilies, id: \.self) { family in
-                    Text(family)
-                        .tag(family)
-                }
-            }
-            .labelsHidden()
-            .frame(width: 130)
-
-            Button {
-                let panel = NSOpenPanel()
-                panel.allowedContentTypes = [.font]
-                panel.allowsMultipleSelection = true
-                panel.canChooseDirectories = false
-                guard panel.runModal() == .OK else { return }
-                var lastFamily: String?
-                for url in panel.urls {
-                    if let family = onImportFont?(url) {
-                        lastFamily = family
-                    }
-                }
-                if let family = lastFamily {
-                    selection = family
+                    fontButton(family, value: family)
                 }
             } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 9))
+                HStack(spacing: 6) {
+                    Text(displayName)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: 130, alignment: .leading)
             }
-            .buttonStyle(.borderless)
-            .help("Add custom font")
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
         }
     }
 }

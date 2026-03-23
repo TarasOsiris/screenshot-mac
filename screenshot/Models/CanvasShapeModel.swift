@@ -192,6 +192,8 @@ extension CanvasShapeModel {
 struct CanvasShapeModel: Identifiable, Codable {
     static let deviceMinSize: CGFloat = 200
     static let defaultDeviceBodyColor = Color(red: 0.11, green: 0.11, blue: 0.12)
+    static let defaultFontSize: CGFloat = 72
+    static let fontSizePresets: [Int] = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96, 128, 144, 192, 256]
     static let defaultStarPointCount = 5
     static let defaultOutlineColor: Color = .black
     static let defaultOutlineWidth: CGFloat = 4

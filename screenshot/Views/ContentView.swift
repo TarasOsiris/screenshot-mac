@@ -172,6 +172,7 @@ struct ContentView: View {
         .toolbar(id: "main") {
             ToolbarItem(id: "projectSwitcher", placement: .navigation) {
                 projectSwitcherToolbarMenu
+                    .padding(.leading, 8)
             }
 
             ToolbarItem(id: "projectActions", placement: .navigation) {
@@ -180,6 +181,7 @@ struct ContentView: View {
 
             ToolbarItem(id: "locale", placement: .navigation) {
                 LocaleToolbarMenu(state: state)
+                    .padding(.trailing, 8)
             }
 
             ToolbarItem(id: "export", placement: .principal) {
@@ -404,6 +406,8 @@ struct ContentView: View {
         } label: {
             projectMenuLabel
         }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
         .help(state.activeProject?.name ?? "Switch project")
         .accessibilityIdentifier("projectSwitcherMenu")
     }

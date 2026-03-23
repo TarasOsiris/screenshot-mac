@@ -142,6 +142,7 @@ struct EditorRowView: View {
                             .foregroundStyle(.secondary)
                     }
                     .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
                     .fixedSize()
                 }
                 .opacity(isSelected || isRowHovered ? 1 : 0.65)

@@ -3,9 +3,9 @@ import Translation
 import UniformTypeIdentifiers
 
 struct ShapePropertiesBar: View {
-    private static let defaultFontSize: CGFloat = 72
+    private static let defaultFontSize: CGFloat = CanvasShapeModel.defaultFontSize
     private static let fontSizeRange: ClosedRange<CGFloat> = 8...400
-    private static let fontSizePresets: [Int] = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96, 128, 144, 192, 256]
+    private static let fontSizePresets: [Int] = CanvasShapeModel.fontSizePresets
     @Bindable var state: AppState
     @State private var isReplacingImage = false
     @State private var isReplacingSvg = false
@@ -586,6 +586,7 @@ struct ShapePropertiesBar: View {
             }
         }
         .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
         .fixedSize()
         .help(devicePickerHelp(shape: shape))
     }

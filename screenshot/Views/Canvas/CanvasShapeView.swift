@@ -312,7 +312,7 @@ struct CanvasShapeView: View {
             } else {
                 let rawText = shape.text ?? ""
                 let showPlaceholder = showsEditorHelpers && rawText.isEmpty
-                let fontSize = shape.fontSize ?? 72
+                let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
                 let weight = fontWeight(shape.fontWeight ?? 700)
                 let isItalic = showPlaceholder ? true : (shape.italic ?? false)
                 let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight, italic: isItalic)
@@ -435,6 +435,22 @@ struct CanvasShapeView: View {
                 get: { shape.uppercase ?? false },
                 set: { var updated = shape; updated.uppercase = $0; onUpdate(updated) }
             ))
+            Menu("Change Font Size") {
+                let currentSize = Int(shape.fontSize ?? CanvasShapeModel.defaultFontSize)
+                ForEach(CanvasShapeModel.fontSizePresets, id: \.self) { size in
+                    Button {
+                        var updated = shape
+                        updated.fontSize = CGFloat(size)
+                        onUpdate(updated)
+                    } label: {
+                        if currentSize == size {
+                            Label("\(size)", systemImage: "checkmark")
+                        } else {
+                            Text("\(size)")
+                        }
+                    }
+                }
+            }
             if let onTranslate, let localeName = translateLocaleName {
                 Divider()
                 Button("Translate into \(localeName)") {
@@ -873,7 +889,7 @@ struct CanvasShapeView: View {
     }
 
     private var textEditor: some View {
-        let fontSize = shape.fontSize ?? 72
+        let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
         let weight = fontWeight(shape.fontWeight ?? 700)
         let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight, italic: shape.italic ?? false)
         return InlineTextEditor(

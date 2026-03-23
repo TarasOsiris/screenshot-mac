@@ -35,6 +35,7 @@ struct DevicePickerMenu: View {
             }
         }
         .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
     }
 
     // MARK: - Resolved display values
