@@ -99,6 +99,23 @@ struct EditorRowView: View {
                         }
                     }
                     Menu {
+                        Menu("Center all devices") {
+                            Button("Vertically") {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    state.centerAllDevices(in: row.id, axis: .vertically)
+                                }
+                            }
+                            Button("Horizontally") {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    state.centerAllDevices(in: row.id, axis: .horizontally)
+                                }
+                            }
+                            Button("Screenshot Center") {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    state.centerAllDevices(in: row.id, axis: .both)
+                                }
+                            }
+                        }
                         Menu("Change all devices to") {
                             DeviceMenuContent(
                                 onSelectCategory: { category in

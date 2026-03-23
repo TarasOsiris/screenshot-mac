@@ -106,6 +106,30 @@ extension AppState {
         scheduleSave()
     }
 
+    enum CenterAxis {
+        case vertically, horizontally, both
+    }
+
+    func centerAllDevices(in rowId: UUID, axis: CenterAxis) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        let row = rows[idx]
+        let deviceIndices = row.shapes.indices.filter { row.shapes[$0].type == .device }
+        guard !deviceIndices.isEmpty else { return }
+        registerUndo("Center All Devices")
+        for i in deviceIndices {
+            let shape = rows[idx].shapes[i]
+            if axis != .vertically {
+                let templateIndex = row.owningTemplateIndex(for: shape)
+                let templateLeft = CGFloat(templateIndex) * row.templateWidth
+                rows[idx].shapes[i].x = templateLeft + (row.templateWidth - shape.width) / 2
+            }
+            if axis != .horizontally {
+                rows[idx].shapes[i].y = (row.templateHeight - shape.height) / 2
+            }
+        }
+        scheduleSave()
+    }
+
     func changeAllDevices(in rowId: UUID, toCategory category: DeviceCategory) {
         changeAllDevices(in: rowId) { $0.selectAbstractDevice(category) }
     }

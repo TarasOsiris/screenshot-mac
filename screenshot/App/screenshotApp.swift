@@ -297,11 +297,18 @@ struct ScreenshotBroApp: App {
     }
 
     private func debugOpenTemplate(name: String) {
-        _ = withDebugBundleAccess { bundleURL in
+        guard let _ = withDebugBundleAccess({ bundleURL in
             let templateURL = bundleURL.appendingPathComponent(name, isDirectory: true)
             let template = ProjectTemplate(id: name, name: name, url: templateURL, previewImage: nil)
             appState.createProjectFromTemplate(template)
             debugRefreshExistingTemplates()
+        }) else {
+            debugTemplateError = "Could not access Templates.bundle. Make sure the bundle exists in the project source directory."
+            return
+        }
+        if let error = appState.saveError {
+            debugTemplateError = error
+            appState.saveError = nil
         }
     }
 
