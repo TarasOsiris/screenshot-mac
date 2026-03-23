@@ -87,7 +87,15 @@ extension AppState {
         // Cancel any in-flight load from a previous call
         imageLoadTask?.cancel()
 
-        let toLoad = allReferencedImageFileNames().filter { screenshotImages[$0] == nil }
+        let needed = editorReferencedImageFileNames()
+
+        // Evict images that are no longer needed (e.g. after locale switch)
+        let stale = Set(screenshotImages.keys).subtracting(needed)
+        for key in stale {
+            screenshotImages.removeValue(forKey: key)
+        }
+
+        let toLoad = needed.filter { screenshotImages[$0] == nil }
         guard !toLoad.isEmpty else { return }
 
         isLoadingImages = true
@@ -550,26 +558,40 @@ extension AppState {
         return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
     }
 
-    /// Loads all referenced images at full resolution from disk. Used for export only.
-    func loadFullResolutionImages() -> [String: NSImage] {
+    /// Loads full-resolution images for the given filenames from disk.
+    /// Pass `cache` to avoid redundant disk reads across multiple calls (e.g. during export).
+    func loadFullResolutionImages(
+        fileNames: Set<String>,
+        cache: inout [String: NSImage]
+    ) -> [String: NSImage] {
         guard let activeId = activeProjectId else { return [:] }
         let resourcesURL = PersistenceService.resourcesDir(activeId)
         var images: [String: NSImage] = [:]
-        for fileName in allReferencedImageFileNames() {
-            autoreleasepool {
-                let url = resourcesURL.appendingPathComponent(fileName)
-                if let image = NSImage(contentsOf: url) {
-                    images[fileName] = image
+        for fileName in fileNames {
+            if let cached = cache[fileName] {
+                images[fileName] = cached
+            } else {
+                autoreleasepool {
+                    let url = resourcesURL.appendingPathComponent(fileName)
+                    if let image = NSImage(contentsOf: url) {
+                        images[fileName] = image
+                        cache[fileName] = image
+                    }
                 }
             }
         }
         return images
     }
 
-    /// Collect all referenced image filenames in a single pass (for batch cleanup).
-    func allReferencedImageFileNames() -> Set<String> {
+    // MARK: - Referenced Image Filenames
+
+    /// Collect referenced image filenames for the given rows and locale overrides.
+    private func referencedImageFileNames(
+        rows targetRows: [ScreenshotRow],
+        localeOverrides: [String: [String: ShapeLocaleOverride]]
+    ) -> Set<String> {
         var result = Set<String>()
-        for row in rows {
+        for row in targetRows {
             if let f = row.backgroundImageConfig.fileName { result.insert(f) }
             for template in row.templates {
                 if let f = template.backgroundImageConfig.fileName { result.insert(f) }
@@ -578,11 +600,29 @@ extension AppState {
                 for f in shape.allImageFileNames { result.insert(f) }
             }
         }
-        for shapeOverrides in localeState.overrides.values {
+        for shapeOverrides in localeOverrides.values {
             for override in shapeOverrides.values {
                 if let f = override.overrideImageFileName { result.insert(f) }
             }
         }
         return result
+    }
+
+    /// Image filenames needed for the editor (base shapes + active locale overrides only).
+    func editorReferencedImageFileNames() -> Set<String> {
+        let activeCode = localeState.activeLocaleCode
+        let activeOverrides = localeState.overrides[activeCode].map { [activeCode: $0] } ?? [:]
+        return referencedImageFileNames(rows: rows, localeOverrides: activeOverrides)
+    }
+
+    /// Collect all referenced image filenames in a single pass (for batch cleanup).
+    func allReferencedImageFileNames() -> Set<String> {
+        referencedImageFileNames(rows: rows, localeOverrides: localeState.overrides)
+    }
+
+    /// Image filenames for a specific row and locale (for per-row export).
+    func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> {
+        let localeOverrides = localeState.overrides[localeCode].map { [localeCode: $0] } ?? [:]
+        return referencedImageFileNames(rows: [row], localeOverrides: localeOverrides)
     }
 }

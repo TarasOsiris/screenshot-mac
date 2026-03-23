@@ -292,8 +292,11 @@ struct CanvasShapeView: View {
     private var shapeContent: some View {
         switch shape.type {
         case .rectangle:
-            let rr = RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
-            outlinedShape(rr)
+            let maxRadius = min(displayW, displayH) / 2
+            let clampedRadius = min(shape.borderRadius * displayScale, maxRadius)
+            // Keep one path implementation across the entire radius range to avoid
+            // tiny export seams where Capsule and RoundedRectangle rasterize differently.
+            outlinedShape(RoundedRectangle(cornerRadius: clampedRadius, style: .circular))
 
         case .circle:
             outlinedShape(Ellipse())
@@ -897,32 +900,28 @@ struct CanvasShapeView: View {
 
     @ViewBuilder
     private func outlinedShape<S: InsettableShape>(_ outline: S) -> some View {
-        if shape.resolvedFillStyle == .color {
-            outline
-                .fill(shape.color)
-                .overlay {
-                    if let outlineColor = shape.outlineColor, displayOutlineWidth > 0 {
-                        outline.strokeBorder(
-                            outlineColor,
-                            style: StrokeStyle(lineWidth: displayOutlineWidth, lineJoin: .miter)
-                        )
-                    }
-                }
+        let maxInset = max(0, min(displayW, displayH) / 2)
+        let inset = min(displayOutlineWidth, maxInset)
+
+        if let outlineColor = shape.outlineColor, inset > 0 {
+            ZStack {
+                outline.fill(outlineColor)
+                let innerOutline = outline.inset(by: inset)
+                filledShape(innerOutline)
+            }
+            .clipShape(outline)
         } else {
-            outline
-                .fill(.clear)
-                .overlay {
-                    shape.fillView(image: fillImage, modelSize: CGSize(width: shape.width, height: shape.height))
-                        .clipShape(outline)
-                }
-                .overlay {
-                    if let outlineColor = shape.outlineColor, displayOutlineWidth > 0 {
-                        outline.strokeBorder(
-                            outlineColor,
-                            style: StrokeStyle(lineWidth: displayOutlineWidth, lineJoin: .miter)
-                        )
-                    }
-                }
+            filledShape(outline)
+        }
+    }
+
+    @ViewBuilder
+    private func filledShape<S: Shape>(_ outline: S) -> some View {
+        if shape.resolvedFillStyle == .color {
+            outline.fill(shape.color)
+        } else {
+            shape.fillView(image: fillImage, modelSize: CGSize(width: shape.width, height: shape.height))
+                .clipShape(outline)
         }
     }
 

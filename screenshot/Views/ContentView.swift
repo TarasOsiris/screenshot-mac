@@ -622,11 +622,14 @@ struct ContentView: View {
         let format: ExportImageFormat = utType == .jpeg ? .jpeg : .png
 
         Task {
-            let fullResImages = state.loadFullResolutionImages()
+            let localeCode = state.localeState.activeLocaleCode
+            let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
+            var cache: [String: NSImage] = [:]
+            let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &cache)
             let image = ExportService.renderRowImage(
                 row: row,
-                screenshotImages: fullResImages,
-                localeCode: state.localeState.activeLocaleCode,
+                screenshotImages: rowImages,
+                localeCode: localeCode,
                 localeState: state.localeState
             )
             guard let data = ExportService.encodeImage(image, format: format) else {
@@ -691,13 +694,16 @@ struct ContentView: View {
             do {
                 let projectName = state.activeProject?.name ?? ""
                 let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
-                let fullResImages = state.loadFullResolutionImages()
+                var imageCache: [String: NSImage] = [:]
                 let destinationFolderURL = try await ExportService.exportAll(
                     rows: state.rows,
                     projectName: projectName,
                     to: url,
                     format: format,
-                    screenshotImages: fullResImages,
+                    imageProvider: { [state] row, localeCode in
+                        let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
+                        return state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
+                    },
                     localeState: state.localeState,
                     availableFontFamilies: state.availableFontFamilySet,
                     onProgress: { completed in

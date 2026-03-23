@@ -484,7 +484,10 @@ struct EditorRowView: View {
                         }
                     },
                     onLoadFullResImages: { [weak state] in
-                        state?.loadFullResolutionImages() ?? [:]
+                        guard let state else { return [:] }
+                        let fileNames = state.referencedImageFileNames(forRow: row, localeCode: state.localeState.activeLocaleCode)
+                        var cache: [String: NSImage] = [:]
+                        return state.loadFullResolutionImages(fileNames: fileNames, cache: &cache)
                     }
                 )
             }

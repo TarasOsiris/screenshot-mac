@@ -8,6 +8,7 @@ extension AppState {
         guard code != localeState.activeLocaleCode else { return }
         guard localeState.locales.contains(where: { $0.code == code }) else { return }
         localeState.activeLocaleCode = code
+        loadScreenshotImages() // evict old locale images, load new ones
         scheduleSave()
     }
 

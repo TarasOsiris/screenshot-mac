@@ -23,7 +23,7 @@ struct ExportService {
         projectName: String,
         to folderURL: URL,
         format: ExportImageFormat = .png,
-        screenshotImages: [String: NSImage] = [:],
+        imageProvider: (_ row: ScreenshotRow, _ localeCode: String) -> [String: NSImage],
         localeState: LocaleState = .default,
         availableFontFamilies: Set<String>? = nil,
         onProgress: (@MainActor (Int) -> Void)? = nil
@@ -65,13 +65,15 @@ struct ExportService {
                     destFolder = localeFolder
                 }
 
+                let rowImages = imageProvider(row, locale.code)
+
                 for (index, _) in row.templates.enumerated() {
                     // Render on main (ImageRenderer requirement) — runs concurrently
                     // with the previous template's background encoding.
                     let image = renderTemplateImage(
                         index: index,
                         row: row,
-                        screenshotImages: screenshotImages,
+                        screenshotImages: rowImages,
                         localeCode: locale.code,
                         localeState: localeState,
                         availableFontFamilies: availableFontFamilies

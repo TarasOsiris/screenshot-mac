@@ -16,9 +16,9 @@ Sketch is the main reference project. UX patterns (cursors, handles, interaction
 xcodebuild -scheme screenshot -destination 'platform=macOS' build
 ```
 
-Run unit tests:
+Run unit tests (always kill the running app first to avoid Xcode crash/hang):
 ```
-xcodebuild -scheme screenshot -destination 'platform=macOS' test
+killall screenshot 2>/dev/null; xcodebuild -scheme screenshot -destination 'platform=macOS' test
 ```
 
 Unit tests cover `AppState` operations (including locale tests), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, and `ProjectMerge` (iCloud merge logic) in `screenshotTests/`. UI tests exist (`screenshotUITests` scheme). No linter configured.

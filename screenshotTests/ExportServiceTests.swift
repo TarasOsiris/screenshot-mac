@@ -442,6 +442,26 @@ struct ExportServiceTests {
         #expect(brightness < 0.4, "Edge should be dark (outline), got brightness=\(brightness)")
     }
 
+    @Test func maxRadiusOutlineStaysInsideCapsuleBounds() throws {
+        let tw: CGFloat = 220
+        let th: CGFloat = 120
+        var row = makeTestRow(width: tw, height: th, bgColor: Self.testBlue)
+        row.shapes = [CanvasShapeModel(
+            type: .rectangle, x: 20, y: 20, width: 180, height: 80,
+            borderRadius: 999, color: .white, outlineColor: .black, outlineWidth: 8
+        )]
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+
+        let center = try pixelColor(bitmap, at: (110, 60))
+        #expect(center.r > 0.8 && center.g > 0.8 && center.b > 0.8, "Center should stay white")
+
+        let edge = try pixelColor(bitmap, at: (24, 60))
+        let brightness = (edge.r + edge.g + edge.b) / 3
+        #expect(brightness < 0.4, "Inner edge should be dark (outline), got brightness=\(brightness)")
+
+        try expectDominant(bitmap, at: (199, 21), channel: .b, label: "outside capsule corner should stay background")
+    }
+
     // MARK: - Text rendering
 
     @Test func textShapeRendersInExport() throws {
