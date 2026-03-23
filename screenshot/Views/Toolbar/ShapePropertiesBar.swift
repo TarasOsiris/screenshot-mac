@@ -18,6 +18,8 @@ struct ShapePropertiesBar: View {
     @State private var isFontSizeFieldActive = false
     @State private var editingLineHeight: String = ""
     @State private var isLineHeightFieldActive = false
+    @State private var editingOpacity: String = ""
+    @State private var isOpacityFieldActive = false
     private static let lineHeightPresets: [Int] = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 175, 200]
 
     private var rowIndex: Int? { state.selectedRowIndex }
@@ -149,11 +151,36 @@ struct ShapePropertiesBar: View {
 
                         // Opacity
                         controlGroup("Opacity") {
-                            Slider(value: shapeBinding(shapeId, \.opacity, continuous: true), in: 0...1)
-                                .frame(width: 80)
+                            HStack(spacing: 0) {
+                                TextField("", text: $editingOpacity, onEditingChanged: { editing in
+                                    if editing {
+                                        isOpacityFieldActive = true
+                                    } else {
+                                        commitOpacity(shapeId: shapeId)
+                                    }
+                                })
+                                .frame(width: 40)
+                                .textFieldStyle(.roundedBorder)
+                                .multilineTextAlignment(.center)
+                                .onAppear {
+                                    editingOpacity = currentOpacityString(for: shapeId)
+                                }
+                                .onChange(of: shapeId) {
+                                    isOpacityFieldActive = false
+                                    editingOpacity = currentOpacityString(for: shapeId)
+                                }
+                                .onChange(of: shape.opacity) {
+                                    guard !isOpacityFieldActive else { return }
+                                    editingOpacity = currentOpacityString(for: shapeId)
+                                }
+                                .onSubmit {
+                                    commitOpacity(shapeId: shapeId)
+                                }
 
-                            Text(verbatim: "\(Int((idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].opacity } ?? 1) * 100))%")
-                                .frame(width: 32, alignment: .trailing)
+                                Text("%")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.secondary)
+                            }
                         }
 
                         // Rotation
@@ -396,6 +423,25 @@ struct ShapePropertiesBar: View {
         editingFontSize = "\(Int(clamped))"
     }
 
+    private func currentOpacityString(for shapeId: UUID) -> String {
+        guard let i = idx(for: shapeId) else { return "100" }
+        return "\(Int((state.rows[i.row].shapes[i.shape].opacity * 100).rounded()))"
+    }
+
+    private func commitOpacity(shapeId: UUID) {
+        isOpacityFieldActive = false
+        guard let i = idx(for: shapeId) else { return }
+        guard let value = Int(editingOpacity) else {
+            editingOpacity = currentOpacityString(for: shapeId)
+            return
+        }
+        let clamped = min(max(value, 0), 100)
+        var shape = state.rows[i.row].shapes[i.shape]
+        shape.opacity = Double(clamped) / 100.0
+        state.updateShape(shape)
+        editingOpacity = "\(clamped)"
+    }
+
     private func currentLineHeightString(for shapeId: UUID) -> String {
         guard let i = idx(for: shapeId) else { return "\(Int(TextLayoutStyle.defaultLineHeightMultiple * 100))" }
         let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
@@ -540,7 +586,7 @@ struct ShapePropertiesBar: View {
             }
         }
         .menuStyle(.borderlessButton)
-        .frame(width: 260, alignment: .leading)
+        .fixedSize()
         .help(devicePickerHelp(shape: shape))
     }
 
@@ -991,18 +1037,16 @@ struct ShapePropertiesBar: View {
     }
 
     private func shapeBadge(_ shape: CanvasShapeModel) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             Image(systemName: shape.type.icon)
-                .font(.system(size: 11, weight: .medium))
-            Text(shape.type.label)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: 10, weight: .medium))
             Text(verbatim: "\(Int(shape.width))×\(Int(shape.height))")
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .transaction { $0.animation = nil }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
         .background(
             Capsule(style: .continuous)
                 .fill(Color.accentColor.opacity(0.14))
