@@ -212,8 +212,13 @@ struct TemplateControlBar: View {
         }
     }
 
+    private func renderExportPNG() -> Data? {
+        let images = onLoadFullResImages?() ?? screenshotImages
+        return ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: images, localeState: localeState)
+    }
+
     private func previewScreenshot() {
-        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: screenshotImages, localeState: localeState) else {
+        guard let pngData = renderExportPNG() else {
             renderError = "Could not render screenshot for preview."
             return
         }
@@ -235,8 +240,7 @@ struct TemplateControlBar: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        let exportImages = onLoadFullResImages?() ?? screenshotImages
-        guard let pngData = ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: exportImages, localeState: localeState) else {
+        guard let pngData = renderExportPNG() else {
             renderError = "Could not render screenshot."
             return
         }

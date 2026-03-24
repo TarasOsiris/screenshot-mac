@@ -279,6 +279,7 @@ struct ExportService {
             return NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
         }
 
+        ctx.interpolationQuality = .high
         ctx.translateBy(x: 0, y: row.templateHeight)
         ctx.scaleBy(x: 1, y: -1)
         hostingView.layer!.render(in: ctx)

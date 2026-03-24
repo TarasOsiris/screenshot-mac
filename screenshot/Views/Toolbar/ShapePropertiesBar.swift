@@ -7,7 +7,6 @@ struct ShapePropertiesBar: View {
     private static let fontSizeRange: ClosedRange<CGFloat> = 8...400
     private static let fontSizePresets: [Int] = CanvasShapeModel.fontSizePresets
     @Bindable var state: AppState
-    @State private var isReplacingImage = false
     @State private var isReplacingSvg = false
     @State private var isReplacingFillImage = false
     @State private var isFillPopoverPresented = false
@@ -36,7 +35,16 @@ struct ShapePropertiesBar: View {
         return shapeIndex > 0
     }
 
-    /// Safely resolve current index for a shape by ID; returns nil if shape or row disappeared.
+    private func pickAndReplaceImage(for shapeId: UUID) {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let image = NSImage.fromSecurityScopedURL(url) else { return }
+        state.saveImage(image, for: shapeId)
+    }
+
     private func idx(for shapeId: UUID) -> (row: Int, shape: Int)? {
         guard let ri = rowIndex, ri < state.rows.count,
               let si = state.rows[ri].shapes.firstIndex(where: { $0.id == shapeId })
@@ -122,7 +130,7 @@ struct ShapePropertiesBar: View {
                                 separator
 
                                 Button {
-                                    isReplacingImage = true
+                                    pickAndReplaceImage(for: shapeId)
                                 } label: {
                                     Label("Replace Image", systemImage: "photo.badge.arrow.down")
                                 }
@@ -234,7 +242,7 @@ struct ShapePropertiesBar: View {
                     if shape.type == .image {
                         section {
                             Button {
-                                isReplacingImage = true
+                                pickAndReplaceImage(for: shapeId)
                             } label: {
                                 Label(shape.imageFileName != nil ? "Replace Image" : "Choose Image", systemImage: "photo.badge.arrow.down")
                             }
@@ -349,12 +357,6 @@ struct ShapePropertiesBar: View {
             .onChange(of: state.pendingTranslateShapeId) { _, newValue in
                 if newValue != nil {
                     triggerTranslation()
-                }
-            }
-            .fileImporter(isPresented: $isReplacingImage, allowedContentTypes: [.image]) { result in
-                if case .success(let url) = result,
-                   let image = NSImage.fromSecurityScopedURL(url) {
-                    state.saveImage(image, for: shapeId)
                 }
             }
             .fileImporter(isPresented: $isReplacingFillImage, allowedContentTypes: [.image]) { result in
