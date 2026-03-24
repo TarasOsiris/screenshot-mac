@@ -79,7 +79,7 @@ extension AppState {
 
     func resetRow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
-        registerUndo("Reset Row")
+        registerUndoForRow(at: idx, "Reset Row")
         let oldRow = rows[idx]
 
         // Collect all image filenames to clean up
@@ -111,7 +111,7 @@ extension AppState {
 
     func updateRowLabel(_ rowId: UUID, text: String) {
         guard let ri = rowIndex(for: rowId) else { return }
-        registerUndo("Edit Row Label")
+        registerUndoForRow(at: ri, "Edit Row Label")
         let trimmed = text.trimmingCharacters(in: .whitespaces)
         if trimmed.isEmpty {
             let row = rows[ri]
@@ -142,7 +142,7 @@ extension AppState {
         var row = rows[rowIndex]
         guard row.templateWidth != newWidth || row.templateHeight != newHeight else { return }
 
-        registerUndo("Resize Row")
+        registerUndoForRow(at: rowIndex, "Resize Row")
 
         let scaleX = newWidth / row.templateWidth
         let scaleY = newHeight / row.templateHeight
@@ -186,7 +186,7 @@ extension AppState {
         let newDefault = CodableColor(color)
         guard oldDefault != newDefault else { return }
 
-        registerUndo("Change Device Color")
+        registerUndoForRow(at: rowIndex, "Change Device Color")
         rows[rowIndex].defaultDeviceBodyColorData = newDefault
 
         // Legacy projects stored the default frame color on each device shape.
@@ -207,7 +207,7 @@ extension AppState {
         guard let idx = rowIndex(for: rowId) else { return }
         let row = rows[idx]
         guard row.defaultDeviceCategory != category || row.defaultDeviceFrameId != frameId else { return }
-        registerUndo("Change Default Device")
+        registerUndoForRow(at: idx, "Change Default Device")
         rows[idx].defaultDeviceCategory = category
         rows[idx].defaultDeviceFrameId = frameId
         scheduleSave()
@@ -217,21 +217,21 @@ extension AppState {
 
     func toggleShowDevice(for rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        registerUndo(rows[idx].showDevice ? "Hide Devices" : "Show Devices")
+        registerUndoForRow(at: idx, rows[idx].showDevice ? "Hide Devices" : "Show Devices")
         rows[idx].showDevice.toggle()
         scheduleSave()
     }
 
     func toggleShowBorders(for rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        registerUndo(rows[idx].showBorders ? "Hide Borders" : "Show Borders")
+        registerUndoForRow(at: idx, rows[idx].showBorders ? "Hide Borders" : "Show Borders")
         rows[idx].showBorders.toggle()
         scheduleSave()
     }
 
     func setAllShapeTypesVisibility(for rowId: UUID, visible: Bool) {
         guard let idx = rowIndex(for: rowId) else { return }
-        registerUndo(visible ? "Show All" : "Hide All")
+        registerUndoForRow(at: idx, visible ? "Show All" : "Hide All")
         rows[idx].showBorders = visible
         rows[idx].hiddenShapeTypes = visible ? [] : Set(ShapeType.allCases)
         scheduleSave()
@@ -240,7 +240,7 @@ extension AppState {
     func toggleShapeTypeVisibility(for rowId: UUID, type: ShapeType) {
         guard let idx = rowIndex(for: rowId) else { return }
         let isCurrentlyVisible = !rows[idx].hiddenShapeTypes.contains(type)
-        registerUndo(isCurrentlyVisible ? "Hide \(type.pluralLabel)" : "Show \(type.pluralLabel)")
+        registerUndoForRow(at: idx, isCurrentlyVisible ? "Hide \(type.pluralLabel)" : "Show \(type.pluralLabel)")
         if isCurrentlyVisible {
             rows[idx].hiddenShapeTypes.insert(type)
         } else {

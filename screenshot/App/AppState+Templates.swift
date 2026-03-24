@@ -6,7 +6,7 @@ extension AppState {
 
     func addTemplate(to rowId: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == rowId }) else { return }
-        registerUndo("Add Template")
+        registerUndoForRow(at: idx, "Add Template")
         appendTemplate(to: idx)
         scheduleSave()
     }
@@ -36,7 +36,7 @@ extension AppState {
     func removeTemplate(_ templateId: UUID, from rowId: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == rowId }),
               let templateIndex = rows[idx].templates.firstIndex(where: { $0.id == templateId }) else { return }
-        registerUndo("Remove Template")
+        registerUndoForRow(at: idx, "Remove Template")
         let shapesToRemove = rows[idx].shapes.filter { rows[idx].owningTemplateIndex(for: $0) == templateIndex }
         let templateBgImage = rows[idx].templates[templateIndex].backgroundImageConfig.fileName
         let shapeImageCandidates = imageFileNames(for: shapesToRemove)
@@ -63,7 +63,7 @@ extension AppState {
     func duplicateTemplate(_ templateId: UUID, in rowId: UUID) {
         guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }),
               let templateIndex = rows[rowIndex].templates.firstIndex(where: { $0.id == templateId }) else { return }
-        registerUndo("Duplicate Screenshot")
+        registerUndoForRow(at: rowIndex, "Duplicate Screenshot")
         let sourceTemplate = rows[rowIndex].templates[templateIndex]
         var newTemplate = sourceTemplate.duplicated()
 
@@ -133,7 +133,7 @@ extension AppState {
         guard row.templates.indices.contains(sourceIndex),
               row.templates.indices.contains(destinationIndex) else { return }
 
-        registerUndo(undoName)
+        registerUndoForRow(at: rowIndex, undoName)
 
         // Keep each shape visually attached to its screenshot column while columns are reordered.
         // Shapes that span multiple templates stay in place — they aren't tied to one column.

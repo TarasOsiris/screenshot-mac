@@ -72,8 +72,8 @@ extension AppState {
         guard let loc = shapeLocation(for: shapeId) else { return }
 
         // Capture undo state only at the start of a base text editing sequence
-        if baseTextBaseRows == nil {
-            baseTextBaseRows = rows
+        if baseTextBaseRow == nil {
+            baseTextBaseRow = rows[loc.rowIndex]
         }
 
         rows[loc.rowIndex].shapes[loc.shapeIndex].text = text
@@ -81,11 +81,11 @@ extension AppState {
 
         // Debounce undo registration so rapid keystrokes collapse into one entry
         baseTextUndoTask?.cancel()
-        guard let savedRows = baseTextBaseRows else { return }
+        guard let savedBaseRow = baseTextBaseRow else { return }
         let task = DispatchWorkItem { [weak self] in
             guard let self else { return }
-            self.registerUndoWithBase("Edit Base Text", base: savedRows, baseLocaleState: self.localeState)
-            self.baseTextBaseRows = nil
+            self.registerUndoForRowWithBase("Edit Base Text", baseRow: savedBaseRow, baseLocaleState: self.localeState)
+            self.baseTextBaseRow = nil
         }
         baseTextUndoTask = task
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: task)

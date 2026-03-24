@@ -54,11 +54,11 @@ final class AppState {
     @ObservationIgnored var translationUndoTask: DispatchWorkItem?
     @ObservationIgnored var translationBaseLocaleState: LocaleState?
     @ObservationIgnored var baseTextUndoTask: DispatchWorkItem?
-    @ObservationIgnored var baseTextBaseRows: [ScreenshotRow]?
+    @ObservationIgnored var baseTextBaseRow: ScreenshotRow?
     @ObservationIgnored var nudgeUndoTask: DispatchWorkItem?
-    @ObservationIgnored var nudgeBaseRows: [ScreenshotRow]?
+    @ObservationIgnored var nudgeBaseRow: ScreenshotRow?
     @ObservationIgnored var continuousEditUndoTask: DispatchWorkItem?
-    @ObservationIgnored var continuousEditBaseRows: [ScreenshotRow]?
+    @ObservationIgnored var continuousEditBaseRow: ScreenshotRow?
     @ObservationIgnored var continuousEditBaseLocaleState: LocaleState?
     @ObservationIgnored var continuousEditLastApply: CFAbsoluteTime = 0
     @ObservationIgnored var continuousEditPending: CanvasShapeModel?
@@ -127,6 +127,8 @@ final class AppState {
 
     // MARK: - Undo
 
+    /// Full snapshot undo — captures ALL rows + localeState. Use for multi-row operations
+    /// (add/delete/move row, etc.) where the row count or order changes.
     func registerUndo(_ actionName: String) {
         registerUndoWithBase(actionName, base: rows, baseLocaleState: localeState)
     }
@@ -145,6 +147,39 @@ final class AppState {
                 t.undoManager?.setActionName(actionName)
             }
             target.rows = base
+            target.localeState = savedLocaleState
+            target.normalizeSelection()
+            target.scheduleSave()
+            target.undoManager?.setActionName(actionName)
+        }
+        undoManager.setActionName(actionName)
+    }
+
+    /// Row-scoped undo — captures only one row + localeState. Use for single-row mutations
+    /// (shape edits, template changes, row property edits) where row count/order doesn't change.
+    func registerUndoForRow(at rowIndex: Int, _ actionName: String) {
+        registerUndoForRowWithBase(actionName, baseRow: rows[rowIndex], baseLocaleState: localeState)
+    }
+
+    /// Row-scoped undo with a pre-captured base row. Looks up the row by ID on undo/redo,
+    /// so it's safe even if row indices shift (though callers should only use this when row count is stable).
+    func registerUndoForRowWithBase(_ actionName: String, baseRow: ScreenshotRow, baseLocaleState: LocaleState? = nil) {
+        guard let undoManager else { return }
+        let savedLocaleState = baseLocaleState ?? localeState
+        let savedRowId = baseRow.id
+        undoManager.registerUndo(withTarget: self) { target in
+            guard let currentIdx = target.rows.firstIndex(where: { $0.id == savedRowId }) else { return }
+            let redoRow = target.rows[currentIdx]
+            let redoLocaleState = target.localeState
+            target.undoManager?.registerUndo(withTarget: target) { t in
+                guard let idx = t.rows.firstIndex(where: { $0.id == savedRowId }) else { return }
+                t.rows[idx] = redoRow
+                t.localeState = redoLocaleState
+                t.normalizeSelection()
+                t.scheduleSave()
+                t.undoManager?.setActionName(actionName)
+            }
+            target.rows[currentIdx] = baseRow
             target.localeState = savedLocaleState
             target.normalizeSelection()
             target.scheduleSave()
@@ -176,13 +211,13 @@ final class AppState {
         translationBaseLocaleState = nil
         nudgeUndoTask?.cancel()
         nudgeUndoTask = nil
-        nudgeBaseRows = nil
+        nudgeBaseRow = nil
         baseTextUndoTask?.cancel()
         baseTextUndoTask = nil
-        baseTextBaseRows = nil
+        baseTextBaseRow = nil
         continuousEditUndoTask?.cancel()
         continuousEditUndoTask = nil
-        continuousEditBaseRows = nil
+        continuousEditBaseRow = nil
         continuousEditBaseLocaleState = nil
         continuousEditFlushTask?.cancel()
         continuousEditFlushTask = nil

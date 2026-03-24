@@ -15,7 +15,7 @@ extension AppState {
     func saveImage(_ image: NSImage, for shapeId: UUID) {
         guard let activeId = activeProjectId,
               let location = shapeLocation(for: shapeId) else { return }
-        registerUndo("Assign Screenshot")
+        registerUndoForRow(at: location.rowIndex, "Assign Screenshot")
         performSaveImage(image, for: shapeId, activeId: activeId, location: location)
         scheduleSave()
     }
@@ -26,7 +26,7 @@ extension AppState {
         if !localeState.isBaseLocale {
             let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
             guard var override = existingOverride, override.overrideImageFileName != nil else { return }
-            registerUndo("Clear Screenshot")
+            registerUndoForRow(at: location.rowIndex, "Clear Screenshot")
             let oldFile = override.overrideImageFileName
             override.overrideImageFileName = nil
             LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override.isEmpty ? nil : override)
@@ -34,7 +34,7 @@ extension AppState {
         } else {
             let shape = rows[location.rowIndex].shapes[location.shapeIndex]
             guard shape.displayImageFileName != nil else { return }
-            registerUndo("Clear Screenshot")
+            registerUndoForRow(at: location.rowIndex, "Clear Screenshot")
             rows[location.rowIndex].shapes[location.shapeIndex].displayImageFileName = nil
             if let oldFile = shape.displayImageFileName { cleanupUnreferencedImage(oldFile) }
         }
@@ -139,7 +139,7 @@ extension AppState {
     func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat) {
         guard let rowIdx = selectedRowIndex else { return }
         let shape = makeImageShape(image: image, row: rows[rowIdx], centerX: centerX, centerY: centerY)
-        registerUndo("Add Image")
+        registerUndoForRow(at: rowIdx, "Add Image")
         rows[rowIdx].shapes.append(shape)
         selectShape(shape.id, in: rows[rowIdx].id)
         justAddedShapeId = shape.id
@@ -173,7 +173,7 @@ extension AppState {
     /// Registers a single undo operation for the entire batch.
     func batchImportImages(_ images: [NSImage], into rowId: UUID) {
         guard let idx = rowIndex(for: rowId), !images.isEmpty else { return }
-        registerUndo("Import Screenshots")
+        registerUndoForRow(at: idx, "Import Screenshots")
         selectRow(rowId)
 
         // Create additional templates if needed
@@ -250,7 +250,7 @@ extension AppState {
         guard let activeId = activeProjectId,
               let location = shapeLocation(for: shapeId) else { return }
 
-        registerUndo("Set Fill Image")
+        registerUndoForRow(at: location.rowIndex, "Set Fill Image")
 
         let fileId = UUID().uuidString
         let fileName = "fill-\(fileId).png"
@@ -276,7 +276,7 @@ extension AppState {
 
     func removeShapeFillImage(for shapeId: UUID) {
         guard let location = shapeLocation(for: shapeId) else { return }
-        registerUndo("Remove Fill Image")
+        registerUndoForRow(at: location.rowIndex, "Remove Fill Image")
         let oldFile = rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName
         rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName = nil
         if let oldFile { cleanupUnreferencedImage(oldFile) }
@@ -289,7 +289,7 @@ extension AppState {
         guard let activeId = activeProjectId,
               let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
 
-        registerUndo("Set Background Image")
+        registerUndoForRow(at: rowIndex, "Set Background Image")
 
         let fileId = UUID().uuidString
         let fileName = "bg-\(fileId).png"
@@ -305,7 +305,7 @@ extension AppState {
 
     func removeBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
         guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
-        registerUndo("Remove Background Image")
+        registerUndoForRow(at: rowIndex, "Remove Background Image")
         setBackgroundImageFileName(nil, rowIndex: rowIndex, templateIndex: templateIndex)
         scheduleSave()
     }

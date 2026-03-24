@@ -283,7 +283,7 @@ struct InspectorPanel: View {
             },
             set: { newValue in
                 guard let idx = state.rowIndex(for: rowId) else { return }
-                state.registerUndo("Edit Row")
+                state.registerUndoForRow(at: idx, "Edit Row")
                 state.rows[idx][keyPath: keyPath] = newValue
                 state.scheduleSave()
             }

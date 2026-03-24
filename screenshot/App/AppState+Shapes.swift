@@ -13,7 +13,7 @@ extension AppState {
 
     func addShape(_ shape: CanvasShapeModel) {
         guard let idx = selectedRowIndex else { return }
-        registerUndo("Add Shape")
+        registerUndoForRow(at: idx, "Add Shape")
         rows[idx].shapes.append(shape)
         selectShape(shape.id, in: rows[idx].id)
         justAddedShapeId = shape.id
@@ -23,7 +23,7 @@ extension AppState {
     func updateShape(_ shape: CanvasShapeModel) {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shape.id }) else { return }
-        registerUndo("Edit Shape")
+        registerUndoForRow(at: rowIdx, "Edit Shape")
         let baseShape = rows[rowIdx].shapes[shapeIdx]
         rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
         scheduleSave()
@@ -35,8 +35,8 @@ extension AppState {
     /// at the start and finalized after changes stop (debounced). Throttled to ~30fps
     /// to avoid expensive re-renders on every slider tick.
     func updateShapeContinuous(_ shape: CanvasShapeModel) {
-        if continuousEditBaseRows == nil {
-            continuousEditBaseRows = rows
+        if continuousEditBaseRow == nil, let rowIdx = selectedRowIndex {
+            continuousEditBaseRow = rows[rowIdx]
             continuousEditBaseLocaleState = localeState
         }
 
@@ -63,10 +63,10 @@ extension AppState {
         // Debounced undo registration
         continuousEditUndoTask?.cancel()
         let undoTask = DispatchWorkItem { [weak self] in
-            guard let self, let base = self.continuousEditBaseRows else { return }
+            guard let self, let baseRow = self.continuousEditBaseRow else { return }
             self.flushPendingContinuousEdit()
-            self.registerUndoWithBase("Edit Shape", base: base, baseLocaleState: self.continuousEditBaseLocaleState)
-            self.continuousEditBaseRows = nil
+            self.registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: self.continuousEditBaseLocaleState)
+            self.continuousEditBaseRow = nil
             self.continuousEditBaseLocaleState = nil
         }
         continuousEditUndoTask = undoTask
@@ -94,7 +94,7 @@ extension AppState {
         guard let idx = rowIndex(for: rowId) else { return }
         let matching = rows[idx].shapes.filter { $0.type == type }
         guard !matching.isEmpty else { return }
-        registerUndo("Delete All \(type.pluralLabel)")
+        registerUndoForRow(at: idx, "Delete All \(type.pluralLabel)")
         let allCandidates = imageFileNames(for: matching)
         let matchingIds = Set(matching.map(\.id))
         for shape in matching {
@@ -115,7 +115,7 @@ extension AppState {
         let row = rows[idx]
         let deviceIndices = row.shapes.indices.filter { row.shapes[$0].type == .device }
         guard !deviceIndices.isEmpty else { return }
-        registerUndo("Center All Devices")
+        registerUndoForRow(at: idx, "Center All Devices")
         for i in deviceIndices {
             let shape = rows[idx].shapes[i]
             if axis != .vertically {
@@ -143,7 +143,7 @@ extension AppState {
         let shapes = rows[idx].shapes
         let deviceIndices = shapes.indices.filter { shapes[$0].type == .device }
         guard !deviceIndices.isEmpty else { return }
-        registerUndo("Change All Row Devices")
+        registerUndoForRow(at: idx, "Change All Row Devices")
         for i in deviceIndices {
             mutate(&rows[idx].shapes[i])
         }
@@ -152,7 +152,7 @@ extension AppState {
 
     func deleteShape(_ id: UUID) {
         guard let location = shapeLocation(for: id) else { return }
-        registerUndo("Delete Shape")
+        registerUndoForRow(at: location.rowIndex, "Delete Shape")
         let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
         // Collect locale override image filenames before removing overrides
         let localeImageFiles = localeOverrideImageFileNames(for: id)
@@ -169,7 +169,7 @@ extension AppState {
         let idsToDelete = selectedShapeIds
         let matching = rows[rowIdx].shapes.filter { idsToDelete.contains($0.id) }
         guard !matching.isEmpty else { return }
-        registerUndo("Delete Shapes")
+        registerUndoForRow(at: rowIdx, "Delete Shapes")
         var allCandidates: [String?] = []
         for shape in matching {
             allCandidates.append(contentsOf: shape.allImageFileNames)
@@ -195,7 +195,7 @@ extension AppState {
         let ids = selectedShapeIds
         let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) }
         guard !shapes.isEmpty else { return }
-        registerUndo("Duplicate Shapes")
+        registerUndoForRow(at: rowIdx, "Duplicate Shapes")
         var newIds: Set<UUID> = []
         for shape in shapes {
             var copy = shape.duplicated(offsetX: 50, offsetY: 50)
@@ -212,7 +212,7 @@ extension AppState {
     func insertDuplicate(of shapeId: UUID, offsetX: CGFloat = 0, offsetY: CGFloat = 0, undoName: String) -> UUID? {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) else { return nil }
-        registerUndo(undoName)
+        registerUndoForRow(at: rowIdx, undoName)
         var copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: offsetX, offsetY: offsetY)
         LocaleService.copyShapeOverrides(&localeState, fromId: shapeId, toId: copy.id)
         copyImageFiles(for: &copy, originalId: shapeId)
@@ -226,7 +226,7 @@ extension AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
               shapeIdx < rows[rowIdx].shapes.count - 1 else { return }
-        registerUndo("Bring to Front")
+        registerUndoForRow(at: rowIdx, "Bring to Front")
         let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
         rows[rowIdx].shapes.append(shape)
         selectShape(id, in: rows[rowIdx].id)
@@ -237,7 +237,7 @@ extension AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
               shapeIdx > 0 else { return }
-        registerUndo("Send to Back")
+        registerUndoForRow(at: rowIdx, "Send to Back")
         let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
         rows[rowIdx].shapes.insert(shape, at: 0)
         selectShape(id, in: rows[rowIdx].id)
@@ -250,7 +250,7 @@ extension AppState {
         // Check if already at front
         let suffixIds = Set(rows[rowIdx].shapes.suffix(ids.count).map(\.id))
         guard suffixIds != ids else { return }
-        registerUndo("Bring to Front")
+        registerUndoForRow(at: rowIdx, "Bring to Front")
         let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
         rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
         rows[rowIdx].shapes.append(contentsOf: selected)
@@ -262,7 +262,7 @@ extension AppState {
         let ids = selectedShapeIds
         let prefixIds = Set(rows[rowIdx].shapes.prefix(ids.count).map(\.id))
         guard prefixIds != ids else { return }
-        registerUndo("Send to Back")
+        registerUndoForRow(at: rowIdx, "Send to Back")
         let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
         rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
         rows[rowIdx].shapes.insert(contentsOf: selected, at: 0)
@@ -283,8 +283,8 @@ extension AppState {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
 
         // Capture undo state only at the start of a nudge sequence
-        if nudgeBaseRows == nil {
-            nudgeBaseRows = rows
+        if nudgeBaseRow == nil {
+            nudgeBaseRow = rows[rowIdx]
         }
 
         let ids = selectedShapeIds
@@ -298,12 +298,12 @@ extension AppState {
 
         // Debounce the undo registration so rapid key repeats collapse into one entry
         nudgeUndoTask?.cancel()
-        guard let savedBase = nudgeBaseRows else { return }
+        guard let savedBaseRow = nudgeBaseRow else { return }
         let actionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
         let nudgeTask = DispatchWorkItem { [weak self] in
             guard let self else { return }
-            self.registerUndoWithBase(actionName, base: savedBase)
-            self.nudgeBaseRows = nil
+            self.registerUndoForRowWithBase(actionName, baseRow: savedBaseRow)
+            self.nudgeBaseRow = nil
         }
         nudgeUndoTask = nudgeTask
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: nudgeTask)
@@ -340,7 +340,7 @@ extension AppState {
 
         // Otherwise paste from internal shape clipboard
         guard !clipboard.isEmpty else { return }
-        registerUndo(clipboard.count == 1 ? "Paste Shape" : "Paste Shapes")
+        registerUndoForRow(at: rowIdx, clipboard.count == 1 ? "Paste Shape" : "Paste Shapes")
         var newIds: Set<UUID> = []
         // Compute group center for mouse-relative positioning
         let groupMinX = clipboard.map(\.x).min() ?? 0
@@ -377,7 +377,7 @@ extension AppState {
     func applyGroupDrag(offset: CGSize) {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let ids = selectedShapeIds
-        registerUndo(ids.count > 1 ? "Move Shapes" : "Move Shape")
+        registerUndoForRow(at: rowIdx, ids.count > 1 ? "Move Shapes" : "Move Shape")
         for i in rows[rowIdx].shapes.indices {
             if ids.contains(rows[rowIdx].shapes[i].id) {
                 rows[rowIdx].shapes[i].x += offset.width
@@ -394,7 +394,7 @@ extension AppState {
         let ids = selectedShapeIds
         let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) }
         guard !shapes.isEmpty else { return }
-        registerUndo("Duplicate Shapes")
+        registerUndoForRow(at: rowIdx, "Duplicate Shapes")
         var newIds: Set<UUID> = []
         for shape in shapes {
             var copy = shape.duplicated()
@@ -420,7 +420,7 @@ extension AppState {
         } else {
             return
         }
-        registerUndo("Edit Shapes")
+        registerUndoForRow(at: rowIdx, "Edit Shapes")
         for i in rows[rowIdx].shapes.indices {
             if ids.contains(rows[rowIdx].shapes[i].id) {
                 let baseShape = rows[rowIdx].shapes[i]
