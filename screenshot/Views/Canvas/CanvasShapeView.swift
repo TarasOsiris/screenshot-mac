@@ -41,6 +41,9 @@ struct CanvasShapeView: View {
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
     var availableFontFamilies: Set<String> = []
+    /// When multi-selected with same-type shapes, applies update to all selected shapes
+    var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
+    var onDeleteSelected: (() -> Void)?
 
     @State private var addBumpScale: CGFloat = 1.0
     @State private var dragOffset: CGSize = .zero
@@ -384,6 +387,17 @@ struct CanvasShapeView: View {
         }
     }
 
+    /// Applies an update to this shape, or to all selected shapes if multi-selected with same type
+    private func applyUpdate(_ update: @escaping (inout CanvasShapeModel) -> Void) {
+        if let onUpdateSelected {
+            onUpdateSelected(update)
+        } else {
+            var updated = shape
+            update(&updated)
+            onUpdate(updated)
+        }
+    }
+
     @ViewBuilder
     private var shapeContextMenu: some View {
         if shape.type == .device || shape.type == .image {
@@ -400,14 +414,10 @@ struct CanvasShapeView: View {
             Menu("Change Device") {
                 DeviceMenuContent(
                     onSelectCategory: { category in
-                        var updated = shape
-                        updated.selectAbstractDevice(category)
-                        onUpdate(updated)
+                        applyUpdate { $0.selectAbstractDevice(category) }
                     },
                     onSelectFrame: { frame in
-                        var updated = shape
-                        updated.selectRealFrame(frame)
-                        onUpdate(updated)
+                        applyUpdate { $0.selectRealFrame(frame) }
                     }
                 )
             }
@@ -421,7 +431,7 @@ struct CanvasShapeView: View {
         if shape.type == .text {
             Picker("Align", selection: Binding(
                 get: { shape.textAlign ?? .center },
-                set: { var updated = shape; updated.textAlign = $0; onUpdate(updated) }
+                set: { val in applyUpdate { $0.textAlign = val } }
             )) {
                 Label("Left", systemImage: "text.alignleft").tag(TextAlign.left)
                 Label("Center", systemImage: "text.aligncenter").tag(TextAlign.center)
@@ -429,19 +439,17 @@ struct CanvasShapeView: View {
             }
             Toggle("Italic", isOn: Binding(
                 get: { shape.italic ?? false },
-                set: { var updated = shape; updated.italic = $0; onUpdate(updated) }
+                set: { val in applyUpdate { $0.italic = val } }
             ))
             Toggle("Uppercase", isOn: Binding(
                 get: { shape.uppercase ?? false },
-                set: { var updated = shape; updated.uppercase = $0; onUpdate(updated) }
+                set: { val in applyUpdate { $0.uppercase = val } }
             ))
             Menu("Change Font Size") {
                 let currentSize = Int(shape.fontSize ?? CanvasShapeModel.defaultFontSize)
                 ForEach(CanvasShapeModel.fontSizePresets, id: \.self) { size in
                     Button {
-                        var updated = shape
-                        updated.fontSize = CGFloat(size)
-                        onUpdate(updated)
+                        applyUpdate { $0.fontSize = CGFloat(size) }
                     } label: {
                         if currentSize == size {
                             Label("\(size)", systemImage: "checkmark")
@@ -463,7 +471,7 @@ struct CanvasShapeView: View {
         if shape.type == .svg {
             Toggle("Use Custom Color", isOn: Binding(
                 get: { shape.svgUseColor ?? false },
-                set: { var updated = shape; updated.svgUseColor = $0; onUpdate(updated) }
+                set: { val in applyUpdate { $0.svgUseColor = val } }
             ))
             Divider()
         }
@@ -471,9 +479,7 @@ struct CanvasShapeView: View {
             Menu("Points: \(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)") {
                 ForEach(3...12, id: \.self) { count in
                     Button("\(count)") {
-                        var updated = shape
-                        updated.starPointCount = count
-                        onUpdate(updated)
+                        applyUpdate { $0.starPointCount = count }
                     }
                 }
             }
@@ -481,11 +487,15 @@ struct CanvasShapeView: View {
         }
         Toggle("Clip to Screenshot", isOn: Binding(
             get: { shape.clipToTemplate ?? false },
-            set: { var updated = shape; updated.clipToTemplate = $0; onUpdate(updated) }
+            set: { val in applyUpdate { $0.clipToTemplate = val } }
         ))
         Divider()
         Button("Delete", role: .destructive) {
-            onDelete()
+            if let onDeleteSelected {
+                onDeleteSelected()
+            } else {
+                onDelete()
+            }
         }
     }
 

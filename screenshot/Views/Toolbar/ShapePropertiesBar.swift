@@ -1096,7 +1096,12 @@ struct ShapePropertiesBar: View {
                         .fill(Color.accentColor.opacity(0.14))
                 )
 
-                // Common controls: opacity
+                // Type-specific controls
+                if let commonType {
+                    multiSelectionTypeControls(commonType, shapes: shapes)
+                }
+
+                // Common controls: opacity & rotation
                 if commonType != nil {
                     section {
                         controlGroup("Opacity") {
@@ -1110,6 +1115,15 @@ struct ShapePropertiesBar: View {
                             Slider(value: multiShapeBinding(\.rotation), in: 0...360)
                                 .frame(width: 80)
                         }
+                    }
+                }
+
+                // Clip to Frame
+                if commonType != nil {
+                    section {
+                        Toggle("Clip to Frame", isOn: multiShapeOptionalBinding(\.clipToTemplate, default: false))
+                            .toggleStyle(.switch)
+                            .controlSize(.small)
                     }
                 }
 
@@ -1150,6 +1164,151 @@ struct ShapePropertiesBar: View {
         .background(.bar)
     }
 
+    @ViewBuilder
+    private func multiSelectionTypeControls(_ type: ShapeType, shapes: [CanvasShapeModel]) -> some View {
+        // Device: change device model
+        if type == .device {
+            section {
+                Menu {
+                    DeviceMenuContent(
+                        onSelectCategory: { category in
+                            state.updateShapes(state.selectedShapeIds) { $0.selectAbstractDevice(category) }
+                        },
+                        onSelectFrame: { frame in
+                            state.updateShapes(state.selectedShapeIds) { $0.selectRealFrame(frame) }
+                        }
+                    )
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "iphone")
+                        Text("Change Device")
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+            }
+        }
+
+        // Text: font, size, weight, alignment, italic, uppercase
+        if type == .text {
+            section {
+                FontPicker(
+                    selection: multiShapeOptionalBinding(\.fontName, default: ""),
+                    customFonts: state.customFonts,
+                    onImportFont: { url in state.importCustomFont(from: url) }
+                )
+
+                separator
+
+                Picker("", selection: multiShapeOptionalBinding(\.fontWeight, default: 400)) {
+                    Text("Light").tag(300)
+                    Text("Regular").tag(400)
+                    Text("Medium").tag(500)
+                    Text("Bold").tag(700)
+                }
+                .labelsHidden()
+                .frame(width: 90)
+
+                separator
+
+                Picker("", selection: multiShapeOptionalBinding(\.textAlign, default: .center)) {
+                    Image(systemName: "text.alignleft").tag(TextAlign.left)
+                    Image(systemName: "text.aligncenter").tag(TextAlign.center)
+                    Image(systemName: "text.alignright").tag(TextAlign.right)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 90)
+            }
+
+            section {
+                Toggle("Italic", isOn: multiShapeOptionalBinding(\.italic, default: false))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+
+                Toggle("Uppercase", isOn: multiShapeOptionalBinding(\.uppercase, default: false))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+            }
+        }
+
+        // Rectangle / Image: border radius
+        if type == .rectangle || type == .image {
+            section {
+                controlGroup("Radius") {
+                    Slider(value: multiShapeBinding(\.borderRadius), in: 0...500)
+                        .frame(width: 80)
+                }
+            }
+        }
+
+        // Star: point count
+        if type == .star {
+            section {
+                controlGroup("Points") {
+                    Stepper(
+                        value: multiShapeOptionalBinding(\.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
+                        in: 3...20
+                    ) {
+                        Text(verbatim: "\(shapes.first?.starPointCount ?? CanvasShapeModel.defaultStarPointCount)")
+                            .frame(width: 20, alignment: .trailing)
+                    }
+                }
+            }
+        }
+
+        // SVG: custom color toggle
+        if type == .svg {
+            section {
+                Toggle("Custom color", isOn: multiShapeOptionalBinding(\.svgUseColor, default: false))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+            }
+        }
+
+        // Outline (rectangle, circle, star, text)
+        if type.supportsOutline {
+            section {
+                multiOutlineControls(shapes: shapes)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func multiOutlineControls(shapes: [CanvasShapeModel]) -> some View {
+        let hasOutline = shapes.contains { ($0.outlineWidth ?? 0) > 0 }
+
+        Toggle("Outline", isOn: Binding(
+            get: { hasOutline },
+            set: { enabled in
+                state.updateShapes(state.selectedShapeIds) { shape in
+                    shape.outlineColor = enabled ? CanvasShapeModel.defaultOutlineColor : nil
+                    shape.outlineWidth = enabled ? CanvasShapeModel.defaultOutlineWidth : nil
+                }
+            }
+        ))
+        .toggleStyle(.switch)
+        .controlSize(.small)
+
+        if hasOutline {
+            ColorPicker("", selection: multiShapeOptionalBinding(\.outlineColor, default: CanvasShapeModel.defaultOutlineColor), supportsOpacity: false)
+                .labelsHidden()
+                .frame(width: 30)
+                .padding(.horizontal, 4)
+
+            separator
+
+            controlGroup("Width") {
+                Slider(value: multiShapeOptionalBinding(\.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth), in: 1...50)
+                    .frame(width: 80)
+            }
+        }
+    }
+
     /// Creates a Binding that reads a common value across all selected shapes.
     /// Returns the first shape's value. Writes apply to all selected via batch update.
     private func multiShapeBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> {
@@ -1159,6 +1318,23 @@ struct ShapePropertiesBar: View {
                       let first = state.rows[rowIndex].shapes.first(where: { state.selectedShapeIds.contains($0.id) })
                 else { return CanvasShapeModel.placeholder[keyPath: keyPath] }
                 return LocaleService.resolveShape(first, localeState: state.localeState)[keyPath: keyPath]
+            },
+            set: { newValue in
+                state.updateShapes(state.selectedShapeIds) { shape in
+                    shape[keyPath: keyPath] = newValue
+                }
+            }
+        )
+    }
+
+    /// Overload for optional properties with a default value.
+    private func multiShapeOptionalBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T) -> Binding<T> {
+        Binding(
+            get: {
+                guard let rowIndex,
+                      let first = state.rows[rowIndex].shapes.first(where: { state.selectedShapeIds.contains($0.id) })
+                else { return defaultValue }
+                return LocaleService.resolveShape(first, localeState: state.localeState)[keyPath: keyPath] ?? defaultValue
             },
             set: { newValue in
                 state.updateShapes(state.selectedShapeIds) { shape in

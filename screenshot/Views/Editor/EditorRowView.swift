@@ -504,6 +504,11 @@ struct EditorRowView: View {
         let resolvedShapes = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
         let isNonBaseLocale = !state.localeState.isBaseLocale
         let currentLocaleName: String? = isNonBaseLocale ? state.localeState.activeLocaleLabel : nil
+        let allSelectedSameType: Bool = state.selectedShapeIds.count > 1 && {
+            let selected = row.activeShapes.filter { state.selectedShapeIds.contains($0.id) }
+            guard let firstType = selected.first?.type else { return false }
+            return selected.allSatisfy { $0.type == firstType }
+        }()
         ZStack(alignment: .topLeading) {
             backgroundLayer(dw: dw, dh: dh)
 
@@ -594,7 +599,13 @@ struct EditorRowView: View {
                         state.pendingTranslateShapeId = shape.id
                     } : nil,
                     translateLocaleName: currentLocaleName,
-                    availableFontFamilies: state.availableFontFamilySet
+                    availableFontFamilies: state.availableFontFamilySet,
+                    onUpdateSelected: isMulti && allSelectedSameType ? { update in
+                        state.updateShapes(state.selectedShapeIds, in: row.id, update: update)
+                    } : nil,
+                    onDeleteSelected: isMulti ? {
+                        state.deleteSelectedShapes()
+                    } : nil
                 )
             }
 
