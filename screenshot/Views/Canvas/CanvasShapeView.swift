@@ -425,6 +425,14 @@ struct CanvasShapeView: View {
                 onClearImage?()
             }
             .disabled(shape.displayImageFileName == nil)
+            if shape.type == .image, let image = screenshotImage {
+                Button("Restore Original Aspect Ratio") {
+                    let imgSize = image.size
+                    guard imgSize.width > 0 && imgSize.height > 0 else { return }
+                    let newHeight = shape.width / (imgSize.width / imgSize.height)
+                    applyUpdate { $0.height = newHeight }
+                }
+            }
             Divider()
         }
         if shape.type == .device {
