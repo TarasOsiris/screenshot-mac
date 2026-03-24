@@ -487,6 +487,19 @@ struct ExportServiceTests {
         try expectHasNonWhitePixel(bitmap, label: "Text with tracking should render in export")
     }
 
+    @Test func textShapeRendersInEditorCanvas() throws {
+        let row = makeEditorTextRow()
+        let bitmap = try renderEditorBitmap(index: 0, row: row)
+        try expectHasNonWhitePixel(bitmap, label: "Text should render visible pixels in editor")
+    }
+
+    @Test func textShapeKeepsEditorBackgroundCleanOutsideGlyphs() throws {
+        let row = makeEditorTextRow()
+        let editorBitmap = try renderEditorBitmap(index: 0, row: row)
+        try expectNearWhite(editorBitmap, at: (20, 20), label: "Editor top-left should stay background")
+        try expectNearWhite(editorBitmap, at: (380, 380), label: "Editor bottom-right should stay background")
+    }
+
     // MARK: - Helpers
 
     private static let testBlue = Color(red: 0, green: 0, blue: 0.9)
@@ -504,6 +517,17 @@ struct ExportServiceTests {
             templateHeight: height,
             bgColor: bgColor
         )
+    }
+
+    private func makeEditorTextRow() -> ScreenshotRow {
+        var row = makeTestRow(width: 400, height: 400, bgColor: .white)
+        row.shapes = [CanvasShapeModel(
+            type: .text, x: 0, y: 0, width: 400, height: 400,
+            color: Color(red: 0.9, green: 0, blue: 0),
+            text: "WWWW\nWWWW\nWWWW", fontSize: 80, fontWeight: 700,
+            letterSpacing: 5
+        )]
+        return row
     }
 
     /// Creates a 400×800 two-template row with a red background and one transparent
@@ -532,6 +556,67 @@ struct ExportServiceTests {
         let image = ExportService.renderTemplateImage(index: index, row: row)
         let pngData = try #require(ExportService.opaquePNGData(from: image))
         return try #require(NSBitmapImageRep(data: pngData))
+    }
+
+    private func renderEditorBitmap(index: Int, row: ScreenshotRow) throws -> NSBitmapImageRep {
+        let tLeft = CGFloat(index) * row.templateWidth
+        let rawShapes = row.visibleShapes(forTemplateAt: index)
+        let visibleShapes = rawShapes.map { shape -> CanvasShapeModel in
+            var shifted = shape
+            shifted.x -= tLeft
+            return shifted
+        }
+        let template = row.templates[index]
+        let templateSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+
+        let view = ZStack(alignment: .topLeading) {
+            if row.isSpanningBackground && !template.overrideBackground {
+                let totalWidth = row.templateWidth * CGFloat(row.templates.count)
+                let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
+                Color.clear
+                    .frame(width: row.templateWidth, height: row.templateHeight)
+                    .overlay(alignment: .topLeading) {
+                        row.resolvedBackgroundView(screenshotImages: [:], modelSize: spanSize)
+                            .frame(width: totalWidth, height: row.templateHeight)
+                            .offset(x: -tLeft)
+                    }
+                    .clipped()
+            } else if template.overrideBackground {
+                template.resolvedBackgroundView(screenshotImages: [:], modelSize: templateSize)
+                    .frame(width: row.templateWidth, height: row.templateHeight)
+            } else {
+                row.resolvedBackgroundView(screenshotImages: [:], modelSize: templateSize)
+                    .frame(width: row.templateWidth, height: row.templateHeight)
+            }
+
+            ForEach(visibleShapes) { shape in
+                CanvasShapeView(
+                    shape: shape,
+                    displayScale: 1.0,
+                    isSelected: false,
+                    screenshotImage: nil,
+                    fillImage: nil,
+                    defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                    showsEditorHelpers: true,
+                    onSelect: {},
+                    onUpdate: { _ in },
+                    onDelete: {},
+                    availableFontFamilies: Set(NSFontManager.shared.availableFontFamilies)
+                )
+            }
+        }
+        .frame(width: row.templateWidth, height: row.templateHeight, alignment: .topLeading)
+        .clipped()
+
+        let hostingView = NSHostingView(rootView: view)
+        hostingView.frame = NSRect(x: 0, y: 0, width: row.templateWidth, height: row.templateHeight)
+        hostingView.layoutSubtreeIfNeeded()
+        hostingView.displayIfNeeded()
+
+        let bounds = hostingView.bounds
+        let rep = try #require(hostingView.bitmapImageRepForCachingDisplay(in: bounds))
+        hostingView.cacheDisplay(in: bounds, to: rep)
+        return rep
     }
 
     private struct PixelRGB {
@@ -578,6 +663,12 @@ struct ExportServiceTests {
             }
         }
         Issue.record("\(label): all sampled pixels were white")
+    }
+
+    private func expectNearWhite(_ bitmap: NSBitmapImageRep, at point: (Int, Int), label: String) throws {
+        let c = try pixelColor(bitmap, at: point)
+        #expect(c.r > 0.95 && c.g > 0.95 && c.b > 0.95,
+                "\(label): expected near-white background, got rgb=(\(c.r),\(c.g),\(c.b))")
     }
 
 }

@@ -11,6 +11,12 @@ import SwiftUI
 // All dimensions derived from mm × 3.077
 
 struct DeviceFrameView: View {
+    private static let frameImageCache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        cache.countLimit = 50
+        return cache
+    }()
+
     let category: DeviceCategory
     let bodyColor: Color
     let width: CGFloat
@@ -37,6 +43,7 @@ struct DeviceFrameView: View {
     @ViewBuilder
     private func imageBasedFrame(frame: DeviceFrame) -> some View {
         let spec = frame.spec
+        let frameImage = Self.cachedFrameImage(named: frame.imageName)
 
         ZStack(alignment: .topLeading) {
             // Screenshot placed at the screen area position
@@ -67,7 +74,7 @@ struct DeviceFrameView: View {
             )
 
             // Frame overlay
-            if let frameImage = NSImage(named: frame.imageName) {
+            if let frameImage {
                 Image(nsImage: frameImage)
                     .resizable()
                     .interpolation(.high)
@@ -77,6 +84,16 @@ struct DeviceFrameView: View {
         .frame(width: width, height: height)
         .clipped()
         .contentShape(Rectangle())
+    }
+
+    private static func cachedFrameImage(named imageName: String) -> NSImage? {
+        let key = imageName as NSString
+        if let cached = frameImageCache.object(forKey: key) {
+            return cached
+        }
+        guard let image = NSImage(named: imageName) else { return nil }
+        frameImageCache.setObject(image, forKey: key)
+        return image
     }
 
     // MARK: - Programmatic Frame

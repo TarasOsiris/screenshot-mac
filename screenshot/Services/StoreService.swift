@@ -1,5 +1,5 @@
 import AppKit
-import StoreKit
+import RevenueCat
 
 @MainActor
 @Observable
@@ -9,61 +9,24 @@ final class StoreService {
         case projectLimit
         case rowLimit
         case templateLimit
-
-        var title: String {
-            switch self {
-            case .general:
-                "Unlock Screenshot Bro Pro"
-            case .projectLimit:
-                "Create More Projects"
-            case .rowLimit:
-                "Add More Rows"
-            case .templateLimit:
-                "Add More Screenshots"
-            }
-        }
-
-        var message: String {
-            switch self {
-            case .general:
-                "Use StoreKit to unlock the full editor with a single App Store purchase."
-            case .projectLimit:
-                "The free plan includes one project. Upgrade to Pro to create and duplicate as many projects as you need."
-            case .rowLimit:
-                "The free plan includes up to \(StoreService.freeMaxRows) rows per project. Upgrade to keep expanding your layout."
-            case .templateLimit:
-                "The free plan includes up to \(StoreService.freeMaxTemplatesPerRow) screenshots per row. Upgrade to keep adding variants."
-            }
-        }
     }
 
-    enum PurchaseOperation: Equatable {
-        case purchase
-        case restore
-
-        var progressTitle: String {
-            switch self {
-            case .purchase:
-                "Contacting the App Store…"
-            case .restore:
-                "Checking your purchase history…"
-            }
-        }
-    }
-
-    static let productId = "proversion"
+    private static let entitlementId = "Nineva Studios / ScreenshotBro Pro"
+    private static let revenueCatAPIKeyEnvironmentName = "REVENUECAT_API_KEY"
+    private static let revenueCatAPIKeyInfoDictionaryKey = "REVENUECAT_API_KEY"
+    #if DEBUG
+    private static let debugFallbackAPIKey = "test_KgNxrrXqBIGgiORjBPsdiXrraJL"
+    #endif
 
     private(set) var isProUnlocked = false
-    private(set) var proProduct: Product?
-    private(set) var purchaseError: String?
-    private(set) var purchaseInfo: String?
-    private(set) var isLoading = false
-    private(set) var didFinishLoadingProducts = false
     private(set) var showPaywall = false
     private(set) var paywallContext: PaywallContext = .general
-    private(set) var activeOperation: PurchaseOperation?
+    private(set) var configurationIssue: String?
+    private(set) var purchaseStatusMessage: String?
+    private(set) var purchaseStatusIsError = false
 
-    private var updatesTask: Task<Void, Never>?
+    private var delegate: CustomerInfoDelegate?
+    private var didStart = false
 
     // MARK: - Free tier limits
 
@@ -96,6 +59,7 @@ final class StoreService {
 
     func presentPaywall(for context: PaywallContext = .general) {
         paywallContext = context
+        clearPurchaseStatus()
         showPaywall = true
     }
 
@@ -106,174 +70,145 @@ final class StoreService {
     // MARK: - Lifecycle
 
     func start() {
-        updatesTask?.cancel()
-        updatesTask = Task { [weak self] in
-            for await result in Transaction.updates {
-                guard let self else { return }
-                await self.handle(transactionResult: result, shouldSurfaceVerificationFailure: false)
-            }
+        guard !didStart else { return }
+        didStart = true
+
+        #if DEBUG
+        Purchases.logLevel = .debug
+        #endif
+
+        guard let apiKey = Self.resolvedAPIKey() else {
+            configurationIssue = "RevenueCat API key is missing. Set REVENUECAT_API_KEY in the app environment or Info.plist."
+            return
         }
+
+        #if !DEBUG
+        guard !apiKey.hasPrefix("test_") else {
+            configurationIssue = "RevenueCat is configured with a Test Store API key. Replace it with your Apple public SDK key before shipping."
+            return
+        }
+        #endif
+
+        Purchases.configure(withAPIKey: apiKey)
+        configurationIssue = nil
+
+        let d = CustomerInfoDelegate { [weak self] info in
+            self?.updateEntitlement(from: info)
+        }
+        self.delegate = d
+        Purchases.shared.delegate = d
 
         Task {
-            await loadProducts()
-            await refreshPurchaseStatus()
+            await refreshEntitlementStatus()
         }
     }
 
-    // MARK: - Products
+    // MARK: - Entitlement
 
-    private func loadProducts() async {
+    private func refreshEntitlementStatus() async {
+        guard Purchases.isConfigured else { return }
+
         do {
-            let products = try await Product.products(for: [Self.productId])
-            proProduct = products.first(where: { $0.id == Self.productId })
-            if proProduct == nil {
-                purchaseError = "Product not found. Please try again later."
-            } else if purchaseError == "Product not found. Please try again later." {
-                purchaseError = nil
-            }
+            let customerInfo = try await Purchases.shared.customerInfo()
+            updateEntitlement(from: customerInfo)
         } catch {
-            purchaseError = "Failed to load products: \(error.localizedDescription)"
-        }
-        didFinishLoadingProducts = true
-    }
-
-    // MARK: - Purchase status
-
-    func refreshPurchaseStatus(showVerificationFailure: Bool = false) async {
-        let entitlement = await Transaction.currentEntitlement(for: Self.productId)
-
-        switch entitlement {
-        case .verified(let transaction):
-            isProUnlocked = transaction.revocationDate == nil
-        case .unverified(_, let error):
-            isProUnlocked = false
-            if showVerificationFailure {
-                purchaseError = "We couldn’t verify your purchase with the App Store: \(error.localizedDescription)"
-            }
-        case nil:
-            isProUnlocked = false
+            setPurchaseStatus("Failed to refresh purchase status: \(error.localizedDescription)", isError: true)
         }
     }
 
-    // MARK: - Purchase
-
-    func purchase(confirmIn window: NSWindow? = nil) async {
-        guard !isLoading else { return }
-
-        guard let product = proProduct else {
-            purchaseError = "Product not available. Please try again later."
-            return
+    private func updateEntitlement(from customerInfo: CustomerInfo) {
+        let entitled = customerInfo.entitlements[Self.entitlementId]?.isActive == true
+        #if DEBUG
+        if !entitled && !customerInfo.entitlements.active.isEmpty {
+            print("[StoreService] Entitlement '\(Self.entitlementId)' not found, but active entitlements: \(customerInfo.entitlements.active.keys.joined(separator: ", "))")
         }
+        #endif
+        isProUnlocked = entitled
+    }
 
+    func handlePurchaseOrRestore(_ customerInfo: CustomerInfo) {
+        updateEntitlement(from: customerInfo)
         if isProUnlocked {
-            purchaseInfo = "Screenshot Bro Pro is already unlocked on this Mac."
-            purchaseError = nil
-            return
+            clearPurchaseStatus()
+            showPaywall = false
         }
+    }
 
-        beginOperation(.purchase)
-        defer { endOperation() }
+    func handlePurchaseFailure(_ error: Error) {
+        setPurchaseStatus("Purchase failed: \(error.localizedDescription)", isError: true)
+    }
 
-        do {
-            let result: Product.PurchaseResult
-            let confirmationWindow = window ?? NSApp.keyWindow
-            if #available(macOS 15.2, *), let confirmationWindow {
-                result = try await product.purchase(confirmIn: confirmationWindow)
-            } else {
-                result = try await product.purchase()
-            }
-
-            switch result {
-            case .success(let verification):
-                if await handle(transactionResult: verification, shouldSurfaceVerificationFailure: true) {
-                    purchaseInfo = "Screenshot Bro Pro is now unlocked."
-                    showPaywall = false
-                }
-            case .userCancelled:
-                break
-            case .pending:
-                purchaseInfo = "This purchase is pending approval."
-            @unknown default:
-                break
-            }
-        } catch {
-            purchaseError = errorMessage(for: error, during: .purchase)
-        }
+    func handleRestoreFailure(_ error: Error) {
+        setPurchaseStatus("Restore failed: \(error.localizedDescription)", isError: true)
     }
 
     // MARK: - Restore
 
     func restore() async {
-        guard !isLoading else { return }
+        clearPurchaseStatus()
 
-        let wasUnlocked = isProUnlocked
-        beginOperation(.restore)
-        defer { endOperation() }
+        guard Purchases.isConfigured else {
+            let message = configurationIssue ?? "RevenueCat is not configured."
+            setPurchaseStatus(message, isError: true)
+            return
+        }
 
         do {
-            try await AppStore.sync()
-            await refreshPurchaseStatus(showVerificationFailure: true)
+            let customerInfo = try await Purchases.shared.restorePurchases()
+            updateEntitlement(from: customerInfo)
             if isProUnlocked {
-                purchaseInfo = wasUnlocked
-                    ? "Screenshot Bro Pro is already unlocked on this Mac."
-                    : "Your Screenshot Bro Pro purchase was restored."
-                showPaywall = false
+                setPurchaseStatus("Your Screenshot Bro Pro purchase was restored.")
             } else {
-                purchaseInfo = "No previous Screenshot Bro Pro purchase was found for this Apple Account."
+                setPurchaseStatus("No Screenshot Bro Pro purchase was found for this Apple Account.")
             }
         } catch {
-            purchaseError = errorMessage(for: error, during: .restore)
+            handleRestoreFailure(error)
         }
     }
 
-    // MARK: - Transaction handling
-
-    @discardableResult
-    private func handle(
-        transactionResult result: VerificationResult<Transaction>,
-        shouldSurfaceVerificationFailure: Bool
-    ) async -> Bool {
-        switch result {
-        case .verified(let transaction):
-            if transaction.productID == Self.productId {
-                isProUnlocked = transaction.revocationDate == nil
-            }
-            await transaction.finish()
-            return transaction.productID == Self.productId && transaction.revocationDate == nil
-        case .unverified(_, let error):
-            if shouldSurfaceVerificationFailure {
-                purchaseError = "We couldn’t verify the App Store transaction: \(error.localizedDescription)"
-            }
-            return false
-        }
+    private func clearPurchaseStatus() {
+        purchaseStatusMessage = nil
+        purchaseStatusIsError = false
     }
 
-    private func beginOperation(_ operation: PurchaseOperation) {
-        activeOperation = operation
-        isLoading = true
-        purchaseError = nil
-        purchaseInfo = nil
+    private func setPurchaseStatus(_ message: String, isError: Bool = false) {
+        purchaseStatusMessage = message
+        purchaseStatusIsError = isError
     }
 
-    private func endOperation() {
-        activeOperation = nil
-        isLoading = false
-    }
-
-    private func errorMessage(for error: Error, during operation: PurchaseOperation) -> String {
-        let prefix = operation == .purchase ? "Purchase failed" : "Restore failed"
-
-        if let purchaseError = error as? Product.PurchaseError {
-            switch purchaseError {
-            case .purchaseNotAllowed:
-                return "Purchases are not allowed for this Apple Account."
-            case .productUnavailable:
-                return "This purchase is currently unavailable in the App Store."
-            default:
-                return "\(prefix): \(purchaseError.localizedDescription)"
-            }
+    private static func resolvedAPIKey() -> String? {
+        let environmentKey = ProcessInfo.processInfo.environment[Self.revenueCatAPIKeyEnvironmentName]?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let environmentKey, !environmentKey.isEmpty {
+            return environmentKey
         }
 
-        return "\(prefix): \(error.localizedDescription)"
+        let infoDictionaryKey = (Bundle.main.object(forInfoDictionaryKey: Self.revenueCatAPIKeyInfoDictionaryKey) as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let infoDictionaryKey, !infoDictionaryKey.isEmpty {
+            return infoDictionaryKey
+        }
+
+        #if DEBUG
+        return Self.debugFallbackAPIKey
+        #else
+        return nil
+        #endif
+    }
+}
+
+// MARK: - RevenueCat Delegate
+
+private final class CustomerInfoDelegate: NSObject, PurchasesDelegate, Sendable {
+    let onUpdate: @MainActor @Sendable (CustomerInfo) -> Void
+
+    init(onUpdate: @escaping @MainActor @Sendable (CustomerInfo) -> Void) {
+        self.onUpdate = onUpdate
+    }
+
+    nonisolated func purchases(_ purchases: Purchases, receivedUpdated customerInfo: CustomerInfo) {
+        Task { @MainActor in
+            onUpdate(customerInfo)
+        }
     }
 }

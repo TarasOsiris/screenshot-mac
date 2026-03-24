@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import RevenueCatUI
 
 struct ContentView: View {
     @Environment(AppState.self) private var state
@@ -263,7 +264,7 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) { pendingTemplate = nil }
         }
         .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
-            PaywallView()
+            paywallSheet
         }
         .middleMousePan()
         .onAppear {
@@ -757,6 +758,34 @@ struct ContentView: View {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
+    @ViewBuilder
+    private var paywallSheet: some View {
+        if let configurationIssue = store.configurationIssue {
+            VStack(alignment: .leading, spacing: 16) {
+                Label("RevenueCat isn’t configured", systemImage: "exclamationmark.triangle.fill")
+                    .font(.headline)
+                    .foregroundStyle(.orange)
+
+                Text(configurationIssue)
+                    .foregroundStyle(.secondary)
+
+                Button("Close") {
+                    store.dismissPaywall()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .frame(minWidth: 520, minHeight: 240)
+            .padding(24)
+        } else {
+            RevenueCatUI.PaywallView(displayCloseButton: true)
+                .onPurchaseCompleted { store.handlePurchaseOrRestore($0) }
+                .onRestoreCompleted { store.handlePurchaseOrRestore($0) }
+                .onPurchaseFailure { store.handlePurchaseFailure($0) }
+                .onRestoreFailure { store.handleRestoreFailure($0) }
+                .onRequestedDismissal { store.dismissPaywall() }
+                .frame(minWidth: 520, idealWidth: 560, maxWidth: 620, minHeight: 560, idealHeight: 620)
+        }
+    }
 }
 
 #Preview {

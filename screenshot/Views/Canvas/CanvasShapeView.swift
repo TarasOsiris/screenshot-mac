@@ -10,6 +10,12 @@ private extension View {
 }
 
 struct CanvasShapeView: View {
+    private static let fontCache: NSCache<NSString, NSFont> = {
+        let cache = NSCache<NSString, NSFont>()
+        cache.countLimit = 200
+        return cache
+    }()
+
     @Environment(\.displayScale) private var screenScale
 
     let shape: CanvasShapeModel
@@ -244,11 +250,7 @@ struct CanvasShapeView: View {
                 if inside != isHovered {
                     isHovered = inside
                     if showsEditorHelpers && isSelected && !isDragging {
-                        if inside {
-                            NSCursor.openHand.set()
-                        } else {
-                            NSCursor.arrow.set()
-                        }
+                        (inside ? NSCursor.openHand : NSCursor.arrow).set()
                     }
                 }
             case .ended:
@@ -258,6 +260,8 @@ struct CanvasShapeView: View {
                         NSCursor.arrow.set()
                     }
                 }
+            @unknown default:
+                break
             }
         }
         .offset(x: offsetX, y: offsetY)
@@ -319,20 +323,33 @@ struct CanvasShapeView: View {
                 let weight = fontWeight(shape.fontWeight ?? 700)
                 let isItalic = showPlaceholder ? true : (shape.italic ?? false)
                 let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight, italic: isItalic)
-                DisplayTextView(
-                    text: showPlaceholder ? "Text" : rawText,
-                    font: nsFont,
-                    color: NSColor(shape.color.opacity(showPlaceholder ? 0.4 : 1.0)),
-                    alignment: shape.textAlign.nsTextAlignment,
-                    verticalAlignment: shape.textVerticalAlign ?? .center,
-                    uppercase: shape.uppercase ?? false,
-                    letterSpacing: shape.letterSpacing,
-                    lineHeightMultiple: shape.lineHeightMultiple,
-                    legacyLineSpacing: shape.lineSpacing
-                )
-                    .frame(width: effectiveW, height: effectiveH)
-                    .scaleEffect(displayScale, anchor: .topLeading)
-                    .frame(width: displayW, height: displayH, alignment: .topLeading)
+                let displayText = showPlaceholder ? "Text" : rawText
+                let nsColor = NSColor(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
+                let align = shape.textAlign.nsTextAlignment
+                let vAlign = shape.textVerticalAlign ?? .center
+                let uc = shape.uppercase ?? false
+                Group {
+                    if showsEditorHelpers {
+                        LiveDisplayTextView(
+                            text: displayText, font: nsFont, color: nsColor,
+                            alignment: align, verticalAlignment: vAlign,
+                            uppercase: uc, letterSpacing: shape.letterSpacing,
+                            lineHeightMultiple: shape.lineHeightMultiple,
+                            legacyLineSpacing: shape.lineSpacing
+                        )
+                    } else {
+                        RasterizedDisplayTextView(
+                            text: displayText, font: nsFont, color: nsColor,
+                            alignment: align, verticalAlignment: vAlign,
+                            uppercase: uc, letterSpacing: shape.letterSpacing,
+                            lineHeightMultiple: shape.lineHeightMultiple,
+                            legacyLineSpacing: shape.lineSpacing
+                        )
+                    }
+                }
+                .frame(width: effectiveW, height: effectiveH)
+                .scaleEffect(displayScale, anchor: .topLeading)
+                .frame(width: displayW, height: displayH, alignment: .topLeading)
             }
 
         case .image:
@@ -971,8 +988,14 @@ struct CanvasShapeView: View {
     }
 
     private func resolvedNSFont(size: CGFloat, weight: NSFont.Weight, italic: Bool = false) -> NSFont {
+        let customName = customFontName
+        let cacheKey = "\(customName ?? "__system__")|\(size)|\(weight.rawValue)|\(italic)" as NSString
+        if let cached = Self.fontCache.object(forKey: cacheKey) {
+            return cached
+        }
+
         let baseFont: NSFont
-        if let name = customFontName {
+        if let name = customName {
             let fm = NSFontManager.shared
             let fmWeight = Self.fontManagerWeight(for: weight)
             if let font = fm.font(withFamily: name, traits: [], weight: fmWeight, size: size) {
@@ -985,7 +1008,9 @@ struct CanvasShapeView: View {
         } else {
             baseFont = NSFont.systemFont(ofSize: size, weight: weight)
         }
-        return italicized(baseFont, italic: italic)
+        let resolved = italicized(baseFont, italic: italic)
+        Self.fontCache.setObject(resolved, forKey: cacheKey)
+        return resolved
     }
 
     private func italicized(_ font: NSFont, italic: Bool) -> NSFont {

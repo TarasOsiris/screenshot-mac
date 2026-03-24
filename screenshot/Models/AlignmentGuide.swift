@@ -5,7 +5,7 @@ enum AlignmentAxis: Hashable {
     case vertical   // X-aligned (vertical line)
 }
 
-struct AlignmentGuide: Identifiable {
+struct AlignmentGuide: Identifiable, Equatable {
     var id: AlignmentAxis { axis }
     let axis: AlignmentAxis
     let position: CGFloat   // canvas coordinate of the line

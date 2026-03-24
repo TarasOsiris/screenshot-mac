@@ -1,5 +1,4 @@
 import SwiftUI
-import StoreKit
 
 struct SettingsView: View {
     @Environment(StoreService.self) private var store
@@ -201,19 +200,9 @@ struct SettingsView: View {
                     Text("One-time in-app purchase")
                         .foregroundStyle(.secondary)
                 }
-
-                if let product = store.proProduct {
-                    LabeledContent("Price") {
-                        Text(product.displayPrice)
-                            .fontWeight(.semibold)
-                    }
-                } else if !store.didFinishLoadingProducts {
-                    LabeledContent("Price") {
-                        ProgressView()
-                            .controlSize(.small)
-                    }
-                }
             }
+
+            purchaseStatusSection
 
             if store.isProUnlocked {
                 Section("Included") {
@@ -223,7 +212,9 @@ struct SettingsView: View {
                 }
 
                 Section("Purchase Status") {
-                    PurchaseStatusStack(store: store)
+                    Label("Screenshot Bro Pro is unlocked.", systemImage: "checkmark.seal.fill")
+                        .font(.footnote)
+                        .foregroundStyle(.green)
                     Text("Your unlock is managed by the App Store for this Apple Account.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -233,6 +224,30 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private var purchaseStatusSection: some View {
+        if let configurationIssue = store.configurationIssue {
+            Section("RevenueCat") {
+                Label(configurationIssue, systemImage: "exclamationmark.triangle.fill")
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+            }
+        }
+
+        if let purchaseStatusMessage = store.purchaseStatusMessage {
+            Section("Status") {
+                Label(
+                    purchaseStatusMessage,
+                    systemImage: store.purchaseStatusIsError
+                        ? "exclamationmark.triangle.fill"
+                        : "info.circle.fill"
+                )
+                .font(.footnote)
+                .foregroundStyle(store.purchaseStatusIsError ? .red : .secondary)
+            }
+        }
     }
 
     @ViewBuilder
@@ -256,13 +271,15 @@ struct SettingsView: View {
         }
 
         Section("Upgrade") {
-            VStack(alignment: .leading, spacing: 14) {
-                ProPurchaseCard(store: store, style: .compact)
-
-                Text("The billed amount shown above comes directly from the App Store.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            Button("Unlock Screenshot Bro Pro") {
+                store.presentPaywall(for: .general)
             }
+            .buttonStyle(.borderedProminent)
+
+            Button("Restore Purchase") {
+                Task { await store.restore() }
+            }
+            .buttonStyle(.bordered)
         }
     }
 

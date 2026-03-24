@@ -1,10 +1,53 @@
 import Foundation
 
 enum AlignmentService {
+    struct OtherShapeBounds {
+        let minX: CGFloat
+        let minY: CGFloat
+        let maxX: CGFloat
+        let maxY: CGFloat
+        let centerX: CGFloat
+        let centerY: CGFloat
+
+        init(shape: CanvasShapeModel) {
+            let bb = shape.aabb
+            minX = bb.minX
+            minY = bb.minY
+            maxX = bb.maxX
+            maxY = bb.maxY
+            centerX = (bb.minX + bb.maxX) / 2
+            centerY = (bb.minY + bb.maxY) / 2
+        }
+    }
+
+    static func makeSnapTargets(from shapes: [CanvasShapeModel]) -> [OtherShapeBounds] {
+        shapes.map { OtherShapeBounds(shape: $0) }
+    }
+
     static func computeSnap(
         draggedShape: CanvasShapeModel,
         dragOffset: CGSize,
         otherShapes: [CanvasShapeModel],
+        templateWidth: CGFloat,
+        templateHeight: CGFloat,
+        templateCount: Int,
+        snapThreshold: CGFloat = 4
+    ) -> SnapResult {
+        computeSnap(
+            draggedShape: draggedShape,
+            dragOffset: dragOffset,
+            otherShapeBounds: makeSnapTargets(from: otherShapes),
+            templateWidth: templateWidth,
+            templateHeight: templateHeight,
+            templateCount: templateCount,
+            snapThreshold: snapThreshold
+        )
+    }
+
+    static func computeSnap(
+        draggedShape: CanvasShapeModel,
+        dragOffset: CGSize,
+        otherShapeBounds: [OtherShapeBounds],
         templateWidth: CGFloat,
         templateHeight: CGFloat,
         templateCount: Int,
@@ -36,19 +79,18 @@ enum AlignmentService {
         // Collect target lines from shapes in nearby templates only
         var targetVerticals: [(position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat, isCenter: Bool)] = []
         var targetHorizontals: [(position: CGFloat, rangeMin: CGFloat, rangeMax: CGFloat, isCenter: Bool)] = []
+        targetVerticals.reserveCapacity(otherShapeBounds.count * 3 + (maxTemplateIndex - minTemplateIndex + 1) * 3)
+        targetHorizontals.reserveCapacity(otherShapeBounds.count * 3 + 3)
 
-        for shape in otherShapes {
-            let bb = shape.aabb
+        for bounds in otherShapeBounds {
             // Skip shapes that don't overlap the neighbor template range
-            guard bb.maxX > neighborLeft && bb.minX < neighborRight else { continue }
-            let cx = (bb.minX + bb.maxX) / 2
-            let cy = (bb.minY + bb.maxY) / 2
-            targetVerticals.append((bb.minX, bb.minY, bb.maxY, false))
-            targetVerticals.append((cx, bb.minY, bb.maxY, true))
-            targetVerticals.append((bb.maxX, bb.minY, bb.maxY, false))
-            targetHorizontals.append((bb.minY, bb.minX, bb.maxX, false))
-            targetHorizontals.append((cy, bb.minX, bb.maxX, true))
-            targetHorizontals.append((bb.maxY, bb.minX, bb.maxX, false))
+            guard bounds.maxX > neighborLeft && bounds.minX < neighborRight else { continue }
+            targetVerticals.append((bounds.minX, bounds.minY, bounds.maxY, false))
+            targetVerticals.append((bounds.centerX, bounds.minY, bounds.maxY, true))
+            targetVerticals.append((bounds.maxX, bounds.minY, bounds.maxY, false))
+            targetHorizontals.append((bounds.minY, bounds.minX, bounds.maxX, false))
+            targetHorizontals.append((bounds.centerY, bounds.minX, bounds.maxX, true))
+            targetHorizontals.append((bounds.maxY, bounds.minX, bounds.maxX, false))
         }
 
         // Template boundary lines for nearby templates
@@ -67,6 +109,7 @@ enum AlignmentService {
         var snapDX: CGFloat = 0
         var snapDY: CGFloat = 0
         var guides: [AlignmentGuide] = []
+        guides.reserveCapacity(2)
 
         // Snap on X axis (vertical guides)
         if let match = findBestSnap(dragLines: dragVerticals, targets: targetVerticals, threshold: snapThreshold) {

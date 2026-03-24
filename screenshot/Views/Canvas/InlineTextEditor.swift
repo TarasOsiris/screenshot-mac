@@ -1,6 +1,48 @@
 import SwiftUI
 
-struct DisplayTextView: View {
+struct LiveDisplayTextView: NSViewRepresentable {
+    var text: String
+    var font: NSFont
+    var color: NSColor
+    var alignment: NSTextAlignment
+    var verticalAlignment: TextVerticalAlign
+    var uppercase: Bool = false
+    var letterSpacing: CGFloat? = nil
+    var lineHeightMultiple: CGFloat? = nil
+    var legacyLineSpacing: CGFloat? = nil
+
+    func makeNSView(context: Context) -> TextLayoutNSView {
+        let view = TextLayoutNSView(frame: .zero)
+        view.configure(
+            text: text,
+            font: font,
+            color: color,
+            alignment: alignment,
+            verticalAlignment: verticalAlignment,
+            uppercase: uppercase,
+            letterSpacing: letterSpacing,
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing
+        )
+        return view
+    }
+
+    func updateNSView(_ view: TextLayoutNSView, context: Context) {
+        view.configure(
+            text: text,
+            font: font,
+            color: color,
+            alignment: alignment,
+            verticalAlignment: verticalAlignment,
+            uppercase: uppercase,
+            letterSpacing: letterSpacing,
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing
+        )
+    }
+}
+
+struct RasterizedDisplayTextView: View {
     var text: String
     var font: NSFont
     var color: NSColor
@@ -189,6 +231,17 @@ final class TextLayoutNSView: NSView {
     private var verticalAlignment: TextVerticalAlign = .center
     private var verticalGlyphPadding: CGFloat = 0
 
+    // Change-detection state to skip redundant configure() calls
+    private var lastText: String?
+    private var lastFont: NSFont?
+    private var lastColor: NSColor?
+    private var lastAlignment: NSTextAlignment?
+    private var lastVerticalAlignment: TextVerticalAlign?
+    private var lastUppercase: Bool?
+    private var lastLetterSpacing: CGFloat?
+    private var lastLineHeightMultiple: CGFloat?
+    private var lastLegacyLineSpacing: CGFloat?
+
     override var isFlipped: Bool { true }
 
     override init(frame frameRect: NSRect) {
@@ -204,6 +257,7 @@ final class TextLayoutNSView: NSView {
     private func commonInit() {
         wantsLayer = true
         layer?.backgroundColor = NSColor.clear.cgColor
+        layer?.isOpaque = false
         textContainer.lineFragmentPadding = 0
         textContainer.lineBreakMode = .byWordWrapping
         layoutManager.addTextContainer(textContainer)
@@ -222,6 +276,27 @@ final class TextLayoutNSView: NSView {
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?
     ) {
+        guard text != lastText
+            || font != lastFont
+            || color != lastColor
+            || alignment != lastAlignment
+            || verticalAlignment != lastVerticalAlignment
+            || uppercase != lastUppercase
+            || letterSpacing != lastLetterSpacing
+            || lineHeightMultiple != lastLineHeightMultiple
+            || legacyLineSpacing != lastLegacyLineSpacing
+        else { return }
+
+        lastText = text
+        lastFont = font
+        lastColor = color
+        lastAlignment = alignment
+        lastVerticalAlignment = verticalAlignment
+        lastUppercase = uppercase
+        lastLetterSpacing = letterSpacing
+        lastLineHeightMultiple = lineHeightMultiple
+        lastLegacyLineSpacing = legacyLineSpacing
+
         self.verticalAlignment = verticalAlignment
         compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
         self.verticalGlyphPadding = TextLayoutStyle.verticalGlyphPadding(
@@ -241,9 +316,7 @@ final class TextLayoutNSView: NSView {
                 legacyLineSpacing: legacyLineSpacing
             )
         )
-        if textStorage != attributedText {
-            textStorage.setAttributedString(attributedText)
-        }
+        textStorage.setAttributedString(attributedText)
         needsDisplay = true
     }
 
@@ -256,7 +329,6 @@ final class TextLayoutNSView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 
-        textContainer.size = bounds.size
         layoutManager.ensureLayout(for: textContainer)
         let glyphRange = layoutManager.glyphRange(for: textContainer)
         let usedRect = layoutManager.usedRect(for: textContainer)

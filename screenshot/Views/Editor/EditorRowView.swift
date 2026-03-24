@@ -1,6 +1,10 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+private final class ModelPointStore {
+    var value: CGPoint?
+}
+
 struct EditorRowView: View {
     @Bindable var state: AppState
     @Environment(StoreService.self) private var store
@@ -10,12 +14,14 @@ struct EditorRowView: View {
     @State private var isResettingRow = false
     @State private var isRowHovered = false
     @State private var isSvgDialogPresented = false
-    @State private var rightClickModelPoint: CGPoint?
+    @State private var contextMenuPointStore = ModelPointStore()
     @State private var activeGuides: [AlignmentGuide] = []
     @State private var activeDragOffset: CGSize = .zero
     @State private var draggingShapeId: UUID?
     @State private var isEditingLabel = false
     @State private var editingLabelText = ""
+    /// Cached snap targets for non-selected shapes during drag.
+    @State private var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
     @FocusState private var isLabelFieldFocused: Bool
 
     private var isSelected: Bool {
@@ -261,7 +267,7 @@ struct EditorRowView: View {
         }
         .sheet(isPresented: $isSvgDialogPresented) {
             SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
-                let center = rightClickModelPoint ?? state.shapeCenter(for: row)
+                let center = contextMenuPointStore.value ?? state.shapeCenter(for: row)
                 let maxDim = row.svgMaxDimension
                 let scaledSize = SvgHelper.scaledSize(size, maxDim: maxDim)
                 var shape = CanvasShapeModel.defaultSvg(centerX: center.x, centerY: center.y, svgContent: svgContent, size: scaledSize)
@@ -502,12 +508,19 @@ struct EditorRowView: View {
     @ViewBuilder
     private func canvasView(dw: CGFloat, dh: CGFloat, ds: CGFloat) -> some View {
         let resolvedShapes = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
+        let selectedShapeIds = state.selectedShapeIds
         let isNonBaseLocale = !state.localeState.isBaseLocale
         let currentLocaleName: String? = isNonBaseLocale ? state.localeState.activeLocaleLabel : nil
-        let allSelectedSameType: Bool = state.selectedShapeIds.count > 1 && {
-            let selected = row.activeShapes.filter { state.selectedShapeIds.contains($0.id) }
-            guard let firstType = selected.first?.type else { return false }
-            return selected.allSatisfy { $0.type == firstType }
+        let allSelectedSameType: Bool = selectedShapeIds.count > 1 && {
+            var firstType: ShapeType?
+            for shape in resolvedShapes where selectedShapeIds.contains(shape.id) {
+                if let ft = firstType {
+                    if shape.type != ft { return false }
+                } else {
+                    firstType = shape.type
+                }
+            }
+            return firstType != nil
         }()
         ZStack(alignment: .topLeading) {
             backgroundLayer(dw: dw, dh: dh)
@@ -518,8 +531,8 @@ struct EditorRowView: View {
                     let ti = row.owningTemplateIndex(for: shape)
                     return CGRect(x: CGFloat(ti) * dw, y: 0, width: dw, height: dh)
                 }() : nil
-                let isInSelection = state.selectedShapeIds.contains(shape.id)
-                let isMulti = isInSelection && state.selectedShapeIds.count > 1
+                let isInSelection = selectedShapeIds.contains(shape.id)
+                let isMulti = isInSelection && selectedShapeIds.count > 1
                 let groupOffset: CGSize = (isMulti && draggingShapeId != nil && draggingShapeId != shape.id) ? activeDragOffset : .zero
 
                 CanvasShapeView(
@@ -544,25 +557,42 @@ struct EditorRowView: View {
                         state.clearImage(for: shape.id)
                     },
                     onDragSnap: { draggedShape, rawOffset in
-                        let selectedIds = state.selectedShapeIds
-                        let others = resolvedShapes.filter { !selectedIds.contains($0.id) }
+                        let targets: [AlignmentService.OtherShapeBounds]
+                        if let cached = cachedSnapTargets {
+                            targets = cached
+                        } else if isInSelection {
+                            let filtered = AlignmentService.makeSnapTargets(
+                                from: resolvedShapes.filter { !selectedShapeIds.contains($0.id) }
+                            )
+                            cachedSnapTargets = filtered
+                            targets = filtered
+                        } else {
+                            let filtered = AlignmentService.makeSnapTargets(
+                                from: resolvedShapes.filter { $0.id != draggedShape.id }
+                            )
+                            cachedSnapTargets = filtered
+                            targets = filtered
+                        }
                         let threshold = 4 / row.displayScale(zoom: zoom)
                         let result = AlignmentService.computeSnap(
                             draggedShape: draggedShape,
                             dragOffset: rawOffset,
-                            otherShapes: others,
+                            otherShapeBounds: targets,
                             templateWidth: row.templateWidth,
                             templateHeight: row.templateHeight,
                             templateCount: row.templates.count,
                             snapThreshold: threshold
                         )
-                        activeGuides = result.guides
+                        if activeGuides != result.guides {
+                            activeGuides = result.guides
+                        }
                         return result
                     },
                     onDragEnd: {
                         activeGuides = []
                         activeDragOffset = .zero
                         draggingShapeId = nil
+                        cachedSnapTargets = nil
                     },
                     onOptionDragDuplicate: { shapeId in
                         if isMulti {
@@ -580,6 +610,7 @@ struct EditorRowView: View {
                         state.applyGroupDrag(offset: offset)
                         activeDragOffset = .zero
                         draggingShapeId = nil
+                        cachedSnapTargets = nil
                     },
                     onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
                     onEditingTextChanged: { state.isEditingText = $0 },
@@ -601,7 +632,7 @@ struct EditorRowView: View {
                     translateLocaleName: currentLocaleName,
                     availableFontFamilies: state.availableFontFamilySet,
                     onUpdateSelected: isMulti && allSelectedSameType ? { update in
-                        state.updateShapes(state.selectedShapeIds, in: row.id, update: update)
+                        state.updateShapes(selectedShapeIds, in: row.id, update: update)
                     } : nil,
                     onDeleteSelected: isMulti ? {
                         state.deleteSelectedShapes()
@@ -658,7 +689,7 @@ struct EditorRowView: View {
                 state.canvasMouseModelPosition = modelPoint
                 // Keep right-click position up-to-date while hovering,
                 // so it reflects cursor position when context menu opens.
-                rightClickModelPoint = modelPoint
+                contextMenuPointStore.value = modelPoint
             case .ended:
                 state.canvasMouseModelPosition = nil
             @unknown default:
@@ -755,7 +786,7 @@ struct EditorRowView: View {
     // MARK: - Add Element helpers
 
     private func addShapeFromMenu(_ type: ShapeType) {
-        let center = rightClickModelPoint ?? state.shapeCenter(for: row)
+        let center = contextMenuPointStore.value ?? state.shapeCenter(for: row)
         state.selectRow(row.id)
         guard let shape = CanvasShapeModel.defaultShape(for: type, row: row, centerX: center.x, centerY: center.y) else { return }
         state.addShape(shape)
