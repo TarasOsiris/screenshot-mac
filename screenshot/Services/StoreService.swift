@@ -31,7 +31,7 @@ final class StoreService {
     // MARK: - Free tier limits
 
     nonisolated static let freeMaxRows = 3
-    nonisolated static let freeMaxTemplatesPerRow = 10
+    nonisolated static let freeMaxTemplatesPerRow = 5
 
     func canAddRow(currentCount: Int) -> Bool {
         isProUnlocked || currentCount < Self.freeMaxRows
