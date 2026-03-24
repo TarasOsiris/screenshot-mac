@@ -417,7 +417,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ScreenshotBro-Info.plist;
+				INFOPLIST_FILE = "ScreenshotBro-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -427,6 +427,8 @@
 				PRODUCT_NAME = "Screenshot Bro";
 				REGISTER_APP_GROUPS = YES;
 				REVENUECAT_API_KEY = test_KgNxrrXqBIGgiORjBPsdiXrraJL;
+				REVENUECAT_ENTITLEMENT_ID = "Nineva Studios / ScreenshotBro Pro";
+				REVENUECAT_PRODUCT_ID = proversion;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -452,7 +454,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ScreenshotBro-Info.plist;
+				INFOPLIST_FILE = "ScreenshotBro-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -462,6 +464,8 @@
 				PRODUCT_NAME = "Screenshot Bro";
 				REGISTER_APP_GROUPS = YES;
 				REVENUECAT_API_KEY = appl_qNsQJpgVEPpXpoJiqWqgKOIhKru;
+				REVENUECAT_ENTITLEMENT_ID = "Nineva Studios / ScreenshotBro Pro";
+				REVENUECAT_PRODUCT_ID = proversion;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;

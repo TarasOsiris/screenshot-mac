@@ -11,9 +11,14 @@ final class StoreService {
         case templateLimit
     }
 
-    private static let entitlementId = "Nineva Studios / ScreenshotBro Pro"
     private static let revenueCatAPIKeyEnvironmentName = "REVENUECAT_API_KEY"
     private static let revenueCatAPIKeyInfoDictionaryKey = "REVENUECAT_API_KEY"
+    private static let revenueCatEntitlementIDEnvironmentName = "REVENUECAT_ENTITLEMENT_ID"
+    private static let revenueCatEntitlementIDInfoDictionaryKey = "REVENUECAT_ENTITLEMENT_ID"
+    private static let revenueCatProductIDEnvironmentName = "REVENUECAT_PRODUCT_ID"
+    private static let revenueCatProductIDInfoDictionaryKey = "REVENUECAT_PRODUCT_ID"
+    private static let fallbackEntitlementId = "Nineva Studios / ScreenshotBro Pro"
+    private static let fallbackProductId = "proversion"
     #if DEBUG
     private static let debugFallbackAPIKey = "test_KgNxrrXqBIGgiORjBPsdiXrraJL"
     #endif
@@ -117,10 +122,22 @@ final class StoreService {
     }
 
     private func updateEntitlement(from customerInfo: CustomerInfo) {
-        let entitled = customerInfo.entitlements[Self.entitlementId]?.isActive == true
+        let activeEntitlements = customerInfo.entitlements.active
+        let configuredEntitlementId = Self.resolvedEntitlementID()
+        let configuredProductId = Self.resolvedProductID()
+        let hasConfiguredEntitlement = configuredEntitlementId.flatMap { entitlementId in
+            activeEntitlements[entitlementId].map(\.isActive)
+        } == true
+        let hasSingleActiveEntitlement = activeEntitlements.count == 1 && activeEntitlements.values.first?.isActive == true
+        let hasPurchasedConfiguredProduct = configuredProductId.map(customerInfo.allPurchasedProductIdentifiers.contains) == true
+        let entitled = hasConfiguredEntitlement || hasSingleActiveEntitlement || hasPurchasedConfiguredProduct
         #if DEBUG
-        if !entitled && !customerInfo.entitlements.active.isEmpty {
-            print("[StoreService] Entitlement '\(Self.entitlementId)' not found, but active entitlements: \(customerInfo.entitlements.active.keys.joined(separator: ", "))")
+        if !entitled && (!activeEntitlements.isEmpty || !customerInfo.allPurchasedProductIdentifiers.isEmpty) {
+            let configuredEntitlementId = configuredEntitlementId ?? "<none>"
+            let configuredProductId = configuredProductId ?? "<none>"
+            let activeEntitlementKeys = activeEntitlements.keys.sorted().joined(separator: ", ")
+            let purchasedProductIds = customerInfo.allPurchasedProductIdentifiers.sorted().joined(separator: ", ")
+            print("[StoreService] No Pro unlock for entitlement '\(configuredEntitlementId)' or product '\(configuredProductId)'. Active entitlements: \(activeEntitlementKeys). Purchased products: \(purchasedProductIds)")
         }
         #endif
         isProUnlocked = entitled
@@ -129,8 +146,10 @@ final class StoreService {
     func handlePurchaseOrRestore(_ customerInfo: CustomerInfo) {
         updateEntitlement(from: customerInfo)
         if isProUnlocked {
-            clearPurchaseStatus()
+            setPurchaseStatus("Screenshot Bro Pro is unlocked and ready to use.")
             showPaywall = false
+        } else {
+            setPurchaseStatus("Purchase completed, but RevenueCat did not grant access. Check the entitlement or product mapping in RevenueCat.", isError: true)
         }
     }
 
@@ -194,6 +213,38 @@ final class StoreService {
         #else
         return nil
         #endif
+    }
+
+    private static func resolvedEntitlementID() -> String? {
+        let environmentKey = ProcessInfo.processInfo.environment[Self.revenueCatEntitlementIDEnvironmentName]?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let environmentKey, !environmentKey.isEmpty {
+            return environmentKey
+        }
+
+        let infoDictionaryKey = (Bundle.main.object(forInfoDictionaryKey: Self.revenueCatEntitlementIDInfoDictionaryKey) as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let infoDictionaryKey, !infoDictionaryKey.isEmpty {
+            return infoDictionaryKey
+        }
+
+        return Self.fallbackEntitlementId
+    }
+
+    private static func resolvedProductID() -> String? {
+        let environmentKey = ProcessInfo.processInfo.environment[Self.revenueCatProductIDEnvironmentName]?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let environmentKey, !environmentKey.isEmpty {
+            return environmentKey
+        }
+
+        let infoDictionaryKey = (Bundle.main.object(forInfoDictionaryKey: Self.revenueCatProductIDInfoDictionaryKey) as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let infoDictionaryKey, !infoDictionaryKey.isEmpty {
+            return infoDictionaryKey
+        }
+
+        return Self.fallbackProductId
     }
 }
 

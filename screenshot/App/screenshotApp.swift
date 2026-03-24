@@ -24,7 +24,7 @@ struct ScreenshotBroApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppRootView()
                 .environment(appState)
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
