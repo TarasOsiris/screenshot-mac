@@ -30,7 +30,7 @@ enum TemplateService {
         ) else {
             return []
         }
-        return contents
+        let all = contents
             .filter { url in
                 var isDir: ObjCBool = false
                 fm.fileExists(atPath: url.path, isDirectory: &isDir)
@@ -45,6 +45,7 @@ enum TemplateService {
                 let previewImage = NSImage(contentsOf: url.appendingPathComponent("preview.png"))
                 return ProjectTemplate(id: dirName, name: displayName, url: url, previewImage: previewImage)
             }
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            .sorted { (a: ProjectTemplate, b: ProjectTemplate) in a.name.localizedStandardCompare(b.name) == .orderedAscending }
+        return Array(all.prefix(8))
     }
 }
