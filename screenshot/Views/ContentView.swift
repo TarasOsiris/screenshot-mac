@@ -552,7 +552,7 @@ struct ContentView: View {
 
             Divider()
 
-            Text(lastExportFolderName)
+            Text("Current export folder: \(lastExportFolderName)")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }

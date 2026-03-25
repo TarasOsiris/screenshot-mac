@@ -12,6 +12,7 @@ struct ScreenshotBroApp: App {
     @State private var debugTemplateError: String?
     @State private var debugExistingTemplates: [String] = []
     @State private var isDebugProjectManagerPresented = false
+    @State private var isDebugOnboardingPresented = false
     #endif
 
     private var preferredColorScheme: ColorScheme? {
@@ -29,7 +30,6 @@ struct ScreenshotBroApp: App {
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
                 .task { storeService.start() }
-                .onAppear { onboardingCompleted = false }
                 .sheet(isPresented: Binding(
                     get: { !onboardingCompleted },
                     set: { if !$0 { onboardingCompleted = true } }
@@ -38,6 +38,12 @@ struct ScreenshotBroApp: App {
                         .interactiveDismissDisabled()
                 }
                 #if DEBUG
+                .sheet(isPresented: $isDebugOnboardingPresented) {
+                    OnboardingView(
+                        persistCompletion: false,
+                        onComplete: { isDebugOnboardingPresented = false }
+                    )
+                }
                 .task {
                     debugRefreshExistingTemplates()
                 }
@@ -237,11 +243,15 @@ struct ScreenshotBroApp: App {
 
             #if DEBUG
             CommandMenu("Debug") {
-                Button("Manage Projects...") {
-                    isDebugProjectManagerPresented = true
+                Button("Show Onboarding...") {
+                    isDebugOnboardingPresented = true
                 }
 
                 Divider()
+
+                Button("Manage Projects...") {
+                    isDebugProjectManagerPresented = true
+                }
 
                 Menu("Save Current Project as Template") {
                     Button("New Template...") {
