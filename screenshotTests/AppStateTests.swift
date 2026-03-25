@@ -461,7 +461,13 @@ struct AppStateTests {
         defer { cleanup(tempDir) }
 
         let originalProjectId = try #require(state.activeProjectId)
-        let firstShapeId = try #require(state.rows.first?.shapes.first?.id)
+        // Explicitly add an image shape so the test doesn't depend on makeDefaultRow
+        // creating device shapes (which can fail when tests run concurrently and
+        // the shared SCREENSHOT_DATA_DIR env var races).
+        state.selectRow(state.rows.first?.id)
+        let imageShape = CanvasShapeModel.defaultImage(centerX: 500, centerY: 500)
+        state.addShape(imageShape)
+        let firstShapeId = imageShape.id
         state.saveImage(makeTestImage(width: 1200, height: 2600), for: firstShapeId)
         state.saveAll()
 

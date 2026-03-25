@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+    private static let privacyPolicyURL = URL(string: "https://screenshotbro.app/privacy")!
+
     @Environment(StoreService.self) private var store
     @AppStorage("appearance") private var appearance = "auto"
     @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
@@ -221,6 +223,10 @@ struct SettingsView: View {
                 }
             } else {
                 freeTierSections
+            }
+
+            Section("Legal") {
+                Link("Privacy Policy", destination: Self.privacyPolicyURL)
             }
         }
         .formStyle(.grouped)
