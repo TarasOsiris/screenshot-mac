@@ -540,10 +540,10 @@ struct ContentView: View {
             exportScreenshotsAs()
         }
 
-        Button("Export as Preview Image...") {
-            exportSingleDemoImage()
+        Button("Export rows as continuous images") {
+            exportRowImages()
         }
-        .disabled(currentExportRow == nil)
+        .disabled(state.rows.isEmpty)
 
         if hasLastExportDestination {
             Button("Open Export Folder") {
@@ -615,38 +615,46 @@ struct ContentView: View {
         exportScreenshots(to: url)
     }
 
-    private func exportSingleDemoImage() {
-        guard let row = currentExportRow else { return }
-
-        let panel = NSSavePanel()
-        panel.title = "Export Single Demo Image"
-        panel.nameFieldStringValue = "\(row.label.isEmpty ? "demo" : row.label)_demo.png"
-        panel.allowedContentTypes = [.png, .jpeg]
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-
-        let utType = UTType(filenameExtension: url.pathExtension)
-        let format: ExportImageFormat = utType == .jpeg ? .jpeg : .png
+    private func exportRowImages() {
+        guard !state.rows.isEmpty else { return }
+        guard let baseURL = chooseExportDestination() else { return }
 
         Task {
-            let localeCode = state.localeState.activeLocaleCode
-            let rowImages = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-            let image = ExportService.renderRowImage(
-                row: row,
-                screenshotImages: rowImages,
-                localeCode: localeCode,
-                localeState: state.localeState
-            )
-            guard let data = ExportService.encodeImage(image, format: format) else {
-                exportError = "Failed to render demo image"
+            let rowsDir = baseURL.appendingPathComponent("rows", isDirectory: true)
+            do {
+                try FileManager.default.createDirectory(at: rowsDir, withIntermediateDirectories: true)
+            } catch {
+                exportError = "Failed to create rows folder: \(error.localizedDescription)"
                 return
             }
-            do {
-                try data.write(to: url)
-                NSWorkspace.shared.activateFileViewerSelecting([url])
-                showExportSuccess()
-            } catch {
-                exportError = error.localizedDescription
+
+            let localeCode = state.localeState.activeLocaleCode
+            var imageCache: [String: NSImage] = [:]
+            for (index, row) in state.rows.enumerated() {
+                let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
+                let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
+                let image = ExportService.renderRowImage(
+                    row: row,
+                    screenshotImages: rowImages,
+                    localeCode: localeCode,
+                    localeState: state.localeState
+                )
+                guard let data = ExportService.encodeImage(image, format: .png) else {
+                    exportError = "Failed to render row \(index + 1)"
+                    return
+                }
+                let paddedIndex = String(format: "%02d", index + 1)
+                let fileName = row.label.isEmpty ? "\(paddedIndex).png" : "\(paddedIndex)_\(row.label).png"
+                do {
+                    try data.write(to: rowsDir.appendingPathComponent(fileName))
+                } catch {
+                    exportError = error.localizedDescription
+                    return
+                }
             }
+
+            NSWorkspace.shared.activateFileViewerSelecting([rowsDir])
+            showExportSuccess()
         }
     }
 

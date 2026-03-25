@@ -29,6 +29,7 @@ struct ScreenshotBroApp: App {
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
                 .task { storeService.start() }
+                .onAppear { onboardingCompleted = false }
                 .sheet(isPresented: Binding(
                     get: { !onboardingCompleted },
                     set: { if !$0 { onboardingCompleted = true } }
