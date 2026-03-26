@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var exportError: String?
     @State private var exportProgress = 0
     @State private var exportTotal = 0
+    @State private var exportTask: Task<Void, Never>?
     @State private var isCreatingProject = false
     @State private var isCreatingFromTemplate = false
     @State private var pendingTemplate: ProjectTemplate?
@@ -144,6 +145,11 @@ struct ContentView: View {
                         Text("\(exportProgress) of \(exportTotal)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                        Button("Cancel") {
+                            exportTask?.cancel()
+                        }
+                        .keyboardShortcut(.cancelAction)
+                        .controlSize(.small)
                     }
                     .padding(24)
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
@@ -698,10 +704,11 @@ struct ContentView: View {
         let localeCount = max(1, state.localeState.locales.count)
         exportTotal = localeCount * state.rows.reduce(0) { $0 + $1.templates.count }
 
-        Task {
+        exportTask = Task {
             defer {
                 url.stopAccessingSecurityScopedResource()
                 isExporting = false
+                exportTask = nil
             }
             do {
                 let projectName = state.activeProject?.name ?? ""
@@ -726,6 +733,8 @@ struct ContentView: View {
                 if openExportFolderOnSuccess {
                     NSWorkspace.shared.activateFileViewerSelecting([destinationFolderURL])
                 }
+            } catch is CancellationError {
+                // User cancelled — no error to show
             } catch {
                 exportError = error.localizedDescription
             }

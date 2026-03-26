@@ -40,69 +40,78 @@ struct ExportService {
         // render template N on main while encoding template N-1 in background.
         var previousEncodeTask: Task<Void, any Error>?
 
-        for locale in localesToExport {
-            let localeFolder: URL
-            if multiLocale {
-                localeFolder = rootFolder.appendingPathComponent(locale.code)
-                try FileManager.default.createDirectory(at: localeFolder, withIntermediateDirectories: true)
-            } else {
-                localeFolder = rootFolder
-            }
-
-            let multiRow = rows.count > 1
-            var usedFolderNames: [String: Int] = [:]
-
-            for row in rows {
-                let destFolder: URL
-                if multiRow {
-                    let baseName = exportFolderName(for: row)
-                    let count = usedFolderNames[baseName, default: 0]
-                    usedFolderNames[baseName] = count + 1
-                    let folderName = count == 0 ? baseName : "\(baseName) (\(count + 1))"
-                    destFolder = localeFolder.appendingPathComponent(folderName)
-                    try FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
+        do {
+            for locale in localesToExport {
+                let localeFolder: URL
+                if multiLocale {
+                    localeFolder = rootFolder.appendingPathComponent(locale.code)
+                    try FileManager.default.createDirectory(at: localeFolder, withIntermediateDirectories: true)
                 } else {
-                    destFolder = localeFolder
+                    localeFolder = rootFolder
                 }
 
-                let rowImages = imageProvider(row, locale.code)
+                let multiRow = rows.count > 1
+                var usedFolderNames: [String: Int] = [:]
 
-                for (index, _) in row.templates.enumerated() {
-                    // Render on main (ImageRenderer requirement) — runs concurrently
-                    // with the previous template's background encoding.
-                    let image = renderTemplateImage(
-                        index: index,
-                        row: row,
-                        screenshotImages: rowImages,
-                        localeCode: locale.code,
-                        localeState: localeState,
-                        availableFontFamilies: availableFontFamilies
-                    )
-
-                    // Await the previous encoding before starting a new one
-                    try await previousEncodeTask?.value
-
-                    let padded = String(format: "%02d", index + 1)
-                    let filename = "\(padded)_screenshot.\(format.fileExtension)"
-                    let fileURL = destFolder.appendingPathComponent(filename)
-
-                    // Offload encoding + file write to background
-                    let fmt = format
-                    previousEncodeTask = Task.detached {
-                        guard let imageData = encodeImage(image, format: fmt) else {
-                            throw ExportError.renderFailed
-                        }
-                        try imageData.write(to: fileURL)
+                for row in rows {
+                    let destFolder: URL
+                    if multiRow {
+                        let baseName = exportFolderName(for: row)
+                        let count = usedFolderNames[baseName, default: 0]
+                        usedFolderNames[baseName] = count + 1
+                        let folderName = count == 0 ? baseName : "\(baseName) (\(count + 1))"
+                        destFolder = localeFolder.appendingPathComponent(folderName)
+                        try FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
+                    } else {
+                        destFolder = localeFolder
                     }
 
-                    completed += 1
-                    onProgress?(completed)
+                    let rowImages = imageProvider(row, locale.code)
+
+                    for (index, _) in row.templates.enumerated() {
+                        try Task.checkCancellation()
+
+                        // Render on main (ImageRenderer requirement) — runs concurrently
+                        // with the previous template's background encoding.
+                        let image = renderTemplateImage(
+                            index: index,
+                            row: row,
+                            screenshotImages: rowImages,
+                            localeCode: locale.code,
+                            localeState: localeState,
+                            availableFontFamilies: availableFontFamilies
+                        )
+
+                        // Await the previous encoding before starting a new one
+                        try await previousEncodeTask?.value
+                        try Task.checkCancellation()
+
+                        let padded = String(format: "%02d", index + 1)
+                        let filename = "\(padded)_screenshot.\(format.fileExtension)"
+                        let fileURL = destFolder.appendingPathComponent(filename)
+
+                        // Offload encoding + file write to background
+                        let fmt = format
+                        previousEncodeTask = Task.detached {
+                            guard let imageData = encodeImage(image, format: fmt) else {
+                                throw ExportError.renderFailed
+                            }
+                            try imageData.write(to: fileURL)
+                        }
+
+                        completed += 1
+                        onProgress?(completed)
+                    }
                 }
             }
-        }
 
-        // Await the final encoding task
-        try await previousEncodeTask?.value
+            // Await the final encoding task
+            try await previousEncodeTask?.value
+        } catch {
+            previousEncodeTask?.cancel()
+            try? FileManager.default.removeItem(at: rootFolder)
+            throw error
+        }
 
         return rootFolder
     }

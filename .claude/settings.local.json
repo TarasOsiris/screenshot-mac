@@ -32,7 +32,9 @@
       "Bash(find /Users/taras/repo/experiments/screenshot-mac -name \"*.swift\" -exec grep -l \"NSImage\" {} \\\\; | xargs grep -l \"extension NSImage\" | head -5)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(cat \"/Users/taras/Library/Containers/xyz.tleskiv.screenshot/Data/Library/Application Support/screenshot/projects.json\" | python3 -m json.tool)",
-      "Bash(for f:*)"
+      "Bash(for f:*)",
+      "Bash(GIT_EDITOR=true git -C /Users/taras/Documents/repo/experiments/screenshot-mac rebase --continue)",
+      "Bash(GIT_EDITOR=true git rebase --continue)"
     ]
   }
 }
