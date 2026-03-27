@@ -28,6 +28,21 @@ struct BackgroundImageConfig: Codable, Equatable {
     /// Whether this config has any image source (raster file or SVG content).
     var hasImage: Bool { fileName != nil || svgContent != nil }
 
+    /// Render SVG content to an NSImage. Returns nil if no svgContent.
+    func renderSvgImage(modelSize: CGSize?) -> NSImage? {
+        guard let svgContent else { return nil }
+        if fillMode == .tile {
+            return SvgHelper.renderImage(from: svgContent, useColor: false, color: .white)
+        }
+        let refDim = max(modelSize?.width ?? 1200, modelSize?.height ?? 1200)
+        let naturalSize = SvgHelper.parseViewBoxSize(svgContent) ?? CGSize(width: 100, height: 100)
+        let scale = refDim / max(naturalSize.width, naturalSize.height, 1)
+        let targetSize = CGSize(width: ceil(naturalSize.width * scale),
+                                height: ceil(naturalSize.height * scale))
+        return SvgHelper.renderImage(from: svgContent, useColor: false, color: .white,
+                                      targetSize: targetSize)
+    }
+
     enum CodingKeys: String, CodingKey {
         case fileName = "f", svgContent = "sc", fillMode = "fm", opacity = "a"
         case legacyTileSpacing = "ts", legacyTileOffset = "to", legacyTileScale = "tsc"
@@ -126,6 +141,23 @@ struct BackgroundImageView: View {
     @State private var cachedSvgImage: NSImage?
     @State private var svgCacheKey: String = ""
 
+    init(image: NSImage?, config: BackgroundImageConfig, modelSize: CGSize? = nil) {
+        self.image = image
+        self.config = config
+        self.modelSize = modelSize
+        // Eagerly render SVG so export doesn't depend on onAppear
+        if image == nil, config.svgContent != nil {
+            let rendered = config.renderSvgImage(modelSize: modelSize)
+            let fillKey = config.fillMode == .tile ? "tile" : "scaled"
+            let refDim = max(modelSize?.width ?? 1200, modelSize?.height ?? 1200)
+            _cachedSvgImage = State(initialValue: rendered)
+            _svgCacheKey = State(initialValue: "\(config.svgContent!.hashValue)-\(fillKey)-\(Int(refDim))")
+        } else {
+            _cachedSvgImage = State(initialValue: nil)
+            _svgCacheKey = State(initialValue: "")
+        }
+    }
+
     var body: some View {
         GeometryReader { geo in
             let resolvedImage = image ?? cachedSvgImage
@@ -134,33 +166,22 @@ struct BackgroundImageView: View {
             }
         }
         .opacity(config.opacity)
-        .onAppear { updateSvgCache() }
         .onChange(of: config.svgContent) { updateSvgCache() }
         .onChange(of: config.fillMode == .tile) { updateSvgCache() }
     }
 
     private func updateSvgCache() {
-        guard image == nil, let svgContent = config.svgContent else {
+        guard image == nil, config.svgContent != nil else {
             cachedSvgImage = nil
             svgCacheKey = ""
             return
         }
         let refDim = max(modelSize?.width ?? 1200, modelSize?.height ?? 1200)
         let fillKey = config.fillMode == .tile ? "tile" : "scaled"
-        let key = "\(svgContent.hashValue)-\(fillKey)-\(Int(refDim))"
+        let key = "\(config.svgContent!.hashValue)-\(fillKey)-\(Int(refDim))"
         guard key != svgCacheKey else { return }
         svgCacheKey = key
-        if config.fillMode == .tile {
-            cachedSvgImage = SvgHelper.renderImage(from: svgContent, useColor: false, color: .white)
-        } else {
-            // Get natural aspect ratio from viewBox without rendering, then render once at target size.
-            let naturalSize = SvgHelper.parseViewBoxSize(svgContent) ?? CGSize(width: 100, height: 100)
-            let scale = refDim / max(naturalSize.width, naturalSize.height, 1)
-            let targetSize = CGSize(width: ceil(naturalSize.width * scale),
-                                    height: ceil(naturalSize.height * scale))
-            cachedSvgImage = SvgHelper.renderImage(from: svgContent, useColor: false, color: .white,
-                                                   targetSize: targetSize)
-        }
+        cachedSvgImage = config.renderSvgImage(modelSize: modelSize)
     }
 
     @ViewBuilder
