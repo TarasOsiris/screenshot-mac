@@ -696,6 +696,17 @@ struct EditorRowView: View {
 
     @ViewBuilder
     private var rowMenuContent: some View {
+        rowMenuAddSection
+        Divider()
+        rowMenuOrganizationSection
+        Divider()
+        rowMenuAppearanceSection
+        Divider()
+        rowMenuDestructiveSection
+    }
+
+    @ViewBuilder
+    private var rowMenuAddSection: some View {
         Button("Add Screenshot") {
             store.requirePro(
                 allowed: store.canAddTemplate(currentCount: row.templates.count),
@@ -720,50 +731,18 @@ struct EditorRowView: View {
                 }
             }
         }
-        Divider()
-        Button(row.showDevice ? "Hide Devices" : "Show Devices") {
-            state.toggleShowDevice(for: row.id)
-        }
-        Button(row.showBorders ? "Hide Borders" : "Show Borders") {
-            state.toggleShowBorders(for: row.id)
-        }
-        Divider()
-        Menu("Center all devices") {
-            Button("Vertically") {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    state.centerAllDevices(in: row.id, axis: .vertically)
-                }
-            }
-            Button("Horizontally") {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    state.centerAllDevices(in: row.id, axis: .horizontally)
-                }
-            }
-            Button("Screenshot Center") {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    state.centerAllDevices(in: row.id, axis: .both)
-                }
+    }
+
+    @ViewBuilder
+    private var rowMenuOrganizationSection: some View {
+        Button("Duplicate Row") {
+            store.requirePro(
+                allowed: store.canAddRow(currentCount: state.rows.count),
+                context: .rowLimit
+            ) {
+                withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
             }
         }
-        Menu("Change all devices to") {
-            DeviceMenuContent(
-                onSelectCategory: { category in
-                    state.changeAllDevices(in: row.id, toCategory: category)
-                },
-                onSelectFrame: { frame in
-                    state.changeAllDevices(in: row.id, toFrame: frame)
-                }
-            )
-        }
-        Divider()
-        Button("Move Row Up") {
-            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
-        }
-        .disabled(!canMoveUp)
-        Button("Move Row Down") {
-            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
-        }
-        .disabled(!canMoveDown)
         Button("Add New Row Above") {
             store.requirePro(
                 allowed: store.canAddRow(currentCount: state.rows.count),
@@ -780,15 +759,58 @@ struct EditorRowView: View {
                 withAnimation(.easeInOut(duration: 0.2)) { state.addRowBelow(row.id) }
             }
         }
-        Button("Duplicate Row") {
-            store.requirePro(
-                allowed: store.canAddRow(currentCount: state.rows.count),
-                context: .rowLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+        Button("Move Row Up") {
+            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
+        }
+        .disabled(!canMoveUp)
+        Button("Move Row Down") {
+            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
+        }
+        .disabled(!canMoveDown)
+    }
+
+    @ViewBuilder
+    private var rowMenuAppearanceSection: some View {
+        Menu("Devices") {
+            Button(row.showDevice ? "Hide Devices" : "Show Devices") {
+                state.toggleShowDevice(for: row.id)
+            }
+            Divider()
+            Menu("Center All") {
+                Button("Vertically") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        state.centerAllDevices(in: row.id, axis: .vertically)
+                    }
+                }
+                Button("Horizontally") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        state.centerAllDevices(in: row.id, axis: .horizontally)
+                    }
+                }
+                Button("Screenshot Center") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        state.centerAllDevices(in: row.id, axis: .both)
+                    }
+                }
+            }
+            Menu("Change All To") {
+                DeviceMenuContent(
+                    onSelectCategory: { category in
+                        state.changeAllDevices(in: row.id, toCategory: category)
+                    },
+                    onSelectFrame: { frame in
+                        state.changeAllDevices(in: row.id, toFrame: frame)
+                    }
+                )
             }
         }
-        Divider()
+        Button(row.showBorders ? "Hide Borders" : "Show Borders") {
+            state.toggleShowBorders(for: row.id)
+        }
+    }
+
+    @ViewBuilder
+    private var rowMenuDestructiveSection: some View {
         Menu("Delete all") {
             ForEach(ShapeType.allCases, id: \.self) { type in
                 Button(type.pluralLabel, role: .destructive) {
