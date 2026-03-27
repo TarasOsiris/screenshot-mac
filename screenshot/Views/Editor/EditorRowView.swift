@@ -626,12 +626,11 @@ struct EditorRowView: View {
         let templateModelSize = CGSize(width: row.templateWidth, height: row.templateHeight)
         let displayBlur = row.backgroundBlur * dh / row.templateHeight
         let totalWidth = dw * CGFloat(row.templates.count)
-        let blurBleed = displayBlur > 0 ? ceil(displayBlur * 3) : 0
-        let baseLayer = rowBackgroundBaseLayer(dw: dw, dh: dh, templateModelSize: templateModelSize, blurBleed: blurBleed)
+        let baseLayer = rowBackgroundBaseLayer(dw: dw, dh: dh, templateModelSize: templateModelSize)
 
         ZStack(alignment: .topLeading) {
             if displayBlur > 0 {
-                blurredView(width: totalWidth, height: dh, displayBlur: displayBlur, blurBleed: blurBleed) {
+                blurredView(width: totalWidth, height: dh, displayBlur: displayBlur) {
                     baseLayer
                 }
             } else {
@@ -647,22 +646,22 @@ struct EditorRowView: View {
     }
 
     @ViewBuilder
-    private func rowBackgroundBaseLayer(dw: CGFloat, dh: CGFloat, templateModelSize: CGSize, blurBleed: CGFloat) -> some View {
+    private func rowBackgroundBaseLayer(dw: CGFloat, dh: CGFloat, templateModelSize: CGSize) -> some View {
         let totalWidth = dw * CGFloat(row.templates.count)
 
         if row.isSpanningBackground {
             let spanModelSize = CGSize(width: row.templateWidth * CGFloat(row.templates.count), height: row.templateHeight)
             row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: spanModelSize)
-                .frame(width: totalWidth + blurBleed * 2, height: dh + blurBleed * 2)
+                .frame(width: totalWidth, height: dh)
         } else {
             ZStack(alignment: .topLeading) {
                 ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, _ in
                     row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
-                        .frame(width: dw + blurBleed * 2, height: dh + blurBleed * 2)
+                        .frame(width: dw, height: dh)
                         .offset(x: CGFloat(index) * dw, y: 0)
                 }
             }
-            .frame(width: totalWidth + blurBleed * 2, height: dh + blurBleed * 2, alignment: .topLeading)
+            .frame(width: totalWidth, height: dh, alignment: .topLeading)
         }
     }
 
@@ -683,13 +682,10 @@ struct EditorRowView: View {
     /// Applies blur once across the whole row background so adjacent screenshots
     /// share one continuous blurred surface instead of blurring each tile separately.
     @ViewBuilder
-    private func blurredView<V: View>(width: CGFloat, height: CGFloat, displayBlur: CGFloat, blurBleed: CGFloat, @ViewBuilder content: () -> V) -> some View {
-        content()
-            .offset(x: -blurBleed, y: -blurBleed)
-            .compositingGroup()
-            .blur(radius: displayBlur)
-            .frame(width: width, height: height)
-            .clipped()
+    private func blurredView<V: View>(width: CGFloat, height: CGFloat, displayBlur: CGFloat, @ViewBuilder content: () -> V) -> some View {
+        BackgroundBlurView(width: width, height: height, blurRadius: displayBlur) {
+            content()
+        }
     }
 
     private func tapSelectRow() {

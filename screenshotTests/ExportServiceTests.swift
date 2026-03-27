@@ -165,6 +165,60 @@ struct ExportServiceTests {
         }
     }
 
+    @Test func blurredSolidBackgroundKeepsEdgesOpaque() throws {
+        let tw: CGFloat = 200
+        let th: CGFloat = 400
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate()],
+            templateWidth: tw,
+            templateHeight: th,
+            bgColor: Self.testRed,
+            backgroundBlur: 24
+        )
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+
+        for (label, x, y) in [
+            ("top-left", 2, 2), ("top-right", Int(tw) - 3, 2),
+            ("bottom-left", 2, Int(th) - 3), ("bottom-right", Int(tw) - 3, Int(th) - 3),
+        ] {
+            try expectDominant(bitmap, at: (x, y), channel: .r, label: label)
+        }
+    }
+
+    @Test func blurredSpanningGradientMatchesEditor() throws {
+        let tw: CGFloat = 220
+        let th: CGFloat = 220
+        let gradient = GradientConfig(
+            stops: [
+                GradientColorStop(color: Self.testRed, location: 0),
+                GradientColorStop(color: Self.testBlue, location: 1),
+            ],
+            angle: 90
+        )
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw,
+            templateHeight: th,
+            backgroundStyle: .gradient,
+            gradientConfig: gradient,
+            spanBackgroundAcrossRow: true,
+            backgroundBlur: 24
+        )
+
+        let exportBitmap = try renderTemplateBitmap(index: 1, row: row)
+        let editorBitmap = try renderEditorBitmap(index: 1, row: row)
+
+        for (label, x, y) in [
+            ("top-left", 12, 12),
+            ("top-right", Int(tw) - 13, 12),
+            ("center", Int(tw) / 2, Int(th) / 2),
+            ("bottom-left", 12, Int(th) - 13),
+            ("bottom-right", Int(tw) - 13, Int(th) - 13),
+        ] {
+            try expectPixelsClose(exportBitmap, editorBitmap, at: (x, y), label: label)
+        }
+    }
+
     @Test func shapeAppearsAtCorrectPositionInTemplate() throws {
         let tw: CGFloat = 400
         let th: CGFloat = 400
@@ -560,36 +614,60 @@ struct ExportServiceTests {
 
     private func renderEditorBitmap(index: Int, row: ScreenshotRow) throws -> NSBitmapImageRep {
         let tLeft = CGFloat(index) * row.templateWidth
-        let rawShapes = row.visibleShapes(forTemplateAt: index)
-        let visibleShapes = rawShapes.map { shape -> CanvasShapeModel in
-            var shifted = shape
-            shifted.x -= tLeft
-            return shifted
-        }
-        let template = row.templates[index]
+        let totalWidth = row.templateWidth * CGFloat(row.templates.count)
         let templateSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+        let rowBaseBackground: AnyView
+
+        if row.isSpanningBackground {
+            let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
+            rowBaseBackground = AnyView(
+                row.resolvedBackgroundView(screenshotImages: [:], modelSize: spanSize)
+                    .frame(width: totalWidth, height: row.templateHeight)
+            )
+        } else {
+            rowBaseBackground = AnyView(
+                ZStack(alignment: .topLeading) {
+                    ForEach(Array(row.templates.enumerated()), id: \.element.id) { templateIndex, _ in
+                        row.resolvedBackgroundView(screenshotImages: [:], modelSize: templateSize)
+                            .frame(width: row.templateWidth, height: row.templateHeight)
+                            .offset(x: CGFloat(templateIndex) * row.templateWidth, y: 0)
+                    }
+                }
+                .frame(width: totalWidth, height: row.templateHeight, alignment: .topLeading)
+            )
+        }
 
         let view = ZStack(alignment: .topLeading) {
-            if row.isSpanningBackground && !template.overrideBackground {
-                let totalWidth = row.templateWidth * CGFloat(row.templates.count)
-                let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
-                Color.clear
-                    .frame(width: row.templateWidth, height: row.templateHeight)
-                    .overlay(alignment: .topLeading) {
-                        row.resolvedBackgroundView(screenshotImages: [:], modelSize: spanSize)
-                            .frame(width: totalWidth, height: row.templateHeight)
-                            .offset(x: -tLeft)
-                    }
-                    .clipped()
-            } else if template.overrideBackground {
-                template.resolvedBackgroundView(screenshotImages: [:], modelSize: templateSize)
-                    .frame(width: row.templateWidth, height: row.templateHeight)
+            if row.backgroundBlur > 0 {
+                BackgroundBlurView(width: totalWidth, height: row.templateHeight, blurRadius: row.backgroundBlur) {
+                    rowBaseBackground
+                }
             } else {
-                row.resolvedBackgroundView(screenshotImages: [:], modelSize: templateSize)
-                    .frame(width: row.templateWidth, height: row.templateHeight)
+                rowBaseBackground
             }
 
-            ForEach(visibleShapes) { shape in
+            if row.templates.contains(where: \.overrideBackground) {
+                HStack(spacing: 0) {
+                    ForEach(row.templates) { template in
+                        if template.overrideBackground {
+                            template.resolvedBackgroundView(screenshotImages: [:], modelSize: templateSize)
+                                .frame(width: row.templateWidth, height: row.templateHeight)
+                        } else {
+                            Color.clear.frame(width: row.templateWidth, height: row.templateHeight)
+                        }
+                    }
+                }
+            }
+
+            ForEach(row.activeShapes) { shape in
+                let clipRect: CGRect? = shape.clipToTemplate == true
+                    ? CGRect(
+                        x: CGFloat(row.owningTemplateIndex(for: shape)) * row.templateWidth,
+                        y: 0,
+                        width: row.templateWidth,
+                        height: row.templateHeight
+                    )
+                    : nil
                 CanvasShapeView(
                     shape: shape,
                     displayScale: 1.0,
@@ -597,6 +675,7 @@ struct ExportServiceTests {
                     screenshotImage: nil,
                     fillImage: nil,
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                    clipBounds: clipRect,
                     showsEditorHelpers: true,
                     onSelect: {},
                     onUpdate: { _ in },
@@ -605,18 +684,24 @@ struct ExportServiceTests {
                 )
             }
         }
-        .frame(width: row.templateWidth, height: row.templateHeight, alignment: .topLeading)
+        .frame(width: totalWidth, height: row.templateHeight, alignment: .topLeading)
         .clipped()
 
         let hostingView = NSHostingView(rootView: view)
-        hostingView.frame = NSRect(x: 0, y: 0, width: row.templateWidth, height: row.templateHeight)
+        hostingView.frame = NSRect(x: 0, y: 0, width: totalWidth, height: row.templateHeight)
         hostingView.layoutSubtreeIfNeeded()
         hostingView.displayIfNeeded()
 
         let bounds = hostingView.bounds
         let rep = try #require(hostingView.bitmapImageRepForCachingDisplay(in: bounds))
         hostingView.cacheDisplay(in: bounds, to: rep)
-        return rep
+        let image = NSImage(size: NSSize(width: totalWidth, height: row.templateHeight))
+        image.addRepresentation(rep)
+        let cropped = try cropBitmap(image, x: tLeft, width: row.templateWidth, height: row.templateHeight)
+        let croppedImage = NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
+        croppedImage.addRepresentation(cropped)
+        let pngData = try #require(ExportService.opaquePNGData(from: croppedImage))
+        return try #require(NSBitmapImageRep(data: pngData))
     }
 
     private struct PixelRGB {
@@ -669,6 +754,31 @@ struct ExportServiceTests {
         let c = try pixelColor(bitmap, at: point)
         #expect(c.r > 0.95 && c.g > 0.95 && c.b > 0.95,
                 "\(label): expected near-white background, got rgb=(\(c.r),\(c.g),\(c.b))")
+    }
+
+    private func cropBitmap(_ image: NSImage, x: CGFloat, width: CGFloat, height: CGFloat) throws -> NSBitmapImageRep {
+        let cgImage = try #require(image.cgImage(forProposedRect: nil, context: nil, hints: nil))
+        let cropRect = CGRect(
+            x: max(0, floor(x)),
+            y: 0,
+            width: min(CGFloat(cgImage.width) - max(0, floor(x)), ceil(width)),
+            height: min(CGFloat(cgImage.height), ceil(height))
+        ).integral
+        let cropped = try #require(cgImage.cropping(to: cropRect))
+        return NSBitmapImageRep(cgImage: cropped)
+    }
+
+    private func expectPixelsClose(
+        _ lhs: NSBitmapImageRep,
+        _ rhs: NSBitmapImageRep,
+        at point: (Int, Int),
+        tolerance: CGFloat = 0.06,
+        label: String
+    ) throws {
+        let left = try pixelColor(lhs, at: point)
+        let right = try pixelColor(rhs, at: point)
+        let delta = abs(left.r - right.r) + abs(left.g - right.g) + abs(left.b - right.b)
+        #expect(delta < tolerance, "\(label): export/editor delta too large, delta=\(delta)")
     }
 
 }

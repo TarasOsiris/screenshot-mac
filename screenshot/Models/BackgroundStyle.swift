@@ -160,6 +160,28 @@ struct BackgroundImageView: View {
     }
 }
 
+struct BackgroundBlurView<Content: View>: View {
+    let width: CGFloat
+    let height: CGFloat
+    let blurRadius: CGFloat
+    let content: Content
+
+    init(width: CGFloat, height: CGFloat, blurRadius: CGFloat, @ViewBuilder content: () -> Content) {
+        self.width = width
+        self.height = height
+        self.blurRadius = blurRadius
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .compositingGroup()
+            .blur(radius: blurRadius, opaque: true)
+        .frame(width: width, height: height, alignment: .topLeading)
+        .clipped()
+    }
+}
+
 struct GradientColorStop: Codable, Equatable, Identifiable {
     var id: UUID
     var colorData: CodableColor

@@ -68,7 +68,6 @@ struct ExportService {
 
                     let rowImages = imageProvider(row, locale.code)
                     let cachedBlur = renderBlurredSpanningBackground(row: row, screenshotImages: rowImages)
-
                     for (index, _) in row.templates.enumerated() {
                         try Task.checkCancellation()
 
@@ -246,10 +245,14 @@ struct ExportService {
 
         let template = row.templates[index]
         let needsBlur = row.backgroundBlur > 0 && !template.overrideBackground
-
-        // Pre-render and blur background if needed
-        let blurredBgImage: NSImage? = needsBlur ? renderBlurredBackground(index: index, row: row, screenshotImages: screenshotImages, cachedSpanningBlur: blurredSpanningBackground) : nil
-
+        let blurredBgImage: NSImage? = needsBlur
+            ? renderBlurredBackground(
+                index: index,
+                row: row,
+                screenshotImages: screenshotImages,
+                cachedSpanningBlur: blurredSpanningBackground
+            )
+            : nil
         let templateSize = CGSize(width: row.templateWidth, height: row.templateHeight)
         let view = ZStack(alignment: .topLeading) {
             // Background
@@ -355,7 +358,6 @@ struct ExportService {
         let ciImage = CIImage(cgImage: cgImage)
         let originalExtent = ciImage.extent
 
-        // Clamp edges to infinite extent so blur doesn't sample transparent pixels
         let clamp = CIFilter(name: "CIAffineClamp")!
         clamp.setValue(ciImage, forKey: kCIInputImageKey)
         clamp.setValue(CGAffineTransform.identity, forKey: kCIInputTransformKey)
