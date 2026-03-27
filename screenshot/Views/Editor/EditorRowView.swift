@@ -764,7 +764,7 @@ struct EditorRowView: View {
             withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
         }
         .disabled(!canMoveDown)
-        Button("Add Row Above") {
+        Button("Add New Row Above") {
             store.requirePro(
                 allowed: store.canAddRow(currentCount: state.rows.count),
                 context: .rowLimit
@@ -772,7 +772,7 @@ struct EditorRowView: View {
                 withAnimation(.easeInOut(duration: 0.2)) { state.addRowAbove(row.id) }
             }
         }
-        Button("Add Row Below") {
+        Button("Add New Row Below") {
             store.requirePro(
                 allowed: store.canAddRow(currentCount: state.rows.count),
                 context: .rowLimit

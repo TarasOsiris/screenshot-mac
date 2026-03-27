@@ -24,8 +24,8 @@ struct AddRowButton: View {
         .buttonStyle(.plain)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .help("Add row")
-        .accessibilityLabel("Add row")
+        .help("Add new row")
+        .accessibilityLabel("Add new row")
         .onHover { isHovered = $0 }
         .animation(.easeInOut(duration: 0.15), value: isHovered)
     }

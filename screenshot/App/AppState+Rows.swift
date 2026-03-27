@@ -5,7 +5,7 @@ extension AppState {
     // MARK: - Rows
 
     func addRow() {
-        registerUndo("Add Row")
+        registerUndo("Add New Row")
         let row = makeDefaultRow()
         rows.append(row)
         selectRow(row.id)
@@ -14,7 +14,7 @@ extension AppState {
 
     func addRowAbove(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
-        registerUndo("Add Row Above")
+        registerUndo("Add New Row Above")
         let row = makeDefaultRow()
         rows.insert(row, at: idx)
         selectRow(row.id)
@@ -23,7 +23,7 @@ extension AppState {
 
     func addRowBelow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
-        registerUndo("Add Row Below")
+        registerUndo("Add New Row Below")
         let row = makeDefaultRow()
         rows.insert(row, at: idx + 1)
         selectRow(row.id)
