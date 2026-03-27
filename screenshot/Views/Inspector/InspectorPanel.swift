@@ -142,24 +142,26 @@ struct InspectorPanel: View {
                 }
             )
 
-            HStack(spacing: 4) {
-                Text("Blur")
-                    .font(.system(size: 12))
-                Spacer()
-                Slider(
-                    value: liveRowBinding(rowId, keyPath: \.backgroundBlur, default: 0),
-                    in: 0...100
-                ) { editing in
-                    if editing {
-                        guard let idx = state.rowIndex(for: rowId) else { return }
-                        state.registerUndoForRow(at: idx, "Background Blur")
+            if state.rows[rowIndex].backgroundStyle != .color {
+                HStack(spacing: 4) {
+                    Text("Blur")
+                        .font(.system(size: 12))
+                    Spacer()
+                    Slider(
+                        value: liveRowBinding(rowId, keyPath: \.backgroundBlur, default: 0),
+                        in: 0...100
+                    ) { editing in
+                        if editing {
+                            guard let idx = state.rowIndex(for: rowId) else { return }
+                            state.registerUndoForRow(at: idx, "Background Blur")
+                        }
                     }
+                    .frame(width: 100)
+                    Text("\(Int(state.rows[rowIndex].backgroundBlur))")
+                        .font(.system(size: 11).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, alignment: .trailing)
                 }
-                .frame(width: 100)
-                Text("\(Int(state.rows[rowIndex].backgroundBlur))")
-                    .font(.system(size: 11).monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .frame(width: 28, alignment: .trailing)
             }
 
             if state.rows[rowIndex].backgroundStyle != .color {

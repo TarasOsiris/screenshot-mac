@@ -20,6 +20,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     var showBorders: Bool
     var shapes: [CanvasShapeModel]
     var isLabelManuallySet: Bool
+    var isCollapsed: Bool
 
     init(
         id: UUID = UUID(),
@@ -40,7 +41,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         hiddenShapeTypes: Set<ShapeType> = [],
         showBorders: Bool = true,
         shapes: [CanvasShapeModel] = [],
-        isLabelManuallySet: Bool = false
+        isLabelManuallySet: Bool = false,
+        isCollapsed: Bool = false
     ) {
         self.id = id
         self.label = label
@@ -62,6 +64,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         self.showBorders = showBorders
         self.shapes = shapes
         self.isLabelManuallySet = isLabelManuallySet
+        self.isCollapsed = isCollapsed
     }
 
     enum CodingKeys: String, CodingKey {
@@ -74,7 +77,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         case backgroundBlur = "bgbl"
         case defaultDeviceFrameId = "ddfi"
         case hiddenShapeTypes = "hst"
-        case showBorders = "sb", shapes = "s", isLabelManuallySet = "lm"
+        case showBorders = "sb", shapes = "s", isLabelManuallySet = "lm", isCollapsed = "col"
     }
 
     init(from decoder: Decoder) throws {
@@ -98,6 +101,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         showBorders = try c.decodeIfPresent(Bool.self, forKey: .showBorders) ?? true
         shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []
         isLabelManuallySet = try c.decodeIfPresent(Bool.self, forKey: .isLabelManuallySet) ?? false
+        isCollapsed = try c.decodeIfPresent(Bool.self, forKey: .isCollapsed) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -120,6 +124,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         if !showBorders { try c.encode(false, forKey: .showBorders) }
         try c.encode(shapes, forKey: .shapes)
         if isLabelManuallySet { try c.encode(true, forKey: .isLabelManuallySet) }
+        if isCollapsed { try c.encode(true, forKey: .isCollapsed) }
     }
 
     var bgColor: Color {

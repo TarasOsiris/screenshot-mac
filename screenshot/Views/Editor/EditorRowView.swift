@@ -47,9 +47,16 @@ struct EditorRowView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Row header
             HStack(spacing: 8) {
-                Circle()
-                    .fill(isSelected ? Color.accentColor : .gray.opacity(0.4))
-                    .frame(width: isSelected ? 7 : 6, height: isSelected ? 7 : 6)
+                Image(systemName: row.isCollapsed ? "chevron.right" : "chevron.down")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                    .frame(width: 12, height: 12)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            state.toggleRowCollapsed(for: row.id)
+                        }
+                    }
 
                 if isEditingLabel {
                     TextField("Row label", text: $editingLabelText)
@@ -124,7 +131,9 @@ struct EditorRowView: View {
             .onHover { isRowHovered = $0 }
 
             // Unified canvas + add button
-            horizontalScrollArea
+            if !row.isCollapsed {
+                horizontalScrollArea
+            }
         }
         .onScrollGeometryChange(for: CGRect.self) { geo in
             geo.visibleRect

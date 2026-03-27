@@ -241,6 +241,12 @@ extension AppState {
         scheduleSave()
     }
 
+    func toggleRowCollapsed(for rowId: UUID) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        rows[idx].isCollapsed.toggle()
+        scheduleSave()
+    }
+
     func toggleShowBorders(for rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
         registerUndoForRow(at: idx, rows[idx].showBorders ? "Hide Borders" : "Show Borders")
