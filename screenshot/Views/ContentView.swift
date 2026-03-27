@@ -569,8 +569,7 @@ struct ContentView: View {
     }
 
     private var lastExportFolderName: String {
-        guard !lastExportFolderPath.isEmpty else { return "selected folder" }
-        return URL(fileURLWithPath: lastExportFolderPath).lastPathComponent
+        ExportFolderService.folderName(for: lastExportFolderPath)
     }
 
     private var exportButtonText: String {
@@ -673,16 +672,7 @@ struct ContentView: View {
     }
 
     private func chooseExportDestination() -> URL? {
-        let panel = NSOpenPanel()
-        panel.title = "Export Screenshots"
-        panel.message = "Choose a folder to export screenshots"
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.canCreateDirectories = true
-        panel.allowsMultipleSelection = false
-
-        guard panel.runModal() == .OK, let url = panel.url else { return nil }
-        return url
+        ExportFolderService.chooseFolder()
     }
 
     private func exportScreenshots(to url: URL) {
@@ -742,32 +732,25 @@ struct ContentView: View {
     }
 
     private func lastExportFolderURL() -> URL? {
-        guard !lastExportFolderBookmark.isEmpty else { return nil }
-        do {
-            var isStale = false
-            let url = try URL(
-                resolvingBookmarkData: lastExportFolderBookmark,
-                options: [.withSecurityScope, .withoutUI],
-                relativeTo: nil,
-                bookmarkDataIsStale: &isStale
-            )
-            if isStale {
-                saveLastExportFolder(url)
+        guard let result = ExportFolderService.resolveBookmark(lastExportFolderBookmark) else {
+            if !lastExportFolderBookmark.isEmpty {
+                lastExportFolderBookmark = Data()
             }
-            return url
-        } catch {
-            lastExportFolderBookmark = Data()
             return nil
         }
+        if let refreshed = result.refreshedBookmark {
+            lastExportFolderBookmark = refreshed
+        }
+        return result.url
     }
 
     private func saveLastExportFolder(_ url: URL) {
-        do {
-            lastExportFolderBookmark = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
-            lastExportFolderPath = url.path
-        } catch {
-            exportError = "Failed to remember export folder: \(error.localizedDescription)"
+        guard let result = ExportFolderService.saveBookmark(for: url) else {
+            exportError = "Failed to remember export folder"
+            return
         }
+        lastExportFolderBookmark = result.bookmark
+        lastExportFolderPath = result.path
     }
 
     private func openLastExportFolder() {

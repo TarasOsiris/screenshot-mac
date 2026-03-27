@@ -8,6 +8,8 @@ struct SettingsView: View {
     @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
+    @AppStorage("lastExportFolderBookmark") private var lastExportFolderBookmark = Data()
+    @AppStorage("lastExportFolderPath") private var lastExportFolderPath = ""
     @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
     @AppStorage("defaultZoomLevel") private var defaultZoomLevel = 1.0
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
@@ -175,6 +177,28 @@ struct SettingsView: View {
 
     private var exportSettings: some View {
         Form {
+            Section {
+                LabeledContent("Export folder") {
+                    HStack(spacing: 6) {
+                        if !lastExportFolderPath.isEmpty {
+                            pathPillView
+                        } else {
+                            Text("Ask each time")
+                                .foregroundStyle(.tertiary)
+                        }
+                        Button("Choose…") {
+                            guard let url = ExportFolderService.chooseFolder(),
+                                  let result = ExportFolderService.saveBookmark(for: url) else { return }
+                            lastExportFolderBookmark = result.bookmark
+                            lastExportFolderPath = result.path
+                        }
+                    }
+                }
+            } footer: {
+                Text("When set, Cmd+E exports directly to this folder without prompting.")
+                    .foregroundStyle(.secondary)
+            }
+
             Picker("Format", selection: $exportFormat) {
                 Text("PNG").tag("png")
                 Text("JPEG").tag("jpeg")
@@ -183,6 +207,31 @@ struct SettingsView: View {
             Toggle("Reveal in Finder after export", isOn: $openExportFolderOnSuccess)
         }
         .formStyle(.grouped)
+    }
+
+    private var pathPillView: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "folder.fill")
+                .foregroundStyle(.blue)
+                .font(.caption)
+            Text(ExportFolderService.folderName(for: lastExportFolderPath))
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Button {
+                lastExportFolderBookmark = Data()
+                lastExportFolderPath = ""
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+            }
+            .buttonStyle(.plain)
+            .help("Clear export folder")
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(.quaternary, in: .capsule)
+        .help(lastExportFolderPath)
     }
 
     private var purchaseSettings: some View {
