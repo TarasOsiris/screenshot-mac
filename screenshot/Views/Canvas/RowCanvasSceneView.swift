@@ -8,17 +8,22 @@ private struct EditorBlurBackgroundRenderKey: Equatable {
     let templateCount: Int
     let displayScale: CGFloat
     let backgroundBlur: Double
-    let rowBackgroundStyle: BackgroundStyle
     let spanBackgroundAcrossRow: Bool
-    let rowBackgroundImageFileName: String?
+    let rowBackgroundDescriptor: BackgroundDescriptor
     let templateBackgroundDescriptors: [TemplateBackgroundDescriptor]
     let imageTokens: [ImageToken]
+
+    struct BackgroundDescriptor: Equatable {
+        let style: BackgroundStyle
+        let color: CodableColor
+        let gradient: GradientConfig
+        let image: BackgroundImageConfig
+    }
 
     struct TemplateBackgroundDescriptor: Equatable {
         let id: UUID
         let overrideBackground: Bool
-        let style: BackgroundStyle
-        let imageFileName: String?
+        let background: BackgroundDescriptor
     }
 
     struct ImageToken: Equatable {
@@ -30,6 +35,8 @@ private struct EditorBlurBackgroundRenderKey: Equatable {
 }
 
 struct EditorRasterizedBackgroundView: View {
+    private static let exactRenderDebounceNanoseconds: UInt64 = 120_000_000
+
     let row: ScreenshotRow
     let screenshotImages: [String: NSImage]
     let displayScale: CGFloat
@@ -44,6 +51,9 @@ struct EditorRasterizedBackgroundView: View {
     private var displayTemplateHeight: CGFloat {
         row.templateHeight * displayScale
     }
+
+    private var renderScale: CGFloat { 1.0 }
+    private var previewBlurRadius: CGFloat { row.backgroundBlur * displayScale }
 
     private var renderKey: EditorBlurBackgroundRenderKey {
         let imageNames = Set(
@@ -68,15 +78,23 @@ struct EditorRasterizedBackgroundView: View {
             templateCount: row.templates.count,
             displayScale: displayScale,
             backgroundBlur: row.backgroundBlur,
-            rowBackgroundStyle: row.backgroundStyle,
             spanBackgroundAcrossRow: row.spanBackgroundAcrossRow,
-            rowBackgroundImageFileName: row.backgroundImageConfig.fileName,
+            rowBackgroundDescriptor: .init(
+                style: row.backgroundStyle,
+                color: row.backgroundColorData,
+                gradient: row.gradientConfig,
+                image: row.backgroundImageConfig
+            ),
             templateBackgroundDescriptors: row.templates.map {
                 .init(
                     id: $0.id,
                     overrideBackground: $0.overrideBackground,
-                    style: $0.backgroundStyle,
-                    imageFileName: $0.backgroundImageConfig.fileName
+                    background: .init(
+                        style: $0.backgroundStyle,
+                        color: $0.backgroundColor,
+                        gradient: $0.gradientConfig,
+                        image: $0.backgroundImageConfig
+                    )
                 )
             },
             imageTokens: imageTokens
@@ -87,6 +105,7 @@ struct EditorRasterizedBackgroundView: View {
         Group {
             if row.backgroundBlur > 0, let cachedImage, renderedKey == renderKey {
                 Image(nsImage: cachedImage)
+                    .resizable()
                     .interpolation(.high)
                     .frame(width: displayTotalWidth, height: displayTemplateHeight)
             } else {
@@ -94,7 +113,7 @@ struct EditorRasterizedBackgroundView: View {
                     row: row,
                     screenshotImages: screenshotImages,
                     displayScale: displayScale,
-                    blurRadius: 0
+                    blurRadius: previewBlurRadius
                 )
             }
         }
@@ -105,10 +124,14 @@ struct EditorRasterizedBackgroundView: View {
                 return
             }
             let key = renderKey
+            try? await Task.sleep(nanoseconds: Self.exactRenderDebounceNanoseconds)
+            guard !Task.isCancelled else { return }
+            // Blur the background at model resolution, then downscale for the editor.
+            // This avoids edge artifacts from blurring an already downsampled tile/image raster.
             let image = ExportService.renderComposedBackgroundImage(
                 row: row,
                 screenshotImages: screenshotImages,
-                displayScale: displayScale,
+                displayScale: renderScale,
                 labelPrefix: "editor"
             )
             guard !Task.isCancelled else { return }
@@ -290,4 +313,3 @@ struct RowCanvasShapeLayerView<ShapeContent: View>: View {
         )
     }
 }
-

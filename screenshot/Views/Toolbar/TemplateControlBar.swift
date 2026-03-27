@@ -53,10 +53,10 @@ struct TemplateControlBar: View {
 
     var body: some View {
         HStack(spacing: 6) {
+            ActionButton(icon: "eye", tooltip: "Preview") {
+                previewScreenshot()
+            }
             if !isCompact {
-                ActionButton(icon: "eye", tooltip: "Preview") {
-                    previewScreenshot()
-                }
                 ActionButton(icon: "arrow.down.circle", tooltip: "Download") {
                     downloadScreenshot()
                 }
@@ -66,79 +66,79 @@ struct TemplateControlBar: View {
                 ActionButton(icon: "chevron.right", tooltip: "Move right", disabled: !canMoveRight) {
                     onMoveRight()
                 }
-            }
 
-            // Background override button
-            Button {
-                showBackgroundPopover = true
-            } label: {
-                HStack(spacing: 3) {
-                    if template.overrideBackground {
-                        if template.backgroundStyle == .image {
-                            if let image = backgroundPreviewImage {
-                                Image(nsImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
+                // Background override button
+                Button {
+                    showBackgroundPopover = true
+                } label: {
+                    HStack(spacing: 3) {
+                        if template.overrideBackground {
+                            if template.backgroundStyle == .image {
+                                if let image = backgroundPreviewImage {
+                                    Image(nsImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 12, height: 12)
+                                        .clipShape(RoundedRectangle(cornerRadius: 2))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 2)
+                                                .strokeBorder(.secondary.opacity(0.5), lineWidth: 0.5)
+                                        )
+                                } else {
+                                    Image(systemName: "photo.badge.plus")
+                                        .font(.system(size: 10))
+                                        .frame(width: 12, height: 12)
+                                }
+                            } else {
+                                template.backgroundFillView()
                                     .frame(width: 12, height: 12)
                                     .clipShape(RoundedRectangle(cornerRadius: 2))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 2)
                                             .strokeBorder(.secondary.opacity(0.5), lineWidth: 0.5)
                                     )
-                            } else {
-                                Image(systemName: "photo.badge.plus")
-                                    .font(.system(size: 10))
-                                    .frame(width: 12, height: 12)
                             }
                         } else {
-                            template.backgroundFillView()
-                                .frame(width: 12, height: 12)
-                                .clipShape(RoundedRectangle(cornerRadius: 2))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 2)
-                                        .strokeBorder(.secondary.opacity(0.5), lineWidth: 0.5)
-                                )
+                            Image(systemName: "paintbrush")
+                                .font(.system(size: 11))
                         }
-                    } else {
-                        Image(systemName: "paintbrush")
-                            .font(.system(size: 11))
                     }
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
                 }
-                .frame(width: 22, height: 22)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.borderless)
-            .focusable(false)
-            .foregroundStyle(backgroundButtonStyle)
-            .help(backgroundButtonHelp)
-            .popover(isPresented: $showBackgroundPopover, arrowEdge: .bottom) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Toggle(
-                        "Override background",
-                        isOn: $template.overrideBackground.onSet { onSave() }
-                    )
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .font(.system(size: 12))
-
-                    if template.overrideBackground {
-                        Divider()
-                        BackgroundEditor(
-                            backgroundStyle: $template.backgroundStyle,
-                            bgColor: $template.bgColor,
-                            gradientConfig: $template.gradientConfig,
-                            backgroundImageConfig: $template.backgroundImageConfig,
-                            backgroundImage: backgroundPreviewImage,
-                            compact: true,
-                            onChanged: onSave,
-                            onPickImage: onPickBackgroundImage,
-                            onRemoveImage: onRemoveBackgroundImage,
-                            onDropImage: onDropBackgroundImage
+                .buttonStyle(.borderless)
+                .focusable(false)
+                .foregroundStyle(backgroundButtonStyle)
+                .help(backgroundButtonHelp)
+                .popover(isPresented: $showBackgroundPopover, arrowEdge: .bottom) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle(
+                            "Override background",
+                            isOn: $template.overrideBackground.onSet { onSave() }
                         )
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                        .font(.system(size: 12))
+
+                        if template.overrideBackground {
+                            Divider()
+                            BackgroundEditor(
+                                backgroundStyle: $template.backgroundStyle,
+                                bgColor: $template.bgColor,
+                                gradientConfig: $template.gradientConfig,
+                                backgroundImageConfig: $template.backgroundImageConfig,
+                                backgroundImage: backgroundPreviewImage,
+                                compact: true,
+                                onChanged: onSave,
+                                onPickImage: onPickBackgroundImage,
+                                onRemoveImage: onRemoveBackgroundImage,
+                                onDropImage: onDropBackgroundImage
+                            )
+                        }
                     }
+                    .padding(12)
+                    .frame(width: 260)
                 }
-                .padding(12)
-                .frame(width: 260)
             }
 
             Spacer()
