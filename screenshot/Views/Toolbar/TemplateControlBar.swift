@@ -16,6 +16,7 @@ struct TemplateControlBar: View {
     var onPickBackgroundImage: (() -> Void)?
     var onRemoveBackgroundImage: (() -> Void)?
     var onDropBackgroundImage: ((NSImage) -> Void)? = nil
+    var onDropBackgroundSvg: ((String) -> Void)? = nil
     var onDuplicate: () -> Void = {}
     var onInsertBefore: () -> Void = {}
     var onInsertAfter: () -> Void = {}
@@ -132,23 +133,24 @@ struct TemplateControlBar: View {
                                 onChanged: onSave,
                                 onPickImage: onPickBackgroundImage,
                                 onRemoveImage: onRemoveBackgroundImage,
-                                onDropImage: onDropBackgroundImage
+                                onDropImage: onDropBackgroundImage,
+                                onDropSvg: onDropBackgroundSvg
                             )
 
                             if template.backgroundStyle != .color {
                                 HStack(spacing: 4) {
                                     Text("Blur")
-                                        .font(.system(size: 12))
+                                        .font(.system(size: 10))
                                     Spacer()
                                     Slider(
                                         value: $template.backgroundBlur.onSet { onSave() },
                                         in: 0...100
                                     )
-                                    .frame(width: 100)
+                                    .frame(width: 80)
                                     Text("\(Int(template.backgroundBlur))")
-                                        .font(.system(size: 11).monospacedDigit())
+                                        .font(.system(size: 9).monospacedDigit())
                                         .foregroundStyle(.secondary)
-                                        .frame(width: 28, alignment: .trailing)
+                                        .frame(width: 38, alignment: .trailing)
                                 }
                             }
                         }

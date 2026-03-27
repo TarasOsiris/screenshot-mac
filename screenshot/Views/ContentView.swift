@@ -660,6 +660,7 @@ struct ContentView: View {
                     let fileName = row.label.isEmpty ? "\(paddedIndex).png" : "\(paddedIndex)_\(row.label).png"
                     try data.write(to: rowsDir.appendingPathComponent(fileName))
                     exportProgress = index + 1
+                    await Task.yield()
                 }
 
                 if openExportFolderOnSuccess {

@@ -206,4 +206,41 @@ struct ScreenshotRowTests {
         #expect(decoded.isLabelManuallySet == true)
     }
 
+    @Test func backgroundImageConfigDecodesLegacyTileValuesIntoAxes() throws {
+        let data = Data(#"{"fm":"tile","ts":0.25,"to":0.10,"tsc":1.4}"#.utf8)
+        let decoded = try JSONDecoder().decode(BackgroundImageConfig.self, from: data)
+
+        #expect(decoded.fillMode == .tile)
+        #expect(decoded.tileSpacingX == 0.25)
+        #expect(decoded.tileSpacingY == 0.25)
+        #expect(decoded.tileOffsetX == 0.10)
+        #expect(decoded.tileOffsetY == 0.10)
+        #expect(decoded.tileScaleX == 1.4)
+        #expect(decoded.tileScaleY == 1.4)
+    }
+
+    @Test func backgroundImageConfigRoundTripsIndependentTileAxes() throws {
+        let original = BackgroundImageConfig(
+            fileName: "tile.png",
+            fillMode: .tile,
+            tileSpacingX: 0.1,
+            tileSpacingY: 0.25,
+            tileOffsetX: 0.2,
+            tileOffsetY: 0.4,
+            tileScaleX: 1.5,
+            tileScaleY: 0.8
+        )
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(BackgroundImageConfig.self, from: data)
+
+        #expect(decoded.fileName == "tile.png")
+        #expect(decoded.fillMode == .tile)
+        #expect(decoded.tileSpacingX == 0.1)
+        #expect(decoded.tileSpacingY == 0.25)
+        #expect(decoded.tileOffsetX == 0.2)
+        #expect(decoded.tileOffsetY == 0.4)
+        #expect(decoded.tileScaleX == 1.5)
+        #expect(decoded.tileScaleY == 0.8)
+    }
+
 }

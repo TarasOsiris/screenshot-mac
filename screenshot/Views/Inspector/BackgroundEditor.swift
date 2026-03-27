@@ -12,6 +12,7 @@ struct BackgroundEditor: View {
     var onPickImage: (() -> Void)?
     var onRemoveImage: (() -> Void)?
     var onDropImage: ((NSImage) -> Void)?
+    var onDropSvg: ((String) -> Void)?
 
     var body: some View {
         Picker("Style", selection: $backgroundStyle.onSet { onChanged() }) {
@@ -95,7 +96,8 @@ struct BackgroundEditor: View {
                 onChanged: onChanged,
                 onPickImage: onPickImage ?? {},
                 onRemoveImage: onRemoveImage ?? {},
-                onDropImage: onDropImage
+                onDropImage: onDropImage,
+                onDropSvg: onDropSvg
             )
         }
     }
@@ -189,15 +191,19 @@ struct BackgroundImageEditor: View {
     var onPickImage: () -> Void
     var onRemoveImage: () -> Void
     var onDropImage: ((NSImage) -> Void)?
+    var onDropSvg: ((String) -> Void)?
     @State private var isDropTargeted = false
+    @State private var cachedSvgPreview: NSImage?
 
-    private var hasImage: Bool { image != nil }
+    private var hasImage: Bool { config.hasImage || image != nil }
+
+    private var previewImage: NSImage? { image ?? cachedSvgPreview }
 
     var body: some View {
         // Image preview / picker
         Group {
-            if let image {
-                Image(nsImage: image)
+            if let preview = previewImage {
+                Image(nsImage: preview)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxHeight: compact ? 60 : 80)
@@ -242,9 +248,11 @@ struct BackgroundImageEditor: View {
                 .buttonStyle(.plain)
             }
         }
-        .onDrop(of: [.image, .fileURL], isTargeted: $isDropTargeted) { providers in
+        .onDrop(of: [.image, .svg, .fileURL], isTargeted: $isDropTargeted) { providers in
             handleImageDrop(providers)
         }
+        .onAppear { updateSvgPreview() }
+        .onChange(of: config.svgContent) { updateSvgPreview() }
 
         if !hasImage {
             Text("Drop or paste an image to configure fill and opacity.")
@@ -268,11 +276,18 @@ struct BackgroundImageEditor: View {
         sliderRow("Opacity", value: $config.opacity)
 
         if config.fillMode == .tile {
-            sliderRow("Scale", value: $config.tileScale, range: 0.1...3.0) {
-                "\(String(format: "%.1f", config.tileScale))x"
+            VStack(spacing: compact ? 4 : 6) {
+                axisSliderRow(
+                    "Scale",
+                    xValue: $config.tileScaleX,
+                    yValue: $config.tileScaleY,
+                    range: 0.1...3.0,
+                    xFormat: { "\(String(format: "%.1f", config.tileScaleX))x" },
+                    yFormat: { "\(String(format: "%.1f", config.tileScaleY))x" }
+                )
+                axisSliderRow("Spacing", xValue: $config.tileSpacingX, yValue: $config.tileSpacingY)
+                axisSliderRow("Offset", xValue: $config.tileOffsetX, yValue: $config.tileOffsetY)
             }
-            sliderRow("Spacing", value: $config.tileSpacing)
-            sliderRow("Offset", value: $config.tileOffset)
         }
     }
 
@@ -298,25 +313,93 @@ struct BackgroundImageEditor: View {
         .opacity(hasImage ? 1 : 0.45)
     }
 
+    private func axisSliderRow(
+        _ label: String,
+        xValue: Binding<Double>,
+        yValue: Binding<Double>,
+        range: ClosedRange<Double> = 0...1.0,
+        xFormat: (() -> String)? = nil,
+        yFormat: (() -> String)? = nil
+    ) -> some View {
+        VStack(alignment: .leading, spacing: compact ? 3 : 4) {
+            Text(label)
+                .font(.system(size: compact ? 10 : 12))
+            axisSlider("X", value: xValue, range: range, formatLabel: xFormat, valueWidth: 34)
+            axisSlider("Y", value: yValue, range: range, formatLabel: yFormat, valueWidth: 34)
+        }
+        .opacity(hasImage ? 1 : 0.45)
+    }
+
+    private func axisSlider(
+        _ axis: String,
+        value: Binding<Double>,
+        range: ClosedRange<Double>,
+        formatLabel: (() -> String)?,
+        valueWidth: CGFloat
+    ) -> some View {
+        HStack(spacing: compact ? 4 : 3) {
+            Text(axis)
+                .font(.system(size: compact ? 9 : 10, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 10)
+            Slider(value: value.onSet { onChanged() }, in: range)
+                .disabled(!hasImage)
+            Text(formatLabel?() ?? "\(Int(value.wrappedValue * 100))%")
+                .font(.system(size: compact ? 9 : 11).monospacedDigit())
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .frame(width: valueWidth, alignment: .trailing)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func updateSvgPreview() {
+        guard image == nil, let svg = config.svgContent else {
+            cachedSvgPreview = nil
+            return
+        }
+        let naturalSize = SvgHelper.parseViewBoxSize(svg) ?? CGSize(width: 100, height: 100)
+        let maxDim: CGFloat = 120
+        let scale = maxDim / max(naturalSize.width, naturalSize.height, 1)
+        let targetSize = CGSize(width: ceil(naturalSize.width * scale), height: ceil(naturalSize.height * scale))
+        cachedSvgPreview = SvgHelper.renderImage(from: svg, useColor: false, color: .white, targetSize: targetSize)
+    }
+
     private func handleImageDrop(_ providers: [NSItemProvider]) -> Bool {
-        guard onDropImage != nil, let provider = providers.first else { return false }
+        guard onDropImage != nil || onDropSvg != nil, let provider = providers.first else { return false }
+
+        // Try SVG first
+        if provider.hasItemConformingToTypeIdentifier(UTType.svg.identifier) {
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { url, _ in
+                guard let url, let sanitized = SvgHelper.loadAndSanitize(from: url) else { return }
+                DispatchQueue.main.async { onDropSvg?(sanitized) }
+            }
+            return true
+        }
 
         if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
             provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
-                guard let url, let image = NSImage(contentsOf: url) else { return }
-                DispatchQueue.main.async { onDropImage?(image) }
+                guard let url else { return }
+                if let sanitized = SvgHelper.loadAndSanitize(from: url) {
+                    DispatchQueue.main.async { onDropSvg?(sanitized) }
+                } else if let image = NSImage(contentsOf: url) {
+                    DispatchQueue.main.async { onDropImage?(image) }
+                }
             }
             return true
         }
 
         if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
             provider.loadFileRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { url, _ in
-                guard let url,
-                      let typeId = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
-                      let type = UTType(typeId),
-                      type.conforms(to: .image),
-                      let image = NSImage(contentsOf: url) else { return }
-                DispatchQueue.main.async { onDropImage?(image) }
+                guard let url else { return }
+                if let sanitized = SvgHelper.loadAndSanitize(from: url) {
+                    DispatchQueue.main.async { onDropSvg?(sanitized) }
+                } else if let typeId = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
+                          let type = UTType(typeId),
+                          type.conforms(to: .image),
+                          let image = NSImage(contentsOf: url) {
+                    DispatchQueue.main.async { onDropImage?(image) }
+                }
             }
             return true
         }

@@ -299,35 +299,53 @@ extension AppState {
         try? pngData.write(to: url, options: .atomic)
         screenshotImages[fileName] = Self.editorThumbnail(for: image)
 
-        setBackgroundImageFileName(fileName, rowIndex: rowIndex, templateIndex: templateIndex)
+        setBackgroundImage(fileName: fileName, svgContent: nil, rowIndex: rowIndex, templateIndex: templateIndex)
+        scheduleSave()
+    }
+
+    func saveBackgroundSvg(_ svgContent: String, for rowId: UUID, templateIndex: Int? = nil) {
+        guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
+        registerUndoForRow(at: rowIndex, "Set Background SVG")
+        setBackgroundImage(fileName: nil, svgContent: svgContent, rowIndex: rowIndex, templateIndex: templateIndex)
         scheduleSave()
     }
 
     func removeBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
         guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
         registerUndoForRow(at: rowIndex, "Remove Background Image")
-        setBackgroundImageFileName(nil, rowIndex: rowIndex, templateIndex: templateIndex)
+        setBackgroundImage(fileName: nil, svgContent: nil, rowIndex: rowIndex, templateIndex: templateIndex)
         scheduleSave()
     }
 
     func pickAndSaveBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.image]
+        panel.allowedContentTypes = [.image, .svg]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        guard let image = NSImage.fromSecurityScopedURL(url) else { return }
-        saveBackgroundImage(image, for: rowId, templateIndex: templateIndex)
+
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+
+        if url.pathExtension.lowercased() == "svg",
+           let sanitized = SvgHelper.loadAndSanitize(from: url) {
+            saveBackgroundSvg(sanitized, for: rowId, templateIndex: templateIndex)
+        } else {
+            guard let image = NSImage(contentsOf: url) else { return }
+            saveBackgroundImage(image, for: rowId, templateIndex: templateIndex)
+        }
     }
 
-    private func setBackgroundImageFileName(_ newFile: String?, rowIndex: Int, templateIndex: Int?) {
+    private func setBackgroundImage(fileName: String?, svgContent: String?, rowIndex: Int, templateIndex: Int?) {
         let oldFile: String?
         if let templateIndex, templateIndex < rows[rowIndex].templates.count {
             oldFile = rows[rowIndex].templates[templateIndex].backgroundImageConfig.fileName
-            rows[rowIndex].templates[templateIndex].backgroundImageConfig.fileName = newFile
+            rows[rowIndex].templates[templateIndex].backgroundImageConfig.fileName = fileName
+            rows[rowIndex].templates[templateIndex].backgroundImageConfig.svgContent = svgContent
         } else {
             oldFile = rows[rowIndex].backgroundImageConfig.fileName
-            rows[rowIndex].backgroundImageConfig.fileName = newFile
+            rows[rowIndex].backgroundImageConfig.fileName = fileName
+            rows[rowIndex].backgroundImageConfig.svgContent = svgContent
         }
         cleanupUnreferencedImage(oldFile)
     }

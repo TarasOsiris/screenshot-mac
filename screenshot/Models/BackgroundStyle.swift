@@ -15,45 +15,72 @@ enum ImageFillMode: String, Codable, CaseIterable {
 
 struct BackgroundImageConfig: Codable, Equatable {
     var fileName: String?
+    var svgContent: String?
     var fillMode: ImageFillMode
     var opacity: Double
-    var tileSpacing: Double // 0-1 relative to image size
-    var tileOffset: Double  // 0-1 relative to image size
-    var tileScale: Double   // 0.1-3.0 scale factor for tile images
+    var tileSpacingX: Double // 0-1 relative to image width
+    var tileSpacingY: Double // 0-1 relative to image height
+    var tileOffsetX: Double  // 0-1 relative to image width
+    var tileOffsetY: Double  // 0-1 relative to image height
+    var tileScaleX: Double   // 0.1-3.0 scale factor for tile image width
+    var tileScaleY: Double   // 0.1-3.0 scale factor for tile image height
+
+    /// Whether this config has any image source (raster file or SVG content).
+    var hasImage: Bool { fileName != nil || svgContent != nil }
 
     enum CodingKeys: String, CodingKey {
-        case fileName = "f", fillMode = "fm", opacity = "a"
-        case tileSpacing = "ts", tileOffset = "to", tileScale = "tsc"
+        case fileName = "f", svgContent = "sc", fillMode = "fm", opacity = "a"
+        case legacyTileSpacing = "ts", legacyTileOffset = "to", legacyTileScale = "tsc"
+        case tileSpacingX = "tsx", tileSpacingY = "tsy"
+        case tileOffsetX = "tox", tileOffsetY = "toy"
+        case tileScaleX = "tscx", tileScaleY = "tscy"
     }
 
-    init(fileName: String? = nil, fillMode: ImageFillMode = .fill, opacity: Double = 1.0,
-         tileSpacing: Double = 0.0, tileOffset: Double = 0.0, tileScale: Double = 1.0) {
+    init(fileName: String? = nil, svgContent: String? = nil, fillMode: ImageFillMode = .fill,
+         opacity: Double = 1.0, tileSpacingX: Double = 0.0, tileSpacingY: Double = 0.0,
+         tileOffsetX: Double = 0.0, tileOffsetY: Double = 0.0,
+         tileScaleX: Double = 1.0, tileScaleY: Double = 1.0) {
         self.fileName = fileName
+        self.svgContent = svgContent
         self.fillMode = fillMode
         self.opacity = opacity
-        self.tileSpacing = tileSpacing
-        self.tileOffset = tileOffset
-        self.tileScale = tileScale
+        self.tileSpacingX = tileSpacingX
+        self.tileSpacingY = tileSpacingY
+        self.tileOffsetX = tileOffsetX
+        self.tileOffsetY = tileOffsetY
+        self.tileScaleX = tileScaleX
+        self.tileScaleY = tileScaleY
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         fileName = try c.decodeIfPresent(String.self, forKey: .fileName)
+        svgContent = try c.decodeIfPresent(String.self, forKey: .svgContent)
         fillMode = try c.decodeIfPresent(ImageFillMode.self, forKey: .fillMode) ?? .fill
         opacity = try c.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
-        tileSpacing = try c.decodeIfPresent(Double.self, forKey: .tileSpacing) ?? 0.0
-        tileOffset = try c.decodeIfPresent(Double.self, forKey: .tileOffset) ?? 0.0
-        tileScale = try c.decodeIfPresent(Double.self, forKey: .tileScale) ?? 1.0
+        let legacyTileSpacing = try c.decodeIfPresent(Double.self, forKey: .legacyTileSpacing) ?? 0.0
+        let legacyTileOffset = try c.decodeIfPresent(Double.self, forKey: .legacyTileOffset) ?? 0.0
+        let legacyTileScale = try c.decodeIfPresent(Double.self, forKey: .legacyTileScale) ?? 1.0
+        tileSpacingX = try c.decodeIfPresent(Double.self, forKey: .tileSpacingX) ?? legacyTileSpacing
+        tileSpacingY = try c.decodeIfPresent(Double.self, forKey: .tileSpacingY) ?? legacyTileSpacing
+        tileOffsetX = try c.decodeIfPresent(Double.self, forKey: .tileOffsetX) ?? legacyTileOffset
+        tileOffsetY = try c.decodeIfPresent(Double.self, forKey: .tileOffsetY) ?? legacyTileOffset
+        tileScaleX = try c.decodeIfPresent(Double.self, forKey: .tileScaleX) ?? legacyTileScale
+        tileScaleY = try c.decodeIfPresent(Double.self, forKey: .tileScaleY) ?? legacyTileScale
     }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encodeIfPresent(fileName, forKey: .fileName)
+        try c.encodeIfPresent(svgContent, forKey: .svgContent)
         if fillMode != .fill { try c.encode(fillMode, forKey: .fillMode) }
         if opacity != 1.0 { try c.encode(opacity, forKey: .opacity) }
-        if tileSpacing != 0 { try c.encode(tileSpacing, forKey: .tileSpacing) }
-        if tileOffset != 0 { try c.encode(tileOffset, forKey: .tileOffset) }
-        if tileScale != 1.0 { try c.encode(tileScale, forKey: .tileScale) }
+        if tileSpacingX != 0 { try c.encode(tileSpacingX, forKey: .tileSpacingX) }
+        if tileSpacingY != 0 { try c.encode(tileSpacingY, forKey: .tileSpacingY) }
+        if tileOffsetX != 0 { try c.encode(tileOffsetX, forKey: .tileOffsetX) }
+        if tileOffsetY != 0 { try c.encode(tileOffsetY, forKey: .tileOffsetY) }
+        if tileScaleX != 1.0 { try c.encode(tileScaleX, forKey: .tileScaleX) }
+        if tileScaleY != 1.0 { try c.encode(tileScaleY, forKey: .tileScaleY) }
     }
 }
 
@@ -73,7 +100,7 @@ extension BackgroundFillable {
         case .gradient:
             gradientConfig.gradientFill
         case .image:
-            if let image {
+            if image != nil || backgroundImageConfig.svgContent != nil {
                 ZStack {
                     Rectangle().fill(bgColor)
                     BackgroundImageView(image: image, config: backgroundImageConfig, modelSize: modelSize)
@@ -92,71 +119,118 @@ extension BackgroundFillable {
 }
 
 struct BackgroundImageView: View {
-    let image: NSImage
+    let image: NSImage?
     let config: BackgroundImageConfig
     var modelSize: CGSize?
 
+    @State private var cachedSvgImage: NSImage?
+    @State private var svgCacheKey: String = ""
+
     var body: some View {
         GeometryReader { geo in
-            let swiftImage = Image(nsImage: image)
-
-            switch config.fillMode {
-            case .fill:
-                swiftImage
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: geo.size.width, height: geo.size.height)
-                    .clipped()
-            case .fit:
-                swiftImage
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: geo.size.width, height: geo.size.height)
-            case .stretch:
-                swiftImage
-                    .resizable()
-                    .frame(width: geo.size.width, height: geo.size.height)
-            case .tile:
-                let scale = max(config.tileScale, 0.1)
-                let imgW = image.size.width * scale
-                let imgH = image.size.height * scale
-                let refSize = modelSize ?? geo.size
-                if imgW > 0, imgH > 0, refSize.width > 0, refSize.height > 0 {
-                    let spacing = config.tileSpacing
-                    let offset = config.tileOffset
-                    let stepW = imgW * (1 + spacing)
-                    let stepH = imgH * (1 + spacing)
-                    let offW = imgW * offset
-                    let offH = imgH * offset
-                    let rawCols = max(1, Int(ceil((refSize.width + offW) / stepW)) + 1)
-                    let rawRows = max(1, Int(ceil((refSize.height + offH) / stepH)) + 1)
-                    let drawScale = rawCols * rawRows > 10_000
-                        ? sqrt(Double(rawCols * rawRows) / 10_000.0) : 1.0
-                    let cols = max(1, Int(Double(rawCols) / drawScale))
-                    let rows = max(1, Int(Double(rawRows) / drawScale))
-                    let toDisplay = geo.size.width / refSize.width
-                    // When spacing is near 0, add a small overlap to prevent
-                    // sub-pixel gaps caused by floating-point rounding.
-                    let overlap: CGFloat = spacing < 0.001 ? 0.5 : 0
-                    let tileW = imgW * toDisplay + overlap
-                    let tileH = imgH * toDisplay + overlap
-                    Canvas { context, size in
-                        let resolved = context.resolve(Image(nsImage: image))
-                        for r in 0..<rows {
-                            for c in 0..<cols {
-                                let x = (CGFloat(c) * stepW - offW) * toDisplay
-                                let y = (CGFloat(r) * stepH - offH) * toDisplay
-                                let rect = CGRect(x: x, y: y, width: tileW, height: tileH)
-                                context.draw(resolved, in: rect)
-                            }
-                        }
-                    }
-                    .frame(width: geo.size.width, height: geo.size.height)
-                    .clipped()
-                }
+            let resolvedImage = image ?? cachedSvgImage
+            if let resolvedImage {
+                renderFillMode(image: resolvedImage, geo: geo)
             }
         }
         .opacity(config.opacity)
+        .onAppear { updateSvgCache() }
+        .onChange(of: config.svgContent) { updateSvgCache() }
+        .onChange(of: config.fillMode == .tile) { updateSvgCache() }
+    }
+
+    private func updateSvgCache() {
+        guard image == nil, let svgContent = config.svgContent else {
+            cachedSvgImage = nil
+            svgCacheKey = ""
+            return
+        }
+        let refDim = max(modelSize?.width ?? 1200, modelSize?.height ?? 1200)
+        let fillKey = config.fillMode == .tile ? "tile" : "scaled"
+        let key = "\(svgContent.hashValue)-\(fillKey)-\(Int(refDim))"
+        guard key != svgCacheKey else { return }
+        svgCacheKey = key
+        if config.fillMode == .tile {
+            cachedSvgImage = SvgHelper.renderImage(from: svgContent, useColor: false, color: .white)
+        } else {
+            // Get natural aspect ratio from viewBox without rendering, then render once at target size.
+            let naturalSize = SvgHelper.parseViewBoxSize(svgContent) ?? CGSize(width: 100, height: 100)
+            let scale = refDim / max(naturalSize.width, naturalSize.height, 1)
+            let targetSize = CGSize(width: ceil(naturalSize.width * scale),
+                                    height: ceil(naturalSize.height * scale))
+            cachedSvgImage = SvgHelper.renderImage(from: svgContent, useColor: false, color: .white,
+                                                   targetSize: targetSize)
+        }
+    }
+
+    @ViewBuilder
+    private func renderFillMode(image: NSImage, geo: GeometryProxy) -> some View {
+        let swiftImage = Image(nsImage: image)
+        switch config.fillMode {
+        case .fill:
+            swiftImage
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: geo.size.width, height: geo.size.height)
+                .clipped()
+        case .fit:
+            swiftImage
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: geo.size.width, height: geo.size.height)
+        case .stretch:
+            swiftImage
+                .resizable()
+                .frame(width: geo.size.width, height: geo.size.height)
+        case .tile:
+            tileView(image: image, geo: geo)
+        }
+    }
+
+    @ViewBuilder
+    private func tileView(image: NSImage, geo: GeometryProxy) -> some View {
+        let scaleX = max(config.tileScaleX, 0.1)
+        let scaleY = max(config.tileScaleY, 0.1)
+        let imgW = image.size.width * scaleX
+        let imgH = image.size.height * scaleY
+        let refSize = modelSize ?? geo.size
+        if imgW > 0, imgH > 0, refSize.width > 0, refSize.height > 0 {
+            let spacingX = config.tileSpacingX
+            let spacingY = config.tileSpacingY
+            let offsetX = config.tileOffsetX
+            let offsetY = config.tileOffsetY
+            let stepW = imgW * (1 + spacingX)
+            let stepH = imgH * (1 + spacingY)
+            let offW = imgW * offsetX
+            let offH = imgH * offsetY
+            let rawCols = max(1, Int(ceil((refSize.width + offW) / stepW)) + 1)
+            let rawRows = max(1, Int(ceil((refSize.height + offH) / stepH)) + 1)
+            let drawScale = rawCols * rawRows > 10_000
+                ? sqrt(Double(rawCols * rawRows) / 10_000.0) : 1.0
+            let cols = max(1, Int(Double(rawCols) / drawScale))
+            let rows = max(1, Int(Double(rawRows) / drawScale))
+            let toDisplayX = geo.size.width / refSize.width
+            let toDisplayY = geo.size.height / refSize.height
+            // When spacing is near 0, add a small overlap to prevent
+            // sub-pixel gaps caused by floating-point rounding.
+            let overlapX: CGFloat = spacingX < 0.001 ? 0.5 : 0
+            let overlapY: CGFloat = spacingY < 0.001 ? 0.5 : 0
+            let tileW = imgW * toDisplayX + overlapX
+            let tileH = imgH * toDisplayY + overlapY
+            Canvas { context, size in
+                let resolved = context.resolve(Image(nsImage: image))
+                for r in 0..<rows {
+                    for c in 0..<cols {
+                        let x = (CGFloat(c) * stepW - offW) * toDisplayX
+                        let y = (CGFloat(r) * stepH - offH) * toDisplayY
+                        let rect = CGRect(x: x, y: y, width: tileW, height: tileH)
+                        context.draw(resolved, in: rect)
+                    }
+                }
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipped()
+        }
     }
 }
 

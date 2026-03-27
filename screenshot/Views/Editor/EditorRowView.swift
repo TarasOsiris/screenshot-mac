@@ -391,6 +391,9 @@ struct EditorRowView: View {
                     onDropBackgroundImage: { image in
                         state.saveBackgroundImage(image, for: row.id, templateIndex: index)
                     },
+                    onDropBackgroundSvg: { svgContent in
+                        state.saveBackgroundSvg(svgContent, for: row.id, templateIndex: index)
+                    },
                     onDuplicate: {
                         store.requirePro(
                             allowed: store.canAddTemplate(currentCount: row.templates.count),

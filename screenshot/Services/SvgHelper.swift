@@ -2,6 +2,15 @@ import AppKit
 import SwiftUI
 
 enum SvgHelper {
+    /// Reads an SVG file from a URL, converts to String, and sanitizes it.
+    /// Returns nil for non-SVG files.
+    static func loadAndSanitize(from url: URL) -> String? {
+        guard url.pathExtension.lowercased() == "svg",
+              let data = try? Data(contentsOf: url),
+              let raw = String(data: data, encoding: .utf8) else { return nil }
+        return sanitize(raw)
+    }
+
     static func sanitize(_ svg: String) -> String {
         var result = svg.trimmingCharacters(in: .whitespacesAndNewlines)
         result = result.replacingOccurrences(
@@ -22,21 +31,22 @@ enum SvgHelper {
         return result
     }
 
+    /// Parses the SVG's viewBox to get its natural size. Returns nil if no viewBox is found.
+    static func parseViewBoxSize(_ svg: String) -> CGSize? {
+        guard let viewBoxMatch = svg.range(of: "viewBox\\s*=\\s*[\"']([^\"']+)[\"']", options: .regularExpression) else { return nil }
+        let attrValue = svg[viewBoxMatch]
+        guard let quoteStart = attrValue.firstIndex(where: { $0 == "\"" || $0 == "'" }),
+              quoteStart < attrValue.endIndex,
+              let quoteEnd = attrValue[attrValue.index(after: quoteStart)...].firstIndex(where: { $0 == "\"" || $0 == "'" }) else { return nil }
+        let parts = svg[attrValue.index(after: quoteStart)..<quoteEnd]
+            .split(whereSeparator: { $0 == " " || $0 == "," })
+            .compactMap { Double($0) }
+        guard parts.count == 4 else { return nil }
+        return CGSize(width: max(parts[2], 20), height: max(parts[3], 20))
+    }
+
     static func parseSize(_ svg: String, fallbackImage: NSImage) -> CGSize {
-        // Match viewBox with either single or double quotes
-        if let viewBoxMatch = svg.range(of: "viewBox\\s*=\\s*[\"']([^\"']+)[\"']", options: .regularExpression) {
-            let attrValue = svg[viewBoxMatch]
-            if let quoteStart = attrValue.firstIndex(where: { $0 == "\"" || $0 == "'" }),
-               quoteStart < attrValue.endIndex,
-               let quoteEnd = attrValue[attrValue.index(after: quoteStart)...].firstIndex(where: { $0 == "\"" || $0 == "'" }) {
-                let parts = svg[attrValue.index(after: quoteStart)..<quoteEnd]
-                    .split(whereSeparator: { $0 == " " || $0 == "," })
-                    .compactMap { Double($0) }
-                if parts.count == 4 {
-                    return CGSize(width: max(parts[2], 20), height: max(parts[3], 20))
-                }
-            }
-        }
+        if let size = parseViewBoxSize(svg) { return size }
         let rep = fallbackImage.representations.first
         let w = CGFloat(rep?.pixelsWide ?? Int(fallbackImage.size.width))
         let h = CGFloat(rep?.pixelsHigh ?? Int(fallbackImage.size.height))
