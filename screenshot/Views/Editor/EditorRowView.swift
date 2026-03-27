@@ -453,14 +453,17 @@ struct EditorRowView: View {
             return firstType != nil
         }()
         ZStack(alignment: .topLeading) {
-            backgroundLayer(dw: dw, dh: dh)
+            EditorRasterizedBackgroundView(
+                row: row,
+                screenshotImages: state.screenshotImages,
+                displayScale: ds
+            )
 
-            // Shared shapes layer (resolved for active locale)
-            ForEach(resolvedShapes) { shape in
-                let clipRect: CGRect? = shape.clipToTemplate == true ? {
-                    let ti = row.owningTemplateIndex(for: shape)
-                    return CGRect(x: CGFloat(ti) * dw, y: 0, width: dw, height: dh)
-                }() : nil
+            RowCanvasShapeLayerView(
+                row: row,
+                shapes: resolvedShapes,
+                displayScale: ds
+            ) { shape, clipRect in
                 let isInSelection = selectedShapeIds.contains(shape.id)
                 let isMulti = isInSelection && selectedShapeIds.count > 1
                 let groupOffset: CGSize = (isMulti && draggingShapeId != nil && draggingShapeId != shape.id) ? activeDragOffset : .zero
@@ -627,73 +630,6 @@ struct EditorRowView: View {
         }
         .onDrop(of: [.image, .svg, .fileURL], isTargeted: nil) { providers, location in
             handleCanvasDrop(providers, at: location, displayScale: ds)
-        }
-    }
-
-    @ViewBuilder
-    private func backgroundLayer(dw: CGFloat, dh: CGFloat) -> some View {
-        let templateModelSize = CGSize(width: row.templateWidth, height: row.templateHeight)
-        let displayBlur = row.backgroundBlur * dh / row.templateHeight
-        let totalWidth = dw * CGFloat(row.templates.count)
-        let baseLayer = rowBackgroundBaseLayer(dw: dw, dh: dh, templateModelSize: templateModelSize)
-
-        ZStack(alignment: .topLeading) {
-            if displayBlur > 0 {
-                blurredView(width: totalWidth, height: dh, displayBlur: displayBlur) {
-                    baseLayer
-                }
-            } else {
-                baseLayer
-                    .frame(width: totalWidth, height: dh, alignment: .topLeading)
-                    .clipped()
-            }
-
-            if row.templates.contains(where: \.overrideBackground) {
-                rowBackgroundOverrideLayer(dw: dw, dh: dh, templateModelSize: templateModelSize)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func rowBackgroundBaseLayer(dw: CGFloat, dh: CGFloat, templateModelSize: CGSize) -> some View {
-        let totalWidth = dw * CGFloat(row.templates.count)
-
-        if row.isSpanningBackground {
-            let spanModelSize = CGSize(width: row.templateWidth * CGFloat(row.templates.count), height: row.templateHeight)
-            row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: spanModelSize)
-                .frame(width: totalWidth, height: dh)
-        } else {
-            ZStack(alignment: .topLeading) {
-                ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, _ in
-                    row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
-                        .frame(width: dw, height: dh)
-                        .offset(x: CGFloat(index) * dw, y: 0)
-                }
-            }
-            .frame(width: totalWidth, height: dh, alignment: .topLeading)
-        }
-    }
-
-    @ViewBuilder
-    private func rowBackgroundOverrideLayer(dw: CGFloat, dh: CGFloat, templateModelSize: CGSize) -> some View {
-        HStack(spacing: 0) {
-            ForEach(row.templates) { template in
-                if template.overrideBackground {
-                    template.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
-                        .frame(width: dw, height: dh)
-                } else {
-                    Color.clear.frame(width: dw, height: dh)
-                }
-            }
-        }
-    }
-
-    /// Applies blur once across the whole row background so adjacent screenshots
-    /// share one continuous blurred surface instead of blurring each tile separately.
-    @ViewBuilder
-    private func blurredView<V: View>(width: CGFloat, height: CGFloat, displayBlur: CGFloat, @ViewBuilder content: () -> V) -> some View {
-        BackgroundBlurView(width: width, height: height, blurRadius: displayBlur) {
-            content()
         }
     }
 

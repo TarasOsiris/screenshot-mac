@@ -219,6 +219,106 @@ struct ExportServiceTests {
         }
     }
 
+    @Test func blurredStepGradientChangesBoundaryPixelInExport() throws {
+        let tw: CGFloat = 240
+        let th: CGFloat = 240
+        let sharpGradient = GradientConfig(
+            stops: [
+                GradientColorStop(color: Self.testRed, location: 0.49),
+                GradientColorStop(color: Self.testRed, location: 0.5),
+                GradientColorStop(color: Self.testBlue, location: 0.5),
+                GradientColorStop(color: Self.testBlue, location: 0.51),
+            ],
+            angle: 90
+        )
+
+        let unblurredRow = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw,
+            templateHeight: th,
+            backgroundStyle: .gradient,
+            gradientConfig: sharpGradient,
+            spanBackgroundAcrossRow: true,
+            backgroundBlur: 0
+        )
+        let blurredRow = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw,
+            templateHeight: th,
+            backgroundStyle: .gradient,
+            gradientConfig: sharpGradient,
+            spanBackgroundAcrossRow: true,
+            backgroundBlur: 24
+        )
+
+        let unblurred = try renderTemplateBitmap(index: 0, row: unblurredRow)
+        let blurred = try renderTemplateBitmap(index: 0, row: blurredRow)
+
+        let x = Int(tw) - 4
+        let y = Int(th) / 2
+        let sharp = try pixelColor(unblurred, at: (x, y))
+        let soft = try pixelColor(blurred, at: (x, y))
+        let delta = abs(sharp.r - soft.r) + abs(sharp.g - soft.g) + abs(sharp.b - soft.b)
+        #expect(delta > 0.12, "Blur should change the hard boundary pixel, delta=\(delta)")
+    }
+
+    @Test func compositeTemplateMatchesEditor() throws {
+        let tw: CGFloat = 240
+        let th: CGFloat = 240
+        let gradient = GradientConfig(
+            stops: [
+                GradientColorStop(color: Self.testRed, location: 0),
+                GradientColorStop(color: Self.testBlue, location: 1),
+            ],
+            angle: 90
+        )
+        var overriddenTemplate = ScreenshotTemplate(backgroundColor: Self.testGreen)
+        overriddenTemplate.overrideBackground = true
+        overriddenTemplate.backgroundStyle = .color
+
+        var row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), overriddenTemplate],
+            templateWidth: tw,
+            templateHeight: th,
+            backgroundStyle: .gradient,
+            gradientConfig: gradient,
+            spanBackgroundAcrossRow: true,
+            backgroundBlur: 18
+        )
+        row.shapes = [
+            CanvasShapeModel(
+                type: .rectangle,
+                x: 180,
+                y: 80,
+                width: 120,
+                height: 90,
+                color: Self.testRed,
+                opacity: 0.85
+            ),
+            CanvasShapeModel(
+                type: .rectangle,
+                x: 260,
+                y: 24,
+                width: 70,
+                height: 50,
+                color: .white,
+                clipToTemplate: true
+            ),
+        ]
+
+        let exportBitmap = try renderTemplateBitmap(index: 1, row: row)
+        let editorBitmap = try renderEditorBitmap(index: 1, row: row)
+
+        for (label, x, y) in [
+            ("override bg", 24, 24),
+            ("shared shape", 30, 120),
+            ("clipped shape", 40, 40),
+            ("far corner", Int(tw) - 20, Int(th) - 20),
+        ] {
+            try expectPixelsClose(exportBitmap, editorBitmap, at: (x, y), label: label)
+        }
+    }
+
     @Test func shapeAppearsAtCorrectPositionInTemplate() throws {
         let tw: CGFloat = 400
         let th: CGFloat = 400
@@ -558,6 +658,7 @@ struct ExportServiceTests {
 
     private static let testBlue = Color(red: 0, green: 0, blue: 0.9)
     private static let testRed = Color(red: 0.9, green: 0, blue: 0)
+    private static let testGreen = Color(red: 0, green: 0.8, blue: 0)
 
     private func makeTestRow(
         width: CGFloat = 200,
@@ -615,88 +716,45 @@ struct ExportServiceTests {
     private func renderEditorBitmap(index: Int, row: ScreenshotRow) throws -> NSBitmapImageRep {
         let tLeft = CGFloat(index) * row.templateWidth
         let totalWidth = row.templateWidth * CGFloat(row.templates.count)
-        let templateSize = CGSize(width: row.templateWidth, height: row.templateHeight)
-        let rowBaseBackground: AnyView
+        let composedBackground = ExportService.renderComposedBackgroundImage(
+            row: row,
+            displayScale: 1.0,
+            labelPrefix: "test editor"
+        )
 
-        if row.isSpanningBackground {
-            let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
-            rowBaseBackground = AnyView(
-                row.resolvedBackgroundView(screenshotImages: [:], modelSize: spanSize)
-                    .frame(width: totalWidth, height: row.templateHeight)
-            )
-        } else {
-            rowBaseBackground = AnyView(
-                ZStack(alignment: .topLeading) {
-                    ForEach(Array(row.templates.enumerated()), id: \.element.id) { templateIndex, _ in
-                        row.resolvedBackgroundView(screenshotImages: [:], modelSize: templateSize)
-                            .frame(width: row.templateWidth, height: row.templateHeight)
-                            .offset(x: CGFloat(templateIndex) * row.templateWidth, y: 0)
-                    }
-                }
-                .frame(width: totalWidth, height: row.templateHeight, alignment: .topLeading)
+        let shapesView = RowCanvasShapeLayerView(
+            row: row,
+            shapes: row.activeShapes,
+            displayScale: 1.0
+        ) { shape, clipRect in
+            CanvasShapeView(
+                shape: shape,
+                displayScale: 1.0,
+                isSelected: false,
+                screenshotImage: nil,
+                fillImage: nil,
+                defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                clipBounds: clipRect,
+                showsEditorHelpers: true,
+                onSelect: {},
+                onUpdate: { _ in },
+                onDelete: {},
+                availableFontFamilies: Set(NSFontManager.shared.availableFontFamilies)
             )
         }
 
-        let view = ZStack(alignment: .topLeading) {
-            if row.backgroundBlur > 0 {
-                BackgroundBlurView(width: totalWidth, height: row.templateHeight, blurRadius: row.backgroundBlur) {
-                    rowBaseBackground
-                }
-            } else {
-                rowBaseBackground
-            }
-
-            if row.templates.contains(where: \.overrideBackground) {
-                HStack(spacing: 0) {
-                    ForEach(row.templates) { template in
-                        if template.overrideBackground {
-                            template.resolvedBackgroundView(screenshotImages: [:], modelSize: templateSize)
-                                .frame(width: row.templateWidth, height: row.templateHeight)
-                        } else {
-                            Color.clear.frame(width: row.templateWidth, height: row.templateHeight)
-                        }
-                    }
-                }
-            }
-
-            ForEach(row.activeShapes) { shape in
-                let clipRect: CGRect? = shape.clipToTemplate == true
-                    ? CGRect(
-                        x: CGFloat(row.owningTemplateIndex(for: shape)) * row.templateWidth,
-                        y: 0,
-                        width: row.templateWidth,
-                        height: row.templateHeight
-                    )
-                    : nil
-                CanvasShapeView(
-                    shape: shape,
-                    displayScale: 1.0,
-                    isSelected: false,
-                    screenshotImage: nil,
-                    fillImage: nil,
-                    defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-                    clipBounds: clipRect,
-                    showsEditorHelpers: true,
-                    onSelect: {},
-                    onUpdate: { _ in },
-                    onDelete: {},
-                    availableFontFamilies: Set(NSFontManager.shared.availableFontFamilies)
-                )
-            }
-        }
-        .frame(width: totalWidth, height: row.templateHeight, alignment: .topLeading)
-        .clipped()
-
-        let hostingView = NSHostingView(rootView: view)
-        hostingView.frame = NSRect(x: 0, y: 0, width: totalWidth, height: row.templateHeight)
-        hostingView.layoutSubtreeIfNeeded()
-        hostingView.displayIfNeeded()
-
-        let bounds = hostingView.bounds
-        let rep = try #require(hostingView.bitmapImageRepForCachingDisplay(in: bounds))
-        hostingView.cacheDisplay(in: bounds, to: rep)
-        let image = NSImage(size: NSSize(width: totalWidth, height: row.templateHeight))
-        image.addRepresentation(rep)
+        let shapesImage = ExportService.renderViewToImage(
+            shapesView,
+            width: totalWidth,
+            height: row.templateHeight,
+            label: "test editor shapes"
+        )
+        let image = ExportService.flattenImage(
+            shapesImage,
+            over: composedBackground,
+            width: totalWidth,
+            height: row.templateHeight
+        )
         let cropped = try cropBitmap(image, x: tLeft, width: row.templateWidth, height: row.templateHeight)
         let croppedImage = NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
         croppedImage.addRepresentation(cropped)

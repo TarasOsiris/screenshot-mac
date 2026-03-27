@@ -67,21 +67,18 @@ struct ExportService {
                     }
 
                     let rowImages = imageProvider(row, locale.code)
-                    let cachedBlur = renderBlurredSpanningBackground(row: row, screenshotImages: rowImages)
+                    let rowImage = renderRowImage(
+                        row: row,
+                        screenshotImages: rowImages,
+                        localeCode: locale.code,
+                        localeState: localeState,
+                        availableFontFamilies: availableFontFamilies
+                    )
                     for (index, _) in row.templates.enumerated() {
                         try Task.checkCancellation()
 
-                        // Render on main (ImageRenderer requirement) — runs concurrently
-                        // with the previous template's background encoding.
-                        let image = renderTemplateImage(
-                            index: index,
-                            row: row,
-                            screenshotImages: rowImages,
-                            localeCode: locale.code,
-                            localeState: localeState,
-                            availableFontFamilies: availableFontFamilies,
-                            blurredSpanningBackground: cachedBlur
-                        )
+                        // Render the shared row scene once, then crop each template from it.
+                        let image = cropTemplateImage(rowImage, index: index, row: row)
 
                         // Await the previous encoding before starting a new one
                         try await previousEncodeTask?.value
@@ -147,43 +144,118 @@ struct ExportService {
     // MARK: - Row-level rendering (single demo image)
 
     @MainActor
-    static func renderRowImage(row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default) -> NSImage {
+    static func renderRowImage(
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:],
+        localeCode: String? = nil,
+        localeState: LocaleState = .default,
+        availableFontFamilies: Set<String>? = nil
+    ) -> NSImage {
         let count = row.templates.count
         guard count > 0 else {
             return NSImage(size: NSSize(width: 1, height: 1))
         }
 
         let totalWidth = row.templateWidth * CGFloat(count)
-        let height = row.templateHeight
-        let pixelW = Int(totalWidth)
-        let pixelH = Int(height)
+        let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
+        let fontFamilies = availableFontFamilies ?? Set(NSFontManager.shared.availableFontFamilies)
+        let composedBackground = renderComposedBackgroundImage(
+            row: row,
+            screenshotImages: screenshotImages,
+            displayScale: 1.0,
+            labelPrefix: "row"
+        )
 
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        guard let ctx = CGContext(
-            data: nil, width: pixelW, height: pixelH,
-            bitsPerComponent: 8, bytesPerRow: pixelW * 4,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            return NSImage(size: NSSize(width: totalWidth, height: height))
-        }
-
-        // Render each template and draw immediately so intermediate images are freed
-        let cachedBlur = renderBlurredSpanningBackground(row: row, screenshotImages: screenshotImages)
-        for i in 0..<count {
-            let img = renderTemplateImage(index: i, row: row, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState, blurredSpanningBackground: cachedBlur)
-            guard let cgImg = img.cgImage(forProposedRect: nil, context: nil, hints: nil) else { continue }
-            let x = CGFloat(i) * row.templateWidth
-            ctx.draw(cgImg, in: CGRect(x: x, y: 0, width: CGFloat(cgImg.width), height: CGFloat(cgImg.height)))
-        }
-
-        guard let composited = ctx.makeImage() else {
-            return NSImage(size: NSSize(width: totalWidth, height: height))
-        }
-        return NSImage(cgImage: composited, size: NSSize(width: totalWidth, height: height))
+        let shapesView = RowCanvasShapeLayerView(
+            row: row,
+            shapes: resolvedShapes,
+            displayScale: 1.0,
+            shapeContent: { shape, clipRect in
+                CanvasShapeView(
+                    shape: shape,
+                    displayScale: 1.0,
+                    isSelected: false,
+                    screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
+                    fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
+                    defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                    clipBounds: clipRect,
+                    showsEditorHelpers: false,
+                    onSelect: {},
+                    onUpdate: { _ in },
+                    onDelete: {},
+                    availableFontFamilies: fontFamilies
+                )
+            }
+        )
+        let shapesImage = renderViewToImage(
+            shapesView,
+            width: totalWidth,
+            height: row.templateHeight,
+            label: "row shapes '\(row.label)'"
+        )
+        return flattenImage(
+            shapesImage,
+            over: composedBackground,
+            width: totalWidth,
+            height: row.templateHeight
+        )
     }
 
     // MARK: - Shared Rendering
+
+    @MainActor
+    static func renderComposedBackgroundImage(
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:],
+        displayScale: CGFloat,
+        labelPrefix: String
+    ) -> NSImage {
+        let totalWidth = row.templateWidth * displayScale * CGFloat(row.templates.count)
+        let totalHeight = row.templateHeight * displayScale
+        let baseBackgroundImage = renderViewToImage(
+            RowCanvasBaseBackgroundView(
+                row: row,
+                screenshotImages: screenshotImages,
+                displayScale: displayScale
+            ),
+            width: totalWidth,
+            height: totalHeight,
+            label: "\(labelPrefix) base background '\(row.label)'"
+        )
+        let backgroundImage: NSImage
+        if row.backgroundBlur > 0 {
+            let blurred = applyGaussianBlur(to: baseBackgroundImage, radius: row.backgroundBlur * displayScale)
+            backgroundImage = flattenImage(
+                blurred,
+                over: baseBackgroundImage,
+                width: totalWidth,
+                height: totalHeight
+            )
+        } else {
+            backgroundImage = baseBackgroundImage
+        }
+
+        guard row.templates.contains(where: \.overrideBackground) else {
+            return backgroundImage
+        }
+
+        let overrideImage = renderViewToImage(
+            RowCanvasOverrideBackgroundView(
+                row: row,
+                screenshotImages: screenshotImages,
+                displayScale: displayScale
+            ),
+            width: totalWidth,
+            height: totalHeight,
+            label: "\(labelPrefix) override background '\(row.label)'"
+        )
+        return flattenImage(
+            overrideImage,
+            over: backgroundImage,
+            width: totalWidth,
+            height: totalHeight
+        )
+    }
 
     @MainActor
     static func renderTemplatePNG(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeState: LocaleState = .default) -> Data? {
@@ -204,7 +276,7 @@ struct ExportService {
         return encodeImage(image, format: format)
     }
 
-    static func encodeImage(_ image: NSImage, format: ExportImageFormat) -> Data? {
+    nonisolated static func encodeImage(_ image: NSImage, format: ExportImageFormat) -> Data? {
         switch format {
         case .png:
             return opaquePNGData(from: image)
@@ -213,137 +285,44 @@ struct ExportService {
         }
     }
 
-    /// Pre-renders the blurred spanning background for a row.
-    /// Call once per row and pass the result to each `renderTemplateImage` call to avoid redundant work.
     @MainActor
-    static func renderBlurredSpanningBackground(row: ScreenshotRow, screenshotImages: [String: NSImage]) -> NSImage? {
-        guard row.backgroundBlur > 0, row.isSpanningBackground else { return nil }
-        let totalWidth = row.templateWidth * CGFloat(row.templates.count)
-        let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
-        let spanView = row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanSize)
-            .frame(width: totalWidth, height: row.templateHeight)
-        return renderBlurredViewToImage(
-            spanView,
-            width: totalWidth,
-            height: row.templateHeight,
-            radius: row.backgroundBlur,
-            label: "blur spanning bg"
+    static func renderTemplateImage(
+        index: Int,
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:],
+        localeCode: String? = nil,
+        localeState: LocaleState = .default,
+        availableFontFamilies: Set<String>? = nil
+    ) -> NSImage {
+        let rowImage = renderRowImage(
+            row: row,
+            screenshotImages: screenshotImages,
+            localeCode: localeCode,
+            localeState: localeState,
+            availableFontFamilies: availableFontFamilies
         )
+        return cropTemplateImage(rowImage, index: index, row: row)
     }
 
     @MainActor
-    static func renderTemplateImage(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default, availableFontFamilies: Set<String>? = nil, blurredSpanningBackground: NSImage? = nil) -> NSImage {
-        let tLeft = CGFloat(index) * row.templateWidth
-        let rawShapes = row.visibleShapes(forTemplateAt: index)
+    private static func resolvedExportShapes(row: ScreenshotRow, localeCode: String?, localeState: LocaleState) -> [CanvasShapeModel] {
         let resolvedShapes: [CanvasShapeModel]
         if let localeCode {
-            resolvedShapes = rawShapes.map { LocaleService.resolveShape($0, localeCode: localeCode, localeState: localeState) }
+            resolvedShapes = row.activeShapes.map {
+                LocaleService.resolveShape($0, localeCode: localeCode, localeState: localeState)
+            }
         } else {
-            resolvedShapes = rawShapes
+            resolvedShapes = row.activeShapes
         }
-        let visibleShapes = resolvedShapes.map { normalizeDeviceAspectIfNeeded($0) }
-
-        let template = row.templates[index]
-        let needsBlur = row.backgroundBlur > 0 && !template.overrideBackground
-        let blurredBgImage: NSImage? = needsBlur
-            ? renderBlurredBackground(
-                index: index,
-                row: row,
-                screenshotImages: screenshotImages,
-                cachedSpanningBlur: blurredSpanningBackground
-            )
-            : nil
-        let templateSize = CGSize(width: row.templateWidth, height: row.templateHeight)
-        let view = ZStack(alignment: .topLeading) {
-            // Background
-            if let blurredBgImage {
-                Image(nsImage: blurredBgImage)
-                    .interpolation(.high)
-                    .frame(width: row.templateWidth, height: row.templateHeight)
-            } else if template.overrideBackground {
-                template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateSize)
-                    .frame(width: row.templateWidth, height: row.templateHeight)
-            } else {
-                rowBackgroundView(index: index, row: row, screenshotImages: screenshotImages)
-            }
-            ForEach(visibleShapes) { shape in
-                CanvasShapeView(
-                    shape: shape.duplicated(offsetX: -tLeft),
-                    displayScale: 1.0,
-                    isSelected: false,
-                    screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
-                    fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
-                    defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-
-                    showsEditorHelpers: false,
-                    onSelect: {},
-                    onUpdate: { _ in },
-                    onDelete: {},
-                    availableFontFamilies: availableFontFamilies ?? Set(NSFontManager.shared.availableFontFamilies)
-                )
-            }
-        }
-        .frame(width: row.templateWidth, height: row.templateHeight, alignment: .topLeading)
-        .clipped()
-
-        return renderViewToImage(view, width: row.templateWidth, height: row.templateHeight, label: "template \(index) in row '\(row.label)'")
+        return resolvedShapes.map(normalizeDeviceAspectIfNeeded)
     }
 
-    /// Returns the row background view for a single template slot (spanning or per-template).
-    @MainActor @ViewBuilder
-    private static func rowBackgroundView(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage]) -> some View {
-        if row.isSpanningBackground {
-            let tLeft = CGFloat(index) * row.templateWidth
-            let totalWidth = row.templateWidth * CGFloat(row.templates.count)
-            let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
-            Color.clear
-                .frame(width: row.templateWidth, height: row.templateHeight)
-                .overlay(alignment: .topLeading) {
-                    row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanSize)
-                        .frame(width: totalWidth, height: row.templateHeight)
-                        .offset(x: -tLeft)
-                }
-                .clipped()
-        } else {
-            let templateSize = CGSize(width: row.templateWidth, height: row.templateHeight)
-            row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateSize)
-                .frame(width: row.templateWidth, height: row.templateHeight)
-        }
-    }
-
-    /// Renders the background for a single template slot, applies CIGaussianBlur, and returns the result cropped to template bounds.
-    /// Pass `cachedSpanningBlur` (from `renderBlurredSpanningBackground`) to avoid re-rendering the full-width image per template.
-    @MainActor
-    private static func renderBlurredBackground(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage], cachedSpanningBlur: NSImage? = nil) -> NSImage {
-        if row.isSpanningBackground {
-            let blurred = cachedSpanningBlur ?? {
-                let totalWidth = row.templateWidth * CGFloat(row.templates.count)
-                let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
-                let spanView = row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanSize)
-                    .frame(width: totalWidth, height: row.templateHeight)
-                return renderBlurredViewToImage(
-                    spanView,
-                    width: totalWidth,
-                    height: row.templateHeight,
-                    radius: row.backgroundBlur,
-                    label: "blur spanning bg"
-                )
-            }()
-            return cropImage(
-                blurred,
-                x: CGFloat(index) * row.templateWidth,
-                width: row.templateWidth,
-                height: row.templateHeight
-            )
-        }
-
-        let bgView = rowBackgroundView(index: index, row: row, screenshotImages: screenshotImages)
-        return renderBlurredViewToImage(
-            bgView,
+    private static func cropTemplateImage(_ image: NSImage, index: Int, row: ScreenshotRow) -> NSImage {
+        cropImage(
+            image,
+            x: CGFloat(index) * row.templateWidth,
             width: row.templateWidth,
-            height: row.templateHeight,
-            radius: row.backgroundBlur,
-            label: "blur bg"
+            height: row.templateHeight
         )
     }
 
@@ -351,7 +330,7 @@ struct ExportService {
 
     /// Applies CIGaussianBlur and crops the result back to the original image bounds.
     /// Uses CIAffineClamp to extend edge pixels so the blur kernel doesn't sample transparent pixels.
-    private static func applyGaussianBlur(to image: NSImage, radius: Double) -> NSImage {
+    static func applyGaussianBlur(to image: NSImage, radius: Double) -> NSImage {
         guard radius > 0,
               let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return image }
 
@@ -402,7 +381,7 @@ struct ExportService {
     }
 
     @MainActor
-    private static func renderViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, label: String) -> NSImage {
+    static func renderViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, label: String) -> NSImage {
         // Use NSHostingView + layer rendering instead of ImageRenderer.
         // ImageRenderer can produce slightly different text glyph metrics than
         // on-screen rendering, causing line-break differences in export.
@@ -433,7 +412,7 @@ struct ExportService {
 
     /// Composites the blurred image over the original rendered background to remove edge alpha fringes.
     @MainActor
-    private static func flattenImage(_ image: NSImage, over background: NSImage, width: CGFloat, height: CGFloat) -> NSImage {
+    static func flattenImage(_ image: NSImage, over background: NSImage, width: CGFloat, height: CGFloat) -> NSImage {
         let flattened = NSImage(size: NSSize(width: width, height: height))
         flattened.lockFocus()
         let rect = NSRect(x: 0, y: 0, width: width, height: height)
