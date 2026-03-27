@@ -48,7 +48,12 @@ struct InspectorPanel: View {
                 if isCustom { syncCustomFields(rowId: rowId) }
             }
             .onChange(of: rowId) { _, newRowId in
+                useCustomSize = !isPresetSize(rowId: newRowId)
                 if useCustomSize { syncCustomFields(rowId: newRowId) }
+            }
+            .onAppear {
+                useCustomSize = !isPresetSize(rowId: rowId)
+                if useCustomSize { syncCustomFields(rowId: rowId) }
             }
 
             if useCustomSize {
@@ -56,8 +61,6 @@ struct InspectorPanel: View {
             } else {
                 presetPicker(rowId: rowId)
             }
-
-            sizeLabel(rowIndex: rowIndex)
         } header: {
             Text("Screenshot Size")
         }
@@ -103,12 +106,12 @@ struct InspectorPanel: View {
         .controlSize(.small)
     }
 
-    @ViewBuilder
-    private func sizeLabel(rowIndex: Int) -> some View {
-        LabeledContent("Size") {
-            Text(verbatim: state.rows[rowIndex].resolutionLabel)
-                .font(.system(size: 11).monospacedDigit())
-                .foregroundStyle(.secondary)
+    private func isPresetSize(rowId: UUID) -> Bool {
+        guard let idx = state.rowIndex(for: rowId) else { return true }
+        let w = state.rows[idx].templateWidth
+        let h = state.rows[idx].templateHeight
+        return displayCategories.contains { cat in
+            cat.sizes.contains { $0.width == w && $0.height == h }
         }
     }
 
@@ -120,7 +123,7 @@ struct InspectorPanel: View {
 
     private func applyCustomSize(rowId: UUID) {
         guard let w = Double(customWidth), let h = Double(customHeight),
-              w >= 100, h >= 100,
+              w >= 100, h >= 100, w <= 5000, h <= 5000,
               let idx = state.rowIndex(for: rowId) else { return }
         state.resizeRow(at: idx, newWidth: CGFloat(w), newHeight: CGFloat(h))
     }

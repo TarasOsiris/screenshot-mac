@@ -542,11 +542,11 @@ struct ContentView: View {
 
     @ViewBuilder
     private var exportMenuContent: some View {
-        Button("Export to Folder...") {
+        Button("Export All Screenshots to Folder...") {
             exportScreenshotsAs()
         }
 
-        Button("Export rows as continuous images") {
+        Button("Export all rows as continuous images") {
             exportRowImages()
         }
         .disabled(state.rows.isEmpty)
