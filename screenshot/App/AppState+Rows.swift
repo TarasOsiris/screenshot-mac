@@ -12,6 +12,24 @@ extension AppState {
         scheduleSave()
     }
 
+    func addRowAbove(_ id: UUID) {
+        guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
+        registerUndo("Add Row Above")
+        let row = makeDefaultRow()
+        rows.insert(row, at: idx)
+        selectRow(row.id)
+        scheduleSave()
+    }
+
+    func addRowBelow(_ id: UUID) {
+        guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
+        registerUndo("Add Row Below")
+        let row = makeDefaultRow()
+        rows.insert(row, at: idx + 1)
+        selectRow(row.id)
+        scheduleSave()
+    }
+
     func duplicateRow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
         registerUndo("Duplicate Row")

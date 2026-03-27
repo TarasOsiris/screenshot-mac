@@ -11,26 +11,54 @@ extension AppState {
         scheduleSave()
     }
 
+    func insertTemplateBefore(_ templateId: UUID, in rowId: UUID) {
+        guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
+              let templateIndex = rows[rowIdx].templates.firstIndex(where: { $0.id == templateId }) else { return }
+        registerUndoForRow(at: rowIdx, "Insert Screenshot Before")
+        insertTemplate(inRowAt: rowIdx, at: templateIndex)
+        scheduleSave()
+    }
+
+    func insertTemplateAfter(_ templateId: UUID, in rowId: UUID) {
+        guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
+              let templateIndex = rows[rowIdx].templates.firstIndex(where: { $0.id == templateId }) else { return }
+        registerUndoForRow(at: rowIdx, "Insert Screenshot After")
+        insertTemplate(inRowAt: rowIdx, at: templateIndex + 1)
+        scheduleSave()
+    }
+
     /// Appends a new template (and its default device shape) to the row at the given index.
     /// Does not register undo or schedule save — callers handle that.
     func appendTemplate(to rowIndex: Int) {
-        let color = Self.templateColors[rows[rowIndex].templates.count % Self.templateColors.count]
-        rows[rowIndex].templates.append(ScreenshotTemplate(backgroundColor: color))
-        let templateIndex = rows[rowIndex].templates.count - 1
-        if let defaultCategory = rows[rowIndex].defaultDeviceCategory {
+        insertTemplate(inRowAt: rowIndex, at: rows[rowIndex].templates.count)
+    }
+
+    /// Inserts a new template at the given position, shifting existing shapes right.
+    private func insertTemplate(inRowAt rowIndex: Int, at insertIndex: Int) {
+        var row = rows[rowIndex]
+        let columnWidth = row.templateWidth
+        for i in row.shapes.indices {
+            if row.owningTemplateIndex(for: row.shapes[i]) >= insertIndex {
+                row.shapes[i].x += columnWidth
+            }
+        }
+        let color = Self.templateColors[row.templates.count % Self.templateColors.count]
+        row.templates.insert(ScreenshotTemplate(backgroundColor: color), at: insertIndex)
+        if let defaultCategory = row.defaultDeviceCategory {
             var device = CanvasShapeModel.defaultDevice(
-                centerX: rows[rowIndex].templateCenterX(at: templateIndex),
-                centerY: rows[rowIndex].templateHeight / 2,
-                templateHeight: rows[rowIndex].templateHeight,
+                centerX: row.templateCenterX(at: insertIndex),
+                centerY: row.templateHeight / 2,
+                templateHeight: row.templateHeight,
                 category: defaultCategory
             )
-            if let frameId = rows[rowIndex].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
+            if let frameId = row.defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
                 device.deviceCategory = frame.fallbackCategory
                 device.deviceFrameId = frame.id
-                device.adjustToDeviceAspectRatio(centerX: rows[rowIndex].templateCenterX(at: templateIndex))
+                device.adjustToDeviceAspectRatio(centerX: row.templateCenterX(at: insertIndex))
             }
-            rows[rowIndex].shapes.append(device)
+            row.shapes.append(device)
         }
+        rows[rowIndex] = row
     }
 
     func removeTemplate(_ templateId: UUID, from rowId: UUID) {

@@ -17,6 +17,8 @@ struct TemplateControlBar: View {
     var onRemoveBackgroundImage: (() -> Void)?
     var onDropBackgroundImage: ((NSImage) -> Void)? = nil
     var onDuplicate: () -> Void = {}
+    var onInsertBefore: () -> Void = {}
+    var onInsertAfter: () -> Void = {}
     var onDelete: () -> Void
     var onLoadFullResImages: (() -> [String: NSImage])? = nil
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
@@ -160,6 +162,12 @@ struct TemplateControlBar: View {
                     onMoveRight()
                 }
                 .disabled(!canMoveRight)
+                Button("Add Screenshot Before", systemImage: "plus.rectangle.on.rectangle") {
+                    onInsertBefore()
+                }
+                Button("Add Screenshot After", systemImage: "plus.rectangle.on.rectangle") {
+                    onInsertAfter()
+                }
                 Button("Duplicate Screenshot", systemImage: "plus.square.on.square") {
                     onDuplicate()
                 }

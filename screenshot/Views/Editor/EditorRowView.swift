@@ -105,43 +105,7 @@ struct EditorRowView: View {
                         }
                     }
                     Menu {
-                        Menu("Center all devices") {
-                            Button("Vertically") {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.centerAllDevices(in: row.id, axis: .vertically)
-                                }
-                            }
-                            Button("Horizontally") {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.centerAllDevices(in: row.id, axis: .horizontally)
-                                }
-                            }
-                            Button("Screenshot Center") {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.centerAllDevices(in: row.id, axis: .both)
-                                }
-                            }
-                        }
-                        Menu("Change all devices to") {
-                            DeviceMenuContent(
-                                onSelectCategory: { category in
-                                    state.changeAllDevices(in: row.id, toCategory: category)
-                                },
-                                onSelectFrame: { frame in
-                                    state.changeAllDevices(in: row.id, toFrame: frame)
-                                }
-                            )
-                        }
-                        Divider()
-                        Menu("Delete all") {
-                            ForEach(ShapeType.allCases, id: \.self) { type in
-                                Button(type.pluralLabel, role: .destructive) {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        state.deleteAllShapes(ofType: type, in: row.id)
-                                    }
-                                }
-                            }
-                        }
+                        rowMenuContent
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .font(.system(size: 13))
@@ -184,70 +148,7 @@ struct EditorRowView: View {
             }
         }
         .contextMenu {
-            Button("Add Screenshot") {
-                store.requirePro(
-                    allowed: store.canAddTemplate(currentCount: row.templates.count),
-                    context: .templateLimit
-                ) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        state.addTemplate(to: row.id)
-                    }
-                }
-            }
-            Menu("Add Element") {
-                ForEach(ShapeType.allCases, id: \.self) { type in
-                    Button {
-                        if type == .svg {
-                            state.selectRow(row.id)
-                            isSvgDialogPresented = true
-                        } else {
-                            addShapeFromMenu(type)
-                        }
-                    } label: {
-                        Label(type.label, systemImage: type.icon)
-                    }
-                }
-            }
-            Divider()
-            Button(row.showDevice ? "Hide Devices" : "Show Devices") {
-                state.toggleShowDevice(for: row.id)
-            }
-            Button(row.showBorders ? "Hide Borders" : "Show Borders") {
-                state.toggleShowBorders(for: row.id)
-            }
-            Divider()
-            Button("Move Row Up") {
-                withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
-            }
-            .disabled(!canMoveUp)
-            Button("Move Row Down") {
-                withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
-            }
-            .disabled(!canMoveDown)
-            Button("Duplicate Row") {
-                store.requirePro(
-                    allowed: store.canAddRow(currentCount: state.rows.count),
-                    context: .rowLimit
-                ) {
-                    withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
-                }
-            }
-            Divider()
-            Button("Reset Row", role: .destructive) {
-                if confirmBeforeDeleting {
-                    isResettingRow = true
-                } else {
-                    withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
-                }
-            }
-            Button("Delete Row", role: .destructive) {
-                if confirmBeforeDeleting {
-                    isDeletingRow = true
-                } else {
-                    withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
-                }
-            }
-            .disabled(!canDelete)
+            rowMenuContent
         }
         .alert("Delete Row", isPresented: $isDeletingRow) {
             Button("Delete", role: .destructive) {
@@ -488,6 +389,26 @@ struct EditorRowView: View {
                         ) {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 state.duplicateTemplate(template.id, in: row.id)
+                            }
+                        }
+                    },
+                    onInsertBefore: {
+                        store.requirePro(
+                            allowed: store.canAddTemplate(currentCount: row.templates.count),
+                            context: .templateLimit
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                state.insertTemplateBefore(template.id, in: row.id)
+                            }
+                        }
+                    },
+                    onInsertAfter: {
+                        store.requirePro(
+                            allowed: store.canAddTemplate(currentCount: row.templates.count),
+                            context: .templateLimit
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                state.insertTemplateAfter(template.id, in: row.id)
                             }
                         }
                     },
@@ -825,6 +746,129 @@ struct EditorRowView: View {
         state.selectRow(row.id)
         guard let shape = CanvasShapeModel.defaultShape(for: type, row: row, centerX: center.x, centerY: center.y) else { return }
         state.addShape(shape)
+    }
+
+    // MARK: - Shared row menu
+
+    @ViewBuilder
+    private var rowMenuContent: some View {
+        Button("Add Screenshot") {
+            store.requirePro(
+                allowed: store.canAddTemplate(currentCount: row.templates.count),
+                context: .templateLimit
+            ) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    state.addTemplate(to: row.id)
+                }
+            }
+        }
+        Menu("Add Element") {
+            ForEach(ShapeType.allCases, id: \.self) { type in
+                Button {
+                    if type == .svg {
+                        state.selectRow(row.id)
+                        isSvgDialogPresented = true
+                    } else {
+                        addShapeFromMenu(type)
+                    }
+                } label: {
+                    Label(type.label, systemImage: type.icon)
+                }
+            }
+        }
+        Divider()
+        Button(row.showDevice ? "Hide Devices" : "Show Devices") {
+            state.toggleShowDevice(for: row.id)
+        }
+        Button(row.showBorders ? "Hide Borders" : "Show Borders") {
+            state.toggleShowBorders(for: row.id)
+        }
+        Divider()
+        Menu("Center all devices") {
+            Button("Vertically") {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    state.centerAllDevices(in: row.id, axis: .vertically)
+                }
+            }
+            Button("Horizontally") {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    state.centerAllDevices(in: row.id, axis: .horizontally)
+                }
+            }
+            Button("Screenshot Center") {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    state.centerAllDevices(in: row.id, axis: .both)
+                }
+            }
+        }
+        Menu("Change all devices to") {
+            DeviceMenuContent(
+                onSelectCategory: { category in
+                    state.changeAllDevices(in: row.id, toCategory: category)
+                },
+                onSelectFrame: { frame in
+                    state.changeAllDevices(in: row.id, toFrame: frame)
+                }
+            )
+        }
+        Divider()
+        Button("Move Row Up") {
+            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
+        }
+        .disabled(!canMoveUp)
+        Button("Move Row Down") {
+            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
+        }
+        .disabled(!canMoveDown)
+        Button("Add Row Above") {
+            store.requirePro(
+                allowed: store.canAddRow(currentCount: state.rows.count),
+                context: .rowLimit
+            ) {
+                withAnimation(.easeInOut(duration: 0.2)) { state.addRowAbove(row.id) }
+            }
+        }
+        Button("Add Row Below") {
+            store.requirePro(
+                allowed: store.canAddRow(currentCount: state.rows.count),
+                context: .rowLimit
+            ) {
+                withAnimation(.easeInOut(duration: 0.2)) { state.addRowBelow(row.id) }
+            }
+        }
+        Button("Duplicate Row") {
+            store.requirePro(
+                allowed: store.canAddRow(currentCount: state.rows.count),
+                context: .rowLimit
+            ) {
+                withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+            }
+        }
+        Divider()
+        Menu("Delete all") {
+            ForEach(ShapeType.allCases, id: \.self) { type in
+                Button(type.pluralLabel, role: .destructive) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        state.deleteAllShapes(ofType: type, in: row.id)
+                    }
+                }
+            }
+        }
+        Button("Reset Row", role: .destructive) {
+            if confirmBeforeDeleting {
+                isResettingRow = true
+            } else {
+                withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
+            }
+        }
+        Button("Delete Row", role: .destructive) {
+            if confirmBeforeDeleting {
+                isDeletingRow = true
+            } else {
+                withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
+            }
+        }
+        .disabled(!canDelete)
     }
 
 }
