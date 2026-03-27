@@ -5,8 +5,18 @@ struct ScreenshotSizePicker: View {
     @Binding var selection: String
     var label: String = "Default screenshot size"
 
+    private var isCustomSize: Bool {
+        !displayCategories.contains { category in
+            category.sizes.contains { "\(Int($0.width))x\(Int($0.height))" == selection }
+        }
+    }
+
     var body: some View {
         Picker(label, selection: $selection) {
+            if isCustomSize {
+                Text(selection.replacingOccurrences(of: "x", with: "\u{00d7}") + " Custom")
+                    .tag(selection)
+            }
             ForEach(displayCategories) { category in
                 Section(category.name) {
                     ForEach(category.sizes, id: \.label) { size in

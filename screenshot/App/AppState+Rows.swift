@@ -35,6 +35,7 @@ extension AppState {
             gradientConfig: source.gradientConfig,
             spanBackgroundAcrossRow: source.spanBackgroundAcrossRow,
             backgroundImageConfig: source.backgroundImageConfig,
+            backgroundBlur: source.backgroundBlur,
             defaultDeviceFrameId: source.defaultDeviceFrameId,
             hiddenShapeTypes: source.hiddenShapeTypes,
             showBorders: source.showBorders,

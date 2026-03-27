@@ -67,6 +67,7 @@ struct ExportService {
                     }
 
                     let rowImages = imageProvider(row, locale.code)
+                    let cachedBlur = renderBlurredSpanningBackground(row: row, screenshotImages: rowImages)
 
                     for (index, _) in row.templates.enumerated() {
                         try Task.checkCancellation()
@@ -79,7 +80,8 @@ struct ExportService {
                             screenshotImages: rowImages,
                             localeCode: locale.code,
                             localeState: localeState,
-                            availableFontFamilies: availableFontFamilies
+                            availableFontFamilies: availableFontFamilies,
+                            blurredSpanningBackground: cachedBlur
                         )
 
                         // Await the previous encoding before starting a new one
@@ -131,7 +133,7 @@ struct ExportService {
         return sanitized.isEmpty ? "Screenshots" : sanitized
     }
 
-    private static func uniqueFolder(named baseName: String, in parent: URL) -> URL {
+    static func uniqueFolder(named baseName: String, in parent: URL) -> URL {
         let fm = FileManager.default
         let candidate = parent.appendingPathComponent(baseName)
         if !fm.fileExists(atPath: candidate.path) { return candidate }
@@ -168,8 +170,9 @@ struct ExportService {
         }
 
         // Render each template and draw immediately so intermediate images are freed
+        let cachedBlur = renderBlurredSpanningBackground(row: row, screenshotImages: screenshotImages)
         for i in 0..<count {
-            let img = renderTemplateImage(index: i, row: row, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
+            let img = renderTemplateImage(index: i, row: row, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState, blurredSpanningBackground: cachedBlur)
             guard let cgImg = img.cgImage(forProposedRect: nil, context: nil, hints: nil) else { continue }
             let x = CGFloat(i) * row.templateWidth
             ctx.draw(cgImg, in: CGRect(x: x, y: 0, width: CGFloat(cgImg.width), height: CGFloat(cgImg.height)))
@@ -211,8 +214,26 @@ struct ExportService {
         }
     }
 
+    /// Pre-renders the blurred spanning background for a row.
+    /// Call once per row and pass the result to each `renderTemplateImage` call to avoid redundant work.
     @MainActor
-    static func renderTemplateImage(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default, availableFontFamilies: Set<String>? = nil) -> NSImage {
+    static func renderBlurredSpanningBackground(row: ScreenshotRow, screenshotImages: [String: NSImage]) -> NSImage? {
+        guard row.backgroundBlur > 0, row.isSpanningBackground else { return nil }
+        let totalWidth = row.templateWidth * CGFloat(row.templates.count)
+        let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
+        let spanView = row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanSize)
+            .frame(width: totalWidth, height: row.templateHeight)
+        return renderBlurredViewToImage(
+            spanView,
+            width: totalWidth,
+            height: row.templateHeight,
+            radius: row.backgroundBlur,
+            label: "blur spanning bg"
+        )
+    }
+
+    @MainActor
+    static func renderTemplateImage(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeCode: String? = nil, localeState: LocaleState = .default, availableFontFamilies: Set<String>? = nil, blurredSpanningBackground: NSImage? = nil) -> NSImage {
         let tLeft = CGFloat(index) * row.templateWidth
         let rawShapes = row.visibleShapes(forTemplateAt: index)
         let resolvedShapes: [CanvasShapeModel]
@@ -224,27 +245,23 @@ struct ExportService {
         let visibleShapes = resolvedShapes.map { normalizeDeviceAspectIfNeeded($0) }
 
         let template = row.templates[index]
+        let needsBlur = row.backgroundBlur > 0 && !template.overrideBackground
+
+        // Pre-render and blur background if needed
+        let blurredBgImage: NSImage? = needsBlur ? renderBlurredBackground(index: index, row: row, screenshotImages: screenshotImages, cachedSpanningBlur: blurredSpanningBackground) : nil
 
         let templateSize = CGSize(width: row.templateWidth, height: row.templateHeight)
         let view = ZStack(alignment: .topLeading) {
             // Background
-            if row.isSpanningBackground && !template.overrideBackground {
-                let totalWidth = row.templateWidth * CGFloat(row.templates.count)
-                let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
-                Color.clear
+            if let blurredBgImage {
+                Image(nsImage: blurredBgImage)
+                    .interpolation(.high)
                     .frame(width: row.templateWidth, height: row.templateHeight)
-                    .overlay(alignment: .topLeading) {
-                        row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanSize)
-                            .frame(width: totalWidth, height: row.templateHeight)
-                            .offset(x: -tLeft)
-                    }
-                    .clipped()
             } else if template.overrideBackground {
                 template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateSize)
                     .frame(width: row.templateWidth, height: row.templateHeight)
             } else {
-                row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateSize)
-                    .frame(width: row.templateWidth, height: row.templateHeight)
+                rowBackgroundView(index: index, row: row, screenshotImages: screenshotImages)
             }
             ForEach(visibleShapes) { shape in
                 CanvasShapeView(
@@ -266,38 +283,162 @@ struct ExportService {
         .frame(width: row.templateWidth, height: row.templateHeight, alignment: .topLeading)
         .clipped()
 
+        return renderViewToImage(view, width: row.templateWidth, height: row.templateHeight, label: "template \(index) in row '\(row.label)'")
+    }
+
+    /// Returns the row background view for a single template slot (spanning or per-template).
+    @MainActor @ViewBuilder
+    private static func rowBackgroundView(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage]) -> some View {
+        if row.isSpanningBackground {
+            let tLeft = CGFloat(index) * row.templateWidth
+            let totalWidth = row.templateWidth * CGFloat(row.templates.count)
+            let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
+            Color.clear
+                .frame(width: row.templateWidth, height: row.templateHeight)
+                .overlay(alignment: .topLeading) {
+                    row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanSize)
+                        .frame(width: totalWidth, height: row.templateHeight)
+                        .offset(x: -tLeft)
+                }
+                .clipped()
+        } else {
+            let templateSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+            row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateSize)
+                .frame(width: row.templateWidth, height: row.templateHeight)
+        }
+    }
+
+    /// Renders the background for a single template slot, applies CIGaussianBlur, and returns the result cropped to template bounds.
+    /// Pass `cachedSpanningBlur` (from `renderBlurredSpanningBackground`) to avoid re-rendering the full-width image per template.
+    @MainActor
+    private static func renderBlurredBackground(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage], cachedSpanningBlur: NSImage? = nil) -> NSImage {
+        if row.isSpanningBackground {
+            let blurred = cachedSpanningBlur ?? {
+                let totalWidth = row.templateWidth * CGFloat(row.templates.count)
+                let spanSize = CGSize(width: totalWidth, height: row.templateHeight)
+                let spanView = row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanSize)
+                    .frame(width: totalWidth, height: row.templateHeight)
+                return renderBlurredViewToImage(
+                    spanView,
+                    width: totalWidth,
+                    height: row.templateHeight,
+                    radius: row.backgroundBlur,
+                    label: "blur spanning bg"
+                )
+            }()
+            return cropImage(
+                blurred,
+                x: CGFloat(index) * row.templateWidth,
+                width: row.templateWidth,
+                height: row.templateHeight
+            )
+        }
+
+        let bgView = rowBackgroundView(index: index, row: row, screenshotImages: screenshotImages)
+        return renderBlurredViewToImage(
+            bgView,
+            width: row.templateWidth,
+            height: row.templateHeight,
+            radius: row.backgroundBlur,
+            label: "blur bg"
+        )
+    }
+
+    private static let ciContext = CIContext()
+
+    /// Applies CIGaussianBlur and crops the result back to the original image bounds.
+    /// Uses CIAffineClamp to extend edge pixels so the blur kernel doesn't sample transparent pixels.
+    private static func applyGaussianBlur(to image: NSImage, radius: Double) -> NSImage {
+        guard radius > 0,
+              let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return image }
+
+        let ciImage = CIImage(cgImage: cgImage)
+        let originalExtent = ciImage.extent
+
+        // Clamp edges to infinite extent so blur doesn't sample transparent pixels
+        let clamp = CIFilter(name: "CIAffineClamp")!
+        clamp.setValue(ciImage, forKey: kCIInputImageKey)
+        clamp.setValue(CGAffineTransform.identity, forKey: kCIInputTransformKey)
+
+        let blur = CIFilter(name: "CIGaussianBlur")!
+        blur.setValue(clamp.outputImage, forKey: kCIInputImageKey)
+        blur.setValue(radius, forKey: kCIInputRadiusKey)
+
+        guard let output = blur.outputImage else { return image }
+
+        let cropped = output.cropped(to: originalExtent)
+        guard let blurredCG = ciContext.createCGImage(cropped, from: originalExtent) else { return image }
+
+        return NSImage(cgImage: blurredCG, size: image.size)
+    }
+
+    /// Crops a rendered row background back to a single template slot.
+    private static func cropImage(_ image: NSImage, x: CGFloat, width: CGFloat, height: CGFloat) -> NSImage {
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return image }
+
+        let cropRect = CGRect(
+            x: max(0, floor(x)),
+            y: 0,
+            width: min(CGFloat(cgImage.width) - max(0, floor(x)), ceil(width)),
+            height: min(CGFloat(cgImage.height), ceil(height))
+        ).integral
+
+        guard cropRect.width > 0,
+              cropRect.height > 0,
+              let croppedCG = cgImage.cropping(to: cropRect) else {
+            return image
+        }
+
+        return NSImage(cgImage: croppedCG, size: NSSize(width: width, height: height))
+    }
+
+    @MainActor
+    static func renderBlurredViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, radius: Double, label: String) -> NSImage {
+        let rendered = renderViewToImage(view, width: width, height: height, label: label)
+        let blurred = applyGaussianBlur(to: rendered, radius: radius)
+        return flattenImage(blurred, over: rendered, width: width, height: height)
+    }
+
+    @MainActor
+    private static func renderViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, label: String) -> NSImage {
         // Use NSHostingView + layer rendering instead of ImageRenderer.
         // ImageRenderer can produce slightly different text glyph metrics than
         // on-screen rendering, causing line-break differences in export.
         // NSHostingView uses the same AppKit/CoreText pipeline as the editor.
-        let hostingView = NSHostingView(rootView: view)
-        hostingView.frame = NSRect(x: 0, y: 0, width: row.templateWidth, height: row.templateHeight)
+        let pixelW = Int(ceil(width))
+        let pixelH = Int(ceil(height))
+        let rect = NSRect(x: 0, y: 0, width: pixelW, height: pixelH)
+        let hostingView = NSHostingView(
+            rootView: view
+                .frame(width: CGFloat(pixelW), height: CGFloat(pixelH), alignment: .topLeading)
+                .clipped()
+        )
+        hostingView.frame = rect
         hostingView.wantsLayer = true
         hostingView.layoutSubtreeIfNeeded()
         hostingView.displayIfNeeded()
 
-        let pixelW = Int(ceil(row.templateWidth))
-        let pixelH = Int(ceil(row.templateHeight))
-        guard let ctx = CGContext(
-            data: nil, width: pixelW, height: pixelH,
-            bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
-        ) else {
-            print("[ExportService] Warning: Failed to create CGContext for template \(index) in row '\(row.label)'")
-            return NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
+        guard let bitmapRep = hostingView.bitmapImageRepForCachingDisplay(in: rect) else {
+            print("[ExportService] Warning: Failed to create bitmap rep for \(label)")
+            return NSImage(size: NSSize(width: width, height: height))
         }
+        hostingView.cacheDisplay(in: rect, to: bitmapRep)
 
-        ctx.interpolationQuality = .high
-        ctx.translateBy(x: 0, y: row.templateHeight)
-        ctx.scaleBy(x: 1, y: -1)
-        hostingView.layer!.render(in: ctx)
+        let image = NSImage(size: NSSize(width: width, height: height))
+        image.addRepresentation(bitmapRep)
+        return image
+    }
 
-        if let cgImage = ctx.makeImage() {
-            return NSImage(cgImage: cgImage, size: NSSize(width: row.templateWidth, height: row.templateHeight))
-        }
-        print("[ExportService] Warning: CGContext.makeImage() returned nil for template \(index) in row '\(row.label)'")
-        return NSImage(size: NSSize(width: row.templateWidth, height: row.templateHeight))
+    /// Composites the blurred image over the original rendered background to remove edge alpha fringes.
+    @MainActor
+    private static func flattenImage(_ image: NSImage, over background: NSImage, width: CGFloat, height: CGFloat) -> NSImage {
+        let flattened = NSImage(size: NSSize(width: width, height: height))
+        flattened.lockFocus()
+        let rect = NSRect(x: 0, y: 0, width: width, height: height)
+        background.draw(in: rect)
+        image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
+        flattened.unlockFocus()
+        return flattened
     }
 
     private static func normalizeDeviceAspectIfNeeded(_ shape: CanvasShapeModel) -> CanvasShapeModel {

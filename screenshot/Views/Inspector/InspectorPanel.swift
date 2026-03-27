@@ -142,6 +142,26 @@ struct InspectorPanel: View {
                 }
             )
 
+            HStack(spacing: 4) {
+                Text("Blur")
+                    .font(.system(size: 12))
+                Spacer()
+                Slider(
+                    value: liveRowBinding(rowId, keyPath: \.backgroundBlur, default: 0),
+                    in: 0...100
+                ) { editing in
+                    if editing {
+                        guard let idx = state.rowIndex(for: rowId) else { return }
+                        state.registerUndoForRow(at: idx, "Background Blur")
+                    }
+                }
+                .frame(width: 100)
+                Text("\(Int(state.rows[rowIndex].backgroundBlur))")
+                    .font(.system(size: 11).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, alignment: .trailing)
+            }
+
             if state.rows[rowIndex].backgroundStyle != .color {
                 let canSpanAcrossRow = state.rows[rowIndex].templates.count > 1
                 Toggle("Stretch across all screenshots", isOn: safeRowBinding(rowId, keyPath: \.spanBackgroundAcrossRow, default: false))
@@ -273,6 +293,22 @@ struct InspectorPanel: View {
 
     private func sizePresetTag(for size: ScreenshotSize) -> String {
         "\(Int(size.width))x\(Int(size.height))"
+    }
+
+    /// Binding that updates the row and schedules a save but does NOT register undo.
+    /// Use with sliders where undo is registered once via `onEditingChanged`.
+    private func liveRowBinding<T>(_ rowId: UUID, keyPath: WritableKeyPath<ScreenshotRow, T>, default defaultValue: T) -> Binding<T> {
+        Binding(
+            get: {
+                guard let idx = state.rowIndex(for: rowId) else { return defaultValue }
+                return state.rows[idx][keyPath: keyPath]
+            },
+            set: { newValue in
+                guard let idx = state.rowIndex(for: rowId) else { return }
+                state.rows[idx][keyPath: keyPath] = newValue
+                state.scheduleSave()
+            }
+        )
     }
 
     private func safeRowBinding<T>(_ rowId: UUID, keyPath: WritableKeyPath<ScreenshotRow, T>, default defaultValue: T) -> Binding<T> {

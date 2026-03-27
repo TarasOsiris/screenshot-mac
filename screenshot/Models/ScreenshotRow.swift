@@ -14,6 +14,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     var gradientConfig: GradientConfig
     var spanBackgroundAcrossRow: Bool
     var backgroundImageConfig: BackgroundImageConfig
+    var backgroundBlur: Double
     var defaultDeviceFrameId: String?
     var hiddenShapeTypes: Set<ShapeType>
     var showBorders: Bool
@@ -33,6 +34,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         gradientConfig: GradientConfig = GradientConfig(),
         spanBackgroundAcrossRow: Bool = false,
         backgroundImageConfig: BackgroundImageConfig = BackgroundImageConfig(),
+        backgroundBlur: Double = 0,
         defaultDeviceFrameId: String? = nil,
         showDevice: Bool = true,
         hiddenShapeTypes: Set<ShapeType> = [],
@@ -52,6 +54,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         self.gradientConfig = gradientConfig
         self.spanBackgroundAcrossRow = spanBackgroundAcrossRow
         self.backgroundImageConfig = backgroundImageConfig
+        self.backgroundBlur = backgroundBlur
         self.defaultDeviceFrameId = defaultDeviceFrameId
         var hidden = hiddenShapeTypes
         if !showDevice { hidden.insert(.device) }
@@ -68,6 +71,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         case defaultDeviceCategory = "ddc"
         case backgroundStyle = "bgs", gradientConfig = "gc", backgroundImageConfig = "bgic"
         case spanBackgroundAcrossRow = "span"
+        case backgroundBlur = "bgbl"
         case defaultDeviceFrameId = "ddfi"
         case hiddenShapeTypes = "hst"
         case showBorders = "sb", shapes = "s", isLabelManuallySet = "lm"
@@ -88,6 +92,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
         spanBackgroundAcrossRow = try c.decodeIfPresent(Bool.self, forKey: .spanBackgroundAcrossRow) ?? false
         backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? BackgroundImageConfig()
+        backgroundBlur = try c.decodeIfPresent(Double.self, forKey: .backgroundBlur) ?? 0
         defaultDeviceFrameId = try c.decodeIfPresent(String.self, forKey: .defaultDeviceFrameId)
         hiddenShapeTypes = try c.decodeIfPresent(Set<ShapeType>.self, forKey: .hiddenShapeTypes) ?? []
         showBorders = try c.decodeIfPresent(Bool.self, forKey: .showBorders) ?? true
@@ -109,6 +114,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         if backgroundStyle == .gradient { try c.encode(gradientConfig, forKey: .gradientConfig) }
         if spanBackgroundAcrossRow { try c.encode(true, forKey: .spanBackgroundAcrossRow) }
         if backgroundStyle == .image { try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig) }
+        if backgroundBlur != 0 { try c.encode(backgroundBlur, forKey: .backgroundBlur) }
         try c.encodeIfPresent(defaultDeviceFrameId, forKey: .defaultDeviceFrameId)
         if !hiddenShapeTypes.isEmpty { try c.encode(hiddenShapeTypes, forKey: .hiddenShapeTypes) }
         if !showBorders { try c.encode(false, forKey: .showBorders) }

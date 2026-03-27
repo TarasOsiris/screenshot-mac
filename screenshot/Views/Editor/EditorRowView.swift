@@ -676,7 +676,6 @@ struct EditorRowView: View {
             alignment: .topLeading
         )
         .clipped()
-        .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
         .contentShape(Rectangle())
         .onTapGesture { tapSelectRow() }
         .onContinuousHover { phase in
@@ -704,36 +703,72 @@ struct EditorRowView: View {
     @ViewBuilder
     private func backgroundLayer(dw: CGFloat, dh: CGFloat) -> some View {
         let templateModelSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+        let displayBlur = row.backgroundBlur * dh / row.templateHeight
+        let totalWidth = dw * CGFloat(row.templates.count)
+        let blurBleed = displayBlur > 0 ? ceil(displayBlur * 3) : 0
+        let baseLayer = rowBackgroundBaseLayer(dw: dw, dh: dh, templateModelSize: templateModelSize, blurBleed: blurBleed)
+
+        ZStack(alignment: .topLeading) {
+            if displayBlur > 0 {
+                blurredView(width: totalWidth, height: dh, displayBlur: displayBlur, blurBleed: blurBleed) {
+                    baseLayer
+                }
+            } else {
+                baseLayer
+                    .frame(width: totalWidth, height: dh, alignment: .topLeading)
+                    .clipped()
+            }
+
+            if row.templates.contains(where: \.overrideBackground) {
+                rowBackgroundOverrideLayer(dw: dw, dh: dh, templateModelSize: templateModelSize)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func rowBackgroundBaseLayer(dw: CGFloat, dh: CGFloat, templateModelSize: CGSize, blurBleed: CGFloat) -> some View {
+        let totalWidth = dw * CGFloat(row.templates.count)
+
         if row.isSpanningBackground {
-            let totalWidth = dw * CGFloat(row.templates.count)
             let spanModelSize = CGSize(width: row.templateWidth * CGFloat(row.templates.count), height: row.templateHeight)
+            row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: spanModelSize)
+                .frame(width: totalWidth + blurBleed * 2, height: dh + blurBleed * 2)
+        } else {
             ZStack(alignment: .topLeading) {
-                row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: spanModelSize)
-                    .frame(width: totalWidth, height: dh)
-                HStack(spacing: 0) {
-                    ForEach(row.templates) { template in
-                        if template.overrideBackground {
-                            template.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
-                                .frame(width: dw, height: dh)
-                        } else {
-                            Color.clear.frame(width: dw, height: dh)
-                        }
-                    }
+                ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, _ in
+                    row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
+                        .frame(width: dw + blurBleed * 2, height: dh + blurBleed * 2)
+                        .offset(x: CGFloat(index) * dw, y: 0)
                 }
             }
-        } else {
-            HStack(spacing: 0) {
-                ForEach(row.templates) { template in
-                    if template.overrideBackground {
-                        template.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
-                            .frame(width: dw, height: dh)
-                    } else {
-                        row.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
-                            .frame(width: dw, height: dh)
-                    }
+            .frame(width: totalWidth + blurBleed * 2, height: dh + blurBleed * 2, alignment: .topLeading)
+        }
+    }
+
+    @ViewBuilder
+    private func rowBackgroundOverrideLayer(dw: CGFloat, dh: CGFloat, templateModelSize: CGSize) -> some View {
+        HStack(spacing: 0) {
+            ForEach(row.templates) { template in
+                if template.overrideBackground {
+                    template.resolvedBackgroundView(screenshotImages: state.screenshotImages, modelSize: templateModelSize)
+                        .frame(width: dw, height: dh)
+                } else {
+                    Color.clear.frame(width: dw, height: dh)
                 }
             }
         }
+    }
+
+    /// Applies blur once across the whole row background so adjacent screenshots
+    /// share one continuous blurred surface instead of blurring each tile separately.
+    @ViewBuilder
+    private func blurredView<V: View>(width: CGFloat, height: CGFloat, displayBlur: CGFloat, blurBleed: CGFloat, @ViewBuilder content: () -> V) -> some View {
+        content()
+            .offset(x: -blurBleed, y: -blurBleed)
+            .compositingGroup()
+            .blur(radius: displayBlur)
+            .frame(width: width, height: height)
+            .clipped()
     }
 
     private func tapSelectRow() {

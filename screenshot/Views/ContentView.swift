@@ -624,42 +624,53 @@ struct ContentView: View {
         guard !state.rows.isEmpty else { return }
         guard let baseURL = chooseExportDestination() else { return }
 
-        Task {
-            let rowsDir = baseURL.appendingPathComponent("rows", isDirectory: true)
+        exportSuccessTimer?.cancel()
+        isExporting = true
+        exportSuccess = false
+        exportError = nil
+        exportProgress = 0
+        exportTotal = state.rows.count
+
+        exportTask = Task {
+            defer {
+                isExporting = false
+                exportTask = nil
+            }
             do {
+                let rowsDir = ExportService.uniqueFolder(named: "rows", in: baseURL)
                 try FileManager.default.createDirectory(at: rowsDir, withIntermediateDirectories: true)
-            } catch {
-                exportError = "Failed to create rows folder: \(error.localizedDescription)"
-                return
-            }
 
-            let localeCode = state.localeState.activeLocaleCode
-            var imageCache: [String: NSImage] = [:]
-            for (index, row) in state.rows.enumerated() {
-                let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
-                let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
-                let image = ExportService.renderRowImage(
-                    row: row,
-                    screenshotImages: rowImages,
-                    localeCode: localeCode,
-                    localeState: state.localeState
-                )
-                guard let data = ExportService.encodeImage(image, format: .png) else {
-                    exportError = "Failed to render row \(index + 1)"
-                    return
-                }
-                let paddedIndex = String(format: "%02d", index + 1)
-                let fileName = row.label.isEmpty ? "\(paddedIndex).png" : "\(paddedIndex)_\(row.label).png"
-                do {
+                let localeCode = state.localeState.activeLocaleCode
+                var imageCache: [String: NSImage] = [:]
+                for (index, row) in state.rows.enumerated() {
+                    try Task.checkCancellation()
+                    let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
+                    let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
+                    let image = ExportService.renderRowImage(
+                        row: row,
+                        screenshotImages: rowImages,
+                        localeCode: localeCode,
+                        localeState: state.localeState
+                    )
+                    guard let data = ExportService.encodeImage(image, format: .png) else {
+                        exportError = "Failed to render row \(index + 1)"
+                        return
+                    }
+                    let paddedIndex = String(format: "%02d", index + 1)
+                    let fileName = row.label.isEmpty ? "\(paddedIndex).png" : "\(paddedIndex)_\(row.label).png"
                     try data.write(to: rowsDir.appendingPathComponent(fileName))
-                } catch {
-                    exportError = error.localizedDescription
-                    return
+                    exportProgress = index + 1
                 }
-            }
 
-            NSWorkspace.shared.activateFileViewerSelecting([rowsDir])
-            showExportSuccess()
+                if openExportFolderOnSuccess {
+                    NSWorkspace.shared.activateFileViewerSelecting([rowsDir])
+                }
+                showExportSuccess()
+            } catch is CancellationError {
+                // User cancelled — no error to show
+            } catch {
+                exportError = error.localizedDescription
+            }
         }
     }
 
