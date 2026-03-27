@@ -18,6 +18,7 @@ private struct EditorBlurBackgroundRenderKey: Equatable {
         let color: CodableColor
         let gradient: GradientConfig
         let image: BackgroundImageConfig
+        let blur: Double
     }
 
     struct TemplateBackgroundDescriptor: Equatable {
@@ -83,7 +84,8 @@ struct EditorRasterizedBackgroundView: View {
                 style: row.backgroundStyle,
                 color: row.backgroundColorData,
                 gradient: row.gradientConfig,
-                image: row.backgroundImageConfig
+                image: row.backgroundImageConfig,
+                blur: row.backgroundBlur
             ),
             templateBackgroundDescriptors: row.templates.map {
                 .init(
@@ -93,7 +95,8 @@ struct EditorRasterizedBackgroundView: View {
                         style: $0.backgroundStyle,
                         color: $0.backgroundColor,
                         gradient: $0.gradientConfig,
-                        image: $0.backgroundImageConfig
+                        image: $0.backgroundImageConfig,
+                        blur: $0.backgroundBlur
                     )
                 )
             },
@@ -206,8 +209,19 @@ struct RowCanvasOverrideBackgroundView: View {
         HStack(spacing: 0) {
             ForEach(row.templates) { template in
                 if template.overrideBackground {
-                    template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
-                        .frame(width: displayTemplateWidth, height: displayTemplateHeight)
+                    if template.backgroundBlur > 0 {
+                        BackgroundBlurView(
+                            width: displayTemplateWidth,
+                            height: displayTemplateHeight,
+                            blurRadius: template.backgroundBlur * displayScale
+                        ) {
+                            template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
+                                .frame(width: displayTemplateWidth, height: displayTemplateHeight)
+                        }
+                    } else {
+                        template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
+                            .frame(width: displayTemplateWidth, height: displayTemplateHeight)
+                    }
                 } else {
                     Color.clear.frame(width: displayTemplateWidth, height: displayTemplateHeight)
                 }

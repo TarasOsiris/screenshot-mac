@@ -235,26 +235,66 @@ struct ExportService {
             backgroundImage = baseBackgroundImage
         }
 
+        return renderOverrideBackgroundImage(
+            row: row,
+            screenshotImages: screenshotImages,
+            displayScale: displayScale,
+            labelPrefix: labelPrefix,
+            over: backgroundImage
+        )
+    }
+
+    @MainActor
+    private static func renderOverrideBackgroundImage(
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage],
+        displayScale: CGFloat,
+        labelPrefix: String,
+        over backgroundImage: NSImage
+    ) -> NSImage {
+        let totalWidth = row.templateWidth * displayScale * CGFloat(row.templates.count)
+        let totalHeight = row.templateHeight * displayScale
+
         guard row.templates.contains(where: \.overrideBackground) else {
             return backgroundImage
         }
 
-        let overrideImage = renderViewToImage(
-            RowCanvasOverrideBackgroundView(
-                row: row,
-                screenshotImages: screenshotImages,
-                displayScale: displayScale
-            ),
-            width: totalWidth,
-            height: totalHeight,
-            label: "\(labelPrefix) override background '\(row.label)'"
-        )
-        return flattenImage(
-            overrideImage,
-            over: backgroundImage,
-            width: totalWidth,
-            height: totalHeight
-        )
+        var composited = backgroundImage
+        let templateWidth = row.templateWidth * displayScale
+        let templateHeight = row.templateHeight * displayScale
+        let templateModelSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+
+        for (index, template) in row.templates.enumerated() where template.overrideBackground {
+            let baseOverride = renderViewToImage(
+                template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
+                    .frame(width: templateWidth, height: templateHeight),
+                width: templateWidth,
+                height: templateHeight,
+                label: "\(labelPrefix) override background '\(row.label)' [\(index)]"
+            )
+
+            let overrideImage: NSImage
+            if template.backgroundBlur > 0 {
+                let blurred = applyGaussianBlur(to: baseOverride, radius: template.backgroundBlur * displayScale)
+                overrideImage = flattenImage(
+                    blurred,
+                    over: baseOverride,
+                    width: templateWidth,
+                    height: templateHeight
+                )
+            } else {
+                overrideImage = baseOverride
+            }
+
+            composited = drawImage(
+                overrideImage,
+                into: composited,
+                at: CGPoint(x: CGFloat(index) * templateWidth, y: 0),
+                canvasSize: NSSize(width: totalWidth, height: totalHeight)
+            )
+        }
+
+        return composited
     }
 
     @MainActor
@@ -283,6 +323,25 @@ struct ExportService {
         case .jpeg:
             return opaqueJPEGData(from: image)
         }
+    }
+
+    nonisolated private static func drawImage(
+        _ image: NSImage,
+        into background: NSImage,
+        at origin: CGPoint,
+        canvasSize: NSSize
+    ) -> NSImage {
+        let output = NSImage(size: canvasSize)
+        output.lockFocus()
+        background.draw(in: NSRect(origin: .zero, size: canvasSize))
+        image.draw(
+            in: NSRect(origin: origin, size: image.size),
+            from: NSRect(origin: .zero, size: image.size),
+            operation: .sourceOver,
+            fraction: 1
+        )
+        output.unlockFocus()
+        return output
     }
 
     @MainActor

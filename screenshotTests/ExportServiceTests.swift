@@ -372,6 +372,44 @@ struct ExportServiceTests {
         try expectDominant(bmp1, at: (100, 100), channel: .g, label: "t1: override bg green")
     }
 
+    @Test func blurredTemplateOverrideMatchesEditor() throws {
+        let tw: CGFloat = 240
+        let th: CGFloat = 240
+        let sharpGradient = GradientConfig(
+            stops: [
+                GradientColorStop(color: Self.testRed, location: 0.49),
+                GradientColorStop(color: Self.testRed, location: 0.5),
+                GradientColorStop(color: Self.testBlue, location: 0.5),
+                GradientColorStop(color: Self.testBlue, location: 0.51),
+            ],
+            angle: 90
+        )
+
+        var overriddenTemplate = ScreenshotTemplate()
+        overriddenTemplate.overrideBackground = true
+        overriddenTemplate.backgroundStyle = .gradient
+        overriddenTemplate.gradientConfig = sharpGradient
+        overriddenTemplate.backgroundBlur = 24
+
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(backgroundColor: Self.testGreen), overriddenTemplate],
+            templateWidth: tw,
+            templateHeight: th,
+            bgColor: Self.testGreen
+        )
+
+        let exportBitmap = try renderTemplateBitmap(index: 1, row: row)
+        let editorBitmap = try renderEditorBitmap(index: 1, row: row)
+
+        for (label, x, y) in [
+            ("left edge", 12, Int(th) / 2),
+            ("boundary", Int(tw) / 2, Int(th) / 2),
+            ("right edge", Int(tw) - 13, Int(th) / 2),
+        ] {
+            try expectPixelsClose(exportBitmap, editorBitmap, at: (x, y), label: label)
+        }
+    }
+
     @Test func spanningGradientIsContinuousAcrossTemplates() throws {
         let tw: CGFloat = 200
         let th: CGFloat = 200

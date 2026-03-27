@@ -134,6 +134,23 @@ struct TemplateControlBar: View {
                                 onRemoveImage: onRemoveBackgroundImage,
                                 onDropImage: onDropBackgroundImage
                             )
+
+                            if template.backgroundStyle != .color {
+                                HStack(spacing: 4) {
+                                    Text("Blur")
+                                        .font(.system(size: 12))
+                                    Spacer()
+                                    Slider(
+                                        value: $template.backgroundBlur.onSet { onSave() },
+                                        in: 0...100
+                                    )
+                                    .frame(width: 100)
+                                    Text("\(Int(template.backgroundBlur))")
+                                        .font(.system(size: 11).monospacedDigit())
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 28, alignment: .trailing)
+                                }
+                            }
                         }
                     }
                     .padding(12)

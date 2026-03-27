@@ -8,6 +8,7 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
     var backgroundStyle: BackgroundStyle
     var gradientConfig: GradientConfig
     var backgroundImageConfig: BackgroundImageConfig
+    var backgroundBlur: Double
 
     init(id: UUID = UUID(), backgroundColor: Color = .blue) {
         self.id = id
@@ -16,11 +17,13 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
         self.backgroundStyle = .color
         self.gradientConfig = GradientConfig()
         self.backgroundImageConfig = BackgroundImageConfig()
+        self.backgroundBlur = 0
     }
 
     enum CodingKeys: String, CodingKey {
         case id, backgroundColor = "bgc", overrideBackground = "ob"
         case backgroundStyle = "bgs", gradientConfig = "gc", backgroundImageConfig = "bgic"
+        case backgroundBlur = "bgbl"
     }
 
     init(from decoder: Decoder) throws {
@@ -31,6 +34,7 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
         backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
         gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
         backgroundImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .backgroundImageConfig) ?? BackgroundImageConfig()
+        backgroundBlur = try c.decodeIfPresent(Double.self, forKey: .backgroundBlur) ?? 0
     }
 
     func encode(to encoder: Encoder) throws {
@@ -42,6 +46,7 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
             if backgroundStyle != .color { try c.encode(backgroundStyle, forKey: .backgroundStyle) }
             if backgroundStyle == .gradient { try c.encode(gradientConfig, forKey: .gradientConfig) }
             if backgroundStyle == .image { try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig) }
+            if backgroundBlur != 0 { try c.encode(backgroundBlur, forKey: .backgroundBlur) }
         }
     }
 
@@ -56,6 +61,7 @@ struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
         copy.backgroundStyle = backgroundStyle
         copy.gradientConfig = gradientConfig
         copy.backgroundImageConfig = backgroundImageConfig
+        copy.backgroundBlur = backgroundBlur
         return copy
     }
 }
