@@ -443,7 +443,9 @@ struct CanvasShapeView: View {
                     },
                     onSelectFrame: { frame in
                         applyUpdate { $0.selectRealFrame(frame) }
-                    }
+                    },
+                    selectedCategory: shape.deviceCategory,
+                    selectedFrameId: shape.deviceFrameId
                 )
             }
             if let onMatchDeviceSizes {

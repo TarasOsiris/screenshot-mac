@@ -132,8 +132,8 @@ struct DeviceFrameView: View {
         let maxScreenCornerR = max(0, bodyCornerR - max(bezelLR, bezelTB))
         let screenCornerR = min(category.screenCornerRadius * s, maxScreenCornerR)
 
-        // Dynamic Island: ~126 × 37 pts @ 3x = 378 × 111 px on 1206 × 2622 display
-        let diW: CGFloat = screenW * 0.313
+        // Dynamic Island: ~126 × 37 pts @ 3x = 376 × 110 px on 1206 × 2622 display
+        let diW: CGFloat = screenW * 0.312
         let diH: CGFloat = screenH * 0.042
         let diOffsetFromScreenTop: CGFloat = screenH * 0.016 + diH / 2
 
@@ -170,11 +170,11 @@ struct DeviceFrameView: View {
             screenArea(screenShape: screenShape, screenW: screenW, screenH: screenH, bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH, s: s)
 
             // Dynamic Island
-            Capsule()
+            RoundedRectangle(cornerRadius: diH / 2, style: .continuous)
                 .fill(.black)
                 .frame(width: diW, height: diH)
                 .overlay(
-                    Capsule()
+                    RoundedRectangle(cornerRadius: diH / 2, style: .continuous)
                         .strokeBorder(.black.opacity(0.06), lineWidth: 0.5 * s)
                 )
                 .offset(y: -(screenH / 2 - diOffsetFromScreenTop))

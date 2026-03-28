@@ -118,7 +118,8 @@ enum DeviceCategory: String, Codable, CaseIterable {
     }
 
     /// Body dimensions (without side buttons).
-    /// iPhone 17: 71.5 x 149.6 mm at scale 3.077 px/mm → 220 x 460.
+    /// iPhone 17: 71.5 x 149.6 mm at scale 3.077 px/mm → 220 x ~460.
+    /// Height adjusted to 468 so screen area ratio matches real iPhone screenshots (~0.46).
     /// iPad Pro 11": 177.5 x 249.7 mm → 546 x 768.
     /// iPad Pro 13": 215.5 x 281.6 mm → 663 x 867.
     /// MacBook: generic 16:10 landscape proportion.
@@ -126,7 +127,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
     /// Android Tablet: generic tablet ~165 x 254 mm → 508 x 782.
     var bodyDimensions: (width: CGFloat, height: CGFloat) {
         switch self {
-        case .iphone: (220, 460)
+        case .iphone: (220, 468)
         case .ipadPro11: (546, 768)
         case .ipadPro13: (663, 867)
         case .macbook: (640, 420)

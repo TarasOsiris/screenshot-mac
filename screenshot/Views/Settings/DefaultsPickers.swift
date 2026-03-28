@@ -36,10 +36,11 @@ struct DefaultDevicePicker: View {
     @Binding var frameId: String
 
     var body: some View {
-        LabeledContent("Default device") {
+        LabeledContent("Default device frame") {
             DevicePickerMenu(
                 category: DeviceCategory(rawValue: categoryRaw),
                 frameId: frameId.isEmpty ? nil : frameId,
+                presentation: .inline,
                 onSelectNone: {
                     categoryRaw = ""
                     frameId = ""

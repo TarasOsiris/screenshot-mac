@@ -297,4 +297,31 @@ struct CanvasShapeModelTests {
         #expect(ShapeType.device.supportsOutline == false)
         #expect(ShapeType.svg.supportsOutline == false)
     }
+
+    // MARK: - Device frame variants
+
+    @Test func preferredFramePreservesMatchingColorAndOrientationWhenSwitchingModels() {
+        let selected = "iphone17pro-deepblue-landscape"
+        let preferred = DeviceFrameCatalog.preferredFrame(forGroupId: "iphone17promax", matching: selected)
+
+        #expect(preferred?.id == "iphone17promax-deepblue-landscape")
+    }
+
+    @Test func variantChangesColorWithoutChangingOrientation() {
+        let variant = DeviceFrameCatalog.variant(
+            forFrameId: "iphone17-lavender-landscape",
+            colorGroupId: "iphone17-sage"
+        )
+
+        #expect(variant?.id == "iphone17-sage-landscape")
+    }
+
+    @Test func variantChangesOrientationWithoutChangingColor() {
+        let variant = DeviceFrameCatalog.variant(
+            forFrameId: "iphoneair-skyblue-portrait",
+            isLandscape: true
+        )
+
+        #expect(variant?.id == "iphoneair-skyblue-landscape")
+    }
 }

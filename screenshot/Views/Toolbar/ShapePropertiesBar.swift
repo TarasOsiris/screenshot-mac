@@ -104,28 +104,6 @@ struct ShapePropertiesBar: View {
                         section {
                             devicePicker(shape: shape, shapeId: shapeId)
 
-                            // Body color for abstract devices only
-                            if shape.resolvedDeviceFrame == nil {
-                                separator
-
-                                controlGroup("Body") {
-                                    HStack(spacing: 4) {
-                                        ColorPicker("", selection: deviceBodyColorBinding(shapeId), supportsOpacity: false)
-                                            .labelsHidden()
-                                            .help("Device color")
-
-                                        ActionButton(
-                                            icon: "arrow.counterclockwise",
-                                            tooltip: "Reset to row default device body color",
-                                            frameSize: 24,
-                                            disabled: !hasDeviceBodyColorOverride(shapeId)
-                                        ) {
-                                            resetDeviceBodyColor(shapeId)
-                                        }
-                                    }
-                                }
-                            }
-
                             if shape.screenshotFileName != nil {
                                 separator
 
@@ -565,46 +543,26 @@ struct ShapePropertiesBar: View {
 
     // MARK: - Device Picker
 
-    /// Unified device picker: abstract devices first, separator, then real frames grouped by model with submenus.
+    /// Shared device picker used across toolbar/settings/inspector.
     @ViewBuilder
     private func devicePicker(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        Menu {
-            DeviceMenuContent(
-                onSelectCategory: { cat in
-                    selectAbstractDevice(shapeId: shapeId, category: cat)
-                },
-                onSelectFrame: { frame in
-                    selectRealFrame(shapeId: shapeId, frame: frame)
-                }
-            )
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: devicePickerIcon(shape: shape))
-                Text(devicePickerLabel(shape: shape))
-                    .lineLimit(1)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(.secondary)
+        DevicePickerMenu(
+            category: shape.deviceCategory ?? .iphone,
+            frameId: shape.deviceFrameId,
+            allowsNoDevice: false,
+            presentation: .toolbar,
+            bodyColor: shape.resolvedDeviceFrame == nil ? deviceBodyColorBinding(shapeId) : nil,
+            bodyColorLabel: "Device color",
+            canResetBodyColor: hasDeviceBodyColorOverride(shapeId),
+            onResetBodyColor: { resetDeviceBodyColor(shapeId) },
+            onSelectCategory: { cat in
+                selectAbstractDevice(shapeId: shapeId, category: cat)
+            },
+            onSelectFrame: { frame in
+                selectRealFrame(shapeId: shapeId, frame: frame)
             }
-        }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
+        )
         .help(devicePickerHelp(shape: shape))
-    }
-
-    private func devicePickerLabel(shape: CanvasShapeModel) -> String {
-        if let frameId = shape.deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-            return "\(frame.modelName) - \(frame.shortLabel)"
-        }
-        return (shape.deviceCategory ?? .iphone).label
-    }
-
-    private func devicePickerIcon(shape: CanvasShapeModel) -> String {
-        if let frameId = shape.deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-            return frame.icon
-        }
-        return (shape.deviceCategory ?? .iphone).icon
     }
 
     private func devicePickerHelp(shape: CanvasShapeModel) -> String {

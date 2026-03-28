@@ -800,7 +800,9 @@ struct EditorRowView: View {
                     },
                     onSelectFrame: { frame in
                         state.changeAllDevices(in: row.id, toFrame: frame)
-                    }
+                    },
+                    selectedCategory: row.defaultDeviceCategory,
+                    selectedFrameId: row.defaultDeviceFrameId
                 )
             }
         }

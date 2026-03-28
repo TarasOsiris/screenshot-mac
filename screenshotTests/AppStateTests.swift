@@ -20,6 +20,38 @@ struct AppStateTests {
         #expect(state.selectedRowId == state.rows.first?.id)
     }
 
+    @Test func initialRowKeepsGenericDefaultWhenNoFrameIsStored() throws {
+        let defaults = UserDefaults.standard
+        let previousCategory = defaults.object(forKey: "defaultDeviceCategory")
+        let previousFrameId = defaults.object(forKey: "defaultDeviceFrameId")
+        defer {
+            if let previousCategory {
+                defaults.set(previousCategory, forKey: "defaultDeviceCategory")
+            } else {
+                defaults.removeObject(forKey: "defaultDeviceCategory")
+            }
+            if let previousFrameId {
+                defaults.set(previousFrameId, forKey: "defaultDeviceFrameId")
+            } else {
+                defaults.removeObject(forKey: "defaultDeviceFrameId")
+            }
+        }
+
+        defaults.set(DeviceCategory.iphone.rawValue, forKey: "defaultDeviceCategory")
+        defaults.set("", forKey: "defaultDeviceFrameId")
+
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let row = state.rows[0]
+        #expect(row.defaultDeviceCategory == .iphone)
+        #expect(row.defaultDeviceFrameId == nil)
+
+        let device = try #require(row.shapes.first(where: { $0.type == .device }))
+        #expect(device.deviceCategory == .iphone)
+        #expect(device.deviceFrameId == nil)
+    }
+
     // MARK: - Row operations
 
     @Test func addRowIncreasesCount() {

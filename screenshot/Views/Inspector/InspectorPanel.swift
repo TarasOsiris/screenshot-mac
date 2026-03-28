@@ -15,13 +15,13 @@ struct InspectorPanel: View {
         if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId {
             Form {
                 sizeSection(rowIndex: rowIndex, rowId: rowId)
+                deviceSection(rowId: rowId)
                 backgroundSection(rowIndex: rowIndex, rowId: rowId)
                 Section(isExpanded: $isAddElementExpanded) {
                     ShapeToolbar(state: state)
                 } header: {
                     Text("Shapes")
                 }
-                deviceSection(rowId: rowId)
                 optionsSection(rowId: rowId)
             }
             .formStyle(.grouped)
@@ -70,14 +70,7 @@ struct InspectorPanel: View {
     private func presetPicker(rowId: UUID) -> some View {
         let landscape = state.rowIndex(for: rowId).map { state.rows[$0].templateWidth > state.rows[$0].templateHeight } ?? false
 
-        Picker("Orientation", selection: orientationBinding(for: rowId)) {
-            Label("Vertical", systemImage: "rectangle.portrait")
-                .tag(false)
-            Label("Horizontal", systemImage: "rectangle")
-                .tag(true)
-        }
-        .pickerStyle(.segmented)
-        .controlSize(.small)
+        OrientationPicker(isLandscape: orientationBinding(for: rowId))
 
         Picker("Preset", selection: sizePresetBinding(for: rowId)) {
             ForEach(displayCategories) { category in
@@ -226,12 +219,15 @@ struct InspectorPanel: View {
     private func deviceSection(rowId: UUID) -> some View {
         Section(isExpanded: $isDeviceExpanded) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Default device")
+                Text("Default device frame")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                 DevicePickerMenu(
                     category: defaultDeviceCategory(for: rowId),
                     frameId: defaultDeviceFrameId(for: rowId),
+                    presentation: .toolbar,
+                    bodyColor: defaultDeviceIsAbstract(for: rowId) ? rowDefaultDeviceBodyColorBinding(for: rowId) : nil,
+                    bodyColorLabel: "Default color",
                     onSelectNone: {
                         state.setDefaultDevice(for: rowId, category: nil, frameId: nil)
                     },
@@ -245,16 +241,6 @@ struct InspectorPanel: View {
                 .help(defaultDeviceHelp(for: rowId))
             }
             .controlSize(.small)
-
-            // Body color only for abstract devices
-            if defaultDeviceIsAbstract(for: rowId) {
-                LabeledContent("Default color") {
-                    ColorPicker("", selection: rowDefaultDeviceBodyColorBinding(for: rowId), supportsOpacity: false)
-                        .labelsHidden()
-                        .help("Default device color for this row")
-                }
-                .font(.system(size: 12))
-            }
         } header: {
             Text("Device")
         }

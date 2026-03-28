@@ -78,6 +78,8 @@ struct DeviceFrameColorGroup: Identifiable {
     let id: String        // "iphone17pro-deepblue"
     let name: String      // "Deep Blue"
     let frames: [DeviceFrame]
+
+    var swatch: Color? { DeviceFrameColorSwatches.color(named: name) }
 }
 
 /// A group of real frames for one device model (e.g. "iPhone 17 Pro").
@@ -159,6 +161,9 @@ struct DeviceFrameCatalog {
         return map
     }()
 
+    /// O(1) lookup: group ID → group.
+    private static let groupsByID: [String: DeviceFrameGroup] = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, $0) })
+
     /// O(1) lookup: category → first portrait frame ID.
     private static let firstPortraitFrameByCategory: [DeviceCategory: String] = {
         var map: [DeviceCategory: String] = [:]
@@ -178,6 +183,49 @@ struct DeviceFrameCatalog {
     /// First portrait frame ID for a device category.
     static func firstPortraitFrameId(for category: DeviceCategory) -> String? {
         firstPortraitFrameByCategory[category]
+    }
+
+    /// Look up the device model group for a frame ID.
+    static func group(forFrameId frameId: String) -> DeviceFrameGroup? {
+        groupIdByFrameId[frameId].flatMap { groupsByID[$0] }
+    }
+
+    /// Look up the color group for a frame ID.
+    static func colorGroup(forFrameId frameId: String) -> DeviceFrameColorGroup? {
+        group(forFrameId: frameId)?.colorGroups.first { colorGroup in
+            colorGroup.frames.contains { $0.id == frameId }
+        }
+    }
+
+    /// Preferred frame for a device model group, preserving the current orientation/color when possible.
+    static func preferredFrame(forGroupId groupId: String, matching currentFrameId: String? = nil) -> DeviceFrame? {
+        guard let group = groupsByID[groupId] else { return nil }
+        let currentFrame = currentFrameId.flatMap { frame(for: $0) }
+        return preferredFrame(in: group, matching: currentFrame)
+    }
+
+    /// Resolve a sibling variant for the current frame with a different color and/or orientation.
+    static func variant(
+        forFrameId frameId: String,
+        colorGroupId: String? = nil,
+        isLandscape: Bool? = nil
+    ) -> DeviceFrame? {
+        guard let frame = frame(for: frameId),
+              let group = group(forFrameId: frameId) else { return nil }
+
+        let targetColorGroup = colorGroupId.flatMap { id in
+            group.colorGroups.first { $0.id == id }
+        } ?? colorGroup(forFrameId: frameId) ?? group.colorGroups.first
+
+        guard let targetColorGroup else { return nil }
+        let targetLandscape = isLandscape ?? frame.isLandscape
+        return targetColorGroup.frames.first(where: { $0.isLandscape == targetLandscape }) ?? targetColorGroup.frames.first
+    }
+
+    /// Return the same frame in the opposite orientation, if it exists.
+    static func toggledOrientation(for id: String) -> DeviceFrame? {
+        guard let frame = frame(for: id) else { return nil }
+        return variant(forFrameId: id, isLandscape: !frame.isLandscape)
     }
 
     /// Suggested screenshot size preset for a specific device frame.
@@ -201,6 +249,16 @@ struct DeviceFrameCatalog {
             return "\(Int(parsed.height))x\(Int(parsed.width))"
         }
         return preset
+    }
+
+    private static func preferredFrame(in group: DeviceFrameGroup, matching currentFrame: DeviceFrame?) -> DeviceFrame? {
+        let preferredColorName = currentFrame?.colorName
+        let preferredOrientation = currentFrame?.isLandscape ?? false
+
+        let preferredColorGroup = group.colorGroups.first(where: { $0.name == preferredColorName }) ?? group.colorGroups.first
+        return preferredColorGroup?.frames.first(where: { $0.isLandscape == preferredOrientation })
+            ?? preferredColorGroup?.frames.first(where: { !$0.isLandscape })
+            ?? preferredColorGroup?.frames.first
     }
 
     // MARK: - Build
@@ -298,5 +356,42 @@ struct DeviceFrameCatalog {
             return DeviceFrameColorGroup(id: "\(id)-\(slug)", name: color, frames: frames)
         }
         return DeviceFrameGroup(id: id, name: name, colorGroups: colorGroups)
+    }
+}
+
+private enum DeviceFrameColorSwatches {
+    static func color(named name: String) -> Color? {
+        switch name.lowercased() {
+        case "black":
+            Color(red: 0.13, green: 0.13, blue: 0.15)
+        case "white":
+            Color(red: 0.95, green: 0.96, blue: 0.97)
+        case "lavender":
+            Color(red: 0.72, green: 0.67, blue: 0.88)
+        case "mist blue":
+            Color(red: 0.66, green: 0.78, blue: 0.89)
+        case "sage":
+            Color(red: 0.68, green: 0.74, blue: 0.62)
+        case "cosmic orange":
+            Color(red: 0.78, green: 0.47, blue: 0.28)
+        case "deep blue":
+            Color(red: 0.24, green: 0.34, blue: 0.56)
+        case "silver":
+            Color(red: 0.82, green: 0.84, blue: 0.87)
+        case "cloud white":
+            Color(red: 0.94, green: 0.95, blue: 0.94)
+        case "light gold":
+            Color(red: 0.86, green: 0.79, blue: 0.64)
+        case "sky blue":
+            Color(red: 0.55, green: 0.75, blue: 0.93)
+        case "space black":
+            Color(red: 0.18, green: 0.19, blue: 0.21)
+        case "midnight":
+            Color(red: 0.13, green: 0.16, blue: 0.24)
+        case "space gray":
+            Color(red: 0.39, green: 0.42, blue: 0.45)
+        default:
+            nil
+        }
     }
 }

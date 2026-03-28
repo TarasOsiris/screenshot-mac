@@ -1,0 +1,30 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "purchases-ios-spm",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/RevenueCat/purchases-ios-spm.git",
+          "name" : "purchases-ios-spm"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "a1bf83fc76099c3d801aa7fc2543c3b9e488cd00",
+            "version" : "5.67.0"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "purchases-ios-spm"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

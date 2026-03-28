@@ -370,6 +370,7 @@ private struct BlankProjectRowCard: View {
             DevicePickerMenu(
                     category: draft.deviceCategory,
                     frameId: draft.deviceFrameId,
+                    presentation: .inline,
                     onSelectNone: {
                         draft.deviceCategory = nil
                         draft.deviceFrameId = nil

@@ -34,7 +34,10 @@
       "Bash(cat \"/Users/taras/Library/Containers/xyz.tleskiv.screenshot/Data/Library/Application Support/screenshot/projects.json\" | python3 -m json.tool)",
       "Bash(for f:*)",
       "Bash(GIT_EDITOR=true git -C /Users/taras/Documents/repo/experiments/screenshot-mac rebase --continue)",
-      "Bash(GIT_EDITOR=true git rebase --continue)"
+      "Bash(GIT_EDITOR=true git rebase --continue)",
+      "WebFetch(domain:support.google.com)",
+      "WebFetch(domain:help.appscreens.com)",
+      "WebFetch(domain:screenhance.com)"
     ]
   }
 }
