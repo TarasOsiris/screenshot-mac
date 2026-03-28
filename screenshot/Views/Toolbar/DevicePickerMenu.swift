@@ -29,13 +29,9 @@ struct DevicePickerMenu: View {
                 Text(resolvedLabel)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(.secondary)
             }
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
+        .menuStyle(.button)
     }
 
     // MARK: - Resolved display values

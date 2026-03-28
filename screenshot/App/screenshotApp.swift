@@ -76,7 +76,19 @@ struct ScreenshotBroApp: App {
         }
         .defaultSize(width: 1100, height: 700)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
+
+        Window("New Project", id: NewProjectWindowView.windowID) {
+            NewProjectWindowView()
+                .environment(appState)
+                .environment(storeService)
+                .preferredColorScheme(preferredColorScheme)
+        }
+        .defaultSize(width: 760, height: 620)
+        .windowResizability(.contentMinSize)
+
         .commands {
+            NewProjectCommands()
+
             CommandGroup(replacing: .pasteboard) {
                 Section {
                     Button("Cut") {
@@ -336,4 +348,17 @@ struct ScreenshotBroApp: App {
         }
     }
     #endif
+}
+
+private struct NewProjectCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some Commands {
+        CommandGroup(replacing: .newItem) {
+            Button("New Project...") {
+                openWindow(id: NewProjectWindowView.windowID)
+            }
+            .keyboardShortcut("n", modifiers: .command)
+        }
+    }
 }

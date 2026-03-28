@@ -225,28 +225,49 @@ final class AppState {
     }
 
     func makeDefaultRow(id: UUID = UUID(), label: String? = nil, width: CGFloat? = nil, height: CGFloat? = nil) -> ScreenshotRow {
+        makeDefaultRow(
+            id: id,
+            label: label,
+            width: width,
+            height: height,
+            templateCount: nil,
+            defaultDeviceCategory: nil,
+            defaultDeviceFrameId: nil
+        )
+    }
+
+    func makeDefaultRow(
+        id: UUID = UUID(),
+        label: String? = nil,
+        width: CGFloat? = nil,
+        height: CGFloat? = nil,
+        templateCount: Int?,
+        defaultDeviceCategory: DeviceCategory?,
+        defaultDeviceFrameId: String?
+    ) -> ScreenshotRow {
         let defaultSize = UserDefaults.standard.string(forKey: "defaultScreenshotSize") ?? "1242x2688"
         let parsedSize = parseSizeString(defaultSize)
         let w: CGFloat = width ?? parsedSize?.width ?? 1242
         let h: CGFloat = height ?? parsedSize?.height ?? 2688
         let storedTemplateCount = UserDefaults.standard.integer(forKey: "defaultTemplateCount")
-        let templateCount = storedTemplateCount > 0 ? storedTemplateCount : 3
-        let templates = (0..<templateCount).map { index in
+        let resolvedTemplateCount = templateCount ?? (storedTemplateCount > 0 ? storedTemplateCount : 3)
+        let templates = (0..<resolvedTemplateCount).map { index in
             ScreenshotTemplate(backgroundColor: Self.templateColors[index % Self.templateColors.count])
         }
         let deviceCategoryRaw = UserDefaults.standard.string(forKey: "defaultDeviceCategory") ?? "iphone"
-        let deviceCategory = DeviceCategory(rawValue: deviceCategoryRaw)
-        let deviceFrameId = UserDefaults.standard.string(forKey: "defaultDeviceFrameId").flatMap { $0.isEmpty ? nil : $0 }
-        let resolvedFrame = deviceFrameId.flatMap { DeviceFrameCatalog.frame(for: $0) }
+        let resolvedDeviceCategory = defaultDeviceCategory ?? DeviceCategory(rawValue: deviceCategoryRaw)
+        let storedDeviceFrameId = UserDefaults.standard.string(forKey: "defaultDeviceFrameId").flatMap { $0.isEmpty ? nil : $0 }
+        let resolvedDeviceFrame = defaultDeviceFrameId ?? storedDeviceFrameId
+        let resolvedFrame = resolvedDeviceFrame.flatMap { DeviceFrameCatalog.frame(for: $0) }
 
         var shapes: [CanvasShapeModel] = []
-        if let deviceCategory {
-            shapes = (0..<templateCount).map { index in
+        if let resolvedDeviceCategory {
+            shapes = (0..<resolvedTemplateCount).map { index in
                 var device = CanvasShapeModel.defaultDevice(
                     centerX: CGFloat(index) * w + w / 2,
                     centerY: h / 2,
                     templateHeight: h,
-                    category: deviceCategory
+                    category: resolvedDeviceCategory
                 )
                 if let resolvedFrame {
                     device.deviceCategory = resolvedFrame.fallbackCategory
@@ -263,8 +284,8 @@ final class AppState {
             templates: templates,
             templateWidth: w,
             templateHeight: h,
-            defaultDeviceCategory: deviceCategory,
-            defaultDeviceFrameId: deviceFrameId,
+            defaultDeviceCategory: resolvedDeviceCategory,
+            defaultDeviceFrameId: resolvedDeviceFrame,
             shapes: shapes,
             isLabelManuallySet: label != nil
         )

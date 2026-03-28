@@ -68,12 +68,25 @@ struct InspectorPanel: View {
 
     @ViewBuilder
     private func presetPicker(rowId: UUID) -> some View {
+        let landscape = state.rowIndex(for: rowId).map { state.rows[$0].templateWidth > state.rows[$0].templateHeight } ?? false
+
+        Picker("Orientation", selection: orientationBinding(for: rowId)) {
+            Label("Vertical", systemImage: "rectangle.portrait")
+                .tag(false)
+            Label("Horizontal", systemImage: "rectangle")
+                .tag(true)
+        }
+        .pickerStyle(.segmented)
+        .controlSize(.small)
+
         Picker("Preset", selection: sizePresetBinding(for: rowId)) {
             ForEach(displayCategories) { category in
                 Section(category.name) {
-                    ForEach(category.sizes, id: \.label) { size in
-                        Text(size.displayLabel)
-                            .tag(sizePresetTag(for: size))
+                    let sizesToShow = category.canonicalSizes
+                    ForEach(sizesToShow, id: \.label) { baseSize in
+                        let displaySize = category.isLandscapeOnly ? baseSize : baseSize.oriented(landscape: landscape)
+                        Text(displaySize.compactLabel)
+                            .tag(sizePresetTag(for: displaySize))
                     }
                 }
             }
@@ -113,6 +126,24 @@ struct InspectorPanel: View {
         return displayCategories.contains { cat in
             cat.sizes.contains { $0.width == w && $0.height == h }
         }
+    }
+
+    private func orientationBinding(for rowId: UUID) -> Binding<Bool> {
+        Binding(
+            get: {
+                guard let idx = state.rowIndex(for: rowId) else { return false }
+                return state.rows[idx].templateWidth > state.rows[idx].templateHeight
+            },
+            set: { newLandscape in
+                guard let idx = state.rowIndex(for: rowId) else { return }
+                let w = state.rows[idx].templateWidth
+                let h = state.rows[idx].templateHeight
+                let currentlyLandscape = w > h
+                if currentlyLandscape != newLandscape {
+                    state.resizeRow(at: idx, newWidth: h, newHeight: w)
+                }
+            }
+        )
     }
 
     private func syncCustomFields(rowId: UUID) {

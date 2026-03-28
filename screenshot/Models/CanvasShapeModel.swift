@@ -83,6 +83,40 @@ enum DeviceCategory: String, Codable, CaseIterable {
         }
     }
 
+    /// Suggested screenshot size preset string for this device category.
+    var suggestedSizePreset: String {
+        switch self {
+        case .iphone: "1206x2622"
+        case .ipadPro11: "1668x2420"
+        case .ipadPro13: "2064x2752"
+        case .macbook: "2880x1800"
+        case .androidPhone: "1080x2340"
+        case .androidTablet: "1200x1920"
+        }
+    }
+
+    /// Pre-computed map from normalized size preset (portrait) → device category.
+    private static let categoryBySizePreset: [String: DeviceCategory] = {
+        var map: [String: DeviceCategory] = [:]
+        for category in displayCategories {
+            guard let deviceCategory = category.deviceCategory else { continue }
+            for size in category.sizes {
+                let w = Int(min(size.width, size.height))
+                let h = Int(max(size.width, size.height))
+                map["\(w)x\(h)"] = deviceCategory
+            }
+        }
+        return map
+    }()
+
+    /// Best matching device category for a screenshot size preset string.
+    static func suggestedCategory(forSizePreset preset: String) -> DeviceCategory? {
+        guard let size = parseSizeString(preset) else { return nil }
+        let w = Int(min(size.width, size.height))
+        let h = Int(max(size.width, size.height))
+        return categoryBySizePreset["\(w)x\(h)"]
+    }
+
     /// Body dimensions (without side buttons).
     /// iPhone 17: 71.5 x 149.6 mm at scale 3.077 px/mm → 220 x 460.
     /// iPad Pro 11": 177.5 x 249.7 mm → 546 x 768.

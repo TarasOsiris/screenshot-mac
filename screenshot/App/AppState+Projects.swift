@@ -1,10 +1,21 @@
 import SwiftUI
 
+struct BlankProjectRowConfiguration {
+    let label: String?
+    let sizePreset: String?
+    let deviceCategory: DeviceCategory?
+    let deviceFrameId: String?
+}
+
 extension AppState {
 
     // MARK: - Projects
 
     func createProject(name: String) {
+        createBlankProject(name: name, rowConfigurations: [])
+    }
+
+    func createBlankProject(name: String, rowConfigurations: [BlankProjectRowConfiguration]) {
         saveCurrentProject()
 
         let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
@@ -14,7 +25,19 @@ extension AppState {
         activeProjectId = project.id
         PersistenceService.ensureProjectDirs(project.id)
         cancelPendingDebounceTasks()
-        rows = [makeDefaultRow()]
+        let configuredRows = rowConfigurations.enumerated().map { index, configuration in
+            let fallbackLabel = rowLabel(for: configuration, rowIndex: index)
+            let resolvedSize = configuration.sizePreset.flatMap(parseSizeString)
+            return makeDefaultRow(
+                label: fallbackLabel,
+                width: resolvedSize?.width,
+                height: resolvedSize?.height,
+                templateCount: nil,
+                defaultDeviceCategory: configuration.deviceCategory,
+                defaultDeviceFrameId: configuration.deviceFrameId
+            )
+        }
+        rows = configuredRows.isEmpty ? [makeDefaultRow()] : configuredRows
         localeState = .default
         selectRow(rows.first?.id)
         saveAll()
@@ -169,5 +192,20 @@ extension AppState {
         loadCustomFonts()
         loadRowsForProject(id)
         loadScreenshotImages()
+    }
+
+    private func rowLabel(for configuration: BlankProjectRowConfiguration, rowIndex: Int) -> String? {
+        if let explicit = configuration.label?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !explicit.isEmpty {
+            return explicit
+        }
+        if let frameId = configuration.deviceFrameId,
+           let frame = DeviceFrameCatalog.frame(for: frameId) {
+            return frame.modelName
+        }
+        if let deviceCategory = configuration.deviceCategory {
+            return deviceCategory.label
+        }
+        return rowIndex == 0 ? nil : "Row \(rowIndex + 1)"
     }
 }

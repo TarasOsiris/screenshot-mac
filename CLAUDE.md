@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Screenshot Bro — macOS app for generating App Store & Google Play screenshots with device frames, shapes, and a multi-row editor. Pure Swift + SwiftUI, no external dependencies.
+Screenshot Bro — macOS app for generating App Store & Google Play screenshots with device frames, shapes, and a multi-row editor. Swift + SwiftUI, with RevenueCat for in-app purchases.
 
 ## UX Reference
 
@@ -51,12 +51,12 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 - `ScreenshotRow` → has `templates: [ScreenshotTemplate]` (columns) + `shapes: [CanvasShapeModel]` (canvas elements). Implements `BackgroundFillable`.
 - `ScreenshotTemplate` → per-column background/gradient settings. Implements `BackgroundFillable`.
 - `CanvasShapeModel` → union type via `ShapeType` enum (rectangle, circle, star, text, image, device, svg). Type-specific properties are optionals on the same struct.
-- `BackgroundStyle` → enum (color, gradient, image) with `GradientConfig` (color stops, angle, type, center) and `BackgroundImageConfig` (fileName, fillMode, opacity, tileSpacing, tileOffset, tileScale). `BackgroundFillable` protocol provides `backgroundFillView(image:modelSize:)` and `resolvedBackgroundView(screenshotImages:modelSize:)` for rendering.
+- `BackgroundStyle` → enum (color, gradient, image) with `GradientConfig` (color stops, angle, type, center) and `BackgroundImageConfig` (fileName, svgContent, fillMode, opacity, tileSpacingX/Y, tileOffsetX/Y, tileScaleX/Y). `BackgroundFillable` protocol provides `backgroundFillView(image:modelSize:)` and `resolvedBackgroundView(screenshotImages:modelSize:)` for rendering.
 - `ImageFillMode` → enum (fill, fit, stretch, tile). Tile mode uses canvas-based rendering with configurable spacing/offset/scale.
 - `GradientType` → enum (linear, radial, angular). Linear uses `LinearGradient` with angle-derived start/end points. Radial uses `RadialGradient` inside a `GeometryReader` for size-aware `endRadius`. Angular uses `AngularGradient` with center and angle offset.
 - `DeviceCategory` → enum (iphone, ipadPro11, ipadPro13, macbook, androidPhone, androidTablet).
-- `DeviceFrame` / `DeviceFrameCatalog` → real device frame PNG specs (iPhone 17/Air/Pro/Pro Max, iPad Pro 11"/13", MacBook Air/Pro, iMac 24") with per-color variants and landscape support. `DeviceFrameImageSpec` defines precise screen insets and corner radii.
-- `LocaleState` → locale definitions + active locale + per-shape overrides (`ShapeLocaleOverride` for text properties). `LocalePresets` has 30+ language definitions.
+- `DeviceFrame` / `DeviceFrameCatalog` → real device frame PNG specs (iPhone 17/Air/Pro/Pro Max, iPad Pro 11"/13", MacBook Air 13"/Pro 14"/Pro 16", iMac 24") with per-color variants and landscape support. `DeviceFrameImageSpec` defines precise screen insets and corner radii.
+- `LocaleState` → locale definitions + active locale + per-shape overrides (`ShapeLocaleOverride` for text properties). `LocalePresets` has 30 language definitions.
 - `Project` → supports soft deletion (tombstones) with `isDeleted`/`deletedAt` fields and `merged(with:)` for iCloud conflict resolution. `purgingOldTombstones()` removes tombstones older than 30 days.
 
 **Services:**
@@ -66,7 +66,7 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 - `AlignmentService` — snap-to-grid alignment. Computes snaps from dragged shape against other shapes and template boundaries (4px threshold). Returns snap deltas and guide lines.
 - `ICloudSyncService` — iCloud Drive sync (container `iCloud.xyz.tleskiv.screenshot`). Handles enable/disable, project merging with last-writer-wins strategy and tombstone awareness. Uses `NSFileCoordinator` for safe concurrent access.
 - `ICloudMonitor` — `NSFilePresenter` that watches for iCloud file changes. Tracks upload/download progress via `NSMetadataQuery`. Debounced reload (1s). Distinguishes own writes from remote changes.
-- `StoreService` — StoreKit 2 integration for Pro tier. Free limits: 1 project, 3 rows/project, 10 templates/row. `PaywallContext` enum provides context-aware paywall messages.
+- `StoreService` — RevenueCat integration for Pro tier. Free limits: 1 project, 3 rows/project, 5 templates/row. `PaywallContext` enum provides context-aware paywall messages.
 - `SvgHelper` — SVG processing: `sanitize()` (removes scripts/event handlers), `parseSize()`, `scaledSize()`, `renderImage()` (renders to NSImage with optional color replacement).
 
 **View hierarchy:**
@@ -76,17 +76,17 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 - `LocaleBanner` — top contextual banner when editing a non-base locale
 - `InspectorPanel` — right sidebar: row label, screenshot size presets, background editor, shape toolbar, device/border toggles
 - `BackgroundEditor` — background style picker, gradient preset picker, gradient stop editor, angle wheel
-- `ShapeToolbar` — grid of 6 shape type buttons (Rectangle, Circle, Text, Image, Device, SVG)
+- `ShapeToolbar` — Shapes dropdown menu (Rectangle, Circle, Star) + 4 individual buttons (Text, Image, Device, SVG)
 - `ShapePropertiesBar` — bottom bar: color, opacity, rotation, border radius, text properties, image/device properties, outline, clip. All toggles use `.toggleStyle(.switch)` with `.controlSize(.small)`. Sections use a shared `section()` helper with consistent min height.
 - `TemplateControlBar` — per-template controls: background color/style/gradient, device screenshot, export preview
 - `DeviceFrameView` — device frame rendering (abstract bezels for categories, real PNG frames from `DeviceFrameCatalog`)
 - `InlineTextEditor` — NSViewRepresentable for text editing with centering
 - `AlignmentGuideLineView` — renders blue snap guide lines
 - `LocaleToolbarMenu` — locale management: add/remove/reorder locales, translation progress
-- `ZoomControls` — zoom slider with min 0.75, max 2.0, step 0.25
+- `ZoomControls` — zoom slider with min 0.50, max 2.0, step 0.25
 - `SvgPasteDialog` — sheet for pasting SVG content with dimensions
 - `SettingsView` — General tab (appearance, defaults) and Export tab (format, scale)
-- `PaywallView` — StoreKit 2 paywall with feature cards and context-aware messaging
+- `PaywallView` — RevenueCatUI paywall (not a custom view) with context-aware messaging
 - `OnboardingView` — first-time setup (screenshot size, device category, templates-per-row presets)
 - `DevicePickerMenu` / `DeviceMenuContent` — device model/color selection menus
 - `FontPicker` — custom font selection
@@ -103,7 +103,7 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 - Option+Drag creates duplicate shape
 - Custom font import/management via `AppState.importCustomFont()` / `removeCustomFont()`
 - Batch image import with device detection via `AppState.batchImportImages()`
-- Keyboard shortcuts: Cmd+C/V/X copy/paste/cut, Cmd+A select all, Cmd+D duplicate, Delete delete, Esc deselect, Cmd+Shift+]/[ z-order, arrow keys nudge (Shift ×10), Cmd+]/[ cycle locale, Cmd+Option+0 switch to base locale, Cmd++/- zoom in/out, Cmd+0 reset zoom
+- Keyboard shortcuts: Cmd+C/V/X copy/paste/cut, Cmd+A select all, Cmd+D duplicate, Delete delete, Esc deselect, Cmd+Shift+]/[ z-order, arrow keys nudge (Shift ×10), Cmd+]/[ cycle locale, Cmd+Option+0 switch to base locale, Cmd++/- zoom in/out, Cmd+0 reset zoom, F focus on selection
 
 ## Regression Prevention
 

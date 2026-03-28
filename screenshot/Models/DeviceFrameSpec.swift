@@ -148,9 +148,59 @@ struct DeviceFrameCatalog {
     /// O(1) lookup by persistence ID.
     private static let framesByID: [String: DeviceFrame] = Dictionary(uniqueKeysWithValues: allFrames.map { ($0.id, $0) })
 
+    /// O(1) reverse lookup: frame ID → group ID.
+    private static let groupIdByFrameId: [String: String] = {
+        var map: [String: String] = [:]
+        for group in groups {
+            for frame in group.frames {
+                map[frame.id] = group.id
+            }
+        }
+        return map
+    }()
+
+    /// O(1) lookup: category → first portrait frame ID.
+    private static let firstPortraitFrameByCategory: [DeviceCategory: String] = {
+        var map: [DeviceCategory: String] = [:]
+        for frame in allFrames where !frame.isLandscape {
+            if map[frame.fallbackCategory] == nil {
+                map[frame.fallbackCategory] = frame.id
+            }
+        }
+        return map
+    }()
+
     /// Look up a frame by its persistence ID.
     static func frame(for id: String) -> DeviceFrame? {
         framesByID[id]
+    }
+
+    /// First portrait frame ID for a device category.
+    static func firstPortraitFrameId(for category: DeviceCategory) -> String? {
+        firstPortraitFrameByCategory[category]
+    }
+
+    /// Suggested screenshot size preset for a specific device frame.
+    static func suggestedSizePreset(forFrameId frameId: String) -> String? {
+        guard let frame = framesByID[frameId] else { return nil }
+        let groupId = groupIdByFrameId[frameId]
+        let isLandscape = frame.isLandscape
+        let preset: String? = switch groupId {
+        case "iphone17", "iphone17pro": "1206x2622"
+        case "iphone17promax": "1320x2868"
+        case "iphoneair": "1260x2736"
+        case "ipadpro11": "1668x2420"
+        case "ipadpro13": "2064x2752"
+        case "macbookair13": "2560x1600"
+        case "macbookair15", "macbookpro14": "2880x1800"
+        case "macbookpro16", "imac24": "2880x1800"
+        default: nil
+        }
+        guard let preset else { return nil }
+        if isLandscape, let parsed = parseSizeString(preset), parsed.width < parsed.height {
+            return "\(Int(parsed.height))x\(Int(parsed.width))"
+        }
+        return preset
     }
 
     // MARK: - Build
