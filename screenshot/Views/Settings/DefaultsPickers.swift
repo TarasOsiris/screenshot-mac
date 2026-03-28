@@ -64,7 +64,7 @@ struct TemplateCountPicker: View {
 
     var body: some View {
         Picker(label, selection: $selection) {
-            ForEach(1...6, id: \.self) { count in
+            ForEach(1...10, id: \.self) { count in
                 Text(verbatim: "\(count)").tag(count)
             }
         }

@@ -90,7 +90,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .ipadPro11: "1668x2420"
         case .ipadPro13: "2064x2752"
         case .macbook: "2880x1800"
-        case .androidPhone: "1080x2340"
+        case .androidPhone: "1080x1920"
         case .androidTablet: "1200x1920"
         }
     }

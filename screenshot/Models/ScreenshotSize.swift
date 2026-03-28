@@ -115,12 +115,15 @@ let displayCategories: [DisplayCategory] = [
     ]),
     DisplayCategory(name: "Android Phone", deviceCategory: .androidPhone, portraitSizes: [
         (1080, 1920, "Standard 16:9"),
-        (1080, 2340, "Modern 19.5:9"),
-        (1440, 3120, "High-res 19.5:9"),
+        (1080, 2160, "Modern 18:9"),
+        (1440, 2560, "High-res 16:9"),
     ]),
-    DisplayCategory(name: "Android Tablet", deviceCategory: .androidTablet, portraitSizes: [
-        (1200, 1920, "Standard"),
-        (1600, 2560, "High-res QHD"),
+    DisplayCategory(name: "Android 7\" Tablet", deviceCategory: .androidTablet, portraitSizes: [
+        (1200, 1920, "Standard 16:10"),
+    ]),
+    DisplayCategory(name: "Android 10\" Tablet", deviceCategory: .androidTablet, portraitSizes: [
+        (1600, 2560, "High-res 16:10"),
+        (1920, 2560, "Standard 4:3"),
     ]),
 ]
 

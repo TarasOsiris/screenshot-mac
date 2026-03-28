@@ -119,9 +119,8 @@ struct NewProjectWindowView: View {
             }
 
             List {
-                ForEach(Array(rowDrafts.enumerated()), id: \.element.id) { index, draft in
+                ForEach(rowDrafts) { draft in
                     BlankProjectRowCard(
-                        index: index + 1,
                         draft: binding(for: draft.id),
                         canDelete: rowDrafts.count > 1,
                         canDuplicate: rowDrafts.count < 8,
@@ -232,6 +231,7 @@ struct NewProjectWindowView: View {
         let source = rowDrafts[index]
         var copy = BlankProjectRowDraft()
         copy.sizePreset = source.sizePreset
+        copy.templateCount = source.templateCount
         copy.deviceCategory = source.deviceCategory
         copy.deviceFrameId = source.deviceFrameId
         rowDrafts.insert(copy, at: index + 1)
@@ -309,10 +309,13 @@ struct NewProjectWindowView: View {
 private struct BlankProjectRowDraft: Identifiable, Equatable {
     let id = UUID()
     var sizePreset: String
+    var templateCount: Int
     var deviceCategory: DeviceCategory?
     var deviceFrameId: String?
 
     init(category: DeviceCategory? = .iphone) {
+        let storedCount = UserDefaults.standard.integer(forKey: "defaultTemplateCount")
+        self.templateCount = storedCount > 0 ? storedCount : 3
         self.deviceCategory = category
         if let category {
             self.sizePreset = category.suggestedSizePreset
@@ -327,6 +330,7 @@ private struct BlankProjectRowDraft: Identifiable, Equatable {
         BlankProjectRowConfiguration(
             label: nil,
             sizePreset: sizePreset,
+            templateCount: templateCount,
             deviceCategory: deviceCategory,
             deviceFrameId: deviceFrameId
         )
@@ -334,40 +338,16 @@ private struct BlankProjectRowDraft: Identifiable, Equatable {
 }
 
 private struct BlankProjectRowCard: View {
-    let index: Int
     @Binding var draft: BlankProjectRowDraft
     let canDelete: Bool
     let canDuplicate: Bool
     let onDelete: () -> Void
     let onDuplicate: () -> Void
 
-    private var resolvedLabel: String {
-        if let frameId = draft.deviceFrameId,
-           let frame = DeviceFrameCatalog.frame(for: frameId) {
-            return frame.modelName
-        }
-        if let category = draft.deviceCategory {
-            return category.label
-        }
-        return draft.sizePreset
-    }
-
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            VStack(spacing: 2) {
-                Text("\(index)")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .frame(width: 24, height: 24)
-                    .background(Color.accentColor.opacity(0.14), in: Circle())
-                    .foregroundStyle(Color.accentColor)
-                Text(resolvedLabel)
-                    .font(.system(size: 9))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            .frame(width: 60)
-
-            ScreenshotSizePicker(selection: $draft.sizePreset, label: "Preset")
+            ScreenshotSizePicker(selection: $draft.sizePreset, label: "Size")
+                .labelsHidden()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .onChange(of: draft.sizePreset) { _, newPreset in
                     if let category = DeviceCategory.suggestedCategory(forSizePreset: newPreset),
@@ -376,6 +356,16 @@ private struct BlankProjectRowCard: View {
                         draft.deviceFrameId = DeviceFrameCatalog.firstPortraitFrameId(for: category)
                     }
                 }
+
+            HStack(spacing: 4) {
+                Image(systemName: "rectangle.split.3x1")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                TemplateCountPicker(selection: $draft.templateCount, label: "")
+                    .labelsHidden()
+            }
+            .frame(width: 64)
+            .help("Screenshots per row")
 
             DevicePickerMenu(
                     category: draft.deviceCategory,

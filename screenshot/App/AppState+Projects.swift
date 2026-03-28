@@ -3,6 +3,7 @@ import SwiftUI
 struct BlankProjectRowConfiguration {
     let label: String?
     let sizePreset: String?
+    let templateCount: Int?
     let deviceCategory: DeviceCategory?
     let deviceFrameId: String?
 }
@@ -32,7 +33,7 @@ extension AppState {
                 label: fallbackLabel,
                 width: resolvedSize?.width,
                 height: resolvedSize?.height,
-                templateCount: nil,
+                templateCount: configuration.templateCount,
                 defaultDeviceCategory: configuration.deviceCategory,
                 defaultDeviceFrameId: configuration.deviceFrameId
             )
