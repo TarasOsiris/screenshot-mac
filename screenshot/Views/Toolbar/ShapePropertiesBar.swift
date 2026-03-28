@@ -3,6 +3,18 @@ import Translation
 import UniformTypeIdentifiers
 
 struct ShapePropertiesBar: View {
+    @Bindable var state: AppState
+
+    var body: some View {
+        if state.selectedShapeIds.count > 1 {
+            ShapePropertiesMultiSelectionBar(state: state)
+        } else {
+            ShapePropertiesSingleSelectionBar(state: state)
+        }
+    }
+}
+
+private struct ShapePropertiesSingleSelectionBar: View {
     private static let defaultFontSize: CGFloat = CanvasShapeModel.defaultFontSize
     private static let fontSizeRange: ClosedRange<CGFloat> = 8...400
     private static let fontSizePresets: [Int] = CanvasShapeModel.fontSizePresets
@@ -70,264 +82,172 @@ struct ShapePropertiesBar: View {
         return state.localeState.override(forCode: state.localeState.activeLocaleCode, shapeId: shapeId)?.overrideImageFileName != nil
     }
 
-    @ViewBuilder
-    private func localeImageResetButton(shapeId: UUID) -> some View {
-        if hasLocaleImageOverride(shapeId) {
-            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to default locale image", frameSize: 24) {
-                state.resetLocaleImageOverride(shapeId: shapeId)
-            }
-        }
-    }
-
-    private var selectedShapes: [CanvasShapeModel] {
-        guard let rowIndex else { return [] }
-        let ids = state.selectedShapeIds
-        return state.rows[rowIndex].shapes
-            .filter { ids.contains($0.id) }
-            .map { LocaleService.resolveShape($0, localeState: state.localeState) }
-    }
-
     var body: some View {
-        if state.selectedShapeIds.count > 1 {
-            multiSelectionBody
-        } else if let rowIndex, let shapeIdx = shapeIndex {
+        if let rowIndex, let shapeIdx = shapeIndex {
             let shape = resolvedShape(at: rowIndex, shapeIdx: shapeIdx)
             let shapeId = shape.id
 
             HStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    shapeBadge(shape)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ShapePropertiesBadge(shape: shape)
 
-                    // Device properties (frame first)
-                    if shape.type == .device {
-                        section {
-                            devicePicker(shape: shape, shapeId: shapeId)
-
-                            if shape.screenshotFileName != nil {
-                                separator
-
-                                Button {
-                                    pickAndReplaceImage(for: shapeId)
-                                } label: {
-                                    Label("Replace Image", systemImage: "photo.badge.arrow.down")
-                                }
-                                .buttonStyle(.borderless)
-                                .foregroundStyle(.secondary)
-
-                                localeImageResetButton(shapeId: shapeId)
+                        if shape.type == .device {
+                            DeviceShapeControls(
+                                shape: shape,
+                                showsLocaleImageReset: hasLocaleImageOverride(shapeId),
+                                onPickImage: { pickAndReplaceImage(for: shapeId) },
+                                onResetLocaleImage: { state.resetLocaleImageOverride(shapeId: shapeId) }
+                            ) {
+                                devicePicker(shape: shape, shapeId: shapeId)
                             }
                         }
-                    }
 
-                    section {
-                        // Fill (shapes get full editor, text gets simple color picker)
-                        if shape.type.supportsFill {
-                            fillSwatchButton(shape: shape, shapeId: shapeId)
+                        ShapePropertiesSection {
+                            if shape.type.supportsFill {
+                                fillSwatchButton(shape: shape, shapeId: shapeId)
+                                ShapePropertiesSeparator()
+                            } else if shape.type != .device && shape.type != .svg && shape.type != .image {
+                                ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
+                                    .labelsHidden()
+                                    .frame(width: 30)
+                                    .help("Fill color")
+                                ShapePropertiesSeparator()
+                            }
 
-                            separator
-                        } else if shape.type != .device && shape.type != .svg && shape.type != .image {
-                            ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
-                                .labelsHidden()
-                                .frame(width: 30)
-                                .help("Fill color")
-
-                            separator
-                        }
-
-                        // Opacity
-                        controlGroup("Opacity") {
-                            HStack(spacing: 0) {
-                                TextField("", text: $editingOpacity, onEditingChanged: { editing in
-                                    if editing {
-                                        isOpacityFieldActive = true
-                                    } else {
+                            ShapePropertiesControlGroup("Opacity") {
+                                HStack(spacing: 0) {
+                                    TextField("", text: $editingOpacity, onEditingChanged: { editing in
+                                        if editing {
+                                            isOpacityFieldActive = true
+                                        } else {
+                                            commitOpacity(shapeId: shapeId)
+                                        }
+                                    })
+                                    .frame(width: 40)
+                                    .textFieldStyle(.roundedBorder)
+                                    .multilineTextAlignment(.center)
+                                    .onAppear {
+                                        editingOpacity = currentOpacityString(for: shapeId)
+                                    }
+                                    .onChange(of: shapeId) {
+                                        isOpacityFieldActive = false
+                                        editingOpacity = currentOpacityString(for: shapeId)
+                                    }
+                                    .onChange(of: shape.opacity) {
+                                        guard !isOpacityFieldActive else { return }
+                                        editingOpacity = currentOpacityString(for: shapeId)
+                                    }
+                                    .onSubmit {
                                         commitOpacity(shapeId: shapeId)
                                     }
-                                })
-                                .frame(width: 40)
-                                .textFieldStyle(.roundedBorder)
-                                .multilineTextAlignment(.center)
-                                .onAppear {
-                                    editingOpacity = currentOpacityString(for: shapeId)
-                                }
-                                .onChange(of: shapeId) {
-                                    isOpacityFieldActive = false
-                                    editingOpacity = currentOpacityString(for: shapeId)
-                                }
-                                .onChange(of: shape.opacity) {
-                                    guard !isOpacityFieldActive else { return }
-                                    editingOpacity = currentOpacityString(for: shapeId)
-                                }
-                                .onSubmit {
-                                    commitOpacity(shapeId: shapeId)
-                                }
 
-                                Text("%")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(.secondary)
+                                    Text("%")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.secondary)
+                                }
                             }
-                        }
 
-                        // Rotation
-                        separator
+                            ShapePropertiesSeparator()
 
-                        controlGroup("Rotation") {
-                            Slider(value: shapeBinding(shapeId, \.rotation, continuous: true), in: 0...360)
-                                .frame(width: 80)
-
-                            Text(verbatim: "\(Int(idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].rotation } ?? 0))°")
-                                .frame(width: 28, alignment: .trailing)
-                        }
-
-                        // Border radius (rectangle or image)
-                        if shape.type == .rectangle || shape.type == .image {
-                            separator
-
-                            controlGroup("Radius") {
-                                Slider(value: shapeBinding(shapeId, \.borderRadius, continuous: true), in: 0...500)
+                            ShapePropertiesControlGroup("Rotation") {
+                                Slider(value: shapeBinding(shapeId, \.rotation, continuous: true), in: 0...360)
                                     .frame(width: 80)
 
-                                Text(verbatim: "\(Int(shape.borderRadius))")
+                                Text(verbatim: "\(Int(idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].rotation } ?? 0))°")
                                     .frame(width: 28, alignment: .trailing)
                             }
-                        }
-                    }
 
-                    // Outline
-                    if shape.type.supportsOutline {
-                        section {
-                            outlineControls(shape: shape, shapeId: shapeId)
-                        }
-                    }
+                            if shape.type == .rectangle || shape.type == .image {
+                                ShapePropertiesSeparator()
 
-                    // Star properties
-                    if shape.type == .star {
-                        section {
-                            controlGroup("Points") {
-                                Stepper(
-                                    value: shapeBinding(shapeId, \.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
-                                    in: 3...20
-                                ) {
-                                    Text(verbatim: "\(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)")
-                                        .frame(width: 20, alignment: .trailing)
+                                ShapePropertiesControlGroup("Radius") {
+                                    Slider(value: shapeBinding(shapeId, \.borderRadius, continuous: true), in: 0...500)
+                                        .frame(width: 80)
+
+                                    Text(verbatim: "\(Int(shape.borderRadius))")
+                                        .frame(width: 28, alignment: .trailing)
                                 }
                             }
                         }
-                    }
 
-                    // Image properties
-                    if shape.type == .image {
-                        section {
-                            Button {
-                                pickAndReplaceImage(for: shapeId)
-                            } label: {
-                                Label(shape.imageFileName != nil ? "Replace Image" : "Choose Image", systemImage: "photo.badge.arrow.down")
+                        if shape.type.supportsOutline {
+                            ShapePropertiesSection {
+                                outlineControls(shape: shape, shapeId: shapeId)
                             }
-                            .buttonStyle(.borderless)
-                            .foregroundStyle(.secondary)
-
-                            localeImageResetButton(shapeId: shapeId)
-                        }
-                    }
-
-                    // SVG properties
-                    if shape.type == .svg {
-                        section {
-                            HStack(spacing: 4) {
-                                Toggle("Custom color", isOn: shapeBinding(shapeId, \.svgUseColor, default: false))
-                                    .toggleStyle(.switch)
-                                    .controlSize(.small)
-                                    .help("Use custom color for SVG")
-
-                                if shape.svgUseColor == true {
-                                    ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
-                                        .labelsHidden()
-                                        .frame(width: 30)
-                                        .help("SVG custom color")
-                                }
-                            }
-
-                            separator
-
-                            Button {
-                                isReplacingSvg = true
-                            } label: {
-                                Label("Replace SVG", systemImage: "arrow.triangle.2.circlepath")
-                            }
-                            .buttonStyle(.borderless)
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    // Locale override indicator (any shape type)
-                    if !state.localeState.isBaseLocale && hasLocaleOverride {
-                        overrideIndicator(shapeId: shapeId)
-                    }
-
-                    // Text properties
-                    if shape.type == .text {
-                        section {
-                            textPopoverButton(shape: shape, shapeId: shapeId)
                         }
 
-                        if !state.localeState.isBaseLocale {
-                            section {
-                                Button {
-                                    triggerTranslation()
-                                } label: {
-                                    if isTranslating {
-                                        ProgressView()
-                                            .controlSize(.small)
-                                            .frame(width: 16, height: 16)
-                                    } else {
-                                        Label("Translate", systemImage: "globe")
+                        if shape.type == .star {
+                            ShapePropertiesSection {
+                                ShapePropertiesControlGroup("Points") {
+                                    Stepper(
+                                        value: shapeBinding(shapeId, \.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
+                                        in: 3...20
+                                    ) {
+                                        Text(verbatim: "\(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)")
+                                            .frame(width: 20, alignment: .trailing)
                                     }
                                 }
-                                .buttonStyle(.borderless)
-                                .disabled(isTranslating || (state.rows[rowIndex].shapes[shapeIdx].text ?? "").isEmpty)
-                                .help("Translate from base locale")
                             }
                         }
-                    }
 
-                    section {
-                        Toggle("Clip to Frame", isOn: shapeBinding(shapeId, \.clipToTemplate, default: false))
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                    }
+                        if shape.type == .image {
+                            ImageShapeControls(
+                                buttonTitle: shape.imageFileName != nil ? "Replace Image" : "Choose Image",
+                                showsLocaleImageReset: hasLocaleImageOverride(shapeId),
+                                onPickImage: { pickAndReplaceImage(for: shapeId) },
+                                onResetLocaleImage: { state.resetLocaleImageOverride(shapeId: shapeId) }
+                            )
+                        }
 
-                    section {
-                        HStack(spacing: 4) {
-                            ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front (⇧⌘])", frameSize: 24, disabled: !canBringToFront) {
-                                state.bringSelectedShapesToFront()
-                            }
+                        if shape.type == .svg {
+                            SVGShapeControls(
+                                usesCustomColor: shapeBinding(shapeId, \.svgUseColor, default: false),
+                                color: shapeBinding(shapeId, \.color),
+                                onReplace: { isReplacingSvg = true }
+                            )
+                        }
 
-                            ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back (⇧⌘[)", frameSize: 24, disabled: !canSendToBack) {
-                                state.sendSelectedShapesToBack()
-                            }
+                        if !state.localeState.isBaseLocale && hasLocaleOverride {
+                            overrideIndicator(shapeId: shapeId)
+                        }
 
-                            ActionButton(icon: "doc.on.doc", tooltip: "Duplicate (⌘D)", frameSize: 24) {
-                                state.duplicateSelectedShapes()
-                            }
-
-                            ActionButton(icon: "trash", tooltip: "Delete (⌫)", frameSize: 24, isDestructive: true) {
-                                state.deleteShape(shapeId)
+                        if shape.type == .text {
+                            TextShapeControls(
+                                showsTranslation: !state.localeState.isBaseLocale,
+                                isTranslating: isTranslating,
+                                canTranslate: !(state.rows[rowIndex].shapes[shapeIdx].text ?? "").isEmpty,
+                                onTranslate: triggerTranslation
+                            ) {
+                                textPopoverButton(shape: shape, shapeId: shapeId)
                             }
                         }
-                    }
 
+                        ShapePropertiesSection {
+                            Toggle("Clip to Frame", isOn: shapeBinding(shapeId, \.clipToTemplate, default: false))
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                        }
+
+                        ShapeSelectionActionsSection(
+                            canBringToFront: canBringToFront,
+                            canSendToBack: canSendToBack,
+                            onBringToFront: { state.bringSelectedShapesToFront() },
+                            onSendToBack: { state.sendSelectedShapesToBack() },
+                            onDuplicate: { state.duplicateSelectedShapes() },
+                            onDelete: { state.deleteShape(shapeId) }
+                        )
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
-            }
 
-            Spacer(minLength: 0)
+                Spacer(minLength: 0)
 
-            ActionButton(icon: "xmark", tooltip: "Deselect shape (Esc)", frameSize: 24) {
-                state.selectedShapeIds = []
-            }
-            .padding(.trailing, 8)
+                ActionButton(icon: "xmark", tooltip: "Deselect shape (Esc)", frameSize: 24) {
+                    state.selectedShapeIds = []
+                }
+                .padding(.trailing, 8)
             }
             .font(.system(size: 11))
             .controlSize(.small)
@@ -929,38 +849,6 @@ struct ShapePropertiesBar: View {
         .controlSize(.small)
     }
 
-    private var separator: some View {
-        Rectangle()
-            .fill(.separator)
-            .frame(width: 1, height: 18)
-            .padding(.horizontal, 4)
-    }
-
-    private func controlGroup<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
-        HStack(spacing: 4) {
-            Text(label)
-                .foregroundStyle(.secondary)
-            content()
-        }
-    }
-
-    private func section<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        HStack(spacing: 6) {
-            content()
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 4)
-        .frame(minHeight: 28)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.primary.opacity(0.05))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(.separator.opacity(0.35), lineWidth: 0.5)
-        )
-    }
-
     @ViewBuilder
     private func outlineControls(shape: CanvasShapeModel, shapeId: UUID) -> some View {
         let hasOutline = (shape.outlineWidth ?? 0) > 0
@@ -985,9 +873,9 @@ struct ShapePropertiesBar: View {
                 .padding(.horizontal, 4)
                 .help("Outline")
 
-            separator
+            ShapePropertiesSeparator()
 
-            controlGroup("Width") {
+            ShapePropertiesControlGroup("Width") {
                 Slider(value: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true), in: 1...50)
                     .frame(width: 80)
 
@@ -995,23 +883,6 @@ struct ShapePropertiesBar: View {
                     .frame(width: 28, alignment: .trailing)
             }
         }
-    }
-
-    private func shapeBadge(_ shape: CanvasShapeModel) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: shape.type.icon)
-                .font(.system(size: 10, weight: .medium))
-            Text(verbatim: "\(Int(shape.width))×\(Int(shape.height))")
-                .font(.system(size: 10).monospacedDigit())
-                .foregroundStyle(.secondary)
-                .transaction { $0.animation = nil }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-            Capsule(style: .continuous)
-                .fill(Color.accentColor.opacity(0.14))
-        )
     }
 
     private func overrideIndicator(shapeId: UUID) -> some View {
@@ -1029,95 +900,87 @@ struct ShapePropertiesBar: View {
         }
     }
 
-    // MARK: - Multi-Selection
+}
 
-    @ViewBuilder
-    private var multiSelectionBody: some View {
+private struct ShapePropertiesMultiSelectionBar: View {
+    @Bindable var state: AppState
+
+    private var rowIndex: Int? { state.selectedRowIndex }
+
+    private var selectedShapes: [CanvasShapeModel] {
+        guard let rowIndex else { return [] }
+        let ids = state.selectedShapeIds
+        return state.rows[rowIndex].shapes
+            .filter { ids.contains($0.id) }
+            .map { LocaleService.resolveShape($0, localeState: state.localeState) }
+    }
+
+    var body: some View {
         let shapes = selectedShapes
         let count = shapes.count
         let commonType = shapes.dropFirst().allSatisfy({ $0.type == shapes.first?.type }) ? shapes.first?.type : nil
 
         HStack(spacing: 0) {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                // Badge
-                HStack(spacing: 6) {
-                    if let type = commonType {
-                        Image(systemName: type.icon)
-                            .font(.system(size: 11, weight: .medium))
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    HStack(spacing: 6) {
+                        if let type = commonType {
+                            Image(systemName: type.icon)
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        Text("\(count) shapes")
+                            .font(.system(size: 11, weight: .semibold))
                     }
-                    Text("\(count) shapes")
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(Color.accentColor.opacity(0.14))
-                )
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(Color.accentColor.opacity(0.14))
+                    )
 
-                // Type-specific controls
-                if let commonType {
-                    multiSelectionTypeControls(commonType, shapes: shapes)
-                }
+                    if let commonType {
+                        multiSelectionTypeControls(commonType, shapes: shapes)
 
-                // Common controls: opacity & rotation
-                if commonType != nil {
-                    section {
-                        controlGroup("Opacity") {
-                            Slider(value: multiShapeBinding(\.opacity), in: 0...1)
-                                .frame(width: 80)
+                        ShapePropertiesSection {
+                            ShapePropertiesControlGroup("Opacity") {
+                                Slider(value: multiShapeBinding(\.opacity), in: 0...1)
+                                    .frame(width: 80)
+                            }
+
+                            ShapePropertiesSeparator()
+
+                            ShapePropertiesControlGroup("Rotation") {
+                                Slider(value: multiShapeBinding(\.rotation), in: 0...360)
+                                    .frame(width: 80)
+                            }
                         }
 
-                        separator
-
-                        controlGroup("Rotation") {
-                            Slider(value: multiShapeBinding(\.rotation), in: 0...360)
-                                .frame(width: 80)
-                        }
-                    }
-                }
-
-                // Clip to Frame
-                if commonType != nil {
-                    section {
-                        Toggle("Clip to Frame", isOn: multiShapeOptionalBinding(\.clipToTemplate, default: false))
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                    }
-                }
-
-                // Actions
-                section {
-                    HStack(spacing: 4) {
-                        ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front (⇧⌘])", frameSize: 24) {
-                            state.bringSelectedShapesToFront()
-                        }
-
-                        ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back (⇧⌘[)", frameSize: 24) {
-                            state.sendSelectedShapesToBack()
-                        }
-
-                        ActionButton(icon: "doc.on.doc", tooltip: "Duplicate (⌘D)", frameSize: 24) {
-                            state.duplicateSelectedShapes()
-                        }
-
-                        ActionButton(icon: "trash", tooltip: "Delete (⌫)", frameSize: 24, isDestructive: true) {
-                            state.deleteSelectedShapes()
+                        ShapePropertiesSection {
+                            Toggle("Clip to Frame", isOn: multiShapeOptionalBinding(\.clipToTemplate, default: false))
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
                         }
                     }
+
+                    ShapeSelectionActionsSection(
+                        canBringToFront: true,
+                        canSendToBack: true,
+                        onBringToFront: { state.bringSelectedShapesToFront() },
+                        onSendToBack: { state.sendSelectedShapesToBack() },
+                        onDuplicate: { state.duplicateSelectedShapes() },
+                        onDelete: { state.deleteSelectedShapes() }
+                    )
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 4)
-        }
 
-        Spacer(minLength: 0)
+            Spacer(minLength: 0)
 
-        ActionButton(icon: "xmark", tooltip: "Deselect all (Esc)", frameSize: 24) {
-            state.selectedShapeIds = []
-        }
-        .padding(.trailing, 8)
+            ActionButton(icon: "xmark", tooltip: "Deselect all (Esc)", frameSize: 24) {
+                state.selectedShapeIds = []
+            }
+            .padding(.trailing, 8)
         }
         .font(.system(size: 11))
         .controlSize(.small)
@@ -1126,9 +989,8 @@ struct ShapePropertiesBar: View {
 
     @ViewBuilder
     private func multiSelectionTypeControls(_ type: ShapeType, shapes: [CanvasShapeModel]) -> some View {
-        // Device: change device model
         if type == .device {
-            section {
+            ShapePropertiesSection {
                 Menu {
                     DeviceMenuContent(
                         onSelectCategory: { category in
@@ -1153,16 +1015,15 @@ struct ShapePropertiesBar: View {
             }
         }
 
-        // Text: font, size, weight, alignment, italic, uppercase
         if type == .text {
-            section {
+            ShapePropertiesSection {
                 FontPicker(
                     selection: multiShapeOptionalBinding(\.fontName, default: ""),
                     customFonts: state.customFonts,
                     onImportFont: { url in state.importCustomFont(from: url) }
                 )
 
-                separator
+                ShapePropertiesSeparator()
 
                 Picker("", selection: multiShapeOptionalBinding(\.fontWeight, default: 400)) {
                     Text("Light").tag(300)
@@ -1173,7 +1034,7 @@ struct ShapePropertiesBar: View {
                 .labelsHidden()
                 .frame(width: 90)
 
-                separator
+                ShapePropertiesSeparator()
 
                 Picker("", selection: multiShapeOptionalBinding(\.textAlign, default: .center)) {
                     Image(systemName: "text.alignleft").tag(TextAlign.left)
@@ -1185,7 +1046,7 @@ struct ShapePropertiesBar: View {
                 .frame(width: 90)
             }
 
-            section {
+            ShapePropertiesSection {
                 Toggle("Italic", isOn: multiShapeOptionalBinding(\.italic, default: false))
                     .toggleStyle(.switch)
                     .controlSize(.small)
@@ -1196,20 +1057,18 @@ struct ShapePropertiesBar: View {
             }
         }
 
-        // Rectangle / Image: border radius
         if type == .rectangle || type == .image {
-            section {
-                controlGroup("Radius") {
+            ShapePropertiesSection {
+                ShapePropertiesControlGroup("Radius") {
                     Slider(value: multiShapeBinding(\.borderRadius), in: 0...500)
                         .frame(width: 80)
                 }
             }
         }
 
-        // Star: point count
         if type == .star {
-            section {
-                controlGroup("Points") {
+            ShapePropertiesSection {
+                ShapePropertiesControlGroup("Points") {
                     Stepper(
                         value: multiShapeOptionalBinding(\.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
                         in: 3...20
@@ -1221,18 +1080,16 @@ struct ShapePropertiesBar: View {
             }
         }
 
-        // SVG: custom color toggle
         if type == .svg {
-            section {
+            ShapePropertiesSection {
                 Toggle("Custom color", isOn: multiShapeOptionalBinding(\.svgUseColor, default: false))
                     .toggleStyle(.switch)
                     .controlSize(.small)
             }
         }
 
-        // Outline (rectangle, circle, star, text)
         if type.supportsOutline {
-            section {
+            ShapePropertiesSection {
                 multiOutlineControls(shapes: shapes)
             }
         }
@@ -1260,17 +1117,15 @@ struct ShapePropertiesBar: View {
                 .frame(width: 30)
                 .padding(.horizontal, 4)
 
-            separator
+            ShapePropertiesSeparator()
 
-            controlGroup("Width") {
+            ShapePropertiesControlGroup("Width") {
                 Slider(value: multiShapeOptionalBinding(\.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth), in: 1...50)
                     .frame(width: 80)
             }
         }
     }
 
-    /// Creates a Binding that reads a common value across all selected shapes.
-    /// Returns the first shape's value. Writes apply to all selected via batch update.
     private func multiShapeBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> {
         Binding(
             get: {
@@ -1287,7 +1142,6 @@ struct ShapePropertiesBar: View {
         )
     }
 
-    /// Overload for optional properties with a default value.
     private func multiShapeOptionalBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T) -> Binding<T> {
         Binding(
             get: {
@@ -1303,5 +1157,4 @@ struct ShapePropertiesBar: View {
             }
         )
     }
-
 }

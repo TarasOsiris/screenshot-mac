@@ -67,7 +67,6 @@ struct CanvasShapeView: View {
 
     private let handleDiameter: CGFloat = 8
 
-    private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
     private var displayPixelStep: CGFloat { 1 / max(screenScale, 1) }
 
     // Current effective geometry (accounts for in-progress resize or drag)
@@ -298,110 +297,29 @@ struct CanvasShapeView: View {
 
     @ViewBuilder
     private var shapeContent: some View {
-        switch shape.type {
-        case .rectangle:
-            let maxRadius = min(displayW, displayH) / 2
-            let clampedRadius = min(shape.borderRadius * displayScale, maxRadius)
-            // Keep one path implementation across the entire radius range to avoid
-            // tiny export seams where Capsule and RoundedRectangle rasterize differently.
-            outlinedShape(RoundedRectangle(cornerRadius: clampedRadius, style: .circular))
-
-        case .circle:
-            outlinedShape(Ellipse())
-
-        case .star:
-            let star = StarShape(pointCount: shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)
-            outlinedShape(star)
-
-        case .text:
-            if isEditingText {
-                textEditor
-            } else {
-                let rawText = shape.text ?? ""
-                let showPlaceholder = showsEditorHelpers && rawText.isEmpty
-                let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
-                let weight = fontWeight(shape.fontWeight ?? 700)
-                let isItalic = showPlaceholder ? true : (shape.italic ?? false)
-                let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight, italic: isItalic)
-                let displayText = showPlaceholder ? "Text" : rawText
-                let nsColor = NSColor(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
-                let align = shape.textAlign.nsTextAlignment
-                let vAlign = shape.textVerticalAlign ?? .center
-                let uc = shape.uppercase ?? false
-                Group {
-                    if showsEditorHelpers {
-                        LiveDisplayTextView(
-                            text: displayText, font: nsFont, color: nsColor,
-                            alignment: align, verticalAlignment: vAlign,
-                            uppercase: uc, letterSpacing: shape.letterSpacing,
-                            lineHeightMultiple: shape.lineHeightMultiple,
-                            legacyLineSpacing: shape.lineSpacing
-                        )
-                    } else {
-                        RasterizedDisplayTextView(
-                            text: displayText, font: nsFont, color: nsColor,
-                            alignment: align, verticalAlignment: vAlign,
-                            uppercase: uc, letterSpacing: shape.letterSpacing,
-                            lineHeightMultiple: shape.lineHeightMultiple,
-                            legacyLineSpacing: shape.lineSpacing
-                        )
-                    }
-                }
-                .frame(width: effectiveW, height: effectiveH)
-                .scaleEffect(displayScale, anchor: .topLeading)
-                .frame(width: displayW, height: displayH, alignment: .topLeading)
-            }
-
-        case .image:
-            if let image = screenshotImage {
-                Image(nsImage: image)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: displayW, height: displayH)
-                    .clipShape(RoundedRectangle(cornerRadius: shape.borderRadius * displayScale))
-            } else if showsEditorHelpers {
-                imageDropPlaceholder {
-                    RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
-                        .fill(Color.gray.opacity(0.3))
-                }
-            }
-
-        case .svg:
-            if let image = cachedSvgImage ?? Self.svgImage(from: shape.svgContent ?? "", useColor: shape.svgUseColor == true, color: shape.color, targetSize: CGSize(width: effectiveW, height: effectiveH)) {
-                Image(nsImage: image)
-                    .resizable()
-                    .interpolation(.high)
-            } else if showsEditorHelpers {
-                RoundedRectangle(cornerRadius: 4 * displayScale)
-                    .fill(Color.gray.opacity(0.2))
-                    .overlay {
-                        Image(systemName: "chevron.left.forwardslash.chevron.right")
-                            .font(.system(size: 24 * displayScale))
-                            .foregroundStyle(.secondary)
-                    }
-            }
-
-        case .device:
-            let frame = DeviceFrameView(
-                category: shape.deviceCategory ?? .iphone,
-                bodyColor: shape.resolvedDeviceBodyColor(default: defaultDeviceBodyColor),
-                width: displayW,
-                height: displayH,
-                screenshotImage: screenshotImage,
-                deviceFrameId: shape.deviceFrameId
-            )
-            if screenshotImage == nil && showsEditorHelpers {
-                imageDropPlaceholder { frame }
-            } else if showsEditorHelpers {
-                frame
-                    .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
-                        handleDrop(providers)
-                    }
-            } else {
-                frame
-            }
-        }
+        CanvasShapeRenderContent(
+            shape: shape,
+            effectiveW: effectiveW,
+            effectiveH: effectiveH,
+            displayW: displayW,
+            displayH: displayH,
+            displayScale: displayScale,
+            displayOutlineWidth: displayOutlineWidth,
+            screenshotImage: screenshotImage,
+            fillImage: fillImage,
+            defaultDeviceBodyColor: defaultDeviceBodyColor,
+            cachedSvgImage: cachedSvgImage,
+            showsEditorHelpers: showsEditorHelpers,
+            isEditingText: isEditingText,
+            editingTextValue: $editingTextValue,
+            isDropTargeted: $isDropTargeted,
+            onRequestImagePicker: { isPickerPresented = true },
+            onHandleDrop: handleDrop,
+            onCommitTextEdit: commitTextEdit,
+            resolveNSFont: resolvedNSFont,
+            fontWeightResolver: fontWeight,
+            renderSvgImage: Self.svgImage
+        )
     }
 
     /// Applies an update to this shape, or to all selected shapes if multi-selected with same type
@@ -417,125 +335,41 @@ struct CanvasShapeView: View {
 
     @ViewBuilder
     private var shapeContextMenu: some View {
-        if shape.type == .device || shape.type == .image {
-            Button("Replace Image...") {
-                isPickerPresented = true
-            }
-            Button("Reset Image") {
-                onClearImage?()
-            }
-            .disabled(shape.displayImageFileName == nil)
-            if shape.type == .image, let image = screenshotImage {
-                Button("Restore Original Aspect Ratio") {
-                    let imgSize = image.size
-                    guard imgSize.width > 0 && imgSize.height > 0 else { return }
-                    let newHeight = shape.width / (imgSize.width / imgSize.height)
-                    applyUpdate { $0.height = newHeight }
+        CanvasShapeContextMenuContent(
+            shape: shape,
+            screenshotImage: screenshotImage,
+            isPickerPresented: $isPickerPresented,
+            onClearImage: onClearImage,
+            onMatchDeviceSizes: onMatchDeviceSizes,
+            onTranslate: onTranslate,
+            translateLocaleName: translateLocaleName,
+            applyUpdate: applyUpdate,
+            deleteAction: {
+                if let onDeleteSelected {
+                    onDeleteSelected()
+                } else {
+                    onDelete()
                 }
             }
-            Divider()
-        }
-        if shape.type == .device {
-            Menu("Change Device") {
-                DeviceMenuContent(
-                    onSelectCategory: { category in
-                        applyUpdate { $0.selectAbstractDevice(category) }
-                    },
-                    onSelectFrame: { frame in
-                        applyUpdate { $0.selectRealFrame(frame) }
-                    },
-                    selectedCategory: shape.deviceCategory,
-                    selectedFrameId: shape.deviceFrameId
-                )
-            }
-            if let onMatchDeviceSizes {
-                Button("Resize to Fit All Devices") {
-                    onMatchDeviceSizes()
-                }
-            }
-            Divider()
-        }
-        if shape.type == .text {
-            Picker("Align", selection: Binding(
-                get: { shape.textAlign ?? .center },
-                set: { val in applyUpdate { $0.textAlign = val } }
-            )) {
-                Label("Left", systemImage: "text.alignleft").tag(TextAlign.left)
-                Label("Center", systemImage: "text.aligncenter").tag(TextAlign.center)
-                Label("Right", systemImage: "text.alignright").tag(TextAlign.right)
-            }
-            Toggle("Italic", isOn: Binding(
-                get: { shape.italic ?? false },
-                set: { val in applyUpdate { $0.italic = val } }
-            ))
-            Toggle("Uppercase", isOn: Binding(
-                get: { shape.uppercase ?? false },
-                set: { val in applyUpdate { $0.uppercase = val } }
-            ))
-            Menu("Change Font Size") {
-                let currentSize = Int(shape.fontSize ?? CanvasShapeModel.defaultFontSize)
-                ForEach(CanvasShapeModel.fontSizePresets, id: \.self) { size in
-                    Button {
-                        applyUpdate { $0.fontSize = CGFloat(size) }
-                    } label: {
-                        if currentSize == size {
-                            Label("\(size)", systemImage: "checkmark")
-                        } else {
-                            Text("\(size)")
-                        }
-                    }
-                }
-            }
-            if let onTranslate, let localeName = translateLocaleName {
-                Divider()
-                Button("Translate into \(localeName)") {
-                    onTranslate()
-                }
-                .disabled((shape.text ?? "").isEmpty)
-            }
-            Divider()
-        }
-        if shape.type == .svg {
-            Toggle("Use Custom Color", isOn: Binding(
-                get: { shape.svgUseColor ?? false },
-                set: { val in applyUpdate { $0.svgUseColor = val } }
-            ))
-            Divider()
-        }
-        if shape.type == .star {
-            Menu("Points: \(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)") {
-                ForEach(3...12, id: \.self) { count in
-                    Button("\(count)") {
-                        applyUpdate { $0.starPointCount = count }
-                    }
-                }
-            }
-            Divider()
-        }
-        Toggle("Clip to Screenshot", isOn: Binding(
-            get: { shape.clipToTemplate ?? false },
-            set: { val in applyUpdate { $0.clipToTemplate = val } }
-        ))
-        Divider()
-        Button("Delete", role: .destructive) {
-            if let onDeleteSelected {
-                onDeleteSelected()
-            } else {
-                onDelete()
-            }
-        }
+        )
     }
 
     @ViewBuilder
     private var handlesContent: some View {
-        if isSelected {
-            selectionOverlay
-            resizeHandles
-        }
-    }
-
-    private var selectionOverlay: some View {
-        borderOverlay(opacity: 1.0, lineWidth: 1.5)
+        CanvasShapeHandlesOverlay(
+            shape: shape,
+            displayScale: displayScale,
+            zoom: zoom,
+            displayX: displayX,
+            displayY: displayY,
+            displayW: displayW,
+            displayH: displayH,
+            currentRotation: currentRotation,
+            handleDiameter: handleDiameter,
+            rotationDelta: $rotationDelta,
+            resizeState: $resizeState,
+            onUpdate: onUpdate
+        )
     }
 
     private var hoverOverlay: some View {
@@ -551,248 +385,8 @@ struct CanvasShapeView: View {
             .allowsHitTesting(false)
     }
 
-    // MARK: - Resize Handles
-
-    private var resizeHandles: some View {
-        ZStack {
-            resizeHandle(edge: .topLeft)
-            resizeHandle(edge: .topRight)
-            resizeHandle(edge: .bottomLeft)
-            resizeHandle(edge: .bottomRight)
-            resizeHandle(edge: .top)
-            resizeHandle(edge: .bottom)
-            resizeHandle(edge: .left)
-            resizeHandle(edge: .right)
-            rotateHandleContent
-        }
-        .frame(width: displayW, height: displayH)
-        .rotationEffect(.degrees(currentRotation))
-        .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
-    }
-
-    // MARK: - Rotate Handle
-
-    private var rotateHandleContent: some View {
-        let stemLength: CGFloat = 24 / zoom
-        let handleSize: CGFloat = 10 / zoom
-        let hitSize: CGFloat = 24 / zoom
-
-        return ZStack {
-            // Stem line behind the knob (starts below the resize handle's edge)
-            Path { path in
-                path.move(to: CGPoint(x: displayW / 2, y: -handleDiameter / (2 * zoom)))
-                path.addLine(to: CGPoint(x: displayW / 2, y: -stemLength))
-            }
-            .stroke(Color.accentColor, lineWidth: 1 / zoom)
-
-            // Rotate handle circle (on top of stem)
-            ZStack {
-                Color.clear
-                    .frame(width: hitSize, height: hitSize)
-                    .contentShape(Rectangle())
-
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: handleSize, height: handleSize)
-
-                Circle()
-                    .strokeBorder(Color.accentColor, lineWidth: 1.5 / zoom)
-                    .frame(width: handleSize, height: handleSize)
-            }
-            .onHover { hovering in
-                if hovering {
-                    CursorHelper.rotateCursor.push()
-                } else {
-                    NSCursor.pop()
-                }
-            }
-            .position(x: displayW / 2, y: -stemLength)
-            .gesture(rotateGesture(stemLength: stemLength))
-        }
-    }
-
-    /// Rotation gesture using translation-only math (no need for global center position).
-    /// The handle starts at a known offset from center in screen space; we compute angle change
-    /// from the translation vector applied to that initial offset.
-    private func rotateGesture(stemLength: CGFloat) -> some Gesture {
-        let handleDist = (displayH / 2 + stemLength) * zoom
-        let baseAngleRad = (shape.rotation - 90) * .pi / 180
-        // Pre-compute invariant vector from center to handle start position
-        let handleVecX = handleDist * cos(baseAngleRad)
-        let handleVecY = handleDist * sin(baseAngleRad)
-        let startAngle = atan2(handleVecY, handleVecX) * 180 / .pi
-
-        return DragGesture(coordinateSpace: .global)
-            .onChanged { value in
-                CursorHelper.rotateCursor.set()
-
-                // Current vector: initial + drag translation
-                let curX = handleVecX + value.translation.width
-                let curY = handleVecY + value.translation.height
-                let currentAngle = atan2(curY, curX) * 180 / .pi
-
-                var delta = currentAngle - startAngle
-
-                // Snap to 15° increments when holding Shift
-                if NSEvent.modifierFlags.contains(.shift) {
-                    let target = shape.rotation + delta
-                    let snapped = (target / 15).rounded() * 15
-                    delta = snapped - shape.rotation
-                }
-
-                rotationDelta = delta
-            }
-            .onEnded { _ in
-                NSCursor.arrow.set()
-                var updated = shape
-                updated.rotation = normalizeAngle(shape.rotation + rotationDelta)
-                rotationDelta = 0
-                onUpdate(updated)
-            }
-    }
-
-    private func normalizeAngle(_ angle: Double) -> Double {
-        var a = angle.truncatingRemainder(dividingBy: 360)
-        if a < 0 { a += 360 }
-        return a
-    }
-
     private func snapToDisplayPixel(_ value: CGFloat) -> CGFloat {
         (value / displayPixelStep).rounded() * displayPixelStep
-    }
-
-    private func handlePosition(for edge: ResizeEdge) -> CGPoint {
-        let hw = displayW / 2
-        let hh = displayH / 2
-        switch edge {
-        case .topLeft:     return CGPoint(x: 0, y: 0)
-        case .top:         return CGPoint(x: hw, y: 0)
-        case .topRight:    return CGPoint(x: displayW, y: 0)
-        case .left:        return CGPoint(x: 0, y: hh)
-        case .right:       return CGPoint(x: displayW, y: hh)
-        case .bottomLeft:  return CGPoint(x: 0, y: displayH)
-        case .bottom:      return CGPoint(x: hw, y: displayH)
-        case .bottomRight: return CGPoint(x: displayW, y: displayH)
-        }
-    }
-
-    private func resizeHandle(edge: ResizeEdge) -> some View {
-        let handleSize = handleDiameter / zoom
-        let hitSize: CGFloat = 20 / zoom
-        let pos = handlePosition(for: edge)
-
-        return ZStack {
-            Color.clear
-                .frame(width: hitSize, height: hitSize)
-                .contentShape(Rectangle())
-
-            Circle()
-                .fill(Color.white)
-                .strokeBorder(Color.accentColor, lineWidth: 1.5 / zoom)
-                .frame(width: handleSize, height: handleSize)
-                .allowsHitTesting(false)
-        }
-        .onHover { hovering in
-            if hovering {
-                CursorHelper.resizeCursor(for: edge, rotation: currentRotation).push()
-            } else {
-                NSCursor.pop()
-            }
-        }
-        .position(pos)
-        .gesture(
-            DragGesture(coordinateSpace: .global)
-                .onChanged { value in
-                    let effectiveScale = displayScale * zoom
-                    let tx = value.translation.width / effectiveScale
-                    let ty = value.translation.height / effectiveScale
-                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift) || shape.type == .device
-                    resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
-                }
-                .onEnded { _ in
-                    if let rs = resizeState {
-                        var updated = shape
-                        updated.x = rs.newX
-                        updated.y = rs.newY
-                        updated.width = rs.newW
-                        updated.height = rs.newH
-                        onUpdate(updated)
-                    }
-                    resizeState = nil
-                }
-        )
-    }
-
-    // MARK: - Resize Math
-
-    /// Compute new x, y, width, height for a resize drag, keeping the anchor point fixed in canvas space.
-    private func computeResize(edge: ResizeEdge, tx: CGFloat, ty: CGFloat, lockAspectRatio: Bool = false) -> ResizeState {
-        let minSize: CGFloat = shape.type == .device ? CanvasShapeModel.deviceMinSize : 20
-        let cosA = cos(rotationRadians)
-        let sinA = sin(rotationRadians)
-
-        // Rotate screen-space drag into local shape space (cos(-x)=cos(x), sin(-x)=-sin(x))
-        let localTx =  tx * cosA + ty * sinA
-        let localTy = -tx * sinA + ty * cosA
-
-        // Compute new size from local-space drag
-        var newW = shape.width
-        var newH = shape.height
-        switch edge {
-        case .topLeft:     newW = max(minSize, shape.width - localTx);  newH = max(minSize, shape.height - localTy)
-        case .top:         newH = max(minSize, shape.height - localTy)
-        case .topRight:    newW = max(minSize, shape.width + localTx);  newH = max(minSize, shape.height - localTy)
-        case .left:        newW = max(minSize, shape.width - localTx)
-        case .right:       newW = max(minSize, shape.width + localTx)
-        case .bottomLeft:  newW = max(minSize, shape.width - localTx);  newH = max(minSize, shape.height + localTy)
-        case .bottom:      newH = max(minSize, shape.height + localTy)
-        case .bottomRight: newW = max(minSize, shape.width + localTx);  newH = max(minSize, shape.height + localTy)
-        }
-
-        if lockAspectRatio {
-            let baseW = max(shape.width, 1)
-            let baseH = max(shape.height, 1)
-            let minScale = max(minSize / baseW, minSize / baseH)
-
-            let widthScale = newW / baseW
-            let heightScale = newH / baseH
-
-            let scale: CGFloat
-            switch edge {
-            case .left, .right:
-                scale = max(minScale, widthScale)
-            case .top, .bottom:
-                scale = max(minScale, heightScale)
-            case .topLeft, .topRight, .bottomLeft, .bottomRight:
-                let useWidth = abs(widthScale - 1) >= abs(heightScale - 1)
-                scale = max(minScale, useWidth ? widthScale : heightScale)
-            }
-
-            newW = baseW * scale
-            newH = baseH * scale
-        }
-
-        // Anchor point: the corner/edge opposite to the dragged one, in local coords relative to shape origin
-        let anchor = edge.anchorPoint(width: shape.width, height: shape.height)
-
-        // Anchor in canvas space: rotate around shape center
-        let cx = shape.x + shape.width / 2
-        let cy = shape.y + shape.height / 2
-        let ax = anchor.x - shape.width / 2
-        let ay = anchor.y - shape.height / 2
-        let anchorCanvasX = cx + ax * cosA - ay * sinA
-        let anchorCanvasY = cy + ax * sinA + ay * cosA
-
-        // Same anchor in new local coords
-        let newAnchor = edge.anchorPoint(width: newW, height: newH)
-        let nax = newAnchor.x - newW / 2
-        let nay = newAnchor.y - newH / 2
-
-        // Solve for new center: newCenter + rotate(newAnchorRelCenter) = anchorCanvas
-        let newCx = anchorCanvasX - (nax * cosA - nay * sinA)
-        let newCy = anchorCanvasY - (nax * sinA + nay * cosA)
-
-        return ResizeState(newX: newCx - newW / 2, newY: newCy - newH / 2, newW: newW, newH: newH)
     }
 
     // MARK: - Drag
@@ -861,46 +455,6 @@ struct CanvasShapeView: View {
         NSImage.fromSecurityScopedURL(url)
     }
 
-    @ViewBuilder
-    private func imageDropPlaceholder<Background: View>(@ViewBuilder background: () -> Background) -> some View {
-        // Scale button to fit within shape, capped at comfortable max
-        let sizeRef = min(displayW, displayH)
-        let iconSize = min(28, max(14, sizeRef * 0.18))
-        let padding = min(12, max(4, sizeRef * 0.05))
-        let cr = min(8, max(4, sizeRef * 0.04))
-
-        ZStack {
-            background()
-
-            Button {
-                isPickerPresented = true
-            } label: {
-                Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
-                    .font(.system(size: iconSize))
-                .foregroundStyle(.primary)
-                .padding(padding)
-                .background(
-                    .thinMaterial.opacity(isDropTargeted ? 0.9 : 1.0),
-                    in: RoundedRectangle(cornerRadius: cr, style: .continuous)
-                )
-            }
-            .buttonStyle(.plain)
-            .focusable(false)
-            .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
-
-            if isDropTargeted {
-                RoundedRectangle(cornerRadius: cr, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.12))
-                RoundedRectangle(cornerRadius: cr, style: .continuous)
-                    .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
-            }
-        }
-        .frame(width: displayW, height: displayH)
-        .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
-            handleDrop(providers)
-        }
-    }
-
     private func debounceSvgCacheUpdate() {
         svgResizeDebounceTask?.cancel()
         svgResizeDebounceTask = Task {
@@ -921,29 +475,8 @@ struct CanvasShapeView: View {
         cachedSvgImage = Self.svgImage(from: content, useColor: shape.svgUseColor == true, color: shape.color, targetSize: targetSize)
     }
 
-    static func svgImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
+    nonisolated static func svgImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
         SvgHelper.renderImage(from: svgContent, useColor: useColor, color: color, targetSize: targetSize)
-    }
-
-    private var textEditor: some View {
-        let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
-        let weight = fontWeight(shape.fontWeight ?? 700)
-        let nsFont = resolvedNSFont(size: fontSize, weight: weight.nsWeight, italic: shape.italic ?? false)
-        return InlineTextEditor(
-            text: $editingTextValue,
-            font: nsFont,
-            color: NSColor(shape.color),
-            alignment: shape.textAlign.nsTextAlignment,
-            verticalAlignment: shape.textVerticalAlign ?? .center,
-            uppercase: shape.uppercase ?? false,
-            letterSpacing: shape.letterSpacing,
-            lineHeightMultiple: shape.lineHeightMultiple,
-            legacyLineSpacing: shape.lineSpacing,
-            onCommit: { commitTextEdit() }
-        )
-        .frame(width: effectiveW, height: effectiveH)
-        .scaleEffect(displayScale, anchor: .topLeading)
-        .frame(width: displayW, height: displayH, alignment: .topLeading)
     }
 
     private func commitTextEdit() {
@@ -954,47 +487,11 @@ struct CanvasShapeView: View {
         onUpdate(updated)
     }
 
-    @ViewBuilder
-    private func outlinedShape<S: InsettableShape>(_ outline: S) -> some View {
-        let maxInset = max(0, min(displayW, displayH) / 2)
-        let inset = min(displayOutlineWidth, maxInset)
-
-        if let outlineColor = shape.outlineColor, inset > 0 {
-            ZStack {
-                outline.fill(outlineColor)
-                let innerOutline = outline.inset(by: inset)
-                filledShape(innerOutline)
-            }
-            .clipShape(outline)
-        } else {
-            filledShape(outline)
-        }
-    }
-
-    @ViewBuilder
-    private func filledShape<S: Shape>(_ outline: S) -> some View {
-        if shape.resolvedFillStyle == .color {
-            outline.fill(shape.color)
-        } else {
-            shape.fillView(image: fillImage, modelSize: CGSize(width: shape.width, height: shape.height))
-                .clipShape(outline)
-        }
-    }
-
     /// The custom font family name, if the shape specifies one that's available.
     private var customFontName: String? {
         guard let name = shape.fontName, !name.isEmpty,
               availableFontFamilies.contains(name) else { return nil }
         return name
-    }
-
-    private func resolvedFont(size: CGFloat, weight: Font.Weight) -> Font {
-        // Use Font.custom for custom fonts — Font(NSFont) can lose variable font
-        // weight variations. Font.custom lets SwiftUI resolve weight axes natively.
-        if let name = customFontName {
-            return Font.custom(name, size: size).weight(weight)
-        }
-        return .system(size: size, weight: weight)
     }
 
     private func resolvedNSFont(size: CGFloat, weight: NSFont.Weight, italic: Bool = false) -> NSFont {
@@ -1055,5 +552,634 @@ struct CanvasShapeView: View {
         case 700...799: .bold
         default: .heavy
         }
+    }
+}
+
+private struct CanvasShapeRenderContent: View {
+    let shape: CanvasShapeModel
+    let effectiveW: CGFloat
+    let effectiveH: CGFloat
+    let displayW: CGFloat
+    let displayH: CGFloat
+    let displayScale: CGFloat
+    let displayOutlineWidth: CGFloat
+    var screenshotImage: NSImage?
+    var fillImage: NSImage?
+    var defaultDeviceBodyColor: Color
+    var cachedSvgImage: NSImage?
+    let showsEditorHelpers: Bool
+    let isEditingText: Bool
+    @Binding var editingTextValue: String
+    @Binding var isDropTargeted: Bool
+    let onRequestImagePicker: () -> Void
+    let onHandleDrop: ([NSItemProvider]) -> Bool
+    let onCommitTextEdit: () -> Void
+    let resolveNSFont: (CGFloat, NSFont.Weight, Bool) -> NSFont
+    let fontWeightResolver: (Int) -> Font.Weight
+    let renderSvgImage: (String, Bool, Color, CGSize?) -> NSImage?
+
+    var body: some View {
+        switch shape.type {
+        case .rectangle:
+            let maxRadius = min(displayW, displayH) / 2
+            let clampedRadius = min(shape.borderRadius * displayScale, maxRadius)
+            outlinedShape(RoundedRectangle(cornerRadius: clampedRadius, style: .circular))
+
+        case .circle:
+            outlinedShape(Ellipse())
+
+        case .star:
+            outlinedShape(StarShape(pointCount: shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount))
+
+        case .text:
+            if isEditingText {
+                textEditor
+            } else {
+                displayTextContent
+            }
+
+        case .image:
+            imageContent
+
+        case .svg:
+            svgContent
+
+        case .device:
+            deviceContent
+        }
+    }
+
+    private var displayTextContent: some View {
+        let rawText = shape.text ?? ""
+        let showPlaceholder = showsEditorHelpers && rawText.isEmpty
+        let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
+        let weight = fontWeightResolver(shape.fontWeight ?? 700)
+        let isItalic = showPlaceholder ? true : (shape.italic ?? false)
+        let nsFont = resolveNSFont(fontSize, weight.nsWeight, isItalic)
+        let displayText = showPlaceholder ? "Text" : rawText
+        let nsColor = NSColor(shape.color.opacity(showPlaceholder ? 0.4 : 1.0))
+        let align = shape.textAlign.nsTextAlignment
+        let verticalAlign = shape.textVerticalAlign ?? .center
+        let uppercase = shape.uppercase ?? false
+
+        return Group {
+            if showsEditorHelpers {
+                LiveDisplayTextView(
+                    text: displayText,
+                    font: nsFont,
+                    color: nsColor,
+                    alignment: align,
+                    verticalAlignment: verticalAlign,
+                    uppercase: uppercase,
+                    letterSpacing: shape.letterSpacing,
+                    lineHeightMultiple: shape.lineHeightMultiple,
+                    legacyLineSpacing: shape.lineSpacing
+                )
+            } else {
+                RasterizedDisplayTextView(
+                    text: displayText,
+                    font: nsFont,
+                    color: nsColor,
+                    alignment: align,
+                    verticalAlignment: verticalAlign,
+                    uppercase: uppercase,
+                    letterSpacing: shape.letterSpacing,
+                    lineHeightMultiple: shape.lineHeightMultiple,
+                    legacyLineSpacing: shape.lineSpacing
+                )
+            }
+        }
+        .frame(width: effectiveW, height: effectiveH)
+        .scaleEffect(displayScale, anchor: .topLeading)
+        .frame(width: displayW, height: displayH, alignment: .topLeading)
+    }
+
+    @ViewBuilder
+    private var imageContent: some View {
+        if let screenshotImage {
+            Image(nsImage: screenshotImage)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fill)
+                .frame(width: displayW, height: displayH)
+                .clipShape(RoundedRectangle(cornerRadius: shape.borderRadius * displayScale))
+        } else if showsEditorHelpers {
+            imageDropPlaceholder {
+                RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
+                    .fill(Color.gray.opacity(0.3))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var svgContent: some View {
+        if let image = cachedSvgImage ?? renderSvgImage(
+            shape.svgContent ?? "",
+            shape.svgUseColor == true,
+            shape.color,
+            CGSize(width: effectiveW, height: effectiveH)
+        ) {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+        } else if showsEditorHelpers {
+            RoundedRectangle(cornerRadius: 4 * displayScale)
+                .fill(Color.gray.opacity(0.2))
+                .overlay {
+                    Image(systemName: "chevron.left.forwardslash.chevron.right")
+                        .font(.system(size: 24 * displayScale))
+                        .foregroundStyle(.secondary)
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var deviceContent: some View {
+        let frame = DeviceFrameView(
+            category: shape.deviceCategory ?? .iphone,
+            bodyColor: shape.resolvedDeviceBodyColor(default: defaultDeviceBodyColor),
+            width: displayW,
+            height: displayH,
+            screenshotImage: screenshotImage,
+            deviceFrameId: shape.deviceFrameId
+        )
+
+        if screenshotImage == nil && showsEditorHelpers {
+            imageDropPlaceholder { frame }
+        } else if showsEditorHelpers {
+            frame
+                .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
+                    onHandleDrop(providers)
+                }
+        } else {
+            frame
+        }
+    }
+
+    private var textEditor: some View {
+        let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
+        let weight = fontWeightResolver(shape.fontWeight ?? 700)
+        let nsFont = resolveNSFont(fontSize, weight.nsWeight, shape.italic ?? false)
+
+        return InlineTextEditor(
+            text: $editingTextValue,
+            font: nsFont,
+            color: NSColor(shape.color),
+            alignment: shape.textAlign.nsTextAlignment,
+            verticalAlignment: shape.textVerticalAlign ?? .center,
+            uppercase: shape.uppercase ?? false,
+            letterSpacing: shape.letterSpacing,
+            lineHeightMultiple: shape.lineHeightMultiple,
+            legacyLineSpacing: shape.lineSpacing,
+            onCommit: onCommitTextEdit
+        )
+        .frame(width: effectiveW, height: effectiveH)
+        .scaleEffect(displayScale, anchor: .topLeading)
+        .frame(width: displayW, height: displayH, alignment: .topLeading)
+    }
+
+    @ViewBuilder
+    private func imageDropPlaceholder<Background: View>(@ViewBuilder background: () -> Background) -> some View {
+        let sizeRef = min(displayW, displayH)
+        let iconSize = min(28, max(14, sizeRef * 0.18))
+        let padding = min(12, max(4, sizeRef * 0.05))
+        let cornerRadius = min(8, max(4, sizeRef * 0.04))
+
+        ZStack {
+            background()
+
+            Button(action: onRequestImagePicker) {
+                Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
+                    .font(.system(size: iconSize))
+                    .foregroundStyle(.primary)
+                    .padding(padding)
+                    .background(
+                        .thinMaterial.opacity(isDropTargeted ? 0.9 : 1.0),
+                        in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    )
+            }
+            .buttonStyle(.plain)
+            .focusable(false)
+            .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
+
+            if isDropTargeted {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(Color.accentColor.opacity(0.12))
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
+            }
+        }
+        .frame(width: displayW, height: displayH)
+        .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
+            onHandleDrop(providers)
+        }
+    }
+
+    @ViewBuilder
+    private func outlinedShape<S: InsettableShape>(_ outline: S) -> some View {
+        let maxInset = max(0, min(displayW, displayH) / 2)
+        let inset = min(displayOutlineWidth, maxInset)
+
+        if let outlineColor = shape.outlineColor, inset > 0 {
+            ZStack {
+                outline.fill(outlineColor)
+                filledShape(outline.inset(by: inset))
+            }
+            .clipShape(outline)
+        } else {
+            filledShape(outline)
+        }
+    }
+
+    @ViewBuilder
+    private func filledShape<S: Shape>(_ outline: S) -> some View {
+        if shape.resolvedFillStyle == .color {
+            outline.fill(shape.color)
+        } else {
+            shape.fillView(image: fillImage, modelSize: CGSize(width: shape.width, height: shape.height))
+                .clipShape(outline)
+        }
+    }
+}
+
+private struct CanvasShapeContextMenuContent: View {
+    let shape: CanvasShapeModel
+    var screenshotImage: NSImage?
+    @Binding var isPickerPresented: Bool
+    var onClearImage: (() -> Void)?
+    var onMatchDeviceSizes: (() -> Void)?
+    var onTranslate: (() -> Void)?
+    var translateLocaleName: String?
+    let applyUpdate: (@escaping (inout CanvasShapeModel) -> Void) -> Void
+    let deleteAction: () -> Void
+
+    var body: some View {
+        if shape.type == .device || shape.type == .image {
+            Button("Replace Image...") {
+                isPickerPresented = true
+            }
+            Button("Reset Image") {
+                onClearImage?()
+            }
+            .disabled(shape.displayImageFileName == nil)
+            if shape.type == .image, let screenshotImage {
+                Button("Restore Original Aspect Ratio") {
+                    let imageSize = screenshotImage.size
+                    guard imageSize.width > 0 && imageSize.height > 0 else { return }
+                    let newHeight = shape.width / (imageSize.width / imageSize.height)
+                    applyUpdate { $0.height = newHeight }
+                }
+            }
+            Divider()
+        }
+
+        if shape.type == .device {
+            Menu("Change Device") {
+                DeviceMenuContent(
+                    onSelectCategory: { category in
+                        applyUpdate { $0.selectAbstractDevice(category) }
+                    },
+                    onSelectFrame: { frame in
+                        applyUpdate { $0.selectRealFrame(frame) }
+                    },
+                    selectedCategory: shape.deviceCategory,
+                    selectedFrameId: shape.deviceFrameId
+                )
+            }
+            if let onMatchDeviceSizes {
+                Button("Resize to Fit All Devices", action: onMatchDeviceSizes)
+            }
+            Divider()
+        }
+
+        if shape.type == .text {
+            Picker("Align", selection: Binding(
+                get: { shape.textAlign ?? .center },
+                set: { value in applyUpdate { $0.textAlign = value } }
+            )) {
+                Label("Left", systemImage: "text.alignleft").tag(TextAlign.left)
+                Label("Center", systemImage: "text.aligncenter").tag(TextAlign.center)
+                Label("Right", systemImage: "text.alignright").tag(TextAlign.right)
+            }
+            Toggle("Italic", isOn: Binding(
+                get: { shape.italic ?? false },
+                set: { value in applyUpdate { $0.italic = value } }
+            ))
+            Toggle("Uppercase", isOn: Binding(
+                get: { shape.uppercase ?? false },
+                set: { value in applyUpdate { $0.uppercase = value } }
+            ))
+            Menu("Change Font Size") {
+                let currentSize = Int(shape.fontSize ?? CanvasShapeModel.defaultFontSize)
+                ForEach(CanvasShapeModel.fontSizePresets, id: \.self) { size in
+                    Button {
+                        applyUpdate { $0.fontSize = CGFloat(size) }
+                    } label: {
+                        if currentSize == size {
+                            Label("\(size)", systemImage: "checkmark")
+                        } else {
+                            Text("\(size)")
+                        }
+                    }
+                }
+            }
+            if let onTranslate, let translateLocaleName {
+                Divider()
+                Button("Translate into \(translateLocaleName)", action: onTranslate)
+                    .disabled((shape.text ?? "").isEmpty)
+            }
+            Divider()
+        }
+
+        if shape.type == .svg {
+            Toggle("Use Custom Color", isOn: Binding(
+                get: { shape.svgUseColor ?? false },
+                set: { value in applyUpdate { $0.svgUseColor = value } }
+            ))
+            Divider()
+        }
+
+        if shape.type == .star {
+            Menu("Points: \(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)") {
+                ForEach(3...12, id: \.self) { count in
+                    Button("\(count)") {
+                        applyUpdate { $0.starPointCount = count }
+                    }
+                }
+            }
+            Divider()
+        }
+
+        Toggle("Clip to Screenshot", isOn: Binding(
+            get: { shape.clipToTemplate ?? false },
+            set: { value in applyUpdate { $0.clipToTemplate = value } }
+        ))
+
+        Divider()
+
+        Button("Delete", role: .destructive, action: deleteAction)
+    }
+}
+
+private struct CanvasShapeHandlesOverlay: View {
+    let shape: CanvasShapeModel
+    let displayScale: CGFloat
+    let zoom: CGFloat
+    let displayX: CGFloat
+    let displayY: CGFloat
+    let displayW: CGFloat
+    let displayH: CGFloat
+    let currentRotation: Double
+    let handleDiameter: CGFloat
+    @Binding var rotationDelta: Double
+    @Binding var resizeState: ResizeState?
+    let onUpdate: (CanvasShapeModel) -> Void
+
+    var body: some View {
+        selectionOverlay
+        resizeHandles
+    }
+
+    private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
+
+    private var selectionOverlay: some View {
+        Rectangle()
+            .strokeBorder(Color.accentColor.opacity(1.0), lineWidth: 1.5 / zoom)
+            .frame(width: displayW, height: displayH)
+            .rotationEffect(.degrees(currentRotation))
+            .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+            .allowsHitTesting(false)
+    }
+
+    private var resizeHandles: some View {
+        ZStack {
+            resizeHandle(edge: .topLeft)
+            resizeHandle(edge: .topRight)
+            resizeHandle(edge: .bottomLeft)
+            resizeHandle(edge: .bottomRight)
+            resizeHandle(edge: .top)
+            resizeHandle(edge: .bottom)
+            resizeHandle(edge: .left)
+            resizeHandle(edge: .right)
+            rotateHandleContent
+        }
+        .frame(width: displayW, height: displayH)
+        .rotationEffect(.degrees(currentRotation))
+        .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+    }
+
+    private var rotateHandleContent: some View {
+        let stemLength: CGFloat = 24 / zoom
+        let handleSize: CGFloat = 10 / zoom
+        let hitSize: CGFloat = 24 / zoom
+
+        return ZStack {
+            Path { path in
+                path.move(to: CGPoint(x: displayW / 2, y: -handleDiameter / (2 * zoom)))
+                path.addLine(to: CGPoint(x: displayW / 2, y: -stemLength))
+            }
+            .stroke(Color.accentColor, lineWidth: 1 / zoom)
+
+            ZStack {
+                Color.clear
+                    .frame(width: hitSize, height: hitSize)
+                    .contentShape(Rectangle())
+
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: handleSize, height: handleSize)
+
+                Circle()
+                    .strokeBorder(Color.accentColor, lineWidth: 1.5 / zoom)
+                    .frame(width: handleSize, height: handleSize)
+            }
+            .onHover { hovering in
+                if hovering {
+                    CursorHelper.rotateCursor.push()
+                } else {
+                    NSCursor.pop()
+                }
+            }
+            .position(x: displayW / 2, y: -stemLength)
+            .gesture(rotateGesture(stemLength: stemLength))
+        }
+    }
+
+    private func rotateGesture(stemLength: CGFloat) -> some Gesture {
+        let handleDistance = (displayH / 2 + stemLength) * zoom
+        let baseAngleRadians = (shape.rotation - 90) * .pi / 180
+        let handleVectorX = handleDistance * cos(baseAngleRadians)
+        let handleVectorY = handleDistance * sin(baseAngleRadians)
+        let startAngle = atan2(handleVectorY, handleVectorX) * 180 / .pi
+
+        return DragGesture(coordinateSpace: .global)
+            .onChanged { value in
+                CursorHelper.rotateCursor.set()
+
+                let currentX = handleVectorX + value.translation.width
+                let currentY = handleVectorY + value.translation.height
+                let currentAngle = atan2(currentY, currentX) * 180 / .pi
+
+                var delta = currentAngle - startAngle
+                if NSEvent.modifierFlags.contains(.shift) {
+                    let target = shape.rotation + delta
+                    let snapped = (target / 15).rounded() * 15
+                    delta = snapped - shape.rotation
+                }
+
+                rotationDelta = delta
+            }
+            .onEnded { _ in
+                NSCursor.arrow.set()
+                var updated = shape
+                updated.rotation = normalizeAngle(shape.rotation + rotationDelta)
+                rotationDelta = 0
+                onUpdate(updated)
+            }
+    }
+
+    private func normalizeAngle(_ angle: Double) -> Double {
+        var normalized = angle.truncatingRemainder(dividingBy: 360)
+        if normalized < 0 { normalized += 360 }
+        return normalized
+    }
+
+    private func handlePosition(for edge: ResizeEdge) -> CGPoint {
+        let halfWidth = displayW / 2
+        let halfHeight = displayH / 2
+        switch edge {
+        case .topLeft: return CGPoint(x: 0, y: 0)
+        case .top: return CGPoint(x: halfWidth, y: 0)
+        case .topRight: return CGPoint(x: displayW, y: 0)
+        case .left: return CGPoint(x: 0, y: halfHeight)
+        case .right: return CGPoint(x: displayW, y: halfHeight)
+        case .bottomLeft: return CGPoint(x: 0, y: displayH)
+        case .bottom: return CGPoint(x: halfWidth, y: displayH)
+        case .bottomRight: return CGPoint(x: displayW, y: displayH)
+        }
+    }
+
+    private func resizeHandle(edge: ResizeEdge) -> some View {
+        let handleSize = handleDiameter / zoom
+        let hitSize: CGFloat = 20 / zoom
+        let position = handlePosition(for: edge)
+
+        return ZStack {
+            Color.clear
+                .frame(width: hitSize, height: hitSize)
+                .contentShape(Rectangle())
+
+            Circle()
+                .fill(Color.white)
+                .strokeBorder(Color.accentColor, lineWidth: 1.5 / zoom)
+                .frame(width: handleSize, height: handleSize)
+                .allowsHitTesting(false)
+        }
+        .onHover { hovering in
+            if hovering {
+                CursorHelper.resizeCursor(for: edge, rotation: currentRotation).push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+        .position(position)
+        .gesture(
+            DragGesture(coordinateSpace: .global)
+                .onChanged { value in
+                    let effectiveScale = displayScale * zoom
+                    let tx = value.translation.width / effectiveScale
+                    let ty = value.translation.height / effectiveScale
+                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift) || shape.type == .device
+                    resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
+                }
+                .onEnded { _ in
+                    if let resizeState {
+                        var updated = shape
+                        updated.x = resizeState.newX
+                        updated.y = resizeState.newY
+                        updated.width = resizeState.newW
+                        updated.height = resizeState.newH
+                        onUpdate(updated)
+                    }
+                    resizeState = nil
+                }
+        )
+    }
+
+    private func computeResize(edge: ResizeEdge, tx: CGFloat, ty: CGFloat, lockAspectRatio: Bool) -> ResizeState {
+        let minSize: CGFloat = shape.type == .device ? CanvasShapeModel.deviceMinSize : 20
+        let cosA = cos(rotationRadians)
+        let sinA = sin(rotationRadians)
+        let localTx = tx * cosA + ty * sinA
+        let localTy = -tx * sinA + ty * cosA
+
+        var newW = shape.width
+        var newH = shape.height
+        switch edge {
+        case .topLeft:
+            newW = max(minSize, shape.width - localTx)
+            newH = max(minSize, shape.height - localTy)
+        case .top:
+            newH = max(minSize, shape.height - localTy)
+        case .topRight:
+            newW = max(minSize, shape.width + localTx)
+            newH = max(minSize, shape.height - localTy)
+        case .left:
+            newW = max(minSize, shape.width - localTx)
+        case .right:
+            newW = max(minSize, shape.width + localTx)
+        case .bottomLeft:
+            newW = max(minSize, shape.width - localTx)
+            newH = max(minSize, shape.height + localTy)
+        case .bottom:
+            newH = max(minSize, shape.height + localTy)
+        case .bottomRight:
+            newW = max(minSize, shape.width + localTx)
+            newH = max(minSize, shape.height + localTy)
+        }
+
+        if lockAspectRatio {
+            let baseW = max(shape.width, 1)
+            let baseH = max(shape.height, 1)
+            let minScale = max(minSize / baseW, minSize / baseH)
+
+            let widthScale = newW / baseW
+            let heightScale = newH / baseH
+
+            let scale: CGFloat
+            switch edge {
+            case .left, .right:
+                scale = max(minScale, widthScale)
+            case .top, .bottom:
+                scale = max(minScale, heightScale)
+            case .topLeft, .topRight, .bottomLeft, .bottomRight:
+                let useWidth = abs(widthScale - 1) >= abs(heightScale - 1)
+                scale = max(minScale, useWidth ? widthScale : heightScale)
+            }
+
+            newW = baseW * scale
+            newH = baseH * scale
+        }
+
+        let anchor = edge.anchorPoint(width: shape.width, height: shape.height)
+        let centerX = shape.x + shape.width / 2
+        let centerY = shape.y + shape.height / 2
+        let anchorX = anchor.x - shape.width / 2
+        let anchorY = anchor.y - shape.height / 2
+        let anchorCanvasX = centerX + anchorX * cosA - anchorY * sinA
+        let anchorCanvasY = centerY + anchorX * sinA + anchorY * cosA
+
+        let newAnchor = edge.anchorPoint(width: newW, height: newH)
+        let newAnchorX = newAnchor.x - newW / 2
+        let newAnchorY = newAnchor.y - newH / 2
+        let newCenterX = anchorCanvasX - (newAnchorX * cosA - newAnchorY * sinA)
+        let newCenterY = anchorCanvasY - (newAnchorX * sinA + newAnchorY * cosA)
+
+        return ResizeState(
+            newX: newCenterX - newW / 2,
+            newY: newCenterY - newH / 2,
+            newW: newW,
+            newH: newH
+        )
     }
 }
