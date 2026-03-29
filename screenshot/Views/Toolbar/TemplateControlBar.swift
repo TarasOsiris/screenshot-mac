@@ -26,6 +26,7 @@ struct TemplateControlBar: View {
     @State private var isDeletingTemplate = false
     @State private var showBackgroundPopover = false
     @State private var renderError: String?
+    @State private var isPreviewing = false
 
     private var canDelete: Bool { row.templates.count > 1 }
     private var isCompact: Bool { row.displayWidth(zoom: zoom) < 200 }
@@ -54,8 +55,15 @@ struct TemplateControlBar: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            ActionButton(icon: "eye", tooltip: "Preview") {
+            ActionButton(icon: "eye", tooltip: "Preview", disabled: isPreviewing) {
                 previewScreenshot()
+            }
+            .opacity(isPreviewing ? 0 : 1)
+            .overlay {
+                if isPreviewing {
+                    ProgressView()
+                        .controlSize(.small)
+                }
             }
             if !isCompact {
                 ActionButton(icon: "arrow.down.circle", tooltip: "Download") {
@@ -170,6 +178,7 @@ struct TemplateControlBar: View {
                 Button("Quick Look", systemImage: "eye") {
                     previewScreenshot()
                 }
+                .disabled(isPreviewing)
                 Button("Save as PNG...", systemImage: "square.and.arrow.down") {
                     downloadScreenshot()
                 }
@@ -245,19 +254,24 @@ struct TemplateControlBar: View {
     }
 
     private func previewScreenshot() {
-        guard let pngData = renderExportPNG() else {
-            renderError = "Could not render screenshot for preview."
-            return
+        isPreviewing = true
+        renderError = nil
+        DispatchQueue.main.async {
+            defer { isPreviewing = false }
+            guard let pngData = renderExportPNG() else {
+                renderError = "Could not render screenshot for preview."
+                return
+            }
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("screenshot-\(index + 1)-\(localeState.activeLocaleCode).png")
+            do {
+                try pngData.write(to: tempURL)
+            } catch {
+                renderError = "Could not write preview file: \(error.localizedDescription)"
+                return
+            }
+            QuickLookCoordinator.shared.preview(imageAt: tempURL)
         }
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("screenshot-\(index + 1)-\(localeState.activeLocaleCode).png")
-        do {
-            try pngData.write(to: tempURL)
-        } catch {
-            renderError = "Could not write preview file: \(error.localizedDescription)"
-            return
-        }
-        QuickLookCoordinator.shared.preview(imageAt: tempURL)
     }
 
     private func downloadScreenshot() {
