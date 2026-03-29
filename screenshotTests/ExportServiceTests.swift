@@ -615,6 +615,101 @@ struct ExportServiceTests {
         try expectDominant(bitmap, at: (340, 250), channel: .b, label: "right of normalized device")
     }
 
+    @Test func modelBackedDeviceFrameRendersVisibleContentInExport() throws {
+        var row = makeTestRow(width: 500, height: 900, bgColor: .white)
+        row.shapes = [CanvasShapeModel(
+            type: .device,
+            x: 90,
+            y: 80,
+            width: 320,
+            height: 720,
+            color: .clear,
+            deviceCategory: .iphone,
+            deviceFrameId: "iphone16model-default-portrait",
+            screenshotFileName: "model-screen"
+        )]
+
+        let bitmap = try renderTemplateBitmap(
+            index: 0,
+            row: row,
+            screenshotImages: ["model-screen": makeTestImage(width: 1206, height: 2622)]
+        )
+
+        try expectHasNonWhitePixel(bitmap, label: "Model-backed device frame should render visible pixels")
+    }
+
+    @Test func modelBackedDeviceRotationChangesExportOutput() throws {
+        let screenshotImages = ["model-screen": makeTestImage(width: 1206, height: 2622)]
+        var leftRow = makeTestRow(width: 500, height: 900, bgColor: .white)
+        leftRow.shapes = [CanvasShapeModel(
+            type: .device,
+            x: 90,
+            y: 80,
+            width: 320,
+            height: 720,
+            color: .clear,
+            deviceCategory: .iphone,
+            deviceFrameId: "iphone16model-default-portrait",
+            screenshotFileName: "model-screen",
+            deviceYaw: -30
+        )]
+
+        var rightRow = leftRow
+        rightRow.shapes[0].deviceYaw = 30
+
+        let leftBitmap = try renderTemplateBitmap(index: 0, row: leftRow, screenshotImages: screenshotImages)
+        let rightBitmap = try renderTemplateBitmap(index: 0, row: rightRow, screenshotImages: screenshotImages)
+
+        try expectBitmapsDiffer(leftBitmap, rightBitmap, label: "Changing model yaw should change exported pixels")
+    }
+
+    @Test func modelBackedDeviceFramePreservesBackgroundOutsidePhoneInExport() throws {
+        var row = makeTestRow(width: 500, height: 900, bgColor: Self.testBlue)
+        row.shapes = [CanvasShapeModel(
+            type: .device,
+            x: 90,
+            y: 80,
+            width: 320,
+            height: 720,
+            color: .clear,
+            deviceCategory: .iphone,
+            deviceFrameId: "iphone16model-default-portrait",
+            screenshotFileName: "model-screen"
+        )]
+
+        let bitmap = try renderTemplateBitmap(
+            index: 0,
+            row: row,
+            screenshotImages: ["model-screen": makeTestImage(width: 1206, height: 2622)]
+        )
+
+        try expectDominant(bitmap, at: (100, 100), channel: .b, label: "background around 3D phone should stay blue")
+    }
+
+    @Test func modelBackedDeviceExportMatchesEditorBrightness() throws {
+        let screenshotImages = ["model-screen": makeTestImage(width: 1206, height: 2622)]
+        var row = makeTestRow(width: 500, height: 900, bgColor: .white)
+        row.shapes = [CanvasShapeModel(
+            type: .device,
+            x: 90,
+            y: 80,
+            width: 320,
+            height: 720,
+            color: .clear,
+            deviceCategory: .iphone,
+            deviceFrameId: "iphone16model-default-portrait",
+            screenshotFileName: "model-screen"
+        )]
+
+        let exportBitmap = try renderTemplateBitmap(index: 0, row: row, screenshotImages: screenshotImages)
+        let editorBitmap = try renderEditorBitmap(index: 0, row: row, screenshotImages: screenshotImages)
+        let exportBrightness = try averageBrightnessOfVisibleContent(exportBitmap)
+        let editorBrightness = try averageBrightnessOfVisibleContent(editorBitmap)
+        let delta = abs(exportBrightness - editorBrightness)
+
+        #expect(delta < 0.08, "Model-backed device brightness should match editor, delta=\(delta)")
+    }
+
     @Test func outlineRendersAtShapeEdge() throws {
         let tw: CGFloat = 200
         let th: CGFloat = 200
@@ -745,17 +840,26 @@ struct ExportServiceTests {
         return (row, tw, th)
     }
 
-    private func renderTemplateBitmap(index: Int, row: ScreenshotRow) throws -> NSBitmapImageRep {
-        let image = ExportService.renderTemplateImage(index: index, row: row)
+    private func renderTemplateBitmap(
+        index: Int,
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:]
+    ) throws -> NSBitmapImageRep {
+        let image = ExportService.renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
         let pngData = try #require(ExportService.opaquePNGData(from: image))
         return try #require(NSBitmapImageRep(data: pngData))
     }
 
-    private func renderEditorBitmap(index: Int, row: ScreenshotRow) throws -> NSBitmapImageRep {
+    private func renderEditorBitmap(
+        index: Int,
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:]
+    ) throws -> NSBitmapImageRep {
         let tLeft = CGFloat(index) * row.templateWidth
         let totalWidth = row.templateWidth * CGFloat(row.templates.count)
         let composedBackground = ExportService.renderComposedBackgroundImage(
             row: row,
+            screenshotImages: screenshotImages,
             displayScale: 1.0,
             labelPrefix: "test editor"
         )
@@ -769,8 +873,8 @@ struct ExportServiceTests {
                 shape: shape,
                 displayScale: 1.0,
                 isSelected: false,
-                screenshotImage: nil,
-                fillImage: nil,
+                screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
+                fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
                 defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                 clipBounds: clipRect,
                 showsEditorHelpers: true,
@@ -798,6 +902,24 @@ struct ExportServiceTests {
         croppedImage.addRepresentation(cropped)
         let pngData = try #require(ExportService.opaquePNGData(from: croppedImage))
         return try #require(NSBitmapImageRep(data: pngData))
+    }
+
+    private func averageBrightnessOfVisibleContent(_ bitmap: NSBitmapImageRep) throws -> CGFloat {
+        let width = bitmap.pixelsWide
+        let height = bitmap.pixelsHigh
+        var total: CGFloat = 0
+        var count: CGFloat = 0
+
+        for y in stride(from: height / 10, to: height * 9 / 10, by: 12) {
+            for x in stride(from: width / 10, to: width * 9 / 10, by: 12) {
+                let color = try pixelColor(bitmap, at: (x, y))
+                guard color.r < 0.97 || color.g < 0.97 || color.b < 0.97 else { continue }
+                total += (color.r + color.g + color.b) / 3
+                count += 1
+            }
+        }
+
+        return try #require(count > 0 ? total / count : nil, "No visible content pixels sampled")
     }
 
     private struct PixelRGB {
@@ -850,6 +972,27 @@ struct ExportServiceTests {
         let c = try pixelColor(bitmap, at: point)
         #expect(c.r > 0.95 && c.g > 0.95 && c.b > 0.95,
                 "\(label): expected near-white background, got rgb=(\(c.r),\(c.g),\(c.b))")
+    }
+
+    private func expectBitmapsDiffer(
+        _ lhs: NSBitmapImageRep,
+        _ rhs: NSBitmapImageRep,
+        label: String,
+        threshold: CGFloat = 0.12
+    ) throws {
+        let width = min(lhs.pixelsWide, rhs.pixelsWide)
+        let height = min(lhs.pixelsHigh, rhs.pixelsHigh)
+        for y in stride(from: height / 8, to: height * 7 / 8, by: 18) {
+            for x in stride(from: width / 8, to: width * 7 / 8, by: 18) {
+                let left = try pixelColor(lhs, at: (x, y))
+                let right = try pixelColor(rhs, at: (x, y))
+                let delta = abs(left.r - right.r) + abs(left.g - right.g) + abs(left.b - right.b)
+                if delta > threshold {
+                    return
+                }
+            }
+        }
+        Issue.record("\(label): sampled pixels were effectively identical")
     }
 
     private func cropBitmap(_ image: NSImage, x: CGFloat, width: CGFloat, height: CGFloat) throws -> NSBitmapImageRep {

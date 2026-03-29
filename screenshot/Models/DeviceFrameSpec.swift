@@ -1,5 +1,10 @@
 import SwiftUI
 
+enum DeviceFrameScreenRenderingMode: Equatable {
+    case replaceMaterial
+    case overlayPlane
+}
+
 /// Describes the screen area within a device frame PNG image.
 struct DeviceFrameImageSpec {
     /// Frame PNG dimensions.
@@ -33,6 +38,19 @@ struct DeviceFrameImageSpec {
     }
 }
 
+struct DeviceFrameModelSpec: Equatable {
+    let resourceName: String
+    let resourceExtension: String
+    let resourceSubdirectory: String?
+    let screenMaterialName: String?
+    let screenRenderingMode: DeviceFrameScreenRenderingMode
+    let targetBodyHeight: CGFloat
+    let cameraDistance: CGFloat
+    let baseYawDegrees: Double
+    let defaultPitch: Double
+    let defaultYaw: Double
+}
+
 // MARK: - Real Device Frame
 
 /// A single real device frame image — one entry per PNG file.
@@ -42,10 +60,12 @@ struct DeviceFrame: Identifiable, Equatable {
     let colorName: String       // "Black"
     let isLandscape: Bool
     let fallbackCategory: DeviceCategory
-    let imageName: String       // Asset catalog name: "DeviceFrames/iphone17-black-portrait"
+    let imageName: String?      // Asset catalog name: "DeviceFrames/iphone17-black-portrait"
     let spec: DeviceFrameImageSpec
+    let modelSpec: DeviceFrameModelSpec?
 
     var orientationLabel: String { isLandscape ? "Landscape" : "Portrait" }
+    var isModelBacked: Bool { modelSpec != nil }
 
     /// SF Symbol icon name based on device type and orientation.
     var icon: String {
@@ -139,6 +159,23 @@ struct DeviceFrameCatalog {
         frameWidth: 2300, frameHeight: 3000,
         screenLeft: 118, screenTop: 124, screenRight: 118, screenBottom: 124,
         screenCornerRadius: 54
+    )
+    private static let iphone16ModelSpec = DeviceFrameImageSpec(
+        frameWidth: 148.05, frameHeight: 300.0,
+        screenLeft: 7.6025, screenTop: 6.653, screenRight: 7.6025, screenBottom: 6.653,
+        screenCornerRadius: 18
+    )
+    private static let iphone16USDZModel = DeviceFrameModelSpec(
+        resourceName: "iPhone_17_Pro_Max",
+        resourceExtension: "usdz",
+        resourceSubdirectory: "DeviceModels",
+        screenMaterialName: "screen_001",
+        screenRenderingMode: .replaceMaterial,
+        targetBodyHeight: 2.05,
+        cameraDistance: 5.4,
+        baseYawDegrees: 90,
+        defaultPitch: 0,
+        defaultYaw: 0
     )
 
     /// All available real device frames, grouped by model.
@@ -286,6 +323,12 @@ struct DeviceFrameCatalog {
                 baseSpec: iphoneAirSpec
             ),
             buildGroup(
+                id: "iphone16model", name: "iPhone 17 Pro Max (3D)",
+                colors: ["Default"],
+                baseSpec: iphone16ModelSpec,
+                modelSpec: iphone16USDZModel
+            ),
+            buildGroup(
                 id: "ipadpro11", name: "iPad Pro 11\"",
                 colors: ["Silver", "Space Gray"],
                 baseSpec: ipadPro11Spec,
@@ -334,7 +377,8 @@ struct DeviceFrameCatalog {
         colors: [String],
         baseSpec: DeviceFrameImageSpec,
         fallbackCategory: DeviceCategory = .iphone,
-        landscapeOnly: Bool = false
+        landscapeOnly: Bool = false,
+        modelSpec: DeviceFrameModelSpec? = nil
     ) -> DeviceFrameGroup {
         let landscapeSpec = landscapeOnly ? baseSpec : baseSpec.landscape
         let orientations: [Bool] = landscapeOnly ? [true] : [false, true]
@@ -349,8 +393,9 @@ struct DeviceFrameCatalog {
                     colorName: color,
                     isLandscape: isLandscape,
                     fallbackCategory: fallbackCategory,
-                    imageName: "DeviceFrames/\(frameId)",
-                    spec: isLandscape ? landscapeSpec : baseSpec
+                    imageName: modelSpec == nil ? "DeviceFrames/\(frameId)" : nil,
+                    spec: isLandscape ? landscapeSpec : baseSpec,
+                    modelSpec: modelSpec
                 )
             }
             return DeviceFrameColorGroup(id: "\(id)-\(slug)", name: color, frames: frames)

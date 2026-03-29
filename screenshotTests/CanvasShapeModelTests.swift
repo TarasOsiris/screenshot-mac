@@ -324,4 +324,64 @@ struct CanvasShapeModelTests {
 
         #expect(variant?.id == "iphoneair-skyblue-landscape")
     }
+
+    @Test func modelBackedFrameUsesDefaultRotationValues() throws {
+        let frame = try #require(DeviceFrameCatalog.frame(for: "iphone16model-default-portrait"))
+        let shape = CanvasShapeModel(
+            type: .device,
+            x: 0,
+            y: 0,
+            width: 300,
+            height: 600,
+            deviceCategory: .iphone,
+            deviceFrameId: frame.id
+        )
+
+        #expect(shape.supportsDeviceModelRotation)
+        #expect(shape.resolvedDevicePitch == frame.modelSpec?.defaultPitch)
+        #expect(shape.resolvedDeviceYaw == frame.modelSpec?.defaultYaw)
+    }
+
+    @Test func modelBackedFrameRotationRoundTripsThroughCodable() throws {
+        let shape = CanvasShapeModel(
+            type: .device,
+            x: 0,
+            y: 0,
+            width: 300,
+            height: 600,
+            deviceCategory: .iphone,
+            deviceFrameId: "iphone16model-default-portrait",
+            devicePitch: 9,
+            deviceYaw: 27
+        )
+
+        let data = try JSONEncoder().encode(shape)
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+
+        #expect(decoded.devicePitch == 9)
+        #expect(decoded.deviceYaw == 27)
+        #expect(decoded.resolvedDevicePitch == 9)
+        #expect(decoded.resolvedDeviceYaw == 27)
+    }
+
+    @Test func switchingAwayFromModelBackedFrameClearsStoredRotation() throws {
+        var shape = CanvasShapeModel(
+            type: .device,
+            x: 0,
+            y: 0,
+            width: 300,
+            height: 600,
+            deviceCategory: .iphone,
+            deviceFrameId: "iphone16model-default-portrait",
+            devicePitch: 12,
+            deviceYaw: -18
+        )
+        let nonModelFrame = try #require(DeviceFrameCatalog.frame(for: "iphone17-black-portrait"))
+
+        shape.selectRealFrame(nonModelFrame)
+
+        #expect(shape.devicePitch == nil)
+        #expect(shape.deviceYaw == nil)
+        #expect(!shape.supportsDeviceModelRotation)
+    }
 }

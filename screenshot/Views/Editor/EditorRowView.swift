@@ -481,6 +481,7 @@ struct EditorRowView: View {
                     fillImage: shape.fillImageConfig?.fileName.flatMap { state.screenshotImages[$0] },
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                     groupDragOffset: groupOffset,
+                    deviceModelRenderingMode: .live,
                     clipBounds: clipRect,
                     onSelect: { state.selectShape(shape.id, in: row.id) },
                     onShiftSelect: { state.toggleShapeSelection(shape.id, in: row.id) },

@@ -27,6 +27,7 @@ struct CanvasShapeView: View {
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor
     var groupDragOffset: CGSize = .zero
+    var deviceModelRenderingMode: DeviceModelRenderingMode = .snapshot
 
     var clipBounds: CGRect?
     var showsEditorHelpers: Bool = true
@@ -308,6 +309,7 @@ struct CanvasShapeView: View {
             screenshotImage: screenshotImage,
             fillImage: fillImage,
             defaultDeviceBodyColor: defaultDeviceBodyColor,
+            deviceModelRenderingMode: deviceModelRenderingMode,
             cachedSvgImage: cachedSvgImage,
             showsEditorHelpers: showsEditorHelpers,
             isEditingText: isEditingText,
@@ -566,6 +568,7 @@ private struct CanvasShapeRenderContent: View {
     var screenshotImage: NSImage?
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color
+    var deviceModelRenderingMode: DeviceModelRenderingMode
     var cachedSvgImage: NSImage?
     let showsEditorHelpers: Bool
     let isEditingText: Bool
@@ -701,7 +704,10 @@ private struct CanvasShapeRenderContent: View {
             width: displayW,
             height: displayH,
             screenshotImage: screenshotImage,
-            deviceFrameId: shape.deviceFrameId
+            deviceFrameId: shape.deviceFrameId,
+            devicePitch: shape.resolvedDevicePitch,
+            deviceYaw: shape.resolvedDeviceYaw,
+            modelRenderingMode: deviceModelRenderingMode
         )
 
         if screenshotImage == nil && showsEditorHelpers {

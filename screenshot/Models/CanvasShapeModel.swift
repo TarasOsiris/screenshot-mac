@@ -227,6 +227,8 @@ extension CanvasShapeModel {
 struct CanvasShapeModel: Identifiable, Codable {
     static let deviceMinSize: CGFloat = 200
     static let defaultDeviceBodyColor = Color(red: 0.11, green: 0.11, blue: 0.12)
+    static let defaultDeviceModelPitch: Double = 0
+    static let defaultDeviceModelYaw: Double = 0
     static let defaultFontSize: CGFloat = 72
     static let fontSizePresets: [Int] = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96, 128, 144, 192, 256]
     static let defaultStarPointCount = 5
@@ -265,6 +267,8 @@ struct CanvasShapeModel: Identifiable, Codable {
     var deviceBodyColorData: CodableColor?
     var deviceFrameId: String?
     var screenshotFileName: String?
+    var devicePitch: Double?
+    var deviceYaw: Double?
 
     // SVG properties
     var svgContent: String?
@@ -297,6 +301,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         case imageFileName = "ifn"
         case deviceCategory = "dc", deviceBodyColorData = "dbc"
         case deviceFrameId = "dfi", screenshotFileName = "sfn"
+        case devicePitch = "dpt", deviceYaw = "dyw"
         case svgContent = "svg", svgUseColor = "suc"
         case outlineColorData = "olc", outlineWidth = "olw"
         case starPointCount = "spc"
@@ -334,6 +339,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         deviceBodyColorData = try c.decodeIfPresent(CodableColor.self, forKey: .deviceBodyColorData)
         deviceFrameId = try c.decodeIfPresent(String.self, forKey: .deviceFrameId)
         screenshotFileName = try c.decodeIfPresent(String.self, forKey: .screenshotFileName)
+        devicePitch = try c.decodeIfPresent(Double.self, forKey: .devicePitch)
+        deviceYaw = try c.decodeIfPresent(Double.self, forKey: .deviceYaw)
         svgContent = try c.decodeIfPresent(String.self, forKey: .svgContent)
         svgUseColor = try c.decodeIfPresent(Bool.self, forKey: .svgUseColor)
         outlineColorData = try c.decodeIfPresent(CodableColor.self, forKey: .outlineColorData)
@@ -376,6 +383,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         try c.encodeIfPresent(deviceBodyColorData, forKey: .deviceBodyColorData)
         try c.encodeIfPresent(deviceFrameId, forKey: .deviceFrameId)
         try c.encodeIfPresent(screenshotFileName, forKey: .screenshotFileName)
+        if abs(resolvedDevicePitch) > 0.001 { try c.encode(resolvedDevicePitch, forKey: .devicePitch) }
+        if abs(resolvedDeviceYaw) > 0.001 { try c.encode(resolvedDeviceYaw, forKey: .deviceYaw) }
         // SVG
         try c.encodeIfPresent(svgContent, forKey: .svgContent)
         try c.encodeIfPresent(svgUseColor, forKey: .svgUseColor)
@@ -419,6 +428,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         deviceBodyColor: Color? = nil,
         deviceFrameId: String? = nil,
         screenshotFileName: String? = nil,
+        devicePitch: Double? = nil,
+        deviceYaw: Double? = nil,
         svgContent: String? = nil,
         svgUseColor: Bool? = nil,
         outlineColor: Color? = nil,
@@ -452,6 +463,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.deviceBodyColorData = deviceBodyColor.map { CodableColor($0) }
         self.deviceFrameId = deviceFrameId
         self.screenshotFileName = screenshotFileName
+        self.devicePitch = devicePitch
+        self.deviceYaw = deviceYaw
         self.svgContent = svgContent
         self.svgUseColor = svgUseColor
         self.outlineColorData = outlineColor.map { CodableColor($0) }
@@ -536,6 +549,25 @@ struct CanvasShapeModel: Identifiable, Codable {
         deviceBodyColorData?.color ?? defaultColor
     }
 
+    var supportsDeviceModelRotation: Bool {
+        type == .device && (resolvedDeviceFrame?.isModelBacked == true)
+    }
+
+    var resolvedDevicePitch: Double {
+        guard supportsDeviceModelRotation else { return 0 }
+        return devicePitch ?? resolvedDeviceFrame?.modelSpec?.defaultPitch ?? Self.defaultDeviceModelPitch
+    }
+
+    var resolvedDeviceYaw: Double {
+        guard supportsDeviceModelRotation else { return 0 }
+        return deviceYaw ?? resolvedDeviceFrame?.modelSpec?.defaultYaw ?? Self.defaultDeviceModelYaw
+    }
+
+    mutating func resetDeviceModelRotation() {
+        devicePitch = nil
+        deviceYaw = nil
+    }
+
     func duplicated(offsetX: CGFloat = 0, offsetY: CGFloat = 0) -> CanvasShapeModel {
         var copy = self
         copy.id = UUID()
@@ -603,6 +635,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     mutating func selectAbstractDevice(_ category: DeviceCategory) {
         deviceFrameId = nil
         deviceCategory = category
+        resetDeviceModelRotation()
         adjustToDeviceAspectRatio()
     }
 
@@ -610,6 +643,9 @@ struct CanvasShapeModel: Identifiable, Codable {
     mutating func selectRealFrame(_ frame: DeviceFrame) {
         deviceCategory = frame.fallbackCategory
         deviceFrameId = frame.id
+        if !frame.isModelBacked {
+            resetDeviceModelRotation()
+        }
         adjustToDeviceAspectRatio()
     }
 

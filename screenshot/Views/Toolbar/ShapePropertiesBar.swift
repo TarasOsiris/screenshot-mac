@@ -103,6 +103,39 @@ private struct ShapePropertiesSingleSelectionBar: View {
                             }
                         }
 
+                        if shape.supportsDeviceModelRotation {
+                            ShapePropertiesSection {
+                                ShapePropertiesControlGroup("Pitch") {
+                                    Slider(value: deviceModelRotationBinding(shapeId, \.devicePitch, defaultValue: \.resolvedDevicePitch), in: -35...35)
+                                        .frame(width: 80)
+
+                                    Text(verbatim: "\(Int(shape.resolvedDevicePitch.rounded()))°")
+                                        .frame(width: 28, alignment: .trailing)
+                                }
+
+                                ShapePropertiesSeparator()
+
+                                ShapePropertiesControlGroup("Yaw") {
+                                    Slider(value: deviceModelRotationBinding(shapeId, \.deviceYaw, defaultValue: \.resolvedDeviceYaw), in: -45...45)
+                                        .frame(width: 80)
+
+                                    Text(verbatim: "\(Int(shape.resolvedDeviceYaw.rounded()))°")
+                                        .frame(width: 28, alignment: .trailing)
+                                }
+
+                                ShapePropertiesSeparator()
+
+                                ActionButton(
+                                    icon: "arrow.counterclockwise",
+                                    tooltip: "Reset 3D device rotation",
+                                    frameSize: 24,
+                                    disabled: !hasDeviceModelRotationOverride(shapeId)
+                                ) {
+                                    resetDeviceModelRotation(shapeId)
+                                }
+                            }
+                        }
+
                         ShapePropertiesSection {
                             if shape.type.supportsFill {
                                 fillSwatchButton(shape: shape, shapeId: shapeId)
@@ -532,6 +565,41 @@ private struct ShapePropertiesSingleSelectionBar: View {
         guard state.rows[i.row].shapes[i.shape].type == .device else { return }
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         resolved.deviceBodyColorData = nil
+        state.updateShape(resolved)
+    }
+
+    private func deviceModelRotationBinding(
+        _ shapeId: UUID,
+        _ keyPath: WritableKeyPath<CanvasShapeModel, Double?>,
+        defaultValue: KeyPath<CanvasShapeModel, Double>
+    ) -> Binding<Double> {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else {
+                    return CanvasShapeModel.placeholder[keyPath: defaultValue]
+                }
+                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+                return shape[keyPath: keyPath] ?? shape[keyPath: defaultValue]
+            },
+            set: { newValue in
+                guard let i = idx(for: shapeId) else { return }
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                resolved[keyPath: keyPath] = newValue
+                state.updateShapeContinuous(resolved)
+            }
+        )
+    }
+
+    private func hasDeviceModelRotationOverride(_ shapeId: UUID) -> Bool {
+        guard let i = idx(for: shapeId) else { return false }
+        let shape = state.rows[i.row].shapes[i.shape]
+        return shape.devicePitch != nil || shape.deviceYaw != nil
+    }
+
+    private func resetDeviceModelRotation(_ shapeId: UUID) {
+        guard let i = idx(for: shapeId) else { return }
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        resolved.resetDeviceModelRotation()
         state.updateShape(resolved)
     }
 
