@@ -416,11 +416,16 @@ struct ExportService {
     private static func cropImage(_ image: NSImage, x: CGFloat, width: CGFloat, height: CGFloat) -> NSImage {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return image }
 
+        // bitmapImageRepForCachingDisplay creates bitmaps at screen backing scale (2x on Retina),
+        // so cgImage pixel dimensions may be larger than the NSImage logical size.
+        let scaleX = CGFloat(cgImage.width) / image.size.width
+        let scaleY = CGFloat(cgImage.height) / image.size.height
+
         let cropRect = CGRect(
-            x: max(0, floor(x)),
+            x: max(0, floor(x * scaleX)),
             y: 0,
-            width: min(CGFloat(cgImage.width) - max(0, floor(x)), ceil(width)),
-            height: min(CGFloat(cgImage.height), ceil(height))
+            width: min(CGFloat(cgImage.width) - max(0, floor(x * scaleX)), ceil(width * scaleX)),
+            height: min(CGFloat(cgImage.height), ceil(height * scaleY))
         ).integral
 
         guard cropRect.width > 0,
