@@ -441,10 +441,11 @@ struct ExportService {
 
     @MainActor
     static func renderViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, label: String) -> NSImage {
-        // Use NSHostingView + layer rendering instead of ImageRenderer.
-        // ImageRenderer can produce slightly different text glyph metrics than
-        // on-screen rendering, causing line-break differences in export.
-        // NSHostingView uses the same AppKit/CoreText pipeline as the editor.
+        // Use NSHostingView + layer rendering into an explicit 1x CGContext.
+        // bitmapImageRepForCachingDisplay implicitly scales by the screen's
+        // backingScaleFactor, which breaks cropImage (it expects 1:1 pixel
+        // dimensions matching model space). Rendering via CGContext with exact
+        // pixel dimensions guarantees consistent output regardless of display.
         let pixelW = Int(ceil(width))
         let pixelH = Int(ceil(height))
         let rect = NSRect(x: 0, y: 0, width: pixelW, height: pixelH)
@@ -455,18 +456,33 @@ struct ExportService {
         )
         hostingView.frame = rect
         hostingView.wantsLayer = true
+        hostingView.layer?.contentsScale = 1.0
         hostingView.layoutSubtreeIfNeeded()
         hostingView.displayIfNeeded()
 
-        guard let bitmapRep = hostingView.bitmapImageRepForCachingDisplay(in: rect) else {
-            print("[ExportService] Warning: Failed to create bitmap rep for \(label)")
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        guard let ctx = CGContext(
+            data: nil, width: pixelW, height: pixelH,
+            bitsPerComponent: 8, bytesPerRow: pixelW * 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            print("[ExportService] Warning: Failed to create CGContext for \(label)")
             return NSImage(size: NSSize(width: width, height: height))
         }
-        hostingView.cacheDisplay(in: rect, to: bitmapRep)
 
-        let image = NSImage(size: NSSize(width: width, height: height))
-        image.addRepresentation(bitmapRep)
-        return image
+        // Flip coordinate system — CGContext is bottom-up, AppKit layers are top-down
+        ctx.translateBy(x: 0, y: CGFloat(pixelH))
+        ctx.scaleBy(x: 1, y: -1)
+
+        hostingView.layer!.render(in: ctx)
+
+        guard let cgImage = ctx.makeImage() else {
+            print("[ExportService] Warning: Failed to create image for \(label)")
+            return NSImage(size: NSSize(width: width, height: height))
+        }
+
+        return NSImage(cgImage: cgImage, size: NSSize(width: width, height: height))
     }
 
     /// Composites the blurred image over the original rendered background to remove edge alpha fringes.

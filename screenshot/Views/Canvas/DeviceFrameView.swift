@@ -611,8 +611,10 @@ struct DeviceFrameView: View {
     ) -> NSImage? {
         let safeWidth = max(1, (width * modelSnapshotScale).rounded(.up))
         let safeHeight = max(1, (height * modelSnapshotScale).rounded(.up))
+        let viewportSize = CGSize(width: safeWidth, height: safeHeight)
         guard let (scene, cameraNode) = makeDeviceModelScene(
             frame: frame,
+            viewportSize: viewportSize,
             screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw
@@ -638,6 +640,7 @@ struct DeviceFrameView: View {
 
     fileprivate static func makeDeviceModelScene(
         frame: DeviceFrame,
+        viewportSize: CGSize,
         screenshotImage: NSImage?,
         pitch: Double,
         yaw: Double
@@ -723,7 +726,64 @@ struct DeviceFrameView: View {
         )
         sceneRoot.addChildNode(rimNode)
 
+        fitModelToViewport(
+            presentationNode: presentationNode,
+            cameraNode: cameraNode,
+            scene: scene,
+            viewportSize: viewportSize
+        )
+
         return (scene, cameraNode)
+    }
+
+    private static func fitModelToViewport(
+        presentationNode: SCNNode,
+        cameraNode: SCNNode,
+        scene: SCNScene,
+        viewportSize: CGSize
+    ) {
+        guard viewportSize.width > 1, viewportSize.height > 1,
+              let camera = cameraNode.camera else { return }
+
+        let cameraZ = CGFloat(cameraNode.position.z)
+        guard cameraZ > 0 else { return }
+
+        // Calculate visible area at the model's depth (z=0) from camera FOV
+        let fovRadians = camera.fieldOfView * .pi / 180
+        let visibleHeight = 2 * cameraZ * tan(fovRadians / 2)
+        let aspect = viewportSize.width / viewportSize.height
+        let visibleWidth = visibleHeight * aspect
+
+        let insetFactor: CGFloat = 0.9
+        let availableWidth = visibleWidth * insetFactor
+        let availableHeight = visibleHeight * insetFactor
+
+        // Get the model's world-space bounding box
+        let bounds = worldBounds(of: presentationNode)
+        let modelWidth = CGFloat(bounds.max.x - bounds.min.x)
+        let modelHeight = CGFloat(bounds.max.y - bounds.min.y)
+
+        guard modelWidth > 0.001, modelHeight > 0.001 else { return }
+
+        let scaleFactor = min(
+            availableWidth / modelWidth,
+            availableHeight / modelHeight
+        )
+
+        if scaleFactor.isFinite, scaleFactor > 0, abs(scaleFactor - 1) > 0.01 {
+            presentationNode.scale = SCNVector3(
+                presentationNode.scale.x * scaleFactor,
+                presentationNode.scale.y * scaleFactor,
+                presentationNode.scale.z * scaleFactor
+            )
+        }
+
+        // Re-center after scaling
+        let scaledBounds = worldBounds(of: presentationNode)
+        let centerX = CGFloat(scaledBounds.min.x + scaledBounds.max.x) / 2
+        let centerY = CGFloat(scaledBounds.min.y + scaledBounds.max.y) / 2
+        presentationNode.position.x -= centerX
+        presentationNode.position.y -= centerY
     }
 
     private static func clonedBaseScene(for modelSpec: DeviceFrameModelSpec) -> SCNScene? {
@@ -827,7 +887,7 @@ struct DeviceFrameView: View {
 
     private static func screenTextureContentsTransform() -> SCNMatrix4 {
         let scale = SCNMatrix4MakeScale(-1, -1, 1)
-        return SCNMatrix4Translate(scale, -1, -1, 0)
+        return SCNMatrix4Translate(scale, 1, 1, 0)
     }
 
     private static func applyScreenOverlayPlane(
@@ -977,31 +1037,67 @@ struct DeviceFrameView: View {
     }
 
     private static func worldBounds(of node: SCNNode) -> (min: SCNVector3, max: SCNVector3) {
-        guard let geometry = node.geometry else {
-            let zero = SCNVector3(0, 0, 0)
-            return (zero, zero)
-        }
-        let (localMin, localMax) = geometry.boundingBox
-        let corners = [
-            SCNVector3(localMin.x, localMin.y, localMin.z),
-            SCNVector3(localMin.x, localMin.y, localMax.z),
-            SCNVector3(localMin.x, localMax.y, localMin.z),
-            SCNVector3(localMin.x, localMax.y, localMax.z),
-            SCNVector3(localMax.x, localMin.y, localMin.z),
-            SCNVector3(localMax.x, localMin.y, localMax.z),
-            SCNVector3(localMax.x, localMax.y, localMin.z),
-            SCNVector3(localMax.x, localMax.y, localMax.z),
-        ].map { node.convertPosition($0, to: nil) }
+        var accumulated: (min: SCNVector3, max: SCNVector3)?
 
-        var minV = corners[0]
-        var maxV = corners[0]
-        for corner in corners.dropFirst() {
-            minV.x = min(minV.x, corner.x)
-            minV.y = min(minV.y, corner.y)
-            minV.z = min(minV.z, corner.z)
-            maxV.x = max(maxV.x, corner.x)
-            maxV.y = max(maxV.y, corner.y)
-            maxV.z = max(maxV.z, corner.z)
+        if let geometry = node.geometry {
+            let (localMin, localMax) = geometry.boundingBox
+            let corners = [
+                SCNVector3(localMin.x, localMin.y, localMin.z),
+                SCNVector3(localMin.x, localMin.y, localMax.z),
+                SCNVector3(localMin.x, localMax.y, localMin.z),
+                SCNVector3(localMin.x, localMax.y, localMax.z),
+                SCNVector3(localMax.x, localMin.y, localMin.z),
+                SCNVector3(localMax.x, localMin.y, localMax.z),
+                SCNVector3(localMax.x, localMax.y, localMin.z),
+                SCNVector3(localMax.x, localMax.y, localMax.z),
+            ].map { node.convertPosition($0, to: nil) }
+
+            accumulated = boundsCovering(points: corners)
+        }
+
+        for child in node.childNodes {
+            let childBounds = worldBounds(of: child)
+            let isEmptyLeaf =
+                child.geometry == nil &&
+                child.childNodes.isEmpty &&
+                childBounds.min.x == childBounds.max.x &&
+                childBounds.min.y == childBounds.max.y &&
+                childBounds.min.z == childBounds.max.z
+            if isEmptyLeaf {
+                continue
+            }
+            if let existing = accumulated {
+                accumulated = (
+                    min: SCNVector3(
+                        min(existing.min.x, childBounds.min.x),
+                        min(existing.min.y, childBounds.min.y),
+                        min(existing.min.z, childBounds.min.z)
+                    ),
+                    max: SCNVector3(
+                        max(existing.max.x, childBounds.max.x),
+                        max(existing.max.y, childBounds.max.y),
+                        max(existing.max.z, childBounds.max.z)
+                    )
+                )
+            } else {
+                accumulated = childBounds
+            }
+        }
+
+        return accumulated ?? (SCNVector3Zero, SCNVector3Zero)
+    }
+
+    private static func boundsCovering(points: [SCNVector3]) -> (min: SCNVector3, max: SCNVector3) {
+        guard let first = points.first else { return (SCNVector3Zero, SCNVector3Zero) }
+        var minV = first
+        var maxV = first
+        for point in points.dropFirst() {
+            minV.x = min(minV.x, point.x)
+            minV.y = min(minV.y, point.y)
+            minV.z = min(minV.z, point.z)
+            maxV.x = max(maxV.x, point.x)
+            maxV.y = max(maxV.y, point.y)
+            maxV.z = max(maxV.z, point.z)
         }
         return (minV, maxV)
     }
@@ -1038,6 +1134,7 @@ private struct LiveDeviceModelView: NSViewRepresentable {
     private func update(_ scnView: SCNView) {
         guard let (scene, cameraNode) = DeviceFrameView.makeDeviceModelScene(
             frame: frame,
+            viewportSize: CGSize(width: max(1, width), height: max(1, height)),
             screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw

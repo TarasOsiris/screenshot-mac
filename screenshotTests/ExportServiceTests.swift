@@ -710,6 +710,28 @@ struct ExportServiceTests {
         #expect(delta < 0.08, "Model-backed device brightness should match editor, delta=\(delta)")
     }
 
+    @Test func modelBackedDeviceLargeExportUsesExpectedBounds() throws {
+        let screenshotImages = ["model-screen": makeTestImage(width: 1206, height: 2622)]
+        var row = makeTestRow(width: 1290, height: 2796, bgColor: .white)
+        row.shapes = [CanvasShapeModel(
+            type: .device,
+            x: 165,
+            y: 180,
+            width: 960,
+            height: 2160,
+            color: .clear,
+            deviceCategory: .iphone,
+            deviceFrameId: "iphone16model-default-portrait",
+            screenshotFileName: "model-screen",
+            deviceYaw: 18
+        )]
+
+        let bitmap = try renderTemplateBitmap(index: 0, row: row, screenshotImages: screenshotImages)
+        try expectHasNonWhitePixel(bitmap, region: CGRect(x: 260, y: 1120, width: 120, height: 400), label: "left half of large 3D device")
+        try expectHasNonWhitePixel(bitmap, region: CGRect(x: 910, y: 1120, width: 120, height: 400), label: "right half of large 3D device")
+        try expectWhitePixel(bitmap, at: (80, 240), label: "background outside large 3D device")
+    }
+
     @Test func outlineRendersAtShapeEdge() throws {
         let tw: CGFloat = 200
         let th: CGFloat = 200
@@ -968,10 +990,33 @@ struct ExportServiceTests {
         Issue.record("\(label): all sampled pixels were white")
     }
 
+    private func expectHasNonWhitePixel(_ bitmap: NSBitmapImageRep, region: CGRect, label: String) throws {
+        let minX = max(0, Int(region.minX.rounded(.down)))
+        let maxX = min(bitmap.pixelsWide - 1, Int(region.maxX.rounded(.up)))
+        let minY = max(0, Int(region.minY.rounded(.down)))
+        let maxY = min(bitmap.pixelsHigh - 1, Int(region.maxY.rounded(.up)))
+        guard minX <= maxX, minY <= maxY else {
+            Issue.record("\(label): sampled region was empty")
+            return
+        }
+
+        for y in stride(from: minY, through: maxY, by: 12) {
+            for x in stride(from: minX, through: maxX, by: 12) {
+                let c = try pixelColor(bitmap, at: (x, y))
+                if c.r < 0.95 || c.g < 0.95 || c.b < 0.95 { return }
+            }
+        }
+        Issue.record("\(label): all sampled pixels were white")
+    }
+
     private func expectNearWhite(_ bitmap: NSBitmapImageRep, at point: (Int, Int), label: String) throws {
         let c = try pixelColor(bitmap, at: point)
         #expect(c.r > 0.95 && c.g > 0.95 && c.b > 0.95,
                 "\(label): expected near-white background, got rgb=(\(c.r),\(c.g),\(c.b))")
+    }
+
+    private func expectWhitePixel(_ bitmap: NSBitmapImageRep, at point: (Int, Int), label: String) throws {
+        try expectNearWhite(bitmap, at: point, label: label)
     }
 
     private func expectBitmapsDiffer(
