@@ -133,6 +133,69 @@ struct ExportService {
         }
     }
 
+    // MARK: - Showcase rendering (gallery layout with spacing & rounded corners)
+
+    @MainActor
+    static func renderShowcaseRowImage(
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:],
+        localeCode: String? = nil,
+        localeState: LocaleState = .default,
+        availableFontFamilies: Set<String>? = nil,
+        backgroundColor: NSColor = NSColor(white: 0.88, alpha: 1.0),
+        spacing: CGFloat? = nil,
+        padding: CGFloat? = nil,
+        cornerRadius: CGFloat? = nil
+    ) -> NSImage {
+        let count = row.templates.count
+        guard count > 0 else {
+            return NSImage(size: NSSize(width: 1, height: 1))
+        }
+
+        let templateWidth = row.templateWidth
+        let templateHeight = row.templateHeight
+        let resolvedSpacing = spacing ?? round(templateWidth * 0.03)
+        let resolvedPadding = padding ?? round(templateWidth * 0.04)
+        let resolvedRadius = cornerRadius ?? round(templateHeight * 0.025)
+        let shadowRadius: CGFloat = round(templateHeight * 0.02)
+        let shadowY: CGFloat = round(templateHeight * 0.008)
+        let shadowExtent = shadowRadius + shadowY
+
+        let totalWidth = resolvedPadding + CGFloat(count) * templateWidth + CGFloat(count - 1) * resolvedSpacing + resolvedPadding
+        let totalHeight = resolvedPadding + templateHeight + max(resolvedPadding, shadowExtent)
+
+        var templateImages: [NSImage] = []
+        for index in 0..<count {
+            templateImages.append(renderSingleTemplateImage(
+                index: index,
+                row: row,
+                screenshotImages: screenshotImages,
+                localeCode: localeCode,
+                localeState: localeState,
+                availableFontFamilies: availableFontFamilies
+            ))
+        }
+
+        let showcaseView = ShowcaseRowView(
+            templateImages: templateImages,
+            templateWidth: templateWidth,
+            templateHeight: templateHeight,
+            spacing: resolvedSpacing,
+            padding: resolvedPadding,
+            cornerRadius: resolvedRadius,
+            shadowRadius: shadowRadius,
+            shadowY: shadowY,
+            backgroundColor: Color(nsColor: backgroundColor)
+        )
+
+        return renderViewToImage(
+            showcaseView,
+            width: totalWidth,
+            height: totalHeight,
+            label: "showcase row '\(row.label)'"
+        )
+    }
+
     // MARK: - Row-level rendering (single demo image)
 
     @MainActor
@@ -689,6 +752,34 @@ struct ExportService {
 
         guard let opaqueRef = ctx.makeImage() else { return nil }
         return NSBitmapImageRep(cgImage: opaqueRef)
+    }
+}
+
+// MARK: - Showcase SwiftUI View
+
+private struct ShowcaseRowView: View {
+    let templateImages: [NSImage]
+    let templateWidth: CGFloat
+    let templateHeight: CGFloat
+    let spacing: CGFloat
+    let padding: CGFloat
+    let cornerRadius: CGFloat
+    let shadowRadius: CGFloat
+    let shadowY: CGFloat
+    let backgroundColor: Color
+
+    var body: some View {
+        HStack(spacing: spacing) {
+            ForEach(Array(templateImages.enumerated()), id: \.offset) { _, img in
+                Image(nsImage: img)
+                    .resizable()
+                    .frame(width: templateWidth, height: templateHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    .shadow(color: .black.opacity(0.25), radius: shadowRadius, x: 0, y: shadowY)
+            }
+        }
+        .padding(padding)
+        .background(backgroundColor)
     }
 }
 

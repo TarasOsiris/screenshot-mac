@@ -495,8 +495,13 @@ struct ContentView: View {
             exportScreenshotsAs()
         }
 
-        Button("Export all rows as continuous images") {
-            exportRowImages()
+        Menu("Export Rows") {
+            Button("Continuous") {
+                exportRowImages()
+            }
+            Button("Showcase") {
+                exportShowcaseImages()
+            }
         }
         .disabled(state.rows.isEmpty)
 
@@ -570,6 +575,21 @@ struct ContentView: View {
     }
 
     private func exportRowImages() {
+        exportRowLevel(folderName: "rows") { row, images, locale, localeState in
+            ExportService.renderRowImage(row: row, screenshotImages: images, localeCode: locale, localeState: localeState)
+        }
+    }
+
+    private func exportShowcaseImages() {
+        exportRowLevel(folderName: "showcase") { row, images, locale, localeState in
+            ExportService.renderShowcaseRowImage(row: row, screenshotImages: images, localeCode: locale, localeState: localeState)
+        }
+    }
+
+    private func exportRowLevel(
+        folderName: String,
+        render: @MainActor @escaping (ScreenshotRow, [String: NSImage], String?, LocaleState) -> NSImage
+    ) {
         guard !state.rows.isEmpty else { return }
         guard let baseURL = chooseExportDestination() else { return }
 
@@ -586,8 +606,8 @@ struct ContentView: View {
                 exportTask = nil
             }
             do {
-                let rowsDir = ExportService.uniqueFolder(named: "rows", in: baseURL)
-                try FileManager.default.createDirectory(at: rowsDir, withIntermediateDirectories: true)
+                let destDir = ExportService.uniqueFolder(named: folderName, in: baseURL)
+                try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
 
                 let localeCode = state.localeState.activeLocaleCode
                 var imageCache: [String: NSImage] = [:]
@@ -595,29 +615,24 @@ struct ContentView: View {
                     try Task.checkCancellation()
                     let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
                     let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
-                    let image = ExportService.renderRowImage(
-                        row: row,
-                        screenshotImages: rowImages,
-                        localeCode: localeCode,
-                        localeState: state.localeState
-                    )
+                    let image = render(row, rowImages, localeCode, state.localeState)
                     guard let data = ExportService.encodeImage(image, format: .png) else {
                         exportError = "Failed to render row \(index + 1)"
                         return
                     }
                     let paddedIndex = String(format: "%02d", index + 1)
                     let fileName = row.label.isEmpty ? "\(paddedIndex).png" : "\(paddedIndex)_\(row.label).png"
-                    try data.write(to: rowsDir.appendingPathComponent(fileName))
+                    try data.write(to: destDir.appendingPathComponent(fileName))
                     exportProgress = index + 1
                     await Task.yield()
                 }
 
                 if openExportFolderOnSuccess {
-                    NSWorkspace.shared.activateFileViewerSelecting([rowsDir])
+                    NSWorkspace.shared.activateFileViewerSelecting([destDir])
                 }
                 showExportSuccess()
             } catch is CancellationError {
-                // User cancelled — no error to show
+                // User cancelled
             } catch {
                 exportError = error.localizedDescription
             }
