@@ -43,6 +43,7 @@ struct DeviceFrameModelSpec: Equatable {
     let resourceExtension: String
     let resourceSubdirectory: String?
     let screenMaterialName: String?
+    let disabledNodeNames: Set<String>
     let screenRenderingMode: DeviceFrameScreenRenderingMode
     let targetBodyHeight: CGFloat
     let cameraDistance: CGFloat
@@ -170,6 +171,11 @@ struct DeviceFrameCatalog {
         resourceExtension: "usdz",
         resourceSubdirectory: "DeviceModels",
         screenMaterialName: "screen_001",
+        disabledNodeNames: [
+            "Cube_010_Material_006_0",
+            "Cube_010_gray_001_0",
+            "Cube_010_metaL_001_0",
+        ],
         screenRenderingMode: .replaceMaterial,
         targetBodyHeight: 2.05,
         cameraDistance: 5.4,

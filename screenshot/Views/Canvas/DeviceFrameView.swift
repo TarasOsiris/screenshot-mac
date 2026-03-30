@@ -658,6 +658,8 @@ struct DeviceFrameView: View {
         }
         sceneRoot.addChildNode(contentNode)
 
+        removeDisabledModelNodes(in: contentNode, modelSpec: modelSpec)
+        flattenBodyMaterials(in: contentNode, modelSpec: modelSpec)
         applyScreenTexture(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
 
         let bounds = contentNode.boundingBox
@@ -822,8 +824,64 @@ struct DeviceFrameView: View {
         case .replaceMaterial:
             applyScreenReplacementMaterial(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
         case .overlayPlane:
-            applyScreenOverlayPlane(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
+            applyScreenReplacementMaterial(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
         }
+    }
+
+    private static func flattenBodyMaterials(
+        in contentNode: SCNNode,
+        modelSpec: DeviceFrameModelSpec
+    ) {
+        enumerateNodes(in: contentNode) { node in
+            guard let geometry = node.geometry else { return }
+            geometry.materials = geometry.materials.map { material in
+                guard shouldFlattenBodyMaterial(material, screenMaterialName: modelSpec.screenMaterialName) else {
+                    return material.copy() as? SCNMaterial ?? SCNMaterial()
+                }
+
+                let flattened = material.copy() as? SCNMaterial ?? SCNMaterial()
+                flattened.name = material.name
+                flattened.lightingModel = .lambert
+                flattened.specular.contents = NSColor.black
+                flattened.reflective.contents = NSColor.black
+                flattened.metalness.contents = 0.0
+                flattened.roughness.contents = 1.0
+                flattened.shininess = 0.0
+                flattened.fresnelExponent = 0.0
+                flattened.locksAmbientWithDiffuse = true
+                return flattened
+            }
+        }
+    }
+
+    private static func removeDisabledModelNodes(
+        in contentNode: SCNNode,
+        modelSpec: DeviceFrameModelSpec
+    ) {
+        guard !modelSpec.disabledNodeNames.isEmpty else { return }
+
+        var nodesToRemove: [SCNNode] = []
+        enumerateNodes(in: contentNode) { node in
+            if let name = node.name, modelSpec.disabledNodeNames.contains(name) {
+                nodesToRemove.append(node)
+            }
+        }
+
+        for node in nodesToRemove {
+            node.removeFromParentNode()
+        }
+    }
+
+    private static func shouldFlattenBodyMaterial(
+        _ material: SCNMaterial,
+        screenMaterialName: String?
+    ) -> Bool {
+        guard material.name != screenMaterialName else { return false }
+        let name = material.name?.lowercased() ?? ""
+        if name.contains("glass") || name.contains("lens") {
+            return false
+        }
+        return true
     }
 
     private static func applyScreenReplacementMaterial(
@@ -837,7 +895,7 @@ struct DeviceFrameView: View {
         }
 
         let screenContents = preparedScreenContents(from: screenshotImage)
-        let screenTextureTransform = screenTextureContentsTransform()
+        let textureTransform = screenTextureContentsTransform
         let materials = geometry.materials.map { material -> SCNMaterial in
             guard material.name == modelSpec.screenMaterialName else {
                 return material.copy() as? SCNMaterial ?? SCNMaterial()
@@ -845,12 +903,26 @@ struct DeviceFrameView: View {
 
             let replacement = material.copy() as? SCNMaterial ?? SCNMaterial()
             replacement.name = material.name
-            replacement.diffuse.contents = screenContents
-            replacement.diffuse.contentsTransform = screenTextureTransform
-            replacement.ambient.contents = screenContents
-            replacement.ambient.contentsTransform = screenTextureTransform
-            replacement.emission.contents = screenContents
-            replacement.emission.contentsTransform = screenTextureTransform
+            // Preserve the USDZ-authored sampler settings. The screen mesh uses UVs
+            // outside 0...1, so forcing clamp collapses the texture into an edge color.
+            configureScreenTextureProperty(
+                replacement.diffuse,
+                source: material.diffuse,
+                contents: screenContents,
+                transform: textureTransform
+            )
+            configureScreenTextureProperty(
+                replacement.ambient,
+                source: material.ambient,
+                contents: screenContents,
+                transform: textureTransform
+            )
+            configureScreenTextureProperty(
+                replacement.emission,
+                source: material.emission,
+                contents: screenContents,
+                transform: textureTransform
+            )
             replacement.multiply.contents = NSColor.white
             replacement.transparent.contents = NSColor.white
             replacement.reflective.contents = NSColor.black
@@ -860,23 +932,6 @@ struct DeviceFrameView: View {
             replacement.lightingModel = .constant
             replacement.locksAmbientWithDiffuse = true
             replacement.isDoubleSided = true
-            replacement.diffuse.wrapS = .clamp
-            replacement.diffuse.wrapT = .clamp
-            replacement.diffuse.magnificationFilter = .nearest
-            replacement.diffuse.minificationFilter = .nearest
-            replacement.diffuse.mipFilter = .none
-            replacement.diffuse.maxAnisotropy = 16
-            replacement.ambient.wrapS = .clamp
-            replacement.ambient.wrapT = .clamp
-            replacement.ambient.magnificationFilter = .nearest
-            replacement.ambient.minificationFilter = .nearest
-            replacement.ambient.mipFilter = .none
-            replacement.ambient.maxAnisotropy = 16
-            replacement.emission.wrapS = .clamp
-            replacement.emission.wrapT = .clamp
-            replacement.emission.magnificationFilter = .nearest
-            replacement.emission.minificationFilter = .nearest
-            replacement.emission.mipFilter = .none
             replacement.writesToDepthBuffer = true
             replacement.readsFromDepthBuffer = true
             return replacement
@@ -885,74 +940,26 @@ struct DeviceFrameView: View {
         screenNode.geometry = geometry
     }
 
-    private static func screenTextureContentsTransform() -> SCNMatrix4 {
+    private static func configureScreenTextureProperty(
+        _ target: SCNMaterialProperty,
+        source: SCNMaterialProperty,
+        contents: Any,
+        transform: SCNMatrix4
+    ) {
+        target.contents = contents
+        target.contentsTransform = SCNMatrix4Mult(source.contentsTransform, transform)
+        target.wrapS = source.wrapS
+        target.wrapT = source.wrapT
+        target.magnificationFilter = source.magnificationFilter
+        target.minificationFilter = source.minificationFilter
+        target.mipFilter = source.mipFilter
+        target.maxAnisotropy = source.maxAnisotropy
+    }
+
+    private static let screenTextureContentsTransform: SCNMatrix4 = {
         let scale = SCNMatrix4MakeScale(-1, -1, 1)
         return SCNMatrix4Translate(scale, 1, 1, 0)
-    }
-
-    private static func applyScreenOverlayPlane(
-        in contentNode: SCNNode,
-        modelSpec: DeviceFrameModelSpec,
-        screenshotImage: NSImage?
-    ) {
-        guard let screenNode = findScreenNode(in: contentNode, modelSpec: modelSpec),
-              let geometry = screenNode.geometry else {
-            return
-        }
-
-        let screenContents = preparedScreenContents(from: screenshotImage)
-        let (boundsMin, boundsMax) = geometry.boundingBox
-        let width = CGFloat(boundsMax.x - boundsMin.x)
-        let height = CGFloat(boundsMax.y - boundsMin.y)
-        guard width > 0, height > 0 else { return }
-
-        let overlayPlane = SCNPlane(width: width, height: height)
-        overlayPlane.cornerRadius = min(width, height) * 0.08
-
-        let overlayMaterial = SCNMaterial()
-        overlayMaterial.name = modelSpec.screenMaterialName ?? "device-screen-overlay"
-        overlayMaterial.diffuse.contents = screenContents
-        overlayMaterial.ambient.contents = screenContents
-        overlayMaterial.emission.contents = screenContents
-        overlayMaterial.multiply.contents = NSColor.white
-        overlayMaterial.transparent.contents = NSColor.white
-        overlayMaterial.reflective.contents = NSColor.black
-        overlayMaterial.metalness.contents = 0.0
-        overlayMaterial.roughness.contents = 1.0
-        overlayMaterial.lightingModel = .constant
-        overlayMaterial.locksAmbientWithDiffuse = true
-        overlayMaterial.isDoubleSided = false
-        overlayMaterial.diffuse.wrapS = .clamp
-        overlayMaterial.diffuse.wrapT = .clamp
-        overlayMaterial.diffuse.magnificationFilter = .nearest
-        overlayMaterial.diffuse.minificationFilter = .nearest
-        overlayMaterial.diffuse.mipFilter = .none
-        overlayMaterial.diffuse.maxAnisotropy = 16
-        overlayMaterial.ambient.wrapS = .clamp
-        overlayMaterial.ambient.wrapT = .clamp
-        overlayMaterial.ambient.magnificationFilter = .nearest
-        overlayMaterial.ambient.minificationFilter = .nearest
-        overlayMaterial.ambient.mipFilter = .none
-        overlayMaterial.ambient.maxAnisotropy = 16
-        overlayMaterial.emission.wrapS = .clamp
-        overlayMaterial.emission.wrapT = .clamp
-        overlayMaterial.emission.magnificationFilter = .nearest
-        overlayMaterial.emission.minificationFilter = .nearest
-        overlayMaterial.emission.mipFilter = .none
-        overlayPlane.materials = [overlayMaterial]
-
-        let overlayNode = SCNNode(geometry: overlayPlane)
-        overlayNode.name = "deviceScreenOverlay"
-        overlayNode.position = SCNVector3(
-            Float((boundsMin.x + boundsMax.x) / 2),
-            Float((boundsMin.y + boundsMax.y) / 2),
-            Float(boundsMax.z) + 0.001
-        )
-        screenNode.childNodes
-            .filter { $0.name == "deviceScreenOverlay" }
-            .forEach { $0.removeFromParentNode() }
-        screenNode.addChildNode(overlayNode)
-    }
+    }()
 
     private static func preparedScreenContents(from image: NSImage?) -> Any {
         guard let image else { return NSColor.white }
