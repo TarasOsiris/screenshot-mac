@@ -323,16 +323,24 @@ struct ExportService {
         at origin: CGPoint,
         canvasSize: NSSize
     ) -> NSImage {
-        let output = NSImage(size: canvasSize)
-        output.lockFocus()
-        background.draw(in: NSRect(origin: .zero, size: canvasSize))
+        guard let bitmapRep = bitmapRep(width: canvasSize.width, height: canvasSize.height) else {
+            return background
+        }
+        let rect = NSRect(origin: .zero, size: canvasSize)
+        let previousContext = NSGraphicsContext.current
+        defer { NSGraphicsContext.current = previousContext }
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
+        background.draw(in: rect)
         image.draw(
             in: NSRect(origin: origin, size: image.size),
             from: NSRect(origin: .zero, size: image.size),
             operation: .sourceOver,
             fraction: 1
         )
-        output.unlockFocus()
+        NSGraphicsContext.current?.flushGraphics()
+
+        let output = NSImage(size: canvasSize)
+        output.addRepresentation(bitmapRep)
         return output
     }
 
@@ -564,7 +572,7 @@ struct ExportService {
         hostingView.layoutSubtreeIfNeeded()
         hostingView.displayIfNeeded()
 
-        guard let bitmapRep = hostingView.bitmapImageRepForCachingDisplay(in: rect) else {
+        guard let bitmapRep = bitmapRep(width: width, height: height) else {
             print("[ExportService] Warning: Failed to create bitmap rep for \(label)")
             return NSImage(size: NSSize(width: width, height: height))
         }
@@ -578,13 +586,39 @@ struct ExportService {
     /// Composites the blurred image over the original rendered background to remove edge alpha fringes.
     @MainActor
     static func flattenImage(_ image: NSImage, over background: NSImage, width: CGFloat, height: CGFloat) -> NSImage {
-        let flattened = NSImage(size: NSSize(width: width, height: height))
-        flattened.lockFocus()
+        guard let bitmapRep = bitmapRep(width: width, height: height) else {
+            return background
+        }
         let rect = NSRect(x: 0, y: 0, width: width, height: height)
+        let previousContext = NSGraphicsContext.current
+        defer { NSGraphicsContext.current = previousContext }
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
         background.draw(in: rect)
         image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
-        flattened.unlockFocus()
+        NSGraphicsContext.current?.flushGraphics()
+
+        let flattened = NSImage(size: NSSize(width: width, height: height))
+        flattened.addRepresentation(bitmapRep)
         return flattened
+    }
+
+    private static func bitmapRep(width: CGFloat, height: CGFloat) -> NSBitmapImageRep? {
+        let pixelW = max(Int(ceil(width)), 1)
+        let pixelH = max(Int(ceil(height)), 1)
+        let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: pixelW,
+            pixelsHigh: pixelH,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        )
+        rep?.size = NSSize(width: width, height: height)
+        return rep
     }
 
     private static func normalizeDeviceAspectIfNeeded(_ shape: CanvasShapeModel) -> CanvasShapeModel {
