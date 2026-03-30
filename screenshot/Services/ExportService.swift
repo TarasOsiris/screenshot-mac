@@ -303,6 +303,13 @@ struct ExportService {
         return opaquePNGData(from: image)
     }
 
+    /// Fast single-template render + PNG encode for preview use.
+    @MainActor
+    static func renderSingleTemplatePNG(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeState: LocaleState = .default) -> Data? {
+        let image = renderSingleTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeState.activeLocaleCode, localeState: localeState)
+        return opaquePNGData(from: image)
+    }
+
     @MainActor
     static func renderTemplateData(
         index: Int,
@@ -361,6 +368,116 @@ struct ExportService {
             availableFontFamilies: availableFontFamilies
         )
         return cropTemplateImage(rowImage, index: index, row: row)
+    }
+
+    /// Renders only the single template at `index` without rendering the full row.
+    /// Faster than `renderTemplateImage` which renders all templates then crops.
+    @MainActor
+    static func renderSingleTemplateImage(
+        index: Int,
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:],
+        localeCode: String? = nil,
+        localeState: LocaleState = .default,
+        availableFontFamilies: Set<String>? = nil
+    ) -> NSImage {
+        let templateWidth = row.templateWidth
+        let templateHeight = row.templateHeight
+        let templateModelSize = CGSize(width: templateWidth, height: templateHeight)
+        let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
+        let fontFamilies = availableFontFamilies ?? Set(NSFontManager.shared.availableFontFamilies)
+
+        // --- Background ---
+        let template = row.templates[index]
+        let backgroundView: AnyView
+        if template.overrideBackground {
+            backgroundView = AnyView(
+                template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
+                    .frame(width: templateWidth, height: templateHeight)
+            )
+        } else if row.isSpanningBackground {
+            // Spanning: render the full-width background and offset to show this template's slice
+            let spanModelSize = CGSize(
+                width: templateWidth * CGFloat(row.templates.count),
+                height: templateHeight
+            )
+            let spanWidth = templateWidth * CGFloat(row.templates.count)
+            backgroundView = AnyView(
+                row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanModelSize)
+                    .frame(width: spanWidth, height: templateHeight)
+                    .offset(x: -CGFloat(index) * templateWidth, y: 0)
+                    .frame(width: templateWidth, height: templateHeight, alignment: .topLeading)
+                    .clipped()
+            )
+        } else {
+            backgroundView = AnyView(
+                row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
+                    .frame(width: templateWidth, height: templateHeight)
+            )
+        }
+
+        let baseBackgroundImage = renderViewToImage(backgroundView, width: templateWidth, height: templateHeight, label: "single template background [\(index)]")
+        let backgroundImage: NSImage
+        let blurRadius = template.overrideBackground ? template.backgroundBlur : row.backgroundBlur
+        if blurRadius > 0 {
+            let blurred = applyGaussianBlur(to: baseBackgroundImage, radius: blurRadius)
+            backgroundImage = flattenImage(blurred, over: baseBackgroundImage, width: templateWidth, height: templateHeight)
+        } else {
+            backgroundImage = baseBackgroundImage
+        }
+
+        // --- Shapes ---
+        // Filter resolved shapes to those visible in this template, then shift so template origin is at (0,0)
+        let templateOriginX = CGFloat(index) * templateWidth
+        let tRight = templateOriginX + templateWidth
+        let visibleShapes = resolvedShapes.filter { s in
+            if s.clipToTemplate == true {
+                return row.owningTemplateIndex(for: s) == index
+            }
+            let bb = s.aabb
+            return bb.maxX > templateOriginX && bb.minX < tRight
+        }
+        let shiftedShapes = visibleShapes.map { shape -> CanvasShapeModel in
+            var s = shape
+            s.x -= templateOriginX
+            return s
+        }
+        // Build a single-template row for shape rendering
+        let singleTemplateRow = ScreenshotRow(
+            templateWidth: templateWidth,
+            templateHeight: templateHeight,
+            templates: [template]
+        )
+
+        let shapesView = RowCanvasShapeLayerView(
+            row: singleTemplateRow,
+            shapes: shiftedShapes,
+            displayScale: 1.0,
+            shapeContent: { shape, clipRect in
+                CanvasShapeView(
+                    shape: shape,
+                    displayScale: 1.0,
+                    isSelected: false,
+                    screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
+                    fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
+                    defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                    clipBounds: clipRect,
+                    showsEditorHelpers: false,
+                    onSelect: {},
+                    onUpdate: { _ in },
+                    onDelete: {},
+                    availableFontFamilies: fontFamilies
+                )
+            }
+        )
+        let shapesImage = renderViewToImage(
+            shapesView,
+            width: templateWidth,
+            height: templateHeight,
+            label: "single template shapes [\(index)]"
+        )
+
+        return flattenImage(shapesImage, over: backgroundImage, width: templateWidth, height: templateHeight)
     }
 
     @MainActor
@@ -520,7 +637,7 @@ struct ExportService {
     }
 
     /// Encode PNG with no alpha channel by flattening onto an opaque white background.
-    static func opaquePNGData(from image: NSImage) -> Data? {
+    nonisolated static func opaquePNGData(from image: NSImage) -> Data? {
         guard let bitmap = opaqueBitmap(from: image) else { return nil }
         return bitmap.representation(using: .png, properties: [:])
     }

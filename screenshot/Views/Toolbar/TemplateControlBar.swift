@@ -256,22 +256,44 @@ struct TemplateControlBar: View {
     private func previewScreenshot() {
         isPreviewing = true
         renderError = nil
-        DispatchQueue.main.async {
-            defer { isPreviewing = false }
-            guard let pngData = renderExportPNG() else {
-                renderError = "Could not render screenshot for preview."
-                return
-            }
+        Task {
+            // Render on main thread (NSHostingView requires it)
+            let images = onLoadFullResImages?() ?? screenshotImages
+            let image = ExportService.renderSingleTemplateImage(
+                index: index, row: row, screenshotImages: images,
+                localeCode: localeState.activeLocaleCode, localeState: localeState
+            )
+            // PNG encode + file write off main thread
             let tempURL = FileManager.default.temporaryDirectory
                 .appendingPathComponent("screenshot-\(index + 1)-\(localeState.activeLocaleCode).png")
-            do {
-                try pngData.write(to: tempURL)
-            } catch {
-                renderError = "Could not write preview file: \(error.localizedDescription)"
-                return
+            let result: Result<URL, Error> = await Task.detached {
+                guard let pngData = ExportService.opaquePNGData(from: image) else {
+                    return .failure(PreviewError.renderFailed)
+                }
+                do {
+                    try pngData.write(to: tempURL)
+                    return .success(tempURL)
+                } catch {
+                    return .failure(error)
+                }
+            }.value
+            // Back on main thread for QuickLook
+            switch result {
+            case .success(let url):
+                QuickLookCoordinator.shared.preview(imageAt: url)
+            case .failure(let error):
+                if error is PreviewError {
+                    renderError = "Could not render screenshot for preview."
+                } else {
+                    renderError = "Could not write preview file: \(error.localizedDescription)"
+                }
             }
-            QuickLookCoordinator.shared.preview(imageAt: tempURL)
+            isPreviewing = false
         }
+    }
+
+    private enum PreviewError: Error {
+        case renderFailed
     }
 
     private func downloadScreenshot() {
