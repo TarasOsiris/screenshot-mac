@@ -36,9 +36,6 @@ struct ExportService {
         let localesToExport = multiLocale ? localeState.locales : [localeState.locales.first ?? LocaleDefinition(code: "en", label: "English")]
 
         var completed = 0
-        // Track the previous encoding task so we can pipeline:
-        // render template N on main while encoding template N-1 in background.
-        var previousEncodeTask: Task<Void, any Error>?
 
         do {
             for locale in localesToExport {
@@ -74,39 +71,34 @@ struct ExportService {
                         localeState: localeState,
                         availableFontFamilies: availableFontFamilies
                     )
-                    for (index, _) in row.templates.enumerated() {
-                        try Task.checkCancellation()
 
-                        // Render the shared row scene once, then crop each template from it.
-                        let image = cropTemplateImage(rowImage, index: index, row: row)
+                    // Encode all templates in this row concurrently, then await
+                    // before the next row to bound memory usage.
+                    try await withThrowingTaskGroup(of: Void.self) { group in
+                        for (index, _) in row.templates.enumerated() {
+                            try Task.checkCancellation()
 
-                        // Await the previous encoding before starting a new one
-                        try await previousEncodeTask?.value
-                        try Task.checkCancellation()
+                            let image = cropTemplateImage(rowImage, index: index, row: row)
 
-                        let padded = String(format: "%02d", index + 1)
-                        let filename = "\(padded)_screenshot.\(format.fileExtension)"
-                        let fileURL = destFolder.appendingPathComponent(filename)
+                            let padded = String(format: "%02d", index + 1)
+                            let filename = "\(padded)_screenshot.\(format.fileExtension)"
+                            let fileURL = destFolder.appendingPathComponent(filename)
 
-                        // Offload encoding + file write to background
-                        let fmt = format
-                        previousEncodeTask = Task.detached {
-                            guard let imageData = encodeImage(image, format: fmt) else {
-                                throw ExportError.renderFailed
+                            let fmt = format
+                            group.addTask {
+                                guard let imageData = encodeImage(image, format: fmt) else {
+                                    throw ExportError.renderFailed
+                                }
+                                try imageData.write(to: fileURL)
                             }
-                            try imageData.write(to: fileURL)
-                        }
 
-                        completed += 1
-                        onProgress?(completed)
+                            completed += 1
+                            onProgress?(completed)
+                        }
                     }
                 }
             }
-
-            // Await the final encoding task
-            try await previousEncodeTask?.value
         } catch {
-            previousEncodeTask?.cancel()
             try? FileManager.default.removeItem(at: rootFolder)
             throw error
         }
