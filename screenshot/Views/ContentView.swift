@@ -381,9 +381,6 @@ struct ContentView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .frame(minWidth: 180, idealWidth: 240, maxWidth: 320, alignment: .leading)
-            Image(systemName: "chevron.up.chevron.down")
-                .font(.system(size: 8, weight: .semibold))
-                .foregroundStyle(.secondary)
         }
         .accessibilityIdentifier("projectPicker")
     }
@@ -394,8 +391,7 @@ struct ContentView: View {
         } label: {
             projectMenuLabel
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
+        .menuStyle(.button)
         .help(state.activeProject?.name ?? "Switch project")
         .accessibilityIdentifier("projectSwitcherMenu")
     }

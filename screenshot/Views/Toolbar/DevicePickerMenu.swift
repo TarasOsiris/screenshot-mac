@@ -94,20 +94,13 @@ struct DevicePickerMenu: View {
                 Text(resolvedLabel)
                     .lineLimit(1)
                     .truncationMode(.tail)
-
-                if presentation == .toolbar {
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                }
             }
         }
 
         switch presentation {
         case .toolbar:
             menu
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
+                .menuStyle(.button)
                 .fixedSize()
         case .form, .inline:
             menu.menuStyle(.button)
