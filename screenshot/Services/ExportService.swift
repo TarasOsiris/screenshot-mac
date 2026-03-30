@@ -155,14 +155,35 @@ struct ExportService {
         let templateWidth = row.templateWidth
         let templateHeight = row.templateHeight
         let resolvedSpacing = spacing ?? round(templateWidth * 0.03)
-        let resolvedPadding = padding ?? round(templateWidth * 0.04)
         let resolvedRadius = cornerRadius ?? round(templateHeight * 0.025)
         let shadowRadius: CGFloat = round(templateHeight * 0.02)
         let shadowY: CGFloat = round(templateHeight * 0.008)
         let shadowExtent = shadowRadius + shadowY
 
-        let totalWidth = resolvedPadding + CGFloat(count) * templateWidth + CGFloat(count - 1) * resolvedSpacing + resolvedPadding
-        let totalHeight = resolvedPadding + templateHeight + max(resolvedPadding, shadowExtent)
+        // Stack in two rows when even and >= 8
+        let rowCount = (count >= 8 && count % 2 == 0) ? 2 : 1
+        let columnsPerRow = rowCount == 2 ? count / 2 : count
+
+        // Enforce 1.91:1 aspect ratio (Twitter/X, Facebook, LinkedIn)
+        let targetAspect: CGFloat = 1.91
+        let contentWidth = CGFloat(columnsPerRow) * templateWidth + CGFloat(columnsPerRow - 1) * resolvedSpacing
+        let contentHeight = CGFloat(rowCount) * templateHeight + CGFloat(rowCount - 1) * resolvedSpacing
+        let minPadH = padding ?? round(templateWidth * 0.08)
+        let minPadV = padding ?? round(templateHeight * 0.04)
+        let minWidth = contentWidth + minPadH * 2
+        let minHeight = contentHeight + minPadV + max(minPadV, shadowExtent)
+
+        let totalWidth: CGFloat
+        let totalHeight: CGFloat
+        if minWidth / minHeight > targetAspect {
+            totalWidth = minWidth
+            totalHeight = round(totalWidth / targetAspect)
+        } else {
+            totalHeight = minHeight
+            totalWidth = round(totalHeight * targetAspect)
+        }
+        let horizontalPadding = round((totalWidth - contentWidth) / 2)
+        let verticalPadding = round((totalHeight - contentHeight) / 2)
 
         var templateImages: [NSImage] = []
         for index in 0..<count {
@@ -180,8 +201,10 @@ struct ExportService {
             templateImages: templateImages,
             templateWidth: templateWidth,
             templateHeight: templateHeight,
+            columns: columnsPerRow,
             spacing: resolvedSpacing,
-            padding: resolvedPadding,
+            horizontalPadding: horizontalPadding,
+            verticalPadding: verticalPadding,
             cornerRadius: resolvedRadius,
             shadowRadius: shadowRadius,
             shadowY: shadowY,
@@ -761,25 +784,43 @@ private struct ShowcaseRowView: View {
     let templateImages: [NSImage]
     let templateWidth: CGFloat
     let templateHeight: CGFloat
+    let columns: Int
     let spacing: CGFloat
-    let padding: CGFloat
+    let horizontalPadding: CGFloat
+    let verticalPadding: CGFloat
     let cornerRadius: CGFloat
     let shadowRadius: CGFloat
     let shadowY: CGFloat
     let backgroundColor: Color
 
     var body: some View {
-        HStack(spacing: spacing) {
-            ForEach(Array(templateImages.enumerated()), id: \.offset) { _, img in
-                Image(nsImage: img)
-                    .resizable()
-                    .frame(width: templateWidth, height: templateHeight)
-                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-                    .shadow(color: .black.opacity(0.25), radius: shadowRadius, x: 0, y: shadowY)
+        VStack(spacing: spacing) {
+            ForEach(0..<rows, id: \.self) { rowIndex in
+                HStack(spacing: spacing) {
+                    ForEach(0..<columns, id: \.self) { colIndex in
+                        let index = rowIndex * columns + colIndex
+                        if index < templateImages.count {
+                            templateImageView(templateImages[index])
+                        }
+                    }
+                }
             }
         }
-        .padding(padding)
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, verticalPadding)
         .background(backgroundColor)
+    }
+
+    private var rows: Int {
+        (templateImages.count + columns - 1) / columns
+    }
+
+    private func templateImageView(_ img: NSImage) -> some View {
+        Image(nsImage: img)
+            .resizable()
+            .frame(width: templateWidth, height: templateHeight)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .shadow(color: .black.opacity(0.25), radius: shadowRadius, x: 0, y: shadowY)
     }
 }
 
