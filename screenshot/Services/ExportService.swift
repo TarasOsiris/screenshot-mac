@@ -303,14 +303,7 @@ struct ExportService {
         return opaquePNGData(from: image)
     }
 
-    /// Fast single-template render + PNG encode for preview use.
-    @MainActor
-    static func renderSingleTemplatePNG(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeState: LocaleState = .default) -> Data? {
-        let image = renderSingleTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeState.activeLocaleCode, localeState: localeState)
-        return opaquePNGData(from: image)
-    }
-
-    @MainActor
+@MainActor
     static func renderTemplateData(
         index: Int,
         row: ScreenshotRow,
@@ -401,10 +394,9 @@ struct ExportService {
                 width: templateWidth * CGFloat(row.templates.count),
                 height: templateHeight
             )
-            let spanWidth = templateWidth * CGFloat(row.templates.count)
             backgroundView = AnyView(
                 row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanModelSize)
-                    .frame(width: spanWidth, height: templateHeight)
+                    .frame(width: spanModelSize.width, height: templateHeight)
                     .offset(x: -CGFloat(index) * templateWidth, y: 0)
                     .frame(width: templateWidth, height: templateHeight, alignment: .topLeading)
                     .clipped()
@@ -444,9 +436,9 @@ struct ExportService {
         }
         // Build a single-template row for shape rendering
         let singleTemplateRow = ScreenshotRow(
+            templates: [template],
             templateWidth: templateWidth,
-            templateHeight: templateHeight,
-            templates: [template]
+            templateHeight: templateHeight
         )
 
         let shapesView = RowCanvasShapeLayerView(

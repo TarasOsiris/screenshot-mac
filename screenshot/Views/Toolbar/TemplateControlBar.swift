@@ -257,6 +257,7 @@ struct TemplateControlBar: View {
         isPreviewing = true
         renderError = nil
         Task {
+            defer { isPreviewing = false }
             // Render on main thread (NSHostingView requires it)
             let images = onLoadFullResImages?() ?? screenshotImages
             let image = ExportService.renderSingleTemplateImage(
@@ -266,34 +267,18 @@ struct TemplateControlBar: View {
             // PNG encode + file write off main thread
             let tempURL = FileManager.default.temporaryDirectory
                 .appendingPathComponent("screenshot-\(index + 1)-\(localeState.activeLocaleCode).png")
-            let result: Result<URL, Error> = await Task.detached {
-                guard let pngData = ExportService.opaquePNGData(from: image) else {
-                    return .failure(PreviewError.renderFailed)
-                }
-                do {
-                    try pngData.write(to: tempURL)
-                    return .success(tempURL)
-                } catch {
-                    return .failure(error)
-                }
-            }.value
-            // Back on main thread for QuickLook
-            switch result {
-            case .success(let url):
-                QuickLookCoordinator.shared.preview(imageAt: url)
-            case .failure(let error):
-                if error is PreviewError {
+            do {
+                guard let pngData = await Task.detached(operation: { ExportService.opaquePNGData(from: image) }).value else {
                     renderError = "Could not render screenshot for preview."
-                } else {
-                    renderError = "Could not write preview file: \(error.localizedDescription)"
+                    return
                 }
+                try pngData.write(to: tempURL)
+            } catch {
+                renderError = "Could not write preview file: \(error.localizedDescription)"
+                return
             }
-            isPreviewing = false
+            QuickLookCoordinator.shared.preview(imageAt: tempURL)
         }
-    }
-
-    private enum PreviewError: Error {
-        case renderFailed
     }
 
     private func downloadScreenshot() {
