@@ -161,7 +161,6 @@ struct InspectorPanel: View {
                 gradientConfig: safeRowBinding(rowId, keyPath: \.gradientConfig, default: GradientConfig()),
                 backgroundImageConfig: safeRowBinding(rowId, keyPath: \.backgroundImageConfig, default: BackgroundImageConfig()),
                 backgroundImage: state.rows[rowIndex].backgroundImageConfig.fileName.flatMap { state.screenshotImages[$0] },
-                compact: true,
                 onChanged: { },
                 onPickImage: { state.pickAndSaveBackgroundImage(for: rowId) },
                 onRemoveImage: { state.removeBackgroundImage(for: rowId) },

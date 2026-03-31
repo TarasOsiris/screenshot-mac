@@ -640,7 +640,6 @@ private struct ShapePropertiesSingleSelectionBar: View {
                     backgroundImage: (idx(for: shapeId).flatMap { i in
                         state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
                     }).flatMap { state.screenshotImages[$0] },
-                    compact: true,
                     onChanged: { state.scheduleSave() },
                     onPickImage: { isReplacingFillImage = true },
                     onRemoveImage: { state.removeShapeFillImage(for: shapeId) },

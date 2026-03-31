@@ -7,7 +7,6 @@ struct BackgroundEditor: View {
     @Binding var gradientConfig: GradientConfig
     @Binding var backgroundImageConfig: BackgroundImageConfig
     var backgroundImage: NSImage?
-    var compact: Bool = false
     var onChanged: () -> Void
     var onPickImage: (() -> Void)?
     var onRemoveImage: (() -> Void)?
@@ -23,7 +22,7 @@ struct BackgroundEditor: View {
         .pickerStyle(.segmented)
         .labelsHidden()
         .frame(maxWidth: .infinity)
-        .controlSize(compact ? .mini : .small)
+        .controlSize(.mini)
 
         switch backgroundStyle {
         case .color:
@@ -34,57 +33,59 @@ struct BackgroundEditor: View {
                     .labelsHidden()
                     .fixedSize()
             }
-            .font(.system(size: compact ? 10 : 12))
+            .font(.system(size: 10))
 
         case .gradient:
-            Picker("Type", selection: $gradientConfig.gradientType.onSet { onChanged() }) {
-                Text("Linear").tag(GradientType.linear)
-                Text("Radial").tag(GradientType.radial)
-                Text("Angular").tag(GradientType.angular)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(maxWidth: .infinity)
-            .controlSize(compact ? .mini : .small)
-
-            GradientStopEditor(
-                config: $gradientConfig,
-                onChanged: onChanged
-            )
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
-                ForEach(gradientPresets) { preset in
-                    Button {
-                        var presetConfig = preset.config
-                        presetConfig.gradientType = gradientConfig.gradientType
-                        presetConfig.centerX = gradientConfig.centerX
-                        presetConfig.centerY = gradientConfig.centerY
-                        gradientConfig = presetConfig
-                        onChanged()
-                    } label: {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(preset.config.linearGradient)
-                            .frame(height: compact ? 24 : 28)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .strokeBorder(.white.opacity(0.2), lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .focusable(false)
-                    .help(preset.label)
+            VStack(alignment: .leading, spacing: 10) {
+                Picker("Type", selection: $gradientConfig.gradientType.onSet { onChanged() }) {
+                    Text("Linear").tag(GradientType.linear)
+                    Text("Radial").tag(GradientType.radial)
+                    Text("Angular").tag(GradientType.angular)
                 }
-            }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(maxWidth: .infinity)
+                .controlSize(.mini)
 
-            switch gradientConfig.gradientType {
-            case .linear:
-                angleControls
+                GradientStopEditor(
+                    config: $gradientConfig,
+                    onChanged: onChanged
+                )
 
-            case .radial, .angular:
-                centerControls
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
+                    ForEach(gradientPresets) { preset in
+                        Button {
+                            var presetConfig = preset.config
+                            presetConfig.gradientType = gradientConfig.gradientType
+                            presetConfig.centerX = gradientConfig.centerX
+                            presetConfig.centerY = gradientConfig.centerY
+                            gradientConfig = presetConfig
+                            onChanged()
+                        } label: {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(preset.config.linearGradient)
+                                .frame(height: 24)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .focusable(false)
+                        .help(preset.label)
+                    }
+                }
 
-                if gradientConfig.gradientType == .angular {
+                switch gradientConfig.gradientType {
+                case .linear:
                     angleControls
+
+                case .radial, .angular:
+                    centerControls
+
+                    if gradientConfig.gradientType == .angular {
+                        angleControls
+                    }
                 }
             }
 
@@ -92,7 +93,6 @@ struct BackgroundEditor: View {
             BackgroundImageEditor(
                 config: $backgroundImageConfig,
                 image: backgroundImage,
-                compact: compact,
                 onChanged: onChanged,
                 onPickImage: onPickImage ?? {},
                 onRemoveImage: onRemoveImage ?? {},
@@ -104,65 +104,61 @@ struct BackgroundEditor: View {
 
     @ViewBuilder
     private var angleControls: some View {
-        let angleFontSize: CGFloat = compact ? 14 : 18
-        let buttonSize: CGFloat = compact ? 14 : 18
-        let arrowSize: CGFloat = compact ? 7 : 8
+        HStack(alignment: .top, spacing: 8) {
+            GradientAngleWheel(
+                angle: $gradientConfig.angle.onSet { onChanged() }
+            )
+            .frame(width: 36, height: 36)
 
-        VStack(spacing: 6) {
-            HStack(spacing: compact ? 8 : 12) {
-                GradientAngleWheel(
-                    angle: $gradientConfig.angle.onSet { onChanged() }
-                )
-                .frame(width: compact ? 36 : nil, height: compact ? 36 : nil)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(Int(gradientConfig.angle))°")
+                    .font(.system(size: 14, weight: .medium).monospacedDigit())
+                    .foregroundStyle(.primary)
 
-                VStack(alignment: .leading, spacing: compact ? 2 : 4) {
-                    Text("\(Int(gradientConfig.angle))°")
-                        .font(.system(size: angleFontSize, weight: .medium).monospacedDigit())
-                        .foregroundStyle(.primary)
-
-                    HStack(spacing: compact ? 1 : 2) {
-                        ForEach([0, 45, 90, 135, 180, 225, 270, 315], id: \.self) { a in
-                            Button {
-                                gradientConfig.angle = Double(a)
-                                onChanged()
-                            } label: {
-                                Image(systemName: "arrow.up")
-                                    .font(.system(size: arrowSize))
-                                    .rotationEffect(.degrees(Double(a)))
-                                    .frame(width: buttonSize, height: buttonSize)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: compact ? 2 : 3)
-                                            .fill(Int(gradientConfig.angle.rounded()) == a ? Color.accentColor.opacity(0.3) : Color.clear)
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                            .focusable(false)
-                            .help("\(a)°")
+                HStack(spacing: 1) {
+                    ForEach([0, 45, 90, 135, 180, 225, 270, 315], id: \.self) { a in
+                        Button {
+                            gradientConfig.angle = Double(a)
+                            onChanged()
+                        } label: {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 7))
+                                .rotationEffect(.degrees(Double(a)))
+                                .frame(width: 14, height: 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(Int(gradientConfig.angle.rounded()) == a ? Color.accentColor.opacity(0.3) : Color.clear)
+                                )
                         }
+                        .buttonStyle(.plain)
+                        .focusable(false)
+                        .help("\(a)°")
                     }
                 }
             }
         }
+        .padding(.leading, 4)
+        .padding(.vertical, 6)
     }
 
     @ViewBuilder
     private var centerControls: some View {
-        HStack(spacing: compact ? 8 : 12) {
+        HStack(alignment: .top, spacing: 8) {
             GradientCenterPicker(
                 centerX: $gradientConfig.centerX.onSet { onChanged() },
                 centerY: $gradientConfig.centerY.onSet { onChanged() }
             )
 
-            VStack(alignment: .leading, spacing: compact ? 2 : 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("Center")
-                    .font(.system(size: compact ? 10 : 12))
+                    .font(.system(size: 10))
                     .foregroundStyle(.secondary)
 
-                HStack(spacing: compact ? 4 : 8) {
+                HStack(spacing: 4) {
                     Text("X: \(Int(gradientConfig.centerX * 100))%")
                     Text("Y: \(Int(gradientConfig.centerY * 100))%")
                 }
-                .font(.system(size: compact ? 10 : 11).monospacedDigit())
+                .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(.primary)
 
                 Button {
@@ -171,7 +167,7 @@ struct BackgroundEditor: View {
                     onChanged()
                 } label: {
                     Text("Reset")
-                        .font(.system(size: compact ? 9 : 10))
+                        .font(.system(size: 9))
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
@@ -180,13 +176,13 @@ struct BackgroundEditor: View {
                 .disabled(gradientConfig.centerX == 0.5 && gradientConfig.centerY == 0.5)
             }
         }
+        .padding(.leading, 4)
     }
 }
 
 struct BackgroundImageEditor: View {
     @Binding var config: BackgroundImageConfig
     let image: NSImage?
-    var compact: Bool = false
     var onChanged: () -> Void
     var onPickImage: () -> Void
     var onRemoveImage: () -> Void
@@ -200,13 +196,12 @@ struct BackgroundImageEditor: View {
     private var previewImage: NSImage? { image ?? cachedSvgPreview }
 
     var body: some View {
-        // Image preview / picker
         Group {
             if let preview = previewImage {
                 Image(nsImage: preview)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(maxHeight: compact ? 60 : 80)
+                    .frame(maxHeight: 60)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
@@ -222,21 +217,21 @@ struct BackgroundImageEditor: View {
                     Button("Remove", role: .destructive) { onRemoveImage() }
                         .controlSize(.small)
                 }
-                .font(.system(size: compact ? 10 : 11))
+                .font(.system(size: 10))
             } else {
                 Button {
                     onPickImage()
                 } label: {
                     VStack(spacing: 4) {
                         Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.on.rectangle.angled")
-                            .font(.system(size: compact ? 16 : 20))
+                            .font(.system(size: 16))
                             .foregroundStyle(isDropTargeted ? Color.accentColor : Color.secondary)
                         Text(isDropTargeted ? "Drop Image" : "Choose or Drop Image")
-                            .font(.system(size: compact ? 10 : 11))
+                            .font(.system(size: 10))
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: compact ? 44 : 56)
+                    .frame(height: 44)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
                             .strokeBorder(
@@ -256,11 +251,10 @@ struct BackgroundImageEditor: View {
 
         if !hasImage {
             Text("Drop or paste an image to configure fill and opacity.")
-                .font(.system(size: compact ? 9 : 11))
+                .font(.system(size: 9))
                 .foregroundStyle(.secondary)
         }
 
-        // Fill mode
         Picker("Fill", selection: $config.fillMode.onSet { onChanged() }) {
             Text("Fill").tag(ImageFillMode.fill)
             Text("Fit").tag(ImageFillMode.fit)
@@ -270,13 +264,13 @@ struct BackgroundImageEditor: View {
         .pickerStyle(.segmented)
         .labelsHidden()
         .frame(maxWidth: .infinity)
-        .controlSize(compact ? .mini : .small)
+        .controlSize(.mini)
         .disabled(!hasImage)
 
         sliderRow("Opacity", value: $config.opacity)
 
         if config.fillMode == .tile {
-            VStack(spacing: compact ? 4 : 6) {
+            VStack(spacing: 4) {
                 axisSliderRow(
                     "Scale",
                     xValue: $config.tileScaleX,
@@ -299,16 +293,16 @@ struct BackgroundImageEditor: View {
     ) -> some View {
         HStack(spacing: 4) {
             Text(label)
-                .font(.system(size: compact ? 10 : 12))
+                .font(.system(size: 10))
             Spacer()
             Slider(value: value.onSet { onChanged() }, in: range)
-                .frame(width: compact ? 80 : 100)
+                .frame(width: 80)
                 .disabled(!hasImage)
             Text(formatLabel?() ?? "\(Int(value.wrappedValue * 100))%")
-                .font(.system(size: compact ? 9 : 11).monospacedDigit())
+                .font(.system(size: 9).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-                .frame(width: compact ? 38 : 34, alignment: .trailing)
+                .frame(width: 38, alignment: .trailing)
         }
         .opacity(hasImage ? 1 : 0.45)
     }
@@ -321,9 +315,9 @@ struct BackgroundImageEditor: View {
         xFormat: (() -> String)? = nil,
         yFormat: (() -> String)? = nil
     ) -> some View {
-        VStack(alignment: .leading, spacing: compact ? 3 : 4) {
+        VStack(alignment: .leading, spacing: 3) {
             Text(label)
-                .font(.system(size: compact ? 10 : 12))
+                .font(.system(size: 10))
             axisSlider("X", value: xValue, range: range, formatLabel: xFormat, valueWidth: 34)
             axisSlider("Y", value: yValue, range: range, formatLabel: yFormat, valueWidth: 34)
         }
@@ -337,15 +331,15 @@ struct BackgroundImageEditor: View {
         formatLabel: (() -> String)?,
         valueWidth: CGFloat
     ) -> some View {
-        HStack(spacing: compact ? 4 : 3) {
+        HStack(spacing: 4) {
             Text(axis)
-                .font(.system(size: compact ? 9 : 10, weight: .medium))
+                .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.secondary)
                 .frame(width: 10)
             Slider(value: value.onSet { onChanged() }, in: range)
                 .disabled(!hasImage)
             Text(formatLabel?() ?? "\(Int(value.wrappedValue * 100))%")
-                .font(.system(size: compact ? 9 : 11).monospacedDigit())
+                .font(.system(size: 9).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .frame(width: valueWidth, alignment: .trailing)
@@ -368,7 +362,6 @@ struct BackgroundImageEditor: View {
     private func handleImageDrop(_ providers: [NSItemProvider]) -> Bool {
         guard onDropImage != nil || onDropSvg != nil, let provider = providers.first else { return false }
 
-        // Try SVG first
         if provider.hasItemConformingToTypeIdentifier(UTType.svg.identifier) {
             provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { url, _ in
                 guard let url, let sanitized = SvgHelper.loadAndSanitize(from: url) else { return }

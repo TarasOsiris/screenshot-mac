@@ -135,8 +135,6 @@ struct TemplateControlBar: View {
                             .buttonStyle(.borderless)
                         }
 
-                        Divider()
-
                         Toggle(
                             "Override background",
                             isOn: $template.overrideBackground.onSet { onSave() }
@@ -146,14 +144,12 @@ struct TemplateControlBar: View {
                         .font(.system(size: 12))
 
                         if template.overrideBackground {
-                            Divider()
                             BackgroundEditor(
                                 backgroundStyle: $template.backgroundStyle,
                                 bgColor: $template.bgColor,
                                 gradientConfig: $template.gradientConfig,
                                 backgroundImageConfig: $template.backgroundImageConfig,
                                 backgroundImage: backgroundPreviewImage,
-                                compact: true,
                                 onChanged: onSave,
                                 onPickImage: onPickBackgroundImage,
                                 onRemoveImage: onRemoveBackgroundImage,
