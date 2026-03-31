@@ -136,9 +136,13 @@ private struct ShapePropertiesSingleSelectionBar: View {
 
                                 ShapePropertiesSeparator()
 
-                                Label("Experimental", systemImage: "exclamationmark.triangle.fill")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                                Text("Beta")
+                                    .font(.system(size: 9, weight: .semibold))
+                                    .foregroundStyle(.orange)
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 2)
+                                    .background(.orange.opacity(0.15), in: .capsule)
+                                    .help("3D device rotation is an experimental feature")
                             }
                         }
 
