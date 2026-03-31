@@ -55,6 +55,9 @@ struct DeviceFrameModelSpec: Equatable {
     /// hidden area on each side.  With `.clamp` wrapping the edge pixels
     /// stretch into the padding zone, keeping actual content fully visible.
     let screenUVPadding: CGFloat
+    /// Vertical UV offset to align the screenshot's dynamic island with the
+    /// device frame's. Positive values shift the screenshot up.
+    let screenUVOffsetY: CGFloat
 }
 
 // MARK: - Real Device Frame
@@ -183,7 +186,8 @@ struct DeviceFrameCatalog {
         baseYawDegrees: 0,
         defaultPitch: 0,
         defaultYaw: 0,
-        screenUVPadding: 0.03
+        screenUVPadding: 0.03,
+        screenUVOffsetY: -0.02
     )
 
     /// All available real device frames, grouped by model.

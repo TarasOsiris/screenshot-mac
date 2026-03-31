@@ -908,7 +908,7 @@ struct DeviceFrameView: View {
 
         // Remap UVs from atlas sub-region to full range so the screenshot fills the screen.
         // Padding pushes UVs slightly beyond 0...1 so content stays inside the visible area.
-        let remappedGeometry = remapUVsToFullRange(geometry, padding: modelSpec.screenUVPadding)
+        let remappedGeometry = remapUVsToFullRange(geometry, padding: modelSpec.screenUVPadding, offsetY: modelSpec.screenUVOffsetY)
 
         let screenContents = preparedScreenContents(from: screenshotImage)
         let materials = remappedGeometry.materials.map { material -> SCNMaterial in
@@ -943,7 +943,7 @@ struct DeviceFrameView: View {
     }
 
     /// Remaps UV coordinates of a geometry so they span the full 0...1 range.
-    private static func remapUVsToFullRange(_ geometry: SCNGeometry, padding: CGFloat = 0) -> SCNGeometry {
+    private static func remapUVsToFullRange(_ geometry: SCNGeometry, padding: CGFloat = 0, offsetY: CGFloat = 0) -> SCNGeometry {
         guard let uvSource = geometry.sources.first(where: { $0.semantic == .texcoord }) else {
             return geometry
         }
@@ -976,11 +976,12 @@ struct DeviceFrameView: View {
 
         // Map to [-padding, 1+padding] so edge content stays inside the visible screen area.
         // With .clamp wrapping, the edge pixels stretch into the padding zone behind the bezel.
+        // offsetY shifts the screenshot vertically to align dynamic islands.
         let totalU = 1.0 + 2.0 * padding
         let totalV = 1.0 + 2.0 * padding
         for i in 0..<rawUVs.count {
             rawUVs[i] = CGPoint(
-                x: (rawUVs[i].x - CGFloat(minU)) / CGFloat(rangeU) * totalU - padding,
+                x: (rawUVs[i].x - CGFloat(minU)) / CGFloat(rangeU) * totalU - padding + offsetY,
                 y: (rawUVs[i].y - CGFloat(minV)) / CGFloat(rangeV) * totalV - padding
             )
         }
