@@ -590,6 +590,9 @@ struct EditorRowView: View {
                     } : nil,
                     onDeleteSelected: isMulti ? {
                         state.deleteSelectedShapes()
+                    } : nil,
+                    onDuplicateToAll: row.templates.count > 1 ? {
+                        state.duplicateShapeToAllTemplates(shape.id)
                     } : nil
                 )
             }

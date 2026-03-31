@@ -53,6 +53,7 @@ struct CanvasShapeView: View {
     /// When multi-selected with same-type shapes, applies update to all selected shapes
     var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
     var onDeleteSelected: (() -> Void)?
+    var onDuplicateToAll: (() -> Void)?
 
     @State private var addBumpScale: CGFloat = 1.0
     @State private var dragOffset: CGSize = .zero
@@ -341,6 +342,7 @@ struct CanvasShapeView: View {
     private var shapeContextMenu: some View {
         CanvasShapeContextMenuContent(
             shape: shape,
+            isMultiSelected: isMultiSelected,
             screenshotImage: screenshotImage,
             isPickerPresented: $isPickerPresented,
             onClearImage: onClearImage,
@@ -356,7 +358,8 @@ struct CanvasShapeView: View {
                 } else {
                     onDelete()
                 }
-            }
+            },
+            onDuplicateToAll: onDuplicateToAll
         )
     }
 
@@ -814,6 +817,7 @@ private struct CanvasShapeRenderContent: View {
 
 private struct CanvasShapeContextMenuContent: View {
     let shape: CanvasShapeModel
+    var isMultiSelected: Bool = false
     var screenshotImage: NSImage?
     @Binding var isPickerPresented: Bool
     var onClearImage: (() -> Void)?
@@ -824,44 +828,47 @@ private struct CanvasShapeContextMenuContent: View {
     var onPasteTextStyle: (() -> Void)?
     let applyUpdate: (@escaping (inout CanvasShapeModel) -> Void) -> Void
     let deleteAction: () -> Void
+    var onDuplicateToAll: (() -> Void)?
 
     var body: some View {
-        if shape.type == .device || shape.type == .image {
-            Button("Replace Image...") {
-                isPickerPresented = true
-            }
-            Button("Reset Image") {
-                onClearImage?()
-            }
-            .disabled(shape.displayImageFileName == nil)
-            if shape.type == .image, let screenshotImage {
-                Button("Restore Original Aspect Ratio") {
-                    let imageSize = screenshotImage.size
-                    guard imageSize.width > 0 && imageSize.height > 0 else { return }
-                    let newHeight = shape.width / (imageSize.width / imageSize.height)
-                    applyUpdate { $0.height = newHeight }
+        if !isMultiSelected {
+            if shape.type == .device || shape.type == .image {
+                Button("Replace Image...") {
+                    isPickerPresented = true
                 }
+                Button("Reset Image") {
+                    onClearImage?()
+                }
+                .disabled(shape.displayImageFileName == nil)
+                if shape.type == .image, let screenshotImage {
+                    Button("Restore Original Aspect Ratio") {
+                        let imageSize = screenshotImage.size
+                        guard imageSize.width > 0 && imageSize.height > 0 else { return }
+                        let newHeight = shape.width / (imageSize.width / imageSize.height)
+                        applyUpdate { $0.height = newHeight }
+                    }
+                }
+                Divider()
             }
-            Divider()
-        }
 
-        if shape.type == .device {
-            Menu("Change Device") {
-                DeviceMenuContent(
-                    onSelectCategory: { category in
-                        applyUpdate { $0.selectAbstractDevice(category) }
-                    },
-                    onSelectFrame: { frame in
-                        applyUpdate { $0.selectRealFrame(frame) }
-                    },
-                    selectedCategory: shape.deviceCategory,
-                    selectedFrameId: shape.deviceFrameId
-                )
+            if shape.type == .device {
+                Menu("Change Device") {
+                    DeviceMenuContent(
+                        onSelectCategory: { category in
+                            applyUpdate { $0.selectAbstractDevice(category) }
+                        },
+                        onSelectFrame: { frame in
+                            applyUpdate { $0.selectRealFrame(frame) }
+                        },
+                        selectedCategory: shape.deviceCategory,
+                        selectedFrameId: shape.deviceFrameId
+                    )
+                }
+                if let onMatchDeviceSizes {
+                    Button("Resize to Fit All Devices", action: onMatchDeviceSizes)
+                }
+                Divider()
             }
-            if let onMatchDeviceSizes {
-                Button("Resize to Fit All Devices", action: onMatchDeviceSizes)
-            }
-            Divider()
         }
 
         if shape.type == .text {
@@ -895,7 +902,7 @@ private struct CanvasShapeContextMenuContent: View {
                     }
                 }
             }
-            if let onCopyTextStyle {
+            if !isMultiSelected, let onCopyTextStyle {
                 Divider()
                 Button("Copy Text Style", systemImage: "paintbrush") {
                     onCopyTextStyle()
@@ -905,7 +912,7 @@ private struct CanvasShapeContextMenuContent: View {
                 }
                 .disabled(onPasteTextStyle == nil)
             }
-            if let onTranslate, let translateLocaleName {
+            if !isMultiSelected, let onTranslate, let translateLocaleName {
                 Divider()
                 Button("Translate into \(translateLocaleName)", action: onTranslate)
                     .disabled((shape.text ?? "").isEmpty)
@@ -932,14 +939,20 @@ private struct CanvasShapeContextMenuContent: View {
             Divider()
         }
 
-        Toggle("Clip to Screenshot", isOn: Binding(
+        Toggle("Clip to Frame", isOn: Binding(
             get: { shape.clipToTemplate ?? false },
             set: { value in applyUpdate { $0.clipToTemplate = value } }
         ))
 
+        if !isMultiSelected, let onDuplicateToAll {
+            Button("Duplicate to All Screenshots") {
+                onDuplicateToAll()
+            }
+        }
+
         Divider()
 
-        Button("Delete", role: .destructive, action: deleteAction)
+        Button(isMultiSelected ? "Delete Selected" : "Delete", role: .destructive, action: deleteAction)
     }
 }
 
