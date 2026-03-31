@@ -591,6 +591,9 @@ struct EditorRowView: View {
                     onDeleteSelected: isMulti ? {
                         state.deleteSelectedShapes()
                     } : nil,
+                    onAlignSelected: isMulti ? { alignment in
+                        state.alignSelectedShapes(alignment)
+                    } : nil,
                     onDuplicateToAll: row.templates.count > 1 ? {
                         state.duplicateShapeToAllTemplates(shape.id)
                     } : nil

@@ -428,6 +428,69 @@ extension AppState {
         scheduleSave()
     }
 
+    // MARK: - Align Selected Shapes
+
+    enum ShapeAlignment: Equatable {
+        case left, centerH, right, top, centerV, bottom
+        case distributeH, distributeV
+    }
+
+    func alignSelectedShapes(_ alignment: ShapeAlignment) {
+        guard let rowIdx = selectedRowIndex, selectedShapeIds.count >= 2 else { return }
+        let ids = selectedShapeIds
+        let indices = rows[rowIdx].shapes.indices.filter { ids.contains(rows[rowIdx].shapes[$0].id) }
+        guard indices.count >= 2 else { return }
+        if alignment == .distributeH || alignment == .distributeV {
+            guard indices.count >= 3 else { return }
+        }
+
+        registerUndoForRow(at: rowIdx, "Align Shapes")
+
+        let shapes = indices.map { rows[rowIdx].shapes[$0] }
+
+        switch alignment {
+        case .left:
+            let target = shapes.map(\.x).min()!
+            for i in indices { rows[rowIdx].shapes[i].x = target }
+        case .centerH:
+            let centers = shapes.map { $0.x + $0.width / 2 }
+            let target = centers.reduce(0, +) / CGFloat(centers.count)
+            for i in indices { rows[rowIdx].shapes[i].x = target - rows[rowIdx].shapes[i].width / 2 }
+        case .right:
+            let target = shapes.map { $0.x + $0.width }.max()!
+            for i in indices { rows[rowIdx].shapes[i].x = target - rows[rowIdx].shapes[i].width }
+        case .top:
+            let target = shapes.map(\.y).min()!
+            for i in indices { rows[rowIdx].shapes[i].y = target }
+        case .centerV:
+            let centers = shapes.map { $0.y + $0.height / 2 }
+            let target = centers.reduce(0, +) / CGFloat(centers.count)
+            for i in indices { rows[rowIdx].shapes[i].y = target - rows[rowIdx].shapes[i].height / 2 }
+        case .bottom:
+            let target = shapes.map { $0.y + $0.height }.max()!
+            for i in indices { rows[rowIdx].shapes[i].y = target - rows[rowIdx].shapes[i].height }
+        case .distributeH:
+            distributeShapes(indices: indices, rowIdx: rowIdx, posKey: \.x, sizeKey: \.width)
+        case .distributeV:
+            distributeShapes(indices: indices, rowIdx: rowIdx, posKey: \.y, sizeKey: \.height)
+        }
+        scheduleSave()
+    }
+
+    private func distributeShapes(indices: [Int], rowIdx: Int, posKey: WritableKeyPath<CanvasShapeModel, CGFloat>, sizeKey: KeyPath<CanvasShapeModel, CGFloat>) {
+        let sorted = indices.sorted { rows[rowIdx].shapes[$0][keyPath: posKey] < rows[rowIdx].shapes[$1][keyPath: posKey] }
+        let first = rows[rowIdx].shapes[sorted.first!]
+        let last = rows[rowIdx].shapes[sorted.last!]
+        let totalSpan = (last[keyPath: posKey] + last[keyPath: sizeKey]) - first[keyPath: posKey]
+        let totalSize = sorted.map { rows[rowIdx].shapes[$0][keyPath: sizeKey] }.reduce(0, +)
+        let gap = (totalSpan - totalSize) / CGFloat(sorted.count - 1)
+        var current = first[keyPath: posKey]
+        for idx in sorted {
+            rows[rowIdx].shapes[idx][keyPath: posKey] = current
+            current += rows[rowIdx].shapes[idx][keyPath: sizeKey] + gap
+        }
+    }
+
     // MARK: - Batch Property Update
 
     func updateShapes(_ ids: Set<UUID>, in rowId: UUID? = nil, update: (inout CanvasShapeModel) -> Void) {

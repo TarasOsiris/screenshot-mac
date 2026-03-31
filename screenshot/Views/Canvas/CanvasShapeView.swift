@@ -53,6 +53,7 @@ struct CanvasShapeView: View {
     /// When multi-selected with same-type shapes, applies update to all selected shapes
     var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
     var onDeleteSelected: (() -> Void)?
+    var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
     var onDuplicateToAll: (() -> Void)?
 
     @State private var addBumpScale: CGFloat = 1.0
@@ -359,6 +360,7 @@ struct CanvasShapeView: View {
                     onDelete()
                 }
             },
+            onAlignSelected: onAlignSelected,
             onDuplicateToAll: onDuplicateToAll
         )
     }
@@ -828,6 +830,7 @@ private struct CanvasShapeContextMenuContent: View {
     var onPasteTextStyle: (() -> Void)?
     let applyUpdate: (@escaping (inout CanvasShapeModel) -> Void) -> Void
     let deleteAction: () -> Void
+    var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
     var onDuplicateToAll: (() -> Void)?
 
     var body: some View {
@@ -947,6 +950,22 @@ private struct CanvasShapeContextMenuContent: View {
         if !isMultiSelected, let onDuplicateToAll {
             Button("Duplicate to All Screenshots") {
                 onDuplicateToAll()
+            }
+        }
+
+        if let onAlignSelected {
+            Divider()
+            Menu("Align Selected") {
+                Button("Align Left") { onAlignSelected(.left) }
+                Button("Align Center") { onAlignSelected(.centerH) }
+                Button("Align Right") { onAlignSelected(.right) }
+                Divider()
+                Button("Align Top") { onAlignSelected(.top) }
+                Button("Align Middle") { onAlignSelected(.centerV) }
+                Button("Align Bottom") { onAlignSelected(.bottom) }
+                Divider()
+                Button("Distribute Horizontally") { onAlignSelected(.distributeH) }
+                Button("Distribute Vertically") { onAlignSelected(.distributeV) }
             }
         }
 
