@@ -133,6 +133,12 @@ private struct ShapePropertiesSingleSelectionBar: View {
                                 ) {
                                     resetDeviceModelRotation(shapeId)
                                 }
+
+                                ShapePropertiesSeparator()
+
+                                Label("Experimental", systemImage: "exclamationmark.triangle.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
                             }
                         }
 

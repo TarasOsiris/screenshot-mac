@@ -325,7 +325,7 @@ struct DeviceFrameCatalog {
                 baseSpec: iphoneAirSpec
             ),
             buildGroup(
-                id: "iphone16model", name: "iPhone 17 Pro Max (3D)",
+                id: "iphone16model", name: "iPhone 17 (3D)",
                 colors: ["Default"],
                 baseSpec: iphone16ModelSpec,
                 modelSpec: iphone16USDZModel
