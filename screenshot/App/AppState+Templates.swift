@@ -89,6 +89,14 @@ extension AppState {
     }
 
     func duplicateTemplate(_ templateId: UUID, in rowId: UUID) {
+        duplicateTemplate(templateId, in: rowId, toEnd: false)
+    }
+
+    func duplicateTemplateToEnd(_ templateId: UUID, in rowId: UUID) {
+        duplicateTemplate(templateId, in: rowId, toEnd: true)
+    }
+
+    private func duplicateTemplate(_ templateId: UUID, in rowId: UUID, toEnd: Bool) {
         guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }),
               let templateIndex = rows[rowIndex].templates.firstIndex(where: { $0.id == templateId }) else { return }
         registerUndoForRow(at: rowIndex, "Duplicate Screenshot")
@@ -109,8 +117,8 @@ extension AppState {
             }
         }
 
-        // Insert the new template right after the original
-        rows[rowIndex].templates.insert(newTemplate, at: templateIndex + 1)
+        let insertIndex = toEnd ? rows[rowIndex].templates.count : templateIndex + 1
+        rows[rowIndex].templates.insert(newTemplate, at: insertIndex)
 
         // Duplicate shapes belonging to this template and shift to the new column
         let columnWidth = rows[rowIndex].templateWidth
@@ -121,16 +129,19 @@ extension AppState {
         // Shift existing shapes in templates after the insertion point to the right
         for i in rows[rowIndex].shapes.indices {
             let owner = rows[rowIndex].owningTemplateIndex(for: rows[rowIndex].shapes[i])
-            if owner > templateIndex {
+            if owner >= insertIndex {
                 rows[rowIndex].shapes[i].x += columnWidth
             }
         }
 
         // Create duplicated shapes for the new template
+        let targetCenterX = rows[rowIndex].templateCenterX(at: insertIndex)
+        let sourceCenterX = rows[rowIndex].templateCenterX(at: templateIndex)
+        let shapeOffset = targetCenterX - sourceCenterX
         var newShapes: [CanvasShapeModel] = []
         for shape in sourceShapes {
             var copy = shape.duplicated()
-            copy.x += columnWidth
+            copy.x += shapeOffset
             LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
             copyImageFiles(for: &copy, originalId: shape.id)
             newShapes.append(copy)

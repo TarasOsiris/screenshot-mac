@@ -404,6 +404,16 @@ struct EditorRowView: View {
                             }
                         }
                     },
+                    onDuplicateToEnd: {
+                        store.requirePro(
+                            allowed: store.canAddTemplate(currentCount: row.templates.count),
+                            context: .templateLimit
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                state.duplicateTemplateToEnd(template.id, in: row.id)
+                            }
+                        }
+                    },
                     onInsertBefore: {
                         store.requirePro(
                             allowed: store.canAddTemplate(currentCount: row.templates.count),
@@ -481,7 +491,7 @@ struct EditorRowView: View {
                     fillImage: shape.fillImageConfig?.fileName.flatMap { state.screenshotImages[$0] },
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                     groupDragOffset: groupOffset,
-                    deviceModelRenderingMode: .live,
+                    deviceModelRenderingMode: .snapshot,
                     clipBounds: clipRect,
                     onSelect: { state.selectShape(shape.id, in: row.id) },
                     onShiftSelect: { state.toggleShapeSelection(shape.id, in: row.id) },
@@ -567,6 +577,13 @@ struct EditorRowView: View {
                         state.pendingTranslateShapeId = shape.id
                     } : nil,
                     translateLocaleName: currentLocaleName,
+                    onCopyTextStyle: shape.type == .text ? {
+                        state.textStyleClipboard = shape.extractTextStyle()
+                    } : nil,
+                    onPasteTextStyle: shape.type == .text && state.textStyleClipboard != nil ? { [rowId = row.id] in
+                        guard let style = state.textStyleClipboard else { return }
+                        state.updateShapes([shape.id], in: rowId) { $0.applyTextStyle(style) }
+                    } : nil,
                     availableFontFamilies: state.availableFontFamilySet,
                     onUpdateSelected: isMulti && allSelectedSameType ? { update in
                         state.updateShapes(selectedShapeIds, in: row.id, update: update)

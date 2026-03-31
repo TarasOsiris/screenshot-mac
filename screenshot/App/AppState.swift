@@ -82,6 +82,7 @@ final class AppState {
     // Clipboard
     var clipboard: [CanvasShapeModel] = []
     var clipboardPasteboardChangeCount: Int = 0
+    var textStyleClipboard: TextStyle?
 
     var activeProject: Project? {
         visibleProjects.first { $0.id == activeProjectId }

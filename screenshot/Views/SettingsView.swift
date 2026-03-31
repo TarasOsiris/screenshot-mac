@@ -361,6 +361,19 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 2)
             }
+
+            Section("Templates") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("500 App Store Screenshot Templates")
+                        .fontWeight(.medium)
+                    Text("for Android and iOS Apps")
+                        .foregroundStyle(.secondary)
+                    Link("View on Figma Community",
+                         destination: URL(string: "https://www.figma.com/community/file/1471925742378558731/500-app-store-screenshot-templates-for-android-and-ios-apps")!)
+                        .font(.caption)
+                }
+                .padding(.vertical, 2)
+            }
         }
         .formStyle(.grouped)
     }

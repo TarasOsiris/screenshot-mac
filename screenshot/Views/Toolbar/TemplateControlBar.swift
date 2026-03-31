@@ -18,6 +18,7 @@ struct TemplateControlBar: View {
     var onDropBackgroundImage: ((NSImage) -> Void)? = nil
     var onDropBackgroundSvg: ((String) -> Void)? = nil
     var onDuplicate: () -> Void = {}
+    var onDuplicateToEnd: () -> Void = {}
     var onInsertBefore: () -> Void = {}
     var onInsertAfter: () -> Void = {}
     var onDelete: () -> Void
@@ -196,8 +197,13 @@ struct TemplateControlBar: View {
                 Button("Add Screenshot After", systemImage: "plus.rectangle.on.rectangle") {
                     onInsertAfter()
                 }
-                Button("Duplicate Screenshot", systemImage: "plus.square.on.square") {
-                    onDuplicate()
+                Menu("Duplicate Screenshot", systemImage: "plus.square.on.square") {
+                    Button("Place After This One", systemImage: "plus.square.on.square") {
+                        onDuplicate()
+                    }
+                    Button("Place at End", systemImage: "arrow.right.to.line") {
+                        onDuplicateToEnd()
+                    }
                 }
                 if canDelete {
                     Divider()

@@ -47,6 +47,8 @@ struct CanvasShapeView: View {
     var onMatchDeviceSizes: (() -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
+    var onCopyTextStyle: (() -> Void)?
+    var onPasteTextStyle: (() -> Void)?
     var availableFontFamilies: Set<String> = []
     /// When multi-selected with same-type shapes, applies update to all selected shapes
     var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
@@ -345,6 +347,8 @@ struct CanvasShapeView: View {
             onMatchDeviceSizes: onMatchDeviceSizes,
             onTranslate: onTranslate,
             translateLocaleName: translateLocaleName,
+            onCopyTextStyle: onCopyTextStyle,
+            onPasteTextStyle: onPasteTextStyle,
             applyUpdate: applyUpdate,
             deleteAction: {
                 if let onDeleteSelected {
@@ -816,6 +820,8 @@ private struct CanvasShapeContextMenuContent: View {
     var onMatchDeviceSizes: (() -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
+    var onCopyTextStyle: (() -> Void)?
+    var onPasteTextStyle: (() -> Void)?
     let applyUpdate: (@escaping (inout CanvasShapeModel) -> Void) -> Void
     let deleteAction: () -> Void
 
@@ -888,6 +894,16 @@ private struct CanvasShapeContextMenuContent: View {
                         }
                     }
                 }
+            }
+            if let onCopyTextStyle {
+                Divider()
+                Button("Copy Text Style", systemImage: "paintbrush") {
+                    onCopyTextStyle()
+                }
+                Button("Paste Text Style", systemImage: "paintbrush.fill") {
+                    onPasteTextStyle?()
+                }
+                .disabled(onPasteTextStyle == nil)
             }
             if let onTranslate, let translateLocaleName {
                 Divider()

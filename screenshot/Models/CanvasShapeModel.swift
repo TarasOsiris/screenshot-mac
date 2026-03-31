@@ -198,6 +198,21 @@ enum TextVerticalAlign: String, Codable {
     case bottom
 }
 
+struct TextStyle {
+    var fontName: String?
+    var fontSize: CGFloat?
+    var fontWeight: Int?
+    var textAlign: TextAlign?
+    var textVerticalAlign: TextVerticalAlign?
+    var italic: Bool?
+    var uppercase: Bool?
+    var letterSpacing: CGFloat?
+    var lineSpacing: CGFloat?
+    var lineHeightMultiple: CGFloat?
+    var colorData: CodableColor
+    var opacity: Double
+}
+
 extension Optional where Wrapped == TextAlign {
     var textAlignment: TextAlignment {
         switch self {
@@ -706,5 +721,37 @@ struct CanvasShapeModel: Identifiable, Codable {
         case .device: return defaultDeviceFromRow(row, centerX: centerX, centerY: centerY)
         case .svg: return nil
         }
+    }
+
+    func extractTextStyle() -> TextStyle {
+        TextStyle(
+            fontName: fontName,
+            fontSize: fontSize,
+            fontWeight: fontWeight,
+            textAlign: textAlign,
+            textVerticalAlign: textVerticalAlign,
+            italic: italic,
+            uppercase: uppercase,
+            letterSpacing: letterSpacing,
+            lineSpacing: lineSpacing,
+            lineHeightMultiple: lineHeightMultiple,
+            colorData: colorData,
+            opacity: opacity
+        )
+    }
+
+    mutating func applyTextStyle(_ style: TextStyle) {
+        fontName = style.fontName
+        fontSize = style.fontSize
+        fontWeight = style.fontWeight
+        textAlign = style.textAlign
+        textVerticalAlign = style.textVerticalAlign
+        italic = style.italic
+        uppercase = style.uppercase
+        letterSpacing = style.letterSpacing
+        lineSpacing = style.lineSpacing
+        lineHeightMultiple = style.lineHeightMultiple
+        colorData = style.colorData
+        opacity = style.opacity
     }
 }
