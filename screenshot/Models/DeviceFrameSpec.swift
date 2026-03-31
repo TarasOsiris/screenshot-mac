@@ -50,6 +50,11 @@ struct DeviceFrameModelSpec: Equatable {
     let baseYawDegrees: Double
     let defaultPitch: Double
     let defaultYaw: Double
+    /// Extra UV padding so the screenshot doesn't extend behind the bezel.
+    /// A value of 0.03 means ~3 % of the screen texture is reserved for the
+    /// hidden area on each side.  With `.clamp` wrapping the edge pixels
+    /// stretch into the padding zone, keeping actual content fully visible.
+    let screenUVPadding: CGFloat
 }
 
 // MARK: - Real Device Frame
@@ -177,7 +182,8 @@ struct DeviceFrameCatalog {
         cameraDistance: 5.4,
         baseYawDegrees: 0,
         defaultPitch: 0,
-        defaultYaw: 0
+        defaultYaw: 0,
+        screenUVPadding: 0.03
     )
 
     /// All available real device frames, grouped by model.
