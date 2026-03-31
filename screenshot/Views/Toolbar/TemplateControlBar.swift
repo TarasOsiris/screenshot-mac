@@ -120,8 +120,23 @@ struct TemplateControlBar: View {
                 .focusable(false)
                 .foregroundStyle(backgroundButtonStyle)
                 .help(backgroundButtonHelp)
-                .popover(isPresented: $showBackgroundPopover, arrowEdge: .bottom) {
+                .sheet(isPresented: $showBackgroundPopover) {
                     VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Background Override")
+                                .font(.headline)
+                            Spacer()
+                            Button {
+                                showBackgroundPopover = false
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+
+                        Divider()
+
                         Toggle(
                             "Override background",
                             isOn: $template.overrideBackground.onSet { onSave() }
@@ -164,8 +179,8 @@ struct TemplateControlBar: View {
                             }
                         }
                     }
-                    .padding(12)
-                    .frame(width: 260)
+                    .padding(20)
+                    .frame(width: 320)
                 }
             }
 
