@@ -839,8 +839,10 @@ struct DeviceFrameView: View {
         tintColor: NSColor? = nil
     ) {
         enumerateNodes(in: contentNode) { node in
-            guard let geometry = node.geometry else { return }
-            geometry.materials = geometry.materials.map { material in
+            guard let originalGeometry = node.geometry,
+                  let clonedGeometry = originalGeometry.copy() as? SCNGeometry else { return }
+
+            clonedGeometry.materials = originalGeometry.materials.map { material in
                 guard shouldFlattenBodyMaterial(material, screenMaterialName: modelSpec.screenMaterialName) else {
                     return material.copy() as? SCNMaterial ?? SCNMaterial()
                 }
@@ -860,6 +862,7 @@ struct DeviceFrameView: View {
                 flattened.locksAmbientWithDiffuse = true
                 return flattened
             }
+            node.geometry = clonedGeometry
         }
     }
 
@@ -1157,6 +1160,8 @@ private struct LiveDeviceModelView: NSViewRepresentable {
         let scnView = RetinaSCNView(frame: NSRect(x: 0, y: 0, width: max(1, width), height: max(1, height)))
         scnView.backgroundColor = .clear
         scnView.wantsLayer = true
+        let initialScale = NSScreen.main?.backingScaleFactor ?? 2.0
+        scnView.layer?.contentsScale = max(2.0, initialScale)
         scnView.layer?.isOpaque = false
         scnView.layerContentsRedrawPolicy = .duringViewResize
         scnView.antialiasingMode = .multisampling4X
@@ -1170,7 +1175,10 @@ private struct LiveDeviceModelView: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: SCNView, context: Context) {
+        let currentScale = nsView.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2.0
+        nsView.layer?.contentsScale = max(2.0, currentScale)
         update(nsView)
+        nsView.needsDisplay = true
     }
 
     private func update(_ scnView: SCNView) {
@@ -1191,6 +1199,8 @@ private struct LiveDeviceModelView: NSViewRepresentable {
 }
 
 private final class RetinaSCNView: SCNView {
+    private var lastScale: CGFloat = 0
+
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         updateBackingScale()
@@ -1207,7 +1217,12 @@ private final class RetinaSCNView: SCNView {
     }
 
     private func updateBackingScale() {
-        let scale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
-        layer?.contentsScale = scale
+        let screenScale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2.0
+        let scale = max(2.0, screenScale)
+        if layer?.contentsScale != scale || lastScale != scale {
+            layer?.contentsScale = scale
+            lastScale = scale
+            needsDisplay = true
+        }
     }
 }

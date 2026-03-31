@@ -37,6 +37,10 @@ struct SettingsView: View {
             Tab("Purchase", systemImage: "star") {
                 purchaseSettings
             }
+
+            Tab("Attributions", systemImage: "heart") {
+                attributionsSettings
+            }
         }
         .frame(width: 520, height: 560)
     }
@@ -336,6 +340,29 @@ struct SettingsView: View {
             }
             .buttonStyle(.bordered)
         }
+    }
+
+    private var attributionsSettings: some View {
+        Form {
+            Section("3D Models") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("iPhone 17 Pro")
+                        .fontWeight(.medium)
+                    Text("by Ibrahim.Bhl")
+                        .foregroundStyle(.secondary)
+                    HStack(spacing: 4) {
+                        Text("License: CC Attribution")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Link("View on Sketchfab",
+                         destination: URL(string: "https://sketchfab.com/3d-models/iphone-17-pro-4aeeeb41f9d14f96bb3f2589edc3edac")!)
+                        .font(.caption)
+                }
+                .padding(.vertical, 2)
+            }
+        }
+        .formStyle(.grouped)
     }
 
     private func proFeatureRow(_ text: String) -> some View {
