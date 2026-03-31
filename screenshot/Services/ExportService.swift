@@ -133,6 +133,92 @@ struct ExportService {
         }
     }
 
+    // MARK: - Showcase rendering (gallery layout with spacing & rounded corners)
+
+    @MainActor
+    static func renderShowcaseRowImage(
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:],
+        localeCode: String? = nil,
+        localeState: LocaleState = .default,
+        availableFontFamilies: Set<String>? = nil,
+        backgroundColor: NSColor = NSColor(white: 0.88, alpha: 1.0),
+        spacing: CGFloat? = nil,
+        padding: CGFloat? = nil,
+        cornerRadius: CGFloat? = nil
+    ) -> NSImage {
+        let count = row.templates.count
+        guard count > 0 else {
+            return NSImage(size: NSSize(width: 1, height: 1))
+        }
+
+        let templateWidth = row.templateWidth
+        let templateHeight = row.templateHeight
+        let resolvedSpacing = spacing ?? round(templateWidth * 0.03)
+        let resolvedRadius = cornerRadius ?? round(templateHeight * 0.025)
+        let shadowRadius: CGFloat = round(templateHeight * 0.02)
+        let shadowY: CGFloat = round(templateHeight * 0.008)
+        let shadowExtent = shadowRadius + shadowY
+
+        // Stack in two rows when even and >= 8
+        let rowCount = (count >= 8 && count % 2 == 0) ? 2 : 1
+        let columnsPerRow = rowCount == 2 ? count / 2 : count
+
+        // Enforce 1.91:1 aspect ratio (Twitter/X, Facebook, LinkedIn)
+        let targetAspect: CGFloat = 1.91
+        let contentWidth = CGFloat(columnsPerRow) * templateWidth + CGFloat(columnsPerRow - 1) * resolvedSpacing
+        let contentHeight = CGFloat(rowCount) * templateHeight + CGFloat(rowCount - 1) * resolvedSpacing
+        let minPadH = padding ?? round(templateWidth * 0.08)
+        let minPadV = padding ?? round(templateHeight * 0.04)
+        let minWidth = contentWidth + minPadH * 2
+        let minHeight = contentHeight + minPadV + max(minPadV, shadowExtent)
+
+        let totalWidth: CGFloat
+        let totalHeight: CGFloat
+        if minWidth / minHeight > targetAspect {
+            totalWidth = minWidth
+            totalHeight = round(totalWidth / targetAspect)
+        } else {
+            totalHeight = minHeight
+            totalWidth = round(totalHeight * targetAspect)
+        }
+        let horizontalPadding = round((totalWidth - contentWidth) / 2)
+        let verticalPadding = round((totalHeight - contentHeight) / 2)
+
+        var templateImages: [NSImage] = []
+        for index in 0..<count {
+            templateImages.append(renderSingleTemplateImage(
+                index: index,
+                row: row,
+                screenshotImages: screenshotImages,
+                localeCode: localeCode,
+                localeState: localeState,
+                availableFontFamilies: availableFontFamilies
+            ))
+        }
+
+        let showcaseView = ShowcaseRowView(
+            templateImages: templateImages,
+            templateWidth: templateWidth,
+            templateHeight: templateHeight,
+            columns: columnsPerRow,
+            spacing: resolvedSpacing,
+            horizontalPadding: horizontalPadding,
+            verticalPadding: verticalPadding,
+            cornerRadius: resolvedRadius,
+            shadowRadius: shadowRadius,
+            shadowY: shadowY,
+            backgroundColor: Color(nsColor: backgroundColor)
+        )
+
+        return renderViewToImage(
+            showcaseView,
+            width: totalWidth,
+            height: totalHeight,
+            label: "showcase row '\(row.label)'"
+        )
+    }
+
     // MARK: - Row-level rendering (single demo image)
 
     @MainActor
@@ -323,16 +409,24 @@ struct ExportService {
         at origin: CGPoint,
         canvasSize: NSSize
     ) -> NSImage {
-        let output = NSImage(size: canvasSize)
-        output.lockFocus()
-        background.draw(in: NSRect(origin: .zero, size: canvasSize))
+        guard let bitmapRep = bitmapRep(width: canvasSize.width, height: canvasSize.height) else {
+            return background
+        }
+        let rect = NSRect(origin: .zero, size: canvasSize)
+        let previousContext = NSGraphicsContext.current
+        defer { NSGraphicsContext.current = previousContext }
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
+        background.draw(in: rect)
         image.draw(
             in: NSRect(origin: origin, size: image.size),
             from: NSRect(origin: .zero, size: image.size),
             operation: .sourceOver,
             fraction: 1
         )
-        output.unlockFocus()
+        NSGraphicsContext.current?.flushGraphics()
+
+        let output = NSImage(size: canvasSize)
+        output.addRepresentation(bitmapRep)
         return output
     }
 
@@ -562,45 +656,57 @@ struct ExportService {
         )
         hostingView.frame = rect
         hostingView.wantsLayer = true
-        hostingView.layer?.contentsScale = 1.0
         hostingView.layoutSubtreeIfNeeded()
         hostingView.displayIfNeeded()
 
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        guard let ctx = CGContext(
-            data: nil, width: pixelW, height: pixelH,
-            bitsPerComponent: 8, bytesPerRow: pixelW * 4,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            print("[ExportService] Warning: Failed to create CGContext for \(label)")
+        guard let bitmapRep = bitmapRep(width: width, height: height) else {
+            print("[ExportService] Warning: Failed to create bitmap rep for \(label)")
             return NSImage(size: NSSize(width: width, height: height))
         }
 
-        // Flip coordinate system — CGContext is bottom-up, AppKit layers are top-down
-        ctx.translateBy(x: 0, y: CGFloat(pixelH))
-        ctx.scaleBy(x: 1, y: -1)
+        hostingView.cacheDisplay(in: rect, to: bitmapRep)
 
-        hostingView.layer!.render(in: ctx)
-
-        guard let cgImage = ctx.makeImage() else {
-            print("[ExportService] Warning: Failed to create image for \(label)")
-            return NSImage(size: NSSize(width: width, height: height))
-        }
-
-        return NSImage(cgImage: cgImage, size: NSSize(width: width, height: height))
+        let image = NSImage(size: NSSize(width: width, height: height))
+        image.addRepresentation(bitmapRep)
+        return image
     }
 
     /// Composites the blurred image over the original rendered background to remove edge alpha fringes.
     @MainActor
     static func flattenImage(_ image: NSImage, over background: NSImage, width: CGFloat, height: CGFloat) -> NSImage {
-        let flattened = NSImage(size: NSSize(width: width, height: height))
-        flattened.lockFocus()
+        guard let bitmapRep = bitmapRep(width: width, height: height) else {
+            return background
+        }
         let rect = NSRect(x: 0, y: 0, width: width, height: height)
+        let previousContext = NSGraphicsContext.current
+        defer { NSGraphicsContext.current = previousContext }
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
         background.draw(in: rect)
         image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
-        flattened.unlockFocus()
+        NSGraphicsContext.current?.flushGraphics()
+
+        let flattened = NSImage(size: NSSize(width: width, height: height))
+        flattened.addRepresentation(bitmapRep)
         return flattened
+    }
+
+    private static func bitmapRep(width: CGFloat, height: CGFloat) -> NSBitmapImageRep? {
+        let pixelW = max(Int(ceil(width)), 1)
+        let pixelH = max(Int(ceil(height)), 1)
+        let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: pixelW,
+            pixelsHigh: pixelH,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        )
+        rep?.size = NSSize(width: width, height: height)
+        return rep
     }
 
     private static func normalizeDeviceAspectIfNeeded(_ shape: CanvasShapeModel) -> CanvasShapeModel {
@@ -671,6 +777,52 @@ struct ExportService {
 
         guard let opaqueRef = ctx.makeImage() else { return nil }
         return NSBitmapImageRep(cgImage: opaqueRef)
+    }
+}
+
+// MARK: - Showcase SwiftUI View
+
+private struct ShowcaseRowView: View {
+    let templateImages: [NSImage]
+    let templateWidth: CGFloat
+    let templateHeight: CGFloat
+    let columns: Int
+    let spacing: CGFloat
+    let horizontalPadding: CGFloat
+    let verticalPadding: CGFloat
+    let cornerRadius: CGFloat
+    let shadowRadius: CGFloat
+    let shadowY: CGFloat
+    let backgroundColor: Color
+
+    var body: some View {
+        VStack(spacing: spacing) {
+            ForEach(0..<rows, id: \.self) { rowIndex in
+                HStack(spacing: spacing) {
+                    ForEach(0..<columns, id: \.self) { colIndex in
+                        let index = rowIndex * columns + colIndex
+                        if index < templateImages.count {
+                            templateImageView(templateImages[index])
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, verticalPadding)
+        .background(backgroundColor)
+    }
+
+    private var rows: Int {
+        (templateImages.count + columns - 1) / columns
+    }
+
+    private func templateImageView(_ img: NSImage) -> some View {
+        Image(nsImage: img)
+            .resizable()
+            .frame(width: templateWidth, height: templateHeight)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .shadow(color: .black.opacity(0.25), radius: shadowRadius, x: 0, y: shadowY)
     }
 }
 

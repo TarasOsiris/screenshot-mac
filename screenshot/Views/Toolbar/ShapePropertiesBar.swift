@@ -784,7 +784,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                                 .frame(width: 14, height: 20)
                                 .contentShape(Rectangle())
                         }
-                        .menuStyle(.borderlessButton)
+                        .menuStyle(.button)
                         .menuIndicator(.hidden)
                         .fixedSize()
                     }
@@ -902,7 +902,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                             .frame(width: 14, height: 20)
                             .contentShape(Rectangle())
                     }
-                    .menuStyle(.borderlessButton)
+                    .menuStyle(.button)
                     .menuIndicator(.hidden)
                     .fixedSize()
 
@@ -1072,13 +1072,9 @@ private struct ShapePropertiesMultiSelectionBar: View {
                     HStack(spacing: 4) {
                         Image(systemName: "iphone")
                         Text("Change Device")
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.system(size: 8, weight: .semibold))
-                            .foregroundStyle(.secondary)
                     }
                 }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
+                .menuStyle(.button)
                 .fixedSize()
             }
         }

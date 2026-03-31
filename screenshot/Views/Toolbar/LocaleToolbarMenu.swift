@@ -98,8 +98,7 @@ struct LocaleToolbarMenu: View {
                 }
             }
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
+        .menuStyle(.button)
         .help(localeHelpText)
         .sheet(isPresented: $isManagingLocales) {
             ManageLocalesSheet(state: state)

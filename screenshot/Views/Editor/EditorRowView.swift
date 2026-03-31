@@ -701,6 +701,8 @@ struct EditorRowView: View {
         Divider()
         rowMenuOrganizationSection
         Divider()
+        rowMenuExportSection
+        Divider()
         rowMenuAppearanceSection
         Divider()
         rowMenuDestructiveSection
@@ -768,6 +770,77 @@ struct EditorRowView: View {
             withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
         }
         .disabled(!canMoveDown)
+    }
+
+    @ViewBuilder
+    private var rowMenuExportSection: some View {
+        Menu("Export Row") {
+            Button("Screenshots") {
+                exportRowScreenshots()
+            }
+            Button("Continuous") {
+                exportRowImage(showcase: false)
+            }
+            Button("Showcase") {
+                exportRowImage(showcase: true)
+            }
+        }
+    }
+
+    private func exportRowScreenshots() {
+        guard let folder = ExportFolderService.chooseFolder() else { return }
+        let didAccess = folder.startAccessingSecurityScopedResource()
+
+        Task { @MainActor in
+            defer { if didAccess { folder.stopAccessingSecurityScopedResource() } }
+
+            let localeCode = state.localeState.activeLocaleCode
+            let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
+
+            try? await withThrowingTaskGroup(of: Void.self) { group in
+                for index in row.templates.indices {
+                    let image = ExportService.renderSingleTemplateImage(
+                        index: index, row: row, screenshotImages: images,
+                        localeCode: localeCode, localeState: state.localeState
+                    )
+                    let padded = String(format: "%02d", index + 1)
+                    let fileURL = folder.appendingPathComponent("\(padded)_screenshot.png")
+                    group.addTask {
+                        guard let data = ExportService.encodeImage(image, format: .png) else { return }
+                        try data.write(to: fileURL)
+                    }
+                }
+            }
+            NSWorkspace.shared.activateFileViewerSelecting([folder])
+        }
+    }
+
+    private func exportRowImage(showcase: Bool) {
+        let panel = NSSavePanel()
+        let safeName = row.label.isEmpty ? "row" : row.label.replacingOccurrences(of: "/", with: "-")
+        panel.nameFieldStringValue = "\(safeName).png"
+        panel.allowedContentTypes = [.png]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+
+        let localeCode = state.localeState.activeLocaleCode
+        let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
+
+        let image: NSImage
+        if showcase {
+            image = ExportService.renderShowcaseRowImage(
+                row: row, screenshotImages: images,
+                localeCode: localeCode, localeState: state.localeState
+            )
+        } else {
+            image = ExportService.renderRowImage(
+                row: row, screenshotImages: images,
+                localeCode: localeCode, localeState: state.localeState
+            )
+        }
+        guard let data = ExportService.encodeImage(image, format: .png) else { return }
+        try? data.write(to: url)
     }
 
     @ViewBuilder

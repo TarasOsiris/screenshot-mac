@@ -74,17 +74,12 @@ struct FontPicker: View {
                     fontButton(family, value: family)
                 }
             } label: {
-                HStack(spacing: 6) {
-                    Text(displayName)
-                        .lineLimit(1)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                }
-                .frame(width: 130, alignment: .leading)
+                Text(displayName)
+                    .lineLimit(1)
+                    .frame(width: 130, alignment: .leading)
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
+            .menuStyle(.button)
+            .fixedSize()
         }
     }
 }
