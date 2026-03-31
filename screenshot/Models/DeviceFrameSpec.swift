@@ -184,8 +184,8 @@ struct DeviceFrameCatalog {
         targetBodyHeight: 2.05,
         cameraDistance: 5.4,
         baseYawDegrees: 0,
-        defaultPitch: 0,
-        defaultYaw: 0,
+        defaultPitch: -22,
+        defaultYaw: -14,
         screenUVPadding: 0.03,
         screenUVOffsetY: -0.02
     )

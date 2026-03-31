@@ -241,9 +241,9 @@ extension CanvasShapeModel {
 
 struct CanvasShapeModel: Identifiable, Codable {
     static let deviceMinSize: CGFloat = 200
-    static let defaultDeviceBodyColor = Color(red: 0.11, green: 0.11, blue: 0.12)
-    static let defaultDeviceModelPitch: Double = 0
-    static let defaultDeviceModelYaw: Double = 0
+    static let defaultDeviceBodyColor = Color(white: 0x91 / 255.0)
+    static let defaultDeviceModelPitch: Double = -22
+    static let defaultDeviceModelYaw: Double = -14
     static let defaultFontSize: CGFloat = 72
     static let fontSizePresets: [Int] = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96, 128, 144, 192, 256]
     static let defaultStarPointCount = 5
@@ -561,7 +561,9 @@ struct CanvasShapeModel: Identifiable, Codable {
     }
 
     func resolvedDeviceBodyColor(default defaultColor: Color) -> Color {
-        deviceBodyColorData?.color ?? defaultColor
+        if let override = deviceBodyColorData?.color { return override }
+        if supportsDeviceModelRotation { return Self.defaultDeviceBodyColor }
+        return defaultColor
     }
 
     var supportsDeviceModelRotation: Bool {
