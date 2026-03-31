@@ -69,7 +69,8 @@ struct DeviceFrameView: View {
                 height: height,
                 screenshotImage: screenshotImage,
                 pitch: devicePitch,
-                yaw: deviceYaw
+                yaw: deviceYaw,
+                bodyTintColor: NSColor(bodyColor)
             )
             .frame(width: width, height: height)
         case .snapshot:
@@ -79,7 +80,8 @@ struct DeviceFrameView: View {
                 height: height,
                 screenshotImage: screenshotImage,
                 pitch: devicePitch,
-                yaw: deviceYaw
+                yaw: deviceYaw,
+                bodyTintColor: NSColor(bodyColor)
             ) {
                 Image(nsImage: image)
                     .resizable()
@@ -607,7 +609,8 @@ struct DeviceFrameView: View {
         height: CGFloat,
         screenshotImage: NSImage?,
         pitch: Double,
-        yaw: Double
+        yaw: Double,
+        bodyTintColor: NSColor? = nil
     ) -> NSImage? {
         let safeWidth = max(1, (width * modelSnapshotScale).rounded(.up))
         let safeHeight = max(1, (height * modelSnapshotScale).rounded(.up))
@@ -617,7 +620,8 @@ struct DeviceFrameView: View {
             viewportSize: viewportSize,
             screenshotImage: screenshotImage,
             pitch: pitch,
-            yaw: yaw
+            yaw: yaw,
+            bodyTintColor: bodyTintColor
         ) else {
             return nil
         }
@@ -643,7 +647,8 @@ struct DeviceFrameView: View {
         viewportSize: CGSize,
         screenshotImage: NSImage?,
         pitch: Double,
-        yaw: Double
+        yaw: Double,
+        bodyTintColor: NSColor? = nil
     ) -> (SCNScene, SCNNode)? {
         guard let modelSpec = frame.modelSpec,
               let scene = clonedBaseScene(for: modelSpec) else {
@@ -659,7 +664,7 @@ struct DeviceFrameView: View {
         sceneRoot.addChildNode(contentNode)
 
         removeDisabledModelNodes(in: contentNode, modelSpec: modelSpec)
-        flattenBodyMaterials(in: contentNode, modelSpec: modelSpec)
+        flattenBodyMaterials(in: contentNode, modelSpec: modelSpec, tintColor: bodyTintColor)
         applyScreenTexture(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
 
         let bounds = contentNode.boundingBox
@@ -830,7 +835,8 @@ struct DeviceFrameView: View {
 
     private static func flattenBodyMaterials(
         in contentNode: SCNNode,
-        modelSpec: DeviceFrameModelSpec
+        modelSpec: DeviceFrameModelSpec,
+        tintColor: NSColor? = nil
     ) {
         enumerateNodes(in: contentNode) { node in
             guard let geometry = node.geometry else { return }
@@ -842,6 +848,9 @@ struct DeviceFrameView: View {
                 let flattened = material.copy() as? SCNMaterial ?? SCNMaterial()
                 flattened.name = material.name
                 flattened.lightingModel = .lambert
+                if let tintColor {
+                    flattened.multiply.contents = tintColor
+                }
                 flattened.specular.contents = NSColor.black
                 flattened.reflective.contents = NSColor.black
                 flattened.metalness.contents = 0.0
@@ -894,35 +903,24 @@ struct DeviceFrameView: View {
             return
         }
 
+        // Remap UVs from atlas sub-region to full 0...1 range so the screenshot fills the screen.
+        let remappedGeometry = remapUVsToFullRange(geometry)
+
         let screenContents = preparedScreenContents(from: screenshotImage)
-        let textureTransform = screenTextureContentsTransform
-        let materials = geometry.materials.map { material -> SCNMaterial in
+        let materials = remappedGeometry.materials.map { material -> SCNMaterial in
             guard material.name == modelSpec.screenMaterialName else {
                 return material.copy() as? SCNMaterial ?? SCNMaterial()
             }
 
             let replacement = material.copy() as? SCNMaterial ?? SCNMaterial()
             replacement.name = material.name
-            // Preserve the USDZ-authored sampler settings. The screen mesh uses UVs
-            // outside 0...1, so forcing clamp collapses the texture into an edge color.
-            configureScreenTextureProperty(
-                replacement.diffuse,
-                source: material.diffuse,
-                contents: screenContents,
-                transform: textureTransform
-            )
-            configureScreenTextureProperty(
-                replacement.ambient,
-                source: material.ambient,
-                contents: screenContents,
-                transform: textureTransform
-            )
-            configureScreenTextureProperty(
-                replacement.emission,
-                source: material.emission,
-                contents: screenContents,
-                transform: textureTransform
-            )
+            let rot90 = screenTexture90CWTransform
+            for prop in [replacement.diffuse, replacement.ambient, replacement.emission] {
+                prop.contents = screenContents
+                prop.contentsTransform = rot90
+                prop.wrapS = .clamp
+                prop.wrapT = .clamp
+            }
             replacement.multiply.contents = NSColor.white
             replacement.transparent.contents = NSColor.white
             replacement.reflective.contents = NSColor.black
@@ -936,29 +934,65 @@ struct DeviceFrameView: View {
             replacement.readsFromDepthBuffer = true
             return replacement
         }
-        geometry.materials = materials
-        screenNode.geometry = geometry
+        remappedGeometry.materials = materials
+        screenNode.geometry = remappedGeometry
     }
 
-    private static func configureScreenTextureProperty(
-        _ target: SCNMaterialProperty,
-        source: SCNMaterialProperty,
-        contents: Any,
-        transform: SCNMatrix4
-    ) {
-        target.contents = contents
-        target.contentsTransform = SCNMatrix4Mult(source.contentsTransform, transform)
-        target.wrapS = source.wrapS
-        target.wrapT = source.wrapT
-        target.magnificationFilter = source.magnificationFilter
-        target.minificationFilter = source.minificationFilter
-        target.mipFilter = source.mipFilter
-        target.maxAnisotropy = source.maxAnisotropy
+    /// Remaps UV coordinates of a geometry so they span the full 0...1 range.
+    private static func remapUVsToFullRange(_ geometry: SCNGeometry) -> SCNGeometry {
+        guard let uvSource = geometry.sources.first(where: { $0.semantic == .texcoord }) else {
+            return geometry
+        }
+
+        let vectorCount = uvSource.vectorCount
+        let data = uvSource.data
+        let stride = uvSource.dataStride
+        let offset = uvSource.dataOffset
+
+        // Single pass: read UVs, track bounds, then remap
+        var rawUVs = [CGPoint]()
+        rawUVs.reserveCapacity(vectorCount)
+        var minU: Float = .greatestFiniteMagnitude, maxU: Float = -.greatestFiniteMagnitude
+        var minV: Float = .greatestFiniteMagnitude, maxV: Float = -.greatestFiniteMagnitude
+        data.withUnsafeBytes { rawBuffer in
+            let bytes = rawBuffer.baseAddress!
+            for i in 0..<vectorCount {
+                let base = bytes + stride * i + offset
+                let u = base.load(as: Float.self)
+                let v = (base + 4).load(as: Float.self)
+                minU = min(minU, u); maxU = max(maxU, u)
+                minV = min(minV, v); maxV = max(maxV, v)
+                rawUVs.append(CGPoint(x: CGFloat(u), y: CGFloat(v)))
+            }
+        }
+
+        let rangeU = maxU - minU
+        let rangeV = maxV - minV
+        guard rangeU > 0.001, rangeV > 0.001 else { return geometry }
+
+        for i in 0..<rawUVs.count {
+            rawUVs[i] = CGPoint(
+                x: (rawUVs[i].x - CGFloat(minU)) / CGFloat(rangeU),
+                y: (rawUVs[i].y - CGFloat(minV)) / CGFloat(rangeV)
+            )
+        }
+
+        let newUVSource = SCNGeometrySource(textureCoordinates: rawUVs)
+
+        // Keep all non-texcoord sources
+        let otherSources = geometry.sources.filter { $0.semantic != .texcoord }
+        let newGeometry = SCNGeometry(sources: otherSources + [newUVSource], elements: geometry.elements)
+        newGeometry.materials = geometry.materials
+        return newGeometry
     }
 
-    private static let screenTextureContentsTransform: SCNMatrix4 = {
-        let scale = SCNMatrix4MakeScale(-1, -1, 1)
-        return SCNMatrix4Translate(scale, 1, 1, 0)
+    /// 90° CW rotation + horizontal flip around UV center.
+    private static let screenTexture90CWTransform: SCNMatrix4 = {
+        let toOrigin = SCNMatrix4MakeTranslation(-0.5, -0.5, 0)
+        let rotate = SCNMatrix4MakeRotation(-.pi / 2, 0, 0, 1)
+        let flipH = SCNMatrix4MakeScale(-1, 1, 1)
+        let toCenter = SCNMatrix4MakeTranslation(0.5, 0.5, 0)
+        return SCNMatrix4Mult(SCNMatrix4Mult(SCNMatrix4Mult(toOrigin, rotate), flipH), toCenter)
     }()
 
     private static func preparedScreenContents(from image: NSImage?) -> Any {
@@ -1117,9 +1151,10 @@ private struct LiveDeviceModelView: NSViewRepresentable {
     let screenshotImage: NSImage?
     let pitch: Double
     let yaw: Double
+    let bodyTintColor: NSColor?
 
     func makeNSView(context: Context) -> SCNView {
-        let scnView = RetinaSCNView()
+        let scnView = RetinaSCNView(frame: NSRect(x: 0, y: 0, width: max(1, width), height: max(1, height)))
         scnView.backgroundColor = .clear
         scnView.wantsLayer = true
         scnView.layer?.isOpaque = false
@@ -1128,7 +1163,7 @@ private struct LiveDeviceModelView: NSViewRepresentable {
         scnView.autoenablesDefaultLighting = false
         scnView.allowsCameraControl = false
         scnView.rendersContinuously = false
-        scnView.isJitteringEnabled = true
+        scnView.isJitteringEnabled = false
         scnView.preferredFramesPerSecond = 60
         update(scnView)
         return scnView
@@ -1144,7 +1179,8 @@ private struct LiveDeviceModelView: NSViewRepresentable {
             viewportSize: CGSize(width: max(1, width), height: max(1, height)),
             screenshotImage: screenshotImage,
             pitch: pitch,
-            yaw: yaw
+            yaw: yaw,
+            bodyTintColor: bodyTintColor
         ) else {
             return
         }

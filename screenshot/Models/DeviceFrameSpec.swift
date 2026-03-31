@@ -167,19 +167,15 @@ struct DeviceFrameCatalog {
         screenCornerRadius: 18
     )
     private static let iphone16USDZModel = DeviceFrameModelSpec(
-        resourceName: "iPhone_17_Pro_Max",
+        resourceName: "Iphone_17_pro",
         resourceExtension: "usdz",
         resourceSubdirectory: "DeviceModels",
-        screenMaterialName: "screen_001",
-        disabledNodeNames: [
-            "Cube_010_Material_006_0",
-            "Cube_010_gray_001_0",
-            "Cube_010_metaL_001_0",
-        ],
+        screenMaterialName: "Screen_BG",
+        disabledNodeNames: [],
         screenRenderingMode: .replaceMaterial,
         targetBodyHeight: 2.05,
         cameraDistance: 5.4,
-        baseYawDegrees: 90,
+        baseYawDegrees: 0,
         defaultPitch: 0,
         defaultYaw: 0
     )

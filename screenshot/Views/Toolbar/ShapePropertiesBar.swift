@@ -504,7 +504,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
             frameId: shape.deviceFrameId,
             allowsNoDevice: false,
             presentation: .toolbar,
-            bodyColor: shape.resolvedDeviceFrame == nil ? deviceBodyColorBinding(shapeId) : nil,
+            bodyColor: shape.resolvedDeviceFrame?.isModelBacked != false ? deviceBodyColorBinding(shapeId) : nil,
             bodyColorLabel: "Device color",
             canResetBodyColor: hasDeviceBodyColorOverride(shapeId),
             onResetBodyColor: { resetDeviceBodyColor(shapeId) },

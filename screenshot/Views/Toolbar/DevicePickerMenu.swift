@@ -128,6 +128,10 @@ struct DevicePickerMenu: View {
                 )
             }
 
+            if frame.isModelBacked, let bodyColor {
+                bodyColorControls(bodyColor)
+            }
+
             if canToggleOrientation {
                 OrientationPicker(isLandscape: orientationBinding(for: frame), labelsHidden: true)
                     .frame(width: 72)
