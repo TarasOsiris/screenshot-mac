@@ -519,76 +519,74 @@ private struct TranslationOverviewSheet: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView([.horizontal, .vertical]) {
-                    LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                        Section {
-                            ForEach(items, id: \.shape.id) { item in
-                                HStack(spacing: 0) {
-                                    baseColumn(
-                                        shapeId: item.shape.id,
-                                        text: item.shape.text ?? "",
-                                        rowLabel: item.rowLabel
-                                    )
-                                    .frame(width: baseColumnWidth, alignment: .topLeading)
-
-                                    ForEach(translationLocales) { locale in
-                                        TranslationMatrixCell(
-                                            locale: locale,
-                                            baseText: item.shape.text ?? "",
-                                            text: Binding(
-                                                get: {
-                                                    state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text ?? ""
-                                                },
-                                                set: { newValue in
-                                                    let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                                                    if trimmed.isEmpty {
-                                                        state.resetTranslationText(shapeId: item.shape.id, localeCode: locale.code)
-                                                    } else {
-                                                        state.updateTranslationText(
-                                                            shapeId: item.shape.id,
-                                                            localeCode: locale.code,
-                                                            text: newValue
-                                                        )
-                                                    }
-                                                }
-                                            ),
-                                            columnPadding: columnPadding,
-                                            isTranslating: isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code),
-                                            canReset: state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text != nil,
-                                            onTranslate: {
-                                                startCellTranslation(
-                                                    shapeId: item.shape.id,
-                                                    localeCode: locale.code,
-                                                    baseText: item.shape.text ?? ""
-                                                )
-                                            },
-                                            onReset: {
-                                                state.resetTranslationText(shapeId: item.shape.id, localeCode: locale.code)
-                                            }
-                                        )
-                                        .frame(width: translationColumnWidth, alignment: .topLeading)
-                                    }
-                                }
-                                .fixedSize(horizontal: true, vertical: false)
-                                .background(Color(NSColor.textBackgroundColor))
-                                Divider()
-                            }
-                        } header: {
-                            HStack(spacing: 0) {
+                    VStack(spacing: 0) {
+                        HStack(spacing: 0) {
+                            headerColumn(
+                                title: "Base Language",
+                                subtitle: baseLocale?.flagLabel ?? state.localeState.baseLocaleCode.uppercased()
+                            )
+                            .frame(width: baseColumnWidth, alignment: .leading)
+                            ForEach(translationLocales) { locale in
                                 headerColumn(
-                                    title: "Base Language",
-                                    subtitle: baseLocale?.flagLabel ?? state.localeState.baseLocaleCode.uppercased()
+                                    title: locale.flagLabel,
+                                    subtitle: locale.code.uppercased()
                                 )
-                                .frame(width: baseColumnWidth, alignment: .leading)
+                                .frame(width: translationColumnWidth, alignment: .leading)
+                            }
+                        }
+                        .fixedSize(horizontal: true, vertical: false)
+                        .background(.regularMaterial)
+
+                        ForEach(items, id: \.shape.id) { item in
+                            HStack(spacing: 0) {
+                                baseColumn(
+                                    shapeId: item.shape.id,
+                                    text: item.shape.text ?? "",
+                                    rowLabel: item.rowLabel
+                                )
+                                .frame(width: baseColumnWidth, alignment: .topLeading)
+
                                 ForEach(translationLocales) { locale in
-                                    headerColumn(
-                                        title: locale.flagLabel,
-                                        subtitle: locale.code.uppercased()
+                                    TranslationMatrixCell(
+                                        locale: locale,
+                                        baseText: item.shape.text ?? "",
+                                        text: Binding(
+                                            get: {
+                                                state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text ?? ""
+                                            },
+                                            set: { newValue in
+                                                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                                                if trimmed.isEmpty {
+                                                    state.resetTranslationText(shapeId: item.shape.id, localeCode: locale.code)
+                                                } else {
+                                                    state.updateTranslationText(
+                                                        shapeId: item.shape.id,
+                                                        localeCode: locale.code,
+                                                        text: newValue
+                                                    )
+                                                }
+                                            }
+                                        ),
+                                        columnPadding: columnPadding,
+                                        isTranslating: isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code),
+                                        canReset: state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text != nil,
+                                        onTranslate: {
+                                            startCellTranslation(
+                                                shapeId: item.shape.id,
+                                                localeCode: locale.code,
+                                                baseText: item.shape.text ?? ""
+                                            )
+                                        },
+                                        onReset: {
+                                            state.resetTranslationText(shapeId: item.shape.id, localeCode: locale.code)
+                                        }
                                     )
-                                    .frame(width: translationColumnWidth, alignment: .leading)
+                                    .frame(width: translationColumnWidth, alignment: .topLeading)
                                 }
                             }
                             .fixedSize(horizontal: true, vertical: false)
-                            .background(.regularMaterial)
+                            .background(Color(NSColor.textBackgroundColor))
+                            Divider()
                         }
                     }
                 }
