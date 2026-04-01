@@ -10,6 +10,7 @@ struct LocaleToolbarMenu: View {
     @State private var isQuickTranslating = false
     @State private var showReplaceAllConfirmation = false
     @State private var showResetToBaseConfirmation = false
+    @State private var showLanguageDownloadAlert = false
 
     var body: some View {
         Menu {
@@ -132,13 +133,17 @@ struct LocaleToolbarMenu: View {
             isQuickTranslating = true
             defer { isQuickTranslating = false }
             let targetLocaleCode = state.localeState.activeLocaleCode
-            await translateShapes(
+            let success = await translateShapes(
                 session: session,
                 state: state,
                 targetLocaleCode: targetLocaleCode,
                 onlyUntranslated: quickTranslateOnlyUntranslated
             )
+            if !success {
+                showLanguageDownloadAlert = true
+            }
         }
+        .translationLanguageDownloadAlert(isPresented: $showLanguageDownloadAlert)
     }
 
     private var localeHelpText: String {
@@ -190,6 +195,7 @@ struct LocaleBanner: View {
     @State private var showReplaceAllConfirmation = false
     @State private var showResetToBaseConfirmation = false
     @State private var isTranslationOverviewPresented = false
+    @State private var showLanguageDownloadAlert = false
 
     var body: some View {
         let localeState = state.localeState
@@ -317,13 +323,17 @@ struct LocaleBanner: View {
                 isTranslating = true
                 defer { isTranslating = false }
                 let targetLocaleCode = state.localeState.activeLocaleCode
-                await translateShapes(
+                let success = await translateShapes(
                     session: session,
                     state: state,
                     targetLocaleCode: targetLocaleCode,
                     onlyUntranslated: translateOnlyUntranslated
                 )
+                if !success {
+                    showLanguageDownloadAlert = true
+                }
             }
+            .translationLanguageDownloadAlert(isPresented: $showLanguageDownloadAlert)
         }
     }
 

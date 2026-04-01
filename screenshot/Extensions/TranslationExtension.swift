@@ -1,3 +1,4 @@
+import SwiftUI
 import Translation
 
 extension Optional where Wrapped == TranslationSession.Configuration {
@@ -23,13 +24,15 @@ func isUntranslated(_ overrideText: String?) -> Bool {
 }
 
 /// Translate text shapes for a specific locale using a caller-provided translation function.
+/// Returns `true` if all shapes translated successfully, `false` if translation was interrupted by an error.
+@discardableResult
 func translateShapes(
     state: AppState,
     targetLocaleCode: String,
     onlyUntranslated: Bool = true,
     shapeFilter: ((UUID) -> Bool)? = nil,
     translate: @escaping (String) async throws -> String
-) async {
+) async -> Bool {
     let items = state.textShapesForTranslation(localeCode: targetLocaleCode)
     for item in items {
         if let filter = shapeFilter, !filter(item.shape.id) { continue }
@@ -44,18 +47,23 @@ func translateShapes(
             )
         } catch {
             print("Translation failed for shape \(item.shape.id): \(error)")
+            // Stop the entire loop on first failure — avoids re-showing
+            // the language download dialog for every remaining shape.
+            return false
         }
     }
+    return true
 }
 
-/// Translate text shapes using the given session.
+/// Thin wrapper that translates via the given session. Delegates to the primary overload.
+@discardableResult
 func translateShapes(
     session: TranslationSession,
     state: AppState,
     targetLocaleCode: String,
     onlyUntranslated: Bool = true,
     shapeFilter: ((UUID) -> Bool)? = nil
-) async {
+) async -> Bool {
     await translateShapes(
         state: state,
         targetLocaleCode: targetLocaleCode,
@@ -64,5 +72,22 @@ func translateShapes(
     ) { baseText in
         let response = try await session.translate(baseText)
         return response.targetText
+    }
+}
+
+// MARK: - Language Download Alert
+
+extension View {
+    func translationLanguageDownloadAlert(isPresented: Binding<Bool>) -> some View {
+        self.alert("Translation Languages Not Available", isPresented: isPresented) {
+            if let url = URL(string: "x-apple.systempreferences:com.apple.SystemPreferences.TranslationSettings") {
+                Button("Open System Settings") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("The required languages are not downloaded on your Mac.\n\nTo download them, go to:\nSystem Settings → General → Language & Region → Translation Languages\n\nThen download the languages you need and try again.")
+        }
     }
 }
