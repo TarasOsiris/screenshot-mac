@@ -14,6 +14,18 @@ struct LocaleDefinition: Codable, Identifiable, Equatable {
         self.label = label
     }
 
+    var flag: String { Self.flags[code] ?? "" }
+
+    var flagLabel: String { flag.isEmpty ? label : "\(flag) \(label)" }
+
+    private static let flags: [String: String] = [
+        "en": "🇺🇸", "fr": "🇫🇷", "de": "🇩🇪", "es": "🇪🇸", "it": "🇮🇹",
+        "pt": "🇧🇷", "nl": "🇳🇱", "ru": "🇷🇺", "ja": "🇯🇵", "ko": "🇰🇷",
+        "zh": "🇨🇳", "ar": "🇸🇦", "hi": "🇮🇳", "tr": "🇹🇷", "pl": "🇵🇱",
+        "sv": "🇸🇪", "da": "🇩🇰", "fi": "🇫🇮", "no": "🇳🇴", "uk": "🇺🇦",
+        "th": "🇹🇭", "vi": "🇻🇳", "id": "🇮🇩", "ms": "🇲🇾", "cs": "🇨🇿",
+        "el": "🇬🇷", "he": "🇮🇱", "hu": "🇭🇺", "ro": "🇷🇴", "sk": "🇸🇰",
+    ]
 }
 
 struct ShapeLocaleOverride: Codable, Equatable {
@@ -102,7 +114,7 @@ struct LocaleState: Codable, Equatable {
 
     var isBaseLocale: Bool { activeLocaleCode == locales.first?.code }
     var baseLocaleCode: String { locales.first?.code ?? "en" }
-    var activeLocaleLabel: String { locales.first { $0.code == activeLocaleCode }?.label ?? activeLocaleCode }
+    var activeLocaleLabel: String { locales.first { $0.code == activeLocaleCode }?.flagLabel ?? activeLocaleCode }
 
     /// Check if a shape has any override for the active locale.
     func hasOverride(shapeId: UUID) -> Bool {

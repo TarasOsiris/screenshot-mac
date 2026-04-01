@@ -19,7 +19,7 @@ struct LocaleToolbarMenu: View {
                 } label: {
                     HStack {
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(locale.label)
+                            Text(locale.flagLabel)
                             Text(locale.code.uppercased())
                                 .font(.system(size: 10, design: .monospaced))
                                 .foregroundStyle(.secondary)
@@ -358,7 +358,7 @@ private struct ManageLocalesSheet: View {
                         Text(locale.code)
                             .font(.system(size: 12, design: .monospaced))
                             .frame(width: 36, alignment: .leading)
-                        Text(locale.label)
+                        Text(locale.flagLabel)
                         Spacer()
                         if locale.code == state.localeState.baseLocaleCode {
                             Text("Base")
@@ -456,7 +456,7 @@ private struct LocalePresetsSheet: View {
                         Text(locale.code)
                             .font(.system(size: 12, design: .monospaced))
                             .frame(width: 36, alignment: .leading)
-                        Text(locale.label)
+                        Text(locale.flagLabel)
                         Spacer()
                         Button("Add") {
                             state.addLocale(locale)
@@ -576,12 +576,12 @@ private struct TranslationOverviewSheet: View {
                             HStack(spacing: 0) {
                                 headerColumn(
                                     title: "Base Language",
-                                    subtitle: baseLocale?.label ?? state.localeState.baseLocaleCode.uppercased()
+                                    subtitle: baseLocale?.flagLabel ?? state.localeState.baseLocaleCode.uppercased()
                                 )
                                 .frame(width: baseColumnWidth, alignment: .leading)
                                 ForEach(translationLocales) { locale in
                                     headerColumn(
-                                        title: locale.label,
+                                        title: locale.flagLabel,
                                         subtitle: locale.code.uppercased()
                                     )
                                     .frame(width: translationColumnWidth, alignment: .leading)
@@ -688,7 +688,7 @@ private struct TranslationMatrixCell: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField("\(locale.label) text", text: $text, axis: .vertical)
+            TextField("\(locale.flagLabel) text", text: $text, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(size: 12))
                 .lineLimit(2...6)

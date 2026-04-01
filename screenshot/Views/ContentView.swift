@@ -93,16 +93,10 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .layoutPriority(0)
                 .background(Color(nsColor: .windowBackgroundColor))
-                .background {
-                    GeometryReader { proxy in
-                        Color.clear
-                            .onAppear {
-                                editorViewportHeight = proxy.size.height
-                            }
-                            .onChange(of: proxy.size.height) { _, newValue in
-                                editorViewportHeight = newValue
-                            }
-                    }
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.height
+                } action: { newValue in
+                    editorViewportHeight = newValue
                 }
             }
 
