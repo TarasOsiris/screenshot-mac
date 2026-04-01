@@ -379,9 +379,9 @@ private struct ShapePropertiesSingleSelectionBar: View {
             return
         }
         let clamped = min(max(value, 0), 100)
-        var shape = state.rows[i.row].shapes[i.shape]
-        shape.opacity = Double(clamped) / 100.0
-        state.updateShape(shape)
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        resolved.opacity = Double(clamped) / 100.0
+        state.updateShape(resolved)
         editingOpacity = "\(clamped)"
     }
 
@@ -683,15 +683,15 @@ private struct ShapePropertiesSingleSelectionBar: View {
             },
             set: { newValue in
                 guard let i = idx(for: shapeId) else { return }
-                var shape = state.rows[i.row].shapes[i.shape]
-                shape.fillStyle = newValue == .color ? nil : newValue
-                if newValue == .gradient && shape.fillGradientConfig == nil {
-                    shape.fillGradientConfig = GradientConfig()
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                resolved.fillStyle = newValue == .color ? nil : newValue
+                if newValue == .gradient && resolved.fillGradientConfig == nil {
+                    resolved.fillGradientConfig = GradientConfig()
                 }
-                if newValue == .image && shape.fillImageConfig == nil {
-                    shape.fillImageConfig = BackgroundImageConfig()
+                if newValue == .image && resolved.fillImageConfig == nil {
+                    resolved.fillImageConfig = BackgroundImageConfig()
                 }
-                state.updateShape(shape)
+                state.updateShape(resolved)
             }
         )
     }

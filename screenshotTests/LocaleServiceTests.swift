@@ -172,6 +172,53 @@ struct LocaleServiceTests {
         #expect(override?.lineHeightMultiple == 0.8)
     }
 
+    @Test func splitUpdatePreservesOverridesWhenNonOverridablePropertyChanges() {
+        let base = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello", fontSize: 24)
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [base.id.uuidString: ShapeLocaleOverride(text: "Bonjour", fontSize: 20)]]
+        )
+
+        // Simulate changing opacity on a resolved shape (non-overridable property)
+        var resolved = LocaleService.resolveShape(base, localeState: state)
+        #expect(resolved.text == "Bonjour")
+        resolved.opacity = 0.5
+
+        let result = LocaleService.splitUpdate(base: base, updated: resolved, localeState: &state)
+
+        // Base shape should get the opacity change but keep base text
+        #expect(result.opacity == 0.5)
+        #expect(result.text == "Hello")
+        #expect(result.fontSize == 24)
+
+        // Override should be preserved
+        let override = state.override(forCode: "fr", shapeId: base.id)
+        #expect(override?.text == "Bonjour", "Translation must survive non-overridable property changes")
+        #expect(override?.fontSize == 20, "Font size override must survive non-overridable property changes")
+    }
+
+    @Test func splitUpdateWipesOverridesWhenBaseShapePassedDirectly() {
+        // This test documents the bug: passing a base shape (not resolved) to splitUpdate
+        // causes overrides to be wiped because all overridable properties match the base.
+        let base = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello", fontSize: 24)
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [base.id.uuidString: ShapeLocaleOverride(text: "Bonjour", fontSize: 20)]]
+        )
+
+        // BUG: passing the base shape directly (not resolved) to splitUpdate
+        var unresolved = base
+        unresolved.opacity = 0.5
+        let result = LocaleService.splitUpdate(base: base, updated: unresolved, localeState: &state)
+
+        // The override gets wiped because updated.text == base.text
+        #expect(result.opacity == 0.5)
+        let override = state.override(forCode: "fr", shapeId: base.id)
+        #expect(override == nil, "Bug: override is wiped when base shape is passed as updated")
+    }
+
     @Test func splitUpdateClearsOverrideWhenValuesMatchBase() {
         var state = LocaleState(
             locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
