@@ -62,6 +62,7 @@ enum SvgHelper {
         var svg = svgContent
         if useColor {
             let hex = color.hexString
+            // Replace existing fill/stroke attributes (except "none")
             svg = svg.replacingOccurrences(
                 of: "fill\\s*=\\s*\"(?!none\")[^\"]*\"",
                 with: "fill=\"\(hex)\"",
@@ -72,6 +73,16 @@ enum SvgHelper {
                 with: "stroke=\"\(hex)\"",
                 options: .regularExpression
             )
+            // Set fill on the <svg> tag so elements without an explicit fill inherit the color
+            if svg.range(of: "<svg\\b[^>]*\\bfill\\s*=", options: .regularExpression) != nil {
+                // Already has fill on <svg>, was replaced above
+            } else {
+                svg = svg.replacingOccurrences(
+                    of: "<svg\\b",
+                    with: "<svg fill=\"\(hex)\"",
+                    options: .regularExpression
+                )
+            }
         }
         guard let data = svg.data(using: .utf8) else { return nil }
         guard let baseImage = NSImage(data: data) else { return nil }

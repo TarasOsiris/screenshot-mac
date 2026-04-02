@@ -46,6 +46,10 @@ enum TemplateService {
                 return ProjectTemplate(id: dirName, name: displayName, url: url, previewImage: previewImage)
             }
             .sorted { (a: ProjectTemplate, b: ProjectTemplate) in a.name.localizedStandardCompare(b.name) == .orderedAscending }
+        #if DEBUG
+        return all
+        #else
         return Array(all.prefix(8))
+        #endif
     }
 }
