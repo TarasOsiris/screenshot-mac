@@ -924,6 +924,13 @@ private struct CanvasShapeContextMenuContent: View {
         }
 
         if shape.type == .svg {
+            if let svgContent = shape.svgContent,
+               let originalSize = SvgHelper.parseViewBoxSize(svgContent) {
+                Button("Restore Original Aspect Ratio") {
+                    let newHeight = shape.width / (originalSize.width / originalSize.height)
+                    applyUpdate { $0.height = newHeight }
+                }
+            }
             Toggle("Use Custom Color", isOn: Binding(
                 get: { shape.svgUseColor ?? false },
                 set: { value in applyUpdate { $0.svgUseColor = value } }

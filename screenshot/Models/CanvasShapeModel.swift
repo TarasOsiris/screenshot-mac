@@ -172,7 +172,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
     var screenCornerRadius: CGFloat {
         switch self {
         case .iphone: 33
-        case .ipadPro11, .ipadPro13: 11
+        case .ipadPro11, .ipadPro13: 29
         case .macbook: 10
         case .androidPhone: 28
         case .androidTablet: 20
