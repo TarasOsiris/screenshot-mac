@@ -266,7 +266,8 @@ struct InspectorPanel: View {
 
     private func defaultDeviceIsAbstract(for rowId: UUID) -> Bool {
         guard let idx = state.rowIndex(for: rowId) else { return true }
-        guard state.rows[idx].defaultDeviceCategory != nil else { return false }
+        guard let category = state.rows[idx].defaultDeviceCategory else { return false }
+        if category == .invisible { return false }
         guard let frameId = state.rows[idx].defaultDeviceFrameId else { return true }
         return DeviceFrameCatalog.frame(for: frameId) == nil
     }

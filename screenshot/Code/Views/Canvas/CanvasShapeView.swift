@@ -707,6 +707,7 @@ private struct CanvasShapeRenderContent: View {
 
     @ViewBuilder
     private var deviceContent: some View {
+        let isInvisible = shape.deviceCategory == .invisible
         let frame = DeviceFrameView(
             category: shape.deviceCategory ?? .iphone,
             bodyColor: shape.resolvedDeviceBodyColor(default: defaultDeviceBodyColor),
@@ -716,7 +717,10 @@ private struct CanvasShapeRenderContent: View {
             deviceFrameId: shape.deviceFrameId,
             devicePitch: shape.resolvedDevicePitch,
             deviceYaw: shape.resolvedDeviceYaw,
-            modelRenderingMode: deviceModelRenderingMode
+            modelRenderingMode: deviceModelRenderingMode,
+            invisibleCornerRadius: isInvisible ? shape.borderRadius * displayScale : 0,
+            invisibleOutlineWidth: isInvisible ? max(0, (shape.outlineWidth ?? 0) * displayScale) : 0,
+            invisibleOutlineColor: isInvisible ? (shape.outlineColor ?? CanvasShapeModel.defaultOutlineColor) : .black
         )
 
         if screenshotImage == nil && showsEditorHelpers {
@@ -858,7 +862,7 @@ private struct CanvasShapeContextMenuContent: View {
                 Menu("Change Device") {
                     DeviceMenuContent(
                         onSelectCategory: { category in
-                            applyUpdate { $0.selectAbstractDevice(category) }
+                            applyUpdate { $0.selectAbstractDevice(category, screenshotImageSize: screenshotImage?.size) }
                         },
                         onSelectFrame: { frame in
                             applyUpdate { $0.selectRealFrame(frame) }
@@ -1150,7 +1154,7 @@ private struct CanvasShapeHandlesOverlay: View {
                     let effectiveScale = displayScale * zoom
                     let tx = value.translation.width / effectiveScale
                     let ty = value.translation.height / effectiveScale
-                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift) || shape.type == .device
+                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift) || (shape.type == .device && shape.deviceCategory != .invisible)
                     resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
                 }
                 .onEnded { _ in

@@ -131,7 +131,12 @@ extension AppState {
     }
 
     func changeAllDevices(in rowId: UUID, toCategory category: DeviceCategory) {
-        changeAllDevices(in: rowId) { $0.selectAbstractDevice(category) }
+        changeAllDevices(in: rowId) {
+            let imageSize = category == .invisible
+                ? $0.displayImageFileName.flatMap { self.screenshotImages[$0] }?.size
+                : nil
+            $0.selectAbstractDevice(category, screenshotImageSize: imageSize)
+        }
     }
 
     func changeAllDevices(in rowId: UUID, toFrame frame: DeviceFrame) {

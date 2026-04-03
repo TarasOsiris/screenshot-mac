@@ -201,7 +201,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                                     .frame(width: 28, alignment: .trailing)
                             }
 
-                            if shape.type == .rectangle || shape.type == .image {
+                            if shape.type == .rectangle || shape.type == .image || (shape.type == .device && shape.deviceCategory == .invisible) {
                                 ShapePropertiesSeparator()
 
                                 ShapePropertiesControlGroup("Radius") {
@@ -214,7 +214,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                             }
                         }
 
-                        if shape.type.supportsOutline {
+                        if shape.type.supportsOutline || (shape.type == .device && shape.deviceCategory == .invisible) {
                             ShapePropertiesSection {
                                 outlineControls(shape: shape, shapeId: shapeId)
                             }
@@ -514,7 +514,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
             frameId: shape.deviceFrameId,
             allowsNoDevice: false,
             presentation: .toolbar,
-            bodyColor: shape.resolvedDeviceFrame?.isModelBacked != false ? deviceBodyColorBinding(shapeId) : nil,
+            bodyColor: shape.deviceCategory != .invisible && shape.resolvedDeviceFrame?.isModelBacked != false ? deviceBodyColorBinding(shapeId) : nil,
             bodyColorLabel: "Device color",
             canResetBodyColor: hasDeviceBodyColorOverride(shapeId),
             onResetBodyColor: { resetDeviceBodyColor(shapeId) },
@@ -538,7 +538,8 @@ private struct ShapePropertiesSingleSelectionBar: View {
     private func selectAbstractDevice(shapeId: UUID, category: DeviceCategory) {
         guard let i = idx(for: shapeId) else { return }
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        resolved.selectAbstractDevice(category)
+        let imageSize = resolved.displayImageFileName.flatMap { state.screenshotImages[$0] }?.size
+        resolved.selectAbstractDevice(category, screenshotImageSize: imageSize)
         state.updateShape(resolved)
     }
 
@@ -1071,7 +1072,12 @@ private struct ShapePropertiesMultiSelectionBar: View {
                 Menu {
                     DeviceMenuContent(
                         onSelectCategory: { category in
-                            state.updateShapes(state.selectedShapeIds) { $0.selectAbstractDevice(category) }
+                            state.updateShapes(state.selectedShapeIds) {
+                                let imageSize = category == .invisible
+                                    ? $0.displayImageFileName.flatMap { state.screenshotImages[$0] }?.size
+                                    : nil
+                                $0.selectAbstractDevice(category, screenshotImageSize: imageSize)
+                            }
                         },
                         onSelectFrame: { frame in
                             state.updateShapes(state.selectedShapeIds) { $0.selectRealFrame(frame) }

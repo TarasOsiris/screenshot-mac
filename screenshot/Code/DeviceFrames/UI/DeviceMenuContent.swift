@@ -10,43 +10,6 @@ struct DeviceMenuContent: View {
     var selectedFrameId: String? = nil
     var usePreferredFrameButtons: Bool = false
 
-    /// Device families group related categories and real frame groups together.
-    private struct DeviceFamily: Identifiable {
-        var id: String { name }
-        let name: String
-        let categories: [DeviceCategory]
-        let groups: [DeviceFrameGroup]
-    }
-
-    private static let ipadCategories: Set<DeviceCategory> = [.ipadPro11, .ipadPro13]
-    private static let androidCategories: Set<DeviceCategory> = [.androidPhone, .androidTablet]
-
-    private static let families: [DeviceFamily] = {
-        let allGroups = DeviceFrameCatalog.groups
-        return [
-            DeviceFamily(
-                name: "iPhone",
-                categories: [.iphone],
-                groups: allGroups.filter { $0.frames.first?.fallbackCategory == .iphone }
-            ),
-            DeviceFamily(
-                name: "Android",
-                categories: [.androidPhone, .androidTablet],
-                groups: allGroups.filter { androidCategories.contains($0.frames.first?.fallbackCategory ?? .iphone) }
-            ),
-            DeviceFamily(
-                name: "iPad",
-                categories: [.ipadPro11, .ipadPro13],
-                groups: allGroups.filter { ipadCategories.contains($0.frames.first?.fallbackCategory ?? .iphone) }
-            ),
-            DeviceFamily(
-                name: "Mac",
-                categories: [.macbook],
-                groups: allGroups.filter { $0.frames.first?.fallbackCategory == .macbook }
-            ),
-        ]
-    }()
-
     private var selectedGroupId: String? {
         guard let selectedFrameId else { return nil }
         return DeviceFrameCatalog.group(forFrameId: selectedFrameId)?.id
@@ -66,11 +29,12 @@ struct DeviceMenuContent: View {
     }
 
     private func categoryButton(_ category: DeviceCategory) -> some View {
-        Button {
+        let label = category == .invisible ? category.label : "Generic \(category.label)"
+        return Button {
             onSelectCategory(category)
         } label: {
             menuRowLabel(
-                "Generic \(category.label)",
+                label,
                 icon: category.icon,
                 isSelected: selectedFrameId == nil && selectedCategory == category
             )
@@ -128,17 +92,17 @@ struct DeviceMenuContent: View {
     }
 
     var body: some View {
-        ForEach(Self.families) { family in
-            Section(family.name) {
-                ForEach(family.categories, id: \.self) { cat in
+        ForEach(DeviceFrameCatalog.sections) { section in
+            Section(section.title) {
+                ForEach(section.categories, id: \.self) { cat in
                     categoryButton(cat)
                 }
 
-                if !family.categories.isEmpty && !family.groups.isEmpty {
+                if !section.categories.isEmpty && !section.groups.isEmpty {
                     Divider()
                 }
 
-                ForEach(family.groups) { group in
+                ForEach(section.groups) { group in
                     groupContent(group)
                 }
             }

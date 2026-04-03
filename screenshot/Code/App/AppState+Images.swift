@@ -72,6 +72,11 @@ extension AppState {
             var shape = rows[location.rowIndex].shapes[location.shapeIndex]
             let previousFile = shape.displayImageFileName
             shape.displayImageFileName = fileName
+
+            if shape.deviceCategory == .invisible {
+                shape.adaptToImageAspectRatio(image.size)
+            }
+
             rows[location.rowIndex].shapes[location.shapeIndex] = shape
 
             if let oldFile = previousFile, oldFile != fileName {

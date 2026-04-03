@@ -61,6 +61,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
     case macbook
     case androidPhone = "android"
     case androidTablet
+    case invisible
 
     var label: String {
         switch self {
@@ -70,6 +71,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .macbook: "MacBook"
         case .androidPhone: "Android Phone"
         case .androidTablet: "Android Tablet"
+        case .invisible: "Invisible"
         }
     }
 
@@ -80,6 +82,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .macbook: "laptopcomputer"
         case .androidPhone: "iphone.gen3"
         case .androidTablet: "ipad.gen2"
+        case .invisible: "rectangle.dashed"
         }
     }
 
@@ -92,6 +95,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .macbook: "2880x1800"
         case .androidPhone: "1080x1920"
         case .androidTablet: "1200x1920"
+        case .invisible: "1206x2622"
         }
     }
 
@@ -133,6 +137,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .macbook: (640, 420)
         case .androidPhone: (221, 470)
         case .androidTablet: (508, 782)
+        case .invisible: (220, 468)
         }
     }
 
@@ -141,7 +146,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
     var buttonDepth: CGFloat {
         switch self {
         case .iphone, .androidPhone: 2.5
-        case .ipadPro11, .ipadPro13, .macbook, .androidTablet: 0
+        case .ipadPro11, .ipadPro13, .macbook, .androidTablet, .invisible: 0
         }
     }
 
@@ -154,6 +159,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .macbook: (40, 40)
         case .androidPhone: (4.0, 4.0)
         case .androidTablet: (18.0, 18.0)
+        case .invisible: (0, 0)
         }
     }
 
@@ -165,6 +171,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .macbook: 20
         case .androidPhone: 30
         case .androidTablet: 40
+        case .invisible: 0
         }
     }
 
@@ -176,6 +183,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .macbook: 10
         case .androidPhone: 28
         case .androidTablet: 20
+        case .invisible: 0
         }
     }
 
@@ -649,11 +657,31 @@ struct CanvasShapeModel: Identifiable, Codable {
     }
 
     /// Selects an abstract device category (no specific frame).
-    mutating func selectAbstractDevice(_ category: DeviceCategory) {
+    /// When switching to `.invisible`, pass the current screenshot image size so the frame
+    /// adapts its aspect ratio to the image. A nice default corner radius is also applied.
+    mutating func selectAbstractDevice(_ category: DeviceCategory, screenshotImageSize: CGSize? = nil) {
         deviceFrameId = nil
         deviceCategory = category
         resetDeviceModelRotation()
-        adjustToDeviceAspectRatio()
+        if category == .invisible {
+            if borderRadius == 0 {
+                borderRadius = 40
+            }
+            if let imageSize = screenshotImageSize {
+                adaptToImageAspectRatio(imageSize)
+            }
+        } else {
+            adjustToDeviceAspectRatio()
+        }
+    }
+
+    /// Adjusts width to match the given image's aspect ratio, keeping the shape centered horizontally.
+    mutating func adaptToImageAspectRatio(_ imageSize: CGSize) {
+        guard imageSize.width > 0 && imageSize.height > 0 else { return }
+        let aspect = imageSize.width / imageSize.height
+        let centerX = x + width / 2
+        width = height * aspect
+        x = centerX - width / 2
     }
 
     /// Selects a specific device frame from the catalog.
@@ -668,7 +696,12 @@ struct CanvasShapeModel: Identifiable, Codable {
 
     /// Adjusts width to match the correct aspect ratio for the current device type.
     /// Optionally re-centers horizontally at `centerX`.
+    /// Invisible frames skip aspect ratio enforcement — they keep their current dimensions.
     mutating func adjustToDeviceAspectRatio(centerX: CGFloat? = nil) {
+        if deviceCategory == .invisible {
+            if let cx = centerX { x = cx - width / 2 }
+            return
+        }
         let base = resolvedBaseDimensions
         let aspect = base.width / base.height
         width = height * aspect
