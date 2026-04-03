@@ -595,7 +595,7 @@ struct EditorRowView: View {
                         state.alignSelectedShapes(alignment)
                     } : nil,
                     onDuplicateToAll: row.templates.count > 1 ? {
-                        state.duplicateShapeToAllTemplates(shape.id)
+                        state.duplicateSelectedShapesToAllTemplates()
                     } : nil
                 )
             }

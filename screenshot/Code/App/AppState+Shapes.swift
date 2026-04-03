@@ -227,21 +227,24 @@ extension AppState {
         return copy.id
     }
 
-    func duplicateShapeToAllTemplates(_ shapeId: UUID) {
-        guard let rowIdx = selectedRowIndex,
-              let shape = rows[rowIdx].shapes.first(where: { $0.id == shapeId }) else { return }
+    func duplicateSelectedShapesToAllTemplates() {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let row = rows[rowIdx]
-        let sourceIndex = row.owningTemplateIndex(for: shape)
         guard row.templates.count > 1 else { return }
+        let shapes = row.shapes.filter { selectedShapeIds.contains($0.id) }
+        guard !shapes.isEmpty else { return }
         registerUndoForRow(at: rowIdx, "Duplicate to All Screenshots")
-        let sourceCenterX = row.templateCenterX(at: sourceIndex)
-        for targetIndex in 0..<row.templates.count where targetIndex != sourceIndex {
-            let targetCenterX = row.templateCenterX(at: targetIndex)
-            let offset = targetCenterX - sourceCenterX
-            var copy = shape.duplicated(offsetX: offset)
-            LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
-            copyImageFiles(for: &copy, originalId: shape.id)
-            rows[rowIdx].shapes.append(copy)
+        for shape in shapes {
+            let sourceIndex = row.owningTemplateIndex(for: shape)
+            let sourceCenterX = row.templateCenterX(at: sourceIndex)
+            for targetIndex in 0..<row.templates.count where targetIndex != sourceIndex {
+                let targetCenterX = row.templateCenterX(at: targetIndex)
+                let offset = targetCenterX - sourceCenterX
+                var copy = shape.duplicated(offsetX: offset)
+                LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
+                copyImageFiles(for: &copy, originalId: shape.id)
+                rows[rowIdx].shapes.append(copy)
+            }
         }
         scheduleSave()
     }

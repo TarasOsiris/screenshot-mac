@@ -958,7 +958,7 @@ private struct CanvasShapeContextMenuContent: View {
             set: { value in applyUpdate { $0.clipToTemplate = value } }
         ))
 
-        if !isMultiSelected, let onDuplicateToAll {
+        if let onDuplicateToAll {
             Button("Duplicate to All Screenshots") {
                 onDuplicateToAll()
             }
