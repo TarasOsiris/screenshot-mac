@@ -69,6 +69,7 @@ enum DebugTemplateService {
             .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
 
+    @MainActor
     static func saveProjectAsTemplate(projectId: UUID, templateName: String, bundleURL: URL) throws {
         let fm = FileManager.default
         try fm.createDirectory(at: bundleURL, withIntermediateDirectories: true)
@@ -84,7 +85,129 @@ enum DebugTemplateService {
         // Move fonts from template resources into the shared fonts directory
         moveFontsToShared(templateResources: destURL.appendingPathComponent("resources", isDirectory: true), bundleURL: bundleURL)
 
+        // Generate preview image from rendered rows
+        generatePreviewImage(templateURL: destURL)
+
         print("[DebugTemplateService] Saved template '\(templateName)' to \(destURL.path)")
+    }
+
+    /// Regenerate preview images for all templates in the bundle.
+    @MainActor
+    static func regenerateAllPreviews(bundleURL: URL) {
+        let didAccess = bundleURL.startAccessingSecurityScopedResource()
+        let names = existingTemplateNames(at: bundleURL)
+        let total = names.count
+        print("[DebugTemplateService] Starting preview regeneration for \(total) templates...")
+
+        Task { @MainActor in
+            defer { if didAccess { bundleURL.stopAccessingSecurityScopedResource() } }
+            var succeeded = 0
+            for (index, name) in names.enumerated() {
+                let templateURL = bundleURL.appendingPathComponent(name, isDirectory: true)
+                if generatePreviewImage(templateURL: templateURL) {
+                    succeeded += 1
+                }
+                print("[DebugTemplateService] Progress: \(index + 1)/\(total)")
+                await Task.yield()
+            }
+            print("[DebugTemplateService] Done: regenerated \(succeeded)/\(total) preview images")
+        }
+    }
+
+    /// Generate a preview image by rendering actual row canvases and compositing them.
+    @MainActor
+    static func generatePreviewImage(templateURL: URL) -> Bool {
+        let templateName = templateURL.lastPathComponent
+        let projectURL = templateURL.appendingPathComponent("project.json")
+        guard let data = try? Data(contentsOf: projectURL) else {
+            print("[DebugTemplateService] Failed to read project.json for '\(templateName)'")
+            return false
+        }
+        let projectData: ProjectData
+        do {
+            projectData = try PersistenceService.decoder.decode(ProjectData.self, from: data)
+        } catch {
+            print("[DebugTemplateService] Failed to decode '\(templateName)': \(error)")
+            return false
+        }
+        let rows = projectData.rows.filter { !$0.templates.isEmpty }
+        guard !rows.isEmpty else { return false }
+
+        // Load only referenced resource images
+        let resourcesURL = templateURL.appendingPathComponent("resources", isDirectory: true)
+        var referencedNames = Set<String>()
+        for row in rows {
+            for shape in row.shapes {
+                if let name = shape.displayImageFileName { referencedNames.insert(name) }
+                if let name = shape.fillImageConfig?.fileName { referencedNames.insert(name) }
+            }
+            if let name = row.backgroundImageConfig.fileName { referencedNames.insert(name) }
+            for tp in row.templates {
+                if let name = tp.backgroundImageConfig.fileName { referencedNames.insert(name) }
+            }
+        }
+        var screenshotImages: [String: NSImage] = [:]
+        for name in referencedNames {
+            let fileURL = resourcesURL.appendingPathComponent(name)
+            if let img = NSImage(contentsOf: fileURL) {
+                screenshotImages[name] = img
+            }
+        }
+
+        let localeState = projectData.localeState ?? .default
+        let previewHeight: CGFloat = 36
+        let gap: CGFloat = 4
+
+        // First pass: compute layout
+        var rowLayouts: [(row: ScreenshotRow, scaledWidth: CGFloat)] = []
+        for row in rows {
+            let totalWidth = row.templateWidth * CGFloat(row.templates.count)
+            let scaledWidth = totalWidth * (previewHeight / row.templateHeight)
+            rowLayouts.append((row, scaledWidth))
+        }
+
+        let maxWidth = rowLayouts.map(\.scaledWidth).max() ?? 1
+        let totalHeight = previewHeight * CGFloat(rowLayouts.count) + gap * CGFloat(rowLayouts.count - 1)
+
+        let previewSize = NSSize(width: maxWidth, height: totalHeight)
+        let preview = NSImage(size: previewSize)
+        preview.lockFocus()
+        NSColor.clear.set()
+        NSRect(origin: .zero, size: previewSize).fill()
+
+        // Second pass: render each row and draw immediately to avoid holding all images in memory
+        var y = totalHeight
+        for (row, scaledWidth) in rowLayouts {
+            y -= previewHeight
+            let rowImage = ExportService.renderRowImage(
+                row: row,
+                screenshotImages: screenshotImages,
+                localeState: localeState
+            )
+            let x = (maxWidth - scaledWidth) / 2
+            rowImage.draw(
+                in: NSRect(x: x, y: y, width: scaledWidth, height: previewHeight),
+                from: NSRect(origin: .zero, size: rowImage.size),
+                operation: .sourceOver,
+                fraction: 1
+            )
+            y -= gap
+        }
+        preview.unlockFocus()
+
+        guard let pngData = ExportService.opaquePNGData(from: preview) else {
+            print("[DebugTemplateService] Failed to encode preview PNG for '\(templateName)'")
+            return false
+        }
+        let previewURL = templateURL.appendingPathComponent("preview.png")
+        do {
+            try pngData.write(to: previewURL, options: .atomic)
+            print("[DebugTemplateService] Preview saved for '\(templateName)' (\(Int(maxWidth))x\(Int(totalHeight)))")
+            return true
+        } catch {
+            print("[DebugTemplateService] Failed to write preview for '\(templateName)': \(error)")
+            return false
+        }
     }
 
     /// Moves font files from a template's resources into the shared/fonts directory,

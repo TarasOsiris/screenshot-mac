@@ -295,6 +295,11 @@ struct ScreenshotBroApp: App {
                         }
                     }
                 }
+
+                Button("Regenerate All Previews") {
+                    guard let bundleURL = DebugTemplateService.getTemplatesBundleURL() else { return }
+                    DebugTemplateService.regenerateAllPreviews(bundleURL: bundleURL)
+                }
             }
             #endif
         }
