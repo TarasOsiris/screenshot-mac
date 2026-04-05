@@ -21,7 +21,7 @@ Run unit tests (always kill the running app first to avoid Xcode crash/hang):
 killall screenshot 2>/dev/null; xcodebuild -scheme screenshot -destination 'platform=macOS' test
 ```
 
-Unit tests cover `AppState` operations (including locale tests), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, and `ProjectMerge` (iCloud merge logic) in `screenshotTests/`. UI tests exist (`screenshotUITests` scheme). No linter configured.
+Unit tests cover `AppState` operations (including locale tests and deletion), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, `ProjectMerge` (iCloud merge logic), and `DeviceFrameCatalog` in `screenshotTests/`. UI tests exist (`screenshotUITests` scheme). No linter configured.
 
 ## Custom Commands
 
@@ -42,9 +42,11 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 
 ## Architecture
 
-**App entry:** `screenshotApp.swift` — injects `AppState` into the SwiftUI environment via `@State` + `.environment()`. Defines keyboard shortcuts and menu items (Edit, View, Locale menus).
+**Source layout:** All Swift source lives under `screenshot/Code/` with subdirectories: `App/` (AppState + extensions), `Models/`, `Services/`, `Views/` (Canvas, Editor, Inspector, Toolbar, Settings), `DeviceFrames/` (Models, Rendering, UI), `Extensions/`.
 
-**State management:** `AppState` (`@Observable`) is the single source of truth. All mutations (projects, rows, shapes, screenshot columns, locales) go through AppState methods, which call `scheduleSave()` to debounce persistence (0.3s). Undo/redo via macOS `UndoManager`.
+**App entry:** `screenshotApp.swift` — injects `AppState` into the SwiftUI environment via `@State` + `.environment()`. Defines keyboard shortcuts and menu items (Edit, View, Locale, Debug menus).
+
+**State management:** `AppState` (`@Observable`) is the single source of truth, split across extension files (`AppState+Images`, `AppState+Locales`, `AppState+Persistence`, `AppState+Projects`, `AppState+Rows`, `AppState+Selection`, `AppState+Shapes`, `AppState+Templates`, `AppState+Zoom`). All mutations go through AppState methods, which call `scheduleSave()` to debounce persistence (0.3s). Undo/redo via macOS `UndoManager`.
 
 **Data model hierarchy:**
 - `Project` → has many `ScreenshotRow` (stored in `ProjectData`)
@@ -54,8 +56,8 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 - `BackgroundStyle` → enum (color, gradient, image) with `GradientConfig` (color stops, angle, type, center) and `BackgroundImageConfig` (fileName, svgContent, fillMode, opacity, tileSpacingX/Y, tileOffsetX/Y, tileScaleX/Y). `BackgroundFillable` protocol provides `backgroundFillView(image:modelSize:)` and `resolvedBackgroundView(screenshotImages:modelSize:)` for rendering.
 - `ImageFillMode` → enum (fill, fit, stretch, tile). Tile mode uses canvas-based rendering with configurable spacing/offset/scale.
 - `GradientType` → enum (linear, radial, angular). Linear uses `LinearGradient` with angle-derived start/end points. Radial uses `RadialGradient` inside a `GeometryReader` for size-aware `endRadius`. Angular uses `AngularGradient` with center and angle offset.
-- `DeviceCategory` → enum (iphone, ipadPro11, ipadPro13, macbook, androidPhone, androidTablet).
-- `DeviceFrame` / `DeviceFrameCatalog` → real device frame PNG specs (iPhone 17/Air/Pro/Pro Max, iPad Pro 11"/13", MacBook Air 13"/Pro 14"/Pro 16", iMac 24") with per-color variants and landscape support. `DeviceFrameImageSpec` defines precise screen insets and corner radii.
+- `DeviceCategory` → enum (iphone, ipadPro11, ipadPro13, macbook, androidPhone, androidTablet, invisible). Invisible provides abstract layout with no visible frame.
+- `DeviceFrame` / `DeviceFrameCatalog` → real device frame PNG specs (iPhone 17/Air/Pro/Pro Max, iPad Pro 11"/13", MacBook Air 13"/Pro 14"/Pro 16", iMac 24") with per-color variants and landscape support. `DeviceFrameImageSpec` defines precise screen insets and corner radii. `DeviceFrameModelSpec` defines 3D model resources for SceneKit rendering.
 - `LocaleState` → locale definitions + active locale + per-shape overrides (`ShapeLocaleOverride` for text properties). `LocalePresets` has 30 language definitions.
 - `Project` → supports soft deletion (tombstones) with `isDeleted`/`deletedAt` fields and `merged(with:)` for iCloud conflict resolution. `purgingOldTombstones()` removes tombstones older than 30 days.
 
@@ -66,27 +68,42 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 - `AlignmentService` — snap-to-grid alignment. Computes snaps from dragged shape against other shapes and template boundaries (4px threshold). Returns snap deltas and guide lines.
 - `ICloudSyncService` — iCloud Drive sync (container `iCloud.xyz.tleskiv.screenshot`). Handles enable/disable, project merging with last-writer-wins strategy and tombstone awareness. Uses `NSFileCoordinator` for safe concurrent access.
 - `ICloudMonitor` — `NSFilePresenter` that watches for iCloud file changes. Tracks upload/download progress via `NSMetadataQuery`. Debounced reload (1s). Distinguishes own writes from remote changes.
-- `StoreService` — RevenueCat integration for Pro tier. Free limits: 1 project, 3 rows/project, 5 templates/row. `PaywallContext` enum provides context-aware paywall messages.
+- `StoreService` — RevenueCat integration for Pro tier. Free tier: 1 project (cannot create additional), 3 rows/project, 5 templates/row. `PaywallContext` enum provides context-aware paywall messages.
 - `SvgHelper` — SVG processing: `sanitize()` (removes scripts/event handlers), `parseSize()`, `scaledSize()`, `renderImage()` (renders to NSImage with optional color replacement).
+- `TemplateService` — template management utilities.
+- `ExportFolderService` — export folder selection and management.
+- `DebugTemplateService` — debug utilities for template inspection and rendering.
+- `QuickLookCoordinator` — Quick Look preview integration.
 
 **View hierarchy:**
+- `AppRootView` — top-level view wrapping `ContentView`
 - `ContentView` — toolbar (project selector, zoom, locale menu, export), vertical scroll of rows, shape properties bar (bottom), inspector panel (right sidebar)
+- `NewProjectWindowView` — standalone window for creating new projects with template selection
 - `EditorRowView` — single row with header controls, horizontal scroll of template canvases, per-template control bars
+- `RowCanvasSceneView` — canvas scene rendering for a row, manages shape layout and background layers
 - `CanvasShapeView` — renders individual shapes with drag/resize/rotate, selection overlay, hover state; handles SVG caching (debounced during resize), inline text editing, image/screenshot drops
-- `LocaleBanner` — top contextual banner when editing a non-base locale
+- `ResizeHandles` — shape resize handle rendering
+- `CursorHelper` — cursor management for canvas interactions
+- `MiddleMousePanView` — middle mouse button panning support
+- `TextLayoutStyle` — text layout mode definitions
+- `LocaleBanner` — top contextual banner when editing a non-base locale (in `LocaleToolbarMenu.swift`)
 - `InspectorPanel` — right sidebar: row label, screenshot size presets, background editor, shape toolbar, device/border toggles
 - `BackgroundEditor` — background style picker, gradient preset picker, gradient stop editor, angle wheel
 - `ShapeToolbar` — Shapes dropdown menu (Rectangle, Circle, Star) + 4 individual buttons (Text, Image, Device, SVG)
 - `ShapePropertiesBar` — bottom bar: color, opacity, rotation, border radius, text properties, image/device properties, outline, clip. All toggles use `.toggleStyle(.switch)` with `.controlSize(.small)`. Sections use a shared `section()` helper with consistent min height.
+- `ShapePropertiesComponents` — reusable sub-components for `ShapePropertiesBar`
 - `TemplateControlBar` — per-template controls: background color/style/gradient, device screenshot, export preview
 - `DeviceFrameView` — device frame rendering (abstract bezels for categories, real PNG frames from `DeviceFrameCatalog`)
+- `DeviceModelFrameView` — 3D model device frame rendering with SceneKit
+- `ProgrammaticDeviceFrameView` — programmatic (non-image) device frame rendering
+- `DeviceFrameImageView` — image-based device frame rendering
 - `InlineTextEditor` — NSViewRepresentable for text editing with centering
 - `AlignmentGuideLineView` — renders blue snap guide lines
 - `LocaleToolbarMenu` — locale management: add/remove/reorder locales, translation progress
 - `ZoomControls` — zoom slider with min 0.50, max 2.0, step 0.25
 - `SvgPasteDialog` — sheet for pasting SVG content with dimensions
 - `SettingsView` — General tab (appearance, defaults) and Export tab (format, scale)
-- `PaywallView` — RevenueCatUI paywall (not a custom view) with context-aware messaging
+- `DefaultsPickers` — reusable picker components for settings defaults
 - `OnboardingView` — first-time setup (screenshot size, device category, templates-per-row presets)
 - `DevicePickerMenu` / `DeviceMenuContent` — device model/color selection menus
 - `FontPicker` — custom font selection
@@ -95,6 +112,8 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 - `GradientStopEditor` — multi-stop gradient editor with add/remove
 - `StarShape` — SVG-based star rendering with configurable point count
 - `AddRowButton` / `AddTemplateButton` — add buttons with pro tier enforcement
+- `ActionButton` — reusable styled action button
+- `DebugProjectManagerView` — debug view for project data inspection
 
 **Key patterns:**
 - Colors are persisted via `CodableColor` wrapper (NSColor → sRGB components)
@@ -135,7 +154,7 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 - Use `NSImage.fromSecurityScopedURL()` (in `Extensions/CodableColor.swift`) when loading images from user-picked file URLs.
 
 **Exhaustive switch coverage:**
-- `BackgroundStyle`, `ShapeType`, `ImageFillMode` (fill/fit/stretch/tile), `DeviceCategory` (iphone/ipadPro11/ipadPro13/macbook/androidPhone/androidTablet), `GradientType` are enums used in switch statements across the codebase. Adding a new case requires updating every switch — check `EditorRowView`, `ExportService`, `BackgroundEditor`, `CanvasShapeView`, `ShapePropertiesBar`, and `InspectorPanel`.
+- `BackgroundStyle`, `ShapeType`, `ImageFillMode` (fill/fit/stretch/tile), `DeviceCategory` (iphone/ipadPro11/ipadPro13/macbook/androidPhone/androidTablet/invisible), `GradientType` are enums used in switch statements across the codebase. Adding a new case requires updating every switch — check `EditorRowView`, `ExportService`, `BackgroundEditor`, `CanvasShapeView`, `ShapePropertiesBar`, and `InspectorPanel`.
 - The `BackgroundFillable` protocol extension (`backgroundFillView`) must handle all `BackgroundStyle` cases. Both editor and export use this same code path.
 
 **SwiftUI type-checker limits:**

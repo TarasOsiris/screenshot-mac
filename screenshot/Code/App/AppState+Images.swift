@@ -155,7 +155,17 @@ extension AppState {
     /// Creates an image or device shape sized for the given row, without side effects.
     func makeImageShape(image: NSImage, row: ScreenshotRow, centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
         if let detectedCategory = Self.detectScreenshotDevice(image) {
-            return CanvasShapeModel.defaultDeviceFromRow(row, centerX: centerX, centerY: centerY, detectedCategory: detectedCategory)
+            var shape = CanvasShapeModel.defaultDeviceFromRow(
+                row,
+                centerX: centerX,
+                centerY: centerY,
+                detectedCategory: detectedCategory
+            )
+            if let preferredFrame = preferredImportFrame(for: image, in: row, detectedCategory: detectedCategory) {
+                shape.selectRealFrame(preferredFrame)
+                shape.adjustToDeviceAspectRatio(centerX: centerX)
+            }
+            return shape
         }
         let imgW = image.size.width
         let imgH = image.size.height
@@ -177,7 +187,9 @@ extension AppState {
     /// Import multiple images into a row, one per template. Creates new templates if needed.
     /// Registers a single undo operation for the entire batch.
     func batchImportImages(_ images: [NSImage], into rowId: UUID) {
-        guard let idx = rowIndex(for: rowId), !images.isEmpty else { return }
+        guard let idx = rowIndex(for: rowId),
+              let activeId = activeProjectId,
+              !images.isEmpty else { return }
         registerUndoForRow(at: idx, "Import Screenshots")
         selectRow(rowId)
 
@@ -189,15 +201,117 @@ extension AppState {
 
         // Place one image per template
         for (i, image) in images.enumerated() {
-            let row = rows[idx]
-            let centerX = row.templateCenterX(at: i)
-            let centerY = row.templateHeight / 2
-            let shape = makeImageShape(image: image, row: row, centerX: centerX, centerY: centerY)
-            rows[idx].shapes.append(shape)
-            performSaveImage(image, for: shape.id)
+            importImage(image, intoTemplateAt: i, rowIndex: idx, activeId: activeId)
         }
 
         scheduleSave()
+    }
+
+    private func importImage(_ image: NSImage, intoTemplateAt templateIndex: Int, rowIndex: Int, activeId: UUID) {
+        let row = rows[rowIndex]
+        if let shapeIndex = existingDeviceShapeIndex(in: row, templateIndex: templateIndex) {
+            let shapeId = row.shapes[shapeIndex].id
+            performSaveImage(
+                image,
+                for: shapeId,
+                activeId: activeId,
+                location: (rowIndex: rowIndex, shapeIndex: shapeIndex)
+            )
+            return
+        }
+
+        let centerX = row.templateCenterX(at: templateIndex)
+        let centerY = row.templateHeight / 2
+        let shape = makeImageShape(image: image, row: row, centerX: centerX, centerY: centerY)
+        rows[rowIndex].shapes.append(shape)
+        performSaveImage(
+            image,
+            for: shape.id,
+            activeId: activeId,
+            location: (rowIndex: rowIndex, shapeIndex: rows[rowIndex].shapes.count - 1)
+        )
+    }
+
+    private func existingDeviceShapeIndex(in row: ScreenshotRow, templateIndex: Int) -> Int? {
+        let templateCenterX = row.templateCenterX(at: templateIndex)
+        let templateCenterY = row.templateHeight / 2
+
+        var best: (index: Int, hasRealFrame: Bool, distance: CGFloat)?
+
+        for (index, shape) in row.shapes.enumerated() {
+            guard shape.type == .device,
+                  row.owningTemplateIndex(for: shape) == templateIndex else { continue }
+
+            let hasRealFrame = shape.deviceFrameId != nil
+            let shapeCenterX = shape.x + shape.width / 2
+            let shapeCenterY = shape.y + shape.height / 2
+            let distance = abs(shapeCenterX - templateCenterX) + abs(shapeCenterY - templateCenterY)
+
+            guard let current = best else {
+                best = (index, hasRealFrame, distance)
+                continue
+            }
+
+            if hasRealFrame != current.hasRealFrame {
+                if hasRealFrame { best = (index, hasRealFrame, distance) }
+            } else if distance < current.distance {
+                best = (index, hasRealFrame, distance)
+            } else if distance == current.distance && index < current.index {
+                best = (index, hasRealFrame, distance)
+            }
+        }
+
+        return best?.index
+    }
+
+    private func preferredImportFrame(for image: NSImage, in row: ScreenshotRow, detectedCategory: DeviceCategory) -> DeviceFrame? {
+        let isLandscape = Self.imageIsLandscape(image)
+
+        if let frameId = mostCommonDeviceFrameId(in: row, matching: detectedCategory),
+           let frame = DeviceFrameCatalog.frame(for: frameId) {
+            return landscapeVariant(of: frame, isLandscape: isLandscape)
+        }
+
+        if let defaultFrameId = row.defaultDeviceFrameId,
+           let defaultFrame = DeviceFrameCatalog.frame(for: defaultFrameId),
+           defaultFrame.fallbackCategory == detectedCategory {
+            return landscapeVariant(of: defaultFrame, isLandscape: isLandscape)
+        }
+
+        return nil
+    }
+
+    private func landscapeVariant(of frame: DeviceFrame, isLandscape: Bool?) -> DeviceFrame {
+        guard let isLandscape, isLandscape != frame.isLandscape else { return frame }
+        return DeviceFrameCatalog.variant(forFrameId: frame.id, isLandscape: isLandscape) ?? frame
+    }
+
+    private func mostCommonDeviceFrameId(in row: ScreenshotRow, matching category: DeviceCategory) -> String? {
+        var counts: [String: Int] = [:]
+        var firstSeen: [String: Int] = [:]
+
+        for (index, shape) in row.shapes.enumerated() where shape.type == .device {
+            guard let frameId = shape.deviceFrameId,
+                  let frame = DeviceFrameCatalog.frame(for: frameId),
+                  frame.fallbackCategory == category else { continue }
+            counts[frameId, default: 0] += 1
+            firstSeen[frameId] = firstSeen[frameId] ?? index
+        }
+
+        return counts.max { lhs, rhs in
+            if lhs.value != rhs.value {
+                return lhs.value < rhs.value
+            }
+            return (firstSeen[lhs.key] ?? .max) > (firstSeen[rhs.key] ?? .max)
+        }?.key
+    }
+
+    private static func imageIsLandscape(_ image: NSImage) -> Bool? {
+        if let rep = image.representations.first, rep.pixelsWide > 0, rep.pixelsHigh > 0 {
+            return rep.pixelsWide > rep.pixelsHigh
+        }
+        guard image.size.width > 0, image.size.height > 0 else { return nil }
+        return image.size.width > image.size.height
     }
 
     // Known screenshot pixel sizes (portrait "WxH") → device category

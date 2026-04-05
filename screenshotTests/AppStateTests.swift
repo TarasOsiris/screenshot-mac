@@ -212,6 +212,68 @@ struct AppStateTests {
         #expect(!state.rows.first!.shapes.contains { $0.id == shape.id })
     }
 
+    @Test func batchImportImagesReusesExistingDeviceShapes() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let rowId = try #require(state.rows.first?.id)
+        let originalDevices = state.rows[0].shapes.filter { $0.type == .device }
+        #expect(originalDevices.count == state.rows[0].templates.count)
+
+        let images = (0..<state.rows[0].templates.count).map { _ in
+            makeTestImage(width: 1206, height: 2622)
+        }
+
+        state.batchImportImages(images, into: rowId)
+
+        let row = state.rows[0]
+        let devices = row.shapes.filter { $0.type == .device }
+        #expect(devices.count == originalDevices.count)
+        #expect(Set(devices.map(\.id)) == Set(originalDevices.map(\.id)))
+        #expect(devices.allSatisfy { $0.screenshotFileName != nil })
+        #expect(row.shapes.filter { $0.type == .image }.isEmpty)
+    }
+
+    @Test func batchImportImagesCreatesMissingDeviceUsingMostCommonRowFrame() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let commonFrameId = try #require(DeviceFrameCatalog.firstPortraitFrameId(for: .iphone))
+        let commonFrame = try #require(DeviceFrameCatalog.frame(for: commonFrameId))
+        let alternateFrame = try #require(
+            DeviceFrameCatalog.allFrames.first {
+                $0.fallbackCategory == .iphone && !$0.isLandscape && $0.id != commonFrameId
+            }
+        )
+
+        var row = state.rows[0]
+        row.defaultDeviceFrameId = alternateFrame.id
+        row.shapes = [
+            makeDevice(in: row, templateIndex: 0, frame: commonFrame),
+            makeDevice(in: row, templateIndex: 1, frame: commonFrame)
+        ]
+        state.rows[0] = row
+        state.selectRow(row.id)
+
+        let images = [
+            makeTestImage(width: 1206, height: 2622),
+            makeTestImage(width: 1206, height: 2622),
+            makeTestImage(width: 1206, height: 2622)
+        ]
+
+        state.batchImportImages(images, into: row.id)
+
+        let updatedRow = state.rows[0]
+        let devices = updatedRow.shapes.filter { $0.type == .device }
+        #expect(devices.count == 3)
+
+        let createdDevice = try #require(devices.first {
+            updatedRow.owningTemplateIndex(for: $0) == 2
+        })
+        #expect(createdDevice.deviceFrameId == commonFrame.id)
+        #expect(createdDevice.screenshotFileName != nil)
+    }
+
     @Test func bringShapeToFrontMovesToEnd() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
@@ -517,5 +579,19 @@ struct AppStateTests {
 
         #expect(!state.isOpeningProject)
         #expect(!state.screenshotImages.isEmpty)
+    }
+
+    private func makeDevice(in row: ScreenshotRow, templateIndex: Int, frame: DeviceFrame) -> CanvasShapeModel {
+        let centerX = row.templateCenterX(at: templateIndex)
+        let centerY = row.templateHeight / 2
+        var device = CanvasShapeModel.defaultDevice(
+            centerX: centerX,
+            centerY: centerY,
+            templateHeight: row.templateHeight,
+            category: frame.fallbackCategory
+        )
+        device.selectRealFrame(frame)
+        device.adjustToDeviceAspectRatio(centerX: centerX)
+        return device
     }
 }
