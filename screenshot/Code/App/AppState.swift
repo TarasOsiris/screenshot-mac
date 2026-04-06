@@ -55,6 +55,7 @@ final class AppState {
     @ObservationIgnored var translationBaseLocaleState: LocaleState?
     @ObservationIgnored var baseTextUndoTask: DispatchWorkItem?
     @ObservationIgnored var baseTextBaseRow: ScreenshotRow?
+    @ObservationIgnored var arrowKeyMonitor: Any?
     @ObservationIgnored var nudgeUndoTask: DispatchWorkItem?
     @ObservationIgnored var nudgeBaseRow: ScreenshotRow?
     @ObservationIgnored var continuousEditUndoTask: DispatchWorkItem?
@@ -123,6 +124,38 @@ final class AppState {
 
         if !PersistenceService.hasDataDirOverride {
             setupICloudIfNeeded()
+        }
+
+        installArrowKeyMonitor()
+    }
+
+    deinit {
+        if let monitor = arrowKeyMonitor { NSEvent.removeMonitor(monitor) }
+    }
+
+    // macOS virtual key codes for arrow keys
+    private static let kVKLeftArrow: UInt16 = 0x7B
+    private static let kVKRightArrow: UInt16 = 0x7C
+    private static let kVKDownArrow: UInt16 = 0x7D
+    private static let kVKUpArrow: UInt16 = 0x7E
+
+    private func installArrowKeyMonitor() {
+        arrowKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self else { return event }
+            if let responder = NSApp.keyWindow?.firstResponder,
+               responder is NSTextView {
+                return event
+            }
+            guard self.hasSelection, !self.isEditingText else { return event }
+            let shift = event.modifierFlags.contains(.shift)
+            let step: CGFloat = shift ? 10 : 1
+            switch event.keyCode {
+            case Self.kVKLeftArrow:  self.nudgeSelectedShapes(dx: -step, dy: 0); return nil
+            case Self.kVKRightArrow: self.nudgeSelectedShapes(dx: step, dy: 0); return nil
+            case Self.kVKUpArrow:    self.nudgeSelectedShapes(dx: 0, dy: -step); return nil
+            case Self.kVKDownArrow:  self.nudgeSelectedShapes(dx: 0, dy: step); return nil
+            default: return event
+            }
         }
     }
 

@@ -177,41 +177,8 @@ struct ScreenshotBroApp: App {
 
                 Divider()
 
-                Section {
-                    let noShape = !appState.hasSelection || appState.isEditingText
-
-                    Button("Nudge Left") { appState.nudgeSelectedShapes(dx: -1, dy: 0) }
-                    .keyboardShortcut(.leftArrow, modifiers: [])
-                    .disabled(noShape)
-
-                    Button("Nudge Right") { appState.nudgeSelectedShapes(dx: 1, dy: 0) }
-                    .keyboardShortcut(.rightArrow, modifiers: [])
-                    .disabled(noShape)
-
-                    Button("Nudge Up") { appState.nudgeSelectedShapes(dx: 0, dy: -1) }
-                    .keyboardShortcut(.upArrow, modifiers: [])
-                    .disabled(noShape)
-
-                    Button("Nudge Down") { appState.nudgeSelectedShapes(dx: 0, dy: 1) }
-                    .keyboardShortcut(.downArrow, modifiers: [])
-                    .disabled(noShape)
-
-                    Button("Nudge Left ×10") { appState.nudgeSelectedShapes(dx: -10, dy: 0) }
-                    .keyboardShortcut(.leftArrow, modifiers: .shift)
-                    .disabled(noShape)
-
-                    Button("Nudge Right ×10") { appState.nudgeSelectedShapes(dx: 10, dy: 0) }
-                    .keyboardShortcut(.rightArrow, modifiers: .shift)
-                    .disabled(noShape)
-
-                    Button("Nudge Up ×10") { appState.nudgeSelectedShapes(dx: 0, dy: -10) }
-                    .keyboardShortcut(.upArrow, modifiers: .shift)
-                    .disabled(noShape)
-
-                    Button("Nudge Down ×10") { appState.nudgeSelectedShapes(dx: 0, dy: 10) }
-                    .keyboardShortcut(.downArrow, modifiers: .shift)
-                    .disabled(noShape)
-                }
+                // Arrow key nudge is handled via NSEvent local monitor
+                // so that arrow keys work normally in text fields and alerts.
             }
 
             CommandGroup(before: .toolbar) {

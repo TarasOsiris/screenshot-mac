@@ -663,6 +663,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     mutating func selectAbstractDevice(_ category: DeviceCategory, screenshotImageSize: CGSize? = nil) {
         deviceFrameId = nil
         deviceCategory = category
+        deviceBodyColorData = nil
         resetDeviceModelRotation()
         if category == .invisible {
             if borderRadius == 0 {

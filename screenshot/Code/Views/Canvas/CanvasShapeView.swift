@@ -54,7 +54,7 @@ struct CanvasShapeView: View {
     var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
     var onDeleteSelected: (() -> Void)?
     var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
-    var onDuplicateToAll: (() -> Void)?
+    var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
 
     @State private var addBumpScale: CGFloat = 1.0
     @State private var dragOffset: CGSize = .zero
@@ -361,7 +361,7 @@ struct CanvasShapeView: View {
                 }
             },
             onAlignSelected: onAlignSelected,
-            onDuplicateToAll: onDuplicateToAll
+            onDuplicateToTemplates: onDuplicateToTemplates
         )
     }
 
@@ -835,7 +835,7 @@ private struct CanvasShapeContextMenuContent: View {
     let applyUpdate: (@escaping (inout CanvasShapeModel) -> Void) -> Void
     let deleteAction: () -> Void
     var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
-    var onDuplicateToAll: (() -> Void)?
+    var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
 
     var body: some View {
         if !isMultiSelected {
@@ -958,9 +958,17 @@ private struct CanvasShapeContextMenuContent: View {
             set: { value in applyUpdate { $0.clipToTemplate = value } }
         ))
 
-        if let onDuplicateToAll {
-            Button("Duplicate to All Screenshots") {
-                onDuplicateToAll()
+        if let onDuplicateToTemplates {
+            Menu("Duplicate") {
+                Button("To All Screenshots on the Left") {
+                    onDuplicateToTemplates(.left)
+                }
+                Button("To All Screenshots on the Right") {
+                    onDuplicateToTemplates(.right)
+                }
+                Button("To All Screenshots") {
+                    onDuplicateToTemplates(.all)
+                }
             }
         }
 

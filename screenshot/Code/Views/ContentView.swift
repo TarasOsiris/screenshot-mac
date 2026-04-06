@@ -295,9 +295,9 @@ struct ContentView: View {
     private var currentProjectSection: some View {
         Section("Current Project") {
             Button("Rename Project...") {
-                dialogText = state.activeProject?.name ?? ""
                 // Defer to next tick so menu dismisses before alert presents
                 Task { @MainActor in
+                    dialogText = state.activeProject?.name ?? ""
                     isRenamingProject = true
                 }
             }
