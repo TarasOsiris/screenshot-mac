@@ -872,7 +872,7 @@ private struct CanvasShapeContextMenuContent: View {
                     )
                 }
                 if let onMatchDeviceSizes {
-                    Button("Resize to Fit All Devices", action: onMatchDeviceSizes)
+                    Button("Match Size to Other Devices", action: onMatchDeviceSizes)
                 }
                 Divider()
             }
