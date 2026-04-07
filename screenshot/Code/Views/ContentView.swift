@@ -499,6 +499,17 @@ struct ContentView: View {
         }
         .disabled(state.rows.isEmpty)
 
+        if state.localeState.locales.count > 1 {
+            Menu("Export Locale") {
+                ForEach(state.localeState.locales) { locale in
+                    Button(locale.flagLabel) {
+                        exportScreenshots(localeFilter: locale.code)
+                    }
+                }
+            }
+            .disabled(state.rows.isEmpty)
+        }
+
         if hasLastExportDestination {
             Button("Open Export Folder") {
                 openLastExportFolder()
@@ -554,18 +565,18 @@ struct ContentView: View {
         state.setZoomLevel(editorViewportHeight / baseHeight)
     }
 
-    private func exportScreenshots() {
+    private func exportScreenshots(localeFilter: String? = nil) {
         if let savedURL = lastExportFolderURL() {
-            exportScreenshots(to: savedURL)
+            exportScreenshots(to: savedURL, localeFilter: localeFilter)
         } else {
-            exportScreenshotsAs()
+            exportScreenshotsAs(localeFilter: localeFilter)
         }
     }
 
-    private func exportScreenshotsAs() {
+    private func exportScreenshotsAs(localeFilter: String? = nil) {
         guard let url = chooseExportDestination() else { return }
         saveLastExportFolder(url)
-        exportScreenshots(to: url)
+        exportScreenshots(to: url, localeFilter: localeFilter)
     }
 
     private func exportRowImages() {
@@ -645,7 +656,7 @@ struct ContentView: View {
         ExportFolderService.chooseFolder()
     }
 
-    private func exportScreenshots(to url: URL) {
+    private func exportScreenshots(to url: URL, localeFilter: String? = nil) {
         let didAccess = url.startAccessingSecurityScopedResource()
         guard didAccess else {
             // Permission lost — clear stale bookmark and ask user to pick again
@@ -661,7 +672,7 @@ struct ContentView: View {
         exportError = nil
         exportProgress = 0
 
-        let localeCount = max(1, state.localeState.locales.count)
+        let localeCount = localeFilter == nil ? max(1, state.localeState.locales.count) : 1
         exportTotal = localeCount * state.rows.reduce(0) { $0 + $1.templates.count }
 
         exportTask = Task {
@@ -684,6 +695,7 @@ struct ContentView: View {
                         return state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
                     },
                     localeState: state.localeState,
+                    localeFilter: localeFilter,
                     availableFontFamilies: state.availableFontFamilySet,
                     onProgress: { completed in
                         exportProgress = completed

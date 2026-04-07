@@ -25,6 +25,7 @@ struct ExportService {
         format: ExportImageFormat = .png,
         imageProvider: (_ row: ScreenshotRow, _ localeCode: String) -> [String: NSImage],
         localeState: LocaleState = .default,
+        localeFilter: String? = nil,
         availableFontFamilies: Set<String>? = nil,
         onProgress: (@MainActor (Int) -> Void)? = nil
     ) async throws -> URL {
@@ -32,8 +33,19 @@ struct ExportService {
         let rootFolder = uniqueFolder(named: rootName, in: folderURL)
         try FileManager.default.createDirectory(at: rootFolder, withIntermediateDirectories: true)
 
+        // Folder layout is determined by the project's full locale set, not the filter,
+        // so a single-locale export still nests under its locale subfolder when the
+        // project has multiple locales configured.
         let multiLocale = localeState.locales.count > 1
-        let localesToExport = multiLocale ? localeState.locales : [localeState.locales.first ?? LocaleDefinition(code: "en", label: "English")]
+        let allLocales = localeState.locales.isEmpty
+            ? [LocaleDefinition(code: "en", label: "English")]
+            : localeState.locales
+        let localesToExport: [LocaleDefinition]
+        if let localeFilter, let match = allLocales.first(where: { $0.code == localeFilter }) {
+            localesToExport = [match]
+        } else {
+            localesToExport = allLocales
+        }
 
         var completed = 0
 
