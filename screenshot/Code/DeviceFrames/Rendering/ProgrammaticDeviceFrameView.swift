@@ -26,6 +26,8 @@ struct ProgrammaticDeviceFrameView: View {
             macBookFrame
         case .androidPhone:
             androidPhoneFrame
+        case .pixel9:
+            pixel9Frame
         case .androidTablet:
             androidTabletFrame
         case .invisible:
@@ -296,6 +298,61 @@ struct ProgrammaticDeviceFrameView: View {
             shineOverlay(bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH)
         }
         .frame(width: totalW, height: bodyH)
+    }
+
+    private var pixel9Frame: some View {
+        let s = scale
+        let dims = category.bodyDimensions
+        let bodyW: CGFloat = dims.width * s
+        let bodyH: CGFloat = dims.height * s
+
+        let outerRimW: CGFloat = bodyW * (7.0 / 452.0)
+        let innerRimW: CGFloat = bodyW * (13.0 / 452.0)
+        let totalBezel: CGFloat = outerRimW + innerRimW
+        let screenW: CGFloat = bodyW - totalBezel * 2
+        let screenH: CGFloat = bodyH - totalBezel * 2
+
+        let bodyCornerR: CGFloat = bodyW * (76.0 / 452.0)
+        let midCornerR: CGFloat = bodyW * (70.0 / 452.0)
+        let screenCornerR: CGFloat = bodyW * (57.0 / 452.0)
+
+        let cameraR: CGFloat = bodyW * (15.0 / 452.0)
+        let cameraCenterY: CGFloat = bodyH * (54.0 / 964.0)
+
+        let bodyShape = RoundedRectangle(cornerRadius: bodyCornerR, style: .continuous)
+        let midShape = RoundedRectangle(cornerRadius: midCornerR, style: .continuous)
+        let screenShape = RoundedRectangle(cornerRadius: screenCornerR, style: .continuous)
+
+        let innerRimColor = Color(red: 0.141, green: 0.125, blue: 0.125)
+
+        return ZStack {
+            bodyShape
+                .fill(bodyColor)
+                .frame(width: bodyW, height: bodyH)
+                .shadow(color: .black.opacity(0.25), radius: 4 * s, y: 2 * s)
+
+            midShape
+                .fill(innerRimColor)
+                .frame(width: bodyW - outerRimW * 2, height: bodyH - outerRimW * 2)
+
+            screenArea(
+                screenShape: screenShape,
+                screenW: screenW,
+                screenH: screenH,
+                bodyShape: bodyShape,
+                bodyW: bodyW,
+                bodyH: bodyH,
+                s: s
+            )
+
+            Circle()
+                .fill(.black)
+                .frame(width: cameraR * 2, height: cameraR * 2)
+                .offset(y: -(bodyH / 2 - cameraCenterY))
+
+            shineOverlay(bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH)
+        }
+        .frame(width: bodyW, height: bodyH)
     }
 
     private var androidTabletFrame: some View {

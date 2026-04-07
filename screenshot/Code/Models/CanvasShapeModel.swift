@@ -60,6 +60,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
     case ipadPro13
     case macbook
     case androidPhone = "android"
+    case pixel9
     case androidTablet
     case invisible
 
@@ -70,6 +71,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .ipadPro13: "iPad Pro 13\""
         case .macbook: "MacBook"
         case .androidPhone: "Android Phone"
+        case .pixel9: "Abstract Pixel 9"
         case .androidTablet: "Android Tablet"
         case .invisible: "Invisible"
         }
@@ -80,7 +82,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .iphone: "iphone"
         case .ipadPro11, .ipadPro13: "ipad"
         case .macbook: "laptopcomputer"
-        case .androidPhone: "iphone.gen3"
+        case .androidPhone, .pixel9: "iphone.gen3"
         case .androidTablet: "ipad.gen2"
         case .invisible: "rectangle.dashed"
         }
@@ -94,6 +96,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .ipadPro13: "2064x2752"
         case .macbook: "2880x1800"
         case .androidPhone: "1080x1920"
+        case .pixel9: "1280x2856"
         case .androidTablet: "1200x1920"
         case .invisible: "1206x2622"
         }
@@ -128,6 +131,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
     /// iPad Pro 13": 215.5 x 281.6 mm → 663 x 867.
     /// MacBook: generic 16:10 landscape proportion.
     /// Android Phone: generic modern phone ~72 x 153 mm → 221 x 470.
+    /// Pixel 9: abstract Pixel 9 template proportions from 452×964 SVG → 226 x 482.
     /// Android Tablet: generic tablet ~165 x 254 mm → 508 x 782.
     var bodyDimensions: (width: CGFloat, height: CGFloat) {
         switch self {
@@ -136,6 +140,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .ipadPro13: (663, 867)
         case .macbook: (640, 420)
         case .androidPhone: (221, 470)
+        case .pixel9: (226, 482)
         case .androidTablet: (508, 782)
         case .invisible: (220, 468)
         }
@@ -146,7 +151,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
     var buttonDepth: CGFloat {
         switch self {
         case .iphone, .androidPhone: 2.5
-        case .ipadPro11, .ipadPro13, .macbook, .androidTablet, .invisible: 0
+        case .ipadPro11, .ipadPro13, .macbook, .pixel9, .androidTablet, .invisible: 0
         }
     }
 
@@ -158,6 +163,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .ipadPro13: (27.0, 26.0)
         case .macbook: (40, 40)
         case .androidPhone: (4.0, 4.0)
+        case .pixel9: (10, 10)
         case .androidTablet: (18.0, 18.0)
         case .invisible: (0, 0)
         }
@@ -170,6 +176,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .ipadPro11, .ipadPro13: 55
         case .macbook: 20
         case .androidPhone: 30
+        case .pixel9: 38
         case .androidTablet: 40
         case .invisible: 0
         }
@@ -181,7 +188,7 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .iphone: 33
         case .ipadPro11, .ipadPro13: 29
         case .macbook: 10
-        case .androidPhone: 28
+        case .androidPhone, .pixel9: 28
         case .androidTablet: 20
         case .invisible: 0
         }
@@ -251,6 +258,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     static let deviceMinSize: CGFloat = 200
     static let defaultDeviceBodyColor = Color.black
     static let defaultDevice3DBodyColor = Color(white: 0x91 / 255.0)
+    static let defaultPixel9BodyColor = Color(white: 0xA9 / 255.0)
     static let defaultDeviceModelPitch: Double = -22
     static let defaultDeviceModelYaw: Double = -14
     static let defaultFontSize: CGFloat = 72
@@ -572,6 +580,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     func resolvedDeviceBodyColor(default defaultColor: Color) -> Color {
         if let override = deviceBodyColorData?.color { return override }
         if supportsDeviceModelRotation { return Self.defaultDevice3DBodyColor }
+        if deviceCategory == .pixel9 { return Self.defaultPixel9BodyColor }
         return defaultColor
     }
 

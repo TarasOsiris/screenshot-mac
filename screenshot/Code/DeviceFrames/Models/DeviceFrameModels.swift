@@ -19,7 +19,7 @@ enum DeviceFrameFamily: String, CaseIterable, Identifiable {
         case .iphone:
             [.iphone]
         case .android:
-            [.androidPhone, .androidTablet]
+            [.androidPhone, .pixel9, .androidTablet]
         case .ipad:
             [.ipadPro11, .ipadPro13]
         case .mac:
@@ -116,7 +116,7 @@ struct DeviceFrame: Identifiable, Equatable {
             return isLandscape ? "ipad.landscape" : "ipad"
         case .macbook:
             return "laptopcomputer"
-        case .androidPhone:
+        case .androidPhone, .pixel9:
             return isLandscape ? "iphone.gen3.landscape" : "iphone.gen3"
         case .androidTablet:
             return isLandscape ? "ipad.gen2.landscape" : "ipad.gen2"
