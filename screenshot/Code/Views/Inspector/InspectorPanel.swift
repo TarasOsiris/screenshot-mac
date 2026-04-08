@@ -224,7 +224,7 @@ struct InspectorPanel: View {
                 DevicePickerMenu(
                     category: defaultDeviceCategory(for: rowId),
                     frameId: defaultDeviceFrameId(for: rowId),
-                    presentation: .toolbar,
+                    presentation: .sidebar,
                     bodyColor: defaultDeviceIsAbstract(for: rowId) ? rowDefaultDeviceBodyColorBinding(for: rowId) : nil,
                     bodyColorLabel: "Default color",
                     onSelectNone: {

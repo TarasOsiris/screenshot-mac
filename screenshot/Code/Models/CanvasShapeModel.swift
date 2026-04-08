@@ -709,7 +709,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     /// Optionally re-centers horizontally at `centerX`.
     /// Invisible frames skip aspect ratio enforcement — they keep their current dimensions.
     mutating func adjustToDeviceAspectRatio(centerX: CGFloat? = nil) {
-        if deviceCategory == .invisible {
+        if deviceCategory == .invisible && deviceFrameId == nil {
             if let cx = centerX { x = cx - width / 2 }
             return
         }

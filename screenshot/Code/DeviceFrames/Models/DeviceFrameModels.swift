@@ -10,6 +10,7 @@ enum DeviceFrameFamily: String, CaseIterable, Identifiable {
     case android = "Android"
     case ipad = "iPad"
     case mac = "Mac"
+    case watch = "Watch"
     case other = "Other"
 
     var id: String { rawValue }
@@ -24,6 +25,8 @@ enum DeviceFrameFamily: String, CaseIterable, Identifiable {
             [.ipadPro11, .ipadPro13]
         case .mac:
             [.macbook]
+        case .watch:
+            []
         case .other:
             [.invisible]
         }
@@ -91,6 +94,8 @@ struct DeviceFrameCatalogEntry {
     let baseSpec: DeviceFrameImageSpec
     let modelSpec: DeviceFrameModelSpec?
     let landscapeOnly: Bool
+    var landscapeFromRotation: Bool = false
+    var iconOverride: String? = nil
     let suggestedSizePreset: String?
 }
 
@@ -104,11 +109,16 @@ struct DeviceFrame: Identifiable, Equatable {
     let imageName: String?
     let spec: DeviceFrameImageSpec
     let modelSpec: DeviceFrameModelSpec?
+    let iconOverride: String?
+    /// When true, the asset is the portrait PNG and the renderer must rotate it 90° clockwise.
+    /// `spec` already reflects the post-rotation (landscape) dimensions.
+    var isLandscapeRotation: Bool = false
 
     var orientationLabel: String { isLandscape ? "Landscape" : "Portrait" }
     var isModelBacked: Bool { modelSpec != nil }
 
     var icon: String {
+        if let iconOverride { return iconOverride }
         switch fallbackCategory {
         case .iphone:
             return isLandscape ? "iphone.landscape" : "iphone"
@@ -151,6 +161,7 @@ struct DeviceFrameGroup: Identifiable {
     let colorGroups: [DeviceFrameColorGroup]
 
     var frames: [DeviceFrame] { colorGroups.flatMap(\.frames) }
+    var prefersVariantMenu: Bool { family == .watch }
 }
 
 struct DeviceFrameCatalogSection: Identifiable {
@@ -198,3 +209,4 @@ private enum DeviceFrameColorSwatches {
         }
     }
 }
+

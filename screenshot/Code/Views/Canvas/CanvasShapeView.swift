@@ -1162,7 +1162,7 @@ private struct CanvasShapeHandlesOverlay: View {
                     let effectiveScale = displayScale * zoom
                     let tx = value.translation.width / effectiveScale
                     let ty = value.translation.height / effectiveScale
-                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift) || (shape.type == .device && shape.deviceCategory != .invisible)
+                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift) || (shape.type == .device && (shape.deviceFrameId != nil || shape.deviceCategory != .invisible))
                     resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
                 }
                 .onEnded { _ in

@@ -3,6 +3,7 @@ import SwiftUI
 enum DevicePickerPresentation {
     case form
     case inline
+    case sidebar
     case toolbar
 }
 
@@ -56,6 +57,8 @@ struct DevicePickerMenu: View {
 
     private var layout: AnyLayout {
         switch presentation {
+        case .sidebar:
+            AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
         case .form, .inline, .toolbar:
             AnyLayout(HStackLayout(alignment: .center, spacing: 8))
         }
@@ -66,6 +69,7 @@ struct DevicePickerMenu: View {
             menuButton
             accessoryControls
         }
+        .frame(maxWidth: presentation == .sidebar ? .infinity : nil, alignment: .leading)
     }
 
     @ViewBuilder
@@ -89,12 +93,7 @@ struct DevicePickerMenu: View {
                 usePreferredFrameButtons: true
             )
         } label: {
-            HStack(spacing: 6) {
-                Image(systemName: resolvedIcon)
-                Text(resolvedLabel)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
+            menuLabel
         }
 
         switch presentation {
@@ -102,6 +101,10 @@ struct DevicePickerMenu: View {
             menu
                 .menuStyle(.button)
                 .fixedSize()
+        case .sidebar:
+            menu
+                .menuStyle(.button)
+                .frame(maxWidth: .infinity, alignment: .leading)
         case .form, .inline:
             menu.menuStyle(.button)
         }
@@ -118,14 +121,28 @@ struct DevicePickerMenu: View {
 
     @ViewBuilder
     private func frameAccessoryControls(frame: DeviceFrame) -> some View {
-        HStack(spacing: 6) {
+        let layout: AnyLayout = presentation == .sidebar
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+            : AnyLayout(HStackLayout(spacing: 6))
+
+        layout {
             if showsColorOptions, let group = resolvedGroup {
-                DeviceFrameColorSelector(
-                    group: group,
-                    selectedFrame: frame,
-                    compact: true,
-                    onSelectFrame: onSelectFrame
-                )
+                labeledIfSidebar(group.prefersVariantMenu ? "Watch style" : "Frame color") {
+                    if group.prefersVariantMenu {
+                        DeviceFrameVariantSelector(
+                            group: group,
+                            selectedFrame: frame,
+                            onSelectFrame: onSelectFrame
+                        )
+                    } else {
+                        DeviceFrameColorSelector(
+                            group: group,
+                            selectedFrame: frame,
+                            compact: true,
+                            onSelectFrame: onSelectFrame
+                        )
+                    }
+                }
             }
 
             if frame.isModelBacked, let bodyColor {
@@ -133,9 +150,23 @@ struct DevicePickerMenu: View {
             }
 
             if canToggleOrientation {
-                OrientationPicker(isLandscape: orientationBinding(for: frame), labelsHidden: true)
-                    .frame(width: 72)
+                labeledIfSidebar("Orientation") {
+                    OrientationPicker(isLandscape: orientationBinding(for: frame), labelsHidden: true)
+                        .frame(width: 72, alignment: .leading)
+                }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func labeledIfSidebar<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        if presentation == .sidebar {
+            sidebarField(title, content: content)
+        } else {
+            content()
         }
     }
 
@@ -157,7 +188,42 @@ struct DevicePickerMenu: View {
                     .help(bodyColorLabel)
                 resetBodyColorButton
             }
+        case .sidebar:
+            sidebarField(bodyColorLabel) {
+                HStack(spacing: 6) {
+                    ColorPicker("", selection: bodyColor, supportsOpacity: false)
+                        .labelsHidden()
+                        .help(bodyColorLabel)
+                    resetBodyColorButton
+                }
+            }
         }
+    }
+
+    private var menuLabel: some View {
+        HStack(spacing: 6) {
+            Image(systemName: resolvedIcon)
+            Text(resolvedLabel)
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            if presentation == .sidebar {
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private func sidebarField<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title)
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -207,6 +273,140 @@ struct OrientationPicker: View {
         } else {
             picker
         }
+    }
+}
+
+private struct WatchVariantDescriptor {
+    let bandName: String
+    let title: String
+    let subtitle: String?
+    let selectionLabel: String
+
+    init(variantName: String) {
+        let finishes = ["Black", "Natural"]
+        let bandNames = ["Alpine Loop", "Milanese Loop", "Ocean Band", "Trail Loop"]
+
+        guard
+            let finish = finishes.first(where: { variantName.hasPrefix("\($0) ") })
+        else {
+            bandName = "Watch"
+            title = variantName
+            subtitle = nil
+            selectionLabel = variantName
+            return
+        }
+
+        let remainder = String(variantName.dropFirst(finish.count + 1))
+        let band = bandNames.first(where: { remainder.hasPrefix($0) }) ?? "Watch"
+        let bandDetail = String(remainder.dropFirst(band.count)).trimmingCharacters(in: .whitespaces)
+
+        bandName = band
+        title = "\(finish) Case"
+        subtitle = bandDetail.isEmpty ? nil : bandDetail
+        selectionLabel = bandDetail.isEmpty
+            ? "\(band) · \(finish)"
+            : "\(band) · \(finish) / \(bandDetail)"
+    }
+}
+
+private struct DeviceFrameVariantSelector: View {
+    let group: DeviceFrameGroup
+    let selectedFrame: DeviceFrame
+    let onSelectFrame: (DeviceFrame) -> Void
+
+    private struct VariantEntry: Identifiable {
+        let id: String
+        let colorGroup: DeviceFrameColorGroup
+        let descriptor: WatchVariantDescriptor
+    }
+
+    private struct PickerSection: Identifiable {
+        let id: String
+        let title: String
+        var entries: [VariantEntry]
+    }
+
+    private var selectedColorGroup: DeviceFrameColorGroup? {
+        DeviceFrameCatalog.colorGroup(forFrameId: selectedFrame.id)
+    }
+
+    private var sections: [PickerSection] {
+        var sections: [PickerSection] = []
+        for colorGroup in group.colorGroups {
+            let entry = VariantEntry(
+                id: colorGroup.id,
+                colorGroup: colorGroup,
+                descriptor: WatchVariantDescriptor(variantName: colorGroup.name)
+            )
+            if let index = sections.firstIndex(where: { $0.title == entry.descriptor.bandName }) {
+                sections[index].entries.append(entry)
+            } else {
+                sections.append(
+                    PickerSection(
+                        id: entry.descriptor.bandName,
+                        title: entry.descriptor.bandName,
+                        entries: [entry]
+                    )
+                )
+            }
+        }
+        return sections
+    }
+
+    var body: some View {
+        let selectedId = selectedColorGroup?.id
+        let selectionLabel = selectedColorGroup.map { WatchVariantDescriptor(variantName: $0.name).selectionLabel }
+
+        Menu {
+            ForEach(sections) { section in
+                Section(section.title) {
+                    ForEach(section.entries) { entry in
+                        Button {
+                            selectColor(entry.colorGroup.id)
+                        } label: {
+                            variantRow(entry: entry, isSelected: selectedId == entry.colorGroup.id)
+                        }
+                    }
+                }
+            }
+        } label: {
+            Text(selectionLabel ?? "Watch style")
+                .lineLimit(1)
+                .truncationMode(.tail)
+        }
+        .menuStyle(.button)
+        .help("Watch style")
+    }
+
+    private func variantRow(entry: VariantEntry, isSelected: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: entry.colorGroup.frames.first?.icon ?? "applewatch")
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(entry.descriptor.title)
+                if let subtitle = entry.descriptor.subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer(minLength: 12)
+
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .foregroundStyle(Color.accentColor)
+            }
+        }
+    }
+
+    private func selectColor(_ colorGroupId: String) {
+        guard let frame = DeviceFrameCatalog.variant(
+            forFrameId: selectedFrame.id,
+            colorGroupId: colorGroupId
+        ) else { return }
+        onSelectFrame(frame)
     }
 }
 
@@ -299,12 +499,15 @@ private struct DeviceFrameColorChip: View {
             if let swatch = colorGroup.swatch {
                 Circle()
                     .fill(swatch)
+            } else if let frameImageName = colorGroup.frames.first?.imageName {
+                Image(frameImageName)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fill)
+                    .clipShape(Circle())
             } else {
                 Circle()
                     .fill(Color.secondary.opacity(0.16))
-                Text(shortLabel)
-                    .font(.system(size: max(9, size * 0.55), weight: .semibold))
-                    .foregroundStyle(.secondary)
             }
         }
         .frame(width: size, height: size)
@@ -312,10 +515,6 @@ private struct DeviceFrameColorChip: View {
             Circle()
                 .strokeBorder(borderColor, lineWidth: isSelected ? 2 : 1)
         )
-    }
-
-    private var shortLabel: String {
-        String(colorGroup.name.prefix(1))
     }
 
     private var borderColor: Color {

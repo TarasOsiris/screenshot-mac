@@ -124,15 +124,19 @@ enum DeviceFrameCatalog {
             let frames = orientations.map { isLandscape in
                 let orientation = isLandscape ? "landscape" : "portrait"
                 let frameId = "\(entry.groupId)-\(slug)-\(orientation)"
+                let usesRotation = isLandscape && entry.landscapeFromRotation
+                let assetSlug = usesRotation ? "\(entry.groupId)-\(slug)-portrait" : frameId
                 return DeviceFrame(
                     id: frameId,
                     modelName: entry.modelName,
                     colorName: color,
                     isLandscape: isLandscape,
                     fallbackCategory: entry.fallbackCategory,
-                    imageName: entry.modelSpec == nil ? "DeviceFrames/\(frameId)" : nil,
+                    imageName: entry.modelSpec == nil ? "DeviceFrames/\(assetSlug)" : nil,
                     spec: isLandscape ? landscapeSpec : entry.baseSpec,
-                    modelSpec: entry.modelSpec
+                    modelSpec: entry.modelSpec,
+                    iconOverride: entry.iconOverride,
+                    isLandscapeRotation: usesRotation
                 )
             }
 

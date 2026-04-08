@@ -54,4 +54,14 @@ struct DeviceFrameCatalogTests {
 
         #expect(preset == "2622x1206")
     }
+
+    @Test func appleWatchExposesBothOrientationsViaRotation() {
+        let portraitId = "applewatchultra3-blackoceanbandblack-portrait"
+        let landscape = DeviceFrameCatalog.variant(forFrameId: portraitId, isLandscape: true)
+
+        #expect(DeviceFrameCatalog.frame(for: portraitId) != nil)
+        #expect(landscape?.isLandscape == true)
+        #expect(landscape?.spec.frameWidth == 960)
+        #expect(landscape?.spec.frameHeight == 600)
+    }
 }

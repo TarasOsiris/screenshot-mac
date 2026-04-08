@@ -45,10 +45,19 @@ struct DeviceFrameImageView: View {
             )
 
             if let frameImage {
-                Image(nsImage: frameImage)
+                let baseImage = Image(nsImage: frameImage)
                     .resizable()
                     .interpolation(.high)
-                    .frame(width: width, height: height)
+
+                if frame.isLandscapeRotation {
+                    baseImage
+                        .frame(width: height, height: width)
+                        .rotationEffect(.degrees(90))
+                        .frame(width: width, height: height)
+                } else {
+                    baseImage
+                        .frame(width: width, height: height)
+                }
             }
         }
         .frame(width: width, height: height)

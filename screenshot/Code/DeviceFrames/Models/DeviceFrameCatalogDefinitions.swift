@@ -82,6 +82,15 @@ enum DeviceFrameCatalogDefinitions {
         screenBottom: 124,
         screenCornerRadius: 54
     )
+    private static let appleWatchUltra3Spec = DeviceFrameImageSpec(
+        frameWidth: 600,
+        frameHeight: 960,
+        screenLeft: 71,
+        screenTop: 204,
+        screenRight: 71,
+        screenBottom: 204,
+        screenCornerRadius: 160
+    )
     private static let iphone16ModelSpec = DeviceFrameImageSpec(
         frameWidth: 148.05,
         frameHeight: 300.0,
@@ -217,6 +226,33 @@ enum DeviceFrameCatalogDefinitions {
             modelSpec: nil,
             landscapeOnly: true,
             suggestedSizePreset: "2880x1800"
+        ),
+        DeviceFrameCatalogEntry(
+            groupId: "applewatchultra3",
+            modelName: "Apple Watch Ultra 3",
+            family: .watch,
+            fallbackCategory: .invisible,
+            colors: [
+                "Black Alpine Loop Black",
+                "Black Alpine Loop Light Blue",
+                "Natural Alpine Loop Light Blue",
+                "Natural Alpine Loop Terra Cotta",
+                "Black Milanese Loop",
+                "Natural Milanese Loop",
+                "Black Ocean Band Anchor Blue",
+                "Black Ocean Band Black",
+                "Natural Ocean Band Anchor Blue",
+                "Natural Ocean Band Neon Green",
+                "Black Trail Loop Black Charcoal",
+                "Natural Trail Loop Blue Bright Blue",
+                "Natural Trail Loop Green Neon",
+            ],
+            baseSpec: appleWatchUltra3Spec,
+            modelSpec: nil,
+            landscapeOnly: false,
+            landscapeFromRotation: true,
+            iconOverride: "applewatch",
+            suggestedSizePreset: "410x502"
         ),
         DeviceFrameCatalogEntry(
             groupId: "imac24",
