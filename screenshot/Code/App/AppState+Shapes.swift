@@ -21,11 +21,25 @@ extension AppState {
     }
 
     func updateShape(_ shape: CanvasShapeModel) {
-        guard let rowIdx = selectedRowIndex,
-              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shape.id }) else { return }
-        registerUndoForRow(at: rowIdx, "Edit Shape")
-        let baseShape = rows[rowIdx].shapes[shapeIdx]
-        rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
+        guard let location = shapeLocation(for: shape.id) else { return }
+        let shouldRebase = continuousEditShapeId == shape.id
+        let staleBaseShape = shouldRebase ? rows[location.rowIndex].shapes[location.shapeIndex] : nil
+        if shouldRebase {
+            finishContinuousEditIfNeeded()
+            guard let refreshed = shapeLocation(for: shape.id) else { return }
+            let rowIdx = refreshed.rowIndex
+            let shapeIdx = refreshed.shapeIndex
+            registerUndoForRow(at: rowIdx, "Edit Shape")
+            let baseShape = rows[rowIdx].shapes[shapeIdx]
+            let updatedShape = shape.rebased(from: staleBaseShape!, onto: baseShape)
+            rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: updatedShape, localeState: &localeState)
+        } else {
+            let rowIdx = location.rowIndex
+            let shapeIdx = location.shapeIndex
+            registerUndoForRow(at: rowIdx, "Edit Shape")
+            let baseShape = rows[rowIdx].shapes[shapeIdx]
+            rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
+        }
         scheduleSave()
     }
 
@@ -35,9 +49,14 @@ extension AppState {
     /// at the start and finalized after changes stop (debounced). Throttled to ~30fps
     /// to avoid expensive re-renders on every slider tick.
     func updateShapeContinuous(_ shape: CanvasShapeModel) {
-        if continuousEditBaseRow == nil, let rowIdx = selectedRowIndex {
-            continuousEditBaseRow = rows[rowIdx]
+        if let activeShapeId = continuousEditShapeId, activeShapeId != shape.id {
+            finishContinuousEditIfNeeded()
+        }
+
+        if continuousEditBaseRow == nil, let location = shapeLocation(for: shape.id) {
+            continuousEditBaseRow = rows[location.rowIndex]
             continuousEditBaseLocaleState = localeState
+            continuousEditShapeId = shape.id
         }
 
         let now = CFAbsoluteTimeGetCurrent()
@@ -66,14 +85,13 @@ extension AppState {
             guard let self, let baseRow = self.continuousEditBaseRow else { return }
             self.flushPendingContinuousEdit()
             self.registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: self.continuousEditBaseLocaleState)
-            self.continuousEditBaseRow = nil
-            self.continuousEditBaseLocaleState = nil
+            self.resetContinuousEditState()
         }
         continuousEditUndoTask = undoTask
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: undoTask)
     }
 
-    private func flushPendingContinuousEdit() {
+    func flushPendingContinuousEdit() {
         guard let pending = continuousEditPending else { return }
         applyContinuousEdit(pending)
         continuousEditPending = nil
@@ -83,8 +101,9 @@ extension AppState {
     }
 
     private func applyContinuousEdit(_ shape: CanvasShapeModel) {
-        guard let rowIdx = selectedRowIndex,
-              let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shape.id }) else { return }
+        guard let location = shapeLocation(for: shape.id) else { return }
+        let rowIdx = location.rowIndex
+        let shapeIdx = location.shapeIndex
         let baseShape = rows[rowIdx].shapes[shapeIdx]
         rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
         scheduleSave()

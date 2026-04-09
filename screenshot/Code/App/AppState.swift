@@ -64,6 +64,7 @@ final class AppState {
     @ObservationIgnored var continuousEditLastApply: CFAbsoluteTime = 0
     @ObservationIgnored var continuousEditPending: CanvasShapeModel?
     @ObservationIgnored var continuousEditFlushTask: DispatchWorkItem?
+    @ObservationIgnored var continuousEditShapeId: UUID?
     @ObservationIgnored var zoomPersistTask: DispatchWorkItem?
 
     /// Single-selection convenience: returns the sole selected shape ID, or nil.
@@ -164,6 +165,7 @@ final class AppState {
     /// Full snapshot undo — captures ALL rows + localeState. Use for multi-row operations
     /// (add/delete/move row, etc.) where the row count or order changes.
     func registerUndo(_ actionName: String) {
+        finishContinuousEditIfNeeded()
         registerUndoWithBase(actionName, base: rows, baseLocaleState: localeState)
     }
 
@@ -192,6 +194,7 @@ final class AppState {
     /// Row-scoped undo — captures only one row + localeState. Use for single-row mutations
     /// (shape edits, template changes, row property edits) where row count/order doesn't change.
     func registerUndoForRow(at rowIndex: Int, _ actionName: String) {
+        finishContinuousEditIfNeeded()
         registerUndoForRowWithBase(actionName, baseRow: rows[rowIndex], baseLocaleState: localeState)
     }
 
@@ -251,11 +254,35 @@ final class AppState {
         baseTextBaseRow = nil
         continuousEditUndoTask?.cancel()
         continuousEditUndoTask = nil
-        continuousEditBaseRow = nil
-        continuousEditBaseLocaleState = nil
         continuousEditFlushTask?.cancel()
         continuousEditFlushTask = nil
         continuousEditPending = nil
+        resetContinuousEditState()
+    }
+
+    func resetContinuousEditState() {
+        continuousEditBaseRow = nil
+        continuousEditBaseLocaleState = nil
+        continuousEditShapeId = nil
+        continuousEditLastApply = 0
+    }
+
+    func finishContinuousEditIfNeeded() {
+        guard continuousEditBaseRow != nil
+            || continuousEditPending != nil
+            || continuousEditUndoTask != nil
+            || continuousEditFlushTask != nil
+        else { return }
+
+        continuousEditUndoTask?.cancel()
+        continuousEditUndoTask = nil
+        flushPendingContinuousEdit()
+
+        if let baseRow = continuousEditBaseRow {
+            registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: continuousEditBaseLocaleState)
+        }
+
+        resetContinuousEditState()
     }
 
     func makeDefaultRow(id: UUID = UUID(), label: String? = nil, width: CGFloat? = nil, height: CGFloat? = nil) -> ScreenshotRow {

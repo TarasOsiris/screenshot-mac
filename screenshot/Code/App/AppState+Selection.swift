@@ -5,6 +5,7 @@ extension AppState {
     // MARK: - Selection
 
     func selectRow(_ id: UUID?) {
+        finishContinuousEditIfNeeded()
         guard let id else {
             deselectAll()
             return
@@ -19,6 +20,7 @@ extension AppState {
     }
 
     func selectShape(_ shapeId: UUID, in rowId: UUID) {
+        finishContinuousEditIfNeeded()
         guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
               rows[rowIdx].shapes.contains(where: { $0.id == shapeId }) else { return }
         selectedRowId = rowId
@@ -26,6 +28,7 @@ extension AppState {
     }
 
     func toggleShapeSelection(_ shapeId: UUID, in rowId: UUID) {
+        finishContinuousEditIfNeeded()
         guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
               rows[rowIdx].shapes.contains(where: { $0.id == shapeId }) else { return }
         // Different row → switch row and select just this shape
@@ -46,11 +49,13 @@ extension AppState {
     }
 
     func selectAllShapesInRow() {
+        finishContinuousEditIfNeeded()
         guard let rowIdx = selectedRowIndex else { return }
         selectedShapeIds = Set(rows[rowIdx].activeShapes.map(\.id))
     }
 
     func deselectAll() {
+        finishContinuousEditIfNeeded()
         selectedShapeIds = []
         selectedRowId = nil
         isEditingText = false
