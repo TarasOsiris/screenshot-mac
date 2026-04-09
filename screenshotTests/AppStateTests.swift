@@ -469,22 +469,43 @@ struct AppStateTests {
         defer { cleanup(tempDir) }
         let initial = state.zoomLevel
         state.zoomLevel = 1.0
-        state.zoomLevel = min(2.0, state.zoomLevel + 0.25)
+        state.zoomLevel = min(ZoomConstants.max, state.zoomLevel + ZoomConstants.step)
         #expect(state.zoomLevel == 1.25)
-        state.zoomLevel = max(0.75, state.zoomLevel - 0.25)
+        state.zoomLevel = max(ZoomConstants.min, state.zoomLevel - ZoomConstants.step)
         #expect(state.zoomLevel == 1.0)
     }
 
     @Test func zoomClampsToRange() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
-        state.zoomLevel = 2.0
-        state.zoomLevel = min(2.0, state.zoomLevel + 0.25)
-        #expect(state.zoomLevel == 2.0, "Cannot exceed max")
+        state.zoomLevel = ZoomConstants.max
+        state.zoomLevel = min(ZoomConstants.max, state.zoomLevel + ZoomConstants.step)
+        #expect(state.zoomLevel == ZoomConstants.max, "Cannot exceed max")
 
-        state.zoomLevel = 0.75
-        state.zoomLevel = max(0.75, state.zoomLevel - 0.25)
-        #expect(state.zoomLevel == 0.75, "Cannot go below min")
+        state.zoomLevel = ZoomConstants.min
+        state.zoomLevel = max(ZoomConstants.min, state.zoomLevel - ZoomConstants.step)
+        #expect(state.zoomLevel == ZoomConstants.min, "Cannot go below min")
+    }
+
+    @Test func saveImageDoesNotMutateStateWhenWriteFails() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let shapeId = try #require(state.rows.first?.shapes.first?.id)
+        let writeError = NSError(
+            domain: "AppStateTests",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Disk full"]
+        )
+        ImageResourceIO.writeData = { _, _ in throw writeError }
+        defer { ImageResourceIO.writeData = ImageResourceIO.defaultWriteData }
+
+        state.saveImage(makeTestImage(width: 1200, height: 2600), for: shapeId)
+
+        let shape = try #require(state.rows.first?.shapes.first(where: { $0.id == shapeId }))
+        #expect(shape.displayImageFileName == nil)
+        #expect(state.screenshotImages.isEmpty)
+        #expect(state.saveError?.contains("Disk full") == true)
     }
 
     // MARK: - Nudge

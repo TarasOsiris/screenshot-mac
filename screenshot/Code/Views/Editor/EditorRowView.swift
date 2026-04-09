@@ -20,6 +20,7 @@ struct EditorRowView: View {
     @State private var draggingShapeId: UUID?
     @State private var isEditingLabel = false
     @State private var editingLabelText = ""
+    @State private var exportError: String?
     /// Cached snap targets for non-selected shapes during drag.
     @State private var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
     @FocusState private var isLabelFieldFocused: Bool
@@ -174,6 +175,14 @@ struct EditorRowView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will remove all screenshots and shapes from \"\(row.label)\" and restore default settings.")
+        }
+        .alert("Export Failed", isPresented: Binding(
+            get: { exportError != nil },
+            set: { if !$0 { exportError = nil } }
+        )) {
+            Button("OK") { exportError = nil }
+        } message: {
+            Text(exportError ?? "")
         }
         .sheet(isPresented: $isSvgDialogPresented) {
             SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
@@ -818,24 +827,38 @@ struct EditorRowView: View {
         Task { @MainActor in
             defer { if didAccess { folder.stopAccessingSecurityScopedResource() } }
 
-            let localeCode = state.localeState.activeLocaleCode
-            let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
+            do {
+                let localeCode = state.localeState.activeLocaleCode
+                let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
+                let rowBackground = ExportService.renderComposedBackgroundImage(
+                    row: row,
+                    screenshotImages: images,
+                    displayScale: 1.0,
+                    labelPrefix: "row export"
+                )
 
-            try? await withThrowingTaskGroup(of: Void.self) { group in
-                for index in row.templates.indices {
-                    let image = ExportService.renderSingleTemplateImage(
-                        index: index, row: row, screenshotImages: images,
-                        localeCode: localeCode, localeState: state.localeState
-                    )
-                    let padded = String(format: "%02d", index + 1)
-                    let fileURL = folder.appendingPathComponent("\(padded)_screenshot.png")
-                    group.addTask {
-                        guard let data = ExportService.encodeImage(image, format: .png) else { return }
-                        try data.write(to: fileURL)
+                try await withThrowingTaskGroup(of: Void.self) { group in
+                    for index in row.templates.indices {
+                        let image = ExportService.renderSingleTemplateImage(
+                            index: index, row: row, screenshotImages: images,
+                            localeCode: localeCode, localeState: state.localeState,
+                            preRenderedRowBackground: rowBackground
+                        )
+                        let padded = String(format: "%02d", index + 1)
+                        let fileURL = folder.appendingPathComponent("\(padded)_screenshot.png")
+                        group.addTask {
+                            guard let data = ExportService.encodeImage(image, format: .png) else {
+                                throw ExportError.renderFailed
+                            }
+                            try data.write(to: fileURL)
+                        }
                     }
+                    try await group.waitForAll()
                 }
+                NSWorkspace.shared.activateFileViewerSelecting([folder])
+            } catch {
+                exportError = "Could not export row screenshots: \(error.localizedDescription)"
             }
-            NSWorkspace.shared.activateFileViewerSelecting([folder])
         }
     }
 
@@ -863,8 +886,14 @@ struct EditorRowView: View {
                 localeCode: localeCode, localeState: state.localeState
             )
         }
-        guard let data = ExportService.encodeImage(image, format: .png) else { return }
-        try? data.write(to: url)
+        do {
+            guard let data = ExportService.encodeImage(image, format: .png) else {
+                throw ExportError.renderFailed
+            }
+            try data.write(to: url)
+        } catch {
+            exportError = "Could not export row image: \(error.localizedDescription)"
+        }
     }
 
     @ViewBuilder

@@ -2,8 +2,9 @@ import SwiftUI
 
 enum ZoomConstants {
     static let min: CGFloat = 0.50
-    static let max: CGFloat = 2.0
+    static let max: CGFloat = 3.0
     static let step: CGFloat = 0.25
+    static let presets: [CGFloat] = Array(stride(from: min, through: max, by: step))
 }
 
 struct ZoomControls: View {
@@ -11,8 +12,6 @@ struct ZoomControls: View {
     @State private var isPopoverPresented = false
     var onFit: (() -> Void)? = nil
     var fitHelpText = "Fit canvas to the window"
-
-    private let presets: [CGFloat] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
 
     var body: some View {
         @Bindable var state = state
@@ -39,7 +38,7 @@ struct ZoomControls: View {
                         .font(.system(size: 12, weight: .semibold))
 
                     HStack(spacing: 6) {
-                        ForEach(presets, id: \.self) { preset in
+                        ForEach(ZoomConstants.presets, id: \.self) { preset in
                             Button("\(Int(preset * 100))%") {
                                 state.setZoomLevel(preset)
                                 isPopoverPresented = false

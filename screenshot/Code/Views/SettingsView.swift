@@ -67,13 +67,9 @@ struct SettingsView: View {
             }
 
             Picker("Default zoom level", selection: $defaultZoomLevel) {
-                Text("50%").tag(0.50)
-                Text("75%").tag(0.75)
-                Text("100%").tag(1.0)
-                Text("125%").tag(1.25)
-                Text("150%").tag(1.50)
-                Text("175%").tag(1.75)
-                Text("200%").tag(2.0)
+                ForEach(ZoomConstants.presets, id: \.self) { preset in
+                    Text("\(Int(preset * 100))%").tag(Double(preset))
+                }
             }
             Section("iCloud Sync") {
                 if !iCloudAvailable {

@@ -197,6 +197,12 @@ struct ExportService {
         let horizontalPadding = round((totalWidth - contentWidth) / 2)
         let verticalPadding = round((totalHeight - contentHeight) / 2)
 
+        let rowBackground = renderComposedBackgroundImage(
+            row: row,
+            screenshotImages: screenshotImages,
+            displayScale: 1.0,
+            labelPrefix: "showcase row"
+        )
         var templateImages: [NSImage] = []
         for index in 0..<count {
             templateImages.append(renderSingleTemplateImage(
@@ -205,7 +211,8 @@ struct ExportService {
                 screenshotImages: screenshotImages,
                 localeCode: localeCode,
                 localeState: localeState,
-                availableFontFamilies: availableFontFamilies
+                availableFontFamilies: availableFontFamilies,
+                preRenderedRowBackground: rowBackground
             ))
         }
 
@@ -470,51 +477,20 @@ struct ExportService {
         screenshotImages: [String: NSImage] = [:],
         localeCode: String? = nil,
         localeState: LocaleState = .default,
-        availableFontFamilies: Set<String>? = nil
+        availableFontFamilies: Set<String>? = nil,
+        preRenderedRowBackground: NSImage? = nil
     ) -> NSImage {
         let templateWidth = row.templateWidth
         let templateHeight = row.templateHeight
-        let templateModelSize = CGSize(width: templateWidth, height: templateHeight)
         let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
         let fontFamilies = availableFontFamilies ?? Set(NSFontManager.shared.availableFontFamilies)
-
-        // --- Background ---
-        let template = row.templates[index]
-        let backgroundView: AnyView
-        if template.overrideBackground {
-            backgroundView = AnyView(
-                template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
-                    .frame(width: templateWidth, height: templateHeight)
-            )
-        } else if row.isSpanningBackground {
-            // Spanning: render the full-width background and offset to show this template's slice
-            let spanModelSize = CGSize(
-                width: templateWidth * CGFloat(row.templates.count),
-                height: templateHeight
-            )
-            backgroundView = AnyView(
-                row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanModelSize)
-                    .frame(width: spanModelSize.width, height: templateHeight)
-                    .offset(x: -CGFloat(index) * templateWidth, y: 0)
-                    .frame(width: templateWidth, height: templateHeight, alignment: .topLeading)
-                    .clipped()
-            )
-        } else {
-            backgroundView = AnyView(
-                row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
-                    .frame(width: templateWidth, height: templateHeight)
-            )
-        }
-
-        let baseBackgroundImage = renderViewToImage(backgroundView, width: templateWidth, height: templateHeight, label: "single template background [\(index)]")
-        let backgroundImage: NSImage
-        let blurRadius = template.overrideBackground ? template.backgroundBlur : row.backgroundBlur
-        if blurRadius > 0 {
-            let blurred = applyGaussianBlur(to: baseBackgroundImage, radius: blurRadius)
-            backgroundImage = flattenImage(blurred, over: baseBackgroundImage, width: templateWidth, height: templateHeight)
-        } else {
-            backgroundImage = baseBackgroundImage
-        }
+        let rowBackground = preRenderedRowBackground ?? renderComposedBackgroundImage(
+            row: row,
+            screenshotImages: screenshotImages,
+            displayScale: 1.0,
+            labelPrefix: "single template row"
+        )
+        let backgroundImage = cropTemplateImage(rowBackground, index: index, row: row)
 
         // --- Shapes ---
         // Filter resolved shapes to those visible in this template, then shift so template origin is at (0,0)
@@ -534,7 +510,7 @@ struct ExportService {
         }
         // Build a single-template row for shape rendering
         let singleTemplateRow = ScreenshotRow(
-            templates: [template],
+            templates: [row.templates[index]],
             templateWidth: templateWidth,
             templateHeight: templateHeight
         )

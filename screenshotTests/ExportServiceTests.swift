@@ -219,6 +219,40 @@ struct ExportServiceTests {
         }
     }
 
+    @Test func singleTemplateRendererMatchesFullExportForBlurredSpanningBackground() throws {
+        let tw: CGFloat = 220
+        let th: CGFloat = 220
+        let gradient = GradientConfig(
+            stops: [
+                GradientColorStop(color: Self.testRed, location: 0),
+                GradientColorStop(color: Self.testBlue, location: 1),
+            ],
+            angle: 90
+        )
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw,
+            templateHeight: th,
+            backgroundStyle: .gradient,
+            gradientConfig: gradient,
+            spanBackgroundAcrossRow: true,
+            backgroundBlur: 24
+        )
+
+        let singleTemplateBitmap = try renderSingleTemplateBitmap(index: 1, row: row)
+        let fullExportBitmap = try renderTemplateBitmap(index: 1, row: row)
+
+        for (label, x, y) in [
+            ("top-left", 12, 12),
+            ("top-right", Int(tw) - 13, 12),
+            ("center", Int(tw) / 2, Int(th) / 2),
+            ("bottom-left", 12, Int(th) - 13),
+            ("bottom-right", Int(tw) - 13, Int(th) - 13),
+        ] {
+            try expectPixelsClose(singleTemplateBitmap, fullExportBitmap, at: (x, y), label: label)
+        }
+    }
+
     @Test func blurredStepGradientChangesBoundaryPixelInExport() throws {
         let tw: CGFloat = 240
         let th: CGFloat = 240
@@ -868,6 +902,16 @@ struct ExportServiceTests {
         screenshotImages: [String: NSImage] = [:]
     ) throws -> NSBitmapImageRep {
         let image = ExportService.renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
+        let pngData = try #require(ExportService.opaquePNGData(from: image))
+        return try #require(NSBitmapImageRep(data: pngData))
+    }
+
+    private func renderSingleTemplateBitmap(
+        index: Int,
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:]
+    ) throws -> NSBitmapImageRep {
+        let image = ExportService.renderSingleTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
         let pngData = try #require(ExportService.opaquePNGData(from: image))
         return try #require(NSBitmapImageRep(data: pngData))
     }

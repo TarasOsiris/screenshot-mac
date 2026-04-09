@@ -2,6 +2,13 @@ import SwiftUI
 import UniformTypeIdentifiers
 import ImageIO
 
+enum ImageResourceIO {
+    static let defaultWriteData: (Data, URL) throws -> Void = { data, url in
+        try data.write(to: url, options: .atomic)
+    }
+    static var writeData: (Data, URL) throws -> Void = defaultWriteData
+}
+
 extension AppState {
 
     /// Maximum pixel dimension for images stored in `screenshotImages` (editor display).
@@ -16,8 +23,9 @@ extension AppState {
         guard let activeId = activeProjectId,
               let location = shapeLocation(for: shapeId) else { return }
         registerUndoForRow(at: location.rowIndex, "Assign Screenshot")
-        performSaveImage(image, for: shapeId, activeId: activeId, location: location)
-        scheduleSave()
+        if performSaveImage(image, for: shapeId, activeId: activeId, location: location) {
+            scheduleSave()
+        }
     }
 
     func clearImage(for shapeId: UUID) {
@@ -43,20 +51,25 @@ extension AppState {
 
     /// Saves image file and updates state without registering undo or scheduling save.
     /// Used by compound operations that manage their own undo (addImageShape, batchImportImages).
+    @discardableResult
     private func performSaveImage(_ image: NSImage, for shapeId: UUID,
-                                  activeId: UUID? = nil, location: (rowIndex: Int, shapeIndex: Int)? = nil) {
-        guard let activeId = activeId ?? activeProjectId else { return }
-        guard let location = location ?? shapeLocation(for: shapeId) else { return }
+                                  activeId: UUID? = nil, location: (rowIndex: Int, shapeIndex: Int)? = nil) -> Bool {
+        guard let activeId = activeId ?? activeProjectId else { return false }
+        guard let location = location ?? shapeLocation(for: shapeId) else { return false }
 
         let isNonBaseLocale = !localeState.isBaseLocale
         let suffix = isNonBaseLocale ? "-\(localeState.activeLocaleCode)" : ""
         let fileName = "\(shapeId.uuidString)\(suffix).png"
-        let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+        guard let thumbnail = persistImageResource(
+            image,
+            named: fileName,
+            activeId: activeId,
+            action: "save screenshot"
+        ) else {
+            return false
+        }
 
-        guard let pngData = ExportService.pngData(from: image) else { return }
-
-        try? pngData.write(to: url, options: .atomic)
-        screenshotImages[fileName] = Self.editorThumbnail(for: image)
+        screenshotImages[fileName] = thumbnail
 
         if isNonBaseLocale {
             let shape = rows[location.rowIndex].shapes[location.shapeIndex]
@@ -83,6 +96,7 @@ extension AppState {
                 cleanupUnreferencedImage(oldFile)
             }
         }
+        return true
     }
 
     func loadScreenshotImages() {
@@ -142,14 +156,26 @@ extension AppState {
     }
 
     func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat) {
-        guard let rowIdx = selectedRowIndex else { return }
+        guard let rowIdx = selectedRowIndex,
+              let activeId = activeProjectId else { return }
         let shape = makeImageShape(image: image, row: rows[rowIdx], centerX: centerX, centerY: centerY)
         registerUndoForRow(at: rowIdx, "Add Image")
+        let shapeIndex = rows[rowIdx].shapes.count
         rows[rowIdx].shapes.append(shape)
         selectShape(shape.id, in: rows[rowIdx].id)
         justAddedShapeId = shape.id
-        performSaveImage(image, for: shape.id)
-        scheduleSave()
+        if performSaveImage(
+            image,
+            for: shape.id,
+            activeId: activeId,
+            location: (rowIndex: rowIdx, shapeIndex: shapeIndex)
+        ) {
+            scheduleSave()
+        } else {
+            rows[rowIdx].shapes.removeAll { $0.id == shape.id }
+            selectedShapeIds = []
+            justAddedShapeId = nil
+        }
     }
 
     /// Creates an image or device shape sized for the given row, without side effects.
@@ -211,7 +237,7 @@ extension AppState {
         let row = rows[rowIndex]
         if let shapeIndex = existingDeviceShapeIndex(in: row, templateIndex: templateIndex) {
             let shapeId = row.shapes[shapeIndex].id
-            performSaveImage(
+            _ = performSaveImage(
                 image,
                 for: shapeId,
                 activeId: activeId,
@@ -223,13 +249,16 @@ extension AppState {
         let centerX = row.templateCenterX(at: templateIndex)
         let centerY = row.templateHeight / 2
         let shape = makeImageShape(image: image, row: row, centerX: centerX, centerY: centerY)
+        let shapeIndex = rows[rowIndex].shapes.count
         rows[rowIndex].shapes.append(shape)
-        performSaveImage(
+        if !performSaveImage(
             image,
             for: shape.id,
             activeId: activeId,
-            location: (rowIndex: rowIndex, shapeIndex: rows[rowIndex].shapes.count - 1)
-        )
+            location: (rowIndex: rowIndex, shapeIndex: shapeIndex)
+        ) {
+            rows[rowIndex].shapes.removeAll { $0.id == shape.id }
+        }
     }
 
     private func existingDeviceShapeIndex(in row: ScreenshotRow, templateIndex: Int) -> Int? {
@@ -373,11 +402,16 @@ extension AppState {
 
         let fileId = UUID().uuidString
         let fileName = "fill-\(fileId).png"
-        let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+        guard let thumbnail = persistImageResource(
+            image,
+            named: fileName,
+            activeId: activeId,
+            action: "save fill image"
+        ) else {
+            return
+        }
 
-        guard let pngData = ExportService.pngData(from: image) else { return }
-        try? pngData.write(to: url, options: .atomic)
-        screenshotImages[fileName] = Self.editorThumbnail(for: image)
+        screenshotImages[fileName] = thumbnail
 
         var shape = rows[location.rowIndex].shapes[location.shapeIndex]
         let oldFile = shape.fillImageConfig?.fileName
@@ -412,11 +446,16 @@ extension AppState {
 
         let fileId = UUID().uuidString
         let fileName = "bg-\(fileId).png"
-        let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+        guard let thumbnail = persistImageResource(
+            image,
+            named: fileName,
+            activeId: activeId,
+            action: "save background image"
+        ) else {
+            return
+        }
 
-        guard let pngData = ExportService.pngData(from: image) else { return }
-        try? pngData.write(to: url, options: .atomic)
-        screenshotImages[fileName] = Self.editorThumbnail(for: image)
+        screenshotImages[fileName] = thumbnail
 
         setBackgroundImage(fileName: fileName, svgContent: nil, rowIndex: rowIndex, templateIndex: templateIndex)
         scheduleSave()
@@ -467,6 +506,28 @@ extension AppState {
             rows[rowIndex].backgroundImageConfig.svgContent = svgContent
         }
         cleanupUnreferencedImage(oldFile)
+    }
+
+    private func persistImageResource(
+        _ image: NSImage,
+        named fileName: String,
+        activeId: UUID,
+        action: String
+    ) -> NSImage? {
+        guard let pngData = ExportService.pngData(from: image) else {
+            saveError = "Failed to \(action): could not encode image."
+            return nil
+        }
+
+        let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+        do {
+            try ImageResourceIO.writeData(pngData, url)
+        } catch {
+            saveError = "Failed to \(action): \(error.localizedDescription)"
+            return nil
+        }
+
+        return Self.editorThumbnail(for: image)
     }
 
     // MARK: - Custom Fonts
