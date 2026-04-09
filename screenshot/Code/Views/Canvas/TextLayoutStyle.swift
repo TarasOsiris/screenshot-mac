@@ -7,6 +7,7 @@ import Foundation
 /// fragments and repositions them at the desired compressed y-positions.
 final class CompactLineLayoutDelegate: NSObject, NSLayoutManagerDelegate {
     var lineHeightMultiple: CGFloat = 1.0
+    private var nextCompressedY: CGFloat = 0
 
     func layoutManager(
         _ layoutManager: NSLayoutManager,
@@ -21,15 +22,17 @@ final class CompactLineLayoutDelegate: NSObject, NSLayoutManagerDelegate {
         let naturalHeight = lineFragmentRect.pointee.height
         guard naturalHeight > 0 else { return false }
 
-        // Assumes uniform line height (single font per shape). If mixed font sizes
-        // are ever supported, this derivation would need per-line tracking.
-        let lineIndex = Int(round(lineFragmentRect.pointee.origin.y / naturalHeight))
+        if lineFragmentRect.pointee.origin.y == 0 {
+            nextCompressedY = 0
+        }
+
         let desiredSpacing = naturalHeight * lineHeightMultiple
-        let desiredY = CGFloat(lineIndex) * desiredSpacing
-        let delta = desiredY - lineFragmentRect.pointee.origin.y
+        let delta = nextCompressedY - lineFragmentRect.pointee.origin.y
 
         lineFragmentRect.pointee.origin.y += delta
         lineFragmentUsedRect.pointee.origin.y += delta
+
+        nextCompressedY += desiredSpacing
 
         return true
     }
@@ -156,7 +159,8 @@ enum TextLayoutStyle {
         uppercase: Bool,
         letterSpacing: CGFloat?,
         lineHeightMultiple: CGFloat?,
-        legacyLineSpacing: CGFloat?
+        legacyLineSpacing: CGFloat?,
+        richTextData: String? = nil
     ) -> NSImage? {
         guard size.width > 0, size.height > 0 else { return nil }
         let view = TextLayoutNSView(frame: NSRect(origin: .zero, size: size))
@@ -169,7 +173,8 @@ enum TextLayoutStyle {
             uppercase: uppercase,
             letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple,
-            legacyLineSpacing: legacyLineSpacing
+            legacyLineSpacing: legacyLineSpacing,
+            richTextData: richTextData
         )
         view.layoutSubtreeIfNeeded()
         guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return nil }

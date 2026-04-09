@@ -42,6 +42,50 @@ struct LocaleServiceTests {
         #expect(resolved.fontWeight == 400, "Non-overridden properties stay at base value")
     }
 
+    @Test func resolveShapeCanClearRichTextOverride() {
+        var shape = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello")
+        shape.richText = "base-rtf"
+        let state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [shape.id.uuidString: ShapeLocaleOverride(clearsRichText: true)]]
+        )
+
+        let resolved = LocaleService.resolveShape(shape, localeState: state)
+
+        #expect(resolved.richText == nil)
+    }
+
+    @Test func resolveShapeClearsInheritedRichTextForPlainTextOverride() {
+        var shape = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello")
+        shape.richText = "base-rtf"
+        let state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [shape.id.uuidString: ShapeLocaleOverride(text: "Bonjour")]]
+        )
+
+        let resolved = LocaleService.resolveShape(shape, localeState: state)
+
+        #expect(resolved.text == "Bonjour")
+        #expect(resolved.richText == nil)
+    }
+
+    @Test func resolveShapeKeepsLocaleRichTextWhenRichTextOverrideExists() {
+        var shape = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello")
+        shape.richText = "base-rtf"
+        let state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [shape.id.uuidString: ShapeLocaleOverride(text: "Bonjour", richText: "locale-rtf")]]
+        )
+
+        let resolved = LocaleService.resolveShape(shape, localeState: state)
+
+        #expect(resolved.text == "Bonjour")
+        #expect(resolved.richText == "locale-rtf")
+    }
+
     @Test func resolveShapeAppliesLineHeightMultipleOverride() {
         let shape = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello", fontSize: 24, lineSpacing: 12)
         let state = LocaleState(
@@ -151,6 +195,26 @@ struct LocaleServiceTests {
         let override = state.override(forCode: "fr", shapeId: base.id)
         #expect(override?.text == "Bonjour")
         #expect(override?.fontSize == 20)
+    }
+
+    @Test func splitUpdateStoresRichTextClearForNonBaseLocale() {
+        var base = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello")
+        base.richText = "base-rtf"
+        var updated = base
+        updated.richText = nil
+
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: [:]
+        )
+
+        let result = LocaleService.splitUpdate(base: base, updated: updated, localeState: &state)
+        let override = state.override(forCode: "fr", shapeId: base.id)
+
+        #expect(result.richText == "base-rtf")
+        #expect(override?.clearsRichText == true)
+        #expect(override?.richText == nil)
     }
 
     @Test func splitUpdateStoresLineHeightMultipleOverrideForNonBaseLocale() {

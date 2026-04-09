@@ -117,6 +117,31 @@ struct ContentView: View {
                 state.deselectAll()
             }
         }
+        #if DEBUG
+        .overlay {
+            if state.isEditingText,
+               let selectionState = state.richTextSelectionState,
+               let anchor = state.richTextFormatBarAnchor,
+               let controller = state.richTextFormatController {
+                GeometryReader { proxy in
+                    let localPoint = proxy.frame(in: .global).origin
+                    let x = anchor.x - localPoint.x
+                    let barHalfH = RichTextFormatBarMetrics.height / 2
+                    let rawY = anchor.y - localPoint.y - barHalfH
+                    let y = max(barHalfH + 4, rawY)
+                    RichTextFormatBar(
+                        selectionState: selectionState,
+                        onApplyFormat: { action in
+                            controller.applyAction(action)
+                        }
+                    )
+                    .frame(width: RichTextFormatBarMetrics.width, height: RichTextFormatBarMetrics.height)
+                    .position(x: x, y: y)
+                }
+                .zIndex(999)
+            }
+        }
+        #endif
         .overlay {
             if !state.localeState.isBaseLocale {
                 Rectangle()

@@ -35,6 +35,8 @@ struct ShapeLocaleOverride: Codable, Equatable {
     var offsetHeight: CGFloat?
 
     var text: String?
+    var richText: String?
+    var clearsRichText: Bool?
     var fontName: String?
     var fontSize: CGFloat?
     var fontWeight: Int?
@@ -49,7 +51,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case offsetX = "ox", offsetY = "oy", offsetWidth = "ow", offsetHeight = "oh"
-        case text = "txt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
+        case text = "txt", richText = "rt", clearsRichText = "crt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
         case textAlign = "ta", italic = "it", uppercase = "uc"
         case letterSpacing = "ls", lineSpacing = "lns", lineHeightMultiple = "lhm"
         case overrideImageFileName = "oifn"
@@ -58,7 +60,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
     init(
         offsetX: CGFloat? = nil, offsetY: CGFloat? = nil,
         offsetWidth: CGFloat? = nil, offsetHeight: CGFloat? = nil,
-        text: String? = nil, fontName: String? = nil,
+        text: String? = nil, richText: String? = nil, clearsRichText: Bool? = nil, fontName: String? = nil,
         fontSize: CGFloat? = nil, fontWeight: Int? = nil,
         textAlign: TextAlign? = nil, italic: Bool? = nil,
         uppercase: Bool? = nil, letterSpacing: CGFloat? = nil,
@@ -67,7 +69,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
     ) {
         self.offsetX = offsetX; self.offsetY = offsetY
         self.offsetWidth = offsetWidth; self.offsetHeight = offsetHeight
-        self.text = text; self.fontName = fontName
+        self.text = text; self.richText = richText; self.clearsRichText = clearsRichText; self.fontName = fontName
         self.fontSize = fontSize; self.fontWeight = fontWeight
         self.textAlign = textAlign; self.italic = italic
         self.uppercase = uppercase; self.letterSpacing = letterSpacing
@@ -77,7 +79,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
 
     var isEmpty: Bool {
         offsetX == nil && offsetY == nil && offsetWidth == nil && offsetHeight == nil
-            && text == nil && fontName == nil && fontSize == nil && fontWeight == nil
+            && text == nil && richText == nil && clearsRichText != true && fontName == nil && fontSize == nil && fontWeight == nil
             && textAlign == nil && italic == nil && uppercase == nil
             && letterSpacing == nil && lineSpacing == nil && lineHeightMultiple == nil
             && overrideImageFileName == nil

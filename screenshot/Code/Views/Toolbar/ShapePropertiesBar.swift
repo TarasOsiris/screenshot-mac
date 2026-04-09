@@ -366,6 +366,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
         let clamped = clampedFontSize(value)
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         resolved.fontSize = clamped
+        syncRichTextIfNeeded(in: &resolved, property: .fontSize)
         state.updateShape(resolved)
         editingFontSize = "\(Int(clamped))"
     }
@@ -415,8 +416,30 @@ private struct ShapePropertiesSingleSelectionBar: View {
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         resolved.lineHeightMultiple = clamped
         resolved.lineSpacing = nil
+        syncRichTextIfNeeded(in: &resolved, property: .lineHeight)
         state.updateShape(resolved)
         editingLineHeight = "\(Int((clamped * 100).rounded()))"
+    }
+
+    private func syncRichTextIfNeeded(in shape: inout CanvasShapeModel, property: RichTextUtils.ShapeStyleProperty?) {
+        guard shape.type == .text, let property else { return }
+        RichTextUtils.syncShapeStyle(in: &shape, property: property)
+    }
+
+    private func richTextStyleProperty<T>(for keyPath: WritableKeyPath<CanvasShapeModel, T>) -> RichTextUtils.ShapeStyleProperty? {
+        let anyKeyPath = keyPath as AnyKeyPath
+        if anyKeyPath == \CanvasShapeModel.color { return .color }
+        return nil
+    }
+
+    private func richTextStyleProperty<T>(for keyPath: WritableKeyPath<CanvasShapeModel, T?>) -> RichTextUtils.ShapeStyleProperty? {
+        let anyKeyPath = keyPath as AnyKeyPath
+        if anyKeyPath == \CanvasShapeModel.fontName { return .fontName }
+        if anyKeyPath == \CanvasShapeModel.fontWeight { return .fontWeight }
+        if anyKeyPath == \CanvasShapeModel.textAlign { return .alignment }
+        if anyKeyPath == \CanvasShapeModel.italic { return .italic }
+        if anyKeyPath == \CanvasShapeModel.letterSpacing { return .letterSpacing }
+        return nil
     }
 
     private func triggerTranslation() {
@@ -440,6 +463,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                 guard let i = idx(for: shapeId) else { return }
                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                 resolved[keyPath: keyPath] = newValue
+                syncRichTextIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
                 if continuous {
                     state.updateShapeContinuous(resolved)
                 } else {
@@ -460,6 +484,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                 guard let i = idx(for: shapeId) else { return }
                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                 resolved[keyPath: keyPath] = newValue
+                syncRichTextIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
                 if continuous {
                     state.updateShapeContinuous(resolved)
                 } else {
@@ -491,6 +516,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                 resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(newValue)
                 resolved.lineSpacing = nil
+                syncRichTextIfNeeded(in: &resolved, property: .lineHeight)
                 state.updateShape(resolved)
             }
         )
@@ -781,6 +807,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                             if let value = Int(editingFontSize), let i = idx(for: shapeId) {
                                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                                 resolved.fontSize = clampedFontSize(value)
+                                syncRichTextIfNeeded(in: &resolved, property: .fontSize)
                                 state.updateShapeContinuous(resolved)
                             }
                         }
@@ -900,6 +927,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                             var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                             resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
                             resolved.lineSpacing = nil
+                            syncRichTextIfNeeded(in: &resolved, property: .lineHeight)
                             state.updateShapeContinuous(resolved)
                         }
                     }
@@ -928,6 +956,16 @@ private struct ShapePropertiesSingleSelectionBar: View {
                 }
             }
 
+            if shape.hasRichText {
+                Divider()
+                Button("Clear Formatting") {
+                    guard let i = idx(for: shapeId) else { return }
+                    var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
+                    updated.richText = nil
+                    state.updateShape(updated)
+                }
+                .font(.system(size: 11))
+            }
         }
         .font(.system(size: 11))
         .controlSize(.small)

@@ -30,6 +30,7 @@ struct CanvasShapeView: View {
     var deviceModelRenderingMode: DeviceModelRenderingMode = .snapshot
 
     var clipBounds: CGRect?
+    var canvasGlobalOrigin: CGPoint = .zero
     var showsEditorHelpers: Bool = true
     var onSelect: () -> Void
     var onShiftSelect: (() -> Void)?
@@ -44,6 +45,8 @@ struct CanvasShapeView: View {
     var onGroupDragEnd: ((CGSize) -> Void)?
     var onDidAppearAfterAdd: (() -> Void)?
     var onEditingTextChanged: ((Bool) -> Void)?
+    var onFormatBarStateChanged: ((RichTextSelectionState?, RichTextFormatController?) -> Void)?
+    var onFormatBarAnchorChanged: ((CGPoint?) -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
@@ -65,6 +68,9 @@ struct CanvasShapeView: View {
     @State private var isPickerPresented = false
     @State private var isEditingText = false
     @State private var editingTextValue = ""
+    @State private var editingRichTextData: String?
+    @State private var selectionState: RichTextSelectionState?
+    @StateObject private var formatController = RichTextFormatController()
     @State private var cachedSvgImage: NSImage?
     @State private var svgCacheKey = ""
     @State private var rotationDelta: Double = 0
@@ -168,7 +174,18 @@ struct CanvasShapeView: View {
             }
             .onChange(of: isEditingText) { _, editing in
                 onEditingTextChanged?(editing)
+                if editing {
+                    updateFormatBarAnchor()
+                }
             }
+            .onChange(of: selectionState) { _, newState in
+                if isEditingText {
+                    onFormatBarStateChanged?(newState, formatController)
+                }
+            }
+            .onChange(of: canvasGlobalOrigin) { if isEditingText { updateFormatBarAnchor() } }
+            .onChange(of: displayRect) { if isEditingText { updateFormatBarAnchor() } }
+            .onChange(of: zoom) { if isEditingText { updateFormatBarAnchor() } }
             .onChange(of: isSelected) { _, selected in
                 if !selected && isEditingText {
                     commitTextEdit()
@@ -198,6 +215,11 @@ struct CanvasShapeView: View {
                     TapGesture(count: 2).onEnded {
                         if shape.type == .text {
                             editingTextValue = shape.text ?? ""
+                            editingRichTextData = shape.richText
+                            formatController.resetRichTextSession()
+                            if shape.richText != nil {
+                                formatController.beginRichTextSession()
+                            }
                             isEditingText = true
                             onSelect()
                         } else if shape.type == .device || shape.type == .image {
@@ -220,6 +242,7 @@ struct CanvasShapeView: View {
                 handlesContent
                     .zIndex(99)
             }
+
         } else {
             svgAware
                 .allowsHitTesting(false)
@@ -318,10 +341,19 @@ struct CanvasShapeView: View {
             showsEditorHelpers: showsEditorHelpers,
             isEditingText: isEditingText,
             editingTextValue: $editingTextValue,
+            editingRichTextData: $editingRichTextData,
             isDropTargeted: $isDropTargeted,
             onRequestImagePicker: { isPickerPresented = true },
             onHandleDrop: handleDrop,
             onCommitTextEdit: commitTextEdit,
+            onRichTextChange: { rtfData, plainText in
+                editingRichTextData = rtfData
+                editingTextValue = plainText
+            },
+            onSelectionChange: { attrs, range in
+                selectionState = RichTextSelectionState(from: attrs, hasRangeSelection: range != nil)
+            },
+            formatController: formatController,
             resolveNSFont: resolvedNSFont,
             fontWeightResolver: fontWeight,
             renderSvgImage: Self.svgImage
@@ -493,9 +525,22 @@ struct CanvasShapeView: View {
     private func commitTextEdit() {
         guard isEditingText else { return }
         isEditingText = false
+        selectionState = nil
         var updated = shape
         updated.text = editingTextValue
+        updated.richText = editingRichTextData
+        if updated.text?.isEmpty != false {
+            updated.richText = nil
+        }
+        formatController.resetRichTextSession()
         onUpdate(updated)
+    }
+
+    private func updateFormatBarAnchor() {
+        onFormatBarAnchorChanged?(CGPoint(
+            x: canvasGlobalOrigin.x + ((displayX + displayW / 2) * zoom),
+            y: canvasGlobalOrigin.y + (displayY * zoom) - 10
+        ))
     }
 
     /// The custom font family name, if the shape specifies one that's available.
@@ -582,10 +627,14 @@ private struct CanvasShapeRenderContent: View {
     let showsEditorHelpers: Bool
     let isEditingText: Bool
     @Binding var editingTextValue: String
+    @Binding var editingRichTextData: String?
     @Binding var isDropTargeted: Bool
     let onRequestImagePicker: () -> Void
     let onHandleDrop: ([NSItemProvider]) -> Bool
     let onCommitTextEdit: () -> Void
+    var onRichTextChange: ((String?, String) -> Void)? = nil
+    var onSelectionChange: (([NSAttributedString.Key: Any]?, NSRange?) -> Void)? = nil
+    var formatController: RichTextFormatController? = nil
     let resolveNSFont: (CGFloat, NSFont.Weight, Bool) -> NSFont
     let fontWeightResolver: (Int) -> Font.Weight
     let renderSvgImage: (String, Bool, Color, CGSize?) -> NSImage?
@@ -623,7 +672,7 @@ private struct CanvasShapeRenderContent: View {
 
     private var displayTextContent: some View {
         let rawText = shape.text ?? ""
-        let showPlaceholder = showsEditorHelpers && rawText.isEmpty
+        let showPlaceholder = showsEditorHelpers && rawText.isEmpty && !shape.hasRichText
         let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
         let weight = fontWeightResolver(shape.fontWeight ?? 700)
         let isItalic = showPlaceholder ? true : (shape.italic ?? false)
@@ -633,6 +682,7 @@ private struct CanvasShapeRenderContent: View {
         let align = shape.textAlign.nsTextAlignment
         let verticalAlign = shape.textVerticalAlign ?? .center
         let uppercase = shape.uppercase ?? false
+        let richText = showPlaceholder ? nil : shape.richText
 
         return Group {
             if showsEditorHelpers {
@@ -645,7 +695,8 @@ private struct CanvasShapeRenderContent: View {
                     uppercase: uppercase,
                     letterSpacing: shape.letterSpacing,
                     lineHeightMultiple: shape.lineHeightMultiple,
-                    legacyLineSpacing: shape.lineSpacing
+                    legacyLineSpacing: shape.lineSpacing,
+                    richTextData: richText
                 )
             } else {
                 RasterizedDisplayTextView(
@@ -657,7 +708,8 @@ private struct CanvasShapeRenderContent: View {
                     uppercase: uppercase,
                     letterSpacing: shape.letterSpacing,
                     lineHeightMultiple: shape.lineHeightMultiple,
-                    legacyLineSpacing: shape.lineSpacing
+                    legacyLineSpacing: shape.lineSpacing,
+                    richTextData: richText
                 )
             }
         }
@@ -750,7 +802,11 @@ private struct CanvasShapeRenderContent: View {
             letterSpacing: shape.letterSpacing,
             lineHeightMultiple: shape.lineHeightMultiple,
             legacyLineSpacing: shape.lineSpacing,
-            onCommit: onCommitTextEdit
+            richTextData: editingRichTextData,
+            formatController: formatController,
+            onCommit: onCommitTextEdit,
+            onRichTextChange: onRichTextChange,
+            onSelectionChange: onSelectionChange
         )
         .frame(width: effectiveW, height: effectiveH)
         .scaleEffect(displayScale, anchor: .topLeading)

@@ -202,6 +202,18 @@ struct CanvasShapeModelTests {
         #expect(decoded.lineHeightMultiple == nil)
     }
 
+    @Test func applyTextStyleClearsExistingRichText() {
+        let source = CanvasShapeModel(type: .text, text: "Source", fontSize: 48)
+        var target = CanvasShapeModel(type: .text, text: "Target", fontSize: 24)
+        target.richText = "target-rtf"
+
+        target.applyTextStyle(source.extractTextStyle())
+
+        #expect(target.text == "Target")
+        #expect(target.fontSize == 48)
+        #expect(target.richText == nil)
+    }
+
     @Test func duplicatedPreservesFillProperties() {
         var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 100, height: 100)
         shape.fillStyle = .gradient

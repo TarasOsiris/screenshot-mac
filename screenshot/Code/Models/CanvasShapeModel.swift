@@ -280,6 +280,7 @@ struct CanvasShapeModel: Identifiable, Codable {
 
     // Text properties
     var text: String?
+    var richText: String?  // Base64-encoded RTF data for per-range styling
     var fontName: String?
     var fontSize: CGFloat?
     var fontWeight: Int?
@@ -327,7 +328,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         case width = "w", height = "h"
         case rotation = "rot", borderRadius = "br"
         case colorData = "c", opacity = "o"
-        case text = "txt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
+        case text = "txt", richText = "rt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
         case textAlign = "ta", textVerticalAlign = "tva", italic = "it", uppercase = "uc"
         case letterSpacing = "ls", lineSpacing = "lns", lineHeightMultiple = "lhm"
         case imageFileName = "ifn"
@@ -356,6 +357,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         colorData = try c.decode(CodableColor.self, forKey: .colorData)
         opacity = try c.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
         text = try c.decodeIfPresent(String.self, forKey: .text)
+        richText = try c.decodeIfPresent(String.self, forKey: .richText)
         fontName = try c.decodeIfPresent(String.self, forKey: .fontName)
         fontSize = try c.decodeIfPresent(CGFloat.self, forKey: .fontSize)
         fontWeight = try c.decodeIfPresent(Int.self, forKey: .fontWeight)
@@ -398,6 +400,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         if opacity != 1.0 { try c.encode(opacity, forKey: .opacity) }
         // Text properties
         try c.encodeIfPresent(text, forKey: .text)
+        try c.encodeIfPresent(richText, forKey: .richText)
         try c.encodeIfPresent(fontName, forKey: .fontName)
         try c.encodeIfPresent(fontSize, forKey: .fontSize)
         try c.encodeIfPresent(fontWeight, forKey: .fontWeight)
@@ -480,6 +483,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.colorData = CodableColor(color)
         self.opacity = opacity
         self.text = text
+        self.richText = nil
         self.fontName = fontName
         self.fontSize = fontSize
         self.fontWeight = fontWeight
@@ -799,7 +803,10 @@ struct CanvasShapeModel: Identifiable, Codable {
         lineHeightMultiple = style.lineHeightMultiple
         colorData = style.colorData
         opacity = style.opacity
+        richText = nil
     }
+
+    var hasRichText: Bool { richText != nil }
 
     /// Re-applies only the caller's changes relative to `oldBase` onto `newBase`.
     /// This is used when a discrete edit was prepared from a stale snapshot while a
@@ -818,6 +825,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         if opacity != oldBase.opacity { result.opacity = opacity }
 
         if text != oldBase.text { result.text = text }
+        if richText != oldBase.richText { result.richText = richText }
         if fontName != oldBase.fontName { result.fontName = fontName }
         if fontSize != oldBase.fontSize { result.fontSize = fontSize }
         if fontWeight != oldBase.fontWeight { result.fontWeight = fontWeight }

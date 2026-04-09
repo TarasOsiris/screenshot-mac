@@ -18,6 +18,7 @@ struct EditorRowView: View {
     @State private var activeGuides: [AlignmentGuide] = []
     @State private var activeDragOffset: CGSize = .zero
     @State private var draggingShapeId: UUID?
+    @State private var canvasGlobalOrigin: CGPoint = .zero
     @State private var isEditingLabel = false
     @State private var editingLabelText = ""
     @State private var exportError: String?
@@ -502,6 +503,7 @@ struct EditorRowView: View {
                     groupDragOffset: groupOffset,
                     deviceModelRenderingMode: .snapshot,
                     clipBounds: clipRect,
+                    canvasGlobalOrigin: canvasGlobalOrigin,
                     onSelect: { state.selectShape(shape.id, in: row.id) },
                     onShiftSelect: { state.toggleShapeSelection(shape.id, in: row.id) },
                     onUpdate: { state.updateShape($0) },
@@ -570,6 +572,13 @@ struct EditorRowView: View {
                     },
                     onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
                     onEditingTextChanged: { state.isEditingText = $0 },
+                    onFormatBarStateChanged: { selState, controller in
+                        state.richTextSelectionState = selState
+                        state.richTextFormatController = controller
+                    },
+                    onFormatBarAnchorChanged: { anchor in
+                        state.richTextFormatBarAnchor = anchor
+                    },
                     onMatchDeviceSizes: shape.type == .device ? {
                         let matchingIds = Set(row.activeShapes.filter { other in
                             other.id != shape.id &&
@@ -608,6 +617,11 @@ struct EditorRowView: View {
                         state.duplicateShapesToTemplates(Set(ids), direction: direction)
                     } : nil
                 )
+            }
+            .onGeometryChange(for: CGPoint.self) { proxy in
+                proxy.frame(in: .global).origin
+            } action: { origin in
+                canvasGlobalOrigin = origin
             }
 
             // Alignment guide lines

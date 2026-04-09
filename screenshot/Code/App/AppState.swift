@@ -13,7 +13,18 @@ final class AppState {
     var localeState: LocaleState = .default
     var selectedRowId: UUID?
     var selectedShapeIds: Set<UUID> = []
-    var isEditingText = false
+    var isEditingText = false {
+        didSet {
+            if !isEditingText {
+                richTextSelectionState = nil
+                richTextFormatBarAnchor = nil
+                richTextFormatController = nil
+            }
+        }
+    }
+    var richTextSelectionState: RichTextSelectionState?
+    var richTextFormatBarAnchor: CGPoint?
+    @ObservationIgnored var richTextFormatController: RichTextFormatController?
     var zoomLevel: CGFloat = 1.0
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?

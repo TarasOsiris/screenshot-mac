@@ -172,6 +172,7 @@ extension AppState {
 
     /// Cancels in-flight work, unregisters fonts, and clears images for the current project.
     private func teardownActiveProject() {
+        isEditingText = false
         cancelPendingDebounceTasks()
         imageLoadTask?.cancel()
         imageLoadTask = nil

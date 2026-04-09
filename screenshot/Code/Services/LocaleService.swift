@@ -48,6 +48,7 @@ enum LocaleService {
         // Text shapes also have text property overrides
         if updated.type == .text {
             baseResult.text = base.text
+            baseResult.richText = base.richText
             baseResult.fontName = base.fontName
             baseResult.fontSize = base.fontSize
             baseResult.fontWeight = base.fontWeight
@@ -59,6 +60,10 @@ enum LocaleService {
             baseResult.lineHeightMultiple = base.lineHeightMultiple
 
             if updated.text != base.text { override.text = updated.text }
+            if updated.richText != base.richText {
+                override.richText = updated.richText
+                override.clearsRichText = updated.richText == nil && base.richText != nil ? true : nil
+            }
             if updated.fontName != base.fontName { override.fontName = updated.fontName }
             if updated.fontSize != base.fontSize { override.fontSize = updated.fontSize }
             if updated.fontWeight != base.fontWeight { override.fontWeight = updated.fontWeight }
@@ -148,7 +153,17 @@ enum LocaleService {
         if let dy = override.offsetY { result.y = shape.y + dy }
         if let dw = override.offsetWidth { result.width = shape.width + dw }
         if let dh = override.offsetHeight { result.height = shape.height + dh }
-        if let text = override.text { result.text = text }
+        if let text = override.text {
+            result.text = text
+            if override.richText == nil {
+                result.richText = nil
+            }
+        }
+        if override.clearsRichText == true {
+            result.richText = nil
+        } else if let richText = override.richText {
+            result.richText = richText
+        }
         if let fontName = override.fontName { result.fontName = fontName }
         if let fontSize = override.fontSize { result.fontSize = fontSize }
         if let fontWeight = override.fontWeight { result.fontWeight = fontWeight }
