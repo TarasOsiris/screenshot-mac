@@ -6,6 +6,7 @@ struct ProjectTemplate: Identifiable {
     let name: String
     let url: URL
     let previewImage: NSImage?
+    let menuIcon: NSImage?
 }
 
 enum TemplateService {
@@ -43,7 +44,13 @@ enum TemplateService {
                     .replacingOccurrences(of: "-", with: " ")
                     .localizedCapitalized
                 let previewImage = NSImage(contentsOf: url.appendingPathComponent("preview.png"))
-                return ProjectTemplate(id: dirName, name: displayName, url: url, previewImage: previewImage)
+                let menuIcon = previewImage.flatMap { img in
+                    NSImage(size: NSSize(width: 64, height: 32), flipped: false) { rect in
+                        img.draw(in: rect)
+                        return true
+                    }
+                }
+                return ProjectTemplate(id: dirName, name: displayName, url: url, previewImage: previewImage, menuIcon: menuIcon)
             }
             .sorted { (a: ProjectTemplate, b: ProjectTemplate) in a.name.localizedStandardCompare(b.name) == .orderedAscending }
         #if DEBUG

@@ -130,21 +130,21 @@ enum DebugTemplateService {
             print("[DebugTemplateService] Failed to decode '\(templateName)': \(error)")
             return false
         }
-        let rows = projectData.rows.filter { !$0.templates.isEmpty }
-        guard !rows.isEmpty else { return false }
+        guard let firstRow = projectData.rows.first(where: { !$0.templates.isEmpty }) else { return false }
+
+        var row = firstRow
+        row.templates = Array(row.templates.prefix(4))
 
         // Load only referenced resource images
         let resourcesURL = templateURL.appendingPathComponent("resources", isDirectory: true)
         var referencedNames = Set<String>()
-        for row in rows {
-            for shape in row.shapes {
-                if let name = shape.displayImageFileName { referencedNames.insert(name) }
-                if let name = shape.fillImageConfig?.fileName { referencedNames.insert(name) }
-            }
-            if let name = row.backgroundImageConfig.fileName { referencedNames.insert(name) }
-            for tp in row.templates {
-                if let name = tp.backgroundImageConfig.fileName { referencedNames.insert(name) }
-            }
+        for shape in row.shapes {
+            if let name = shape.displayImageFileName { referencedNames.insert(name) }
+            if let name = shape.fillImageConfig?.fileName { referencedNames.insert(name) }
+        }
+        if let name = row.backgroundImageConfig.fileName { referencedNames.insert(name) }
+        for tp in row.templates {
+            if let name = tp.backgroundImageConfig.fileName { referencedNames.insert(name) }
         }
         var screenshotImages: [String: NSImage] = [:]
         for name in referencedNames {
@@ -156,43 +156,27 @@ enum DebugTemplateService {
 
         let localeState = projectData.localeState ?? .default
         let previewHeight: CGFloat = 36
-        let gap: CGFloat = 4
 
-        // First pass: compute layout
-        var rowLayouts: [(row: ScreenshotRow, scaledWidth: CGFloat)] = []
-        for row in rows {
-            let totalWidth = row.templateWidth * CGFloat(row.templates.count)
-            let scaledWidth = totalWidth * (previewHeight / row.templateHeight)
-            rowLayouts.append((row, scaledWidth))
-        }
+        let totalWidth = row.templateWidth * CGFloat(row.templates.count)
+        let scaledWidth = totalWidth * (previewHeight / row.templateHeight)
 
-        let maxWidth = rowLayouts.map(\.scaledWidth).max() ?? 1
-        let totalHeight = previewHeight * CGFloat(rowLayouts.count) + gap * CGFloat(rowLayouts.count - 1)
-
-        let previewSize = NSSize(width: maxWidth, height: totalHeight)
+        let previewSize = NSSize(width: scaledWidth, height: previewHeight)
         let preview = NSImage(size: previewSize)
         preview.lockFocus()
         NSColor.clear.set()
         NSRect(origin: .zero, size: previewSize).fill()
 
-        // Second pass: render each row and draw immediately to avoid holding all images in memory
-        var y = totalHeight
-        for (row, scaledWidth) in rowLayouts {
-            y -= previewHeight
-            let rowImage = ExportService.renderRowImage(
-                row: row,
-                screenshotImages: screenshotImages,
-                localeState: localeState
-            )
-            let x = (maxWidth - scaledWidth) / 2
-            rowImage.draw(
-                in: NSRect(x: x, y: y, width: scaledWidth, height: previewHeight),
-                from: NSRect(origin: .zero, size: rowImage.size),
-                operation: .sourceOver,
-                fraction: 1
-            )
-            y -= gap
-        }
+        let rowImage = ExportService.renderRowImage(
+            row: row,
+            screenshotImages: screenshotImages,
+            localeState: localeState
+        )
+        rowImage.draw(
+            in: NSRect(origin: .zero, size: previewSize),
+            from: NSRect(origin: .zero, size: rowImage.size),
+            operation: .sourceOver,
+            fraction: 1
+        )
         preview.unlockFocus()
 
         guard let pngData = ExportService.opaquePNGData(from: preview) else {
@@ -202,7 +186,7 @@ enum DebugTemplateService {
         let previewURL = templateURL.appendingPathComponent("preview.png")
         do {
             try pngData.write(to: previewURL, options: .atomic)
-            print("[DebugTemplateService] Preview saved for '\(templateName)' (\(Int(maxWidth))x\(Int(totalHeight)))")
+            print("[DebugTemplateService] Preview saved for '\(templateName)' (\(Int(previewSize.width))x\(Int(previewSize.height)))")
             return true
         } catch {
             print("[DebugTemplateService] Failed to write preview for '\(templateName)': \(error)")

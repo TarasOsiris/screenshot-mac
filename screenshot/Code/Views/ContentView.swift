@@ -354,10 +354,8 @@ struct ContentView: View {
                         Label {
                             Text(template.name)
                         } icon: {
-                            if let nsImage = template.previewImage {
-                                Image(nsImage: nsImage)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
+                            if let icon = template.menuIcon {
+                                Image(nsImage: icon)
                             }
                         }
                     }

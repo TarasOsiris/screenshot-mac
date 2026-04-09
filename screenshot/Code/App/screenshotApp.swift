@@ -294,7 +294,7 @@ struct ScreenshotBroApp: App {
     private func debugOpenTemplate(name: String) {
         guard let _ = withDebugBundleAccess({ bundleURL in
             let templateURL = bundleURL.appendingPathComponent(name, isDirectory: true)
-            let template = ProjectTemplate(id: name, name: name, url: templateURL, previewImage: nil)
+            let template = ProjectTemplate(id: name, name: name, url: templateURL, previewImage: nil, menuIcon: nil)
             appState.createProjectFromTemplate(template)
             debugRefreshExistingTemplates()
         }) else {
