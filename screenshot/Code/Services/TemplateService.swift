@@ -7,11 +7,21 @@ struct ProjectTemplate: Identifiable {
     let url: URL
     let previewImage: NSImage?
     let menuIcon: NSImage?
+    var isIncludedInReleaseBuild: Bool = false
+}
+
+struct ProjectTemplateMetadata: Codable, Equatable {
+    var includeInReleaseBuild: Bool
+
+    init(includeInReleaseBuild: Bool = false) {
+        self.includeInReleaseBuild = includeInReleaseBuild
+    }
 }
 
 enum TemplateService {
     /// Relative path for shared fonts within any Templates.bundle root.
     static let sharedFontsSubpath = "shared/fonts"
+    static let metadataFileName = "template.json"
 
     /// URL of the shared fonts directory inside the app's Templates.bundle.
     static var sharedFontsURL: URL? {
@@ -50,13 +60,36 @@ enum TemplateService {
                         return true
                     }
                 }
-                return ProjectTemplate(id: dirName, name: displayName, url: url, previewImage: previewImage, menuIcon: menuIcon)
+                let metadata = loadMetadata(at: url)
+                return ProjectTemplate(
+                    id: dirName,
+                    name: displayName,
+                    url: url,
+                    previewImage: previewImage,
+                    menuIcon: menuIcon,
+                    isIncludedInReleaseBuild: metadata.includeInReleaseBuild
+                )
             }
-            .sorted { (a: ProjectTemplate, b: ProjectTemplate) in a.name.localizedStandardCompare(b.name) == .orderedAscending }
+            .sorted { (a: ProjectTemplate, b: ProjectTemplate) in
+                a.name.localizedStandardCompare(b.name) == .orderedAscending
+            }
         #if DEBUG
         return all
         #else
-        return Array(all.prefix(8))
+        return all.filter(\.isIncludedInReleaseBuild)
         #endif
+    }
+
+    static func metadataURL(for templateURL: URL) -> URL {
+        templateURL.appendingPathComponent(metadataFileName)
+    }
+
+    static func loadMetadata(at templateURL: URL) -> ProjectTemplateMetadata {
+        let metadataURL = metadataURL(for: templateURL)
+        guard let data = try? Data(contentsOf: metadataURL),
+              let metadata = try? JSONDecoder().decode(ProjectTemplateMetadata.self, from: data) else {
+            return ProjectTemplateMetadata()
+        }
+        return metadata
     }
 }

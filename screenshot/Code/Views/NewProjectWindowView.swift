@@ -148,6 +148,12 @@ struct NewProjectWindowView: View {
             Text("Template")
                 .font(.headline)
 
+            #if DEBUG
+            if !templates.isEmpty {
+                debugReleaseTemplateLegend
+            }
+            #endif
+
             if templates.isEmpty {
                 ContentUnavailableView(
                     "No Templates Available",
@@ -205,6 +211,23 @@ struct NewProjectWindowView: View {
     private var templateGridColumns: [GridItem] {
         [GridItem(.adaptive(minimum: 130, maximum: 200), spacing: templateGridSpacing)]
     }
+
+    #if DEBUG
+    private var debugReleaseTemplateLegend: some View {
+        HStack(spacing: 8) {
+            Text("Release")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(Color(nsColor: .systemGreen))
+                .padding(.horizontal, 7)
+                .padding(.vertical, 4)
+                .background(Color(nsColor: .systemGreen).opacity(0.12), in: Capsule())
+
+            Text("Badged templates are included in non-debug builds.")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+        }
+    }
+    #endif
 
     private func binding(for id: UUID) -> Binding<BlankProjectRowDraft> {
         Binding {
@@ -422,32 +445,78 @@ private struct TemplateSelectionCard: View {
     let template: ProjectTemplate
     let isSelected: Bool
 
+    private var borderColor: Color {
+        if isSelected {
+            return Color.accentColor
+        }
+        #if DEBUG
+        if template.isIncludedInReleaseBuild {
+            return Color(nsColor: .systemGreen).opacity(0.55)
+        }
+        #endif
+        return Color.secondary.opacity(0.12)
+    }
+
+    private var borderWidth: CGFloat {
+        isSelected ? 2 : 1
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Color.secondary.opacity(0.12)
-                .frame(height: 72)
-                .overlay {
-                    if let previewImage = template.previewImage {
-                        Image(nsImage: previewImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } else {
-                        Image(systemName: "photo")
-                            .foregroundStyle(.secondary)
+            ZStack(alignment: .topTrailing) {
+                Color.secondary.opacity(0.12)
+                    .frame(height: 72)
+                    .overlay {
+                        if let previewImage = template.previewImage {
+                            Image(nsImage: previewImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            Image(systemName: "photo")
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
+                #if DEBUG
+                if template.isIncludedInReleaseBuild {
+                    Text("Release")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(Color(nsColor: .systemGreen))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                        .background(.regularMaterial, in: Capsule())
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(Color(nsColor: .systemGreen).opacity(0.3), lineWidth: 1)
+                        }
+                        .padding(6)
+                }
+                #endif
+
+            }
             Text(template.name)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
         }
         .padding(8)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(
+            cardBackgroundColor,
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(isSelected ? Color.accentColor : Color.secondary.opacity(0.12), lineWidth: isSelected ? 2 : 1)
+                .strokeBorder(borderColor, lineWidth: borderWidth)
         }
+    }
+
+    private var cardBackgroundColor: Color {
+        #if DEBUG
+        if template.isIncludedInReleaseBuild && !isSelected {
+            return Color(nsColor: .systemGreen).opacity(0.05)
+        }
+        #endif
+        return Color(nsColor: .controlBackgroundColor)
     }
 }

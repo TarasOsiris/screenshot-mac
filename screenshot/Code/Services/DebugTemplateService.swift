@@ -85,6 +85,11 @@ enum DebugTemplateService {
         // Move fonts from template resources into the shared fonts directory
         moveFontsToShared(templateResources: destURL.appendingPathComponent("resources", isDirectory: true), bundleURL: bundleURL)
 
+        let metadataURL = TemplateService.metadataURL(for: destURL)
+        let metadata = ProjectTemplateMetadata(includeInReleaseBuild: false)
+        let metadataData = try JSONEncoder().encode(metadata)
+        try metadataData.write(to: metadataURL, options: .atomic)
+
         // Generate preview image from rendered rows
         generatePreviewImage(templateURL: destURL)
 

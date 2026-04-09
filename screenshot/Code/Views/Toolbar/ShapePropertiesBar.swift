@@ -31,6 +31,8 @@ private struct ShapePropertiesSingleSelectionBar: View {
     @State private var isLineHeightFieldActive = false
     @State private var editingOpacity: String = ""
     @State private var isOpacityFieldActive = false
+    @FocusState private var focusedField: Field?
+    private enum Field: Hashable { case opacity, fontSize, lineHeight }
     private static let lineHeightPresets: [Int] = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 175, 200]
 
     private var rowIndex: Int? { state.selectedRowIndex }
@@ -167,6 +169,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                                             commitOpacity(shapeId: shapeId)
                                         }
                                     })
+                                    .focused($focusedField, equals: .opacity)
                                     .frame(width: 40)
                                     .textFieldStyle(.roundedBorder)
                                     .multilineTextAlignment(.center)
@@ -175,6 +178,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                                     }
                                     .onChange(of: shapeId) {
                                         isOpacityFieldActive = false
+                                        focusedField = nil
                                         editingOpacity = currentOpacityString(for: shapeId)
                                     }
                                     .onChange(of: shape.opacity) {
@@ -757,6 +761,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                                 commitFontSize(shapeId: shapeId)
                             }
                         })
+                        .focused($focusedField, equals: .fontSize)
                         .frame(width: 48)
                         .textFieldStyle(.roundedBorder)
                         .multilineTextAlignment(.center)
@@ -874,6 +879,7 @@ private struct ShapePropertiesSingleSelectionBar: View {
                             commitLineHeight(shapeId: shapeId)
                         }
                     })
+                    .focused($focusedField, equals: .lineHeight)
                     .frame(width: 48)
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.center)
