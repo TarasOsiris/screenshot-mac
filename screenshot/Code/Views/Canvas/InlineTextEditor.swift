@@ -243,8 +243,9 @@ struct InlineTextEditor: NSViewRepresentable {
             guard let textView = notification.object as? NSTextView else { return }
             hasReceivedTextChange = true
             let maxLength = 5000
-            if textView.string.count > maxLength {
-                textView.string = String(textView.string.prefix(maxLength))
+            if textView.string.count > maxLength, let storage = textView.textStorage {
+                let excess = NSRange(location: maxLength, length: storage.length - maxLength)
+                storage.deleteCharacters(in: excess)
             }
             if parent.uppercase && !parent.isRichTextMode {
                 let uppercased = textView.string.uppercased()
