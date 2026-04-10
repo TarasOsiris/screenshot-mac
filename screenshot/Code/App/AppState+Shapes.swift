@@ -5,9 +5,11 @@ extension AppState {
     // MARK: - Shapes
 
     func shapeCenter(for row: ScreenshotRow) -> CGPoint {
-        CGPoint(
-            x: visibleCanvasModelCenter?.x ?? row.templateWidth / 2,
-            y: visibleCanvasModelCenter?.y ?? row.templateHeight / 2
+        let rawX = visibleCanvasModelCenter?.x ?? row.templateWidth / 2
+        let templateIndex = min(Int(floor(rawX / row.templateWidth)), max(row.templates.count - 1, 0))
+        return CGPoint(
+            x: row.templateCenterX(at: templateIndex),
+            y: row.templateHeight / 2
         )
     }
 
