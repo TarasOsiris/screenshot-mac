@@ -196,6 +196,7 @@ struct LocaleBanner: View {
     @State private var showResetToBaseConfirmation = false
     @State private var isTranslationOverviewPresented = false
     @State private var showLanguageDownloadAlert = false
+    @State private var showLocaleHelp = false
 
     var body: some View {
         let localeState = state.localeState
@@ -209,31 +210,46 @@ struct LocaleBanner: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color.localeWarning)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            Text("Editing \(label)")
-                                .font(.system(size: 12, weight: .semibold))
+                    HStack(spacing: 6) {
+                        Text("Editing \(label)")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color.localeWarning)
+                        if progress.total > 0 {
+                            Text("\(progress.translated) of \(progress.total)")
+                                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.localeWarning.opacity(0.12), in: Capsule())
                                 .foregroundStyle(Color.localeWarning)
-                            if progress.total > 0 {
-                                Text("\(progress.translated) of \(progress.total)")
-                                    .font(.system(size: 10, weight: .medium, design: .monospaced))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.localeWarning.opacity(0.12), in: Capsule())
-                                    .foregroundStyle(Color.localeWarning)
-                            }
-                            if missingCount > 0 {
-                                Text("\(missingCount) left")
-                                    .font(.system(size: 10, weight: .medium, design: .monospaced))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.localeWarning.opacity(0.14), in: Capsule())
-                                    .foregroundStyle(Color.localeWarning)
-                            }
                         }
-                        Text("Changes here affect only \(label). Edit translations manually, fill in missing text automatically, or switch back to the base language.")
-                            .font(.system(size: 11))
-                            .foregroundStyle(Color.localeWarning.opacity(0.72))
+                        Button {
+                            showLocaleHelp.toggle()
+                        } label: {
+                            Image(systemName: "questionmark.circle")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.localeWarning.opacity(0.6))
+                        }
+                        .buttonStyle(.borderless)
+                        .focusable(false)
+                        .popover(isPresented: $showLocaleHelp, arrowEdge: .bottom) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Locale Editing")
+                                    .font(.system(size: 12, weight: .semibold))
+                                Text("Changes here affect only \(label). The base language text is shared across all locales — edits to other locales are stored as overrides.")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Label("Edit translations manually or use Auto-Translate", systemImage: "character.book.closed")
+                                    Label("Leave a field empty to fall back to base language", systemImage: "arrow.uturn.backward")
+                                    Label("Use Edit Translations for a side-by-side view", systemImage: "tablecells")
+                                }
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                            }
+                            .padding(12)
+                            .frame(width: 300, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
 
                     Spacer(minLength: 8)
@@ -356,29 +372,46 @@ private struct ManageLocalesSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("Manage Locales")
-                .font(.headline)
-                .padding(.top, 16)
-                .padding(.bottom, 12)
+            VStack(spacing: 4) {
+                Text("Manage Locales")
+                    .font(.headline)
+                Text("The first language is the base. Drag to reorder.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, 16)
+            .padding(.bottom, 12)
 
             List {
                 ForEach(state.localeState.locales) { locale in
                     let progress = state.translationProgress(for: locale.code)
-                    HStack {
-                        Text(locale.code)
-                            .font(.system(size: 12, design: .monospaced))
-                            .frame(width: 36, alignment: .leading)
+                    let isBase = locale.code == state.localeState.baseLocaleCode
+                    HStack(spacing: 8) {
+                        Image(systemName: "line.3.horizontal")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
                         Text(locale.flagLabel)
+                            .font(.system(size: 13))
+                        Text(locale.code.uppercased())
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.secondary)
                         Spacer()
-                        if locale.code == state.localeState.baseLocaleCode {
+                        if isBase {
                             Text("Base")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 10, weight: .medium))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.accentColor.opacity(0.12), in: Capsule())
+                                .foregroundStyle(Color.accentColor)
                         } else {
                             if progress.total > 0 {
-                                Text("\(progress.translated) of \(progress.total)")
-                                    .font(.system(size: 11, design: .monospaced))
-                                    .foregroundStyle(.secondary)
+                                let statusColor: Color = progress.translated >= progress.total ? .green : .orange
+                                Text("\(progress.translated)/\(progress.total)")
+                                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(statusColor.opacity(0.12), in: Capsule())
+                                    .foregroundStyle(statusColor)
                             }
                             Button(role: .destructive) {
                                 state.removeLocale(locale.code)
@@ -397,34 +430,25 @@ private struct ManageLocalesSheet: View {
                     state.moveLocale(from: source, to: destination)
                 }
             }
-            .frame(minHeight: 120)
-
-            Text("First language is the default. Drag to reorder.")
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12)
-                .padding(.top, 6)
+            .listStyle(.inset(alternatesRowBackgrounds: true))
 
             Divider()
 
-            VStack(spacing: 8) {
-                Button("Add Language...") {
+            HStack {
+                Button {
                     showPresets = true
+                } label: {
+                    Label("Add Language", systemImage: "plus")
                 }
                 .buttonStyle(.borderless)
-            }
-            .padding(12)
-
-            HStack {
                 Spacer()
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.defaultAction)
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+            .padding(.vertical, 12)
         }
-        .frame(width: 360, height: 320)
+        .frame(width: 380, height: 340)
         .sheet(isPresented: $showPresets) {
             LocalePresetsSheet(state: state, searchText: $searchText)
         }
