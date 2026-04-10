@@ -125,10 +125,13 @@ struct ContentView: View {
                let controller = state.richTextFormatController {
                 GeometryReader { proxy in
                     let localPoint = proxy.frame(in: .global).origin
-                    let x = anchor.x - localPoint.x
+                    let barHalfW = RichTextFormatBarMetrics.width / 2
                     let barHalfH = RichTextFormatBarMetrics.height / 2
+                    let rawX = anchor.x - localPoint.x
                     let rawY = anchor.y - localPoint.y - barHalfH
-                    let y = max(barHalfH + 4, rawY)
+                    let inset = RichTextFormatBarMetrics.edgeInset
+                    let clampedX = min(max(barHalfW + inset, rawX), proxy.size.width - barHalfW - inset)
+                    let clampedY = min(max(barHalfH + inset, rawY), proxy.size.height - barHalfH - inset)
                     RichTextFormatBar(
                         selectionState: selectionState,
                         onApplyFormat: { action in
@@ -136,7 +139,7 @@ struct ContentView: View {
                         }
                     )
                     .frame(width: RichTextFormatBarMetrics.width, height: RichTextFormatBarMetrics.height)
-                    .position(x: x, y: y)
+                    .position(x: clampedX, y: clampedY)
                 }
                 .zIndex(999)
             }

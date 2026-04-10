@@ -6,6 +6,7 @@ enum RichTextFormatBarMetrics {
     static let height: CGFloat = 42
     static let controlSize = CGSize(width: 28, height: 28)
     static let cornerRadius: CGFloat = 12
+    static let edgeInset: CGFloat = 4
 }
 
 /// Derived selection state for the format bar, avoiding [Key: Any] dictionary which isn't Equatable.
@@ -94,11 +95,12 @@ struct RichTextFormatBar: View {
             ), supportsOpacity: false)
             .labelsHidden()
             .frame(width: RichTextFormatBarMetrics.controlSize.width, height: RichTextFormatBarMetrics.controlSize.height)
+            .padding(.horizontal, 4)
             .help("Text color")
 
             divider
 
-            formatButton(systemName: "textformat", isActive: false, helpText: "Clear formatting") {
+            formatButton(systemName: "eraser", isActive: false, helpText: "Clear formatting") {
                 onApplyFormat(.clearFormatting)
             }
         }
