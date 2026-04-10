@@ -478,8 +478,8 @@ private class CommitTextView: NSTextView {
     var verticalGlyphPadding: CGFloat = 0
 
     override func keyDown(with event: NSEvent) {
-        if event.keyCode == 36 && !event.modifierFlags.contains(.shift) {
-            // Return without shift -> commit
+        if event.keyCode == 36 && event.modifierFlags.contains(.shift) {
+            // Shift+Return -> commit
             onCommit?()
             return
         }
