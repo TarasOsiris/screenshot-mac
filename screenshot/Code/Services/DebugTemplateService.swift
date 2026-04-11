@@ -160,7 +160,7 @@ enum DebugTemplateService {
         }
 
         let localeState = projectData.localeState ?? .default
-        let previewHeight: CGFloat = 36
+        let previewHeight: CGFloat = 72
 
         let totalWidth = row.templateWidth * CGFloat(row.templates.count)
         let scaledWidth = totalWidth * (previewHeight / row.templateHeight)
