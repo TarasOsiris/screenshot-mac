@@ -71,7 +71,10 @@ enum TemplateService {
                 )
             }
             .sorted { (a: ProjectTemplate, b: ProjectTemplate) in
-                a.name.localizedStandardCompare(b.name) == .orderedAscending
+                if a.isIncludedInReleaseBuild != b.isIncludedInReleaseBuild {
+                    return a.isIncludedInReleaseBuild
+                }
+                return a.name.localizedStandardCompare(b.name) == .orderedAscending
             }
         #if DEBUG
         return all
