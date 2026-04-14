@@ -24,6 +24,7 @@ struct ContentView: View {
     @State private var isRenamingProject = false
     @State private var dialogText = ""
     @State private var isDeletingProject = false
+    @State private var isDuplicatingProject = false
     @State private var isResettingProject = false
     @State private var resetTemplate: ProjectTemplate?
     @State private var projectTemplates: [ProjectTemplate] = TemplateService.availableTemplates()
@@ -272,6 +273,15 @@ struct ContentView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+        .alert("Duplicate Project", isPresented: $isDuplicatingProject) {
+            TextField("Project name", text: $dialogText.limited(to: 100))
+            Button("Duplicate") {
+                if let id = state.activeProjectId {
+                    state.duplicateProject(id, name: dialogText)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
         .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
             paywallSheet
         }
@@ -331,13 +341,14 @@ struct ContentView: View {
             }
             .disabled(state.activeProjectId == nil)
 
-            Button("Duplicate Project") {
+            Button("Duplicate Project...") {
                 store.requirePro(
                     allowed: store.canCreateProject(),
                     context: .projectLimit
                 ) {
-                    if let id = state.activeProjectId {
-                        state.duplicateProject(id)
+                    Task { @MainActor in
+                        dialogText = (state.activeProject?.name ?? "") + " Copy"
+                        isDuplicatingProject = true
                     }
                 }
             }

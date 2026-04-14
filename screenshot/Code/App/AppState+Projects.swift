@@ -115,11 +115,13 @@ extension AppState {
         }
     }
 
-    func duplicateProject(_ id: UUID) {
+    func duplicateProject(_ id: UUID, name: String? = nil) {
         saveCurrentProject()
 
         guard let source = projects.first(where: { $0.id == id }) else { return }
-        let newProject = Project(name: uniqueProjectName(source.name + " Copy"))
+        let trimmed = name.map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength)) } ?? ""
+        let chosenName = trimmed.isEmpty ? source.name + " Copy" : trimmed
+        let newProject = Project(name: uniqueProjectName(chosenName))
         PersistenceService.copyProject(from: id, to: newProject.id)
         projects.append(newProject)
 

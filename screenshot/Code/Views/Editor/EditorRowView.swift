@@ -47,90 +47,50 @@ struct EditorRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Row header
-            HStack(spacing: 8) {
-                Image(systemName: row.isCollapsed ? "chevron.right" : "chevron.down")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(isSelected ? Color.accentColor : .secondary)
-                    .frame(width: 12, height: 12)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            state.toggleRowCollapsed(for: row.id)
-                        }
+            EditorRowHeader(
+                row: row,
+                isSelected: isSelected,
+                canMoveUp: canMoveUp,
+                canMoveDown: canMoveDown,
+                canDelete: canDelete,
+                isEditingLabel: $isEditingLabel,
+                editingLabelText: $editingLabelText,
+                isLabelFieldFocused: $isLabelFieldFocused,
+                isRowHovered: $isRowHovered,
+                onToggleCollapsed: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        state.toggleRowCollapsed(for: row.id)
                     }
-
-                if isEditingLabel {
-                    TextField("Row label", text: $editingLabelText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12, weight: .medium))
-                        .frame(minWidth: 60, maxWidth: 200)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(Color(nsColor: .controlBackgroundColor))
-                        .cornerRadius(4)
-                        .focused($isLabelFieldFocused)
-                        .onSubmit { commitLabelEdit() }
-                        .onChange(of: isLabelFieldFocused) {
-                            if !isLabelFieldFocused { commitLabelEdit() }
-                        }
-                        .onExitCommand { cancelLabelEdit() }
-                } else {
-                    Text(row.label.isEmpty ? "Untitled Row" : row.label)
-                        .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
-                        .foregroundStyle(isSelected ? Color.primary : .secondary)
-                        .opacity(row.label.isEmpty ? 0.5 : 1)
-                        .onTapGesture(count: 2) { startLabelEdit() }
+                },
+                onStartLabelEdit: startLabelEdit,
+                onCommitLabelEdit: commitLabelEdit,
+                onCancelLabelEdit: cancelLabelEdit,
+                onMoveUp: {
+                    withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
+                },
+                onMoveDown: {
+                    withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
+                },
+                onDuplicate: {
+                    withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+                },
+                onReset: {
+                    if confirmBeforeDeleting {
+                        isResettingRow = true
+                    } else {
+                        withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
+                    }
+                },
+                onDelete: {
+                    if confirmBeforeDeleting {
+                        isDeletingRow = true
+                    } else {
+                        withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
+                    }
                 }
-
-                Text(verbatim: row.resolutionLabel)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                HStack(spacing: 4) {
-                    ActionButton(icon: "chevron.up", tooltip: "Move up", disabled: !canMoveUp) {
-                        withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
-                    }
-                    ActionButton(icon: "chevron.down", tooltip: "Move down", disabled: !canMoveDown) {
-                        withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
-                    }
-                    ActionButton(icon: "doc.on.doc", tooltip: "Duplicate row", disabled: false) {
-                        withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
-                    }
-                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset row", isDestructive: true, disabled: false) {
-                        if confirmBeforeDeleting {
-                            isResettingRow = true
-                        } else {
-                            withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
-                        }
-                    }
-                    ActionButton(icon: "trash", tooltip: "Delete row", isDestructive: true, disabled: !canDelete) {
-                        if confirmBeforeDeleting {
-                            isDeletingRow = true
-                        } else {
-                            withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
-                        }
-                    }
-                    Menu {
-                        rowMenuContent
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                    }
-                    .menuStyle(.borderlessButton)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-                }
-                .opacity(isSelected || isRowHovered ? 1 : 0.65)
-                .animation(.easeInOut(duration: 0.15), value: isSelected || isRowHovered)
+            ) {
+                rowMenuContent
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 4)
-            .onHover { isRowHovered = $0 }
 
             // Unified canvas + add button
             if !row.isCollapsed {
