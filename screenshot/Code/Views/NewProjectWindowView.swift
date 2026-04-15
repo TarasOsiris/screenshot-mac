@@ -80,13 +80,13 @@ struct NewProjectWindowView: View {
         HStack(spacing: 12) {
             modeCard(
                 title: "Blank",
-                subtitle: "Rows + devices",
+                subtitle: "Set up your own rows",
                 icon: "square.on.square.dashed",
                 mode: .blank
             )
             modeCard(
                 title: "Template",
-                subtitle: "Pick a layout",
+                subtitle: "Pre-designed layouts",
                 icon: "square.grid.2x2",
                 mode: .template
             )
@@ -96,7 +96,7 @@ struct NewProjectWindowView: View {
     private var blankProjectConfigurator: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Configure rows")
+                Text("Rows")
                     .font(.headline)
 
                 Spacer()
@@ -145,7 +145,7 @@ struct NewProjectWindowView: View {
 
     private var templateConfigurator: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Template")
+            Text("Choose a template")
                 .font(.headline)
 
             #if DEBUG

@@ -82,8 +82,13 @@ enum DebugTemplateService {
         let sourceURL = PersistenceService.projectDataURL(projectId).deletingLastPathComponent()
         try fm.copyItem(at: sourceURL, to: destURL)
 
-        // Move fonts from template resources into the shared fonts directory
-        moveFontsToShared(templateResources: destURL.appendingPathComponent("resources", isDirectory: true), bundleURL: bundleURL)
+        // Load project data to determine which fonts are actually used
+        let projectJSON = destURL.appendingPathComponent("project.json")
+        let projectData = try PersistenceService.decoder.decode(ProjectData.self, from: Data(contentsOf: projectJSON))
+        let usedFonts = referencedFontFamilies(in: projectData)
+
+        // Move only used fonts from template resources into the shared fonts directory
+        moveFontsToShared(templateResources: destURL.appendingPathComponent("resources", isDirectory: true), bundleURL: bundleURL, usedFontFamilies: usedFonts)
 
         let metadataURL = TemplateService.metadataURL(for: destURL)
         let metadata = ProjectTemplateMetadata(includeInReleaseBuild: false)
@@ -166,23 +171,42 @@ enum DebugTemplateService {
         let scaledWidth = totalWidth * (previewHeight / row.templateHeight)
 
         let previewSize = NSSize(width: scaledWidth, height: previewHeight)
-        let preview = NSImage(size: previewSize)
-        preview.lockFocus()
-        NSColor.clear.set()
-        NSRect(origin: .zero, size: previewSize).fill()
+        let pixelWidth = Int(scaledWidth)
+        let pixelHeight = Int(previewHeight)
 
         let rowImage = ExportService.renderRowImage(
             row: row,
             screenshotImages: screenshotImages,
             localeState: localeState
         )
+
+        // Use NSBitmapImageRep directly to ensure 1x pixel output (lockFocus produces 2x on Retina)
+        guard let bitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: pixelWidth,
+            pixelsHigh: pixelHeight,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else { return false }
+        bitmap.size = previewSize
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
         rowImage.draw(
             in: NSRect(origin: .zero, size: previewSize),
             from: NSRect(origin: .zero, size: rowImage.size),
             operation: .sourceOver,
             fraction: 1
         )
-        preview.unlockFocus()
+        NSGraphicsContext.restoreGraphicsState()
+
+        let preview = NSImage(size: previewSize)
+        preview.addRepresentation(bitmap)
 
         guard let pngData = ExportService.opaquePNGData(from: preview) else {
             print("[DebugTemplateService] Failed to encode preview PNG for '\(templateName)'")
@@ -199,9 +223,37 @@ enum DebugTemplateService {
         }
     }
 
-    /// Moves font files from a template's resources into the shared/fonts directory,
-    /// removing duplicates that already exist there.
-    private static func moveFontsToShared(templateResources: URL, bundleURL: URL) {
+    /// Collects all font family names referenced by shapes and locale overrides in a project.
+    private static func referencedFontFamilies(in projectData: ProjectData) -> Set<String> {
+        var families = Set<String>()
+        for row in projectData.rows {
+            for shape in row.shapes {
+                if let name = shape.fontName { families.insert(name) }
+            }
+        }
+        if let localeState = projectData.localeState {
+            for (_, shapeOverrides) in localeState.overrides {
+                for (_, override_) in shapeOverrides {
+                    if let name = override_.fontName { families.insert(name) }
+                }
+            }
+        }
+        return families
+    }
+
+    /// Returns the font family name for a font file, or nil if it can't be determined.
+    private static func fontFamilyName(for url: URL) -> String? {
+        guard let descriptors = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor],
+              let first = descriptors.first,
+              let familyName = CTFontDescriptorCopyAttribute(first, kCTFontFamilyNameAttribute) as? String else {
+            return nil
+        }
+        return familyName
+    }
+
+    /// Moves font files that are actually used by the project from a template's resources
+    /// into the shared/fonts directory. Unused font files are simply removed.
+    private static func moveFontsToShared(templateResources: URL, bundleURL: URL, usedFontFamilies: Set<String>) {
         let fm = FileManager.default
         let sharedFontsURL = bundleURL.appendingPathComponent(TemplateService.sharedFontsSubpath, isDirectory: true)
         try? fm.createDirectory(at: sharedFontsURL, withIntermediateDirectories: true)
@@ -209,9 +261,12 @@ enum DebugTemplateService {
         guard let files = try? fm.contentsOfDirectory(at: templateResources, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return }
 
         for file in files where AppState.fontExtensions.contains(file.pathExtension.lowercased()) {
-            let sharedDest = sharedFontsURL.appendingPathComponent(file.lastPathComponent)
-            if !fm.fileExists(atPath: sharedDest.path) {
-                guard (try? fm.copyItem(at: file, to: sharedDest)) != nil else { continue }
+            let family = fontFamilyName(for: file)
+            if let family, usedFontFamilies.contains(family) {
+                let sharedDest = sharedFontsURL.appendingPathComponent(file.lastPathComponent)
+                if !fm.fileExists(atPath: sharedDest.path) {
+                    _ = try? fm.copyItem(at: file, to: sharedDest)
+                }
             }
             try? fm.removeItem(at: file)
         }
