@@ -82,12 +82,10 @@ enum DebugTemplateService {
         let sourceURL = PersistenceService.projectDataURL(projectId).deletingLastPathComponent()
         try fm.copyItem(at: sourceURL, to: destURL)
 
-        // Load project data to determine which fonts are actually used
         let projectJSON = destURL.appendingPathComponent("project.json")
         let projectData = try PersistenceService.decoder.decode(ProjectData.self, from: Data(contentsOf: projectJSON))
         let usedFonts = referencedFontFamilies(in: projectData)
 
-        // Move only used fonts from template resources into the shared fonts directory
         moveFontsToShared(templateResources: destURL.appendingPathComponent("resources", isDirectory: true), bundleURL: bundleURL, usedFontFamilies: usedFonts)
 
         let metadataURL = TemplateService.metadataURL(for: destURL)
@@ -95,8 +93,7 @@ enum DebugTemplateService {
         let metadataData = try JSONEncoder().encode(metadata)
         try metadataData.write(to: metadataURL, options: .atomic)
 
-        // Generate preview image from rendered rows
-        generatePreviewImage(templateURL: destURL)
+        generatePreviewImage(templateURL: destURL, projectData: projectData)
 
         print("[DebugTemplateService] Saved template '\(templateName)' to \(destURL.path)")
     }
@@ -126,19 +123,23 @@ enum DebugTemplateService {
 
     /// Generate a preview image by rendering actual row canvases and compositing them.
     @MainActor
-    static func generatePreviewImage(templateURL: URL) -> Bool {
+    static func generatePreviewImage(templateURL: URL, projectData existingData: ProjectData? = nil) -> Bool {
         let templateName = templateURL.lastPathComponent
-        let projectURL = templateURL.appendingPathComponent("project.json")
-        guard let data = try? Data(contentsOf: projectURL) else {
-            print("[DebugTemplateService] Failed to read project.json for '\(templateName)'")
-            return false
-        }
         let projectData: ProjectData
-        do {
-            projectData = try PersistenceService.decoder.decode(ProjectData.self, from: data)
-        } catch {
-            print("[DebugTemplateService] Failed to decode '\(templateName)': \(error)")
-            return false
+        if let existingData {
+            projectData = existingData
+        } else {
+            let projectURL = templateURL.appendingPathComponent("project.json")
+            guard let data = try? Data(contentsOf: projectURL) else {
+                print("[DebugTemplateService] Failed to read project.json for '\(templateName)'")
+                return false
+            }
+            do {
+                projectData = try PersistenceService.decoder.decode(ProjectData.self, from: data)
+            } catch {
+                print("[DebugTemplateService] Failed to decode '\(templateName)': \(error)")
+                return false
+            }
         }
         guard let firstRow = projectData.rows.first(where: { !$0.templates.isEmpty }) else { return false }
 
@@ -171,8 +172,6 @@ enum DebugTemplateService {
         let scaledWidth = totalWidth * (previewHeight / row.templateHeight)
 
         let previewSize = NSSize(width: scaledWidth, height: previewHeight)
-        let pixelWidth = Int(scaledWidth)
-        let pixelHeight = Int(previewHeight)
 
         let rowImage = ExportService.renderRowImage(
             row: row,
@@ -180,20 +179,8 @@ enum DebugTemplateService {
             localeState: localeState
         )
 
-        // Use NSBitmapImageRep directly to ensure 1x pixel output (lockFocus produces 2x on Retina)
-        guard let bitmap = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: pixelWidth,
-            pixelsHigh: pixelHeight,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ) else { return false }
-        bitmap.size = previewSize
+        // NSBitmapImageRep ensures 1x pixel output (lockFocus produces 2x on Retina)
+        guard let bitmap = ExportService.bitmapRep(width: scaledWidth, height: previewHeight) else { return false }
 
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)

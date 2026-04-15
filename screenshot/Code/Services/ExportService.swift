@@ -673,7 +673,7 @@ struct ExportService {
         return flattened
     }
 
-    private static func bitmapRep(width: CGFloat, height: CGFloat) -> NSBitmapImageRep? {
+    static func bitmapRep(width: CGFloat, height: CGFloat) -> NSBitmapImageRep? {
         let pixelW = max(Int(ceil(width)), 1)
         let pixelH = max(Int(ceil(height)), 1)
         let rep = NSBitmapImageRep(
