@@ -211,7 +211,7 @@ struct EditorRowView: View {
         } else if let provider = imageProviders.first {
             let modelX = baseX
             let modelY = baseY
-            loadImageFromProvider(provider) { image in
+            ItemProviderImageLoader.loadImage(from: provider) { image in
                 guard let image else { return }
                 self.createImageShape(image: image, modelX: modelX, modelY: modelY)
             }
@@ -221,30 +221,6 @@ struct EditorRowView: View {
         return handled
     }
 
-    /// Loads an image from an NSItemProvider, calling completion on the main queue with nil on failure.
-    private func loadImageFromProvider(_ provider: NSItemProvider, completion: @escaping (NSImage?) -> Void) {
-        if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
-            provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
-                let image = url.flatMap { NSImage(contentsOf: $0) }
-                DispatchQueue.main.async { completion(image) }
-            }
-        } else if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-            provider.loadFileRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { url, _ in
-                guard let url = url,
-                      let typeId = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
-                      let uttype = UTType(typeId),
-                      uttype.conforms(to: .image) else {
-                    DispatchQueue.main.async { completion(nil) }
-                    return
-                }
-                let image = NSImage.fromSecurityScopedURL(url)
-                DispatchQueue.main.async { completion(image) }
-            }
-        } else {
-            DispatchQueue.main.async { completion(nil) }
-        }
-    }
-
     private func handleBatchImageDrop(_ providers: [NSItemProvider]) {
         let group = DispatchGroup()
         var loadedImages: [(Int, NSImage)] = []
@@ -252,7 +228,7 @@ struct EditorRowView: View {
 
         for (i, provider) in providers.enumerated() {
             group.enter()
-            loadImageFromProvider(provider) { image in
+            ItemProviderImageLoader.loadImage(from: provider) { image in
                 if let image {
                     lock.lock()
                     loadedImages.append((i, image))
@@ -592,26 +568,11 @@ struct EditorRowView: View {
 
             // Guideline separators
             if row.showBorders && row.templates.count > 1 {
-                ForEach(1..<row.templates.count, id: \.self) { i in
-                    ZStack {
-                        Path { path in
-                            path.move(to: CGPoint(x: 0, y: 0))
-                            path.addLine(to: CGPoint(x: 0, y: dh))
-                        }
-                        .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                        .foregroundStyle(.black)
-
-                        Path { path in
-                            path.move(to: CGPoint(x: 0, y: 0))
-                            path.addLine(to: CGPoint(x: 0, y: dh))
-                        }
-                        .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4], dashPhase: 4))
-                        .foregroundStyle(.white)
-                    }
-                    .frame(width: 1, height: dh)
-                    .offset(x: dw * CGFloat(i))
-                    .allowsHitTesting(false)
-                }
+                CanvasTemplateSeparatorLines(
+                    templateCount: row.templates.count,
+                    templateDisplayWidth: dw,
+                    templateDisplayHeight: dh
+                )
             }
         }
         .frame(
@@ -704,94 +665,20 @@ struct EditorRowView: View {
 
     @ViewBuilder
     private var rowMenuContent: some View {
-        rowMenuAddSection
-        Divider()
-        rowMenuOrganizationSection
-        Divider()
-        rowMenuExportSection
-        Divider()
-        rowMenuAppearanceSection
-        Divider()
-        rowMenuDestructiveSection
-    }
-
-    @ViewBuilder
-    private var rowMenuAddSection: some View {
-        Button("Add Screenshot") {
-            store.requirePro(
-                allowed: store.canAddTemplate(currentCount: row.templates.count),
-                context: .templateLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    state.addTemplate(to: row.id)
-                }
-            }
-        }
-        Menu("Add Element") {
-            ForEach(ShapeType.allCases, id: \.self) { type in
-                Button {
-                    if type == .svg {
-                        state.selectRow(row.id)
-                        isSvgDialogPresented = true
-                    } else {
-                        addShapeFromMenu(type)
-                    }
-                } label: {
-                    Label(type.label, systemImage: type.icon)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var rowMenuOrganizationSection: some View {
-        Button("Duplicate Row") {
-            store.requirePro(
-                allowed: store.canAddRow(currentCount: state.rows.count),
-                context: .rowLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
-            }
-        }
-        Button("Add New Row Above") {
-            store.requirePro(
-                allowed: store.canAddRow(currentCount: state.rows.count),
-                context: .rowLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) { state.addRowAbove(row.id) }
-            }
-        }
-        Button("Add New Row Below") {
-            store.requirePro(
-                allowed: store.canAddRow(currentCount: state.rows.count),
-                context: .rowLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) { state.addRowBelow(row.id) }
-            }
-        }
-        Button("Move Row Up") {
-            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
-        }
-        .disabled(!canMoveUp)
-        Button("Move Row Down") {
-            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
-        }
-        .disabled(!canMoveDown)
-    }
-
-    @ViewBuilder
-    private var rowMenuExportSection: some View {
-        Menu("Export Row") {
-            Button("Screenshots") {
-                exportRowScreenshots()
-            }
-            Button("Continuous") {
-                exportRowImage(showcase: false)
-            }
-            Button("Showcase") {
-                exportRowImage(showcase: true)
-            }
-        }
+        EditorRowMenuContent(
+            state: state,
+            row: row,
+            canMoveUp: canMoveUp,
+            canMoveDown: canMoveDown,
+            canDelete: canDelete,
+            confirmBeforeDeleting: confirmBeforeDeleting,
+            isSvgDialogPresented: $isSvgDialogPresented,
+            isResettingRow: $isResettingRow,
+            isDeletingRow: $isDeletingRow,
+            addShapeFromMenu: addShapeFromMenu,
+            exportRowScreenshots: exportRowScreenshots,
+            exportRowImage: { exportRowImage(showcase: $0) }
+        )
     }
 
     private func exportRowScreenshots() {
@@ -868,76 +755,6 @@ struct EditorRowView: View {
         } catch {
             exportError = "Could not export row image: \(error.localizedDescription)"
         }
-    }
-
-    @ViewBuilder
-    private var rowMenuAppearanceSection: some View {
-        Menu("Devices") {
-            Button(row.showDevice ? "Hide Devices" : "Show Devices") {
-                state.toggleShowDevice(for: row.id)
-            }
-            Divider()
-            Menu("Center All") {
-                Button("Vertically") {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        state.centerAllDevices(in: row.id, axis: .vertically)
-                    }
-                }
-                Button("Horizontally") {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        state.centerAllDevices(in: row.id, axis: .horizontally)
-                    }
-                }
-                Button("Screenshot Center") {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        state.centerAllDevices(in: row.id, axis: .both)
-                    }
-                }
-            }
-            Menu("Change All To") {
-                DeviceMenuContent(
-                    onSelectCategory: { category in
-                        state.changeAllDevices(in: row.id, toCategory: category)
-                    },
-                    onSelectFrame: { frame in
-                        state.changeAllDevices(in: row.id, toFrame: frame)
-                    },
-                    selectedCategory: row.defaultDeviceCategory,
-                    selectedFrameId: row.defaultDeviceFrameId
-                )
-            }
-        }
-        Button(row.showBorders ? "Hide Borders" : "Show Borders") {
-            state.toggleShowBorders(for: row.id)
-        }
-    }
-
-    @ViewBuilder
-    private var rowMenuDestructiveSection: some View {
-        Menu("Delete all") {
-            ForEach(ShapeType.allCases, id: \.self) { type in
-                Button(type.pluralLabel, role: .destructive) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        state.deleteAllShapes(ofType: type, in: row.id)
-                    }
-                }
-            }
-        }
-        Button("Reset Row", role: .destructive) {
-            if confirmBeforeDeleting {
-                isResettingRow = true
-            } else {
-                withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
-            }
-        }
-        Button("Delete Row", role: .destructive) {
-            if confirmBeforeDeleting {
-                isDeletingRow = true
-            } else {
-                withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
-            }
-        }
-        .disabled(!canDelete)
     }
 
 }

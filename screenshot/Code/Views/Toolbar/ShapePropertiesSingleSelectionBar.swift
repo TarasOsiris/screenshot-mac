@@ -94,51 +94,32 @@ struct ShapePropertiesSingleSelectionBar: View {
                         }
 
                         if shape.supportsDeviceModelRotation {
-                            ShapePropertiesSection {
-                                ShapePropertiesControlGroup("Pitch") {
-                                    Slider(value: deviceModelRotationBinding(shapeId, \.devicePitch, defaultValue: \.resolvedDevicePitch), in: -35...35)
-                                        .frame(width: 80)
-
-                                    Text(verbatim: "\(Int(shape.resolvedDevicePitch.rounded()))°")
-                                        .frame(width: 28, alignment: .trailing)
-                                }
-
-                                ShapePropertiesSeparator()
-
-                                ShapePropertiesControlGroup("Yaw") {
-                                    Slider(value: deviceModelRotationBinding(shapeId, \.deviceYaw, defaultValue: \.resolvedDeviceYaw), in: -45...45)
-                                        .frame(width: 80)
-
-                                    Text(verbatim: "\(Int(shape.resolvedDeviceYaw.rounded()))°")
-                                        .frame(width: 28, alignment: .trailing)
-                                }
-
-                                ShapePropertiesSeparator()
-
-                                ActionButton(
-                                    icon: "arrow.counterclockwise",
-                                    tooltip: "Reset 3D device rotation",
-                                    frameSize: 24,
-                                    disabled: !hasDeviceModelRotationOverride(shapeId)
-                                ) {
-                                    resetDeviceModelRotation(shapeId)
-                                }
-
-                                ShapePropertiesSeparator()
-
-                                Text("Beta")
-                                    .font(.system(size: 9, weight: .semibold))
-                                    .foregroundStyle(.orange)
-                                    .padding(.horizontal, 5)
-                                    .padding(.vertical, 2)
-                                    .background(.orange.opacity(0.15), in: .capsule)
-                                    .help("3D device rotation is an experimental feature")
-                            }
+                            ShapeDeviceModelRotationControls(
+                                shape: shape,
+                                pitch: deviceModelRotationBinding(shapeId, \.devicePitch, defaultValue: \.resolvedDevicePitch),
+                                yaw: deviceModelRotationBinding(shapeId, \.deviceYaw, defaultValue: \.resolvedDeviceYaw),
+                                canReset: hasDeviceModelRotationOverride(shapeId),
+                                onReset: { resetDeviceModelRotation(shapeId) }
+                            )
                         }
 
                         ShapePropertiesSection {
                             if shape.type.supportsFill {
-                                fillSwatchButton(shape: shape, shapeId: shapeId)
+                                ShapeFillSwatchButton(
+                                    shape: shape,
+                                    isPresented: $isFillPopoverPresented,
+                                    backgroundStyle: fillStyleBinding(shapeId),
+                                    bgColor: shapeBinding(shapeId, \.color),
+                                    gradientConfig: shapeBinding(shapeId, \.fillGradientConfig, default: GradientConfig()),
+                                    backgroundImageConfig: shapeBinding(shapeId, \.fillImageConfig, default: BackgroundImageConfig()),
+                                    backgroundImage: (idx(for: shapeId).flatMap { i in
+                                        state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
+                                    }).flatMap { state.screenshotImages[$0] },
+                                    onChanged: { state.scheduleSave() },
+                                    onPickImage: { isReplacingFillImage = true },
+                                    onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
+                                    onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
+                                )
                                 ShapePropertiesSeparator()
                             } else if shape.type != .device && shape.type != .svg && shape.type != .image {
                                 ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
@@ -208,7 +189,20 @@ struct ShapePropertiesSingleSelectionBar: View {
 
                         if shape.type.supportsOutline || (shape.type == .device && shape.deviceCategory == .invisible) {
                             ShapePropertiesSection {
-                                outlineControls(shape: shape, shapeId: shapeId)
+                                ShapeOutlineControls(
+                                    shape: shape,
+                                    hasOutline: Binding(
+                                        get: { (shape.outlineWidth ?? 0) > 0 },
+                                        set: { enabled in
+                                            var updated = shape
+                                            updated.outlineColor = enabled ? CanvasShapeModel.defaultOutlineColor : nil
+                                            updated.outlineWidth = enabled ? CanvasShapeModel.defaultOutlineWidth : nil
+                                            state.updateShape(updated)
+                                        }
+                                    ),
+                                    outlineColor: shapeBinding(shapeId, \.outlineColor, default: CanvasShapeModel.defaultOutlineColor),
+                                    outlineWidth: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true)
+                                )
                             }
                         }
 
@@ -244,7 +238,9 @@ struct ShapePropertiesSingleSelectionBar: View {
                         }
 
                         if !state.localeState.isBaseLocale && hasLocaleOverride {
-                            overrideIndicator(shapeId: shapeId)
+                            LocaleOverrideIndicator {
+                                state.resetLocaleOverride(shapeId: shapeId)
+                            }
                         }
 
                         if shape.type == .text {
@@ -632,68 +628,6 @@ struct ShapePropertiesSingleSelectionBar: View {
         state.updateShape(resolved)
     }
 
-    // MARK: - Fill Swatch
-
-    @ViewBuilder
-    private func fillSwatchButton(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        Button {
-            isFillPopoverPresented.toggle()
-        } label: {
-            fillSwatchPreview(shape: shape)
-                .frame(width: 24, height: 24)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .strokeBorder(.separator, lineWidth: 0.5)
-                )
-        }
-        .buttonStyle(.plain)
-        .help("Fill")
-        .popover(isPresented: $isFillPopoverPresented, arrowEdge: .top) {
-            VStack(spacing: 8) {
-                BackgroundEditor(
-                    backgroundStyle: fillStyleBinding(shapeId),
-                    bgColor: shapeBinding(shapeId, \.color),
-                    gradientConfig: shapeBinding(shapeId, \.fillGradientConfig, default: GradientConfig()),
-                    backgroundImageConfig: shapeBinding(shapeId, \.fillImageConfig, default: BackgroundImageConfig()),
-                    backgroundImage: (idx(for: shapeId).flatMap { i in
-                        state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
-                    }).flatMap { state.screenshotImages[$0] },
-                    onChanged: { state.scheduleSave() },
-                    onPickImage: { isReplacingFillImage = true },
-                    onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
-                    onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
-                )
-            }
-            .padding(12)
-            .frame(width: 260)
-        }
-    }
-
-    @ViewBuilder
-    private func fillSwatchPreview(shape: CanvasShapeModel) -> some View {
-        switch shape.resolvedFillStyle {
-        case .color:
-            Rectangle().fill(shape.color)
-        case .gradient:
-            (shape.fillGradientConfig ?? GradientConfig()).gradientFill
-        case .image:
-            if let fileName = shape.fillImageConfig?.fileName,
-               let image = state.screenshotImages[fileName] {
-                Image(nsImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                Rectangle().fill(shape.color)
-                    .overlay {
-                        Image(systemName: "photo")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
-                    }
-            }
-        }
-    }
-
     private func fillStyleBinding(_ shapeId: UUID) -> Binding<BackgroundStyle> {
         Binding(
             get: {
@@ -959,56 +893,4 @@ struct ShapePropertiesSingleSelectionBar: View {
         .controlSize(.small)
     }
 
-    @ViewBuilder
-    private func outlineControls(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        let hasOutline = (shape.outlineWidth ?? 0) > 0
-
-        Toggle("Outline", isOn: Binding(
-            get: { hasOutline },
-            set: { enabled in
-                var updated = shape
-                updated.outlineColor = enabled ? CanvasShapeModel.defaultOutlineColor : nil
-                updated.outlineWidth = enabled ? CanvasShapeModel.defaultOutlineWidth : nil
-                state.updateShape(updated)
-            }
-        ))
-        .toggleStyle(.switch)
-        .controlSize(.small)
-        .help(hasOutline ? "Disable outline" : "Enable outline")
-
-        if hasOutline {
-            ColorPicker("", selection: shapeBinding(shapeId, \.outlineColor, default: CanvasShapeModel.defaultOutlineColor), supportsOpacity: false)
-                .labelsHidden()
-                .frame(width: 30)
-                .padding(.horizontal, 4)
-                .help("Outline")
-
-            ShapePropertiesSeparator()
-
-            ShapePropertiesControlGroup("Width") {
-                Slider(value: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true), in: 1...50)
-                    .frame(width: 80)
-
-                Text(verbatim: "\(Int((shape.outlineWidth ?? CanvasShapeModel.defaultOutlineWidth).rounded()))")
-                    .frame(width: 28, alignment: .trailing)
-            }
-        }
-    }
-
-    private func overrideIndicator(shapeId: UUID) -> some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(Color.accentColor)
-                .frame(width: 5, height: 5)
-            Text("Overridden")
-                .font(.system(size: 10))
-                .foregroundStyle(Color.accentColor)
-
-            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset locale override", frameSize: 24) {
-                state.resetLocaleOverride(shapeId: shapeId)
-            }
-        }
-    }
-
 }
-

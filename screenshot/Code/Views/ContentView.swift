@@ -1,6 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
-import RevenueCatUI
 
 struct ContentView: View {
     @Environment(AppState.self) private var state
@@ -155,42 +153,16 @@ struct ContentView: View {
         }
         .overlay {
             if isExporting {
-                ZStack {
-                    Color.black.opacity(0.3)
-                        .ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        Text("Exporting Screenshots...")
-                            .font(.headline)
-                        ProgressView(value: Double(exportProgress), total: Double(max(1, exportTotal)))
-                            .frame(width: 200)
-                        Text("\(exportProgress) of \(exportTotal)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Button("Cancel") {
-                            exportTask?.cancel()
-                        }
-                        .keyboardShortcut(.cancelAction)
-                        .controlSize(.small)
-                    }
-                    .padding(24)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-                }
+                ExportProgressOverlay(
+                    progress: exportProgress,
+                    total: exportTotal,
+                    onCancel: { exportTask?.cancel() }
+                )
             }
         }
         .overlay {
             if !isExporting && (state.isOpeningProject || state.isLoadingImages) {
-                ZStack {
-                    Color.black.opacity(0.3)
-                        .ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        ProgressView()
-                            .controlSize(.large)
-                        Text(state.isOpeningProject ? "Opening Project…" : "Loading Images…")
-                            .font(.headline)
-                    }
-                    .padding(24)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-                }
+                ProjectLoadingOverlay(message: state.isOpeningProject ? "Opening Project…" : "Loading Images…")
             }
         }
         .inspector(isPresented: $isInspectorPresented) {
@@ -283,7 +255,7 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) {}
         }
         .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
-            paywallSheet
+            PaywallSheetContent(store: store)
         }
         .middleMousePan()
         .onAppear {
@@ -465,59 +437,17 @@ struct ContentView: View {
         .help(isInspectorPresented ? "Hide inspector" : "Show inspector")
     }
 
-    private var exportButtonLabel: some View {
-        HStack(spacing: 4) {
-            if isExporting {
-                ProgressView()
-                    .controlSize(.small)
-                    .scaleEffect(0.7)
-            } else if exportSuccess {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .semibold))
-            } else {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 11))
-            }
-            Text(exportButtonText)
-        }
-    }
-
     private var exportControlGroup: some View {
-        HStack(spacing: 0) {
-            Button {
-                exportScreenshots()
-            } label: {
-                exportButtonLabel
-            }
-            .keyboardShortcut("e", modifiers: .command)
-            .help(exportHelpText)
-
-            Rectangle()
-                .fill(.white.opacity(0.3))
-                .frame(width: 1, height: 16)
-
-            Menu {
-                exportMenuContent
-            } label: {
-                Label {
-                    Text("")
-                } icon: {
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(.white)
-                }
-                .frame(width: 16, height: 22)
-                .contentShape(Rectangle())
-            }
-            .menuStyle(.button)
-            .buttonStyle(.plain)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .help("Export options")
+        ContentExportControl(
+            isExporting: isExporting,
+            exportSuccess: exportSuccess,
+            buttonText: exportButtonText,
+            helpText: exportHelpText,
+            isDisabled: isExporting || state.rows.isEmpty,
+            onExport: { exportScreenshots() }
+        ) {
+            exportMenuContent
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.regular)
-        .disabled(isExporting || state.rows.isEmpty)
     }
 
     @ViewBuilder
@@ -777,34 +707,6 @@ struct ContentView: View {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
-    @ViewBuilder
-    private var paywallSheet: some View {
-        if let configurationIssue = store.configurationIssue {
-            VStack(alignment: .leading, spacing: 16) {
-                Label("RevenueCat isn’t configured", systemImage: "exclamationmark.triangle.fill")
-                    .font(.headline)
-                    .foregroundStyle(.orange)
-
-                Text(configurationIssue)
-                    .foregroundStyle(.secondary)
-
-                Button("Close") {
-                    store.dismissPaywall()
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .frame(minWidth: 520, minHeight: 240)
-            .padding(24)
-        } else {
-            RevenueCatUI.PaywallView(displayCloseButton: true)
-                .onPurchaseCompleted { store.handlePurchaseOrRestore($0) }
-                .onRestoreCompleted { store.handlePurchaseOrRestore($0) }
-                .onPurchaseFailure { store.handlePurchaseFailure($0) }
-                .onRestoreFailure { store.handleRestoreFailure($0) }
-                .onRequestedDismissal { store.dismissPaywall() }
-                .frame(minWidth: 520, idealWidth: 560, maxWidth: 620, minHeight: 560, idealHeight: 620)
-        }
-    }
 }
 
 #Preview {
