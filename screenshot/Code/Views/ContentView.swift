@@ -29,6 +29,7 @@ struct ContentView: View {
     @State private var gestureZoomStartLevel: CGFloat?
     @State private var editorViewportHeight: CGFloat = 0
     @State private var scrollWheelMonitor: Any?
+    @State private var showingASCUploadSheet = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -257,6 +258,10 @@ struct ContentView: View {
         }
         .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
             PaywallSheetContent(store: store)
+        }
+        .sheet(isPresented: $showingASCUploadSheet) {
+            UploadToAppStoreConnectView()
+                .environment(state)
         }
         .middleMousePan()
         .onAppear {
@@ -489,6 +494,15 @@ struct ContentView: View {
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }
+
+        #if DEBUG
+        Divider()
+
+        Button("Upload to App Store Connect…") {
+            showingASCUploadSheet = true
+        }
+        .disabled(state.rows.isEmpty)
+        #endif
     }
 
     private var hasLastExportDestination: Bool {

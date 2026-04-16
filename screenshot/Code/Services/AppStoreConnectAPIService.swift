@@ -1,0 +1,415 @@
+import Foundation
+
+enum AppStoreConnectAPIError: Error, LocalizedError {
+    case invalidURL
+    case httpError(status: Int, message: String)
+    case decodingFailed(Error)
+    case transport(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid request URL."
+        case .httpError(let status, let message):
+            return "App Store Connect returned \(status): \(message)"
+        case .decodingFailed(let error):
+            return "Response decoding failed: \(error.localizedDescription)"
+        case .transport(let error):
+            return error.localizedDescription
+        }
+    }
+}
+
+final class AppStoreConnectAPIService {
+    static let shared = AppStoreConnectAPIService()
+
+    private static let baseURL = "https://api.appstoreconnect.apple.com"
+    private static let decoder = JSONDecoder()
+    private static let encoder = JSONEncoder()
+
+    private let auth: AppStoreConnectAuthService
+    private let session: URLSession
+
+    init(auth: AppStoreConnectAuthService = .shared,
+         session: URLSession = .shared) {
+        self.auth = auth
+        self.session = session
+    }
+
+    func testConnection() async throws -> String {
+        let response: ASCListResponse<ASCApp> = try await get("/v1/apps?limit=1")
+        if let first = response.data.first {
+            return "Connected. First app: \(first.attributes.name)"
+        }
+        return "Connected. No apps found on this account yet."
+    }
+
+    // MARK: - Apps / versions / localizations
+
+    func listApps(limit: Int = 200) async throws -> [ASCApp] {
+        let response: ASCListResponse<ASCApp> = try await get("/v1/apps?limit=\(limit)&sort=name")
+        return response.data
+    }
+
+    func listAppStoreVersions(appId: String, limit: Int = 20) async throws -> [ASCAppStoreVersion] {
+        let path = "/v1/apps/\(appId)/appStoreVersions?limit=\(limit)"
+        let response: ASCListResponse<ASCAppStoreVersion> = try await get(path)
+        return response.data
+    }
+
+    func listLocalizations(versionId: String, limit: Int = 200) async throws -> [ASCAppStoreVersionLocalization] {
+        let path = "/v1/appStoreVersions/\(versionId)/appStoreVersionLocalizations?limit=\(limit)"
+        let response: ASCListResponse<ASCAppStoreVersionLocalization> = try await get(path)
+        return response.data
+    }
+
+    // MARK: - Screenshot sets
+
+    func listScreenshotSets(localizationId: String, limit: Int = 50) async throws -> [ASCAppScreenshotSet] {
+        let path = "/v1/appStoreVersionLocalizations/\(localizationId)/appScreenshotSets?limit=\(limit)"
+        let response: ASCListResponse<ASCAppScreenshotSet> = try await get(path)
+        return response.data
+    }
+
+    func createScreenshotSet(localizationId: String, displayType: String) async throws -> ASCAppScreenshotSet {
+        let body = ASCResourceCreate(
+            data: ASCResourceCreate.Payload(
+                type: "appScreenshotSets",
+                attributes: ["screenshotDisplayType": AnyEncodable(displayType)],
+                relationships: [
+                    "appStoreVersionLocalization": AnyEncodable(
+                        ASCRelationship.single(type: "appStoreVersionLocalizations", id: localizationId)
+                    )
+                ]
+            )
+        )
+        let response: ASCSingleResponse<ASCAppScreenshotSet> = try await post("/v1/appScreenshotSets", body: body)
+        return response.data
+    }
+
+    func deleteScreenshotSet(id: String) async throws {
+        try await delete("/v1/appScreenshotSets/\(id)")
+    }
+
+    // MARK: - Screenshots (reserve / upload / commit)
+
+    func listScreenshots(setId: String, limit: Int = 50) async throws -> [ASCAppScreenshot] {
+        let path = "/v1/appScreenshotSets/\(setId)/appScreenshots?limit=\(limit)"
+        let response: ASCListResponse<ASCAppScreenshot> = try await get(path)
+        return response.data
+    }
+
+    func deleteScreenshot(id: String) async throws {
+        try await delete("/v1/appScreenshots/\(id)")
+    }
+
+    func reserveScreenshot(setId: String, fileName: String, fileSize: Int) async throws -> ASCAppScreenshot {
+        let attributes: [String: AnyEncodable] = [
+            "fileName": AnyEncodable(fileName),
+            "fileSize": AnyEncodable(fileSize)
+        ]
+        let body = ASCResourceCreate(
+            data: ASCResourceCreate.Payload(
+                type: "appScreenshots",
+                attributes: attributes,
+                relationships: [
+                    "appScreenshotSet": AnyEncodable(
+                        ASCRelationship.single(type: "appScreenshotSets", id: setId)
+                    )
+                ]
+            )
+        )
+        let response: ASCSingleResponse<ASCAppScreenshot> = try await post("/v1/appScreenshots", body: body)
+        return response.data
+    }
+
+    func uploadChunk(operation: ASCUploadOperation, from fileData: Data) async throws {
+        guard let url = URL(string: operation.url) else {
+            throw AppStoreConnectAPIError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = operation.method
+        for header in operation.requestHeaders {
+            request.setValue(header.value, forHTTPHeaderField: header.name)
+        }
+
+        let lower = operation.offset
+        let upper = min(operation.offset + operation.length, fileData.count)
+        let slice = fileData.subdata(in: lower..<upper)
+        request.httpBody = slice
+
+        let response: URLResponse
+        do {
+            (_, response) = try await session.data(for: request)
+        } catch {
+            throw AppStoreConnectAPIError.transport(error)
+        }
+
+        guard let http = response as? HTTPURLResponse else {
+            throw AppStoreConnectAPIError.httpError(status: -1, message: "Non-HTTP response")
+        }
+        guard (200..<300).contains(http.statusCode) else {
+            throw AppStoreConnectAPIError.httpError(status: http.statusCode, message: "Upload chunk failed")
+        }
+    }
+
+    func commitScreenshot(id: String, md5Checksum: String) async throws {
+        let attributes: [String: AnyEncodable] = [
+            "uploaded": AnyEncodable(true),
+            "sourceFileChecksum": AnyEncodable(md5Checksum)
+        ]
+        let body = ASCResourceUpdate(
+            data: ASCResourceUpdate.Payload(
+                type: "appScreenshots",
+                id: id,
+                attributes: attributes
+            )
+        )
+        let _: ASCSingleResponse<ASCAppScreenshot> = try await patch("/v1/appScreenshots/\(id)", body: body)
+    }
+
+    // MARK: - HTTP helpers
+
+    func get<T: Decodable>(_ path: String) async throws -> T {
+        try await request(method: "GET", path: path, body: Optional<Data>.none)
+    }
+
+    func post<Body: Encodable, T: Decodable>(_ path: String, body: Body) async throws -> T {
+        try await request(method: "POST", path: path, body: body)
+    }
+
+    func patch<Body: Encodable, T: Decodable>(_ path: String, body: Body) async throws -> T {
+        try await request(method: "PATCH", path: path, body: body)
+    }
+
+    func delete(_ path: String) async throws {
+        _ = try await rawRequest(method: "DELETE", path: path, body: Optional<Data>.none)
+    }
+
+    private func request<Body: Encodable, T: Decodable>(
+        method: String,
+        path: String,
+        body: Body?
+    ) async throws -> T {
+        let data = try await rawRequest(method: method, path: path, body: body)
+        do {
+            return try Self.decoder.decode(T.self, from: data)
+        } catch {
+            throw AppStoreConnectAPIError.decodingFailed(error)
+        }
+    }
+
+    private func rawRequest<Body: Encodable>(
+        method: String,
+        path: String,
+        body: Body?
+    ) async throws -> Data {
+        guard let url = URL(string: Self.baseURL + path) else {
+            throw AppStoreConnectAPIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        let token = try auth.token()
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        if let body {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try Self.encoder.encode(body)
+        }
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw AppStoreConnectAPIError.transport(error)
+        }
+
+        guard let http = response as? HTTPURLResponse else {
+            throw AppStoreConnectAPIError.httpError(status: -1, message: "Non-HTTP response")
+        }
+
+        guard (200..<300).contains(http.statusCode) else {
+            throw AppStoreConnectAPIError.httpError(
+                status: http.statusCode,
+                message: Self.extractErrorMessage(from: data) ?? "HTTP \(http.statusCode)"
+            )
+        }
+
+        return data
+    }
+
+    private static func extractErrorMessage(from data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let errors = json["errors"] as? [[String: Any]] else {
+            return nil
+        }
+        let messages: [String] = errors.compactMap { error in
+            let title = error["title"] as? String
+            let detail = error["detail"] as? String
+            return [title, detail].compactMap { $0 }.joined(separator: ": ").nonEmpty
+        }
+        return messages.isEmpty ? nil : messages.joined(separator: "\n")
+    }
+}
+
+private extension String {
+    var nonEmpty: String? { isEmpty ? nil : self }
+}
+
+// MARK: - ASC DTOs
+
+struct ASCListResponse<T: Decodable>: Decodable {
+    let data: [T]
+}
+
+struct ASCSingleResponse<T: Decodable>: Decodable {
+    let data: T
+}
+
+struct ASCApp: Decodable, Identifiable {
+    let id: String
+    let attributes: Attributes
+
+    struct Attributes: Decodable {
+        let name: String
+        let bundleId: String
+        let sku: String?
+        let primaryLocale: String?
+    }
+}
+
+struct ASCAppStoreVersion: Decodable, Identifiable {
+    let id: String
+    let attributes: Attributes
+
+    struct Attributes: Decodable {
+        let versionString: String
+        let appStoreState: String?
+        let platform: String?
+
+        var displayState: String {
+            guard let raw = appStoreState, !raw.isEmpty else { return "not editable" }
+            return raw.replacingOccurrences(of: "_", with: " ").lowercased()
+        }
+
+        var displayPlatform: String? {
+            switch platform {
+            case "IOS": return "iOS"
+            case "MAC_OS": return "macOS"
+            case "TV_OS": return "tvOS"
+            case "VISION_OS": return "visionOS"
+            case nil, "": return nil
+            default: return platform?.replacingOccurrences(of: "_", with: " ").capitalized
+            }
+        }
+    }
+
+    var isEditable: Bool {
+        switch attributes.appStoreState {
+        case "PREPARE_FOR_SUBMISSION",
+             "DEVELOPER_REJECTED",
+             "REJECTED",
+             "METADATA_REJECTED",
+             "INVALID_BINARY",
+             "WAITING_FOR_REVIEW",
+             "IN_REVIEW":
+            return true
+        default:
+            return false
+        }
+    }
+}
+
+struct ASCAppStoreVersionLocalization: Decodable, Identifiable {
+    let id: String
+    let attributes: Attributes
+
+    struct Attributes: Decodable {
+        let locale: String
+    }
+}
+
+struct ASCAppScreenshotSet: Decodable, Identifiable {
+    let id: String
+    let attributes: Attributes
+
+    struct Attributes: Decodable {
+        let screenshotDisplayType: String?
+    }
+}
+
+struct ASCAppScreenshot: Decodable, Identifiable {
+    let id: String
+    let attributes: Attributes
+
+    struct Attributes: Decodable {
+        let fileName: String?
+        let fileSize: Int?
+        let uploaded: Bool?
+        let sourceFileChecksum: String?
+        let uploadOperations: [ASCUploadOperation]?
+    }
+}
+
+struct ASCUploadOperation: Decodable {
+    let method: String
+    let url: String
+    let length: Int
+    let offset: Int
+    let requestHeaders: [ASCUploadHeader]
+}
+
+struct ASCUploadHeader: Decodable {
+    let name: String
+    let value: String
+}
+
+// MARK: - ASC request bodies
+
+private struct ASCResourceCreate: Encodable {
+    let data: Payload
+
+    struct Payload: Encodable {
+        let type: String
+        let attributes: [String: AnyEncodable]?
+        let relationships: [String: AnyEncodable]?
+    }
+}
+
+private struct ASCResourceUpdate: Encodable {
+    let data: Payload
+
+    struct Payload: Encodable {
+        let type: String
+        let id: String
+        let attributes: [String: AnyEncodable]?
+    }
+}
+
+private struct ASCRelationship: Encodable {
+    let data: Ref
+
+    struct Ref: Encodable {
+        let type: String
+        let id: String
+    }
+
+    static func single(type: String, id: String) -> ASCRelationship {
+        ASCRelationship(data: Ref(type: type, id: id))
+    }
+}
+
+/// Tiny type-erasing wrapper so we can build heterogeneous JSON:API attribute dictionaries.
+struct AnyEncodable: Encodable {
+    private let _encode: (Encoder) throws -> Void
+
+    init<T: Encodable>(_ value: T) {
+        _encode = value.encode
+    }
+
+    func encode(to encoder: Encoder) throws {
+        try _encode(encoder)
+    }
+}
