@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 private struct ASCAppIconView: View {
@@ -83,6 +84,8 @@ struct UploadToAppStoreConnectView: View {
     @State private var uploadSummary: UploadSummary?
 
     @State private var errorMessage: String?
+    @State private var uploadFailureDetails: String?
+    @State private var displayTypeDetailsPlanId: UUID?
     @State private var isBusy = false
 
     struct UploadSummary {
@@ -122,6 +125,30 @@ struct UploadToAppStoreConnectView: View {
         var isEnabled: Bool
     }
 
+    struct UploadPlanEntry: Identifiable {
+        let id: String
+        let rowLabel: String
+        let sourceSizeLabel: String
+        let displayTypeLabel: String
+        let displayTypeRawValue: String
+        let projectLocaleLabel: String
+        let projectLocaleCode: String
+        let appStoreLocaleCode: String?
+        let templateCount: Int
+        let isSelected: Bool
+        let skipReason: String?
+
+        var screenshotCount: Int { isSelected ? templateCount : 0 }
+    }
+
+    struct UploadLocaleGroup: Identifiable {
+        let id: String
+        let label: String
+        let entries: [UploadPlanEntry]
+
+        var screenshotCount: Int { entries.reduce(0) { $0 + $1.screenshotCount } }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -131,8 +158,24 @@ struct UploadToAppStoreConnectView: View {
             Divider()
             footer
         }
-        .frame(width: 640, height: 540)
+        .frame(width: 860, height: 680)
         .task { await loadAppsIfNeeded() }
+        .alert("Upload failed", isPresented: Binding(
+            get: { uploadFailureDetails != nil },
+            set: { isPresented in
+                if !isPresented { uploadFailureDetails = nil }
+            }
+        )) {
+            Button("Copy Details") {
+                if let uploadFailureDetails {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(uploadFailureDetails, forType: .string)
+                }
+            }
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(uploadFailureDetails ?? "")
+        }
     }
 
     // MARK: - Header / footer
@@ -151,13 +194,14 @@ struct UploadToAppStoreConnectView: View {
     }
 
     private var footer: some View {
-        HStack {
+        HStack(alignment: .top) {
             backButton
             if let errorMessage {
                 Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
                     .font(.caption)
-                    .lineLimit(3)
+                    .lineLimit(4)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             dismissButton
@@ -227,6 +271,7 @@ struct UploadToAppStoreConnectView: View {
 
     private func goBack() {
         errorMessage = nil
+        uploadFailureDetails = nil
         switch step {
         case .pickingVersion:
             step = .pickingApp
@@ -247,6 +292,68 @@ struct UploadToAppStoreConnectView: View {
 
     private var canStartUpload: Bool {
         !validationIssues.hasErrors
+    }
+
+    private var uploadPlanEntries: [UploadPlanEntry] {
+        rowPlans.flatMap { plan -> [UploadPlanEntry] in
+            guard plan.isEnabled else { return [] }
+            let rowLabel = plan.rowLabel.isEmpty ? "Row" : plan.rowLabel
+            let sourceSizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
+            let displayTypeLabel = plan.selectedDisplayType?.label ?? "No display type selected"
+            let displayTypeRawValue = plan.selectedDisplayType?.rawValue ?? "none"
+
+            return plan.localeTargets.map { target in
+                let appStoreLocale = target.selectedASCLocalizationId.flatMap { selectedId in
+                    target.candidates.first(where: { $0.id == selectedId })?.attributes.locale
+                }
+                let isSelected = target.isEnabled && plan.selectedDisplayType != nil && appStoreLocale != nil
+                let skipReason: String?
+                if isSelected {
+                    skipReason = nil
+                } else if target.candidates.isEmpty {
+                    skipReason = "No matching App Store locale"
+                } else if !target.isEnabled {
+                    skipReason = "Unchecked"
+                } else if plan.selectedDisplayType == nil {
+                    skipReason = "No display type selected"
+                } else {
+                    skipReason = "No App Store locale selected"
+                }
+
+                return UploadPlanEntry(
+                    id: "\(plan.id.uuidString)-\(target.id.uuidString)",
+                    rowLabel: rowLabel,
+                    sourceSizeLabel: sourceSizeLabel,
+                    displayTypeLabel: displayTypeLabel,
+                    displayTypeRawValue: displayTypeRawValue,
+                    projectLocaleLabel: target.appLocaleLabel,
+                    projectLocaleCode: target.appLocaleCode,
+                    appStoreLocaleCode: appStoreLocale,
+                    templateCount: plan.templateCount,
+                    isSelected: isSelected,
+                    skipReason: skipReason
+                )
+            }
+        }
+    }
+
+    private var selectedUploadPlanEntries: [UploadPlanEntry] {
+        uploadPlanEntries.filter(\.isSelected)
+    }
+
+    private var skippedUploadPlanEntries: [UploadPlanEntry] {
+        uploadPlanEntries.filter { !$0.isSelected }
+    }
+
+    private var selectedLocaleGroups: [UploadLocaleGroup] {
+        let grouped = Dictionary(grouping: selectedUploadPlanEntries) { entry in
+            entry.appStoreLocaleCode ?? entry.projectLocaleCode
+        }
+        return grouped.keys.sorted().map { code in
+            let entries = grouped[code] ?? []
+            let label = entries.first.map { "\($0.projectLocaleLabel) -> \(code)" } ?? code
+            return UploadLocaleGroup(id: code, label: label, entries: entries)
+        }
     }
 
     // MARK: - Content by step
@@ -366,6 +473,8 @@ struct UploadToAppStoreConnectView: View {
                 Text("Review and upload plan")
                     .font(.headline)
 
+                uploadSummaryPanel
+
                 replaceWarningCallout
 
                 issuesPanel
@@ -378,15 +487,141 @@ struct UploadToAppStoreConnectView: View {
         }
     }
 
+    private var uploadSummaryPanel: some View {
+        let entries = selectedUploadPlanEntries
+        let screenshotCount = entries.reduce(0) { $0 + $1.screenshotCount }
+        let issues = validationIssues
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Preflight")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                Spacer()
+                if issues.hasErrors {
+                    Label("Fix required", systemImage: "xmark.circle.fill")
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                } else {
+                    Label("Ready", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .font(.caption)
+                }
+                Button("Refresh App Store data") {
+                    Task { await refreshLocalizations() }
+                }
+                .font(.caption)
+                .disabled(isBusy)
+            }
+
+            HStack(spacing: 10) {
+                summaryMetric("\(entries.count)", "sets")
+                summaryMetric("\(screenshotCount)", "screenshots")
+                summaryMetric("\(selectedLocaleGroups.count)", "locales")
+            }
+
+            if !selectedLocaleGroups.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Selected uploads")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    ForEach(selectedLocaleGroups) { group in
+                        localePlanGroupRow(group)
+                    }
+                }
+            }
+
+            if !skippedUploadPlanEntries.isEmpty {
+                DisclosureGroup("Skipped items (\(skippedUploadPlanEntries.count))") {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(skippedUploadPlanEntries.prefix(12)) { entry in
+                            HStack(alignment: .top, spacing: 6) {
+                                Image(systemName: "minus.circle")
+                                    .foregroundStyle(.secondary)
+                                    .font(.caption)
+                                Text("\(entry.projectLocaleLabel) · \(entry.rowLabel): \(entry.skipReason ?? "Skipped")")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        if skippedUploadPlanEntries.count > 12 {
+                            Text("\(skippedUploadPlanEntries.count - 12) more skipped item\(skippedUploadPlanEntries.count - 12 == 1 ? "" : "s")")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.top, 6)
+                }
+                .font(.caption)
+            }
+        }
+        .padding(12)
+        .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
+    }
+
+    private func summaryMetric(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.headline.monospacedDigit())
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(minWidth: 78, alignment: .leading)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .background(Color.primary.opacity(0.04), in: .rect(cornerRadius: 6))
+    }
+
+    private func localePlanGroupRow(_ group: UploadLocaleGroup) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(group.label)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                Spacer()
+                Text("\(group.screenshotCount) screenshot\(group.screenshotCount == 1 ? "" : "s")")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(group.entries) { entry in
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .foregroundStyle(.orange)
+                        .font(.caption)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("\(entry.rowLabel) -> \(entry.displayTypeLabel)")
+                            .font(.caption)
+                            .lineLimit(1)
+                        Text("Source \(entry.sourceSizeLabel) · \(entry.templateCount) screenshot\(entry.templateCount == 1 ? "" : "s") · \(entry.displayTypeRawValue)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+            }
+        }
+        .padding(8)
+        .background(Color.primary.opacity(0.035), in: .rect(cornerRadius: 6))
+    }
+
     private var replaceWarningCallout: some View {
         calloutBox(tint: .orange) {
-            HStack(alignment: .top, spacing: 8) {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .foregroundStyle(.orange)
-                    .font(.system(size: 13))
-                Text("Existing screenshots in each matching display type set will be deleted and replaced. This cannot be undone.")
-                    .font(.caption)
-                    .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .foregroundStyle(.orange)
+                        .font(.system(size: 13))
+                    Text("Existing screenshots in each matching display type set will be deleted and replaced. This cannot be undone.")
+                        .font(.caption)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if !selectedUploadPlanEntries.isEmpty {
+                    Text("The selected upload plan will replace or create these App Store screenshot sets.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -462,9 +697,17 @@ struct UploadToAppStoreConnectView: View {
             if plan.wrappedValue.isEnabled {
                 displayTypePicker(plan: plan)
 
-                Text("Locales")
+                HStack {
+                    Text("Locales")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Refresh locales") {
+                        Task { await refreshLocalizations() }
+                    }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .disabled(isBusy)
+                }
                 ForEach(plan.localeTargets) { $target in
                     localeTargetRow(target: $target)
                 }
@@ -475,37 +718,115 @@ struct UploadToAppStoreConnectView: View {
     }
 
     private func displayTypePicker(plan: Binding<RowPlan>) -> some View {
-        HStack {
-            Text("Display type")
-                .font(.caption)
-            Picker("", selection: plan.selectedDisplayType) {
-                Text("Select…").tag(ASCDisplayType?.none)
-                ForEach(ASCDisplayType.userSelectableCases) { type in
-                    Text(type.label).tag(Optional(type))
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Source")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 72, alignment: .leading)
+                Text("\(Int(plan.wrappedValue.rowSize.width))×\(Int(plan.wrappedValue.rowSize.height))")
+                    .font(.caption)
+                if let detected = plan.wrappedValue.detectedDisplayType,
+                   detected == plan.wrappedValue.selectedDisplayType {
+                    Label("Auto-detected", systemImage: "checkmark.circle")
+                        .foregroundStyle(.green)
+                        .font(.caption)
+                }
+                Spacer()
+                Button {
+                    displayTypeDetailsPlanId = plan.wrappedValue.id
+                } label: {
+                    Image(systemName: "info.circle")
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: Binding(
+                    get: { displayTypeDetailsPlanId == plan.wrappedValue.id },
+                    set: { isPresented in
+                        if !isPresented { displayTypeDetailsPlanId = nil }
+                    }
+                )) {
+                    displayTypeDetailsPopover(plan: plan.wrappedValue)
                 }
             }
-            .labelsHidden()
-            if let detected = plan.wrappedValue.detectedDisplayType,
-               detected == plan.wrappedValue.selectedDisplayType {
-                Label("Auto-detected", systemImage: "checkmark.circle")
-                    .foregroundStyle(.green)
+            HStack {
+                Text("Upload as")
                     .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 72, alignment: .leading)
+                Picker("", selection: plan.selectedDisplayType) {
+                    Text("Select…").tag(ASCDisplayType?.none)
+                    ForEach(ASCDisplayType.userSelectableCases) { type in
+                        Text(type.label).tag(Optional(type))
+                    }
+                }
+                .labelsHidden()
+                if let selected = plan.wrappedValue.selectedDisplayType {
+                    Text(selected.rawValue)
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
         }
     }
 
+    private func displayTypeDetailsPopover(plan: RowPlan) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Display Type")
+                .font(.headline)
+            LabeledContent("Source size") {
+                Text("\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))")
+            }
+            LabeledContent("Auto-detected") {
+                Text(plan.detectedDisplayType?.label ?? "No exact match")
+            }
+            if let selected = plan.selectedDisplayType {
+                LabeledContent("Upload target") {
+                    Text(selected.label)
+                }
+                LabeledContent("ASC value") {
+                    Text(selected.rawValue)
+                        .font(.caption.monospaced())
+                }
+                LabeledContent("Accepted sizes") {
+                    Text(selected.acceptedSizeDescription)
+                        .multilineTextAlignment(.trailing)
+                }
+                if selected.family == .ipad {
+                    Label("App Store Connect rejects this if the selected app version is iPhone-only.", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .font(.caption)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding(14)
+        .frame(width: 360)
+    }
+
     private func localeTargetRow(target: Binding<LocaleTarget>) -> some View {
-        HStack {
+        HStack(alignment: .firstTextBaseline) {
             Toggle(isOn: target.isEnabled) {
-                Text("\(target.wrappedValue.appLocaleLabel)")
-                    .frame(width: 120, alignment: .leading)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(target.wrappedValue.appLocaleLabel)
+                    Text("Project \(target.wrappedValue.appLocaleCode)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: 150, alignment: .leading)
             }
             .toggleStyle(.checkbox)
+            .disabled(target.wrappedValue.candidates.isEmpty)
 
             if target.wrappedValue.candidates.isEmpty {
-                Text("No matching App Store locale")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("No matching App Store locale")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                    Text("Add this locale in App Store Connect, then refresh locales.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 Picker("", selection: target.selectedASCLocalizationId) {
                     Text("Choose…").tag(String?.none)
@@ -515,6 +836,12 @@ struct UploadToAppStoreConnectView: View {
                 }
                 .labelsHidden()
                 .disabled(!target.wrappedValue.isEnabled)
+                if let selectedId = target.wrappedValue.selectedASCLocalizationId,
+                   let selected = target.wrappedValue.candidates.first(where: { $0.id == selectedId }) {
+                    Text("-> \(selected.attributes.locale)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -608,24 +935,46 @@ struct UploadToAppStoreConnectView: View {
         defer { isBusy = false }
         do {
             localizations = try await AppStoreConnectAPIService.shared.listLocalizations(versionId: version.id)
-            rowPlans = buildRowPlans()
+            rowPlans = buildRowPlans(preserving: rowPlans)
             step = .configuringPlan
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
-    private func buildRowPlans() -> [RowPlan] {
+    private func refreshLocalizations() async {
+        guard let version = selectedVersion else { return }
+        isBusy = true
+        errorMessage = nil
+        defer { isBusy = false }
+        do {
+            localizations = try await AppStoreConnectAPIService.shared.listLocalizations(versionId: version.id)
+            rowPlans = buildRowPlans(preserving: rowPlans)
+        } catch {
+            errorMessage = "Could not refresh locales: \(error.localizedDescription)"
+        }
+    }
+
+    private func buildRowPlans(preserving existingPlans: [RowPlan] = []) -> [RowPlan] {
         state.rows.map { row in
             let detected = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight)
+            let existingPlan = existingPlans.first(where: { $0.id == row.id })
             let targets = state.localeState.locales.map { locale -> LocaleTarget in
                 let matches = ASCLocaleMatcher.matches(appCode: locale.code, in: localizations)
+                let existingTarget = existingPlan?.localeTargets.first(where: { $0.appLocaleCode == locale.code })
+                let preservedSelection = existingTarget?.selectedASCLocalizationId
+                let selectedId: String?
+                if let preservedSelection, matches.contains(where: { $0.id == preservedSelection }) {
+                    selectedId = preservedSelection
+                } else {
+                    selectedId = matches.first?.id
+                }
                 return LocaleTarget(
                     appLocaleCode: locale.code,
                     appLocaleLabel: locale.flagLabel,
-                    selectedASCLocalizationId: matches.first?.id,
+                    selectedASCLocalizationId: selectedId,
                     candidates: matches,
-                    isEnabled: !matches.isEmpty
+                    isEnabled: matches.isEmpty ? false : (existingTarget?.isEnabled ?? true)
                 )
             }
             return RowPlan(
@@ -633,17 +982,22 @@ struct UploadToAppStoreConnectView: View {
                 rowLabel: row.label,
                 rowSize: CGSize(width: row.templateWidth, height: row.templateHeight),
                 templateCount: row.templates.count,
-                isEnabled: true,
+                isEnabled: existingPlan?.isEnabled ?? true,
                 detectedDisplayType: detected,
-                selectedDisplayType: detected,
+                selectedDisplayType: existingPlan?.selectedDisplayType ?? detected,
                 localeTargets: targets
             )
         }
     }
 
     private func startUpload() async {
-        step = .uploading
         errorMessage = nil
+        uploadFailureDetails = nil
+        let issues = validationIssues
+        guard !issues.hasErrors else {
+            errorMessage = "Fix the preflight errors before uploading."
+            return
+        }
         let targets = buildUploadTargets()
         guard !targets.isEmpty else {
             errorMessage = "No rows × locales are selected."
@@ -651,6 +1005,7 @@ struct UploadToAppStoreConnectView: View {
             return
         }
 
+        step = .uploading
         isBusy = true
         defer { isBusy = false; uploadTask = nil }
 
@@ -673,7 +1028,8 @@ struct UploadToAppStoreConnectView: View {
                 errorMessage = "Upload cancelled. Screenshot sets for already-started locales may have been cleared but not refilled — re-run the upload to restore them, or check App Store Connect."
                 step = .configuringPlan
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = uploadFailureSummary(for: error)
+                uploadFailureDetails = uploadFailureDetails(for: error)
                 step = .configuringPlan
             }
         }
@@ -698,5 +1054,27 @@ struct UploadToAppStoreConnectView: View {
                 templateCount: plan.templateCount
             )
         }
+    }
+
+    private func uploadFailureSummary(for error: Error) -> String {
+        if let uploadError = error as? AppStoreConnectUploadError {
+            return uploadError.summaryDescription
+        }
+        return "Upload failed: \(error.localizedDescription)"
+    }
+
+    private func uploadFailureDetails(for error: Error) -> String {
+        var details: [String] = [error.localizedDescription]
+        if let app = selectedApp {
+            details.append("App: \(app.attributes.name) (\(app.attributes.bundleId))")
+        }
+        if let version = selectedVersion {
+            let platform = version.attributes.displayPlatform.map { " \($0)" } ?? ""
+            details.append("Version: \(version.attributes.versionString)\(platform) · \(version.attributes.displayState)")
+        }
+        if let uploadError = error as? AppStoreConnectUploadError {
+            details.append("Technical details:\n\(uploadError.technicalDescription)")
+        }
+        return details.joined(separator: "\n\n")
     }
 }

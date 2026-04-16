@@ -99,6 +99,15 @@ enum ASCUploadValidator {
                 ))
             }
 
+            if displayType.family == .ipad {
+                issues.append(ASCUploadIssue(
+                    severity: .warning,
+                    scope: rowName,
+                    message: "\(displayType.label) may be rejected if this App Store version is iPhone-only.",
+                    hint: "If App Store Connect returns Display Type Not Allowed, disable this row or update the app's device support before retrying."
+                ))
+            }
+
             let activeLocaleCount = plan.localeTargets.filter { $0.isEnabled && $0.selectedASCLocalizationId != nil }.count
             if activeLocaleCount == 0 {
                 issues.append(ASCUploadIssue(
@@ -109,10 +118,20 @@ enum ASCUploadValidator {
                 ))
             }
 
+            let missingSelection = plan.localeTargets.filter { $0.isEnabled && !$0.candidates.isEmpty && $0.selectedASCLocalizationId == nil }
+            for target in missingSelection {
+                issues.append(ASCUploadIssue(
+                    severity: .error,
+                    scope: rowName,
+                    message: "Choose the App Store locale for \(target.appLocaleLabel).",
+                    hint: "Use the locale picker in this row, or disable this locale."
+                ))
+            }
+
             let unmatched = plan.localeTargets.filter { $0.isEnabled && $0.candidates.isEmpty }
             for target in unmatched {
                 issues.append(ASCUploadIssue(
-                    severity: .warning,
+                    severity: .error,
                     scope: rowName,
                     message: "No App Store locale matches \(target.appLocaleLabel) on this version.",
                     hint: "Add the locale in App Store Connect, or disable this locale here."

@@ -11,14 +11,23 @@ struct AppStoreConnectSettingsView: View {
     @State private var testResult: TestResult?
     @State private var fileImporterPresented = false
     @State private var importError: String?
+    @State private var showClearConfirmation = false
 
     private enum TestResult {
         case success(String)
         case failure(String)
     }
 
+    private struct SetupItem: Identifiable {
+        let id: String
+        let title: String
+        let detail: String
+        let isComplete: Bool
+    }
+
     var body: some View {
         Form {
+            statusSection
             credentialsSection
             connectionSection
             helpSection
@@ -30,21 +39,93 @@ struct AppStoreConnectSettingsView: View {
             allowsMultipleSelection: false,
             onCompletion: handleImport
         )
+        .confirmationDialog(
+            "Clear App Store Connect credentials?",
+            isPresented: $showClearConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Clear Credentials", role: .destructive) {
+                clearCredentials()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This removes the Issuer ID, Key ID, and imported private key from this Mac.")
+        }
+        .onChange(of: credentials.issuerId) { _, _ in resetConnectionState() }
+        .onChange(of: credentials.keyId) { _, _ in resetConnectionState() }
+        .onChange(of: credentials.hasPrivateKey) { _, _ in resetConnectionState() }
+    }
+
+    private var statusSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: credentials.isConfigured ? "checkmark.seal.fill" : "key.horizontal")
+                        .foregroundStyle(credentials.isConfigured ? .green : .secondary)
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(credentials.isConfigured ? "Ready to test" : "Finish setup")
+                            .font(.headline)
+                        Text(statusMessage)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
+                    Link(destination: Self.apiKeysURL) {
+                        Label("Open API Keys", systemImage: "arrow.up.right.square")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(setupItems) { item in
+                        setupItemRow(item)
+                    }
+                }
+            }
+        } header: {
+            Text("Setup")
+        } footer: {
+            Text("Values are saved automatically on this Mac. The private key is stored in Keychain.")
+                .foregroundStyle(.secondary)
+        }
     }
 
     private var credentialsSection: some View {
         Section {
-            TextField("Issuer ID",
-                      text: $credentials.issuerId,
-                      prompt: Text("e.g. 57246542-96fe-1a63-e053-0824d011072a"))
-                .textFieldStyle(.roundedBorder)
-                .font(.system(.body, design: .monospaced))
+            VStack(alignment: .leading, spacing: 4) {
+                TextField("Issuer ID",
+                          text: normalizedIssuerIdBinding,
+                          prompt: Text("e.g. 57246542-96fe-1a63-e053-0824d011072a"))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(.body, design: .monospaced))
+                    .textContentType(.oneTimeCode)
 
-            TextField("Key ID",
-                      text: $credentials.keyId,
-                      prompt: Text("10-character key ID"))
-                .textFieldStyle(.roundedBorder)
-                .font(.system(.body, design: .monospaced))
+                fieldStatus(
+                    value: trimmedIssuerId,
+                    isComplete: isIssuerIdValid,
+                    emptyMessage: "Paste the Issuer ID from the API Keys page.",
+                    invalidMessage: "Issuer ID should be a UUID."
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                TextField("Key ID",
+                          text: normalizedKeyIdBinding,
+                          prompt: Text("10-character key ID"))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(.body, design: .monospaced))
+                    .textContentType(.oneTimeCode)
+
+                fieldStatus(
+                    value: trimmedKeyId,
+                    isComplete: isKeyIdValid,
+                    emptyMessage: "Paste the 10-character Key ID.",
+                    invalidMessage: "Key ID is usually 10 uppercase letters and numbers."
+                )
+            }
 
             LabeledContent("Private Key (.p8)") {
                 HStack(spacing: 6) {
@@ -69,57 +150,203 @@ struct AppStoreConnectSettingsView: View {
             }
 
             if let importError {
-                Text(importError)
+                Label(importError, systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
+                    .font(.caption)
+            } else if credentials.hasPrivateKey {
+                Text("Private key imported. App Store Connect lets you download a .p8 key only once, so keep the original file somewhere safe.")
+                    .foregroundStyle(.secondary)
                     .font(.caption)
             }
         } header: {
             Text("API Key")
         } footer: {
-            Text("Create an API key in App Store Connect → Users and Access → Integrations → App Store Connect API. The .p8 key file is downloaded once at creation time.")
+            Text("Use an App Store Connect API key with access to edit app metadata. Account Holder, Admin, or App Manager roles are typical for screenshot uploads.")
                 .foregroundStyle(.secondary)
         }
     }
 
     private var connectionSection: some View {
-        Section("Connection") {
-            HStack {
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
                 Button {
                     Task { await runTest() }
                 } label: {
-                    if isTesting {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Text("Test Connection")
+                    HStack(spacing: 6) {
+                        if isTesting {
+                            ProgressView().controlSize(.small)
+                        }
+                        Text(isTesting ? "Testing…" : "Test Connection")
                     }
                 }
+                .buttonStyle(.borderedProminent)
                 .disabled(!credentials.isConfigured || isTesting)
-                Spacer()
-            }
 
-            switch testResult {
-            case .success(let message):
-                Label(message, systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .font(.caption)
-            case .failure(let message):
-                Label(message, systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
-                    .font(.caption)
-            case nil:
-                EmptyView()
+                if !credentials.isConfigured {
+                    Text(missingConfigurationMessage)
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+
+                switch testResult {
+                case .success(let message):
+                    Label(message, systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .font(.caption)
+                        .fixedSize(horizontal: false, vertical: true)
+                case .failure(let message):
+                    Label(message, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                        .fixedSize(horizontal: false, vertical: true)
+                case nil:
+                    EmptyView()
+                }
             }
+        } header: {
+            Text("Connection")
+        } footer: {
+            Text("Testing lists one app from the account. If this passes but uploads fail, check that the API key can edit the specific app and version.")
+                .foregroundStyle(.secondary)
         }
     }
 
     private var helpSection: some View {
-        Section("Help") {
+        Section("Actions") {
             Link("Create or manage API keys", destination: Self.apiKeysURL)
             Link("App Store Connect API documentation", destination: Self.docsURL)
+
+            Button("Clear App Store Connect Credentials…", role: .destructive) {
+                showClearConfirmation = true
+            }
         }
     }
 
-    private static let p8ContentTypes: [UTType] = [UTType(filenameExtension: "p8") ?? .data]
+    private var statusMessage: String {
+        if credentials.isConfigured {
+            return "Test the connection before uploading screenshots."
+        }
+        return missingConfigurationMessage
+    }
+
+    private var setupItems: [SetupItem] {
+        [
+            SetupItem(
+                id: "issuer",
+                title: "Issuer ID",
+                detail: isIssuerIdValid ? trimmedIssuerId : "Required UUID from App Store Connect",
+                isComplete: isIssuerIdValid
+            ),
+            SetupItem(
+                id: "key",
+                title: "Key ID",
+                detail: isKeyIdValid ? trimmedKeyId : "Required 10-character key ID",
+                isComplete: isKeyIdValid
+            ),
+            SetupItem(
+                id: "private-key",
+                title: "Private key",
+                detail: credentials.hasPrivateKey ? ".p8 key imported" : "Import the .p8 file downloaded when the key was created",
+                isComplete: credentials.hasPrivateKey
+            ),
+            SetupItem(
+                id: "connection",
+                title: "Connection",
+                detail: connectionDetail,
+                isComplete: connectionTestPassed
+            )
+        ]
+    }
+
+    private var connectionDetail: String {
+        switch testResult {
+        case .success:
+            return "Last test passed"
+        case .failure:
+            return "Last test failed"
+        case nil:
+            return credentials.isConfigured ? "Not tested yet" : "Available after setup is complete"
+        }
+    }
+
+    private var connectionTestPassed: Bool {
+        if case .success = testResult { return true }
+        return false
+    }
+
+    private var missingConfigurationMessage: String {
+        let missing = setupItems
+            .filter { $0.id != "connection" && !$0.isComplete }
+            .map(\.title)
+        guard !missing.isEmpty else { return "Configuration is complete." }
+        return "Missing: \(missing.joined(separator: ", "))."
+    }
+
+    private var trimmedIssuerId: String {
+        credentials.issuerId.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var trimmedKeyId: String {
+        credentials.keyId.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isIssuerIdValid: Bool {
+        UUID(uuidString: trimmedIssuerId) != nil
+    }
+
+    private var isKeyIdValid: Bool {
+        let pattern = #"^[A-Z0-9]{10}$"#
+        return trimmedKeyId.range(of: pattern, options: .regularExpression) != nil
+    }
+
+    private var normalizedIssuerIdBinding: Binding<String> {
+        Binding(
+            get: { credentials.issuerId },
+            set: { credentials.issuerId = $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        )
+    }
+
+    private var normalizedKeyIdBinding: Binding<String> {
+        Binding(
+            get: { credentials.keyId },
+            set: { credentials.keyId = $0.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() }
+        )
+    }
+
+    private func setupItemRow(_ item: SetupItem) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: item.isComplete ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(item.isComplete ? .green : .secondary)
+                .font(.caption)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.title)
+                    .font(.caption)
+                Text(item.detail)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func fieldStatus(value: String, isComplete: Bool, emptyMessage: String, invalidMessage: String) -> some View {
+        if isComplete {
+            Label("Looks valid", systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .font(.caption)
+        } else {
+            Text(value.isEmpty ? emptyMessage : invalidMessage)
+                .foregroundStyle(.secondary)
+                .font(.caption)
+        }
+    }
+
+    private static let p8ContentTypes: [UTType] = [
+        UTType(filenameExtension: "p8") ?? .data,
+        .plainText,
+        .data
+    ]
 
     private func handleImport(_ result: Result<[URL], Error>) {
         importError = nil
@@ -138,19 +365,51 @@ struct AppStoreConnectSettingsView: View {
             try credentials.savePrivateKey(pem)
             testResult = nil
         } catch {
-            importError = error.localizedDescription
+            importError = "Could not import the private key: \(error.localizedDescription)"
         }
     }
 
     private func runTest() async {
+        resetConnectionState(clearImportError: false)
         isTesting = true
         defer { isTesting = false }
         do {
             let message = try await AppStoreConnectAPIService.shared.testConnection()
             testResult = .success(message)
         } catch {
-            testResult = .failure(error.localizedDescription)
+            testResult = .failure(connectionFailureMessage(for: error))
         }
+    }
+
+    private func resetConnectionState(clearImportError: Bool = true) {
+        testResult = nil
+        if clearImportError {
+            importError = nil
+        }
+    }
+
+    private func clearCredentials() {
+        credentials.issuerId = ""
+        credentials.keyId = ""
+        credentials.deletePrivateKey()
+        testResult = nil
+        importError = nil
+    }
+
+    private func connectionFailureMessage(for error: Error) -> String {
+        if let apiError = error as? AppStoreConnectAPIError {
+            switch apiError {
+            case .httpError(let status, let message) where status == 401 || status == 403:
+                return "\(message) Check that the Issuer ID, Key ID, private key, and API key permissions match the App Store Connect key."
+            case .httpError(let status, let message):
+                return "App Store Connect returned \(status): \(message)"
+            case .transport(let transportError):
+                return "Network request failed: \(transportError.localizedDescription)"
+            default:
+                return apiError.localizedDescription
+            }
+        }
+        return error.localizedDescription
     }
 }
 

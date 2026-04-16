@@ -36,6 +36,26 @@ enum ASCDisplayType: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    enum Family {
+        case iphone
+        case ipad
+        case mac
+        case other
+    }
+
+    var family: Family {
+        switch self {
+        case .iphone69, .iphone67, .iphone65, .iphone63, .iphone61, .iphone58, .iphone55, .iphone47, .iphone40, .iphone35:
+            return .iphone
+        case .ipadPro129M4, .ipadPro3Gen129, .ipadPro11M4, .ipadPro3Gen11, .ipad105, .ipad97:
+            return .ipad
+        case .desktop:
+            return .mac
+        default:
+            return .other
+        }
+    }
+
     var label: String {
         switch self {
         case .iphone69: return "iPhone 6.9\" Display (1320×2868)"
@@ -95,6 +115,15 @@ enum ASCDisplayType: String, CaseIterable, Identifiable {
         case .desktop: return [(2880, 1800), (2560, 1600), (1440, 900), (1280, 800)]
         default: return []
         }
+    }
+
+    var acceptedSizeDescription: String {
+        let sizes = acceptedPortraitSizes.map { "\($0.0)×\($0.1)" }
+        guard !sizes.isEmpty else { return "No upload sizes listed for this display type." }
+        if self == .desktop {
+            return sizes.joined(separator: ", ") + " landscape only"
+        }
+        return sizes.joined(separator: ", ") + " portrait or landscape"
     }
 
     /// True if the given (width, height) matches an ASC-valid size for this display type.
