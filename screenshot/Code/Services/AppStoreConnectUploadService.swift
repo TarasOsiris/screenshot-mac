@@ -92,7 +92,7 @@ struct ASCUploadFailureContext {
         self.operation = operation
         self.rowLabel = target.rowLabel
         self.displayTypeLabel = target.displayType.label
-        self.displayTypeRawValue = target.displayType.rawValue
+        self.displayTypeRawValue = target.displayType.appStoreConnectValue
         self.localeLabel = localization.label
         self.localeCode = localization.localeCode
         self.localizationId = localization.id
@@ -233,7 +233,8 @@ final class AppStoreConnectUploadService {
                     try await api.listScreenshotSets(localizationId: localization.id)
                 }
                 var existingSetWasDeleted = false
-                if let match = existingSets.first(where: { $0.attributes.screenshotDisplayType == target.displayType.rawValue }) {
+                let appStoreConnectDisplayType = target.displayType.appStoreConnectValue
+                if let match = existingSets.first(where: { $0.attributes.screenshotDisplayType == appStoreConnectDisplayType }) {
                     emit("Deleting existing screenshots · \(planLabel)")
                     try await performUploadStep(
                         "delete the existing \(target.displayType.label) screenshot set",
@@ -254,7 +255,7 @@ final class AppStoreConnectUploadService {
                 ) {
                     try await api.createScreenshotSet(
                         localizationId: localization.id,
-                        displayType: target.displayType.rawValue
+                        displayType: appStoreConnectDisplayType
                     )
                 }
 

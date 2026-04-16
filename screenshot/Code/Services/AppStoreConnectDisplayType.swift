@@ -1,7 +1,8 @@
 import Foundation
 
-/// ASC screenshot display type — the device/size bucket a screenshot set targets.
-/// Raw values match the `screenshotDisplayType` enum values in the ASC API.
+/// Screenshot display type — the device/size bucket a screenshot set targets.
+/// Some newer App Store labels still upload through older `screenshotDisplayType`
+/// enum values because the ASC API does not expose a distinct enum case for them.
 enum ASCDisplayType: String, CaseIterable, Identifiable {
     // iPhone
     case iphone69 = "APP_IPHONE_69"  // 6.9" (1320x2868) — 16/17 Pro Max
@@ -35,6 +36,22 @@ enum ASCDisplayType: String, CaseIterable, Identifiable {
     case visionPro = "APP_APPLE_VISION_PRO"
 
     var id: String { rawValue }
+
+    /// The enum value accepted by App Store Connect's `screenshotDisplayType` API field.
+    var appStoreConnectValue: String {
+        switch self {
+        case .iphone69:
+            return ASCDisplayType.iphone67.rawValue
+        case .iphone63:
+            return ASCDisplayType.iphone61.rawValue
+        case .ipadPro129M4:
+            return ASCDisplayType.ipadPro3Gen129.rawValue
+        case .ipadPro11M4:
+            return ASCDisplayType.ipadPro3Gen11.rawValue
+        default:
+            return rawValue
+        }
+    }
 
     enum Family {
         case iphone

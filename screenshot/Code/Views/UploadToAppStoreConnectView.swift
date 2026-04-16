@@ -65,6 +65,59 @@ private struct ASCAppHeaderView: View {
     }
 }
 
+private struct ASCUploadFailureDetailItem: Identifiable {
+    let id = UUID()
+    let message: String
+}
+
+private struct ASCUploadFailureDetailsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let details: String
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Label("Upload failed", systemImage: "exclamationmark.triangle.fill")
+                    .font(.headline)
+                    .foregroundStyle(.red)
+                Spacer()
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+
+            Divider()
+
+            ScrollView([.vertical, .horizontal]) {
+                Text(details)
+                    .font(.system(size: 11, design: .monospaced))
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: true, vertical: true)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+            .background(Color(nsColor: .textBackgroundColor))
+
+            Divider()
+
+            HStack {
+                Button("Copy Details") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(details, forType: .string)
+                }
+                Spacer()
+                Button("OK") {
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+        }
+        .frame(width: 760, height: 520)
+    }
+}
+
 struct UploadToAppStoreConnectView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var state
@@ -84,7 +137,7 @@ struct UploadToAppStoreConnectView: View {
     @State private var uploadSummary: UploadSummary?
 
     @State private var errorMessage: String?
-    @State private var uploadFailureDetails: String?
+    @State private var uploadFailureDetails: ASCUploadFailureDetailItem?
     @State private var displayTypeDetailsPlanId: UUID?
     @State private var isBusy = false
 
@@ -160,21 +213,8 @@ struct UploadToAppStoreConnectView: View {
         }
         .frame(width: 860, height: 680)
         .task { await loadAppsIfNeeded() }
-        .alert("Upload failed", isPresented: Binding(
-            get: { uploadFailureDetails != nil },
-            set: { isPresented in
-                if !isPresented { uploadFailureDetails = nil }
-            }
-        )) {
-            Button("Copy Details") {
-                if let uploadFailureDetails {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(uploadFailureDetails, forType: .string)
-                }
-            }
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(uploadFailureDetails ?? "")
+        .sheet(item: $uploadFailureDetails) { details in
+            ASCUploadFailureDetailsSheet(details: details.message)
         }
     }
 
@@ -300,7 +340,7 @@ struct UploadToAppStoreConnectView: View {
             let rowLabel = plan.rowLabel.isEmpty ? "Row" : plan.rowLabel
             let sourceSizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
             let displayTypeLabel = plan.selectedDisplayType?.label ?? "No display type selected"
-            let displayTypeRawValue = plan.selectedDisplayType?.rawValue ?? "none"
+            let displayTypeRawValue = plan.selectedDisplayType?.appStoreConnectValue ?? "none"
 
             return plan.localeTargets.map { target in
                 let appStoreLocale = target.selectedASCLocalizationId.flatMap { selectedId in
@@ -761,7 +801,7 @@ struct UploadToAppStoreConnectView: View {
                 }
                 .labelsHidden()
                 if let selected = plan.wrappedValue.selectedDisplayType {
-                    Text(selected.rawValue)
+                    Text(selected.appStoreConnectValue)
                         .font(.caption2.monospaced())
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -785,7 +825,7 @@ struct UploadToAppStoreConnectView: View {
                     Text(selected.label)
                 }
                 LabeledContent("ASC value") {
-                    Text(selected.rawValue)
+                    Text(selected.appStoreConnectValue)
                         .font(.caption.monospaced())
                 }
                 LabeledContent("Accepted sizes") {
@@ -1029,7 +1069,7 @@ struct UploadToAppStoreConnectView: View {
                 step = .configuringPlan
             } catch {
                 errorMessage = uploadFailureSummary(for: error)
-                uploadFailureDetails = uploadFailureDetails(for: error)
+                uploadFailureDetails = ASCUploadFailureDetailItem(message: uploadFailureDetails(for: error))
                 step = .configuringPlan
             }
         }

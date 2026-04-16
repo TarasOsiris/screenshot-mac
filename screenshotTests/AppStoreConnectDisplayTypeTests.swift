@@ -12,4 +12,13 @@ struct AppStoreConnectDisplayTypeTests {
         #expect(ASCDisplayType.iphone69.accepts(width: 1320, height: 2868))
         #expect(ASCDisplayType.iphone69.accepts(width: 2868, height: 1320))
     }
+
+    @Test func modernDisplayTypesUseSupportedAppStoreConnectValues() {
+        #expect(ASCDisplayType.iphone69.appStoreConnectValue == "APP_IPHONE_67")
+        #expect(ASCDisplayType.iphone63.appStoreConnectValue == "APP_IPHONE_61")
+        #expect(ASCDisplayType.ipadPro129M4.appStoreConnectValue == "APP_IPAD_PRO_3GEN_129")
+        #expect(ASCDisplayType.ipadPro11M4.appStoreConnectValue == "APP_IPAD_PRO_3GEN_11")
+        #expect(ASCDisplayType.ipadPro129M4.accepts(width: 2064, height: 2752))
+        #expect(ASCDisplayType.detect(width: 2064, height: 2752) == .ipadPro129M4)
+    }
 }

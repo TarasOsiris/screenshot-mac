@@ -54,6 +54,8 @@ enum ASCUploadValidator {
             return issues
         }
 
+        var seenAppStoreConnectTargets: [String: String] = [:]
+
         for plan in enabledPlans {
             let rowName = plan.rowLabel.isEmpty ? "Row" : plan.rowLabel
             let sizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
@@ -116,6 +118,21 @@ enum ASCUploadValidator {
                     message: "Pick at least one App Store locale to upload to.",
                     hint: "Enable a locale checkbox and choose an App Store locale."
                 ))
+            }
+
+            for localeTarget in plan.localeTargets where localeTarget.isEnabled {
+                guard let localizationId = localeTarget.selectedASCLocalizationId else { continue }
+                let uploadTargetKey = "\(localizationId)|\(displayType.appStoreConnectValue)"
+                if let existingRowName = seenAppStoreConnectTargets[uploadTargetKey] {
+                    issues.append(ASCUploadIssue(
+                        severity: .error,
+                        scope: rowName,
+                        message: "This row uploads to the same App Store screenshot set as \(existingRowName).",
+                        hint: "Disable one of these rows or choose a different display type before uploading."
+                    ))
+                } else {
+                    seenAppStoreConnectTargets[uploadTargetKey] = rowName
+                }
             }
 
             let missingSelection = plan.localeTargets.filter { $0.isEnabled && !$0.candidates.isEmpty && $0.selectedASCLocalizationId == nil }
