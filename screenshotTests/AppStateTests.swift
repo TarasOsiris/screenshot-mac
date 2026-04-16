@@ -274,6 +274,146 @@ struct AppStateTests {
         #expect(createdDevice.screenshotFileName != nil)
     }
 
+    @Test func batchImportImagesSkipsTemplatesWithoutDevices() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let frameId = try #require(DeviceFrameCatalog.firstPortraitFrameId(for: .iphone))
+        let frame = try #require(DeviceFrameCatalog.frame(for: frameId))
+
+        var row = state.rows[0]
+        while row.templates.count < 3 {
+            state.appendTemplate(to: 0)
+            row = state.rows[0]
+        }
+        row.shapes = [
+            makeDevice(in: row, templateIndex: 0, frame: frame),
+            makeDevice(in: row, templateIndex: 2, frame: frame)
+        ]
+        state.rows[0] = row
+        state.selectRow(row.id)
+
+        let images = [
+            makeTestImage(width: 1206, height: 2622),
+            makeTestImage(width: 1206, height: 2622)
+        ]
+
+        state.batchImportImages(images, into: row.id)
+
+        let updatedRow = state.rows[0]
+        #expect(updatedRow.templates.count == 3, "No new templates should be appended")
+
+        let devices = updatedRow.shapes.filter { $0.type == .device }
+        #expect(devices.count == 2, "No new devices should be added to template 1")
+        #expect(devices.allSatisfy { $0.screenshotFileName != nil })
+
+        let deviceTemplateIndices = Set(devices.compactMap { updatedRow.owningTemplateIndex(for: $0) })
+        #expect(deviceTemplateIndices == [0, 2])
+    }
+
+    @Test func batchImportImagesAppendsTemplatesForOverflowImages() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let frameId = try #require(DeviceFrameCatalog.firstPortraitFrameId(for: .iphone))
+        let frame = try #require(DeviceFrameCatalog.frame(for: frameId))
+
+        // Default row; keep only template 0 with a device — other default templates stay device-less.
+        var row = state.rows[0]
+        let initialTemplateCount = row.templates.count
+        #expect(initialTemplateCount >= 1)
+        row.shapes = [makeDevice(in: row, templateIndex: 0, frame: frame)]
+        state.rows[0] = row
+        state.selectRow(row.id)
+
+        // One image fills template 0's existing device; remaining images overflow and append new templates.
+        let overflowCount = initialTemplateCount
+        let images = (0..<(1 + overflowCount)).map { _ in
+            makeTestImage(width: 1206, height: 2622)
+        }
+
+        state.batchImportImages(images, into: row.id)
+
+        let updatedRow = state.rows[0]
+        #expect(updatedRow.templates.count == initialTemplateCount + overflowCount,
+                "Overflow images should append new templates beyond the original ones")
+
+        let devices = updatedRow.shapes.filter { $0.type == .device }
+        #expect(devices.count == 1 + overflowCount,
+                "One existing device + one new device per overflow image")
+        #expect(devices.allSatisfy { $0.screenshotFileName != nil })
+
+        let deviceTemplateIndices = Set(devices.compactMap { updatedRow.owningTemplateIndex(for: $0) })
+        let expectedIndices = Set([0] + Array(initialTemplateCount..<updatedRow.templates.count))
+        #expect(deviceTemplateIndices == expectedIndices,
+                "Devices should only live in template 0 and in newly-appended overflow templates")
+    }
+
+    @Test func clearAllDeviceImagesRemovesScreenshotsFromEveryDevice() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let rowId = try #require(state.rows.first?.id)
+        let images = (0..<state.rows[0].templates.count).map { _ in
+            makeTestImage(width: 1206, height: 2622)
+        }
+        state.batchImportImages(images, into: rowId)
+
+        let devicesBefore = state.rows[0].shapes.filter { $0.type == .device }
+        #expect(!devicesBefore.isEmpty)
+        #expect(devicesBefore.allSatisfy { $0.screenshotFileName != nil })
+
+        state.clearAllDeviceImages(in: rowId)
+
+        let devicesAfter = state.rows[0].shapes.filter { $0.type == .device }
+        #expect(devicesAfter.count == devicesBefore.count, "Device shapes themselves must remain")
+        #expect(devicesAfter.allSatisfy { $0.screenshotFileName == nil },
+                "All device screenshots should be cleared")
+    }
+
+    @Test func clearAllDeviceImagesLeavesNonDeviceImageShapesAlone() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let rowId = try #require(state.rows.first?.id)
+        state.selectRow(rowId)
+
+        // Add a non-device image shape and give it an image file reference.
+        let imageShape = CanvasShapeModel(
+            id: UUID(), type: .image, x: 50, y: 50, width: 100, height: 100,
+            imageFileName: "keep-me.png"
+        )
+        state.addShape(imageShape)
+
+        // Also fill the default device shapes with screenshots.
+        let images = (0..<state.rows[0].templates.count).map { _ in
+            makeTestImage(width: 1206, height: 2622)
+        }
+        state.batchImportImages(images, into: rowId)
+
+        state.clearAllDeviceImages(in: rowId)
+
+        let row = state.rows[0]
+        let preservedImage = try #require(row.shapes.first { $0.id == imageShape.id })
+        #expect(preservedImage.imageFileName == "keep-me.png",
+                "Non-device image shapes must not be touched")
+        #expect(row.shapes.filter { $0.type == .device }.allSatisfy { $0.screenshotFileName == nil })
+    }
+
+    @Test func clearAllDeviceImagesIsANoOpWhenNothingToClear() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let rowId = try #require(state.rows.first?.id)
+        let shapeIdsBefore = state.rows[0].shapes.map(\.id)
+
+        state.clearAllDeviceImages(in: rowId)
+
+        #expect(state.rows[0].shapes.map(\.id) == shapeIdsBefore,
+                "Clearing with no images to clear must not add or remove shapes")
+        #expect(state.rows[0].shapes.filter { $0.type == .device }.allSatisfy { $0.screenshotFileName == nil })
+    }
+
     @Test func bringShapeToFrontMovesToEnd() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }

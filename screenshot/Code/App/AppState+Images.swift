@@ -28,6 +28,50 @@ extension AppState {
         }
     }
 
+    /// Clears the screenshot image from every device shape in the row, including all locale overrides.
+    func clearAllDeviceImages(in rowId: UUID) {
+        guard let idx = rowIndex(for: rowId) else { return }
+        let deviceIndices = rows[idx].shapes.indices.filter { rows[idx].shapes[$0].type == .device }
+        guard !deviceIndices.isEmpty else { return }
+
+        let hasImagesToClear = deviceIndices.contains { shapeIndex in
+            let shape = rows[idx].shapes[shapeIndex]
+            return shape.displayImageFileName != nil
+                || !localeOverrideImageFileNames(for: shape.id).isEmpty
+        }
+        guard hasImagesToClear else { return }
+
+        registerUndoForRow(at: idx, "Reset All Images")
+        // Snapshot locale codes — setShapeOverride can remove codes via cleanupEmptyOverrides.
+        let localeCodes = Array(localeState.overrides.keys)
+        var orphanCandidates: [String?] = []
+
+        for shapeIndex in deviceIndices {
+            let shapeId = rows[idx].shapes[shapeIndex].id
+
+            for localeCode in localeCodes {
+                guard var override = localeState.override(forCode: localeCode, shapeId: shapeId),
+                      let oldFile = override.overrideImageFileName else { continue }
+                orphanCandidates.append(oldFile)
+                override.overrideImageFileName = nil
+                LocaleService.setShapeOverride(
+                    &localeState,
+                    localeCode: localeCode,
+                    shapeId: shapeId,
+                    override: override.isEmpty ? nil : override
+                )
+            }
+
+            if let baseFile = rows[idx].shapes[shapeIndex].displayImageFileName {
+                orphanCandidates.append(baseFile)
+                rows[idx].shapes[shapeIndex].displayImageFileName = nil
+            }
+        }
+
+        cleanupUnreferencedImages(orphanCandidates)
+        scheduleSave()
+    }
+
     func clearImage(for shapeId: UUID) {
         guard let location = shapeLocation(for: shapeId) else { return }
 
@@ -210,7 +254,10 @@ extension AppState {
         )
     }
 
-    /// Import multiple images into a row, one per template. Creates new templates if needed.
+    /// Import multiple images into a row. If the row already has device shapes, fills those
+    /// in template order and skips templates without a device. Overflow images (beyond the
+    /// number of existing devices) are placed into freshly appended templates. Rows with no
+    /// existing devices fall back to the legacy one-image-per-template behavior.
     /// Registers a single undo operation for the entire batch.
     func batchImportImages(_ images: [NSImage], into rowId: UUID) {
         guard let idx = rowIndex(for: rowId),
@@ -219,18 +266,34 @@ extension AppState {
         registerUndoForRow(at: idx, "Import Screenshots")
         selectRow(rowId)
 
-        // Create additional templates if needed
-        let needed = images.count - rows[idx].templates.count
-        for _ in 0..<max(0, needed) {
-            appendTemplate(to: idx)
+        let templatesWithDevices = templatesContainingDevices(inRowAt: idx)
+        var targetTemplateIndices: [Int]
+
+        if templatesWithDevices.isEmpty {
+            while rows[idx].templates.count < images.count {
+                appendTemplate(to: idx)
+            }
+            targetTemplateIndices = Array(0..<images.count)
+        } else {
+            targetTemplateIndices = Array(templatesWithDevices.prefix(images.count))
+            while targetTemplateIndices.count < images.count {
+                appendTemplate(to: idx)
+                targetTemplateIndices.append(rows[idx].templates.count - 1)
+            }
         }
 
-        // Place one image per template
-        for (i, image) in images.enumerated() {
-            importImage(image, intoTemplateAt: i, rowIndex: idx, activeId: activeId)
+        for (image, templateIndex) in zip(images, targetTemplateIndices) {
+            importImage(image, intoTemplateAt: templateIndex, rowIndex: idx, activeId: activeId)
         }
 
         scheduleSave()
+    }
+
+    private func templatesContainingDevices(inRowAt rowIndex: Int) -> [Int] {
+        let row = rows[rowIndex]
+        return (0..<row.templates.count).filter { templateIndex in
+            existingDeviceShapeIndex(in: row, templateIndex: templateIndex) != nil
+        }
     }
 
     private func importImage(_ image: NSImage, intoTemplateAt templateIndex: Int, rowIndex: Int, activeId: UUID) {

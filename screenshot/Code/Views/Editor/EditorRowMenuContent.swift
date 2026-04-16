@@ -142,6 +142,10 @@ struct EditorRowMenuContent: View {
                     selectedFrameId: row.defaultDeviceFrameId
                 )
             }
+            Divider()
+            Button("Reset All Images", role: .destructive) {
+                state.clearAllDeviceImages(in: row.id)
+            }
         }
         Button(row.showBorders ? "Hide Borders" : "Show Borders") {
             state.toggleShowBorders(for: row.id)
