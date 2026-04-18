@@ -63,6 +63,40 @@ final class AppStoreConnectAPIService {
         return response.data
     }
 
+    // MARK: - Metadata (editing)
+
+    func listAppInfos(appId: String) async throws -> [ASCAppInfo] {
+        let path = "/v1/apps/\(appId)/appInfos"
+        let response: ASCListResponse<ASCAppInfo> = try await get(path)
+        return response.data
+    }
+
+    func listAppInfoLocalizations(appInfoId: String, limit: Int = 200) async throws -> [ASCAppInfoLocalization] {
+        let path = "/v1/appInfos/\(appInfoId)/appInfoLocalizations?limit=\(limit)"
+        let response: ASCListResponse<ASCAppInfoLocalization> = try await get(path)
+        return response.data
+    }
+
+    func updateVersionLocalization(id: String, attributes: [String: AnyEncodable]) async throws {
+        try await updateResource(type: "appStoreVersionLocalizations", id: id, attributes: attributes)
+    }
+
+    func updateAppInfoLocalization(id: String, attributes: [String: AnyEncodable]) async throws {
+        try await updateResource(type: "appInfoLocalizations", id: id, attributes: attributes)
+    }
+
+    func updateAppStoreVersion(id: String, attributes: [String: AnyEncodable]) async throws {
+        try await updateResource(type: "appStoreVersions", id: id, attributes: attributes)
+    }
+
+    private func updateResource(type: String, id: String, attributes: [String: AnyEncodable]) async throws {
+        guard !attributes.isEmpty else { return }
+        let body = ASCResourceUpdate(
+            data: ASCResourceUpdate.Payload(type: type, id: id, attributes: attributes)
+        )
+        _ = try await rawRequest(method: "PATCH", path: "/v1/\(type)/\(id)", body: body)
+    }
+
     // MARK: - Screenshot sets
 
     func listScreenshotSets(localizationId: String, limit: Int = 50) async throws -> [ASCAppScreenshotSet] {
@@ -304,6 +338,19 @@ struct ASCAppStoreVersion: Decodable, Identifiable {
         let versionString: String
         let appStoreState: String?
         let platform: String?
+        let copyright: String?
+
+        init(
+            versionString: String,
+            appStoreState: String?,
+            platform: String?,
+            copyright: String? = nil
+        ) {
+            self.versionString = versionString
+            self.appStoreState = appStoreState
+            self.platform = platform
+            self.copyright = copyright
+        }
 
         var displayState: String {
             guard let raw = appStoreState, !raw.isEmpty else { return "not editable" }
@@ -344,6 +391,93 @@ struct ASCAppStoreVersionLocalization: Decodable, Identifiable {
 
     struct Attributes: Decodable {
         let locale: String
+        let description: String?
+        let keywords: String?
+        let promotionalText: String?
+        let whatsNew: String?
+        let marketingUrl: String?
+        let supportUrl: String?
+
+        init(
+            locale: String,
+            description: String? = nil,
+            keywords: String? = nil,
+            promotionalText: String? = nil,
+            whatsNew: String? = nil,
+            marketingUrl: String? = nil,
+            supportUrl: String? = nil
+        ) {
+            self.locale = locale
+            self.description = description
+            self.keywords = keywords
+            self.promotionalText = promotionalText
+            self.whatsNew = whatsNew
+            self.marketingUrl = marketingUrl
+            self.supportUrl = supportUrl
+        }
+    }
+}
+
+struct ASCAppInfo: Decodable, Identifiable {
+    let id: String
+    let attributes: Attributes?
+
+    struct Attributes: Decodable {
+        let state: String?
+        let appStoreState: String?
+
+        init(state: String? = nil, appStoreState: String? = nil) {
+            self.state = state
+            self.appStoreState = appStoreState
+        }
+    }
+
+    var effectiveState: String? {
+        attributes?.state ?? attributes?.appStoreState
+    }
+
+    var isEditable: Bool {
+        guard let state = effectiveState else { return false }
+        return Self.editableStates.contains(state)
+    }
+
+    private static let editableStates: Set<String> = [
+        "PREPARE_FOR_SUBMISSION",
+        "DEVELOPER_REJECTED",
+        "REJECTED",
+        "METADATA_REJECTED",
+        "WAITING_FOR_REVIEW",
+        "IN_REVIEW"
+    ]
+}
+
+struct ASCAppInfoLocalization: Decodable, Identifiable {
+    let id: String
+    let attributes: Attributes
+
+    struct Attributes: Decodable {
+        let locale: String
+        let name: String?
+        let subtitle: String?
+        let privacyPolicyUrl: String?
+        let privacyPolicyText: String?
+        let privacyChoicesUrl: String?
+
+        init(
+            locale: String,
+            name: String? = nil,
+            subtitle: String? = nil,
+            privacyPolicyUrl: String? = nil,
+            privacyPolicyText: String? = nil,
+            privacyChoicesUrl: String? = nil
+        ) {
+            self.locale = locale
+            self.name = name
+            self.subtitle = subtitle
+            self.privacyPolicyUrl = privacyPolicyUrl
+            self.privacyPolicyText = privacyPolicyText
+            self.privacyChoicesUrl = privacyChoicesUrl
+        }
     }
 }
 

@@ -131,6 +131,12 @@ struct UploadToAppStoreConnectView: View {
 
     @State private var localizations: [ASCAppStoreVersionLocalization] = []
 
+    @State private var versionDrafts: [VersionLocaleDraft] = []
+    @State private var appInfoDrafts: [AppInfoLocaleDraft] = []
+    @State private var copyrightDraft: String = ""
+    @State private var originalCopyright: String = ""
+    @State private var selectedMetadataLocale: String?
+
     @State private var rowPlans: [RowPlan] = []
     @State private var uploadProgress: ASCUploadProgress?
     @State private var uploadTask: Task<Void, Never>?
@@ -156,9 +162,88 @@ struct UploadToAppStoreConnectView: View {
     private enum Step {
         case pickingApp
         case pickingVersion
+        case editingMetadata
         case configuringPlan
         case uploading
         case done
+    }
+
+    struct VersionLocaleDraft: Identifiable {
+        let id: String
+        let locale: String
+        var description: String
+        var keywords: String
+        var promotionalText: String
+        var whatsNew: String
+        var marketingUrl: String
+        var supportUrl: String
+        var original: ASCAppStoreVersionLocalization.Attributes
+
+        var isChanged: Bool {
+            description != (original.description ?? "")
+                || keywords != (original.keywords ?? "")
+                || promotionalText != (original.promotionalText ?? "")
+                || whatsNew != (original.whatsNew ?? "")
+                || marketingUrl != (original.marketingUrl ?? "")
+                || supportUrl != (original.supportUrl ?? "")
+        }
+
+        func changedAttributes() -> [String: AnyEncodable] {
+            var changes: [String: AnyEncodable] = [:]
+            if description != (original.description ?? "") { changes["description"] = AnyEncodable(description) }
+            if keywords != (original.keywords ?? "") { changes["keywords"] = AnyEncodable(keywords) }
+            if promotionalText != (original.promotionalText ?? "") { changes["promotionalText"] = AnyEncodable(promotionalText) }
+            if whatsNew != (original.whatsNew ?? "") { changes["whatsNew"] = AnyEncodable(whatsNew) }
+            if marketingUrl != (original.marketingUrl ?? "") { changes["marketingUrl"] = AnyEncodable(marketingUrl) }
+            if supportUrl != (original.supportUrl ?? "") { changes["supportUrl"] = AnyEncodable(supportUrl) }
+            return changes
+        }
+
+        mutating func markSaved() {
+            original = ASCAppStoreVersionLocalization.Attributes(
+                locale: locale,
+                description: description,
+                keywords: keywords,
+                promotionalText: promotionalText,
+                whatsNew: whatsNew,
+                marketingUrl: marketingUrl,
+                supportUrl: supportUrl
+            )
+        }
+    }
+
+    struct AppInfoLocaleDraft: Identifiable {
+        let id: String
+        let locale: String
+        var name: String
+        var subtitle: String
+        var privacyPolicyUrl: String
+        var original: ASCAppInfoLocalization.Attributes
+
+        var isChanged: Bool {
+            name != (original.name ?? "")
+                || subtitle != (original.subtitle ?? "")
+                || privacyPolicyUrl != (original.privacyPolicyUrl ?? "")
+        }
+
+        func changedAttributes() -> [String: AnyEncodable] {
+            var changes: [String: AnyEncodable] = [:]
+            if name != (original.name ?? "") { changes["name"] = AnyEncodable(name) }
+            if subtitle != (original.subtitle ?? "") { changes["subtitle"] = AnyEncodable(subtitle) }
+            if privacyPolicyUrl != (original.privacyPolicyUrl ?? "") { changes["privacyPolicyUrl"] = AnyEncodable(privacyPolicyUrl) }
+            return changes
+        }
+
+        mutating func markSaved() {
+            original = ASCAppInfoLocalization.Attributes(
+                locale: locale,
+                name: name,
+                subtitle: subtitle,
+                privacyPolicyUrl: privacyPolicyUrl,
+                privacyPolicyText: original.privacyPolicyText,
+                privacyChoicesUrl: original.privacyChoicesUrl
+            )
+        }
     }
 
     struct RowPlan: Identifiable {
@@ -284,7 +369,7 @@ struct UploadToAppStoreConnectView: View {
     @ViewBuilder
     private var backButton: some View {
         switch step {
-        case .pickingVersion, .configuringPlan:
+        case .pickingVersion, .editingMetadata, .configuringPlan:
             Button {
                 goBack()
             } label: {
@@ -320,10 +405,17 @@ struct UploadToAppStoreConnectView: View {
                 .keyboardShortcut(.defaultAction)
                 .disabled(selectedApp == nil || isBusy)
         case .pickingVersion:
-            Button("Next") { Task { await moveToPlan() } }
+            Button("Next") { Task { await moveToMetadata() } }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(!canAdvanceFromVersion || isBusy)
+        case .editingMetadata:
+            Button(hasMetadataChanges ? "Save & Continue" : "Continue") {
+                Task { await saveMetadataAndContinue() }
+            }
+            .buttonStyle(.borderedProminent)
+            .keyboardShortcut(.defaultAction)
+            .disabled(isBusy)
         case .configuringPlan:
             Button("Upload") { isConfirmingUpload = true }
                 .buttonStyle(.borderedProminent)
@@ -332,6 +424,13 @@ struct UploadToAppStoreConnectView: View {
         case .uploading, .done:
             EmptyView()
         }
+    }
+
+    private var hasMetadataChanges: Bool {
+        if copyrightDraft != originalCopyright { return true }
+        if versionDrafts.contains(where: \.isChanged) { return true }
+        if appInfoDrafts.contains(where: \.isChanged) { return true }
+        return false
     }
 
     private var canAdvanceFromVersion: Bool {
@@ -345,8 +444,10 @@ struct UploadToAppStoreConnectView: View {
         switch step {
         case .pickingVersion:
             step = .pickingApp
-        case .configuringPlan:
+        case .editingMetadata:
             step = .pickingVersion
+        case .configuringPlan:
+            step = .editingMetadata
         default: break
         }
     }
@@ -436,6 +537,7 @@ struct UploadToAppStoreConnectView: View {
             switch step {
             case .pickingApp: pickAppView
             case .pickingVersion: pickVersionView
+            case .editingMetadata: editMetadataView
             case .configuringPlan: configurePlanView
             case .uploading, .done: uploadProgressView
             }
@@ -554,6 +656,223 @@ struct UploadToAppStoreConnectView: View {
                     .font(.caption)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 4)
+            }
+        }
+    }
+
+    private var editMetadataView: some View {
+        VStack(spacing: 0) {
+            if let app = selectedApp, let version = selectedVersion {
+                ASCAppHeaderView(
+                    app: app,
+                    subtitle: "Version \(version.attributes.versionString) · \(version.attributes.displayState)"
+                )
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+            }
+
+            HStack(alignment: .top, spacing: 0) {
+                metadataLocaleSidebar
+                    .frame(width: 180)
+                Divider()
+                metadataFormPane
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+
+    private var metadataLocaleSidebar: some View {
+        List(selection: Binding(
+            get: { selectedMetadataLocale },
+            set: { selectedMetadataLocale = $0 }
+        )) {
+            Section("Version") {
+                HStack {
+                    Text("All locales")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    if copyrightDraft != originalCopyright {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 6))
+                            .foregroundStyle(.blue)
+                    }
+                }
+            }
+            Section("Locales") {
+                ForEach(metadataLocaleCodes, id: \.self) { code in
+                    HStack {
+                        Text(code)
+                        Spacer()
+                        if localeHasChanges(code) {
+                            Image(systemName: "circle.fill")
+                                .font(.system(size: 6))
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                    .tag(code as String?)
+                }
+            }
+        }
+        .listStyle(.sidebar)
+    }
+
+    private func localeHasChanges(_ code: String) -> Bool {
+        if versionDrafts.contains(where: { $0.locale == code && $0.isChanged }) { return true }
+        if appInfoDrafts.contains(where: { $0.locale == code && $0.isChanged }) { return true }
+        return false
+    }
+
+    @ViewBuilder
+    private var metadataFormPane: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                versionCopyrightField
+                if let code = selectedMetadataLocale {
+                    if let idx = appInfoDrafts.firstIndex(where: { $0.locale == code }) {
+                        appInfoSection(index: idx)
+                    }
+                    if let idx = versionDrafts.firstIndex(where: { $0.locale == code }) {
+                        versionLocaleSection(index: idx)
+                    }
+                    if !versionDrafts.contains(where: { $0.locale == code }),
+                       !appInfoDrafts.contains(where: { $0.locale == code }) {
+                        Text("No editable metadata for this locale.")
+                            .foregroundStyle(.secondary)
+                            .font(.caption)
+                    }
+                } else {
+                    Text("Select a locale on the left to edit its metadata.")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+            }
+            .padding(16)
+        }
+    }
+
+    private var versionCopyrightField: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Copyright")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+            TextField("© 2025 Your Company", text: $copyrightDraft)
+                .textFieldStyle(.roundedBorder)
+            Text("Applies to all locales for this version.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .padding(10)
+        .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
+    }
+
+    @ViewBuilder
+    private func appInfoSection(index: Int) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("App Info (shared across versions)")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+            metadataField(
+                label: "App Name",
+                text: $appInfoDrafts[index].name,
+                limit: 30
+            )
+            metadataField(
+                label: "Subtitle",
+                text: $appInfoDrafts[index].subtitle,
+                limit: 30
+            )
+            metadataField(
+                label: "Privacy Policy URL",
+                text: $appInfoDrafts[index].privacyPolicyUrl,
+                limit: nil
+            )
+        }
+        .padding(10)
+        .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
+    }
+
+    @ViewBuilder
+    private func versionLocaleSection(index: Int) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("This Version")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+            metadataField(
+                label: "Promotional Text",
+                text: $versionDrafts[index].promotionalText,
+                limit: 170,
+                multiline: true,
+                minHeight: 44
+            )
+            metadataField(
+                label: "Description",
+                text: $versionDrafts[index].description,
+                limit: 4000,
+                multiline: true,
+                minHeight: 140
+            )
+            metadataField(
+                label: "Keywords (comma-separated)",
+                text: $versionDrafts[index].keywords,
+                limit: 100
+            )
+            metadataField(
+                label: "What's New",
+                text: $versionDrafts[index].whatsNew,
+                limit: 4000,
+                multiline: true,
+                minHeight: 80
+            )
+            metadataField(
+                label: "Support URL",
+                text: $versionDrafts[index].supportUrl,
+                limit: nil
+            )
+            metadataField(
+                label: "Marketing URL",
+                text: $versionDrafts[index].marketingUrl,
+                limit: nil
+            )
+        }
+        .padding(10)
+        .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
+    }
+
+    @ViewBuilder
+    private func metadataField(
+        label: String,
+        text: Binding<String>,
+        limit: Int?,
+        multiline: Bool = false,
+        minHeight: CGFloat = 0
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if let limit {
+                    Text("\(text.wrappedValue.count)/\(limit)")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(text.wrappedValue.count > limit ? .red : .secondary)
+                }
+            }
+            if multiline {
+                TextEditor(text: text)
+                    .font(.body)
+                    .frame(minHeight: minHeight)
+                    .padding(4)
+                    .background(Color(nsColor: .textBackgroundColor), in: .rect(cornerRadius: 6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(Color.secondary.opacity(0.25), lineWidth: 1)
+                    )
+            } else {
+                TextField("", text: text)
+                    .textFieldStyle(.roundedBorder)
             }
         }
     }
@@ -1057,17 +1376,123 @@ struct UploadToAppStoreConnectView: View {
         }
     }
 
-    private func moveToPlan() async {
-        guard let version = selectedVersion else { return }
+    private func moveToMetadata() async {
+        guard let version = selectedVersion, let app = selectedApp else { return }
         isBusy = true
         errorMessage = nil
         defer { isBusy = false }
         do {
-            localizations = try await AppStoreConnectAPIService.shared.listLocalizations(versionId: version.id)
+            async let localizationsTask = AppStoreConnectAPIService.shared.listLocalizations(versionId: version.id)
+            async let appInfosTask = AppStoreConnectAPIService.shared.listAppInfos(appId: app.id)
+            let (fetchedLocalizations, fetchedAppInfos) = try await (localizationsTask, appInfosTask)
+            localizations = fetchedLocalizations
+
+            let editableInfo = fetchedAppInfos.first(where: { $0.isEditable }) ?? fetchedAppInfos.first
+            let fetchedAppInfoLocalizations: [ASCAppInfoLocalization]
+            if let editableInfo {
+                fetchedAppInfoLocalizations = try await AppStoreConnectAPIService.shared.listAppInfoLocalizations(appInfoId: editableInfo.id)
+            } else {
+                fetchedAppInfoLocalizations = []
+            }
+
+            buildMetadataDrafts(appInfoLocalizations: fetchedAppInfoLocalizations)
+            step = .editingMetadata
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func buildMetadataDrafts(appInfoLocalizations: [ASCAppInfoLocalization]) {
+        versionDrafts = localizations
+            .sorted { $0.attributes.locale < $1.attributes.locale }
+            .map { loc in
+                VersionLocaleDraft(
+                    id: loc.id,
+                    locale: loc.attributes.locale,
+                    description: loc.attributes.description ?? "",
+                    keywords: loc.attributes.keywords ?? "",
+                    promotionalText: loc.attributes.promotionalText ?? "",
+                    whatsNew: loc.attributes.whatsNew ?? "",
+                    marketingUrl: loc.attributes.marketingUrl ?? "",
+                    supportUrl: loc.attributes.supportUrl ?? "",
+                    original: loc.attributes
+                )
+            }
+        appInfoDrafts = appInfoLocalizations
+            .sorted { $0.attributes.locale < $1.attributes.locale }
+            .map { loc in
+                AppInfoLocaleDraft(
+                    id: loc.id,
+                    locale: loc.attributes.locale,
+                    name: loc.attributes.name ?? "",
+                    subtitle: loc.attributes.subtitle ?? "",
+                    privacyPolicyUrl: loc.attributes.privacyPolicyUrl ?? "",
+                    original: loc.attributes
+                )
+            }
+        originalCopyright = selectedVersion?.attributes.copyright ?? ""
+        copyrightDraft = originalCopyright
+        let codes = metadataLocaleCodes
+        let currentStillValid = selectedMetadataLocale.map(codes.contains) ?? false
+        if !currentStillValid {
+            selectedMetadataLocale = codes.first
+        }
+    }
+
+    private var metadataLocaleCodes: [String] {
+        let codes = Set(versionDrafts.map(\.locale)).union(appInfoDrafts.map(\.locale))
+        return codes.sorted()
+    }
+
+    private func saveMetadataAndContinue() async {
+        guard let version = selectedVersion else { return }
+        isBusy = true
+        errorMessage = nil
+        defer { isBusy = false }
+
+        let copyrightChanged = copyrightDraft != originalCopyright
+        let copyrightValue = copyrightDraft
+        let versionSnapshot = versionDrafts
+        let appInfoSnapshot = appInfoDrafts
+        let api = AppStoreConnectAPIService.shared
+
+        do {
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                if copyrightChanged {
+                    group.addTask {
+                        try await api.updateAppStoreVersion(
+                            id: version.id,
+                            attributes: ["copyright": AnyEncodable(copyrightValue)]
+                        )
+                    }
+                }
+                for draft in versionSnapshot {
+                    let changes = draft.changedAttributes()
+                    guard !changes.isEmpty else { continue }
+                    group.addTask {
+                        try await api.updateVersionLocalization(id: draft.id, attributes: changes)
+                    }
+                }
+                for draft in appInfoSnapshot {
+                    let changes = draft.changedAttributes()
+                    guard !changes.isEmpty else { continue }
+                    group.addTask {
+                        try await api.updateAppInfoLocalization(id: draft.id, attributes: changes)
+                    }
+                }
+                try await group.waitForAll()
+            }
+            if copyrightChanged { originalCopyright = copyrightValue }
+            for i in versionDrafts.indices where versionDrafts[i].isChanged {
+                versionDrafts[i].markSaved()
+            }
+            for i in appInfoDrafts.indices where appInfoDrafts[i].isChanged {
+                appInfoDrafts[i].markSaved()
+            }
             rowPlans = buildRowPlans(preserving: rowPlans)
             step = .configuringPlan
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Failed to save metadata: \(error.localizedDescription)"
         }
     }
 
