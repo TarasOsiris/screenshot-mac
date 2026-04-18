@@ -1574,20 +1574,29 @@ struct UploadToAppStoreConnectView: View {
                     progress: { p in self.uploadProgress = p }
                 )
                 if Task.isCancelled { return }
-                uploadSummary = UploadSummary(
+                let summary = UploadSummary(
                     appId: selectedApp?.id,
                     appName: selectedApp?.attributes.name ?? "",
                     totalScreenshots: targets.reduce(0) { $0 + $1.templateCount * $1.localizations.count },
                     localizationCount: Set(targets.flatMap { $0.localizations.map(\.id) }).count
                 )
+                uploadSummary = summary
                 step = .done
+                let shotNoun = summary.totalScreenshots == 1 ? "screenshot" : "screenshots"
+                let locNoun = summary.localizationCount == 1 ? "locale" : "locales"
+                let body = summary.appName.isEmpty
+                    ? "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun)"
+                    : "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) · \(summary.appName)"
+                NotificationService.notify(title: "Upload complete", body: body)
             } catch is CancellationError {
                 errorMessage = "Upload cancelled. Any set that was already being replaced may be empty in App Store Connect — re-run the upload to refill it."
                 step = .configuringPlan
             } catch {
-                errorMessage = uploadFailureSummary(for: error)
+                let summary = uploadFailureSummary(for: error)
+                errorMessage = summary
                 errorDetailsText = buildErrorDetails(for: error)
                 step = .configuringPlan
+                NotificationService.notify(title: "Upload failed", body: summary)
             }
         }
         uploadTask = task

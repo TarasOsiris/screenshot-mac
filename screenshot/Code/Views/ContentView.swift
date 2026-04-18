@@ -622,6 +622,7 @@ struct ContentView: View {
                 // User cancelled
             } catch {
                 exportError = error.localizedDescription
+                NotificationService.notify(title: "Export failed", body: error.localizedDescription)
             }
         }
     }
@@ -632,6 +633,14 @@ struct ContentView: View {
         let timer = DispatchWorkItem { exportSuccess = false }
         exportSuccessTimer = timer
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timer)
+
+        let count = exportTotal
+        let noun = count == 1 ? "screenshot" : "screenshots"
+        let projectName = state.activeProject?.name ?? ""
+        let body = projectName.isEmpty
+            ? "\(count) \(noun) exported"
+            : "\(count) \(noun) exported · \(projectName)"
+        NotificationService.notify(title: "Export complete", body: body)
     }
 
     private func chooseExportDestination() -> URL? {
@@ -691,6 +700,7 @@ struct ContentView: View {
                 // User cancelled — no error to show
             } catch {
                 exportError = error.localizedDescription
+                NotificationService.notify(title: "Export failed", body: error.localizedDescription)
             }
         }
     }
