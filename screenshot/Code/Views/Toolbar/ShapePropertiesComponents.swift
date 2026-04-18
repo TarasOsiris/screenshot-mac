@@ -204,47 +204,15 @@ struct SVGShapeControls: View {
 }
 
 struct TextShapeControls<TextPopoverContent: View>: View {
-    let showsTranslation: Bool
-    let isTranslating: Bool
-    let canTranslate: Bool
-    let onTranslate: () -> Void
     private let textPopoverContent: TextPopoverContent
 
-    init(
-        showsTranslation: Bool,
-        isTranslating: Bool,
-        canTranslate: Bool,
-        onTranslate: @escaping () -> Void,
-        @ViewBuilder textPopoverContent: () -> TextPopoverContent
-    ) {
-        self.showsTranslation = showsTranslation
-        self.isTranslating = isTranslating
-        self.canTranslate = canTranslate
-        self.onTranslate = onTranslate
+    init(@ViewBuilder textPopoverContent: () -> TextPopoverContent) {
         self.textPopoverContent = textPopoverContent()
     }
 
-    @ViewBuilder
     var body: some View {
         ShapePropertiesSection {
             textPopoverContent
-        }
-
-        if showsTranslation {
-            ShapePropertiesSection {
-                Button(action: onTranslate) {
-                    if isTranslating {
-                        ProgressView()
-                            .controlSize(.small)
-                            .frame(width: 16, height: 16)
-                    } else {
-                        Label("Translate", systemImage: "globe")
-                    }
-                }
-                .buttonStyle(.borderless)
-                .disabled(isTranslating || !canTranslate)
-                .help("Translate from base locale")
-            }
         }
     }
 }

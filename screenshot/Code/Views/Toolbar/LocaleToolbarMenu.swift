@@ -192,11 +192,21 @@ struct LocaleBanner: View {
     @State private var translationConfig: TranslationSession.Configuration?
     @State private var isTranslating = false
     @State private var translateOnlyUntranslated = true
+    @State private var pendingShapeFilter: Set<UUID>?
     @State private var showReplaceAllConfirmation = false
     @State private var showResetToBaseConfirmation = false
     @State private var isTranslationOverviewPresented = false
     @State private var showLanguageDownloadAlert = false
     @State private var showLocaleHelp = false
+
+    private var selectedTextShapeIds: Set<UUID> {
+        guard let rowIndex = state.selectedRowIndex else { return [] }
+        let selected = state.selectedShapeIds
+        let ids = state.rows[rowIndex].shapes
+            .filter { selected.contains($0.id) && $0.type == .text && !($0.text ?? "").isEmpty }
+            .map(\.id)
+        return Set(ids)
+    }
 
     var body: some View {
         let localeState = state.localeState
@@ -253,6 +263,20 @@ struct LocaleBanner: View {
                     }
 
                     Spacer(minLength: 8)
+
+                    let selectedIds = selectedTextShapeIds
+                    if !selectedIds.isEmpty {
+                        Button {
+                            startTranslation(onlyUntranslated: false, shapeIds: selectedIds)
+                        } label: {
+                            Label("Translate Selected", systemImage: "globe")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .font(.system(size: 11, weight: .medium))
+                        .disabled(isTranslating)
+                        .help("Translate selected text layers into \(label)")
+                    }
 
                     if progress.total > 0 {
                         Button("Edit Translations") {
@@ -339,22 +363,31 @@ struct LocaleBanner: View {
                 isTranslating = true
                 defer { isTranslating = false }
                 let targetLocaleCode = state.localeState.activeLocaleCode
+                let filterIds = pendingShapeFilter
+                pendingShapeFilter = nil
                 let success = await translateShapes(
                     session: session,
                     state: state,
                     targetLocaleCode: targetLocaleCode,
-                    onlyUntranslated: translateOnlyUntranslated
+                    onlyUntranslated: translateOnlyUntranslated,
+                    shapeFilter: filterIds.map { ids in { ids.contains($0) } }
                 )
                 if !success {
                     showLanguageDownloadAlert = true
                 }
             }
             .translationLanguageDownloadAlert(isPresented: $showLanguageDownloadAlert)
+            .onChange(of: state.pendingTranslateShapeId) { _, newValue in
+                guard let shapeId = newValue else { return }
+                state.pendingTranslateShapeId = nil
+                startTranslation(onlyUntranslated: false, shapeIds: [shapeId])
+            }
         }
     }
 
-    private func startTranslation(onlyUntranslated: Bool) {
+    private func startTranslation(onlyUntranslated: Bool, shapeIds: Set<UUID>? = nil) {
         translateOnlyUntranslated = onlyUntranslated
+        pendingShapeFilter = shapeIds
         translationConfig.refresh(
             source: state.localeState.baseLocaleCode,
             target: state.localeState.activeLocaleCode

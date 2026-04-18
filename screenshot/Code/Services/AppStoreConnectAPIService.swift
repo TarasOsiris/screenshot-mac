@@ -280,6 +280,22 @@ struct ASCApp: Decodable, Identifiable {
     }
 }
 
+enum ASCPlatform: String, CaseIterable {
+    case ios = "IOS"
+    case macOS = "MAC_OS"
+    case tvOS = "TV_OS"
+    case visionOS = "VISION_OS"
+
+    var displayName: String {
+        switch self {
+        case .ios: return "iOS"
+        case .macOS: return "macOS"
+        case .tvOS: return "tvOS"
+        case .visionOS: return "visionOS"
+        }
+    }
+}
+
 struct ASCAppStoreVersion: Decodable, Identifiable {
     let id: String
     let attributes: Attributes
@@ -294,15 +310,15 @@ struct ASCAppStoreVersion: Decodable, Identifiable {
             return raw.replacingOccurrences(of: "_", with: " ").lowercased()
         }
 
+        var ascPlatform: ASCPlatform? {
+            guard let platform, !platform.isEmpty else { return nil }
+            return ASCPlatform(rawValue: platform)
+        }
+
         var displayPlatform: String? {
-            switch platform {
-            case "IOS": return "iOS"
-            case "MAC_OS": return "macOS"
-            case "TV_OS": return "tvOS"
-            case "VISION_OS": return "visionOS"
-            case nil, "": return nil
-            default: return platform?.replacingOccurrences(of: "_", with: " ").capitalized
-            }
+            if let ascPlatform { return ascPlatform.displayName }
+            guard let platform, !platform.isEmpty else { return nil }
+            return platform.replacingOccurrences(of: "_", with: " ").capitalized
         }
     }
 

@@ -369,13 +369,18 @@ final class AppStoreConnectUploadService {
         }
     }
 
+    private static let fileNameAllowedCharacters = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "._-"))
+    private static let fileNameTrimCharacters = CharacterSet(charactersIn: "-.")
+
     private static func fileName(row: ScreenshotRow, index: Int) -> String {
         let padded = String(format: "%02d", index + 1)
         let labelPart = row.label.isEmpty ? "screenshot" : row.label
-        let sanitized = labelPart
-            .replacingOccurrences(of: "/", with: "-")
-            .replacingOccurrences(of: "\\", with: "-")
-        return "\(padded)_\(sanitized).png"
+        let sanitized = labelPart.unicodeScalars.map { scalar -> String in
+            fileNameAllowedCharacters.contains(scalar) ? String(scalar) : "-"
+        }.joined()
+        let trimmed = sanitized.trimmingCharacters(in: fileNameTrimCharacters)
+        let safe = trimmed.isEmpty ? "screenshot" : trimmed
+        return "\(padded)_\(safe).png"
     }
 
     private static func md5Hex(data: Data) -> String {

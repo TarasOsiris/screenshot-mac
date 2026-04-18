@@ -1,5 +1,4 @@
 import SwiftUI
-import Translation
 import UniformTypeIdentifiers
 
 struct ShapePropertiesSingleSelectionBar: View {
@@ -10,8 +9,6 @@ struct ShapePropertiesSingleSelectionBar: View {
     @State private var isReplacingSvg = false
     @State private var isReplacingFillImage = false
     @State private var isFillPopoverPresented = false
-    @State private var translationConfig: TranslationSession.Configuration?
-    @State private var isTranslating = false
     @State private var isTextPopoverPresented = false
     @State private var editingFontSize: String = ""
     @State private var isFontSizeFieldActive = false
@@ -244,12 +241,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                         }
 
                         if shape.type == .text {
-                            TextShapeControls(
-                                showsTranslation: !state.localeState.isBaseLocale,
-                                isTranslating: isTranslating,
-                                canTranslate: !(state.rows[rowIndex].shapes[shapeIdx].text ?? "").isEmpty,
-                                onTranslate: triggerTranslation
-                            ) {
+                            TextShapeControls {
                                 textPopoverButton(shape: shape, shapeId: shapeId)
                             }
                         }
@@ -283,11 +275,6 @@ struct ShapePropertiesSingleSelectionBar: View {
             .font(.system(size: 11))
             .controlSize(.small)
             .background(.bar)
-            .onChange(of: state.pendingTranslateShapeId) { _, newValue in
-                if newValue != nil {
-                    triggerTranslation()
-                }
-            }
             .fileImporter(isPresented: $isReplacingFillImage, allowedContentTypes: [.image]) { result in
                 if case .success(let url) = result,
                    let image = NSImage.fromSecurityScopedURL(url) {
@@ -303,29 +290,6 @@ struct ShapePropertiesSingleSelectionBar: View {
                         state.rows[i.row].shapes[i.shape].color = color
                     }
                     state.scheduleSave()
-                }
-            }
-            .translationTask(translationConfig) { session in
-                let targetShapeId = state.pendingTranslateShapeId ?? state.selectedShapeId
-                defer { state.pendingTranslateShapeId = nil }
-                guard let ri = state.selectedRowIndex,
-                      let shapeId = targetShapeId,
-                      let si = state.rows[ri].shapes.firstIndex(where: { $0.id == shapeId })
-                else { return }
-                let baseShape = state.rows[ri].shapes[si]
-                guard baseShape.type == .text, let baseText = baseShape.text, !baseText.isEmpty else { return }
-                let targetLocaleCode = state.localeState.activeLocaleCode
-                isTranslating = true
-                defer { isTranslating = false }
-                do {
-                    let response = try await session.translate(baseText)
-                    state.updateTranslationText(
-                        shapeId: baseShape.id,
-                        localeCode: targetLocaleCode,
-                        text: response.targetText
-                    )
-                } catch {
-                    print("Translation failed: \(error)")
                 }
             }
         }
@@ -424,13 +388,6 @@ struct ShapePropertiesSingleSelectionBar: View {
         if anyKeyPath == \CanvasShapeModel.italic { return .italic }
         if anyKeyPath == \CanvasShapeModel.letterSpacing { return .letterSpacing }
         return nil
-    }
-
-    private func triggerTranslation() {
-        translationConfig.refresh(
-            source: state.localeState.baseLocaleCode,
-            target: state.localeState.activeLocaleCode
-        )
     }
 
     /// Creates a Binding that always resolves the shape index by ID at access time.

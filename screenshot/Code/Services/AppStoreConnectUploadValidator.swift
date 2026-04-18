@@ -45,6 +45,15 @@ enum ASCUploadValidator {
             ))
         }
 
+        if plans.isEmpty {
+            issues.append(ASCUploadIssue(
+                severity: .error,
+                message: "This project has no rows to upload.",
+                hint: "Add a row in the editor before running the upload."
+            ))
+            return issues
+        }
+
         let enabledPlans = plans.filter { $0.isEnabled }
         if enabledPlans.isEmpty {
             issues.append(ASCUploadIssue(
@@ -84,6 +93,16 @@ enum ASCUploadValidator {
                 ))
             }
 
+            if let platform = version.attributes.ascPlatform,
+               !displayType.accepts(platform: platform) {
+                issues.append(ASCUploadIssue(
+                    severity: .error,
+                    scope: rowName,
+                    message: "\(displayType.label) can't be uploaded to a \(platform.displayName) version.",
+                    hint: "Pick a display type that matches the app's platform."
+                ))
+            }
+
             if plan.templateCount < ASCUploadLimits.minScreenshotsPerSet {
                 issues.append(ASCUploadIssue(
                     severity: .error,
@@ -98,15 +117,6 @@ enum ASCUploadValidator {
                     scope: rowName,
                     message: "App Store Connect allows at most \(ASCUploadLimits.maxScreenshotsPerSet) screenshots per display type; this row has \(plan.templateCount).",
                     hint: "Remove columns to bring the count to \(ASCUploadLimits.maxScreenshotsPerSet) or fewer."
-                ))
-            }
-
-            if displayType.family == .ipad {
-                issues.append(ASCUploadIssue(
-                    severity: .warning,
-                    scope: rowName,
-                    message: "\(displayType.label) may be rejected if this App Store version is iPhone-only.",
-                    hint: "If App Store Connect returns Display Type Not Allowed, disable this row or update the app's device support before retrying."
                 ))
             }
 

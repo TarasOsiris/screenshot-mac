@@ -86,6 +86,13 @@ extension AppState {
         }
     }
 
+    func setASCAppId(_ ascAppId: String?, forProject id: UUID) {
+        guard let idx = projects.firstIndex(where: { $0.id == id }) else { return }
+        guard projects[idx].ascAppId != ascAppId else { return }
+        projects[idx].ascAppId = ascAppId
+        scheduleSave()
+    }
+
     func renameProject(_ id: UUID, to name: String) {
         let trimmed = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
         guard !trimmed.isEmpty else { return }

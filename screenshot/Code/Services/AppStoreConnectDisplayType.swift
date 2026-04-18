@@ -73,6 +73,25 @@ enum ASCDisplayType: String, CaseIterable, Identifiable {
         }
     }
 
+    var allowedPlatforms: Set<ASCPlatform> {
+        switch family {
+        case .iphone, .ipad: return [.ios]
+        case .mac: return [.macOS]
+        case .other:
+            switch self {
+            case .appleTV: return [.tvOS]
+            case .visionPro: return [.visionOS]
+            case .watchUltra, .watchSeries7, .watchSeries4, .watchSeries3: return [.ios]
+            default: return []
+            }
+        }
+    }
+
+    func accepts(platform: ASCPlatform?) -> Bool {
+        guard let platform else { return true }
+        return allowedPlatforms.contains(platform)
+    }
+
     var label: String {
         switch self {
         case .iphone69: return "iPhone 6.9\" Display (1320×2868)"
@@ -108,6 +127,13 @@ enum ASCDisplayType: String, CaseIterable, Identifiable {
         .ipadPro129M4, .ipadPro3Gen129, .ipadPro11M4, .ipadPro3Gen11, .ipad105, .ipad97,
         .desktop
     ]
+
+    /// Falls back to the full list when the platform is unknown so the picker is never empty.
+    static func userSelectableCases(forPlatform platform: ASCPlatform?) -> [ASCDisplayType] {
+        guard let platform else { return userSelectableCases }
+        let filtered = userSelectableCases.filter { $0.allowedPlatforms.contains(platform) }
+        return filtered.isEmpty ? userSelectableCases : filtered
+    }
 
     /// Portrait (short × long) pixel pairs accepted by ASC for this display type.
     /// Desktop is landscape-only. Empty for display types the app doesn't target (watch/TV/vision).

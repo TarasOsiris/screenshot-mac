@@ -21,4 +21,24 @@ struct AppStoreConnectDisplayTypeTests {
         #expect(ASCDisplayType.ipadPro129M4.accepts(width: 2064, height: 2752))
         #expect(ASCDisplayType.detect(width: 2064, height: 2752) == .ipadPro129M4)
     }
+
+    @Test func platformGatingMatchesFamily() {
+        #expect(ASCDisplayType.iphone67.accepts(platform: .ios))
+        #expect(!ASCDisplayType.iphone67.accepts(platform: .macOS))
+        #expect(ASCDisplayType.desktop.accepts(platform: .macOS))
+        #expect(!ASCDisplayType.desktop.accepts(platform: .ios))
+        #expect(ASCDisplayType.iphone67.accepts(platform: nil))
+    }
+
+    @Test func userSelectableCasesFilterByPlatform() {
+        let ios = ASCDisplayType.userSelectableCases(forPlatform: .ios)
+        #expect(ios.contains(.iphone67))
+        #expect(ios.contains(.ipadPro129M4))
+        #expect(!ios.contains(.desktop))
+
+        let mac = ASCDisplayType.userSelectableCases(forPlatform: .macOS)
+        #expect(mac == [.desktop])
+
+        #expect(ASCDisplayType.userSelectableCases(forPlatform: nil) == ASCDisplayType.userSelectableCases)
+    }
 }

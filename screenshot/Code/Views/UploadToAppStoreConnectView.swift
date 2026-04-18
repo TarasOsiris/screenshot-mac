@@ -137,9 +137,12 @@ struct UploadToAppStoreConnectView: View {
     @State private var uploadSummary: UploadSummary?
 
     @State private var errorMessage: String?
-    @State private var uploadFailureDetails: ASCUploadFailureDetailItem?
+    /// Full error text (summary + API response + context). When nil, the Details button falls back to `errorMessage`.
+    @State private var errorDetailsText: String?
+    @State private var presentedErrorDetails: ASCUploadFailureDetailItem?
     @State private var displayTypeDetailsPlanId: UUID?
     @State private var isBusy = false
+    @State private var isConfirmingUpload = false
 
     struct UploadSummary {
         let appId: String?
@@ -213,9 +216,31 @@ struct UploadToAppStoreConnectView: View {
         }
         .frame(width: 860, height: 680)
         .task { await loadAppsIfNeeded() }
-        .sheet(item: $uploadFailureDetails) { details in
+        .sheet(item: $presentedErrorDetails) { details in
             ASCUploadFailureDetailsSheet(details: details.message)
         }
+        .confirmationDialog(
+            "Replace existing screenshots?",
+            isPresented: $isConfirmingUpload,
+            titleVisibility: .visible
+        ) {
+            Button("Upload and Replace", role: .destructive) {
+                Task { await startUpload() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(confirmationMessage)
+        }
+    }
+
+    private var confirmationMessage: String {
+        let groups = selectedLocaleGroups
+        let screenshotCount = groups.reduce(0) { $0 + $1.screenshotCount }
+        let localeCount = groups.count
+        let setCount = selectedUploadPlanEntries.count
+        return "Existing screenshots in each matching display type set will be deleted and replaced. " +
+            "\(screenshotCount) screenshot\(screenshotCount == 1 ? "" : "s") will be uploaded across \(setCount) set\(setCount == 1 ? "" : "s") and \(localeCount) locale\(localeCount == 1 ? "" : "s"). " +
+            "This cannot be undone."
     }
 
     // MARK: - Header / footer
@@ -234,7 +259,7 @@ struct UploadToAppStoreConnectView: View {
     }
 
     private var footer: some View {
-        HStack(alignment: .top) {
+        HStack(alignment: .top, spacing: 6) {
             backButton
             if let errorMessage {
                 Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
@@ -242,6 +267,11 @@ struct UploadToAppStoreConnectView: View {
                     .font(.caption)
                     .lineLimit(4)
                     .fixedSize(horizontal: false, vertical: true)
+                Button("Details") {
+                    presentedErrorDetails = ASCUploadFailureDetailItem(message: errorDetailsText ?? errorMessage)
+                }
+                .font(.caption)
+                .buttonStyle(.borderless)
             }
             Spacer()
             dismissButton
@@ -295,7 +325,7 @@ struct UploadToAppStoreConnectView: View {
                 .keyboardShortcut(.defaultAction)
                 .disabled(!canAdvanceFromVersion || isBusy)
         case .configuringPlan:
-            Button("Upload") { Task { await startUpload() } }
+            Button("Upload") { isConfirmingUpload = true }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(!canStartUpload || isBusy)
@@ -311,7 +341,7 @@ struct UploadToAppStoreConnectView: View {
 
     private func goBack() {
         errorMessage = nil
-        uploadFailureDetails = nil
+        errorDetailsText = nil
         switch step {
         case .pickingVersion:
             step = .pickingApp
@@ -423,6 +453,10 @@ struct UploadToAppStoreConnectView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 400)
+            SettingsLink {
+                Label("Open Settings", systemImage: "gearshape")
+            }
+            .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -455,6 +489,30 @@ struct UploadToAppStoreConnectView: View {
             if let app = selectedApp {
                 ASCAppHeaderView(app: app, subtitle: app.attributes.bundleId)
                     .padding(.horizontal, 16)
+            }
+            if !versions.isEmpty && !versions.contains(where: { $0.isEditable }) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("No editable version available", systemImage: "lock.fill")
+                        .foregroundStyle(.orange)
+                        .font(.callout)
+                        .fontWeight(.medium)
+                    Text("Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let app = selectedApp,
+                       let url = URL(string: "https://appstoreconnect.apple.com/apps/\(app.id)/appstore") {
+                        Link(destination: url) {
+                            Label("Open app in App Store Connect", systemImage: "arrow.up.right.square")
+                        }
+                        .font(.caption)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.orange.opacity(0.08), in: .rect(cornerRadius: 8))
+                .padding(.horizontal, 16)
             }
             List(selection: Binding(
                 get: { selectedVersion?.id },
@@ -653,14 +711,9 @@ struct UploadToAppStoreConnectView: View {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .foregroundStyle(.orange)
                         .font(.system(size: 13))
-                    Text("Existing screenshots in each matching display type set will be deleted and replaced. This cannot be undone.")
+                    Text("If a matching display type already has screenshots, they will be deleted and replaced. You'll be asked to confirm before anything is uploaded.")
                         .font(.caption)
                         .fixedSize(horizontal: false, vertical: true)
-                }
-                if !selectedUploadPlanEntries.isEmpty {
-                    Text("The selected upload plan will replace or create these App Store screenshot sets.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -737,17 +790,9 @@ struct UploadToAppStoreConnectView: View {
             if plan.wrappedValue.isEnabled {
                 displayTypePicker(plan: plan)
 
-                HStack {
-                    Text("Locales")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button("Refresh locales") {
-                        Task { await refreshLocalizations() }
-                    }
+                Text("Locales")
                     .font(.caption)
-                    .disabled(isBusy)
-                }
+                    .foregroundStyle(.secondary)
                 ForEach(plan.localeTargets) { $target in
                     localeTargetRow(target: $target)
                 }
@@ -758,7 +803,15 @@ struct UploadToAppStoreConnectView: View {
     }
 
     private func displayTypePicker(plan: Binding<RowPlan>) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        let detected = plan.wrappedValue.detectedDisplayType
+        let selected = plan.wrappedValue.selectedDisplayType
+        let availableCases = ASCDisplayType.userSelectableCases(forPlatform: selectedVersion?.attributes.ascPlatform)
+        let groups: [(String, [ASCDisplayType])] = [
+            ("iPhone", availableCases.filter { $0.family == .iphone }),
+            ("iPad", availableCases.filter { $0.family == .ipad }),
+            ("Mac", availableCases.filter { $0.family == .mac }),
+        ]
+        return VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("Source")
                     .font(.caption)
@@ -766,11 +819,18 @@ struct UploadToAppStoreConnectView: View {
                     .frame(width: 72, alignment: .leading)
                 Text("\(Int(plan.wrappedValue.rowSize.width))×\(Int(plan.wrappedValue.rowSize.height))")
                     .font(.caption)
-                if let detected = plan.wrappedValue.detectedDisplayType,
-                   detected == plan.wrappedValue.selectedDisplayType {
+                if let detected, detected == selected {
                     Label("Auto-detected", systemImage: "checkmark.circle")
                         .foregroundStyle(.green)
                         .font(.caption)
+                } else if let detected, detected != selected {
+                    Button {
+                        plan.wrappedValue.selectedDisplayType = detected
+                    } label: {
+                        Label("Use detected (\(detected.label))", systemImage: "wand.and.stars")
+                    }
+                    .font(.caption)
+                    .buttonStyle(.borderless)
                 }
                 Spacer()
                 Button {
@@ -793,14 +853,27 @@ struct UploadToAppStoreConnectView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(width: 72, alignment: .leading)
-                Picker("", selection: plan.selectedDisplayType) {
-                    Text("Select…").tag(ASCDisplayType?.none)
-                    ForEach(ASCDisplayType.userSelectableCases) { type in
-                        Text(type.label).tag(Optional(type))
+                Menu {
+                    Button("Select…") { plan.wrappedValue.selectedDisplayType = nil }
+                    ForEach(groups, id: \.0) { (title, items) in
+                        if !items.isEmpty {
+                            Section(title) {
+                                ForEach(items) { type in
+                                    Button(type.label) { plan.wrappedValue.selectedDisplayType = type }
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Text(selected?.label ?? "Select…")
+                            .lineLimit(1)
+                        Spacer()
                     }
                 }
-                .labelsHidden()
-                if let selected = plan.wrappedValue.selectedDisplayType {
+                .menuStyle(.borderlessButton)
+                .frame(maxWidth: 340, alignment: .leading)
+                if let selected {
                     Text(selected.appStoreConnectValue)
                         .font(.caption2.monospaced())
                         .foregroundStyle(.secondary)
@@ -951,16 +1024,32 @@ struct UploadToAppStoreConnectView: View {
             apps = try await AppStoreConnectAPIService.shared.listApps()
         } catch {
             errorMessage = error.localizedDescription
+            return
+        }
+        if selectedApp == nil,
+           let savedId = state.activeProject?.ascAppId,
+           let match = apps.first(where: { $0.id == savedId }) {
+            selectedApp = match
         }
     }
 
     private func moveToVersion() async {
         guard let app = selectedApp else { return }
+        if let projectId = state.activeProject?.id {
+            state.setASCAppId(app.id, forProject: projectId)
+        }
         isBusy = true
         errorMessage = nil
         defer { isBusy = false }
         do {
-            versions = try await AppStoreConnectAPIService.shared.listAppStoreVersions(appId: app.id)
+            let fetched = try await AppStoreConnectAPIService.shared.listAppStoreVersions(appId: app.id)
+            versions = fetched.sorted { lhs, rhs in
+                if lhs.isEditable != rhs.isEditable { return lhs.isEditable }
+                return lhs.attributes.versionString.compare(
+                    rhs.attributes.versionString,
+                    options: .numeric
+                ) == .orderedDescending
+            }
             selectedVersion = versions.first(where: { $0.isEditable }) ?? versions.first
             step = .pickingVersion
         } catch {
@@ -996,7 +1085,8 @@ struct UploadToAppStoreConnectView: View {
     }
 
     private func buildRowPlans(preserving existingPlans: [RowPlan] = []) -> [RowPlan] {
-        state.rows.map { row in
+        let platform = selectedVersion?.attributes.ascPlatform
+        return state.rows.map { row in
             let detected = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight)
             let existingPlan = existingPlans.first(where: { $0.id == row.id })
             let targets = state.localeState.locales.map { locale -> LocaleTarget in
@@ -1017,6 +1107,8 @@ struct UploadToAppStoreConnectView: View {
                     isEnabled: matches.isEmpty ? false : (existingTarget?.isEnabled ?? true)
                 )
             }
+            let compatiblePreserved = existingPlan?.selectedDisplayType.flatMap { $0.accepts(platform: platform) ? $0 : nil }
+            let detectedCompatible = (detected?.accepts(platform: platform) ?? false) ? detected : nil
             return RowPlan(
                 id: row.id,
                 rowLabel: row.label,
@@ -1024,7 +1116,7 @@ struct UploadToAppStoreConnectView: View {
                 templateCount: row.templates.count,
                 isEnabled: existingPlan?.isEnabled ?? true,
                 detectedDisplayType: detected,
-                selectedDisplayType: existingPlan?.selectedDisplayType ?? detected,
+                selectedDisplayType: compatiblePreserved ?? detectedCompatible,
                 localeTargets: targets
             )
         }
@@ -1032,7 +1124,7 @@ struct UploadToAppStoreConnectView: View {
 
     private func startUpload() async {
         errorMessage = nil
-        uploadFailureDetails = nil
+        errorDetailsText = nil
         let issues = validationIssues
         guard !issues.hasErrors else {
             errorMessage = "Fix the preflight errors before uploading."
@@ -1065,11 +1157,11 @@ struct UploadToAppStoreConnectView: View {
                 )
                 step = .done
             } catch is CancellationError {
-                errorMessage = "Upload cancelled. Screenshot sets for already-started locales may have been cleared but not refilled — re-run the upload to restore them, or check App Store Connect."
+                errorMessage = "Upload cancelled. Any set that was already being replaced may be empty in App Store Connect — re-run the upload to refill it."
                 step = .configuringPlan
             } catch {
                 errorMessage = uploadFailureSummary(for: error)
-                uploadFailureDetails = ASCUploadFailureDetailItem(message: uploadFailureDetails(for: error))
+                errorDetailsText = buildErrorDetails(for: error)
                 step = .configuringPlan
             }
         }
@@ -1103,7 +1195,7 @@ struct UploadToAppStoreConnectView: View {
         return "Upload failed: \(error.localizedDescription)"
     }
 
-    private func uploadFailureDetails(for error: Error) -> String {
+    private func buildErrorDetails(for error: Error) -> String {
         var details: [String] = [error.localizedDescription]
         if let app = selectedApp {
             details.append("App: \(app.attributes.name) (\(app.attributes.bundleId))")
