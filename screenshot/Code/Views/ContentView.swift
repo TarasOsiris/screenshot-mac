@@ -190,6 +190,19 @@ struct ContentView: View {
                 exportControlGroup
             }
 
+            if !store.isProUnlocked {
+                ToolbarItem(id: "buyPro", placement: .principal) {
+                    Button {
+                        store.presentPaywall(for: .general)
+                    } label: {
+                        Label("Upgrade to Pro", systemImage: "crown")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help("Unlock all projects, rows, and templates")
+                }
+            }
+
             ToolbarItem(id: "trailingControls", placement: .primaryAction) {
                 HStack(spacing: 6) {
                     ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
