@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     private static let privacyPolicyURL = URL(string: "https://screenshotbro.app/privacy")!
@@ -23,6 +24,11 @@ struct SettingsView: View {
     @State private var showDisableConfirmation = false
     @State private var iCloudMigrationProgress: Double?
     @State private var iCloudError: String?
+
+    @State private var isBackingUp = false
+    @State private var backupResult: BackupResult?
+
+    enum BackupResult { case success; case failure(String) }
 
     var body: some View {
         TabView {
@@ -138,9 +144,30 @@ struct SettingsView: View {
                 Text("Projects will be kept locally. Other Macs will no longer see updates.")
             }
 
-            LabeledContent("Project storage") {
-                Button("Open in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting([PersistenceService.rootURL])
+            Section("Storage") {
+                LabeledContent("Project storage") {
+                    Button("Open in Finder") {
+                        NSWorkspace.shared.activateFileViewerSelecting([PersistenceService.rootURL])
+                    }
+                }
+                LabeledContent("Backup") {
+                    HStack(spacing: 8) {
+                        if isBackingUp {
+                            ProgressView().controlSize(.small)
+                        }
+                        Button("Create Backup…") { createBackup() }
+                            .disabled(isBackingUp)
+                    }
+                }
+                if let result = backupResult {
+                    switch result {
+                    case .success:
+                        Text("Backup saved successfully.")
+                            .font(.caption).foregroundStyle(.green)
+                    case .failure(let message):
+                        Text(message)
+                            .font(.caption).foregroundStyle(.red)
+                    }
                 }
             }
         }
@@ -383,6 +410,50 @@ struct SettingsView: View {
     private func proFeatureRow(_ text: String) -> some View {
         Label(text, systemImage: "checkmark")
             .foregroundStyle(.primary)
+    }
+
+    @MainActor
+    private func createBackup() {
+        let panel = NSSavePanel()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        panel.nameFieldStringValue = "screenshot-backup-\(formatter.string(from: Date())).zip"
+        panel.allowedContentTypes = [.zip]
+        guard panel.runModal() == .OK, let destURL = panel.url else { return }
+
+        isBackingUp = true
+        backupResult = nil
+
+        let sourceURL = PersistenceService.rootURL
+        Task {
+            do {
+                let tempZip = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString + ".zip")
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/zip")
+                process.arguments = ["-r", tempZip.path, "."]
+                process.currentDirectoryURL = sourceURL
+                try process.run()
+                await withCheckedContinuation { continuation in
+                    process.terminationHandler = { _ in continuation.resume() }
+                }
+                guard process.terminationStatus == 0 else {
+                    try? FileManager.default.removeItem(at: tempZip)
+                    isBackingUp = false
+                    backupResult = .failure("Backup failed (zip exited with status \(process.terminationStatus)).")
+                    return
+                }
+                if FileManager.default.fileExists(atPath: destURL.path) {
+                    try FileManager.default.removeItem(at: destURL)
+                }
+                try FileManager.default.moveItem(at: tempZip, to: destURL)
+                isBackingUp = false
+                backupResult = BackupResult.success
+            } catch {
+                isBackingUp = false
+                backupResult = .failure(error.localizedDescription)
+            }
+        }
     }
 
     private func comparisonRow(title: String, freeValue: String, proValue: String) -> some View {
