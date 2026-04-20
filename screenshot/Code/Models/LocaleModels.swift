@@ -14,18 +14,39 @@ struct LocaleDefinition: Codable, Identifiable, Equatable {
         self.label = label
     }
 
-    var flag: String { Self.flags[code] ?? "" }
+    var flag: String { Self.flagIndex[code] ?? "" }
 
     var flagLabel: String { flag.isEmpty ? label : "\(flag) \(label)" }
 
-    private static let flags: [String: String] = [
-        "en": "🇺🇸", "fr": "🇫🇷", "de": "🇩🇪", "es": "🇪🇸", "it": "🇮🇹",
-        "pt": "🇧🇷", "nl": "🇳🇱", "ru": "🇷🇺", "ja": "🇯🇵", "ko": "🇰🇷",
-        "zh": "🇨🇳", "ar": "🇸🇦", "hi": "🇮🇳", "tr": "🇹🇷", "pl": "🇵🇱",
-        "sv": "🇸🇪", "da": "🇩🇰", "fi": "🇫🇮", "no": "🇳🇴", "uk": "🇺🇦",
-        "th": "🇹🇭", "vi": "🇻🇳", "id": "🇮🇩", "ms": "🇲🇾", "cs": "🇨🇿",
-        "el": "🇬🇷", "he": "🇮🇱", "hu": "🇭🇺", "ro": "🇷🇴", "sk": "🇸🇰",
+    static let catalog: [(code: String, label: String, flag: String)] = [
+        ("en", "English",     "🇺🇸"), ("fr", "French",      "🇫🇷"), ("de", "German",      "🇩🇪"),
+        ("es", "Spanish",     "🇪🇸"), ("it", "Italian",     "🇮🇹"), ("pt", "Portuguese",  "🇧🇷"),
+        ("nl", "Dutch",       "🇳🇱"), ("ru", "Russian",     "🇷🇺"), ("ja", "Japanese",    "🇯🇵"),
+        ("ko", "Korean",      "🇰🇷"), ("zh", "Chinese",     "🇨🇳"), ("ar", "Arabic",      "🇸🇦"),
+        ("hi", "Hindi",       "🇮🇳"), ("tr", "Turkish",     "🇹🇷"), ("pl", "Polish",      "🇵🇱"),
+        ("sv", "Swedish",     "🇸🇪"), ("da", "Danish",      "🇩🇰"), ("fi", "Finnish",     "🇫🇮"),
+        ("no", "Norwegian",   "🇳🇴"), ("uk", "Ukrainian",   "🇺🇦"), ("th", "Thai",        "🇹🇭"),
+        ("vi", "Vietnamese",  "🇻🇳"), ("id", "Indonesian",  "🇮🇩"), ("ms", "Malay",       "🇲🇾"),
+        ("cs", "Czech",       "🇨🇿"), ("el", "Greek",       "🇬🇷"), ("he", "Hebrew",      "🇮🇱"),
+        ("hu", "Hungarian",   "🇭🇺"), ("ro", "Romanian",    "🇷🇴"), ("sk", "Slovak",      "🇸🇰"),
+        ("bg", "Bulgarian",   "🇧🇬"), ("hr", "Croatian",    "🇭🇷"), ("sr", "Serbian",     "🇷🇸"),
+        ("ca", "Catalan",     "🇪🇸"), ("fa", "Persian",     "🇮🇷"), ("bn", "Bengali",     "🇧🇩"),
+        ("fil","Filipino",    "🇵🇭"), ("lt", "Lithuanian",  "🇱🇹"), ("lv", "Latvian",     "🇱🇻"),
+        ("et", "Estonian",    "🇪🇪"), ("sl", "Slovenian",   "🇸🇮"), ("kk", "Kazakh",      "🇰🇿"),
+        ("uz", "Uzbek",       "🇺🇿"), ("ta", "Tamil",       "🇮🇳"), ("te", "Telugu",      "🇮🇳"),
+        ("mr", "Marathi",     "🇮🇳"), ("sw", "Swahili",     "🇰🇪"), ("af", "Afrikaans",   "🇿🇦"),
+        ("gu", "Gujarati",    "🇮🇳"), ("kn", "Kannada",     "🇮🇳"), ("ml", "Malayalam",   "🇮🇳"),
+        ("pa", "Punjabi",     "🇮🇳"), ("my", "Burmese",     "🇲🇲"), ("km", "Khmer",       "🇰🇭"),
+        ("ne", "Nepali",      "🇳🇵"), ("si", "Sinhala",     "🇱🇰"), ("mn", "Mongolian",   "🇲🇳"),
+        ("az", "Azerbaijani", "🇦🇿"), ("ka", "Georgian",    "🇬🇪"), ("hy", "Armenian",    "🇦🇲"),
+        ("be", "Belarusian",  "🇧🇾"), ("sq", "Albanian",    "🇦🇱"), ("mk", "Macedonian",  "🇲🇰"),
+        ("bs", "Bosnian",     "🇧🇦"), ("is", "Icelandic",   "🇮🇸"), ("mt", "Maltese",     "🇲🇹"),
+        ("ga", "Irish",       "🇮🇪"), ("cy", "Welsh",       "🏴󠁧󠁢󠁷󠁬󠁳󠁿"), ("eu", "Basque",      "🇪🇸"),
+        ("gl", "Galician",    "🇪🇸"),
     ]
+
+    private static let flagIndex: [String: String] =
+        Dictionary(uniqueKeysWithValues: catalog.map { ($0.code, $0.flag) })
 }
 
 struct ShapeLocaleOverride: Codable, Equatable {
@@ -131,36 +152,7 @@ struct LocaleState: Codable, Equatable {
 }
 
 enum LocalePresets {
-    static let all: [LocaleDefinition] = [
-        .init(code: "en", label: "English"),
-        .init(code: "fr", label: "French"),
-        .init(code: "de", label: "German"),
-        .init(code: "es", label: "Spanish"),
-        .init(code: "it", label: "Italian"),
-        .init(code: "pt", label: "Portuguese"),
-        .init(code: "nl", label: "Dutch"),
-        .init(code: "ru", label: "Russian"),
-        .init(code: "ja", label: "Japanese"),
-        .init(code: "ko", label: "Korean"),
-        .init(code: "zh", label: "Chinese"),
-        .init(code: "ar", label: "Arabic"),
-        .init(code: "hi", label: "Hindi"),
-        .init(code: "tr", label: "Turkish"),
-        .init(code: "pl", label: "Polish"),
-        .init(code: "sv", label: "Swedish"),
-        .init(code: "da", label: "Danish"),
-        .init(code: "fi", label: "Finnish"),
-        .init(code: "no", label: "Norwegian"),
-        .init(code: "uk", label: "Ukrainian"),
-        .init(code: "th", label: "Thai"),
-        .init(code: "vi", label: "Vietnamese"),
-        .init(code: "id", label: "Indonesian"),
-        .init(code: "ms", label: "Malay"),
-        .init(code: "cs", label: "Czech"),
-        .init(code: "el", label: "Greek"),
-        .init(code: "he", label: "Hebrew"),
-        .init(code: "hu", label: "Hungarian"),
-        .init(code: "ro", label: "Romanian"),
-        .init(code: "sk", label: "Slovak"),
-    ]
+    static let all: [LocaleDefinition] = LocaleDefinition.catalog.map {
+        .init(code: $0.code, label: $0.label)
+    }
 }
