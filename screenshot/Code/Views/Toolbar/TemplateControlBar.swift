@@ -299,20 +299,11 @@ struct TemplateControlBar: View {
     }
 
     private func downloadScreenshot() {
-        let panel = NSSavePanel()
-        panel.nameFieldStringValue = "screenshot-\(index + 1).png"
-        panel.allowedContentTypes = [.png]
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        let didAccess = url.startAccessingSecurityScopedResource()
-        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        guard let pngData = renderExportPNG() else {
-            renderError = "Could not render screenshot."
-            return
-        }
-        do {
-            try pngData.write(to: url)
-        } catch {
-            renderError = "Could not save file: \(error.localizedDescription)"
+        if let message = ExportService.savePNGDataViaPanel(
+            defaultName: "screenshot-\(index + 1)",
+            data: renderExportPNG
+        ) {
+            renderError = message
         }
     }
 }

@@ -1,6 +1,18 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
+    private enum ShowcaseExportMode {
+        case allRows
+        case singleRow
+    }
+
+    private struct ShowcasePresentation: Identifiable {
+        let id = UUID()
+        let mode: ShowcaseExportMode
+        let candidateRows: [ScreenshotRow]
+    }
+
     @Environment(AppState.self) private var state
     @Environment(StoreService.self) private var store
     @Environment(\.openWindow) private var openWindow
@@ -30,6 +42,7 @@ struct ContentView: View {
     @State private var editorViewportHeight: CGFloat = 0
     @State private var scrollWheelMonitor: Any?
     @State private var showingASCUploadSheet = false
+    @State private var showcasePresentation: ShowcasePresentation?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,7 +60,11 @@ struct ContentView: View {
                 ScrollView(.vertical) {
                     LazyVStack(spacing: 0) {
                         ForEach(state.rows) { row in
-                            EditorRowView(state: state, row: row)
+                            EditorRowView(
+                                state: state,
+                                row: row,
+                                requestShowcaseExport: { presentShowcaseSheet(for: $0, mode: .singleRow) }
+                            )
                                 .id(row.id)
                             Divider()
                         }
@@ -275,6 +292,29 @@ struct ContentView: View {
         .sheet(isPresented: $showingASCUploadSheet) {
             UploadToAppStoreConnectView()
                 .environment(state)
+        }
+        .sheet(item: $showcasePresentation) { presentation in
+            ShowcaseExportSheet(
+                candidateRows: presentation.candidateRows,
+                loadImages: { row in
+                    state.loadFullResolutionImages(
+                        forRow: row,
+                        localeCode: state.localeState.activeLocaleCode
+                    )
+                },
+                localeCode: state.localeState.activeLocaleCode,
+                localeState: state.localeState,
+                availableFontFamilies: state.availableFontFamilySet
+            ) { config, backgroundImage, selectedRowIds in
+                showcasePresentation = nil
+                runShowcaseExport(
+                    presentation: presentation,
+                    config: config,
+                    backgroundImage: backgroundImage,
+                    selectedRowIds: selectedRowIds
+                )
+            }
+            .presentationSizing(.page)
         }
         .middleMousePan()
         .onAppear {
@@ -581,16 +621,72 @@ struct ContentView: View {
     }
 
     private func exportShowcaseImages() {
-        exportRowLevel(folderName: "showcase") { row, images, locale, localeState in
-            ExportService.renderShowcaseRowImage(row: row, screenshotImages: images, localeCode: locale, localeState: localeState)
+        guard let row = state.rows.first else { return }
+        presentShowcaseSheet(for: row, mode: .allRows)
+    }
+
+    private func presentShowcaseSheet(for row: ScreenshotRow, mode: ShowcaseExportMode) {
+        let candidates: [ScreenshotRow]
+        switch mode {
+        case .allRows:
+            candidates = state.rows
+        case .singleRow:
+            candidates = [row]
+        }
+        showcasePresentation = ShowcasePresentation(
+            mode: mode,
+            candidateRows: candidates
+        )
+    }
+
+    private func runShowcaseExport(
+        presentation: ShowcasePresentation,
+        config: ShowcaseExportConfig,
+        backgroundImage: NSImage?,
+        selectedRowIds: Set<UUID>
+    ) {
+        guard !selectedRowIds.isEmpty else { return }
+
+        var seedCache: [String: NSImage] = [:]
+        if let backgroundImage,
+           config.backgroundStyle == .image,
+           config.backgroundImageConfig.fileName == ShowcaseExportConfig.transientBackgroundKey {
+            seedCache[ShowcaseExportConfig.transientBackgroundKey] = backgroundImage
+        }
+
+        switch presentation.mode {
+        case .allRows:
+            let rowsToExport = state.rows.filter { selectedRowIds.contains($0.id) }
+            guard !rowsToExport.isEmpty else { return }
+            exportRowLevel(folderName: "showcase", rows: rowsToExport, imageCache: seedCache) { row, images, locale, localeState in
+                ExportService.renderShowcaseRowImage(row: row, screenshotImages: images, localeCode: locale, localeState: localeState, config: config)
+            }
+        case .singleRow:
+            guard let rowId = selectedRowIds.first,
+                  let row = state.rows.first(where: { $0.id == rowId }) else { return }
+            let localeCode = state.localeState.activeLocaleCode
+            if let message = ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
+                var images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
+                images.merge(seedCache, uniquingKeysWith: { _, new in new })
+                return ExportService.renderShowcaseRowImage(
+                    row: row, screenshotImages: images,
+                    localeCode: localeCode, localeState: state.localeState,
+                    config: config
+                )
+            }) {
+                exportError = "Could not export row image: \(message)"
+            }
         }
     }
 
     private func exportRowLevel(
         folderName: String,
+        rows: [ScreenshotRow]? = nil,
+        imageCache seedCache: [String: NSImage] = [:],
         render: @MainActor @escaping (ScreenshotRow, [String: NSImage], String?, LocaleState) -> NSImage
     ) {
-        guard !state.rows.isEmpty else { return }
+        let rowsToExport = rows ?? state.rows
+        guard !rowsToExport.isEmpty else { return }
         guard let baseURL = chooseExportDestination() else { return }
 
         exportSuccessTimer?.cancel()
@@ -598,7 +694,7 @@ struct ContentView: View {
         exportSuccess = false
         exportError = nil
         exportProgress = 0
-        exportTotal = state.rows.count
+        exportTotal = rowsToExport.count
 
         exportTask = Task {
             defer {
@@ -610,8 +706,8 @@ struct ContentView: View {
                 try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
 
                 let localeCode = state.localeState.activeLocaleCode
-                var imageCache: [String: NSImage] = [:]
-                for (index, row) in state.rows.enumerated() {
+                var imageCache: [String: NSImage] = seedCache
+                for (index, row) in rowsToExport.enumerated() {
                     try Task.checkCancellation()
                     let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
                     let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)

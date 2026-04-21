@@ -1,7 +1,34 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
+
+enum PickedBackground {
+    case image(NSImage)
+    case svg(String)
+}
 
 enum SvgHelper {
+    /// Prompts the user for an image or SVG file and returns the picked content.
+    /// Returns nil if the user cancels or the file cannot be loaded.
+    @MainActor
+    static func pickImageOrSvg() -> PickedBackground? {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image, .svg]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+
+        if url.pathExtension.lowercased() == "svg",
+           let sanitized = loadAndSanitize(from: url) {
+            return .svg(sanitized)
+        }
+        guard let image = NSImage.fromSecurityScopedURL(url) else { return nil }
+        return .image(image)
+    }
+
     /// Reads an SVG file from a URL, converts to String, and sanitizes it.
     /// Returns nil for non-SVG files.
     static func loadAndSanitize(from url: URL) -> String? {

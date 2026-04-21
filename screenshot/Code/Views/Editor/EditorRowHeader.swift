@@ -46,7 +46,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                     }
                     .onExitCommand { onCancelLabelEdit() }
             } else {
-                Text(row.label.isEmpty ? "Untitled Row" : row.label)
+                Text(row.displayLabel)
                     .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
                     .foregroundStyle(isSelected ? Color.primary : .secondary)
                     .opacity(row.label.isEmpty ? 0.5 : 1)

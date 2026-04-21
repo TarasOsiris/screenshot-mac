@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 enum ExportImageFormat: String {
     case png
@@ -118,18 +119,20 @@ struct ExportService {
         return rootFolder
     }
 
-    private static func exportFolderName(for row: ScreenshotRow) -> String {
-        let name = "\(row.label) — \(Int(row.templateWidth))x\(Int(row.templateHeight))"
-        return name.replacingOccurrences(of: "/", with: "-")
+    /// Returns the input with path separators replaced by dashes so it is safe to use as a single filename component.
+    static func sanitizedFileName(_ name: String) -> String {
+        name.replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: "\\", with: "-")
+    }
+
+    private static func exportFolderName(for row: ScreenshotRow) -> String {
+        sanitizedFileName("\(row.label) — \(Int(row.templateWidth))x\(Int(row.templateHeight))")
     }
 
     private static func sanitizedRootFolderName(_ projectName: String) -> String {
         let trimmed = projectName.trimmingCharacters(in: .whitespacesAndNewlines)
         let candidate = trimmed.isEmpty ? "Screenshots" : trimmed
-        let sanitized = candidate
-            .replacingOccurrences(of: "/", with: "-")
-            .replacingOccurrences(of: "\\", with: "-")
+        let sanitized = sanitizedFileName(candidate)
         return sanitized.isEmpty ? "Screenshots" : sanitized
     }
 
@@ -154,48 +157,14 @@ struct ExportService {
         localeCode: String? = nil,
         localeState: LocaleState = .default,
         availableFontFamilies: Set<String>? = nil,
-        backgroundColor: NSColor = NSColor(white: 0.88, alpha: 1.0),
-        spacing: CGFloat? = nil,
-        padding: CGFloat? = nil,
-        cornerRadius: CGFloat? = nil
+        config: ShowcaseExportConfig = .init()
     ) -> NSImage {
         let count = row.templates.count
         guard count > 0 else {
             return NSImage(size: NSSize(width: 1, height: 1))
         }
 
-        let templateWidth = row.templateWidth
-        let templateHeight = row.templateHeight
-        let resolvedSpacing = spacing ?? round(templateWidth * 0.03)
-        let resolvedRadius = cornerRadius ?? round(templateHeight * 0.025)
-        let shadowRadius: CGFloat = round(templateHeight * 0.02)
-        let shadowY: CGFloat = round(templateHeight * 0.008)
-        let shadowExtent = shadowRadius + shadowY
-
-        // Stack in two rows when even and >= 8
-        let rowCount = (count >= 8 && count % 2 == 0) ? 2 : 1
-        let columnsPerRow = rowCount == 2 ? count / 2 : count
-
-        // Enforce 1.91:1 aspect ratio (Twitter/X, Facebook, LinkedIn)
-        let targetAspect: CGFloat = 1.91
-        let contentWidth = CGFloat(columnsPerRow) * templateWidth + CGFloat(columnsPerRow - 1) * resolvedSpacing
-        let contentHeight = CGFloat(rowCount) * templateHeight + CGFloat(rowCount - 1) * resolvedSpacing
-        let minPadH = padding ?? round(templateWidth * 0.08)
-        let minPadV = padding ?? round(templateHeight * 0.04)
-        let minWidth = contentWidth + minPadH * 2
-        let minHeight = contentHeight + minPadV + max(minPadV, shadowExtent)
-
-        let totalWidth: CGFloat
-        let totalHeight: CGFloat
-        if minWidth / minHeight > targetAspect {
-            totalWidth = minWidth
-            totalHeight = round(totalWidth / targetAspect)
-        } else {
-            totalHeight = minHeight
-            totalWidth = round(totalHeight * targetAspect)
-        }
-        let horizontalPadding = round((totalWidth - contentWidth) / 2)
-        let verticalPadding = round((totalHeight - contentHeight) / 2)
+        let layout = ShowcaseLayout(row: row, config: config)
 
         let rowBackground = renderComposedBackgroundImage(
             row: row,
@@ -216,24 +185,20 @@ struct ExportService {
             ))
         }
 
+        let totalSize = CGSize(width: layout.totalWidth, height: layout.totalHeight)
         let showcaseView = ShowcaseRowView(
             templateImages: templateImages,
-            templateWidth: templateWidth,
-            templateHeight: templateHeight,
-            columns: columnsPerRow,
-            spacing: resolvedSpacing,
-            horizontalPadding: horizontalPadding,
-            verticalPadding: verticalPadding,
-            cornerRadius: resolvedRadius,
-            shadowRadius: shadowRadius,
-            shadowY: shadowY,
-            backgroundColor: Color(nsColor: backgroundColor)
+            templateWidth: row.templateWidth,
+            templateHeight: row.templateHeight,
+            layout: layout,
+            background: config.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: totalSize)
+                .frame(width: totalSize.width, height: totalSize.height)
         )
 
         return renderViewToImage(
             showcaseView,
-            width: totalWidth,
-            height: totalHeight,
+            width: layout.totalWidth,
+            height: layout.totalHeight,
             label: "showcase row '\(row.label)'"
         )
     }
@@ -415,6 +380,36 @@ struct ExportService {
 
     nonisolated static func encodeImage(_ image: NSImage, format: ExportImageFormat) -> Data? {
         ExportImageEncoder.encode(image, format: format)
+    }
+
+    /// Presents a save panel and writes PNG data to disk.
+    /// Returns an error message on failure, nil on success or user cancellation.
+    @MainActor
+    static func savePNGDataViaPanel(defaultName: String, data: () -> Data?) -> String? {
+        let panel = NSSavePanel()
+        let safeName = defaultName.isEmpty ? "image" : sanitizedFileName(defaultName)
+        panel.nameFieldStringValue = "\(safeName).png"
+        panel.allowedContentTypes = [.png]
+        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+
+        guard let pngData = data() else {
+            return ExportError.renderFailed.localizedDescription
+        }
+        do {
+            try pngData.write(to: url)
+            return nil
+        } catch {
+            return error.localizedDescription
+        }
+    }
+
+    @MainActor
+    static func saveRowImageViaPanel(defaultName: String, render: () -> NSImage) -> String? {
+        savePNGDataViaPanel(defaultName: defaultName.isEmpty ? "row" : defaultName) {
+            encodeImage(render(), format: .png)
+        }
     }
 
     nonisolated private static func drawImage(

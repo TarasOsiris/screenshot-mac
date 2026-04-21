@@ -9,6 +9,7 @@ struct EditorRowView: View {
     @Bindable var state: AppState
     @Environment(StoreService.self) private var store
     let row: ScreenshotRow
+    let requestShowcaseExport: (ScreenshotRow) -> Void
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @State private var isDeletingRow = false
     @State private var isResettingRow = false
@@ -724,36 +725,19 @@ struct EditorRowView: View {
     }
 
     private func exportRowImage(showcase: Bool) {
-        let panel = NSSavePanel()
-        let safeName = row.label.isEmpty ? "row" : row.label.replacingOccurrences(of: "/", with: "-")
-        panel.nameFieldStringValue = "\(safeName).png"
-        panel.allowedContentTypes = [.png]
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        let didAccess = url.startAccessingSecurityScopedResource()
-        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-
-        let localeCode = state.localeState.activeLocaleCode
-        let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-
-        let image: NSImage
         if showcase {
-            image = ExportService.renderShowcaseRowImage(
-                row: row, screenshotImages: images,
-                localeCode: localeCode, localeState: state.localeState
-            )
-        } else {
-            image = ExportService.renderRowImage(
-                row: row, screenshotImages: images,
-                localeCode: localeCode, localeState: state.localeState
-            )
+            requestShowcaseExport(row)
+            return
         }
-        do {
-            guard let data = ExportService.encodeImage(image, format: .png) else {
-                throw ExportError.renderFailed
-            }
-            try data.write(to: url)
-        } catch {
-            exportError = "Could not export row image: \(error.localizedDescription)"
+        let localeCode = state.localeState.activeLocaleCode
+        if let message = ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
+            let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
+            return ExportService.renderRowImage(
+                row: row, screenshotImages: images,
+                localeCode: localeCode, localeState: state.localeState
+            )
+        }) {
+            exportError = "Could not export row image: \(message)"
         }
     }
 

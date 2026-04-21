@@ -86,21 +86,13 @@ extension AppState {
     }
 
     func pickAndSaveBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.image, .svg]
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-
-        let didAccess = url.startAccessingSecurityScopedResource()
-        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-
-        if url.pathExtension.lowercased() == "svg",
-           let sanitized = SvgHelper.loadAndSanitize(from: url) {
+        switch SvgHelper.pickImageOrSvg() {
+        case .svg(let sanitized):
             saveBackgroundSvg(sanitized, for: rowId, templateIndex: templateIndex)
-        } else {
-            guard let image = NSImage(contentsOf: url) else { return }
+        case .image(let image):
             saveBackgroundImage(image, for: rowId, templateIndex: templateIndex)
+        case .none:
+            break
         }
     }
 
