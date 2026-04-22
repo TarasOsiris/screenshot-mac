@@ -346,37 +346,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ Vérifiez que les autorisations Issuer ID, Key ID, la clé privée et la clé API correspondent à la clé App Store Connect."
+            "value": "%@ Vérifiez que les autorisations Issuer ID, Key ID, la clé privée et la clé API correspondent à la clé App Store Connect."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ Überprüfen Sie, ob die Berechtigungen für Issuer ID, Key ID, den privaten Schlüssel und den Schlüssel API mit dem Schlüssel App Store Connect übereinstimmen."
+            "value": "%@ Überprüfen Sie, ob die Berechtigungen für Issuer ID, Key ID, den privaten Schlüssel und den Schlüssel API mit dem Schlüssel App Store Connect übereinstimmen."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ Issuer ID、Key ID、秘密キー、および API キーの権限が App Store Connect キーと一致することを確認します。"
+            "value": "%@ Issuer ID、Key ID、秘密キー、および API キーの権限が App Store Connect キーと一致することを確認します。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ Issuer ID, Key ID, 개인 키, API 키 권한이 App Store Connect 키와 일치하는지 확인하세요."
+            "value": "%@ Issuer ID, Key ID, 개인 키, API 키 권한이 App Store Connect 키와 일치하는지 확인하세요."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ Verifique se as permissões de Issuer ID, Key ID, chave privada e API correspondem à chave App Store Connect."
+            "value": "%@ Verifique se as permissões de Issuer ID, Key ID, chave privada e API correspondem à chave App Store Connect."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 检查 Issuer ID、Key ID、私钥和 API 密钥权限是否与 App Store Connect 密钥匹配。"
+            "value": "%@ 检查 Issuer ID、Key ID、私钥和 API 密钥权限是否与 App Store Connect 密钥匹配。"
           }
         }
       }
@@ -392,37 +392,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ n'est pas autorisé pour cette application/version."
+            "value": "%@ n'est pas autorisé pour cette application/version."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ ist für diese App/Version nicht zulässig."
+            "value": "%@ ist für diese App/Version nicht zulässig."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ はこのアプリ/バージョンでは許可されていません。"
+            "value": "%@ はこのアプリ/バージョンでは許可されていません。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@은(는) 이 앱/버전에 허용되지 않습니다."
+            "value": "%@은(는) 이 앱/버전에 허용되지 않습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ não é permitido para este aplicativo/versão."
+            "value": "%@ não é permitido para este aplicativo/versão."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "此应用/版本不允许 %1$@。"
+            "value": "此应用/版本不允许 %@。"
           }
         }
       }
@@ -438,37 +438,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ texte"
+            "value": "%@ texte"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ Text"
+            "value": "%@ Text"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ テキスト"
+            "value": "%@ テキスト"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 텍스트"
+            "value": "%@ 텍스트"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ texto"
+            "value": "%@ texto"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 文本"
+            "value": "%@ 文本"
           }
         }
       }
@@ -582,37 +582,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ sur %3$lld %4$@"
+            "value": "%lld %@ sur %lld %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ über %3$lld %4$@"
+            "value": "%lld %@ über %lld %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$lld %4$@ 全体の %1$lld %2$@"
+            "value": "%lld %@ 全体の %lld %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ %3$lld %4$@ 전반"
+            "value": "%lld %@ %lld %@ 전반"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ em %3$lld %4$@"
+            "value": "%lld %@ em %lld %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ 横跨 %3$lld %4$@"
+            "value": "%lld %@ 横跨 %lld %@"
           }
         }
       }
@@ -628,37 +628,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ sur %3$lld %4$@ · %5$@"
+            "value": "%lld %@ sur %lld %@ · %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ über %3$lld %4$@ · %5$@"
+            "value": "%lld %@ über %lld %@ · %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$lld %4$@ · %5$@ 全体の %1$lld %2$@"
+            "value": "%lld %@ · %@ 全体の %lld %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ %3$lld %4$@ · %5$@ 전반"
+            "value": "%lld %@ %lld %@ · %@ 전반"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ em %3$lld %4$@ · %5$@"
+            "value": "%lld %@ em %lld %@ · %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ 横跨 %3$lld %4$@ · %5$@"
+            "value": "%lld %@ 横跨 %lld %@ · %@"
           }
         }
       }
@@ -674,37 +674,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ exporté"
+            "value": "%lld %@ exporté"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ exportiert"
+            "value": "%lld %@ exportiert"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ がエクスポートされました"
+            "value": "%lld %@ がエクスポートされました"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ 내보냈습니다."
+            "value": "%lld %@ 내보냄"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ exportado"
+            "value": "%lld %@ exportado"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ 已导出"
+            "value": "%lld %@ 已导出"
           }
         }
       }
@@ -720,37 +720,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ exporté · %3$@"
+            "value": "%lld %@ exporté · %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ exportiert · %3$@"
+            "value": "%lld %@ exportiert · %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ エクスポートされました · %3$@"
+            "value": "%lld %@ エクスポートされました · %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ 내보냄 · %3$@"
+            "value": "%lld %@ 내보냄 · %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ exportado · %3$@"
+            "value": "%lld %@ exportado · %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ 已导出 · %3$@"
+            "value": "%lld %@ 已导出 · %@"
           }
         }
       }
@@ -766,37 +766,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ sera téléchargé sur %3$lld %4$@ et %5$lld %6$@. "
+            "value": "%lld %@ sera téléchargé sur %lld %@ et %lld %@."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ wird auf %3$lld %4$@ und %5$lld %6$@ hochgeladen. "
+            "value": "%lld %@ wird auf %lld %@ und %lld %@ hochgeladen."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ は %3$lld %4$@ と %5$lld %6$@ 全体にアップロードされます。 "
+            "value": "%lld %@ は %lld %@ と %lld %@ 全体にアップロードされます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@이 %3$lld %4$@ 및 %5$lld %6$@에 업로드됩니다. "
+            "value": "%lld %@이 %lld %@ 및 %lld %@에 업로드됩니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ será carregado em %3$lld %4$@ e %5$lld %6$@. "
+            "value": "%lld %@ será carregado em %lld %@ e %lld %@."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld %2$@ 将跨 %3$lld %4$@ 和 %5$lld %6$@ 上传。 "
+            "value": "%lld %@ 将跨 %lld %@ 和 %lld %@ 上传。"
           }
         }
       }
@@ -968,37 +968,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld sur %2$lld terminé"
+            "value": "%lld sur %lld terminé"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld von %2$lld abgeschlossen"
+            "value": "%lld von %lld abgeschlossen"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld/%2$lld が完了しました"
+            "value": "%lld/%lld が完了しました"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%2$lld 중 %1$lld 완료"
+            "value": "%lld 중 %lld 완료"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld de %2$lld concluído"
+            "value": "%lld de %lld concluído"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%2$lld 的 %1$lld 已完成"
+            "value": "%lld 的 %lld 已完成"
           }
         }
       }
@@ -1015,37 +1015,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld projets"
+            "value": "%lld projets"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld Projekte"
+            "value": "%lld Projekte"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld プロジェクト"
+            "value": "%lld プロジェクト"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld 프로젝트"
+            "value": "%lld 프로젝트"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld projetos"
+            "value": "%lld projetos"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld 项目"
+            "value": "%lld 项目"
           }
         }
       }
@@ -1873,7 +1873,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Actions"
+            "value": "Actes"
           }
         },
         "de": {
@@ -1891,7 +1891,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "작업"
+            "value": "행위"
           }
         },
         "pt-BR": {
@@ -1983,7 +1983,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "추가"
+            "value": "추가하다"
           }
         },
         "pt-BR": {
@@ -2011,37 +2011,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter %1$@"
+            "value": "Ajouter %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ hinzufügen"
+            "value": "%@ hinzufügen"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ を追加"
+            "value": "%@ を追加"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 추가"
+            "value": "%@ 추가"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adicionar %1$@"
+            "value": "Adicionar %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加%1$@"
+            "value": "添加%@"
           }
         }
       }
@@ -2811,7 +2811,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "정렬"
+            "value": "맞추다"
           }
         },
         "pt-BR": {
@@ -3161,7 +3161,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tout"
+            "value": "Tous"
           }
         },
         "de": {
@@ -3173,7 +3173,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "すべて"
+            "value": "全て"
           }
         },
         "ko": {
@@ -3299,7 +3299,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Par ordre alphabétique"
+            "value": "Alphabétiquement"
           }
         },
         "de": {
@@ -3455,7 +3455,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "각도"
+            "value": "모난"
           }
         },
         "pt-BR": {
@@ -3806,37 +3806,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect n'autorise pas %1$@ (%2$@) pour cette version/localisation de cette application. Cela signifie généralement que la version de l'application sélectionnée ne prend pas en charge cette famille d'appareils, par exemple en téléchargeant des captures d'écran de iPad pour une application réservée à iPhone, ou que App Store Connect n'accepte pas ce type d'affichage pour la plate-forme sélectionnée."
+            "value": "App Store Connect n'autorise pas %@ (%@) pour cette version/localisation de cette application. Cela signifie généralement que la version de l'application sélectionnée ne prend pas en charge cette famille d'appareils, par exemple en téléchargeant des captures d'écran de iPad pour une application réservée à iPhone, ou que App Store Connect n'accepte pas ce type d'affichage pour la plate-forme sélectionnée."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect erlaubt %1$@ (%2$@) für diese App-Version/Lokalisierung nicht. Dies bedeutet normalerweise, dass die ausgewählte App-Version diese Gerätefamilie nicht unterstützt, z. B. das Hochladen von iPad-Screenshots für eine nur iPhone-App, oder dass App Store Connect diesen Anzeigetyp für die ausgewählte Plattform nicht akzeptiert."
+            "value": "App Store Connect erlaubt %@ (%@) für diese App-Version/Lokalisierung nicht. Dies bedeutet normalerweise, dass die ausgewählte App-Version diese Gerätefamilie nicht unterstützt, z. B. das Hochladen von iPad-Screenshots für eine nur iPhone-App, oder dass App Store Connect diesen Anzeigetyp für die ausgewählte Plattform nicht akzeptiert."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect では、このアプリのバージョン/ローカリゼーションに対して %1$@ (%2$@) が許可されていません。これは通常、選択したアプリのバージョンがそのデバイス ファミリをサポートしていないこと (iPhone 専用アプリの iPad スクリーンショットのアップロードなど)、または App Store Connect が選択したプラットフォームでこの表示タイプを受け入れないことを意味します。"
+            "value": "App Store Connect では、このアプリのバージョン/ローカリゼーションに対して %@ (%@) が許可されていません。これは通常、選択したアプリのバージョンがそのデバイス ファミリをサポートしていないこと (iPhone 専用アプリの iPad スクリーンショットのアップロードなど)、または App Store Connect が選択したプラットフォームでこの表示タイプを受け入れないことを意味します。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect는 이 앱 버전/현지화에 대해 %1$@(%2$@)을 허용하지 않습니다. 이는 일반적으로 선택한 앱 버전이 해당 기기 제품군을 지원하지 않음을 의미합니다. 예를 들어 iPhone 전용 앱에 대한 iPad 스크린샷을 업로드하거나 App Store Connect이(가) 선택한 플랫폼에 대해 이 표시 유형을 허용하지 않습니다."
+            "value": "App Store Connect는 이 앱 버전/현지화에 대해 %@(%@)을 허용하지 않습니다. 이는 일반적으로 선택한 앱 버전이 해당 기기 제품군을 지원하지 않음을 의미합니다. 예를 들어 iPhone 전용 앱에 대한 iPad 스크린샷을 업로드하거나 App Store Connect이(가) 선택한 플랫폼에 대해 이 표시 유형을 허용하지 않습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect não permite %1$@ (%2$@) para esta versão/localização do aplicativo. Isso geralmente significa que a versão do aplicativo selecionada não é compatível com essa família de dispositivos, como o upload de capturas de tela de iPad para um aplicativo somente iPhone ou App Store Connect não aceita esse tipo de exibição para a plataforma selecionada."
+            "value": "App Store Connect não permite %@ (%@) para esta versão/localização do aplicativo. Isso geralmente significa que a versão do aplicativo selecionada não é compatível com essa família de dispositivos, como o upload de capturas de tela de iPad para um aplicativo somente iPhone ou App Store Connect não aceita esse tipo de exibição para a plataforma selecionada."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect 不允许 %1$@ (%2$@) 用于此应用版本/本地化。这通常意味着所选应用版本不支持该设备系列，例如上传仅 iPhone 应用的 iPad 屏幕截图，或者 App Store Connect 不接受所选平台的此显示类型。"
+            "value": "App Store Connect 不允许 %@ (%@) 用于此应用版本/本地化。这通常意味着所选应用版本不支持该设备系列，例如上传仅 iPhone 应用的 iPad 屏幕截图，或者 App Store Connect 不接受所选平台的此显示类型。"
           }
         }
       }
@@ -3944,37 +3944,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect a renvoyé %1$lld en essayant de %2$@."
+            "value": "App Store Connect a renvoyé %lld en essayant de %@."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect hat beim Versuch, %2$@ zurückzugeben, %1$lld zurückgegeben."
+            "value": "App Store Connect hat beim Versuch, %@ zurückzugeben, %lld zurückgegeben."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect は %2$@ を試行中に %1$lld を返しました。"
+            "value": "App Store Connect は %@ を試行中に %lld を返しました。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect가 %2$@을(를) 시도하는 동안 %1$lld을(를) 반환했습니다."
+            "value": "App Store Connect가 %@을(를) 시도하는 동안 %lld을(를) 반환했습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect retornou %1$lld ao tentar %2$@."
+            "value": "App Store Connect retornou %lld ao tentar %@."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect 在尝试 %2$@ 时返回了 %1$lld。"
+            "value": "App Store Connect 在尝试 %@ 时返回了 %lld。"
           }
         }
       }
@@ -3990,37 +3990,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect a renvoyé %1$lld : %2$@"
+            "value": "App Store Connect a renvoyé %lld : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect hat %1$lld zurückgegeben: %2$@"
+            "value": "App Store Connect hat %lld zurückgegeben: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect が %1$lld を返しました: %2$@"
+            "value": "App Store Connect が %lld を返しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect가 %1$lld을(를) 반환했습니다. %2$@"
+            "value": "App Store Connect가 %lld을(를) 반환했습니다. %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect retornou %1$lld: %2$@"
+            "value": "App Store Connect retornou %lld: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect 返回 %1$lld：%2$@"
+            "value": "App Store Connect 返回 %lld：%@"
           }
         }
       }
@@ -4054,7 +4054,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "외관"
+            "value": "모습"
           }
         },
         "pt-BR": {
@@ -4066,7 +4066,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "外观"
+            "value": "外貌"
           }
         }
       }
@@ -4128,37 +4128,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Êtes-vous sûr de vouloir supprimer \"%1$@\" ?"
+            "value": "Êtes-vous sûr de vouloir supprimer \"%@\" ?"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sind Sie sicher, dass Sie „%1$@“ löschen möchten?"
+            "value": "Sind Sie sicher, dass Sie „%@“ löschen möchten?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「%1$@」を削除してもよろしいですか?"
+            "value": "「%@」を削除してもよろしいですか?"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "\"%1$@\"을(를) 삭제하시겠습니까?"
+            "value": "\"%@\"을(를) 삭제하시겠습니까?"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tem certeza de que deseja excluir \"%1$@\"?"
+            "value": "Tem certeza de que deseja excluir \"%@\"?"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您确定要删除“%1$@”吗？"
+            "value": "您确定要删除“%@”吗？"
           }
         }
       }
@@ -4174,37 +4174,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Êtes-vous sûr de vouloir supprimer \"%1$@\" ? Cela ne peut pas être annulé."
+            "value": "Êtes-vous sûr de vouloir supprimer \"%@\" ? Cela ne peut pas être annulé."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sind Sie sicher, dass Sie „%1$@“ löschen möchten? Dies kann nicht rückgängig gemacht werden."
+            "value": "Sind Sie sicher, dass Sie „%@“ löschen möchten? Dies kann nicht rückgängig gemacht werden."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「%1$@」を削除してもよろしいですか?これを元に戻すことはできません。"
+            "value": "「%@」を削除してもよろしいですか?これを元に戻すことはできません。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "\"%1$@\"을(를) 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
+            "value": "\"%@\"을(를) 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tem certeza de que deseja excluir \"%1$@\"? Isto não pode ser desfeito."
+            "value": "Tem certeza de que deseja excluir \"%@\"? Isto não pode ser desfeito."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您确定要删除“%1$@”吗？此操作无法撤消。"
+            "value": "您确定要删除“%@”吗？此操作无法撤消。"
           }
         }
       }
@@ -4272,37 +4272,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Êtes-vous sûr de vouloir réinitialiser \"%1$@\" à l'aide du modèle \"%2$@\" ? Toutes les lignes et formes actuelles seront remplacées. Cela ne peut pas être annulé."
+            "value": "Êtes-vous sûr de vouloir réinitialiser \"%@\" à l'aide du modèle \"%@\" ? Toutes les lignes et formes actuelles seront remplacées. Cela ne peut pas être annulé."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sind Sie sicher, dass Sie „%1$@“ mithilfe der Vorlage „%2$@“ zurücksetzen möchten? Alle aktuellen Zeilen und Formen werden ersetzt. Dies kann nicht rückgängig gemacht werden."
+            "value": "Sind Sie sicher, dass Sie „%@“ mithilfe der Vorlage „%@“ zurücksetzen möchten? Alle aktuellen Zeilen und Formen werden ersetzt. Dies kann nicht rückgängig gemacht werden."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「%2$@」テンプレートを使用して「%1$@」をリセットしてもよろしいですか?現在の行と図形はすべて置き換えられます。これを元に戻すことはできません。"
+            "value": "「%@」テンプレートを使用して「%@」をリセットしてもよろしいですか?現在の行と図形はすべて置き換えられます。これを元に戻すことはできません。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "\"%2$@\" 템플릿을 사용하여 \"%1$@\"을(를) 재설정하시겠습니까? 현재 행과 도형이 모두 교체됩니다. 이 작업은 취소할 수 없습니다."
+            "value": "\"%@\" 템플릿을 사용하여 \"%@\"을(를) 재설정하시겠습니까? 현재 행과 도형이 모두 교체됩니다. 이 작업은 취소할 수 없습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tem certeza de que deseja redefinir \"%1$@\" usando o modelo \"%2$@\"? Todas as linhas e formas atuais serão substituídas. Isto não pode ser desfeito."
+            "value": "Tem certeza de que deseja redefinir \"%@\" usando o modelo \"%@\"? Todas as linhas e formas atuais serão substituídas. Isto não pode ser desfeito."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您确定要使用“%2$@”模板重置“%1$@”吗？当前的所有行和形状都将被替换。此操作无法撤消。"
+            "value": "您确定要使用“%@”模板重置“%@”吗？当前的所有行和形状都将被替换。此操作无法撤消。"
           }
         }
       }
@@ -4318,37 +4318,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Êtes-vous sûr de vouloir réinitialiser \"%1$@\" ? Toutes les lignes et formes seront supprimées. Cela ne peut pas être annulé."
+            "value": "Êtes-vous sûr de vouloir réinitialiser \"%@\" ? Toutes les lignes et formes seront supprimées. Cela ne peut pas être annulé."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sind Sie sicher, dass Sie „%1$@“ zurücksetzen möchten? Alle Zeilen und Formen werden entfernt. Dies kann nicht rückgängig gemacht werden."
+            "value": "Sind Sie sicher, dass Sie „%@“ zurücksetzen möchten? Alle Zeilen und Formen werden entfernt. Dies kann nicht rückgängig gemacht werden."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「%1$@」をリセットしてもよろしいですか?すべての行と図形が削除されます。これを元に戻すことはできません。"
+            "value": "「%@」をリセットしてもよろしいですか?すべての行と図形が削除されます。これを元に戻すことはできません。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "\"%1$@\"을(를) 재설정하시겠습니까? 모든 행과 도형이 제거됩니다. 이 작업은 취소할 수 없습니다."
+            "value": "\"%@\"을(를) 재설정하시겠습니까? 모든 행과 도형이 제거됩니다. 이 작업은 취소할 수 없습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tem certeza de que deseja redefinir \"%1$@\"? Todas as linhas e formas serão removidas. Isto não pode ser desfeito."
+            "value": "Tem certeza de que deseja redefinir \"%@\"? Todas as linhas e formas serão removidas. Isto não pode ser desfeito."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您确定要重置“%1$@”吗？所有行和形状都将被删除。此操作无法撤消。"
+            "value": "您确定要重置“%@”吗？所有行和形状都将被删除。此操作无法撤消。"
           }
         }
       }
@@ -4548,13 +4548,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatique"
+            "value": "Auto"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatisch"
+            "value": "Auto"
           }
         },
         "ja": {
@@ -4572,7 +4572,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automático"
+            "value": "Auto"
           }
         },
         "zh-Hans": {
@@ -4779,7 +4779,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Retour"
+            "value": "Dos"
           }
         },
         "de": {
@@ -4797,7 +4797,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "뒤로"
+            "value": "뒤쪽에"
           }
         },
         "pt-BR": {
@@ -4809,7 +4809,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "返回"
+            "value": "后退"
           }
         }
       }
@@ -4825,7 +4825,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Contexte"
+            "value": "Arrière-plan"
           }
         },
         "de": {
@@ -4849,7 +4849,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plano de fundo"
+            "value": "Fundo"
           }
         },
         "zh-Hans": {
@@ -4935,13 +4935,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "백업"
+            "value": "지원"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cópia de segurança"
+            "value": "Backup"
           }
         },
         "zh-Hans": {
@@ -4963,37 +4963,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de la sauvegarde (zip fermé avec le statut %1$d)."
+            "value": "Échec de la sauvegarde (zip fermé avec le statut %d)."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Sicherung ist fehlgeschlagen (Zip wurde mit dem Status %1$d beendet)."
+            "value": "Die Sicherung ist fehlgeschlagen (Zip wurde mit dem Status %d beendet)."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "バックアップに失敗しました (zip はステータス %1$d で終了しました)。"
+            "value": "バックアップに失敗しました (zip はステータス %d で終了しました)。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "백업에 실패했습니다(zip이 %1$d 상태로 종료되었습니다)."
+            "value": "백업에 실패했습니다(zip이 %d 상태로 종료되었습니다)."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha no backup (zip encerrado com status %1$d)."
+            "value": "Falha no backup (zip encerrado com status %d)."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "备份失败（zip 已退出，状态为 %1$d）。"
+            "value": "备份失败（zip 已退出，状态为 %d）。"
           }
         }
       }
@@ -5011,37 +5011,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de la sauvegarde (zip fermé avec le statut %1$lld)."
+            "value": "Échec de la sauvegarde (zip fermé avec le statut %lld)."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Sicherung ist fehlgeschlagen (Zip wurde mit dem Status %1$lld beendet)."
+            "value": "Die Sicherung ist fehlgeschlagen (Zip wurde mit dem Status %lld beendet)."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "バックアップに失敗しました (zip はステータス %1$lld で終了しました)。"
+            "value": "バックアップに失敗しました (zip はステータス %lld で終了しました)。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "백업에 실패했습니다(zip이 %1$lld 상태로 종료되었습니다)."
+            "value": "백업에 실패했습니다(zip이 %lld 상태로 종료되었습니다)."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha no backup (zip encerrado com status %1$lld)."
+            "value": "Falha no backup (zip encerrado com status %lld)."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "备份失败（zip 已退出，状态为 %1$lld）。"
+            "value": "备份失败（zip 已退出，状态为 %lld）。"
           }
         }
       }
@@ -5150,13 +5150,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Socle"
+            "value": "Base"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Basis"
+            "value": "Base"
           }
         },
         "ja": {
@@ -5180,7 +5180,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "基地"
+            "value": "根据"
           }
         }
       }
@@ -5288,13 +5288,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Flou"
+            "value": "Se brouiller"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unschärfe"
+            "value": "Verwischen"
           }
         },
         "ja": {
@@ -5312,7 +5312,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Desfoque"
+            "value": "Borrão"
           }
         },
         "zh-Hans": {
@@ -5340,31 +5340,31 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fett"
+            "value": "Deutlich"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "太字"
+            "value": "大胆な"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "굵게"
+            "value": "용감한"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ousado"
+            "value": "Audacioso"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "大胆"
+            "value": "大胆的"
           }
         }
       }
@@ -5616,7 +5616,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abbrechen"
+            "value": "Stornieren"
           }
         },
         "ja": {
@@ -5708,13 +5708,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mitte"
+            "value": "Center"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "センター"
+            "value": "中心"
           }
         },
         "ko": {
@@ -5932,37 +5932,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les modifications ici affectent uniquement %1$@. Le texte de la langue de base est partagé dans tous les paramètres régionaux : les modifications apportées aux autres paramètres régionaux sont stockées en tant que remplacements."
+            "value": "Les modifications ici affectent uniquement %@. Le texte de la langue de base est partagé dans tous les paramètres régionaux : les modifications apportées aux autres paramètres régionaux sont stockées en tant que remplacements."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Änderungen hier betreffen nur %1$@. Der Text in der Basissprache wird von allen Gebietsschemas gemeinsam genutzt – Änderungen an anderen Gebietsschemas werden als Überschreibungen gespeichert."
+            "value": "Änderungen hier betreffen nur %@. Der Text in der Basissprache wird von allen Gebietsschemas gemeinsam genutzt – Änderungen an anderen Gebietsschemas werden als Überschreibungen gespeichert."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ここでの変更は %1$@ のみに影響します。基本言語のテキストはすべてのロケールで共有され、他のロケールへの編集はオーバーライドとして保存されます。"
+            "value": "ここでの変更は %@ のみに影響します。基本言語のテキストはすべてのロケールで共有され、他のロケールへの編集はオーバーライドとして保存されます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "여기에서 변경한 사항은 %1$@에만 영향을 미칩니다. 기본 언어 텍스트는 모든 로캘에서 공유됩니다. 다른 로캘에 대한 편집 내용은 재정의로 저장됩니다."
+            "value": "여기에서 변경한 사항은 %@에만 영향을 미칩니다. 기본 언어 텍스트는 모든 로캘에서 공유됩니다. 다른 로캘에 대한 편집 내용은 재정의로 저장됩니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "As alterações aqui afetam apenas %1$@. O texto do idioma base é compartilhado entre todas as localidades — as edições em outras localidades são armazenadas como substituições."
+            "value": "As alterações aqui afetam apenas %@. O texto do idioma base é compartilhado entre todas as localidades — as edições em outras localidades são armazenadas como substituições."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "此处的更改仅影响 %1$@。基本语言文本在所有区域设置之间共享 - 对其他区域设置的编辑存储为覆盖。"
+            "value": "此处的更改仅影响 %@。基本语言文本在所有区域设置之间共享 - 对其他区域设置的编辑存储为覆盖。"
           }
         }
       }
@@ -6162,37 +6162,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez…"
+            "value": "Choisir…"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wählen Sie…"
+            "value": "Wählen…"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "選択してください…"
+            "value": "選ぶ…"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "선택하세요…"
+            "value": "선택하다…"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Escolha…"
+            "value": "Escolher…"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择..."
+            "value": "选择…"
           }
         }
       }
@@ -6220,13 +6220,13 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サークル"
+            "value": "丸"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "서클"
+            "value": "원"
           }
         },
         "pt-BR": {
@@ -6238,7 +6238,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "圆"
+            "value": "圆圈"
           }
         }
       }
@@ -6284,7 +6284,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "圆圈"
+            "value": "界"
           }
         }
       }
@@ -6634,13 +6634,13 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "閉じる"
+            "value": "近い"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "닫기"
+            "value": "닫다"
           }
         },
         "pt-BR": {
@@ -6926,37 +6926,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Connecté. Première application : %1$@"
+            "value": "Connecté. Première application : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verbunden. Erste App: %1$@"
+            "value": "Verbunden. Erste App: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "接続されました。最初のアプリ: %1$@"
+            "value": "接続されました。最初のアプリ: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "연결되었습니다. 첫 번째 앱: %1$@"
+            "value": "연결되었습니다. 첫 번째 앱: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Conectado. Primeiro aplicativo: %1$@"
+            "value": "Conectado. Primeiro aplicativo: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已连接。第一个应用程序：%1$@"
+            "value": "已连接。第一个应用程序：%@"
           }
         }
       }
@@ -7018,7 +7018,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Connexion..."
+            "value": "De liaison..."
           }
         },
         "de": {
@@ -7076,7 +7076,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "接続"
+            "value": "繋がり"
           }
         },
         "ko": {
@@ -7094,7 +7094,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "连接方式"
+            "value": "联系"
           }
         }
       }
@@ -7116,19 +7116,19 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Weiter"
+            "value": "Weitermachen"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "続ける"
+            "value": "続く"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "계속"
+            "value": "계속하다"
           }
         },
         "pt-BR": {
@@ -7174,7 +7174,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "연속"
+            "value": "마디 없는"
           }
         },
         "pt-BR": {
@@ -7186,7 +7186,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "连续"
+            "value": "连续的"
           }
         }
       }
@@ -7202,13 +7202,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copier"
+            "value": "Copie"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kopieren"
+            "value": "Kopie"
           }
         },
         "ja": {
@@ -7226,7 +7226,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copiar"
+            "value": "Cópia"
           }
         },
         "zh-Hans": {
@@ -7346,7 +7346,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Urheberrecht"
+            "value": "Copyright"
           }
         },
         "ja": {
@@ -7386,37 +7386,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible de %1$@ pour %2$@ (%3$@) dans %4$@."
+            "value": "Impossible de %@ pour %@ (%@) dans %@."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Konnte %1$@ für %2$@ (%3$@) in %4$@ nicht."
+            "value": "Konnte %@ für %@ (%@) in %@ nicht."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%4$@ の %2$@ (%3$@) を %1$@ できませんでした。"
+            "value": "%@ の %@ (%@) を %@ できませんでした。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%4$@의 %2$@(%3$@)에 대해 %1$@을(를) 수행할 수 없습니다."
+            "value": "%@의 %@(%@)에 대해 %@을(를) 수행할 수 없습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível %1$@ para %2$@ (%3$@) em %4$@."
+            "value": "Não foi possível %@ para %@ (%@) em %@."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法在 %4$@ 中为 %2$@ (%3$@) 执行 %1$@。"
+            "value": "无法在 %@ 中为 %@ (%@) 执行 %@。"
           }
         }
       }
@@ -7432,37 +7432,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible de créer l'ensemble de captures d'écran pour %1$@ (%2$@) dans %3$@."
+            "value": "Impossible de créer l'ensemble de captures d'écran pour %@ (%@) dans %@."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Der Screenshot-Satz für %1$@ (%2$@) in %3$@ konnte nicht erstellt werden."
+            "value": "Der Screenshot-Satz für %@ (%@) in %@ konnte nicht erstellt werden."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ の %1$@ (%2$@) に設定されたスクリーンショットを作成できませんでした。"
+            "value": "%@ の %@ (%@) に設定されたスクリーンショットを作成できませんでした。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@에서 %1$@(%2$@)에 대한 스크린샷 세트를 생성할 수 없습니다."
+            "value": "%@에서 %@(%@)에 대한 스크린샷 세트를 생성할 수 없습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível criar a captura de tela definida para %1$@ (%2$@) em %3$@."
+            "value": "Não foi possível criar a captura de tela definida para %@ (%@) em %@."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法在 %3$@ 中创建 %1$@ (%2$@) 的屏幕截图集。"
+            "value": "无法在 %@ 中创建 %@ (%@) 的屏幕截图集。"
           }
         }
       }
@@ -7478,37 +7478,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible d'exporter l'image de la ligne : %1$@"
+            "value": "Impossible d'exporter l'image de la ligne : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zeilenbild konnte nicht exportiert werden: %1$@"
+            "value": "Zeilenbild konnte nicht exportiert werden: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "行イメージをエクスポートできませんでした: %1$@"
+            "value": "行イメージをエクスポートできませんでした: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "행 이미지를 내보낼 수 없습니다: %1$@"
+            "value": "행 이미지를 내보낼 수 없습니다: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível exportar a imagem da linha: %1$@"
+            "value": "Não foi possível exportar a imagem da linha: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法导出行图像：%1$@"
+            "value": "无法导出行图像：%@"
           }
         }
       }
@@ -7524,37 +7524,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible d'exporter les captures d'écran de la ligne : %1$@"
+            "value": "Impossible d'exporter les captures d'écran de la ligne : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zeilen-Screenshots konnten nicht exportiert werden: %1$@"
+            "value": "Zeilen-Screenshots konnten nicht exportiert werden: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "行のスクリーンショットをエクスポートできませんでした: %1$@"
+            "value": "行のスクリーンショットをエクスポートできませんでした: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "행 스크린샷을 내보낼 수 없습니다: %1$@"
+            "value": "행 스크린샷을 내보낼 수 없습니다: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível exportar capturas de tela da linha: %1$@"
+            "value": "Não foi possível exportar capturas de tela da linha: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法导出行屏幕截图：%1$@"
+            "value": "无法导出行屏幕截图：%@"
           }
         }
       }
@@ -7570,37 +7570,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible d'importer la clé privée : %1$@"
+            "value": "Impossible d'importer la clé privée : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Der private Schlüssel konnte nicht importiert werden: %1$@"
+            "value": "Der private Schlüssel konnte nicht importiert werden: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "秘密キーをインポートできませんでした: %1$@"
+            "value": "秘密キーをインポートできませんでした: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "개인 키를 가져올 수 없습니다: %1$@"
+            "value": "개인 키를 가져올 수 없습니다: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível importar a chave privada: %1$@"
+            "value": "Não foi possível importar a chave privada: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法导入私钥：%1$@"
+            "value": "无法导入私钥：%@"
           }
         }
       }
@@ -7662,37 +7662,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible d'actualiser les paramètres régionaux : %1$@"
+            "value": "Impossible d'actualiser les paramètres régionaux : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Gebietsschemata konnten nicht aktualisiert werden: %1$@"
+            "value": "Die Gebietsschemata konnten nicht aktualisiert werden: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ロケールを更新できませんでした: %1$@"
+            "value": "ロケールを更新できませんでした: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "언어를 새로 고칠 수 없습니다: %1$@"
+            "value": "언어를 새로 고칠 수 없습니다: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível atualizar as localidades: %1$@"
+            "value": "Não foi possível atualizar as localidades: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法刷新区域设置：%1$@"
+            "value": "无法刷新区域设置：%@"
           }
         }
       }
@@ -7708,37 +7708,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible de restituer %1$@ · %2$@ · capture d'écran %3$lld."
+            "value": "Impossible de restituer %@ · %@ · capture d'écran %lld."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ · %2$@ · Screenshot %3$lld konnte nicht gerendert werden."
+            "value": "%@ · %@ · Screenshot %lld konnte nicht gerendert werden."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ · %2$@ · スクリーンショット %3$lld をレンダリングできませんでした。"
+            "value": "%@ · %@ · スクリーンショット %lld をレンダリングできませんでした。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ · %2$@ · 스크린샷 %3$lld을 렌더링할 수 없습니다."
+            "value": "%@ · %@ · 스크린샷 %lld을 렌더링할 수 없습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível renderizar %1$@ · %2$@ · captura de tela %3$lld."
+            "value": "Não foi possível renderizar %@ · %@ · captura de tela %lld."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法渲染 %1$@ · %2$@ · 屏幕截图 %3$lld。"
+            "value": "无法渲染 %@ · %@ · 屏幕截图 %lld。"
           }
         }
       }
@@ -7754,37 +7754,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible de rendre la capture d'écran %1$lld pour %2$@ (%3$@) dans %4$@. Vérifiez que cette ligne s'affiche correctement dans l'éditeur, puis réessayez le téléchargement."
+            "value": "Impossible de rendre la capture d'écran %lld pour %@ (%@) dans %@. Vérifiez que cette ligne s'affiche correctement dans l'éditeur, puis réessayez le téléchargement."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Screenshot %1$lld für %2$@ (%3$@) in %4$@ konnte nicht gerendert werden. Überprüfen Sie, ob die Vorschau dieser Zeile im Editor korrekt angezeigt wird, und versuchen Sie dann erneut, sie hochzuladen."
+            "value": "Screenshot %lld für %@ (%@) in %@ konnte nicht gerendert werden. Überprüfen Sie, ob die Vorschau dieser Zeile im Editor korrekt angezeigt wird, und versuchen Sie dann erneut, sie hochzuladen."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%4$@ の %2$@ (%3$@) のスクリーンショット %1$lld をレンダリングできませんでした。この行がエディターで正しくプレビューされることを確認してから、アップロードを再試行してください。"
+            "value": "%@ の %@ (%@) のスクリーンショット %lld をレンダリングできませんでした。この行がエディターで正しくプレビューされることを確認してから、アップロードを再試行してください。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%4$@의 %2$@(%3$@)에 대한 스크린샷 %1$lld을 렌더링할 수 없습니다. 편집기에서 이 행 미리보기가 올바르게 표시되는지 확인한 후 다시 업로드해 보세요."
+            "value": "%@의 %@(%@)에 대한 스크린샷 %lld을 렌더링할 수 없습니다. 편집기에서 이 행 미리보기가 올바르게 표시되는지 확인한 후 다시 업로드해 보세요."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível renderizar a captura de tela %1$lld para %2$@ (%3$@) em %4$@. Verifique se esta linha é visualizada corretamente no editor e tente fazer o upload novamente."
+            "value": "Não foi possível renderizar a captura de tela %lld para %@ (%@) em %@. Verifique se esta linha é visualizada corretamente no editor e tente fazer o upload novamente."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法渲染 %4$@ 中 %2$@ (%3$@) 的屏幕截图 %1$lld。检查该行在编辑器中预览是否正确，然后再次尝试上传。"
+            "value": "无法渲染 %@ 中 %@ (%@) 的屏幕截图 %lld。检查该行在编辑器中预览是否正确，然后再次尝试上传。"
           }
         }
       }
@@ -7892,37 +7892,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible d'écrire le fichier d'aperçu : %1$@"
+            "value": "Impossible d'écrire le fichier d'aperçu : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vorschaudatei konnte nicht geschrieben werden: %1$@"
+            "value": "Vorschaudatei konnte nicht geschrieben werden: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プレビュー ファイルを書き込めませんでした: %1$@"
+            "value": "プレビュー ファイルを書き込めませんでした: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "미리보기 파일을 쓸 수 없습니다: %1$@"
+            "value": "미리보기 파일을 쓸 수 없습니다: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível gravar o arquivo de visualização: %1$@"
+            "value": "Não foi possível gravar o arquivo de visualização: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法写入预览文件：%1$@"
+            "value": "无法写入预览文件：%@"
           }
         }
       }
@@ -8030,37 +8030,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dossier d'exportation actuel : %1$@"
+            "value": "Dossier d'exportation actuel : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aktueller Exportordner: %1$@"
+            "value": "Aktueller Exportordner: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "現在のエクスポート フォルダー: %1$@"
+            "value": "現在のエクスポート フォルダー: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "현재 내보내기 폴더: %1$@"
+            "value": "현재 내보내기 폴더: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pasta de exportação atual: %1$@"
+            "value": "Pasta de exportação atual: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当前导出文件夹：%1$@"
+            "value": "当前导出文件夹：%@"
           }
         }
       }
@@ -8122,13 +8122,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Personnalisé"
+            "value": "Coutume"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Benutzerdefiniert"
+            "value": "Brauch"
           }
         },
         "ja": {
@@ -8140,7 +8140,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "맞춤"
+            "value": "관습"
           }
         },
         "pt-BR": {
@@ -8152,7 +8152,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "定制"
+            "value": "风俗"
           }
         }
       }
@@ -8232,13 +8232,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "컷"
+            "value": "자르다"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cortar"
+            "value": "Corte"
           }
         },
         "zh-Hans": {
@@ -8278,7 +8278,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "어둠"
+            "value": "어두운"
           }
         },
         "pt-BR": {
@@ -8290,7 +8290,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "黑暗"
+            "value": "黑暗的"
           }
         }
       }
@@ -8307,7 +8307,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Débogage"
+            "value": "Déboguer"
           }
         },
         "de": {
@@ -8457,7 +8457,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "削除"
+            "value": "消去"
           }
         },
         "ko": {
@@ -8538,37 +8538,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer le %1$lld projet%2$@ ?"
+            "value": "Supprimer le %lld projet%@ ?"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld Projekt%2$@ löschen?"
+            "value": "%lld Projekt%@ löschen?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld プロジェクト%2$@ を削除しますか?"
+            "value": "%lld プロジェクト%@ を削除しますか?"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld 프로젝트%2$@를 삭제하시겠습니까?"
+            "value": "%lld 프로젝트%@를 삭제하시겠습니까?"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excluir %1$lld projeto%2$@?"
+            "value": "Excluir %lld projeto%@?"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "删除 %1$lld 项目 %2$@？"
+            "value": "删除 %lld 项目 %@？"
           }
         }
       }
@@ -8585,37 +8585,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer %1$lld sélectionné"
+            "value": "Supprimer %lld sélectionné"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Löschen Sie %1$lld ausgewählt"
+            "value": "Löschen Sie %lld ausgewählt"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "選択した %1$lld を削除します"
+            "value": "選択した %lld を削除します"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld 삭제 선택됨"
+            "value": "%lld 삭제 선택됨"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excluir %1$lld selecionado"
+            "value": "Excluir %lld selecionado"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "删除所选的 %1$lld"
+            "value": "删除所选的 %lld"
           }
         }
       }
@@ -8999,7 +8999,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Descriptif"
+            "value": "Description"
           }
         },
         "de": {
@@ -9248,7 +9248,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "세부정보"
+            "value": "세부"
           }
         },
         "pt-BR": {
@@ -9260,7 +9260,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "详情"
+            "value": "细节"
           }
         }
       }
@@ -9644,19 +9644,19 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Terminé"
+            "value": "Fait"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fertig"
+            "value": "Erledigt"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "完了"
+            "value": "終わり"
           }
         },
         "ko": {
@@ -9668,13 +9668,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Concluído"
+            "value": "Feito"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "完成"
+            "value": "完毕"
           }
         }
       }
@@ -9760,7 +9760,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Baixar"
+            "value": "Download"
           }
         },
         "zh-Hans": {
@@ -9874,13 +9874,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dupliquer"
+            "value": "Double"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Duplizieren"
+            "value": "Duplikat"
           }
         },
         "ja": {
@@ -9892,19 +9892,19 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "중복"
+            "value": "복제하다"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Duplicar"
+            "value": "Duplicado"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "重复"
+            "value": "复制"
           }
         }
       }
@@ -10426,37 +10426,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modification de %1$@"
+            "value": "Modification de %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bearbeiten von %1$@"
+            "value": "Bearbeiten von %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ を編集中"
+            "value": "%@ を編集中"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 편집 중"
+            "value": "%@ 편집 중"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Editando %1$@"
+            "value": "Editando %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "编辑 %1$@"
+            "value": "编辑 %@"
           }
         }
       }
@@ -10657,37 +10657,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les captures d'écran existantes dans chaque ensemble de types d'affichage correspondant seront supprimées et remplacées. "
+            "value": "Les captures d'écran existantes dans chaque ensemble de types d'affichage correspondant seront supprimées et remplacées."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vorhandene Screenshots in jedem passenden Anzeigetypsatz werden gelöscht und ersetzt. "
+            "value": "Vorhandene Screenshots in jedem passenden Anzeigetypsatz werden gelöscht und ersetzt."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "一致する各表示タイプ セット内の既存のスクリーンショットは削除され、置き換えられます。 "
+            "value": "一致する各表示タイプ セット内の既存のスクリーンショットは削除され、置き換えられます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "일치하는 각 디스플레이 유형 세트의 기존 스크린샷은 삭제되고 교체됩니다. "
+            "value": "일치하는 각 디스플레이 유형 세트의 기존 스크린샷은 삭제되고 교체됩니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "As capturas de tela existentes em cada tipo de exibição correspondente serão excluídas e substituídas. "
+            "value": "As capturas de tela existentes em cada tipo de exibição correspondente serão excluídas e substituídas."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "每个匹配的显示类型集中的现有屏幕截图将被删除并替换。 "
+            "value": "每个匹配的显示类型集中的现有屏幕截图将被删除并替换。"
           }
         }
       }
@@ -10709,19 +10709,19 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exportieren"
+            "value": "Export"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "エクスポート"
+            "value": "輸出"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "수출"
+            "value": "내보내다"
           }
         },
         "pt-BR": {
@@ -11169,19 +11169,19 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exportieren…"
+            "value": "Export…"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "エクスポート…"
+            "value": "輸出…"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내보내기…"
+            "value": "내보내다…"
           }
         },
         "pt-BR": {
@@ -11255,37 +11255,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de %1$@ : %2$@"
+            "value": "Échec de %@ : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fehler bei %1$@: %2$@"
+            "value": "Fehler bei %@: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ に失敗しました: %2$@"
+            "value": "%@ に失敗しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 실패: %2$@"
+            "value": "%@ 실패: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha em %1$@: %2$@"
+            "value": "Falha em %@: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法 %1$@：%2$@"
+            "value": "无法 %@：%@"
           }
         }
       }
@@ -11301,37 +11301,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de %1$@ : impossible d'encoder l'image."
+            "value": "Échec de %@ : impossible d'encoder l'image."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fehler bei %1$@: Bild konnte nicht kodiert werden."
+            "value": "Fehler bei %@: Bild konnte nicht kodiert werden."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ に失敗しました: 画像をエンコードできませんでした。"
+            "value": "%@ に失敗しました: 画像をエンコードできませんでした。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 실패: 이미지를 인코딩할 수 없습니다."
+            "value": "%@ 실패: 이미지를 인코딩할 수 없습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha em %1$@: não foi possível codificar a imagem."
+            "value": "Falha em %@: não foi possível codificar a imagem."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法 %1$@：无法对图像进行编码。"
+            "value": "无法 %@：无法对图像进行编码。"
           }
         }
       }
@@ -11347,37 +11347,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de la création du projet à partir du modèle \"%1$@\". Les données du modèle n'ont pas pu être chargées."
+            "value": "Échec de la création du projet à partir du modèle \"%@\". Les données du modèle n'ont pas pu être chargées."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Das Projekt konnte nicht aus der Vorlage „%1$@“ erstellt werden. Die Vorlagendaten konnten nicht geladen werden."
+            "value": "Das Projekt konnte nicht aus der Vorlage „%@“ erstellt werden. Die Vorlagendaten konnten nicht geladen werden."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "テンプレート「%1$@」からプロジェクトを作成できませんでした。テンプレートデータを読み込めませんでした。"
+            "value": "テンプレート「%@」からプロジェクトを作成できませんでした。テンプレートデータを読み込めませんでした。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "\"%1$@\" 템플릿에서 프로젝트를 생성하지 못했습니다. 템플릿 데이터를 로드할 수 없습니다."
+            "value": "\"%@\" 템플릿에서 프로젝트를 생성하지 못했습니다. 템플릿 데이터를 로드할 수 없습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha ao criar projeto a partir do modelo \"%1$@\". Os dados do modelo não puderam ser carregados."
+            "value": "Falha ao criar projeto a partir do modelo \"%@\". Os dados do modelo não puderam ser carregados."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法从模板“%1$@”创建项目。无法加载模板数据。"
+            "value": "无法从模板“%@”创建项目。无法加载模板数据。"
           }
         }
       }
@@ -11393,37 +11393,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de l'actualisation du statut d'achat : %1$@"
+            "value": "Échec de l'actualisation du statut d'achat : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kaufstatus konnte nicht aktualisiert werden: %1$@"
+            "value": "Kaufstatus konnte nicht aktualisiert werden: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "購入ステータスを更新できませんでした: %1$@"
+            "value": "購入ステータスを更新できませんでした: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "구매 상태를 새로 고치지 못했습니다: %1$@"
+            "value": "구매 상태를 새로 고치지 못했습니다: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha ao atualizar o status da compra: %1$@"
+            "value": "Falha ao atualizar o status da compra: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法刷新购买状态：%1$@"
+            "value": "无法刷新购买状态：%@"
           }
         }
       }
@@ -11485,37 +11485,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec du rendu de la ligne %1$lld"
+            "value": "Échec du rendu de la ligne %lld"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zeile %1$lld konnte nicht gerendert werden"
+            "value": "Zeile %lld konnte nicht gerendert werden"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "行 %1$lld のレンダリングに失敗しました"
+            "value": "行 %lld のレンダリングに失敗しました"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld 행을 렌더링하지 못했습니다."
+            "value": "%lld 행을 렌더링하지 못했습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha ao renderizar linha %1$lld"
+            "value": "Falha ao renderizar linha %lld"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法渲染行 %1$lld"
+            "value": "无法渲染行 %lld"
           }
         }
       }
@@ -11577,37 +11577,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de l'enregistrement des métadonnées : %1$@"
+            "value": "Échec de l'enregistrement des métadonnées : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Metadaten konnten nicht gespeichert werden: %1$@"
+            "value": "Metadaten konnten nicht gespeichert werden: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "メタデータの保存に失敗しました: %1$@"
+            "value": "メタデータの保存に失敗しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "메타데이터 저장 실패: %1$@"
+            "value": "메타데이터 저장 실패: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha ao salvar metadados: %1$@"
+            "value": "Falha ao salvar metadados: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法保存元数据：%1$@"
+            "value": "无法保存元数据：%@"
           }
         }
       }
@@ -11623,37 +11623,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de l'enregistrement de l'index du projet : %1$@"
+            "value": "Échec de l'enregistrement de l'index du projet : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Projektindex konnte nicht gespeichert werden: %1$@"
+            "value": "Projektindex konnte nicht gespeichert werden: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プロジェクト インデックスの保存に失敗しました: %1$@"
+            "value": "プロジェクト インデックスの保存に失敗しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "프로젝트 인덱스 저장 실패: %1$@"
+            "value": "프로젝트 인덱스 저장 실패: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha ao salvar o índice do projeto: %1$@"
+            "value": "Falha ao salvar o índice do projeto: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法保存项目索引：%1$@"
+            "value": "无法保存项目索引：%@"
           }
         }
       }
@@ -11669,37 +11669,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de l'enregistrement du projet : %1$@"
+            "value": "Échec de l'enregistrement du projet : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Projekt konnte nicht gespeichert werden: %1$@"
+            "value": "Projekt konnte nicht gespeichert werden: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プロジェクトの保存に失敗しました: %1$@"
+            "value": "プロジェクトの保存に失敗しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "프로젝트 저장 실패: %1$@"
+            "value": "프로젝트 저장 실패: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha ao salvar projeto: %1$@"
+            "value": "Falha ao salvar projeto: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法保存项目：%1$@"
+            "value": "无法保存项目：%@"
           }
         }
       }
@@ -11779,7 +11779,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "채우기"
+            "value": "채우다"
           }
         },
         "pt-BR": {
@@ -11791,7 +11791,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "填充"
+            "value": "充满"
           }
         }
       }
@@ -11837,7 +11837,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "填充颜色"
+            "value": "填充颜​​色"
           }
         }
       }
@@ -11899,13 +11899,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajustement"
+            "value": "Ajuster"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Passt"
+            "value": "Fit"
           }
         },
         "ja": {
@@ -11917,7 +11917,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "핏"
+            "value": "맞다"
           }
         },
         "pt-BR": {
@@ -11929,7 +11929,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "适合"
+            "value": "合身"
           }
         }
       }
@@ -12083,7 +12083,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Police"
+            "value": "Fonte"
           }
         },
         "de": {
@@ -12101,7 +12101,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "글꼴"
+            "value": "세례반"
           }
         },
         "pt-BR": {
@@ -12221,31 +12221,31 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formater"
+            "value": "Format"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formatieren"
+            "value": "Format"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "フォーマット"
+            "value": "形式"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "형식"
+            "value": "체재"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Formato"
+            "value": "Formatar"
           }
         },
         "zh-Hans": {
@@ -12273,7 +12273,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kostenlos"
+            "value": "Frei"
           }
         },
         "ja": {
@@ -12291,13 +12291,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Grátis"
+            "value": "Livre"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "免费"
+            "value": "自由的"
           }
         }
       }
@@ -12313,37 +12313,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gratuit : %1$@"
+            "value": "Gratuit : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kostenlos: %1$@"
+            "value": "Kostenlos: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "無料: %1$@"
+            "value": "無料: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "무료: %1$@"
+            "value": "무료: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gratuito: %1$@"
+            "value": "Gratuito: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "免费：%1$@"
+            "value": "免费：%@"
           }
         }
       }
@@ -12371,25 +12371,25 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "一般"
+            "value": "一般的な"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "일반"
+            "value": "일반적인"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Geral"
+            "value": "Em geral"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "一般"
+            "value": "一般的"
           }
         }
       }
@@ -12451,25 +12451,25 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dégradé"
+            "value": "Pente"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Farbverlauf"
+            "value": "Gradient"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "グラデーション"
+            "value": "勾配"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "그라데이션"
+            "value": "구배"
           }
         },
         "pt-BR": {
@@ -12481,7 +12481,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "渐变"
+            "value": "坡度"
           }
         }
       }
@@ -12987,7 +12987,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果匹配的显示类型已有屏幕截图，它们将被删除并替换。在上传任何内容之前，系统会要求您确认。"
+            "value": "如果匹配的显示类型已经有屏幕截图，它们将被删除并替换。在上传任何内容之前，系统会要求您确认。"
           }
         }
       }
@@ -13003,7 +13003,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Images"
+            "value": "Image"
           }
         },
         "de": {
@@ -13021,7 +13021,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "이미지"
+            "value": "영상"
           }
         },
         "pt-BR": {
@@ -13033,7 +13033,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "图片"
+            "value": "图像"
           }
         }
       }
@@ -13325,7 +13325,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Inclus"
+            "value": "Compris"
           }
         },
         "de": {
@@ -13355,7 +13355,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "包含"
+            "value": "包括"
           }
         }
       }
@@ -13509,7 +13509,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Invisibles"
+            "value": "Invisible"
           }
         },
         "de": {
@@ -13521,7 +13521,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "目に見えない"
+            "value": "見えない"
           }
         },
         "ko": {
@@ -13539,7 +13539,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "隐形"
+            "value": "无形的"
           }
         }
       }
@@ -13752,7 +13752,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "イタリック体"
+            "value": "イタリック"
           }
         },
         "ko": {
@@ -13764,7 +13764,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Itálico"
+            "value": "itálico"
           }
         },
         "zh-Hans": {
@@ -13924,37 +13924,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de l'enregistrement du trousseau (état %1$d)"
+            "value": "Échec de l'enregistrement du trousseau (état %d)"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Speichern des Schlüsselbunds fehlgeschlagen (Status %1$d)"
+            "value": "Speichern des Schlüsselbunds fehlgeschlagen (Status %d)"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "キーチェーンの保存に失敗しました (ステータス %1$d)"
+            "value": "キーチェーンの保存に失敗しました (ステータス %d)"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "키체인 저장 실패(상태 %1$d)"
+            "value": "키체인 저장 실패(상태 %d)"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha ao salvar as chaves (status %1$d)"
+            "value": "Falha ao salvar as chaves (status %d)"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "钥匙串保存失败（状态 %1$d）"
+            "value": "钥匙串保存失败（状态 %d）"
           }
         }
       }
@@ -14046,7 +14046,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "风景"
+            "value": "景观"
           }
         }
       }
@@ -14086,7 +14086,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Idioma"
+            "value": "Linguagem"
           }
         },
         "zh-Hans": {
@@ -14230,7 +14230,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "后来"
+            "value": "之后"
           }
         }
       }
@@ -14368,7 +14368,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "左"
+            "value": "左边"
           }
         }
       }
@@ -14384,7 +14384,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Juridique"
+            "value": "Légal"
           }
         },
         "de": {
@@ -14396,13 +14396,13 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "法的"
+            "value": "法律上の"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "법적"
+            "value": "합법적인"
           }
         },
         "pt-BR": {
@@ -14414,7 +14414,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "法律"
+            "value": "合法的"
           }
         }
       }
@@ -14632,13 +14632,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "선형"
+            "value": "선의"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "linear"
+            "value": "Linear"
           }
         },
         "zh-Hans": {
@@ -14660,7 +14660,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "paramètres régionaux"
+            "value": "lieu"
           }
         },
         "de": {
@@ -14678,7 +14678,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "로케일"
+            "value": "장소"
           }
         },
         "pt-BR": {
@@ -14706,7 +14706,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Paramètres régionaux"
+            "value": "Lieu"
           }
         },
         "de": {
@@ -14724,13 +14724,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "로케일"
+            "value": "장소"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Local"
+            "value": "Localidade"
           }
         },
         "zh-Hans": {
@@ -15173,13 +15173,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mittel"
+            "value": "Medium"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "中"
+            "value": "中くらい"
           }
         },
         "ko": {
@@ -15197,7 +15197,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "中等"
+            "value": "中等的"
           }
         }
       }
@@ -15213,37 +15213,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Manquant : %1$@."
+            "value": "Manquant : %@."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fehlt: %1$@."
+            "value": "Fehlt: %@."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "欠落しています: %1$@。"
+            "value": "欠落しています: %@。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "누락됨: %1$@."
+            "value": "누락됨: %@."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Faltando: %1$@."
+            "value": "Faltando: %@."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "缺失：%1$@。"
+            "value": "缺失：%@。"
           }
         }
       }
@@ -15277,7 +15277,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "모드"
+            "value": "방법"
           }
         },
         "pt-BR": {
@@ -15749,7 +15749,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "名称"
+            "value": "姓名"
           }
         }
       }
@@ -15765,37 +15765,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de la requête réseau : %1$@"
+            "value": "Échec de la requête réseau : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Netzwerkanfrage fehlgeschlagen: %1$@"
+            "value": "Netzwerkanfrage fehlgeschlagen: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ネットワーク要求が失敗しました: %1$@"
+            "value": "ネットワーク要求が失敗しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "네트워크 요청 실패: %1$@"
+            "value": "네트워크 요청 실패: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha na solicitação de rede: %1$@"
+            "value": "Falha na solicitação de rede: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "网络请求失败：%1$@"
+            "value": "网络请求失败：%@"
           }
         }
       }
@@ -15956,13 +15956,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Als nächstes"
+            "value": "Nächste"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "次へ"
+            "value": "次"
           }
         },
         "ko": {
@@ -15980,7 +15980,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "下一页"
+            "value": "下一个"
           }
         }
       }
@@ -16204,7 +16204,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não há metadados editáveis para esta localidade."
+            "value": "Não há metadados editáveis ​​para esta localidade."
           }
         },
         "zh-Hans": {
@@ -16646,7 +16646,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keine"
+            "value": "Keiner"
           }
         },
         "ja": {
@@ -16670,7 +16670,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无"
+            "value": "没有任何"
           }
         }
       }
@@ -16825,7 +16825,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Décalage"
+            "value": "Compenser"
           }
         },
         "de": {
@@ -16849,13 +16849,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deslocamento"
+            "value": "Desvio"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "偏移量"
+            "value": "抵消"
           }
         }
       }
@@ -16871,25 +16871,25 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "D'accord"
+            "value": "D'ACCORD"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Okay"
+            "value": "OK"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "OK"
+            "value": "わかりました"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "알았어"
+            "value": "좋아요"
           }
         },
         "pt-BR": {
@@ -16981,7 +16981,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "불투명도"
+            "value": "불투명"
           }
         },
         "pt-BR": {
@@ -17009,37 +17009,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ouvrez %1$@ dans App Store Connect"
+            "value": "Ouvrez %@ dans App Store Connect"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Öffnen Sie %1$@ in App Store Connect"
+            "value": "Öffnen Sie %@ in App Store Connect"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect で %1$@ を開きます"
+            "value": "App Store Connect で %@ を開きます"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Store Connect에서 %1$@ 열기"
+            "value": "App Store Connect에서 %@ 열기"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abra %1$@ em App Store Connect"
+            "value": "Abra %@ em App Store Connect"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 App Store Connect 中打开 %1$@"
+            "value": "在 App Store Connect 中打开 %@"
           }
         }
       }
@@ -17396,7 +17396,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "오리엔테이션"
+            "value": "정위"
           }
         },
         "pt-BR": {
@@ -17424,37 +17424,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Réponse originale : %1$@"
+            "value": "Réponse originale : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ursprüngliche Antwort: %1$@"
+            "value": "Ursprüngliche Antwort: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "元の応答: %1$@"
+            "value": "元の応答: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "원래 응답: %1$@"
+            "value": "원래 응답: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Resposta original: %1$@"
+            "value": "Resposta original: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "原始回复：%1$@"
+            "value": "原始回复：%@"
           }
         }
       }
@@ -17470,7 +17470,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aperçu"
+            "value": "Contour"
           }
         },
         "de": {
@@ -17494,13 +17494,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Esboço"
+            "value": "Contorno"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "概要"
+            "value": "大纲"
           }
         }
       }
@@ -17707,7 +17707,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Einfügen"
+            "value": "Paste"
           }
         },
         "ja": {
@@ -17719,7 +17719,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "붙여넣기"
+            "value": "반죽"
           }
         },
         "pt-BR": {
@@ -17977,7 +17977,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Emplacement"
+            "value": "Pas"
           }
         },
         "de": {
@@ -17995,19 +17995,19 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "피치"
+            "value": "정점"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Argumento"
+            "value": "Tom"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "间距"
+            "value": "沥青"
           }
         }
       }
@@ -18115,7 +18115,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Planifier"
+            "value": "Plan"
           }
         },
         "de": {
@@ -18127,7 +18127,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "計画"
+            "value": "プラン"
           }
         },
         "ko": {
@@ -18225,7 +18225,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "포인트"
+            "value": "전철기"
           }
         },
         "pt-BR": {
@@ -18253,37 +18253,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Points : %1$lld"
+            "value": "Points : %lld"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Punkte: %1$lld"
+            "value": "Punkte: %lld"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ポイント: %1$lld"
+            "value": "ポイント: %lld"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "포인트: %1$lld"
+            "value": "포인트: %lld"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pontos: %1$lld"
+            "value": "Pontos: %lld"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "积分：%1$lld"
+            "value": "积分：%lld"
           }
         }
       }
@@ -18501,7 +18501,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "미리보기"
+            "value": "시사"
           }
         },
         "pt-BR": {
@@ -18575,7 +18575,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Politique de confidentialité"
+            "value": "politique de confidentialité"
           }
         },
         "de": {
@@ -18599,7 +18599,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Política de Privacidade"
+            "value": "política de Privacidade"
           }
         },
         "zh-Hans": {
@@ -18851,37 +18851,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avantages : %1$@"
+            "value": "Avantages : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Profi: %1$@"
+            "value": "Profi: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プロ: %1$@"
+            "value": "プロ: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "장점: %1$@"
+            "value": "찬성: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pró: %1$@"
+            "value": "Pró: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "优点：%1$@"
+            "value": "优点：%@"
           }
         }
       }
@@ -18897,37 +18897,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Projet %1$@"
+            "value": "Projet %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Projekt %1$@"
+            "value": "Projekt %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プロジェクト %1$@"
+            "value": "プロジェクト %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "프로젝트 %1$@"
+            "value": "프로젝트 %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Projeto %1$@"
+            "value": "Projeto %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "项目 %1$@"
+            "value": "项目 %@"
           }
         }
       }
@@ -19265,25 +19265,25 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Acheter"
+            "value": "Achat"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kauf"
+            "value": "Kaufen"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "購入する"
+            "value": "購入"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "구매"
+            "value": "구입"
           }
         },
         "pt-BR": {
@@ -19357,37 +19357,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de l'achat : %1$@"
+            "value": "Échec de l'achat : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kauf fehlgeschlagen: %1$@"
+            "value": "Kauf fehlgeschlagen: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "購入に失敗しました: %1$@"
+            "value": "購入に失敗しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "구매 실패: %1$@"
+            "value": "구매 실패: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha na compra: %1$@"
+            "value": "Falha na compra: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "购买失败：%1$@"
+            "value": "购买失败：%@"
           }
         }
       }
@@ -19541,7 +19541,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Radiale"
+            "value": "Radial"
           }
         },
         "de": {
@@ -19565,7 +19565,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "radial"
+            "value": "Radial"
           }
         },
         "zh-Hans": {
@@ -19605,7 +19605,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "반경"
+            "value": "반지름"
           }
         },
         "pt-BR": {
@@ -19737,25 +19737,25 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "準備完了"
+            "value": "準備ができて"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "준비"
+            "value": "준비가 된"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pronto"
+            "value": "Preparar"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "准备好了"
+            "value": "准备好"
           }
         }
       }
@@ -19817,7 +19817,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rectangulaire"
+            "value": "Rectangle"
           }
         },
         "de": {
@@ -19829,13 +19829,13 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "長方形"
+            "value": "矩形"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "직사각형"
+            "value": "구형"
           }
         },
         "pt-BR": {
@@ -19847,7 +19847,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "矩形"
+            "value": "长方形"
           }
         }
       }
@@ -20008,31 +20008,31 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Regelmäßig"
+            "value": "Regulär"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "レギュラー"
+            "value": "通常"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "레귤러"
+            "value": "정기적인"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Normal"
+            "value": "Regular"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "常规"
+            "value": "常规的"
           }
         }
       }
@@ -20049,13 +20049,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Libération"
+            "value": "Libérer"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Veröffentlichung"
+            "value": "Freigeben"
           }
         },
         "ja": {
@@ -20067,7 +20067,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "출시"
+            "value": "풀어 주다"
           }
         },
         "pt-BR": {
@@ -20095,7 +20095,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprimer"
+            "value": "Retirer"
           }
         },
         "de": {
@@ -20107,13 +20107,13 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "削除"
+            "value": "取り除く"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "제거"
+            "value": "제거하다"
           }
         },
         "pt-BR": {
@@ -20125,7 +20125,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "删除"
+            "value": "消除"
           }
         }
       }
@@ -20187,7 +20187,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Renommer"
+            "value": "Rebaptiser"
           }
         },
         "de": {
@@ -20389,7 +20389,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "바꾸기"
+            "value": "바꾸다"
           }
         },
         "pt-BR": {
@@ -20401,7 +20401,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "更换"
+            "value": "代替"
           }
         }
       }
@@ -20417,37 +20417,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remplacer tout le texte %1$@ par de nouvelles traductions ?"
+            "value": "Remplacer tout le texte %@ par de nouvelles traductions ?"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Den gesamten %1$@-Text durch neue Übersetzungen ersetzen?"
+            "value": "Den gesamten %@-Text durch neue Übersetzungen ersetzen?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "すべての %1$@ テキストを新しい翻訳に置き換えますか?"
+            "value": "すべての %@ テキストを新しい翻訳に置き換えますか?"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "모든 %1$@ 텍스트를 새 번역으로 바꾸시겠습니까?"
+            "value": "모든 %@ 텍스트를 새 번역으로 바꾸시겠습니까?"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Substituir todo o texto %1$@ por novas traduções?"
+            "value": "Substituir todo o texto %@ por novas traduções?"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "将所有 %1$@ 文本替换为新翻译？"
+            "value": "将所有 %@ 文本替换为新翻译？"
           }
         }
       }
@@ -20751,25 +20751,25 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "交換してください…"
+            "value": "交換する…"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "교체…"
+            "value": "바꾸다…"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Substitua…"
+            "value": "Substituir…"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "更换..."
+            "value": "代替…"
           }
         }
       }
@@ -20895,13 +20895,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "재설정"
+            "value": "다시 놓기"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Redefinir"
+            "value": "Reiniciar"
           }
         },
         "zh-Hans": {
@@ -20923,37 +20923,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Réinitialiser %1$@"
+            "value": "Réinitialiser %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zurücksetzen %1$@"
+            "value": "Zurücksetzen %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ をリセットします"
+            "value": "%@ をリセットします"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 재설정"
+            "value": "%@ 재설정"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Redefinir %1$@"
+            "value": "Redefinir %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "重置%1$@"
+            "value": "重置%@"
           }
         }
       }
@@ -21015,37 +21015,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Réinitialiser tous les remplacements de texte et d'image %1$@ ?"
+            "value": "Réinitialiser tous les remplacements de texte et d'image %@ ?"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alle %1$@ Text- und Bildüberschreibungen zurücksetzen?"
+            "value": "Alle %@ Text- und Bildüberschreibungen zurücksetzen?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "すべての %1$@ テキストと画像の上書きをリセットしますか?"
+            "value": "すべての %@ テキストと画像の上書きをリセットしますか?"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "모든 %1$@ 텍스트 및 이미지 재정의를 재설정하시겠습니까?"
+            "value": "모든 %@ 텍스트 및 이미지 재정의를 재설정하시겠습니까?"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Redefinir todas as substituições de texto e imagem %1$@?"
+            "value": "Redefinir todas as substituições de texto e imagem %@?"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "重置所有 %1$@ 文本和图像覆盖吗？"
+            "value": "重置所有 %@ 文本和图像覆盖吗？"
           }
         }
       }
@@ -21521,37 +21521,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec du décodage de la réponse : %1$@"
+            "value": "Échec du décodage de la réponse : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Antwortdecodierung fehlgeschlagen: %1$@"
+            "value": "Antwortdecodierung fehlgeschlagen: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "応答のデコードに失敗しました: %1$@"
+            "value": "応答のデコードに失敗しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "응답 디코딩 실패: %1$@"
+            "value": "응답 디코딩 실패: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha na decodificação da resposta: %1$@"
+            "value": "Falha na decodificação da resposta: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "响应解码失败：%1$@"
+            "value": "响应解码失败：%@"
           }
         }
       }
@@ -21659,37 +21659,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec de la restauration : %1$@"
+            "value": "Échec de la restauration : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wiederherstellung fehlgeschlagen: %1$@"
+            "value": "Wiederherstellung fehlgeschlagen: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "復元に失敗しました: %1$@"
+            "value": "復元に失敗しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "복원 실패: %1$@"
+            "value": "복원 실패: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha na restauração: %1$@"
+            "value": "Falha na restauração: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "恢复失败：%1$@"
+            "value": "恢复失败：%@"
           }
         }
       }
@@ -22211,13 +22211,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "À droite"
+            "value": "Droite"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Richtig"
+            "value": "Rechts"
           }
         },
         "ja": {
@@ -22241,7 +22241,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "右"
+            "value": "正确的"
           }
         }
       }
@@ -22263,7 +22263,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rotation"
+            "value": "Drehung"
           }
         },
         "ja": {
@@ -22321,7 +22321,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "행"
+            "value": "열"
           }
         },
         "pt-BR": {
@@ -22333,7 +22333,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "行"
+            "value": "排"
           }
         }
       }
@@ -22528,7 +22528,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enregistrer"
+            "value": "Sauvegarder"
           }
         },
         "de": {
@@ -22546,7 +22546,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "저장"
+            "value": "구하다"
           }
         },
         "pt-BR": {
@@ -22558,7 +22558,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存"
+            "value": "节省"
           }
         }
       }
@@ -22812,13 +22812,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maßstab"
+            "value": "Skala"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "スケール"
+            "value": "規模"
           }
         },
         "ko": {
@@ -22882,7 +22882,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "截图"
+            "value": "截屏"
           }
         }
       }
@@ -23266,13 +23266,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sélectionnez"
+            "value": "Sélectionner"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auswählen"
+            "value": "Wählen"
           }
         },
         "ja": {
@@ -23284,7 +23284,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "선택"
+            "value": "선택하다"
           }
         },
         "pt-BR": {
@@ -23588,13 +23588,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sélectionnez…"
+            "value": "Sélectionner…"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wählen Sie…"
+            "value": "Wählen…"
           }
         },
         "ja": {
@@ -23606,7 +23606,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "선택…"
+            "value": "선택하다…"
           }
         },
         "pt-BR": {
@@ -23824,7 +23824,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "eingestellt"
+            "value": "Satz"
           }
         },
         "ja": {
@@ -23848,7 +23848,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "设置"
+            "value": "放"
           }
         }
       }
@@ -23910,19 +23910,19 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Configuration"
+            "value": "Installation"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Einrichtung"
+            "value": "Aufstellen"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "セットアップ"
+            "value": "設定"
           }
         },
         "ko": {
@@ -23934,7 +23934,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Configuração"
+            "value": "Configurar"
           }
         },
         "zh-Hans": {
@@ -24291,7 +24291,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "쇼케이스"
+            "value": "유리 진열장"
           }
         },
         "pt-BR": {
@@ -24411,37 +24411,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Éléments ignorés (%1$lld)"
+            "value": "Éléments ignorés (%lld)"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Übersprungene Elemente (%1$lld)"
+            "value": "Übersprungene Elemente (%lld)"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "スキップされたアイテム (%1$lld)"
+            "value": "スキップされたアイテム (%lld)"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "건너뛴 항목(%1$lld)"
+            "value": "건너뛴 항목(%lld)"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Itens ignorados (%1$lld)"
+            "value": "Itens ignorados (%lld)"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "跳过的项目 (%1$lld)"
+            "value": "跳过的项目 (%lld)"
           }
         }
       }
@@ -24475,7 +24475,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "소스"
+            "value": "원천"
           }
         },
         "pt-BR": {
@@ -24509,37 +24509,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Source %1$@ · %2$lld capture d'écran%3$@ · %4$@"
+            "value": "Source %@ · %lld capture d'écran%@ · %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quelle %1$@ · %2$lld Screenshot%3$@ · %4$@"
+            "value": "Quelle %@ · %lld Screenshot%@ · %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ソース %1$@ · %2$lld スクリーンショット%3$@ · %4$@"
+            "value": "ソース %@ · %lld スクリーンショット%@ · %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "소스 %1$@ · %2$lld 스크린샷%3$@ · %4$@"
+            "value": "소스 %@ · %lld 스크린샷%@ · %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fonte %1$@ · %2$lld captura de tela%3$@ · %4$@"
+            "value": "Fonte %@ · %lld captura de tela%@ · %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "来源 %1$@ · %2$lld 屏幕截图 %3$@ · %4$@"
+            "value": "来源 %@ · %lld 屏幕截图 %@ · %@"
           }
         }
       }
@@ -24659,13 +24659,13 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "スター"
+            "value": "星"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "스타"
+            "value": "별"
           }
         },
         "pt-BR": {
@@ -24677,7 +24677,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "明星"
+            "value": "星星"
           }
         }
       }
@@ -24751,7 +24751,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ステータス"
+            "value": "状態"
           }
         },
         "ko": {
@@ -24763,13 +24763,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Estado"
+            "value": "Status"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "状态"
+            "value": "地位"
           }
         }
       }
@@ -24785,37 +24785,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étape %1$lld"
+            "value": "Étape %lld"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Schritt %1$lld"
+            "value": "Schritt %lld"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ステップ %1$lld"
+            "value": "ステップ %lld"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "단계 %1$lld"
+            "value": "단계 %lld"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Etapa %1$lld"
+            "value": "Etapa %lld"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "步骤 %1$lld"
+            "value": "步骤 %lld"
           }
         }
       }
@@ -24855,13 +24855,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Armazenamento"
+            "value": "Armazenar"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "存储"
+            "value": "贮存"
           }
         }
       }
@@ -24877,13 +24877,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étirer"
+            "value": "Extensible"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dehnen"
+            "value": "Strecken"
           }
         },
         "ja": {
@@ -24895,7 +24895,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "스트레칭"
+            "value": "뻗기"
           }
         },
         "pt-BR": {
@@ -24907,7 +24907,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "拉伸"
+            "value": "拉紧"
           }
         }
       }
@@ -25027,13 +25027,13 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サブタイトル"
+            "value": "字幕"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "자막"
+            "value": "부제"
           }
         },
         "pt-BR": {
@@ -25045,7 +25045,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "副标题"
+            "value": "字幕"
           }
         }
       }
@@ -25539,7 +25539,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "시스템"
+            "value": "체계"
           }
         },
         "pt-BR": {
@@ -25701,13 +25701,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tester"
+            "value": "Test"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Testen"
+            "value": "Prüfen"
           }
         },
         "ja": {
@@ -25719,7 +25719,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "테스트"
+            "value": "시험"
           }
         },
         "pt-BR": {
@@ -25887,7 +25887,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Test…"
+            "value": "Essai…"
           }
         },
         "de": {
@@ -25945,7 +25945,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "テキスト"
+            "value": "文章"
           }
         },
         "ko": {
@@ -25963,7 +25963,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "文字"
+            "value": "文本"
           }
         }
       }
@@ -26111,37 +26111,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La capture d'écran %1$@ existante définie pour %2$@ a peut-être déjà été supprimée. Après avoir résolu le problème, réexécutez le téléchargement pour remplir cet ensemble."
+            "value": "La capture d'écran %@ existante définie pour %@ a peut-être déjà été supprimée. Après avoir résolu le problème, réexécutez le téléchargement pour remplir cet ensemble."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Der vorhandene %1$@-Screenshot-Satz für %2$@ wurde möglicherweise bereits gelöscht. Nachdem Sie das Problem behoben haben, führen Sie den Upload erneut aus, um den Satz wieder aufzufüllen."
+            "value": "Der vorhandene %@-Screenshot-Satz für %@ wurde möglicherweise bereits gelöscht. Nachdem Sie das Problem behoben haben, führen Sie den Upload erneut aus, um den Satz wieder aufzufüllen."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%2$@ に設定されている既存の %1$@ スクリーンショットはすでに削除されている可能性があります。問題を修正した後、アップロードを再実行してそのセットを補充します。"
+            "value": "%@ に設定されている既存の %@ スクリーンショットはすでに削除されている可能性があります。問題を修正した後、アップロードを再実行してそのセットを補充します。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%2$@에 설정된 기존 %1$@ 스크린샷이 이미 삭제되었을 수 있습니다. 문제를 해결한 후 업로드를 다시 실행하여 해당 세트를 다시 채우세요."
+            "value": "%@에 설정된 기존 %@ 스크린샷이 이미 삭제되었을 수 있습니다. 문제를 해결한 후 업로드를 다시 실행하여 해당 세트를 다시 채우세요."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "A captura de tela %1$@ existente definida para %2$@ pode já ter sido excluída. Depois de corrigir o problema, execute novamente o upload para recarregar esse conjunto."
+            "value": "A captura de tela %@ existente definida para %@ pode já ter sido excluída. Depois de corrigir o problema, execute novamente o upload para recarregar esse conjunto."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "为 %2$@ 设置的现有 %1$@ 屏幕截图可能已被删除。解决问题后，重新运行上传以重新填充该集。"
+            "value": "为 %@ 设置的现有 %@ 屏幕截图可能已被删除。解决问题后，重新运行上传以重新填充该集。"
           }
         }
       }
@@ -26295,37 +26295,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cela applique la traduction de la langue de base à chaque couche de texte dans %1$@ et remplace le texte traduit actuel."
+            "value": "Cela applique la traduction de la langue de base à chaque couche de texte dans %@ et remplace le texte traduit actuel."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dadurch wird die Übersetzung aus der Basissprache auf jede Textebene in %1$@ angewendet und der aktuell übersetzte Text ersetzt."
+            "value": "Dadurch wird die Übersetzung aus der Basissprache auf jede Textebene in %@ angewendet und der aktuell übersetzte Text ersetzt."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "これにより、基本言語からの翻訳が %1$@ 内のすべてのテキスト レイヤーに適用され、現在の翻訳済みテキストが置き換えられます。"
+            "value": "これにより、基本言語からの翻訳が %@ 内のすべてのテキスト レイヤーに適用され、現在の翻訳済みテキストが置き換えられます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "이는 기본 언어의 번역을 %1$@의 모든 텍스트 레이어에 적용하고 현재 번역된 텍스트를 대체합니다."
+            "value": "이는 기본 언어의 번역을 %@의 모든 텍스트 레이어에 적용하고 현재 번역된 텍스트를 대체합니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Isto aplica a tradução do idioma base a todas as camadas de texto em %1$@ e substitui o texto traduzido atual."
+            "value": "Isto aplica a tradução do idioma base a todas as camadas de texto em %@ e substitui o texto traduzido atual."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这会将基础语言的翻译应用于 %1$@ 中的每个文本层，并替换当前翻译的文本。"
+            "value": "这会将基础语言的翻译应用于 %@ 中的每个文本层，并替换当前翻译的文本。"
           }
         }
       }
@@ -26387,37 +26387,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cela supprime tous les remplacements de texte traduit et d'image spécifiques aux paramètres régionaux pour %1$@, de sorte que le projet utilise à nouveau le texte et les images de la langue de base."
+            "value": "Cela supprime tous les remplacements de texte traduit et d'image spécifiques aux paramètres régionaux pour %@, de sorte que le projet utilise à nouveau le texte et les images de la langue de base."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dadurch werden alle übersetzten Texte und gebietsschemaspezifischen Bildüberschreibungen für %1$@ entfernt, sodass das Projekt wieder den Text und die Bilder in der Basissprache verwendet."
+            "value": "Dadurch werden alle übersetzten Texte und gebietsschemaspezifischen Bildüberschreibungen für %@ entfernt, sodass das Projekt wieder den Text und die Bilder in der Basissprache verwendet."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "これにより、%1$@ の翻訳されたテキストとロケール固有の画像のオーバーライドがすべて削除されるため、プロジェクトでは基本言語のテキストと画像が再度使用されます。"
+            "value": "これにより、%@ の翻訳されたテキストとロケール固有の画像のオーバーライドがすべて削除されるため、プロジェクトでは基本言語のテキストと画像が再度使用されます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "이렇게 하면 %1$@에 대한 번역된 텍스트와 로케일별 이미지 재정의가 모두 제거되므로 프로젝트는 기본 언어 텍스트와 이미지를 다시 사용합니다."
+            "value": "이렇게 하면 %@에 대한 번역된 텍스트와 로케일별 이미지 재정의가 모두 제거되므로 프로젝트는 기본 언어 텍스트와 이미지를 다시 사용합니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Isso remove todo o texto traduzido e substituições de imagens específicas de localidade para %1$@, para que o projeto use o texto e as imagens do idioma base novamente."
+            "value": "Isso remove todo o texto traduzido e substituições de imagens específicas de localidade para %@, para que o projeto use o texto e as imagens do idioma base novamente."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这会删除 %1$@ 的所有翻译文本和特定于区域设置的图像覆盖，因此项目再次使用基本语言文本和图像。"
+            "value": "这会删除 %@ 的所有翻译文本和特定于区域设置的图像覆盖，因此项目再次使用基本语言文本和图像。"
           }
         }
       }
@@ -26497,7 +26497,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "그러면 Issuer ID, Key ID 및 가져온 개인 키가 이 Mac에서 제거됩니다."
+            "value": "그러면 Issuer ID, Key ID 및 이 Mac에서 가져온 개인 키가 제거됩니다."
           }
         },
         "pt-BR": {
@@ -26571,37 +26571,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cette version est %1$@ — les captures d'écran ne peuvent pas être modifiées. Choisissez une version modifiable ou créez-en une nouvelle dans App Store Connect."
+            "value": "Cette version est %@ — les captures d'écran ne peuvent pas être modifiées. Choisissez une version modifiable ou créez-en une nouvelle dans App Store Connect."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Diese Version ist %1$@ – Screenshots können nicht geändert werden. Wählen Sie eine bearbeitbare Version aus oder erstellen Sie eine neue in App Store Connect."
+            "value": "Diese Version ist %@ – Screenshots können nicht geändert werden. Wählen Sie eine bearbeitbare Version aus oder erstellen Sie eine neue in App Store Connect."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このバージョンは %1$@ です。スクリーンショットは変更できません。編集可能なバージョンを選択するか、App Store Connect で新しいバージョンを作成します。"
+            "value": "このバージョンは %@ です。スクリーンショットは変更できません。編集可能なバージョンを選択するか、App Store Connect で新しいバージョンを作成します。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "이 버전은 %1$@입니다. 스크린샷을 변경할 수 없습니다. 편집 가능한 버전을 선택하거나 App Store Connect에서 새 버전을 만드세요."
+            "value": "이 버전은 %@입니다. 스크린샷을 변경할 수 없습니다. 편집 가능한 버전을 선택하거나 App Store Connect에서 새 버전을 만드세요."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Esta versão é %1$@ — as capturas de tela não podem ser alteradas. Escolha uma versão editável ou crie uma nova em App Store Connect."
+            "value": "Esta versão é %@ — as capturas de tela não podem ser alteradas. Escolha uma versão editável ou crie uma nova em App Store Connect."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "此版本是 %1$@ — 屏幕截图无法更改。选择一个可编辑版本或在 App Store Connect 中创建一个新版本。"
+            "value": "此版本是 %@ — 屏幕截图无法更改。选择一个可编辑版本或在 App Store Connect 中创建一个新版本。"
           }
         }
       }
@@ -26617,37 +26617,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cela supprimera toutes les captures d'écran et formes de \"%1$@\" et restaurera les paramètres par défaut."
+            "value": "Cela supprimera toutes les captures d'écran et formes de \"%@\" et restaurera les paramètres par défaut."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dadurch werden alle Screenshots und Formen aus „%1$@“ entfernt und die Standardeinstellungen wiederhergestellt."
+            "value": "Dadurch werden alle Screenshots und Formen aus „%@“ entfernt und die Standardeinstellungen wiederhergestellt."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "これにより、「%1$@」からすべてのスクリーンショットとシェイプが削除され、デフォルト設定が復元されます。"
+            "value": "これにより、「%@」からすべてのスクリーンショットとシェイプが削除され、デフォルト設定が復元されます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "이렇게 하면 \"%1$@\"에서 모든 스크린샷과 도형이 제거되고 기본 설정이 복원됩니다."
+            "value": "이렇게 하면 \"%@\"에서 모든 스크린샷과 도형이 제거되고 기본 설정이 복원됩니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Isso removerá todas as capturas de tela e formas de \"%1$@\" e restaurará as configurações padrão."
+            "value": "Isso removerá todas as capturas de tela e formas de \"%@\" e restaurará as configurações padrão."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这将从“%1$@”中删除所有屏幕截图和形状并恢复默认设置。"
+            "value": "这将从“%@”中删除所有屏幕截图和形状并恢复默认设置。"
           }
         }
       }
@@ -26687,13 +26687,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Azulejo"
+            "value": "Telha"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "瓷砖"
+            "value": "瓦"
           }
         }
       }
@@ -26893,37 +26893,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Traduire en %1$@"
+            "value": "Traduire en %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Übersetzen in %1$@"
+            "value": "Übersetzen in %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ に翻訳します"
+            "value": "%@ に翻訳します"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@로 번역"
+            "value": "%@로 번역"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Traduzir para %1$@"
+            "value": "Traduzir para %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "翻译成%1$@"
+            "value": "翻译成%@"
           }
         }
       }
@@ -26985,37 +26985,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Traduire les calques de texte sélectionnés en %1$@"
+            "value": "Traduire les calques de texte sélectionnés en %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ausgewählte Textebenen in %1$@ übersetzen"
+            "value": "Ausgewählte Textebenen in %@ übersetzen"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "選択したテキストレイヤーを%1$@に変換します"
+            "value": "選択したテキストレイヤーを%@に変換します"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "선택한 텍스트 레이어를 %1$@로 번역합니다."
+            "value": "선택한 텍스트 레이어를 %@로 번역합니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Traduzir camadas de texto selecionadas para %1$@"
+            "value": "Traduzir camadas de texto selecionadas para %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "将选定的文本图层转换为 %1$@"
+            "value": "将选定的文本图层转换为 %@"
           }
         }
       }
@@ -27123,7 +27123,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tapez"
+            "value": "Taper"
           }
         },
         "de": {
@@ -27135,7 +27135,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "種類"
+            "value": "タイプ"
           }
         },
         "ko": {
@@ -27233,7 +27233,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "무제한"
+            "value": "제한 없는"
           }
         },
         "pt-BR": {
@@ -27555,7 +27555,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "업그레이드"
+            "value": "치받이"
           }
         },
         "pt-BR": {
@@ -27791,7 +27791,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Carregamento cancelado. Qualquer conjunto que já estava sendo substituído pode ficar vazio em App Store Connect — execute novamente o upload para reabastecê-lo."
+            "value": "Carregamento cancelado. Qualquer conjunto que já estava sendo substituído pode estar vazio em App Store Connect — execute novamente o upload para reabastecê-lo."
           }
         },
         "zh-Hans": {
@@ -27905,37 +27905,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le téléchargement a échoué lors de la tentative de %1$@."
+            "value": "Le téléchargement a échoué lors de la tentative de %@."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Beim Versuch, %1$@ hochzuladen, ist ein Fehler aufgetreten."
+            "value": "Beim Versuch, %@ hochzuladen, ist ein Fehler aufgetreten."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ の試行中にアップロードに失敗しました。"
+            "value": "%@ の試行中にアップロードに失敗しました。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@을(를) 시도하는 동안 업로드에 실패했습니다."
+            "value": "%@을(를) 시도하는 동안 업로드에 실패했습니다."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O upload falhou ao tentar %1$@."
+            "value": "O upload falhou ao tentar %@."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "尝试 %1$@ 时上传失败。"
+            "value": "尝试 %@ 时上传失败。"
           }
         }
       }
@@ -27951,37 +27951,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Échec du téléchargement : %1$@"
+            "value": "Échec du téléchargement : %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hochladen fehlgeschlagen: %1$@"
+            "value": "Hochladen fehlgeschlagen: %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アップロードに失敗しました: %1$@"
+            "value": "アップロードに失敗しました: %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "업로드 실패: %1$@"
+            "value": "업로드 실패: %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Falha no upload: %1$@"
+            "value": "Falha no upload: %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "上传失败：%1$@"
+            "value": "上传失败：%@"
           }
         }
       }
@@ -28136,7 +28136,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Majuscules"
+            "value": "Majuscule"
           }
         },
         "de": {
@@ -28320,37 +28320,37 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Utilisation détectée (%1$@)"
+            "value": "Utilisation détectée (%@)"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verwendung erkannt (%1$@)"
+            "value": "Verwendung erkannt (%@)"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "使用が検出されました (%1$@)"
+            "value": "使用が検出されました (%@)"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "사용 감지됨(%1$@)"
+            "value": "사용 감지됨(%@)"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uso detectado (%1$@)"
+            "value": "Uso detectado (%@)"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "检测到使用 (%1$@)"
+            "value": "检测到使用 (%@)"
           }
         }
       }
@@ -28694,7 +28694,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sichtbarkeit"
+            "value": "Sichtweite"
           }
         },
         "ja": {
@@ -28706,7 +28706,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "가시성"
+            "value": "시계"
           }
         },
         "pt-BR": {
@@ -28832,13 +28832,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Was ist neu?"
+            "value": "Was ist neu"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "新機能"
+            "value": "新着情報"
           }
         },
         "ko": {
@@ -28850,13 +28850,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Novidades"
+            "value": "O que há de novo"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "最新消息"
+            "value": "什么是新的"
           }
         }
       }
@@ -28902,7 +28902,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "设置后，Cmd+E 直接导出到该文件夹而不提示。"
+            "value": "设置后，Cmd+E 直接导出到该文件夹​​而不提示。"
           }
         }
       }
@@ -28936,7 +28936,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "폭"
+            "value": "너비"
           }
         },
         "pt-BR": {
@@ -28982,7 +28982,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "X"
+            "value": "엑스"
           }
         },
         "pt-BR": {
@@ -29074,7 +29074,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Y"
+            "value": "와이"
           }
         },
         "pt-BR": {
@@ -29148,7 +29148,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lacet"
+            "value": "Embardée"
           }
         },
         "de": {
@@ -29166,7 +29166,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "요"
+            "value": "편주"
           }
         },
         "pt-BR": {
@@ -29286,13 +29286,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zoomer"
+            "value": "Zoom"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zoomen"
+            "value": "Zoom"
           }
         },
         "ja": {
@@ -29316,7 +29316,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "变焦"
+            "value": "飞涨"
           }
         }
       }
