@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -31,10 +32,7 @@ struct ContentView: View {
     @State private var exportProgress = 0
     @State private var exportTotal = 0
     @State private var exportTask: Task<Void, Never>?
-    @State private var isRenamingProject = false
-    @State private var dialogText = ""
     @State private var isDeletingProject = false
-    @State private var isDuplicatingProject = false
     @State private var isResettingProject = false
     @State private var resetTemplate: ProjectTemplate?
     @State private var projectTemplates: [ProjectTemplate] = TemplateService.availableTemplates()
@@ -268,24 +266,6 @@ struct ContentView: View {
         } message: {
             Text("Are you sure you want to delete \"\(state.activeProject?.name ?? "")\"? This cannot be undone.")
         }
-        .alert("Rename Project", isPresented: $isRenamingProject) {
-            TextField("Project name", text: $dialogText.limited(to: 100))
-            Button("Rename") {
-                if let id = state.activeProjectId {
-                    state.renameProject(id, to: dialogText)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        }
-        .alert("Duplicate Project", isPresented: $isDuplicatingProject) {
-            TextField("Project name", text: $dialogText.limited(to: 100))
-            Button("Duplicate") {
-                if let id = state.activeProjectId {
-                    state.duplicateProject(id, name: dialogText)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        }
         .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
             PaywallSheetContent(store: store)
         }
@@ -364,10 +344,17 @@ struct ContentView: View {
     private var currentProjectSection: some View {
         Section("Current Project") {
             Button("Rename Project...") {
-                dialogText = state.activeProject?.name ?? ""
-                // Defer to next tick so menu dismisses before alert presents
+                guard let id = state.activeProjectId else { return }
+                let currentName = state.activeProject?.name ?? ""
+                // Defer so the menu fully dismisses before the modal opens.
                 Task { @MainActor in
-                    isRenamingProject = true
+                    presentProjectNameAlert(
+                        title: String(localized: "Rename Project"),
+                        confirmTitle: String(localized: "Rename"),
+                        initialValue: currentName
+                    ) { newName in
+                        state.renameProject(id, to: newName)
+                    }
                 }
             }
             .disabled(state.activeProjectId == nil)
@@ -377,9 +364,16 @@ struct ContentView: View {
                     allowed: store.canCreateProject(),
                     context: .projectLimit
                 ) {
-                    dialogText = (state.activeProject?.name ?? "") + " Copy"
+                    guard let id = state.activeProjectId else { return }
+                    let initialName = (state.activeProject?.name ?? "") + " Copy"
                     Task { @MainActor in
-                        isDuplicatingProject = true
+                        presentProjectNameAlert(
+                            title: String(localized: "Duplicate Project"),
+                            confirmTitle: String(localized: "Duplicate"),
+                            initialValue: initialName
+                        ) { newName in
+                            state.duplicateProject(id, name: newName)
+                        }
                     }
                 }
             }
@@ -411,6 +405,29 @@ struct ContentView: View {
                 }
             }
             .disabled(state.activeProjectId == nil || state.visibleProjects.count <= 1)
+        }
+    }
+
+    private func presentProjectNameAlert(
+        title: String,
+        confirmTitle: String,
+        initialValue: String,
+        onConfirm: (String) -> Void
+    ) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.addButton(withTitle: confirmTitle)
+        alert.addButton(withTitle: String(localized: "Cancel"))
+
+        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24))
+        textField.placeholderString = String(localized: "Project name")
+        textField.stringValue = initialValue
+        textField.selectText(nil)
+        alert.accessoryView = textField
+        alert.window.initialFirstResponder = textField
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            onConfirm(String(textField.stringValue.prefix(100)))
         }
     }
 
