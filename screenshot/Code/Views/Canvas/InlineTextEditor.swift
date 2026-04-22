@@ -291,12 +291,12 @@ struct InlineTextEditor: NSViewRepresentable {
 
         func textViewDidChangeSelection(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
-            let selectedRange = textView.selectedRange()
-            if selectedRange.length > 0 {
-                let attrs = textView.textStorage?.attributes(at: selectedRange.location, effectiveRange: nil)
-                parent.onSelectionChange?(attrs, selectedRange)
-            } else {
-                parent.onSelectionChange?(textView.typingAttributes, nil)
+            let selection = textView.selectedRange()
+            let (attrs, range): ([NSAttributedString.Key: Any]?, NSRange?) = selection.length > 0
+                ? (textView.textStorage?.attributes(at: selection.location, effectiveRange: nil), selection)
+                : (textView.typingAttributes, nil)
+            DispatchQueue.main.async { [weak self] in
+                self?.parent.onSelectionChange?(attrs, range)
             }
         }
 
