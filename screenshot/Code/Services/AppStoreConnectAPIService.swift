@@ -9,11 +9,11 @@ enum AppStoreConnectAPIError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Invalid request URL."
+            return String(localized: "Invalid request URL.")
         case .httpError(let status, let message):
-            return "App Store Connect returned \(status): \(message)"
+            return String(localized: "App Store Connect returned \(status): \(message)")
         case .decodingFailed(let error):
-            return "Response decoding failed: \(error.localizedDescription)"
+            return String(localized: "Response decoding failed: \(error.localizedDescription)")
         case .transport(let error):
             return error.localizedDescription
         }
@@ -39,9 +39,9 @@ final class AppStoreConnectAPIService {
     func testConnection() async throws -> String {
         let response: ASCListResponse<ASCApp> = try await get("/v1/apps?limit=1")
         if let first = response.data.first {
-            return "Connected. First app: \(first.attributes.name)"
+            return String(localized: "Connected. First app: \(first.attributes.name)")
         }
-        return "Connected. No apps found on this account yet."
+        return String(localized: "Connected. No apps found on this account yet.")
     }
 
     // MARK: - Apps / versions / localizations
@@ -353,7 +353,7 @@ struct ASCAppStoreVersion: Decodable, Identifiable {
         }
 
         var displayState: String {
-            guard let raw = appStoreState, !raw.isEmpty else { return "not editable" }
+            guard let raw = appStoreState, !raw.isEmpty else { return String(localized: "not editable") }
             return raw.replacingOccurrences(of: "_", with: " ").lowercased()
         }
 

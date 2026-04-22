@@ -55,7 +55,7 @@ extension AppState {
         // Verify the template data can be loaded before committing
         guard PersistenceService.loadProject(project.id) != nil else {
             PersistenceService.deleteProject(project.id)
-            saveError = "Failed to create project from template \"\(template.name)\". The template data could not be loaded."
+            saveError = String(localized: "Failed to create project from template \"\(template.name)\". The template data could not be loaded.")
             return
         }
 

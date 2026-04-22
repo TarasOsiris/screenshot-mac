@@ -28,7 +28,7 @@ struct FontPicker: View {
     }
 
     private var displayName: String {
-        if selection.isEmpty { return "System" }
+        if selection.isEmpty { return String(localized: "System") }
         return selection
     }
 
@@ -60,7 +60,7 @@ struct FontPicker: View {
 
                 Divider()
 
-                fontButton("System", value: "")
+                fontButton(String(localized: "System"), value: "")
 
                 if !sortedCustomFamilies.isEmpty {
                     Divider()

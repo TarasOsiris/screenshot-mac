@@ -7,8 +7,8 @@ enum ExportFolderService {
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
-        panel.prompt = "Select"
-        panel.message = "Choose a folder for exported screenshots"
+        panel.prompt = String(localized: "Select")
+        panel.message = String(localized: "Choose a folder for exported screenshots")
         guard panel.runModal() == .OK else { return nil }
         return panel.url
     }
@@ -40,7 +40,7 @@ enum ExportFolderService {
     }
 
     static func folderName(for path: String) -> String {
-        guard !path.isEmpty else { return "selected folder" }
+        guard !path.isEmpty else { return String(localized: "selected folder") }
         return URL(fileURLWithPath: path).lastPathComponent
     }
 }

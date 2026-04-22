@@ -117,7 +117,7 @@ extension AppState {
         action: String
     ) -> NSImage? {
         guard let pngData = ExportService.pngData(from: image) else {
-            saveError = "Failed to \(action): could not encode image."
+            saveError = String(localized: "Failed to \(action): could not encode image.")
             return nil
         }
 
@@ -125,7 +125,7 @@ extension AppState {
         do {
             try ImageResourceIO.writeData(pngData, url)
         } catch {
-            saveError = "Failed to \(action): \(error.localizedDescription)"
+            saveError = String(localized: "Failed to \(action): \(error.localizedDescription)")
             return nil
         }
 

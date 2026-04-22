@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ActionButton: View {
     let icon: String
-    let tooltip: String
+    let tooltip: LocalizedStringKey
     var iconSize: CGFloat = 11
     var frameSize: CGFloat = 22
     var isDestructive: Bool = false

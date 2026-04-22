@@ -24,20 +24,25 @@ enum ShapeType: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .rectangle: "Rectangle"
-        case .circle: "Circle"
-        case .star: "Star"
-        case .text: "Text"
-        case .image: "Image"
-        case .device: "Device"
-        case .svg: "SVG"
+        case .rectangle: String(localized: "Rectangle")
+        case .circle: String(localized: "Circle")
+        case .star: String(localized: "Star")
+        case .text: String(localized: "Text")
+        case .image: String(localized: "Image")
+        case .device: String(localized: "Device")
+        case .svg: String(localized: "SVG")
         }
     }
 
     var pluralLabel: String {
         switch self {
-        case .text: "Text"
-        default: label + "s"
+        case .rectangle: String(localized: "Rectangles")
+        case .circle: String(localized: "Circles")
+        case .star: String(localized: "Stars")
+        case .text: String(localized: "Text")
+        case .image: String(localized: "Images")
+        case .device: String(localized: "Devices")
+        case .svg: String(localized: "SVGs")
         }
     }
 

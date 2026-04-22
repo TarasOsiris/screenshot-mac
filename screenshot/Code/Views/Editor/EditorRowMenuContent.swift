@@ -109,7 +109,7 @@ struct EditorRowMenuContent: View {
     @ViewBuilder
     private var appearanceSection: some View {
         Menu("Devices") {
-            Button(row.showDevice ? "Hide Devices" : "Show Devices") {
+            Button(row.showDevice ? String(localized: "Hide Devices") : String(localized: "Show Devices")) {
                 state.toggleShowDevice(for: row.id)
             }
             Divider()
@@ -147,7 +147,7 @@ struct EditorRowMenuContent: View {
                 state.clearAllDeviceImages(in: row.id)
             }
         }
-        Button(row.showBorders ? "Hide Borders" : "Show Borders") {
+        Button(row.showBorders ? String(localized: "Hide Borders") : String(localized: "Show Borders")) {
             state.toggleShowBorders(for: row.id)
         }
     }

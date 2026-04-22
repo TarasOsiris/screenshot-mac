@@ -286,12 +286,12 @@ struct TemplateControlBar: View {
                 .appendingPathComponent("screenshot-\(index + 1)-\(localeState.activeLocaleCode).png")
             do {
                 guard let pngData = await Task.detached(operation: { ExportService.opaquePNGData(from: image) }).value else {
-                    renderError = "Could not render screenshot for preview."
+                    renderError = String(localized: "Could not render screenshot for preview.")
                     return
                 }
                 try pngData.write(to: tempURL)
             } catch {
-                renderError = "Could not write preview file: \(error.localizedDescription)"
+                renderError = String(localized: "Could not write preview file: \(error.localizedDescription)")
                 return
             }
             QuickLookCoordinator.shared.preview(imageAt: tempURL)

@@ -83,13 +83,13 @@ final class StoreService {
         #endif
 
         guard let apiKey = Self.resolvedAPIKey() else {
-            configurationIssue = "RevenueCat API key is missing. Set REVENUECAT_API_KEY in the app environment or Info.plist."
+            configurationIssue = String(localized: "RevenueCat API key is missing. Set REVENUECAT_API_KEY in the app environment or Info.plist.")
             return
         }
 
         #if !DEBUG
         guard !apiKey.hasPrefix("test_") else {
-            configurationIssue = "RevenueCat is configured with a Test Store API key. Replace it with your Apple public SDK key before shipping."
+            configurationIssue = String(localized: "RevenueCat is configured with a Test Store API key. Replace it with your Apple public SDK key before shipping.")
             return
         }
         #endif
@@ -117,7 +117,7 @@ final class StoreService {
             let customerInfo = try await Purchases.shared.customerInfo()
             updateEntitlement(from: customerInfo)
         } catch {
-            setPurchaseStatus("Failed to refresh purchase status: \(error.localizedDescription)", isError: true)
+            setPurchaseStatus(String(localized: "Failed to refresh purchase status: \(error.localizedDescription)"), isError: true)
         }
     }
 
@@ -146,19 +146,19 @@ final class StoreService {
     func handlePurchaseOrRestore(_ customerInfo: CustomerInfo) {
         updateEntitlement(from: customerInfo)
         if isProUnlocked {
-            setPurchaseStatus("Screenshot Bro Pro is unlocked and ready to use.")
+            setPurchaseStatus(String(localized: "Screenshot Bro Pro is unlocked and ready to use."))
             showPaywall = false
         } else {
-            setPurchaseStatus("Purchase completed, but RevenueCat did not grant access. Check the entitlement or product mapping in RevenueCat.", isError: true)
+            setPurchaseStatus(String(localized: "Purchase completed, but RevenueCat did not grant access. Check the entitlement or product mapping in RevenueCat."), isError: true)
         }
     }
 
     func handlePurchaseFailure(_ error: Error) {
-        setPurchaseStatus("Purchase failed: \(error.localizedDescription)", isError: true)
+        setPurchaseStatus(String(localized: "Purchase failed: \(error.localizedDescription)"), isError: true)
     }
 
     func handleRestoreFailure(_ error: Error) {
-        setPurchaseStatus("Restore failed: \(error.localizedDescription)", isError: true)
+        setPurchaseStatus(String(localized: "Restore failed: \(error.localizedDescription)"), isError: true)
     }
 
     // MARK: - Restore
@@ -167,7 +167,7 @@ final class StoreService {
         clearPurchaseStatus()
 
         guard Purchases.isConfigured else {
-            let message = configurationIssue ?? "RevenueCat is not configured."
+            let message = configurationIssue ?? String(localized: "RevenueCat is not configured.")
             setPurchaseStatus(message, isError: true)
             return
         }
@@ -176,9 +176,9 @@ final class StoreService {
             let customerInfo = try await Purchases.shared.restorePurchases()
             updateEntitlement(from: customerInfo)
             if isProUnlocked {
-                setPurchaseStatus("Your Screenshot Bro Pro purchase was restored.")
+                setPurchaseStatus(String(localized: "Your Screenshot Bro Pro purchase was restored."))
             } else {
-                setPurchaseStatus("No Screenshot Bro Pro purchase was found for this Apple Account.")
+                setPurchaseStatus(String(localized: "No Screenshot Bro Pro purchase was found for this Apple Account."))
             }
         } catch {
             handleRestoreFailure(error)

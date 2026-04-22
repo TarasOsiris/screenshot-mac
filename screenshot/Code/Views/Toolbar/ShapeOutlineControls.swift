@@ -10,7 +10,7 @@ struct ShapeOutlineControls: View {
         Toggle("Outline", isOn: hasOutline)
             .toggleStyle(.switch)
             .controlSize(.small)
-            .help(hasOutline.wrappedValue ? "Disable outline" : "Enable outline")
+            .help(hasOutline.wrappedValue ? String(localized: "Disable outline") : String(localized: "Enable outline"))
 
         if hasOutline.wrappedValue {
             ColorPicker("", selection: outlineColor, supportsOpacity: false)

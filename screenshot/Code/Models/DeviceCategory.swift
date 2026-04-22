@@ -17,10 +17,10 @@ enum DeviceCategory: String, Codable, CaseIterable {
         case .ipadPro11: "iPad Pro 11\""
         case .ipadPro13: "iPad Pro 13\""
         case .macbook: "MacBook"
-        case .androidPhone: "Android Phone"
-        case .pixel9: "Abstract Pixel 9"
-        case .androidTablet: "Android Tablet"
-        case .invisible: "Invisible"
+        case .androidPhone: String(localized: "Android Phone")
+        case .pixel9: String(localized: "Abstract Pixel 9")
+        case .androidTablet: String(localized: "Android Tablet")
+        case .invisible: String(localized: "Invisible")
         }
     }
 

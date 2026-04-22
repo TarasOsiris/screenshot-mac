@@ -51,6 +51,7 @@ struct AppStoreConnectSettingsView: View {
         } message: {
             Text("This removes the Issuer ID, Key ID, and imported private key from this Mac.")
         }
+        .onAppear { credentials.refreshPrivateKeyPresence() }
         .onChange(of: credentials.issuerId) { _, _ in resetConnectionState() }
         .onChange(of: credentials.keyId) { _, _ in resetConnectionState() }
         .onChange(of: credentials.hasPrivateKey) { _, _ in resetConnectionState() }
@@ -106,8 +107,8 @@ struct AppStoreConnectSettingsView: View {
                 fieldStatus(
                     value: trimmedIssuerId,
                     isComplete: isIssuerIdValid,
-                    emptyMessage: "Paste the Issuer ID from the API Keys page.",
-                    invalidMessage: "Issuer ID should be a UUID."
+                    emptyMessage: String(localized: "Paste the Issuer ID from the API Keys page."),
+                    invalidMessage: String(localized: "Issuer ID should be a UUID.")
                 )
             }
 
@@ -122,8 +123,8 @@ struct AppStoreConnectSettingsView: View {
                 fieldStatus(
                     value: trimmedKeyId,
                     isComplete: isKeyIdValid,
-                    emptyMessage: "Paste the 10-character Key ID.",
-                    invalidMessage: "Key ID is usually 10 uppercase letters and numbers."
+                    emptyMessage: String(localized: "Paste the 10-character Key ID."),
+                    invalidMessage: String(localized: "Key ID is usually 10 uppercase letters and numbers.")
                 )
             }
 
@@ -224,7 +225,7 @@ struct AppStoreConnectSettingsView: View {
 
     private var statusMessage: String {
         if credentials.isConfigured {
-            return "Test the connection before uploading screenshots."
+            return String(localized: "Test the connection before uploading screenshots.")
         }
         return missingConfigurationMessage
     }
@@ -233,25 +234,25 @@ struct AppStoreConnectSettingsView: View {
         [
             SetupItem(
                 id: "issuer",
-                title: "Issuer ID",
-                detail: isIssuerIdValid ? trimmedIssuerId : "Required UUID from App Store Connect",
+                title: String(localized: "Issuer ID"),
+                detail: isIssuerIdValid ? trimmedIssuerId : String(localized: "Required UUID from App Store Connect"),
                 isComplete: isIssuerIdValid
             ),
             SetupItem(
                 id: "key",
-                title: "Key ID",
-                detail: isKeyIdValid ? trimmedKeyId : "Required 10-character key ID",
+                title: String(localized: "Key ID"),
+                detail: isKeyIdValid ? trimmedKeyId : String(localized: "Required 10-character key ID"),
                 isComplete: isKeyIdValid
             ),
             SetupItem(
                 id: "private-key",
-                title: "Private key",
-                detail: credentials.hasPrivateKey ? ".p8 key imported" : "Import the .p8 file downloaded when the key was created",
+                title: String(localized: "Private key"),
+                detail: credentials.hasPrivateKey ? String(localized: ".p8 key imported") : String(localized: "Import the .p8 file downloaded when the key was created"),
                 isComplete: credentials.hasPrivateKey
             ),
             SetupItem(
                 id: "connection",
-                title: "Connection",
+                title: String(localized: "Connection"),
                 detail: connectionDetail,
                 isComplete: connectionTestPassed
             )
@@ -261,11 +262,11 @@ struct AppStoreConnectSettingsView: View {
     private var connectionDetail: String {
         switch testResult {
         case .success:
-            return "Last test passed"
+            return String(localized: "Last test passed")
         case .failure:
-            return "Last test failed"
+            return String(localized: "Last test failed")
         case nil:
-            return credentials.isConfigured ? "Not tested yet" : "Available after setup is complete"
+            return credentials.isConfigured ? String(localized: "Not tested yet") : String(localized: "Available after setup is complete")
         }
     }
 
@@ -278,25 +279,24 @@ struct AppStoreConnectSettingsView: View {
         let missing = setupItems
             .filter { $0.id != "connection" && !$0.isComplete }
             .map(\.title)
-        guard !missing.isEmpty else { return "Configuration is complete." }
-        return "Missing: \(missing.joined(separator: ", "))."
+        guard !missing.isEmpty else { return String(localized: "Configuration is complete.") }
+        return String(localized: "Missing: \(missing.joined(separator: ", ")).")
     }
 
     private var trimmedIssuerId: String {
-        credentials.issuerId.trimmingCharacters(in: .whitespacesAndNewlines)
+        credentials.trimmedIssuerId
     }
 
     private var trimmedKeyId: String {
-        credentials.keyId.trimmingCharacters(in: .whitespacesAndNewlines)
+        credentials.trimmedKeyId
     }
 
     private var isIssuerIdValid: Bool {
-        UUID(uuidString: trimmedIssuerId) != nil
+        credentials.isIssuerIdValid
     }
 
     private var isKeyIdValid: Bool {
-        let pattern = #"^[A-Z0-9]{10}$"#
-        return trimmedKeyId.range(of: pattern, options: .regularExpression) != nil
+        credentials.isKeyIdValid
     }
 
     private var normalizedIssuerIdBinding: Binding<String> {
@@ -359,17 +359,18 @@ struct AppStoreConnectSettingsView: View {
             do {
                 _ = try P256.Signing.PrivateKey(pemRepresentation: pem)
             } catch {
-                importError = "That doesn't look like a valid .p8 private key."
+                importError = String(localized: "That doesn't look like a valid .p8 private key.")
                 return
             }
             try credentials.savePrivateKey(pem)
             testResult = nil
         } catch {
-            importError = "Could not import the private key: \(error.localizedDescription)"
+            importError = String(localized: "Could not import the private key: \(error.localizedDescription)")
         }
     }
 
     private func runTest() async {
+        credentials.refreshPrivateKeyPresence()
         resetConnectionState(clearImportError: false)
         isTesting = true
         defer { isTesting = false }
@@ -400,11 +401,11 @@ struct AppStoreConnectSettingsView: View {
         if let apiError = error as? AppStoreConnectAPIError {
             switch apiError {
             case .httpError(let status, let message) where status == 401 || status == 403:
-                return "\(message) Check that the Issuer ID, Key ID, private key, and API key permissions match the App Store Connect key."
+                return String(localized: "\(message) Check that the Issuer ID, Key ID, private key, and API key permissions match the App Store Connect key.")
             case .httpError(let status, let message):
-                return "App Store Connect returned \(status): \(message)"
+                return String(localized: "App Store Connect returned \(status): \(message)")
             case .transport(let transportError):
-                return "Network request failed: \(transportError.localizedDescription)"
+                return String(localized: "Network request failed: \(transportError.localizedDescription)")
             default:
                 return apiError.localizedDescription
             }

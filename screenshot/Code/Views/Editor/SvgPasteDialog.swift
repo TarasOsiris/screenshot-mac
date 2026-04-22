@@ -101,21 +101,21 @@ struct SvgPasteDialog: View {
         let maxSvgSize = 512 * 1024 // 512 KB
         guard trimmed.utf8.count <= maxSvgSize else {
             previewImage = nil
-            errorMessage = "SVG content is too large (max 512 KB)"
+            errorMessage = String(localized: "SVG content is too large (max 512 KB)")
             isValidSvg = false
             return
         }
 
         guard trimmed.contains("<svg") else {
             previewImage = nil
-            errorMessage = "Not a valid SVG — must contain an <svg> element"
+            errorMessage = String(localized: "Not a valid SVG — must contain an <svg> element")
             isValidSvg = false
             return
         }
 
         guard let image = SvgHelper.renderImage(from: trimmed, useColor: useColorOverride, color: overrideColor) else {
             previewImage = nil
-            errorMessage = "Could not render SVG — check for syntax errors"
+            errorMessage = String(localized: "Could not render SVG — check for syntax errors")
             isValidSvg = false
             return
         }
@@ -130,7 +130,7 @@ struct SvgPasteDialog: View {
         let sanitized = SvgHelper.sanitize(trimmed)
         guard let data = sanitized.data(using: .utf8),
               let image = NSImage(data: data) else {
-            errorMessage = "Invalid SVG content"
+            errorMessage = String(localized: "Invalid SVG content")
             return
         }
         let size = SvgHelper.parseSize(sanitized, fallbackImage: image)

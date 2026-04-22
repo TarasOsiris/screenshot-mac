@@ -35,10 +35,10 @@ struct ShapePropertiesSeparator: View {
 }
 
 struct ShapePropertiesControlGroup<Content: View>: View {
-    let label: String
+    let label: LocalizedStringKey
     private let content: Content
 
-    init(_ label: String, @ViewBuilder content: () -> Content) {
+    init(_ label: LocalizedStringKey, @ViewBuilder content: () -> Content) {
         self.label = label
         self.content = content()
     }
@@ -149,7 +149,7 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
 }
 
 struct ImageShapeControls: View {
-    let buttonTitle: String
+    let buttonTitle: LocalizedStringKey
     let showsLocaleImageReset: Bool
     let onPickImage: () -> Void
     let onResetLocaleImage: () -> Void

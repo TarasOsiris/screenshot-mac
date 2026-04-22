@@ -10,9 +10,9 @@ enum AppStoreConnectUploadError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .renderFailed(let label, let displayTypeLabel, let localeLabel, let index):
-            return "Could not render screenshot \(index + 1) for \(label) (\(displayTypeLabel)) in \(localeLabel). Check that this row previews correctly in the editor, then try the upload again."
+            return String(localized: "Could not render screenshot \(index + 1) for \(label) (\(displayTypeLabel)) in \(localeLabel). Check that this row previews correctly in the editor, then try the upload again.")
         case .noRowsSelected:
-            return "No rows selected for upload."
+            return String(localized: "No rows selected for upload.")
         case .requestFailed(let context):
             return context.detailedMessage
         }
@@ -21,9 +21,9 @@ enum AppStoreConnectUploadError: Error, LocalizedError {
     var summaryDescription: String {
         switch self {
         case .renderFailed(let label, _, let localeLabel, let index):
-            return "Could not render \(label) · \(localeLabel) · screenshot \(index + 1)."
+            return String(localized: "Could not render \(label) · \(localeLabel) · screenshot \(index + 1).")
         case .noRowsSelected:
-            return "No rows selected for upload."
+            return String(localized: "No rows selected for upload.")
         case .requestFailed(let context):
             return context.summaryMessage
         }
@@ -107,7 +107,7 @@ struct ASCUploadFailureContext {
             case .transport(let error):
                 self.httpStatus = nil
                 self.apiMessage = nil
-                self.originalMessage = "Network request failed: \(error.localizedDescription)"
+                self.originalMessage = String(localized: "Network request failed: \(error.localizedDescription)")
             default:
                 self.httpStatus = nil
                 self.apiMessage = nil
@@ -122,44 +122,44 @@ struct ASCUploadFailureContext {
 
     var summaryMessage: String {
         if isDisplayTypeNotAllowed {
-            return "\(displayTypeLabel) is not allowed for this app/version."
+            return String(localized: "\(displayTypeLabel) is not allowed for this app/version.")
         }
         if let httpStatus {
-            return "App Store Connect returned \(httpStatus) while trying to \(operation)."
+            return String(localized: "App Store Connect returned \(httpStatus) while trying to \(operation).")
         }
-        return "Upload failed while trying to \(operation)."
+        return String(localized: "Upload failed while trying to \(operation).")
     }
 
     var detailedMessage: String {
         if isDisplayTypeNotAllowed {
             var messages = [
-                "Could not create the screenshot set for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel).",
-                "App Store Connect does not allow \(displayTypeLabel) (\(displayTypeRawValue)) for this app version/localization. This usually means the selected app version does not support that device family, such as uploading iPad screenshots for an iPhone-only app, or App Store Connect does not accept this display type for the selected platform.",
-                "Disable this row, choose a display type that App Store Connect accepts for this app, or update the app's device support before retrying.",
+                String(localized: "Could not create the screenshot set for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel)."),
+                String(localized: "App Store Connect does not allow \(displayTypeLabel) (\(displayTypeRawValue)) for this app version/localization. This usually means the selected app version does not support that device family, such as uploading iPad screenshots for an iPhone-only app, or App Store Connect does not accept this display type for the selected platform."),
+                String(localized: "Disable this row, choose a display type that App Store Connect accepts for this app, or update the app's device support before retrying."),
             ]
             if existingSetWasDeleted {
-                messages.append("The existing \(displayTypeLabel) screenshot set for \(localeLabel) may already have been deleted. After fixing the issue, re-run the upload to refill that set.")
+                messages.append(String(localized: "The existing \(displayTypeLabel) screenshot set for \(localeLabel) may already have been deleted. After fixing the issue, re-run the upload to refill that set."))
             }
-            messages.append("Original response: \(originalMessage)")
+            messages.append(String(localized: "Original response: \(originalMessage)"))
             return messages.joined(separator: "\n\n")
         }
 
         if httpStatus == 401 || httpStatus == 403 {
             return [
-                "Could not \(operation) for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel).",
-                "App Store Connect rejected the request because the API key is not authorized for this app or action. Check that the key has access to this app and enough App Store Connect permissions to edit app metadata.",
-                "Original response: \(originalMessage)"
+                String(localized: "Could not \(operation) for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel)."),
+                String(localized: "App Store Connect rejected the request because the API key is not authorized for this app or action. Check that the key has access to this app and enough App Store Connect permissions to edit app metadata."),
+                String(localized: "Original response: \(originalMessage)")
             ].joined(separator: "\n\n")
         }
 
         var messages = [
-            "Could not \(operation) for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel).",
-            "App Store Connect did not accept the request. Check the selected app, version, display type, and locale, then retry.",
+            String(localized: "Could not \(operation) for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel)."),
+            String(localized: "App Store Connect did not accept the request. Check the selected app, version, display type, and locale, then retry."),
         ]
         if existingSetWasDeleted {
-            messages.append("The existing \(displayTypeLabel) screenshot set for \(localeLabel) may already have been deleted. After fixing the issue, re-run the upload to refill that set.")
+            messages.append(String(localized: "The existing \(displayTypeLabel) screenshot set for \(localeLabel) may already have been deleted. After fixing the issue, re-run the upload to refill that set."))
         }
-        messages.append("Original response: \(originalMessage)")
+        messages.append(String(localized: "Original response: \(originalMessage)"))
         return messages.joined(separator: "\n\n")
     }
 

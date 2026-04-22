@@ -188,7 +188,7 @@ extension AppState {
         do {
             try PersistenceService.saveIndex(index)
         } catch {
-            saveError = "Failed to save project index: \(error.localizedDescription)"
+            saveError = String(localized: "Failed to save project index: \(error.localizedDescription)")
         }
     }
 
@@ -199,7 +199,7 @@ extension AppState {
             try PersistenceService.saveProject(activeId, data: data)
             activeProjectDataModifiedAt = data.modifiedAt
         } catch {
-            saveError = "Failed to save project: \(error.localizedDescription)"
+            saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
         }
     }
 

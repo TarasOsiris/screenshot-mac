@@ -18,7 +18,7 @@ struct ScreenshotSize: Identifiable {
     }
 
     var displayLabel: String {
-        let orientation = isLandscape ? "Landscape" : "Portrait"
+        let orientation = isLandscape ? String(localized: "Landscape") : String(localized: "Portrait")
         let suffix = subtitle.map { " — \($0)" } ?? ""
         return label + " " + orientation + suffix
     }
@@ -138,7 +138,7 @@ func parseSizeString(_ value: String) -> (width: CGFloat, height: CGFloat)? {
 func presetLabel(forWidth width: CGFloat, height: CGFloat) -> String {
     for category in displayCategories {
         if let size = category.sizes.first(where: { $0.width == width && $0.height == height }) {
-            let orientation = size.isLandscape ? "Landscape" : "Portrait"
+            let orientation = size.isLandscape ? String(localized: "Landscape") : String(localized: "Portrait")
             return "\(category.name) \(orientation)"
         }
     }

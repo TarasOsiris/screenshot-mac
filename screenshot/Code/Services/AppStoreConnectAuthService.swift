@@ -2,18 +2,30 @@ import Foundation
 import CryptoKit
 
 enum AppStoreConnectAuthError: Error, LocalizedError {
-    case missingCredentials
+    case missingIssuerId
+    case invalidIssuerId
+    case missingKeyId
+    case invalidKeyId
+    case missingPrivateKey
     case invalidPrivateKey
     case signingFailed
 
     var errorDescription: String? {
         switch self {
-        case .missingCredentials:
-            return "Issuer ID, Key ID, and private key are required."
+        case .missingIssuerId:
+            return String(localized: "Paste the Issuer ID from the API Keys page.")
+        case .invalidIssuerId:
+            return String(localized: "Issuer ID should be a UUID.")
+        case .missingKeyId:
+            return String(localized: "Paste the 10-character Key ID.")
+        case .invalidKeyId:
+            return String(localized: "Key ID is usually 10 uppercase letters and numbers.")
+        case .missingPrivateKey:
+            return String(localized: "Import the .p8 file downloaded when the key was created.")
         case .invalidPrivateKey:
-            return "Could not parse the private key. Make sure it's a valid .p8 file downloaded from App Store Connect."
+            return String(localized: "Could not parse the private key. Make sure it's a valid .p8 file downloaded from App Store Connect.")
         case .signingFailed:
-            return "Failed to sign the JWT token."
+            return String(localized: "Failed to sign the JWT token.")
         }
     }
 }
@@ -53,10 +65,16 @@ final class AppStoreConnectAuthService {
     }
 
     private func currentSnapshot() throws -> Snapshot {
-        let issuer = credentials.issuerId.trimmingCharacters(in: .whitespaces)
-        let keyId = credentials.keyId.trimmingCharacters(in: .whitespaces)
-        guard !issuer.isEmpty, !keyId.isEmpty, let pem = credentials.privateKeyPEM() else {
-            throw AppStoreConnectAuthError.missingCredentials
+        let issuer = credentials.trimmedIssuerId
+        guard !issuer.isEmpty else { throw AppStoreConnectAuthError.missingIssuerId }
+        guard UUID(uuidString: issuer) != nil else { throw AppStoreConnectAuthError.invalidIssuerId }
+
+        let keyId = credentials.trimmedKeyId
+        guard !keyId.isEmpty else { throw AppStoreConnectAuthError.missingKeyId }
+        guard credentials.isKeyIdValid else { throw AppStoreConnectAuthError.invalidKeyId }
+
+        guard let pem = credentials.privateKeyPEM() else {
+            throw AppStoreConnectAuthError.missingPrivateKey
         }
         return Snapshot(issuerId: issuer, keyId: keyId, pem: pem)
     }

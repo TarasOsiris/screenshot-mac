@@ -239,7 +239,7 @@ struct ContentView: View {
         } message: {
             Text(exportError ?? "")
         }
-        .alert(resetTemplate != nil ? "Reset Project from Template" : "Reset Project", isPresented: $isResettingProject) {
+        .alert(resetTemplate != nil ? String(localized: "Reset Project from Template") : String(localized: "Reset Project"), isPresented: $isResettingProject) {
             Button("Reset", role: .destructive) {
                 if let id = state.activeProjectId {
                     if let template = resetTemplate {
@@ -454,7 +454,7 @@ struct ContentView: View {
             projectMenuLabel
         }
         .menuStyle(.button)
-        .help(state.activeProject?.name ?? "Switch project")
+        .help(state.activeProject?.name ?? String(localized: "Switch project"))
         .accessibilityIdentifier("projectSwitcherMenu")
     }
 
@@ -493,7 +493,7 @@ struct ContentView: View {
         } label: {
             Label("Inspector", systemImage: "sidebar.trailing")
         }
-        .help(isInspectorPresented ? "Hide inspector" : "Show inspector")
+        .help(isInspectorPresented ? String(localized: "Hide inspector") : String(localized: "Show inspector"))
     }
 
     private var exportControlGroup: some View {
@@ -674,7 +674,7 @@ struct ContentView: View {
                     config: config
                 )
             }) {
-                exportError = "Could not export row image: \(message)"
+                exportError = String(localized: "Could not export row image: \(message)")
             }
         }
     }
@@ -713,7 +713,7 @@ struct ContentView: View {
                     let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
                     let image = render(row, rowImages, localeCode, state.localeState)
                     guard let data = ExportService.encodeImage(image, format: .png) else {
-                        exportError = "Failed to render row \(index + 1)"
+                        exportError = String(localized: "Failed to render row \(index + 1)")
                         return
                     }
                     let paddedIndex = String(format: "%02d", index + 1)
@@ -731,7 +731,7 @@ struct ContentView: View {
                 // User cancelled
             } catch {
                 exportError = error.localizedDescription
-                NotificationService.notify(title: "Export failed", body: error.localizedDescription)
+                NotificationService.notify(title: String(localized: "Export failed"), body: error.localizedDescription)
             }
         }
     }
@@ -744,12 +744,12 @@ struct ContentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timer)
 
         let count = exportTotal
-        let noun = count == 1 ? "screenshot" : "screenshots"
+        let noun = count == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
         let projectName = state.activeProject?.name ?? ""
         let body = projectName.isEmpty
-            ? "\(count) \(noun) exported"
-            : "\(count) \(noun) exported · \(projectName)"
-        NotificationService.notify(title: "Export complete", body: body)
+            ? String(localized: "\(count) \(noun) exported")
+            : String(localized: "\(count) \(noun) exported · \(projectName)")
+        NotificationService.notify(title: String(localized: "Export complete"), body: body)
     }
 
     private func chooseExportDestination() -> URL? {
@@ -809,7 +809,7 @@ struct ContentView: View {
                 // User cancelled — no error to show
             } catch {
                 exportError = error.localizedDescription
-                NotificationService.notify(title: "Export failed", body: error.localizedDescription)
+                NotificationService.notify(title: String(localized: "Export failed"), body: error.localizedDescription)
             }
         }
     }
@@ -829,7 +829,7 @@ struct ContentView: View {
 
     private func saveLastExportFolder(_ url: URL) {
         guard let result = ExportFolderService.saveBookmark(for: url) else {
-            exportError = "Failed to remember export folder"
+            exportError = String(localized: "Failed to remember export folder")
             return
         }
         lastExportFolderBookmark = result.bookmark

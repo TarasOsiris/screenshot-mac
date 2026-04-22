@@ -719,7 +719,7 @@ struct EditorRowView: View {
                 }
                 NSWorkspace.shared.activateFileViewerSelecting([folder])
             } catch {
-                exportError = "Could not export row screenshots: \(error.localizedDescription)"
+                exportError = String(localized: "Could not export row screenshots: \(error.localizedDescription)")
             }
         }
     }
@@ -737,7 +737,7 @@ struct EditorRowView: View {
                 localeCode: localeCode, localeState: state.localeState
             )
         }) {
-            exportError = "Could not export row image: \(message)"
+            exportError = String(localized: "Could not export row image: \(message)")
         }
     }
 

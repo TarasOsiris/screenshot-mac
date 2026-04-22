@@ -6,6 +6,7 @@ struct SettingsView: View {
 
     @Environment(StoreService.self) private var store
     @AppStorage("appearance") private var appearance = "auto"
+    @AppStorage("appLanguageOverride") private var languageOverride = ""
     @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
@@ -17,6 +18,8 @@ struct SettingsView: View {
     @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
     @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
     @AppStorage("projectSortOrder") private var projectSortOrder = "creation"
+
+    @State private var showLanguageRelaunchAlert = false
 
     @State private var iCloudEnabled = ICloudSyncService.shared.isEnabled
     @State private var iCloudAvailable = ICloudSyncService.shared.isAvailable
@@ -64,6 +67,8 @@ struct SettingsView: View {
                 Text("Light").tag("light")
                 Text("Dark").tag("dark")
             }
+
+            languagePicker
 
             ScreenshotSizePicker(selection: $defaultScreenshotSize)
 
@@ -183,6 +188,57 @@ struct SettingsView: View {
         } else {
             Label("Connecting...", systemImage: "arrow.triangle.2.circlepath")
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var languagePicker: some View {
+        Picker("Language", selection: $languageOverride) {
+            Text("System").tag("")
+            ForEach(Self.availableAppLanguages, id: \.self) { code in
+                Text(Self.displayName(forLanguageCode: code)).tag(code)
+            }
+        }
+        .onChange(of: languageOverride) { _, newValue in
+            applyLanguageOverride(newValue)
+            showLanguageRelaunchAlert = true
+        }
+        .alert("Restart to change language", isPresented: $showLanguageRelaunchAlert) {
+            Button("Restart Now") { relaunchApp() }
+            Button("Later", role: .cancel) {}
+        } message: {
+            Text("The interface language will switch the next time Screenshot Bro launches.")
+        }
+    }
+
+    private static var availableAppLanguages: [String] {
+        Bundle.main.localizations
+            .filter { $0 != "Base" }
+            .sorted()
+    }
+
+    private static func displayName(forLanguageCode code: String) -> String {
+        let localeInOwnLanguage = Locale(identifier: code)
+        if let name = localeInOwnLanguage.localizedString(forLanguageCode: code) {
+            return name.capitalized(with: localeInOwnLanguage)
+        }
+        return code
+    }
+
+    private func applyLanguageOverride(_ code: String) {
+        if code.isEmpty {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.set([code], forKey: "AppleLanguages")
+        }
+    }
+
+    private func relaunchApp() {
+        guard let url = Bundle.main.bundleURL as URL? else { return }
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+            Task { @MainActor in NSApp.terminate(nil) }
         }
     }
 
@@ -344,17 +400,17 @@ struct SettingsView: View {
             comparisonRow(
                 title: "Projects",
                 freeValue: "1",
-                proValue: "Unlimited"
+                proValue: String(localized: "Unlimited")
             )
             comparisonRow(
                 title: "Rows per project",
                 freeValue: "\(StoreService.freeMaxRows)",
-                proValue: "Unlimited"
+                proValue: String(localized: "Unlimited")
             )
             comparisonRow(
                 title: "Screenshots per row",
                 freeValue: "\(StoreService.freeMaxTemplatesPerRow)",
-                proValue: "Unlimited"
+                proValue: String(localized: "Unlimited")
             )
         }
 
@@ -407,7 +463,7 @@ struct SettingsView: View {
         .formStyle(.grouped)
     }
 
-    private func proFeatureRow(_ text: String) -> some View {
+    private func proFeatureRow(_ text: LocalizedStringKey) -> some View {
         Label(text, systemImage: "checkmark")
             .foregroundStyle(.primary)
     }
@@ -440,7 +496,7 @@ struct SettingsView: View {
                 guard process.terminationStatus == 0 else {
                     try? FileManager.default.removeItem(at: tempZip)
                     isBackingUp = false
-                    backupResult = .failure("Backup failed (zip exited with status \(process.terminationStatus)).")
+                    backupResult = .failure(String(localized: "Backup failed (zip exited with status \(process.terminationStatus))."))
                     return
                 }
                 if FileManager.default.fileExists(atPath: destURL.path) {
@@ -456,7 +512,7 @@ struct SettingsView: View {
         }
     }
 
-    private func comparisonRow(title: String, freeValue: String, proValue: String) -> some View {
+    private func comparisonRow(title: LocalizedStringKey, freeValue: String, proValue: String) -> some View {
         HStack(spacing: 16) {
             Text(title)
             Spacer()

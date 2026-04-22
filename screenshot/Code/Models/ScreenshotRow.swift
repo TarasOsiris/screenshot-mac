@@ -23,7 +23,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     var isCollapsed: Bool
 
     /// User-facing label; falls back to "Untitled Row" when `label` is empty.
-    var displayLabel: String { label.isEmpty ? "Untitled Row" : label }
+    var displayLabel: String { label.isEmpty ? String(localized: "Untitled Row") : label }
 
     init(
         id: UUID = UUID(),

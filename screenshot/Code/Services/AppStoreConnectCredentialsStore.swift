@@ -28,17 +28,34 @@ final class AppStoreConnectCredentialsStore {
     private init() {
         self.issuerId = UserDefaults.standard.string(forKey: Self.issuerIdKey) ?? ""
         self.keyId = UserDefaults.standard.string(forKey: Self.keyIdKey) ?? ""
-        self.hasPrivateKey = KeychainService.load(account: Self.keychainAccount) != nil
+        self.hasPrivateKey = Self.normalizedPrivateKey(KeychainService.load(account: Self.keychainAccount)) != nil
+    }
+
+    var trimmedIssuerId: String {
+        issuerId.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var trimmedKeyId: String {
+        keyId.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var isIssuerIdValid: Bool {
+        UUID(uuidString: trimmedIssuerId) != nil
+    }
+
+    var isKeyIdValid: Bool {
+        trimmedKeyId.range(of: #"^[A-Z0-9]{10}$"#, options: .regularExpression) != nil
     }
 
     var isConfigured: Bool {
-        !issuerId.trimmingCharacters(in: .whitespaces).isEmpty
-            && !keyId.trimmingCharacters(in: .whitespaces).isEmpty
-            && hasPrivateKey
+        isIssuerIdValid
+            && isKeyIdValid
+            && Self.normalizedPrivateKey(KeychainService.load(account: Self.keychainAccount)) != nil
     }
 
     func savePrivateKey(_ pem: String) throws {
-        try KeychainService.save(pem, account: Self.keychainAccount)
+        let normalized = Self.normalizedPrivateKey(pem)
+        try KeychainService.save(normalized ?? pem, account: Self.keychainAccount)
         hasPrivateKey = true
     }
 
@@ -47,7 +64,19 @@ final class AppStoreConnectCredentialsStore {
         hasPrivateKey = false
     }
 
+    func refreshPrivateKeyPresence() {
+        hasPrivateKey = Self.normalizedPrivateKey(KeychainService.load(account: Self.keychainAccount)) != nil
+    }
+
     func privateKeyPEM() -> String? {
-        KeychainService.load(account: Self.keychainAccount)
+        let pem = Self.normalizedPrivateKey(KeychainService.load(account: Self.keychainAccount))
+        hasPrivateKey = pem != nil
+        return pem
+    }
+
+    private static func normalizedPrivateKey(_ pem: String?) -> String? {
+        guard let pem else { return nil }
+        let normalized = pem.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.isEmpty ? nil : normalized
     }
 }

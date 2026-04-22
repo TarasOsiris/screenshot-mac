@@ -323,9 +323,12 @@ struct UploadToAppStoreConnectView: View {
         let screenshotCount = groups.reduce(0) { $0 + $1.screenshotCount }
         let localeCount = groups.count
         let setCount = selectedUploadPlanEntries.count
-        return "Existing screenshots in each matching display type set will be deleted and replaced. " +
-            "\(screenshotCount) screenshot\(screenshotCount == 1 ? "" : "s") will be uploaded across \(setCount) set\(setCount == 1 ? "" : "s") and \(localeCount) locale\(localeCount == 1 ? "" : "s"). " +
-            "This cannot be undone."
+        let shotNoun = screenshotCount == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
+        let setNoun = setCount == 1 ? String(localized: "set") : String(localized: "sets")
+        let locNoun = localeCount == 1 ? String(localized: "locale") : String(localized: "locales")
+        return String(localized: "Existing screenshots in each matching display type set will be deleted and replaced. ") +
+            String(localized: "\(screenshotCount) \(shotNoun) will be uploaded across \(setCount) \(setNoun) and \(localeCount) \(locNoun). ") +
+            String(localized: "This cannot be undone.")
     }
 
     // MARK: - Header / footer
@@ -468,9 +471,9 @@ struct UploadToAppStoreConnectView: View {
     private var uploadPlanEntries: [UploadPlanEntry] {
         rowPlans.flatMap { plan -> [UploadPlanEntry] in
             guard plan.isEnabled else { return [] }
-            let rowLabel = plan.rowLabel.isEmpty ? "Row" : plan.rowLabel
+            let rowLabel = plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel
             let sourceSizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
-            let displayTypeLabel = plan.selectedDisplayType?.label ?? "No display type selected"
+            let displayTypeLabel = plan.selectedDisplayType?.label ?? String(localized: "No display type selected")
             let displayTypeRawValue = plan.selectedDisplayType?.appStoreConnectValue ?? "none"
 
             return plan.localeTargets.map { target in
@@ -482,13 +485,13 @@ struct UploadToAppStoreConnectView: View {
                 if isSelected {
                     skipReason = nil
                 } else if target.candidates.isEmpty {
-                    skipReason = "No matching App Store locale"
+                    skipReason = String(localized: "No matching App Store locale")
                 } else if !target.isEnabled {
-                    skipReason = "Unchecked"
+                    skipReason = String(localized: "Unchecked")
                 } else if plan.selectedDisplayType == nil {
-                    skipReason = "No display type selected"
+                    skipReason = String(localized: "No display type selected")
                 } else {
-                    skipReason = "No App Store locale selected"
+                    skipReason = String(localized: "No App Store locale selected")
                 }
 
                 return UploadPlanEntry(
@@ -842,7 +845,7 @@ struct UploadToAppStoreConnectView: View {
 
     @ViewBuilder
     private func metadataField(
-        label: String,
+        label: LocalizedStringKey,
         text: Binding<String>,
         limit: Int?,
         multiline: Bool = false,
@@ -956,7 +959,7 @@ struct UploadToAppStoreConnectView: View {
                                 Image(systemName: "minus.circle")
                                     .foregroundStyle(.secondary)
                                     .font(.caption)
-                                Text("\(entry.projectLocaleLabel) · \(entry.rowLabel): \(entry.skipReason ?? "Skipped")")
+                                Text("\(entry.projectLocaleLabel) · \(entry.rowLabel): \(entry.skipReason ?? String(localized: "Skipped"))")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -977,7 +980,7 @@ struct UploadToAppStoreConnectView: View {
         .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
     }
 
-    private func summaryMetric(_ value: String, _ label: String) -> some View {
+    private func summaryMetric(_ value: String, _ label: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
                 .font(.headline.monospacedDigit())
@@ -1094,7 +1097,7 @@ struct UploadToAppStoreConnectView: View {
             HStack {
                 Toggle(isOn: plan.isEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(plan.wrappedValue.rowLabel.isEmpty ? "Row" : plan.wrappedValue.rowLabel)
+                        Text(plan.wrappedValue.rowLabel.isEmpty ? String(localized: "Row") : plan.wrappedValue.rowLabel)
                             .fontWeight(.medium)
                         Text("\(Int(plan.wrappedValue.rowSize.width))×\(Int(plan.wrappedValue.rowSize.height)) · \(plan.wrappedValue.templateCount) screenshot\(plan.wrappedValue.templateCount == 1 ? "" : "s")")
                             .font(.caption)
@@ -1492,7 +1495,7 @@ struct UploadToAppStoreConnectView: View {
             rowPlans = buildRowPlans(preserving: rowPlans)
             step = .configuringPlan
         } catch {
-            errorMessage = "Failed to save metadata: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to save metadata: \(error.localizedDescription)")
         }
     }
 
@@ -1505,7 +1508,7 @@ struct UploadToAppStoreConnectView: View {
             localizations = try await AppStoreConnectAPIService.shared.listLocalizations(versionId: version.id)
             rowPlans = buildRowPlans(preserving: rowPlans)
         } catch {
-            errorMessage = "Could not refresh locales: \(error.localizedDescription)"
+            errorMessage = String(localized: "Could not refresh locales: \(error.localizedDescription)")
         }
     }
 
@@ -1552,12 +1555,12 @@ struct UploadToAppStoreConnectView: View {
         errorDetailsText = nil
         let issues = validationIssues
         guard !issues.hasErrors else {
-            errorMessage = "Fix the preflight errors before uploading."
+            errorMessage = String(localized: "Fix the preflight errors before uploading.")
             return
         }
         let targets = buildUploadTargets()
         guard !targets.isEmpty else {
-            errorMessage = "No rows × locales are selected."
+            errorMessage = String(localized: "No rows × locales are selected.")
             step = .configuringPlan
             return
         }
@@ -1582,21 +1585,21 @@ struct UploadToAppStoreConnectView: View {
                 )
                 uploadSummary = summary
                 step = .done
-                let shotNoun = summary.totalScreenshots == 1 ? "screenshot" : "screenshots"
-                let locNoun = summary.localizationCount == 1 ? "locale" : "locales"
+                let shotNoun = summary.totalScreenshots == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
+                let locNoun = summary.localizationCount == 1 ? String(localized: "locale") : String(localized: "locales")
                 let body = summary.appName.isEmpty
-                    ? "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun)"
-                    : "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) · \(summary.appName)"
-                NotificationService.notify(title: "Upload complete", body: body)
+                    ? String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun)")
+                    : String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) · \(summary.appName)")
+                NotificationService.notify(title: String(localized: "Upload complete"), body: body)
             } catch is CancellationError {
-                errorMessage = "Upload cancelled. Any set that was already being replaced may be empty in App Store Connect — re-run the upload to refill it."
+                errorMessage = String(localized: "Upload cancelled. Any set that was already being replaced may be empty in App Store Connect — re-run the upload to refill it.")
                 step = .configuringPlan
             } catch {
                 let summary = uploadFailureSummary(for: error)
                 errorMessage = summary
                 errorDetailsText = buildErrorDetails(for: error)
                 step = .configuringPlan
-                NotificationService.notify(title: "Upload failed", body: summary)
+                NotificationService.notify(title: String(localized: "Upload failed"), body: summary)
             }
         }
         uploadTask = task
@@ -1613,7 +1616,7 @@ struct UploadToAppStoreConnectView: View {
             guard !localizations.isEmpty else { return nil }
             return ASCUploadTarget(
                 rowId: plan.id,
-                rowLabel: plan.rowLabel.isEmpty ? "Row" : plan.rowLabel,
+                rowLabel: plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel,
                 rowSize: plan.rowSize,
                 displayType: displayType,
                 localizations: localizations,
@@ -1626,7 +1629,7 @@ struct UploadToAppStoreConnectView: View {
         if let uploadError = error as? AppStoreConnectUploadError {
             return uploadError.summaryDescription
         }
-        return "Upload failed: \(error.localizedDescription)"
+        return String(localized: "Upload failed: \(error.localizedDescription)")
     }
 
     private func buildErrorDetails(for error: Error) -> String {

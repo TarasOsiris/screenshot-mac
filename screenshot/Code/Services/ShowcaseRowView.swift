@@ -167,7 +167,7 @@ enum ExportError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .renderFailed: "Failed to render screenshot"
+        case .renderFailed: String(localized: "Failed to render screenshot")
         }
     }
 }

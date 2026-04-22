@@ -236,7 +236,7 @@ extension AppState {
 
     func toggleShowDevice(for rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        registerUndoForRow(at: idx, rows[idx].showDevice ? "Hide Devices" : "Show Devices")
+        registerUndoForRow(at: idx, rows[idx].showDevice ? String(localized: "Hide Devices") : String(localized: "Show Devices"))
         rows[idx].showDevice.toggle()
         scheduleSave()
     }
@@ -249,7 +249,7 @@ extension AppState {
 
     func toggleShowBorders(for rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        registerUndoForRow(at: idx, rows[idx].showBorders ? "Hide Borders" : "Show Borders")
+        registerUndoForRow(at: idx, rows[idx].showBorders ? String(localized: "Hide Borders") : String(localized: "Show Borders"))
         rows[idx].showBorders.toggle()
         scheduleSave()
     }

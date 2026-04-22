@@ -286,7 +286,7 @@ struct BackgroundImageEditor: View {
     }
 
     private func sliderRow(
-        _ label: String,
+        _ label: LocalizedStringKey,
         value: Binding<Double>,
         range: ClosedRange<Double> = 0...1.0,
         formatLabel: (() -> String)? = nil
@@ -308,7 +308,7 @@ struct BackgroundImageEditor: View {
     }
 
     private func axisSliderRow(
-        _ label: String,
+        _ label: LocalizedStringKey,
         xValue: Binding<Double>,
         yValue: Binding<Double>,
         range: ClosedRange<Double> = 0...1.0,
@@ -325,7 +325,7 @@ struct BackgroundImageEditor: View {
     }
 
     private func axisSlider(
-        _ axis: String,
+        _ axis: LocalizedStringKey,
         value: Binding<Double>,
         range: ClosedRange<Double>,
         formatLabel: (() -> String)?,

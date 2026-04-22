@@ -219,7 +219,7 @@ enum ICloudSyncError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .containerUnavailable:
-            return "iCloud container is not available. Make sure you're signed into iCloud."
+            return String(localized: "iCloud container is not available. Make sure you're signed into iCloud.")
         }
     }
 }
