@@ -29,7 +29,6 @@ struct AppStoreConnectSettingsView: View {
         Form {
             statusSection
             credentialsSection
-            connectionSection
             helpSection
         }
         .formStyle(.grouped)
@@ -61,11 +60,11 @@ struct AppStoreConnectSettingsView: View {
         Section {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: credentials.isConfigured ? "checkmark.seal.fill" : "key.horizontal")
-                        .foregroundStyle(credentials.isConfigured ? .green : .secondary)
+                    Image(systemName: statusSymbolName)
+                        .foregroundStyle(statusSymbolColor)
                         .font(.title3)
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(credentials.isConfigured ? "Ready to test" : "Finish setup")
+                        Text(statusTitle)
                             .font(.headline)
                         Text(statusMessage)
                             .font(.caption)
@@ -73,11 +72,12 @@ struct AppStoreConnectSettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()
-                    Link(destination: Self.apiKeysURL) {
-                        Label("Open API Keys", systemImage: "arrow.up.right.square")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    Text(setupSummary)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.quaternary, in: Capsule())
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -85,11 +85,18 @@ struct AppStoreConnectSettingsView: View {
                         setupItemRow(item)
                     }
                 }
+
+                if let testResult {
+                    connectionFeedbackRow(result: testResult)
+                }
             }
         } header: {
             Text("Setup")
         } footer: {
-            Text("Values are saved automatically on this Mac. The private key is stored in Keychain.")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Values are saved automatically on this Mac. The private key is stored in Keychain.")
+                Text("Testing lists one app from the account. If this passes but uploads fail, check that the API key can edit the specific app and version.")
+            }
                 .foregroundStyle(.secondary)
         }
     }
@@ -167,53 +174,9 @@ struct AppStoreConnectSettingsView: View {
         }
     }
 
-    private var connectionSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 8) {
-                Button {
-                    Task { await runTest() }
-                } label: {
-                    HStack(spacing: 6) {
-                        if isTesting {
-                            ProgressView().controlSize(.small)
-                        }
-                        Text(isTesting ? "Testing…" : "Test Connection")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!credentials.isConfigured || isTesting)
-
-                if !credentials.isConfigured {
-                    Text(missingConfigurationMessage)
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                }
-
-                switch testResult {
-                case .success(let message):
-                    Label(message, systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .font(.caption)
-                        .fixedSize(horizontal: false, vertical: true)
-                case .failure(let message):
-                    Label(message, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                        .fixedSize(horizontal: false, vertical: true)
-                case nil:
-                    EmptyView()
-                }
-            }
-        } header: {
-            Text("Connection")
-        } footer: {
-            Text("Testing lists one app from the account. If this passes but uploads fail, check that the API key can edit the specific app and version.")
-                .foregroundStyle(.secondary)
-        }
-    }
-
     private var helpSection: some View {
         Section("Actions") {
+            Link("Open API Keys", destination: Self.apiKeysURL)
             Link("Create or manage API keys", destination: Self.apiKeysURL)
             Link("App Store Connect API documentation", destination: Self.docsURL)
 
@@ -224,10 +187,13 @@ struct AppStoreConnectSettingsView: View {
     }
 
     private var statusMessage: String {
-        if credentials.isConfigured {
-            return String(localized: "Test the connection before uploading screenshots.")
+        if connectionTestPassed {
+            return String(localized: "The API key is connected and ready for screenshot uploads.")
         }
-        return missingConfigurationMessage
+        if credentials.isConfigured {
+            return String(localized: "Run the connection test once before uploading screenshots.")
+        }
+        return String(localized: "Complete the API key details below, then test the connection from the checklist.")
     }
 
     private var setupItems: [SetupItem] {
@@ -266,13 +232,42 @@ struct AppStoreConnectSettingsView: View {
         case .failure:
             return String(localized: "Last test failed")
         case nil:
-            return credentials.isConfigured ? String(localized: "Not tested yet") : String(localized: "Available after setup is complete")
+            return credentials.isConfigured ? String(localized: "Ready to test") : String(localized: "Complete the first three items to enable testing")
         }
     }
 
     private var connectionTestPassed: Bool {
         if case .success = testResult { return true }
         return false
+    }
+
+    private var canTestConnection: Bool {
+        credentials.isConfigured && !isTesting
+    }
+
+    private var statusTitle: String {
+        if connectionTestPassed {
+            return String(localized: "Connected")
+        }
+        return credentials.isConfigured ? String(localized: "Ready to test") : String(localized: "Finish setup")
+    }
+
+    private var statusSymbolName: String {
+        if connectionTestPassed {
+            return "checkmark.seal.fill"
+        }
+        return credentials.isConfigured ? "bolt.horizontal.circle.fill" : "key.horizontal"
+    }
+
+    private var statusSymbolColor: Color {
+        if connectionTestPassed {
+            return .green
+        }
+        return credentials.isConfigured ? .orange : .secondary
+    }
+
+    private var setupSummary: String {
+        String(localized: "\(setupItems.filter(\.isComplete).count) of \(setupItems.count) complete")
     }
 
     private var missingConfigurationMessage: String {
@@ -314,19 +309,40 @@ struct AppStoreConnectSettingsView: View {
     }
 
     private func setupItemRow(_ item: SetupItem) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: item.isComplete ? "checkmark.circle.fill" : "circle")
+        HStack(spacing: 12) {
+            Image(systemName: item.isComplete ? "checkmark.circle.fill" : item.id == "connection" ? "bolt.horizontal.circle" : "circle")
                 .foregroundStyle(item.isComplete ? .green : .secondary)
-                .font(.caption)
-            VStack(alignment: .leading, spacing: 1) {
+                .font(.headline)
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
-                    .font(.caption)
+                    .font(.caption.weight(.semibold))
                 Text(item.detail)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 12)
+            if item.id == "connection" {
+                Button {
+                    Task { await runTest() }
+                } label: {
+                    HStack(spacing: 6) {
+                        if isTesting {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                        Text(isTesting ? "Testing…" : "Test")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(!canTestConnection)
             }
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.quaternary.opacity(0.6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     @ViewBuilder
@@ -395,6 +411,30 @@ struct AppStoreConnectSettingsView: View {
         credentials.deletePrivateKey()
         testResult = nil
         importError = nil
+    }
+
+    @ViewBuilder
+    private func connectionFeedbackRow(result: TestResult) -> some View {
+        switch result {
+        case .success(let message):
+            Label(message, systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .font(.caption)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        case .failure(let message):
+            Label(message, systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+                .font(.caption)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
     }
 
     private func connectionFailureMessage(for error: Error) -> String {
