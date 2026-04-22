@@ -2,6 +2,113 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
+private struct ProjectNamePrompt: Identifiable {
+    let id = UUID()
+    let title: String
+    let confirmTitle: String
+    let initialValue: String
+    let onConfirm: (String) -> Void
+}
+
+private struct ProjectNameTextField: NSViewRepresentable {
+    @Binding var text: String
+    let placeholder: String
+    let onSubmit: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, onSubmit: onSubmit)
+    }
+
+    func makeNSView(context: Context) -> NSTextField {
+        let textField = NSTextField()
+        textField.delegate = context.coordinator
+        textField.placeholderString = placeholder
+        textField.stringValue = text
+        textField.target = context.coordinator
+        textField.action = #selector(Coordinator.submit)
+
+        DispatchQueue.main.async {
+            textField.window?.makeFirstResponder(textField)
+            textField.selectText(nil)
+        }
+
+        return textField
+    }
+
+    func updateNSView(_ textField: NSTextField, context: Context) {
+        if textField.stringValue != text {
+            textField.stringValue = text
+        }
+        textField.placeholderString = placeholder
+    }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        @Binding private var text: String
+        private let onSubmit: () -> Void
+
+        init(text: Binding<String>, onSubmit: @escaping () -> Void) {
+            _text = text
+            self.onSubmit = onSubmit
+        }
+
+        func controlTextDidChange(_ notification: Notification) {
+            guard let textField = notification.object as? NSTextField else { return }
+            text = textField.stringValue
+        }
+
+        @objc func submit() {
+            onSubmit()
+        }
+    }
+}
+
+private struct ProjectNameSheet: View {
+    let prompt: ProjectNamePrompt
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var text: String
+
+    init(prompt: ProjectNamePrompt) {
+        self.prompt = prompt
+        _text = State(initialValue: prompt.initialValue)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(prompt.title)
+                .font(.headline)
+
+            ProjectNameTextField(
+                text: $text,
+                placeholder: String(localized: "Project name"),
+                onSubmit: confirm
+            )
+            .frame(height: 22)
+
+            HStack {
+                Spacer()
+
+                Button("Cancel", role: .cancel) {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Button(prompt.confirmTitle) {
+                    confirm()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 360)
+    }
+
+    private func confirm() {
+        prompt.onConfirm(String(text.prefix(100)))
+        dismiss()
+    }
+}
+
 struct ContentView: View {
     private enum ShowcaseExportMode {
         case allRows
@@ -41,6 +148,7 @@ struct ContentView: View {
     @State private var scrollWheelMonitor: Any?
     @State private var showingASCUploadSheet = false
     @State private var showcasePresentation: ShowcasePresentation?
+    @State private var projectNamePrompt: ProjectNamePrompt?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -273,6 +381,10 @@ struct ContentView: View {
             UploadToAppStoreConnectView()
                 .environment(state)
         }
+        .sheet(item: $projectNamePrompt) { prompt in
+            ProjectNameSheet(prompt: prompt)
+                .presentationSizing(.fitted)
+        }
         .sheet(item: $showcasePresentation) { presentation in
             ShowcaseExportSheet(
                 candidateRows: presentation.candidateRows,
@@ -412,23 +524,14 @@ struct ContentView: View {
         title: String,
         confirmTitle: String,
         initialValue: String,
-        onConfirm: (String) -> Void
+        onConfirm: @escaping (String) -> Void
     ) {
-        let alert = NSAlert()
-        alert.messageText = title
-        alert.addButton(withTitle: confirmTitle)
-        alert.addButton(withTitle: String(localized: "Cancel"))
-
-        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24))
-        textField.placeholderString = String(localized: "Project name")
-        textField.stringValue = initialValue
-        textField.selectText(nil)
-        alert.accessoryView = textField
-        alert.window.initialFirstResponder = textField
-
-        if alert.runModal() == .alertFirstButtonReturn {
-            onConfirm(String(textField.stringValue.prefix(100)))
-        }
+        projectNamePrompt = ProjectNamePrompt(
+            title: title,
+            confirmTitle: confirmTitle,
+            initialValue: initialValue,
+            onConfirm: onConfirm
+        )
     }
 
     @ViewBuilder
