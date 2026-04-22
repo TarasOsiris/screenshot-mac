@@ -46,6 +46,10 @@ struct PersistenceService {
         projectsDir.appendingPathComponent(id.uuidString, isDirectory: true)
     }
 
+    static func projectDirectoryURL(_ id: UUID) -> URL {
+        projectDir(id)
+    }
+
     static func projectDataURL(_ id: UUID) -> URL {
         projectDir(id).appendingPathComponent("project.json")
     }

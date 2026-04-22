@@ -385,6 +385,13 @@ struct ContentView: View {
             }
             .disabled(state.activeProjectId == nil)
 
+            Button("Show in Finder") {
+                guard let id = state.activeProjectId else { return }
+                let folder = PersistenceService.projectDirectoryURL(id)
+                NSWorkspace.shared.activateFileViewerSelecting([folder])
+            }
+            .disabled(state.activeProjectId == nil)
+
             Button("Reset Project...", role: .destructive) {
                 if confirmBeforeDeleting {
                     isResettingProject = true

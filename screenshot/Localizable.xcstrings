@@ -5297,6 +5297,9 @@
         }
       }
     },
+    "Show in Finder" : {
+
+    },
     "Show inspector" : {
       "localizations" : {
         "es" : {
