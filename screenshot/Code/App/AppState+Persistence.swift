@@ -149,6 +149,7 @@ extension AppState {
         activeProjectDataModifiedAt = data.modifiedAt
         selectRow(rows.first?.id)
         cleanupOrphanedResourceFiles(for: projectId)
+        seedReferencedFontFamiliesFromLoadedProject()
     }
 
     // MARK: - Save
@@ -172,14 +173,18 @@ extension AppState {
             monitor.recordOwnWrite(urls)
         }
 
-        saveIndex()
-        saveCurrentProject()
+        let didSaveIndex = saveIndex()
+        let didSaveProject = saveCurrentProject()
+        if didSaveIndex && didSaveProject {
+            cleanupUnreferencedFonts()
+        }
 
         // Snapshot AFTER writing so hasIndexChanged() returns false for our own saves
         iCloudMonitor?.snapshotAfterWrite()
     }
 
-    func saveIndex() {
+    @discardableResult
+    func saveIndex() -> Bool {
         // Update modifiedAt for the active project (skip tombstones)
         if let idx = projects.firstIndex(where: { $0.id == activeProjectId && !$0.isDeleted }) {
             projects[idx].modifiedAt = Date()
@@ -187,19 +192,24 @@ extension AppState {
         let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
         do {
             try PersistenceService.saveIndex(index)
+            return true
         } catch {
             saveError = String(localized: "Failed to save project index: \(error.localizedDescription)")
+            return false
         }
     }
 
-    func saveCurrentProject() {
-        guard let activeId = activeProjectId else { return }
+    @discardableResult
+    func saveCurrentProject() -> Bool {
+        guard let activeId = activeProjectId else { return true }
         let data = ProjectData(rows: rows, localeState: localeState)
         do {
             try PersistenceService.saveProject(activeId, data: data)
             activeProjectDataModifiedAt = data.modifiedAt
+            return true
         } catch {
             saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
+            return false
         }
     }
 

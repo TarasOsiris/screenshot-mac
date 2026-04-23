@@ -31,18 +31,27 @@ final class AppState {
     @ObservationIgnored var justAddedShapeId: UUID?
     var pendingTranslateShapeId: UUID?
     var screenshotImages: [String: NSImage] = [:]
-    var customFonts: [String: String] = [:]  // fileName → familyName
-    /// Cached set of all available font family names for O(1) lookups during rendering.
+    var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
+    /// Family names referenced by any shape at some point in the current session. A font
+    /// is only eligible for in-session cleanup once its family enters this set — otherwise
+    /// a freshly imported font (or auto-imported sibling variant) would be deleted by the
+    /// next debounced save before the user has a chance to apply it.
+    @ObservationIgnored var everReferencedFontFamilies: Set<String> = []
+    /// Includes both system family names and custom font display names so render-time
+    /// `.contains(name)` checks succeed for style-qualified variants like
+    /// "Playfair Display Italic".
     @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = Set(NSFontManager.shared.availableFontFamilies)
 
     func refreshAvailableFontFamilies() {
+        // Process-registered fonts (via CTFontManager) don't appear in
+        // NSFontManager.availableFontFamilies, so add both family and display names.
         var families = Set(NSFontManager.shared.availableFontFamilies)
-        // Process-registered fonts (via CTFontManager) may not appear in
-        // NSFontManager.availableFontFamilies. Include them explicitly.
-        for familyName in customFonts.values {
-            families.insert(familyName)
+        for font in customFonts.values {
+            families.insert(font.familyName)
+            families.insert(font.displayName)
         }
         availableFontFamilySet = families
+        CustomFontRegistry.update(with: customFonts)
     }
     var undoManager: UndoManager?
     var saveError: String?

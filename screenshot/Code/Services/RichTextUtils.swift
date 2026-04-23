@@ -320,21 +320,15 @@ enum RichTextUtils {
         managerWeight: Int,
         italic: Bool
     ) -> NSFont {
-        let fontManager = NSFontManager.shared
-        let traits: NSFontTraitMask = italic ? .italicFontMask : []
-
         if let familyName {
-            if let font = fontManager.font(withFamily: familyName, traits: traits, weight: managerWeight, size: size) {
-                return font
-            }
-            if let baseFont = fontManager.font(withFamily: familyName, traits: [], weight: managerWeight, size: size) {
-                return italic ? fontManager.convert(baseFont, toHaveTrait: .italicFontMask) : baseFont
-            }
-            let fallback = CTFontCreateWithName(familyName as CFString, size, nil) as NSFont
-            return italic ? fontManager.convert(fallback, toHaveTrait: .italicFontMask) : fallback
+            return CustomFontRegistry.resolveNSFont(
+                name: familyName,
+                size: size,
+                managerWeight: managerWeight,
+                italic: italic
+            )
         }
-
         let system = NSFont.systemFont(ofSize: size, weight: nsFontWeight(for: managerWeight))
-        return italic ? fontManager.convert(system, toHaveTrait: .italicFontMask) : system
+        return italic ? NSFontManager.shared.convert(system, toHaveTrait: .italicFontMask) : system
     }
 }

@@ -8,6 +8,12 @@ struct AppStateTests {
 
     private func makeState() -> (AppState, URL) { makeTestState() }
     private func cleanup(_ tempDir: URL) { cleanupTestState(tempDir) }
+    private func bundledFontURL(_ fileName: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("screenshot/Templates.bundle/shared/fonts/\(fileName)")
+    }
 
     // MARK: - Initial state
 
@@ -646,6 +652,59 @@ struct AppStateTests {
         #expect(shape.displayImageFileName == nil)
         #expect(state.screenshotImages.isEmpty)
         #expect(state.saveError?.contains("Disk full") == true)
+    }
+
+    @Test func saveAllDoesNotDeleteUnreferencedFontsWhenIndexSaveFails() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let projectId = try #require(state.activeProjectId)
+        let resourcesDir = PersistenceService.resourcesDir(projectId)
+        let projectDir = PersistenceService.projectDirectoryURL(projectId)
+        let fontURL = resourcesDir.appendingPathComponent("Unused.ttf")
+        try Data("font".utf8).write(to: fontURL)
+
+        state.customFonts["Unused.ttf"] = CustomFont(
+            fileName: "Unused.ttf",
+            familyName: "Unused Family",
+            styleName: nil,
+            postScriptName: nil,
+            isItalic: false
+        )
+        state.everReferencedFontFamilies = ["Unused Family"]
+
+        let fm = FileManager.default
+        try fm.setAttributes([.posixPermissions: 0o555], ofItemAtPath: tempDir.path)
+        try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: projectDir.path)
+        try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: resourcesDir.path)
+        defer {
+            try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tempDir.path)
+        }
+
+        state.saveAll()
+
+        #expect(state.saveError?.contains("Failed to save project index") == true)
+        #expect(fm.fileExists(atPath: fontURL.path))
+    }
+
+    @Test func importedUnusedFontSurvivesProjectReload() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let sourceFontURL = bundledFontURL("Raleway-VariableFont_wght.ttf")
+        #expect(FileManager.default.fileExists(atPath: sourceFontURL.path))
+        let importedName = state.importCustomFont(from: sourceFontURL)
+        #expect(importedName != nil)
+
+        let projectId = try #require(state.activeProjectId)
+        let importedURL = PersistenceService.resourcesDir(projectId).appendingPathComponent(sourceFontURL.lastPathComponent)
+        #expect(FileManager.default.fileExists(atPath: importedURL.path))
+
+        state.saveAll()
+
+        let reopened = AppState()
+        #expect(FileManager.default.fileExists(atPath: importedURL.path))
+        #expect(reopened.customFonts.keys.contains(sourceFontURL.lastPathComponent))
     }
 
     // MARK: - Nudge

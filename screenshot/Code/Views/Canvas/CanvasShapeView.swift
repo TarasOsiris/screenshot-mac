@@ -543,11 +543,14 @@ struct CanvasShapeView: View {
         ))
     }
 
-    /// The custom font family name, if the shape specifies one that's available.
     private var customFontName: String? {
-        guard let name = shape.fontName, !name.isEmpty,
-              availableFontFamilies.contains(name) else { return nil }
-        return name
+        guard let name = shape.fontName, !name.isEmpty else { return nil }
+        // Custom-font display names ("Playfair Display Italic") aren't in NSFontManager's
+        // family list; the registry is the authoritative check for them. Fall back to the
+        // passed-in family set for system fonts.
+        if CustomFontRegistry.font(forDisplayName: name) != nil { return name }
+        if availableFontFamilies.contains(name) { return name }
+        return nil
     }
 
     private func resolvedNSFont(size: CGFloat, weight: NSFont.Weight, italic: Bool = false) -> NSFont {
@@ -557,21 +560,17 @@ struct CanvasShapeView: View {
             return cached
         }
 
-        let baseFont: NSFont
+        let resolved: NSFont
         if let name = customName {
-            let fm = NSFontManager.shared
-            let fmWeight = Self.fontManagerWeight(for: weight)
-            if let font = fm.font(withFamily: name, traits: [], weight: fmWeight, size: size) {
-                baseFont = font
-            } else if let font = fm.font(withFamily: name, traits: [], weight: 5, size: size) {
-                baseFont = fmWeight >= 9 ? fm.convert(font, toHaveTrait: .boldFontMask) : font
-            } else {
-                baseFont = CTFontCreateWithName(name as CFString, size, nil) as NSFont
-            }
+            resolved = CustomFontRegistry.resolveNSFont(
+                name: name,
+                size: size,
+                managerWeight: Self.fontManagerWeight(for: weight),
+                italic: italic
+            )
         } else {
-            baseFont = NSFont.systemFont(ofSize: size, weight: weight)
+            resolved = italicized(NSFont.systemFont(ofSize: size, weight: weight), italic: italic)
         }
-        let resolved = italicized(baseFont, italic: italic)
         Self.fontCache.setObject(resolved, forKey: cacheKey)
         return resolved
     }

@@ -52,6 +52,45 @@ struct RichTextUtilsTests {
         #expect(font?.fontDescriptor.symbolicTraits.contains(.bold) == true)
     }
 
+    @Test func customFontRegistryKeepsExactFaceForStyleQualifiedSelection() {
+        CustomFontRegistry.update(with: [
+            "Family-Bold.otf": CustomFont(
+                fileName: "Family-Bold.otf",
+                familyName: "Family",
+                styleName: "Bold",
+                postScriptName: "Family-Bold",
+                isItalic: false
+            )
+        ])
+        defer { CustomFontRegistry.update(with: [:]) }
+
+        let resolved = CustomFontRegistry.resolve("Family Bold")
+        #expect(resolved.family == "Family")
+        #expect(resolved.exactName == "Family-Bold")
+        #expect(resolved.italic == false)
+    }
+
+    @Test func canonicalDisplayNameSortsFallbackVariantsDeterministically() {
+        let fonts: [String: CustomFont] = [
+            "Family-Italic.otf": CustomFont(
+                fileName: "Family-Italic.otf",
+                familyName: "Family",
+                styleName: "Italic",
+                postScriptName: "Family-Italic",
+                isItalic: true
+            ),
+            "Family-Bold.otf": CustomFont(
+                fileName: "Family-Bold.otf",
+                familyName: "Family",
+                styleName: "Bold",
+                postScriptName: "Family-Bold",
+                isItalic: false
+            )
+        ]
+
+        #expect(CustomFontRegistry.canonicalDisplayName(for: "Family", in: fonts) == "Family Bold")
+    }
+
     @Test func buildAttributedStringMergesUpdatedParagraphStyleIntoRichText() {
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .left

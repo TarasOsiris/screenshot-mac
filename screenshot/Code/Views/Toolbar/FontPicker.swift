@@ -3,15 +3,29 @@ import UniformTypeIdentifiers
 
 struct FontPicker: View {
     @Binding var selection: String
-    var customFonts: [String: String] = [:]  // fileName → familyName
+    var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
     var onImportFont: ((URL) -> String?)?
 
     private static let fontFamilies: [String] = {
         NSFontManager.shared.availableFontFamilies.sorted()
     }()
 
-    private var sortedCustomFamilies: [String] {
-        Set(customFonts.values).sorted()
+    /// Picker entries for imported custom fonts. When a family has a regular variant
+    /// (e.g. all four Tinos files imported), we collapse to a single family entry — the
+    /// existing weight/italic toggles drive Bold/Italic via NSFontManager. When only
+    /// non-regular variants exist (e.g. just Playfair Italic), we list them by display
+    /// name so the user can still pick the variant they imported.
+    private var customFontEntries: [String] {
+        let byFamily = Dictionary(grouping: customFonts.values, by: { $0.familyName })
+        var entries: Set<String> = []
+        for (family, variants) in byFamily {
+            if variants.contains(where: { $0.displayName == family }) {
+                entries.insert(family)
+            } else {
+                for v in variants { entries.insert(v.displayName) }
+            }
+        }
+        return entries.sorted()
     }
 
     @ViewBuilder
@@ -36,16 +50,20 @@ struct FontPicker: View {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.font]
         panel.allowsMultipleSelection = true
-        panel.canChooseDirectories = false
+        // Allow picking a folder so all variants (Bold, Italic, BoldItalic, ...) get
+        // imported in one gesture. Sandbox grants access to the chosen folder's contents.
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = true
+        panel.message = String(localized: "Pick a font file or a folder containing all variants")
         guard panel.runModal() == .OK else { return }
-        var lastFamily: String?
+        var lastDisplayName: String?
         for url in panel.urls {
-            if let family = onImportFont?(url) {
-                lastFamily = family
+            if let name = onImportFont?(url) {
+                lastDisplayName = name
             }
         }
-        if let family = lastFamily {
-            selection = family
+        if let name = lastDisplayName {
+            selection = name
         }
     }
 
@@ -62,10 +80,10 @@ struct FontPicker: View {
 
                 fontButton(String(localized: "System"), value: "")
 
-                if !sortedCustomFamilies.isEmpty {
+                if !customFontEntries.isEmpty {
                     Divider()
-                    ForEach(sortedCustomFamilies, id: \.self) { family in
-                        fontButton(family, value: family)
+                    ForEach(customFontEntries, id: \.self) { name in
+                        fontButton(name, value: name)
                     }
                 }
 
