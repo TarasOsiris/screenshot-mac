@@ -43,11 +43,9 @@ struct SettingsView: View {
                 exportSettings
             }
 
-            #if DEBUG
             Tab("App Store Connect", systemImage: "arrow.up.circle") {
                 AppStoreConnectSettingsView()
             }
-            #endif
 
             Tab("Purchase", systemImage: "star") {
                 purchaseSettings

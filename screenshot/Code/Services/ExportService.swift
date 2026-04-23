@@ -690,6 +690,9 @@ struct ExportService {
     private static func normalizeDeviceAspectIfNeeded(_ shape: CanvasShapeModel) -> CanvasShapeModel {
         guard shape.type == .device else { return shape }
 
+        // Invisible frames have no fixed aspect ratio — they adapt to the user's screenshot.
+        if shape.deviceCategory == .invisible && shape.deviceFrameId == nil { return shape }
+
         let base = shape.resolvedBaseDimensions
         let targetAspect = base.width / base.height
 

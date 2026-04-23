@@ -675,14 +675,12 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
         }
 
-        #if DEBUG
         Divider()
 
         Button("Upload to App Store Connect…") {
             showingASCUploadSheet = true
         }
         .disabled(state.rows.isEmpty)
-        #endif
     }
 
     private var hasLastExportDestination: Bool {
