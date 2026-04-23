@@ -48,9 +48,7 @@ final class AppStoreConnectCredentialsStore {
     }
 
     var isConfigured: Bool {
-        isIssuerIdValid
-            && isKeyIdValid
-            && Self.normalizedPrivateKey(KeychainService.load(account: Self.keychainAccount)) != nil
+        isIssuerIdValid && isKeyIdValid && hasPrivateKey
     }
 
     func savePrivateKey(_ pem: String) throws {
@@ -65,12 +63,14 @@ final class AppStoreConnectCredentialsStore {
     }
 
     func refreshPrivateKeyPresence() {
-        hasPrivateKey = Self.normalizedPrivateKey(KeychainService.load(account: Self.keychainAccount)) != nil
+        let present = Self.normalizedPrivateKey(KeychainService.load(account: Self.keychainAccount)) != nil
+        if hasPrivateKey != present { hasPrivateKey = present }
     }
 
     func privateKeyPEM() -> String? {
         let pem = Self.normalizedPrivateKey(KeychainService.load(account: Self.keychainAccount))
-        hasPrivateKey = pem != nil
+        let present = pem != nil
+        if hasPrivateKey != present { hasPrivateKey = present }
         return pem
     }
 
