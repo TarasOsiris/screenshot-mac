@@ -314,7 +314,7 @@ struct ShapePropertiesSingleSelectionBar: View {
         let clamped = clampedFontSize(value)
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         resolved.fontSize = clamped
-        syncRichTextIfNeeded(in: &resolved, property: .fontSize)
+        RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
         state.updateShape(resolved)
         editingFontSize = "\(Int(clamped))"
     }
@@ -364,14 +364,9 @@ struct ShapePropertiesSingleSelectionBar: View {
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         resolved.lineHeightMultiple = clamped
         resolved.lineSpacing = nil
-        syncRichTextIfNeeded(in: &resolved, property: .lineHeight)
+        RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
         state.updateShape(resolved)
         editingLineHeight = "\(Int((clamped * 100).rounded()))"
-    }
-
-    private func syncRichTextIfNeeded(in shape: inout CanvasShapeModel, property: RichTextUtils.ShapeStyleProperty?) {
-        guard shape.type == .text, let property else { return }
-        RichTextUtils.syncShapeStyle(in: &shape, property: property)
     }
 
     private func richTextStyleProperty<T>(for keyPath: WritableKeyPath<CanvasShapeModel, T>) -> RichTextUtils.ShapeStyleProperty? {
@@ -404,7 +399,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                 guard let i = idx(for: shapeId) else { return }
                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                 resolved[keyPath: keyPath] = newValue
-                syncRichTextIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
+                RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
                 if continuous {
                     state.updateShapeContinuous(resolved)
                 } else {
@@ -425,12 +420,44 @@ struct ShapePropertiesSingleSelectionBar: View {
                 guard let i = idx(for: shapeId) else { return }
                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                 resolved[keyPath: keyPath] = newValue
-                syncRichTextIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
+                RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
                 if continuous {
                     state.updateShapeContinuous(resolved)
                 } else {
                     state.updateShape(resolved)
                 }
+            }
+        )
+    }
+
+    private func fontWeightBinding(_ shapeId: UUID) -> Binding<Int> {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else { return 400 }
+                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+                return CustomFontRegistry.controlState(for: shape)?.effectiveWeight ?? shape.fontWeight ?? 400
+            },
+            set: { newValue in
+                guard let i = idx(for: shapeId) else { return }
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                RichTextUtils.applyFontWeightUpdate(to: &resolved, weight: newValue)
+                state.updateShape(resolved)
+            }
+        )
+    }
+
+    private func italicBinding(_ shapeId: UUID) -> Binding<Bool> {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else { return false }
+                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+                return CustomFontRegistry.controlState(for: shape)?.effectiveItalic ?? shape.italic ?? false
+            },
+            set: { newValue in
+                guard let i = idx(for: shapeId) else { return }
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                RichTextUtils.applyItalicUpdate(to: &resolved, italic: newValue)
+                state.updateShape(resolved)
             }
         )
     }
@@ -457,7 +484,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                 resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(newValue)
                 resolved.lineSpacing = nil
-                syncRichTextIfNeeded(in: &resolved, property: .lineHeight)
+                RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
                 state.updateShape(resolved)
             }
         )
@@ -633,23 +660,22 @@ struct ShapePropertiesSingleSelectionBar: View {
     private func textPopoverSummary(shape: CanvasShapeModel) -> String {
         let fontName = shape.fontName?.isEmpty == false ? shape.fontName! : "System"
         let size = Int(shape.fontSize ?? Self.defaultFontSize)
-        let weight: String
-        switch shape.fontWeight ?? 400 {
-        case 300: weight = "Light"
-        case 500: weight = "Medium"
-        case 700: weight = "Bold"
-        default: weight = "Regular"
-        }
+        let controlState = CustomFontRegistry.controlState(for: shape)
+        let weight = RichTextUtils.fontWeightLabel(controlState?.effectiveWeight ?? shape.fontWeight ?? 400)
         return "\(fontName) \(size) \(weight)"
     }
 
     @ViewBuilder
     private func textPopoverContent(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        let customControlState = CustomFontRegistry.controlState(for: shape)
+
         VStack(alignment: .leading, spacing: 10) {
             // Font
             LabeledContent("Font") {
                 FontPicker(
                     selection: shapeBinding(shapeId, \.fontName, default: ""),
+                    fontWeight: fontWeightBinding(shapeId),
+                    italic: italicBinding(shapeId),
                     customFonts: state.customFonts,
                     onImportFont: { url in state.importCustomFont(from: url) }
                 )
@@ -686,7 +712,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                             if let value = Int(editingFontSize), let i = idx(for: shapeId) {
                                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                                 resolved.fontSize = clampedFontSize(value)
-                                syncRichTextIfNeeded(in: &resolved, property: .fontSize)
+                                RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
                                 state.updateShapeContinuous(resolved)
                             }
                         }
@@ -710,14 +736,13 @@ struct ShapePropertiesSingleSelectionBar: View {
                         .fixedSize()
                     }
 
-                    Picker("", selection: shapeBinding(shapeId, \.fontWeight, default: 400)) {
-                        Text("Light").tag(300)
-                        Text("Regular").tag(400)
-                        Text("Medium").tag(500)
-                        Text("Bold").tag(700)
+                    if customControlState?.showsWeightPicker ?? true {
+                        FontWeightPicker(
+                            selection: fontWeightBinding(shapeId),
+                            options: customControlState?.availableWeights ?? [300, 400, 500, 700],
+                            width: 100
+                        )
                     }
-                    .labelsHidden()
-                    .frame(width: 100)
                 }
             }
 
@@ -750,9 +775,11 @@ struct ShapePropertiesSingleSelectionBar: View {
 
             // Style toggles
             HStack(spacing: 12) {
-                Toggle("Italic", isOn: shapeBinding(shapeId, \.italic, default: false))
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
+                if customControlState?.showsItalicToggle ?? true {
+                    Toggle("Italic", isOn: italicBinding(shapeId))
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                }
 
                 Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
                     .toggleStyle(.switch)
@@ -806,7 +833,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                             var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                             resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
                             resolved.lineSpacing = nil
-                            syncRichTextIfNeeded(in: &resolved, property: .lineHeight)
+                            RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
                             state.updateShapeContinuous(resolved)
                         }
                     }

@@ -669,6 +669,7 @@ struct AppStateTests {
             familyName: "Unused Family",
             styleName: nil,
             postScriptName: nil,
+            isBold: false,
             isItalic: false
         )
         state.everReferencedFontFamilies = ["Unused Family"]
@@ -693,8 +694,8 @@ struct AppStateTests {
 
         let sourceFontURL = bundledFontURL("Raleway-VariableFont_wght.ttf")
         #expect(FileManager.default.fileExists(atPath: sourceFontURL.path))
-        let importedName = state.importCustomFont(from: sourceFontURL)
-        #expect(importedName != nil)
+        let importedSelection = state.importCustomFont(from: sourceFontURL)
+        #expect(importedSelection != nil)
 
         let projectId = try #require(state.activeProjectId)
         let importedURL = PersistenceService.resourcesDir(projectId).appendingPathComponent(sourceFontURL.lastPathComponent)

@@ -39,36 +39,33 @@ extension AppState {
         refreshAvailableFontFamilies()
     }
 
-    /// Imports either a single font file or every font in a folder. When a single file is
-    /// picked, also opportunistically pulls in sibling files of the same family (Bold,
-    /// Italic, BoldItalic, ...) so the weight/italic toggles can drive the variants. The
-    /// sibling scan only succeeds when the sandbox grants directory access (e.g. via
-    /// folder selection); for plain file picks it silently no-ops.
-    /// Returns the display name to assign to the shape. Single-file imports preserve the
-    /// exact face the user picked; directory imports fall back to the family's canonical
-    /// display name.
+    /// Imports a single font file or every font in a folder, opportunistically pulling in
+    /// sibling family files when the sandbox allows parent-directory access.
     @discardableResult
-    func importCustomFont(from url: URL) -> String? {
+    func importCustomFont(from url: URL) -> ImportedCustomFontSelection? {
         guard let activeId = activeProjectId else { return nil }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
 
         let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+        var firstImportedFont: CustomFont?
         var firstFamily: String?
-        var selectedDisplayName: String?
 
         if isDirectory {
-            firstFamily = importFontsFromDirectory(url, activeId: activeId)
+            firstImportedFont = importFontsFromDirectory(url, activeId: activeId)
+            firstFamily = firstImportedFont?.familyName
         } else if let primary = importFontFile(at: url, activeId: activeId) {
+            firstImportedFont = primary
             firstFamily = primary.familyName
-            selectedDisplayName = primary.displayName
             importFamilySiblings(of: url, familyName: primary.familyName, activeId: activeId)
         }
 
         refreshAvailableFontFamilies()
-        if let selectedDisplayName { return selectedDisplayName }
+        if let firstImportedFont, !isDirectory {
+            return firstImportedFont.selectionResult()
+        }
         guard let family = firstFamily else { return nil }
-        return CustomFontRegistry.canonicalDisplayName(for: family, in: customFonts)
+        return CustomFontRegistry.preferredSelection(for: family, in: customFonts)
     }
 
     func removeCustomFont(_ fileName: String) {
@@ -78,18 +75,16 @@ extension AppState {
 
     // MARK: - Private import helpers
 
-    /// Enumerates a directory and imports every recognized font file inside. Returns the
-    /// family name of the first imported font (or `nil` if nothing was imported).
-    private func importFontsFromDirectory(_ dirURL: URL, activeId: UUID) -> String? {
+    private func importFontsFromDirectory(_ dirURL: URL, activeId: UUID) -> CustomFont? {
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(at: dirURL, includingPropertiesForKeys: nil) else { return nil }
-        var firstFamily: String?
+        var firstImportedFont: CustomFont?
         for file in files where Self.fontExtensions.contains(file.pathExtension.lowercased()) {
-            if let font = importFontFile(at: file, activeId: activeId), firstFamily == nil {
-                firstFamily = font.familyName
+            if let font = importFontFile(at: file, activeId: activeId), firstImportedFont == nil {
+                firstImportedFont = font
             }
         }
-        return firstFamily
+        return firstImportedFont
     }
 
     /// Best-effort scan of `url`'s parent folder for other files with the same family name.

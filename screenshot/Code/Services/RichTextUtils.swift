@@ -137,6 +137,62 @@ enum RichTextUtils {
         return result
     }
 
+    static func syncShapeStyleIfNeeded(in shape: inout CanvasShapeModel, property: ShapeStyleProperty?) {
+        guard shape.type == .text, let property else { return }
+        syncShapeStyle(in: &shape, property: property)
+    }
+
+    static func fontWeightLabel(_ weight: Int) -> String {
+        switch weight {
+        case 300: return String(localized: "Light")
+        case 500: return String(localized: "Medium")
+        case 700: return String(localized: "Bold")
+        default: return String(localized: "Regular")
+        }
+    }
+
+    static func applyImportedFontSelection(
+        _ selection: ImportedCustomFontSelection,
+        to shape: inout CanvasShapeModel,
+        property: ShapeStyleProperty
+    ) {
+        let previousFontName = shape.fontName
+        shape.fontName = selection.fontName
+        if let value = selection.fontWeight {
+            shape.fontWeight = value
+        }
+        if let value = selection.italic {
+            shape.italic = value
+        }
+        syncShapeStyleIfNeeded(in: &shape, property: previousFontName == shape.fontName ? property : .fontName)
+    }
+
+    static func applyFontWeightUpdate(to shape: inout CanvasShapeModel, weight: Int) {
+        if let selection = CustomFontRegistry.selection(
+            name: shape.fontName,
+            fontWeight: weight,
+            italic: shape.italic
+        ) {
+            applyImportedFontSelection(selection, to: &shape, property: .fontWeight)
+        } else {
+            shape.fontWeight = weight
+            syncShapeStyleIfNeeded(in: &shape, property: .fontWeight)
+        }
+    }
+
+    static func applyItalicUpdate(to shape: inout CanvasShapeModel, italic: Bool) {
+        if let selection = CustomFontRegistry.selection(
+            name: shape.fontName,
+            fontWeight: shape.fontWeight,
+            italic: italic
+        ) {
+            applyImportedFontSelection(selection, to: &shape, property: .italic)
+        } else {
+            shape.italic = italic
+            syncShapeStyleIfNeeded(in: &shape, property: .italic)
+        }
+    }
+
     static func syncShapeStyle(in shape: inout CanvasShapeModel, property: ShapeStyleProperty) {
         guard let richText = shape.richText,
               let decoded = decode(richText)?.mutableCopy() as? NSMutableAttributedString

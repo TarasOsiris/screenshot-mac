@@ -59,6 +59,7 @@ struct RichTextUtilsTests {
                 familyName: "Family",
                 styleName: "Bold",
                 postScriptName: "Family-Bold",
+                isBold: true,
                 isItalic: false
             )
         ])
@@ -70,13 +71,22 @@ struct RichTextUtilsTests {
         #expect(resolved.italic == false)
     }
 
-    @Test func canonicalDisplayNameSortsFallbackVariantsDeterministically() {
+    @Test func preferredSelectionPrefersRegularVariantWhenAvailable() {
         let fonts: [String: CustomFont] = [
+            "Family-Regular.otf": CustomFont(
+                fileName: "Family-Regular.otf",
+                familyName: "Family",
+                styleName: "Regular",
+                postScriptName: "Family-Regular",
+                isBold: false,
+                isItalic: false
+            ),
             "Family-Italic.otf": CustomFont(
                 fileName: "Family-Italic.otf",
                 familyName: "Family",
                 styleName: "Italic",
                 postScriptName: "Family-Italic",
+                isBold: false,
                 isItalic: true
             ),
             "Family-Bold.otf": CustomFont(
@@ -84,11 +94,140 @@ struct RichTextUtilsTests {
                 familyName: "Family",
                 styleName: "Bold",
                 postScriptName: "Family-Bold",
+                isBold: true,
                 isItalic: false
             )
         ]
 
-        #expect(CustomFontRegistry.canonicalDisplayName(for: "Family", in: fonts) == "Family Bold")
+        let selection = CustomFontRegistry.preferredSelection(for: "Family", in: fonts)
+        #expect(selection?.fontName == "Family Regular")
+        #expect(selection?.fontWeight == 400)
+        #expect(selection?.italic == false)
+    }
+
+    @Test func selectionResultKeepsExactVariantTraits() {
+        let boldItalic = CustomFont(
+            fileName: "Family-BoldItalic.otf",
+            familyName: "Family",
+            styleName: "Bold Italic",
+            postScriptName: "Family-BoldItalic",
+            isBold: true,
+            isItalic: true
+        )
+
+        let selection = boldItalic.selectionResult()
+        #expect(selection.fontName == "Family Bold Italic")
+        #expect(selection.fontWeight == 700)
+        #expect(selection.italic == true)
+    }
+
+    @Test func displayNameIncludesRegularStyleForTransparency() {
+        let regular = CustomFont(
+            fileName: "Family-Regular.otf",
+            familyName: "Family",
+            styleName: "Regular",
+            postScriptName: "Family-Regular",
+            isBold: false,
+            isItalic: false
+        )
+
+        #expect(regular.displayName == "Family Regular")
+    }
+
+    @Test func controlStateShowsOnlySwitchableWeightsForExactVariant() {
+        let regular = CustomFont(
+            fileName: "Family-Regular.otf",
+            familyName: "Family",
+            styleName: "Regular",
+            postScriptName: "Family-Regular",
+            isBold: false,
+            isItalic: false
+        )
+        let bold = CustomFont(
+            fileName: "Family-Bold.otf",
+            familyName: "Family",
+            styleName: "Bold",
+            postScriptName: "Family-Bold",
+            isBold: true,
+            isItalic: false
+        )
+        let italic = CustomFont(
+            fileName: "Family-Italic.otf",
+            familyName: "Family",
+            styleName: "Italic",
+            postScriptName: "Family-Italic",
+            isBold: false,
+            isItalic: true
+        )
+
+        CustomFontRegistry.update(with: [
+            regular.fileName: regular,
+            bold.fileName: bold,
+            italic.fileName: italic
+        ])
+        defer { CustomFontRegistry.update(with: [:]) }
+
+        let state = CustomFontRegistry.controlState(name: "Family Regular", fontWeight: nil, italic: nil)
+        #expect(state?.effectiveItalic == false)
+        #expect(state?.effectiveWeight == 400)
+        #expect(state?.availableWeights == [400, 700])
+        #expect(state?.showsWeightPicker == true)
+        #expect(state?.showsItalicToggle == true)
+    }
+
+    @Test func selectionSwitchesToMatchingExactVariant() {
+        let bold = CustomFont(
+            fileName: "Family-Bold.otf",
+            familyName: "Family",
+            styleName: "Bold",
+            postScriptName: "Family-Bold",
+            isBold: true,
+            isItalic: false
+        )
+        let boldItalic = CustomFont(
+            fileName: "Family-BoldItalic.otf",
+            familyName: "Family",
+            styleName: "Bold Italic",
+            postScriptName: "Family-BoldItalic",
+            isBold: true,
+            isItalic: true
+        )
+
+        CustomFontRegistry.update(with: [
+            bold.fileName: bold,
+            boldItalic.fileName: boldItalic
+        ])
+        defer { CustomFontRegistry.update(with: [:]) }
+
+        let selection = CustomFontRegistry.selection(
+            name: "Family Bold",
+            fontWeight: 700,
+            italic: true
+        )
+
+        #expect(selection?.fontName == "Family Bold Italic")
+        #expect(selection?.fontWeight == 700)
+        #expect(selection?.italic == true)
+    }
+
+    @Test func controlStateHidesUnsupportedControlsForSingleVariant() {
+        let italic = CustomFont(
+            fileName: "Family-Italic.otf",
+            familyName: "Family",
+            styleName: "Italic",
+            postScriptName: "Family-Italic",
+            isBold: false,
+            isItalic: true
+        )
+
+        CustomFontRegistry.update(with: [italic.fileName: italic])
+        defer { CustomFontRegistry.update(with: [:]) }
+
+        let state = CustomFontRegistry.controlState(name: "Family Italic", fontWeight: nil, italic: nil)
+        #expect(state?.effectiveItalic == true)
+        #expect(state?.availableWeights == [400])
+        #expect(state?.showsWeightPicker == false)
+        #expect(state?.showsItalicToggle == false)
     }
 
     @Test func buildAttributedStringMergesUpdatedParagraphStyleIntoRichText() {

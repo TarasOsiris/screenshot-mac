@@ -9,7 +9,6 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     @Binding var isEditingLabel: Bool
     @Binding var editingLabelText: String
     var isLabelFieldFocused: FocusState<Bool>.Binding
-    @Binding var isRowHovered: Bool
     let onToggleCollapsed: () -> Void
     let onStartLabelEdit: () -> Void
     let onCommitLabelEdit: () -> Void
@@ -60,11 +59,17 @@ struct EditorRowHeader<RowMenuContent: View>: View {
             Spacer()
 
             HStack(spacing: 4) {
-                ActionButton(icon: "chevron.up", tooltip: "Move up", disabled: !canMoveUp, action: onMoveUp)
-                ActionButton(icon: "chevron.down", tooltip: "Move down", disabled: !canMoveDown, action: onMoveDown)
-                ActionButton(icon: "doc.on.doc", tooltip: "Duplicate row", disabled: false, action: onDuplicate)
-                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset row", isDestructive: true, disabled: false, action: onReset)
-                ActionButton(icon: "trash", tooltip: "Delete row", isDestructive: true, disabled: !canDelete, action: onDelete)
+                RowHeaderActionButtons(
+                    isSelected: isSelected,
+                    canMoveUp: canMoveUp,
+                    canMoveDown: canMoveDown,
+                    canDelete: canDelete,
+                    onMoveUp: onMoveUp,
+                    onMoveDown: onMoveDown,
+                    onDuplicate: onDuplicate,
+                    onReset: onReset,
+                    onDelete: onDelete
+                )
                 Menu {
                     rowMenuContent()
                 } label: {
@@ -75,13 +80,40 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
                 .fixedSize()
+                .opacity(isSelected ? 1 : 0.65)
             }
-            .opacity(isSelected || isRowHovered ? 1 : 0.65)
-            .animation(.easeInOut(duration: 0.15), value: isSelected || isRowHovered)
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)
         .padding(.bottom, 4)
-        .onHover { isRowHovered = $0 }
+    }
+}
+
+/// Isolates hover state so it doesn't re-render the parent header. Rebuilding
+/// the header's `Menu` while a submenu is open causes macOS to dismiss it.
+private struct RowHeaderActionButtons: View {
+    let isSelected: Bool
+    let canMoveUp: Bool
+    let canMoveDown: Bool
+    let canDelete: Bool
+    let onMoveUp: () -> Void
+    let onMoveDown: () -> Void
+    let onDuplicate: () -> Void
+    let onReset: () -> Void
+    let onDelete: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ActionButton(icon: "chevron.up", tooltip: "Move up", disabled: !canMoveUp, action: onMoveUp)
+            ActionButton(icon: "chevron.down", tooltip: "Move down", disabled: !canMoveDown, action: onMoveDown)
+            ActionButton(icon: "doc.on.doc", tooltip: "Duplicate row", disabled: false, action: onDuplicate)
+            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset row", isDestructive: true, disabled: false, action: onReset)
+            ActionButton(icon: "trash", tooltip: "Delete row", isDestructive: true, disabled: !canDelete, action: onDelete)
+        }
+        .opacity(isSelected || isHovered ? 1 : 0.65)
+        .animation(.easeInOut(duration: 0.15), value: isSelected || isHovered)
+        .onHover { isHovered = $0 }
     }
 }

@@ -115,25 +115,30 @@ struct ShapePropertiesMultiSelectionBar: View {
         }
 
         if type == .text {
+            let textShapes = shapes
+            let primaryControlState = textShapes.first.flatMap(CustomFontRegistry.controlState(for:))
+            let weightBinding = multiFontWeightBinding(controlState: primaryControlState)
+            let italicBinding = multiItalicBinding(controlState: primaryControlState)
+
             ShapePropertiesSection {
                 FontPicker(
-                    selection: multiShapeOptionalBinding(\.fontName, default: ""),
+                    selection: multiFontNameBinding(),
+                    fontWeight: weightBinding,
+                    italic: italicBinding,
                     customFonts: state.customFonts,
                     onImportFont: { url in state.importCustomFont(from: url) }
                 )
 
                 ShapePropertiesSeparator()
 
-                Picker("", selection: multiShapeOptionalBinding(\.fontWeight, default: 400)) {
-                    Text("Light").tag(300)
-                    Text("Regular").tag(400)
-                    Text("Medium").tag(500)
-                    Text("Bold").tag(700)
-                }
-                .labelsHidden()
-                .frame(width: 90)
+                if showsMultiFontWeightPicker(primary: primaryControlState, textShapes: textShapes) {
+                    FontWeightPicker(
+                        selection: weightBinding,
+                        options: primaryControlState?.availableWeights ?? [300, 400, 500, 700]
+                    )
 
-                ShapePropertiesSeparator()
+                    ShapePropertiesSeparator()
+                }
 
                 Picker("", selection: multiShapeOptionalBinding(\.textAlign, default: .center)) {
                     Image(systemName: "text.alignleft").tag(TextAlign.left)
@@ -146,9 +151,11 @@ struct ShapePropertiesMultiSelectionBar: View {
             }
 
             ShapePropertiesSection {
-                Toggle("Italic", isOn: multiShapeOptionalBinding(\.italic, default: false))
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
+                if showsMultiItalicToggle(textShapes: textShapes) {
+                    Toggle("Italic", isOn: italicBinding)
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                }
 
                 Toggle("Uppercase", isOn: multiShapeOptionalBinding(\.uppercase, default: false))
                     .toggleStyle(.switch)
@@ -223,6 +230,62 @@ struct ShapePropertiesMultiSelectionBar: View {
                     .frame(width: 80)
             }
         }
+    }
+
+    private var firstTextShape: CanvasShapeModel? {
+        selectedShapes.first { $0.type == .text }
+    }
+
+    private func showsMultiFontWeightPicker(primary: CustomFontControlState?, textShapes: [CanvasShapeModel]) -> Bool {
+        guard let primary else { return true }
+        return primary.showsWeightPicker && textShapes.allSatisfy { shape in
+            guard let state = CustomFontRegistry.controlState(for: shape) else { return true }
+            return state.showsWeightPicker && state.availableWeights == primary.availableWeights
+        }
+    }
+
+    private func showsMultiItalicToggle(textShapes: [CanvasShapeModel]) -> Bool {
+        textShapes.allSatisfy { shape in
+            CustomFontRegistry.controlState(for: shape)?.showsItalicToggle ?? true
+        }
+    }
+
+    private func multiFontNameBinding() -> Binding<String> {
+        Binding(
+            get: { firstTextShape?.fontName ?? "" },
+            set: { newValue in
+                state.updateShapes(state.selectedShapeIds) { shape in
+                    shape.fontName = newValue
+                    RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .fontName)
+                }
+            }
+        )
+    }
+
+    private func multiFontWeightBinding(controlState: CustomFontControlState?) -> Binding<Int> {
+        Binding(
+            get: {
+                controlState?.effectiveWeight ?? firstTextShape?.fontWeight ?? 400
+            },
+            set: { newValue in
+                state.updateShapes(state.selectedShapeIds) { shape in
+                    RichTextUtils.applyFontWeightUpdate(to: &shape, weight: newValue)
+                }
+            }
+        )
+    }
+
+    private func multiItalicBinding(controlState: CustomFontControlState?) -> Binding<Bool> {
+        Binding(
+            get: {
+                controlState?.effectiveItalic ?? firstTextShape?.italic ?? false
+            },
+            set: { newValue in
+                state.updateShapes(state.selectedShapeIds) { shape in
+                    RichTextUtils.applyItalicUpdate(to: &shape, italic: newValue)
+                }
+            }
+        )
     }
 
     private func multiShapeBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> {

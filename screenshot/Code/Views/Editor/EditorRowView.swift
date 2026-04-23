@@ -13,7 +13,6 @@ struct EditorRowView: View {
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @State private var isDeletingRow = false
     @State private var isResettingRow = false
-    @State private var isRowHovered = false
     @State private var isSvgDialogPresented = false
     @State private var contextMenuPointStore = ModelPointStore()
     @State private var activeGuides: [AlignmentGuide] = []
@@ -57,7 +56,6 @@ struct EditorRowView: View {
                 isEditingLabel: $isEditingLabel,
                 editingLabelText: $editingLabelText,
                 isLabelFieldFocused: $isLabelFieldFocused,
-                isRowHovered: $isRowHovered,
                 onToggleCollapsed: {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         state.toggleRowCollapsed(for: row.id)
