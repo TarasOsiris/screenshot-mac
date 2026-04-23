@@ -107,8 +107,7 @@ struct CanvasShapeContextMenuContent: View {
         }
 
         if shape.type == .svg {
-            if let svgContent = shape.svgContent,
-               let originalSize = SvgHelper.parseViewBoxSize(svgContent) {
+            if let originalSize = svgOriginalSize {
                 Button("Restore Original Aspect Ratio") {
                     let newHeight = shape.width / (originalSize.width / originalSize.height)
                     applyUpdate { $0.height = newHeight }
@@ -170,5 +169,12 @@ struct CanvasShapeContextMenuContent: View {
         Divider()
 
         Button(isMultiSelected ? "Delete Selected" : "Delete", role: .destructive, action: deleteAction)
+    }
+
+    private var svgOriginalSize: CGSize? {
+        guard let svgContent = shape.svgContent,
+              let data = svgContent.data(using: .utf8),
+              let image = NSImage(data: data) else { return nil }
+        return SvgHelper.parseSize(svgContent, fallbackImage: image)
     }
 }

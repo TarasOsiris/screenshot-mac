@@ -80,7 +80,7 @@ enum SvgHelper {
         return CGSize(width: max(w, 20), height: max(h, 20))
     }
 
-    static func scaledSize(_ size: CGSize, maxDim: CGFloat = 400, minDim: CGFloat = 100) -> CGSize {
+    static func scaledSize(_ size: CGSize, maxDim: CGFloat = 400, minDim: CGFloat = 256) -> CGSize {
         let largest = max(size.width, size.height, 1)
         let target = min(max(largest, minDim), maxDim)
         let scale = target / largest
