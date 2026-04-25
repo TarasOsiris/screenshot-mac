@@ -267,6 +267,11 @@ struct ScreenshotBroApp: App {
                     guard let bundleURL = DebugTemplateService.getTemplatesBundleURL() else { return }
                     DebugTemplateService.regenerateAllPreviews(bundleURL: bundleURL)
                 }
+
+                Button("Generate Missing Previews") {
+                    guard let bundleURL = DebugTemplateService.getTemplatesBundleURL() else { return }
+                    DebugTemplateService.generateMissingPreviews(bundleURL: bundleURL)
+                }
             }
             #endif
         }

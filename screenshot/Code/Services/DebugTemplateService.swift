@@ -101,10 +101,29 @@ enum DebugTemplateService {
     /// Regenerate preview images for all templates in the bundle.
     @MainActor
     static func regenerateAllPreviews(bundleURL: URL) {
+        regeneratePreviews(bundleURL: bundleURL, missingOnly: false)
+    }
+
+    /// Regenerate preview images only for templates without an existing preview.png.
+    @MainActor
+    static func generateMissingPreviews(bundleURL: URL) {
+        regeneratePreviews(bundleURL: bundleURL, missingOnly: true)
+    }
+
+    static func previewURL(for templateURL: URL) -> URL {
+        templateURL.appendingPathComponent("preview.png")
+    }
+
+    @MainActor
+    private static func regeneratePreviews(bundleURL: URL, missingOnly: Bool) {
         let didAccess = bundleURL.startAccessingSecurityScopedResource()
-        let names = existingTemplateNames(at: bundleURL)
+        let allNames = existingTemplateNames(at: bundleURL)
+        let names = missingOnly
+            ? allNames.filter { !FileManager.default.fileExists(atPath: previewURL(for: bundleURL.appendingPathComponent($0, isDirectory: true)).path) }
+            : allNames
         let total = names.count
-        print("[DebugTemplateService] Starting preview regeneration for \(total) templates...")
+        let label = missingOnly ? "missing" : "all"
+        print("[DebugTemplateService] Starting preview regeneration for \(total) \(label) templates...")
 
         Task { @MainActor in
             defer { if didAccess { bundleURL.stopAccessingSecurityScopedResource() } }
@@ -199,7 +218,7 @@ enum DebugTemplateService {
             print("[DebugTemplateService] Failed to encode preview PNG for '\(templateName)'")
             return false
         }
-        let previewURL = templateURL.appendingPathComponent("preview.png")
+        let previewURL = Self.previewURL(for: templateURL)
         do {
             try pngData.write(to: previewURL, options: .atomic)
             print("[DebugTemplateService] Preview saved for '\(templateName)' (\(Int(previewSize.width))x\(Int(previewSize.height)))")
