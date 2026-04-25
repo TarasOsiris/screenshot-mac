@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tleskiv.xyz/screenshot/project-schema.json",
+  "title": "Screenshot Bro Project Data",
+  "description": "Schema for a Screenshot Bro project.json file (the contents of projects/<uuid>/project.json). Generated from Swift models in screenshot/Code/Models/. Field names are short codes from CodingKeys; comments map them to the Swift property names.",
+  "type": "object",
+  "required": ["r"],
+  "additionalProperties": false,
+  "properties": {
+    "r": {
+      "description": "rows — ordered list of screenshot rows in this project.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/ScreenshotRow" }
+    },
+    "ls": {
+      "description": "localeState — locale definitions, active locale, and per-shape locale overrides.",
+      "$ref": "#/$defs/LocaleState"
+    },
+    "m": {
+      "description": "modifiedAt — Swift Date (seconds since 2001-01-01 reference date).",
+      "type": "number"
+    }
+  },
+  "$defs": {
+    "UUID": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+    },
+    "Color": {
+      "description": "Hex sRGB color as #RRGGBB (opaque) or #RRGGBBAA (with alpha).",
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"
+    },
+    "ShapeType": {
+      "type": "string",
+      "enum": ["rectangle", "circle", "star", "text", "image", "device", "svg"]
+    },
+    "BackgroundStyle": {
+      "type": "string",
+      "enum": ["color", "gradient", "image"]
+    },
+    "ImageFillMode": {
+      "type": "string",
+      "enum": ["fill", "fit", "stretch", "tile"]
+    },
+    "GradientType": {
+      "type": "string",
+      "enum": ["linear", "radial", "angular"]
+    },
+    "DeviceCategory": {
+      "type": "string",
+      "enum": [
+        "iphone",
+        "ipadPro11",
+        "ipadPro13",
+        "macbook",
+        "android",
+        "pixel9",
+        "androidTablet",
+        "invisible"
+      ]
+    },
+    "TextAlign": {
+      "type": "string",
+      "enum": ["left", "center", "right"]
+    },
+    "TextVerticalAlign": {
+      "type": "string",
+      "enum": ["top", "center", "bottom"]
+    },
+
+    "GradientColorStop": {
+      "type": "object",
+      "required": ["id", "c", "l"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/UUID" },
+        "c": {
+          "description": "colorData — stop color.",
+          "$ref": "#/$defs/Color"
+        },
+        "l": {
+          "description": "location — 0.0 to 1.0.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+
+    "GradientConfig": {
+      "type": "object",
+      "required": ["s", "a"],
+      "additionalProperties": false,
+      "properties": {
+        "s": {
+          "description": "stops — sorted by location ascending.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/GradientColorStop" }
+        },
+        "a": {
+          "description": "angle — degrees.",
+          "type": "number"
+        },
+        "gt": {
+          "description": "gradientType — omitted when 'linear'.",
+          "$ref": "#/$defs/GradientType"
+        },
+        "cx": {
+          "description": "centerX — 0..1, used by radial/angular. Omitted when 0.5.",
+          "type": "number"
+        },
+        "cy": {
+          "description": "centerY — 0..1, used by radial/angular. Omitted when 0.5.",
+          "type": "number"
+        }
+      }
+    },
+
+    "BackgroundImageConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "f":    { "description": "fileName — raster image filename in resources/.", "type": "string" },
+        "sc":   { "description": "svgContent — inline SVG XML.", "type": "string" },
+        "fm":   { "description": "fillMode — omitted when 'fill'.", "$ref": "#/$defs/ImageFillMode" },
+        "a":    { "description": "opacity — 0..1, omitted when 1.0.", "type": "number" },
+        "ts":   { "description": "legacyTileSpacing — old format, replaced by tsx/tsy.", "type": "number" },
+        "to":   { "description": "legacyTileOffset — old format, replaced by tox/toy.", "type": "number" },
+        "tsc":  { "description": "legacyTileScale — old format, replaced by tscx/tscy.", "type": "number" },
+        "tsx":  { "description": "tileSpacingX — fraction of image width.", "type": "number" },
+        "tsy":  { "description": "tileSpacingY — fraction of image height.", "type": "number" },
+        "tox":  { "description": "tileOffsetX — fraction of image width.", "type": "number" },
+        "toy":  { "description": "tileOffsetY — fraction of image height.", "type": "number" },
+        "tscx": { "description": "tileScaleX — 0.1..3.0 scale factor.", "type": "number" },
+        "tscy": { "description": "tileScaleY — 0.1..3.0 scale factor.", "type": "number" }
+      }
+    },
+
+    "CanvasShapeModel": {
+      "type": "object",
+      "required": ["id", "t", "x", "y", "w", "h", "c"],
+      "additionalProperties": false,
+      "properties": {
+        "id":  { "$ref": "#/$defs/UUID" },
+        "t":   { "description": "type — shape kind.", "$ref": "#/$defs/ShapeType" },
+        "x":   { "description": "x — model-space x in points.", "type": "number" },
+        "y":   { "description": "y — model-space y in points.", "type": "number" },
+        "w":   { "description": "width — points.", "type": "number" },
+        "h":   { "description": "height — points.", "type": "number" },
+        "rot": { "description": "rotation — degrees, omitted when 0.", "type": "number" },
+        "br":  { "description": "borderRadius — points, omitted when 0.", "type": "number" },
+        "c":   { "description": "colorData — primary fill / text color.", "$ref": "#/$defs/Color" },
+        "o":   { "description": "opacity — 0..1, omitted when 1.0.", "type": "number" },
+
+        "txt": { "description": "text — plain text content (text shape).", "type": "string" },
+        "rt":  { "description": "richText — base64-encoded RTF for per-range styling.", "type": "string" },
+        "fn":  { "description": "fontName — PostScript or family name.", "type": "string" },
+        "fs":  { "description": "fontSize — points.", "type": "number" },
+        "fw":  { "description": "fontWeight — 100..900.", "type": "integer" },
+        "ta":  { "description": "textAlign — horizontal alignment.", "$ref": "#/$defs/TextAlign" },
+        "tva": { "description": "textVerticalAlign — vertical alignment.", "$ref": "#/$defs/TextVerticalAlign" },
+        "it":  { "description": "italic.", "type": "boolean" },
+        "uc":  { "description": "uppercase.", "type": "boolean" },
+        "ls":  { "description": "letterSpacing — points.", "type": "number" },
+        "lns": { "description": "lineSpacing — points.", "type": "number" },
+        "lhm": { "description": "lineHeightMultiple.", "type": "number" },
+
+        "ifn": { "description": "imageFileName — filename in resources/ for image shapes.", "type": "string" },
+
+        "dc":  { "description": "deviceCategory — device kind for device shapes.", "$ref": "#/$defs/DeviceCategory" },
+        "dbc": { "description": "deviceBodyColorData — device body color override.", "$ref": "#/$defs/Color" },
+        "dfi": { "description": "deviceFrameId — id from DeviceFrameCatalog (specific frame variant).", "type": "string" },
+        "sfn": { "description": "screenshotFileName — screenshot image inside the device frame.", "type": "string" },
+        "dpt": { "description": "devicePitch — degrees, only for 3D model frames.", "type": "number" },
+        "dyw": { "description": "deviceYaw — degrees, only for 3D model frames.", "type": "number" },
+
+        "svg": { "description": "svgContent — inline SVG XML for svg shapes.", "type": "string" },
+        "suc": { "description": "svgUseColor — when true, recolor SVG using `c`.", "type": "boolean" },
+
+        "olc": { "description": "outlineColorData — stroke color (rectangle/circle/star).", "$ref": "#/$defs/Color" },
+        "olw": { "description": "outlineWidth — stroke width in points.", "type": "number" },
+
+        "spc": { "description": "starPointCount — number of points on a star shape.", "type": "integer" },
+
+        "fst": { "description": "fillStyle — gradient/image fill for rectangle/circle/star.", "$ref": "#/$defs/BackgroundStyle" },
+        "fgc": { "description": "fillGradientConfig — used when fillStyle is 'gradient'.", "$ref": "#/$defs/GradientConfig" },
+        "fic": { "description": "fillImageConfig — used when fillStyle is 'image'.", "$ref": "#/$defs/BackgroundImageConfig" },
+
+        "ct":  { "description": "clipToTemplate — when true, shape is clipped to its owning template.", "type": "boolean" }
+      }
+    },
+
+    "ScreenshotTemplate": {
+      "type": "object",
+      "required": ["id", "bgc"],
+      "additionalProperties": false,
+      "properties": {
+        "id":   { "$ref": "#/$defs/UUID" },
+        "bgc":  { "description": "backgroundColor.", "$ref": "#/$defs/Color" },
+        "ob":   { "description": "overrideBackground — when true, this template's background overrides the row.", "type": "boolean" },
+        "bgs":  { "description": "backgroundStyle — only present when overrideBackground=true and not 'color'.", "$ref": "#/$defs/BackgroundStyle" },
+        "gc":   { "description": "gradientConfig — present when backgroundStyle='gradient'.", "$ref": "#/$defs/GradientConfig" },
+        "bgic": { "description": "backgroundImageConfig — present when backgroundStyle='image'.", "$ref": "#/$defs/BackgroundImageConfig" },
+        "bgbl": { "description": "backgroundBlur — radius in points, omitted when 0.", "type": "number" }
+      }
+    },
+
+    "ScreenshotRow": {
+      "type": "object",
+      "required": ["id", "l", "tp", "tw", "th", "bgc", "ddc"],
+      "additionalProperties": false,
+      "properties": {
+        "id":   { "$ref": "#/$defs/UUID" },
+        "l":    { "description": "label — user-visible row name.", "type": "string" },
+        "tp":   {
+          "description": "templates — columns within this row.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/ScreenshotTemplate" }
+        },
+        "tw":   { "description": "templateWidth — model-space pixels per template.", "type": "number" },
+        "th":   { "description": "templateHeight — model-space pixels per template.", "type": "number" },
+        "bgc":  { "description": "backgroundColorData — row default background color.", "$ref": "#/$defs/Color" },
+        "ddbc": { "description": "defaultDeviceBodyColorData — default device body color for new devices in this row.", "$ref": "#/$defs/Color" },
+        "ddc":  {
+          "description": "defaultDeviceCategory — default device kind for new device shapes (nullable).",
+          "oneOf": [
+            { "$ref": "#/$defs/DeviceCategory" },
+            { "type": "null" }
+          ]
+        },
+        "bgs":  { "description": "backgroundStyle — omitted when 'color'.", "$ref": "#/$defs/BackgroundStyle" },
+        "gc":   { "description": "gradientConfig — present when backgroundStyle='gradient'.", "$ref": "#/$defs/GradientConfig" },
+        "bgic": { "description": "backgroundImageConfig — present when backgroundStyle='image'.", "$ref": "#/$defs/BackgroundImageConfig" },
+        "span": { "description": "spanBackgroundAcrossRow — render background once across all templates.", "type": "boolean" },
+        "bgbl": { "description": "backgroundBlur — omitted when 0.", "type": "number" },
+        "ddfi": { "description": "defaultDeviceFrameId — preferred specific frame id for new devices.", "type": "string" },
+        "hst":  {
+          "description": "hiddenShapeTypes — shape kinds hidden from this row (omitted when empty).",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/ShapeType" }
+        },
+        "sb":   { "description": "showBorders — omitted when true (default).", "type": "boolean" },
+        "s":    {
+          "description": "shapes — canvas elements that span across templates by x-position.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/CanvasShapeModel" }
+        },
+        "lm":   { "description": "isLabelManuallySet — omitted when false.", "type": "boolean" },
+        "col":  { "description": "isCollapsed — omitted when false.", "type": "boolean" }
+      }
+    },
+
+    "LocaleDefinition": {
+      "type": "object",
+      "required": ["c", "l"],
+      "additionalProperties": false,
+      "properties": {
+        "c": { "description": "code — BCP-47-style language code (e.g. 'en', 'fr').", "type": "string" },
+        "l": { "description": "label — display name.", "type": "string" }
+      }
+    },
+
+    "ShapeLocaleOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ox":   { "description": "offsetX — added to base shape x for this locale.", "type": "number" },
+        "oy":   { "description": "offsetY — added to base shape y.", "type": "number" },
+        "ow":   { "description": "offsetWidth — added to base width.", "type": "number" },
+        "oh":   { "description": "offsetHeight — added to base height.", "type": "number" },
+        "txt":  { "description": "text — translated string.", "type": "string" },
+        "rt":   { "description": "richText — base64 RTF override.", "type": "string" },
+        "crt":  { "description": "clearsRichText — when true, drop base richText for this locale.", "type": "boolean" },
+        "fn":   { "description": "fontName override.", "type": "string" },
+        "fs":   { "description": "fontSize override.", "type": "number" },
+        "fw":   { "description": "fontWeight override.", "type": "integer" },
+        "ta":   { "description": "textAlign override.", "$ref": "#/$defs/TextAlign" },
+        "it":   { "description": "italic override.", "type": "boolean" },
+        "uc":   { "description": "uppercase override.", "type": "boolean" },
+        "ls":   { "description": "letterSpacing override.", "type": "number" },
+        "lns":  { "description": "lineSpacing override.", "type": "number" },
+        "lhm":  { "description": "lineHeightMultiple override.", "type": "number" },
+        "oifn": { "description": "overrideImageFileName — locale-specific image asset.", "type": "string" }
+      }
+    },
+
+    "LocaleState": {
+      "type": "object",
+      "required": ["l", "alc"],
+      "additionalProperties": false,
+      "properties": {
+        "l": {
+          "description": "locales — ordered list; first entry is the base locale.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/LocaleDefinition" }
+        },
+        "alc": {
+          "description": "activeLocaleCode — currently selected locale.",
+          "type": "string"
+        },
+        "o": {
+          "description": "overrides — keyed by locale code, then shape UUID string.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/$defs/ShapeLocaleOverride" }
+          }
+        }
+      }
+    }
+  }
+}
