@@ -1,6 +1,14 @@
 import SwiftUI
 import Translation
 
+enum LocaleMenuRequest {
+    case manageLocales
+    case editTranslations
+    case autoTranslateMissing
+    case reTranslateAll
+    case revertToBase
+}
+
 struct LocaleToolbarMenu: View {
     @Bindable var state: AppState
     @State private var isManagingLocales = false
@@ -57,7 +65,7 @@ struct LocaleToolbarMenu: View {
                 Button("Revert to Base Language...", role: .destructive) {
                     showResetToBaseConfirmation = true
                 }
-                .disabled(isQuickTranslating || !activeLocaleHasOverrides)
+                .disabled(isQuickTranslating || !state.localeState.activeLocaleHasOverrides)
 
                 Divider()
             }
@@ -144,9 +152,20 @@ struct LocaleToolbarMenu: View {
             }
         }
         .translationLanguageDownloadAlert(isPresented: $showLanguageDownloadAlert)
+        .onChange(of: state.pendingLocaleMenuRequest) { _, newValue in
+            guard let request = newValue else { return }
+            state.pendingLocaleMenuRequest = nil
+            switch request {
+            case .manageLocales: isManagingLocales = true
+            case .editTranslations: isTranslationOverview = true
+            case .autoTranslateMissing: startQuickTranslation(onlyUntranslated: true)
+            case .reTranslateAll: showReplaceAllConfirmation = true
+            case .revertToBase: showResetToBaseConfirmation = true
+            }
+        }
     }
 
-    private var localeHelpText: String {
+    private var localeHelpText: LocalizedStringKey {
         if state.localeState.locales.count > 1 {
             return "Language (\u{2318}[ / \u{2318}], \u{2325}\u{2318}0 to switch to the base language)"
         }
@@ -169,11 +188,6 @@ struct LocaleToolbarMenu: View {
             return ("\(missingCount) untranslated", .orange)
         }
         return ("Translations complete", .secondary)
-    }
-
-    private var activeLocaleHasOverrides: Bool {
-        guard !state.localeState.isBaseLocale else { return false }
-        return !(state.localeState.overrides[state.localeState.activeLocaleCode]?.isEmpty ?? true)
     }
 
     private func startQuickTranslation(onlyUntranslated: Bool) {

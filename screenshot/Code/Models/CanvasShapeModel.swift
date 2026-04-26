@@ -375,7 +375,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     }
 
     static func defaultText(centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
-        let text = "Your awesome new feature here!"
+        let text = String(localized: "Your awesome new feature here!")
         let fontSize: CGFloat = 110
         let fontWeight: Int = 700
         let width: CGFloat = 700

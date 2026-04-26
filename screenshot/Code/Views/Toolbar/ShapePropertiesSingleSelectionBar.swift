@@ -513,7 +513,7 @@ struct ShapePropertiesSingleSelectionBar: View {
             allowsNoDevice: false,
             presentation: .toolbar,
             bodyColor: shape.deviceCategory != .invisible && shape.resolvedDeviceFrame?.isModelBacked != false ? deviceBodyColorBinding(shapeId) : nil,
-            bodyColorLabel: "Device color",
+            bodyColorLabel: String(localized: "Device color"),
             canResetBodyColor: hasDeviceBodyColorOverride(shapeId),
             onResetBodyColor: { resetDeviceBodyColor(shapeId) },
             onSelectCategory: { cat in
@@ -526,7 +526,7 @@ struct ShapePropertiesSingleSelectionBar: View {
         .help(devicePickerHelp(shape: shape))
     }
 
-    private func devicePickerHelp(shape: CanvasShapeModel) -> String {
+    private func devicePickerHelp(shape: CanvasShapeModel) -> LocalizedStringKey {
         if let frameId = shape.deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
             return "Current device frame: \(frame.label)"
         }

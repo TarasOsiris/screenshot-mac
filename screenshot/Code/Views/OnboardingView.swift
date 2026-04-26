@@ -138,38 +138,37 @@ struct OnboardingView: View {
             title: "Pick a template",
             description: "Start from a ready-made layout or a blank project. Templates come pre-sized for each store.",
             icon: "square.grid.2x2",
-            shortcut: nil,
             color: .blue
         ),
         StepInfo(
             title: "Add your content",
             description: "Drop in screenshots, add text and shapes, pick a device frame. Drag to arrange.",
             icon: "plus.rectangle.on.rectangle",
-            shortcut: "Drop images onto canvas",
+            hint: "Drop images onto canvas",
             color: .purple
         ),
         StepInfo(
             title: "Style it",
             description: "Set backgrounds, colors, and gradients. Use the inspector on the right and properties bar at the bottom.",
             icon: "paintbrush",
-            shortcut: nil,
             color: .orange
         ),
         StepInfo(
             title: "Export",
             description: "Export all screenshots at once as PNG or JPEG, ready to upload to App Store Connect or Google Play.",
             icon: "square.and.arrow.up",
-            shortcut: "\u{2318}E",
+            shortcutGlyph: "\u{2318}E",
             color: .green
         ),
     ]
 }
 
 private struct StepInfo {
-    let title: String
-    let description: String
+    let title: LocalizedStringKey
+    let description: LocalizedStringKey
     let icon: String
-    let shortcut: String?
+    var hint: LocalizedStringKey? = nil
+    var shortcutGlyph: String? = nil
     let color: Color
 }
 
@@ -212,13 +211,10 @@ private struct StepCardView: View {
 
             Spacer(minLength: 0)
 
-            if let shortcut = step.shortcut {
-                Text(shortcut)
-                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            if let hint = step.hint {
+                shortcutBadge { Text(hint) }
+            } else if let glyph = step.shortcutGlyph {
+                shortcutBadge { Text(verbatim: glyph) }
             }
         }
         .padding(18)
@@ -251,6 +247,16 @@ private struct StepCardView: View {
         .onHover { hovering in
             isHovered = hovering
         }
+    }
+
+    @ViewBuilder
+    private func shortcutBadge<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .font(.system(size: 10, weight: .semibold, design: .monospaced))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
     }
 }
 

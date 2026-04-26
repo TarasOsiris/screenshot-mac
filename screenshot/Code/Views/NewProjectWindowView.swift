@@ -21,7 +21,7 @@ struct NewProjectWindowView: View {
         return templates.first(where: { $0.id == selectedTemplateId })
     }
 
-    private var createButtonTitle: String {
+    private var createButtonTitle: LocalizedStringKey {
         creationMode == .blank ? "Create Blank Project" : "Create from Template"
     }
 

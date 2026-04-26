@@ -39,7 +39,7 @@ struct TemplateControlBar: View {
         template.backgroundStyle == .image &&
         backgroundPreviewImage == nil
     }
-    private var backgroundButtonHelp: String {
+    private var backgroundButtonHelp: LocalizedStringKey {
         if isImageBackgroundMissing {
             return "Background override (image not selected)"
         }

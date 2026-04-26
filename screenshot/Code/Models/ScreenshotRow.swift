@@ -27,7 +27,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
 
     init(
         id: UUID = UUID(),
-        label: String = "Screenshot 1",
+        label: String = String(localized: "Screenshot 1"),
         templates: [ScreenshotTemplate] = [],
         templateWidth: CGFloat = 1242,
         templateHeight: CGFloat = 2688,

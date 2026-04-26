@@ -381,6 +381,12 @@
         }
       }
     },
+    "%@ copy" : {
+
+    },
+    "%@ Custom" : {
+
+    },
     "%@ is not allowed for this app/version." : {
       "localizations" : {
         "de" : {
@@ -2736,6 +2742,9 @@
         }
       }
     },
+    "Add your content" : {
+
+    },
     "Add your Issuer ID, Key ID, and .p8 key in Settings → App Store Connect." : {
       "localizations" : {
         "de" : {
@@ -4116,6 +4125,9 @@
         }
       }
     },
+    "Apply background across the entire row instead of repeating per screenshot" : {
+
+    },
     "Are you sure you want to delete \"%@\"?" : {
       "localizations" : {
         "de" : {
@@ -4859,6 +4871,9 @@
         }
       }
     },
+    "Background override" : {
+
+    },
     "Background Override" : {
       "localizations" : {
         "de" : {
@@ -4904,6 +4919,9 @@
           }
         }
       }
+    },
+    "Background override (image not selected)" : {
+
     },
     "Backup" : {
       "localizations" : {
@@ -5966,6 +5984,9 @@
         }
       }
     },
+    "Choose a folder and export screenshots (⌘E)" : {
+
+    },
     "Choose a folder for exported screenshots" : {
       "localizations" : {
         "de" : {
@@ -6335,6 +6356,7 @@
       }
     },
     "Clear App Store Connect Credentials…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -6426,6 +6448,9 @@
         }
       }
     },
+    "Clear Credentials…" : {
+
+    },
     "Clear export folder" : {
       "localizations" : {
         "de" : {
@@ -6471,6 +6496,9 @@
           }
         }
       }
+    },
+    "Clear formatting" : {
+
     },
     "Clear Formatting" : {
       "localizations" : {
@@ -7972,6 +8000,12 @@
         }
       }
     },
+    "Create Blank Project" : {
+
+    },
+    "Create from Template" : {
+
+    },
     "Create or manage API keys" : {
       "localizations" : {
         "de" : {
@@ -8017,6 +8051,21 @@
           }
         }
       }
+    },
+    "Current abstract device: %@" : {
+
+    },
+    "Current default abstract device: %@" : {
+
+    },
+    "Current default device frame: %@" : {
+
+    },
+    "Current default device: iPhone" : {
+
+    },
+    "Current device frame: %@" : {
+
     },
     "Current export folder: %@" : {
       "localizations" : {
@@ -8341,6 +8390,12 @@
         }
       }
     },
+    "Decrease font size" : {
+
+    },
+    "Default color" : {
+
+    },
     "Default device frame" : {
       "localizations" : {
         "de" : {
@@ -8386,6 +8441,9 @@
           }
         }
       }
+    },
+    "Default screenshot size" : {
+
     },
     "Default zoom level" : {
       "localizations" : {
@@ -9310,6 +9368,9 @@
         }
       }
     },
+    "Device color" : {
+
+    },
     "Devices" : {
       "localizations" : {
         "de" : {
@@ -9815,6 +9876,12 @@
           }
         }
       }
+    },
+    "Drop images onto canvas" : {
+
+    },
+    "Drop in screenshots, add text and shapes, pick a device frame. Drag to arrange." : {
+
     },
     "Drop or paste an image to configure fill and opacity." : {
       "localizations" : {
@@ -10414,6 +10481,9 @@
         }
       }
     },
+    "Edit Translations..." : {
+
+    },
     "Editing %@" : {
       "localizations" : {
         "de" : {
@@ -10736,6 +10806,9 @@
           }
         }
       }
+    },
+    "Export all screenshots at once as PNG or JPEG, ready to upload to App Store Connect or Google Play." : {
+
     },
     "Export All Screenshots to Folder..." : {
       "localizations" : {
@@ -11151,6 +11224,12 @@
         }
       }
     },
+    "Export screenshots to %@ (⌘E)" : {
+
+    },
+    "Export..." : {
+
+    },
     "Export…" : {
       "localizations" : {
         "de" : {
@@ -11197,6 +11276,22 @@
         }
       }
     },
+    "Exported" : {
+
+    },
+    "Exporting %lld of %lld rows" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Exporting %1$lld of %2$lld rows"
+          }
+        }
+      }
+    },
+    "Exporting all %lld rows" : {
+
+    },
     "Exporting Screenshots..." : {
       "localizations" : {
         "de" : {
@@ -11242,6 +11337,9 @@
           }
         }
       }
+    },
+    "Exporting..." : {
+
     },
     "Failed to %@: %@" : {
       "localizations" : {
@@ -11932,6 +12030,15 @@
           }
         }
       }
+    },
+    "Fit %@ to the editor" : {
+
+    },
+    "Fit canvas to the window" : {
+
+    },
+    "Fit the selected row to the editor" : {
+
     },
     "Fix required" : {
       "localizations" : {
@@ -13359,6 +13466,9 @@
         }
       }
     },
+    "Increase font size" : {
+
+    },
     "Inspector" : {
       "localizations" : {
         "de" : {
@@ -14096,6 +14206,9 @@
         }
       }
     },
+    "Language (⌘[ / ⌘], ⌥⌘0 to switch to the base language)" : {
+
+    },
     "Last test failed" : {
       "localizations" : {
         "de" : {
@@ -14647,6 +14760,9 @@
           }
         }
       }
+    },
+    "Loading Images…" : {
+
     },
     "locale" : {
       "localizations" : {
@@ -16076,6 +16192,9 @@
         }
       }
     },
+    "No default device" : {
+
+    },
     "No device" : {
       "localizations" : {
         "de" : {
@@ -17366,6 +17485,9 @@
         }
       }
     },
+    "Opening Project…" : {
+
+    },
     "Orientation" : {
       "localizations" : {
         "de" : {
@@ -17920,6 +18042,9 @@
       }
     },
     "Pick a font file or a folder containing all variants" : {
+
+    },
+    "Pick a template" : {
 
     },
     "Pick custom font" : {
@@ -20868,6 +20993,9 @@
         }
       }
     },
+    "Requires at least two screenshots in the row" : {
+
+    },
     "Reset" : {
       "localizations" : {
         "de" : {
@@ -22889,6 +23017,9 @@
         }
       }
     },
+    "Screenshot 1" : {
+
+    },
     "Screenshot Bro Pro is unlocked and ready to use." : {
       "localizations" : {
         "de" : {
@@ -23164,6 +23295,9 @@
           }
         }
       }
+    },
+    "Screenshots per new row" : {
+
     },
     "Screenshots per row" : {
       "localizations" : {
@@ -23854,6 +23988,9 @@
           }
         }
       }
+    },
+    "Set backgrounds, colors, and gradients. Use the inspector on the right and properties bar at the bottom." : {
+
     },
     "sets" : {
       "localizations" : {
@@ -24730,6 +24867,9 @@
         }
       }
     },
+    "Start from a ready-made layout or a blank project. Templates come pre-sized for each store." : {
+
+    },
     "Status" : {
       "localizations" : {
         "de" : {
@@ -25005,6 +25145,9 @@
           }
         }
       }
+    },
+    "Style it" : {
+
     },
     "Subtitle" : {
       "localizations" : {
@@ -25327,6 +25470,9 @@
           }
         }
       }
+    },
+    "Switch To" : {
+
     },
     "Switch to Base" : {
       "localizations" : {
@@ -26837,6 +26983,18 @@
           }
         }
       }
+    },
+    "Toggle bold" : {
+
+    },
+    "Toggle italic" : {
+
+    },
+    "Toggle strikethrough" : {
+
+    },
+    "Toggle underline" : {
+
     },
     "Translate" : {
       "localizations" : {
@@ -29183,6 +29341,9 @@
           }
         }
       }
+    },
+    "Your awesome new feature here!" : {
+
     },
     "Your Screenshot Bro Pro purchase was restored." : {
       "localizations" : {

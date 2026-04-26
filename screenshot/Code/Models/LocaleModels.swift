@@ -139,6 +139,11 @@ struct LocaleState: Codable, Equatable {
     var baseLocaleCode: String { locales.first?.code ?? "en" }
     var activeLocaleLabel: String { locales.first { $0.code == activeLocaleCode }?.flagLabel ?? activeLocaleCode }
 
+    var activeLocaleHasOverrides: Bool {
+        guard !isBaseLocale else { return false }
+        return !(overrides[activeLocaleCode]?.isEmpty ?? true)
+    }
+
     /// Check if a shape has any override for the active locale.
     func hasOverride(shapeId: UUID) -> Bool {
         override(forCode: activeLocaleCode, shapeId: shapeId) != nil

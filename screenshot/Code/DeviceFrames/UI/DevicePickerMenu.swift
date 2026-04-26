@@ -15,7 +15,7 @@ struct DevicePickerMenu: View {
     var allowsNoDevice: Bool = true
     var presentation: DevicePickerPresentation = .form
     var bodyColor: Binding<Color>? = nil
-    var bodyColorLabel: String = "Color"
+    var bodyColorLabel: String = String(localized: "Color")
     var canResetBodyColor: Bool = false
     var onResetBodyColor: (() -> Void)? = nil
     var onSelectNone: () -> Void = {}
@@ -34,7 +34,7 @@ struct DevicePickerMenu: View {
         if let frame = resolvedFrame {
             return frame.modelName
         }
-        guard let category else { return "No device" }
+        guard let category else { return String(localized: "No device") }
         return category.label
     }
 

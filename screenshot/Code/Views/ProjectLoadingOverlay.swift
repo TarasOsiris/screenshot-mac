@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ProjectLoadingOverlay: View {
-    let message: String
+    let message: LocalizedStringKey
 
     var body: some View {
         ZStack {

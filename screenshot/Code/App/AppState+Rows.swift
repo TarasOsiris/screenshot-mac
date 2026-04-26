@@ -42,7 +42,7 @@ extension AppState {
             copyImageFiles(for: &newShapes[i], originalId: originalId)
         }
         let copy = ScreenshotRow(
-            label: "\(source.label) copy",
+            label: String(localized: "\(source.label) copy"),
             templates: source.templates.map { $0.duplicated() },
             templateWidth: source.templateWidth,
             templateHeight: source.templateHeight,

@@ -691,22 +691,22 @@ struct ContentView: View {
         ExportFolderService.folderName(for: lastExportFolderPath)
     }
 
-    private var exportButtonText: String {
+    private var exportButtonText: LocalizedStringKey {
         if isExporting { return "Exporting..." }
         if exportSuccess { return "Exported" }
         return hasLastExportDestination ? "Export" : "Export..."
     }
 
-    private var exportHelpText: String {
+    private var exportHelpText: LocalizedStringKey {
         if hasLastExportDestination {
             return "Export screenshots to \(lastExportFolderName) (\u{2318}E)"
         }
         return "Choose a folder and export screenshots (\u{2318}E)"
     }
 
-    private var fitZoomHelpText: String {
+    private var fitZoomHelpText: LocalizedStringKey {
         if let row = currentExportRow {
-            return "Fit \(row.label.isEmpty ? "selected row" : row.label) to the editor"
+            return "Fit \(row.displayLabel) to the editor"
         }
         return "Fit the selected row to the editor"
     }

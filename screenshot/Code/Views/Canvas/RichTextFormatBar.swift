@@ -122,7 +122,7 @@ struct RichTextFormatBar: View {
             .frame(height: 20)
     }
 
-    private func stepButton(systemName: String, helpText: String, action: @escaping () -> Void) -> some View {
+    private func stepButton(systemName: String, helpText: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: 10, weight: .semibold))
@@ -132,7 +132,7 @@ struct RichTextFormatBar: View {
         .help(helpText)
     }
 
-    private func formatButton(systemName: String, isActive: Bool, helpText: String, action: @escaping () -> Void) -> some View {
+    private func formatButton(systemName: String, isActive: Bool, helpText: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: 12, weight: .semibold))

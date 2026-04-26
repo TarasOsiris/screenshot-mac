@@ -194,7 +194,7 @@ struct ShowcaseExportSheet: View {
         selectedRowIds.count == candidateRows.count
     }
 
-    private var exportCountText: String {
+    private var exportCountText: LocalizedStringKey {
         let count = selectedRowIds.count
         if count == 0 { return "No rows selected" }
         if count == candidateRows.count { return "Exporting all \(count) rows" }

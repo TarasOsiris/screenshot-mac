@@ -3,7 +3,7 @@ import SwiftUI
 /// Screenshot size picker used in both Settings and Onboarding.
 struct ScreenshotSizePicker: View {
     @Binding var selection: String
-    var label: String = "Default screenshot size"
+    var label: LocalizedStringKey = "Default screenshot size"
 
     private var isCustomSize: Bool {
         !displayCategories.contains { category in
@@ -14,7 +14,8 @@ struct ScreenshotSizePicker: View {
     var body: some View {
         Picker(label, selection: $selection) {
             if isCustomSize {
-                Text(selection.replacingOccurrences(of: "x", with: "\u{00d7}") + " Custom")
+                let dimensions = selection.replacingOccurrences(of: "x", with: "\u{00d7}")
+                Text("\(dimensions) Custom")
                     .tag(selection)
             }
             ForEach(displayCategories) { category in
@@ -61,7 +62,7 @@ struct DefaultDevicePicker: View {
 /// Template count picker used in both Settings and Onboarding.
 struct TemplateCountPicker: View {
     @Binding var selection: Int
-    var label: String = "Screenshots per new row"
+    var label: LocalizedStringKey = "Screenshots per new row"
 
     var body: some View {
         Picker(label, selection: $selection) {

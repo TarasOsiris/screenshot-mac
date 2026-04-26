@@ -11,7 +11,7 @@ struct ZoomControls: View {
     @Environment(AppState.self) private var state
     @State private var isPopoverPresented = false
     var onFit: (() -> Void)? = nil
-    var fitHelpText = "Fit canvas to the window"
+    var fitHelpText: LocalizedStringKey = "Fit canvas to the window"
 
     var body: some View {
         @Bindable var state = state

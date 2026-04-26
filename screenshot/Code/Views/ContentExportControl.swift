@@ -3,8 +3,8 @@ import SwiftUI
 struct ContentExportControl<MenuContent: View>: View {
     let isExporting: Bool
     let exportSuccess: Bool
-    let buttonText: String
-    let helpText: String
+    let buttonText: LocalizedStringKey
+    let helpText: LocalizedStringKey
     let isDisabled: Bool
     let onExport: () -> Void
     let menuContent: MenuContent
@@ -12,8 +12,8 @@ struct ContentExportControl<MenuContent: View>: View {
     init(
         isExporting: Bool,
         exportSuccess: Bool,
-        buttonText: String,
-        helpText: String,
+        buttonText: LocalizedStringKey,
+        helpText: LocalizedStringKey,
         isDisabled: Bool,
         onExport: @escaping () -> Void,
         @ViewBuilder menuContent: () -> MenuContent

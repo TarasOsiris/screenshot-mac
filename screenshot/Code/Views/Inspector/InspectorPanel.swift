@@ -226,7 +226,7 @@ struct InspectorPanel: View {
                     frameId: defaultDeviceFrameId(for: rowId),
                     presentation: .sidebar,
                     bodyColor: defaultDeviceIsAbstract(for: rowId) ? rowDefaultDeviceBodyColorBinding(for: rowId) : nil,
-                    bodyColorLabel: "Default color",
+                    bodyColorLabel: String(localized: "Default color"),
                     onSelectNone: {
                         state.setDefaultDevice(for: rowId, category: nil, frameId: nil)
                     },
@@ -255,7 +255,7 @@ struct InspectorPanel: View {
         return state.rows[idx].defaultDeviceFrameId
     }
 
-    private func defaultDeviceHelp(for rowId: UUID) -> String {
+    private func defaultDeviceHelp(for rowId: UUID) -> LocalizedStringKey {
         guard let idx = state.rowIndex(for: rowId) else { return "Current default device: iPhone" }
         if let frameId = state.rows[idx].defaultDeviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
             return "Current default device frame: \(frame.label)"
@@ -381,7 +381,7 @@ struct InspectorPanel: View {
         )
     }
 
-    private func spanAcrossRowHelp(for rowIndex: Int, canSpanAcrossRow: Bool) -> String {
+    private func spanAcrossRowHelp(for rowIndex: Int, canSpanAcrossRow: Bool) -> LocalizedStringKey {
         canSpanAcrossRow
             ? "Apply background across the entire row instead of repeating per screenshot"
             : "Requires at least two screenshots in the row"

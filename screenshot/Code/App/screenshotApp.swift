@@ -218,6 +218,53 @@ struct ScreenshotBroApp: App {
                 }
                 .keyboardShortcut("0", modifiers: [.command, .option])
                 .disabled(appState.localeState.isBaseLocale)
+
+                if appState.localeState.locales.count > 1 {
+                    Divider()
+
+                    Section("Switch To") {
+                        ForEach(appState.localeState.locales) { locale in
+                            Button(locale.flagLabel) {
+                                appState.setActiveLocale(locale.code)
+                            }
+                            .disabled(locale.code == appState.localeState.activeLocaleCode)
+                        }
+                    }
+                }
+
+                Divider()
+
+                let translationProgress = appState.translationProgress()
+
+                Button("Auto-Translate Missing Text") {
+                    appState.pendingLocaleMenuRequest = .autoTranslateMissing
+                }
+                .disabled(
+                    appState.localeState.isBaseLocale ||
+                    translationProgress.total == 0 ||
+                    translationProgress.translated >= translationProgress.total
+                )
+
+                Button("Re-Translate All Text...") {
+                    appState.pendingLocaleMenuRequest = .reTranslateAll
+                }
+                .disabled(appState.localeState.isBaseLocale || translationProgress.total == 0)
+
+                Button("Revert to Base Language...") {
+                    appState.pendingLocaleMenuRequest = .revertToBase
+                }
+                .disabled(!appState.localeState.activeLocaleHasOverrides)
+
+                Divider()
+
+                Button("Edit Translations...") {
+                    appState.pendingLocaleMenuRequest = .editTranslations
+                }
+                .disabled(appState.localeState.locales.count < 2 || translationProgress.total == 0)
+
+                Button("Manage Locales...") {
+                    appState.pendingLocaleMenuRequest = .manageLocales
+                }
             }
 
             #if DEBUG
@@ -279,6 +326,7 @@ struct ScreenshotBroApp: App {
         Settings {
             SettingsView()
                 .environment(storeService)
+                .preferredColorScheme(preferredColorScheme)
         }
     }
 

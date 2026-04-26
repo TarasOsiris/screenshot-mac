@@ -30,6 +30,7 @@ final class AppState {
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
     @ObservationIgnored var justAddedShapeId: UUID?
     var pendingTranslateShapeId: UUID?
+    var pendingLocaleMenuRequest: LocaleMenuRequest?
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
     /// Family names referenced by any shape at some point in the current session. A font
