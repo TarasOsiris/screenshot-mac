@@ -166,6 +166,16 @@ struct AppStoreConnectSettingsView: View {
                     .foregroundStyle(.secondary)
                     .font(.caption)
             }
+
+            if credentials.isConfigured || credentials.hasPrivateKey {
+                HStack {
+                    Spacer()
+                    Button("Clear Credentials…", role: .destructive) {
+                        showClearConfirmation = true
+                    }
+                    .controlSize(.small)
+                }
+            }
         } header: {
             Text("API Key")
         } footer: {
@@ -179,10 +189,6 @@ struct AppStoreConnectSettingsView: View {
             Link("Open API Keys", destination: Self.apiKeysURL)
             Link("Create or manage API keys", destination: Self.apiKeysURL)
             Link("App Store Connect API documentation", destination: Self.docsURL)
-
-            Button("Clear App Store Connect Credentials…", role: .destructive) {
-                showClearConfirmation = true
-            }
         }
     }
 
