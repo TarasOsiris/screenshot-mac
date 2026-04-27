@@ -48,14 +48,17 @@ xcodebuild -exportArchive -archivePath build/screenshot.xcarchive -exportPath bu
 ```
 3. Revert `ExportOptions.plist` back to `destination: export`
 
-## Step 6: Commit and tag
+## Step 6: Commit, tag, and push
 
-Stage and commit the version changes, then create a git tag:
+Stage and commit the version changes, create a git tag, then push both the commit and the tag:
 ```
 git add screenshot.xcodeproj/project.pbxproj
 git commit -m "Bump version to <MARKETING_VERSION> (<CURRENT_PROJECT_VERSION>)"
 git tag v<MARKETING_VERSION>-<CURRENT_PROJECT_VERSION>
+git push && git push --tags
 ```
+
+`git push --tags` is mandatory — local-only tags from prior ships should never be left behind.
 
 ## Step 7: Report
 
