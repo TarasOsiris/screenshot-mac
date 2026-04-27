@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct ScreenshotBroApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var appState = AppState()
     @State private var storeService = StoreService()
     @AppStorage("appearance") private var appearance = "auto"
@@ -385,5 +386,11 @@ private struct NewProjectCommands: Commands {
             }
             .keyboardShortcut("n", modifiers: .command)
         }
+    }
+}
+
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
     }
 }

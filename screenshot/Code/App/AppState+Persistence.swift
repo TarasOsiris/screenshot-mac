@@ -73,11 +73,7 @@ extension AppState {
             guard let self else { return }
             // Flush any pending save so locally-created projects are persisted
             // before we reload (otherwise the remote index would drop them).
-            if self.saveTask != nil {
-                self.saveTask?.cancel()
-                self.saveTask = nil
-                self.saveAll()
-            }
+            self.flushPendingSaveTask()
             self.reloadFromDisk()
         }
         monitor.startMonitoring(url: url)

@@ -149,6 +149,29 @@ final class AppState {
         }
 
         installArrowKeyMonitor()
+
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.flushPendingSavesSynchronously()
+        }
+    }
+
+    /// Flushes any in-flight continuous edits and pending debounced save so closing
+    /// the main window (which terminates the app) doesn't drop unsaved changes.
+    func flushPendingSavesSynchronously() {
+        finishContinuousEditIfNeeded()
+        flushPendingSaveTask()
+    }
+
+    /// If a debounced save is queued, cancel it and run `saveAll()` immediately.
+    func flushPendingSaveTask() {
+        guard saveTask != nil else { return }
+        saveTask?.cancel()
+        saveTask = nil
+        saveAll()
     }
 
     deinit {
