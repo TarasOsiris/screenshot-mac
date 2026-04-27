@@ -30,6 +30,7 @@ struct ScreenshotBroApp: App {
                 .environment(appState)
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
+                .background(MainWindowSceneBridge())
                 .task { storeService.start() }
                 .sheet(isPresented: Binding(
                     get: { !onboardingCompleted },
@@ -89,6 +90,7 @@ struct ScreenshotBroApp: App {
 
         .commands {
             NewProjectCommands()
+            MainWindowCommands()
 
             CommandGroup(replacing: .pasteboard) {
                 Section {
@@ -389,8 +391,24 @@ private struct NewProjectCommands: Commands {
     }
 }
 
+private struct MainWindowCommands: Commands {
+    var body: some Commands {
+        CommandGroup(after: .windowArrangement) {
+            Button("Show Main Window") {
+                AppWindowManager.shared.showMainWindow()
+            }
+        }
+    }
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        true
+        false
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        guard !flag else { return false }
+        AppWindowManager.shared.showMainWindow()
+        return true
     }
 }

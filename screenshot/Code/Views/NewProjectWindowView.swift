@@ -8,7 +8,6 @@ struct NewProjectWindowView: View {
     @Environment(AppState.self) private var state
     @Environment(StoreService.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openWindow) private var openWindow
 
     @State private var projectName = ""
     @State private var creationMode: CreationMode = .blank
@@ -278,7 +277,7 @@ struct NewProjectWindowView: View {
                 state.createProjectFromTemplate(selectedTemplate, name: resolvedName)
             }
 
-            openWindow(id: AppRootView.windowID)
+            AppWindowManager.shared.showMainWindow()
             dismiss()
         }
     }

@@ -17,6 +17,9 @@ final class StoreService {
     private static let revenueCatEntitlementIDInfoDictionaryKey = "REVENUECAT_ENTITLEMENT_ID"
     private static let revenueCatProductIDEnvironmentName = "REVENUECAT_PRODUCT_ID"
     private static let revenueCatProductIDInfoDictionaryKey = "REVENUECAT_PRODUCT_ID"
+    #if DEBUG
+    private static let forceProUnlockEnvironmentName = "SCREENSHOT_FORCE_PRO_UNLOCK"
+    #endif
     private static let fallbackEntitlementId = "Nineva Studios / ScreenshotBro Pro"
     private static let fallbackProductId = "proversion"
     #if DEBUG
@@ -38,6 +41,15 @@ final class StoreService {
     nonisolated static let freeMaxRows = 3
     nonisolated static let freeMaxTemplatesPerRow = 5
 
+    #if DEBUG
+    private static let isForceProUnlockedForCurrentProcess: Bool = {
+        let value = ProcessInfo.processInfo.environment[forceProUnlockEnvironmentName]?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        return value == "1" || value == "true" || value == "yes"
+    }()
+    #endif
+
     func canAddRow(currentCount: Int) -> Bool {
         isProUnlocked || currentCount < Self.freeMaxRows
     }
@@ -47,7 +59,11 @@ final class StoreService {
     }
 
     func canCreateProject() -> Bool {
-        isProUnlocked
+        #if DEBUG
+        return isProUnlocked || Self.isForceProUnlockedForCurrentProcess
+        #else
+        return isProUnlocked
+        #endif
     }
 
     func requirePro(
@@ -77,6 +93,14 @@ final class StoreService {
     func start() {
         guard !didStart else { return }
         didStart = true
+
+        #if DEBUG
+        if Self.isForceProUnlockedForCurrentProcess {
+            isProUnlocked = true
+            configurationIssue = nil
+            return
+        }
+        #endif
 
         #if DEBUG
         Purchases.logLevel = .debug

@@ -23020,6 +23020,9 @@
     "Screenshot 1" : {
 
     },
+    "Screenshot Bro" : {
+
+    },
     "Screenshot Bro Pro is unlocked and ready to use." : {
       "localizations" : {
         "de" : {
@@ -24353,6 +24356,9 @@
           }
         }
       }
+    },
+    "Show Main Window" : {
+
     },
     "Show Onboarding..." : {
       "extractionState" : "stale",
