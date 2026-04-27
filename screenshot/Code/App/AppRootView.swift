@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct AppRootView: View {
+    static let windowID = "main"
+
     @Environment(StoreService.self) private var store
     @State private var purchaseStatusDialogMessage: String?
 

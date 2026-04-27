@@ -25,7 +25,7 @@ struct ScreenshotBroApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        Window("Screenshot Bro", id: AppRootView.windowID) {
             AppRootView()
                 .environment(appState)
                 .environment(storeService)
