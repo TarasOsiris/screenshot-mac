@@ -487,9 +487,14 @@ struct SettingsView: View {
                 process.executableURL = URL(fileURLWithPath: "/usr/bin/zip")
                 process.arguments = ["-r", tempZip.path, "."]
                 process.currentDirectoryURL = sourceURL
-                try process.run()
-                await withCheckedContinuation { continuation in
+                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
                     process.terminationHandler = { _ in continuation.resume() }
+                    do {
+                        try process.run()
+                    } catch {
+                        process.terminationHandler = nil
+                        continuation.resume(throwing: error)
+                    }
                 }
                 guard process.terminationStatus == 0 else {
                     try? FileManager.default.removeItem(at: tempZip)

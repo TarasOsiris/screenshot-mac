@@ -189,6 +189,12 @@ struct ASCUploadFailureContext {
 final class AppStoreConnectUploadService {
     static let shared = AppStoreConnectUploadService()
 
+    private struct RenderedScreenshot {
+        let templateIndex: Int
+        let fileName: String
+        let data: Data
+    }
+
     private let api: AppStoreConnectAPIService
     init(api: AppStoreConnectAPIService? = nil) { self.api = api ?? .shared }
 
@@ -222,6 +228,15 @@ final class AppStoreConnectUploadService {
                 let planLabel = "\(target.rowLabel) · \(localization.label) · \(target.displayType.label)"
                 let fileNames = appState.referencedImageFileNames(forRow: row, localeCode: localization.localeCode)
                 let rowImages = appState.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
+                let renderedScreenshots = try renderScreenshots(
+                    row: row,
+                    rowImages: rowImages,
+                    target: target,
+                    localization: localization,
+                    localeState: appState.localeState,
+                    fontFamilies: fontFamilies,
+                    emit: emit
+                )
 
                 // Replace mode: dropping and recreating the set is one request vs. 1+N delete-each.
                 emit("Checking existing screenshots · \(planLabel)")
@@ -259,36 +274,17 @@ final class AppStoreConnectUploadService {
                     )
                 }
 
-                for templateIndex in 0..<target.templateCount {
+                for rendered in renderedScreenshots {
                     try Task.checkCancellation()
-                    let label = "\(target.rowLabel) · \(localization.label) · \(templateIndex + 1)/\(target.templateCount)"
+                    let label = "\(target.rowLabel) · \(localization.label) · \(rendered.templateIndex + 1)/\(target.templateCount)"
                     emit(label)
-
-                    let image = ExportService.renderSingleTemplateImage(
-                        index: templateIndex,
-                        row: row,
-                        screenshotImages: rowImages,
-                        localeCode: localization.localeCode,
-                        localeState: appState.localeState,
-                        availableFontFamilies: fontFamilies
-                    )
-                    guard let data = ExportService.encodeImage(image, format: .png) else {
-                        throw AppStoreConnectUploadError.renderFailed(
-                            rowLabel: target.rowLabel,
-                            displayTypeLabel: target.displayType.label,
-                            localeLabel: localization.label,
-                            index: templateIndex
-                        )
-                    }
-
-                    let fileName = Self.fileName(row: row, index: templateIndex)
                     try await uploadOneScreenshot(
                         setId: set.id,
-                        fileName: fileName,
-                        data: data,
+                        fileName: rendered.fileName,
+                        data: rendered.data,
                         target: target,
                         localization: localization,
-                        templateIndex: templateIndex,
+                        templateIndex: rendered.templateIndex,
                         existingSetWasDeleted: existingSetWasDeleted,
                         emit: emit
                     )
@@ -300,6 +296,47 @@ final class AppStoreConnectUploadService {
         }
 
         emit("Done")
+    }
+
+    private func renderScreenshots(
+        row: ScreenshotRow,
+        rowImages: [String: NSImage],
+        target: ASCUploadTarget,
+        localization: ASCUploadLocalization,
+        localeState: LocaleState,
+        fontFamilies: Set<String>,
+        emit: (String) -> Void
+    ) throws -> [RenderedScreenshot] {
+        var screenshots: [RenderedScreenshot] = []
+        screenshots.reserveCapacity(target.templateCount)
+
+        for templateIndex in 0..<target.templateCount {
+            try Task.checkCancellation()
+            emit("Rendering \(target.rowLabel) · \(localization.label) · \(templateIndex + 1)/\(target.templateCount)")
+            let image = ExportService.renderSingleTemplateImage(
+                index: templateIndex,
+                row: row,
+                screenshotImages: rowImages,
+                localeCode: localization.localeCode,
+                localeState: localeState,
+                availableFontFamilies: fontFamilies
+            )
+            guard let data = ExportService.encodeImage(image, format: .png) else {
+                throw AppStoreConnectUploadError.renderFailed(
+                    rowLabel: target.rowLabel,
+                    displayTypeLabel: target.displayType.label,
+                    localeLabel: localization.label,
+                    index: templateIndex
+                )
+            }
+            screenshots.append(RenderedScreenshot(
+                templateIndex: templateIndex,
+                fileName: Self.fileName(row: row, index: templateIndex),
+                data: data
+            ))
+        }
+
+        return screenshots
     }
 
     private func uploadOneScreenshot(

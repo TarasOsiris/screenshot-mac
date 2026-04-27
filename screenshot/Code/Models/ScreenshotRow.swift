@@ -95,7 +95,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
         backgroundColorData = try c.decode(CodableColor.self, forKey: .backgroundColorData)
         defaultDeviceBodyColorData = try c.decodeIfPresent(CodableColor.self, forKey: .defaultDeviceBodyColorData)
             ?? CodableColor(CanvasShapeModel.defaultDeviceBodyColor)
-        defaultDeviceCategory = try c.decode(DeviceCategory?.self, forKey: .defaultDeviceCategory)
+        defaultDeviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .defaultDeviceCategory)
         backgroundStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .backgroundStyle) ?? .color
         gradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .gradientConfig) ?? GradientConfig()
         spanBackgroundAcrossRow = try c.decodeIfPresent(Bool.self, forKey: .spanBackgroundAcrossRow) ?? false

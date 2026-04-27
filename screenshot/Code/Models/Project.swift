@@ -26,7 +26,7 @@ struct Project: Identifiable, Codable, Equatable {
         id = try c.decode(UUID.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
         modifiedAt = try c.decode(Date.self, forKey: .modifiedAt)
-        isDeleted = try c.decode(Bool.self, forKey: .isDeleted)
+        isDeleted = try c.decodeIfPresent(Bool.self, forKey: .isDeleted) ?? false
         deletedAt = try c.decodeIfPresent(Date.self, forKey: .deletedAt)
         ascAppId = try c.decodeIfPresent(String.self, forKey: .ascAppId)
     }

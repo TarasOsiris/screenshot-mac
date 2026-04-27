@@ -126,6 +126,30 @@ struct ProjectMergeTests {
         #expect(merged[1].name == "B")
         #expect(merged[2].name == "C")
     }
+
+    @Test func legacyProjectIndexWithoutTombstoneFieldsDecodesAsAlive() throws {
+        let projectId = UUID()
+        let data = Data("""
+        {
+          "projects": [
+            {
+              "id": "\(projectId.uuidString)",
+              "name": "Legacy Project",
+              "modifiedAt": 1000
+            }
+          ],
+          "activeProjectId": "\(projectId.uuidString)"
+        }
+        """.utf8)
+
+        let index = try JSONDecoder().decode(ProjectIndex.self, from: data)
+
+        #expect(index.projects.count == 1)
+        #expect(index.projects[0].id == projectId)
+        #expect(index.projects[0].isDeleted == false)
+        #expect(index.projects[0].deletedAt == nil)
+        #expect(index.activeProjectId == projectId)
+    }
 }
 
 @MainActor

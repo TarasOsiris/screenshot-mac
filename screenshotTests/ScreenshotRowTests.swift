@@ -206,6 +206,35 @@ struct ScreenshotRowTests {
         #expect(decoded.isLabelManuallySet == true)
     }
 
+    @Test func legacyRowWithoutDefaultDeviceCategoryDecodes() throws {
+        let rowId = UUID()
+        let templateId = UUID()
+        let data = Data("""
+        {
+          "id": "\(rowId.uuidString)",
+          "l": "Legacy Row",
+          "tp": [
+            {
+              "id": "\(templateId.uuidString)",
+              "bgc": "#0000FF"
+            }
+          ],
+          "tw": 1242,
+          "th": 2688,
+          "bgc": "#0000FF"
+        }
+        """.utf8)
+
+        let decoded = try JSONDecoder().decode(ScreenshotRow.self, from: data)
+
+        #expect(decoded.id == rowId)
+        #expect(decoded.label == "Legacy Row")
+        #expect(decoded.templates.count == 1)
+        #expect(decoded.defaultDeviceCategory == nil)
+        #expect(decoded.showBorders == true)
+        #expect(decoded.shapes.isEmpty)
+    }
+
     @Test func backgroundImageConfigDecodesLegacyTileValuesIntoAxes() throws {
         let data = Data(#"{"fm":"tile","ts":0.25,"to":0.10,"tsc":1.4}"#.utf8)
         let decoded = try JSONDecoder().decode(BackgroundImageConfig.self, from: data)
