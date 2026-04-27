@@ -164,6 +164,7 @@ final class AppState {
     func flushPendingSavesSynchronously() {
         finishContinuousEditIfNeeded()
         flushPendingSaveTask()
+        flushPendingZoomPersist()
     }
 
     /// If a debounced save is queued, cancel it and run `saveAll()` immediately.

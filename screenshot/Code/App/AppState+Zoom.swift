@@ -33,4 +33,11 @@ extension AppState {
         zoomPersistTask?.cancel()
         UserDefaults.standard.removeObject(forKey: "lastZoomLevel")
     }
+
+    func flushPendingZoomPersist() {
+        guard zoomPersistTask != nil else { return }
+        zoomPersistTask?.cancel()
+        zoomPersistTask = nil
+        UserDefaults.standard.set(zoomLevel, forKey: "lastZoomLevel")
+    }
 }
