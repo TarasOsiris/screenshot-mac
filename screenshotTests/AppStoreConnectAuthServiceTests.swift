@@ -9,6 +9,7 @@ struct AppStoreConnectAuthServiceTests {
         let snapshot = CredentialsSnapshot.capture(from: credentials)
         defer { snapshot.restore(into: credentials) }
 
+        credentials.isDemoMode = false
         credentials.issuerId = "not-a-uuid"
         credentials.keyId = "short"
         try credentials.savePrivateKey(P256.Signing.PrivateKey().pemRepresentation)
@@ -32,6 +33,19 @@ struct AppStoreConnectAuthServiceTests {
         }
     }
 
+    @Test func demoModeReportsConfiguredEvenWithoutCredentials() {
+        let credentials = AppStoreConnectCredentialsStore.shared
+        let snapshot = CredentialsSnapshot.capture(from: credentials)
+        defer { snapshot.restore(into: credentials) }
+
+        credentials.issuerId = ""
+        credentials.keyId = ""
+        credentials.deletePrivateKey()
+        credentials.isDemoMode = true
+
+        #expect(credentials.isConfigured == true)
+    }
+
     @Test func authServiceRejectsInvalidIssuerBeforeSigning() throws {
         let credentials = AppStoreConnectCredentialsStore.shared
         let snapshot = CredentialsSnapshot.capture(from: credentials)
@@ -52,12 +66,14 @@ struct AppStoreConnectAuthServiceTests {
 private struct CredentialsSnapshot {
     let issuerId: String
     let keyId: String
+    let isDemoMode: Bool
     let privateKeyPEM: String?
 
     static func capture(from credentials: AppStoreConnectCredentialsStore) -> CredentialsSnapshot {
         CredentialsSnapshot(
             issuerId: credentials.issuerId,
             keyId: credentials.keyId,
+            isDemoMode: credentials.isDemoMode,
             privateKeyPEM: credentials.privateKeyPEM()
         )
     }
@@ -65,6 +81,7 @@ private struct CredentialsSnapshot {
     func restore(into credentials: AppStoreConnectCredentialsStore) {
         credentials.issuerId = issuerId
         credentials.keyId = keyId
+        credentials.isDemoMode = isDemoMode
         if let privateKeyPEM {
             try? credentials.savePrivateKey(privateKeyPEM)
         } else {

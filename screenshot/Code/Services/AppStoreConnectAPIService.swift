@@ -29,14 +29,33 @@ final class AppStoreConnectAPIService {
 
     private let auth: AppStoreConnectAuthService
     private let session: URLSession
+    private let credentials: AppStoreConnectCredentialsStore
+    private let demoData: AppStoreConnectDemoData
 
     init(auth: AppStoreConnectAuthService = .shared,
-         session: URLSession = .shared) {
+         session: URLSession = .shared,
+         credentials: AppStoreConnectCredentialsStore = .shared,
+         demoData: AppStoreConnectDemoData = .shared) {
         self.auth = auth
         self.session = session
+        self.credentials = credentials
+        self.demoData = demoData
+    }
+
+    private var isDemoMode: Bool { credentials.isDemoMode }
+
+    /// Short pause so the upload wizard's progress UI animates believably in demo mode.
+    /// Kept small because real upload flows make ~6 sequential calls per (template × locale).
+    private func demoDelay() async {
+        try? await Task.sleep(for: .milliseconds(80))
     }
 
     func testConnection() async throws -> String {
+        if isDemoMode {
+            await demoDelay()
+            let name = demoData.apps.first?.attributes.name ?? "Demo App"
+            return String(localized: "Connected (Demo Mode). Sample app: \(name).")
+        }
         let response: ASCListResponse<ASCApp> = try await get("/v1/apps?limit=1")
         if let first = response.data.first {
             return String(localized: "Connected. First app: \(first.attributes.name)")
@@ -47,17 +66,29 @@ final class AppStoreConnectAPIService {
     // MARK: - Apps / versions / localizations
 
     func listApps(limit: Int = 200) async throws -> [ASCApp] {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.apps
+        }
         let response: ASCListResponse<ASCApp> = try await get("/v1/apps?limit=\(limit)&sort=name")
         return response.data
     }
 
     func listAppStoreVersions(appId: String, limit: Int = 20) async throws -> [ASCAppStoreVersion] {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.versions(forApp: appId)
+        }
         let path = "/v1/apps/\(appId)/appStoreVersions?limit=\(limit)"
         let response: ASCListResponse<ASCAppStoreVersion> = try await get(path)
         return response.data
     }
 
     func listLocalizations(versionId: String, limit: Int = 200) async throws -> [ASCAppStoreVersionLocalization] {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.versionLocalizations(forVersion: versionId)
+        }
         let path = "/v1/appStoreVersions/\(versionId)/appStoreVersionLocalizations?limit=\(limit)"
         let response: ASCListResponse<ASCAppStoreVersionLocalization> = try await get(path)
         return response.data
@@ -66,26 +97,37 @@ final class AppStoreConnectAPIService {
     // MARK: - Metadata (editing)
 
     func listAppInfos(appId: String) async throws -> [ASCAppInfo] {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.appInfos(forApp: appId)
+        }
         let path = "/v1/apps/\(appId)/appInfos"
         let response: ASCListResponse<ASCAppInfo> = try await get(path)
         return response.data
     }
 
     func listAppInfoLocalizations(appInfoId: String, limit: Int = 200) async throws -> [ASCAppInfoLocalization] {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.appInfoLocalizations(forAppInfo: appInfoId)
+        }
         let path = "/v1/appInfos/\(appInfoId)/appInfoLocalizations?limit=\(limit)"
         let response: ASCListResponse<ASCAppInfoLocalization> = try await get(path)
         return response.data
     }
 
     func updateVersionLocalization(id: String, attributes: [String: AnyEncodable]) async throws {
+        if isDemoMode { await demoDelay(); return }
         try await updateResource(type: "appStoreVersionLocalizations", id: id, attributes: attributes)
     }
 
     func updateAppInfoLocalization(id: String, attributes: [String: AnyEncodable]) async throws {
+        if isDemoMode { await demoDelay(); return }
         try await updateResource(type: "appInfoLocalizations", id: id, attributes: attributes)
     }
 
     func updateAppStoreVersion(id: String, attributes: [String: AnyEncodable]) async throws {
+        if isDemoMode { await demoDelay(); return }
         try await updateResource(type: "appStoreVersions", id: id, attributes: attributes)
     }
 
@@ -100,12 +142,20 @@ final class AppStoreConnectAPIService {
     // MARK: - Screenshot sets
 
     func listScreenshotSets(localizationId: String, limit: Int = 50) async throws -> [ASCAppScreenshotSet] {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.screenshotSets(localizationId: localizationId)
+        }
         let path = "/v1/appStoreVersionLocalizations/\(localizationId)/appScreenshotSets?limit=\(limit)"
         let response: ASCListResponse<ASCAppScreenshotSet> = try await get(path)
         return response.data
     }
 
     func createScreenshotSet(localizationId: String, displayType: String) async throws -> ASCAppScreenshotSet {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.createScreenshotSet(localizationId: localizationId, displayType: displayType)
+        }
         let body = ASCResourceCreate(
             data: ASCResourceCreate.Payload(
                 type: "appScreenshotSets",
@@ -122,6 +172,11 @@ final class AppStoreConnectAPIService {
     }
 
     func deleteScreenshotSet(id: String) async throws {
+        if isDemoMode {
+            await demoDelay()
+            demoData.deleteScreenshotSet(id: id)
+            return
+        }
         try await delete("/v1/appScreenshotSets/\(id)")
     }
 
@@ -138,6 +193,10 @@ final class AppStoreConnectAPIService {
     }
 
     func reserveScreenshot(setId: String, fileName: String, fileSize: Int) async throws -> ASCAppScreenshot {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.reserveScreenshot(setId: setId, fileName: fileName, fileSize: fileSize)
+        }
         let attributes: [String: AnyEncodable] = [
             "fileName": AnyEncodable(fileName),
             "fileSize": AnyEncodable(fileSize)
@@ -188,6 +247,7 @@ final class AppStoreConnectAPIService {
     }
 
     func commitScreenshot(id: String, md5Checksum: String) async throws {
+        if isDemoMode { await demoDelay(); return }
         let attributes: [String: AnyEncodable] = [
             "uploaded": AnyEncodable(true),
             "sourceFileChecksum": AnyEncodable(md5Checksum)

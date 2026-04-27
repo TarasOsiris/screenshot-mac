@@ -27,6 +27,10 @@ struct ASCUploadIssue: Identifiable {
         self.message = message
         self.hint = hint
     }
+
+    func with(severity: Severity) -> ASCUploadIssue {
+        ASCUploadIssue(severity: severity, scope: scope, message: message, hint: hint)
+    }
 }
 
 enum ASCUploadValidator {

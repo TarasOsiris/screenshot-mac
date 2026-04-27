@@ -293,6 +293,9 @@ struct UploadToAppStoreConnectView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            if credentials.isDemoMode {
+                demoModeBanner
+            }
             Divider()
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -344,6 +347,25 @@ struct UploadToAppStoreConnectView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+    }
+
+    private var demoModeBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "theatermasks.fill")
+                .foregroundStyle(.white)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Demo Mode")
+                    .font(.caption.bold())
+                    .foregroundStyle(.white)
+                Text("Sample apps and a simulated upload. Nothing is sent to App Store Connect.")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.blue)
     }
 
     private var footer: some View {
@@ -461,7 +483,14 @@ struct UploadToAppStoreConnectView: View {
 
     private var validationIssues: [ASCUploadIssue] {
         guard let version = selectedVersion else { return [] }
-        return ASCUploadValidator.validate(version: version, plans: rowPlans)
+        let raw = ASCUploadValidator.validate(version: version, plans: rowPlans)
+        guard credentials.isDemoMode else { return raw }
+        // In demo mode the upload is simulated, so per-row App Store rules (size
+        // match, 3–10 screenshot count, duplicate target, locale matching) become
+        // advisory warnings instead of hard blockers — the wizard must run end-to-end
+        // for any project. Structural issues (no rows / no enabled rows / version
+        // not editable) keep their original severity.
+        return raw.map { $0.scope == nil ? $0 : $0.with(severity: .warning) }
     }
 
     private var canStartUpload: Bool {
@@ -1339,6 +1368,7 @@ struct UploadToAppStoreConnectView: View {
 
     private func loadAppsIfNeeded() async {
         guard credentials.isConfigured, apps.isEmpty else { return }
+        seedDemoContextIfNeeded()
         isBusy = true
         errorMessage = nil
         defer { isBusy = false }
@@ -1355,9 +1385,20 @@ struct UploadToAppStoreConnectView: View {
         }
     }
 
+    /// Reseeds the demo catalog with the active project's locales and row sizes so the
+    /// wizard finds a matching version platform and a matching App Store locale for
+    /// every project locale. No-op when not in demo mode.
+    private func seedDemoContextIfNeeded() {
+        guard credentials.isDemoMode else { return }
+        AppStoreConnectDemoData.shared.updateContext(
+            localeCodes: state.localeState.locales.map(\.code),
+            rowSizes: state.rows.map(\.templateSize)
+        )
+    }
+
     private func moveToVersion() async {
         guard let app = selectedApp else { return }
-        if let projectId = state.activeProject?.id {
+        if !credentials.isDemoMode, let projectId = state.activeProject?.id {
             state.setASCAppId(app.id, forProject: projectId)
         }
         isBusy = true
@@ -1501,6 +1542,7 @@ struct UploadToAppStoreConnectView: View {
 
     private func refreshLocalizations() async {
         guard let version = selectedVersion else { return }
+        seedDemoContextIfNeeded()
         isBusy = true
         errorMessage = nil
         defer { isBusy = false }
@@ -1514,6 +1556,9 @@ struct UploadToAppStoreConnectView: View {
 
     private func buildRowPlans(preserving existingPlans: [RowPlan] = []) -> [RowPlan] {
         let platform = selectedVersion?.attributes.ascPlatform
+        let demoFallbackDisplayType = credentials.isDemoMode
+            ? ASCDisplayType.userSelectableCases(forPlatform: platform).first
+            : nil
         return state.rows.map { row in
             let detected = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight)
             let existingPlan = existingPlans.first(where: { $0.id == row.id })
@@ -1540,11 +1585,11 @@ struct UploadToAppStoreConnectView: View {
             return RowPlan(
                 id: row.id,
                 rowLabel: row.label,
-                rowSize: CGSize(width: row.templateWidth, height: row.templateHeight),
+                rowSize: row.templateSize,
                 templateCount: row.templates.count,
                 isEnabled: existingPlan?.isEnabled ?? true,
                 detectedDisplayType: detected,
-                selectedDisplayType: compatiblePreserved ?? detectedCompatible,
+                selectedDisplayType: compatiblePreserved ?? detectedCompatible ?? demoFallbackDisplayType,
                 localeTargets: targets
             )
         }

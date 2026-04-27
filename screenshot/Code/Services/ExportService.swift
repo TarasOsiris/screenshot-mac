@@ -324,7 +324,7 @@ struct ExportService {
         var composited = backgroundImage
         let templateWidth = row.templateWidth * displayScale
         let templateHeight = row.templateHeight * displayScale
-        let templateModelSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+        let templateModelSize = row.templateSize
 
         for (index, template) in row.templates.enumerated() where template.overrideBackground {
             let baseOverride = renderViewToImage(

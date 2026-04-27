@@ -7,6 +7,7 @@ final class AppStoreConnectCredentialsStore {
 
     private static let issuerIdKey = "ascIssuerId"
     private static let keyIdKey = "ascKeyId"
+    private static let demoModeKey = "ascDemoMode"
     private static let keychainAccount = "default"
 
     var issuerId: String {
@@ -23,11 +24,22 @@ final class AppStoreConnectCredentialsStore {
         }
     }
 
+    /// When on, App Store Connect API calls are intercepted and returned with mock
+    /// data so App Review (or anyone without an API key) can exercise the upload flow
+    /// end-to-end without sending traffic to Apple's servers.
+    var isDemoMode: Bool {
+        didSet {
+            guard isDemoMode != oldValue else { return }
+            UserDefaults.standard.set(isDemoMode, forKey: Self.demoModeKey)
+        }
+    }
+
     private(set) var hasPrivateKey: Bool
 
     private init() {
         self.issuerId = UserDefaults.standard.string(forKey: Self.issuerIdKey) ?? ""
         self.keyId = UserDefaults.standard.string(forKey: Self.keyIdKey) ?? ""
+        self.isDemoMode = UserDefaults.standard.bool(forKey: Self.demoModeKey)
         self.hasPrivateKey = Self.normalizedPrivateKey(KeychainService.load(account: Self.keychainAccount)) != nil
     }
 
@@ -48,7 +60,8 @@ final class AppStoreConnectCredentialsStore {
     }
 
     var isConfigured: Bool {
-        isIssuerIdValid && isKeyIdValid && hasPrivateKey
+        if isDemoMode { return true }
+        return isIssuerIdValid && isKeyIdValid && hasPrivateKey
     }
 
     func savePrivateKey(_ pem: String) throws {

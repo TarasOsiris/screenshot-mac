@@ -25,6 +25,8 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
     /// User-facing label; falls back to "Untitled Row" when `label` is empty.
     var displayLabel: String { label.isEmpty ? String(localized: "Untitled Row") : label }
 
+    var templateSize: CGSize { CGSize(width: templateWidth, height: templateHeight) }
+
     init(
         id: UUID = UUID(),
         label: String = String(localized: "Screenshot 1"),

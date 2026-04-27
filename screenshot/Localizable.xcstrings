@@ -3619,6 +3619,9 @@
         }
       }
     },
+    "App Review Demo Mode" : {
+
+    },
     "App Store Connect" : {
       "localizations" : {
         "de" : {
@@ -5524,6 +5527,9 @@
         }
       }
     },
+    "Browse a sample app, version, locales, and run a simulated upload — no API key required and no traffic is sent to App Store Connect." : {
+
+    },
     "By creation date" : {
       "localizations" : {
         "de" : {
@@ -6941,6 +6947,9 @@
           }
         }
       }
+    },
+    "Connected (Demo Mode). Sample app: %@." : {
+
     },
     "Connected. First app: %@" : {
       "localizations" : {
@@ -9045,6 +9054,18 @@
         }
       }
     },
+    "Demo mode" : {
+
+    },
+    "Demo Mode" : {
+
+    },
+    "Demo mode is active. Real API key fields below are ignored until you turn demo mode off." : {
+
+    },
+    "Demo mode is on. The upload wizard runs against built-in sample data and never contacts App Store Connect." : {
+
+    },
     "Description" : {
       "localizations" : {
         "de" : {
@@ -10529,6 +10550,9 @@
           }
         }
       }
+    },
+    "Enable demo mode" : {
+
     },
     "Enable iCloud Sync" : {
       "localizations" : {
@@ -22646,6 +22670,9 @@
         }
       }
     },
+    "Sample apps and a simulated upload. Nothing is sent to App Store Connect." : {
+
+    },
     "Save" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -28473,6 +28500,9 @@
           }
         }
       }
+    },
+    "Use demo mode to walk through the App Store Connect upload feature without an API key — for example during App Review." : {
+
     },
     "Use detected (%@)" : {
       "localizations" : {

@@ -162,7 +162,7 @@ struct RowCanvasBaseBackgroundView: View {
     }
 
     var body: some View {
-        let templateModelSize = CGSize(width: row.templateWidth, height: row.templateHeight)
+        let templateModelSize = row.templateSize
 
         Group {
             if row.isSpanningBackground {
@@ -201,9 +201,7 @@ struct RowCanvasOverrideBackgroundView: View {
         row.templateHeight * displayScale
     }
 
-    private var templateModelSize: CGSize {
-        CGSize(width: row.templateWidth, height: row.templateHeight)
-    }
+    private var templateModelSize: CGSize { row.templateSize }
 
     var body: some View {
         HStack(spacing: 0) {

@@ -28,6 +28,7 @@ struct AppStoreConnectSettingsView: View {
     var body: some View {
         Form {
             statusSection
+            demoModeSection
             credentialsSection
             helpSection
         }
@@ -192,14 +193,62 @@ struct AppStoreConnectSettingsView: View {
         }
     }
 
+    private enum StatusState {
+        case demoMode, connected, readyToTest, finishSetup
+    }
+
+    private var statusState: StatusState {
+        if credentials.isDemoMode { return .demoMode }
+        if connectionTestPassed { return .connected }
+        return credentials.isConfigured ? .readyToTest : .finishSetup
+    }
+
     private var statusMessage: String {
-        if connectionTestPassed {
+        switch statusState {
+        case .demoMode:
+            return String(localized: "Demo mode is on. The upload wizard runs against built-in sample data and never contacts App Store Connect.")
+        case .connected:
             return String(localized: "The API key is connected and ready for screenshot uploads.")
-        }
-        if credentials.isConfigured {
+        case .readyToTest:
             return String(localized: "Run the connection test once before uploading screenshots.")
+        case .finishSetup:
+            return String(localized: "Complete the API key details below, then test the connection from the checklist.")
         }
-        return String(localized: "Complete the API key details below, then test the connection from the checklist.")
+    }
+
+    private var demoModeSection: some View {
+        Section {
+            Toggle(isOn: Binding(
+                get: { credentials.isDemoMode },
+                set: { newValue in
+                    credentials.isDemoMode = newValue
+                    testResult = nil
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Enable demo mode")
+                        .fontWeight(.medium)
+                    Text("Browse a sample app, version, locales, and run a simulated upload — no API key required and no traffic is sent to App Store Connect.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .toggleStyle(.switch)
+
+            if credentials.isDemoMode {
+                Label("Demo mode is active. Real API key fields below are ignored until you turn demo mode off.",
+                      systemImage: "info.circle.fill")
+                    .foregroundStyle(.blue)
+                    .font(.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        } header: {
+            Text("App Review Demo Mode")
+        } footer: {
+            Text("Use demo mode to walk through the App Store Connect upload feature without an API key — for example during App Review.")
+                .foregroundStyle(.secondary)
+        }
     }
 
     private var setupItems: [SetupItem] {
@@ -252,24 +301,30 @@ struct AppStoreConnectSettingsView: View {
     }
 
     private var statusTitle: String {
-        if connectionTestPassed {
-            return String(localized: "Connected")
+        switch statusState {
+        case .demoMode: return String(localized: "Demo mode")
+        case .connected: return String(localized: "Connected")
+        case .readyToTest: return String(localized: "Ready to test")
+        case .finishSetup: return String(localized: "Finish setup")
         }
-        return credentials.isConfigured ? String(localized: "Ready to test") : String(localized: "Finish setup")
     }
 
     private var statusSymbolName: String {
-        if connectionTestPassed {
-            return "checkmark.seal.fill"
+        switch statusState {
+        case .demoMode: return "theatermasks.fill"
+        case .connected: return "checkmark.seal.fill"
+        case .readyToTest: return "bolt.horizontal.circle.fill"
+        case .finishSetup: return "key.horizontal"
         }
-        return credentials.isConfigured ? "bolt.horizontal.circle.fill" : "key.horizontal"
     }
 
     private var statusSymbolColor: Color {
-        if connectionTestPassed {
-            return .green
+        switch statusState {
+        case .demoMode: return .blue
+        case .connected: return .green
+        case .readyToTest: return .orange
+        case .finishSetup: return .secondary
         }
-        return credentials.isConfigured ? .orange : .secondary
     }
 
     private var setupSummary: String {
