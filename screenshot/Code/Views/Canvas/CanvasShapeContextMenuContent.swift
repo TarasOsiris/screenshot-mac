@@ -6,6 +6,7 @@ struct CanvasShapeContextMenuContent: View {
     var screenshotImage: NSImage?
     @Binding var isPickerPresented: Bool
     var onClearImage: (() -> Void)?
+    var onCaptureSimulator: (() -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
@@ -21,6 +22,9 @@ struct CanvasShapeContextMenuContent: View {
             if shape.type == .device || shape.type == .image {
                 Button("Replace Image...") {
                     isPickerPresented = true
+                }
+                if shape.type == .device, let onCaptureSimulator {
+                    Button("Capture from iOS Simulator", action: onCaptureSimulator)
                 }
                 Button("Reset Image") {
                     onClearImage?()

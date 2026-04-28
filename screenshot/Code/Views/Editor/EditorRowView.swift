@@ -22,6 +22,8 @@ struct EditorRowView: View {
     @State private var isEditingLabel = false
     @State private var editingLabelText = ""
     @State private var exportError: String?
+    @State private var simulatorCaptureError: String?
+    @State private var simulatorInstallPromptShapeId: UUID?
     /// Cached snap targets for non-selected shapes during drag.
     @State private var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
     @FocusState private var isLabelFieldFocused: Bool
@@ -136,13 +138,40 @@ struct EditorRowView: View {
         } message: {
             Text("This will remove all screenshots and shapes from \"\(row.label)\" and restore default settings.")
         }
-        .alert("Export Failed", isPresented: Binding(
-            get: { exportError != nil },
-            set: { if !$0 { exportError = nil } }
-        )) {
+        .alert("Export Failed", isPresented: $exportError.isPresent()) {
             Button("OK") { exportError = nil }
         } message: {
             Text(exportError ?? "")
+        }
+        .alert("iOS Simulator Capture Failed", isPresented: $simulatorCaptureError.isPresent()) {
+            Button("OK") { simulatorCaptureError = nil }
+        } message: {
+            Text(simulatorCaptureError ?? "")
+        }
+        .alert("Enable iOS Simulator Capture", isPresented: $simulatorInstallPromptShapeId.isPresent()) {
+            Button("Install…") {
+                let pendingShapeId = simulatorInstallPromptShapeId
+                simulatorInstallPromptShapeId = nil
+                Task { @MainActor in
+                    switch SimulatorCaptureService.presentInstallPanel() {
+                    case .success:
+                        if let pendingShapeId {
+                            state.captureFromSimulator(intoShape: pendingShapeId) { message in
+                                simulatorCaptureError = message
+                            }
+                        }
+                    case .failure(let error):
+                        if let message = error.errorDescription {
+                            simulatorCaptureError = message
+                        }
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                simulatorInstallPromptShapeId = nil
+            }
+        } message: {
+            Text("Capturing from the iOS Simulator needs a one-time setup: a small script that asks the Simulator for a screenshot and does nothing else.\n\nBecause of macOS security, only you can install it. Click Install… to save the script — you'll only need to do this once.")
         }
         .sheet(isPresented: $isSvgDialogPresented) {
             SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
@@ -449,6 +478,15 @@ struct EditorRowView: View {
                     onClearImage: {
                         state.clearImage(for: shape.id)
                     },
+                    onCaptureSimulator: shape.type == .device ? {
+                        if SimulatorCaptureService.isHelperInstalled {
+                            state.captureFromSimulator(intoShape: shape.id) { message in
+                                simulatorCaptureError = message
+                            }
+                        } else {
+                            simulatorInstallPromptShapeId = shape.id
+                        }
+                    } : nil,
                     onDragSnap: { draggedShape, rawOffset in
                         let targets: [AlignmentService.OtherShapeBounds]
                         if let cached = cachedSnapTargets {

@@ -38,6 +38,7 @@ struct CanvasShapeView: View {
     var onDelete: () -> Void
     var onScreenshotDrop: ((NSImage) -> Void)?
     var onClearImage: (() -> Void)?
+    var onCaptureSimulator: (() -> Void)?
     var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
     var onDragEnd: (() -> Void)?
     var onOptionDragDuplicate: ((UUID) -> UUID?)?
@@ -379,6 +380,7 @@ struct CanvasShapeView: View {
             screenshotImage: screenshotImage,
             isPickerPresented: $isPickerPresented,
             onClearImage: onClearImage,
+            onCaptureSimulator: onCaptureSimulator,
             onMatchDeviceSizes: onMatchDeviceSizes,
             onTranslate: onTranslate,
             translateLocaleName: translateLocaleName,
