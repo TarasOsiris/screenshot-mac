@@ -17,6 +17,14 @@ struct DeviceFrameImageView: View {
         let spec = frame.spec
         let frameImage = frame.imageName.flatMap(Self.cachedFrameImage(named:))
 
+        // Bleed the screenshot 1pt past the spec'd aperture on every side so the
+        // anti-aliased edge of the bezel PNG blends with the screenshot rather than
+        // whatever sits behind the frame. Without this, light canvas backgrounds
+        // show through as a 1px halo on the iPhone 17 family.
+        let bleed: CGFloat = 1
+        let cornerRadius = height * spec.cornerRadiusFraction + bleed
+        let bottomCornerRadius = frame.fallbackCategory == .macbook ? 0 : cornerRadius
+
         ZStack(alignment: .topLeading) {
             Group {
                 if let screenshotImage {
@@ -29,19 +37,19 @@ struct DeviceFrameImageView: View {
                 }
             }
             .frame(
-                width: width * (1 - spec.leftFraction - spec.rightFraction),
-                height: height * (1 - spec.topFraction - spec.bottomFraction)
+                width: width * (1 - spec.leftFraction - spec.rightFraction) + bleed * 2,
+                height: height * (1 - spec.topFraction - spec.bottomFraction) + bleed * 2
             )
             .clipShape(UnevenRoundedRectangle(
-                topLeadingRadius: height * spec.cornerRadiusFraction,
-                bottomLeadingRadius: frame.fallbackCategory == .macbook ? 0 : height * spec.cornerRadiusFraction,
-                bottomTrailingRadius: frame.fallbackCategory == .macbook ? 0 : height * spec.cornerRadiusFraction,
-                topTrailingRadius: height * spec.cornerRadiusFraction,
+                topLeadingRadius: cornerRadius,
+                bottomLeadingRadius: bottomCornerRadius,
+                bottomTrailingRadius: bottomCornerRadius,
+                topTrailingRadius: cornerRadius,
                 style: .continuous
             ))
             .offset(
-                x: width * spec.leftFraction,
-                y: height * spec.topFraction
+                x: width * spec.leftFraction - bleed,
+                y: height * spec.topFraction - bleed
             )
 
             if let frameImage {
