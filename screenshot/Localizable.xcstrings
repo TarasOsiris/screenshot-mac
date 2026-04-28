@@ -20317,6 +20317,18 @@
         }
       }
     },
+    "Could not load image." : {
+
+    },
+    "No foreground subject was detected in this image." : {
+
+    },
+    "Remove Background" : {
+
+    },
+    "Remove Background Failed" : {
+
+    },
     "Remove stop (min 2)" : {
       "localizations" : {
         "de" : {

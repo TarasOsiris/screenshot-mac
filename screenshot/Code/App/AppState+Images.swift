@@ -72,6 +72,36 @@ extension AppState {
         scheduleSave()
     }
 
+    /// Loads the full-resolution image referenced by `shapeId`, runs Vision's foreground
+    /// subject mask off the main actor, and replaces the shape's image with the cropped
+    /// transparent-background result. The shape's width is adjusted to match the new
+    /// (tighter) aspect ratio in the same undo step.
+    @MainActor
+    func removeImageBackground(for shapeId: UUID, onError: @escaping (String) -> Void) {
+        guard let location = shapeLocation(for: shapeId) else { return }
+        let shape = rows[location.rowIndex].shapes[location.shapeIndex]
+        guard let fileName = shape.displayImageFileName,
+              let activeId = activeProjectId else { return }
+        let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
+
+        Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                let result = try BackgroundRemovalService.removeBackground(at: url)
+                await MainActor.run {
+                    guard let self, let location = self.shapeLocation(for: shapeId) else { return }
+                    self.registerUndoForRow(at: location.rowIndex, "Remove Background")
+                    if self.performSaveImage(result, for: shapeId, activeId: activeId, location: location) {
+                        self.rows[location.rowIndex].shapes[location.shapeIndex].adaptToImageAspectRatio(result.size)
+                        self.scheduleSave()
+                    }
+                }
+            } catch {
+                let message = error.localizedDescription
+                await MainActor.run { onError(message) }
+            }
+        }
+    }
+
     func clearImage(for shapeId: UUID) {
         guard let location = shapeLocation(for: shapeId) else { return }
 

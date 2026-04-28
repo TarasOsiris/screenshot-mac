@@ -6,6 +6,7 @@ struct CanvasShapeContextMenuContent: View {
     var screenshotImage: NSImage?
     @Binding var isPickerPresented: Bool
     var onClearImage: (() -> Void)?
+    var onRemoveBackground: (() -> Void)?
     var onCaptureSimulator: (() -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
     var onTranslate: (() -> Void)?
@@ -37,6 +38,10 @@ struct CanvasShapeContextMenuContent: View {
                         let newHeight = shape.width / (imageSize.width / imageSize.height)
                         applyUpdate { $0.height = newHeight }
                     }
+                }
+                if shape.type == .image, let onRemoveBackground {
+                    Button("Remove Background", action: onRemoveBackground)
+                        .disabled(shape.displayImageFileName == nil)
                 }
                 Divider()
             }

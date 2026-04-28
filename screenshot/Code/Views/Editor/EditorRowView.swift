@@ -24,6 +24,7 @@ struct EditorRowView: View {
     @State private var exportError: String?
     @State private var simulatorCaptureError: String?
     @State private var simulatorInstallPromptShapeId: UUID?
+    @State private var backgroundRemovalError: String?
     /// Cached snap targets for non-selected shapes during drag.
     @State private var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
     @FocusState private var isLabelFieldFocused: Bool
@@ -147,6 +148,11 @@ struct EditorRowView: View {
             Button("OK") { simulatorCaptureError = nil }
         } message: {
             Text(simulatorCaptureError ?? "")
+        }
+        .alert("Remove Background Failed", isPresented: $backgroundRemovalError.isPresent()) {
+            Button("OK") { backgroundRemovalError = nil }
+        } message: {
+            Text(backgroundRemovalError ?? "")
         }
         .alert("Enable iOS Simulator Capture", isPresented: $simulatorInstallPromptShapeId.isPresent()) {
             Button("Install…") {
@@ -478,6 +484,11 @@ struct EditorRowView: View {
                     onClearImage: {
                         state.clearImage(for: shape.id)
                     },
+                    onRemoveBackground: shape.type == .image ? {
+                        state.removeImageBackground(for: shape.id) { message in
+                            backgroundRemovalError = message
+                        }
+                    } : nil,
                     onCaptureSimulator: shape.type == .device ? {
                         if SimulatorCaptureService.isHelperInstalled {
                             state.captureFromSimulator(intoShape: shape.id) { message in
