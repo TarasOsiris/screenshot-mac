@@ -15,17 +15,17 @@ struct GradientAngleWheel: View {
 
         ZStack {
             Circle()
-                .strokeBorder(Color.secondary.opacity(0.3), lineWidth: 1.5)
+                .strokeBorder(Color.secondary.opacity(UIMetrics.Opacity.accentSelection), lineWidth: UIMetrics.BorderWidth.emphasis)
 
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [.white.opacity(0.15), .clear],
+                        colors: [Color.primary.opacity(UIMetrics.Opacity.hairlineOverlay), .clear],
                         startPoint: unitPoint(for: angle),
                         endPoint: unitPoint(for: angle + 180)
                     )
                 )
-                .padding(1.5)
+                .padding(UIMetrics.BorderWidth.emphasis)
 
             Path { path in
                 let center = CGPoint(x: size / 2, y: size / 2)

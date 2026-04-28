@@ -18,11 +18,11 @@ struct ShapeFillSwatchButton: View {
             isPresented.toggle()
         } label: {
             preview
-                .frame(width: 24, height: 24)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .frame(width: UIMetrics.ColorSwatch.preview, height: UIMetrics.ColorSwatch.preview)
+                .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .strokeBorder(.separator, lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
+                        .strokeBorder(.separator, lineWidth: UIMetrics.BorderWidth.hairline)
                 )
         }
         .buttonStyle(.plain)

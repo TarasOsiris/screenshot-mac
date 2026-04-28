@@ -92,11 +92,11 @@ struct TemplateControlBar: View {
                                         .clipShape(RoundedRectangle(cornerRadius: 2))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 2)
-                                                .strokeBorder(.secondary.opacity(0.5), lineWidth: 0.5)
+                                                .strokeBorder(.secondary.opacity(0.5), lineWidth: UIMetrics.BorderWidth.hairline)
                                         )
                                 } else {
                                     Image(systemName: "photo.badge.plus")
-                                        .font(.system(size: 10))
+                                        .font(.system(size: UIMetrics.FontSize.numericBadge))
                                         .frame(width: 12, height: 12)
                                 }
                             } else {
@@ -105,7 +105,7 @@ struct TemplateControlBar: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 2))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 2)
-                                            .strokeBorder(.secondary.opacity(0.5), lineWidth: 0.5)
+                                            .strokeBorder(.secondary.opacity(0.5), lineWidth: UIMetrics.BorderWidth.hairline)
                                     )
                             }
                         } else {
@@ -141,7 +141,7 @@ struct TemplateControlBar: View {
                         )
                         .toggleStyle(.switch)
                         .controlSize(.small)
-                        .font(.system(size: 12))
+                        .font(.system(size: UIMetrics.FontSize.body))
 
                         if template.overrideBackground {
                             BackgroundEditor(
@@ -160,15 +160,15 @@ struct TemplateControlBar: View {
                             if template.backgroundStyle != .color {
                                 HStack(spacing: 4) {
                                     Text("Blur")
-                                        .font(.system(size: 10))
+                                        .font(.system(size: UIMetrics.FontSize.body))
                                     Spacer()
                                     Slider(
                                         value: $template.backgroundBlur.onSet { onSave() },
                                         in: 0...100
                                     )
-                                    .frame(width: 80)
+                                    .frame(width: UIMetrics.SliderWidth.standard)
                                     Text("\(Int(template.backgroundBlur))")
-                                        .font(.system(size: 9).monospacedDigit())
+                                        .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
                                         .foregroundStyle(.secondary)
                                         .frame(width: 38, alignment: .trailing)
                                 }
@@ -224,8 +224,10 @@ struct TemplateControlBar: View {
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 12))
+                    .font(.system(size: UIMetrics.FontSize.body))
                     .frame(width: 22, height: 22)
+                    .foregroundStyle(.secondary)
+                    .contentShape(Rectangle())
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
@@ -238,7 +240,7 @@ struct TemplateControlBar: View {
             if index > 0 {
                 Rectangle()
                     .fill(.separator)
-                    .frame(width: 1, height: 20)
+                    .frame(width: UIMetrics.BorderWidth.standard, height: 20)
             }
         }
         .alert("Delete Screenshot", isPresented: $isDeletingTemplate) {

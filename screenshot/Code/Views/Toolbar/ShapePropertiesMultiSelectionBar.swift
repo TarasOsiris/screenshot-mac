@@ -24,16 +24,16 @@ struct ShapePropertiesMultiSelectionBar: View {
                     HStack(spacing: 6) {
                         if let type = commonType {
                             Image(systemName: type.icon)
-                                .font(.system(size: 11, weight: .medium))
+                                .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
                         }
                         Text("\(count) shapes")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(
                         Capsule(style: .continuous)
-                            .fill(Color.accentColor.opacity(0.14))
+                            .fill(Color.accentColor.opacity(UIMetrics.Opacity.accentBadge))
                     )
 
                     if let commonType {
@@ -42,14 +42,14 @@ struct ShapePropertiesMultiSelectionBar: View {
                         ShapePropertiesSection {
                             ShapePropertiesControlGroup("Opacity") {
                                 Slider(value: multiShapeBinding(\.opacity), in: 0...1)
-                                    .frame(width: 80)
+                                    .frame(width: UIMetrics.SliderWidth.standard)
                             }
 
                             ShapePropertiesSeparator()
 
                             ShapePropertiesControlGroup("Rotation") {
                                 Slider(value: multiShapeBinding(\.rotation), in: 0...360)
-                                    .frame(width: 80)
+                                    .frame(width: UIMetrics.SliderWidth.standard)
                             }
                         }
 
@@ -69,8 +69,8 @@ struct ShapePropertiesMultiSelectionBar: View {
                         onDelete: { state.deleteSelectedShapes() }
                     )
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
+                .padding(.horizontal, ShapePropertiesSectionLayout.horizontalPadding)
+                .padding(.vertical, ShapePropertiesSectionLayout.verticalPadding)
             }
 
             Spacer(minLength: 0)
@@ -80,7 +80,7 @@ struct ShapePropertiesMultiSelectionBar: View {
             }
             .padding(.trailing, 8)
         }
-        .font(.system(size: 11))
+        .font(.system(size: UIMetrics.FontSize.body))
         .controlSize(.small)
         .background(.bar)
     }
@@ -167,7 +167,7 @@ struct ShapePropertiesMultiSelectionBar: View {
             ShapePropertiesSection {
                 ShapePropertiesControlGroup("Radius") {
                     Slider(value: multiShapeBinding(\.borderRadius), in: 0...500)
-                        .frame(width: 80)
+                        .frame(width: UIMetrics.SliderWidth.standard)
                 }
             }
         }
@@ -220,14 +220,14 @@ struct ShapePropertiesMultiSelectionBar: View {
         if hasOutline {
             ColorPicker("", selection: multiShapeOptionalBinding(\.outlineColor, default: CanvasShapeModel.defaultOutlineColor), supportsOpacity: false)
                 .labelsHidden()
-                .frame(width: 30)
+                .frame(width: UIMetrics.ColorSwatch.inline)
                 .padding(.horizontal, 4)
 
             ShapePropertiesSeparator()
 
             ShapePropertiesControlGroup("Width") {
                 Slider(value: multiShapeOptionalBinding(\.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth), in: 1...50)
-                    .frame(width: 80)
+                    .frame(width: UIMetrics.SliderWidth.standard)
             }
         }
     }

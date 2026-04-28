@@ -165,3 +165,10 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 - `row.isSpanningBackground` controls whether a background renders once across all templates or repeats per-template. This applies to both gradient and image styles (not color).
 - In the editor, spanning renders a full-width background behind the HStack of templates. In export, it renders at full row width with an offset per template.
 - Per-template overrides (`template.overrideBackground`) always take priority over the row spanning background.
+
+**UI consistency (`UIMetrics`):**
+- All view-layer constants — font sizes, slider widths, swatch sizes, corner radii, border widths, overlay opacities — live in `Code/Views/UIMetrics.swift`. Reach for those before hardcoding values, and add new entries there when you need a new shared constant.
+- **Never use `.white` / `.black` opacities for chrome that sits over arbitrary content** (toolbars, gradients, overlays). They don't adapt to dark mode. Use `Color.primary` / `.secondary` / `.separator` with the opacities in `UIMetrics.Opacity`, or `UIMetrics.Stroke.subtle` / `.section` for hairline borders.
+- Properties bar sections must use `ShapePropertiesSection` — and the parent HStack of sections must use `ShapePropertiesSectionLayout.horizontalPadding` / `.verticalPadding` so sections align flush with the bar edges.
+- Toggles in compact toolbars use `.toggleStyle(.switch).controlSize(.small)`. The exception is the inspector's Visibility section, which uses `.toggleStyle(.checkbox)` because switches would break the 2-column LazyVGrid layout — keep that as is.
+- `ActionButton` (default `frameSize: 22`, `iconSize: 11`) is the canonical small icon button. Match its size when adding adjacent menu/buttons that aren't `ActionButton` (e.g., the ellipsis menu in `TemplateControlBar`).

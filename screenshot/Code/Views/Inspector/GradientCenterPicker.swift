@@ -11,8 +11,8 @@ struct GradientCenterPicker: View {
             let area = size - edgeInset * 2
 
             ZStack {
-                RoundedRectangle(cornerRadius: 4)
-                    .strokeBorder(Color.secondary.opacity(0.3), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
+                    .strokeBorder(Color.secondary.opacity(UIMetrics.Opacity.accentSelection), lineWidth: UIMetrics.BorderWidth.emphasis)
 
                 Path { path in
                     let cx = edgeInset + area * centerX
@@ -22,7 +22,7 @@ struct GradientCenterPicker: View {
                     path.move(to: CGPoint(x: edgeInset, y: cy))
                     path.addLine(to: CGPoint(x: size - edgeInset, y: cy))
                 }
-                .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
+                .stroke(Color.accentColor.opacity(UIMetrics.Opacity.accentSelection), lineWidth: UIMetrics.BorderWidth.standard)
 
                 Circle()
                     .fill(Color.accentColor)

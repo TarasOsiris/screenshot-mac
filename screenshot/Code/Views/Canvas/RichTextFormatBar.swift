@@ -5,7 +5,7 @@ enum RichTextFormatBarMetrics {
     static let width: CGFloat = 372
     static let height: CGFloat = 42
     static let controlSize = CGSize(width: 28, height: 28)
-    static let cornerRadius: CGFloat = 12
+    static let cornerRadius: CGFloat = UIMetrics.CornerRadius.floating
     static let edgeInset: CGFloat = 4
 }
 
@@ -71,12 +71,12 @@ struct RichTextFormatBar: View {
                     }
                 } label: {
                     Text("\(Int(selectionState.fontSize.rounded()))")
-                        .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                        .font(.system(size: UIMetrics.FontSize.body, weight: .semibold).monospacedDigit())
                         .foregroundStyle(.primary)
                         .frame(width: 42, height: RichTextFormatBarMetrics.controlSize.height)
                         .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.black.opacity(0.08))
+                            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section)
+                                .fill(Color.primary.opacity(UIMetrics.Opacity.sectionFill))
                         )
                 }
                 .menuStyle(.borderlessButton)
@@ -113,7 +113,7 @@ struct RichTextFormatBar: View {
         }
         .overlay {
             RoundedRectangle(cornerRadius: RichTextFormatBarMetrics.cornerRadius)
-                .strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
+                .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.standard)
         }
     }
 
@@ -125,7 +125,7 @@ struct RichTextFormatBar: View {
     private func stepButton(systemName: String, helpText: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .semibold))
                 .frame(width: RichTextFormatBarMetrics.controlSize.width, height: RichTextFormatBarMetrics.controlSize.height)
         }
         .buttonStyle(FormatBarButtonStyle(isActive: false))
@@ -135,7 +135,7 @@ struct RichTextFormatBar: View {
     private func formatButton(systemName: String, isActive: Bool, helpText: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
                 .frame(width: RichTextFormatBarMetrics.controlSize.width, height: RichTextFormatBarMetrics.controlSize.height)
         }
         .buttonStyle(FormatBarButtonStyle(isActive: isActive))
@@ -150,31 +150,31 @@ private struct FormatBarButtonStyle: ButtonStyle {
         configuration.label
             .foregroundStyle(isActive ? Color.accentColor : .primary)
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section)
                     .fill(backgroundColor(isPressed: configuration.isPressed))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(borderColor(isPressed: configuration.isPressed), lineWidth: 1)
+                RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section)
+                    .strokeBorder(borderColor(isPressed: configuration.isPressed), lineWidth: UIMetrics.BorderWidth.standard)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
     }
 
     private func backgroundColor(isPressed: Bool) -> Color {
         if isPressed {
-            return Color.accentColor.opacity(0.22)
+            return Color.accentColor.opacity(UIMetrics.Opacity.accentPressed)
         }
         if isActive {
-            return Color.accentColor.opacity(0.14)
+            return Color.accentColor.opacity(UIMetrics.Opacity.accentBadge)
         }
-        return Color.black.opacity(0.08)
+        return Color.primary.opacity(UIMetrics.Opacity.sectionFill)
     }
 
     private func borderColor(isPressed: Bool) -> Color {
         if isPressed || isActive {
-            return Color.accentColor.opacity(0.38)
+            return Color.accentColor.opacity(UIMetrics.Opacity.accentBorder)
         }
-        return Color.white.opacity(0.14)
+        return Color.primary.opacity(UIMetrics.Opacity.hairlineOverlay)
     }
 }
 

@@ -121,7 +121,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                             } else if shape.type != .device && shape.type != .svg && shape.type != .image {
                                 ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
                                     .labelsHidden()
-                                    .frame(width: 30)
+                                    .frame(width: UIMetrics.ColorSwatch.inline)
                                     .help("Fill color")
                                 ShapePropertiesSeparator()
                             }
@@ -156,7 +156,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     }
 
                                     Text("%")
-                                        .font(.system(size: 10))
+                                        .font(.system(size: UIMetrics.FontSize.numericBadge))
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -165,7 +165,7 @@ struct ShapePropertiesSingleSelectionBar: View {
 
                             ShapePropertiesControlGroup("Rotation") {
                                 Slider(value: shapeBinding(shapeId, \.rotation, continuous: true), in: 0...360)
-                                    .frame(width: 80)
+                                    .frame(width: UIMetrics.SliderWidth.standard)
 
                                 Text(verbatim: "\(Int(idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].rotation } ?? 0))°")
                                     .frame(width: 28, alignment: .trailing)
@@ -176,7 +176,7 @@ struct ShapePropertiesSingleSelectionBar: View {
 
                                 ShapePropertiesControlGroup("Radius") {
                                     Slider(value: shapeBinding(shapeId, \.borderRadius, continuous: true), in: 0...500)
-                                        .frame(width: 80)
+                                        .frame(width: UIMetrics.SliderWidth.standard)
 
                                     Text(verbatim: "\(Int(shape.borderRadius))")
                                         .frame(width: 28, alignment: .trailing)
@@ -261,8 +261,8 @@ struct ShapePropertiesSingleSelectionBar: View {
                             onDelete: { state.deleteShape(shapeId) }
                         )
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, ShapePropertiesSectionLayout.horizontalPadding)
+                    .padding(.vertical, ShapePropertiesSectionLayout.verticalPadding)
                 }
 
                 Spacer(minLength: 0)
@@ -272,7 +272,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                 }
                 .padding(.trailing, 8)
             }
-            .font(.system(size: 11))
+            .font(.system(size: UIMetrics.FontSize.body))
             .controlSize(.small)
             .background(.bar)
             .fileImporter(isPresented: $isReplacingFillImage, allowedContentTypes: [.image]) { result in
@@ -726,7 +726,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                             }
                         } label: {
                             Image(systemName: "chevron.down")
-                                .font(.system(size: 9))
+                                .font(.system(size: UIMetrics.FontSize.hint))
                                 .foregroundStyle(.secondary)
                                 .frame(width: 14, height: 20)
                                 .contentShape(Rectangle())
@@ -793,7 +793,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                 let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0)
                 HStack(spacing: 4) {
                     Slider(value: trackingBinding, in: -5...30)
-                        .frame(width: 120)
+                        .frame(width: UIMetrics.SliderWidth.wide)
 
                     Text(verbatim: String(format: "%.1f", trackingBinding.wrappedValue))
                         .frame(width: 32, alignment: .trailing)
@@ -870,10 +870,10 @@ struct ShapePropertiesSingleSelectionBar: View {
                     updated.richText = nil
                     state.updateShape(updated)
                 }
-                .font(.system(size: 11))
+                .font(.system(size: UIMetrics.FontSize.body))
             }
         }
-        .font(.system(size: 11))
+        .font(.system(size: UIMetrics.FontSize.body))
         .controlSize(.small)
     }
 

@@ -1,5 +1,13 @@
 import SwiftUI
 
+/// Layout constants shared by `ShapePropertiesSection` and the bars that host it.
+/// Use `.horizontalPadding` on the row container so sections align flush with the bar edges.
+enum ShapePropertiesSectionLayout {
+    static let horizontalPadding: CGFloat = 10
+    static let verticalPadding: CGFloat = 4
+    static let minHeight: CGFloat = 28
+}
+
 struct ShapePropertiesSection<Content: View>: View {
     private let content: Content
 
@@ -11,16 +19,16 @@ struct ShapePropertiesSection<Content: View>: View {
         HStack(spacing: 6) {
             content
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 4)
-        .frame(minHeight: 28)
+        .padding(.horizontal, ShapePropertiesSectionLayout.horizontalPadding)
+        .padding(.vertical, ShapePropertiesSectionLayout.verticalPadding)
+        .frame(minHeight: ShapePropertiesSectionLayout.minHeight)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.primary.opacity(0.05))
+            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section, style: .continuous)
+                .fill(Color.primary.opacity(UIMetrics.Opacity.sectionFill))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(.separator.opacity(0.35), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section, style: .continuous)
+                .strokeBorder(.separator.opacity(UIMetrics.Opacity.sectionBorder), lineWidth: UIMetrics.BorderWidth.hairline)
         )
     }
 }
@@ -29,7 +37,7 @@ struct ShapePropertiesSeparator: View {
     var body: some View {
         Rectangle()
             .fill(.separator)
-            .frame(width: 1, height: 18)
+            .frame(width: UIMetrics.BorderWidth.standard, height: 18)
             .padding(.horizontal, 4)
     }
 }
@@ -58,9 +66,9 @@ struct ShapePropertiesBadge: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: shape.type.icon)
-                .font(.system(size: 10, weight: .medium))
+                .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .medium))
             Text(verbatim: "\(Int(shape.width))×\(Int(shape.height))")
-                .font(.system(size: 10).monospacedDigit())
+                .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .transaction { $0.animation = nil }
         }
@@ -68,7 +76,7 @@ struct ShapePropertiesBadge: View {
         .padding(.vertical, 4)
         .background(
             Capsule(style: .continuous)
-                .fill(Color.accentColor.opacity(0.14))
+                .fill(Color.accentColor.opacity(UIMetrics.Opacity.accentBadge))
         )
     }
 }
@@ -187,7 +195,7 @@ struct SVGShapeControls: View {
                 if usesCustomColor {
                     ColorPicker("", selection: $color, supportsOpacity: false)
                         .labelsHidden()
-                        .frame(width: 30)
+                        .frame(width: UIMetrics.ColorSwatch.inline)
                         .help("SVG custom color")
                 }
             }

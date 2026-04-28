@@ -175,7 +175,7 @@ struct InspectorPanel: View {
             if state.rows[rowIndex].backgroundStyle != .color {
                 HStack(spacing: 4) {
                     Text("Blur")
-                        .font(.system(size: 12))
+                        .font(.system(size: UIMetrics.FontSize.body))
                     Spacer()
                     Slider(
                         value: liveRowBinding(rowId, keyPath: \.backgroundBlur, default: 0),
@@ -188,7 +188,7 @@ struct InspectorPanel: View {
                     }
                     .frame(width: 100)
                     Text("\(Int(state.rows[rowIndex].backgroundBlur))")
-                        .font(.system(size: 11).monospacedDigit())
+                        .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
                         .foregroundStyle(.secondary)
                         .frame(width: 28, alignment: .trailing)
                 }
@@ -197,7 +197,7 @@ struct InspectorPanel: View {
             if state.rows[rowIndex].backgroundStyle != .color {
                 let canSpanAcrossRow = state.rows[rowIndex].templates.count > 1
                 Toggle("Stretch across all screenshots", isOn: safeRowBinding(rowId, keyPath: \.spanBackgroundAcrossRow, default: false))
-                    .font(.system(size: 12))
+                    .font(.system(size: UIMetrics.FontSize.body))
                     .toggleStyle(.switch)
                     .controlSize(.small)
                     .disabled(!canSpanAcrossRow)
@@ -205,7 +205,7 @@ struct InspectorPanel: View {
 
                 if !canSpanAcrossRow {
                     Text("Add at least two screenshots to stretch background across row.")
-                        .font(.system(size: 11))
+                        .font(.system(size: UIMetrics.FontSize.body))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -219,7 +219,7 @@ struct InspectorPanel: View {
         Section(isExpanded: $isDeviceExpanded) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Default device frame")
-                    .font(.system(size: 12))
+                    .font(.system(size: UIMetrics.FontSize.body))
                     .foregroundStyle(.secondary)
                 DevicePickerMenu(
                     category: defaultDeviceCategory(for: rowId),
@@ -286,7 +286,7 @@ struct InspectorPanel: View {
                 }
             }
             .toggleStyle(.checkbox)
-            .font(.system(size: 11))
+            .font(.system(size: UIMetrics.FontSize.body))
             .controlSize(.small)
         } header: {
             HStack(spacing: 4) {
@@ -296,7 +296,7 @@ struct InspectorPanel: View {
                 Button("Hide All") { setVisibility(rowId: rowId, visible: false) }
             }
             .buttonStyle(.plain)
-            .font(.system(size: 10))
+            .font(.system(size: UIMetrics.FontSize.inlineLabel))
             .foregroundStyle(.secondary)
         }
     }

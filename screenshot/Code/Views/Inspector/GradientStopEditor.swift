@@ -17,13 +17,13 @@ struct GradientStopEditor: View {
 
                 ZStack(alignment: .leading) {
                     // Always horizontal so stop positions match visually
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
                         .fill(horizontalGradient)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .strokeBorder(.white.opacity(0.15), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
+                                .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.standard)
                         )
-                        .contentShape(RoundedRectangle(cornerRadius: 6))
+                        .contentShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
                         .onTapGesture { location in
                             focusEditor()
                             let loc = location.x / barWidth
@@ -74,7 +74,7 @@ struct GradientStopEditor: View {
                     .simultaneousGesture(TapGesture().onEnded { focusEditor() })
 
                     Text("\(selectedLocationPercent(for: selectedId))%")
-                        .font(.system(size: 11).monospacedDigit())
+                        .font(.system(size: UIMetrics.FontSize.body).monospacedDigit())
                         .foregroundStyle(.secondary)
                         .frame(width: 30)
 
@@ -87,7 +87,7 @@ struct GradientStopEditor: View {
                         onChanged()
                     } label: {
                         Image(systemName: "minus.circle")
-                            .font(.system(size: 12))
+                            .font(.system(size: UIMetrics.FontSize.body))
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -96,13 +96,13 @@ struct GradientStopEditor: View {
                     .help("Remove stop (min 2)")
                 } else {
                     Text("Click bar to add stops")
-                        .font(.system(size: 10))
+                        .font(.system(size: UIMetrics.FontSize.inlineLabel))
                         .foregroundStyle(.tertiary)
                     Spacer()
                 }
 
                 Text("\(config.stops.count) stops")
-                    .font(.system(size: 10))
+                    .font(.system(size: UIMetrics.FontSize.inlineLabel))
                     .foregroundStyle(.tertiary)
 
                 Button {
@@ -111,7 +111,7 @@ struct GradientStopEditor: View {
                     onChanged()
                 } label: {
                     Image(systemName: "arrow.left.arrow.right")
-                        .font(.system(size: 10))
+                        .font(.system(size: UIMetrics.FontSize.inlineLabel))
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)

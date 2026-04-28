@@ -15,7 +15,7 @@ struct ShapeOutlineControls: View {
         if hasOutline.wrappedValue {
             ColorPicker("", selection: outlineColor, supportsOpacity: false)
                 .labelsHidden()
-                .frame(width: 30)
+                .frame(width: UIMetrics.ColorSwatch.inline)
                 .padding(.horizontal, 4)
                 .help("Outline")
 
@@ -23,7 +23,7 @@ struct ShapeOutlineControls: View {
 
             ShapePropertiesControlGroup("Width") {
                 Slider(value: outlineWidth, in: 1...50)
-                    .frame(width: 80)
+                    .frame(width: UIMetrics.SliderWidth.standard)
 
                 Text(verbatim: "\(Int((shape.outlineWidth ?? CanvasShapeModel.defaultOutlineWidth).rounded()))")
                     .frame(width: 28, alignment: .trailing)

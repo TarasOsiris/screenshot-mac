@@ -33,7 +33,7 @@ struct BackgroundEditor: View {
                     .labelsHidden()
                     .fixedSize()
             }
-            .font(.system(size: 10))
+            .font(.system(size: UIMetrics.FontSize.body))
 
         case .gradient:
             VStack(alignment: .leading, spacing: 10) {
@@ -62,12 +62,12 @@ struct BackgroundEditor: View {
                             gradientConfig = presetConfig
                             onChanged()
                         } label: {
-                            RoundedRectangle(cornerRadius: 4)
+                            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
                                 .fill(preset.config.linearGradient)
                                 .frame(height: 24)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
+                                        .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.standard)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -127,7 +127,7 @@ struct BackgroundEditor: View {
                                 .frame(width: 14, height: 14)
                                 .background(
                                     RoundedRectangle(cornerRadius: 2)
-                                        .fill(Int(gradientConfig.angle.rounded()) == a ? Color.accentColor.opacity(0.3) : Color.clear)
+                                        .fill(Int(gradientConfig.angle.rounded()) == a ? Color.accentColor.opacity(UIMetrics.Opacity.accentSelection) : Color.clear)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -151,14 +151,14 @@ struct BackgroundEditor: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Center")
-                    .font(.system(size: 10))
+                    .font(.system(size: UIMetrics.FontSize.inlineLabel))
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 4) {
                     Text("X: \(Int(gradientConfig.centerX * 100))%")
                     Text("Y: \(Int(gradientConfig.centerY * 100))%")
                 }
-                .font(.system(size: 10).monospacedDigit())
+                .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
                 .foregroundStyle(.primary)
 
                 Button {
@@ -167,12 +167,12 @@ struct BackgroundEditor: View {
                     onChanged()
                 } label: {
                     Text("Reset")
-                        .font(.system(size: 9))
+                        .font(.system(size: UIMetrics.FontSize.hint))
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
                 .foregroundStyle(.secondary)
-                .opacity(gradientConfig.centerX == 0.5 && gradientConfig.centerY == 0.5 ? 0.3 : 1)
+                .opacity(gradientConfig.centerX == 0.5 && gradientConfig.centerY == 0.5 ? UIMetrics.Opacity.disabled : 1)
                 .disabled(gradientConfig.centerX == 0.5 && gradientConfig.centerY == 0.5)
             }
         }
@@ -202,12 +202,12 @@ struct BackgroundImageEditor: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxHeight: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 4)
+                        RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
                             .strokeBorder(
-                                isDropTargeted ? Color.accentColor.opacity(0.75) : Color.secondary.opacity(0.3),
-                                style: StrokeStyle(lineWidth: isDropTargeted ? 1.5 : 1)
+                                isDropTargeted ? Color.accentColor.opacity(UIMetrics.Opacity.accentEmphasis) : Color.secondary.opacity(UIMetrics.Opacity.accentSelection),
+                                style: StrokeStyle(lineWidth: isDropTargeted ? UIMetrics.BorderWidth.emphasis : UIMetrics.BorderWidth.standard)
                             )
                     )
 
@@ -217,7 +217,7 @@ struct BackgroundImageEditor: View {
                     Button("Remove", role: .destructive) { onRemoveImage() }
                         .controlSize(.small)
                 }
-                .font(.system(size: 10))
+                .font(.system(size: UIMetrics.FontSize.inlineLabel))
             } else {
                 Button {
                     onPickImage()
@@ -227,15 +227,15 @@ struct BackgroundImageEditor: View {
                             .font(.system(size: 16))
                             .foregroundStyle(isDropTargeted ? Color.accentColor : Color.secondary)
                         Text(isDropTargeted ? "Drop Image" : "Choose or Drop Image")
-                            .font(.system(size: 10))
+                            .font(.system(size: UIMetrics.FontSize.inlineLabel))
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
                     .background(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
                             .strokeBorder(
-                                style: StrokeStyle(lineWidth: isDropTargeted ? 1.5 : 1, dash: [4, 4])
+                                style: StrokeStyle(lineWidth: isDropTargeted ? UIMetrics.BorderWidth.emphasis : UIMetrics.BorderWidth.standard, dash: [4, 4])
                             )
                             .foregroundStyle(isDropTargeted ? Color.accentColor : Color.secondary.opacity(0.4))
                     )
@@ -251,7 +251,7 @@ struct BackgroundImageEditor: View {
 
         if !hasImage {
             Text("Drop or paste an image to configure fill and opacity.")
-                .font(.system(size: 9))
+                .font(.system(size: UIMetrics.FontSize.hint))
                 .foregroundStyle(.secondary)
         }
 
@@ -293,18 +293,18 @@ struct BackgroundImageEditor: View {
     ) -> some View {
         HStack(spacing: 4) {
             Text(label)
-                .font(.system(size: 10))
+                .font(.system(size: UIMetrics.FontSize.inlineLabel))
             Spacer()
             Slider(value: value.onSet { onChanged() }, in: range)
-                .frame(width: 80)
+                .frame(width: UIMetrics.SliderWidth.standard)
                 .disabled(!hasImage)
             Text(formatLabel?() ?? "\(Int(value.wrappedValue * 100))%")
-                .font(.system(size: 9).monospacedDigit())
+                .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .frame(width: 38, alignment: .trailing)
         }
-        .opacity(hasImage ? 1 : 0.45)
+        .opacity(hasImage ? 1 : UIMetrics.Opacity.disabled)
     }
 
     private func axisSliderRow(
@@ -317,11 +317,11 @@ struct BackgroundImageEditor: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
-                .font(.system(size: 10))
+                .font(.system(size: UIMetrics.FontSize.inlineLabel))
             axisSlider("X", value: xValue, range: range, formatLabel: xFormat, valueWidth: 34)
             axisSlider("Y", value: yValue, range: range, formatLabel: yFormat, valueWidth: 34)
         }
-        .opacity(hasImage ? 1 : 0.45)
+        .opacity(hasImage ? 1 : UIMetrics.Opacity.disabled)
     }
 
     private func axisSlider(
@@ -333,13 +333,13 @@ struct BackgroundImageEditor: View {
     ) -> some View {
         HStack(spacing: 4) {
             Text(axis)
-                .font(.system(size: 9, weight: .medium))
+                .font(.system(size: UIMetrics.FontSize.hint, weight: .medium))
                 .foregroundStyle(.secondary)
                 .frame(width: 10)
             Slider(value: value.onSet { onChanged() }, in: range)
                 .disabled(!hasImage)
             Text(formatLabel?() ?? "\(Int(value.wrappedValue * 100))%")
-                .font(.system(size: 9).monospacedDigit())
+                .font(.system(size: UIMetrics.FontSize.hint).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .frame(width: valueWidth, alignment: .trailing)
