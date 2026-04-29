@@ -7647,6 +7647,9 @@
         }
       }
     },
+    "Could not load image." : {
+
+    },
     "Could not parse the private key. Make sure it's a valid .p8 file downloaded from App Store Connect." : {
       "localizations" : {
         "de" : {
@@ -16436,6 +16439,9 @@
         }
       }
     },
+    "No foreground subject was detected in this image." : {
+
+    },
     "No iOS Simulator is running. Open a device in the Simulator app and try again." : {
 
     },
@@ -20316,12 +20322,6 @@
           }
         }
       }
-    },
-    "Could not load image." : {
-
-    },
-    "No foreground subject was detected in this image." : {
-
     },
     "Remove Background" : {
 

@@ -20,18 +20,30 @@ struct CanvasShapeContextMenuContent: View {
 
     var body: some View {
         if !isMultiSelected {
-            if shape.type == .device || shape.type == .image {
+            if shape.type == .device {
+                Menu("Image") {
+                    Button("Replace Image...") {
+                        isPickerPresented = true
+                    }
+                    Button("Reset Image") {
+                        onClearImage?()
+                    }
+                    .disabled(shape.displayImageFileName == nil)
+                    if let onCaptureSimulator {
+                        Divider()
+                        Button("Capture from iOS Simulator", action: onCaptureSimulator)
+                    }
+                }
+                Divider()
+            } else if shape.type == .image {
                 Button("Replace Image...") {
                     isPickerPresented = true
-                }
-                if shape.type == .device, let onCaptureSimulator {
-                    Button("Capture from iOS Simulator", action: onCaptureSimulator)
                 }
                 Button("Reset Image") {
                     onClearImage?()
                 }
                 .disabled(shape.displayImageFileName == nil)
-                if shape.type == .image, let screenshotImage {
+                if let screenshotImage {
                     Button("Restore Original Aspect Ratio") {
                         let imageSize = screenshotImage.size
                         guard imageSize.width > 0 && imageSize.height > 0 else { return }
@@ -39,7 +51,7 @@ struct CanvasShapeContextMenuContent: View {
                         applyUpdate { $0.height = newHeight }
                     }
                 }
-                if shape.type == .image, let onRemoveBackground {
+                if let onRemoveBackground {
                     Button("Remove Background", action: onRemoveBackground)
                         .disabled(shape.displayImageFileName == nil)
                 }
