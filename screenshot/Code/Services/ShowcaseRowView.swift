@@ -14,6 +14,54 @@ struct ShowcaseExportConfig: BackgroundFillable {
     var paddingPercent: Double = 8.0
     var cornerRadiusPercent: Double = 2.5
     var aspectRatio: Double = ShowcaseAspectPreset.social.ratio
+    /// Maximum long-edge in pixels for the exported image. 0 means no cap (render at full layout
+    /// resolution, which can easily exceed 4000px for multi-template iPhone rows).
+    var maxOutputDimension: Double = ShowcaseOutputSize.medium.maxDimension
+}
+
+enum ShowcaseOutputSize: String, CaseIterable, Identifiable {
+    case original
+    case xlarge
+    case large
+    case medium
+    case small
+
+    var id: String { rawValue }
+
+    /// Long-edge cap in pixels. 0 means no cap (render at native layout resolution).
+    var maxDimension: Double {
+        switch self {
+        case .original: return 0
+        case .xlarge: return 4000
+        case .large: return 2400
+        case .medium: return 1600
+        case .small: return 1200
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .original: return "Original"
+        case .xlarge: return "X-Large"
+        case .large: return "Large"
+        case .medium: return "Medium"
+        case .small: return "Small"
+        }
+    }
+
+    var caption: String {
+        switch self {
+        case .original: return "Full"
+        case .xlarge: return "4000 px"
+        case .large: return "2400 px"
+        case .medium: return "1600 px"
+        case .small: return "1200 px"
+        }
+    }
+
+    static func matching(maxDimension: Double, tolerance: Double = 0.5) -> ShowcaseOutputSize? {
+        allCases.first { abs($0.maxDimension - maxDimension) < tolerance }
+    }
 }
 
 enum ShowcaseAspectPreset: String, CaseIterable, Identifiable {
@@ -118,6 +166,23 @@ struct ShowcaseLayout {
         }
         horizontalPadding = round((totalWidth - contentW) / 2)
         verticalPadding = round((totalHeight - contentH) / 2)
+    }
+
+    /// Returns the scale needed to fit the layout's long edge into `maxDimension` pixels.
+    /// Returns 1.0 when `maxDimension <= 0` (no cap) or when the layout already fits.
+    func outputScale(maxDimension: Double) -> CGFloat {
+        guard maxDimension > 0 else { return 1 }
+        let longEdge = max(totalWidth, totalHeight)
+        guard longEdge > CGFloat(maxDimension) else { return 1 }
+        return CGFloat(maxDimension) / longEdge
+    }
+
+    /// Final exported pixel dimensions after applying `outputScale(maxDimension:)`.
+    /// All callers (export, sheet caption, preview caption) must use this so the
+    /// rounding is consistent with what the renderer actually produces.
+    func outputSize(maxDimension: Double) -> CGSize {
+        let scale = outputScale(maxDimension: maxDimension)
+        return CGSize(width: round(totalWidth * scale), height: round(totalHeight * scale))
     }
 }
 

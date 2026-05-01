@@ -10757,6 +10757,9 @@
         }
       }
     },
+    "Exclude screenshot %lld" : {
+
+    },
     "Existing screenshots in each matching display type set will be deleted and replaced. " : {
       "localizations" : {
         "de" : {
@@ -12404,6 +12407,9 @@
         }
       }
     },
+    "Format, background, layout, and excluded screenshots will return to defaults. Row selection is preserved." : {
+
+    },
     "Free" : {
       "localizations" : {
         "de" : {
@@ -13461,6 +13467,9 @@
           }
         }
       }
+    },
+    "Include screenshot %lld" : {
+
     },
     "Included" : {
       "localizations" : {
@@ -21620,6 +21629,9 @@
         }
       }
     },
+    "Reset Showcase Settings?" : {
+
+    },
     "Reset to default locale image" : {
       "localizations" : {
         "de" : {
@@ -24671,6 +24683,9 @@
           }
         }
       }
+    },
+    "Solid" : {
+
     },
     "Source" : {
       "localizations" : {

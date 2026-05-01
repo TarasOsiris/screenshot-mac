@@ -27,6 +27,15 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
 
     var templateSize: CGSize { CGSize(width: templateWidth, height: templateHeight) }
 
+    /// Returns a copy with templates whose ids appear in `excluded` removed.
+    /// Returns nil when every template would be removed, so callers can drop empty rows.
+    func filtering(excluding excluded: Set<UUID>) -> ScreenshotRow? {
+        guard !excluded.isEmpty else { return self }
+        var copy = self
+        copy.templates = templates.filter { !excluded.contains($0.id) }
+        return copy.templates.isEmpty ? nil : copy
+    }
+
     init(
         id: UUID = UUID(),
         label: String = String(localized: "Screenshot 1"),

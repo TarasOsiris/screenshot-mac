@@ -397,13 +397,14 @@ struct ContentView: View {
                 localeCode: state.localeState.activeLocaleCode,
                 localeState: state.localeState,
                 availableFontFamilies: state.availableFontFamilySet
-            ) { config, backgroundImage, selectedRowIds in
+            ) { config, backgroundImage, selectedRowIds, excludedTemplateIds in
                 showcasePresentation = nil
                 runShowcaseExport(
                     presentation: presentation,
                     config: config,
                     backgroundImage: backgroundImage,
-                    selectedRowIds: selectedRowIds
+                    selectedRowIds: selectedRowIds,
+                    excludedTemplateIds: excludedTemplateIds
                 )
             }
             .presentationSizing(.page)
@@ -768,7 +769,8 @@ struct ContentView: View {
         presentation: ShowcasePresentation,
         config: ShowcaseExportConfig,
         backgroundImage: NSImage?,
-        selectedRowIds: Set<UUID>
+        selectedRowIds: Set<UUID>,
+        excludedTemplateIds: Set<UUID>
     ) {
         guard !selectedRowIds.isEmpty else { return }
 
@@ -781,14 +783,17 @@ struct ContentView: View {
 
         switch presentation.mode {
         case .allRows:
-            let rowsToExport = state.rows.filter { selectedRowIds.contains($0.id) }
+            let rowsToExport = state.rows
+                .filter { selectedRowIds.contains($0.id) }
+                .compactMap { $0.filtering(excluding: excludedTemplateIds) }
             guard !rowsToExport.isEmpty else { return }
             exportRowLevel(folderName: "showcase", rows: rowsToExport, imageCache: seedCache) { row, images, locale, localeState in
                 ExportService.renderShowcaseRowImage(row: row, screenshotImages: images, localeCode: locale, localeState: localeState, config: config)
             }
         case .singleRow:
             guard let rowId = selectedRowIds.first,
-                  let row = state.rows.first(where: { $0.id == rowId }) else { return }
+                  let baseRow = state.rows.first(where: { $0.id == rowId }),
+                  let row = baseRow.filtering(excluding: excludedTemplateIds) else { return }
             let localeCode = state.localeState.activeLocaleCode
             if let message = ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
                 var images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)

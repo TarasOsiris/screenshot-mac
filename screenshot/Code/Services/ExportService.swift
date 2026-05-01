@@ -186,19 +186,22 @@ struct ExportService {
         }
 
         let totalSize = CGSize(width: layout.totalWidth, height: layout.totalHeight)
+        let outputScale = layout.outputScale(maxDimension: config.maxOutputDimension)
+        let outputSize = layout.outputSize(maxDimension: config.maxOutputDimension)
         let showcaseView = ShowcaseRowView(
             templateImages: templateImages,
             templateWidth: row.templateWidth,
             templateHeight: row.templateHeight,
             layout: layout,
             background: config.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: totalSize)
-                .frame(width: totalSize.width, height: totalSize.height)
+                .frame(width: outputSize.width, height: outputSize.height),
+            scale: outputScale
         )
 
         return renderViewToImage(
             showcaseView,
-            width: layout.totalWidth,
-            height: layout.totalHeight,
+            width: outputSize.width,
+            height: outputSize.height,
             label: "showcase row '\(row.label)'"
         )
     }
