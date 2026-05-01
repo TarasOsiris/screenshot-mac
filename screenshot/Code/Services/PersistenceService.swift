@@ -120,6 +120,7 @@ struct PersistenceService {
 
     static func copyProjectFromURL(_ sourceURL: URL, to destId: UUID) {
         copyDirectory(from: sourceURL, to: projectDir(destId))
+        TemplateService.stripTemplateArtifacts(in: projectDir(destId))
         // Copy shared fonts from Templates.bundle into the project's resources
         copySharedFontsIfNeeded(to: destId)
         // Update modifiedAt so iCloud sync treats this as a fresh project

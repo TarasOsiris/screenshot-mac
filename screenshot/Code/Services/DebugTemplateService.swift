@@ -111,7 +111,7 @@ enum DebugTemplateService {
     }
 
     static func previewURL(for templateURL: URL) -> URL {
-        templateURL.appendingPathComponent("preview.png")
+        templateURL.appendingPathComponent(TemplateService.previewFileName)
     }
 
     @MainActor

@@ -22,6 +22,7 @@ enum TemplateService {
     /// Relative path for shared fonts within any Templates.bundle root.
     static let sharedFontsSubpath = "shared/fonts"
     static let metadataFileName = "template.json"
+    static let previewFileName = "preview.png"
 
     /// URL of the shared fonts directory inside the app's Templates.bundle.
     static var sharedFontsURL: URL? {
@@ -53,7 +54,7 @@ enum TemplateService {
                     .replacingOccurrences(of: "_", with: " ")
                     .replacingOccurrences(of: "-", with: " ")
                     .localizedCapitalized
-                let previewImage = NSImage(contentsOf: url.appendingPathComponent("preview.png"))
+                let previewImage = NSImage(contentsOf: url.appendingPathComponent(previewFileName))
                 let menuIcon = previewImage.flatMap { img in
                     NSImage(size: NSSize(width: 64, height: 32), flipped: false) { rect in
                         img.draw(in: rect)
@@ -85,6 +86,14 @@ enum TemplateService {
 
     static func metadataURL(for templateURL: URL) -> URL {
         templateURL.appendingPathComponent(metadataFileName)
+    }
+
+    /// Removes template-only sidecar files (preview image, metadata) from a project directory
+    /// after a template has been instantiated as a user project.
+    static func stripTemplateArtifacts(in projectDir: URL) {
+        let fm = FileManager.default
+        try? fm.removeItem(at: projectDir.appendingPathComponent(previewFileName))
+        try? fm.removeItem(at: projectDir.appendingPathComponent(metadataFileName))
     }
 
     static func loadMetadata(at templateURL: URL) -> ProjectTemplateMetadata {
