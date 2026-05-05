@@ -29,10 +29,12 @@ struct CanvasShapeContextMenuContent: View {
                         onClearImage?()
                     }
                     .disabled(shape.displayImageFileName == nil)
+                    #if DEBUG
                     if let onCaptureSimulator {
                         Divider()
                         Button("Capture from iOS Simulator", action: onCaptureSimulator)
                     }
+                    #endif
                 }
                 Divider()
             } else if shape.type == .image {

@@ -22,8 +22,10 @@ struct EditorRowView: View {
     @State private var isEditingLabel = false
     @State private var editingLabelText = ""
     @State private var exportError: String?
+    #if DEBUG
     @State private var simulatorCaptureError: String?
     @State private var simulatorInstallPromptShapeId: UUID?
+    #endif
     @State private var backgroundRemovalError: String?
     /// Cached snap targets for non-selected shapes during drag.
     @State private var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
@@ -144,16 +146,19 @@ struct EditorRowView: View {
         } message: {
             Text(exportError ?? "")
         }
+        #if DEBUG
         .alert("iOS Simulator Capture Failed", isPresented: $simulatorCaptureError.isPresent()) {
             Button("OK") { simulatorCaptureError = nil }
         } message: {
             Text(simulatorCaptureError ?? "")
         }
+        #endif
         .alert("Remove Background Failed", isPresented: $backgroundRemovalError.isPresent()) {
             Button("OK") { backgroundRemovalError = nil }
         } message: {
             Text(backgroundRemovalError ?? "")
         }
+        #if DEBUG
         .alert("Enable iOS Simulator Capture", isPresented: $simulatorInstallPromptShapeId.isPresent()) {
             Button("Install…") {
                 let pendingShapeId = simulatorInstallPromptShapeId
@@ -179,6 +184,7 @@ struct EditorRowView: View {
         } message: {
             Text("Capturing from the iOS Simulator needs a one-time setup: a small script that asks the Simulator for a screenshot and does nothing else.\n\nBecause of macOS security, only you can install it. Click Install… to save the script — you'll only need to do this once.")
         }
+        #endif
         .sheet(isPresented: $isSvgDialogPresented) {
             SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
                 let center = contextMenuPointStore.value ?? state.shapeCenter(for: row)
@@ -192,6 +198,23 @@ struct EditorRowView: View {
                 state.addShape(shape)
             }
         }
+    }
+
+    private func simulatorCaptureAction(for shape: CanvasShapeModel) -> (() -> Void)? {
+        #if DEBUG
+        guard shape.type == .device else { return nil }
+        return {
+            if SimulatorCaptureService.isHelperInstalled {
+                state.captureFromSimulator(intoShape: shape.id) { message in
+                    simulatorCaptureError = message
+                }
+            } else {
+                simulatorInstallPromptShapeId = shape.id
+            }
+        }
+        #else
+        return nil
+        #endif
     }
 
     private func handleCanvasDrop(_ providers: [NSItemProvider], at displayLocation: CGPoint, displayScale ds: CGFloat) -> Bool {
@@ -489,15 +512,7 @@ struct EditorRowView: View {
                             backgroundRemovalError = message
                         }
                     } : nil,
-                    onCaptureSimulator: shape.type == .device ? {
-                        if SimulatorCaptureService.isHelperInstalled {
-                            state.captureFromSimulator(intoShape: shape.id) { message in
-                                simulatorCaptureError = message
-                            }
-                        } else {
-                            simulatorInstallPromptShapeId = shape.id
-                        }
-                    } : nil,
+                    onCaptureSimulator: simulatorCaptureAction(for: shape),
                     onDragSnap: { draggedShape, rawOffset in
                         let targets: [AlignmentService.OtherShapeBounds]
                         if let cached = cachedSnapTargets {
