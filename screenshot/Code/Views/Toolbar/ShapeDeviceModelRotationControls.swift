@@ -6,6 +6,10 @@ struct ShapeDeviceModelRotationControls: View {
     let yaw: Binding<Double>
     let canReset: Bool
     let onReset: () -> Void
+    let bodyMaterial: Binding<DeviceBodyMaterial>
+    let lighting: Binding<DeviceLighting>
+
+    @State private var isAppearancePopoverPresented = false
 
     var body: some View {
         ShapePropertiesSection {
@@ -36,6 +40,19 @@ struct ShapeDeviceModelRotationControls: View {
                 disabled: !canReset,
                 action: onReset
             )
+
+            ShapePropertiesSeparator()
+
+            ActionButton(
+                icon: "cube.transparent",
+                tooltip: "Material & lighting…",
+                frameSize: 24
+            ) {
+                isAppearancePopoverPresented.toggle()
+            }
+            .popover(isPresented: $isAppearancePopoverPresented, arrowEdge: .top) {
+                Device3DAppearancePopover(material: bodyMaterial, lighting: lighting)
+            }
 
             ShapePropertiesSeparator()
 

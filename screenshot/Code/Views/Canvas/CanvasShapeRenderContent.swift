@@ -159,6 +159,8 @@ struct CanvasShapeRenderContent: View {
             deviceFrameId: shape.deviceFrameId,
             devicePitch: shape.resolvedDevicePitch,
             deviceYaw: shape.resolvedDeviceYaw,
+            bodyMaterial: shape.resolvedDeviceBodyMaterial,
+            lighting: shape.resolvedDeviceLighting,
             modelRenderingMode: deviceModelRenderingMode,
             invisibleCornerRadius: isInvisible ? shape.borderRadius * displayScale : 0,
             invisibleOutlineWidth: isInvisible ? max(0, (shape.outlineWidth ?? 0) * displayScale) : 0,

@@ -96,7 +96,9 @@ struct ShapePropertiesSingleSelectionBar: View {
                                 pitch: deviceModelRotationBinding(shapeId, \.devicePitch, defaultValue: \.resolvedDevicePitch),
                                 yaw: deviceModelRotationBinding(shapeId, \.deviceYaw, defaultValue: \.resolvedDeviceYaw),
                                 canReset: hasDeviceModelRotationOverride(shapeId),
-                                onReset: { resetDeviceModelRotation(shapeId) }
+                                onReset: { resetDeviceModelRotation(shapeId) },
+                                bodyMaterial: optionalConfigBinding(shapeId, \.deviceBodyMaterial, fallback: DeviceBodyMaterial(), isEmpty: \.isEmpty),
+                                lighting: optionalConfigBinding(shapeId, \.deviceLighting, fallback: DeviceLighting(), isEmpty: \.isEmpty)
                             )
                         }
 
@@ -610,6 +612,26 @@ struct ShapePropertiesSingleSelectionBar: View {
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         resolved.resetDeviceModelRotation()
         state.updateShape(resolved)
+    }
+
+    private func optionalConfigBinding<T: Equatable>(
+        _ shapeId: UUID,
+        _ keyPath: WritableKeyPath<CanvasShapeModel, T?>,
+        fallback: T,
+        isEmpty: @escaping (T) -> Bool
+    ) -> Binding<T> {
+        Binding(
+            get: {
+                guard let i = idx(for: shapeId) else { return fallback }
+                return state.rows[i.row].shapes[i.shape][keyPath: keyPath] ?? fallback
+            },
+            set: { newValue in
+                guard let i = idx(for: shapeId) else { return }
+                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                resolved[keyPath: keyPath] = isEmpty(newValue) ? nil : newValue
+                state.updateShapeContinuous(resolved)
+            }
+        )
     }
 
     private func fillStyleBinding(_ shapeId: UUID) -> Binding<BackgroundStyle> {

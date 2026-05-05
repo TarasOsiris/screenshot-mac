@@ -18,6 +18,8 @@ struct DeviceModelFrameView: View {
     let screenshotImage: NSImage?
     let pitch: Double
     let yaw: Double
+    let bodyMaterial: DeviceBodyMaterial
+    let lighting: DeviceLighting
     let modelRenderingMode: DeviceModelRenderingMode
     let invisibleCornerRadius: CGFloat
     let invisibleOutlineWidth: CGFloat
@@ -33,6 +35,8 @@ struct DeviceModelFrameView: View {
                 screenshotImage: screenshotImage,
                 pitch: pitch,
                 yaw: yaw,
+                bodyMaterial: bodyMaterial,
+                lighting: lighting,
                 bodyTintColor: NSColor(bodyColor)
             )
             .frame(width: width, height: height)
@@ -44,6 +48,8 @@ struct DeviceModelFrameView: View {
                 screenshotImage: screenshotImage,
                 pitch: pitch,
                 yaw: yaw,
+                bodyMaterial: bodyMaterial,
+                lighting: lighting,
                 bodyTintColor: NSColor(bodyColor)
             ) {
                 Image(nsImage: image)
@@ -76,6 +82,8 @@ struct DeviceModelFrameView: View {
         screenshotImage: NSImage?,
         pitch: Double,
         yaw: Double,
+        bodyMaterial: DeviceBodyMaterial,
+        lighting: DeviceLighting,
         bodyTintColor: NSColor? = nil
     ) -> NSImage? {
         let safeWidth = max(1, (width * modelSnapshotScale).rounded(.up))
@@ -87,6 +95,8 @@ struct DeviceModelFrameView: View {
             screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw,
+            bodyMaterial: bodyMaterial,
+            lighting: lighting,
             bodyTintColor: bodyTintColor
         ) else {
             return nil
@@ -114,6 +124,8 @@ struct DeviceModelFrameView: View {
         screenshotImage: NSImage?,
         pitch: Double,
         yaw: Double,
+        bodyMaterial: DeviceBodyMaterial,
+        lighting: DeviceLighting,
         bodyTintColor: NSColor? = nil
     ) -> (SCNScene, SCNNode)? {
         guard let modelSpec = frame.modelSpec,
@@ -130,7 +142,7 @@ struct DeviceModelFrameView: View {
         sceneRoot.addChildNode(contentNode)
 
         removeDisabledModelNodes(in: contentNode, modelSpec: modelSpec)
-        flattenBodyMaterials(in: contentNode, modelSpec: modelSpec, tintColor: bodyTintColor)
+        applyBodyMaterials(in: contentNode, modelSpec: modelSpec, tintColor: bodyTintColor, bodyMaterial: bodyMaterial)
         applyScreenTexture(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
 
         let bounds = contentNode.boundingBox
@@ -171,7 +183,7 @@ struct DeviceModelFrameView: View {
 
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.intensity = 520
+        ambientLight.intensity = CGFloat(lighting.resolvedAmbientIntensity)
         ambientLight.color = NSColor.white
         let ambientNode = SCNNode()
         ambientNode.light = ambientLight
@@ -179,7 +191,7 @@ struct DeviceModelFrameView: View {
 
         let keyLight = SCNLight()
         keyLight.type = .omni
-        keyLight.intensity = 1600
+        keyLight.intensity = CGFloat(lighting.resolvedKeyIntensity)
         keyLight.color = NSColor.white
         let keyNode = SCNNode()
         keyNode.light = keyLight
@@ -188,7 +200,7 @@ struct DeviceModelFrameView: View {
 
         let rimLight = SCNLight()
         rimLight.type = .directional
-        rimLight.intensity = 900
+        rimLight.intensity = CGFloat(lighting.resolvedRimIntensity)
         rimLight.color = NSColor.white.withAlphaComponent(0.9)
         let rimNode = SCNNode()
         rimNode.light = rimLight
@@ -296,34 +308,49 @@ struct DeviceModelFrameView: View {
         }
     }
 
-    private static func flattenBodyMaterials(
+    private static func applyBodyMaterials(
         in contentNode: SCNNode,
         modelSpec: DeviceFrameModelSpec,
-        tintColor: NSColor? = nil
+        tintColor: NSColor? = nil,
+        bodyMaterial: DeviceBodyMaterial
     ) {
+        let isGlossy = bodyMaterial.resolvedFinish == .glossy
+        let metalness = CGFloat(bodyMaterial.resolvedMetalness)
+        let roughness = CGFloat(bodyMaterial.resolvedRoughness)
+
         enumerateNodes(in: contentNode) { node in
             guard let originalGeometry = node.geometry,
                   let clonedGeometry = originalGeometry.copy() as? SCNGeometry else { return }
 
             clonedGeometry.materials = originalGeometry.materials.map { material in
-                guard shouldFlattenBodyMaterial(material, screenMaterialName: modelSpec.screenMaterialName) else {
+                guard shouldStyleBodyMaterial(material, screenMaterialName: modelSpec.screenMaterialName) else {
                     return material.copy() as? SCNMaterial ?? SCNMaterial()
                 }
 
-                let flattened = material.copy() as? SCNMaterial ?? SCNMaterial()
-                flattened.name = material.name
-                flattened.lightingModel = .lambert
+                let styled = material.copy() as? SCNMaterial ?? SCNMaterial()
+                styled.name = material.name
                 if let tintColor {
-                    flattened.multiply.contents = tintColor
+                    styled.multiply.contents = tintColor
                 }
-                flattened.specular.contents = NSColor.black
-                flattened.reflective.contents = NSColor.black
-                flattened.metalness.contents = 0.0
-                flattened.roughness.contents = 1.0
-                flattened.shininess = 0.0
-                flattened.fresnelExponent = 0.0
-                flattened.locksAmbientWithDiffuse = true
-                return flattened
+                styled.fresnelExponent = 0.0
+                styled.locksAmbientWithDiffuse = true
+
+                if isGlossy {
+                    styled.lightingModel = .physicallyBased
+                    styled.metalness.contents = metalness
+                    styled.roughness.contents = roughness
+                    styled.specular.contents = NSColor.white
+                    styled.reflective.contents = NSColor(white: 0.15, alpha: 1.0)
+                    styled.shininess = 1.0 - roughness
+                } else {
+                    styled.lightingModel = .lambert
+                    styled.specular.contents = NSColor.black
+                    styled.reflective.contents = NSColor.black
+                    styled.metalness.contents = 0.0
+                    styled.roughness.contents = 1.0
+                    styled.shininess = 0.0
+                }
+                return styled
             }
             node.geometry = clonedGeometry
         }
@@ -347,7 +374,7 @@ struct DeviceModelFrameView: View {
         }
     }
 
-    private static func shouldFlattenBodyMaterial(
+    private static func shouldStyleBodyMaterial(
         _ material: SCNMaterial,
         screenMaterialName: String?
     ) -> Bool {

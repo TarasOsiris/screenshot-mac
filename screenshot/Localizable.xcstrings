@@ -3346,6 +3346,9 @@
         }
       }
     },
+    "Ambient" : {
+
+    },
     "Android Phone" : {
       "localizations" : {
         "de" : {
@@ -5345,6 +5348,9 @@
           }
         }
       }
+    },
+    "Body material" : {
+
     },
     "Bold" : {
       "localizations" : {
@@ -11987,6 +11993,9 @@
         }
       }
     },
+    "Finish" : {
+
+    },
     "Finish setup" : {
       "localizations" : {
         "de" : {
@@ -12596,6 +12605,9 @@
           }
         }
       }
+    },
+    "Glossy lets you tune metalness and roughness for richer reflections. Matte stays close to the original look." : {
+
     },
     "Gradient" : {
       "localizations" : {
@@ -14011,6 +14023,9 @@
     "Keep the script's name (%@) and save it inside the Application Scripts folder." : {
 
     },
+    "Key" : {
+
+    },
     "Key ID" : {
       "localizations" : {
         "de" : {
@@ -14750,6 +14765,9 @@
         }
       }
     },
+    "Lighting" : {
+
+    },
     "Line Spacing" : {
       "localizations" : {
         "de" : {
@@ -15352,6 +15370,9 @@
         }
       }
     },
+    "Material & lighting…" : {
+
+    },
     "Medium" : {
       "localizations" : {
         "de" : {
@@ -15397,6 +15418,9 @@
           }
         }
       }
+    },
+    "Metalness" : {
+
     },
     "Missing: %@." : {
       "localizations" : {
@@ -21647,6 +21671,9 @@
     "Reset Showcase Settings?" : {
 
     },
+    "Reset to default" : {
+
+    },
     "Reset to default locale image" : {
       "localizations" : {
         "de" : {
@@ -22475,6 +22502,9 @@
         }
       }
     },
+    "Rim" : {
+
+    },
     "Rotation" : {
       "localizations" : {
         "de" : {
@@ -22520,6 +22550,9 @@
           }
         }
       }
+    },
+    "Roughness" : {
+
     },
     "Row" : {
       "localizations" : {

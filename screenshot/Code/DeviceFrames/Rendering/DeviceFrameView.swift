@@ -15,6 +15,8 @@ struct DeviceFrameView: View {
     var deviceFrameId: String? = nil
     var devicePitch: Double = 0
     var deviceYaw: Double = 0
+    var bodyMaterial: DeviceBodyMaterial = DeviceBodyMaterial()
+    var lighting: DeviceLighting = DeviceLighting()
     var modelRenderingMode: DeviceModelRenderingMode = .snapshot
     var invisibleCornerRadius: CGFloat = 0
     var invisibleOutlineWidth: CGFloat = 0
@@ -40,6 +42,8 @@ struct DeviceFrameView: View {
                 screenshotImage: screenshotImage,
                 pitch: devicePitch,
                 yaw: deviceYaw,
+                bodyMaterial: bodyMaterial,
+                lighting: lighting,
                 modelRenderingMode: modelRenderingMode,
                 invisibleCornerRadius: invisibleCornerRadius,
                 invisibleOutlineWidth: invisibleOutlineWidth,

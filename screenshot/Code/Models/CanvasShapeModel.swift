@@ -49,6 +49,8 @@ struct CanvasShapeModel: Identifiable, Codable {
     var screenshotFileName: String?
     var devicePitch: Double?
     var deviceYaw: Double?
+    var deviceBodyMaterial: DeviceBodyMaterial?
+    var deviceLighting: DeviceLighting?
 
     // SVG properties
     var svgContent: String?
@@ -81,7 +83,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         case imageFileName = "ifn"
         case deviceCategory = "dc", deviceBodyColorData = "dbc"
         case deviceFrameId = "dfi", screenshotFileName = "sfn"
-        case devicePitch = "dpt", deviceYaw = "dyw"
+        case devicePitch = "dpt", deviceYaw = "dyw", deviceBodyMaterial = "dbm", deviceLighting = "dlt"
         case svgContent = "svg", svgUseColor = "suc"
         case outlineColorData = "olc", outlineWidth = "olw"
         case starPointCount = "spc"
@@ -122,6 +124,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         screenshotFileName = try c.decodeIfPresent(String.self, forKey: .screenshotFileName)
         devicePitch = try c.decodeIfPresent(Double.self, forKey: .devicePitch)
         deviceYaw = try c.decodeIfPresent(Double.self, forKey: .deviceYaw)
+        deviceBodyMaterial = try c.decodeIfPresent(DeviceBodyMaterial.self, forKey: .deviceBodyMaterial)
+        deviceLighting = try c.decodeIfPresent(DeviceLighting.self, forKey: .deviceLighting)
         svgContent = try c.decodeIfPresent(String.self, forKey: .svgContent)
         svgUseColor = try c.decodeIfPresent(Bool.self, forKey: .svgUseColor)
         outlineColorData = try c.decodeIfPresent(CodableColor.self, forKey: .outlineColorData)
@@ -167,6 +171,12 @@ struct CanvasShapeModel: Identifiable, Codable {
         try c.encodeIfPresent(screenshotFileName, forKey: .screenshotFileName)
         if abs(resolvedDevicePitch) > 0.001 { try c.encode(resolvedDevicePitch, forKey: .devicePitch) }
         if abs(resolvedDeviceYaw) > 0.001 { try c.encode(resolvedDeviceYaw, forKey: .deviceYaw) }
+        if let material = deviceBodyMaterial, !material.isEmpty {
+            try c.encode(material, forKey: .deviceBodyMaterial)
+        }
+        if let lighting = deviceLighting, !lighting.isEmpty {
+            try c.encode(lighting, forKey: .deviceLighting)
+        }
         // SVG
         try c.encodeIfPresent(svgContent, forKey: .svgContent)
         try c.encodeIfPresent(svgUseColor, forKey: .svgUseColor)
@@ -354,6 +364,22 @@ struct CanvasShapeModel: Identifiable, Codable {
         deviceYaw = nil
     }
 
+    var resolvedDeviceBodyMaterial: DeviceBodyMaterial {
+        deviceBodyMaterial ?? DeviceBodyMaterial()
+    }
+
+    mutating func resetDeviceBodyMaterial() {
+        deviceBodyMaterial = nil
+    }
+
+    var resolvedDeviceLighting: DeviceLighting {
+        deviceLighting ?? DeviceLighting()
+    }
+
+    mutating func resetDeviceLighting() {
+        deviceLighting = nil
+    }
+
     func duplicated(offsetX: CGFloat = 0, offsetY: CGFloat = 0) -> CanvasShapeModel {
         var copy = self
         copy.id = UUID()
@@ -425,6 +451,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         deviceCategory = category
         deviceBodyColorData = nil
         resetDeviceModelRotation()
+        resetDeviceBodyMaterial()
+        resetDeviceLighting()
         if category == .invisible {
             if borderRadius == 0 {
                 borderRadius = 40
@@ -452,6 +480,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         deviceFrameId = frame.id
         if !frame.isModelBacked {
             resetDeviceModelRotation()
+            resetDeviceBodyMaterial()
+            resetDeviceLighting()
         }
         adjustToDeviceAspectRatio()
     }
@@ -591,6 +621,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         if screenshotFileName != oldBase.screenshotFileName { result.screenshotFileName = screenshotFileName }
         if devicePitch != oldBase.devicePitch { result.devicePitch = devicePitch }
         if deviceYaw != oldBase.deviceYaw { result.deviceYaw = deviceYaw }
+        if deviceBodyMaterial != oldBase.deviceBodyMaterial { result.deviceBodyMaterial = deviceBodyMaterial }
+        if deviceLighting != oldBase.deviceLighting { result.deviceLighting = deviceLighting }
 
         if svgContent != oldBase.svgContent { result.svgContent = svgContent }
         if svgUseColor != oldBase.svgUseColor { result.svgUseColor = svgUseColor }

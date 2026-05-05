@@ -9,6 +9,8 @@ struct LiveDeviceModelView: NSViewRepresentable {
     let screenshotImage: NSImage?
     let pitch: Double
     let yaw: Double
+    let bodyMaterial: DeviceBodyMaterial
+    let lighting: DeviceLighting
     let bodyTintColor: NSColor?
 
     func makeNSView(context: Context) -> SCNView {
@@ -43,6 +45,8 @@ struct LiveDeviceModelView: NSViewRepresentable {
             screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw,
+            bodyMaterial: bodyMaterial,
+            lighting: lighting,
             bodyTintColor: bodyTintColor
         ) else {
             return
