@@ -74,6 +74,37 @@ final class AppStoreConnectAPIService {
         return response.data
     }
 
+    /// Lists apps with their App Store versions inlined via JSON:API `?include`.
+    /// One round-trip instead of N+1 — used by the upload wizard to pre-compute
+    /// which apps have an editable version (so the picker can hide locked ones).
+    func listAppsWithVersions(limit: Int = 200) async throws -> [ASCAppWithVersions] {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.apps.map { app in
+                ASCAppWithVersions(app: app, versions: demoData.versions(forApp: app.id))
+            }
+        }
+        let path = "/v1/apps?limit=\(limit)&sort=name"
+            + "&include=appStoreVersions"
+            + "&fields%5BappStoreVersions%5D=appStoreState,versionString,platform"
+        let response: ASCAppListWithVersionsResponse = try await get(path)
+        let versionsById: [String: ASCAppStoreVersion] = Dictionary(
+            uniqueKeysWithValues: (response.included ?? []).compactMap { item in
+                guard item.type == "appStoreVersions",
+                      let attributes = item.attributes else { return nil }
+                return (item.id, ASCAppStoreVersion(id: item.id, attributes: attributes))
+            }
+        )
+        return response.data.map { row in
+            let versionIds = row.relationships?.appStoreVersions?.data?.map(\.id) ?? []
+            let versions = versionIds.compactMap { versionsById[$0] }
+            return ASCAppWithVersions(
+                app: ASCApp(id: row.id, attributes: row.attributes),
+                versions: versions
+            )
+        }
+    }
+
     func listAppStoreVersions(appId: String, limit: Int = 20) async throws -> [ASCAppStoreVersion] {
         if isDemoMode {
             await demoDelay()
@@ -360,6 +391,43 @@ struct ASCListResponse<T: Decodable>: Decodable {
 
 struct ASCSingleResponse<T: Decodable>: Decodable {
     let data: T
+}
+
+struct ASCAppWithVersions {
+    let app: ASCApp
+    let versions: [ASCAppStoreVersion]
+
+    var hasEditableVersion: Bool { versions.contains(where: \.isEditable) }
+}
+
+struct ASCAppListWithVersionsResponse: Decodable {
+    let data: [AppRow]
+    let included: [IncludedItem]?
+
+    struct AppRow: Decodable {
+        let id: String
+        let attributes: ASCApp.Attributes
+        let relationships: Relationships?
+
+        struct Relationships: Decodable {
+            let appStoreVersions: VersionLinks?
+        }
+
+        struct VersionLinks: Decodable {
+            let data: [Reference]?
+        }
+
+        struct Reference: Decodable {
+            let id: String
+            let type: String
+        }
+    }
+
+    struct IncludedItem: Decodable {
+        let id: String
+        let type: String
+        let attributes: ASCAppStoreVersion.Attributes?
+    }
 }
 
 struct ASCApp: Decodable, Identifiable {

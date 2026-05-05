@@ -28,9 +28,9 @@ struct AppStoreConnectSettingsView: View {
     var body: some View {
         Form {
             statusSection
-            demoModeSection
             credentialsSection
             helpSection
+            demoModeSection
         }
         .formStyle(.grouped)
         .fileImporter(
@@ -237,7 +237,7 @@ struct AppStoreConnectSettingsView: View {
             .toggleStyle(.switch)
 
             if credentials.isDemoMode {
-                Label("Demo mode is active. Real API key fields below are ignored until you turn demo mode off.",
+                Label("Demo mode is active. Real API key fields above are ignored until you turn demo mode off.",
                       systemImage: "info.circle.fill")
                     .foregroundStyle(.blue)
                     .font(.caption)

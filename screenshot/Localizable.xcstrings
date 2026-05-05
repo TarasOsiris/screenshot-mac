@@ -3205,6 +3205,9 @@
         }
       }
     },
+    "All apps are hidden by the filter" : {
+
+    },
     "All locales" : {
       "localizations" : {
         "de" : {
@@ -9075,7 +9078,7 @@
     "Demo Mode" : {
 
     },
-    "Demo mode is active. Real API key fields below are ignored until you turn demo mode off." : {
+    "Demo mode is active. Real API key fields above are ignored until you turn demo mode off." : {
 
     },
     "Demo mode is on. The upload wizard runs against built-in sample data and never contacts App Store Connect." : {
@@ -12732,6 +12735,9 @@
         }
       }
     },
+    "Hide apps with no editable App Store version. Apps in review or already live can't accept new screenshots until you create a new version." : {
+
+    },
     "Hide Borders" : {
       "localizations" : {
         "de" : {
@@ -12869,6 +12875,12 @@
           }
         }
       }
+    },
+    "Hide non-uploadable" : {
+
+    },
+    "Hide non-uploadable (%lld)" : {
+
     },
     "Horizontal alignment" : {
       "localizations" : {
@@ -16867,6 +16879,9 @@
           }
         }
       }
+    },
+    "None of your apps have an editable version right now. Turn off the filter to see them all." : {
+
     },
     "Not a valid SVG — must contain an <svg> element" : {
       "localizations" : {

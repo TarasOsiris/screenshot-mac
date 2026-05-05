@@ -123,8 +123,19 @@ struct UploadToAppStoreConnectView: View {
     @Environment(AppState.self) private var state
 
     @State private var step: Step = .pickingApp
-    @State private var apps: [ASCApp] = []
+    @State private var appsWithVersions: [ASCAppWithVersions] = []
     @State private var selectedApp: ASCApp?
+    @AppStorage("uploadHideNonUploadable") private var hideNonUploadable: Bool = true
+
+    private var apps: [ASCApp] { appsWithVersions.map(\.app) }
+    private var visibleAppsWithVersions: [ASCAppWithVersions] {
+        hideNonUploadable
+            ? appsWithVersions.filter(\.hasEditableVersion)
+            : appsWithVersions
+    }
+    private var nonUploadableAppCount: Int {
+        appsWithVersions.filter { !$0.hasEditableVersion }.count
+    }
 
     @State private var versions: [ASCAppStoreVersion] = []
     @State private var selectedVersion: ASCAppStoreVersion?
@@ -597,22 +608,50 @@ struct UploadToAppStoreConnectView: View {
 
     private var pickAppView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Select an app")
-                .font(.headline)
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-            List(selection: Binding(
-                get: { selectedApp?.id },
-                set: { newId in selectedApp = apps.first(where: { $0.id == newId }) }
-            )) {
-                ForEach(apps) { app in
-                    ASCAppHeaderView(app: app, subtitle: app.attributes.bundleId, iconSize: 36)
-                        .tag(app.id as String?)
+            HStack(alignment: .firstTextBaseline) {
+                Text("Select an app")
+                    .font(.headline)
+                Spacer()
+                Toggle(isOn: $hideNonUploadable) {
+                    if nonUploadableAppCount > 0 {
+                        Text("Hide non-uploadable (\(nonUploadableAppCount))")
+                    } else {
+                        Text("Hide non-uploadable")
+                    }
                 }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .help("Hide apps with no editable App Store version. Apps in review or already live can't accept new screenshots until you create a new version.")
             }
-            .listStyle(.inset)
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            if visibleAppsWithVersions.isEmpty && !appsWithVersions.isEmpty {
+                VStack(spacing: 6) {
+                    Label("All apps are hidden by the filter", systemImage: "line.3.horizontal.decrease.circle")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Text("None of your apps have an editable version right now. Turn off the filter to see them all.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 16)
+            } else {
+                List(selection: Binding(
+                    get: { selectedApp?.id },
+                    set: { newId in selectedApp = apps.first(where: { $0.id == newId }) }
+                )) {
+                    ForEach(visibleAppsWithVersions, id: \.app.id) { item in
+                        ASCAppHeaderView(app: item.app, subtitle: item.app.attributes.bundleId, iconSize: 36)
+                            .tag(item.app.id as String?)
+                    }
+                }
+                .listStyle(.inset)
+            }
         }
     }
+
 
     private var pickVersionView: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -1367,13 +1406,13 @@ struct UploadToAppStoreConnectView: View {
     // MARK: - Step transitions
 
     private func loadAppsIfNeeded() async {
-        guard credentials.isConfigured, apps.isEmpty else { return }
+        guard credentials.isConfigured, appsWithVersions.isEmpty else { return }
         seedDemoContextIfNeeded()
         isBusy = true
         errorMessage = nil
         defer { isBusy = false }
         do {
-            apps = try await AppStoreConnectAPIService.shared.listApps()
+            appsWithVersions = try await AppStoreConnectAPIService.shared.listAppsWithVersions()
         } catch {
             errorMessage = error.localizedDescription
             return
@@ -1383,6 +1422,60 @@ struct UploadToAppStoreConnectView: View {
            let match = apps.first(where: { $0.id == savedId }) {
             selectedApp = match
         }
+        if selectedApp == nil,
+           let projectName = state.activeProject?.name {
+            let uploadable = appsWithVersions.filter(\.hasEditableVersion).map(\.app)
+            let pool = uploadable.isEmpty ? apps : uploadable
+            if let match = Self.closestAppByName(projectName: projectName, in: pool) {
+                selectedApp = match
+            }
+        }
+    }
+
+    private static let nameMatchThreshold: Double = 0.6
+    private static let nameMatchContainmentBonus: Double = 0.2
+
+    private static func closestAppByName(projectName: String, in apps: [ASCApp]) -> ASCApp? {
+        let targetString = normalizedName(projectName)
+        let target = Array(targetString)
+        guard !target.isEmpty else { return nil }
+
+        var bestApp: ASCApp?
+        var bestScore = -Double.infinity
+        for app in apps {
+            let candidateString = normalizedName(app.attributes.name)
+            let candidate = Array(candidateString)
+            guard !candidate.isEmpty else { continue }
+            let distance = levenshtein(candidate, target)
+            let similarity = 1.0 - Double(distance) / Double(max(candidate.count, target.count))
+            let isContained = candidateString.contains(targetString) || targetString.contains(candidateString)
+            let score = similarity + (isContained ? nameMatchContainmentBonus : 0)
+            if score > bestScore {
+                bestScore = score
+                bestApp = app
+            }
+        }
+        return bestScore >= nameMatchThreshold ? bestApp : nil
+    }
+
+    private static func normalizedName(_ s: String) -> String {
+        String(s.lowercased().unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }.map(Character.init))
+    }
+
+    private static func levenshtein(_ a: [Character], _ b: [Character]) -> Int {
+        if a.isEmpty { return b.count }
+        if b.isEmpty { return a.count }
+        var prev = Array(0...b.count)
+        var curr = [Int](repeating: 0, count: b.count + 1)
+        for i in 1...a.count {
+            curr[0] = i
+            for j in 1...b.count {
+                let cost = a[i - 1] == b[j - 1] ? 0 : 1
+                curr[j] = min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost)
+            }
+            swap(&prev, &curr)
+        }
+        return prev[b.count]
     }
 
     /// Reseeds the demo catalog with the active project's locales and row sizes so the
