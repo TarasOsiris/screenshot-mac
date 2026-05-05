@@ -5723,12 +5723,6 @@
         }
       }
     },
-    "Capture from iOS Simulator" : {
-
-    },
-    "Capturing from the iOS Simulator needs a one-time setup: a small script that asks the Simulator for a screenshot and does nothing else.\n\nBecause of macOS security, only you can install it. Click Install… to save the script — you'll only need to do this once." : {
-
-    },
     "Center" : {
       "localizations" : {
         "de" : {
@@ -7705,9 +7699,6 @@
         }
       }
     },
-    "Could not read the captured screenshot." : {
-
-    },
     "Could not refresh locales: %@" : {
       "localizations" : {
         "de" : {
@@ -7983,9 +7974,6 @@
           }
         }
       }
-    },
-    "Couldn't install the script: %@" : {
-
     },
     "Create Backup…" : {
       "localizations" : {
@@ -10623,9 +10611,6 @@
           }
         }
       }
-    },
-    "Enable iOS Simulator Capture" : {
-
     },
     "Enable outline" : {
       "localizations" : {
@@ -13590,9 +13575,6 @@
         }
       }
     },
-    "Install…" : {
-
-    },
     "Invalid request URL." : {
       "localizations" : {
         "de" : {
@@ -13730,18 +13712,6 @@
           }
         }
       }
-    },
-    "iOS Simulator Capture Failed" : {
-
-    },
-    "iOS Simulator capture failed: %@" : {
-
-    },
-    "iOS Simulator capture failed." : {
-
-    },
-    "iOS Simulator capture isn't set up yet." : {
-
     },
     "iPhone 17 Pro" : {
       "localizations" : {
@@ -14019,9 +13989,6 @@
           }
         }
       }
-    },
-    "Keep the script's name (%@) and save it inside the Application Scripts folder." : {
-
     },
     "Key" : {
 
@@ -16485,9 +16452,6 @@
       }
     },
     "No foreground subject was detected in this image." : {
-
-    },
-    "No iOS Simulator is running. Open a device in the Simulator app and try again." : {
 
     },
     "No matching App Store locale" : {
@@ -23059,12 +23023,6 @@
           }
         }
       }
-    },
-    "Save iOS Simulator Capture Script" : {
-
-    },
-    "Save the script in this folder. Screenshot Bro will use it to ask the iOS Simulator for screenshots." : {
-
     },
     "Scale" : {
       "localizations" : {
