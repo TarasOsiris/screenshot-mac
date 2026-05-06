@@ -434,7 +434,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.4;
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshot;
 				PRODUCT_NAME = "Screenshot Bro";
 				REGISTER_APP_GROUPS = YES;
@@ -472,7 +472,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.4;
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshot;
 				PRODUCT_NAME = "Screenshot Bro";
 				REGISTER_APP_GROUPS = YES;

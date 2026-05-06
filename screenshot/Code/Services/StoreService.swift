@@ -134,8 +134,39 @@ final class StoreService {
 
         Task {
             await refreshEntitlementStatus()
+            #if DEBUG
+            await debugDumpOfferings()
+            #endif
         }
     }
+
+    #if DEBUG
+    private func debugDumpOfferings() async {
+        let bundleVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let bundleBuild = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        print("[Store] bundle short version: \(bundleVersion) (build \(bundleBuild))")
+
+        Purchases.shared.invalidateCustomerInfoCache()
+        do {
+            _ = try await Purchases.shared.customerInfo(fetchPolicy: .fetchCurrent)
+            let offerings = try await Purchases.shared.offerings()
+            print("[Store] current offering id: \(offerings.current?.identifier ?? "<nil>")")
+            let currentPackages = offerings.current?.availablePackages.map { pkg in
+                "\(pkg.identifier)→\(pkg.storeProduct.productIdentifier)"
+            } ?? []
+            print("[Store] current packages: \(currentPackages)")
+            print("[Store] all offerings: \(offerings.all.keys.sorted())")
+            for (id, offering) in offerings.all {
+                let packages = offering.availablePackages.map { pkg in
+                    "\(pkg.identifier)→\(pkg.storeProduct.productIdentifier)"
+                }
+                print("[Store]   \(id): \(packages)")
+            }
+        } catch {
+            print("[Store] offerings fetch failed: \(error)")
+        }
+    }
+    #endif
 
     // MARK: - Entitlement
 
