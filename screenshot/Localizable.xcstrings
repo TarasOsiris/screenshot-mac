@@ -140,6 +140,7 @@
       }
     },
     ".p8 key imported" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -6801,6 +6802,7 @@
       }
     },
     "Complete the API key details below, then test the connection from the checklist." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -6840,7 +6842,11 @@
         }
       }
     },
+    "Complete the API key details below, then test the connection." : {
+
+    },
     "Complete the first three items to enable testing" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -6881,6 +6887,7 @@
       }
     },
     "Configuration is complete." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -7108,6 +7115,7 @@
       }
     },
     "Connection" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -10812,6 +10820,9 @@
         }
       }
     },
+    "Expires" : {
+
+    },
     "Export" : {
       "localizations" : {
         "de" : {
@@ -13352,6 +13363,7 @@
       }
     },
     "Import the .p8 file downloaded when the key was created" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -14285,6 +14297,7 @@
 
     },
     "Last test failed" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -14331,6 +14344,7 @@
       }
     },
     "Last test passed" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -14697,6 +14711,9 @@
           }
         }
       }
+    },
+    "Lifetime" : {
+
     },
     "Light" : {
       "localizations" : {
@@ -15257,6 +15274,9 @@
         }
       }
     },
+    "Manage Subscription" : {
+
+    },
     "Marketing URL" : {
       "localizations" : {
         "de" : {
@@ -15402,6 +15422,7 @@
 
     },
     "Missing: %@." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -17115,6 +17136,7 @@
       }
     },
     "One-time in-app purchase" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -17159,6 +17181,9 @@
           }
         }
       }
+    },
+    "One-time purchase" : {
+
     },
     "Opacity" : {
       "localizations" : {
@@ -18883,6 +18908,7 @@
       }
     },
     "Private key" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -19065,6 +19091,18 @@
           }
         }
       }
+    },
+    "Pro — Monthly" : {
+
+    },
+    "Pro — Subscription" : {
+
+    },
+    "Pro — Weekly" : {
+
+    },
+    "Pro — Yearly" : {
+
     },
     "Pro: %@" : {
       "localizations" : {
@@ -20592,6 +20630,9 @@
         }
       }
     },
+    "Renews" : {
+
+    },
     "Replace" : {
       "localizations" : {
         "de" : {
@@ -21007,6 +21048,7 @@
       }
     },
     "Required 10-character key ID" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -21053,6 +21095,7 @@
       }
     },
     "Required UUID from App Store Connect" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -24163,6 +24206,7 @@
       }
     },
     "Setup" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -25980,7 +26024,11 @@
         }
       }
     },
+    "Terms of Use" : {
+
+    },
     "Test" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26021,7 +26069,6 @@
       }
     },
     "Test Connection" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

@@ -11,6 +11,32 @@ final class StoreService {
         case templateLimit
     }
 
+    enum ProTier: Equatable {
+        case lifetime
+        case subscription(productId: String, expirationDate: Date, willRenew: Bool)
+
+        var displayName: String {
+            switch self {
+            case .lifetime:
+                return String(localized: "Lifetime")
+            case .subscription(let productId, _, _):
+                let lower = productId.lowercased()
+                if lower.contains("year") || lower.contains("annual") {
+                    return String(localized: "Pro — Yearly")
+                }
+                if lower.contains("month") {
+                    return String(localized: "Pro — Monthly")
+                }
+                if lower.contains("week") {
+                    return String(localized: "Pro — Weekly")
+                }
+                return String(localized: "Pro — Subscription")
+            }
+        }
+    }
+
+    static let manageSubscriptionsURL = URL(string: "https://apps.apple.com/account/subscriptions")!
+
     private static let revenueCatAPIKeyEnvironmentName = "REVENUECAT_API_KEY"
     private static let revenueCatAPIKeyInfoDictionaryKey = "REVENUECAT_API_KEY"
     private static let revenueCatEntitlementIDEnvironmentName = "REVENUECAT_ENTITLEMENT_ID"
@@ -27,6 +53,7 @@ final class StoreService {
     #endif
 
     private(set) var isProUnlocked = false
+    private(set) var proTier: ProTier?
     private(set) var showPaywall = false
     private(set) var paywallContext: PaywallContext = .general
     private(set) var purchaseCelebrationContext: PaywallContext?
@@ -185,9 +212,8 @@ final class StoreService {
         let activeEntitlements = customerInfo.entitlements.active
         let configuredEntitlementId = Self.resolvedEntitlementID()
         let configuredProductId = Self.resolvedProductID()
-        let hasConfiguredEntitlement = configuredEntitlementId.flatMap { entitlementId in
-            activeEntitlements[entitlementId].map(\.isActive)
-        } == true
+        let configuredEntitlement = configuredEntitlementId.flatMap { activeEntitlements[$0] }
+        let hasConfiguredEntitlement = configuredEntitlement?.isActive == true
         let hasSingleActiveEntitlement = activeEntitlements.count == 1 && activeEntitlements.values.first?.isActive == true
         let hasPurchasedConfiguredProduct = configuredProductId.map(customerInfo.allPurchasedProductIdentifiers.contains) == true
         let entitled = hasConfiguredEntitlement || hasSingleActiveEntitlement || hasPurchasedConfiguredProduct
@@ -200,7 +226,27 @@ final class StoreService {
             print("[StoreService] No Pro unlock for entitlement '\(configuredEntitlementId)' or product '\(configuredProductId)'. Active entitlements: \(activeEntitlementKeys). Purchased products: \(purchasedProductIds)")
         }
         #endif
-        isProUnlocked = entitled
+        let newTier: ProTier? = entitled
+            ? (configuredEntitlement ?? activeEntitlements.values.first).map(Self.tier(from:))
+            : nil
+
+        if isProUnlocked != entitled {
+            isProUnlocked = entitled
+        }
+        if proTier != newTier {
+            proTier = newTier
+        }
+    }
+
+    private static func tier(from entitlement: EntitlementInfo) -> ProTier {
+        if let expirationDate = entitlement.expirationDate {
+            return .subscription(
+                productId: entitlement.productIdentifier,
+                expirationDate: expirationDate,
+                willRenew: entitlement.willRenew
+            )
+        }
+        return .lifetime
     }
 
     func handlePurchaseCompleted(_ customerInfo: CustomerInfo) {

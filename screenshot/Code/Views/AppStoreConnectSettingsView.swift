@@ -18,16 +18,8 @@ struct AppStoreConnectSettingsView: View {
         case failure(String)
     }
 
-    private struct SetupItem: Identifiable {
-        let id: String
-        let title: String
-        let detail: String
-        let isComplete: Bool
-    }
-
     var body: some View {
         Form {
-            statusSection
             credentialsSection
             helpSection
             demoModeSection
@@ -57,53 +49,10 @@ struct AppStoreConnectSettingsView: View {
         .onChange(of: credentials.hasPrivateKey) { _, _ in resetConnectionState() }
     }
 
-    private var statusSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: statusSymbolName)
-                        .foregroundStyle(statusSymbolColor)
-                        .font(.title3)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(statusTitle)
-                            .font(.headline)
-                        Text(statusMessage)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer()
-                    Text(setupSummary)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(.quaternary, in: Capsule())
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(setupItems) { item in
-                        setupItemRow(item)
-                    }
-                }
-
-                if let testResult {
-                    connectionFeedbackRow(result: testResult)
-                }
-            }
-        } header: {
-            Text("Setup")
-        } footer: {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Values are saved automatically on this Mac. The private key is stored in Keychain.")
-                Text("Testing lists one app from the account. If this passes but uploads fail, check that the API key can edit the specific app and version.")
-            }
-                .foregroundStyle(.secondary)
-        }
-    }
-
     private var credentialsSection: some View {
         Section {
+            statusHeader
+
             VStack(alignment: .leading, spacing: 4) {
                 TextField("Issuer ID",
                           text: normalizedIssuerIdBinding,
@@ -168,6 +117,28 @@ struct AppStoreConnectSettingsView: View {
                     .font(.caption)
             }
 
+            HStack {
+                Spacer()
+                Button {
+                    Task { await runTest() }
+                } label: {
+                    HStack(spacing: 6) {
+                        if isTesting {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                        Text(isTesting ? "Testing…" : "Test Connection")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(!canTestConnection)
+            }
+
+            if let testResult {
+                connectionFeedbackRow(result: testResult)
+            }
+
             if credentials.isConfigured || credentials.hasPrivateKey {
                 HStack {
                     Spacer()
@@ -180,8 +151,35 @@ struct AppStoreConnectSettingsView: View {
         } header: {
             Text("API Key")
         } footer: {
-            Text("Use an App Store Connect API key with access to edit app metadata. Account Holder, Admin, or App Manager roles are typical for screenshot uploads.")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Use an App Store Connect API key with access to edit app metadata. Account Holder, Admin, or App Manager roles are typical for screenshot uploads.")
+                Text("Values are saved automatically on this Mac. The private key is stored in Keychain.")
+                Text("Testing lists one app from the account. If this passes but uploads fail, check that the API key can edit the specific app and version.")
+            }
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    private var statusHeader: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: statusSymbolName)
+                .foregroundStyle(statusSymbolColor)
+                .font(.title3)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(statusTitle)
+                    .font(.headline)
+                Text(statusMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            Text(setupSummary)
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(.quaternary, in: Capsule())
         }
     }
 
@@ -212,7 +210,7 @@ struct AppStoreConnectSettingsView: View {
         case .readyToTest:
             return String(localized: "Run the connection test once before uploading screenshots.")
         case .finishSetup:
-            return String(localized: "Complete the API key details below, then test the connection from the checklist.")
+            return String(localized: "Complete the API key details below, then test the connection.")
         }
     }
 
@@ -248,46 +246,6 @@ struct AppStoreConnectSettingsView: View {
         } footer: {
             Text("Use demo mode to walk through the App Store Connect upload feature without an API key — for example during App Review.")
                 .foregroundStyle(.secondary)
-        }
-    }
-
-    private var setupItems: [SetupItem] {
-        [
-            SetupItem(
-                id: "issuer",
-                title: String(localized: "Issuer ID"),
-                detail: isIssuerIdValid ? trimmedIssuerId : String(localized: "Required UUID from App Store Connect"),
-                isComplete: isIssuerIdValid
-            ),
-            SetupItem(
-                id: "key",
-                title: String(localized: "Key ID"),
-                detail: isKeyIdValid ? trimmedKeyId : String(localized: "Required 10-character key ID"),
-                isComplete: isKeyIdValid
-            ),
-            SetupItem(
-                id: "private-key",
-                title: String(localized: "Private key"),
-                detail: credentials.hasPrivateKey ? String(localized: ".p8 key imported") : String(localized: "Import the .p8 file downloaded when the key was created"),
-                isComplete: credentials.hasPrivateKey
-            ),
-            SetupItem(
-                id: "connection",
-                title: String(localized: "Connection"),
-                detail: connectionDetail,
-                isComplete: connectionTestPassed
-            )
-        ]
-    }
-
-    private var connectionDetail: String {
-        switch testResult {
-        case .success:
-            return String(localized: "Last test passed")
-        case .failure:
-            return String(localized: "Last test failed")
-        case nil:
-            return credentials.isConfigured ? String(localized: "Ready to test") : String(localized: "Complete the first three items to enable testing")
         }
     }
 
@@ -328,15 +286,9 @@ struct AppStoreConnectSettingsView: View {
     }
 
     private var setupSummary: String {
-        String(localized: "\(setupItems.filter(\.isComplete).count) of \(setupItems.count) complete")
-    }
-
-    private var missingConfigurationMessage: String {
-        let missing = setupItems
-            .filter { $0.id != "connection" && !$0.isComplete }
-            .map(\.title)
-        guard !missing.isEmpty else { return String(localized: "Configuration is complete.") }
-        return String(localized: "Missing: \(missing.joined(separator: ", ")).")
+        let checks = [isIssuerIdValid, isKeyIdValid, credentials.hasPrivateKey, connectionTestPassed]
+        let complete = checks.filter { $0 }.count
+        return String(localized: "\(complete) of \(checks.count) complete")
     }
 
     private var trimmedIssuerId: String {
@@ -367,43 +319,6 @@ struct AppStoreConnectSettingsView: View {
             get: { credentials.keyId },
             set: { credentials.keyId = $0.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() }
         )
-    }
-
-    private func setupItemRow(_ item: SetupItem) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: item.isComplete ? "checkmark.circle.fill" : item.id == "connection" ? "bolt.horizontal.circle" : "circle")
-                .foregroundStyle(item.isComplete ? .green : .secondary)
-                .font(.headline)
-                .frame(width: 18)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.title)
-                    .font(.caption.weight(.semibold))
-                Text(item.detail)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 12)
-            if item.id == "connection" {
-                Button {
-                    Task { await runTest() }
-                } label: {
-                    HStack(spacing: 6) {
-                        if isTesting {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                        Text(isTesting ? "Testing…" : "Test")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .disabled(!canTestConnection)
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(.quaternary.opacity(0.6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     @ViewBuilder

@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     private static let privacyPolicyURL = URL(string: "https://screenshotbro.app/privacy")!
+    private static let termsURL = URL(string: "https://screenshotbro.app/terms")!
 
     @Environment(StoreService.self) private var store
     @AppStorage("appearance") private var appearance = "auto"
@@ -326,7 +327,7 @@ struct SettingsView: View {
             Section {
                 LabeledContent("Plan") {
                     if store.isProUnlocked {
-                        Label("Pro", systemImage: "checkmark.seal.fill")
+                        Label(store.proTier?.displayName ?? String(localized: "Pro"), systemImage: "checkmark.seal.fill")
                             .foregroundStyle(.green)
                     } else {
                         Text("Free")
@@ -334,9 +335,8 @@ struct SettingsView: View {
                     }
                 }
 
-                LabeledContent("Purchase type") {
-                    Text("One-time in-app purchase")
-                        .foregroundStyle(.secondary)
+                if let tier = store.proTier {
+                    planDetailRows(for: tier)
                 }
             }
 
@@ -362,10 +362,28 @@ struct SettingsView: View {
             }
 
             Section("Legal") {
+                Link("Terms of Use", destination: Self.termsURL)
                 Link("Privacy Policy", destination: Self.privacyPolicyURL)
             }
         }
         .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private func planDetailRows(for tier: StoreService.ProTier) -> some View {
+        switch tier {
+        case .lifetime:
+            LabeledContent("Purchase type") {
+                Text("One-time purchase")
+                    .foregroundStyle(.secondary)
+            }
+        case .subscription(_, let expirationDate, let willRenew):
+            LabeledContent(willRenew ? "Renews" : "Expires") {
+                Text(expirationDate, format: .dateTime.year().month().day())
+                    .foregroundStyle(.secondary)
+            }
+            Link("Manage Subscription", destination: StoreService.manageSubscriptionsURL)
+        }
     }
 
     @ViewBuilder
