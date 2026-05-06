@@ -28,7 +28,7 @@ struct PaywallSheetContent: View {
                 .onPurchaseFailure { store.handlePurchaseFailure($0) }
                 .onRestoreFailure { store.handleRestoreFailure($0) }
                 .onRequestedDismissal { store.dismissPaywall() }
-                .frame(minWidth: 520, idealWidth: 560, maxWidth: 620, minHeight: 560, idealHeight: 620)
+                .frame(minWidth: 520, idealWidth: 560, maxWidth: 620, minHeight: 660, idealHeight: 700)
         }
     }
 }
