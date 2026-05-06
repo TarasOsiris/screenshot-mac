@@ -29,6 +29,7 @@ final class StoreService {
     private(set) var isProUnlocked = false
     private(set) var showPaywall = false
     private(set) var paywallContext: PaywallContext = .general
+    private(set) var purchaseCelebrationContext: PaywallContext?
     private(set) var configurationIssue: String?
     private(set) var purchaseStatusMessage: String?
     private(set) var purchaseStatusIsError = false
@@ -86,6 +87,10 @@ final class StoreService {
 
     func dismissPaywall() {
         showPaywall = false
+    }
+
+    func dismissPurchaseCelebration() {
+        purchaseCelebrationContext = nil
     }
 
     // MARK: - Lifecycle
@@ -167,13 +172,24 @@ final class StoreService {
         isProUnlocked = entitled
     }
 
-    func handlePurchaseOrRestore(_ customerInfo: CustomerInfo) {
+    func handlePurchaseCompleted(_ customerInfo: CustomerInfo) {
+        let triggeringContext = paywallContext
         updateEntitlement(from: customerInfo)
         if isProUnlocked {
-            setPurchaseStatus(String(localized: "Screenshot Bro Pro is unlocked and ready to use."))
             showPaywall = false
+            purchaseCelebrationContext = triggeringContext
         } else {
             setPurchaseStatus(String(localized: "Purchase completed, but RevenueCat did not grant access. Check the entitlement or product mapping in RevenueCat."), isError: true)
+        }
+    }
+
+    func handleRestoreCompleted(_ customerInfo: CustomerInfo) {
+        updateEntitlement(from: customerInfo)
+        if isProUnlocked {
+            setPurchaseStatus(String(localized: "Your Screenshot Bro Pro purchase was restored."))
+            showPaywall = false
+        } else {
+            setPurchaseStatus(String(localized: "No Screenshot Bro Pro purchase was found for this Apple Account."), isError: true)
         }
     }
 

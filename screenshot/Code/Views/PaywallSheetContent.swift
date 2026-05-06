@@ -23,8 +23,8 @@ struct PaywallSheetContent: View {
             .padding(24)
         } else {
             RevenueCatUI.PaywallView(displayCloseButton: true)
-                .onPurchaseCompleted { store.handlePurchaseOrRestore($0) }
-                .onRestoreCompleted { store.handlePurchaseOrRestore($0) }
+                .onPurchaseCompleted { store.handlePurchaseCompleted($0) }
+                .onRestoreCompleted { store.handleRestoreCompleted($0) }
                 .onPurchaseFailure { store.handlePurchaseFailure($0) }
                 .onRestoreFailure { store.handleRestoreFailure($0) }
                 .onRequestedDismissal { store.dismissPaywall() }

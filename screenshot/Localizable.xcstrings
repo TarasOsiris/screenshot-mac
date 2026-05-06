@@ -2791,6 +2791,12 @@
         }
       }
     },
+    "Add Your Next Row" : {
+
+    },
+    "Add Your Next Screenshot" : {
+
+    },
     "Align" : {
       "localizations" : {
         "de" : {
@@ -5539,6 +5545,9 @@
     "Browse a sample app, version, locales, and run a simulated upload — no API key required and no traffic is sent to App Store Connect." : {
 
     },
+    "Build a polished store listing across every locale and device — no caps, no compromises." : {
+
+    },
     "By creation date" : {
       "localizations" : {
         "de" : {
@@ -8072,6 +8081,9 @@
           }
         }
       }
+    },
+    "Create Your Next Project" : {
+
     },
     "Current abstract device: %@" : {
 
@@ -18171,6 +18183,15 @@
         }
       }
     },
+    "Pick up right where you left off — add as many rows as you need." : {
+
+    },
+    "Pick up right where you left off — add as many screenshots per row as you need." : {
+
+    },
+    "Pick up right where you left off — your project list is now unlimited." : {
+
+    },
     "Pitch" : {
       "localizations" : {
         "de" : {
@@ -23123,6 +23144,7 @@
 
     },
     "Screenshot Bro Pro is unlocked and ready to use." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -24232,6 +24254,9 @@
         }
       }
     },
+    "Ship screenshots that convert" : {
+
+    },
     "Show All" : {
       "localizations" : {
         "de" : {
@@ -24974,6 +24999,9 @@
           }
         }
       }
+    },
+    "Start Creating" : {
+
     },
     "Start from a ready-made layout or a blank project. Templates come pre-sized for each store." : {
 
@@ -26953,6 +26981,9 @@
           }
         }
       }
+    },
+    "Tip: drop a screenshot onto any canvas to get started." : {
+
     },
     "To All Screenshots" : {
       "localizations" : {
@@ -29085,6 +29116,9 @@
         }
       }
     },
+    "What’s included" : {
+
+    },
     "What's New" : {
       "localizations" : {
         "de" : {
@@ -29453,7 +29487,13 @@
         }
       }
     },
+    "You’re Pro!" : {
+
+    },
     "Your awesome new feature here!" : {
+
+    },
+    "Your purchase is complete — Screenshot Bro Pro is unlocked on this Apple Account." : {
 
     },
     "Your Screenshot Bro Pro purchase was restored." : {

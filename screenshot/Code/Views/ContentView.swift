@@ -377,6 +377,11 @@ struct ContentView: View {
         .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
             PaywallSheetContent(store: store)
         }
+        .sheet(isPresented: Binding(get: { store.purchaseCelebrationContext != nil }, set: { if !$0 { store.dismissPurchaseCelebration() } })) {
+            PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
+                store.dismissPurchaseCelebration()
+            }
+        }
         .sheet(isPresented: $showingASCUploadSheet) {
             UploadToAppStoreConnectView()
                 .environment(state)
