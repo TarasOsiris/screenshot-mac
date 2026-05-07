@@ -1593,7 +1593,17 @@
         }
       }
     },
+    "3D" : {
+
+    },
+    "3D Device" : {
+
+    },
+    "3D device rendering is an experimental feature" : {
+
+    },
     "3D device rotation is an experimental feature" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -5355,9 +5365,6 @@
           }
         }
       }
-    },
-    "Body material" : {
-
     },
     "Bold" : {
       "localizations" : {
@@ -12614,9 +12621,6 @@
         }
       }
     },
-    "Glossy lets you tune metalness and roughness for richer reflections. Matte stays close to the original look." : {
-
-    },
     "Gradient" : {
       "localizations" : {
         "de" : {
@@ -15369,7 +15373,7 @@
         }
       }
     },
-    "Material & lighting…" : {
+    "Material" : {
 
     },
     "Medium" : {
@@ -15417,9 +15421,6 @@
           }
         }
       }
-    },
-    "Metalness" : {
-
     },
     "Missing: %@." : {
       "extractionState" : "stale",
@@ -21237,6 +21238,7 @@
       }
     },
     "Reset 3D device rotation" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -21281,6 +21283,9 @@
           }
         }
       }
+    },
+    "Reset all" : {
+
     },
     "Reset all %@ text and image overrides?" : {
       "localizations" : {
@@ -21604,6 +21609,9 @@
         }
       }
     },
+    "Reset rotation, material, and lighting to defaults" : {
+
+    },
     "Reset row" : {
       "localizations" : {
         "de" : {
@@ -21697,9 +21705,6 @@
       }
     },
     "Reset Showcase Settings?" : {
-
-    },
-    "Reset to default" : {
 
     },
     "Reset to default locale image" : {
@@ -22579,7 +22584,7 @@
         }
       }
     },
-    "Roughness" : {
+    "Rotation, material, and lighting" : {
 
     },
     "Row" : {

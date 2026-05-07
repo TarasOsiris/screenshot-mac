@@ -92,7 +92,6 @@ struct ShapePropertiesSingleSelectionBar: View {
 
                         if shape.supportsDeviceModelRotation {
                             ShapeDeviceModelRotationControls(
-                                shape: shape,
                                 pitch: deviceModelRotationBinding(shapeId, \.devicePitch, defaultValue: \.resolvedDevicePitch),
                                 yaw: deviceModelRotationBinding(shapeId, \.deviceYaw, defaultValue: \.resolvedDeviceYaw),
                                 canReset: hasDeviceModelRotationOverride(shapeId),

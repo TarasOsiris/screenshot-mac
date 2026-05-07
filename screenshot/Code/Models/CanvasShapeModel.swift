@@ -486,8 +486,10 @@ struct CanvasShapeModel: Identifiable, Codable {
         adjustToDeviceAspectRatio()
     }
 
-    /// Adjusts width to match the correct aspect ratio for the current device type.
-    /// Optionally re-centers horizontally at `centerX`.
+    /// Adjusts the shape to match the correct aspect ratio for the current device type.
+    /// Preserves the longer of the existing dimensions so an orientation flip keeps the
+    /// shape's visual size — only the short side and orientation change. Re-centers on Y;
+    /// optionally re-centers horizontally at `centerX`.
     /// Invisible frames skip aspect ratio enforcement — they keep their current dimensions.
     mutating func adjustToDeviceAspectRatio(centerX: CGFloat? = nil) {
         if deviceCategory == .invisible && deviceFrameId == nil {
@@ -496,10 +498,14 @@ struct CanvasShapeModel: Identifiable, Codable {
         }
         let base = resolvedBaseDimensions
         let aspect = base.width / base.height
-        width = height * aspect
+        let oldCenterY = y + height / 2
+        let longSide = max(width, height)
+        let shortSide = longSide * min(aspect, 1 / aspect)
+        (width, height) = aspect >= 1 ? (longSide, shortSide) : (shortSide, longSide)
         if let cx = centerX {
             x = cx - width / 2
         }
+        y = oldCenterY - height / 2
     }
 
     static func defaultDevice(centerX: CGFloat, centerY: CGFloat, templateHeight: CGFloat = 2688, category: DeviceCategory = .iphone) -> CanvasShapeModel {

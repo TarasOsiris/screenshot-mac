@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct ShapeDeviceModelRotationControls: View {
-    let shape: CanvasShapeModel
     let pitch: Binding<Double>
     let yaw: Binding<Double>
     let canReset: Bool
@@ -9,60 +8,45 @@ struct ShapeDeviceModelRotationControls: View {
     let bodyMaterial: Binding<DeviceBodyMaterial>
     let lighting: Binding<DeviceLighting>
 
-    @State private var isAppearancePopoverPresented = false
+    @State private var isPopoverPresented = false
 
     var body: some View {
         ShapePropertiesSection {
-            ShapePropertiesControlGroup("Pitch") {
-                Slider(value: pitch, in: -35...35)
-                    .frame(width: 80)
-
-                Text(verbatim: "\(Int(shape.resolvedDevicePitch.rounded()))°")
-                    .frame(width: 28, alignment: .trailing)
+            Button {
+                isPopoverPresented.toggle()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "cube.transparent")
+                        .font(.system(size: 11))
+                    Text("3D")
+                        .font(.system(size: UIMetrics.FontSize.body))
+                    if hasAnyOverride {
+                        OverrideDot()
+                    }
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
             }
-
-            ShapePropertiesSeparator()
-
-            ShapePropertiesControlGroup("Yaw") {
-                Slider(value: yaw, in: -45...45)
-                    .frame(width: 80)
-
-                Text(verbatim: "\(Int(shape.resolvedDeviceYaw.rounded()))°")
-                    .frame(width: 28, alignment: .trailing)
+            .buttonStyle(.plain)
+            .help("Rotation, material, and lighting")
+            .popover(isPresented: $isPopoverPresented, arrowEdge: .top) {
+                Device3DAppearancePopover(
+                    pitch: pitch,
+                    yaw: yaw,
+                    material: bodyMaterial,
+                    lighting: lighting,
+                    canResetRotation: canReset,
+                    onResetRotation: onReset
+                )
             }
-
-            ShapePropertiesSeparator()
-
-            ActionButton(
-                icon: "arrow.counterclockwise",
-                tooltip: "Reset 3D device rotation",
-                frameSize: 24,
-                disabled: !canReset,
-                action: onReset
-            )
-
-            ShapePropertiesSeparator()
-
-            ActionButton(
-                icon: "cube.transparent",
-                tooltip: "Material & lighting…",
-                frameSize: 24
-            ) {
-                isAppearancePopoverPresented.toggle()
-            }
-            .popover(isPresented: $isAppearancePopoverPresented, arrowEdge: .top) {
-                Device3DAppearancePopover(material: bodyMaterial, lighting: lighting)
-            }
-
-            ShapePropertiesSeparator()
-
-            Text("Beta")
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.orange)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(.orange.opacity(0.15), in: .capsule)
-                .help("3D device rotation is an experimental feature")
         }
+    }
+
+    private var hasAnyOverride: Bool {
+        canReset || !bodyMaterial.wrappedValue.isEmpty || !lighting.wrappedValue.isEmpty
     }
 }

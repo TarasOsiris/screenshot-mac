@@ -1,10 +1,9 @@
 import Foundation
 
 /// Per-shape lighting configuration for 3D device frames.
-/// All fields are optional; missing values fall back to the SceneKit defaults
-/// that shipped before this struct existed, so older projects render unchanged.
+/// All fields are optional; missing values fall back to the defaults below.
 struct DeviceLighting: Codable, Equatable {
-    static let defaultAmbientIntensity: Double = 520
+    static let defaultAmbientIntensity: Double = 1800
     static let defaultKeyIntensity: Double = 1600
     static let defaultRimIntensity: Double = 900
 
