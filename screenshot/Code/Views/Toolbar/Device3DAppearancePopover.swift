@@ -59,13 +59,13 @@ struct Device3DAppearancePopover: View {
         sliderRow(
             label: "Pitch",
             binding: $pitch,
-            range: -35...35,
+            range: -90...90,
             displayValue: "\(Int(pitch.rounded()))°"
         )
         sliderRow(
             label: "Yaw",
             binding: $yaw,
-            range: -45...45,
+            range: -90...90,
             displayValue: "\(Int(yaw.rounded()))°"
         )
     }
