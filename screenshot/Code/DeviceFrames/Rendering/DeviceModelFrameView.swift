@@ -304,7 +304,7 @@ struct DeviceModelFrameView: View {
         case .replaceMaterial:
             applyScreenReplacementMaterial(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
         case .overlayPlane:
-            applyScreenReplacementMaterial(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
+            applyScreenOverlayPlane(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
         }
     }
 
@@ -432,6 +432,57 @@ struct DeviceModelFrameView: View {
         }
         remappedGeometry.materials = materials
         screenNode.geometry = remappedGeometry
+    }
+
+    private static func applyScreenOverlayPlane(
+        in contentNode: SCNNode,
+        modelSpec: DeviceFrameModelSpec,
+        screenshotImage: NSImage?
+    ) {
+        guard let screenNode = findScreenNode(in: contentNode, modelSpec: modelSpec) else {
+            return
+        }
+
+        let bounds = worldBounds(of: screenNode)
+        let screenWidth = CGFloat(bounds.max.x - bounds.min.x)
+        let screenHeight = CGFloat(bounds.max.y - bounds.min.y)
+        guard screenWidth > 0.001, screenHeight > 0.001 else {
+            return
+        }
+
+        let plane = SCNPlane(width: screenWidth, height: screenHeight)
+        plane.cornerRadius = min(screenWidth / 2, screenHeight * 0.075)
+
+        let material = SCNMaterial()
+        material.name = "ScreenOverlay"
+        let screenContents = preparedScreenContents(from: screenshotImage)
+        for prop in [material.diffuse, material.ambient, material.emission] {
+            prop.contents = screenContents
+            prop.wrapS = .clamp
+            prop.wrapT = .clamp
+        }
+        material.multiply.contents = NSColor.white
+        material.transparent.contents = NSColor.white
+        material.reflective.contents = NSColor.black
+        material.metalness.contents = 0.0
+        material.roughness.contents = 1.0
+        material.lightingModel = .constant
+        material.isDoubleSided = true
+        material.writesToDepthBuffer = true
+        material.readsFromDepthBuffer = true
+        plane.materials = [material]
+
+        let centerInWorld = SCNVector3(
+            (bounds.min.x + bounds.max.x) / 2,
+            (bounds.min.y + bounds.max.y) / 2,
+            bounds.max.z + 0.001
+        )
+        let centerInContent = contentNode.convertPosition(centerInWorld, from: nil)
+
+        let planeNode = SCNNode(geometry: plane)
+        planeNode.name = "screenTextureOverlay"
+        planeNode.position = centerInContent
+        contentNode.addChildNode(planeNode)
     }
 
     private static func remapUVsToFullRange(

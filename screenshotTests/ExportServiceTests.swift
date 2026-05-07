@@ -672,6 +672,35 @@ struct ExportServiceTests {
         try expectHasNonWhitePixel(bitmap, label: "Model-backed device frame should render visible pixels")
     }
 
+    @Test func iphone17ProMaxModelBackedDeviceFrameRendersVisibleContentInExport() throws {
+        var row = makeTestRow(width: 500, height: 900, bgColor: .white)
+        row.shapes = [CanvasShapeModel(
+            type: .device,
+            x: 90,
+            y: 80,
+            width: 320,
+            height: 720,
+            color: .clear,
+            deviceCategory: .iphone,
+            deviceFrameId: "iphone17promaxmodel-default-portrait",
+            screenshotFileName: "model-screen"
+        )]
+
+        let bitmap = try renderTemplateBitmap(
+            index: 0,
+            row: row,
+            screenshotImages: ["model-screen": makeTestImage(width: 1320, height: 2868)]
+        )
+
+        try expectHasNonWhitePixel(bitmap, label: "iPhone 17 Pro Max 3D frame should render visible pixels")
+        try expectHasDominantPixel(
+            bitmap,
+            region: CGRect(x: 170, y: 210, width: 160, height: 380),
+            channel: .b,
+            label: "iPhone 17 Pro Max 3D frame should show the screenshot on its screen"
+        )
+    }
+
     @Test func modelBackedDeviceRotationChangesExportOutput() throws {
         let screenshotImages = ["model-screen": makeTestImage(width: 1206, height: 2622)]
         var leftRow = makeTestRow(width: 500, height: 900, bgColor: .white)
@@ -990,6 +1019,14 @@ struct ExportServiceTests {
 
     private struct PixelRGB {
         let r: CGFloat, g: CGFloat, b: CGFloat
+
+        func dominates(_ channel: Channel, by margin: CGFloat) -> Bool {
+            switch channel {
+            case .r: return r > g + margin && r > b + margin
+            case .g: return g > r + margin && g > b + margin
+            case .b: return b > r + margin && b > g + margin
+            }
+        }
     }
 
     private enum Channel { case r, g, b }
@@ -1009,17 +1046,8 @@ struct ExportServiceTests {
         label: String
     ) throws {
         let c = try pixelColor(bitmap, at: point)
-        switch channel {
-        case .r:
-            #expect(c.r > c.g + margin && c.r > c.b + margin,
-                    "\(label): red should dominate, got rgb=(\(c.r),\(c.g),\(c.b))")
-        case .g:
-            #expect(c.g > c.r + margin && c.g > c.b + margin,
-                    "\(label): green should dominate, got rgb=(\(c.r),\(c.g),\(c.b))")
-        case .b:
-            #expect(c.b > c.r + margin && c.b > c.g + margin,
-                    "\(label): blue should dominate, got rgb=(\(c.r),\(c.g),\(c.b))")
-        }
+        #expect(c.dominates(channel, by: margin),
+                "\(label): \(channel) should dominate, got rgb=(\(c.r),\(c.g),\(c.b))")
     }
 
     /// Scans a grid of pixels and asserts at least one is non-white (i.e. visible content was rendered).
@@ -1051,6 +1079,31 @@ struct ExportServiceTests {
             }
         }
         Issue.record("\(label): all sampled pixels were white")
+    }
+
+    private func expectHasDominantPixel(
+        _ bitmap: NSBitmapImageRep,
+        region: CGRect,
+        channel: Channel,
+        margin: CGFloat = 0.15,
+        label: String
+    ) throws {
+        let minX = max(0, Int(region.minX.rounded(.down)))
+        let maxX = min(bitmap.pixelsWide - 1, Int(region.maxX.rounded(.up)))
+        let minY = max(0, Int(region.minY.rounded(.down)))
+        let maxY = min(bitmap.pixelsHigh - 1, Int(region.maxY.rounded(.up)))
+        guard minX <= maxX, minY <= maxY else {
+            Issue.record("\(label): sampled region was empty")
+            return
+        }
+
+        for y in stride(from: minY, through: maxY, by: 8) {
+            for x in stride(from: minX, through: maxX, by: 8) {
+                let c = try pixelColor(bitmap, at: (x, y))
+                if c.dominates(channel, by: margin) { return }
+            }
+        }
+        Issue.record("\(label): no sampled pixel had the expected dominant channel")
     }
 
     private func expectNearWhite(_ bitmap: NSBitmapImageRep, at point: (Int, Int), label: String) throws {

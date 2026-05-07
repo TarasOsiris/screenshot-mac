@@ -461,6 +461,22 @@ struct SettingsView: View {
                         .font(.caption)
                 }
                 .padding(.vertical, 2)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("iPhone 17 Pro Max")
+                        .fontWeight(.medium)
+                    Text("by izatrcsldssb")
+                        .foregroundStyle(.secondary)
+                    HStack(spacing: 4) {
+                        Text("License: CC Attribution")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Link("View on Sketchfab",
+                         destination: URL(string: "https://sketchfab.com/3d-models/iphone-17-pro-max-d24511d4d7534a4b89efdcf8fb6fae88")!)
+                        .font(.caption)
+                }
+                .padding(.vertical, 2)
             }
 
             Section("Templates") {

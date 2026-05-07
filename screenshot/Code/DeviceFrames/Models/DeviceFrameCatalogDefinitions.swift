@@ -115,6 +115,21 @@ enum DeviceFrameCatalogDefinitions {
         screenUVPadding: 0.03,
         screenUVOffsetY: -0.02
     )
+    private static let iphone17ProMaxUSDZModel = DeviceFrameModelSpec(
+        resourceName: "iphone_17_pro_max",
+        resourceExtension: "usdz",
+        resourceSubdirectory: "DeviceModels",
+        screenMaterialName: "Display",
+        disabledNodeNames: [],
+        screenRenderingMode: .overlayPlane,
+        targetBodyHeight: 2.05,
+        cameraDistance: 5.4,
+        baseYawDegrees: 0,
+        defaultPitch: -22,
+        defaultYaw: -14,
+        screenUVPadding: 0,
+        screenUVOffsetY: 0
+    )
 
     static let entries: [DeviceFrameCatalogEntry] = [
         DeviceFrameCatalogEntry(
@@ -171,6 +186,17 @@ enum DeviceFrameCatalogDefinitions {
             modelSpec: iphone16USDZModel,
             landscapeOnly: false,
             suggestedSizePreset: nil
+        ),
+        DeviceFrameCatalogEntry(
+            groupId: "iphone17promaxmodel",
+            modelName: "iPhone 17 Pro Max (3D)",
+            family: .iphone,
+            fallbackCategory: .iphone,
+            colors: ["Default"],
+            baseSpec: iphone17ProMaxSpec,
+            modelSpec: iphone17ProMaxUSDZModel,
+            landscapeOnly: false,
+            suggestedSizePreset: "1320x2868"
         ),
         DeviceFrameCatalogEntry(
             groupId: "ipadpro11",

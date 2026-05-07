@@ -64,4 +64,15 @@ struct DeviceFrameCatalogTests {
         #expect(landscape?.spec.frameWidth == 960)
         #expect(landscape?.spec.frameHeight == 600)
     }
+
+    @Test func iphone17ProMax3DFrameUsesBundledUSDZModel() throws {
+        let frame = try #require(DeviceFrameCatalog.frame(for: "iphone17promaxmodel-default-portrait"))
+
+        #expect(frame.modelName == "iPhone 17 Pro Max (3D)")
+        #expect(frame.isModelBacked)
+        #expect(frame.modelSpec?.resourceName == "iphone_17_pro_max")
+        #expect(frame.modelSpec?.screenMaterialName == "Display")
+        #expect(frame.modelSpec?.screenRenderingMode == .overlayPlane)
+        #expect(DeviceFrameCatalog.suggestedSizePreset(forFrameId: frame.id) == "1320x2868")
+    }
 }
