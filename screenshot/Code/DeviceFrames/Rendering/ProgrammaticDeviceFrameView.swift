@@ -234,10 +234,13 @@ struct ProgrammaticDeviceFrameView: View {
     }
 
     private var androidPhoneFrame: some View {
-        let s = scale
+        // Generic Android phones come in many aspect ratios, so the body flexes
+        // to the shape's dimensions instead of locking to category.bodyDimensions.
         let dims = category.bodyDimensions
-        let bodyW: CGFloat = dims.width * s
-        let bodyH: CGFloat = dims.height * s
+        let s = height / dims.height
+        let btnDepth: CGFloat = category.buttonDepth * s
+        let bodyW: CGFloat = max(0, width - btnDepth * 2)
+        let bodyH: CGFloat = height
 
         let bezels = category.bezels
         let bezelLR: CGFloat = bezels.lr * s
@@ -256,7 +259,6 @@ struct ProgrammaticDeviceFrameView: View {
         let gestureH: CGFloat = 2.5 * s
         let gestureOffsetFromScreenBottom: CGFloat = 6 * s + gestureH / 2
 
-        let btnDepth: CGFloat = category.buttonDepth * s
         let btnColor = buttonColor
 
         let volUpH: CGFloat = 30 * s
@@ -356,10 +358,11 @@ struct ProgrammaticDeviceFrameView: View {
     }
 
     private var androidTabletFrame: some View {
-        let s = scale
+        // See androidPhoneFrame: body flexes to shape dimensions for variable aspects.
         let dims = category.bodyDimensions
-        let bodyW: CGFloat = dims.width * s
-        let bodyH: CGFloat = dims.height * s
+        let s = height / dims.height
+        let bodyW: CGFloat = width
+        let bodyH: CGFloat = height
 
         let bezels = category.bezels
         let bezelLR: CGFloat = bezels.lr * s

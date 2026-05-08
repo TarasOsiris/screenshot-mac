@@ -160,7 +160,10 @@ extension AppState {
             let previousFile = shape.displayImageFileName
             shape.displayImageFileName = fileName
 
-            if shape.deviceCategory == .invisible {
+            if shape.deviceFrameId == nil,
+               shape.deviceCategory == .invisible
+                || shape.deviceCategory == .androidPhone
+                || shape.deviceCategory == .androidTablet {
                 shape.adaptToImageAspectRatio(image.size)
             }
 
