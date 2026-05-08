@@ -16,8 +16,10 @@ struct ShapePropertiesSingleSelectionBar: View {
     @State private var isLineHeightFieldActive = false
     @State private var editingOpacity: String = ""
     @State private var isOpacityFieldActive = false
+    @State private var editingRotation: String = ""
+    @State private var isRotationFieldActive = false
     @FocusState private var focusedField: Field?
-    private enum Field: Hashable { case opacity, fontSize, lineHeight }
+    private enum Field: Hashable { case opacity, fontSize, lineHeight, rotation }
     private static let lineHeightPresets: [Int] = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 175, 200]
 
     private var rowIndex: Int? { state.selectedRowIndex }
@@ -168,8 +170,39 @@ struct ShapePropertiesSingleSelectionBar: View {
                                 Slider(value: shapeBinding(shapeId, \.rotation, continuous: true), in: 0...360)
                                     .frame(width: UIMetrics.SliderWidth.standard)
 
-                                Text(verbatim: "\(Int(idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape].rotation } ?? 0))°")
-                                    .frame(width: 28, alignment: .trailing)
+                                HStack(spacing: 0) {
+                                    TextField("", text: $editingRotation, onEditingChanged: { editing in
+                                        if editing {
+                                            isRotationFieldActive = true
+                                        } else {
+                                            commitRotation(shapeId: shapeId)
+                                        }
+                                    })
+                                    .focused($focusedField, equals: .rotation)
+                                    .frame(width: 44)
+                                    .textFieldStyle(.roundedBorder)
+                                    .multilineTextAlignment(.center)
+                                    .onAppear {
+                                        editingRotation = currentRotationString(for: shapeId)
+                                    }
+                                    .onChange(of: shapeId) {
+                                        isRotationFieldActive = false
+                                        focusedField = nil
+                                        editingRotation = currentRotationString(for: shapeId)
+                                    }
+                                    .onChange(of: shape.rotation) {
+                                        guard !isRotationFieldActive else { return }
+                                        let next = currentRotationString(for: shapeId)
+                                        if editingRotation != next { editingRotation = next }
+                                    }
+                                    .onSubmit {
+                                        commitRotation(shapeId: shapeId)
+                                    }
+
+                                    Text("°")
+                                        .font(.system(size: UIMetrics.FontSize.numericBadge))
+                                        .foregroundStyle(.secondary)
+                                }
                             }
 
                             if shape.type == .rectangle || shape.type == .image || (shape.type == .device && shape.deviceCategory == .invisible) {
@@ -337,6 +370,36 @@ struct ShapePropertiesSingleSelectionBar: View {
         resolved.opacity = Double(clamped) / 100.0
         state.updateShape(resolved)
         editingOpacity = "\(clamped)"
+    }
+
+    private func currentRotationString(for shapeId: UUID) -> String {
+        guard let i = idx(for: shapeId) else { return "0" }
+        return formatRotation(state.rows[i.row].shapes[i.shape].rotation)
+    }
+
+    private func formatRotation(_ value: Double) -> String {
+        let rounded = (value * 10).rounded() / 10
+        return rounded == rounded.rounded()
+            ? String(format: "%.0f", rounded)
+            : String(format: "%.1f", rounded)
+    }
+
+    private func commitRotation(shapeId: UUID) {
+        isRotationFieldActive = false
+        guard let i = idx(for: shapeId) else { return }
+        let trimmed = editingRotation.replacingOccurrences(of: ",", with: ".")
+        guard let value = Double(trimmed) else {
+            editingRotation = currentRotationString(for: shapeId)
+            return
+        }
+        var normalized = value.truncatingRemainder(dividingBy: 360)
+        if normalized < 0 { normalized += 360 }
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        if resolved.rotation != normalized {
+            resolved.rotation = normalized
+            state.updateShape(resolved)
+        }
+        editingRotation = formatRotation(normalized)
     }
 
     private func currentLineHeightString(for shapeId: UUID) -> String {
