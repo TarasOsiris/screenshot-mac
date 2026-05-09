@@ -13,6 +13,10 @@ enum UIMetrics {
         static let hint: CGFloat = 9
         /// Numeric badge / value display next to sliders.
         static let numericBadge: CGFloat = 10
+        /// Section heading inside long-form copy (Help, settings descriptions).
+        static let sectionHeading: CGFloat = 17
+        /// Display title for help / about headers.
+        static let displayTitle: CGFloat = 26
     }
 
     enum SliderWidth {

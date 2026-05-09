@@ -89,9 +89,16 @@ struct ScreenshotBroApp: App {
         .defaultSize(width: 760, height: 620)
         .windowResizability(.contentMinSize)
 
+        Window("Screenshot Bro Help", id: HelpView.windowID) {
+            HelpView()
+                .preferredColorScheme(preferredColorScheme)
+        }
+        .defaultSize(width: 920, height: 640)
+
         .commands {
             NewProjectCommands()
             MainWindowCommands()
+            HelpCommands()
 
             CommandGroup(replacing: .pasteboard) {
                 Section {
@@ -408,6 +415,19 @@ private struct MainWindowCommands: Commands {
             Button("Show Main Window") {
                 AppWindowManager.shared.showMainWindow()
             }
+        }
+    }
+}
+
+private struct HelpCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some Commands {
+        CommandGroup(replacing: .help) {
+            Button("Screenshot Bro Help") {
+                openWindow(id: HelpView.windowID)
+            }
+            .keyboardShortcut("?", modifiers: .command)
         }
     }
 }

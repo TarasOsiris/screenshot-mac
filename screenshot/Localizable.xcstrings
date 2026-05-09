@@ -186,6 +186,237 @@
         }
       }
     },
+    "[Privacy Policy](https://screenshotbro.app/privacy)" : {
+
+    },
+    "[Terms of Service](https://screenshotbro.app/terms)" : {
+
+    },
+    "**⇧ + Arrow** nudges by 10px." : {
+
+    },
+    "**⌘]** / **⌘[** cycle forward / backward through locales." : {
+
+    },
+    "**⌘+** / **⌘−** zoom in/out, **⌘0** resets to 100%, **F** focuses on the current selection." : {
+
+    },
+    "**⌘⌥0** jumps back to the base locale." : {
+
+    },
+    "**⌘A** selects every shape in the active row." : {
+
+    },
+    "**1 project** — you can keep editing it forever." : {
+
+    },
+    "**3 rows** per project." : {
+
+    },
+    "**5 templates** per row." : {
+
+    },
+    "**Android Phone** and **Android Tablet** — generic frames that flex to match the aspect ratio of any dropped screenshot." : {
+
+    },
+    "**Angular**: a sweep gradient rotating around the center." : {
+
+    },
+    "**Appearance** — Auto / Light / Dark." : {
+
+    },
+    "**Auto-Translate Missing Text** — fills in text shapes that don't yet have an override for the current locale." : {
+
+    },
+    "**Back up projects** — write a one-off zip of your project library to a folder you choose." : {
+
+    },
+    "**Background editor** — color, gradient, or image. See the **Backgrounds** topic." : {
+
+    },
+    "**Batch import**: drop multiple screenshots at once. Screenshot Bro inspects each image's pixel dimensions and routes it to the matching device row (iPhone vs iPad vs Android)." : {
+
+    },
+    "**Color** — a solid fill picked from the inline color picker." : {
+
+    },
+    "**Confirm before deleting** — show a confirmation prompt for destructive actions on rows and screenshots." : {
+
+    },
+    "**Custom fonts persist.** Imported fonts are bundled per project, so a project shared via iCloud or zip backup keeps its typography." : {
+
+    },
+    "**Custom fonts** — manage imported `.otf`/`.ttf` files." : {
+
+    },
+    "**Default device** — pre-selects a device category and model for new rows." : {
+
+    },
+    "**Default screenshot size** — used when creating new rows." : {
+
+    },
+    "**Default templates per row** — number of empty templates a new row starts with." : {
+
+    },
+    "**Default zoom** — initial zoom level when opening the app." : {
+
+    },
+    "**Delete** removes the row. Settings ▸ General has a confirmation toggle." : {
+
+    },
+    "**Drop a screenshot onto the device** to attach it. The image is automatically clipped to the screen area." : {
+
+    },
+    "**Drop folders, not files.** Drag a folder of screenshots onto the canvas — Screenshot Bro will batch-import and route by device size." : {
+
+    },
+    "**Duplicate while dragging** with **⌥**. Combined with snap, this is the fastest way to lay out a row of equal-sized cards." : {
+
+    },
+    "**Edit Translations…** — open a side-by-side editor showing every text shape with its base content and locale overrides." : {
+
+    },
+    "**Esc** deselects shapes; press again to deselect the row." : {
+
+    },
+    "**File ▸ New Project…** (⌘N) opens the New Project window." : {
+
+    },
+    "**Fill** — scales to cover; crops anything that doesn't fit." : {
+
+    },
+    "**Fit** — scales so the whole image is visible; leaves transparent letterbox bars." : {
+
+    },
+    "**Format** — PNG or JPEG." : {
+
+    },
+    "**Gradient presets**: pick from the preset gallery to apply tested stop combinations." : {
+
+    },
+    "**Gradient** — Linear, Radial, or Angular. Edit color stops, angle, and (for Radial / Angular) the center point." : {
+
+    },
+    "**iCloud sync** — toggle and check status." : {
+
+    },
+    "**Image** — bring in any PNG / JPEG / SVG. Pick a fill mode and tweak opacity." : {
+
+    },
+    "**Invisible** — no visible bezel, just the screenshot. Useful for clipped layouts or abstract designs." : {
+
+    },
+    "**Invisible** category shows the screenshot with no bezel — useful for clipped or abstract designs." : {
+
+    },
+    "**iPad Pro 11\"** and **iPad Pro 13\"** — current generation with portrait and landscape." : {
+
+    },
+    "**iPhone** — iPhone 17, Air, Pro, Pro Max with the latest color variants." : {
+
+    },
+    "**Language** — override the app interface language. Requires a relaunch." : {
+
+    },
+    "**Last export folder** — Screenshot Bro remembers and reuses your folder choice." : {
+
+    },
+    "**Linear**: choose start/end via the angle wheel. Add as many stops as you want." : {
+
+    },
+    "**Lock aspect when resizing icons** by holding **⇧** while dragging a corner handle." : {
+
+    },
+    "**MacBook** — MacBook Air 13\", MacBook Pro 14\", MacBook Pro 16\", iMac 24\"." : {
+
+    },
+    "**Open export folder on success** — auto-reveal results in Finder." : {
+
+    },
+    "**Override per template**: from the template control bar, set a unique background that replaces the row's default just for that template." : {
+
+    },
+    "**Pin frequently used projects.** Right-click in the project picker to pin and keep them at the top." : {
+
+    },
+    "**Preview before exporting.** The export preview button on each template renders just that one template — handy for spot-checks." : {
+
+    },
+    "**Project order** — Creation date or Manual." : {
+
+    },
+    "**Projects** hold one screenshot set per app — usually one project per app, or one per major release." : {
+
+    },
+    "**Radial**: a circular gradient with an editable center point and end radius derived from the canvas size." : {
+
+    },
+    "**Re-translate after editing base text.** If you change the base headline, run **Locale ▸ Re-Translate All Text…** so every locale picks up the new wording." : {
+
+    },
+    "**Re-Translate All Text…** — replaces every existing override with a fresh translation. Use after editing the base locale's text." : {
+
+    },
+    "**Restore Purchases** brings back an existing subscription on a new Mac." : {
+
+    },
+    "**Revert to Base Language…** — drops all overrides for the current locale, falling back to base text everywhere." : {
+
+    },
+    "**Row label** — names the folder this row exports into." : {
+
+    },
+    "**Rows** inside a project group screenshots by device type (iPhone, iPad, Android phone, etc.). Each device size gets its own row because the App Store requires different resolutions." : {
+
+    },
+    "**Scale** — 1×, 2×, 3×." : {
+
+    },
+    "**Scale**: 1×, 2×, or 3×. The App Store and Google Play require exact pixel dimensions, so keep this at 1× unless you specifically need oversized assets." : {
+
+    },
+    "**Screenshot size presets** — quickly switch between supported store resolutions." : {
+
+    },
+    "**Settings ▸ Export ▸ Format**: PNG or JPEG. PNG is recommended for marketing screenshots." : {
+
+    },
+    "**Settings ▸ General ▸ Custom Fonts** — pick `.otf` / `.ttf` files to register them with the app." : {
+
+    },
+    "**Settings ▸ General ▸ iCloud Sync** — toggle on." : {
+
+    },
+    "**Settings ▸ Purchase** lists the available plans. RevenueCat handles the transaction." : {
+
+    },
+    "**Span backgrounds for storytelling.** Turn on row spanning and use a wide gradient or panoramic image to make a 3-template carousel feel like one continuous scene." : {
+
+    },
+    "**Spanning background** — when on, the background spans the entire row width across all templates. When off, every template paints the same background independently." : {
+
+    },
+    "**Spanning background** (row toggle): when on, gradients and images render once across the entire row, so a single horizon or gradient flows across all templates." : {
+
+    },
+    "**Stretch** — fills exactly, distorting aspect if needed." : {
+
+    },
+    "**Templates** are the columns inside a row — the individual screenshots you'll submit. Most apps need 3–10 templates per row." : {
+
+    },
+    "**Tile** — repeats the image with adjustable spacing, offset, and scale per axis." : {
+
+    },
+    "**Type rotation degrees directly.** The rotation field accepts text input — type `45` for an exact 45° rotation instead of dragging." : {
+
+    },
+    "**Use Invisible category for clipped designs.** When you want the screenshot to bleed off the canvas with no bezel, pick the Invisible device category." : {
+
+    },
+    "**Use the SVG button for icons.** SVG scales infinitely, so your hero icon stays crisp at 1×, 2×, or 3× export." : {
+
+    },
     "%" : {
       "localizations" : {
         "de" : {
@@ -1547,6 +1778,18 @@
         }
       }
     },
+    "•" : {
+
+    },
+    "`~/Library/Application Support/screenshot/projects.json` — index of all projects." : {
+
+    },
+    "`~/Library/Application Support/screenshot/projects/<uuid>/project.json` — project data." : {
+
+    },
+    "`~/Library/Application Support/screenshot/projects/<uuid>/resources/` — imported images, screenshots, and SVGs." : {
+
+    },
     "°" : {
 
     },
@@ -1595,6 +1838,15 @@
           }
         }
       }
+    },
+    "1. Create a new project from a template, or start blank." : {
+
+    },
+    "2. Drop your raw device screenshots onto the templates — Screenshot Bro detects iPhone vs iPad vs Android from the image dimensions and routes them to the right row." : {
+
+    },
+    "3. Pick a device frame, add a headline, choose a background, and arrange shapes." : {
+
     },
     "3D" : {
 
@@ -1698,6 +1950,12 @@
         }
       }
     },
+    "4. Add locales for languages you support — translate text once and let the layout follow." : {
+
+    },
+    "5. Export. You'll get a folder organized by locale and device, ready to upload." : {
+
+    },
     "10-character key ID" : {
       "localizations" : {
         "de" : {
@@ -1789,6 +2047,12 @@
           }
         }
       }
+    },
+    "A project is a self-contained collection of rows, templates, shapes, locales, and image resources. Projects are stored on disk under your user Application Support folder and can be optionally synced via iCloud Drive." : {
+
+    },
+    "A typical workflow" : {
+
     },
     "Abstract Pixel 9" : {
       "localizations" : {
@@ -1974,6 +2238,9 @@
         }
       }
     },
+    "Actual size (100%)" : {
+
+    },
     "Add" : {
       "localizations" : {
         "de" : {
@@ -2065,6 +2332,9 @@
           }
         }
       }
+    },
+    "Add an outline, corner radius, or rotation from the properties bar." : {
+
     },
     "Add another language to edit translations here." : {
       "localizations" : {
@@ -2811,6 +3081,18 @@
     "Add Your Next Screenshot" : {
 
     },
+    "Adding locales" : {
+
+    },
+    "Adding rows" : {
+
+    },
+    "Adding shapes" : {
+
+    },
+    "Adding templates" : {
+
+    },
     "Align" : {
       "localizations" : {
         "de" : {
@@ -3553,6 +3835,9 @@
         }
       }
     },
+    "API key, Issuer ID, Key ID. See the App Store Connect topic." : {
+
+    },
     "App Info (shared across versions)" : {
       "localizations" : {
         "de" : {
@@ -3693,6 +3978,9 @@
           }
         }
       }
+    },
+    "App Store Connect allows up to 10 screenshots per device family per locale. Screenshot Bro respects template ordering so the first 10 templates in each row will be uploaded in order." : {
+
     },
     "App Store Connect API documentation" : {
       "localizations" : {
@@ -4062,6 +4350,9 @@
         }
       }
     },
+    "App Store Connect upload." : {
+
+    },
     "Appearance" : {
       "localizations" : {
         "de" : {
@@ -4392,6 +4683,9 @@
           }
         }
       }
+    },
+    "Arrow keys nudge the selection by 1px." : {
+
     },
     "ASC value" : {
       "localizations" : {
@@ -4900,6 +5194,9 @@
         }
       }
     },
+    "Background images" : {
+
+    },
     "Background override" : {
 
     },
@@ -4950,6 +5247,9 @@
       }
     },
     "Background override (image not selected)" : {
+
+    },
+    "Backgrounds" : {
 
     },
     "Backup" : {
@@ -5277,6 +5577,12 @@
         }
       }
     },
+    "Beautiful App Store and Google Play screenshots, made on your Mac." : {
+
+    },
+    "Behind the scenes, an `NSMetadataQuery` watches each project for upload/download progress." : {
+
+    },
     "Beta" : {
       "localizations" : {
         "de" : {
@@ -5322,6 +5628,9 @@
           }
         }
       }
+    },
+    "Blue **alignment guides** appear while dragging to show which edges are aligned." : {
+
     },
     "Blur" : {
       "localizations" : {
@@ -5461,6 +5770,15 @@
         }
       }
     },
+    "Both raster and SVG images are supported as backgrounds." : {
+
+    },
+    "Both render identically in the editor preview and in the exported PNG." : {
+
+    },
+    "Bring shape to front" : {
+
+    },
     "Bring to Front" : {
       "localizations" : {
         "de" : {
@@ -5559,6 +5877,15 @@
     "Build a polished store listing across every locale and device — no caps, no compromises." : {
 
     },
+    "Build the layout with rectangles, circles, stars, text, images, devices, and SVGs." : {
+
+    },
+    "Buttons next to it add Text, Image, Device, or SVG elements." : {
+
+    },
+    "Buying or restoring" : {
+
+    },
     "By creation date" : {
       "localizations" : {
         "de" : {
@@ -5604,6 +5931,12 @@
           }
         }
       }
+    },
+    "By default a row's background applies to every template in the row." : {
+
+    },
+    "By default, Screenshot Bro exports every locale, every row, and every template at 1× scale." : {
+
     },
     "by Ibrahim.Bhl" : {
       "localizations" : {
@@ -5745,6 +6078,9 @@
           }
         }
       }
+    },
+    "Categories" : {
+
     },
     "Center" : {
       "localizations" : {
@@ -6021,6 +6357,12 @@
           }
         }
       }
+    },
+    "Choose **Blank** to set up rows and screenshot sizes manually, or **From Template** to start with a pre-designed layout." : {
+
+    },
+    "Choose a device category: **iPhone**, **iPad Pro 11\"**, **iPad Pro 13\"**, **MacBook**, **Android Phone**, **Android Tablet**, or **Invisible** (an abstract layout with no visible frame)." : {
+
     },
     "Choose a folder and export screenshots (⌘E)" : {
 
@@ -6584,6 +6926,21 @@
         }
       }
     },
+    "Click **Add Row** at the bottom of the canvas, or use the inspector when no row is selected." : {
+
+    },
+    "Click **Add Template** (the **+** button at the right end of the row)." : {
+
+    },
+    "Click **Export** in the toolbar to render the current project to PNG." : {
+
+    },
+    "Click **SVG** to import a vector file. Or paste raw SVG via the SVG paste dialog." : {
+
+    },
+    "Click a shape to select it. **Shift-click** to add to or remove from the selection." : {
+
+    },
     "Click bar to add stops" : {
       "localizations" : {
         "de" : {
@@ -6629,6 +6986,12 @@
           }
         }
       }
+    },
+    "Click empty canvas inside a row to select the row itself and reveal row-level inspector controls." : {
+
+    },
+    "Click the image well in the properties bar to pick a file, or drag and drop directly onto the shape." : {
+
     },
     "Clip to Frame" : {
       "localizations" : {
@@ -6767,6 +7130,18 @@
           }
         }
       }
+    },
+    "Color, gradient, or image — at row or template level." : {
+
+    },
+    "Color, opacity, rotation (in degrees, editable as text), border radius, outline (color + width), and a clip toggle (clips overflow to the shape)." : {
+
+    },
+    "Commit text edit" : {
+
+    },
+    "Common properties" : {
+
     },
     "Compare Plans" : {
       "localizations" : {
@@ -6945,6 +7320,9 @@
           }
         }
       }
+    },
+    "Connect your App Store Connect API key once and Screenshot Bro can upload exported screenshots to a specific app version without leaving the app." : {
+
     },
     "Connected" : {
       "localizations" : {
@@ -7357,6 +7735,9 @@
           }
         }
       }
+    },
+    "Copy selected shapes (or text in fields)" : {
+
     },
     "Copy Text Style" : {
       "localizations" : {
@@ -8005,6 +8386,9 @@
         }
       }
     },
+    "Create a key with **App Manager** access. Download the `.p8` private key file (you can only download it once)." : {
+
+    },
     "Create Backup…" : {
       "localizations" : {
         "de" : {
@@ -8106,6 +8490,12 @@
     "Create Your Next Project" : {
 
     },
+    "Creating a project" : {
+
+    },
+    "Credits and licenses for fonts, icons, and bundled assets." : {
+
+    },
     "Current abstract device: %@" : {
 
     },
@@ -8166,6 +8556,9 @@
           }
         }
       }
+    },
+    "Current plan, restore purchases, manage subscription." : {
+
     },
     "Current Project" : {
       "localizations" : {
@@ -8305,6 +8698,12 @@
         }
       }
     },
+    "Custom fonts" : {
+
+    },
+    "Custom fonts: import via **Settings ▸ General ▸ Custom Fonts**." : {
+
+    },
     "Cut" : {
       "localizations" : {
         "de" : {
@@ -8350,6 +8749,9 @@
           }
         }
       }
+    },
+    "Cut selected shapes" : {
+
     },
     "Dark" : {
       "localizations" : {
@@ -9099,6 +9501,15 @@
         }
       }
     },
+    "Delete selected shapes" : {
+
+    },
+    "Deleted projects are kept as **tombstones** for 30 days so iCloud sync can resolve conflicts cleanly. After 30 days the tombstone (and all images) are purged." : {
+
+    },
+    "Deletions are tracked as **tombstones** for 30 days, so a delete on Mac A correctly propagates to Mac B even if the device is offline at the moment of deletion." : {
+
+    },
     "Demo mode" : {
 
     },
@@ -9437,6 +9848,12 @@
     "Device color" : {
 
     },
+    "Device frames wrap your screenshot in an authentic phone or tablet bezel. Screenshot Bro ships pixel-accurate frames for the latest iPhones, iPads, MacBooks, and a generic Android catalog." : {
+
+    },
+    "Device shapes render the screenshot inside a real device frame. Pick a category and model in the properties bar." : {
+
+    },
     "Devices" : {
       "localizations" : {
         "de" : {
@@ -9482,6 +9899,12 @@
           }
         }
       }
+    },
+    "Devices & Frames" : {
+
+    },
+    "Devices that support landscape (iPad, MacBook) auto-rotate the frame to match the dropped screenshot's aspect ratio." : {
+
     },
     "Disable iCloud Sync" : {
       "localizations" : {
@@ -9620,6 +10043,9 @@
           }
         }
       }
+    },
+    "Disabling does **not** delete your iCloud data — your projects remain in the iCloud container until you delete them manually." : {
+
     },
     "Display Type" : {
       "localizations" : {
@@ -9805,6 +10231,9 @@
         }
       }
     },
+    "Double-click a text shape to edit inline. Press **Esc** or click outside to commit." : {
+
+    },
     "Double-click to reset" : {
       "localizations" : {
         "de" : {
@@ -9896,6 +10325,30 @@
           }
         }
       }
+    },
+    "Drag a row's header to reorder. Use **⌘D** to duplicate a selected row." : {
+
+    },
+    "Drag and drop a PNG / JPEG onto a template to attach it as a device screenshot. A device shape is auto-created if needed." : {
+
+    },
+    "Drag templates left/right to reorder. Reordering also reorders the exported file numbering." : {
+
+    },
+    "Drag the rotation handle (above the shape) to rotate freely. Type a degree value into the rotation field for exact control." : {
+
+    },
+    "Drag the shape body to move. Drag a corner or edge handle to resize." : {
+
+    },
+    "Drag, resize, rotate, snap." : {
+
+    },
+    "Drop a screenshot directly onto a template to attach it as the device screenshot." : {
+
+    },
+    "Drop directly into the background image well in the inspector, or pick via the file dialog." : {
+
     },
     "Drop Image" : {
       "localizations" : {
@@ -9994,6 +10447,9 @@
           }
         }
       }
+    },
+    "Drop screenshots, images, fonts, and SVGs." : {
+
     },
     "Duplicate" : {
       "localizations" : {
@@ -10317,6 +10773,15 @@
         }
       }
     },
+    "Duplicate selected shapes / row" : {
+
+    },
+    "Duplicate while dragging" : {
+
+    },
+    "During resize, rendering is debounced for performance — release the mouse to see the final crisp output." : {
+
+    },
     "e.g. 57246542-96fe-1a63-e053-0824d011072a" : {
       "localizations" : {
         "de" : {
@@ -10362,6 +10827,24 @@
           }
         }
       }
+    },
+    "Each category sets the row's default screenshot pixel size to a value the relevant store accepts." : {
+
+    },
+    "Each column inside a row is a template. A template is one final exported image — its dimensions match the row's screenshot size. The App Store accepts up to 10 templates per row; Google Play up to 8." : {
+
+    },
+    "Each model has color variants and (where applicable) a landscape variant." : {
+
+    },
+    "Each project is merged using a **last-writer-wins** strategy at the field level. The most recently edited shape, row, or background wins." : {
+
+    },
+    "Edit" : {
+
+    },
+    "Edit on one Mac, continue on another." : {
+
     },
     "Edit the base language and each translated language side by side. Leave a cell empty to use the base language text." : {
       "localizations" : {
@@ -10596,6 +11079,15 @@
         }
       }
     },
+    "Editing on the Canvas" : {
+
+    },
+    "Editor and export must always match exactly. If they don't, please report it as a bug." : {
+
+    },
+    "Email: %@" : {
+
+    },
     "Enable demo mode" : {
 
     },
@@ -10691,6 +11183,9 @@
         }
       }
     },
+    "Enabling" : {
+
+    },
     "Enter a directory name for the template (e.g. my_template)." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10738,6 +11233,9 @@
         }
       }
     },
+    "Enter inline edit mode" : {
+
+    },
     "Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard." : {
       "localizations" : {
         "de" : {
@@ -10783,6 +11281,9 @@
           }
         }
       }
+    },
+    "Everything you can do without the mouse." : {
+
     },
     "Exclude screenshot %lld" : {
 
@@ -11115,6 +11616,9 @@
         }
       }
     },
+    "Export folder memory" : {
+
+    },
     "Export Locale" : {
       "localizations" : {
         "de" : {
@@ -11354,6 +11858,9 @@
     "Exported" : {
 
     },
+    "Exporting" : {
+
+    },
     "Exporting %lld of %lld rows" : {
       "localizations" : {
         "en" : {
@@ -11412,6 +11919,9 @@
           }
         }
       }
+    },
+    "Exporting with locales" : {
+
     },
     "Exporting..." : {
 
@@ -11922,6 +12432,15 @@
         }
       }
     },
+    "File" : {
+
+    },
+    "File coordination (`NSFileCoordinator`) prevents corruption from concurrent reads/writes." : {
+
+    },
+    "File names are zero-padded (`01_…`, `02_…`) so they sort correctly when uploaded." : {
+
+    },
     "Fill" : {
       "localizations" : {
         "de" : {
@@ -12014,6 +12533,9 @@
         }
       }
     },
+    "Fill modes: **Fill** (crop to fit), **Fit** (letterbox), **Stretch** (distort), **Tile** (repeat). Tile mode unlocks spacing, offset, and scale controls." : {
+
+    },
     "Finish" : {
 
     },
@@ -12062,6 +12584,9 @@
           }
         }
       }
+    },
+    "First-time enable migrates your local project library into iCloud. A progress indicator shows the migration." : {
+
     },
     "Fit" : {
       "localizations" : {
@@ -12210,6 +12735,9 @@
         }
       }
     },
+    "Focus on selection" : {
+
+    },
     "Focus on Selection" : {
       "localizations" : {
         "de" : {
@@ -12255,6 +12783,9 @@
           }
         }
       }
+    },
+    "Folder structure" : {
+
     },
     "Font" : {
       "localizations" : {
@@ -12348,6 +12879,9 @@
         }
       }
     },
+    "Fonts appear in the text shape font picker once registered." : {
+
+    },
     "for Android and iOS Apps" : {
       "localizations" : {
         "de" : {
@@ -12440,6 +12974,9 @@
         }
       }
     },
+    "Format and scale" : {
+
+    },
     "Format, background, layout, and excluded screenshots will return to defaults. Row selection is preserved." : {
 
     },
@@ -12489,6 +13026,15 @@
         }
       }
     },
+    "Free tier" : {
+
+    },
+    "Free tier limit: 5 templates per row. Pro removes this limit. See **Free vs Pro**." : {
+
+    },
+    "Free vs Pro" : {
+
+    },
     "Free: %@" : {
       "localizations" : {
         "de" : {
@@ -12534,6 +13080,12 @@
           }
         }
       }
+    },
+    "Full access to all device frames, shapes, locales, and export resolutions." : {
+
+    },
+    "Future Pro-only features as they ship." : {
+
     },
     "General" : {
       "localizations" : {
@@ -12581,6 +13133,9 @@
         }
       }
     },
+    "Get in touch" : {
+
+    },
     "Get Started" : {
       "localizations" : {
         "de" : {
@@ -12627,6 +13182,9 @@
         }
       }
     },
+    "Go to **App Store Connect ▸ Users and Access ▸ Integrations ▸ App Store Connect API**." : {
+
+    },
     "Gradient" : {
       "localizations" : {
         "de" : {
@@ -12672,6 +13230,9 @@
           }
         }
       }
+    },
+    "Gradients" : {
+
     },
     "H" : {
       "localizations" : {
@@ -12912,6 +13473,15 @@
     "Hide non-uploadable (%lld)" : {
 
     },
+    "Hold **⇧** while resizing to lock aspect ratio." : {
+
+    },
+    "Hold **⌥** while dragging to duplicate the shape as you move." : {
+
+    },
+    "Hold the **middle mouse button** and drag to pan." : {
+
+    },
     "Horizontal alignment" : {
       "localizations" : {
         "de" : {
@@ -13003,6 +13573,15 @@
           }
         }
       }
+    },
+    "How conflicts are resolved" : {
+
+    },
+    "How shapes relate to templates" : {
+
+    },
+    "How translations work" : {
+
     },
     "iCloud container is not available. Make sure you're signed into iCloud." : {
       "localizations" : {
@@ -13142,6 +13721,15 @@
         }
       }
     },
+    "iCloud sync keeps your project library in iCloud Drive (`iCloud.xyz.tleskiv.screenshot`). Changes made on one Mac propagate to others signed into the same iCloud account." : {
+
+    },
+    "iCloud sync." : {
+
+    },
+    "If a locale has no override for a text shape, it falls back to the base locale's text." : {
+
+    },
     "If a matching display type already has screenshots, they will be deleted and replaced. You'll be asked to confirm before anything is uploaded." : {
       "localizations" : {
         "de" : {
@@ -13188,6 +13776,27 @@
         }
       }
     },
+    "If a screenshot doesn't match any existing row, a new row is offered." : {
+
+    },
+    "If a shape spans across templates and you only see part of it, that's expected — each template clips shapes to its own bounds. Switch to a different template view or use **F** to focus on the whole shape." : {
+
+    },
+    "If sync seems stuck, open Finder ▸ iCloud Drive ▸ Screenshot Bro and check whether files are still uploading. Toggling iCloud off and on again forces a re-scan." : {
+
+    },
+    "If the issue affects a project, **Settings ▸ Export ▸ Back Up Projects** and attach the resulting backup so we can reproduce on the exact data." : {
+
+    },
+    "If this is your first time, the **Onboarding** sheet will walk you through picking a default screenshot size and device. Pick a new project from a template any time via **File ▸ New Project**." : {
+
+    },
+    "If you drop a screenshot onto an empty template (not a device shape), Screenshot Bro creates a device shape automatically using the row's category and the right model based on the screenshot's pixel size." : {
+
+    },
+    "If you only see one row, you may be on the **Free** tier (limit: 3 rows per project). Upgrading to Pro removes this limit. See **Free vs Pro**." : {
+
+    },
     "Image" : {
       "localizations" : {
         "de" : {
@@ -13233,6 +13842,12 @@
           }
         }
       }
+    },
+    "Image fill modes" : {
+
+    },
+    "Image-based vs programmatic frames" : {
+
     },
     "Images" : {
       "localizations" : {
@@ -13510,6 +14125,21 @@
           }
         }
       }
+    },
+    "Imported fonts are bundled with the project so they survive iCloud sync and project transfer." : {
+
+    },
+    "Importing" : {
+
+    },
+    "In a non-base locale, edits to text shapes are saved as **per-locale overrides** — they don't change the base." : {
+
+    },
+    "In Blank mode, pick the device categories you want — each one becomes a row with the right default screenshot size for the App Store / Play Store." : {
+
+    },
+    "In Screenshot Bro: **Settings ▸ App Store Connect**, paste the Issuer ID and Key ID, and import the `.p8` file." : {
+
     },
     "Include screenshot %lld" : {
 
@@ -14122,6 +14752,9 @@
         }
       }
     },
+    "Keyboard Shortcuts" : {
+
+    },
     "Keychain save failed (status %d)" : {
       "localizations" : {
         "de" : {
@@ -14214,6 +14847,9 @@
         }
       }
     },
+    "Knowing what's syncing" : {
+
+    },
     "Landscape" : {
       "localizations" : {
         "de" : {
@@ -14259,6 +14895,9 @@
           }
         }
       }
+    },
+    "Landscape mode" : {
+
     },
     "Language" : {
       "localizations" : {
@@ -15102,6 +15741,12 @@
         }
       }
     },
+    "Locales & Translations" : {
+
+    },
+    "Locales let you generate localized screenshot sets without duplicating your project. Each locale shares the same layout and shapes; only text properties (content, font, size, alignment) are overridden per locale." : {
+
+    },
     "Looks valid" : {
       "localizations" : {
         "de" : {
@@ -15147,6 +15792,12 @@
           }
         }
       }
+    },
+    "Loved the app? An App Store review helps tremendously and keeps Screenshot Bro independent." : {
+
+    },
+    "macOS version (Apple menu ▸ About This Mac)." : {
+
     },
     "Manage Locales" : {
       "localizations" : {
@@ -15288,6 +15939,9 @@
       }
     },
     "Manage Subscription" : {
+
+    },
+    "Manual rotation via the rotation control on the properties bar rotates the entire shape including frame and screen content." : {
 
     },
     "Marketing URL" : {
@@ -15524,6 +16178,9 @@
         }
       }
     },
+    "Models are grouped by category. Each shows available colors as small swatches." : {
+
+    },
     "More actions" : {
       "localizations" : {
         "de" : {
@@ -15569,6 +16226,9 @@
           }
         }
       }
+    },
+    "Most modern devices use **image-based frames** — high-res PNG bezels with precise screen insets defined per model." : {
+
     },
     "Move down" : {
       "localizations" : {
@@ -15938,6 +16598,9 @@
         }
       }
     },
+    "Move, resize, rotate" : {
+
+    },
     "Name" : {
       "localizations" : {
         "de" : {
@@ -16029,6 +16692,9 @@
           }
         }
       }
+    },
+    "New project" : {
+
     },
     "New Project" : {
       "localizations" : {
@@ -16122,6 +16788,9 @@
         }
       }
     },
+    "New shapes are placed at the center of the active template and immediately selected." : {
+
+    },
     "New Template..." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -16169,6 +16838,9 @@
         }
       }
     },
+    "New templates inherit the row's background and dimensions." : {
+
+    },
     "Next" : {
       "localizations" : {
         "de" : {
@@ -16214,6 +16886,9 @@
           }
         }
       }
+    },
+    "Next locale" : {
+
     },
     "Next Locale" : {
       "localizations" : {
@@ -17053,6 +17728,18 @@
         }
       }
     },
+    "Note the **Issuer ID** and **Key ID**." : {
+
+    },
+    "Nudge" : {
+
+    },
+    "Nudge selection by 1px" : {
+
+    },
+    "Nudge selection by 10px" : {
+
+    },
     "Offset" : {
       "localizations" : {
         "de" : {
@@ -17144,6 +17831,18 @@
           }
         }
       }
+    },
+    "On export, each template is clipped to its own bounds, so a shape that spans templates will appear on each of them at the right horizontal offset." : {
+
+    },
+    "On export, Screenshot Bro creates one folder per locale, then sub-folders per row. The structure matches what App Store Connect's localized screenshot uploads expect." : {
+
+    },
+    "One project per app — or per major release." : {
+
+    },
+    "One row per device type." : {
+
     },
     "One-time in-app purchase" : {
       "extractionState" : "stale",
@@ -17610,6 +18309,9 @@
         }
       }
     },
+    "Open the **Locale** menu in the toolbar, or use **Locale ▸ Manage Locales…** in the menu bar." : {
+
+    },
     "Opening Project…" : {
 
     },
@@ -17704,6 +18406,9 @@
           }
         }
       }
+    },
+    "Other shape properties (position, size, color, image) are shared across all locales. Edit them once and every locale picks up the change." : {
+
     },
     "Outline" : {
       "localizations" : {
@@ -17936,6 +18641,12 @@
         }
       }
     },
+    "Pan & zoom" : {
+
+    },
+    "Pan canvas" : {
+
+    },
     "Paste" : {
       "localizations" : {
         "de" : {
@@ -17981,6 +18692,12 @@
           }
         }
       }
+    },
+    "Paste shapes" : {
+
+    },
+    "Paste SVG markup directly. Width and height are auto-detected; you can override them." : {
+
     },
     "Paste Text Style" : {
       "localizations" : {
@@ -18166,6 +18883,9 @@
         }
       }
     },
+    "Per-template controls" : {
+
+    },
     "Pick a font file or a folder containing all variants" : {
 
     },
@@ -18218,6 +18938,12 @@
         }
       }
     },
+    "Pick from 30 built-in language presets, or define a custom code." : {
+
+    },
+    "Pick the app and version. Screenshot Bro maps each row to the right device family automatically." : {
+
+    },
     "Pick up right where you left off — add as many rows as you need." : {
 
     },
@@ -18225,6 +18951,12 @@
 
     },
     "Pick up right where you left off — your project list is now unlimited." : {
+
+    },
+    "Picking a model and color" : {
+
+    },
+    "Pinned and recent projects appear at the top." : {
 
     },
     "Pitch" : {
@@ -18779,6 +19511,12 @@
         }
       }
     },
+    "Preview vs export" : {
+
+    },
+    "Previous locale" : {
+
+    },
     "Previous Locale" : {
       "localizations" : {
         "de" : {
@@ -19114,6 +19852,9 @@
     "Pro — Yearly" : {
 
     },
+    "Pro paywall messages adapt to context — the prompt you see when adding a 4th row is different from the one you see when adding a 6th template, so you always know exactly which limit you're hitting." : {
+
+    },
     "Pro: %@" : {
       "localizations" : {
         "de" : {
@@ -19159,6 +19900,9 @@
           }
         }
       }
+    },
+    "Produce store-ready PNGs and JPEGs." : {
+
     },
     "Project %@" : {
       "localizations" : {
@@ -19344,6 +20088,9 @@
         }
       }
     },
+    "Project order can be set to **Creation date** or **Manual** in Settings ▸ General." : {
+
+    },
     "Project storage" : {
       "localizations" : {
         "de" : {
@@ -19435,6 +20182,9 @@
           }
         }
       }
+    },
+    "Projects autosave 0.3 seconds after the last change. You don't need to manually save. To make a one-off backup, use **Settings ▸ Export ▸ Back Up Projects**." : {
+
     },
     "Projects will be kept locally. Other Macs will no longer see updates." : {
       "localizations" : {
@@ -19758,6 +20508,9 @@
         }
       }
     },
+    "Quick export" : {
+
+    },
     "Quick Look" : {
       "localizations" : {
         "de" : {
@@ -20079,6 +20832,9 @@
           }
         }
       }
+    },
+    "Real device frames with accurate screen insets." : {
+
     },
     "Rectangle" : {
       "localizations" : {
@@ -20594,6 +21350,9 @@
         }
       }
     },
+    "Renaming, duplicating, deleting" : {
+
+    },
     "Render Failed" : {
       "localizations" : {
         "de" : {
@@ -20641,6 +21400,9 @@
       }
     },
     "Renews" : {
+
+    },
+    "Reordering and deleting" : {
 
     },
     "Replace" : {
@@ -22544,6 +23306,9 @@
         }
       }
     },
+    "Right-click a project in the picker for rename, duplicate, and delete actions." : {
+
+    },
     "Rim" : {
 
     },
@@ -22642,6 +23407,9 @@
         }
       }
     },
+    "Row inspector" : {
+
+    },
     "Row label" : {
       "localizations" : {
         "de" : {
@@ -22687,6 +23455,9 @@
           }
         }
       }
+    },
+    "Row vs template backgrounds" : {
+
     },
     "Rows" : {
       "localizations" : {
@@ -22734,6 +23505,9 @@
         }
       }
     },
+    "Rows are horizontal groups of screenshots inside a project. Each row has its own screenshot size (in pixels), device category, and a row-level background. The App Store requires separate uploads per device size — that's why rows exist." : {
+
+    },
     "Rows per project" : {
       "localizations" : {
         "de" : {
@@ -22779,6 +23553,9 @@
           }
         }
       }
+    },
+    "Run an export first, then click **Upload to App Store Connect** in the toolbar." : {
+
     },
     "Run the connection test once before uploading screenshots." : {
       "localizations" : {
@@ -23200,6 +23977,9 @@
     "Screenshot Bro" : {
 
     },
+    "Screenshot Bro Help" : {
+
+    },
     "Screenshot Bro Pro is unlocked and ready to use." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -23292,6 +24072,15 @@
           }
         }
       }
+    },
+    "Screenshot Bro remembers the last folder you exported to (security-scoped bookmark)." : {
+
+    },
+    "Screenshot Bro turns raw device screenshots into polished, store-ready marketing images. Drop in a screenshot, pick a device frame, add a headline, and export at exactly the resolution the App Store and Google Play expect." : {
+
+    },
+    "Screenshot Bro version (Apple menu ▸ About Screenshot Bro)." : {
+
     },
     "Screenshot Center" : {
       "localizations" : {
@@ -23526,6 +24315,9 @@
         }
       }
     },
+    "Scroll vertically to navigate rows." : {
+
+    },
     "Search languages..." : {
       "localizations" : {
         "de" : {
@@ -23664,6 +24456,9 @@
         }
       }
     },
+    "Select a row (click empty canvas space inside it) to reveal row-level controls in the inspector." : {
+
+    },
     "Select a row to edit its settings." : {
       "localizations" : {
         "de" : {
@@ -23801,6 +24596,9 @@
           }
         }
       }
+    },
+    "Select all shapes in the active row" : {
+
     },
     "Select an app" : {
       "localizations" : {
@@ -24032,6 +24830,12 @@
         }
       }
     },
+    "Selection" : {
+
+    },
+    "Send shape to back" : {
+
+    },
     "Send to Back" : {
       "localizations" : {
         "de" : {
@@ -24173,6 +24977,9 @@
     "Set backgrounds, colors, and gradients. Use the inspector on the right and properties bar at the bottom." : {
 
     },
+    "Set up an API key" : {
+
+    },
     "sets" : {
       "localizations" : {
         "de" : {
@@ -24218,6 +25025,9 @@
           }
         }
       }
+    },
+    "Settings & Defaults" : {
+
     },
     "Setup" : {
       "extractionState" : "stale",
@@ -24311,6 +25121,15 @@
           }
         }
       }
+    },
+    "Shapes (text, images, devices, etc.) live on the **row canvas** — the unified area behind all templates in a row. A shape can be positioned to land entirely inside one template, or to span across templates." : {
+
+    },
+    "Shapes & Text" : {
+
+    },
+    "Shapes snap to other shapes' edges and centers, and to template boundaries, within a 4px threshold." : {
+
     },
     "Ship screenshots that convert" : {
 
@@ -24773,7 +25592,16 @@
         }
       }
     },
+    "Small things that save time." : {
+
+    },
+    "Snapping & alignment guides" : {
+
+    },
     "Solid" : {
+
+    },
+    "Some abstract categories use **programmatic frames** rendered as SwiftUI shapes. They scale flawlessly to any resolution." : {
 
     },
     "Source" : {
@@ -24966,6 +25794,9 @@
         }
       }
     },
+    "Spanning is great for storytelling: a sunset gradient or a single panoramic image can stretch across three templates and tell a continuous visual story in the App Store carousel." : {
+
+    },
     "Star" : {
       "localizations" : {
         "de" : {
@@ -25156,6 +25987,9 @@
         }
       }
     },
+    "Steps to reproduce, ideally with a screen recording." : {
+
+    },
     "Storage" : {
       "localizations" : {
         "de" : {
@@ -25343,6 +26177,9 @@
     "Style it" : {
 
     },
+    "Subscriptions are managed through your Apple ID; cancellations happen via System Settings ▸ Apple ID ▸ Subscriptions." : {
+
+    },
     "Subtitle" : {
       "localizations" : {
         "de" : {
@@ -25388,6 +26225,9 @@
           }
         }
       }
+    },
+    "Support & Feedback" : {
+
     },
     "Support URL" : {
       "localizations" : {
@@ -25573,6 +26413,9 @@
         }
       }
     },
+    "SVG paste" : {
+
+    },
     "SVGs" : {
       "localizations" : {
         "de" : {
@@ -25618,6 +26461,12 @@
           }
         }
       }
+    },
+    "SVGs are sanitized — script and event handlers are stripped before rendering." : {
+
+    },
+    "SVGs render with a configurable color override and scale crisply at any export resolution." : {
+
     },
     "Switch project" : {
       "localizations" : {
@@ -25714,6 +26563,9 @@
         }
       }
     },
+    "Switch to base locale" : {
+
+    },
     "Switch to the base language (⌥⌘0)" : {
       "localizations" : {
         "de" : {
@@ -25759,6 +26611,15 @@
           }
         }
       }
+    },
+    "Switching between projects" : {
+
+    },
+    "Switching color preserves the screenshot and any rotation." : {
+
+    },
+    "Switching the active locale" : {
+
     },
     "Sync with iCloud" : {
       "localizations" : {
@@ -26313,6 +27174,9 @@
         }
       }
     },
+    "Text auto-grows vertically by default. Drag a side handle to fix the width and let it wrap." : {
+
+    },
     "Text color" : {
       "localizations" : {
         "de" : {
@@ -26359,6 +27223,9 @@
         }
       }
     },
+    "Text editing" : {
+
+    },
     "That doesn't look like a valid .p8 private key." : {
       "localizations" : {
         "de" : {
@@ -26404,6 +27271,12 @@
           }
         }
       }
+    },
+    "The **⋯ menu** offers per-template actions like duplicate, delete, and export preview." : {
+
+    },
+    "The **Template Control Bar** below each template lets you override the row background just for that template." : {
+
     },
     "The API key is connected and ready for screenshot uploads." : {
       "localizations" : {
@@ -26537,6 +27410,12 @@
         }
       }
     },
+    "The first locale you add is the **base locale** — the one whose text is the source of truth." : {
+
+    },
+    "The individual screenshots inside a row." : {
+
+    },
     "The interface language will switch the next time Screenshot Bro launches." : {
       "localizations" : {
         "de" : {
@@ -26583,6 +27462,9 @@
         }
       }
     },
+    "The properties bar shows font, weight, size, color, alignment, line height, and letter spacing." : {
+
+    },
     "The required languages are not downloaded on your Mac.\n\nTo download them, go to:\nSystem Settings → General → Language & Region → Translation Languages\n\nThen download the languages you need and try again." : {
       "localizations" : {
         "de" : {
@@ -26628,6 +27510,12 @@
           }
         }
       }
+    },
+    "The toolbar shows an iCloud status icon when an upload or download is in progress." : {
+
+    },
+    "The zoom slider in the toolbar ranges from 50% to 200% in 25% steps." : {
+
     },
     "This applies translation from the base language to every text layer in %@ and replaces the current translated text." : {
       "localizations" : {
@@ -26720,6 +27608,12 @@
           }
         }
       }
+    },
+    "This is what makes layouts like a single headline that flows across two screenshots possible." : {
+
+    },
+    "This mirrors the upload flow expected by App Store Connect's localized screenshot uploader." : {
+
     },
     "This removes all translated text and locale-specific image overrides for %@, so the project uses the base language text and images again." : {
       "localizations" : {
@@ -26997,6 +27891,12 @@
         }
       }
     },
+    "Three styles" : {
+
+    },
+    "Three things to know first" : {
+
+    },
     "Tile" : {
       "localizations" : {
         "de" : {
@@ -27044,6 +27944,9 @@
       }
     },
     "Tip: drop a screenshot onto any canvas to get started." : {
+
+    },
+    "Tips & Tricks" : {
 
     },
     "To All Screenshots" : {
@@ -27183,6 +28086,15 @@
           }
         }
       }
+    },
+    "To capture screenshots from a connected simulator quickly, use the screenshot capture button in the template control bar — it pulls the most recent simulator screenshot directly into the template." : {
+
+    },
+    "To help us reproduce, please include:" : {
+
+    },
+    "Toggle **Open export folder on success** in Settings to auto-reveal the result in Finder." : {
+
     },
     "Toggle bold" : {
 
@@ -27380,6 +28292,9 @@
         }
       }
     },
+    "Translate text once, lay it out once, ship every language." : {
+
+    },
     "Translating text…" : {
       "localizations" : {
         "de" : {
@@ -27426,6 +28341,9 @@
         }
       }
     },
+    "Translation helpers" : {
+
+    },
     "Translation Languages Not Available" : {
       "localizations" : {
         "de" : {
@@ -27471,6 +28389,9 @@
           }
         }
       }
+    },
+    "Tune the app to match your workflow." : {
+
     },
     "Type" : {
       "localizations" : {
@@ -27655,6 +28576,9 @@
           }
         }
       }
+    },
+    "Unlimited projects, rows, and templates." : {
+
     },
     "Unlimited rows per project" : {
       "localizations" : {
@@ -28346,6 +29270,9 @@
         }
       }
     },
+    "Upload screenshots straight from Screenshot Bro." : {
+
+    },
     "Upload target" : {
       "localizations" : {
         "de" : {
@@ -28483,6 +29410,9 @@
           }
         }
       }
+    },
+    "Uploading" : {
+
     },
     "Uppercase" : {
       "localizations" : {
@@ -28763,6 +29693,18 @@
         }
       }
     },
+    "Use the **Export Preview** button in the template control bar to render a single template to a preview window — handy for spot-checking without going through the full export flow." : {
+
+    },
+    "Use the **Shapes** dropdown in the inspector to add a Rectangle, Circle, or Star." : {
+
+    },
+    "Use the **SVG** button in the shape toolbar to open the paste dialog." : {
+
+    },
+    "Use the project picker in the toolbar to jump between projects." : {
+
+    },
     "Values are saved automatically on this Mac. The private key is stored in Keychain." : {
       "localizations" : {
         "de" : {
@@ -28946,6 +29888,9 @@
           }
         }
       }
+    },
+    "View" : {
+
     },
     "View on Figma Community" : {
       "localizations" : {
@@ -29177,7 +30122,25 @@
         }
       }
     },
+    "Watermark-free exports." : {
+
+    },
+    "We read every message." : {
+
+    },
+    "Website: [screenshotbro.app](https://screenshotbro.app)" : {
+
+    },
+    "Welcome" : {
+
+    },
+    "Welcome to Screenshot Bro" : {
+
+    },
     "What’s included" : {
+
+    },
+    "What's included and where Pro unlocks more." : {
 
     },
     "What's New" : {
@@ -29226,6 +30189,12 @@
         }
       }
     },
+    "When editing a non-base locale, a banner appears at the top of the canvas reminding you which locale you're in." : {
+
+    },
+    "When reporting a bug" : {
+
+    },
     "When set, Cmd+E exports directly to this folder without prompting." : {
       "localizations" : {
         "de" : {
@@ -29272,6 +30241,9 @@
         }
       }
     },
+    "Where projects live on disk" : {
+
+    },
     "Width" : {
       "localizations" : {
         "de" : {
@@ -29317,6 +30289,18 @@
           }
         }
       }
+    },
+    "With a device shape selected, click the device thumbnail in the properties bar to open the picker." : {
+
+    },
+    "With multiple locales: a top-level folder per locale." : {
+
+    },
+    "With multiple rows: a sub-folder per row label (e.g. `iPhone 6.9\"`, `iPad 13\"`)." : {
+
+    },
+    "With one locale and one row: a flat folder of templates." : {
+
     },
     "X" : {
       "localizations" : {
@@ -29548,6 +30532,9 @@
         }
       }
     },
+    "You can preview which screenshots will be uploaded for which locale before confirming." : {
+
+    },
     "You’re Pro!" : {
 
     },
@@ -29649,6 +30636,9 @@
         }
       }
     },
+    "Z-order: **⌘⇧]** brings forward, **⌘⇧[** sends back." : {
+
+    },
     "Zoom" : {
       "localizations" : {
         "de" : {
@@ -29694,6 +30684,9 @@
           }
         }
       }
+    },
+    "Zoom in" : {
+
     },
     "Zoom In" : {
       "localizations" : {
@@ -29786,6 +30779,9 @@
           }
         }
       }
+    },
+    "Zoom out" : {
+
     },
     "Zoom Out" : {
       "localizations" : {
