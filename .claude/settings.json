@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "additionalDirectories": [
+      "/Users/taras/repo/experiments/screnshot-mac-site"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
