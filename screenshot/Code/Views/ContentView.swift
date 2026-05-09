@@ -1,4 +1,5 @@
 import AppKit
+import StoreKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -125,12 +126,17 @@ struct ContentView: View {
     @Environment(StoreService.self) private var store
     @Environment(\.openWindow) private var openWindow
     @Environment(\.undoManager) private var undoManager
+    @Environment(\.requestReview) private var requestReview
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @AppStorage("lastExportFolderBookmark") private var lastExportFolderBookmark = Data()
     @AppStorage("lastExportFolderPath") private var lastExportFolderPath = ""
     @AppStorage("projectSortOrder") private var projectSortOrder = "creation"
+    @AppStorage("reviewExportCount") private var reviewExportCount = 0
+    @AppStorage("reviewLastPromptedVersion") private var reviewLastPromptedVersion = ""
+    @AppStorage("reviewFirstExportDate") private var reviewFirstExportDate: Double = 0
+    @AppStorage("reviewLastPromptDate") private var reviewLastPromptDate: Double = 0
     @State private var isInspectorPresented = true
     @State private var isExporting = false
     @State private var exportSuccess = false
@@ -885,6 +891,34 @@ struct ContentView: View {
             ? String(localized: "\(count) \(noun) exported")
             : String(localized: "\(count) \(noun) exported · \(projectName)")
         NotificationService.notify(title: String(localized: "Export complete"), body: body)
+
+        maybeRequestReview()
+    }
+
+    private static let reviewMinExportCount = 3
+    private static let reviewMinDaysSinceFirstExport: TimeInterval = 14 * 86400
+    private static let reviewMinDaysBetweenPrompts: TimeInterval = 120 * 86400
+
+    private func maybeRequestReview() {
+        let currentVersion = Bundle.main.shortVersion
+        guard !currentVersion.isEmpty, currentVersion != reviewLastPromptedVersion else { return }
+
+        let now = Date().timeIntervalSinceReferenceDate
+        if reviewFirstExportDate == 0 {
+            reviewFirstExportDate = now
+        }
+        reviewExportCount += 1
+
+        guard reviewExportCount >= Self.reviewMinExportCount,
+              now - reviewFirstExportDate >= Self.reviewMinDaysSinceFirstExport,
+              now - reviewLastPromptDate >= Self.reviewMinDaysBetweenPrompts
+        else { return }
+
+        reviewLastPromptedVersion = currentVersion
+        reviewLastPromptDate = now
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            requestReview()
+        }
     }
 
     private func chooseExportDestination() -> URL? {

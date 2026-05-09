@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 
 @main
@@ -322,6 +323,16 @@ struct ScreenshotBroApp: App {
                     guard let bundleURL = DebugTemplateService.getTemplatesBundleURL() else { return }
                     DebugTemplateService.generateMissingPreviews(bundleURL: bundleURL)
                 }
+
+                Divider()
+
+                DebugRequestReviewButton()
+
+                Button("Reset App Review State") {
+                    for key in ["reviewExportCount", "reviewLastPromptedVersion", "reviewFirstExportDate", "reviewLastPromptDate"] {
+                        UserDefaults.standard.removeObject(forKey: key)
+                    }
+                }
             }
             #endif
         }
@@ -412,3 +423,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 }
+
+#if DEBUG
+private struct DebugRequestReviewButton: View {
+    @Environment(\.requestReview) private var requestReview
+    var body: some View {
+        Button("Request App Review Now") { requestReview() }
+    }
+}
+#endif

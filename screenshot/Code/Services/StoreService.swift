@@ -169,8 +169,8 @@ final class StoreService {
 
     #if DEBUG
     private func debugDumpOfferings() async {
-        let bundleVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
-        let bundleBuild = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        let bundleVersion = Bundle.main.shortVersion.isEmpty ? "?" : Bundle.main.shortVersion
+        let bundleBuild = Bundle.main.buildNumber.isEmpty ? "?" : Bundle.main.buildNumber
         print("[Store] bundle short version: \(bundleVersion) (build \(bundleBuild))")
 
         Purchases.shared.invalidateCustomerInfoCache()
