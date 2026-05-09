@@ -2520,6 +2520,9 @@
         }
       }
     },
+    "Add languages to translate every text layer at once. Cmd+] cycles between them." : {
+
+    },
     "Add new row" : {
       "localizations" : {
         "de" : {
@@ -2979,6 +2982,12 @@
           }
         }
       }
+    },
+    "Add text & shapes" : {
+
+    },
+    "Add text, images, devices, and shapes from here. They'll appear on the selected row." : {
+
     },
     "Add this locale in App Store Connect, then refresh locales." : {
       "localizations" : {
@@ -10332,6 +10341,9 @@
     "Drag and drop a PNG / JPEG onto a template to attach it as a device screenshot. A device shape is auto-created if needed." : {
 
     },
+    "Drag screenshots from Finder onto a canvas, or drop several at once to fill the row." : {
+
+    },
     "Drag templates left/right to reorder. Reordering also reorders the exported file numbering." : {
 
     },
@@ -10345,6 +10357,9 @@
 
     },
     "Drop a screenshot directly onto a template to attach it as the device screenshot." : {
+
+    },
+    "Drop a screenshot here" : {
 
     },
     "Drop directly into the background image well in the inspector, or pick via the file dialog." : {
@@ -11478,6 +11493,9 @@
         }
       }
     },
+    "Export every row in every language as PNG or JPEG, ready to upload to App Store Connect or Google Play." : {
+
+    },
     "Export failed" : {
       "localizations" : {
         "de" : {
@@ -11804,6 +11822,9 @@
       }
     },
     "Export screenshots to %@ (⌘E)" : {
+
+    },
+    "Export when ready" : {
 
     },
     "Export..." : {
@@ -15748,6 +15769,9 @@
 
     },
     "Locales let you generate localized screenshot sets without duplicating your project. Each locale shares the same layout and shapes; only text properties (content, font, size, alignment) are overridden per locale." : {
+
+    },
+    "Localize your screenshots" : {
 
     },
     "Looks valid" : {
@@ -25503,6 +25527,9 @@
         }
       }
     },
+    "Skip tour" : {
+
+    },
     "Skipped" : {
       "localizations" : {
         "de" : {
@@ -26178,6 +26205,9 @@
       }
     },
     "Style it" : {
+
+    },
+    "Style your row" : {
 
     },
     "Subscriptions are managed through your Apple ID; cancellations happen via System Settings ▸ Apple ID ▸ Subscriptions." : {
@@ -29703,6 +29733,9 @@
 
     },
     "Use the **SVG** button in the shape toolbar to open the paste dialog." : {
+
+    },
+    "Use the inspector on the right to set the background, default device frame, and screenshot size." : {
 
     },
     "Use the project picker in the toolbar to jump between projects." : {

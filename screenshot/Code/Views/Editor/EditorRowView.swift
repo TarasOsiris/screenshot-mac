@@ -99,6 +99,13 @@ struct EditorRowView: View {
             // Unified canvas + add button
             if !row.isCollapsed {
                 horizontalScrollArea
+                    .coachPopover(
+                        step: .canvas,
+                        state: state,
+                        isActive: state.rows.first?.id == row.id,
+                        arrowEdge: .top,
+                        attachmentAnchor: .point(.center)
+                    )
             }
         }
         .onScrollGeometryChange(for: CGRect.self) { geo in

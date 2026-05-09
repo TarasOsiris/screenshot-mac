@@ -7,7 +7,16 @@ struct ScreenshotBroApp: App {
     @State private var appState = AppState()
     @State private var storeService = StoreService()
     @AppStorage("appearance") private var appearance = "auto"
-    @AppStorage("onboardingCompleted") private var onboardingCompleted = false
+    @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
+    /// Transient: set when the user clicks "Get Started" in the welcome sheet. Lets the
+    /// modal close without persisting completion — the interactive coach handles that
+    /// when it finishes or is skipped, so quitting mid-tour reopens the welcome on relaunch.
+    @State private var welcomeDismissed = false
+    /// Action to run on the next sheet `onDismiss`. Set inside the welcome modal's
+    /// "Get Started" handler so the coach launches AFTER the modal is fully gone —
+    /// otherwise the popover anchor is hidden behind the dismissing sheet and SwiftUI
+    /// never shows the popover.
+    @State private var pendingCoachStart: (() -> Void)?
     #if DEBUG
     @State private var isDebugTemplateSavePresented = false
     @State private var debugTemplateName = ""
@@ -34,17 +43,29 @@ struct ScreenshotBroApp: App {
                 .background(MainWindowSceneBridge())
                 .task { storeService.start() }
                 .sheet(isPresented: Binding(
-                    get: { !onboardingCompleted },
-                    set: { if !$0 { onboardingCompleted = true } }
-                )) {
-                    OnboardingView()
-                        .interactiveDismissDisabled()
-                }
-                #if DEBUG
-                .sheet(isPresented: $isDebugOnboardingPresented) {
+                    get: { !onboardingCompleted && !welcomeDismissed },
+                    set: { _ in }
+                ), onDismiss: launchPendingCoachIfNeeded) {
                     OnboardingView(
                         persistCompletion: false,
-                        onComplete: { isDebugOnboardingPresented = false }
+                        onComplete: {
+                            pendingCoachStart = { appState.startCoach(persistOnEnd: true) }
+                            welcomeDismissed = true
+                        }
+                    )
+                    .interactiveDismissDisabled()
+                }
+                #if DEBUG
+                .sheet(
+                    isPresented: $isDebugOnboardingPresented,
+                    onDismiss: launchPendingCoachIfNeeded
+                ) {
+                    OnboardingView(
+                        persistCompletion: false,
+                        onComplete: {
+                            pendingCoachStart = { appState.startCoach(persistOnEnd: false) }
+                            isDebugOnboardingPresented = false
+                        }
                     )
                 }
                 .task {
@@ -349,6 +370,12 @@ struct ScreenshotBroApp: App {
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
         }
+    }
+
+    private func launchPendingCoachIfNeeded() {
+        guard let start = pendingCoachStart else { return }
+        pendingCoachStart = nil
+        start()
     }
 
     #if DEBUG

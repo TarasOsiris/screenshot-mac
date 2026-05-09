@@ -4,7 +4,7 @@ struct OnboardingView: View {
     var persistCompletion = true
     var onComplete: (() -> Void)?
 
-    @AppStorage("onboardingCompleted") private var onboardingCompleted = false
+    @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
 
     var body: some View {
         ZStack {

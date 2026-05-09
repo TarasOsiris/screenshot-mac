@@ -25,6 +25,7 @@ struct InspectorPanel: View {
                 optionsSection(rowId: rowId)
             }
             .formStyle(.grouped)
+            .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
         } else {
             ContentUnavailableView(
                 "No Row Selected",

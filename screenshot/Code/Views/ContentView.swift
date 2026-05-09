@@ -540,6 +540,7 @@ struct ContentView: View {
         ) {
             exportMenuContent
         }
+        .coachPopover(step: .export, state: state, arrowEdge: .top)
     }
 
     @ViewBuilder

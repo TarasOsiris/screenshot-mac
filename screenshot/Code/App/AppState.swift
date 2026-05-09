@@ -31,6 +31,11 @@ final class AppState {
     @ObservationIgnored var justAddedShapeId: UUID?
     var pendingTranslateShapeId: UUID?
     var pendingLocaleMenuRequest: LocaleMenuRequest?
+    /// Active step of the interactive onboarding tour. `nil` when no tour is in progress.
+    var coachStep: OnboardingCoachStep?
+    /// When false, `endCoach()` skips persisting `onboardingCompleted`. Used by the debug
+    /// "Show Onboarding…" command so it can be re-run without consuming the real flag.
+    @ObservationIgnored var coachPersistsOnEnd: Bool = true
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
     /// Family names referenced by any shape at some point in the current session. A font

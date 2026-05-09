@@ -109,6 +109,7 @@ struct LocaleToolbarMenu: View {
         }
         .menuStyle(.button)
         .help(localeHelpText)
+        .coachPopover(step: .locale, state: state, arrowEdge: .top)
         .sheet(isPresented: $isManagingLocales) {
             ManageLocalesSheet(state: state)
         }

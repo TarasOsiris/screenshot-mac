@@ -19,6 +19,7 @@ struct ShapeToolbar: View {
                 }
             }
         }
+        .coachPopover(step: .shapes, state: state, arrowEdge: .trailing)
         .sheet(isPresented: $isSvgDialogPresented) {
             SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
                 addSvgShape(svgContent: svgContent, size: size, useColor: useColor, color: color)
