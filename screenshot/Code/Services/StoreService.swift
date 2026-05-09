@@ -1,4 +1,5 @@
 import AppKit
+import OSLog
 import RevenueCat
 
 @MainActor
@@ -171,26 +172,26 @@ final class StoreService {
     private func debugDumpOfferings() async {
         let bundleVersion = Bundle.main.shortVersion.isEmpty ? "?" : Bundle.main.shortVersion
         let bundleBuild = Bundle.main.buildNumber.isEmpty ? "?" : Bundle.main.buildNumber
-        print("[Store] bundle short version: \(bundleVersion) (build \(bundleBuild))")
+        AppLogger.store.debug("bundle short version: \(bundleVersion, privacy: .public) (build \(bundleBuild, privacy: .public))")
 
         Purchases.shared.invalidateCustomerInfoCache()
         do {
             _ = try await Purchases.shared.customerInfo(fetchPolicy: .fetchCurrent)
             let offerings = try await Purchases.shared.offerings()
-            print("[Store] current offering id: \(offerings.current?.identifier ?? "<nil>")")
+            AppLogger.store.debug("current offering id: \(offerings.current?.identifier ?? "<nil>", privacy: .public)")
             let currentPackages = offerings.current?.availablePackages.map { pkg in
                 "\(pkg.identifier)→\(pkg.storeProduct.productIdentifier)"
             } ?? []
-            print("[Store] current packages: \(currentPackages)")
-            print("[Store] all offerings: \(offerings.all.keys.sorted())")
+            AppLogger.store.debug("current packages: \(currentPackages, privacy: .public)")
+            AppLogger.store.debug("all offerings: \(offerings.all.keys.sorted(), privacy: .public)")
             for (id, offering) in offerings.all {
                 let packages = offering.availablePackages.map { pkg in
                     "\(pkg.identifier)→\(pkg.storeProduct.productIdentifier)"
                 }
-                print("[Store]   \(id): \(packages)")
+                AppLogger.store.debug("  \(id, privacy: .public): \(packages, privacy: .public)")
             }
         } catch {
-            print("[Store] offerings fetch failed: \(error)")
+            AppLogger.store.error("offerings fetch failed: \(error.localizedDescription, privacy: .public)")
         }
     }
     #endif
@@ -223,7 +224,7 @@ final class StoreService {
             let configuredProductId = configuredProductId ?? "<none>"
             let activeEntitlementKeys = activeEntitlements.keys.sorted().joined(separator: ", ")
             let purchasedProductIds = customerInfo.allPurchasedProductIdentifiers.sorted().joined(separator: ", ")
-            print("[StoreService] No Pro unlock for entitlement '\(configuredEntitlementId)' or product '\(configuredProductId)'. Active entitlements: \(activeEntitlementKeys). Purchased products: \(purchasedProductIds)")
+            AppLogger.store.debug("No Pro unlock for entitlement '\(configuredEntitlementId, privacy: .public)' or product '\(configuredProductId, privacy: .public)'. Active entitlements: \(activeEntitlementKeys, privacy: .public). Purchased products: \(purchasedProductIds, privacy: .public)")
         }
         #endif
         let newTier: ProTier? = entitled

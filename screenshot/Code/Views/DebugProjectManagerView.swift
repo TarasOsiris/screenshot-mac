@@ -88,7 +88,7 @@ struct DebugProjectManagerView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
         }
-        .frame(width: 420, height: 400)
+        .frame(width: UIMetrics.Window.debug.width, height: UIMetrics.Window.debug.height)
         .alert("Delete \(selection.count) project\(selection.count == 1 ? "" : "s")?", isPresented: $isConfirmingDelete) {
             Button("Delete", role: .destructive) {
                 deleteSelected()

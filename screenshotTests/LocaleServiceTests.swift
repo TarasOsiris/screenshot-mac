@@ -262,6 +262,43 @@ struct LocaleServiceTests {
         #expect(override?.fontSize == 20, "Font size override must survive non-overridable property changes")
     }
 
+    @Test func splitUpdateSplitsSimultaneousOverridableAndNonOverridableEdits() {
+        // A user editing in a non-base locale changes BOTH an overridable property (text)
+        // and a non-overridable property (rotation) on the same shape. splitUpdate must:
+        //   - route the rotation change to the base shape (non-overridable),
+        //   - update the locale override with the new text,
+        //   - keep the base shape's text unchanged.
+        let base = CanvasShapeModel(
+            type: .text,
+            x: 0, y: 0, width: 300, height: 50,
+            rotation: 0,
+            color: .red, opacity: 1.0,
+            text: "Hello", fontSize: 24, fontWeight: 400
+        )
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [base.id.uuidString: ShapeLocaleOverride(text: "Bonjour", fontSize: 22)]]
+        )
+
+        // Resolve, then edit text AND rotation at once (simulates a user typing while a rotation gesture is active).
+        var edited = LocaleService.resolveShape(base, localeState: state)
+        #expect(edited.text == "Bonjour")
+        edited.text = "Salut"
+        edited.rotation = 45
+
+        let result = LocaleService.splitUpdate(base: base, updated: edited, localeState: &state)
+
+        // Non-overridable rotation lands on the base shape; base text stays put.
+        #expect(result.rotation == 45, "Rotation (non-overridable) should be applied to the base shape")
+        #expect(result.text == "Hello", "Base shape's text must not change when editing in a non-base locale")
+
+        // The fr override now reflects the new text but keeps the previously-set fontSize override.
+        let override = state.override(forCode: "fr", shapeId: base.id)
+        #expect(override?.text == "Salut", "Updated text should be stored as the override")
+        #expect(override?.fontSize == 22, "Pre-existing fontSize override must survive a same-call edit to a different overridable property")
+    }
+
     @Test func splitUpdateWipesOverridesWhenBaseShapePassedDirectly() {
         // This test documents the bug: passing a base shape (not resolved) to splitUpdate
         // causes overrides to be wiped because all overridable properties match the base.

@@ -21,8 +21,8 @@ struct ExportProgressOverlay: View {
                     .keyboardShortcut(.cancelAction)
                     .controlSize(.small)
             }
-            .padding(24)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .padding(UIMetrics.Spacing.modal)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.floating))
         }
     }
 }

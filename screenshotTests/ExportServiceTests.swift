@@ -567,6 +567,111 @@ struct ExportServiceTests {
         }
     }
 
+    @Test func spanningTiledImageRepeatsAcrossTemplatesWithSpacingGaps() throws {
+        let tile = makePatternedTile(size: 40, redQuadrantSize: 20)
+        let tileKey = "test-tile"
+
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        // tileSpacingX/Y = 1.0 ⇒ step = imgW * 2 = 80, leaving a 40-wide gap between tiles.
+        // Across the 400-wide spanning row, anchors land at row x = 0, 80, 160, 240, 320 —
+        // template 0 sees them at local x = 0, 80, 160; template 1 at local x = 40, 120.
+        let bgConfig = BackgroundImageConfig(
+            fileName: tileKey,
+            fillMode: .tile,
+            tileSpacingX: 1.0, tileSpacingY: 1.0,
+            tileScaleX: 1.0, tileScaleY: 1.0
+        )
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw, templateHeight: th,
+            bgColor: Self.testBlue,
+            backgroundStyle: .image,
+            spanBackgroundAcrossRow: true,
+            backgroundImageConfig: bgConfig
+        )
+
+        let bmp0 = try renderTemplateBitmap(index: 0, row: row, screenshotImages: [tileKey: tile])
+        let bmp1 = try renderTemplateBitmap(index: 1, row: row, screenshotImages: [tileKey: tile])
+
+        // Template 0: red anchors at three tile origins (0, 80, 160) in the top-left quadrant.
+        try expectDominant(bmp0, at: (10, 10), channel: .r, label: "t0 anchor 0")
+        try expectDominant(bmp0, at: (90, 10), channel: .r, label: "t0 anchor 1")
+        try expectDominant(bmp0, at: (170, 10), channel: .r, label: "t0 anchor 2")
+
+        // Template 0: spacing gap between tiles (40-80, 120-160) shows the row's blue bgColor.
+        try expectDominant(bmp0, at: (50, 10), channel: .b, label: "t0 gap shows bgColor")
+        try expectDominant(bmp0, at: (130, 10), channel: .b, label: "t0 gap shows bgColor")
+
+        // Template 1: tile grid continues — anchors land at local x = 40, 120 (row x = 240, 320).
+        try expectDominant(bmp1, at: (50, 10), channel: .r, label: "t1 anchor at row 240")
+        try expectDominant(bmp1, at: (130, 10), channel: .r, label: "t1 anchor at row 320")
+
+        // Template 1: gap before the first anchor (row 200-240) → bgColor visible.
+        try expectDominant(bmp1, at: (10, 10), channel: .b, label: "t1 leading gap")
+    }
+
+    @Test func nonSpanningTiledImageStartsFreshPerTemplate() throws {
+        // Same tile as the spanning test, but spanBackgroundAcrossRow = false.
+        // Each template's tile grid starts at its own origin, so both templates render identically.
+        let tile = makePatternedTile(size: 40, redQuadrantSize: 20)
+        let tileKey = "test-tile"
+
+        let tw: CGFloat = 200
+        let th: CGFloat = 200
+        let bgConfig = BackgroundImageConfig(
+            fileName: tileKey,
+            fillMode: .tile,
+            tileSpacingX: 1.0, tileSpacingY: 1.0,
+            tileScaleX: 1.0, tileScaleY: 1.0
+        )
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw, templateHeight: th,
+            bgColor: Self.testBlue,
+            backgroundStyle: .image,
+            spanBackgroundAcrossRow: false,
+            backgroundImageConfig: bgConfig
+        )
+
+        let bmp0 = try renderTemplateBitmap(index: 0, row: row, screenshotImages: [tileKey: tile])
+        let bmp1 = try renderTemplateBitmap(index: 1, row: row, screenshotImages: [tileKey: tile])
+
+        // Both templates start with a red anchor at (10, 10) and show identical grids.
+        for (label, bmp) in [("t0", bmp0), ("t1", bmp1)] {
+            try expectDominant(bmp, at: (10, 10), channel: .r, label: "\(label) anchor 0")
+            try expectDominant(bmp, at: (90, 10), channel: .r, label: "\(label) anchor 1")
+            try expectDominant(bmp, at: (170, 10), channel: .r, label: "\(label) anchor 2")
+            try expectDominant(bmp, at: (50, 10), channel: .b, label: "\(label) gap")
+        }
+    }
+
+    /// Builds an NSImage that is `size`×`size` pixels: the top-left `redQuadrantSize`×`redQuadrantSize`
+    /// region is opaque red, the rest is opaque white. Used for verifying tile anchor positions in export.
+    private func makePatternedTile(size: Int, redQuadrantSize: Int) -> NSImage {
+        let bitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: size, pixelsHigh: size,
+            bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: size * 4, bitsPerPixel: 32
+        )!
+        let ctx = NSGraphicsContext(bitmapImageRep: bitmap)!
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = ctx
+        NSColor.white.setFill()
+        NSRect(x: 0, y: 0, width: size, height: size).fill()
+        NSColor.red.setFill()
+        NSRect(x: 0, y: size - redQuadrantSize, width: redQuadrantSize, height: redQuadrantSize).fill()
+        ctx.flushGraphics()
+        NSGraphicsContext.restoreGraphicsState()
+
+        let image = NSImage(size: NSSize(width: size, height: size))
+        image.addRepresentation(bitmap)
+        return image
+    }
+
     @Test func clipToTemplateRestrictsShapeToOwningTemplate() throws {
         let tw: CGFloat = 400
         let th: CGFloat = 400

@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import OSLog
 import UniformTypeIdentifiers
 
 enum ExportImageFormat: String {
@@ -641,7 +642,7 @@ struct ExportService {
         hostingView.displayIfNeeded()
 
         guard let bitmapRep = bitmapRep(width: width, height: height) else {
-            print("[ExportService] Warning: Failed to create bitmap rep for \(label)")
+            AppLogger.export.warning("Failed to create bitmap rep for \(label, privacy: .public)")
             return NSImage(size: NSSize(width: width, height: height))
         }
 

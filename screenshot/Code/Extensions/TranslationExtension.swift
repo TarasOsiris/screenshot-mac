@@ -1,3 +1,4 @@
+import OSLog
 import SwiftUI
 import Translation
 
@@ -46,7 +47,7 @@ func translateShapes(
                 text: translatedText
             )
         } catch {
-            print("Translation failed for shape \(item.shape.id): \(error)")
+            AppLogger.translation.error("Translation failed for shape \(item.shape.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
             // Stop the entire loop on first failure — avoids re-showing
             // the language download dialog for every remaining shape.
             return false

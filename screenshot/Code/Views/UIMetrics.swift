@@ -80,4 +80,22 @@ enum UIMetrics {
         /// Subtle strokeBorder used to outline image previews / swatches against any background.
         static var subtle: Color { Color.primary.opacity(Opacity.hairlineOverlay) }
     }
+
+    /// Standard fixed-size dimensions for secondary windows (Settings, debug pickers, etc.).
+    enum Window {
+        static let settings = CGSize(width: 520, height: 560)
+        static let debug = CGSize(width: 420, height: 400)
+    }
+
+    enum Spacing {
+        /// Outer padding for centered modal panels (export progress, drop overlays).
+        static let modal: CGFloat = 24
+    }
+
+    /// Tap-target dimensions for the small chevron menu placed next to a numeric text field
+    /// (e.g. font-size / line-height presets in the properties bar).
+    enum ChevronMenu {
+        static let width: CGFloat = 14
+        static let height: CGFloat = 20
+    }
 }

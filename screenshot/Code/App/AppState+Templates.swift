@@ -110,10 +110,14 @@ extension AppState {
             let newBgFile = "\(newTemplate.id.uuidString)-bg.png"
             let srcURL = resourcesURL.appendingPathComponent(bgFileName)
             let dstURL = resourcesURL.appendingPathComponent(newBgFile)
-            if FileManager.default.fileExists(atPath: srcURL.path) {
-                try? FileManager.default.copyItem(at: srcURL, to: dstURL)
+            do {
+                try FileManager.default.copyItem(at: srcURL, to: dstURL)
                 newTemplate.backgroundImageConfig.fileName = newBgFile
                 screenshotImages[newBgFile] = screenshotImages[bgFileName]
+            } catch CocoaError.fileReadNoSuchFile, CocoaError.fileNoSuchFile {
+                // Source background was already removed elsewhere; nothing to copy.
+            } catch {
+                saveError = String(localized: "Failed to copy template background: \(error.localizedDescription)")
             }
         }
 

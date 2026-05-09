@@ -812,7 +812,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                             Image(systemName: "chevron.down")
                                 .font(.system(size: UIMetrics.FontSize.hint))
                                 .foregroundStyle(.secondary)
-                                .frame(width: 14, height: 20)
+                                .frame(width: UIMetrics.ChevronMenu.width, height: UIMetrics.ChevronMenu.height)
                                 .contentShape(Rectangle())
                         }
                         .menuStyle(.button)
@@ -931,9 +931,9 @@ struct ShapePropertiesSingleSelectionBar: View {
                         }
                     } label: {
                         Image(systemName: "chevron.down")
-                            .font(.system(size: 9))
+                            .font(.system(size: UIMetrics.FontSize.hint))
                             .foregroundStyle(.secondary)
-                            .frame(width: 14, height: 20)
+                            .frame(width: UIMetrics.ChevronMenu.width, height: UIMetrics.ChevronMenu.height)
                             .contentShape(Rectangle())
                     }
                     .menuStyle(.button)

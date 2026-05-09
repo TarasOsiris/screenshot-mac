@@ -56,7 +56,7 @@ struct SettingsView: View {
                 attributionsSettings
             }
         }
-        .frame(width: 520, height: 560)
+        .frame(width: UIMetrics.Window.settings.width, height: UIMetrics.Window.settings.height)
     }
 
     private var generalSettings: some View {

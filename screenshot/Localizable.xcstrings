@@ -12018,6 +12018,9 @@
         }
       }
     },
+    "Failed to copy template background: %@" : {
+
+    },
     "Failed to create project from template \"%@\". The template data could not be loaded." : {
       "localizations" : {
         "de" : {
