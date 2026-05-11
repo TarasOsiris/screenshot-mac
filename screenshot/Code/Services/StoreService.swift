@@ -62,6 +62,11 @@ final class StoreService {
     private(set) var purchaseStatusMessage: String?
     private(set) var purchaseStatusIsError = false
 
+    var appUserID: String? {
+        guard Purchases.isConfigured else { return nil }
+        return Purchases.shared.appUserID
+    }
+
     private var delegate: CustomerInfoDelegate?
     private var didStart = false
 

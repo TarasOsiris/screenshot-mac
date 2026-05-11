@@ -338,6 +338,23 @@ struct SettingsView: View {
                 if let tier = store.proTier {
                     planDetailRows(for: tier)
                 }
+
+                if let appUserID = store.appUserID {
+                    LabeledContent("RevenueCat ID") {
+                        HStack(spacing: 6) {
+                            Text(appUserID)
+                                .font(.system(.callout, design: .monospaced))
+                                .textSelection(.enabled)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .foregroundStyle(.secondary)
+                            ActionButton(icon: "doc.on.doc", tooltip: "Copy RevenueCat ID") {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(appUserID, forType: .string)
+                            }
+                        }
+                    }
+                }
             }
 
             purchaseStatusSection
