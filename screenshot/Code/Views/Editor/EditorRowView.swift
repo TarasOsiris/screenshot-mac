@@ -29,6 +29,12 @@ struct EditorRowView: View {
     @State private var backgroundRemovalError: String?
     /// Cached snap targets for non-selected shapes during drag.
     @State private var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
+    /// In-progress resize state per shape, owned by EditorRowView so the
+    /// selection overlay (outside .scaleEffect) and CanvasShapeView (inside)
+    /// see the same value during a drag.
+    @State private var pendingResize: [UUID: ResizeState] = [:]
+    @State private var pendingRotation: [UUID: Double] = [:]
+    @State private var textEditingShapeId: UUID?
     @FocusState private var isLabelFieldFocused: Bool
 
     private var isSelected: Bool {
@@ -318,25 +324,48 @@ struct EditorRowView: View {
                 let dh = row.displayHeight(zoom: 1.0)
                 let ds = row.displayScale(zoom: 1.0)
 
+                let resolved = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
+
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .top, spacing: 0) {
-                        // Unified canvas with per-template scroll anchors
-                        canvasView(dw: dw, dh: dh, ds: ds)
-                            .scaleEffect(zoom, anchor: .topLeading)
+                        // Unified canvas with per-template scroll anchors.
+                        // The selection layer sits OUTSIDE `.scaleEffect(zoom)` so
+                        // resize/rotation handles stay pixel-perfect at every zoom.
+                        ZStack(alignment: .topLeading) {
+                            canvasView(dw: dw, dh: dh, ds: ds, resolvedShapes: resolved)
+                                .scaleEffect(zoom, anchor: .topLeading)
+                                .frame(
+                                    width: row.totalDisplayWidth(zoom: zoom),
+                                    height: row.displayHeight(zoom: zoom),
+                                    alignment: .topLeading
+                                )
+                                .overlay(alignment: .topLeading) {
+                                    HStack(spacing: 0) {
+                                        ForEach(row.templates) { template in
+                                            Color.clear
+                                                .frame(width: row.displayWidth(zoom: zoom), height: 1)
+                                                .id("focus_\(template.id)")
+                                        }
+                                    }
+                                }
+
+                            CanvasSelectionLayer(
+                                state: state,
+                                row: row,
+                                resolvedShapes: resolved,
+                                visualScale: ds * zoom,
+                                pendingResize: $pendingResize,
+                                pendingRotation: $pendingRotation,
+                                textEditingShapeId: textEditingShapeId,
+                                activeDragOffset: activeDragOffset,
+                                draggingShapeId: draggingShapeId
+                            )
                             .frame(
                                 width: row.totalDisplayWidth(zoom: zoom),
                                 height: row.displayHeight(zoom: zoom),
                                 alignment: .topLeading
                             )
-                            .overlay(alignment: .topLeading) {
-                                HStack(spacing: 0) {
-                                    ForEach(row.templates) { template in
-                                        Color.clear
-                                            .frame(width: row.displayWidth(zoom: zoom), height: 1)
-                                            .id("focus_\(template.id)")
-                                    }
-                                }
-                            }
+                        }
 
                         // Add button
                         AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
@@ -459,11 +488,13 @@ struct EditorRowView: View {
     }
 
     @ViewBuilder
-    private func canvasView(dw: CGFloat, dh: CGFloat, ds: CGFloat) -> some View {
-        let resolvedShapes = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
+    private func canvasView(dw: CGFloat, dh: CGFloat, ds: CGFloat, resolvedShapes: [CanvasShapeModel]) -> some View {
         let selectedShapeIds = state.selectedShapeIds
         let isNonBaseLocale = !state.localeState.isBaseLocale
         let currentLocaleName: String? = isNonBaseLocale ? state.localeState.activeLocaleLabel : nil
+        // Computed once per render — the per-shape closure below references it
+        // instead of recomputing the O(N) walk for every shape's `lockToggleWillUnlock`.
+        let selectionFullyLocked = state.isSelectionFullyLocked
         let allSelectedSameType: Bool = selectedShapeIds.count > 1 && {
             var firstType: ShapeType?
             for shape in resolvedShapes where selectedShapeIds.contains(shape.id) {
@@ -504,6 +535,8 @@ struct EditorRowView: View {
                     deviceModelRenderingMode: .snapshot,
                     clipBounds: clipRect,
                     canvasGlobalOrigin: canvasGlobalOrigin,
+                    resizeState: pendingResize[shape.id],
+                    rotationDelta: pendingRotation[shape.id] ?? 0,
                     onSelect: { state.selectShape(shape.id, in: row.id) },
                     onShiftSelect: { state.toggleShapeSelection(shape.id, in: row.id) },
                     onUpdate: { state.updateShape($0) },
@@ -577,7 +610,14 @@ struct EditorRowView: View {
                         cachedSnapTargets = nil
                     },
                     onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
-                    onEditingTextChanged: { state.isEditingText = $0 },
+                    onEditingTextChanged: { editing in
+                        if state.isEditingText != editing { state.isEditingText = editing }
+                        if editing {
+                            if textEditingShapeId != shape.id { textEditingShapeId = shape.id }
+                        } else if textEditingShapeId == shape.id {
+                            textEditingShapeId = nil
+                        }
+                    },
                     onFormatBarStateChanged: { selState, controller in
                         state.richTextSelectionState = selState
                         state.richTextFormatController = controller
@@ -621,7 +661,14 @@ struct EditorRowView: View {
                     onDuplicateToTemplates: row.templates.count > 1 ? { [shapeId = shape.id] direction in
                         let ids = state.selectedShapeIds.isEmpty ? [shapeId] : state.selectedShapeIds
                         state.duplicateShapesToTemplates(Set(ids), direction: direction)
-                    } : nil
+                    } : nil,
+                    onToggleLock: { [shapeId = shape.id] in
+                        if !state.selectedShapeIds.contains(shapeId) {
+                            state.selectShape(shapeId, in: row.id)
+                        }
+                        state.toggleLockOnSelection()
+                    },
+                    lockToggleWillUnlock: isInSelection ? selectionFullyLocked : shape.resolvedIsLocked
                 )
             }
             .onGeometryChange(for: CGPoint.self) { proxy in

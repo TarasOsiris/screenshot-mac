@@ -32,6 +32,10 @@ struct CanvasShapeView: View {
     var clipBounds: CGRect?
     var canvasGlobalOrigin: CGPoint = .zero
     var showsEditorHelpers: Bool = true
+    /// In-progress resize/rotation reported by the selection overlay so this
+    /// view can render the shape at the pending size/angle during the drag.
+    var resizeState: ResizeState?
+    var rotationDelta: Double = 0
     var onSelect: () -> Void
     var onShiftSelect: (() -> Void)?
     var onUpdate: (CanvasShapeModel) -> Void
@@ -60,12 +64,14 @@ struct CanvasShapeView: View {
     var onDeleteSelected: (() -> Void)?
     var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
     var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
+    var onToggleLock: (() -> Void)?
+    var lockToggleWillUnlock: Bool = false
 
     @State private var addBumpScale: CGFloat = 1.0
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
     @State private var isHovered = false
-    @State private var resizeState: ResizeState?
+    @State private var localResizeState: ResizeState?
     @State private var isDropTargeted = false
     @State private var isPickerPresented = false
     @State private var isEditingText = false
@@ -75,39 +81,32 @@ struct CanvasShapeView: View {
     @StateObject private var formatController = RichTextFormatController()
     @State private var cachedSvgImage: NSImage?
     @State private var svgCacheKey = ""
-    @State private var rotationDelta: Double = 0
+    @State private var localRotationDelta: Double = 0
     @State private var svgResizeDebounceTask: Task<Void, Never>?
 
     private let handleDiameter: CGFloat = 8
-
     private var displayPixelStep: CGFloat { 1 / max(screenScale, 1) }
+    private var activeResizeState: ResizeState? { isMultiSelected ? resizeState : localResizeState }
+    private var activeRotationDelta: Double { isMultiSelected ? rotationDelta : localRotationDelta }
 
     // Current effective geometry (accounts for in-progress resize or drag)
     private var effectiveX: CGFloat {
-        if let rs = resizeState { return rs.newX } else { return shape.x + dragOffset.width + groupDragOffset.width }
+        if let rs = activeResizeState { return rs.newX } else { return shape.x + dragOffset.width + groupDragOffset.width }
     }
     private var effectiveY: CGFloat {
-        if let rs = resizeState { return rs.newY } else { return shape.y + dragOffset.height + groupDragOffset.height }
+        if let rs = activeResizeState { return rs.newY } else { return shape.y + dragOffset.height + groupDragOffset.height }
     }
-    private var effectiveW: CGFloat { resizeState?.newW ?? shape.width }
-    private var effectiveH: CGFloat { resizeState?.newH ?? shape.height }
+    private var effectiveW: CGFloat { activeResizeState?.newW ?? shape.width }
+    private var effectiveH: CGFloat { activeResizeState?.newH ?? shape.height }
 
     private var displayRect: CGRect {
-        let rawMinX = effectiveX * displayScale
-        let rawMinY = effectiveY * displayScale
-        let rawMaxX = (effectiveX + effectiveW) * displayScale
-        let rawMaxY = (effectiveY + effectiveH) * displayScale
-
-        let minX = snapToDisplayPixel(rawMinX)
-        let minY = snapToDisplayPixel(rawMinY)
-        let maxX = snapToDisplayPixel(rawMaxX)
-        let maxY = snapToDisplayPixel(rawMaxY)
-
-        return CGRect(
-            x: minX,
-            y: minY,
-            width: max(displayPixelStep, maxX - minX),
-            height: max(displayPixelStep, maxY - minY)
+        CanvasShapeDisplayGeometry.snappedRect(
+            x: effectiveX,
+            y: effectiveY,
+            width: effectiveW,
+            height: effectiveH,
+            displayScale: displayScale,
+            screenScale: screenScale
         )
     }
     private var displayX: CGFloat { displayRect.minX }
@@ -120,7 +119,7 @@ struct CanvasShapeView: View {
     }
 
     private var currentRotation: Double {
-        isEditingText ? 0 : shape.rotation + rotationDelta
+        isEditingText ? 0 : shape.rotation + activeRotationDelta
     }
 
     /// Axis-aligned bounding box size for the rotated display rect.
@@ -205,46 +204,51 @@ struct CanvasShapeView: View {
             .onChange(of: shape.height) { debounceSvgCacheUpdate() }
 
         if showsEditorHelpers {
-            svgAware
-                .fileImporter(isPresented: $isPickerPresented, allowedContentTypes: [.image]) { result in
-                    if case .success(let url) = result,
-                       let image = loadImportedImage(from: url) {
-                        onScreenshotDrop?(image)
+            ZStack(alignment: .topLeading) {
+                svgAware
+                    .fileImporter(isPresented: $isPickerPresented, allowedContentTypes: [.image]) { result in
+                        if case .success(let url) = result,
+                           let image = loadImportedImage(from: url) {
+                            onScreenshotDrop?(image)
+                        }
                     }
-                }
-                .gesture(dragGesture, including: .gesture)
-                .simultaneousGesture(
-                    TapGesture(count: 2).onEnded {
-                        if shape.type == .text {
-                            editingTextValue = shape.text ?? ""
-                            editingRichTextData = shape.richText
-                            formatController.resetRichTextSession()
-                            if shape.richText != nil {
-                                formatController.beginRichTextSession()
+                    .gesture(dragGesture, including: .gesture)
+                    .simultaneousGesture(
+                        TapGesture(count: 2).onEnded {
+                            guard !shape.resolvedIsLocked else {
+                                onSelect()
+                                return
                             }
-                            isEditingText = true
-                            onSelect()
-                        } else if shape.type == .device || shape.type == .image {
-                            isPickerPresented = true
+                            if shape.type == .text {
+                                editingTextValue = shape.text ?? ""
+                                editingRichTextData = shape.richText
+                                formatController.resetRichTextSession()
+                                if shape.richText != nil {
+                                    formatController.beginRichTextSession()
+                                }
+                                isEditingText = true
+                                onSelect()
+                            } else if shape.type == .device || shape.type == .image {
+                                isPickerPresented = true
+                            }
                         }
-                    }
-                )
-                .simultaneousGesture(
-                    TapGesture().onEnded {
-                        if NSEvent.modifierFlags.contains(.shift) {
-                            onShiftSelect?()
-                        } else {
-                            onSelect()
+                    )
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            if NSEvent.modifierFlags.contains(.shift) {
+                                onShiftSelect?()
+                            } else {
+                                onSelect()
+                            }
                         }
-                    }
-                )
-                .contextMenu { shapeContextMenu }
+                    )
+                    .contextMenu { shapeContextMenu }
 
-            if isSelected {
-                handlesContent
-                    .zIndex(99)
+                if isSelected && !isMultiSelected {
+                    handlesContent
+                        .zIndex(99)
+                }
             }
-
         } else {
             svgAware
                 .allowsHitTesting(false)
@@ -279,7 +283,8 @@ struct CanvasShapeView: View {
                 if inside != isHovered {
                     isHovered = inside
                     if showsEditorHelpers && isSelected && !isDragging {
-                        (inside ? NSCursor.openHand : NSCursor.arrow).set()
+                        let cursor: NSCursor = (inside && !shape.resolvedIsLocked) ? .openHand : .arrow
+                        cursor.set()
                     }
                 }
             case .ended:
@@ -397,25 +402,9 @@ struct CanvasShapeView: View {
                 }
             },
             onAlignSelected: onAlignSelected,
-            onDuplicateToTemplates: onDuplicateToTemplates
-        )
-    }
-
-    @ViewBuilder
-    private var handlesContent: some View {
-        CanvasShapeHandlesOverlay(
-            shape: shape,
-            displayScale: displayScale,
-            zoom: zoom,
-            displayX: displayX,
-            displayY: displayY,
-            displayW: displayW,
-            displayH: displayH,
-            currentRotation: currentRotation,
-            handleDiameter: handleDiameter,
-            rotationDelta: $rotationDelta,
-            resizeState: $resizeState,
-            onUpdate: onUpdate
+            onDuplicateToTemplates: onDuplicateToTemplates,
+            onToggleLock: onToggleLock,
+            lockToggleWillUnlock: lockToggleWillUnlock
         )
     }
 
@@ -432,6 +421,24 @@ struct CanvasShapeView: View {
             .allowsHitTesting(false)
     }
 
+    @ViewBuilder
+    private var handlesContent: some View {
+        CanvasShapeHandlesOverlay(
+            shape: shape,
+            displayScale: displayScale,
+            zoom: zoom,
+            displayX: displayX,
+            displayY: displayY,
+            displayW: displayW,
+            displayH: displayH,
+            currentRotation: currentRotation,
+            handleDiameter: handleDiameter,
+            rotationDelta: $localRotationDelta,
+            resizeState: $localResizeState,
+            onUpdate: onUpdate
+        )
+    }
+
     private func snapToDisplayPixel(_ value: CGFloat) -> CGFloat {
         (value / displayPixelStep).rounded() * displayPixelStep
     }
@@ -441,6 +448,12 @@ struct CanvasShapeView: View {
     private var dragGesture: some Gesture {
         DragGesture()
             .onChanged { value in
+                guard !shape.resolvedIsLocked else {
+                    if !isDragging && !isMultiSelected {
+                        onSelect()
+                    }
+                    return
+                }
                 if !isDragging {
                     isDragging = true
                     NSCursor.closedHand.set()
@@ -464,7 +477,8 @@ struct CanvasShapeView: View {
                 } else {
                     dragOffset = rawOffset
                 }
-                // Report drag progress for group drag
+                // Report drag progress so the selection overlay (which lives
+                // outside the shape) can keep its handles in sync.
                 if isMultiSelected {
                     onDragProgress?(dragOffset)
                 }

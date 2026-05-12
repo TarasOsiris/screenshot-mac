@@ -16,18 +16,46 @@ struct CanvasShapeHandlesOverlay: View {
 
     var body: some View {
         selectionOverlay
-        resizeHandles
+        if !shape.resolvedIsLocked {
+            resizeHandles
+        } else {
+            lockedBadge
+        }
     }
 
     private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
 
     private var selectionOverlay: some View {
-        Rectangle()
-            .strokeBorder(Color.accentColor.opacity(1.0), lineWidth: 1.5 / zoom)
+        let locked = shape.resolvedIsLocked
+        return Rectangle()
+            .strokeBorder(
+                locked ? Color.gray.opacity(0.7) : Color.accentColor.opacity(1.0),
+                lineWidth: (locked ? 1.0 : 1.5) / zoom
+            )
             .frame(width: displayW, height: displayH)
             .rotationEffect(.degrees(currentRotation))
             .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
             .allowsHitTesting(false)
+    }
+
+    private var lockedBadge: some View {
+        let badgeSize: CGFloat = 14 / zoom
+        let inset: CGFloat = 4 / zoom
+        return ZStack(alignment: .topTrailing) {
+            Color.clear
+            Image(systemName: "lock.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: badgeSize, height: badgeSize)
+                .foregroundStyle(Color.white)
+                .padding(3 / zoom)
+                .background(Color.gray.opacity(0.85), in: Circle())
+                .padding(inset)
+        }
+        .frame(width: displayW, height: displayH)
+        .rotationEffect(.degrees(currentRotation))
+        .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+        .allowsHitTesting(false)
     }
 
     private var resizeHandles: some View {

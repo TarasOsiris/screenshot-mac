@@ -48,7 +48,7 @@ struct LocaleToolbarMenu: View {
             Divider()
             let progress = state.translationProgress()
             if !state.localeState.isBaseLocale {
-                Button("Auto-Translate Missing Text") {
+                Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
                     startQuickTranslation(onlyUntranslated: true)
                 }
                 .disabled(
@@ -57,12 +57,12 @@ struct LocaleToolbarMenu: View {
                     progress.translated >= progress.total
                 )
 
-                Button("Re-Translate All Text...") {
+                Button("Re-Translate All Text...", systemImage: "arrow.triangle.2.circlepath") {
                     showReplaceAllConfirmation = true
                 }
                 .disabled(isQuickTranslating || progress.total == 0)
 
-                Button("Revert to Base Language...", role: .destructive) {
+                Button("Revert to Base Language...", systemImage: "arrow.uturn.backward", role: .destructive) {
                     showResetToBaseConfirmation = true
                 }
                 .disabled(isQuickTranslating || !state.localeState.activeLocaleHasOverrides)
@@ -70,12 +70,12 @@ struct LocaleToolbarMenu: View {
                 Divider()
             }
             if state.localeState.locales.count > 1 {
-                Button("Edit Translation Table...") {
+                Button("Edit Translation Table...", systemImage: "tablecells") {
                     isTranslationOverview = true
                 }
                 .disabled(progress.total == 0)
             }
-            Button("Manage Locales...") {
+            Button("Manage Locales...", systemImage: "globe") {
                 isManagingLocales = true
             }
         } label: {
@@ -302,12 +302,12 @@ struct LocaleBanner: View {
                         .font(.system(size: 11, weight: .medium))
 
                         Menu {
-                            Button("Auto-Translate Missing Text") {
+                            Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
                                 startTranslation(onlyUntranslated: true)
                             }
                             .disabled(isTranslating || missingCount == 0)
 
-                            Button("Replace All Text…") {
+                            Button("Replace All Text…", systemImage: "arrow.triangle.2.circlepath") {
                                 showReplaceAllConfirmation = true
                             }
                             .disabled(isTranslating)

@@ -71,6 +71,9 @@ struct CanvasShapeModel: Identifiable, Codable {
     // Clipping
     var clipToTemplate: Bool?
 
+    // Lock — when true, the shape is frozen: no drag, resize, rotate, or edit.
+    var isLocked: Bool?
+
     enum CodingKeys: String, CodingKey {
         case id, x, y
         case type = "t"
@@ -91,6 +94,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         case fillGradientConfig = "fgc"
         case fillImageConfig = "fic"
         case clipToTemplate = "ct"
+        case isLocked = "lk"
     }
 
     init(from decoder: Decoder) throws {
@@ -135,6 +139,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         fillGradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .fillGradientConfig)
         fillImageConfig = try c.decodeIfPresent(BackgroundImageConfig.self, forKey: .fillImageConfig)
         clipToTemplate = try c.decodeIfPresent(Bool.self, forKey: .clipToTemplate)
+        isLocked = try c.decodeIfPresent(Bool.self, forKey: .isLocked)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -191,6 +196,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         try c.encodeIfPresent(fillImageConfig, forKey: .fillImageConfig)
         // Clipping
         try c.encodeIfPresent(clipToTemplate, forKey: .clipToTemplate)
+        // Lock
+        try c.encodeIfPresent(isLocked, forKey: .isLocked)
     }
 
     init(
@@ -295,6 +302,8 @@ struct CanvasShapeModel: Identifiable, Codable {
     var allImageFileNames: [String] {
         [screenshotFileName, imageFileName, fillImageConfig?.fileName].compactMap { $0 }
     }
+
+    var resolvedIsLocked: Bool { isLocked ?? false }
 
     var resolvedFillStyle: BackgroundStyle {
         fillStyle ?? .color
@@ -642,6 +651,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         if fillImageConfig != oldBase.fillImageConfig { result.fillImageConfig = fillImageConfig }
 
         if clipToTemplate != oldBase.clipToTemplate { result.clipToTemplate = clipToTemplate }
+        if isLocked != oldBase.isLocked { result.isLocked = isLocked }
 
         return result
     }

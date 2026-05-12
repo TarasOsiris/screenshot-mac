@@ -189,6 +189,12 @@ struct ScreenshotBroApp: App {
                     }
                     .keyboardShortcut(.escape, modifiers: [])
                     .disabled(!appState.hasSelection && appState.selectedRowId == nil)
+
+                    Button(appState.isSelectionFullyLocked ? "Unlock" : "Lock") {
+                        appState.toggleLockOnSelection()
+                    }
+                    .keyboardShortcut("l", modifiers: .command)
+                    .disabled(!appState.hasSelection || appState.isEditingText)
                 }
 
                 Divider()

@@ -361,7 +361,7 @@ struct ContentView: View {
     @ViewBuilder
     private var currentProjectSection: some View {
         Section("Current Project") {
-            Button("Rename Project...") {
+            Button("Rename Project...", systemImage: "pencil") {
                 guard let id = state.activeProjectId else { return }
                 let currentName = state.activeProject?.name ?? ""
                 // Defer so the menu fully dismisses before the modal opens.
@@ -377,7 +377,7 @@ struct ContentView: View {
             }
             .disabled(state.activeProjectId == nil)
 
-            Button("Duplicate Project...") {
+            Button("Duplicate Project...", systemImage: "plus.square.on.square") {
                 store.requirePro(
                     allowed: store.canCreateProject(),
                     context: .projectLimit
@@ -397,14 +397,14 @@ struct ContentView: View {
             }
             .disabled(state.activeProjectId == nil)
 
-            Button("Show in Finder") {
+            Button("Show in Finder", systemImage: "folder") {
                 guard let id = state.activeProjectId else { return }
                 let folder = PersistenceService.projectDirectoryURL(id)
                 NSWorkspace.shared.activateFileViewerSelecting([folder])
             }
             .disabled(state.activeProjectId == nil)
 
-            Button("Reset Project...", role: .destructive) {
+            Button("Reset Project...", systemImage: "arrow.counterclockwise", role: .destructive) {
                 if confirmBeforeDeleting {
                     isResettingProject = true
                 } else if let id = state.activeProjectId {
@@ -415,7 +415,7 @@ struct ContentView: View {
 
             resetFromTemplateMenu
 
-            Button("Delete Project...", role: .destructive) {
+            Button("Delete Project...", systemImage: "trash", role: .destructive) {
                 if confirmBeforeDeleting {
                     isDeletingProject = true
                 } else if let id = state.activeProjectId {
@@ -443,7 +443,7 @@ struct ContentView: View {
     @ViewBuilder
     private var resetFromTemplateMenu: some View {
         if !projectTemplates.isEmpty {
-            Menu("Reset Project from Template") {
+            Menu("Reset Project from Template", systemImage: "doc.on.doc") {
                 ForEach(projectTemplates) { template in
                     Button {
                         resetTemplate = template
@@ -498,7 +498,7 @@ struct ContentView: View {
 
     private var projectActionsToolbarMenu: some View {
         Menu {
-            Button("New Project...") {
+            Button("New Project...", systemImage: "plus") {
                 store.requirePro(
                     allowed: store.canCreateProject(),
                     context: .projectLimit
@@ -545,22 +545,22 @@ struct ContentView: View {
 
     @ViewBuilder
     private var exportMenuContent: some View {
-        Button("Export All Screenshots to Folder...") {
+        Button("Export All Screenshots to Folder...", systemImage: "square.and.arrow.up") {
             exportScreenshotsAs()
         }
 
-        Menu("Export Rows") {
-            Button("Continuous") {
+        Menu("Export Rows", systemImage: "rectangle.3.group") {
+            Button("Continuous", systemImage: "rectangle.split.3x1") {
                 exportRowImages()
             }
-            Button("Showcase") {
+            Button("Showcase", systemImage: "rectangle.stack") {
                 exportShowcaseImages()
             }
         }
         .disabled(state.rows.isEmpty)
 
         if state.localeState.locales.count > 1 {
-            Menu("Export Locale") {
+            Menu("Export Locale", systemImage: "globe") {
                 ForEach(state.localeState.locales) { locale in
                     Button(locale.flagLabel) {
                         exportScreenshots(localeFilter: locale.code)
@@ -571,7 +571,7 @@ struct ContentView: View {
         }
 
         if hasLastExportDestination {
-            Button("Open Export Folder") {
+            Button("Open Export Folder", systemImage: "folder") {
                 openLastExportFolder()
             }
 
@@ -584,7 +584,7 @@ struct ContentView: View {
 
         Divider()
 
-        Button("Upload to App Store Connect…") {
+        Button("Upload to App Store Connect…", systemImage: "icloud.and.arrow.up") {
             showingASCUploadSheet = true
         }
         .disabled(state.rows.isEmpty)

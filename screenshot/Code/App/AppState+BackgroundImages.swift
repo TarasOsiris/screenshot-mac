@@ -85,6 +85,7 @@ extension AppState {
         scheduleSave()
     }
 
+    @MainActor
     func pickAndSaveBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
         switch SvgHelper.pickImageOrSvg() {
         case .svg(let sanitized):

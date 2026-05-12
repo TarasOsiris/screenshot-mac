@@ -178,6 +178,7 @@ extension AppState {
 
     func deleteShape(_ id: UUID) {
         guard let location = shapeLocation(for: id) else { return }
+        guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
         registerUndoForRow(at: location.rowIndex, "Delete Shape")
         let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
         // Collect locale override image filenames before removing overrides
@@ -193,8 +194,9 @@ extension AppState {
     func deleteSelectedShapes() {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let idsToDelete = selectedShapeIds
-        let matching = rows[rowIdx].shapes.filter { idsToDelete.contains($0.id) }
+        let matching = rows[rowIdx].shapes.filter { idsToDelete.contains($0.id) && !$0.resolvedIsLocked }
         guard !matching.isEmpty else { return }
+        let deletedIds = Set(matching.map(\.id))
         registerUndoForRow(at: rowIdx, "Delete Shapes")
         var allCandidates: [String?] = []
         for shape in matching {
@@ -202,8 +204,8 @@ extension AppState {
             allCandidates.append(contentsOf: localeOverrideImageFileNames(for: shape.id))
             LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
         }
-        rows[rowIdx].shapes.removeAll { idsToDelete.contains($0.id) }
-        selectedShapeIds = []
+        rows[rowIdx].shapes.removeAll { deletedIds.contains($0.id) }
+        selectedShapeIds.subtract(deletedIds)
         cleanupUnreferencedImages(allCandidates)
         scheduleSave()
     }
@@ -340,14 +342,19 @@ extension AppState {
     func nudgeSelectedShapes(dx: CGFloat, dy: CGFloat) {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
 
-        // Capture undo state only at the start of a nudge sequence
+        let ids = selectedShapeIds
+        let hasMovable = rows[rowIdx].shapes.contains { ids.contains($0.id) && !$0.resolvedIsLocked }
+        guard hasMovable else { return }
+
+        // Capture undo state only at the start of a nudge sequence — and only when
+        // we know at least one shape will actually move, so a fully-locked nudge
+        // doesn't poison the baseline for a later, unrelated nudge.
         if nudgeBaseRow == nil {
             nudgeBaseRow = rows[rowIdx]
         }
 
-        let ids = selectedShapeIds
         for i in rows[rowIdx].shapes.indices {
-            if ids.contains(rows[rowIdx].shapes[i].id) {
+            if ids.contains(rows[rowIdx].shapes[i].id) && !rows[rowIdx].shapes[i].resolvedIsLocked {
                 rows[rowIdx].shapes[i].x += dx
                 rows[rowIdx].shapes[i].y += dy
             }
@@ -370,7 +377,9 @@ extension AppState {
     // MARK: - Option+Drag Duplicate
 
     func duplicateShapeForOptionDrag(_ shapeId: UUID) -> UUID? {
-        insertDuplicate(of: shapeId, undoName: "Duplicate Shape")
+        guard let location = shapeLocation(for: shapeId),
+              !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return nil }
+        return insertDuplicate(of: shapeId, undoName: "Duplicate Shape")
     }
 
     // MARK: - Clipboard
@@ -435,12 +444,14 @@ extension AppState {
     func applyGroupDrag(offset: CGSize) {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let ids = selectedShapeIds
-        registerUndoForRow(at: rowIdx, ids.count > 1 ? "Move Shapes" : "Move Shape")
-        for i in rows[rowIdx].shapes.indices {
-            if ids.contains(rows[rowIdx].shapes[i].id) {
-                rows[rowIdx].shapes[i].x += offset.width
-                rows[rowIdx].shapes[i].y += offset.height
-            }
+        let movableIndices = rows[rowIdx].shapes.indices.filter {
+            ids.contains(rows[rowIdx].shapes[$0].id) && !rows[rowIdx].shapes[$0].resolvedIsLocked
+        }
+        guard !movableIndices.isEmpty else { return }
+        registerUndoForRow(at: rowIdx, movableIndices.count > 1 ? "Move Shapes" : "Move Shape")
+        for i in movableIndices {
+            rows[rowIdx].shapes[i].x += offset.width
+            rows[rowIdx].shapes[i].y += offset.height
         }
         scheduleSave()
     }
@@ -450,7 +461,7 @@ extension AppState {
     func duplicateShapesForOptionDrag() {
         guard let rowIdx = selectedRowIndex, selectedShapeIds.count > 1 else { return }
         let ids = selectedShapeIds
-        let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) }
+        let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) && !$0.resolvedIsLocked }
         guard !shapes.isEmpty else { return }
         registerUndoForRow(at: rowIdx, "Duplicate Shapes")
         var newIds: Set<UUID> = []
@@ -477,7 +488,9 @@ extension AppState {
     func alignSelectedShapes(_ alignment: ShapeAlignment) {
         guard let rowIdx = selectedRowIndex, selectedShapeIds.count >= 2 else { return }
         let ids = selectedShapeIds
-        let indices = rows[rowIdx].shapes.indices.filter { ids.contains(rows[rowIdx].shapes[$0].id) }
+        let indices = rows[rowIdx].shapes.indices.filter {
+            ids.contains(rows[rowIdx].shapes[$0].id) && !rows[rowIdx].shapes[$0].resolvedIsLocked
+        }
         guard indices.count >= 2 else { return }
         if alignment == .distributeH || alignment == .distributeV {
             guard indices.count >= 3 else { return }
@@ -532,7 +545,16 @@ extension AppState {
 
     // MARK: - Batch Property Update
 
-    func updateShapes(_ ids: Set<UUID>, in rowId: UUID? = nil, update: (inout CanvasShapeModel) -> Void) {
+    /// Batch property edit. Affects every shape in the selection (including locked
+    /// shapes) — lock blocks direct canvas manipulation, not inspector/properties-bar
+    /// edits. Gesture-driven mutations (drag/nudge/align/delete) live in dedicated
+    /// methods and filter locked shapes themselves.
+    func updateShapes(
+        _ ids: Set<UUID>,
+        in rowId: UUID? = nil,
+        undoName: String = "Edit Shapes",
+        update: (inout CanvasShapeModel) -> Void
+    ) {
         let rowIdx: Int
         if let rowId, let idx = rowIndex(for: rowId) {
             rowIdx = idx
@@ -541,15 +563,54 @@ extension AppState {
         } else {
             return
         }
-        registerUndoForRow(at: rowIdx, "Edit Shapes")
+        var changed = false
         for i in rows[rowIdx].shapes.indices {
-            if ids.contains(rows[rowIdx].shapes[i].id) {
-                let baseShape = rows[rowIdx].shapes[i]
-                var resolved = LocaleService.resolveShape(baseShape, localeState: localeState)
-                update(&resolved)
-                rows[rowIdx].shapes[i] = LocaleService.splitUpdate(base: baseShape, updated: resolved, localeState: &localeState)
-            }
+            guard ids.contains(rows[rowIdx].shapes[i].id) else { continue }
+            // Register undo lazily on the first mutation so an empty-id call
+            // leaves no empty step on the undo stack.
+            if !changed { registerUndoForRow(at: rowIdx, undoName) }
+            let baseShape = rows[rowIdx].shapes[i]
+            var resolved = LocaleService.resolveShape(baseShape, localeState: localeState)
+            update(&resolved)
+            rows[rowIdx].shapes[i] = LocaleService.splitUpdate(base: baseShape, updated: resolved, localeState: &localeState)
+            changed = true
         }
-        scheduleSave()
+        if changed { scheduleSave() }
+    }
+
+    // MARK: - Lock
+
+    /// True when every selected shape is locked. False if there's no selection.
+    var isSelectionFullyLocked: Bool {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return false }
+        let ids = selectedShapeIds
+        var anyMatch = false
+        for shape in rows[rowIdx].shapes where ids.contains(shape.id) {
+            if !shape.resolvedIsLocked { return false }
+            anyMatch = true
+        }
+        return anyMatch
+    }
+
+    /// True when at least one selected shape is locked.
+    var isSelectionPartiallyLocked: Bool {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return false }
+        let ids = selectedShapeIds
+        return rows[rowIdx].shapes.contains { ids.contains($0.id) && $0.resolvedIsLocked }
+    }
+
+    /// Locks the selection if any shape is unlocked; otherwise unlocks all.
+    func toggleLockOnSelection() {
+        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
+        let rowId = rows[rowIdx].id
+        let shouldLock = !isSelectionFullyLocked
+        updateShapes(
+            selectedShapeIds,
+            in: rowId,
+            undoName: shouldLock ? "Lock" : "Unlock"
+        ) { shape in
+            // nil keeps "lk" out of JSON when unlocked; matches the encodeIfPresent pattern.
+            shape.isLocked = shouldLock ? true : nil
+        }
     }
 }

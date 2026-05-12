@@ -15777,6 +15777,9 @@
     "Localize your screenshots" : {
 
     },
+    "Lock" : {
+
+    },
     "Looks valid" : {
       "localizations" : {
         "de" : {
@@ -28710,6 +28713,9 @@
           }
         }
       }
+    },
+    "Unlock" : {
+
     },
     "Unlock all projects, rows, and templates" : {
       "localizations" : {

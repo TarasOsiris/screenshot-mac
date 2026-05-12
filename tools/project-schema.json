@@ -187,7 +187,9 @@
         "fgc": { "description": "fillGradientConfig — used when fillStyle is 'gradient'.", "$ref": "#/$defs/GradientConfig" },
         "fic": { "description": "fillImageConfig — used when fillStyle is 'image'.", "$ref": "#/$defs/BackgroundImageConfig" },
 
-        "ct":  { "description": "clipToTemplate — when true, shape is clipped to its owning template.", "type": "boolean" }
+        "ct":  { "description": "clipToTemplate — when true, shape is clipped to its owning template.", "type": "boolean" },
+
+        "lk":  { "description": "isLocked — when true, shape is frozen: no drag, resize, rotate, or edit.", "type": "boolean" }
       }
     },
 

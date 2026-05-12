@@ -17,8 +17,22 @@ struct CanvasShapeContextMenuContent: View {
     let deleteAction: () -> Void
     var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
     var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
+    var onToggleLock: (() -> Void)?
+    /// True when invoking `onToggleLock` would unlock (rather than lock) the active
+    /// selection. Lets the menu label and icon match the action that will happen.
+    var lockToggleWillUnlock: Bool = false
 
     var body: some View {
+        if shape.resolvedIsLocked && !isMultiSelected {
+            Button("Unlock", systemImage: "lock.open") { onToggleLock?() }
+                .disabled(onToggleLock == nil)
+        } else {
+            menuItemsForUnlocked
+        }
+    }
+
+    @ViewBuilder
+    private var menuItemsForUnlocked: some View {
         if !isMultiSelected {
             if shape.type == .device {
                 Menu {
@@ -210,6 +224,13 @@ struct CanvasShapeContextMenuContent: View {
         }
 
         Divider()
+
+        if let onToggleLock {
+            Button(
+                lockToggleWillUnlock ? "Unlock" : "Lock",
+                systemImage: lockToggleWillUnlock ? "lock.open" : "lock"
+            ) { onToggleLock() }
+        }
 
         Button(isMultiSelected ? "Delete Selected" : "Delete", systemImage: "trash", role: .destructive, action: deleteAction)
     }

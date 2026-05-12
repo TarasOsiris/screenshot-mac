@@ -396,4 +396,44 @@ struct CanvasShapeModelTests {
         #expect(shape.deviceYaw == nil)
         #expect(!shape.supportsDeviceModelRotation)
     }
+
+    // MARK: - Lock
+
+    @Test func isLockedRoundTripsThroughCodable() throws {
+        var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 100, height: 100)
+        shape.isLocked = true
+        let data = try JSONEncoder().encode(shape)
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+        #expect(decoded.isLocked == true)
+        #expect(decoded.resolvedIsLocked == true)
+    }
+
+    @Test func legacyJsonWithoutLkDecodesAsUnlocked() throws {
+        let json = """
+        {"id":"00000000-0000-0000-0000-000000000001","t":"rectangle","x":0,"y":0,"w":100,"h":100,"c":"#FFFFFF"}
+        """
+        let data = json.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+        #expect(decoded.isLocked == nil)
+        #expect(decoded.resolvedIsLocked == false)
+    }
+
+    @Test func duplicatedPreservesLock() {
+        var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 100, height: 100)
+        shape.isLocked = true
+        let copy = shape.duplicated(offsetX: 10, offsetY: 10)
+        #expect(copy.resolvedIsLocked == true)
+        #expect(copy.id != shape.id)
+    }
+
+    @Test func rebasedAppliesLockChange() {
+        let oldBase = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 100, height: 100)
+        var newBase = oldBase
+        newBase.x = 200
+        var updated = oldBase
+        updated.isLocked = true
+        let result = updated.rebased(from: oldBase, onto: newBase)
+        #expect(result.x == 200, "Rebase should preserve new base position")
+        #expect(result.resolvedIsLocked == true)
+    }
 }
