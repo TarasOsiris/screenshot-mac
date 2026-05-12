@@ -52,6 +52,8 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            LocaleBar(state: state)
+
             LocaleBanner(state: state)
                 .alert("Save Failed", isPresented: .init(
                     get: { state.saveError != nil },
@@ -202,11 +204,6 @@ struct ContentView: View {
 
             ToolbarItem(id: "projectActions", placement: .navigation) {
                 projectActionsToolbarMenu
-            }
-
-            ToolbarItem(id: "locale", placement: .navigation) {
-                LocaleToolbarMenu(state: state)
-                    .padding(.trailing, 8)
             }
 
             ToolbarItem(id: "export", placement: .principal) {

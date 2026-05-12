@@ -2520,6 +2520,9 @@
         }
       }
     },
+    "Add Language…" : {
+
+    },
     "Add languages to translate every text layer at once. Cmd+] cycles between them." : {
 
     },
@@ -14972,7 +14975,7 @@
         }
       }
     },
-    "Language (⌘[ / ⌘], ⌥⌘0 to switch to the base language)" : {
+    "Language options" : {
 
     },
     "Last test failed" : {

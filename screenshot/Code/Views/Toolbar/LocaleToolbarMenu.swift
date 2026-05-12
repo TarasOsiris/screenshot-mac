@@ -9,7 +9,7 @@ enum LocaleMenuRequest {
     case revertToBase
 }
 
-struct LocaleToolbarMenu: View {
+struct LocaleBar: View {
     @Bindable var state: AppState
     @State private var isManagingLocales = false
     @State private var isTranslationOverview = false
@@ -21,94 +21,29 @@ struct LocaleToolbarMenu: View {
     @State private var showLanguageDownloadAlert = false
 
     var body: some View {
-        Menu {
+        let baseCode = state.localeState.baseLocaleCode
+        let activeCode = state.localeState.activeLocaleCode
+        FlowLayout(horizontalSpacing: 4, verticalSpacing: 4) {
+            localeActionsMenu
+
             ForEach(state.localeState.locales) { locale in
-                Button {
-                    state.setActiveLocale(locale.code)
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(locale.flagLabel)
-                            Text(locale.code.uppercased())
-                                .font(.system(size: 10, design: .monospaced))
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if locale.code == state.localeState.baseLocaleCode {
-                            Text("Base")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
-                        if locale.code == state.localeState.activeLocaleCode {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
-            Divider()
-            let progress = state.translationProgress()
-            if !state.localeState.isBaseLocale {
-                Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
-                    startQuickTranslation(onlyUntranslated: true)
-                }
-                .disabled(
-                    isQuickTranslating ||
-                    progress.total == 0 ||
-                    progress.translated >= progress.total
+                LocaleFlagChip(
+                    locale: locale,
+                    isActive: locale.code == activeCode,
+                    helpText: locale.code == baseCode ? "\(locale.label) — Base language" : locale.label,
+                    action: { state.setActiveLocale(locale.code) }
                 )
-
-                Button("Re-Translate All Text...", systemImage: "arrow.triangle.2.circlepath") {
-                    showReplaceAllConfirmation = true
-                }
-                .disabled(isQuickTranslating || progress.total == 0)
-
-                Button("Revert to Base Language...", systemImage: "arrow.uturn.backward", role: .destructive) {
-                    showResetToBaseConfirmation = true
-                }
-                .disabled(isQuickTranslating || !state.localeState.activeLocaleHasOverrides)
-
-                Divider()
             }
-            if state.localeState.locales.count > 1 {
-                Button("Edit Translation Table...", systemImage: "tablecells") {
-                    isTranslationOverview = true
-                }
-                .disabled(progress.total == 0)
-            }
-            Button("Manage Locales...", systemImage: "globe") {
-                isManagingLocales = true
-            }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "globe")
-                    .foregroundStyle(.secondary)
 
-                VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 6) {
-                        Text(state.localeState.activeLocaleCode.uppercased())
-                            .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(.primary)
-
-                        if state.localeState.locales.count > 1 {
-                            Text("\(state.localeState.locales.count)")
-                                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 1)
-                                .background(Color.secondary.opacity(0.12), in: Capsule())
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    let status = activeLocaleStatus
-                    Text(status.text)
-                        .font(.system(size: 9))
-                        .foregroundStyle(status.color)
-                        .lineLimit(1)
-                }
-            }
+            addLanguageButton
         }
-        .menuStyle(.button)
-        .help(localeHelpText)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .overlay(alignment: .bottom) {
+            Divider()
+        }
         .coachPopover(step: .locale, state: state, arrowEdge: .top)
         .sheet(isPresented: $isManagingLocales) {
             ManageLocalesSheet(state: state)
@@ -166,29 +101,63 @@ struct LocaleToolbarMenu: View {
         }
     }
 
-    private var localeHelpText: LocalizedStringKey {
-        if state.localeState.locales.count > 1 {
-            return "Language (\u{2318}[ / \u{2318}], \u{2325}\u{2318}0 to switch to the base language)"
+    private var addLanguageButton: some View {
+        ActionButton(
+            icon: "plus.circle",
+            tooltip: "Add Language…",
+            iconSize: 13,
+            frameSize: UIMetrics.IconButton.frameSize
+        ) {
+            isManagingLocales = true
         }
-        return "Language"
     }
 
-    private var activeLocaleStatus: (text: String, color: Color) {
-        if state.localeState.isBaseLocale {
-            let text = state.localeState.locales.count > 1 ? "Base language" : state.localeState.activeLocaleLabel
-            return (text, .secondary)
-        }
+    @ViewBuilder
+    private var localeActionsMenu: some View {
+        Menu {
+            let progress = state.translationProgress()
+            if !state.localeState.isBaseLocale {
+                Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
+                    startQuickTranslation(onlyUntranslated: true)
+                }
+                .disabled(
+                    isQuickTranslating ||
+                    progress.total == 0 ||
+                    progress.translated >= progress.total
+                )
 
-        let progress = state.translationProgress()
-        if progress.total == 0 {
-            return ("Locale-specific editing", .secondary)
-        }
+                Button("Re-Translate All Text...", systemImage: "arrow.triangle.2.circlepath") {
+                    showReplaceAllConfirmation = true
+                }
+                .disabled(isQuickTranslating || progress.total == 0)
 
-        let missingCount = max(progress.total - progress.translated, 0)
-        if missingCount > 0 {
-            return ("\(missingCount) untranslated", .orange)
+                Button("Revert to Base Language...", systemImage: "arrow.uturn.backward", role: .destructive) {
+                    showResetToBaseConfirmation = true
+                }
+                .disabled(isQuickTranslating || !state.localeState.activeLocaleHasOverrides)
+
+                Divider()
+            }
+            if state.localeState.locales.count > 1 {
+                Button("Edit Translation Table...", systemImage: "tablecells") {
+                    isTranslationOverview = true
+                }
+                .disabled(progress.total == 0)
+            }
+            Button("Manage Locales...", systemImage: "globe") {
+                isManagingLocales = true
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .frame(width: UIMetrics.IconButton.frameSize, height: UIMetrics.IconButton.frameSize)
+                .contentShape(Rectangle())
         }
-        return ("Translations complete", .secondary)
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .help("Language options")
     }
 
     private func startQuickTranslation(onlyUntranslated: Bool) {
@@ -197,6 +166,101 @@ struct LocaleToolbarMenu: View {
             source: state.localeState.baseLocaleCode,
             target: state.localeState.activeLocaleCode
         )
+    }
+}
+
+// MARK: - Locale Flag Chip
+
+private struct LocaleFlagChip: View {
+    let locale: LocaleDefinition
+    let isActive: Bool
+    let helpText: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                if !locale.flag.isEmpty {
+                    Text(locale.flag)
+                        .font(.system(size: 13))
+                }
+                Text(locale.code.uppercased())
+                    .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold, design: .monospaced))
+            }
+            .foregroundStyle(isActive ? Color.white : Color.primary)
+            .padding(.horizontal, 7)
+            .frame(height: UIMetrics.IconButton.frameSize)
+            .background(
+                RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
+                    .fill(isActive
+                          ? Color.accentColor
+                          : Color.primary.opacity(UIMetrics.Opacity.sectionFill))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
+                    .strokeBorder(
+                        isActive
+                          ? Color.accentColor
+                          : Color.primary.opacity(UIMetrics.Opacity.hairlineOverlay),
+                        lineWidth: isActive
+                          ? UIMetrics.BorderWidth.emphasis
+                          : UIMetrics.BorderWidth.hairline
+                    )
+            )
+            .shadow(
+                color: isActive ? Color.accentColor.opacity(0.35) : .clear,
+                radius: isActive ? 4 : 0,
+                x: 0,
+                y: isActive ? 1 : 0
+            )
+        }
+        .buttonStyle(.plain)
+        .help(helpText)
+    }
+}
+
+// MARK: - Flow Layout
+
+private struct FlowLayout: Layout {
+    var horizontalSpacing: CGFloat = 4
+    var verticalSpacing: CGFloat = 4
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        arrange(subviews: subviews, maxWidth: proposal.width ?? .infinity).size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let positions = arrange(subviews: subviews, maxWidth: bounds.width).positions
+        for (index, point) in positions.enumerated() {
+            subviews[index].place(
+                at: CGPoint(x: bounds.minX + point.x, y: bounds.minY + point.y),
+                proposal: .unspecified
+            )
+        }
+    }
+
+    private func arrange(subviews: Subviews, maxWidth: CGFloat) -> (positions: [CGPoint], size: CGSize) {
+        var positions: [CGPoint] = []
+        var rowWidth: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var y: CGFloat = 0
+        var maxRowWidth: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if rowWidth > 0 && rowWidth + horizontalSpacing + size.width > maxWidth {
+                maxRowWidth = max(maxRowWidth, rowWidth)
+                y += rowHeight + verticalSpacing
+                rowWidth = 0
+                rowHeight = 0
+            }
+            let x = rowWidth == 0 ? 0 : rowWidth + horizontalSpacing
+            positions.append(CGPoint(x: x, y: y))
+            rowWidth = x + size.width
+            rowHeight = max(rowHeight, size.height)
+        }
+        maxRowWidth = max(maxRowWidth, rowWidth)
+        return (positions, CGSize(width: maxRowWidth, height: y + rowHeight))
     }
 }
 

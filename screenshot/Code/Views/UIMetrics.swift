@@ -98,4 +98,10 @@ enum UIMetrics {
         static let width: CGFloat = 14
         static let height: CGFloat = 20
     }
+
+    /// Square tap target for icon-only buttons used in toolbars and bars (matches the explicit
+    /// `frameSize: 24` passed to `ActionButton` across properties bars).
+    enum IconButton {
+        static let frameSize: CGFloat = 24
+    }
 }
