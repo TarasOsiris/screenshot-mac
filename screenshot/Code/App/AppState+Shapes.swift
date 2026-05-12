@@ -134,7 +134,9 @@ extension AppState {
     func centerAllDevices(in rowId: UUID, axis: CenterAxis) {
         guard let idx = rowIndex(for: rowId) else { return }
         let row = rows[idx]
-        let deviceIndices = row.shapes.indices.filter { row.shapes[$0].type == .device }
+        let deviceIndices = row.shapes.indices.filter {
+            row.shapes[$0].type == .device && !row.shapes[$0].resolvedIsLocked
+        }
         guard !deviceIndices.isEmpty else { return }
         registerUndoForRow(at: idx, "Center All Devices")
         for i in deviceIndices {
@@ -167,7 +169,7 @@ extension AppState {
     private func changeAllDevices(in rowId: UUID, mutate: (inout CanvasShapeModel) -> Void) {
         guard let idx = rowIndex(for: rowId) else { return }
         let shapes = rows[idx].shapes
-        let deviceIndices = shapes.indices.filter { shapes[$0].type == .device }
+        let deviceIndices = shapes.indices.filter { shapes[$0].type == .device && !shapes[$0].resolvedIsLocked }
         guard !deviceIndices.isEmpty else { return }
         registerUndoForRow(at: idx, "Change All Row Devices")
         for i in deviceIndices {

@@ -355,6 +355,65 @@ struct AppStateTests {
                 "Devices should only live in template 0 and in newly-appended overflow templates")
     }
 
+    @Test func addImageShapeUsesAndroidPhoneWhenRowDefaultIsAndroidPhone() throws {
+        // 1080x1920 is the iPhone 6/7/8 Plus exact size but also the most common Android phone
+        // resolution — detection leans iPhone, so the row's Android Phone default must win.
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        var row = state.rows[0]
+        row.defaultDeviceCategory = .androidPhone
+        row.defaultDeviceFrameId = nil
+        row.shapes = []
+        state.rows[0] = row
+        state.selectRow(row.id)
+
+        let image = makeTestImage(width: 1080, height: 1920)
+        state.addImageShape(image: image, centerX: row.templateCenterX(at: 0), centerY: row.templateHeight / 2)
+
+        let added = try #require(state.rows[0].shapes.last)
+        #expect(added.type == .device)
+        #expect(added.deviceCategory == .androidPhone)
+    }
+
+    @Test func addImageShapeUsesAndroidTabletWhenRowDefaultIsAndroidTablet() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        var row = state.rows[0]
+        row.defaultDeviceCategory = .androidTablet
+        row.defaultDeviceFrameId = nil
+        row.shapes = []
+        state.rows[0] = row
+        state.selectRow(row.id)
+
+        let image = makeTestImage(width: 1800, height: 2400)
+        state.addImageShape(image: image, centerX: row.templateCenterX(at: 0), centerY: row.templateHeight / 2)
+
+        let added = try #require(state.rows[0].shapes.last)
+        #expect(added.type == .device)
+        #expect(added.deviceCategory == .androidTablet)
+    }
+
+    @Test func addImageShapeKeepsAppleDetectionWhenRowDefaultIsMismatchedShape() throws {
+        // Phone-shaped image must not become Android Tablet just because that's the row default.
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        var row = state.rows[0]
+        row.defaultDeviceCategory = .androidTablet
+        row.defaultDeviceFrameId = nil
+        row.shapes = []
+        state.rows[0] = row
+        state.selectRow(row.id)
+
+        let image = makeTestImage(width: 1080, height: 1920)
+        state.addImageShape(image: image, centerX: row.templateCenterX(at: 0), centerY: row.templateHeight / 2)
+
+        let added = try #require(state.rows[0].shapes.last)
+        #expect(added.deviceCategory == .iphone)
+    }
+
     @Test func clearAllDeviceImagesRemovesScreenshotsFromEveryDevice() throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
@@ -1048,6 +1107,51 @@ struct AppStateTests {
 
         let movedShape = state.rows.last!.shapes.first { $0.id == movable.id }!
         #expect(movedShape.x == 105, "Nudge should move the unlocked shape in the new row")
+    }
+
+    @Test func saveImageSkipsLockedShape() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        var locked = CanvasShapeModel(type: .device, x: 0, y: 0, width: 100, height: 200, deviceCategory: .iphone)
+        locked.isLocked = true
+        state.addShape(locked)
+
+        state.saveImage(makeTestImage(width: 100, height: 200), for: locked.id)
+
+        let after = state.rows.first!.shapes.first { $0.id == locked.id }!
+        #expect(after.screenshotFileName == nil, "Drag-and-drop image must not overwrite locked device")
+    }
+
+    @Test func clearImageSkipsLockedShape() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        var locked = CanvasShapeModel(type: .image, x: 0, y: 0, width: 100, height: 100)
+        locked.imageFileName = "test.png"
+        locked.isLocked = true
+        state.addShape(locked)
+
+        state.clearImage(for: locked.id)
+
+        let after = state.rows.first!.shapes.first { $0.id == locked.id }!
+        #expect(after.imageFileName == "test.png")
+    }
+
+    @Test func centerAllDevicesSkipsLocked() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+        var locked = CanvasShapeModel(type: .device, x: 10, y: 10, width: 50, height: 100, deviceCategory: .iphone)
+        locked.isLocked = true
+        state.addShape(locked)
+
+        state.centerAllDevices(in: rowId, axis: .both)
+
+        let after = state.rows.first!.shapes.first { $0.id == locked.id }!
+        #expect(after.x == 10)
+        #expect(after.y == 10)
     }
 
     @Test func alignSelectedShapesSkipsLocked() {

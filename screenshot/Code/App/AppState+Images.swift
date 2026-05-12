@@ -22,16 +22,19 @@ extension AppState {
     func saveImage(_ image: NSImage, for shapeId: UUID) {
         guard let activeId = activeProjectId,
               let location = shapeLocation(for: shapeId) else { return }
+        guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
         registerUndoForRow(at: location.rowIndex, "Assign Screenshot")
         if performSaveImage(image, for: shapeId, activeId: activeId, location: location) {
             scheduleSave()
         }
     }
 
-    /// Clears the screenshot image from every device shape in the row, including all locale overrides.
+    /// Clears the screenshot image from every (unlocked) device shape in the row, including locale overrides.
     func clearAllDeviceImages(in rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        let deviceIndices = rows[idx].shapes.indices.filter { rows[idx].shapes[$0].type == .device }
+        let deviceIndices = rows[idx].shapes.indices.filter {
+            rows[idx].shapes[$0].type == .device && !rows[idx].shapes[$0].resolvedIsLocked
+        }
         guard !deviceIndices.isEmpty else { return }
 
         let hasImagesToClear = deviceIndices.contains { shapeIndex in
@@ -80,6 +83,7 @@ extension AppState {
     func removeImageBackground(for shapeId: UUID, onError: @escaping (String) -> Void) {
         guard let location = shapeLocation(for: shapeId) else { return }
         let shape = rows[location.rowIndex].shapes[location.shapeIndex]
+        guard !shape.resolvedIsLocked else { return }
         guard let fileName = shape.displayImageFileName,
               let activeId = activeProjectId else { return }
         let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
@@ -104,6 +108,7 @@ extension AppState {
 
     func clearImage(for shapeId: UUID) {
         guard let location = shapeLocation(for: shapeId) else { return }
+        guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
 
         if !localeState.isBaseLocale {
             let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
@@ -257,7 +262,18 @@ extension AppState {
 
     /// Creates an image or device shape sized for the given row, without side effects.
     func makeImageShape(image: NSImage, row: ScreenshotRow, centerX: CGFloat, centerY: CGFloat) -> CanvasShapeModel {
-        if let detectedCategory = Self.detectScreenshotDevice(image) {
+        if let rawCategory = Self.detectScreenshotDevice(image) {
+            // Phone/tablet pixel sizes overlap between Apple and Android, so when the row's
+            // default is an Android category we honor it instead of the Apple-leaning fallback.
+            let detectedCategory: DeviceCategory
+            switch (row.defaultDeviceCategory, rawCategory) {
+            case (.androidPhone, .iphone):
+                detectedCategory = .androidPhone
+            case (.androidTablet, .ipadPro11), (.androidTablet, .ipadPro13):
+                detectedCategory = .androidTablet
+            default:
+                detectedCategory = rawCategory
+            }
             var shape = CanvasShapeModel.defaultDeviceFromRow(
                 row,
                 centerX: centerX,
