@@ -520,7 +520,12 @@ struct EditorRowView: View {
             ) { shape, clipRect in
                 let isInSelection = selectedShapeIds.contains(shape.id)
                 let isMulti = isInSelection && selectedShapeIds.count > 1
-                let groupOffset: CGSize = (isMulti && draggingShapeId != nil && draggingShapeId != shape.id) ? activeDragOffset : .zero
+                // Locked shapes don't follow a group drag visually either —
+                // `applyGroupDrag` already skips them at commit time, so without
+                // this guard the locked shape would slide with the cursor and
+                // then snap back when the drag ends.
+                let isFollowingDrag = isMulti && draggingShapeId != nil && draggingShapeId != shape.id && !shape.resolvedIsLocked
+                let groupOffset: CGSize = isFollowingDrag ? activeDragOffset : .zero
 
                 CanvasShapeView(
                     shape: shape,
