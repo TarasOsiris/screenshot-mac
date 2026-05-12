@@ -103,8 +103,8 @@ struct ShapePropertiesSingleSelectionBar: View {
                             )
                         }
 
-                        ShapePropertiesSection {
-                            if shape.type.supportsFill {
+                        if shape.type.supportsFill {
+                            ShapePropertiesSection {
                                 ShapeFillSwatchButton(
                                     shape: shape,
                                     isPresented: $isFillPopoverPresented,
@@ -120,15 +120,17 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
                                     onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
                                 )
-                                ShapePropertiesSeparator()
-                            } else if shape.type != .device && shape.type != .svg && shape.type != .image {
+                            }
+                        } else if shape.type != .device && shape.type != .svg && shape.type != .image {
+                            ShapePropertiesSection {
                                 ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
                                     .labelsHidden()
                                     .frame(width: UIMetrics.ColorSwatch.inline)
                                     .help("Fill color")
-                                ShapePropertiesSeparator()
                             }
+                        }
 
+                        ShapePropertiesSection {
                             ShapePropertiesControlGroup("Opacity") {
                                 HStack(spacing: 0) {
                                     TextField("", text: $editingOpacity, onEditingChanged: { editing in
@@ -163,9 +165,9 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         .foregroundStyle(.secondary)
                                 }
                             }
+                        }
 
-                            ShapePropertiesSeparator()
-
+                        ShapePropertiesSection {
                             ShapePropertiesControlGroup("Rotation") {
                                 Slider(value: shapeBinding(shapeId, \.rotation, continuous: true), in: 0...360)
                                     .frame(width: UIMetrics.SliderWidth.standard)
@@ -203,11 +205,17 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         .font(.system(size: UIMetrics.FontSize.numericBadge))
                                         .foregroundStyle(.secondary)
                                 }
+
+                                if shape.rotation != 0 {
+                                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation") {
+                                        resetRotation(shapeId: shapeId)
+                                    }
+                                }
                             }
+                        }
 
-                            if shape.type == .rectangle || shape.type == .image || (shape.type == .device && shape.deviceCategory == .invisible) {
-                                ShapePropertiesSeparator()
-
+                        if shape.type == .rectangle || shape.type == .image || (shape.type == .device && shape.deviceCategory == .invisible) {
+                            ShapePropertiesSection {
                                 ShapePropertiesControlGroup("Radius") {
                                     Slider(value: shapeBinding(shapeId, \.borderRadius, continuous: true), in: 0...500)
                                         .frame(width: UIMetrics.SliderWidth.standard)
@@ -400,6 +408,15 @@ struct ShapePropertiesSingleSelectionBar: View {
             state.updateShape(resolved)
         }
         editingRotation = formatRotation(normalized)
+    }
+
+    private func resetRotation(shapeId: UUID) {
+        guard let i = idx(for: shapeId) else { return }
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard resolved.rotation != 0 else { return }
+        resolved.rotation = 0
+        state.updateShape(resolved)
+        editingRotation = "0"
     }
 
     private func currentLineHeightString(for shapeId: UUID) -> String {

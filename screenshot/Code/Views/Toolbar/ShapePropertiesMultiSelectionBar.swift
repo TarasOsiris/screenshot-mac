@@ -44,12 +44,20 @@ struct ShapePropertiesMultiSelectionBar: View {
                                 Slider(value: multiShapeBinding(\.opacity), in: 0...1)
                                     .frame(width: UIMetrics.SliderWidth.standard)
                             }
+                        }
 
-                            ShapePropertiesSeparator()
-
+                        ShapePropertiesSection {
                             ShapePropertiesControlGroup("Rotation") {
                                 Slider(value: multiShapeBinding(\.rotation), in: 0...360)
                                     .frame(width: UIMetrics.SliderWidth.standard)
+
+                                if shapes.contains(where: { $0.rotation != 0 }) {
+                                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation") {
+                                        state.updateShapes(state.selectedShapeIds) { shape in
+                                            shape.rotation = 0
+                                        }
+                                    }
+                                }
                             }
                         }
 
