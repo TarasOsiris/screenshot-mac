@@ -8,6 +8,24 @@ struct FontPicker: View {
     var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
     var onImportFont: ((URL) -> ImportedCustomFontSelection?)?
 
+    private static let previewFontSize: CGFloat = 13
+    private static let previewFontCache = NSCache<NSString, NSFont>()
+
+    /// Resolves a SwiftUI `Font` for a family/display name and memoizes it so the menu only
+    /// pays the Core Text lookup cost the first time each entry is rendered.
+    private static func previewFont(for name: String) -> Font {
+        if name.isEmpty { return .system(size: previewFontSize) }
+        let key = name as NSString
+        if let cached = previewFontCache.object(forKey: key) {
+            return Font(cached)
+        }
+        let ns = CustomFontRegistry.resolveNSFont(
+            name: name, size: previewFontSize, managerWeight: 5, italic: false
+        )
+        previewFontCache.setObject(ns, forKey: key)
+        return Font(ns)
+    }
+
     private static let fontFamilies: [String] = {
         NSFontManager.shared.availableFontFamilies.sorted()
     }()
@@ -26,9 +44,13 @@ struct FontPicker: View {
             }
         } label: {
             if selection == value {
-                Label(label, systemImage: "checkmark")
+                Label {
+                    Text(label).font(Self.previewFont(for: value))
+                } icon: {
+                    Image(systemName: "checkmark")
+                }
             } else {
-                Text(label)
+                Text(label).font(Self.previewFont(for: value))
             }
         }
     }
@@ -95,6 +117,7 @@ struct FontPicker: View {
                 }
             } label: {
                 Text(displayName)
+                    .font(Self.previewFont(for: selection))
                     .lineLimit(1)
                     .frame(width: 130, alignment: .leading)
             }
