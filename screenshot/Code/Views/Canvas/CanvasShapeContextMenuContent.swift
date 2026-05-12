@@ -21,32 +21,34 @@ struct CanvasShapeContextMenuContent: View {
     var body: some View {
         if !isMultiSelected {
             if shape.type == .device {
-                Menu("Image") {
-                    Button("Replace Image...") {
+                Menu {
+                    Button("Replace Image...", systemImage: "photo") {
                         isPickerPresented = true
                     }
-                    Button("Reset Image") {
+                    Button("Reset Image", systemImage: "arrow.counterclockwise") {
                         onClearImage?()
                     }
                     .disabled(shape.displayImageFileName == nil)
                     #if DEBUG
                     if let onCaptureSimulator {
                         Divider()
-                        Button("Capture from iOS Simulator", action: onCaptureSimulator)
+                        Button("Capture from iOS Simulator", systemImage: "iphone", action: onCaptureSimulator)
                     }
                     #endif
+                } label: {
+                    Label("Image", systemImage: "photo")
                 }
                 Divider()
             } else if shape.type == .image {
-                Button("Replace Image...") {
+                Button("Replace Image...", systemImage: "photo") {
                     isPickerPresented = true
                 }
-                Button("Reset Image") {
+                Button("Reset Image", systemImage: "arrow.counterclockwise") {
                     onClearImage?()
                 }
                 .disabled(shape.displayImageFileName == nil)
                 if let screenshotImage {
-                    Button("Restore Original Aspect Ratio") {
+                    Button("Restore Original Aspect Ratio", systemImage: "aspectratio") {
                         let imageSize = screenshotImage.size
                         guard imageSize.width > 0 && imageSize.height > 0 else { return }
                         let newHeight = shape.width / (imageSize.width / imageSize.height)
@@ -54,14 +56,14 @@ struct CanvasShapeContextMenuContent: View {
                     }
                 }
                 if let onRemoveBackground {
-                    Button("Remove Background", action: onRemoveBackground)
+                    Button("Remove Background", systemImage: "wand.and.stars", action: onRemoveBackground)
                         .disabled(shape.displayImageFileName == nil)
                 }
                 Divider()
             }
 
             if shape.type == .device {
-                Menu("Change Device") {
+                Menu {
                     DeviceMenuContent(
                         onSelectCategory: { category in
                             applyUpdate { $0.selectAbstractDevice(category, screenshotImageSize: screenshotImage?.size) }
@@ -72,9 +74,11 @@ struct CanvasShapeContextMenuContent: View {
                         selectedCategory: shape.deviceCategory,
                         selectedFrameId: shape.deviceFrameId
                     )
+                } label: {
+                    Label("Change Device", systemImage: "iphone")
                 }
                 if let onMatchDeviceSizes {
-                    Button("Match Size to Other Devices", action: onMatchDeviceSizes)
+                    Button("Match Size to Other Devices", systemImage: "arrow.up.left.and.arrow.down.right", action: onMatchDeviceSizes)
                 }
                 Divider()
             }
@@ -89,15 +93,19 @@ struct CanvasShapeContextMenuContent: View {
                 Label("Center", systemImage: "text.aligncenter").tag(TextAlign.center)
                 Label("Right", systemImage: "text.alignright").tag(TextAlign.right)
             }
-            Toggle("Italic", isOn: Binding(
+            Toggle(isOn: Binding(
                 get: { shape.italic ?? false },
                 set: { value in applyUpdate { $0.italic = value } }
-            ))
-            Toggle("Uppercase", isOn: Binding(
+            )) {
+                Label("Italic", systemImage: "italic")
+            }
+            Toggle(isOn: Binding(
                 get: { shape.uppercase ?? false },
                 set: { value in applyUpdate { $0.uppercase = value } }
-            ))
-            Menu("Change Font Size") {
+            )) {
+                Label("Uppercase", systemImage: "textformat")
+            }
+            Menu {
                 let currentSize = Int(shape.fontSize ?? CanvasShapeModel.defaultFontSize)
                 ForEach(CanvasShapeModel.fontSizePresets, id: \.self) { size in
                     Button {
@@ -110,6 +118,8 @@ struct CanvasShapeContextMenuContent: View {
                         }
                     }
                 }
+            } label: {
+                Label("Change Font Size", systemImage: "textformat.size")
             }
             if !isMultiSelected, let onCopyTextStyle {
                 Divider()
@@ -123,7 +133,7 @@ struct CanvasShapeContextMenuContent: View {
             }
             if !isMultiSelected, let onTranslate, let translateLocaleName {
                 Divider()
-                Button("Translate into \(translateLocaleName)", action: onTranslate)
+                Button("Translate into \(translateLocaleName)", systemImage: "character.bubble", action: onTranslate)
                     .disabled((shape.text ?? "").isEmpty)
             }
             Divider()
@@ -131,36 +141,42 @@ struct CanvasShapeContextMenuContent: View {
 
         if shape.type == .svg {
             if let originalSize = svgOriginalSize {
-                Button("Restore Original Aspect Ratio") {
+                Button("Restore Original Aspect Ratio", systemImage: "aspectratio") {
                     let newHeight = shape.width / (originalSize.width / originalSize.height)
                     applyUpdate { $0.height = newHeight }
                 }
             }
-            Toggle("Use Custom Color", isOn: Binding(
+            Toggle(isOn: Binding(
                 get: { shape.svgUseColor ?? false },
                 set: { value in applyUpdate { $0.svgUseColor = value } }
-            ))
+            )) {
+                Label("Use Custom Color", systemImage: "paintpalette")
+            }
             Divider()
         }
 
         if shape.type == .star {
-            Menu("Points: \(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)") {
+            Menu {
                 ForEach(3...12, id: \.self) { count in
                     Button("\(count)") {
                         applyUpdate { $0.starPointCount = count }
                     }
                 }
+            } label: {
+                Label("Points: \(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)", systemImage: "star")
             }
             Divider()
         }
 
-        Toggle("Clip to Frame", isOn: Binding(
+        Toggle(isOn: Binding(
             get: { shape.clipToTemplate ?? false },
             set: { value in applyUpdate { $0.clipToTemplate = value } }
-        ))
+        )) {
+            Label("Clip to Frame", systemImage: "rectangle.dashed")
+        }
 
         if let onDuplicateToTemplates {
-            Menu("Duplicate") {
+            Menu {
                 Button("To All Screenshots on the Left") {
                     onDuplicateToTemplates(.left)
                 }
@@ -170,28 +186,32 @@ struct CanvasShapeContextMenuContent: View {
                 Button("To All Screenshots") {
                     onDuplicateToTemplates(.all)
                 }
+            } label: {
+                Label("Duplicate", systemImage: "plus.square.on.square")
             }
         }
 
         if let onAlignSelected {
             Divider()
-            Menu("Align Selected") {
-                Button("Align Left") { onAlignSelected(.left) }
-                Button("Align Center") { onAlignSelected(.centerH) }
-                Button("Align Right") { onAlignSelected(.right) }
+            Menu {
+                Button("Align Left", systemImage: "align.horizontal.left") { onAlignSelected(.left) }
+                Button("Align Center", systemImage: "align.horizontal.center") { onAlignSelected(.centerH) }
+                Button("Align Right", systemImage: "align.horizontal.right") { onAlignSelected(.right) }
                 Divider()
-                Button("Align Top") { onAlignSelected(.top) }
-                Button("Align Middle") { onAlignSelected(.centerV) }
-                Button("Align Bottom") { onAlignSelected(.bottom) }
+                Button("Align Top", systemImage: "align.vertical.top") { onAlignSelected(.top) }
+                Button("Align Middle", systemImage: "align.vertical.center") { onAlignSelected(.centerV) }
+                Button("Align Bottom", systemImage: "align.vertical.bottom") { onAlignSelected(.bottom) }
                 Divider()
-                Button("Distribute Horizontally") { onAlignSelected(.distributeH) }
-                Button("Distribute Vertically") { onAlignSelected(.distributeV) }
+                Button("Distribute Horizontally", systemImage: "distribute.horizontal.center") { onAlignSelected(.distributeH) }
+                Button("Distribute Vertically", systemImage: "distribute.vertical.center") { onAlignSelected(.distributeV) }
+            } label: {
+                Label("Align Selected", systemImage: "rectangle.3.group")
             }
         }
 
         Divider()
 
-        Button(isMultiSelected ? "Delete Selected" : "Delete", role: .destructive, action: deleteAction)
+        Button(isMultiSelected ? "Delete Selected" : "Delete", systemImage: "trash", role: .destructive, action: deleteAction)
     }
 
     private var svgOriginalSize: CGSize? {
