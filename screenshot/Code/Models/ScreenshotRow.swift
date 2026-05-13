@@ -216,4 +216,18 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
             return bb.maxX > tLeft && bb.minX < tRight
         }
     }
+
+    /// Inverse of `visibleShapes(forTemplateAt:)`: shapes whose footprint is entirely inside this template's column.
+    /// Operates over `shapes` (not `activeShapes`) since callers like deletion must consider hidden shapes too.
+    func shapesContained(inTemplateAt index: Int) -> [CanvasShapeModel] {
+        let tLeft = CGFloat(index) * templateWidth
+        let tRight = tLeft + templateWidth
+        return shapes.filter { s in
+            if s.clipToTemplate == true {
+                return owningTemplateIndex(for: s) == index
+            }
+            let bb = s.aabb
+            return bb.minX >= tLeft && bb.maxX <= tRight
+        }
+    }
 }

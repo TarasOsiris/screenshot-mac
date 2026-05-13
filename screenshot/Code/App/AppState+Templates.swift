@@ -65,7 +65,8 @@ extension AppState {
         guard let idx = rows.firstIndex(where: { $0.id == rowId }),
               let templateIndex = rows[idx].templates.firstIndex(where: { $0.id == templateId }) else { return }
         registerUndoForRow(at: idx, "Remove Template")
-        let shapesToRemove = rows[idx].shapes.filter { rows[idx].owningTemplateIndex(for: $0) == templateIndex }
+        // Spanning shapes survive so their visible portion on neighboring (kept) templates is preserved.
+        let shapesToRemove = rows[idx].shapesContained(inTemplateAt: templateIndex)
         let templateBgImage = rows[idx].templates[templateIndex].backgroundImageConfig.fileName
         let shapeImageCandidates = imageFileNames(for: shapesToRemove)
         for shape in shapesToRemove {

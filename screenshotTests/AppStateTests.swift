@@ -580,6 +580,73 @@ struct AppStateTests {
         #expect(state.rows.first!.templates.count == countAfterAdd - 1)
     }
 
+    @Test func removeTemplateKeepsShapeSpanningIntoNeighbor() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+        state.addTemplate(to: rowId)
+        state.addTemplate(to: rowId)
+        let tw = state.rows.first!.templateWidth
+        let spanning = CanvasShapeModel(
+            type: .rectangle,
+            x: 0.5 * tw,
+            y: 0,
+            width: 2 * tw,
+            height: 100
+        )
+        state.addShape(spanning)
+        let removedTemplateId = try #require(state.rows.first!.templates[1].id)
+        state.removeTemplate(removedTemplateId, from: rowId)
+        let row = state.rows.first!
+        #expect(row.shapes.contains { $0.id == spanning.id }, "Spanning shape should survive deletion of a template it overlaps")
+        #expect(row.visibleShapes(forTemplateAt: 0).contains { $0.id == spanning.id }, "Shape should still be visible on template 0")
+    }
+
+    @Test func removeTemplateDeletesShapeContainedInIt() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+        state.addTemplate(to: rowId)
+        state.addTemplate(to: rowId)
+        let tw = state.rows.first!.templateWidth
+        let contained = CanvasShapeModel(
+            type: .rectangle,
+            x: 1.1 * tw,
+            y: 0,
+            width: 0.5 * tw,
+            height: 100
+        )
+        state.addShape(contained)
+        let removedTemplateId = try #require(state.rows.first!.templates[1].id)
+        state.removeTemplate(removedTemplateId, from: rowId)
+        #expect(!state.rows.first!.shapes.contains { $0.id == contained.id }, "Shape fully inside the deleted template should be removed")
+    }
+
+    @Test func removeTemplateDeletesClippedShapeRegardlessOfWidth() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+        state.addTemplate(to: rowId)
+        state.addTemplate(to: rowId)
+        let tw = state.rows.first!.templateWidth
+        // Wide enough to span 3 templates, but clipToTemplate confines it to its owner.
+        let clipped = CanvasShapeModel(
+            type: .rectangle,
+            x: 0.5 * tw,
+            y: 0,
+            width: 2 * tw,
+            height: 100,
+            clipToTemplate: true
+        )
+        state.addShape(clipped)
+        let removedTemplateId = try #require(state.rows.first!.templates[1].id)
+        state.removeTemplate(removedTemplateId, from: rowId)
+        #expect(!state.rows.first!.shapes.contains { $0.id == clipped.id }, "Clipped shape owned by the deleted template should be removed")
+    }
+
     // MARK: - Locale operations via AppState
 
     @Test func addLocaleUpdatesState() {
