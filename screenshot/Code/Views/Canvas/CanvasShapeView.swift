@@ -54,6 +54,7 @@ struct CanvasShapeView: View {
     var onFormatBarStateChanged: ((RichTextSelectionState?, RichTextFormatController?) -> Void)?
     var onFormatBarAnchorChanged: ((CGPoint?) -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
+    var onMatchSelectedDeviceSizes: (() -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
     var onCopyTextStyle: (() -> Void)?
@@ -389,6 +390,7 @@ struct CanvasShapeView: View {
             onRemoveBackground: onRemoveBackground,
             onCaptureSimulator: onCaptureSimulator,
             onMatchDeviceSizes: onMatchDeviceSizes,
+            onMatchSelectedDeviceSizes: onMatchSelectedDeviceSizes,
             onTranslate: onTranslate,
             translateLocaleName: translateLocaleName,
             onCopyTextStyle: onCopyTextStyle,

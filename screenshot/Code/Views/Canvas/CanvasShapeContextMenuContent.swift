@@ -9,6 +9,7 @@ struct CanvasShapeContextMenuContent: View {
     var onRemoveBackground: (() -> Void)?
     var onCaptureSimulator: (() -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
+    var onMatchSelectedDeviceSizes: (() -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
     var onCopyTextStyle: (() -> Void)?
@@ -203,6 +204,12 @@ struct CanvasShapeContextMenuContent: View {
             } label: {
                 Label("Duplicate", systemImage: "plus.square.on.square")
             }
+        }
+
+        if let onMatchSelectedDeviceSizes {
+            Button("Match Size to Selected Devices",
+                   systemImage: "arrow.up.left.and.arrow.down.right",
+                   action: onMatchSelectedDeviceSizes)
         }
 
         if let onAlignSelected {

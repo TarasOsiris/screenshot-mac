@@ -642,6 +642,25 @@ struct EditorRowView: View {
                             other.height = shape.height
                         }
                     } : nil,
+                    onMatchSelectedDeviceSizes: {
+                        guard isMulti,
+                              shape.type == .device,
+                              selectedShapeIds.contains(shape.id) else { return nil }
+                        let selectedDeviceIds = row.activeShapes.compactMap {
+                            (selectedShapeIds.contains($0.id) && $0.type == .device) ? $0.id : nil
+                        }
+                        guard selectedDeviceIds.count == selectedShapeIds.count else { return nil }
+                        let targetIds = Set(selectedDeviceIds.filter { $0 != shape.id })
+                        guard !targetIds.isEmpty else { return nil }
+                        return {
+                            state.updateShapes(targetIds,
+                                               in: row.id,
+                                               undoName: "Match Size to Selected Devices") { other in
+                                other.width = shape.width
+                                other.height = shape.height
+                            }
+                        }
+                    }(),
                     onTranslate: (shape.type == .text && isNonBaseLocale) ? {
                         state.pendingTranslateShapeId = shape.id
                     } : nil,
