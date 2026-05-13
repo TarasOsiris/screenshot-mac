@@ -57,6 +57,9 @@ struct CanvasShapeView: View {
     var onMatchSelectedDeviceSizes: (() -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
+    var onTranslateAllLocales: (() -> Void)?
+    var translateAllLocalesDisabled = false
+    var nonBaseLocaleCount: Int = 0
     var onCopyTextStyle: (() -> Void)?
     var onPasteTextStyle: (() -> Void)?
     var availableFontFamilies: Set<String> = []
@@ -393,6 +396,9 @@ struct CanvasShapeView: View {
             onMatchSelectedDeviceSizes: onMatchSelectedDeviceSizes,
             onTranslate: onTranslate,
             translateLocaleName: translateLocaleName,
+            onTranslateAllLocales: onTranslateAllLocales,
+            translateAllLocalesDisabled: translateAllLocalesDisabled,
+            nonBaseLocaleCount: nonBaseLocaleCount,
             onCopyTextStyle: onCopyTextStyle,
             onPasteTextStyle: onPasteTextStyle,
             applyUpdate: applyUpdate,

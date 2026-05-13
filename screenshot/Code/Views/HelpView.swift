@@ -70,7 +70,7 @@ enum HelpSection: String, CaseIterable, Identifiable, Hashable {
         case .devices: "Devices & Frames"
         case .backgrounds: "Backgrounds"
         case .editing: "Editing on the Canvas"
-        case .locales: "Locales & Translations"
+        case .locales: "Languages & Translations"
         case .importing: "Importing"
         case .exporting: "Exporting"
         case .appStoreConnect: "App Store Connect"
@@ -292,8 +292,8 @@ extension HelpSection {
                 .bullet("1. Create a new project from a template, or start blank."),
                 .bullet("2. Drop your raw device screenshots onto the templates — Screenshot Bro detects iPhone vs iPad vs Android from the image dimensions and routes them to the right row."),
                 .bullet("3. Pick a device frame, add a headline, choose a background, and arrange shapes."),
-                .bullet("4. Add locales for languages you support — translate text once and let the layout follow."),
-                .bullet("5. Export. You'll get a folder organized by locale and device, ready to upload."),
+                .bullet("4. Add languages you support — translate text once and let the layout follow."),
+                .bullet("5. Export. You'll get a folder organized by language and device, ready to upload."),
                 .tip("If this is your first time, the **Onboarding** sheet will walk you through picking a default screenshot size and device. Pick a new project from a template any time via **File ▸ New Project**."),
             ]
         )
@@ -304,7 +304,7 @@ extension HelpSection {
             title: "Projects",
             subtitle: "One project per app — or per major release.",
             blocks: [
-                .paragraph("A project is a self-contained collection of rows, templates, shapes, locales, and image resources. Projects are stored on disk under your user Application Support folder and can be optionally synced via iCloud Drive."),
+                .paragraph("A project is a self-contained collection of rows, templates, shapes, languages, and image resources. Projects are stored on disk under your user Application Support folder and can be optionally synced via iCloud Drive."),
                 .heading("Creating a project"),
                 .bullet("**File ▸ New Project…** (⌘N) opens the New Project window."),
                 .bullet("Choose **Blank** to set up rows and screenshot sizes manually, or **From Template** to start with a pre-designed layout."),
@@ -495,29 +495,30 @@ extension HelpSection {
 
     private var localesEntry: HelpEntry {
         HelpEntry(
-            title: "Locales & Translations",
+            title: "Languages & Translations",
             subtitle: "Translate text once, lay it out once, ship every language.",
             blocks: [
-                .paragraph("Locales let you generate localized screenshot sets without duplicating your project. Each locale shares the same layout and shapes; only text properties (content, font, size, alignment) are overridden per locale."),
-                .heading("Adding locales"),
-                .bullet("Open the **Locale** menu in the toolbar, or use **Locale ▸ Manage Locales…** in the menu bar."),
+                .paragraph("Languages let you generate localized screenshot sets without duplicating your project. Each language shares the same layout and shapes; only text properties (content, font, size, alignment) are overridden per language."),
+                .heading("Adding languages"),
+                .bullet("Open the **Language** menu in the toolbar, or use **Language ▸ Manage Languages…** in the menu bar."),
                 .bullet("Pick from 30 built-in language presets, or define a custom code."),
-                .bullet("The first locale you add is the **base locale** — the one whose text is the source of truth."),
-                .heading("Switching the active locale"),
-                .bullet("**⌘]** / **⌘[** cycle forward / backward through locales."),
-                .bullet("**⌘⌥0** jumps back to the base locale."),
-                .bullet("When editing a non-base locale, a banner appears at the top of the canvas reminding you which locale you're in."),
+                .bullet("The first language you add is the **base language** — the one whose text is the source of truth."),
+                .heading("Switching the active language"),
+                .bullet("**⌘]** / **⌘[** cycle forward / backward through languages."),
+                .bullet("**⌘⌥0** jumps back to the base language."),
+                .bullet("When editing a non-base language, a banner appears at the top of the canvas reminding you which language you're in."),
                 .heading("How translations work"),
-                .bullet("In a non-base locale, edits to text shapes are saved as **per-locale overrides** — they don't change the base."),
-                .bullet("Other shape properties (position, size, color, image) are shared across all locales. Edit them once and every locale picks up the change."),
-                .bullet("If a locale has no override for a text shape, it falls back to the base locale's text."),
+                .bullet("In a non-base language, edits to text shapes are saved as **per-language overrides** — they don't change the base."),
+                .bullet("Other shape properties (position, size, color, image) are shared across all languages. Edit them once and every language picks up the change."),
+                .bullet("If a language has no override for a text shape, it falls back to the base language's text."),
                 .heading("Translation helpers"),
-                .bullet("**Auto-Translate Missing Text** — fills in text shapes that don't yet have an override for the current locale."),
-                .bullet("**Re-Translate All Text…** — replaces every existing override with a fresh translation. Use after editing the base locale's text."),
-                .bullet("**Revert to Base Language…** — drops all overrides for the current locale, falling back to base text everywhere."),
-                .bullet("**Edit Translations…** — open a side-by-side editor showing every text shape with its base content and locale overrides."),
-                .heading("Exporting with locales"),
-                .bullet("On export, Screenshot Bro creates one folder per locale, then sub-folders per row. The structure matches what App Store Connect's localized screenshot uploads expect."),
+                .bullet("**Auto-Translate Missing Text** — fills in text shapes that don't yet have an override for the current language."),
+                .bullet("**Re-Translate All Text…** — replaces every existing override with a fresh translation. Use after editing the base language's text."),
+                .bullet("**Translate Selected to All Languages** — appears in the language bar when editing the base language with text shapes selected. Translates the selection into every other language at once."),
+                .bullet("**Revert to Base Language…** — drops all overrides for the current language, falling back to base text everywhere."),
+                .bullet("**Edit Translations…** — open a side-by-side editor showing every text shape with its base content and per-language overrides."),
+                .heading("Exporting with languages"),
+                .bullet("On export, Screenshot Bro creates one folder per language, then sub-folders per row. The structure matches what App Store Connect's localized screenshot uploads expect."),
             ]
         )
     }
@@ -554,14 +555,14 @@ extension HelpSection {
             blocks: [
                 .heading("Quick export"),
                 .bullet("Click **Export** in the toolbar to render the current project to PNG."),
-                .bullet("By default, Screenshot Bro exports every locale, every row, and every template at 1× scale."),
+                .bullet("By default, Screenshot Bro exports every language, every row, and every template at 1× scale."),
                 .bullet("File names are zero-padded (`01_…`, `02_…`) so they sort correctly when uploaded."),
                 .heading("Format and scale"),
                 .bullet("**Settings ▸ Export ▸ Format**: PNG or JPEG. PNG is recommended for marketing screenshots."),
                 .bullet("**Scale**: 1×, 2×, or 3×. The App Store and Google Play require exact pixel dimensions, so keep this at 1× unless you specifically need oversized assets."),
                 .heading("Folder structure"),
-                .bullet("With one locale and one row: a flat folder of templates."),
-                .bullet("With multiple locales: a top-level folder per locale."),
+                .bullet("With one language and one row: a flat folder of templates."),
+                .bullet("With multiple languages: a top-level folder per language."),
                 .bullet("With multiple rows: a sub-folder per row label (e.g. `iPhone 6.9\"`, `iPad 13\"`)."),
                 .bullet("This mirrors the upload flow expected by App Store Connect's localized screenshot uploader."),
                 .heading("Export folder memory"),
@@ -657,7 +658,7 @@ extension HelpSection {
                 .bullet("**1 project** — you can keep editing it forever."),
                 .bullet("**3 rows** per project."),
                 .bullet("**5 templates** per row."),
-                .bullet("Full access to all device frames, shapes, locales, and export resolutions."),
+                .bullet("Full access to all device frames, shapes, languages, and export resolutions."),
                 .bullet("Watermark-free exports."),
                 .heading("Pro"),
                 .bullet("Unlimited projects, rows, and templates."),
@@ -684,7 +685,7 @@ extension HelpSection {
                 .bullet("**Duplicate while dragging** with **⌥**. Combined with snap, this is the fastest way to lay out a row of equal-sized cards."),
                 .bullet("**Type rotation degrees directly.** The rotation field accepts text input — type `45` for an exact 45° rotation instead of dragging."),
                 .bullet("**Use the SVG button for icons.** SVG scales infinitely, so your hero icon stays crisp at 1×, 2×, or 3× export."),
-                .bullet("**Re-translate after editing base text.** If you change the base headline, run **Locale ▸ Re-Translate All Text…** so every locale picks up the new wording."),
+                .bullet("**Re-translate after editing base text.** If you change the base headline, run **Language ▸ Re-Translate All Text…** (or use **Translate Selected to All Languages** in the language bar with the edited text selected) so every language picks up the new wording."),
                 .bullet("**Use Invisible category for clipped designs.** When you want the screenshot to bleed off the canvas with no bezel, pick the Invisible device category."),
                 .bullet("**Pin frequently used projects.** Right-click in the project picker to pin and keep them at the top."),
                 .bullet("**Preview before exporting.** The export preview button on each template renders just that one template — handy for spot-checks."),
@@ -727,10 +728,10 @@ private struct ShortcutsHelp: View {
             ("F", "Focus on selection"),
             ("Middle-click + drag", "Pan canvas"),
         ]),
-        Group(title: "Locale", rows: [
-            ("⌘]", "Next locale"),
-            ("⌘[", "Previous locale"),
-            ("⌘⌥0", "Switch to base locale"),
+        Group(title: "Language", rows: [
+            ("⌘]", "Next language"),
+            ("⌘[", "Previous language"),
+            ("⌘⌥0", "Switch to base language"),
         ]),
         Group(title: "Text editing", rows: [
             ("Double-click text", "Enter inline edit mode"),

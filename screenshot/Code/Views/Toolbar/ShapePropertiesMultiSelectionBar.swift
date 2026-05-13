@@ -169,6 +169,7 @@ struct ShapePropertiesMultiSelectionBar: View {
                     .toggleStyle(.switch)
                     .controlSize(.small)
             }
+
         }
 
         if type == .rectangle || type == .image {

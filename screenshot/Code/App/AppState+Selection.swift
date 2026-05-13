@@ -4,6 +4,16 @@ extension AppState {
 
     // MARK: - Selection
 
+    var selectedTranslatableTextShapeIds: Set<UUID> {
+        guard let rowIndex = selectedRowIndex else { return [] }
+        let selected = selectedShapeIds
+        return Set(
+            rows[rowIndex].shapes
+                .filter { selected.contains($0.id) && $0.hasTranslatableText }
+                .map(\.id)
+        )
+    }
+
     func selectRow(_ id: UUID?) {
         finishContinuousEditIfNeeded()
         guard let id else {

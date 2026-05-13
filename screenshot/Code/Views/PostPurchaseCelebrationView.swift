@@ -238,7 +238,7 @@ struct PostPurchaseCelebrationView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Ship screenshots that convert")
                     .font(.system(size: 13, weight: .semibold))
-                Text("Build a polished store listing across every locale and device — no caps, no compromises.")
+                Text("Build a polished store listing across every language and device — no caps, no compromises.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

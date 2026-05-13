@@ -9,7 +9,7 @@ struct ManageLocalesSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 4) {
-                Text("Manage Locales")
+                Text("Manage Languages")
                     .font(.headline)
                 Text("The first language is the base. Drag to reorder.")
                     .font(.system(size: 11))
@@ -58,7 +58,7 @@ struct ManageLocalesSheet: View {
                             .buttonStyle(.borderless)
                             .focusable(false)
                             .foregroundStyle(.red.opacity(0.8))
-                            .help("Delete locale")
+                            .help("Delete language")
                         }
                     }
                 }

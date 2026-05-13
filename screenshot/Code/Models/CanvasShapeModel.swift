@@ -286,6 +286,10 @@ struct CanvasShapeModel: Identifiable, Codable {
         set { outlineColorData = newValue.map { CodableColor($0) } }
     }
 
+    var hasTranslatableText: Bool {
+        type == .text && !(text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     /// The filename for the shape's display image (device screenshot or standalone image).
     var displayImageFileName: String? {
         get { type == .image ? imageFileName : screenshotFileName }

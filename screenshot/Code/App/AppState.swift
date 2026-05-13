@@ -30,6 +30,7 @@ final class AppState {
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
     @ObservationIgnored var justAddedShapeId: UUID?
     var pendingTranslateShapeId: UUID?
+    var pendingFanOutTranslateShapeIds: Set<UUID>?
     var pendingLocaleMenuRequest: LocaleMenuRequest?
     /// Active step of the interactive onboarding tour. `nil` when no tour is in progress.
     var coachStep: OnboardingCoachStep?
@@ -75,6 +76,7 @@ final class AppState {
     @ObservationIgnored var projectOpenTask: Task<Void, Never>?
     var isLoadingImages = false
     var isOpeningProject = false
+    var isFanOutTranslating = false
 
     // Debounce state for undo grouping
     @ObservationIgnored var translationUndoTask: DispatchWorkItem?

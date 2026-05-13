@@ -6,7 +6,7 @@ extension AppState {
 
     func setActiveLocale(_ code: String) {
         guard code != localeState.activeLocaleCode else { return }
-        guard localeState.locales.contains(where: { $0.code == code }) else { return }
+        guard localeState.hasLocale(code) else { return }
         localeState.activeLocaleCode = code
         loadScreenshotImages() // evict old locale images, load new ones
         scheduleSave()
@@ -26,7 +26,7 @@ extension AppState {
 
     func moveLocale(from source: IndexSet, to destination: Int) {
         guard let fromIdx = source.first, fromIdx != 0, destination != 0 else { return }
-        registerUndo("Reorder Locale")
+        registerUndo("Reorder Language")
         localeState.locales.move(fromOffsets: source, toOffset: destination)
         scheduleSave()
     }
@@ -97,6 +97,8 @@ extension AppState {
 
     func updateTranslationText(shapeId: UUID, localeCode code: String, text: String) {
         guard code != localeState.baseLocaleCode else { return }
+        guard localeState.hasLocale(code) else { return }
+        guard shapeLocation(for: shapeId) != nil else { return }
 
         // Capture undo state only at the start of a translation editing sequence
         if translationBaseLocaleState == nil {
@@ -164,7 +166,7 @@ extension AppState {
         guard code != localeState.baseLocaleCode else { return }
         guard let localeOverrides = localeState.overrides[code], !localeOverrides.isEmpty else { return }
 
-        registerUndo("Reset Locale to Base")
+        registerUndo("Reset Language to Base")
         translationUndoTask?.cancel()
         translationUndoTask = nil
         translationBaseLocaleState = nil
@@ -176,8 +178,8 @@ extension AppState {
     }
 
     func addLocale(_ locale: LocaleDefinition) {
-        guard !localeState.locales.contains(where: { $0.code == locale.code }) else { return }
-        registerUndo("Add Locale")
+        guard !localeState.hasLocale(locale.code) else { return }
+        registerUndo("Add Language")
         LocaleService.addLocale(&localeState, locale: locale)
         localeState.activeLocaleCode = locale.code
         scheduleSave()
@@ -185,8 +187,8 @@ extension AppState {
 
     func removeLocale(_ code: String) {
         guard code != localeState.baseLocaleCode else { return }
-        guard localeState.locales.contains(where: { $0.code == code }) else { return }
-        registerUndo("Remove Locale")
+        guard localeState.hasLocale(code) else { return }
+        registerUndo("Remove Language")
         // Collect override image filenames before removing the locale
         let overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
         LocaleService.removeLocale(&localeState, code: code)

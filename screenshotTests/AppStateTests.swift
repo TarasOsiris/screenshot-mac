@@ -734,6 +734,42 @@ struct AppStateTests {
         #expect(state.localeState.override(forCode: "de", shapeId: shape.id)?.text == nil)
     }
 
+    @Test func updateTranslationTextIgnoresRemovedLocale() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        state.addLocale(.init(code: "fr", label: "French"))
+        state.selectRow(state.rows.first!.id)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.text = "Hello"
+        state.addShape(shape)
+
+        state.removeLocale("fr")
+        state.updateTranslationText(shapeId: shape.id, localeCode: "fr", text: "Bonjour")
+
+        #expect(state.localeState.override(forCode: "fr", shapeId: shape.id)?.text == nil)
+        #expect(state.localeState.overrides["fr"] == nil)
+    }
+
+    @Test func updateTranslationTextIgnoresDeletedShape() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        state.addLocale(.init(code: "fr", label: "French"))
+        state.selectRow(state.rows.first!.id)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.text = "Hello"
+        state.addShape(shape)
+
+        state.deleteShape(shape.id)
+        state.updateTranslationText(shapeId: shape.id, localeCode: "fr", text: "Bonjour")
+
+        #expect(state.localeState.override(forCode: "fr", shapeId: shape.id)?.text == nil)
+        #expect(state.localeState.overrides["fr"] == nil)
+    }
+
     // MARK: - Zoom
 
     @Test func zoomInAndOut() {

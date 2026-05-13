@@ -492,6 +492,7 @@ struct EditorRowView: View {
         let selectedShapeIds = state.selectedShapeIds
         let isNonBaseLocale = !state.localeState.isBaseLocale
         let currentLocaleName: String? = isNonBaseLocale ? state.localeState.activeLocaleLabel : nil
+        let nonBaseLocaleCount = state.localeState.nonBaseLocaleCount
         // Computed once per render — the per-shape closure below references it
         // instead of recomputing the O(N) walk for every shape's `lockToggleWillUnlock`.
         let selectionFullyLocked = state.isSelectionFullyLocked
@@ -665,6 +666,22 @@ struct EditorRowView: View {
                         state.pendingTranslateShapeId = shape.id
                     } : nil,
                     translateLocaleName: currentLocaleName,
+                    onTranslateAllLocales: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
+                        let isMultiText = selectedShapeIds.count > 1 && selectedShapeIds.contains(shape.id)
+                        if isMultiText {
+                            let translatableIds: Set<UUID> = Set(
+                                row.activeShapes
+                                    .filter { selectedShapeIds.contains($0.id) && $0.hasTranslatableText }
+                                    .map(\.id)
+                            )
+                            guard !translatableIds.isEmpty else { return }
+                            state.pendingFanOutTranslateShapeIds = translatableIds
+                        } else {
+                            state.pendingFanOutTranslateShapeIds = [shape.id]
+                        }
+                    } : nil,
+                    translateAllLocalesDisabled: state.isFanOutTranslating,
+                    nonBaseLocaleCount: nonBaseLocaleCount,
                     onCopyTextStyle: shape.type == .text ? {
                         state.textStyleClipboard = shape.extractTextStyle()
                     } : nil,

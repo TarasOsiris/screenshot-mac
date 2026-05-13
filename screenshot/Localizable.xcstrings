@@ -195,13 +195,13 @@
     "**⇧ + Arrow** nudges by 10px." : {
 
     },
-    "**⌘]** / **⌘[** cycle forward / backward through locales." : {
+    "**⌘]** / **⌘[** cycle forward / backward through languages." : {
 
     },
     "**⌘+** / **⌘−** zoom in/out, **⌘0** resets to 100%, **F** focuses on the current selection." : {
 
     },
-    "**⌘⌥0** jumps back to the base locale." : {
+    "**⌘⌥0** jumps back to the base language." : {
 
     },
     "**⌘A** selects every shape in the active row." : {
@@ -225,7 +225,7 @@
     "**Appearance** — Auto / Light / Dark." : {
 
     },
-    "**Auto-Translate Missing Text** — fills in text shapes that don't yet have an override for the current locale." : {
+    "**Auto-Translate Missing Text** — fills in text shapes that don't yet have an override for the current language." : {
 
     },
     "**Back up projects** — write a one-off zip of your project library to a folder you choose." : {
@@ -273,7 +273,7 @@
     "**Duplicate while dragging** with **⌥**. Combined with snap, this is the fastest way to lay out a row of equal-sized cards." : {
 
     },
-    "**Edit Translations…** — open a side-by-side editor showing every text shape with its base content and locale overrides." : {
+    "**Edit Translations…** — open a side-by-side editor showing every text shape with its base content and per-language overrides." : {
 
     },
     "**Esc** deselects shapes; press again to deselect the row." : {
@@ -351,16 +351,16 @@
     "**Radial**: a circular gradient with an editable center point and end radius derived from the canvas size." : {
 
     },
-    "**Re-translate after editing base text.** If you change the base headline, run **Locale ▸ Re-Translate All Text…** so every locale picks up the new wording." : {
+    "**Re-translate after editing base text.** If you change the base headline, run **Language ▸ Re-Translate All Text…** (or use **Translate Selected to All Languages** in the language bar with the edited text selected) so every language picks up the new wording." : {
 
     },
-    "**Re-Translate All Text…** — replaces every existing override with a fresh translation. Use after editing the base locale's text." : {
+    "**Re-Translate All Text…** — replaces every existing override with a fresh translation. Use after editing the base language's text." : {
 
     },
     "**Restore Purchases** brings back an existing subscription on a new Mac." : {
 
     },
-    "**Revert to Base Language…** — drops all overrides for the current locale, falling back to base text everywhere." : {
+    "**Revert to Base Language…** — drops all overrides for the current language, falling back to base text everywhere." : {
 
     },
     "**Row label** — names the folder this row exports into." : {
@@ -406,6 +406,9 @@
 
     },
     "**Tile** — repeats the image with adjustable spacing, offset, and scale per axis." : {
+
+    },
+    "**Translate Selected to All Languages** — appears in the language bar when editing the base language with text shapes selected. Translates the selection into every other language at once." : {
 
     },
     "**Type rotation degrees directly.** The rotation field accepts text input — type `45` for an exact 45° rotation instead of dragging." : {
@@ -1950,10 +1953,10 @@
         }
       }
     },
-    "4. Add locales for languages you support — translate text once and let the layout follow." : {
+    "4. Add languages you support — translate text once and let the layout follow." : {
 
     },
-    "5. Export. You'll get a folder organized by locale and device, ready to upload." : {
+    "5. Export. You'll get a folder organized by language and device, ready to upload." : {
 
     },
     "10-character key ID" : {
@@ -2048,7 +2051,7 @@
         }
       }
     },
-    "A project is a self-contained collection of rows, templates, shapes, locales, and image resources. Projects are stored on disk under your user Application Support folder and can be optionally synced via iCloud Drive." : {
+    "A project is a self-contained collection of rows, templates, shapes, languages, and image resources. Projects are stored on disk under your user Application Support folder and can be optionally synced via iCloud Drive." : {
 
     },
     "A typical workflow" : {
@@ -3093,7 +3096,7 @@
     "Add Your Next Screenshot" : {
 
     },
-    "Adding locales" : {
+    "Adding languages" : {
 
     },
     "Adding rows" : {
@@ -5886,7 +5889,7 @@
     "Browse a sample app, version, locales, and run a simulated upload — no API key required and no traffic is sent to App Store Connect." : {
 
     },
-    "Build a polished store listing across every locale and device — no caps, no compromises." : {
+    "Build a polished store listing across every language and device — no caps, no compromises." : {
 
     },
     "Build the layout with rectangles, circles, stars, text, images, devices, and SVGs." : {
@@ -5947,7 +5950,7 @@
     "By default a row's background applies to every template in the row." : {
 
     },
-    "By default, Screenshot Bro exports every locale, every row, and every template at 1× scale." : {
+    "By default, Screenshot Bro exports every language, every row, and every template at 1× scale." : {
 
     },
     "by Ibrahim.Bhl" : {
@@ -6324,7 +6327,11 @@
         }
       }
     },
+    "Changes here affect only %@. The base language text is shared across all languages — edits to other languages are stored as overrides." : {
+
+    },
     "Changes here affect only %@. The base language text is shared across all locales — edits to other locales are stored as overrides." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -9197,7 +9204,11 @@
         }
       }
     },
+    "Delete language" : {
+
+    },
     "Delete locale" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -11960,7 +11971,7 @@
         }
       }
     },
-    "Exporting with locales" : {
+    "Exporting with languages" : {
 
     },
     "Exporting..." : {
@@ -13124,7 +13135,7 @@
         }
       }
     },
-    "Full access to all device frames, shapes, locales, and export resolutions." : {
+    "Full access to all device frames, shapes, languages, and export resolutions." : {
 
     },
     "Future Pro-only features as they ship." : {
@@ -13770,7 +13781,7 @@
     "iCloud sync." : {
 
     },
-    "If a locale has no override for a text shape, it falls back to the base locale's text." : {
+    "If a language has no override for a text shape, it falls back to the base language's text." : {
 
     },
     "If a matching display type already has screenshots, they will be deleted and replaced. You'll be asked to confirm before anything is uploaded." : {
@@ -14175,7 +14186,7 @@
     "Importing" : {
 
     },
-    "In a non-base locale, edits to text shapes are saved as **per-locale overrides** — they don't change the base." : {
+    "In a non-base language, edits to text shapes are saved as **per-language overrides** — they don't change the base." : {
 
     },
     "In Blank mode, pick the device categories you want — each one becomes a row with the right default screenshot size for the App Store / Play Store." : {
@@ -14988,7 +14999,16 @@
         }
       }
     },
+    "Language Editing" : {
+
+    },
     "Language options" : {
+
+    },
+    "Languages & Translations" : {
+
+    },
+    "Languages let you generate localized screenshot sets without duplicating your project. Each language shares the same layout and shapes; only text properties (content, font, size, alignment) are overridden per language." : {
 
     },
     "Last test failed" : {
@@ -15601,6 +15621,7 @@
       }
     },
     "Locale" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15647,6 +15668,7 @@
       }
     },
     "Locale Editing" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15784,12 +15806,6 @@
         }
       }
     },
-    "Locales & Translations" : {
-
-    },
-    "Locales let you generate localized screenshot sets without duplicating your project. Each locale shares the same layout and shapes; only text properties (content, font, size, alignment) are overridden per locale." : {
-
-    },
     "Localize your screenshots" : {
 
     },
@@ -15848,7 +15864,14 @@
     "macOS version (Apple menu ▸ About This Mac)." : {
 
     },
+    "Manage Languages" : {
+
+    },
+    "Manage Languages..." : {
+
+    },
     "Manage Locales" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15895,6 +15918,7 @@
       }
     },
     "Manage Locales..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -16939,10 +16963,14 @@
         }
       }
     },
-    "Next locale" : {
+    "Next language" : {
+
+    },
+    "Next Language" : {
 
     },
     "Next Locale" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -17887,7 +17915,7 @@
     "On export, each template is clipped to its own bounds, so a shape that spans templates will appear on each of them at the right horizontal offset." : {
 
     },
-    "On export, Screenshot Bro creates one folder per locale, then sub-folders per row. The structure matches what App Store Connect's localized screenshot uploads expect." : {
+    "On export, Screenshot Bro creates one folder per language, then sub-folders per row. The structure matches what App Store Connect's localized screenshot uploads expect." : {
 
     },
     "One project per app — or per major release." : {
@@ -18361,7 +18389,7 @@
         }
       }
     },
-    "Open the **Locale** menu in the toolbar, or use **Locale ▸ Manage Locales…** in the menu bar." : {
+    "Open the **Language** menu in the toolbar, or use **Language ▸ Manage Languages…** in the menu bar." : {
 
     },
     "Opening Project…" : {
@@ -18462,7 +18490,7 @@
         }
       }
     },
-    "Other shape properties (position, size, color, image) are shared across all locales. Edit them once and every locale picks up the change." : {
+    "Other shape properties (position, size, color, image) are shared across all languages. Edit them once and every language picks up the change." : {
 
     },
     "Outline" : {
@@ -19569,10 +19597,14 @@
     "Preview vs export" : {
 
     },
-    "Previous locale" : {
+    "Previous language" : {
+
+    },
+    "Previous Language" : {
 
     },
     "Previous Locale" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -22251,7 +22283,11 @@
         }
       }
     },
+    "Reset language override" : {
+
+    },
     "Reset locale override" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -22536,7 +22572,11 @@
     "Reset Showcase Settings?" : {
 
     },
+    "Reset to base-language image" : {
+
+    },
     "Reset to default locale image" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26585,6 +26625,7 @@
 
     },
     "Switch to Base" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26630,10 +26671,14 @@
         }
       }
     },
-    "Switch to base locale" : {
+    "Switch to base language" : {
+
+    },
+    "Switch to Base Language" : {
 
     },
     "Switch to the base language (⌥⌘0)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26685,7 +26730,7 @@
     "Switching color preserves the screenshot and any rotation." : {
 
     },
-    "Switching the active locale" : {
+    "Switching the active language" : {
 
     },
     "Sync with iCloud" : {
@@ -27477,7 +27522,7 @@
         }
       }
     },
-    "The first locale you add is the **base locale** — the one whose text is the source of truth." : {
+    "The first language you add is the **base language** — the one whose text is the source of truth." : {
 
     },
     "The individual screenshots inside a row." : {
@@ -27682,7 +27727,14 @@
     "This mirrors the upload flow expected by App Store Connect's localized screenshot uploader." : {
 
     },
+    "This removes all translated text and language-specific image overrides for %@, so the project uses the base language text and images again." : {
+
+    },
+    "This removes all translated text and language-specific image overrides for the current language, so the project uses the base language text and images again." : {
+
+    },
     "This removes all translated text and locale-specific image overrides for %@, so the project uses the base language text and images again." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -27729,6 +27781,7 @@
       }
     },
     "This removes all translated text and locale-specific image overrides for the current language, so the project uses the base language text and images again." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28221,6 +28274,16 @@
         }
       }
     },
+    "Translate %@ into all %lld other language%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Translate %1$@ into all %2$lld other language%3$@"
+          }
+        }
+      }
+    },
     "Translate into %@" : {
       "localizations" : {
         "de" : {
@@ -28266,6 +28329,9 @@
           }
         }
       }
+    },
+    "Translate into All Languages (%lld)" : {
+
     },
     "Translate Selected" : {
       "localizations" : {
@@ -28313,6 +28379,9 @@
         }
       }
     },
+    "Translate Selected into All Languages (%lld)" : {
+
+    },
     "Translate selected text layers into %@" : {
       "localizations" : {
         "de" : {
@@ -28358,6 +28427,9 @@
           }
         }
       }
+    },
+    "Translate Selected to All Languages" : {
+
     },
     "Translate text once, lay it out once, ship every language." : {
 
@@ -28407,6 +28479,9 @@
           }
         }
       }
+    },
+    "Translating…" : {
+
     },
     "Translation helpers" : {
 
@@ -30262,7 +30337,7 @@
         }
       }
     },
-    "When editing a non-base locale, a banner appears at the top of the canvas reminding you which locale you're in." : {
+    "When editing a non-base language, a banner appears at the top of the canvas reminding you which language you're in." : {
 
     },
     "When reporting a bug" : {
@@ -30366,13 +30441,13 @@
     "With a device shape selected, click the device thumbnail in the properties bar to open the picker." : {
 
     },
-    "With multiple locales: a top-level folder per locale." : {
+    "With multiple languages: a top-level folder per language." : {
 
     },
     "With multiple rows: a sub-folder per row label (e.g. `iPhone 6.9\"`, `iPad 13\"`)." : {
 
     },
-    "With one locale and one row: a flat folder of templates." : {
+    "With one language and one row: a flat folder of templates." : {
 
     },
     "X" : {

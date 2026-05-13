@@ -131,7 +131,7 @@ enum LocaleService {
 
     /// Add a new locale.
     static func addLocale(_ state: inout LocaleState, locale: LocaleDefinition) {
-        guard !state.locales.contains(where: { $0.code == locale.code }) else { return }
+        guard !state.hasLocale(locale.code) else { return }
         state.locales.append(locale)
     }
 

@@ -10,7 +10,7 @@ struct LocaleOverrideIndicator: View {
                 .font(.system(size: 10))
                 .foregroundStyle(Color.accentColor)
 
-            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset locale override", frameSize: 24, action: onReset)
+            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset language override", frameSize: 24, action: onReset)
         }
     }
 }

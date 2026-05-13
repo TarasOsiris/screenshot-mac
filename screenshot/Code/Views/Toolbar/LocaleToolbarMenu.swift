@@ -19,12 +19,27 @@ struct LocaleBar: View {
     @State private var showReplaceAllConfirmation = false
     @State private var showResetToBaseConfirmation = false
     @State private var showLanguageDownloadAlert = false
+    @State private var fanOutConfig: TranslationSession.Configuration?
+    @State private var fanOutPendingTargets: [String] = []
+    @State private var fanOutShapeIds: Set<UUID> = []
+    @State private var showFanOutLanguageDownloadAlert = false
 
     var body: some View {
         let baseCode = state.localeState.baseLocaleCode
         let activeCode = state.localeState.activeLocaleCode
         FlowLayout(horizontalSpacing: 4, verticalSpacing: 4) {
             localeActionsMenu
+
+            if state.isFanOutTranslating {
+                HStack(spacing: 4) {
+                    ProgressView().controlSize(.small)
+                    Text("Translating…")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 6)
+                .frame(height: UIMetrics.IconButton.frameSize)
+            }
 
             ForEach(state.localeState.locales) { locale in
                 LocaleFlagChip(
@@ -36,6 +51,8 @@ struct LocaleBar: View {
             }
 
             addLanguageButton
+
+            fanOutTranslateButton
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -71,7 +88,7 @@ struct LocaleBar: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This removes all translated text and locale-specific image overrides for the current language, so the project uses the base language text and images again.")
+            Text("This removes all translated text and language-specific image overrides for the current language, so the project uses the base language text and images again.")
         }
         .translationTask(quickTranslationConfig) { session in
             isQuickTranslating = true
@@ -88,6 +105,32 @@ struct LocaleBar: View {
             }
         }
         .translationLanguageDownloadAlert(isPresented: $showLanguageDownloadAlert)
+        .translationTask(fanOutConfig) { session in
+            guard let target = fanOutPendingTargets.first else { return }
+            let ids = fanOutShapeIds
+            let success = await translateShapes(
+                session: session,
+                state: state,
+                targetLocaleCode: target,
+                onlyUntranslated: false,
+                shapeFilter: { ids.contains($0) }
+            )
+            if !success {
+                fanOutPendingTargets.removeAll()
+                fanOutShapeIds.removeAll()
+                state.isFanOutTranslating = false
+                showFanOutLanguageDownloadAlert = true
+                return
+            }
+            fanOutPendingTargets.removeFirst()
+            if let next = fanOutPendingTargets.first {
+                fanOutConfig.refresh(source: state.localeState.baseLocaleCode, target: next)
+            } else {
+                fanOutShapeIds.removeAll()
+                state.isFanOutTranslating = false
+            }
+        }
+        .translationLanguageDownloadAlert(isPresented: $showFanOutLanguageDownloadAlert)
         .onChange(of: state.pendingLocaleMenuRequest) { _, newValue in
             guard let request = newValue else { return }
             state.pendingLocaleMenuRequest = nil
@@ -99,6 +142,18 @@ struct LocaleBar: View {
             case .revertToBase: showResetToBaseConfirmation = true
             }
         }
+        .onChange(of: state.pendingFanOutTranslateShapeIds) { _, newValue in
+            guard let ids = newValue, !ids.isEmpty else { return }
+            state.pendingFanOutTranslateShapeIds = nil
+            guard !state.isFanOutTranslating else { return }
+            let base = state.localeState.baseLocaleCode
+            let targets = state.localeState.locales.map(\.code).filter { $0 != base }
+            guard !targets.isEmpty else { return }
+            fanOutShapeIds = ids
+            fanOutPendingTargets = targets
+            state.isFanOutTranslating = true
+            fanOutConfig.refresh(source: base, target: targets[0])
+        }
     }
 
     private var addLanguageButton: some View {
@@ -109,6 +164,37 @@ struct LocaleBar: View {
             frameSize: UIMetrics.IconButton.frameSize
         ) {
             isManagingLocales = true
+        }
+    }
+
+    @ViewBuilder
+    private var fanOutTranslateButton: some View {
+        let count = state.localeState.nonBaseLocaleCount
+        if state.localeState.isBaseLocale, count > 0 {
+            let ids = state.selectedTranslatableTextShapeIds
+            if !ids.isEmpty {
+                Button {
+                    state.pendingFanOutTranslateShapeIds = ids
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "character.bubble")
+                            .font(.system(size: 11, weight: .medium))
+                        Text("Translate Selected to All Languages")
+                            .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .frame(height: UIMetrics.IconButton.frameSize)
+                    .background(
+                        RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
+                            .fill(Color.accentColor)
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(state.isFanOutTranslating)
+                .opacity(state.isFanOutTranslating ? UIMetrics.Opacity.disabled : 1)
+                .help("Translate \(ids.count == 1 ? "this text" : "the \(ids.count) selected texts") into all \(count) other language\(count == 1 ? "" : "s")")
+            }
         }
     }
 
@@ -144,7 +230,7 @@ struct LocaleBar: View {
                 }
                 .disabled(progress.total == 0)
             }
-            Button("Manage Locales...", systemImage: "globe") {
+            Button("Manage Languages...", systemImage: "globe") {
                 isManagingLocales = true
             }
         } label: {
@@ -278,14 +364,6 @@ struct LocaleBanner: View {
     @State private var showLanguageDownloadAlert = false
     @State private var showLocaleHelp = false
 
-    private var selectedTextShapeIds: Set<UUID> {
-        guard let rowIndex = state.selectedRowIndex else { return [] }
-        let selected = state.selectedShapeIds
-        let ids = state.rows[rowIndex].shapes
-            .filter { selected.contains($0.id) && $0.type == .text && !($0.text ?? "").isEmpty }
-            .map(\.id)
-        return Set(ids)
-    }
 
     var body: some View {
         let localeState = state.localeState
@@ -322,9 +400,9 @@ struct LocaleBanner: View {
                         .focusable(false)
                         .popover(isPresented: $showLocaleHelp, arrowEdge: .bottom) {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Locale Editing")
+                                Text("Language Editing")
                                     .font(.system(size: 12, weight: .semibold))
-                                Text("Changes here affect only \(label). The base language text is shared across all locales — edits to other locales are stored as overrides.")
+                                Text("Changes here affect only \(label). The base language text is shared across all languages — edits to other languages are stored as overrides.")
                                     .font(.system(size: 11))
                                     .foregroundStyle(.secondary)
                                 VStack(alignment: .leading, spacing: 4) {
@@ -343,7 +421,7 @@ struct LocaleBanner: View {
 
                     Spacer(minLength: 8)
 
-                    let selectedIds = selectedTextShapeIds
+                    let selectedIds = state.selectedTranslatableTextShapeIds
                     if !selectedIds.isEmpty {
                         Button {
                             startTranslation(onlyUntranslated: false, shapeIds: selectedIds)
@@ -392,14 +470,6 @@ struct LocaleBanner: View {
                         .disabled(isTranslating)
                     }
 
-                    Button("Switch to Base") {
-                        state.setActiveLocale(localeState.baseLocaleCode)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .font(.system(size: 11, weight: .medium))
-                    .help("Switch to the base language (\u{2325}\u{2318}0)")
-
                     Button("Revert to Base", role: .destructive) {
                         showResetToBaseConfirmation = true
                     }
@@ -436,7 +506,7 @@ struct LocaleBanner: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This removes all translated text and locale-specific image overrides for \(label), so the project uses the base language text and images again.")
+                Text("This removes all translated text and language-specific image overrides for \(label), so the project uses the base language text and images again.")
             }
             .translationTask(translationConfig) { session in
                 isTranslating = true

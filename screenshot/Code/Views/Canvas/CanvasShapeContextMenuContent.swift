@@ -12,6 +12,9 @@ struct CanvasShapeContextMenuContent: View {
     var onMatchSelectedDeviceSizes: (() -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
+    var onTranslateAllLocales: (() -> Void)?
+    var translateAllLocalesDisabled = false
+    var nonBaseLocaleCount: Int = 0
     var onCopyTextStyle: (() -> Void)?
     var onPasteTextStyle: (() -> Void)?
     let applyUpdate: (@escaping (inout CanvasShapeModel) -> Void) -> Void
@@ -150,6 +153,18 @@ struct CanvasShapeContextMenuContent: View {
                 Divider()
                 Button("Translate into \(translateLocaleName)", systemImage: "character.bubble", action: onTranslate)
                     .disabled((shape.text ?? "").isEmpty)
+            }
+            if let onTranslateAllLocales, nonBaseLocaleCount > 0 {
+                Divider()
+                if isMultiSelected {
+                    Button("Translate Selected into All Languages (\(nonBaseLocaleCount))",
+                           systemImage: "character.bubble", action: onTranslateAllLocales)
+                        .disabled(translateAllLocalesDisabled)
+                } else {
+                    Button("Translate into All Languages (\(nonBaseLocaleCount))",
+                           systemImage: "character.bubble", action: onTranslateAllLocales)
+                        .disabled(translateAllLocalesDisabled || !shape.hasTranslatableText)
+                }
             }
             Divider()
         }

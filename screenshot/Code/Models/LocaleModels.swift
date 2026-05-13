@@ -137,6 +137,8 @@ struct LocaleState: Codable, Equatable {
 
     var isBaseLocale: Bool { activeLocaleCode == locales.first?.code }
     var baseLocaleCode: String { locales.first?.code ?? "en" }
+    var nonBaseLocaleCount: Int { max(locales.count - 1, 0) }
+    func hasLocale(_ code: String) -> Bool { locales.contains(where: { $0.code == code }) }
     var activeLocaleLabel: String { locales.first { $0.code == activeLocaleCode }?.flagLabel ?? activeLocaleCode }
 
     var activeLocaleHasOverrides: Bool {

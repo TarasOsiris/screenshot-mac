@@ -147,7 +147,7 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
                 .foregroundStyle(.secondary)
 
                 if showsLocaleImageReset {
-                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to default locale image", frameSize: 24) {
+                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: 24) {
                         onResetLocaleImage()
                     }
                 }
@@ -171,7 +171,7 @@ struct ImageShapeControls: View {
             .foregroundStyle(.secondary)
 
             if showsLocaleImageReset {
-                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to default locale image", frameSize: 24) {
+                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: 24) {
                     onResetLocaleImage()
                 }
             }

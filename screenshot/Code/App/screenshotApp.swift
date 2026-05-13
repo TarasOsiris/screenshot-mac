@@ -236,14 +236,14 @@ struct ScreenshotBroApp: App {
                 }
             }
 
-            CommandMenu("Locale") {
-                Button("Previous Locale") {
+            CommandMenu("Language") {
+                Button("Previous Language") {
                     appState.cycleLocaleBackward()
                 }
                 .keyboardShortcut("[", modifiers: .command)
                 .disabled(appState.localeState.locales.count < 2)
 
-                Button("Next Locale") {
+                Button("Next Language") {
                     appState.cycleLocaleForward()
                 }
                 .keyboardShortcut("]", modifiers: .command)
@@ -251,7 +251,7 @@ struct ScreenshotBroApp: App {
 
                 Divider()
 
-                Button("Switch to Base") {
+                Button("Switch to Base Language") {
                     appState.setActiveLocale(appState.localeState.baseLocaleCode)
                 }
                 .keyboardShortcut("0", modifiers: [.command, .option])
@@ -300,7 +300,7 @@ struct ScreenshotBroApp: App {
                 }
                 .disabled(appState.localeState.locales.count < 2 || translationProgress.total == 0)
 
-                Button("Manage Locales...") {
+                Button("Manage Languages...") {
                     appState.pendingLocaleMenuRequest = .manageLocales
                 }
             }
