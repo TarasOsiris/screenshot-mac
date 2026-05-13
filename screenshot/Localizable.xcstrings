@@ -8713,6 +8713,9 @@
         }
       }
     },
+    "Custom filename suffix" : {
+
+    },
     "Custom fonts" : {
 
     },
@@ -11305,6 +11308,16 @@
     },
     "Everything you can do without the mouse." : {
 
+    },
+    "Example: 01_screenshot_en%@.%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Example: 01_screenshot_en%1$@.%2$@"
+          }
+        }
+      }
     },
     "Exclude screenshot %lld" : {
 
@@ -18352,6 +18365,9 @@
 
     },
     "Opening Project…" : {
+
+    },
+    "optional" : {
 
     },
     "Orientation" : {

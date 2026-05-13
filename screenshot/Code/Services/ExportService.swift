@@ -28,6 +28,7 @@ struct ExportService {
         imageProvider: (_ row: ScreenshotRow, _ localeCode: String) -> [String: NSImage],
         localeState: LocaleState = .default,
         localeFilter: String? = nil,
+        customSuffix: String = "",
         availableFontFamilies: Set<String>? = nil,
         onProgress: (@MainActor (Int) -> Void)? = nil
     ) async throws -> URL {
@@ -48,6 +49,8 @@ struct ExportService {
         } else {
             localesToExport = allLocales
         }
+
+        let suffixPart = formattedFileSuffix(customSuffix)
 
         var completed = 0
 
@@ -95,7 +98,8 @@ struct ExportService {
                             let image = cropTemplateImage(rowImage, index: index, row: row)
 
                             let padded = String(format: "%02d", index + 1)
-                            let filename = "\(padded)_screenshot.\(format.fileExtension)"
+                            let localeSuffix = sanitizedFileName(locale.code)
+                            let filename = "\(padded)_screenshot_\(localeSuffix)\(suffixPart).\(format.fileExtension)"
                             let fileURL = destFolder.appendingPathComponent(filename)
 
                             let fmt = format
@@ -124,6 +128,35 @@ struct ExportService {
     static func sanitizedFileName(_ name: String) -> String {
         name.replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: "\\", with: "-")
+    }
+
+    private static let allowedSuffixChars: Set<Character> = Set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")
+    private static let suffixTrimSet = CharacterSet(charactersIn: "._-")
+
+    /// Sanitizes a user-supplied filename suffix. Collapses runs of invalid characters into a single `_`,
+    /// trims leading/trailing separators, and caps at 64 chars so it can't blow past the filesystem name limit.
+    static func sanitizedFileSuffix(_ raw: String) -> String {
+        var out = ""
+        out.reserveCapacity(raw.count)
+        var lastWasUnderscore = false
+        for ch in raw {
+            if allowedSuffixChars.contains(ch) {
+                out.append(ch)
+                lastWasUnderscore = false
+            } else if !lastWasUnderscore && !out.isEmpty {
+                out.append("_")
+                lastWasUnderscore = true
+            }
+        }
+        let trimmed = out.trimmingCharacters(in: suffixTrimSet)
+        return String(trimmed.prefix(64))
+    }
+
+    /// Returns the sanitized suffix prefixed with `_`, or empty string when the input has nothing usable.
+    /// Single source of truth for the export-filename suffix segment — keeps callers in sync with the editor preview.
+    static func formattedFileSuffix(_ raw: String) -> String {
+        let cleaned = sanitizedFileSuffix(raw)
+        return cleaned.isEmpty ? "" : "_\(cleaned)"
     }
 
     private static func exportFolderName(for row: ScreenshotRow) -> String {

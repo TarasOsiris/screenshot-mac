@@ -22,6 +22,7 @@ struct ContentView: View {
     @Environment(\.undoManager) private var undoManager
     @Environment(\.requestReview) private var requestReview
     @AppStorage("exportFormat") private var exportFormat = "png"
+    @AppStorage("exportCustomSuffix") private var exportCustomSuffix = ""
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @AppStorage("lastExportFolderBookmark") private var lastExportFolderBookmark = Data()
@@ -857,6 +858,7 @@ struct ContentView: View {
                     },
                     localeState: state.localeState,
                     localeFilter: localeFilter,
+                    customSuffix: exportCustomSuffix,
                     availableFontFamilies: state.availableFontFamilySet,
                     onProgress: { completed in
                         exportProgress = completed

@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage("appLanguageOverride") private var languageOverride = ""
     @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
     @AppStorage("exportFormat") private var exportFormat = "png"
+    @AppStorage("exportCustomSuffix") private var exportCustomSuffix = ""
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
     @AppStorage("lastExportFolderBookmark") private var lastExportFolderBookmark = Data()
     @AppStorage("lastExportFolderPath") private var lastExportFolderPath = ""
@@ -290,6 +291,15 @@ struct SettingsView: View {
             Picker("Format", selection: $exportFormat) {
                 Text("PNG").tag("png")
                 Text("JPEG").tag("jpeg")
+            }
+
+            Section {
+                TextField("Custom filename suffix", text: $exportCustomSuffix, prompt: Text("optional"))
+            } footer: {
+                let suffixPart = ExportService.formattedFileSuffix(exportCustomSuffix)
+                let ext = (ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png).fileExtension
+                Text("Example: 01_screenshot_en\(suffixPart).\(ext)")
+                    .foregroundStyle(.secondary)
             }
 
             Toggle("Reveal in Finder after export", isOn: $openExportFolderOnSuccess)
