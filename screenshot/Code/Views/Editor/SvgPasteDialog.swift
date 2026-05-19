@@ -11,18 +11,33 @@ struct SvgPasteDialog: View {
     @State private var isValidSvg = false
     @State private var useColorOverride = false
     @State private var overrideColor: Color = .white
+    @State private var selectedPresetId: String?
+    @State private var suppressTextChangeReset = false
 
     var body: some View {
         VStack(spacing: 12) {
             Text("Add SVG")
                 .font(.headline)
 
+            SvgPresetPicker(
+                selectedId: selectedPresetId,
+                overrideColor: useColorOverride ? overrideColor : nil,
+                onPick: applyPreset
+            )
+
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $svgText)
                     .font(.system(size: 11, design: .monospaced))
                     .frame(minHeight: 120)
                     .border(Color.secondary.opacity(0.3))
-                    .onChange(of: svgText) { updatePreview() }
+                    .onChange(of: svgText) {
+                        if suppressTextChangeReset {
+                            suppressTextChangeReset = false
+                        } else {
+                            selectedPresetId = nil
+                        }
+                        updatePreview()
+                    }
 
                 if svgText.isEmpty {
                     Text("Paste your SVG here...")
@@ -86,7 +101,13 @@ struct SvgPasteDialog: View {
             }
         }
         .padding()
-        .frame(width: 400)
+        .frame(width: 480)
+    }
+
+    private func applyPreset(_ preset: SvgPreset) {
+        suppressTextChangeReset = true
+        selectedPresetId = preset.id
+        svgText = preset.sanitizedContent
     }
 
     private func updatePreview() {
@@ -152,6 +173,92 @@ struct SvgPasteDialog: View {
         }
     }
 
+}
+
+private struct SvgPresetPicker: View {
+    let selectedId: String?
+    let overrideColor: Color?
+    let onPick: (SvgPreset) -> Void
+
+    private let presets = SvgPresetCatalog.all
+    private static let thumbSize: CGFloat = 44
+    private let columns = Array(repeating: GridItem(.fixed(SvgPresetPicker.thumbSize), spacing: 6), count: 8)
+
+    var body: some View {
+        if presets.isEmpty {
+            EmptyView()
+        } else {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Presets")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 6) {
+                        ForEach(presets) { preset in
+                            SvgPresetThumbnail(
+                                preset: preset,
+                                isSelected: preset.id == selectedId,
+                                size: Self.thumbSize,
+                                overrideColor: overrideColor
+                            )
+                            .onTapGesture { onPick(preset) }
+                        }
+                    }
+                    .padding(4)
+                }
+                .frame(maxHeight: 160)
+                .background(Color.primary.opacity(UIMetrics.Opacity.sectionFill))
+                .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
+            }
+        }
+    }
+}
+
+private struct SvgPresetThumbnail: View {
+    let preset: SvgPreset
+    let isSelected: Bool
+    let size: CGFloat
+    let overrideColor: Color?
+
+    @State private var image: NSImage?
+
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip) }
+
+    var body: some View {
+        ZStack {
+            shape.fill(Color.primary.opacity(UIMetrics.Opacity.sectionFill))
+            if let image {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding(4)
+            }
+        }
+        .frame(width: size, height: size)
+        .overlay(
+            shape.strokeBorder(
+                isSelected ? Color.accentColor : UIMetrics.Stroke.subtle,
+                lineWidth: isSelected ? UIMetrics.BorderWidth.emphasis : UIMetrics.BorderWidth.standard
+            )
+        )
+        .task(id: thumbnailKey) { await renderThumbnail() }
+    }
+
+    /// Thumbnails always recolor — the bundled SVGs use a dim gray that looks washed out
+    /// against the picker background, especially in dark mode. When the editor's override
+    /// color is unset, fall back to `.primary` so shapes adapt to light/dark appearance.
+    private var thumbnailTint: Color { overrideColor ?? .primary }
+
+    private var thumbnailKey: String { preset.id + "|" + thumbnailTint.hexString }
+
+    private func renderThumbnail() async {
+        let rendered = SvgHelper.renderImage(
+            from: preset.sanitizedContent,
+            useColor: true,
+            color: thumbnailTint
+        )
+        await MainActor.run { self.image = rendered }
+    }
 }
 
 struct CheckerboardPattern: View {

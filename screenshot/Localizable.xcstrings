@@ -13083,6 +13083,9 @@
         }
       }
     },
+    "Free SVG shapes bundled as presets in the SVG picker" : {
+
+    },
     "Free tier" : {
 
     },
@@ -25232,7 +25235,13 @@
     "Shapes & Text" : {
 
     },
+    "Shapes Gallery" : {
+
+    },
     "Shapes snap to other shapes' edges and centers, and to template boundaries, within a 4px threshold." : {
+
+    },
+    "shapes.gallery" : {
 
     },
     "Ship screenshots that convert" : {
@@ -26524,6 +26533,9 @@
       }
     },
     "SVG paste" : {
+
+    },
+    "SVG Presets" : {
 
     },
     "SVGs" : {

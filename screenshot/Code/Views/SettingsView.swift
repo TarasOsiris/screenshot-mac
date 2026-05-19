@@ -518,6 +518,19 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 2)
             }
+
+            Section("SVG Presets") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Shapes Gallery")
+                        .fontWeight(.medium)
+                    Text("Free SVG shapes bundled as presets in the SVG picker")
+                        .foregroundStyle(.secondary)
+                    Link("shapes.gallery",
+                         destination: URL(string: "https://www.shapes.gallery/")!)
+                        .font(.caption)
+                }
+                .padding(.vertical, 2)
+            }
         }
         .formStyle(.grouped)
     }
