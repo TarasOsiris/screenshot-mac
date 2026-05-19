@@ -780,6 +780,13 @@ struct UploadToAppStoreConnectView: View {
                 multiline: true,
                 minHeight: 80
             )
+            if canCopyWhatsNewToOtherLocales(from: index) {
+                Button("Copy to all locales") {
+                    copyWhatsNewToOtherLocales(from: index)
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+            }
             metadataField(
                 label: "Support URL",
                 text: $versionDrafts[index].supportUrl,
@@ -793,6 +800,23 @@ struct UploadToAppStoreConnectView: View {
         }
         .padding(10)
         .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
+    }
+
+    private func canCopyWhatsNewToOtherLocales(from index: Int) -> Bool {
+        guard versionDrafts.indices.contains(index) else { return false }
+        let draft = versionDrafts[index]
+        guard draft.locale.lowercased().hasPrefix("en") else { return false }
+        guard !draft.whatsNew.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        return versionDrafts.contains { $0.locale != draft.locale }
+    }
+
+    private func copyWhatsNewToOtherLocales(from index: Int) {
+        guard versionDrafts.indices.contains(index) else { return }
+        let source = versionDrafts[index].whatsNew
+        let sourceLocale = versionDrafts[index].locale
+        for i in versionDrafts.indices where versionDrafts[i].locale != sourceLocale {
+            versionDrafts[i].whatsNew = source
+        }
     }
 
     @ViewBuilder
