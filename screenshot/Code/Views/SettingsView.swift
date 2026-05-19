@@ -298,7 +298,7 @@ struct SettingsView: View {
             } footer: {
                 let suffixPart = ExportService.formattedFileSuffix(exportCustomSuffix)
                 let ext = (ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png).fileExtension
-                Text("Example: 01_screenshot_en\(suffixPart).\(ext)")
+                Text("Example: 01_Onboarding_en\(suffixPart).\(ext)")
                     .foregroundStyle(.secondary)
             }
 

@@ -11323,12 +11323,12 @@
     "Everything you can do without the mouse." : {
 
     },
-    "Example: 01_screenshot_en%@.%@" : {
+    "Example: 01_Onboarding_en%@.%@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Example: 01_screenshot_en%1$@.%2$@"
+            "value" : "Example: 01_Onboarding_en%1$@.%2$@"
           }
         }
       }

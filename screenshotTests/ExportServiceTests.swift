@@ -101,6 +101,41 @@ struct ExportServiceTests {
         #expect(data.count > 0)
     }
 
+    // MARK: - Filename sanitization
+
+    @Test func sanitizedFileNameReplacesFilesystemReservedCharacters() {
+        // Path separators, Windows-reserved chars, and control bytes collapse to single underscores.
+        #expect(ExportService.sanitizedFileName("a/b\\c:d*e?f\"g<h>i|j") == "a_b_c_d_e_f_g_h_i_j")
+        #expect(ExportService.sanitizedFileName("line1\nline2\tx") == "line1_line2_x")
+    }
+
+    @Test func sanitizedFileNameKeepsUnicodeAndSpaces() {
+        // Spaces, em-dash, accented characters, and emoji are valid on macOS — keep them.
+        #expect(ExportService.sanitizedFileName("Onboarding — Привет 🎉") == "Onboarding — Привет 🎉")
+    }
+
+    @Test func sanitizedFileNameTrimsEdgeSeparators() {
+        #expect(ExportService.sanitizedFileName("  ..Hello..  ") == "Hello")
+        #expect(ExportService.sanitizedFileName("/leading and trailing/") == "leading and trailing")
+    }
+
+    @Test func exportRowFileNameComponentFallsBackWhenLabelEmpty() {
+        var row = makeTestRow()
+        row.label = ""
+        // displayLabel becomes "Untitled Row", sanitized stays the same.
+        #expect(ExportService.exportRowFileNameComponent(for: row) == "Untitled Row")
+
+        row.label = "///"
+        // Sanitizes away entirely → fallback "row".
+        #expect(ExportService.exportRowFileNameComponent(for: row) == "row")
+    }
+
+    @Test func exportRowFileNameComponentSanitizesPathSeparators() {
+        var row = makeTestRow()
+        row.label = "Home / Screen 1"
+        #expect(ExportService.exportRowFileNameComponent(for: row) == "Home _ Screen 1")
+    }
+
     // MARK: - Oversized shapes must not shift layout
 
     /// When a shape extends beyond the template boundary, the rendered image must still

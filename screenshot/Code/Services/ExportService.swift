@@ -67,6 +67,8 @@ struct ExportService {
                 let multiRow = rows.count > 1
                 var usedFolderNames: [String: Int] = [:]
 
+                let localeSuffix = sanitizedFileName(locale.code)
+
                 for row in rows {
                     let destFolder: URL
                     if multiRow {
@@ -80,6 +82,7 @@ struct ExportService {
                         destFolder = localeFolder
                     }
 
+                    let rowName = exportRowFileNameComponent(for: row)
                     let rowImages = imageProvider(row, locale.code)
                     let rowImage = renderRowImage(
                         row: row,
@@ -98,8 +101,7 @@ struct ExportService {
                             let image = cropTemplateImage(rowImage, index: index, row: row)
 
                             let padded = String(format: "%02d", index + 1)
-                            let localeSuffix = sanitizedFileName(locale.code)
-                            let filename = "\(padded)_screenshot_\(localeSuffix)\(suffixPart).\(format.fileExtension)"
+                            let filename = "\(padded)_\(rowName)_\(localeSuffix)\(suffixPart).\(format.fileExtension)"
                             let fileURL = destFolder.appendingPathComponent(filename)
 
                             let fmt = format
@@ -124,10 +126,31 @@ struct ExportService {
         return rootFolder
     }
 
-    /// Returns the input with path separators replaced by dashes so it is safe to use as a single filename component.
+    private static let invalidPathScalars: Set<Unicode.Scalar> = ["/", "\\", ":", "*", "?", "\"", "<", ">", "|"]
+    private static let pathTrimSet = CharacterSet(charactersIn: " ._-").union(.whitespacesAndNewlines)
+
+    /// Returns the input sanitized for use as a single path component:
+    /// replaces path separators and other filesystem-problematic characters
+    /// (`/ \ : * ? " < > |` and control characters) with `_`, collapses runs,
+    /// and trims edge whitespace, dots, dashes, and underscores. Spaces and
+    /// non-ASCII characters (emoji, em-dash, etc.) are preserved.
     static func sanitizedFileName(_ name: String) -> String {
-        name.replacingOccurrences(of: "/", with: "-")
-            .replacingOccurrences(of: "\\", with: "-")
+        var out = ""
+        out.unicodeScalars.reserveCapacity(name.unicodeScalars.count)
+        var lastWasUnderscore = false
+        for scalar in name.unicodeScalars {
+            let isControl = scalar.value < 0x20 || scalar.value == 0x7F
+            if isControl || invalidPathScalars.contains(scalar) {
+                if !lastWasUnderscore && !out.isEmpty {
+                    out.append("_")
+                    lastWasUnderscore = true
+                }
+            } else {
+                out.unicodeScalars.append(scalar)
+                lastWasUnderscore = false
+            }
+        }
+        return out.trimmingCharacters(in: pathTrimSet)
     }
 
     private static let allowedSuffixChars: Set<Character> = Set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")
@@ -160,7 +183,15 @@ struct ExportService {
     }
 
     private static func exportFolderName(for row: ScreenshotRow) -> String {
-        sanitizedFileName("\(row.label) — \(Int(row.templateWidth))x\(Int(row.templateHeight))")
+        let base = sanitizedFileName("\(row.displayLabel) — \(Int(row.templateWidth))x\(Int(row.templateHeight))")
+        return base.isEmpty ? "row" : base
+    }
+
+    /// Sanitized row label suitable for embedding in an export filename.
+    /// Falls back to `"row"` when the label is empty or sanitizes away entirely.
+    static func exportRowFileNameComponent(for row: ScreenshotRow) -> String {
+        let sanitized = sanitizedFileName(row.displayLabel)
+        return sanitized.isEmpty ? "row" : sanitized
     }
 
     private static func sanitizedRootFolderName(_ projectName: String) -> String {
