@@ -4,12 +4,16 @@ import Quartz
 final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDelegate {
     static let shared = QuickLookCoordinator()
 
-    private var previewURL: URL?
+    private var previewURLs: [URL] = []
 
     func preview(imageAt url: URL) {
-        previewURL = url
+        preview(imagesAt: [url], startingAt: 0)
+    }
 
-        guard let panel = QLPreviewPanel.shared() else { return }
+    func preview(imagesAt urls: [URL], startingAt index: Int) {
+        guard !urls.isEmpty, let panel = QLPreviewPanel.shared() else { return }
+        previewURLs = urls
+        let clampedIndex = max(0, min(index, urls.count - 1))
 
         panel.dataSource = self
         panel.delegate = self
@@ -19,13 +23,15 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
         } else {
             panel.makeKeyAndOrderFront(nil)
         }
+        panel.currentPreviewItemIndex = clampedIndex
     }
 
     func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
-        previewURL != nil ? 1 : 0
+        previewURLs.count
     }
 
     func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> (any QLPreviewItem)! {
-        previewURL as? NSURL
+        guard index >= 0 && index < previewURLs.count else { return nil }
+        return previewURLs[index] as NSURL
     }
 }

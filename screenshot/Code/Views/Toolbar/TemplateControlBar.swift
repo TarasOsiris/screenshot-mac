@@ -277,26 +277,37 @@ struct TemplateControlBar: View {
         renderError = nil
         Task {
             defer { isPreviewing = false }
-            // Render on main thread (NSHostingView requires it)
             let images = onLoadFullResImages?() ?? screenshotImages
-            let image = ExportService.renderSingleTemplateImage(
-                index: index, row: row, screenshotImages: images,
-                localeCode: localeState.activeLocaleCode, localeState: localeState
+            let rowBackground = ExportService.renderComposedBackgroundImage(
+                row: row,
+                screenshotImages: images,
+                displayScale: 1.0,
+                labelPrefix: "preview row"
             )
-            // PNG encode + file write off main thread
-            let tempURL = FileManager.default.temporaryDirectory
-                .appendingPathComponent("screenshot-\(index + 1)-\(localeState.activeLocaleCode).png")
-            do {
-                guard let pngData = await Task.detached(operation: { ExportService.opaquePNGData(from: image) }).value else {
-                    renderError = String(localized: "Could not render screenshot for preview.")
+            let fontFamilies = Set(NSFontManager.shared.availableFontFamilies)
+            var urls: [URL] = []
+            for i in row.templates.indices {
+                let image = ExportService.renderSingleTemplateImage(
+                    index: i, row: row, screenshotImages: images,
+                    localeCode: localeState.activeLocaleCode, localeState: localeState,
+                    availableFontFamilies: fontFamilies,
+                    preRenderedRowBackground: rowBackground
+                )
+                let tempURL = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("screenshot-\(i + 1)-\(localeState.activeLocaleCode).png")
+                do {
+                    guard let pngData = await Task.detached(operation: { ExportService.opaquePNGData(from: image) }).value else {
+                        renderError = String(localized: "Could not render screenshot for preview.")
+                        return
+                    }
+                    try pngData.write(to: tempURL)
+                    urls.append(tempURL)
+                } catch {
+                    renderError = String(localized: "Could not write preview file: \(error.localizedDescription)")
                     return
                 }
-                try pngData.write(to: tempURL)
-            } catch {
-                renderError = String(localized: "Could not write preview file: \(error.localizedDescription)")
-                return
             }
-            QuickLookCoordinator.shared.preview(imageAt: tempURL)
+            QuickLookCoordinator.shared.preview(imagesAt: urls, startingAt: index)
         }
     }
 
