@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct TemplateControlBar: View {
+    @Environment(AppState.self) private var state
     @Binding var template: ScreenshotTemplate
     let row: ScreenshotRow
     let index: Int
@@ -273,6 +274,7 @@ struct TemplateControlBar: View {
     }
 
     private func previewScreenshot() {
+        state.deselectAll()
         isPreviewing = true
         renderError = nil
         Task {

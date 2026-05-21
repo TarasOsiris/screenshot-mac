@@ -187,10 +187,10 @@ final class AppState {
     }
 
     // macOS virtual key codes for arrow keys
-    private static let kVKLeftArrow: UInt16 = 0x7B
-    private static let kVKRightArrow: UInt16 = 0x7C
-    private static let kVKDownArrow: UInt16 = 0x7D
-    private static let kVKUpArrow: UInt16 = 0x7E
+    static let kVKLeftArrow: UInt16 = 0x7B
+    static let kVKRightArrow: UInt16 = 0x7C
+    static let kVKDownArrow: UInt16 = 0x7D
+    static let kVKUpArrow: UInt16 = 0x7E
 
     private func installArrowKeyMonitor() {
         arrowKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in

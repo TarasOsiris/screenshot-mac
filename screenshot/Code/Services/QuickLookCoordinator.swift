@@ -34,4 +34,17 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
         guard index >= 0 && index < previewURLs.count else { return nil }
         return previewURLs[index] as NSURL
     }
+
+    func previewPanel(_ panel: QLPreviewPanel!, handle event: NSEvent!) -> Bool {
+        guard event.type == .keyDown else { return false }
+        let idx = panel.currentPreviewItemIndex
+        switch event.keyCode {
+        case AppState.kVKLeftArrow:
+            return idx <= 0
+        case AppState.kVKRightArrow:
+            return idx >= previewURLs.count - 1
+        default:
+            return false
+        }
+    }
 }
