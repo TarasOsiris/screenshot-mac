@@ -87,32 +87,37 @@ enum SvgHelper {
         return CGSize(width: size.width * scale, height: size.height * scale)
     }
 
-    static func renderImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
+    /// Rewrites `fill`/`stroke` attributes in the SVG so the resulting image renders in `color`.
+    /// Handles both single- and double-quoted attributes (templates and pasted SVGs use either).
+    /// Preserves `fill="none"` / `stroke="none"` so non-filled paths stay unfilled.
+    static func applyColor(_ color: Color, to svgContent: String) -> String {
+        let hex = color.hexString
         var svg = svgContent
-        if useColor {
-            let hex = color.hexString
-            // Replace existing fill/stroke attributes (except "none")
+        for attr in ["fill", "stroke"] {
             svg = svg.replacingOccurrences(
-                of: "fill\\s*=\\s*\"(?!none\")[^\"]*\"",
-                with: "fill=\"\(hex)\"",
+                of: "\(attr)\\s*=\\s*\"(?!none\")[^\"]*\"",
+                with: "\(attr)=\"\(hex)\"",
                 options: .regularExpression
             )
             svg = svg.replacingOccurrences(
-                of: "stroke\\s*=\\s*\"(?!none\")[^\"]*\"",
-                with: "stroke=\"\(hex)\"",
+                of: "\(attr)\\s*=\\s*'(?!none')[^']*'",
+                with: "\(attr)=\"\(hex)\"",
                 options: .regularExpression
             )
-            // Set fill on the <svg> tag so elements without an explicit fill inherit the color
-            if svg.range(of: "<svg\\b[^>]*\\bfill\\s*=", options: .regularExpression) != nil {
-                // Already has fill on <svg>, was replaced above
-            } else {
-                svg = svg.replacingOccurrences(
-                    of: "<svg\\b",
-                    with: "<svg fill=\"\(hex)\"",
-                    options: .regularExpression
-                )
-            }
         }
+        // Set fill on the <svg> tag so elements without an explicit fill inherit the color
+        if svg.range(of: "<svg\\b[^>]*\\bfill\\s*=", options: .regularExpression) == nil {
+            svg = svg.replacingOccurrences(
+                of: "<svg\\b",
+                with: "<svg fill=\"\(hex)\"",
+                options: .regularExpression
+            )
+        }
+        return svg
+    }
+
+    static func renderImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
+        let svg = useColor ? applyColor(color, to: svgContent) : svgContent
         guard let data = svg.data(using: .utf8) else { return nil }
         guard let baseImage = NSImage(data: data) else { return nil }
 
