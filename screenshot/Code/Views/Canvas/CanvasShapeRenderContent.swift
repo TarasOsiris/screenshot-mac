@@ -164,7 +164,8 @@ struct CanvasShapeRenderContent: View {
             modelRenderingMode: deviceModelRenderingMode,
             invisibleCornerRadius: isInvisible ? shape.borderRadius * displayScale : 0,
             invisibleOutlineWidth: isInvisible ? max(0, (shape.outlineWidth ?? 0) * displayScale) : 0,
-            invisibleOutlineColor: isInvisible ? (shape.outlineColor ?? CanvasShapeModel.defaultOutlineColor) : .black
+            invisibleOutlineColor: isInvisible ? (shape.outlineColor ?? CanvasShapeModel.defaultOutlineColor) : .black,
+            hideCameraCutout: shape.hideCameraCutout ?? false
         )
 
         if screenshotImage == nil && showsEditorHelpers {

@@ -10,6 +10,7 @@ struct ProgrammaticDeviceFrameView: View {
     let invisibleCornerRadius: CGFloat
     let invisibleOutlineWidth: CGFloat
     let invisibleOutlineColor: Color
+    var hideCameraCutout: Bool = false
 
     private var scale: CGFloat {
         let base = category.baseDimensions
@@ -276,14 +277,16 @@ struct ProgrammaticDeviceFrameView: View {
             deviceBody(bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH, s: s)
             screenArea(screenShape: screenShape, screenW: screenW, screenH: screenH, bodyShape: bodyShape, bodyW: bodyW, bodyH: bodyH, s: s)
 
-            Circle()
-                .fill(.black)
-                .frame(width: cameraD, height: cameraD)
-                .overlay(
-                    Circle()
-                        .strokeBorder(.black.opacity(0.06), lineWidth: 0.5 * s)
-                )
-                .offset(y: -(screenH / 2 - cameraOffsetFromScreenTop))
+            if !hideCameraCutout {
+                Circle()
+                    .fill(.black)
+                    .frame(width: cameraD, height: cameraD)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(.black.opacity(0.06), lineWidth: 0.5 * s)
+                    )
+                    .offset(y: -(screenH / 2 - cameraOffsetFromScreenTop))
+            }
 
             Capsule()
                 .fill(.black.opacity(0.15))

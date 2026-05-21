@@ -92,6 +92,21 @@ struct ShapePropertiesSingleSelectionBar: View {
                             }
                         }
 
+                        if shape.type == .device
+                            && shape.deviceCategory == .androidPhone
+                            && shape.deviceFrameId == nil {
+                            let hideCamera = shapeBinding(shapeId, \.hideCameraCutout, default: false)
+                            ShapePropertiesSection {
+                                Toggle("Camera", isOn: Binding(
+                                    get: { !hideCamera.wrappedValue },
+                                    set: { hideCamera.wrappedValue = !$0 }
+                                ))
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .help("Show camera cutout on the abstract Android frame")
+                            }
+                        }
+
                         if shape.supportsDeviceModelRotation {
                             ShapeDeviceModelRotationControls(
                                 pitch: deviceModelRotationBinding(shapeId, \.devicePitch, defaultValue: \.resolvedDevicePitch),

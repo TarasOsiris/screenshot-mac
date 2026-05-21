@@ -21,6 +21,7 @@ struct DeviceFrameView: View {
     var invisibleCornerRadius: CGFloat = 0
     var invisibleOutlineWidth: CGFloat = 0
     var invisibleOutlineColor: Color = .black
+    var hideCameraCutout: Bool = false
 
     var body: some View {
         if let frameId = deviceFrameId,
@@ -68,7 +69,8 @@ struct DeviceFrameView: View {
             screenshotImage: screenshotImage,
             invisibleCornerRadius: invisibleCornerRadius,
             invisibleOutlineWidth: invisibleOutlineWidth,
-            invisibleOutlineColor: invisibleOutlineColor
+            invisibleOutlineColor: invisibleOutlineColor,
+            hideCameraCutout: hideCameraCutout
         )
     }
 }

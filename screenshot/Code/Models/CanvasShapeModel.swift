@@ -51,6 +51,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     var deviceYaw: Double?
     var deviceBodyMaterial: DeviceBodyMaterial?
     var deviceLighting: DeviceLighting?
+    var hideCameraCutout: Bool?
 
     // SVG properties
     var svgContent: String?
@@ -87,6 +88,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         case deviceCategory = "dc", deviceBodyColorData = "dbc"
         case deviceFrameId = "dfi", screenshotFileName = "sfn"
         case devicePitch = "dpt", deviceYaw = "dyw", deviceBodyMaterial = "dbm", deviceLighting = "dlt"
+        case hideCameraCutout = "hcc"
         case svgContent = "svg", svgUseColor = "suc"
         case outlineColorData = "olc", outlineWidth = "olw"
         case starPointCount = "spc"
@@ -130,6 +132,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         deviceYaw = try c.decodeIfPresent(Double.self, forKey: .deviceYaw)
         deviceBodyMaterial = try c.decodeIfPresent(DeviceBodyMaterial.self, forKey: .deviceBodyMaterial)
         deviceLighting = try c.decodeIfPresent(DeviceLighting.self, forKey: .deviceLighting)
+        hideCameraCutout = try c.decodeIfPresent(Bool.self, forKey: .hideCameraCutout)
         svgContent = try c.decodeIfPresent(String.self, forKey: .svgContent)
         svgUseColor = try c.decodeIfPresent(Bool.self, forKey: .svgUseColor)
         outlineColorData = try c.decodeIfPresent(CodableColor.self, forKey: .outlineColorData)
@@ -182,6 +185,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         if let lighting = deviceLighting, !lighting.isEmpty {
             try c.encode(lighting, forKey: .deviceLighting)
         }
+        try c.encodeIfPresent(hideCameraCutout, forKey: .hideCameraCutout)
         // SVG
         try c.encodeIfPresent(svgContent, forKey: .svgContent)
         try c.encodeIfPresent(svgUseColor, forKey: .svgUseColor)
@@ -642,6 +646,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         if deviceYaw != oldBase.deviceYaw { result.deviceYaw = deviceYaw }
         if deviceBodyMaterial != oldBase.deviceBodyMaterial { result.deviceBodyMaterial = deviceBodyMaterial }
         if deviceLighting != oldBase.deviceLighting { result.deviceLighting = deviceLighting }
+        if hideCameraCutout != oldBase.hideCameraCutout { result.hideCameraCutout = hideCameraCutout }
 
         if svgContent != oldBase.svgContent { result.svgContent = svgContent }
         if svgUseColor != oldBase.svgUseColor { result.svgUseColor = svgUseColor }
