@@ -55,6 +55,7 @@ struct CanvasShapeView: View {
     var onFormatBarAnchorChanged: ((CGPoint?) -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
     var onMatchSelectedDeviceSizes: (() -> Void)?
+    var onCenterDevice: ((AppState.CenterAxis) -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
     var onTranslateAllLocales: (() -> Void)?
@@ -394,6 +395,7 @@ struct CanvasShapeView: View {
             onCaptureSimulator: onCaptureSimulator,
             onMatchDeviceSizes: onMatchDeviceSizes,
             onMatchSelectedDeviceSizes: onMatchSelectedDeviceSizes,
+            onCenterDevice: onCenterDevice,
             onTranslate: onTranslate,
             translateLocaleName: translateLocaleName,
             onTranslateAllLocales: onTranslateAllLocales,

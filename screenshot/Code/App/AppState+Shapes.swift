@@ -133,24 +133,36 @@ extension AppState {
 
     func centerAllDevices(in rowId: UUID, axis: CenterAxis) {
         guard let idx = rowIndex(for: rowId) else { return }
+        centerDevices(Set(rows[idx].shapes.map(\.id)), in: rowId, axis: axis)
+    }
+
+    func centerDevices(_ shapeIds: Set<UUID>, in rowId: UUID, axis: CenterAxis) {
+        guard let idx = rowIndex(for: rowId) else { return }
         let row = rows[idx]
         let deviceIndices = row.shapes.indices.filter {
-            row.shapes[$0].type == .device && !row.shapes[$0].resolvedIsLocked
+            shapeIds.contains(row.shapes[$0].id) &&
+            row.shapes[$0].type == .device &&
+            !row.shapes[$0].resolvedIsLocked
         }
         guard !deviceIndices.isEmpty else { return }
-        registerUndoForRow(at: idx, "Center All Devices")
+        registerUndoForRow(at: idx, deviceIndices.count == 1 ? "Center Device" : "Center Devices")
         for i in deviceIndices {
-            let shape = rows[idx].shapes[i]
-            if axis != .vertically {
-                let templateIndex = row.owningTemplateIndex(for: shape)
-                let templateLeft = CGFloat(templateIndex) * row.templateWidth
-                rows[idx].shapes[i].x = templateLeft + (row.templateWidth - shape.width) / 2
-            }
-            if axis != .horizontally {
-                rows[idx].shapes[i].y = (row.templateHeight - shape.height) / 2
-            }
+            centerShape(at: i, in: idx, axis: axis)
         }
         scheduleSave()
+    }
+
+    private func centerShape(at shapeIndex: Int, in rowIndex: Int, axis: CenterAxis) {
+        let row = rows[rowIndex]
+        let shape = row.shapes[shapeIndex]
+        if axis != .vertically {
+            let templateIndex = row.owningTemplateIndex(for: shape)
+            let templateLeft = CGFloat(templateIndex) * row.templateWidth
+            rows[rowIndex].shapes[shapeIndex].x = templateLeft + (row.templateWidth - shape.width) / 2
+        }
+        if axis != .horizontally {
+            rows[rowIndex].shapes[shapeIndex].y = (row.templateHeight - shape.height) / 2
+        }
     }
 
     func changeAllDevices(in rowId: UUID, toCategory category: DeviceCategory) {

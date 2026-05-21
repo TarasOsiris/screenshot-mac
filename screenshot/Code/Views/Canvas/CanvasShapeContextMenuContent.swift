@@ -10,6 +10,7 @@ struct CanvasShapeContextMenuContent: View {
     var onCaptureSimulator: (() -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
     var onMatchSelectedDeviceSizes: (() -> Void)?
+    var onCenterDevice: ((AppState.CenterAxis) -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
     var onTranslateAllLocales: (() -> Void)?
@@ -97,6 +98,21 @@ struct CanvasShapeContextMenuContent: View {
                 }
                 if let onMatchDeviceSizes {
                     Button("Match Size to Other Devices", systemImage: "arrow.up.left.and.arrow.down.right", action: onMatchDeviceSizes)
+                }
+                if let onCenterDevice {
+                    Menu {
+                        Button("Vertically", systemImage: "arrow.up.and.down") {
+                            onCenterDevice(.vertically)
+                        }
+                        Button("Horizontally", systemImage: "arrow.left.and.right") {
+                            onCenterDevice(.horizontally)
+                        }
+                        Button("Screenshot Center", systemImage: "scope") {
+                            onCenterDevice(.both)
+                        }
+                    } label: {
+                        Label("Center", systemImage: "align.horizontal.center")
+                    }
                 }
                 Divider()
             }
