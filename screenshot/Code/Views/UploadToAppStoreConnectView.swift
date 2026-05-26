@@ -1447,17 +1447,27 @@ struct UploadToAppStoreConnectView: View {
         }
     }
 
+    private static let defaultWhatsNew = "New features and bug fixes"
+
     private func buildMetadataDrafts(appInfoLocalizations: [ASCAppInfoLocalization]) {
-        versionDrafts = localizations
-            .sorted { $0.attributes.locale < $1.attributes.locale }
+        let sortedLocalizations = localizations.sorted { $0.attributes.locale < $1.attributes.locale }
+        let englishWhatsNew = sortedLocalizations
+            .first { $0.attributes.locale.lowercased().hasPrefix("en") }
+            .flatMap { $0.attributes.whatsNew?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .flatMap { $0.isEmpty ? nil : $0 }
+            ?? Self.defaultWhatsNew
+
+        versionDrafts = sortedLocalizations
             .map { loc in
-                VersionLocaleDraft(
+                let existing = loc.attributes.whatsNew?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let whatsNew = existing.isEmpty ? englishWhatsNew : existing
+                return VersionLocaleDraft(
                     id: loc.id,
                     locale: loc.attributes.locale,
                     description: loc.attributes.description ?? "",
                     keywords: loc.attributes.keywords ?? "",
                     promotionalText: loc.attributes.promotionalText ?? "",
-                    whatsNew: loc.attributes.whatsNew ?? "",
+                    whatsNew: whatsNew,
                     marketingUrl: loc.attributes.marketingUrl ?? "",
                     supportUrl: loc.attributes.supportUrl ?? "",
                     original: loc.attributes

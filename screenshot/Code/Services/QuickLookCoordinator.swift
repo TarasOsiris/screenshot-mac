@@ -5,6 +5,7 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
     static let shared = QuickLookCoordinator()
 
     private var previewURLs: [URL] = []
+    private var edgeKeyMonitor: Any?
 
     func preview(imageAt url: URL) {
         preview(imagesAt: [url], startingAt: 0)
@@ -24,6 +25,7 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
             panel.makeKeyAndOrderFront(nil)
         }
         panel.currentPreviewItemIndex = clampedIndex
+        installEdgeKeyMonitorIfNeeded()
     }
 
     func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
@@ -35,16 +37,25 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
         return previewURLs[index] as NSURL
     }
 
-    func previewPanel(_ panel: QLPreviewPanel!, handle event: NSEvent!) -> Bool {
-        guard event.type == .keyDown else { return false }
-        let idx = panel.currentPreviewItemIndex
-        switch event.keyCode {
-        case AppState.kVKLeftArrow:
-            return idx <= 0
-        case AppState.kVKRightArrow:
-            return idx >= previewURLs.count - 1
-        default:
-            return false
+    // QLPreviewPanel handles arrow keys internally and wraps at the ends, so the
+    // panel's handle: delegate hook is never called for them. A local NSEvent
+    // monitor catches the keys first and drops them at the edges to prevent wrap.
+    private func installEdgeKeyMonitorIfNeeded() {
+        guard edgeKeyMonitor == nil else { return }
+        edgeKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard let panel = QLPreviewPanel.shared(),
+                  panel.isVisible,
+                  NSApp.keyWindow === panel
+            else { return event }
+            let idx = panel.currentPreviewItemIndex
+            switch event.keyCode {
+            case AppState.kVKLeftArrow where idx <= 0:
+                return nil
+            case AppState.kVKRightArrow where idx >= QuickLookCoordinator.shared.previewURLs.count - 1:
+                return nil
+            default:
+                return event
+            }
         }
     }
 }
