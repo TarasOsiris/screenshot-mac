@@ -175,8 +175,6 @@ private struct StepInfo {
 private struct StepCardView: View {
     let index: Int
     let step: StepInfo
-    @State private var isHovered = false
-
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 12) {
@@ -194,7 +192,7 @@ private struct StepCardView: View {
 
                 ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(step.color.opacity(isHovered ? 0.2 : 0.12))
+                        .fill(step.color.opacity(0.12))
 
                     Image(systemName: step.icon)
                         .font(.system(size: 16, weight: .semibold))
@@ -227,7 +225,7 @@ private struct StepCardView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    step.color.opacity(isHovered ? 0.16 : 0.1),
+                                    step.color.opacity(0.1),
                                     .clear
                                 ],
                                 startPoint: .topLeading,
@@ -235,17 +233,11 @@ private struct StepCardView: View {
                             )
                         )
                 }
-                .shadow(color: .black.opacity(isHovered ? 0.08 : 0.03), radius: isHovered ? 12 : 6, y: isHovered ? 6 : 2)
+                .shadow(color: .black.opacity(0.03), radius: 6, y: 2)
         }
         .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(step.color.opacity(isHovered ? 0.28 : 0.08), lineWidth: 1)
-        }
-        .scaleEffect(isHovered ? 1.015 : 1.0)
-        .offset(y: isHovered ? -2 : 0)
-        .animation(.easeOut(duration: 0.15), value: isHovered)
-        .onHover { hovering in
-            isHovered = hovering
+                .strokeBorder(step.color.opacity(0.08), lineWidth: 1)
         }
     }
 
