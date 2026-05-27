@@ -5,6 +5,7 @@ struct SvgPasteDialog: View {
     @Binding var isPresented: Bool
     var onConfirm: (String, CGSize, Bool, Color) -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
     @State private var svgText = ""
     @State private var errorMessage: String?
     @State private var previewImage: NSImage?
@@ -108,6 +109,8 @@ struct SvgPasteDialog: View {
         suppressTextChangeReset = true
         selectedPresetId = preset.id
         svgText = preset.sanitizedContent
+        overrideColor = colorScheme == .dark ? .white : .black
+        useColorOverride = true
     }
 
     private func updatePreview() {
