@@ -196,6 +196,7 @@ struct ContentView: View {
         .inspector(isPresented: $isInspectorPresented) {
             InspectorPanel(state: state)
                 .inspectorColumnWidth(min: 220, ideal: 260, max: 320)
+                .frame(minHeight: 200)
         }
         .toolbar(id: "main") {
             ToolbarItem(id: "projectSwitcher", placement: .navigation) {
