@@ -12,13 +12,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		768DF3212F596DAC0072F7A4 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 768DF3032F596DAB0072F7A4 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 768DF30A2F596DAB0072F7A4;
-			remoteInfo = screenshot;
-		};
 		768DF32C2F596DAC0072F7A4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 768DF3032F596DAB0072F7A4 /* Project object */;
@@ -30,7 +23,6 @@
 
 /* Begin PBXFileReference section */
 		768DF30B2F596DAB0072F7A4 /* Screenshot Bro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screenshot Bro.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		768DF31B2F596DAC0072F7A4 /* screenshotUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = screenshotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		768DF3262F596DAC0072F7A4 /* screenshotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = screenshotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -38,11 +30,6 @@
 		768DF30D2F596DAB0072F7A4 /* screenshot */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = screenshot;
-			sourceTree = "<group>";
-		};
-		768DF31C2F596DAC0072F7A4 /* screenshotUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = screenshotUITests;
 			sourceTree = "<group>";
 		};
 		768DF3272F596DAC0072F7A4 /* screenshotTests */ = {
@@ -62,13 +49,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		768DF31D2F596DAC0072F7A4 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		768DF3292F596DAC0072F7A4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -84,7 +64,6 @@
 			children = (
 				768DF30D2F596DAB0072F7A4 /* screenshot */,
 				768DF3272F596DAC0072F7A4 /* screenshotTests */,
-				768DF31C2F596DAC0072F7A4 /* screenshotUITests */,
 				768DF30C2F596DAB0072F7A4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -94,7 +73,6 @@
 			children = (
 				768DF30B2F596DAB0072F7A4 /* Screenshot Bro.app */,
 				768DF3262F596DAC0072F7A4 /* screenshotTests.xctest */,
-				768DF31B2F596DAC0072F7A4 /* screenshotUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -125,29 +103,6 @@
 			productName = screenshot;
 			productReference = 768DF30B2F596DAB0072F7A4 /* Screenshot Bro.app */;
 			productType = "com.apple.product-type.application";
-		};
-		768DF31E2F596DAC0072F7A4 /* screenshotUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 768DF3252F596DAC0072F7A4 /* Build configuration list for PBXNativeTarget "screenshotUITests" */;
-			buildPhases = (
-				768DF31F2F596DAC0072F7A4 /* Sources */,
-				768DF31D2F596DAC0072F7A4 /* Frameworks */,
-				768DF3202F596DAC0072F7A4 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				768DF3222F596DAC0072F7A4 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				768DF31C2F596DAC0072F7A4 /* screenshotUITests */,
-			);
-			name = screenshotUITests;
-			packageProductDependencies = (
-			);
-			productName = screenshotUITests;
-			productReference = 768DF31B2F596DAC0072F7A4 /* screenshotUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		768DF32B2F596DAC0072F7A4 /* screenshotTests */ = {
 			isa = PBXNativeTarget;
@@ -185,10 +140,6 @@
 					768DF30A2F596DAB0072F7A4 = {
 						CreatedOnToolsVersion = 26.2;
 					};
-					768DF31E2F596DAC0072F7A4 = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 768DF30A2F596DAB0072F7A4;
-					};
 					768DF32B2F596DAC0072F7A4 = {
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = 768DF30A2F596DAB0072F7A4;
@@ -221,20 +172,12 @@
 			targets = (
 				768DF30A2F596DAB0072F7A4 /* screenshot */,
 				768DF32B2F596DAC0072F7A4 /* screenshotTests */,
-				768DF31E2F596DAC0072F7A4 /* screenshotUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		768DF3092F596DAB0072F7A4 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		768DF3202F596DAC0072F7A4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -258,13 +201,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		768DF31F2F596DAC0072F7A4 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		768DF3282F596DAC0072F7A4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -275,11 +211,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		768DF3222F596DAC0072F7A4 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 768DF30A2F596DAB0072F7A4 /* screenshot */;
-			targetProxy = 768DF3212F596DAC0072F7A4 /* PBXContainerItemProxy */;
-		};
 		768DF32D2F596DAC0072F7A4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 768DF30A2F596DAB0072F7A4 /* screenshot */;
@@ -490,44 +421,6 @@
 			};
 			name = Release;
 		};
-		768DF3232F596DAC0072F7A4 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 68;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = XW3GM347XY;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 2.7;
-				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = screenshot;
-			};
-			name = Debug;
-		};
-		768DF3242F596DAC0072F7A4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 68;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = XW3GM347XY;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 2.7;
-				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = screenshot;
-			};
-			name = Release;
-		};
 		768DF32E2F596DAC0072F7A4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -583,15 +476,6 @@
 			buildConfigurations = (
 				768DF3192F596DAC0072F7A4 /* Debug */,
 				768DF31A2F596DAC0072F7A4 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		768DF3252F596DAC0072F7A4 /* Build configuration list for PBXNativeTarget "screenshotUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				768DF3232F596DAC0072F7A4 /* Debug */,
-				768DF3242F596DAC0072F7A4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

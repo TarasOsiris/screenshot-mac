@@ -41,17 +41,6 @@
                ReferencedContainer = "container:screenshot.xcodeproj">
             </BuildableReference>
          </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "768DF31E2F596DAC0072F7A4"
-               BuildableName = "screenshotUITests.xctest"
-               BlueprintName = "screenshotUITests"
-               ReferencedContainer = "container:screenshot.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

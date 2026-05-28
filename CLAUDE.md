@@ -21,7 +21,7 @@ Run unit tests (always kill the running app first to avoid Xcode crash/hang):
 killall screenshot 2>/dev/null; xcodebuild -scheme screenshot -destination 'platform=macOS' test
 ```
 
-Unit tests cover `AppState` operations (including locale tests and deletion), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, `ProjectMerge` (iCloud merge logic), and `DeviceFrameCatalog` in `screenshotTests/`. UI tests exist (`screenshotUITests` scheme). No linter configured.
+Unit tests cover `AppState` operations (including locale tests and deletion), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, `ProjectMerge` (iCloud merge logic), and `DeviceFrameCatalog` in `screenshotTests/`. No linter configured.
 
 ## Custom Commands
 
