@@ -26,6 +26,31 @@ final class AppState {
     var richTextFormatBarAnchor: CGPoint?
     @ObservationIgnored var richTextFormatController: RichTextFormatController?
     var zoomLevel: CGFloat = 1.0
+    /// Rows currently shown in preview mode. Session-only — not persisted.
+    private(set) var previewingRows: Set<UUID> = []
+
+    /// Flip the row's preview-mode state. Also drops `isEditingText` when
+    /// entering preview so a stale text-editor focus doesn't survive into the
+    /// non-interactive preview.
+    func togglePreview(for rowId: UUID) {
+        if previewingRows.contains(rowId) {
+            previewingRows.remove(rowId)
+        } else {
+            previewingRows.insert(rowId)
+            isEditingText = false
+        }
+    }
+
+    /// Exit preview mode for a row. Idempotent.
+    func exitPreview(for rowId: UUID) {
+        previewingRows.remove(rowId)
+    }
+
+    /// Drop any preview-mode entries that don't refer to a row in `validIds`.
+    /// Called when rows are replaced wholesale (project switch, iCloud reload).
+    func reconcilePreviewingRows(against validIds: Set<UUID>) {
+        previewingRows = previewingRows.intersection(validIds)
+    }
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
     @ObservationIgnored var justAddedShapeId: UUID?

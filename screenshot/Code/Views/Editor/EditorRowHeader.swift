@@ -18,6 +18,8 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     let onDuplicate: () -> Void
     let onReset: () -> Void
     let onDelete: () -> Void
+    let isPreviewMode: Bool
+    let onTogglePreview: () -> Void
     let rowMenuContent: () -> RowMenuContent
 
     var body: some View {
@@ -55,6 +57,20 @@ struct EditorRowHeader<RowMenuContent: View>: View {
             Text(verbatim: row.resolutionLabel)
                 .font(.system(size: 10))
                 .foregroundStyle(.secondary)
+
+            Picker("", selection: Binding(
+                get: { isPreviewMode },
+                set: { newValue in
+                    if newValue != isPreviewMode { onTogglePreview() }
+                }
+            )) {
+                Text("Edit").tag(false)
+                Text("Preview").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .controlSize(.small)
+            .fixedSize()
 
             Spacer()
 

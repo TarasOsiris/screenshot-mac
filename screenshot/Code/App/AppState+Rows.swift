@@ -82,6 +82,7 @@ extension AppState {
         }
 
         let wasSelectedRow = selectedRowId == id
+        exitPreview(for: id)
         rows.remove(at: idx)
         if wasSelectedRow {
             let newIdx = min(idx, rows.count - 1)

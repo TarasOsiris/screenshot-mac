@@ -21,6 +21,12 @@ struct EditorRowView: View {
     @State private var canvasGlobalOrigin: CGPoint = .zero
     @State private var isEditingLabel = false
     @State private var editingLabelText = ""
+    /// True when the current mode (Edit or Preview) has had a chance to paint
+    /// its first frame. Flipped to false on every Edit↔Preview toggle so we
+    /// can show a `ProgressView` instead of a frozen UI for slow rows
+    /// (many shapes, blur backgrounds). Starts true so the initial editor
+    /// render on app open is instant.
+    @State private var modeReady = true
     @State private var exportError: String?
     #if DEBUG
     @State private var simulatorCaptureError: String?
@@ -55,6 +61,8 @@ struct EditorRowView: View {
 
     private var zoom: CGFloat { state.zoomLevel }
     private let canvasHorizontalPadding: CGFloat = 16
+
+    private var isPreviewMode: Bool { state.previewingRows.contains(row.id) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -97,6 +105,21 @@ struct EditorRowView: View {
                     } else {
                         withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
                     }
+                },
+                isPreviewMode: isPreviewMode,
+                onTogglePreview: {
+                    modeReady = false
+                    let wasPreview = isPreviewMode
+                    state.togglePreview(for: row.id)
+                    if !wasPreview {
+                        pendingResize = [:]
+                        pendingRotation = [:]
+                        textEditingShapeId = nil
+                        activeDragOffset = .zero
+                        draggingShapeId = nil
+                        cachedSnapTargets = nil
+                        activeGuides = []
+                    }
                 }
             ) {
                 rowMenuContent
@@ -108,7 +131,7 @@ struct EditorRowView: View {
                     .coachPopover(
                         step: .canvas,
                         state: state,
-                        isActive: state.rows.first?.id == row.id,
+                        isActive: state.rows.first?.id == row.id && !isPreviewMode,
                         arrowEdge: .top,
                         attachmentAnchor: .point(.center)
                     )
@@ -327,62 +350,68 @@ struct EditorRowView: View {
                 let resolved = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .top, spacing: 0) {
-                        // Unified canvas with per-template scroll anchors.
-                        // The selection layer sits OUTSIDE `.scaleEffect(zoom)` so
-                        // resize/rotation handles stay pixel-perfect at every zoom.
-                        ZStack(alignment: .topLeading) {
-                            canvasView(dw: dw, dh: dh, ds: ds, resolvedShapes: resolved)
-                                .scaleEffect(zoom, anchor: .topLeading)
+                    if !modeReady {
+                        modeLoadingPlaceholder
+                    } else if isPreviewMode {
+                        RowPreviewView(state: state, row: row, zoom: zoom)
+                    } else {
+                        HStack(alignment: .top, spacing: 0) {
+                            // Unified canvas with per-template scroll anchors.
+                            // The selection layer sits OUTSIDE `.scaleEffect(zoom)` so
+                            // resize/rotation handles stay pixel-perfect at every zoom.
+                            ZStack(alignment: .topLeading) {
+                                canvasView(dw: dw, dh: dh, ds: ds, resolvedShapes: resolved)
+                                    .scaleEffect(zoom, anchor: .topLeading)
+                                    .frame(
+                                        width: row.totalDisplayWidth(zoom: zoom),
+                                        height: row.displayHeight(zoom: zoom),
+                                        alignment: .topLeading
+                                    )
+                                    .overlay(alignment: .topLeading) {
+                                        HStack(spacing: 0) {
+                                            ForEach(row.templates) { template in
+                                                Color.clear
+                                                    .frame(width: row.displayWidth(zoom: zoom), height: 1)
+                                                    .id("focus_\(template.id)")
+                                            }
+                                        }
+                                    }
+
+                                CanvasSelectionLayer(
+                                    state: state,
+                                    row: row,
+                                    resolvedShapes: resolved,
+                                    visualScale: ds * zoom,
+                                    pendingResize: $pendingResize,
+                                    pendingRotation: $pendingRotation,
+                                    textEditingShapeId: textEditingShapeId,
+                                    activeDragOffset: activeDragOffset,
+                                    draggingShapeId: draggingShapeId
+                                )
                                 .frame(
                                     width: row.totalDisplayWidth(zoom: zoom),
                                     height: row.displayHeight(zoom: zoom),
                                     alignment: .topLeading
                                 )
-                                .overlay(alignment: .topLeading) {
-                                    HStack(spacing: 0) {
-                                        ForEach(row.templates) { template in
-                                            Color.clear
-                                                .frame(width: row.displayWidth(zoom: zoom), height: 1)
-                                                .id("focus_\(template.id)")
-                                        }
+                            }
+
+                            // Add button
+                            AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
+                                store.requirePro(
+                                    allowed: store.canAddTemplate(currentCount: row.templates.count),
+                                    context: .templateLimit
+                                ) {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        state.addTemplate(to: row.id)
                                     }
-                                }
-
-                            CanvasSelectionLayer(
-                                state: state,
-                                row: row,
-                                resolvedShapes: resolved,
-                                visualScale: ds * zoom,
-                                pendingResize: $pendingResize,
-                                pendingRotation: $pendingRotation,
-                                textEditingShapeId: textEditingShapeId,
-                                activeDragOffset: activeDragOffset,
-                                draggingShapeId: draggingShapeId
-                            )
-                            .frame(
-                                width: row.totalDisplayWidth(zoom: zoom),
-                                height: row.displayHeight(zoom: zoom),
-                                alignment: .topLeading
-                            )
-                        }
-
-                        // Add button
-                        AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
-                            store.requirePro(
-                                allowed: store.canAddTemplate(currentCount: row.templates.count),
-                                context: .templateLimit
-                            ) {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.addTemplate(to: row.id)
                                 }
                             }
                         }
-                    }
 
-                    // Per-template control bars (inside same ScrollView)
-                    controlBarsRow
-                        .padding(.bottom, 8)
+                        // Per-template control bars (inside same ScrollView)
+                        controlBarsRow
+                            .padding(.bottom, 8)
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
@@ -398,6 +427,36 @@ struct EditorRowView: View {
                 hProxy.scrollTo("focus_\(templateId)", anchor: .center)
                 state.focusShapeId = nil
             }
+        }
+    }
+
+    @ViewBuilder
+    private var modeLoadingPlaceholder: some View {
+        let n = CGFloat(row.templates.count)
+        let tileGap: CGFloat = 12
+        // Match whichever mode we're about to render so layout doesn't jump.
+        let baseWidth = isPreviewMode
+            ? row.displayWidth(zoom: 1.0) * n + tileGap * max(0, n - 1)
+            : row.totalDisplayWidth(zoom: 1.0)
+        let width = baseWidth * zoom
+        let height = row.displayHeight(zoom: 1.0) * zoom
+        let label = isPreviewMode ? "Rendering preview…" : "Loading editor…"
+
+        ZStack {
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+                Text(label)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(width: width, height: height)
+        .task {
+            // Yield so SwiftUI has a chance to paint this placeholder before
+            // the (potentially expensive) target view body kicks in.
+            try? await Task.sleep(for: .milliseconds(50))
+            modeReady = true
         }
     }
 

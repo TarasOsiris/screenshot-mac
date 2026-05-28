@@ -143,6 +143,8 @@ extension AppState {
         rows = data.rows
         localeState = data.localeState ?? .default
         activeProjectDataModifiedAt = data.modifiedAt
+        // Drop any preview-mode entries that don't refer to a row in the new data.
+        reconcilePreviewingRows(against: Set(rows.map(\.id)))
         selectRow(rows.first?.id)
         cleanupOrphanedResourceFiles(for: projectId)
         seedReferencedFontFamiliesFromLoadedProject()

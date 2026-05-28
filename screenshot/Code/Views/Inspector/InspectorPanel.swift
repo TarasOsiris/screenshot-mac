@@ -13,19 +13,23 @@ struct InspectorPanel: View {
 
     var body: some View {
         if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId {
-            Form {
-                sizeSection(rowIndex: rowIndex, rowId: rowId)
-                deviceSection(rowId: rowId)
-                backgroundSection(rowIndex: rowIndex, rowId: rowId)
-                Section(isExpanded: $isAddElementExpanded) {
-                    ShapeToolbar(state: state)
-                } header: {
-                    Text("Shapes")
+            if state.previewingRows.contains(rowId) {
+                previewModePanel(rowId: rowId)
+            } else {
+                Form {
+                    sizeSection(rowIndex: rowIndex, rowId: rowId)
+                    deviceSection(rowId: rowId)
+                    backgroundSection(rowIndex: rowIndex, rowId: rowId)
+                    Section(isExpanded: $isAddElementExpanded) {
+                        ShapeToolbar(state: state)
+                    } header: {
+                        Text("Shapes")
+                    }
+                    optionsSection(rowId: rowId)
                 }
-                optionsSection(rowId: rowId)
+                .formStyle(.grouped)
+                .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
             }
-            .formStyle(.grouped)
-            .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
         } else {
             ContentUnavailableView(
                 "No Row Selected",
@@ -34,6 +38,31 @@ struct InspectorPanel: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    @ViewBuilder
+    private func previewModePanel(rowId: UUID) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: "eye.fill")
+                .font(.system(size: 32))
+                .foregroundStyle(Color.accentColor)
+            Text("Preview Mode")
+                .font(.headline)
+            Text("This row is showing its templates as separate App Store-style tiles. Editing is disabled until you exit preview mode.")
+                .font(.system(size: UIMetrics.FontSize.body))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                state.exitPreview(for: rowId)
+            } label: {
+                Label("Exit Preview Mode", systemImage: "pencil")
+            }
+            .controlSize(.large)
+            .buttonStyle(.borderedProminent)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     @ViewBuilder

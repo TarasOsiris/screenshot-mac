@@ -11385,6 +11385,9 @@
         }
       }
     },
+    "Exit Preview Mode" : {
+
+    },
     "Expires" : {
 
     },
@@ -19602,6 +19605,9 @@
           }
         }
       }
+    },
+    "Preview Mode" : {
+
     },
     "Preview vs export" : {
 
@@ -27893,6 +27899,9 @@
           }
         }
       }
+    },
+    "This row is showing its templates as separate App Store-style tiles. Editing is disabled until you exit preview mode." : {
+
     },
     "This Version" : {
       "localizations" : {
