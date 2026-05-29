@@ -26704,6 +26704,12 @@
     "Switch to Base Language" : {
 
     },
+    "Switch to Edit" : {
+
+    },
+    "Switch to Preview" : {
+
+    },
     "Switch to the base language (⌥⌘0)" : {
       "extractionState" : "stale",
       "localizations" : {

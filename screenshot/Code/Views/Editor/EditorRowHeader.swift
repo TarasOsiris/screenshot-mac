@@ -64,13 +64,14 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                     if newValue != isPreviewMode { onTogglePreview() }
                 }
             )) {
-                Text("Edit").tag(false)
-                Text("Preview").tag(true)
+                Image(systemName: "pencil").tag(false)
+                Image(systemName: "eye").tag(true)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
             .controlSize(.small)
             .fixedSize()
+            .help(isPreviewMode ? "Switch to Edit" : "Switch to Preview")
 
             Spacer()
 
