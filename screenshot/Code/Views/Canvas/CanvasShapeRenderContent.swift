@@ -167,6 +167,11 @@ struct CanvasShapeRenderContent: View {
             invisibleOutlineColor: isInvisible ? (shape.outlineColor ?? CanvasShapeModel.defaultOutlineColor) : .black,
             hideCameraCutout: shape.hideCameraCutout ?? false
         )
+        .modifier(DeviceShadowModifier(
+            shadow: shape.shadow,
+            displayScale: displayScale,
+            rotationDegrees: shape.rotation
+        ))
 
         if screenshotImage == nil && showsEditorHelpers {
             imageDropPlaceholder { frame }
@@ -267,5 +272,77 @@ struct CanvasShapeRenderContent: View {
             shape.fillView(image: fillImage, modelSize: CGSize(width: shape.width, height: shape.height))
                 .clipShape(outline)
         }
+    }
+}
+
+/// True while a view is being rasterized offscreen (`ExportService.renderViewToImage`)
+/// rather than composited live on screen. Used to compensate for AppKit's flipped-view
+/// shadow handling. Defaults to false (live rendering).
+private struct ExportRenderingKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var isExportRendering: Bool {
+        get { self[ExportRenderingKey.self] }
+        set { self[ExportRenderingKey.self] = newValue }
+    }
+}
+
+/// Applies a device's configurable drop shadow.
+///
+/// `.compositingGroup()` flattens the device frame's sub-layers (screenshot + bezel, or
+/// programmatic body parts) into one image first, so exactly one drop shadow is cast from
+/// the unified silhouette — strictly behind the whole device. Without it, SwiftUI casts a
+/// shadow per sub-layer and the screenshot's own offset shadow bleeds *inside* the frame.
+///
+/// Offscreen flip: SwiftUI's `.shadow` lowers to a CALayer `shadowOffset` that the
+/// offscreen `NSHostingView.cacheDisplay` path (export / Preview) renders with its
+/// **global** Y mirrored versus live on-screen compositing (editor) — so the shadow sits
+/// below the device live but above it in export. (We use `.shadow` rather than a
+/// `.blur`-based silhouette because `.blur` under-renders offscreen, which would make the
+/// editor and export blur differ; `.shadow`'s blur is identical in both paths.)
+///
+/// The shadow's offset is applied in the device's local (pre-rotation) space, but the
+/// flip is global, so for a rotated device a plain Y-negation points the shadow the wrong
+/// way. We instead feed the export path the local offset `L = R(-θ)·F·R(θ)·(ox, oy)`
+/// (F = vertical mirror), which after the global flip lands exactly where the editor
+/// draws it, at any rotation. For θ = 0 this reduces to `(ox, -oy)`.
+///
+/// Shadow geometry is stored in model space and scaled by `displayScale` so the editor
+/// (display scale) and export (scale 1.0) stay in parity — same precedent as
+/// `displayOutlineWidth`.
+struct DeviceShadowModifier: ViewModifier {
+    let shadow: ShadowConfig?
+    let displayScale: CGFloat
+    /// The device's rotation in degrees — needed to compensate the offscreen flip when rotated.
+    let rotationDegrees: Double
+    @Environment(\.isExportRendering) private var isExportRendering
+
+    func body(content: Content) -> some View {
+        if let shadow, shadow.isActive {
+            let ox = shadow.resolvedOffsetX * displayScale
+            let oy = shadow.resolvedOffsetY * displayScale
+            let offset = compensatedOffset(ox: ox, oy: oy)
+            content
+                .compositingGroup()
+                .shadow(
+                    color: shadow.resolvedColor.opacity(shadow.resolvedOpacity),
+                    radius: shadow.resolvedRadius * displayScale,
+                    x: offset.x,
+                    y: offset.y
+                )
+        } else {
+            content
+        }
+    }
+
+    /// Live: the offset as-authored. Export: `R(-θ)·F·R(θ)·(ox,oy)`, which after the
+    /// offscreen global vertical flip reproduces the live offset at any rotation.
+    private func compensatedOffset(ox: CGFloat, oy: CGFloat) -> (x: CGFloat, y: CGFloat) {
+        guard isExportRendering else { return (ox, oy) }
+        let t = 2 * rotationDegrees * .pi / 180
+        let c = cos(t), s = sin(t)
+        return (x: ox * c - oy * s, y: -(ox * s + oy * c))
     }
 }

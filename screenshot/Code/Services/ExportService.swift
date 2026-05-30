@@ -554,11 +554,11 @@ struct ExportService {
         // Filter resolved shapes to those visible in this template, then shift so template origin is at (0,0)
         let templateOriginX = CGFloat(index) * templateWidth
         let tRight = templateOriginX + templateWidth
-        let visibleShapes = resolvedShapes.filter { s in
-            if s.clipToTemplate == true {
-                return row.owningTemplateIndex(for: s) == index
+        let visibleShapes = resolvedShapes.filter { shape in
+            if shape.clipToTemplate == true {
+                return row.owningTemplateIndex(for: shape) == index
             }
-            let bb = s.aabb
+            let bb = shadowAwareBounds(for: shape)
             return bb.maxX > templateOriginX && bb.minX < tRight
         }
         let shiftedShapes = visibleShapes.map { shape -> CanvasShapeModel in
@@ -615,6 +615,22 @@ struct ExportService {
             resolvedShapes = row.activeShapes
         }
         return resolvedShapes.map(normalizeDeviceAspectIfNeeded)
+    }
+
+    private static func shadowAwareBounds(for shape: CanvasShapeModel) -> (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
+        let bounds = shape.aabb
+        guard shape.type == .device, let shadow = shape.shadow, shadow.isActive else {
+            return bounds
+        }
+
+        let offsetLength = hypot(shadow.resolvedOffsetX, shadow.resolvedOffsetY)
+        let expansion = shadow.resolvedRadius + offsetLength
+        return (
+            minX: bounds.minX - expansion,
+            minY: bounds.minY - expansion,
+            maxX: bounds.maxX + expansion,
+            maxY: bounds.maxY + expansion
+        )
     }
 
     private static func cropTemplateImage(_ image: NSImage, index: Int, row: ScreenshotRow) -> NSImage {
@@ -697,6 +713,7 @@ struct ExportService {
         let rect = NSRect(x: 0, y: 0, width: pixelW, height: pixelH)
         let hostingView = NSHostingView(
             rootView: view
+                .environment(\.isExportRendering, true)
                 .frame(width: CGFloat(pixelW), height: CGFloat(pixelH), alignment: .topLeading)
                 .clipped()
         )

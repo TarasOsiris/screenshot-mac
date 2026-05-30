@@ -52,6 +52,7 @@ struct CanvasShapeModel: Identifiable, Codable {
     var deviceBodyMaterial: DeviceBodyMaterial?
     var deviceLighting: DeviceLighting?
     var hideCameraCutout: Bool?
+    var shadow: ShadowConfig?
 
     // SVG properties
     var svgContent: String?
@@ -89,6 +90,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         case deviceFrameId = "dfi", screenshotFileName = "sfn"
         case devicePitch = "dpt", deviceYaw = "dyw", deviceBodyMaterial = "dbm", deviceLighting = "dlt"
         case hideCameraCutout = "hcc"
+        case shadow = "shd"
         case svgContent = "svg", svgUseColor = "suc"
         case outlineColorData = "olc", outlineWidth = "olw"
         case starPointCount = "spc"
@@ -133,6 +135,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         deviceBodyMaterial = try c.decodeIfPresent(DeviceBodyMaterial.self, forKey: .deviceBodyMaterial)
         deviceLighting = try c.decodeIfPresent(DeviceLighting.self, forKey: .deviceLighting)
         hideCameraCutout = try c.decodeIfPresent(Bool.self, forKey: .hideCameraCutout)
+        shadow = try c.decodeIfPresent(ShadowConfig.self, forKey: .shadow)
         svgContent = try c.decodeIfPresent(String.self, forKey: .svgContent)
         svgUseColor = try c.decodeIfPresent(Bool.self, forKey: .svgUseColor)
         outlineColorData = try c.decodeIfPresent(CodableColor.self, forKey: .outlineColorData)
@@ -186,6 +189,9 @@ struct CanvasShapeModel: Identifiable, Codable {
             try c.encode(lighting, forKey: .deviceLighting)
         }
         try c.encodeIfPresent(hideCameraCutout, forKey: .hideCameraCutout)
+        if let shadow, !shadow.isEmpty {
+            try c.encode(shadow, forKey: .shadow)
+        }
         // SVG
         try c.encodeIfPresent(svgContent, forKey: .svgContent)
         try c.encodeIfPresent(svgUseColor, forKey: .svgUseColor)
@@ -238,7 +244,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         outlineColor: Color? = nil,
         outlineWidth: CGFloat? = nil,
         starPointCount: Int? = nil,
-        clipToTemplate: Bool? = nil
+        clipToTemplate: Bool? = nil,
+        shadow: ShadowConfig? = nil
     ) {
         self.id = id
         self.type = type
@@ -275,6 +282,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         self.outlineWidth = outlineWidth
         self.starPointCount = starPointCount
         self.clipToTemplate = clipToTemplate
+        self.shadow = shadow
     }
 
     /// Used as a fallback when a Binding's get is called after the shape has been removed.
@@ -534,7 +542,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         return CanvasShapeModel(
             type: .device, x: centerX - w / 2, y: centerY - h / 2,
             width: w, height: h,
-            color: .clear, deviceCategory: category
+            color: .clear, deviceCategory: category,
+            shadow: .medium
         )
     }
 
@@ -647,6 +656,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         if deviceBodyMaterial != oldBase.deviceBodyMaterial { result.deviceBodyMaterial = deviceBodyMaterial }
         if deviceLighting != oldBase.deviceLighting { result.deviceLighting = deviceLighting }
         if hideCameraCutout != oldBase.hideCameraCutout { result.hideCameraCutout = hideCameraCutout }
+        if shadow != oldBase.shadow { result.shadow = shadow }
 
         if svgContent != oldBase.svgContent { result.svgContent = svgContent }
         if svgUseColor != oldBase.svgUseColor { result.svgUseColor = svgUseColor }

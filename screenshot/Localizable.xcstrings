@@ -3108,6 +3108,9 @@
     "Adding templates" : {
 
     },
+    "Adjust" : {
+
+    },
     "Align" : {
       "localizations" : {
         "de" : {
@@ -10492,6 +10495,9 @@
     "Drop screenshots, images, fonts, and SVGs." : {
 
     },
+    "Drop shadow" : {
+
+    },
     "Duplicate" : {
       "localizations" : {
         "de" : {
@@ -11223,6 +11229,9 @@
           }
         }
       }
+    },
+    "Enable shadow" : {
+
     },
     "Enabling" : {
 
@@ -17878,6 +17887,12 @@
         }
       }
     },
+    "Offset X" : {
+
+    },
+    "Offset Y" : {
+
+    },
     "OK" : {
       "localizations" : {
         "de" : {
@@ -21313,6 +21328,9 @@
           }
         }
       }
+    },
+    "Remove the shadow" : {
+
     },
     "Rename" : {
       "localizations" : {
@@ -25192,6 +25210,9 @@
         }
       }
     },
+    "Shadow" : {
+
+    },
     "Shapes" : {
       "localizations" : {
         "de" : {
@@ -25726,6 +25747,9 @@
     "Snapping & alignment guides" : {
 
     },
+    "Soft" : {
+
+    },
     "Solid" : {
 
     },
@@ -26255,6 +26279,9 @@
           }
         }
       }
+    },
+    "Strong" : {
+
     },
     "Style" : {
       "localizations" : {

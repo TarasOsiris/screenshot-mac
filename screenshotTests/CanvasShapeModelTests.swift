@@ -436,4 +436,50 @@ struct CanvasShapeModelTests {
         #expect(result.x == 200, "Rebase should preserve new base position")
         #expect(result.resolvedIsLocked == true)
     }
+
+    // MARK: - Shadow
+
+    @Test func shadowConfigRoundTripsThroughCodable() throws {
+        var shape = CanvasShapeModel(
+            type: .device, x: 0, y: 0, width: 300, height: 600,
+            deviceCategory: .iphone
+        )
+        shape.shadow = ShadowConfig(
+            enabled: true, color: .black, radius: 55, offsetX: 4, offsetY: 22, opacity: 0.4
+        )
+
+        let data = try JSONEncoder().encode(shape)
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+
+        let shadow = try #require(decoded.shadow)
+        #expect(shadow.isActive)
+        #expect(shadow.resolvedRadius == 55)
+        #expect(shadow.resolvedOffsetX == 4)
+        #expect(shadow.resolvedOffsetY == 22)
+        #expect(shadow.resolvedOpacity == 0.4)
+    }
+
+    @Test func newDeviceHasSubtleDefaultShadow() {
+        let shape = CanvasShapeModel.defaultDevice(centerX: 500, centerY: 1000)
+        let shadow = try? #require(shape.shadow)
+        #expect(shape.shadow?.isActive == true)
+        #expect(shadow?.matchingPreset == .medium)
+    }
+
+    @Test func legacyJsonWithoutShdDecodesWithoutShadow() throws {
+        let json = """
+        {"id":"00000000-0000-0000-0000-000000000001","t":"device","x":0,"y":0,"w":300,"h":600,"c":"#FFFFFF","dc":"iphone"}
+        """
+        let data = json.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+        #expect(decoded.shadow == nil)
+    }
+
+    @Test func emptyShadowIsNotEncoded() throws {
+        var shape = CanvasShapeModel(type: .device, x: 0, y: 0, width: 300, height: 600)
+        shape.shadow = ShadowConfig()  // all-nil
+        let data = try JSONEncoder().encode(shape)
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+        #expect(decoded.shadow == nil, "An empty shadow config should be skipped during encoding")
+    }
 }
