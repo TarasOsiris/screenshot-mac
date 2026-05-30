@@ -142,6 +142,36 @@ struct ScreenshotRowTests {
         #expect(t1Shapes.count == 1, "Shape overlaps into template 1")
     }
 
+    @Test func visibleShapesIncludesDeviceShadowOverlappingTemplate() {
+        var device = CanvasShapeModel(
+            type: .device,
+            x: 220,
+            y: 210,
+            width: 160,
+            height: 360,
+            color: .clear,
+            deviceCategory: .iphone
+        )
+        device.shadow = ShadowConfig(
+            enabled: true,
+            color: .black,
+            radius: 45,
+            offsetX: 65,
+            offsetY: 0,
+            opacity: 0.55
+        )
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: 400,
+            templateHeight: 800,
+            shapes: [device]
+        )
+
+        let t1Shapes = row.visibleShapes(forTemplateAt: 1)
+        #expect(t1Shapes.count == 1, "Device shadow overlaps into template 1")
+        #expect(t1Shapes.first?.id == device.id)
+    }
+
     @Test func visibleShapesRespectsClipToTemplate() {
         let shape = CanvasShapeModel(
             type: .rectangle, x: 900, y: 100, width: 200, height: 200, clipToTemplate: true

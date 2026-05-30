@@ -212,7 +212,7 @@ struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
             if s.clipToTemplate == true {
                 return owningTemplateIndex(for: s) == index
             }
-            let bb = s.aabb
+            let bb = s.visualAABB
             return bb.maxX > tLeft && bb.minX < tRight
         }
     }

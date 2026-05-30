@@ -363,6 +363,22 @@ struct CanvasShapeModel: Identifiable, Codable {
         return (cx - newHW, cy - newHH, cx + newHW, cy + newHH)
     }
 
+    var visualAABB: (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
+        let bounds = aabb
+        guard type == .device, let shadow, shadow.isActive else {
+            return bounds
+        }
+
+        let offsetLength = hypot(shadow.resolvedOffsetX, shadow.resolvedOffsetY)
+        let expansion = shadow.resolvedRadius + offsetLength
+        return (
+            minX: bounds.minX - expansion,
+            minY: bounds.minY - expansion,
+            maxX: bounds.maxX + expansion,
+            maxY: bounds.maxY + expansion
+        )
+    }
+
     func resolvedDeviceBodyColor(default defaultColor: Color) -> Color {
         if let override = deviceBodyColorData?.color { return override }
         if supportsDeviceModelRotation { return Self.defaultDevice3DBodyColor }

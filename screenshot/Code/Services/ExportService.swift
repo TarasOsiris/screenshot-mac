@@ -558,7 +558,7 @@ struct ExportService {
             if shape.clipToTemplate == true {
                 return row.owningTemplateIndex(for: shape) == index
             }
-            let bb = shadowAwareBounds(for: shape)
+            let bb = shape.visualAABB
             return bb.maxX > templateOriginX && bb.minX < tRight
         }
         let shiftedShapes = visibleShapes.map { shape -> CanvasShapeModel in
@@ -615,22 +615,6 @@ struct ExportService {
             resolvedShapes = row.activeShapes
         }
         return resolvedShapes.map(normalizeDeviceAspectIfNeeded)
-    }
-
-    private static func shadowAwareBounds(for shape: CanvasShapeModel) -> (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
-        let bounds = shape.aabb
-        guard shape.type == .device, let shadow = shape.shadow, shadow.isActive else {
-            return bounds
-        }
-
-        let offsetLength = hypot(shadow.resolvedOffsetX, shadow.resolvedOffsetY)
-        let expansion = shadow.resolvedRadius + offsetLength
-        return (
-            minX: bounds.minX - expansion,
-            minY: bounds.minY - expansion,
-            maxX: bounds.maxX + expansion,
-            maxY: bounds.maxY + expansion
-        )
     }
 
     private static func cropTemplateImage(_ image: NSImage, index: Int, row: ScreenshotRow) -> NSImage {
