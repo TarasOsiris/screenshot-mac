@@ -120,6 +120,8 @@ struct ShapePropertiesMultiSelectionBar: View {
                 .menuStyle(.button)
                 .fixedSize()
             }
+
+            ShapeDeviceShadowControls(shadow: multiShadowBinding())
         }
 
         if type == .text {
@@ -292,6 +294,25 @@ struct ShapePropertiesMultiSelectionBar: View {
             set: { newValue in
                 state.updateShapes(state.selectedShapeIds) { shape in
                     RichTextUtils.applyItalicUpdate(to: &shape, italic: newValue)
+                }
+            }
+        )
+    }
+
+    /// Shared shadow binding for the selected devices: reads the first device's shadow
+    /// and writes the edited config to all of them (clearing to nil when empty, matching
+    /// the single-selection behavior).
+    private func multiShadowBinding() -> Binding<ShadowConfig> {
+        Binding(
+            get: {
+                guard let rowIndex,
+                      let first = state.rows[rowIndex].shapes.first(where: { state.selectedShapeIds.contains($0.id) })
+                else { return ShadowConfig() }
+                return LocaleService.resolveShape(first, localeState: state.localeState).shadow ?? ShadowConfig()
+            },
+            set: { newValue in
+                state.updateShapes(state.selectedShapeIds) { shape in
+                    shape.shadow = newValue.isEmpty ? nil : newValue
                 }
             }
         )

@@ -1279,4 +1279,37 @@ struct AppStateTests {
         #expect(afterA.y == afterB.y, "Unlocked shapes align to the topmost unlocked")
         #expect(afterA.y == 200)
     }
+
+    // MARK: - Shadow (multi-selection)
+
+    @Test func updateShapesAppliesShadowToAllSelectedDevices() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+
+        let d1 = CanvasShapeModel(id: UUID(), type: .device, x: 0, y: 0, deviceCategory: .iphone)
+        let d2 = CanvasShapeModel(id: UUID(), type: .device, x: 100, y: 0, deviceCategory: .iphone)
+        state.addShape(d1)
+        state.addShape(d2)
+        state.selectedShapeIds = [d1.id, d2.id]
+
+        state.updateShapes(state.selectedShapeIds) { $0.shadow = .strong }
+
+        let shapes = state.rows.first!.shapes
+        let s1 = shapes.first { $0.id == d1.id }!
+        let s2 = shapes.first { $0.id == d2.id }!
+        #expect(s1.shadow?.isActive == true)
+        #expect(s2.shadow?.isActive == true)
+        #expect(s1.shadow?.matchingPreset == .strong)
+        #expect(s2.shadow?.matchingPreset == .strong)
+
+        // Clearing an empty config drops it back to nil on all selected devices.
+        state.updateShapes(state.selectedShapeIds) { shape in
+            let empty = ShadowConfig()
+            shape.shadow = empty.isEmpty ? nil : empty
+        }
+        let cleared = state.rows.first!.shapes
+        #expect(cleared.first { $0.id == d1.id }!.shadow == nil)
+        #expect(cleared.first { $0.id == d2.id }!.shadow == nil)
+    }
 }
