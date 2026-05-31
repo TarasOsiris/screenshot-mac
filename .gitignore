@@ -1,5 +1,7 @@
 build/
 .derivedData/
+.agents/
+skills-lock.json
 *.xcuserstate
 xcuserdata/
 .DS_Store

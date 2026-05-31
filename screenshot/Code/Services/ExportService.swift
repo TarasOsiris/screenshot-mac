@@ -111,7 +111,11 @@ struct ExportService {
                                 }
                                 try imageData.write(to: fileURL)
                             }
+                        }
 
+                        // Report progress as each encode/write actually finishes,
+                        // not when it's merely scheduled.
+                        for try await _ in group {
                             completed += 1
                             onProgress?(completed)
                         }

@@ -105,8 +105,11 @@ struct EditorRasterizedBackgroundView: View {
     }
 
     var body: some View {
-        Group {
-            if row.backgroundBlur > 0, let cachedImage, renderedKey == renderKey {
+        // Compute the (allocation-heavy) render key once per body evaluation and
+        // reuse it for the cache comparison and the `.task` id/body.
+        let key = renderKey
+        return Group {
+            if row.backgroundBlur > 0, let cachedImage, renderedKey == key {
                 Image(nsImage: cachedImage)
                     .resizable()
                     .interpolation(.high)
@@ -120,13 +123,12 @@ struct EditorRasterizedBackgroundView: View {
                 )
             }
         }
-        .task(id: renderKey) {
+        .task(id: key) {
             guard row.backgroundBlur > 0 else {
                 cachedImage = nil
                 renderedKey = nil
                 return
             }
-            let key = renderKey
             try? await Task.sleep(nanoseconds: Self.exactRenderDebounceNanoseconds)
             guard !Task.isCancelled else { return }
             // Blur the background at model resolution, then downscale for the editor.

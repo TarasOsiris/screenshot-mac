@@ -24,10 +24,17 @@ struct RowPreviewView: View {
             row.activeShapes,
             localeState: state.localeState
         )
+        // Precompute each template's visible (locale-resolved) shapes once per
+        // render instead of rebuilding the id set + filter inside every tile's
+        // view builder. Filtering `resolvedShapes` preserves z-order.
+        let visiblePerTemplate: [[CanvasShapeModel]] = row.templates.indices.map { index in
+            let visibleIds = Set(row.visibleShapes(forTemplateAt: index).map(\.id))
+            return resolvedShapes.filter { visibleIds.contains($0.id) }
+        }
 
         HStack(alignment: .top, spacing: tileGap) {
             ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, _ in
-                tile(at: index, resolvedShapes: resolvedShapes)
+                tile(at: index, visibleShapes: visiblePerTemplate[index])
             }
         }
         .scaleEffect(zoom, anchor: .topLeading)
@@ -44,13 +51,8 @@ struct RowPreviewView: View {
     }
 
     @ViewBuilder
-    private func tile(at index: Int, resolvedShapes: [CanvasShapeModel]) -> some View {
+    private func tile(at index: Int, visibleShapes visible: [CanvasShapeModel]) -> some View {
         let offsetX = -CGFloat(index) * displayTemplateWidth
-        // Reuse the same visibility predicate the editor's per-template logic
-        // uses; filter the locale-resolved set by id to avoid constructing
-        // shapes that the parent tile clip would hide anyway.
-        let visibleIds = Set(row.visibleShapes(forTemplateAt: index).map(\.id))
-        let visible = resolvedShapes.filter { visibleIds.contains($0.id) }
 
         ZStack(alignment: .topLeading) {
             // Live (non-rasterized) background so we don't pay the per-tile cost of

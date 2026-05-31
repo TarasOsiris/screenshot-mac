@@ -259,8 +259,8 @@ final class AppStoreConnectAPIService {
 
         let lower = operation.offset
         let upper = min(operation.offset + operation.length, fileData.count)
-        let slice = fileData.subdata(in: lower..<upper)
-        request.httpBody = slice
+        // Slicing a multi-MB buffer is pure CPU — run it off the main actor.
+        request.httpBody = await Self.slice(of: fileData, from: lower, to: upper)
 
         let response: URLResponse
         do {
@@ -275,6 +275,10 @@ final class AppStoreConnectAPIService {
         guard (200..<300).contains(http.statusCode) else {
             throw AppStoreConnectAPIError.httpError(status: http.statusCode, message: "Upload chunk failed")
         }
+    }
+
+    nonisolated private static func slice(of data: Data, from lower: Int, to upper: Int) async -> Data {
+        data.subdata(in: lower..<upper)
     }
 
     func commitScreenshot(id: String, md5Checksum: String) async throws {

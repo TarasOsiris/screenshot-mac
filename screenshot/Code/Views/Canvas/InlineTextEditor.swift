@@ -143,13 +143,26 @@ struct InlineTextEditor: NSViewRepresentable {
 
         formatController?.textView = textView
 
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak textView, weak scrollView] in
+            // The editor may have been dismissed (commit/esc) before this runs;
+            // bail if the views are gone or detached from a window so we don't
+            // steal first responder back to a view that's being torn down.
+            guard let textView, let scrollView, textView.window != nil else { return }
             scrollView.centerDocumentView()
             textView.window?.makeFirstResponder(textView)
             textView.selectAll(nil)
         }
 
         return scrollView
+    }
+
+    static func dismantleNSView(_ scrollView: CenteringScrollView, coordinator: Coordinator) {
+        // Clear the (weak) format-controller back-reference if it still points
+        // at the text view being torn down.
+        if let textView = scrollView.documentView as? NSTextView,
+           coordinator.parent.formatController?.textView === textView {
+            coordinator.parent.formatController?.textView = nil
+        }
     }
 
     func updateNSView(_ scrollView: CenteringScrollView, context: Context) {
@@ -165,7 +178,10 @@ struct InlineTextEditor: NSViewRepresentable {
                 || formatController?.hasPendingTypingAttributes == true
             )
 
-        if shouldPreserveRichTextStorage {
+        // Never replace the text storage while the user is mid-IME-composition
+        // (marked text present) — doing so collapses the composition and the
+        // insertion point.
+        if shouldPreserveRichTextStorage || textView.hasMarkedText() {
             if let delegate = textView.layoutManager?.delegate as? CompactLineLayoutDelegate {
                 delegate.lineHeightMultiple = lineHeightMultiple ?? TextLayoutStyle.defaultLineHeightMultiple
             }
@@ -205,7 +221,7 @@ struct InlineTextEditor: NSViewRepresentable {
         )
 
         if let storage = textView.textStorage {
-            storage.setAttributedString(RichTextUtils.buildAttributedString(
+            let newString = RichTextUtils.buildAttributedString(
                 richText: richTextData,
                 plainText: text,
                 font: font,
@@ -215,7 +231,13 @@ struct InlineTextEditor: NSViewRepresentable {
                 lineHeightMultiple: lineHeightMultiple,
                 legacyLineSpacing: legacyLineSpacing,
                 uppercase: uppercase
-            ))
+            )
+            // Skip the disruptive replace when the rendered result is identical
+            // (the common case while typing, since `text` is fed back from the
+            // text view) — avoids needless cursor/IME churn on every update.
+            if !storage.isEqual(to: newString) {
+                storage.setAttributedString(newString)
+            }
         } else {
             textView.string = uppercase ? text.uppercased() : text
         }

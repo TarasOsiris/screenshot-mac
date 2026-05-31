@@ -380,7 +380,8 @@ final class AppStoreConnectUploadService {
             localization: localization,
             existingSetWasDeleted: existingSetWasDeleted
         ) {
-            try await api.commitScreenshot(id: reserved.id, md5Checksum: Self.md5Hex(data: data))
+            let checksum = await Self.md5Hex(data: data)
+            try await api.commitScreenshot(id: reserved.id, md5Checksum: checksum)
         }
     }
 
@@ -420,7 +421,9 @@ final class AppStoreConnectUploadService {
         return "\(padded)_\(safe).png"
     }
 
-    private static func md5Hex(data: Data) -> String {
+    /// Hashing a multi-MB PNG is pure CPU; `nonisolated async` runs it off the
+    /// main actor (on the cooperative pool) so the upload UI stays responsive.
+    nonisolated private static func md5Hex(data: Data) async -> String {
         let digest = Insecure.MD5.hash(data: data)
         return digest.map { String(format: "%02x", $0) }.joined()
     }

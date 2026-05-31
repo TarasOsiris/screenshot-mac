@@ -87,6 +87,13 @@ struct PersistenceService {
 
     static func save<T: Encodable>(_ value: T, to url: URL) throws {
         let data = try encoder.encode(value)
+        try writeData(data, to: url)
+    }
+
+    /// Writes pre-encoded data using the same coordination strategy as `save`.
+    /// Split out so callers can encode on one thread (e.g. the main actor) and
+    /// perform the potentially-blocking coordinated write on another.
+    static func writeData(_ data: Data, to url: URL) throws {
         if isUsingICloud {
             try ICloudSyncService.shared.coordinatedWrite(data, to: url)
         } else {

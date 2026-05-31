@@ -13,6 +13,39 @@ struct LiveDeviceModelView: NSViewRepresentable {
     let lighting: DeviceLighting
     let bodyTintColor: NSColor?
 
+    /// Identity of every input that affects the scene's geometry/materials —
+    /// i.e. everything EXCEPT the viewport size. When this is unchanged, a size
+    /// change only needs a camera re-fit, not a full scene rebuild.
+    struct SceneSignature: Equatable {
+        let frame: DeviceFrame
+        let screenshot: ObjectIdentifier?
+        let pitch: Double
+        let yaw: Double
+        let bodyMaterial: DeviceBodyMaterial
+        let lighting: DeviceLighting
+        let bodyTintColor: NSColor?
+    }
+
+    private var sceneSignature: SceneSignature {
+        SceneSignature(
+            frame: frame,
+            screenshot: screenshotImage.map(ObjectIdentifier.init),
+            pitch: pitch,
+            yaw: yaw,
+            bodyMaterial: bodyMaterial,
+            lighting: lighting,
+            bodyTintColor: bodyTintColor
+        )
+    }
+
+    final class Coordinator {
+        var lastSignature: SceneSignature?
+        var lastViewport: CGSize?
+        weak var cameraNode: SCNNode?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeNSView(context: Context) -> SCNView {
         let scnView = RetinaSCNView(frame: NSRect(x: 0, y: 0, width: max(1, width), height: max(1, height)))
         scnView.backgroundColor = .clear
@@ -27,21 +60,49 @@ struct LiveDeviceModelView: NSViewRepresentable {
         scnView.rendersContinuously = false
         scnView.isJitteringEnabled = false
         scnView.preferredFramesPerSecond = 60
-        update(scnView)
+        update(scnView, coordinator: context.coordinator)
         return scnView
     }
 
     func updateNSView(_ nsView: SCNView, context: Context) {
         let currentScale = nsView.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2.0
         nsView.layer?.contentsScale = max(2.0, currentScale)
-        update(nsView)
+        update(nsView, coordinator: context.coordinator)
         nsView.needsDisplay = true
     }
 
-    private func update(_ scnView: SCNView) {
+    static func dismantleNSView(_ nsView: SCNView, coordinator: Coordinator) {
+        nsView.isPlaying = false
+        nsView.scene = nil
+        nsView.pointOfView = nil
+        coordinator.cameraNode = nil
+        coordinator.lastSignature = nil
+        coordinator.lastViewport = nil
+    }
+
+    private func update(_ scnView: SCNView, coordinator: Coordinator) {
+        let viewport = CGSize(width: max(1, width), height: max(1, height))
+        let signature = sceneSignature
+
+        if coordinator.lastSignature == signature,
+           let existingScene = scnView.scene,
+           let cameraNode = coordinator.cameraNode {
+            // Geometry/materials unchanged — only re-fit if the viewport changed.
+            if coordinator.lastViewport != viewport {
+                DeviceModelFrameView.refitDeviceModelScene(
+                    existingScene,
+                    cameraNode: cameraNode,
+                    viewportSize: viewport
+                )
+                coordinator.lastViewport = viewport
+            }
+            scnView.frame = NSRect(origin: .zero, size: viewport)
+            return
+        }
+
         guard let (scene, cameraNode) = DeviceModelFrameView.makeDeviceModelScene(
             frame: frame,
-            viewportSize: CGSize(width: max(1, width), height: max(1, height)),
+            viewportSize: viewport,
             screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw,
@@ -53,7 +114,10 @@ struct LiveDeviceModelView: NSViewRepresentable {
         }
         scnView.scene = scene
         scnView.pointOfView = cameraNode
-        scnView.frame = NSRect(x: 0, y: 0, width: max(1, width), height: max(1, height))
+        scnView.frame = NSRect(origin: .zero, size: viewport)
+        coordinator.lastSignature = signature
+        coordinator.lastViewport = viewport
+        coordinator.cameraNode = cameraNode
     }
 }
 

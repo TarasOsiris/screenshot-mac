@@ -6,6 +6,7 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
 
     private var previewURLs: [URL] = []
     private var edgeKeyMonitor: Any?
+    private var panelCloseObserver: NSObjectProtocol?
 
     func preview(imageAt url: URL) {
         preview(imagesAt: [url], startingAt: 0)
@@ -42,6 +43,17 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
     // monitor catches the keys first and drops them at the edges to prevent wrap.
     private func installEdgeKeyMonitorIfNeeded() {
         guard edgeKeyMonitor == nil else { return }
+        // Tear the monitor down when the panel closes so it doesn't live for the
+        // rest of the app session intercepting every keystroke.
+        if let panel = QLPreviewPanel.shared() {
+            panelCloseObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: panel,
+                queue: .main
+            ) { [weak self] _ in
+                self?.teardownEdgeKeyMonitor()
+            }
+        }
         edgeKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             guard let panel = QLPreviewPanel.shared(),
                   panel.isVisible,
@@ -56,6 +68,17 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
             default:
                 return event
             }
+        }
+    }
+
+    private func teardownEdgeKeyMonitor() {
+        if let monitor = edgeKeyMonitor {
+            NSEvent.removeMonitor(monitor)
+            edgeKeyMonitor = nil
+        }
+        if let observer = panelCloseObserver {
+            NotificationCenter.default.removeObserver(observer)
+            panelCloseObserver = nil
         }
     }
 }

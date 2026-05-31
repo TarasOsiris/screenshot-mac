@@ -39,7 +39,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
                     .background(Color(nsColor: .controlBackgroundColor))
-                    .cornerRadius(4)
+                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                     .focused(isLabelFieldFocused)
                     .onSubmit { onCommitLabelEdit() }
                     .onChange(of: isLabelFieldFocused.wrappedValue) {

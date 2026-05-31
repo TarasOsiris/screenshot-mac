@@ -161,6 +161,7 @@ struct DeviceModelFrameView: View {
         orientationNode.addChildNode(contentNode)
 
         let presentationNode = SCNNode()
+        presentationNode.name = "deviceModelPresentation"
         presentationNode.eulerAngles = SCNVector3(
             Float((pitch * .pi) / 180),
             Float((yaw * .pi) / 180),
@@ -219,6 +220,29 @@ struct DeviceModelFrameView: View {
         )
 
         return (scene, cameraNode)
+    }
+
+    /// Re-fit an already-built scene to a new viewport size WITHOUT rebuilding
+    /// geometry/materials. The presentation node's scale/position are reset to
+    /// their pre-fit identity values first so the fit stays idempotent across
+    /// repeated resize callbacks.
+    static func refitDeviceModelScene(
+        _ scene: SCNScene,
+        cameraNode: SCNNode,
+        viewportSize: CGSize
+    ) {
+        guard let presentationNode = scene.rootNode.childNode(
+            withName: "deviceModelPresentation",
+            recursively: true
+        ) else { return }
+        presentationNode.scale = SCNVector3(1, 1, 1)
+        presentationNode.position = SCNVector3(0, 0, 0)
+        fitModelToViewport(
+            presentationNode: presentationNode,
+            cameraNode: cameraNode,
+            scene: scene,
+            viewportSize: viewportSize
+        )
     }
 
     private static func fitModelToViewport(

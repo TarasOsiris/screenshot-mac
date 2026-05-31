@@ -19,6 +19,16 @@ private final class PanCoordinator {
     private var lastDragPoint: NSPoint?
     private weak var activeScrollView: NSScrollView?
     private var hasDragged = false
+    /// Tracks whether we currently have a cursor pushed onto the stack, so
+    /// push/pop always balance regardless of the order mouse events arrive in.
+    private var didPushCursor = false
+
+    private func popCursorIfNeeded() {
+        if didPushCursor {
+            NSCursor.pop()
+            didPushCursor = false
+        }
+    }
 
     func install() {
         uninstall()
@@ -29,7 +39,7 @@ private final class PanCoordinator {
 
             // Guard against double mouse-down without intervening mouse-up
             if self.activeScrollView != nil {
-                NSCursor.pop()
+                self.popCursorIfNeeded()
                 self.activeScrollView = nil
             }
 
@@ -41,6 +51,7 @@ private final class PanCoordinator {
             self.lastDragPoint = pointInWindow
             self.hasDragged = false
             NSCursor.openHand.push()
+            self.didPushCursor = true
             return nil
         }
         if let downMonitor { monitors.append(downMonitor) }
@@ -53,8 +64,9 @@ private final class PanCoordinator {
             // Switch from open hand to closed hand on first drag movement
             if !self.hasDragged {
                 self.hasDragged = true
-                NSCursor.pop()
+                self.popCursorIfNeeded()
                 NSCursor.closedHand.push()
+                self.didPushCursor = true
             }
 
             let currentPoint = event.locationInWindow
@@ -81,17 +93,15 @@ private final class PanCoordinator {
             self.activeScrollView = nil
             self.lastDragPoint = nil
             self.hasDragged = false
-            NSCursor.pop()
+            self.popCursorIfNeeded()
             return nil
         }
         if let upMonitor { monitors.append(upMonitor) }
     }
 
     func uninstall() {
-        // Pop cursor if a drag session is still active
-        if activeScrollView != nil {
-            NSCursor.pop()
-        }
+        // Pop cursor if one is still pushed from an active drag session
+        popCursorIfNeeded()
         for monitor in monitors {
             NSEvent.removeMonitor(monitor)
         }

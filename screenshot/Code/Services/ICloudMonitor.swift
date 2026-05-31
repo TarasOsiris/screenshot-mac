@@ -19,6 +19,7 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
 
     private var metadataQuery: NSMetadataQuery?
     private var debounceTimer: DispatchWorkItem?
+    private let debounceLock = NSLock()
     private let debounceInterval: TimeInterval = 1.0
 
     /// Track last-known mod date of the index file to skip no-op reloads.
@@ -31,8 +32,7 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     }
 
     deinit {
-        debounceTimer?.cancel()
-        debounceTimer = nil
+        cancelDebounceTimer()
         stopMonitoring()
     }
 
@@ -48,8 +48,14 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     func stopMonitoring() {
         NSFileCoordinator.removeFilePresenter(self)
         stopMetadataQuery()
+        cancelDebounceTimer()
+    }
+
+    private func cancelDebounceTimer() {
+        debounceLock.lock()
         debounceTimer?.cancel()
         debounceTimer = nil
+        debounceLock.unlock()
     }
 
     /// Mark URLs as own writes so we can ignore the resulting NSFilePresenter callbacks.
@@ -202,7 +208,6 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     // MARK: - Private
 
     private func scheduleDebouncedReload() {
-        debounceTimer?.cancel()
         let task = DispatchWorkItem { [weak self] in
             DispatchQueue.main.async {
                 guard let self, self.hasIndexChanged() else { return }
@@ -210,7 +215,12 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
                 self.onRemoteChange?()
             }
         }
+        // NSFilePresenter callbacks arrive on a background operation queue, so
+        // guard the shared work-item reference against concurrent cancel/replace.
+        debounceLock.lock()
+        debounceTimer?.cancel()
         debounceTimer = task
+        debounceLock.unlock()
         DispatchQueue.main.asyncAfter(deadline: .now() + debounceInterval, execute: task)
     }
 }
