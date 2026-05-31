@@ -326,11 +326,6 @@ private struct FlowLayout: Layout {
     }
 
     private func arrange(subviews: Subviews, maxWidth: CGFloat) -> (positions: [CGPoint], size: CGSize) {
-        // SwiftUI occasionally proposes width 0 (or a non-finite width) during layout
-        // negotiation. With many chips that would wrap every chip onto its own row and
-        // report an absurdly tall height, briefly ballooning the bar. Treat a degenerate
-        // width as unconstrained so the bar never reports a pathological height.
-        let effectiveMaxWidth = (maxWidth.isFinite && maxWidth > 0) ? maxWidth : .greatestFiniteMagnitude
         var positions: [CGPoint] = []
         var rowWidth: CGFloat = 0
         var rowHeight: CGFloat = 0
@@ -339,7 +334,7 @@ private struct FlowLayout: Layout {
 
         for subview in subviews {
             let size = subview.sizeThatFits(.unspecified)
-            if rowWidth > 0 && rowWidth + horizontalSpacing + size.width > effectiveMaxWidth {
+            if rowWidth > 0 && rowWidth + horizontalSpacing + size.width > maxWidth {
                 maxRowWidth = max(maxRowWidth, rowWidth)
                 y += rowHeight + verticalSpacing
                 rowWidth = 0
