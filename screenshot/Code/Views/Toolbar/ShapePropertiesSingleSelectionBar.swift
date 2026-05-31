@@ -158,7 +158,13 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         if editing {
                                             isOpacityFieldActive = true
                                         } else {
-                                            commitOpacity(shapeId: shapeId)
+                                            // Commit to the LIVE selection, never a captured
+                                            // shapeId — SwiftUI keeps stale closures on a
+                                            // focused field after the selection changes. Fall
+                                            // back to the captured id only when the selection
+                                            // is no longer a single shape (became multi/empty),
+                                            // where the captured id is the shape we were editing.
+                                            commitOpacity(to: state.selectedShapeId ?? shapeId)
                                         }
                                     })
                                     .focused($focusedField, equals: .opacity)
@@ -168,17 +174,20 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     .onAppear {
                                         editingOpacity = currentOpacityString(for: shapeId)
                                     }
-                                    .onChange(of: shapeId) {
-                                        isOpacityFieldActive = false
+                                    .onChange(of: shapeId) { oldId, newId in
+                                        // Flush any uncommitted value to the shape we WERE
+                                        // editing — oldId from onChange is reliable (unlike a
+                                        // captured shapeId) — then rebind to the new selection.
+                                        if isOpacityFieldActive { commitOpacity(to: oldId) }
+                                        editingOpacity = currentOpacityString(for: newId)
                                         focusedField = nil
-                                        editingOpacity = currentOpacityString(for: shapeId)
                                     }
                                     .onChange(of: shape.opacity) {
                                         guard !isOpacityFieldActive else { return }
                                         editingOpacity = currentOpacityString(for: shapeId)
                                     }
                                     .onSubmit {
-                                        commitOpacity(shapeId: shapeId)
+                                        commitOpacity(to: state.selectedShapeId ?? shapeId)
                                     }
 
                                     Text("%")
@@ -198,7 +207,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         if editing {
                                             isRotationFieldActive = true
                                         } else {
-                                            commitRotation(shapeId: shapeId)
+                                            commitRotation(to: state.selectedShapeId ?? shapeId)
                                         }
                                     })
                                     .focused($focusedField, equals: .rotation)
@@ -208,10 +217,12 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     .onAppear {
                                         editingRotation = currentRotationString(for: shapeId)
                                     }
-                                    .onChange(of: shapeId) {
-                                        isRotationFieldActive = false
+                                    .onChange(of: shapeId) { oldId, newId in
+                                        // Flush to the shape we were editing (reliable oldId),
+                                        // then rebind to the new selection.
+                                        if isRotationFieldActive { commitRotation(to: oldId) }
+                                        editingRotation = currentRotationString(for: newId)
                                         focusedField = nil
-                                        editingRotation = currentRotationString(for: shapeId)
                                     }
                                     .onChange(of: shape.rotation) {
                                         guard !isRotationFieldActive else { return }
@@ -219,7 +230,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         if editingRotation != next { editingRotation = next }
                                     }
                                     .onSubmit {
-                                        commitRotation(shapeId: shapeId)
+                                        commitRotation(to: state.selectedShapeId ?? shapeId)
                                     }
 
                                     Text("°")
@@ -367,18 +378,20 @@ struct ShapePropertiesSingleSelectionBar: View {
         min(max(CGFloat(value), Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
     }
 
-    private func commitFontSize(shapeId: UUID) {
+    private func commitFontSize(to shapeId: UUID?) {
         isFontSizeFieldActive = false
-        guard let i = idx(for: shapeId) else { return }
+        guard let shapeId, let i = idx(for: shapeId) else { return }
         guard let value = Int(editingFontSize) else {
             editingFontSize = currentFontSizeString(for: shapeId)
             return
         }
         let clamped = clampedFontSize(value)
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        resolved.fontSize = clamped
-        RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
-        state.updateShape(resolved)
+        if resolved.fontSize != clamped {
+            resolved.fontSize = clamped
+            RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
+            state.updateShape(resolved)
+        }
         editingFontSize = "\(Int(clamped))"
     }
 
@@ -387,17 +400,20 @@ struct ShapePropertiesSingleSelectionBar: View {
         return "\(Int((state.rows[i.row].shapes[i.shape].opacity * 100).rounded()))"
     }
 
-    private func commitOpacity(shapeId: UUID) {
+    private func commitOpacity(to shapeId: UUID?) {
         isOpacityFieldActive = false
-        guard let i = idx(for: shapeId) else { return }
+        guard let shapeId, let i = idx(for: shapeId) else { return }
         guard let value = Int(editingOpacity) else {
             editingOpacity = currentOpacityString(for: shapeId)
             return
         }
         let clamped = min(max(value, 0), 100)
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        resolved.opacity = Double(clamped) / 100.0
-        state.updateShape(resolved)
+        let newOpacity = Double(clamped) / 100.0
+        if resolved.opacity != newOpacity {
+            resolved.opacity = newOpacity
+            state.updateShape(resolved)
+        }
         editingOpacity = "\(clamped)"
     }
 
@@ -413,9 +429,9 @@ struct ShapePropertiesSingleSelectionBar: View {
             : String(format: "%.1f", rounded)
     }
 
-    private func commitRotation(shapeId: UUID) {
+    private func commitRotation(to shapeId: UUID?) {
         isRotationFieldActive = false
-        guard let i = idx(for: shapeId) else { return }
+        guard let shapeId, let i = idx(for: shapeId) else { return }
         let trimmed = editingRotation.replacingOccurrences(of: ",", with: ".")
         guard let value = Double(trimmed) else {
             editingRotation = currentRotationString(for: shapeId)
@@ -455,19 +471,21 @@ struct ShapePropertiesSingleSelectionBar: View {
         return "\(Int((multiple * 100).rounded()))"
     }
 
-    private func commitLineHeight(shapeId: UUID) {
+    private func commitLineHeight(to shapeId: UUID?) {
         isLineHeightFieldActive = false
-        guard let i = idx(for: shapeId) else { return }
+        guard let shapeId, let i = idx(for: shapeId) else { return }
         guard let value = Int(editingLineHeight) else {
             editingLineHeight = currentLineHeightString(for: shapeId)
             return
         }
         let clamped = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
         var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        resolved.lineHeightMultiple = clamped
-        resolved.lineSpacing = nil
-        RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
-        state.updateShape(resolved)
+        if resolved.lineHeightMultiple != clamped || resolved.lineSpacing != nil {
+            resolved.lineHeightMultiple = clamped
+            resolved.lineSpacing = nil
+            RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
+            state.updateShape(resolved)
+        }
         editingLineHeight = "\(Int((clamped * 100).rounded()))"
     }
 
@@ -811,7 +829,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                             if editing {
                                 isFontSizeFieldActive = true
                             } else {
-                                commitFontSize(shapeId: shapeId)
+                                commitFontSize(to: state.selectedShapeId ?? shapeId)
                             }
                         })
                         .focused($focusedField, equals: .fontSize)
@@ -821,9 +839,11 @@ struct ShapePropertiesSingleSelectionBar: View {
                         .onAppear {
                             editingFontSize = currentFontSizeString(for: shapeId)
                         }
-                        .onChange(of: shapeId) {
-                            isFontSizeFieldActive = false
-                            editingFontSize = currentFontSizeString(for: shapeId)
+                        .onChange(of: shapeId) { oldId, newId in
+                            // Flush to the shape we were editing before rebinding — see the
+                            // opacity field; the captured shapeId goes stale otherwise.
+                            if isFontSizeFieldActive { commitFontSize(to: oldId) }
+                            editingFontSize = currentFontSizeString(for: newId)
                         }
                         .onChange(of: shape.fontSize) {
                             guard !isFontSizeFieldActive else { return }
@@ -831,7 +851,8 @@ struct ShapePropertiesSingleSelectionBar: View {
                         }
                         .onChange(of: editingFontSize) {
                             guard isFontSizeFieldActive else { return }
-                            if let value = Int(editingFontSize), let i = idx(for: shapeId) {
+                            let target = state.selectedShapeId ?? shapeId
+                            if let value = Int(editingFontSize), let i = idx(for: target) {
                                 var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                                 resolved.fontSize = clampedFontSize(value)
                                 RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
@@ -843,7 +864,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                             ForEach(Self.fontSizePresets, id: \.self) { size in
                                 Button("\(size)") {
                                     editingFontSize = "\(size)"
-                                    commitFontSize(shapeId: shapeId)
+                                    commitFontSize(to: state.selectedShapeId ?? shapeId)
                                 }
                             }
                         } label: {
@@ -931,7 +952,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                         if editing {
                             isLineHeightFieldActive = true
                         } else {
-                            commitLineHeight(shapeId: shapeId)
+                            commitLineHeight(to: state.selectedShapeId ?? shapeId)
                         }
                     })
                     .focused($focusedField, equals: .lineHeight)
@@ -941,9 +962,10 @@ struct ShapePropertiesSingleSelectionBar: View {
                     .onAppear {
                         editingLineHeight = currentLineHeightString(for: shapeId)
                     }
-                    .onChange(of: shapeId) {
-                        isLineHeightFieldActive = false
-                        editingLineHeight = currentLineHeightString(for: shapeId)
+                    .onChange(of: shapeId) { oldId, newId in
+                        // Flush to the shape we were editing before rebinding (see opacity).
+                        if isLineHeightFieldActive { commitLineHeight(to: oldId) }
+                        editingLineHeight = currentLineHeightString(for: newId)
                     }
                     .onChange(of: shape.lineHeightMultiple) {
                         guard !isLineHeightFieldActive else { return }
@@ -951,7 +973,8 @@ struct ShapePropertiesSingleSelectionBar: View {
                     }
                     .onChange(of: editingLineHeight) {
                         guard isLineHeightFieldActive else { return }
-                        if let value = Int(editingLineHeight), let i = idx(for: shapeId) {
+                        let target = state.selectedShapeId ?? shapeId
+                        if let value = Int(editingLineHeight), let i = idx(for: target) {
                             var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
                             resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
                             resolved.lineSpacing = nil
@@ -964,7 +987,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                         ForEach(Self.lineHeightPresets, id: \.self) { preset in
                             Button("\(preset)%") {
                                 editingLineHeight = "\(preset)"
-                                commitLineHeight(shapeId: shapeId)
+                                commitLineHeight(to: state.selectedShapeId ?? shapeId)
                             }
                         }
                     } label: {
