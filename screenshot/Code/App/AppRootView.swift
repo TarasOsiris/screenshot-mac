@@ -15,12 +15,6 @@ struct AppRootView: View {
 
     var body: some View {
         ContentView()
-            // Declare a minimum and let the content fill any larger size. Without an
-            // explicit fill frame, the window's zoom (double-click title bar) standard
-            // frame is derived from the content's *fitting* size, which collapses when
-            // rows are collapsed — making the window shrink/flicker or, with every row
-            // collapsed, vanish entirely. Pinning a min + flexible max keeps zoom stable.
-            .frame(minWidth: 820, maxWidth: .infinity, minHeight: 480, maxHeight: .infinity)
             .alert("Purchase Status", isPresented: purchaseStatusAlertBinding) {
                 Button("OK") { purchaseStatusDialogMessage = nil }
             } message: {
