@@ -99,6 +99,7 @@ struct ScreenshotBroApp: App {
                 #endif
         }
         .defaultSize(width: 1100, height: 700)
+        .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
 
         Window("New Project", id: NewProjectWindowView.windowID) {
