@@ -11,16 +11,6 @@ struct UploadToAppStoreConnectView: View {
     @State private var selectedApp: ASCApp?
     @AppStorage("uploadHideNonUploadable") private var hideNonUploadable: Bool = true
 
-    private var apps: [ASCApp] { appsWithVersions.map(\.app) }
-    private var visibleAppsWithVersions: [ASCAppWithVersions] {
-        hideNonUploadable
-            ? appsWithVersions.filter(\.hasEditableVersion)
-            : appsWithVersions
-    }
-    private var nonUploadableAppCount: Int {
-        appsWithVersions.filter { !$0.hasEditableVersion }.count
-    }
-
     @State private var versions: [ASCAppStoreVersion] = []
     @State private var selectedVersion: ASCAppStoreVersion?
 
@@ -44,6 +34,7 @@ struct UploadToAppStoreConnectView: View {
     @State private var displayTypeDetailsPlanId: UUID?
     @State private var isBusy = false
     @State private var isConfirmingUpload = false
+    @State private var credentials = AppStoreConnectCredentialsStore.shared
 
     struct UploadSummary {
         let appId: String?
@@ -51,8 +42,6 @@ struct UploadToAppStoreConnectView: View {
         let totalScreenshots: Int
         let localizationCount: Int
     }
-
-    @State private var credentials = AppStoreConnectCredentialsStore.shared
 
     private enum Step {
         case pickingApp
@@ -184,6 +173,8 @@ struct UploadToAppStoreConnectView: View {
 
         var screenshotCount: Int { entries.reduce(0) { $0 + $1.screenshotCount } }
     }
+
+    private var apps: [ASCApp] { appsWithVersions.map(\.app) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -491,128 +482,20 @@ struct UploadToAppStoreConnectView: View {
     }
 
     private var pickAppView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Select an app")
-                    .font(.headline)
-                Spacer()
-                Toggle(isOn: $hideNonUploadable) {
-                    if nonUploadableAppCount > 0 {
-                        Text("Hide non-uploadable (\(nonUploadableAppCount))")
-                    } else {
-                        Text("Hide non-uploadable")
-                    }
-                }
-                .toggleStyle(.switch)
-                .controlSize(.small)
-                .help("Hide apps with no editable App Store version. Apps in review or already live can't accept new screenshots until you create a new version.")
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            if visibleAppsWithVersions.isEmpty && !appsWithVersions.isEmpty {
-                VStack(spacing: 6) {
-                    Label("All apps are hidden by the filter", systemImage: "line.3.horizontal.decrease.circle")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                    Text("None of your apps have an editable version right now. Turn off the filter to see them all.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.horizontal, 16)
-            } else {
-                List(selection: Binding(
-                    get: { selectedApp?.id },
-                    set: { newId in selectedApp = apps.first(where: { $0.id == newId }) }
-                )) {
-                    ForEach(visibleAppsWithVersions, id: \.app.id) { item in
-                        ASCAppHeaderView(app: item.app, subtitle: item.app.attributes.bundleId, iconSize: 36)
-                            .tag(item.app.id as String?)
-                    }
-                }
-                .listStyle(.inset)
-            }
-        }
+        ASCAppSelectionStepView(
+            appsWithVersions: appsWithVersions,
+            selectedApp: $selectedApp,
+            hideNonUploadable: $hideNonUploadable
+        )
     }
 
 
     private var pickVersionView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Select a version")
-                .font(.headline)
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-            if let app = selectedApp {
-                ASCAppHeaderView(app: app, subtitle: app.attributes.bundleId)
-                    .padding(.horizontal, 16)
-            }
-            if !versions.isEmpty && !versions.contains(where: { $0.isEditable }) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Label("No editable version available", systemImage: "lock.fill")
-                        .foregroundStyle(.orange)
-                        .font(.callout)
-                        .fontWeight(.medium)
-                    Text("Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if let app = selectedApp,
-                       let url = URL(string: "https://appstoreconnect.apple.com/apps/\(app.id)/appstore") {
-                        Link(destination: url) {
-                            Label("Open app in App Store Connect", systemImage: "arrow.up.right.square")
-                        }
-                        .font(.caption)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.orange.opacity(0.08), in: .rect(cornerRadius: 8))
-                .padding(.horizontal, 16)
-            }
-            List(selection: Binding(
-                get: { selectedVersion?.id },
-                set: { newId in selectedVersion = versions.first(where: { $0.id == newId }) }
-            )) {
-                ForEach(versions) { version in
-                    HStack(spacing: 8) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 6) {
-                                Text(version.attributes.versionString)
-                                    .fontWeight(.medium)
-                                if let platform = version.attributes.displayPlatform {
-                                    Text(platform)
-                                        .font(.caption2)
-                                        .padding(.horizontal, 5)
-                                        .padding(.vertical, 1)
-                                        .background(Color.secondary.opacity(0.15), in: .capsule)
-                                }
-                            }
-                            Text(version.attributes.displayState)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if !version.isEditable {
-                            Label("Read-only", systemImage: "lock.fill")
-                                .foregroundStyle(.orange)
-                                .font(.caption)
-                        }
-                    }
-                    .tag(version.id as String?)
-                }
-            }
-            .listStyle(.inset)
-            if let version = selectedVersion, !version.isEditable {
-                Label("This version is \(version.attributes.displayState) — screenshots can't be changed. Pick an editable version or create a new one in App Store Connect.",
-                      systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                    .font(.caption)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 4)
-            }
-        }
+        ASCVersionSelectionStepView(
+            selectedApp: selectedApp,
+            versions: versions,
+            selectedVersion: $selectedVersion
+        )
     }
 
     private var editMetadataView: some View {
