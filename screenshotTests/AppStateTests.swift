@@ -991,7 +991,7 @@ struct AppStateTests {
         #expect(state.activeProjectId != nil)
     }
 
-    @Test func selectProjectSetsOpeningIndicatorUntilImagesFinishLoading() async throws {
+    @Test func selectProjectClearsOpeningIndicatorAfterStructureThenStreamsImages() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
@@ -1009,16 +1009,24 @@ struct AppStateTests {
         state.createProject(name: "Second")
         state.selectProject(originalProjectId)
 
+        // The opening overlay is shown immediately while the project switches.
         #expect(state.isOpeningProject)
 
+        // It clears as soon as the project *structure* (rows + locales) is applied,
+        // WITHOUT waiting for images to finish downsampling — so the editor chrome
+        // (locale bar, row controls) appears promptly even for projects with many
+        // languages / large images.
         for _ in 0..<50 {
-            if !state.isOpeningProject {
-                break
-            }
+            if !state.isOpeningProject { break }
             try await Task.sleep(for: .milliseconds(20))
         }
-
         #expect(!state.isOpeningProject)
+
+        // Images stream in afterwards, behind the already-visible UI.
+        for _ in 0..<50 {
+            if !state.screenshotImages.isEmpty { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
         #expect(!state.screenshotImages.isEmpty)
     }
 

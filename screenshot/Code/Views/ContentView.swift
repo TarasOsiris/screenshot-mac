@@ -189,8 +189,12 @@ struct ContentView: View {
             }
         }
         .overlay {
-            if !isExporting && (state.isOpeningProject || state.isLoadingImages) {
-                ProjectLoadingOverlay(message: state.isOpeningProject ? "Opening Project…" : "Loading Images…")
+            // Only block the window during the brief structural-open phase (hides the
+            // teardown→reload flash). Image downsampling streams in behind the live UI,
+            // so the locale bar / row controls stay visible instead of being hidden
+            // behind a full-window overlay while large projects finish loading images.
+            if !isExporting && state.isOpeningProject {
+                ProjectLoadingOverlay(message: "Opening Project…")
             }
         }
         .inspector(isPresented: $isInspectorPresented) {

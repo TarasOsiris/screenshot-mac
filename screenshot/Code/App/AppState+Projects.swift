@@ -202,6 +202,12 @@ extension AppState {
         guard activeProjectId == id else { return }
         loadCustomFonts()
         loadRowsForProject(id)
+        // The chrome (locale bar, row headers) and canvas only need the project
+        // *structure* — rows + localeState — which is now applied. Reveal the UI
+        // immediately so a project with many languages / large images doesn't keep
+        // the whole window behind a loading overlay. Images stream in afterwards
+        // (the canvas renders placeholders until each one is ready).
+        finishProjectOpening()
         loadScreenshotImages()
     }
 
