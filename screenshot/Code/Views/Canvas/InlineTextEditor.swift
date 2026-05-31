@@ -142,6 +142,7 @@ struct InlineTextEditor: NSViewRepresentable {
         scrollView.verticalAlignment = verticalAlignment
 
         formatController?.textView = textView
+        textView.formatController = formatController
 
         DispatchQueue.main.async { [weak textView, weak scrollView] in
             // The editor may have been dismissed (commit/esc) before this runs;
@@ -498,6 +499,7 @@ class CenteringScrollView: NSScrollView {
 private class CommitTextView: NSTextView {
     var onCommit: (() -> Void)?
     var verticalGlyphPadding: CGFloat = 0
+    weak var formatController: RichTextFormatController?
 
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 36 && event.modifierFlags.contains(.shift) {
@@ -510,7 +512,23 @@ private class CommitTextView: NSTextView {
             onCommit?()
             return
         }
+        // Cmd+B / Cmd+I / Cmd+U -> toggle formatting on the current selection
+        // (only the bare Cmd chord — ignore Cmd+Shift+B etc. so other shortcuts pass through)
+        if event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command,
+           let action = Self.formatAction(for: event) {
+            formatController?.applyAction(action)
+            return
+        }
         super.keyDown(with: event)
+    }
+
+    private static func formatAction(for event: NSEvent) -> RichTextFormatAction? {
+        switch event.charactersIgnoringModifiers?.lowercased() {
+        case "b": return .toggleBold
+        case "i": return .toggleItalic
+        case "u": return .toggleUnderline
+        default:  return nil
+        }
     }
 }
 
