@@ -669,6 +669,7 @@
       }
     },
     "%@ text" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -5550,6 +5551,7 @@
       }
     },
     "Base text" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15219,6 +15221,7 @@
       }
     },
     "Leave empty to use the base language text" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

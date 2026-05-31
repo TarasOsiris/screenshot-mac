@@ -55,7 +55,7 @@ struct TranslationOverviewSheet: View {
             HStack {
                 Spacer()
                 Button("Done") { dismiss() }
-                    .keyboardShortcut(.defaultAction)
+                    .keyboardShortcut(.cancelAction)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
@@ -179,13 +179,13 @@ struct TranslationOverviewSheet: View {
 
     private func baseColumn(shapeId: UUID, text: String, rowLabel: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField("Base text", text: Binding(
-                get: { text },
-                set: { state.updateBaseText(shapeId: shapeId, text: $0) }
-            ), axis: .vertical)
-                .textFieldStyle(.roundedBorder)
-                .font(.system(size: 12))
-                .lineLimit(2...6)
+            MultilineCellEditor(
+                placeholder: "Base text",
+                text: Binding(
+                    get: { text },
+                    set: { state.updateBaseText(shapeId: shapeId, text: $0) }
+                )
+            )
             Text(rowLabel)
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
@@ -230,11 +230,11 @@ private struct TranslationMatrixCell: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField("\(locale.flagLabel) text", text: $text, axis: .vertical)
-                .textFieldStyle(.roundedBorder)
-                .font(.system(size: 12))
-                .lineLimit(2...6)
-                .help("Leave empty to use the base language text")
+            MultilineCellEditor(
+                placeholder: "\(locale.flagLabel) text",
+                text: $text,
+                help: "Leave empty to use the base language text"
+            )
             if isHovered {
                 HStack(spacing: 8) {
                     Button {
@@ -264,6 +264,98 @@ private struct TranslationMatrixCell: View {
         .onHover { isHovered = $0 }
         .overlay(alignment: .trailing) {
             Divider()
+        }
+    }
+}
+
+/// Multiline editor that uses `TextEditor` so Return inserts a newline (a
+/// vertical-axis `TextField` treats Return as a submit gesture on macOS).
+private struct MultilineCellEditor: View {
+    let placeholder: String
+    @Binding var text: String
+    var help: String? = nil
+
+    // Local buffer: binding TextEditor straight to AppState-backed state recomputes
+    // the body on every keystroke and re-feeds the value, resetting the caret to the
+    // end. The buffer survives recomputes; we sync to/from `text` only on real changes.
+    @State private var localText: String
+    @State private var contentHeight: CGFloat = 0
+
+    private let fontSize: CGFloat = 12
+    // Match the TextEditor's intrinsic text origin so the placeholder/mirror align.
+    private let insetH: CGFloat = 5
+    private let insetV: CGFloat = 5
+    private let minHeight: CGFloat = 40   // ~2 lines
+    private let maxHeight: CGFloat = 100  // ~6 lines
+
+    init(placeholder: String, text: Binding<String>, help: String? = nil) {
+        self.placeholder = placeholder
+        self._text = text
+        self.help = help
+        self._localText = State(initialValue: text.wrappedValue)
+    }
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            // Invisible mirror sizes the editor so it grows with the text instead
+            // of clipping at a fixed height; shares the editor's width and insets.
+            Text(localText.isEmpty ? placeholder : localText)
+                .font(.system(size: fontSize))
+                .padding(.horizontal, insetH)
+                .padding(.vertical, insetV)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .background(GeometryReader { proxy in
+                    Color.clear.preference(key: CellHeightKey.self, value: proxy.size.height)
+                })
+                .hidden()
+
+            if localText.isEmpty {
+                Text(placeholder)
+                    .font(.system(size: fontSize))
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, insetH)
+                    .padding(.vertical, insetV)
+                    .allowsHitTesting(false)
+            }
+
+            TextEditor(text: $localText)
+                .font(.system(size: fontSize))
+                .scrollContentBackground(.hidden)
+        }
+        .frame(height: min(max(contentHeight, minHeight), maxHeight))
+        .onPreferenceChange(CellHeightKey.self) { contentHeight = $0 }
+        .onChange(of: localText) { _, newValue in
+            if newValue != text { text = newValue }
+        }
+        .onChange(of: text) { _, newValue in
+            if newValue != localText { localText = newValue }
+        }
+        .background(Color(NSColor.textBackgroundColor))
+        .overlay(
+            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
+                .stroke(Color(NSColor.separatorColor), lineWidth: UIMetrics.BorderWidth.standard)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
+        .modifier(OptionalHelp(help: help))
+    }
+}
+
+/// Intrinsic content height of a cell editor, used to size it to fit.
+private struct CellHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
+private struct OptionalHelp: ViewModifier {
+    let help: String?
+
+    func body(content: Content) -> some View {
+        if let help {
+            content.help(help)
+        } else {
+            content
         }
     }
 }
