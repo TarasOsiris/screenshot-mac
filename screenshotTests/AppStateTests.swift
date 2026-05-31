@@ -734,6 +734,72 @@ struct AppStateTests {
         #expect(state.localeState.override(forCode: "de", shapeId: shape.id)?.text == nil)
     }
 
+    @Test func translateShapesPreservesLineBreaksWithoutExtraSpaces() async {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        state.addLocale(.init(code: "fr", label: "French"))
+        state.selectRow(state.rows.first!.id)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.text = "Hello\nWorld"
+        state.addShape(shape)
+
+        var translatedInputs: [String] = []
+        await translateShapes(
+            state: state,
+            targetLocaleCode: "fr",
+            onlyUntranslated: false
+        ) { text in
+            translatedInputs.append(text)
+            return text
+                .replacingOccurrences(of: "Hello", with: "Bonjour")
+                .replacingOccurrences(of: "World", with: "Monde")
+        }
+
+        #expect(translatedInputs.count == 1)
+        #expect(translatedInputs.first?.contains("Hello") == true)
+        #expect(translatedInputs.first?.contains("World") == true)
+        #expect(state.localeState.override(forCode: "fr", shapeId: shape.id)?.text == "Bonjour\nMonde")
+    }
+
+    @Test func translatePreservingLineBreaksKeepsBlankLinesAndLinePadding() async throws {
+        var translatedInputs: [String] = []
+        let translated = try await translatePreservingLineBreaks("  Hello\n\nWorld  \r\nAgain") { text in
+            translatedInputs.append(text)
+            return text
+                .replacingOccurrences(of: "Hello", with: "Bonjour")
+                .replacingOccurrences(of: "World", with: "Monde")
+                .replacingOccurrences(of: "Again", with: "Encore")
+        }
+
+        #expect(translatedInputs.count == 1)
+        #expect(translatedInputs.first?.contains("Hello") == true)
+        #expect(translatedInputs.first?.contains("World") == true)
+        #expect(translatedInputs.first?.contains("Again") == true)
+        #expect(translated == "  Bonjour\n\nMonde  \r\nEncore")
+    }
+
+    @Test func translatePreservingLineBreaksUsesSentinelWithNoTranslatableContent() async throws {
+        // The newline sentinel handed to the translator must carry no real words
+        // or ASCII digits — those could be translated, stripped, or localized by
+        // the engine, dropping the newline and leaking garbled text. Only the
+        // original characters, spaces, and Private Use Area scalars may appear.
+        var seenByTranslator = ""
+        _ = try await translatePreservingLineBreaks("1\n2") { text in
+            seenByTranslator = text
+            return text
+        }
+
+        #expect(!seenByTranslator.contains("LINE_BREAK"))
+        for scalar in seenByTranslator.unicodeScalars {
+            let isOriginal = scalar == "1" || scalar == "2"
+            let isSpace = scalar == " "
+            let isPrivateUse = (0xE000...0xF8FF).contains(scalar.value)
+            #expect(isOriginal || isSpace || isPrivateUse)
+        }
+    }
+
     @Test func updateTranslationTextIgnoresRemovedLocale() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }

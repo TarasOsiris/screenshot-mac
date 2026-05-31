@@ -65,11 +65,14 @@ struct TranslationOverviewSheet: View {
             guard let pendingCellTranslation else { return }
             defer { self.pendingCellTranslation = nil }
             do {
-                let response = try await session.translate(pendingCellTranslation.baseText)
+                let translatedText = try await translatePreservingLineBreaks(pendingCellTranslation.baseText) { text in
+                    let response = try await session.translate(text)
+                    return response.targetText
+                }
                 state.updateTranslationText(
                     shapeId: pendingCellTranslation.shapeId,
                     localeCode: pendingCellTranslation.localeCode,
-                    text: response.targetText
+                    text: translatedText
                 )
             } catch {
                 AppLogger.translation.error("Translation failed for shape \(pendingCellTranslation.shapeId, privacy: .public): \(error.localizedDescription, privacy: .public)")
