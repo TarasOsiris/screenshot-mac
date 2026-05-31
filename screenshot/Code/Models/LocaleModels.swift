@@ -20,7 +20,8 @@ struct LocaleDefinition: Codable, Identifiable, Equatable {
 
     static let catalog: [(code: String, label: String, flag: String)] = [
         ("en", "English",     "🇺🇸"), ("fr", "French",      "🇫🇷"), ("de", "German",      "🇩🇪"),
-        ("es", "Spanish",     "🇪🇸"), ("it", "Italian",     "🇮🇹"), ("pt", "Portuguese",  "🇧🇷"),
+        ("es", "Spanish",     "🇪🇸"), ("it", "Italian",     "🇮🇹"),
+        ("pt-BR", "Portuguese (Brazil)", "🇧🇷"), ("pt-PT", "Portuguese (Portugal)", "🇵🇹"),
         ("nl", "Dutch",       "🇳🇱"), ("ru", "Russian",     "🇷🇺"), ("ja", "Japanese",    "🇯🇵"),
         ("ko", "Korean",      "🇰🇷"), ("zh", "Chinese",     "🇨🇳"), ("ar", "Arabic",      "🇸🇦"),
         ("hi", "Hindi",       "🇮🇳"), ("tr", "Turkish",     "🇹🇷"), ("pl", "Polish",      "🇵🇱"),
@@ -45,8 +46,11 @@ struct LocaleDefinition: Codable, Identifiable, Equatable {
         ("gl", "Galician",    "🇪🇸"),
     ]
 
-    private static let flagIndex: [String: String] =
-        Dictionary(uniqueKeysWithValues: catalog.map { ($0.code, $0.flag) })
+    private static let flagIndex: [String: String] = {
+        var index = Dictionary(uniqueKeysWithValues: catalog.map { ($0.code, $0.flag) })
+        index["pt"] = "🇧🇷"
+        return index
+    }()
 }
 
 struct ShapeLocaleOverride: Codable, Equatable {

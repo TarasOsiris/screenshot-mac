@@ -6,6 +6,17 @@ import AppKit
 @MainActor
 struct AppStateLocaleTests {
 
+    @Test func portuguesePresetsIncludeBrazilAndPortugal() {
+        #expect(LocalePresets.all.contains(.init(code: "pt-BR", label: "Portuguese (Brazil)")))
+        #expect(LocalePresets.all.contains(.init(code: "pt-PT", label: "Portuguese (Portugal)")))
+    }
+
+    @Test func legacyPortugueseLocaleKeepsBrazilFlag() {
+        let legacy = LocaleDefinition(code: "pt", label: "Portuguese")
+
+        #expect(legacy.flagLabel == "🇧🇷 Portuguese")
+    }
+
     @Test func resetTranslationRemovesOverrideFromProgress() throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }
