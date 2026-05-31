@@ -311,8 +311,19 @@ private struct FlowLayout: Layout {
     var horizontalSpacing: CGFloat = 4
     var verticalSpacing: CGFloat = 4
 
+    /// Lower bound for the width used when *measuring* the layout. SwiftUI probes a
+    /// custom Layout with tiny widths (0, a few points) to discover its minimum size.
+    /// At those widths every chip wraps onto its own row, so the bar reports a height of
+    /// dozens of rows — which SwiftUI then treats as the bar's minimum height and forces
+    /// the entire window taller than the screen (pushing the toolbar/rows off-screen).
+    /// Clamping the *measurement* width to a realistic minimum keeps the reported size
+    /// bounded. Placement still uses the true width, so wrapping at the real width is
+    /// unaffected as long as the window can't get narrower than this.
+    private static let minMeasuredWidth: CGFloat = 460
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        arrange(subviews: subviews, maxWidth: proposal.width ?? .infinity).size
+        let width = max(proposal.width ?? .infinity, Self.minMeasuredWidth)
+        return arrange(subviews: subviews, maxWidth: width).size
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
