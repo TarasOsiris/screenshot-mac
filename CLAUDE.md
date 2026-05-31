@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Screenshot Bro — macOS app for generating App Store & Google Play screenshots with device frames, shapes, and a multi-row editor. Swift + SwiftUI, with RevenueCat for in-app purchases.
 
+## Code Style
+
+- Avoid excessive comments. Don't narrate what the code already says; keep only short "why" notes for non-obvious decisions (workarounds, platform quirks, invariants). Prefer one concise line over a multi-line explanation.
+
 ## UX Reference
 
 Sketch is the main reference project. UX patterns (cursors, handles, interactions, inspector behavior, etc.) should follow Sketch conventions when applicable.

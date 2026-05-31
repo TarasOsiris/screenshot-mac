@@ -45,7 +45,6 @@ enum LocaleService {
         if dw != 0 { override.offsetWidth = dw }
         if dh != 0 { override.offsetHeight = dh }
 
-        // Text shapes also have text property overrides
         if updated.type == .text {
             baseResult.text = base.text
             baseResult.richText = base.richText
@@ -75,7 +74,6 @@ enum LocaleService {
             if updated.lineHeightMultiple != base.lineHeightMultiple { override.lineHeightMultiple = updated.lineHeightMultiple }
         }
 
-        // Device/image shapes have display image overrides
         if updated.type == .device || updated.type == .image {
             if updated.displayImageFileName != base.displayImageFileName {
                 override.overrideImageFileName = updated.displayImageFileName

@@ -158,12 +158,10 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         if editing {
                                             isOpacityFieldActive = true
                                         } else {
-                                            // Commit to the LIVE selection, never a captured
-                                            // shapeId — SwiftUI keeps stale closures on a
-                                            // focused field after the selection changes. Fall
-                                            // back to the captured id only when the selection
-                                            // is no longer a single shape (became multi/empty),
-                                            // where the captured id is the shape we were editing.
+                                            // Commit to the LIVE selection, not the captured shapeId:
+                                            // SwiftUI keeps stale closures on a focused field after
+                                            // selection changes. Fall back to the captured id only
+                                            // when selection is no longer a single shape.
                                             commitOpacity(to: state.selectedShapeId ?? shapeId)
                                         }
                                     })
@@ -810,7 +808,6 @@ struct ShapePropertiesSingleSelectionBar: View {
         let customControlState = CustomFontRegistry.controlState(for: shape)
 
         VStack(alignment: .leading, spacing: 10) {
-            // Font
             LabeledContent("Font") {
                 FontPicker(
                     selection: shapeBinding(shapeId, \.fontName, default: ""),
@@ -821,7 +818,6 @@ struct ShapePropertiesSingleSelectionBar: View {
                 )
             }
 
-            // Size & Weight
             LabeledContent("Size") {
                 HStack(spacing: 4) {
                     HStack(spacing: 0) {
@@ -891,7 +887,6 @@ struct ShapePropertiesSingleSelectionBar: View {
 
             Divider()
 
-            // Alignment
             LabeledContent("Align") {
                 HStack(spacing: 8) {
                     Picker("", selection: shapeBinding(shapeId, \.textAlign, default: .center)) {
@@ -916,7 +911,6 @@ struct ShapePropertiesSingleSelectionBar: View {
                 }
             }
 
-            // Style toggles
             HStack(spacing: 12) {
                 if customControlState?.showsItalicToggle ?? true {
                     Toggle("Italic", isOn: italicBinding(shapeId))
@@ -931,7 +925,6 @@ struct ShapePropertiesSingleSelectionBar: View {
 
             Divider()
 
-            // Tracking
             LabeledContent("Letter Spacing") {
                 let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0)
                 HStack(spacing: 4) {
@@ -945,7 +938,6 @@ struct ShapePropertiesSingleSelectionBar: View {
                 }
             }
 
-            // Line height
             LabeledContent("Line Spacing") {
                 HStack(spacing: 0) {
                     TextField("", text: $editingLineHeight, onEditingChanged: { editing in

@@ -77,16 +77,12 @@ extension Array where Element == Project {
     private static func mergeWinner(_ a: Project, _ b: Project) -> Project {
         switch (a.isDeleted, b.isDeleted) {
         case (false, false):
-            // Both alive: last-writer-wins by modifiedAt
             return b.modifiedAt > a.modifiedAt ? b : a
         case (true, true):
-            // Both deleted: later deletedAt wins
             return (b.deletedAt ?? .distantPast) > (a.deletedAt ?? .distantPast) ? b : a
         case (true, false):
-            // a is deleted, b is alive: b wins if modified after deletion (resurrection)
             return b.modifiedAt > (a.deletedAt ?? .distantPast) ? b : a
         case (false, true):
-            // b is deleted, a is alive: a wins if modified after deletion (resurrection)
             return a.modifiedAt > (b.deletedAt ?? .distantPast) ? a : b
         }
     }

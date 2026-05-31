@@ -78,7 +78,6 @@ struct TemplateControlBar: View {
                     onMoveRight()
                 }
 
-                // Background override button
                 Button {
                     showBackgroundPopover = true
                 } label: {

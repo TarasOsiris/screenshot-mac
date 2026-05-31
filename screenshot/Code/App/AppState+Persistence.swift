@@ -21,7 +21,6 @@ extension AppState {
     // MARK: - iCloud
 
     func setupICloudIfNeeded() {
-        // Listen for enable/disable from Settings
         NotificationCenter.default.addObserver(
             forName: .iCloudSyncDidEnable,
             object: nil,

@@ -67,7 +67,6 @@ extension AppState {
             }
         }
 
-        // Copy fill image file
         if let originalFillFile = newShape.fillImageConfig?.fileName {
             let srcURL = resourcesURL.appendingPathComponent(originalFillFile)
             let newFillFile = "fill-\(newShape.id.uuidString).png"
@@ -79,7 +78,6 @@ extension AppState {
             }
         }
 
-        // Copy locale override image files
         let originalKey = originalId.uuidString
         let newKey = newShape.id.uuidString
         for localeCode in localeState.overrides.keys {
@@ -104,7 +102,6 @@ extension AppState {
     }
 
     func isImageFileReferenced(_ fileName: String) -> Bool {
-        // Check base shape and background references
         let referencedInRows = rows.contains { row in
             row.backgroundImageConfig.fileName == fileName ||
             row.templates.contains { $0.backgroundImageConfig.fileName == fileName } ||
@@ -114,7 +111,6 @@ extension AppState {
         }
         if referencedInRows { return true }
 
-        // Check locale override image references
         return localeState.overrides.values.contains { shapeOverrides in
             shapeOverrides.values.contains { $0.overrideImageFileName == fileName }
         }

@@ -152,7 +152,6 @@ extension AppState {
         beginProjectOpening()
         teardownActiveProject()
 
-        // Replace project contents with template data
         PersistenceService.copyProjectFromURL(template.url, to: id)
 
         // Reload from disk (font registration before row load, matching switchToProject order)

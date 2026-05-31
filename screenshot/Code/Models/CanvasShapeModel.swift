@@ -160,7 +160,6 @@ struct CanvasShapeModel: Identifiable, Codable {
         if borderRadius != 0 { try c.encode(borderRadius, forKey: .borderRadius) }
         try c.encode(colorData, forKey: .colorData)
         if opacity != 1.0 { try c.encode(opacity, forKey: .opacity) }
-        // Text properties
         try c.encodeIfPresent(text, forKey: .text)
         try c.encodeIfPresent(richText, forKey: .richText)
         try c.encodeIfPresent(fontName, forKey: .fontName)
@@ -173,9 +172,7 @@ struct CanvasShapeModel: Identifiable, Codable {
         try c.encodeIfPresent(letterSpacing, forKey: .letterSpacing)
         try c.encodeIfPresent(lineSpacing, forKey: .lineSpacing)
         try c.encodeIfPresent(lineHeightMultiple, forKey: .lineHeightMultiple)
-        // Image
         try c.encodeIfPresent(imageFileName, forKey: .imageFileName)
-        // Device
         try c.encodeIfPresent(deviceCategory, forKey: .deviceCategory)
         try c.encodeIfPresent(deviceBodyColorData, forKey: .deviceBodyColorData)
         try c.encodeIfPresent(deviceFrameId, forKey: .deviceFrameId)
@@ -192,21 +189,15 @@ struct CanvasShapeModel: Identifiable, Codable {
         if let shadow, !shadow.isEmpty {
             try c.encode(shadow, forKey: .shadow)
         }
-        // SVG
         try c.encodeIfPresent(svgContent, forKey: .svgContent)
         try c.encodeIfPresent(svgUseColor, forKey: .svgUseColor)
-        // Outline
         try c.encodeIfPresent(outlineColorData, forKey: .outlineColorData)
         try c.encodeIfPresent(outlineWidth, forKey: .outlineWidth)
-        // Star
         try c.encodeIfPresent(starPointCount, forKey: .starPointCount)
-        // Fill style
         try c.encodeIfPresent(fillStyle, forKey: .fillStyle)
         try c.encodeIfPresent(fillGradientConfig, forKey: .fillGradientConfig)
         try c.encodeIfPresent(fillImageConfig, forKey: .fillImageConfig)
-        // Clipping
         try c.encodeIfPresent(clipToTemplate, forKey: .clipToTemplate)
-        // Lock
         try c.encodeIfPresent(isLocked, forKey: .isLocked)
     }
 

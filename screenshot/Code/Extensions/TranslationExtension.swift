@@ -157,9 +157,7 @@ private func restoringLineBreaks(in text: String, breaks: [ProtectedLineBreak]) 
 
     for lineBreak in breaks {
         guard let tokenRange = restored.range(of: lineBreak.token) else {
-            // The translator mangled or dropped the sentinel, so we can no longer
-            // tell where the newline went. Log it (diagnosable) and skip — better
-            // than leaking a stray token into user-visible text.
+            // Sentinel mangled/dropped by the translator — skip rather than leak it.
             AppLogger.translation.error("Line-break sentinel did not survive translation; newline could not be restored")
             continue
         }
@@ -170,13 +168,9 @@ private func restoringLineBreaks(in text: String, breaks: [ProtectedLineBreak]) 
     return restored
 }
 
-/// A line-break sentinel built from a Private Use Area scalar. A token made of
-/// real words, brackets, or ASCII digits (e.g. `<<<LINE_BREAK_0>>>`) can be
-/// translated, stripped, or have its digits localized by the translation engine,
-/// which would drop the newline and leak garbled text into the screenshot. PUA
-/// scalars carry no linguistic meaning, so Apple's translator passes them through
-/// untouched. `0xE000 + index` stays inside the PUA block (U+E000–U+F8FF) for any
-/// realistic number of line breaks.
+/// Line-break sentinel as a Private Use Area scalar — opaque to the translation
+/// engine (no words/brackets/digits to translate, strip, or localize). `0xE000 +
+/// index` stays within the PUA block (U+E000–U+F8FF).
 private func lineBreakToken(at index: Int) -> String {
     let scalar = UnicodeScalar(0xE000 + UInt32(index)) ?? UnicodeScalar(0xE000)!
     return String(scalar)

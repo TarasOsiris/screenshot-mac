@@ -13,7 +13,6 @@ struct DebugProjectManagerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Toolbar
             HStack {
                 Text("\(sortedProjects.count) projects")
                     .font(.system(size: 11))
@@ -39,7 +38,6 @@ struct DebugProjectManagerView: View {
 
             Divider()
 
-            // Project list
             List(sortedProjects, selection: $selection) { project in
                 HStack(spacing: 8) {
                     if project.id == state.activeProjectId {
@@ -68,7 +66,6 @@ struct DebugProjectManagerView: View {
 
             Divider()
 
-            // Actions bar
             HStack {
                 Button(role: .destructive) {
                     isConfirmingDelete = true

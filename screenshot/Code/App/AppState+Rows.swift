@@ -35,7 +35,6 @@ extension AppState {
         registerUndo("Duplicate Row")
         let source = rows[idx]
         var newShapes = source.shapes.map { $0.duplicated() }
-        // Copy locale overrides and image files for each duplicated shape
         for i in newShapes.indices {
             let originalId = source.shapes[i].id
             LocaleService.copyShapeOverrides(&localeState, fromId: originalId, toId: newShapes[i].id)
@@ -71,12 +70,10 @@ extension AppState {
         registerUndo("Delete Row")
         let row = rows[idx]
 
-        // Collect all image filenames to clean up before removing the row
         let shapeImageCandidates = imageFileNames(for: row.shapes)
         let templateBgImages = row.templates.compactMap { $0.backgroundImageConfig.fileName }
         let rowBgImage = row.backgroundImageConfig.fileName
 
-        // Remove locale overrides for all shapes in the row
         for shape in row.shapes {
             LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
         }
@@ -91,7 +88,6 @@ extension AppState {
             normalizeSelection()
         }
 
-        // Cleanup orphaned images
         let allCandidates: [String?] = shapeImageCandidates + templateBgImages + [rowBgImage]
         cleanupUnreferencedImages(allCandidates)
         scheduleSave()
@@ -102,12 +98,10 @@ extension AppState {
         registerUndoForRow(at: idx, "Reset Row")
         let oldRow = rows[idx]
 
-        // Collect all image filenames to clean up
         let shapeImageCandidates = imageFileNames(for: oldRow.shapes)
         let templateBgImages = oldRow.templates.compactMap { $0.backgroundImageConfig.fileName }
         let rowBgImage = oldRow.backgroundImageConfig.fileName
 
-        // Remove locale overrides for all shapes
         for shape in oldRow.shapes {
             LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
         }
@@ -122,7 +116,6 @@ extension AppState {
 
         selectedShapeIds = []
 
-        // Cleanup orphaned images (single-pass batch check)
         let allCandidates: [String?] = shapeImageCandidates + templateBgImages + [rowBgImage]
         cleanupUnreferencedImages(allCandidates)
 

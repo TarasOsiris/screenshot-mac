@@ -83,7 +83,6 @@ extension AppState {
             }
         }
         rows[idx].templates.remove(at: templateIndex)
-        // Cleanup orphaned images after removal (single-pass batch check)
         let allCandidates: [String?] = shapeImageCandidates + [templateBgImage]
         cleanupUnreferencedImages(allCandidates)
         scheduleSave()
@@ -104,7 +103,6 @@ extension AppState {
         let sourceTemplate = rows[rowIndex].templates[templateIndex]
         var newTemplate = sourceTemplate.duplicated()
 
-        // Copy template background image if present
         if let bgFileName = sourceTemplate.backgroundImageConfig.fileName,
            let activeId = activeProjectId {
             let resourcesURL = PersistenceService.resourcesDir(activeId)
@@ -139,7 +137,6 @@ extension AppState {
             }
         }
 
-        // Create duplicated shapes for the new template
         let targetCenterX = rows[rowIndex].templateCenterX(at: insertIndex)
         let sourceCenterX = rows[rowIndex].templateCenterX(at: templateIndex)
         let shapeOffset = targetCenterX - sourceCenterX

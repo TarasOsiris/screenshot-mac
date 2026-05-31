@@ -189,7 +189,6 @@ extension AppState {
         guard code != localeState.baseLocaleCode else { return }
         guard localeState.hasLocale(code) else { return }
         registerUndo("Remove Language")
-        // Collect override image filenames before removing the locale
         let overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
         LocaleService.removeLocale(&localeState, code: code)
         cleanupUnreferencedImages(overrideImages)

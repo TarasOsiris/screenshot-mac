@@ -126,7 +126,6 @@ struct ContentView: View {
                 }
             }
 
-            // Shape properties bottom bar
             if state.hasSelection {
                 Divider()
                 ShapePropertiesBar(state: state)
@@ -189,10 +188,8 @@ struct ContentView: View {
             }
         }
         .overlay {
-            // Only block the window during the brief structural-open phase (hides the
-            // teardown→reload flash). Image downsampling streams in behind the live UI,
-            // so the locale bar / row controls stay visible instead of being hidden
-            // behind a full-window overlay while large projects finish loading images.
+            // Block only during the brief structural-open phase (hides the teardown→reload
+            // flash); image downsampling streams in behind the live UI so row controls stay visible.
             if !isExporting && state.isOpeningProject {
                 ProjectLoadingOverlay(message: "Opening Project…")
             }

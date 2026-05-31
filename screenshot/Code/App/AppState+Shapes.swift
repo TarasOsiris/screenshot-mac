@@ -195,10 +195,8 @@ extension AppState {
         guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
         registerUndoForRow(at: location.rowIndex, "Delete Shape")
         let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
-        // Collect locale override image filenames before removing overrides
         let localeImageFiles = localeOverrideImageFileNames(for: id)
         LocaleService.removeShapeOverrides(&localeState, shapeId: id)
-        // Cleanup orphaned images (single-pass batch check)
         let allCandidates: [String?] = removedShape.allImageFileNames + localeImageFiles
         cleanupUnreferencedImages(allCandidates)
         selectedShapeIds.remove(id)
@@ -321,7 +319,6 @@ extension AppState {
     func bringSelectedShapesToFront() {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let ids = selectedShapeIds
-        // Check if already at front
         let suffixIds = Set(rows[rowIdx].shapes.suffix(ids.count).map(\.id))
         guard suffixIds != ids else { return }
         registerUndoForRow(at: rowIdx, "Bring to Front")
@@ -423,7 +420,6 @@ extension AppState {
         guard !clipboard.isEmpty else { return }
         registerUndoForRow(at: rowIdx, clipboard.count == 1 ? "Paste Shape" : "Paste Shapes")
         var newIds: Set<UUID> = []
-        // Compute group center for mouse-relative positioning
         let groupMinX = clipboard.map(\.x).min() ?? 0
         let groupMinY = clipboard.map(\.y).min() ?? 0
         let groupMaxX = clipboard.map { $0.x + $0.width }.max() ?? 0

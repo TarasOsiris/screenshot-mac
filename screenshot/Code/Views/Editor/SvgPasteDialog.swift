@@ -50,7 +50,6 @@ struct SvgPasteDialog: View {
                 }
             }
 
-            // Preview
             if let previewImage {
                 Image(nsImage: previewImage)
                     .resizable()
@@ -122,7 +121,7 @@ struct SvgPasteDialog: View {
             return
         }
 
-        let maxSvgSize = 512 * 1024 // 512 KB
+        let maxSvgSize = 512 * 1024
         guard trimmed.utf8.count <= maxSvgSize else {
             previewImage = nil
             errorMessage = String(localized: "SVG content is too large (max 512 KB)")

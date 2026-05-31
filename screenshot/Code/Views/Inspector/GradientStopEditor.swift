@@ -11,7 +11,6 @@ struct GradientStopEditor: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            // Gradient bar with draggable stops
             GeometryReader { geo in
                 let barWidth = geo.size.width
 
@@ -61,7 +60,6 @@ struct GradientStopEditor: View {
             }
             .frame(height: barHeight)
 
-            // Selected stop controls
             HStack(spacing: 8) {
                 if let selectedId = selectedStopId,
                    config.stops.contains(where: { $0.id == selectedId }) {

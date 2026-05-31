@@ -189,7 +189,6 @@ extension AppState {
         }
         let resourcesURL = PersistenceService.resourcesDir(activeId)
 
-        // Cancel any in-flight load from a previous call
         imageLoadTask?.cancel()
         imageLoadTask = nil
 

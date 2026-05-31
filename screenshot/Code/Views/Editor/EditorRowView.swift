@@ -125,7 +125,6 @@ struct EditorRowView: View {
                 rowMenuContent
             }
 
-            // Unified canvas + add button
             if !row.isCollapsed {
                 horizontalScrollArea
                     .coachPopover(
@@ -256,7 +255,6 @@ struct EditorRowView: View {
     private func handleCanvasDrop(_ providers: [NSItemProvider], at displayLocation: CGPoint, displayScale ds: CGFloat) -> Bool {
         guard !providers.isEmpty else { return false }
 
-        // Separate SVG providers from image providers
         var svgProviders: [NSItemProvider] = []
         var imageProviders: [NSItemProvider] = []
         for provider in providers {
@@ -272,7 +270,6 @@ struct EditorRowView: View {
         let baseX = displayLocation.x / ds
         let baseY = displayLocation.y / ds
 
-        // Handle SVGs with stagger behavior
         for (i, provider) in svgProviders.enumerated() {
             let modelX = baseX + CGFloat(i) * 60
             let modelY = baseY + CGFloat(i) * 60
@@ -395,7 +392,6 @@ struct EditorRowView: View {
                                 )
                             }
 
-                            // Add button
                             AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
                                 store.requirePro(
                                     allowed: store.canAddTemplate(currentCount: row.templates.count),
@@ -408,7 +404,6 @@ struct EditorRowView: View {
                             }
                         }
 
-                        // Per-template control bars (inside same ScrollView)
                         controlBarsRow
                             .padding(.bottom, 8)
                     }
@@ -658,7 +653,6 @@ struct EditorRowView: View {
                     },
                     onOptionDragDuplicate: { shapeId in
                         if isMulti {
-                            // Option+drag with multi-selection: duplicate all selected
                             state.duplicateShapesForOptionDrag()
                             return nil
                         }
@@ -788,13 +782,11 @@ struct EditorRowView: View {
                 canvasGlobalOrigin = origin
             }
 
-            // Alignment guide lines
             ForEach(activeGuides) { guide in
                 AlignmentGuideLineView(guide: guide, displayScale: ds)
             }
             .zIndex(100)
 
-            // Guideline separators
             if row.showBorders && row.templates.count > 1 {
                 CanvasTemplateSeparatorLines(
                     templateCount: row.templates.count,
