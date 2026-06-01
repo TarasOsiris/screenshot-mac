@@ -22,6 +22,9 @@ struct ContentView: View {
 
     @Environment(AppState.self) private var state
     @Environment(StoreService.self) private var store
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
     @Environment(\.openWindow) private var openWindow
     @Environment(\.undoManager) private var undoManager
     @Environment(\.requestReview) private var requestReview
@@ -275,6 +278,14 @@ struct ContentView: View {
         // Without inline mode iPadOS reserves a large-title header, leaving a blank
         // band between the nav bar and the editor content.
         .navigationBarTitleDisplayMode(.inline)
+        // The inspector is a docked side panel at regular width (iPad/Mac) but a blocking
+        // sheet at compact width (iPhone) — don't auto-present it there, or it covers the
+        // canvas on open. The toolbar toggle still opens it on demand.
+        .onAppear {
+            if horizontalSizeClass == .compact {
+                isInspectorPresented = false
+            }
+        }
         #endif
         .alert("Export Failed", isPresented: .init(
             get: { exportError != nil },

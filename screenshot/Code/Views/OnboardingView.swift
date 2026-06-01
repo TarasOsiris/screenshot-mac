@@ -5,6 +5,9 @@ struct OnboardingView: View {
     var onComplete: (() -> Void)?
 
     @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     var body: some View {
         ZStack {
@@ -103,13 +106,21 @@ struct OnboardingView: View {
 
     // MARK: - Steps
 
-    private static let stepColumns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
-    ]
+    private var stepColumns: [GridItem] {
+        #if os(iOS)
+        // Two narrow columns wrap step titles mid-word on an iPhone; use one column there.
+        if horizontalSizeClass == .compact {
+            return [GridItem(.flexible())]
+        }
+        #endif
+        return [
+            GridItem(.flexible(), spacing: 16),
+            GridItem(.flexible(), spacing: 16)
+        ]
+    }
 
     private var steps: some View {
-        LazyVGrid(columns: Self.stepColumns, spacing: 16) {
+        LazyVGrid(columns: stepColumns, spacing: 16) {
             ForEach(Array(Self.stepData.enumerated()), id: \.offset) { index, step in
                 StepCardView(index: index, step: step)
             }
