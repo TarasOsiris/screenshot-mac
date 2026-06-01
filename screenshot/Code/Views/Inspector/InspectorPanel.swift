@@ -302,10 +302,20 @@ struct InspectorPanel: View {
         return DeviceFrameCatalog.frame(for: frameId) == nil
     }
 
+    // macOS uses checkbox toggles in two compact columns; iPad uses switch toggles, which need
+    // a full-width row each so the labels don't wrap.
+    private var visibilityColumns: [GridItem] {
+        #if os(macOS)
+        [GridItem(.flexible()), GridItem(.flexible())]
+        #else
+        [GridItem(.flexible())]
+        #endif
+    }
+
     @ViewBuilder
     private func optionsSection(rowId: UUID) -> some View {
         Section(isExpanded: $isVisibilityExpanded) {
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 4) {
+            LazyVGrid(columns: visibilityColumns, alignment: .leading, spacing: 4) {
                 Toggle(isOn: safeRowBinding(rowId, keyPath: \.showBorders, default: true)) {
                     Label("Borders", systemImage: "rectangle.split.3x3")
                 }

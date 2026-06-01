@@ -5,7 +5,12 @@ import SwiftUI
 enum ShapePropertiesSectionLayout {
     static let horizontalPadding: CGFloat = 10
     static let verticalPadding: CGFloat = 4
+    // Taller sections on iPad give the bottom bar's controls touch-friendly breathing room.
+    #if os(macOS)
     static let minHeight: CGFloat = 28
+    #else
+    static let minHeight: CGFloat = 40
+    #endif
 }
 
 struct ShapePropertiesSection<Content: View>: View {

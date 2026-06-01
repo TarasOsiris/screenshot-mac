@@ -6,8 +6,25 @@ struct ShapeToolbar: View {
 
     private static let nonMenuTypes = ShapeType.allCases.filter { !ShapeType.shapeMenuTypes.contains($0) }
 
+    /// Touch targets need more room on iPad; macOS keeps the compact inspector density.
+    private var buttonControlSize: ControlSize {
+        #if os(macOS)
+        .small
+        #else
+        .large
+        #endif
+    }
+
+    private var gridSpacing: CGFloat {
+        #if os(macOS)
+        6
+        #else
+        10
+        #endif
+    }
+
     var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 2), spacing: 6) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: 2), spacing: gridSpacing) {
             shapesMenu
             ForEach(Self.nonMenuTypes, id: \.self) { type in
                 shapeButton(type) {
@@ -39,7 +56,7 @@ struct ShapeToolbar: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.bordered)
-        .controlSize(.small)
+        .controlSize(buttonControlSize)
         .help("Add shape")
         .popover(isPresented: $isShapesMenuPresented, arrowEdge: .bottom) {
             VStack(alignment: .leading, spacing: 0) {
@@ -70,7 +87,7 @@ struct ShapeToolbar: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.bordered)
-        .controlSize(.small)
+        .controlSize(buttonControlSize)
         .help("Add \(type.label)")
     }
 

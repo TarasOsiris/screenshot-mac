@@ -53,6 +53,11 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                     .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
                     .foregroundStyle(isSelected ? Color.primary : .secondary)
                     .opacity(row.label.isEmpty ? 0.5 : 1)
+                    // iPad's narrow portrait canvas would wrap a long label to multiple lines.
+                    #if os(iOS)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    #endif
                     .onTapGesture(count: 2, perform: onStartLabelEdit)
             }
 

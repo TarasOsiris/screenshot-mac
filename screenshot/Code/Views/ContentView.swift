@@ -202,7 +202,11 @@ struct ContentView: View {
         }
         .inspector(isPresented: $isInspectorPresented) {
             InspectorPanel(state: state)
+                #if os(macOS)
                 .inspectorColumnWidth(min: 220, ideal: 260, max: 320)
+                #else
+                .inspectorColumnWidth(min: 340, ideal: 380, max: 480)
+                #endif
                 .frame(minHeight: 200)
         }
         .toolbar(id: "main") {
