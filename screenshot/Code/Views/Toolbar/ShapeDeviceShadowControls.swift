@@ -31,7 +31,7 @@ struct ShapeDeviceShadowControls: View {
             }
             .buttonStyle(.plain)
             .help("Drop shadow")
-            .popover(isPresented: $isPopoverPresented, arrowEdge: .top) {
+            .barPopover(isPresented: $isPopoverPresented) {
                 DeviceShadowPopover(shadow: shadow)
             }
         }

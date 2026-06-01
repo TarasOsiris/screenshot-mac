@@ -177,6 +177,10 @@ struct TemplateControlBar: View {
                     }
                     .padding(20)
                     .frame(width: 320)
+                    #if os(iOS)
+                    .presentationSizing(.fitted)
+                    .presentationDragIndicator(.visible)
+                    #endif
                 }
             }
 

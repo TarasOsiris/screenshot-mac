@@ -250,8 +250,11 @@ struct ContentView: View {
                 }
             }
             #else
-            // iPad: a minimal toolbar — just zoom in/out.
-            ToolbarItem(id: "zoomControls", placement: .primaryAction) {
+            ToolbarItem(id: "iPadInspector", placement: .primaryAction) {
+                inspectorToggleButton
+            }
+
+            ToolbarItem(id: "iPadZoomControls", placement: .primaryAction) {
                 ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
             }
             #endif
@@ -341,6 +344,11 @@ struct ContentView: View {
         .onAppear {
             state.undoManager = undoManager
             undoManager?.levelsOfUndo = 50
+            #if os(iOS)
+            if state.selectedRowId == nil, let firstRow = state.rows.first {
+                state.selectRow(firstRow.id)
+            }
+            #endif
             #if os(macOS)
             scrollWheelMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
                 guard event.modifierFlags.contains(.command) else { return event }

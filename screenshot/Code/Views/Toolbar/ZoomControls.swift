@@ -37,17 +37,19 @@ struct ZoomControls: View {
                     Text("Zoom")
                         .font(.system(size: 12, weight: .semibold))
 
-                    HStack(spacing: 6) {
-                        ForEach(ZoomConstants.presets, id: \.self) { preset in
-                            Button("\(Int(preset * 100))%") {
-                                state.setZoomLevel(preset)
-                                isPopoverPresented = false
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .tint(state.zoomLevel == preset ? .accentColor : nil)
-                        }
+                    #if os(macOS)
+                    HStack(spacing: 6) { presetButtons }
+                    #else
+                    // A single row of 11 presets would make a ~500pt-wide popover on iPad;
+                    // wrap them into a compact grid instead.
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: 60), spacing: 6)],
+                        spacing: 6
+                    ) {
+                        presetButtons
                     }
+                    .frame(width: 280)
+                    #endif
 
                     Divider()
 
@@ -77,6 +79,19 @@ struct ZoomControls: View {
             }
         }
         .controlSize(.small)
+    }
+
+    @ViewBuilder
+    private var presetButtons: some View {
+        ForEach(ZoomConstants.presets, id: \.self) { preset in
+            Button("\(Int(preset * 100))%") {
+                state.setZoomLevel(preset)
+                isPopoverPresented = false
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .tint(state.zoomLevel == preset ? .accentColor : nil)
+        }
     }
 
     private func zoomButton(_ icon: String, disabled: Bool, action: @escaping () -> Void) -> some View {

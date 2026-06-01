@@ -13,7 +13,12 @@ struct OnboardingView: View {
             content
                 .padding(26)
         }
+        #if os(macOS)
         .frame(width: 760, height: 600)
+        #else
+        .frame(maxWidth: 760, maxHeight: 620)
+        .presentationSizing(.page)
+        #endif
     }
 
     // MARK: - Background

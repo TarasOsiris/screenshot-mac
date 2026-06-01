@@ -48,7 +48,12 @@ struct NewProjectWindowView: View {
             footer
         }
         .padding(22)
+        #if os(macOS)
         .frame(minWidth: 760, idealWidth: 760, minHeight: 620, idealHeight: 620)
+        #else
+        .frame(maxWidth: 820, maxHeight: .infinity)
+        .presentationSizing(.page)
+        #endif
         .onAppear {
             templates = TemplateService.availableTemplates()
             projectName = "Project \(state.visibleProjects.count + 1)"
@@ -369,76 +374,119 @@ private struct BlankProjectRowCard: View {
     let onDuplicate: () -> Void
 
     var body: some View {
+        #if os(iOS)
+        ViewThatFits(in: .horizontal) {
+            horizontalContent
+            verticalContent
+        }
+        #else
+        horizontalContent
+        #endif
+    }
+
+    private var horizontalContent: some View {
         HStack(alignment: .center, spacing: 14) {
-            ScreenshotSizePicker(selection: $draft.sizePreset, label: "Size")
+            sizePicker
+            templateCountControl
+            devicePicker
+            actionButtons
+        }
+        .rowCardChrome()
+    }
+
+    private var verticalContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sizePicker
+            HStack(spacing: 12) {
+                templateCountControl
+                devicePicker
+            }
+            actionButtons
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .rowCardChrome()
+    }
+
+    private var sizePicker: some View {
+        ScreenshotSizePicker(selection: $draft.sizePreset, label: "Size")
+            .labelsHidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .onChange(of: draft.sizePreset) { _, newPreset in
+                if let category = DeviceCategory.suggestedCategory(forSizePreset: newPreset),
+                   category != draft.deviceCategory {
+                    draft.deviceCategory = category
+                    draft.deviceFrameId = DeviceFrameCatalog.firstPortraitFrameId(for: category)
+                }
+            }
+    }
+
+    private var templateCountControl: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "rectangle.split.3x1")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+            TemplateCountPicker(selection: $draft.templateCount, label: "")
                 .labelsHidden()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .onChange(of: draft.sizePreset) { _, newPreset in
-                    if let category = DeviceCategory.suggestedCategory(forSizePreset: newPreset),
-                       category != draft.deviceCategory {
-                        draft.deviceCategory = category
-                        draft.deviceFrameId = DeviceFrameCatalog.firstPortraitFrameId(for: category)
-                    }
-                }
-
-            HStack(spacing: 4) {
-                Image(systemName: "rectangle.split.3x1")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                TemplateCountPicker(selection: $draft.templateCount, label: "")
-                    .labelsHidden()
-            }
-            .frame(width: 64)
-            .help("Screenshots per row")
-
-            DevicePickerMenu(
-                    category: draft.deviceCategory,
-                    frameId: draft.deviceFrameId,
-                    presentation: .inline,
-                    onSelectNone: {
-                        draft.deviceCategory = nil
-                        draft.deviceFrameId = nil
-                    },
-                    onSelectCategory: { category in
-                        draft.deviceCategory = category
-                        draft.deviceFrameId = nil
-                        draft.sizePreset = category.suggestedSizePreset
-                    },
-                    onSelectFrame: { frame in
-                        draft.deviceCategory = frame.fallbackCategory
-                        draft.deviceFrameId = frame.id
-                        if let preset = DeviceFrameCatalog.suggestedSizePreset(forFrameId: frame.id) {
-                            draft.sizePreset = preset
-                        }
-                    }
-                )
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .font(.system(size: 12))
-
-            HStack(spacing: 4) {
-                Button(action: onDuplicate) {
-                    Image(systemName: "doc.on.doc")
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .buttonStyle(.borderless)
-                .disabled(!canDuplicate)
-                .help("Duplicate row")
-
-                Button(role: .destructive, action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .buttonStyle(.borderless)
-                .disabled(!canDelete)
-                .help("Delete row")
-            }
         }
-        .padding(14)
-        .background(Color.platformControlBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.secondary.opacity(0.08), lineWidth: 1)
+        .frame(width: 64)
+        .help("Screenshots per row")
+    }
+
+    private var devicePicker: some View {
+        DevicePickerMenu(
+            category: draft.deviceCategory,
+            frameId: draft.deviceFrameId,
+            presentation: .inline,
+            onSelectNone: {
+                draft.deviceCategory = nil
+                draft.deviceFrameId = nil
+            },
+            onSelectCategory: { category in
+                draft.deviceCategory = category
+                draft.deviceFrameId = nil
+                draft.sizePreset = category.suggestedSizePreset
+            },
+            onSelectFrame: { frame in
+                draft.deviceCategory = frame.fallbackCategory
+                draft.deviceFrameId = frame.id
+                if let preset = DeviceFrameCatalog.suggestedSizePreset(forFrameId: frame.id) {
+                    draft.sizePreset = preset
+                }
+            }
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .font(.system(size: 12))
+    }
+
+    private var actionButtons: some View {
+        HStack(spacing: 4) {
+            Button(action: onDuplicate) {
+                Image(systemName: "doc.on.doc")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .buttonStyle(.borderless)
+            .disabled(!canDuplicate)
+            .help("Duplicate row")
+
+            Button(role: .destructive, action: onDelete) {
+                Image(systemName: "trash")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .buttonStyle(.borderless)
+            .disabled(!canDelete)
+            .help("Delete row")
         }
+    }
+}
+
+private extension View {
+    func rowCardChrome() -> some View {
+        padding(14)
+            .background(Color.platformControlBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(Color.secondary.opacity(0.08), lineWidth: 1)
+            }
     }
 }
 
