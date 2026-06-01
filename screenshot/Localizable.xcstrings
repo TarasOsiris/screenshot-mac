@@ -11473,6 +11473,9 @@
         }
       }
     },
+    "Export All Screenshots" : {
+
+    },
     "Export all screenshots at once as PNG or JPEG, ready to upload to App Store Connect or Google Play." : {
 
     },
@@ -12023,6 +12026,9 @@
 
     },
     "Exporting..." : {
+
+    },
+    "Exporting…" : {
 
     },
     "Failed to %@: %@" : {

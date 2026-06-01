@@ -250,6 +250,16 @@ struct ContentView: View {
                 }
             }
             #else
+            ToolbarItem(id: "iPadTitle", placement: .principal) {
+                Text(state.activeProject?.name ?? "")
+                    .font(.headline)
+                    .lineLimit(1)
+            }
+
+            ToolbarItem(id: "iPadExport", placement: .primaryAction) {
+                iPadExportControl
+            }
+
             ToolbarItem(id: "iPadInspector", placement: .primaryAction) {
                 inspectorToggleButton
             }
@@ -261,6 +271,11 @@ struct ContentView: View {
 
         }
         .toolbarRole(.editor)
+        #if os(iOS)
+        // Without inline mode iPadOS reserves a large-title header, leaving a blank
+        // band between the nav bar and the editor content.
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
         .alert("Export Failed", isPresented: .init(
             get: { exportError != nil },
             set: { if !$0 { exportError = nil } }
@@ -580,6 +595,54 @@ struct ContentView: View {
         }
         .coachPopover(step: .export, state: state, arrowEdge: .top)
     }
+
+    #if os(iOS)
+    @ViewBuilder
+    private var iPadExportControl: some View {
+        let isDisabled = isExporting || state.rows.isEmpty
+        Group {
+            if state.localeState.locales.count > 1 {
+                Menu {
+                    Button("Export All Screenshots", systemImage: "square.and.arrow.up") {
+                        exportScreenshotsForIPad()
+                    }
+                    Menu("Export Locale", systemImage: "globe") {
+                        ForEach(state.localeState.locales) { locale in
+                            Button(locale.flagLabel) {
+                                exportScreenshotsForIPad(localeFilter: locale.code)
+                            }
+                        }
+                    }
+                } label: {
+                    iPadExportLabel
+                }
+            } else {
+                Button {
+                    exportScreenshotsForIPad()
+                } label: {
+                    iPadExportLabel
+                }
+            }
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .disabled(isDisabled)
+    }
+
+    @ViewBuilder
+    private var iPadExportLabel: some View {
+        if isExporting {
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.small)
+                Text("Exporting…")
+            }
+        } else {
+            Label(exportSuccess ? "Exported" : "Export",
+                  systemImage: exportSuccess ? "checkmark.circle.fill" : "square.and.arrow.up")
+                .fontWeight(.semibold)
+        }
+    }
+    #endif
 
     @ViewBuilder
     private var exportMenuContent: some View {
@@ -929,6 +992,63 @@ struct ContentView: View {
             }
         }
     }
+
+    #if os(iOS)
+    /// iPad export: renders to a temp folder via the shared `exportAll` path, then hands the
+    /// folder to the system share sheet (Save to Files / AirDrop) since there's no Finder.
+    private func exportScreenshotsForIPad(localeFilter: String? = nil) {
+        guard !state.rows.isEmpty else { return }
+
+        exportSuccessTimer?.cancel()
+        isExporting = true
+        exportSuccess = false
+        exportError = nil
+        exportProgress = 0
+
+        let localeCount = localeFilter == nil ? max(1, state.localeState.locales.count) : 1
+        exportTotal = localeCount * state.rows.reduce(0) { $0 + $1.templates.count }
+
+        exportTask = Task {
+            defer {
+                isExporting = false
+                exportTask = nil
+            }
+            do {
+                let projectName = state.activeProject?.name ?? ""
+                let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
+                let tempBase = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("Export-\(UUID().uuidString)", isDirectory: true)
+                try FileManager.default.createDirectory(at: tempBase, withIntermediateDirectories: true)
+
+                var imageCache: [String: NSImage] = [:]
+                let folderURL = try await ExportService.exportAll(
+                    rows: state.rows,
+                    projectName: projectName,
+                    to: tempBase,
+                    format: format,
+                    imageProvider: { [state] row, localeCode in
+                        let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
+                        return state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
+                    },
+                    localeState: state.localeState,
+                    localeFilter: localeFilter,
+                    customSuffix: exportCustomSuffix,
+                    availableFontFamilies: state.availableFontFamilySet,
+                    onProgress: { completed in
+                        exportProgress = completed
+                    }
+                )
+                showExportSuccess()
+                PlatformShare.present(urls: [folderURL])
+            } catch is CancellationError {
+                // User cancelled — no error to show
+            } catch {
+                exportError = error.localizedDescription
+                NotificationService.notify(title: String(localized: "Export failed"), body: error.localizedDescription)
+            }
+        }
+    }
+    #endif
 
     private func lastExportFolderURL() -> URL? {
         guard let result = ExportFolderService.resolveBookmark(lastExportFolderBookmark) else {

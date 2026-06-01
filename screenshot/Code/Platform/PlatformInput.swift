@@ -47,6 +47,37 @@ enum PlatformPasteboard {
 }
 
 #if os(iOS)
+/// iPad has no Finder/save panel, so disk export goes through the system share sheet
+/// (Save to Files, AirDrop, etc.). Presents a `UIActivityViewController` over the editor.
+enum PlatformShare {
+    @MainActor
+    static func present(urls: [URL]) {
+        guard !urls.isEmpty, let presenter = topViewController() else { return }
+        let activity = UIActivityViewController(activityItems: urls, applicationActivities: nil)
+        // iPad requires a popover anchor; center it over the presenter.
+        if let popover = activity.popoverPresentationController {
+            popover.sourceView = presenter.view
+            popover.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        presenter.present(activity, animated: true)
+    }
+
+    private static func topViewController() -> UIViewController? {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+            ?? UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        let root = scene?.windows.first(where: { $0.isKeyWindow })?.rootViewController
+            ?? scene?.windows.first?.rootViewController
+        var top = root
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
+    }
+}
+
 /// Canonical offscreen image renderer for iPad: non-opaque, 1x scale (so pixel dimensions
 /// match model space, which the export/crop math relies on). The `draw` block runs with the
 /// UIKit graphics context current, so `UIImage.draw(in:)` etc. work inside it.

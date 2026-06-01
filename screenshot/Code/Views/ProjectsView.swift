@@ -200,6 +200,7 @@ struct ProjectsView: View {
 
 private struct ProjectCard: View {
     let project: Project
+    @State private var snapshot: Image?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -214,6 +215,9 @@ private struct ProjectCard: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .task(id: project.modifiedAt) {
+            snapshot = ProjectThumbnailService.thumbnail(for: project)
+        }
     }
 
     private var thumbnail: some View {
@@ -227,10 +231,17 @@ private struct ProjectCard: View {
             )
             .aspectRatio(4.0 / 3.0, contentMode: .fit)
             .overlay {
-                Image(systemName: "rectangle.on.rectangle.angled")
-                    .font(.system(size: 34, weight: .regular))
-                    .foregroundStyle(Color.accentColor.opacity(0.7))
+                if let snapshot {
+                    snapshot
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Image(systemName: "rectangle.on.rectangle.angled")
+                        .font(.system(size: 34, weight: .regular))
+                        .foregroundStyle(Color.accentColor.opacity(0.7))
+                }
             }
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
