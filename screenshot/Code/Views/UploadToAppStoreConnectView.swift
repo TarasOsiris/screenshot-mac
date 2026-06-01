@@ -1388,6 +1388,30 @@ struct UploadToAppStoreConnectView: View {
         return codes.sorted()
     }
 
+    /// Patch a version localization, gracefully dropping "What's New" when App Store Connect
+    /// rejects it. The first version of a brand-new app has no release notes, so a `whatsNew`
+    /// edit returns 409 ("Attribute 'whatsNew' cannot be edited at this time"); retry without it
+    /// so the remaining metadata still saves.
+    private static func patchVersionLocalization(
+        _ api: AppStoreConnectAPIService,
+        id: String,
+        changes: [String: AnyEncodable]
+    ) async throws {
+        do {
+            try await api.updateVersionLocalization(id: id, attributes: changes)
+        } catch let error as AppStoreConnectAPIError {
+            guard case let .httpError(status, message) = error,
+                  status == 409,
+                  message.contains("whatsNew"),
+                  changes["whatsNew"] != nil
+            else { throw error }
+            var retry = changes
+            retry.removeValue(forKey: "whatsNew")
+            guard !retry.isEmpty else { return }
+            try await api.updateVersionLocalization(id: id, attributes: retry)
+        }
+    }
+
     private func saveMetadataAndContinue() async {
         guard let version = selectedVersion else { return }
         isBusy = true
@@ -1414,7 +1438,7 @@ struct UploadToAppStoreConnectView: View {
                     let changes = draft.changedAttributes()
                     guard !changes.isEmpty else { continue }
                     group.addTask {
-                        try await api.updateVersionLocalization(id: draft.id, attributes: changes)
+                        try await Self.patchVersionLocalization(api, id: draft.id, changes: changes)
                     }
                 }
                 for draft in appInfoSnapshot {

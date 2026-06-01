@@ -94,13 +94,13 @@ struct ASCUploadFailureDetailsSheet: View {
 
             Divider()
 
-            ScrollView([.vertical, .horizontal]) {
+            ScrollView(.vertical) {
                 Text(details)
                     .font(.system(size: 11, design: .monospaced))
                     .textSelection(.enabled)
-                    .fixedSize(horizontal: true, vertical: true)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(12)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
             }
             .background(Color.platformTextBackground)
 
