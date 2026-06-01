@@ -1,4 +1,10 @@
+// WHOLE_FILE_MACOS_GUARD
+#if os(macOS)
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 
@@ -727,7 +733,7 @@ struct UploadToAppStoreConnectView: View {
                     .font(.body)
                     .frame(minHeight: minHeight)
                     .padding(4)
-                    .background(Color(nsColor: .textBackgroundColor), in: .rect(cornerRadius: 6))
+                    .background(Color.platformTextBackground, in: .rect(cornerRadius: 6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
                             .strokeBorder(Color.secondary.opacity(0.25), lineWidth: 1)
@@ -1586,3 +1592,5 @@ struct UploadToAppStoreConnectView: View {
         return details.joined(separator: "\n\n")
     }
 }
+
+#endif

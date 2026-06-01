@@ -1,5 +1,8 @@
 import SwiftUI
 import UniformTypeIdentifiers
+#if os(iOS)
+import UIKit
+#endif
 
 @Observable
 final class AppState {
@@ -72,12 +75,12 @@ final class AppState {
     /// Includes both system family names and custom font display names so render-time
     /// `.contains(name)` checks succeed for style-qualified variants like
     /// "Playfair Display Italic".
-    @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = Set(NSFontManager.shared.availableFontFamilies)
+    @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = Set(PlatformFonts.systemFamilyNames)
 
     func refreshAvailableFontFamilies() {
-        // Process-registered fonts (via CTFontManager) don't appear in
-        // NSFontManager.availableFontFamilies, so add both family and display names.
-        var families = Set(NSFontManager.shared.availableFontFamilies)
+        // Process-registered fonts (via CTFontManager) don't appear in the system family
+        // list, so add both family and display names.
+        var families = Set(PlatformFonts.systemFamilyNames)
         for font in customFonts.values {
             families.insert(font.familyName)
             families.insert(font.displayName)
@@ -182,12 +185,27 @@ final class AppState {
 
         installArrowKeyMonitor()
 
-        NotificationCenter.default.addObserver(
-            forName: NSApplication.willTerminateNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.flushPendingSavesSynchronously()
+        // iOS does NOT reliably deliver willTerminate (suspended apps killed for memory, or
+        // swiped from the app switcher, never fire it), so on iPad also persist whenever the
+        // app leaves the foreground — otherwise the debounced save and any in-flight edit are
+        // silently lost.
+        #if os(macOS)
+        let saveNotifications: [Notification.Name] = [NSApplication.willTerminateNotification]
+        #else
+        let saveNotifications: [Notification.Name] = [
+            UIApplication.didEnterBackgroundNotification,
+            UIApplication.willResignActiveNotification,
+            UIApplication.willTerminateNotification,
+        ]
+        #endif
+        for name in saveNotifications {
+            NotificationCenter.default.addObserver(
+                forName: name,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.flushPendingSavesSynchronously()
+            }
         }
     }
 
@@ -208,7 +226,9 @@ final class AppState {
     }
 
     deinit {
+        #if os(macOS)
         if let monitor = arrowKeyMonitor { NSEvent.removeMonitor(monitor) }
+        #endif
     }
 
     // macOS virtual key codes for arrow keys
@@ -218,6 +238,9 @@ final class AppState {
     static let kVKUpArrow: UInt16 = 0x7E
 
     private func installArrowKeyMonitor() {
+        // Arrow-key nudge uses a global NSEvent monitor (macOS only). On iPad, nudging is
+        // deferred to on-screen controls.
+        #if os(macOS)
         arrowKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
             if let responder = NSApp.keyWindow?.firstResponder,
@@ -235,6 +258,7 @@ final class AppState {
             default: return event
             }
         }
+        #endif
     }
 
     // MARK: - Undo

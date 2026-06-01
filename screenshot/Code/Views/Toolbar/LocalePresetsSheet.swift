@@ -66,7 +66,11 @@ struct ManageLocalesSheet: View {
                     state.moveLocale(from: source, to: destination)
                 }
             }
+            #if os(macOS)
             .listStyle(.inset(alternatesRowBackgrounds: true))
+            #else
+            .listStyle(.inset)
+            #endif
 
             Divider()
 

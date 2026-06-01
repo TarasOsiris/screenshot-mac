@@ -22,7 +22,7 @@ struct OnboardingView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(nsColor: .windowBackgroundColor),
+                    Color.platformWindowBackground,
                     Color.blue.opacity(0.06),
                     Color.green.opacity(0.05)
                 ],
@@ -219,7 +219,7 @@ private struct StepCardView: View {
         .frame(maxWidth: .infinity, minHeight: 154, alignment: .topLeading)
         .background {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.92))
+                .fill(Color.platformControlBackground.opacity(0.92))
                 .overlay {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(

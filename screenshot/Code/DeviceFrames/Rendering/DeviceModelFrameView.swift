@@ -1,6 +1,17 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SceneKit
 import SwiftUI
+
+// SCNVector3 components are CGFloat on macOS but Float on iOS.
+#if os(macOS)
+typealias SCNFloat = CGFloat
+#else
+typealias SCNFloat = Float
+#endif
 
 struct DeviceModelFrameView: View {
     private static let modelSnapshotScale: CGFloat = 3
@@ -107,14 +118,16 @@ struct DeviceModelFrameView: View {
         renderer.pointOfView = cameraNode
         if let camera = cameraNode.camera {
             camera.wantsExposureAdaptation = false
-            camera.exposureOffset = snapshotExposureOffset
+            camera.exposureOffset = .init(snapshotExposureOffset)
         }
         let image = renderer.snapshot(
             atTime: 0,
             with: CGSize(width: safeWidth, height: safeHeight),
             antialiasingMode: .multisampling4X
         )
+        #if os(macOS)
         image.size = NSSize(width: max(1, width), height: max(1, height))
+        #endif
         return image
     }
 
@@ -147,7 +160,7 @@ struct DeviceModelFrameView: View {
 
         let bounds = contentNode.boundingBox
         let sizeY = bounds.max.y - bounds.min.y
-        let scale = sizeY > 0 ? modelSpec.targetBodyHeight / sizeY : 1
+        let scale: SCNFloat = sizeY > 0 ? SCNFloat(modelSpec.targetBodyHeight) / sizeY : 1
         contentNode.scale = SCNVector3(scale, scale, scale)
         contentNode.position = SCNVector3(
             -((bounds.min.x + bounds.max.x) / 2) * scale,
@@ -157,7 +170,7 @@ struct DeviceModelFrameView: View {
 
         let orientationNode = SCNNode()
         orientationNode.eulerAngles.z = frame.isLandscape ? .pi / 2 : 0
-        orientationNode.eulerAngles.y = CGFloat((modelSpec.baseYawDegrees * .pi) / 180)
+        orientationNode.eulerAngles.y = SCNFloat((modelSpec.baseYawDegrees * .pi) / 180)
         orientationNode.addChildNode(contentNode)
 
         let presentationNode = SCNNode()
@@ -278,16 +291,17 @@ struct DeviceModelFrameView: View {
         )
 
         if scaleFactor.isFinite, scaleFactor > 0, abs(scaleFactor - 1) > 0.01 {
+            let factor = SCNFloat(scaleFactor)
             presentationNode.scale = SCNVector3(
-                presentationNode.scale.x * scaleFactor,
-                presentationNode.scale.y * scaleFactor,
-                presentationNode.scale.z * scaleFactor
+                presentationNode.scale.x * factor,
+                presentationNode.scale.y * factor,
+                presentationNode.scale.z * factor
             )
         }
 
         let scaledBounds = worldBounds(of: presentationNode)
-        let centerX = CGFloat(scaledBounds.min.x + scaledBounds.max.x) / 2
-        let centerY = CGFloat(scaledBounds.min.y + scaledBounds.max.y) / 2
+        let centerX = SCNFloat(scaledBounds.min.x + scaledBounds.max.x) / 2
+        let centerY = SCNFloat(scaledBounds.min.y + scaledBounds.max.y) / 2
         presentationNode.position.x -= centerX
         presentationNode.position.y -= centerY
     }
@@ -614,7 +628,7 @@ struct DeviceModelFrameView: View {
         }
 
         let frontZ = root.boundingBox.max.z
-        var candidate: (node: SCNNode, area: CGFloat)?
+        var candidate: (node: SCNNode, area: SCNFloat)?
         enumerateNodes(in: root) { node in
             guard let geometry = node.geometry else { return }
             let bounds = geometry.boundingBox

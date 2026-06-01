@@ -1,3 +1,5 @@
+// WHOLE_FILE_MACOS_GUARD
+#if os(macOS)
 import SwiftUI
 
 struct ASCAppSelectionStepView: View {
@@ -215,3 +217,5 @@ private struct ASCVersionSelectionRow: View {
         }
     }
 }
+
+#endif

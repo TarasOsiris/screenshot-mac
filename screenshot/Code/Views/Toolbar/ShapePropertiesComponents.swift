@@ -137,6 +137,7 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
         ShapePropertiesSection {
             devicePickerContent
 
+            #if os(macOS)
             if shape.screenshotFileName != nil {
                 ShapePropertiesSeparator()
 
@@ -152,6 +153,7 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
                     }
                 }
             }
+            #endif
         }
     }
 }
@@ -163,6 +165,7 @@ struct ImageShapeControls: View {
     let onResetLocaleImage: () -> Void
 
     var body: some View {
+        #if os(macOS)
         ShapePropertiesSection {
             Button(action: onPickImage) {
                 Label(buttonTitle, systemImage: "photo.badge.arrow.down")
@@ -176,6 +179,9 @@ struct ImageShapeControls: View {
                 }
             }
         }
+        #else
+        EmptyView()
+        #endif
     }
 }
 

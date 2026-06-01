@@ -1,7 +1,21 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 enum ExportFolderService {
+    // Security-scoped bookmarks are a macOS sandbox concept; iOS uses plain bookmarks.
+    #if os(macOS)
+    private static let bookmarkCreateOptions: URL.BookmarkCreationOptions = .withSecurityScope
+    private static let bookmarkResolveOptions: URL.BookmarkResolutionOptions = [.withSecurityScope, .withoutUI]
+    #else
+    private static let bookmarkCreateOptions: URL.BookmarkCreationOptions = []
+    private static let bookmarkResolveOptions: URL.BookmarkResolutionOptions = []
+    #endif
+
     static func chooseFolder() -> URL? {
+        #if os(macOS)
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
@@ -11,11 +25,15 @@ enum ExportFolderService {
         panel.message = String(localized: "Choose a folder for exported screenshots")
         guard panel.runModal() == .OK else { return nil }
         return panel.url
+        #else
+        // iPad: folder selection via UIDocumentPicker is deferred to a follow-up.
+        return nil
+        #endif
     }
 
     static func saveBookmark(for url: URL) -> (bookmark: Data, path: String)? {
         guard let data = try? url.bookmarkData(
-            options: .withSecurityScope,
+            options: bookmarkCreateOptions,
             includingResourceValuesForKeys: nil,
             relativeTo: nil
         ) else { return nil }
@@ -27,12 +45,12 @@ enum ExportFolderService {
         var isStale = false
         guard let url = try? URL(
             resolvingBookmarkData: data,
-            options: [.withSecurityScope, .withoutUI],
+            options: bookmarkResolveOptions,
             relativeTo: nil,
             bookmarkDataIsStale: &isStale
         ) else { return nil }
         let refreshed: Data? = isStale ? (try? url.bookmarkData(
-            options: .withSecurityScope,
+            options: bookmarkCreateOptions,
             includingResourceValuesForKeys: nil,
             relativeTo: nil
         )) : nil

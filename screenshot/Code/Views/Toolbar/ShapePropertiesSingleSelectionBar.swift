@@ -37,6 +37,7 @@ struct ShapePropertiesSingleSelectionBar: View {
     }
 
     private func pickAndReplaceImage(for shapeId: UUID) {
+        #if os(macOS)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image]
         panel.allowsMultipleSelection = false
@@ -44,6 +45,8 @@ struct ShapePropertiesSingleSelectionBar: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         guard let image = NSImage.fromSecurityScopedURL(url) else { return }
         state.saveImage(image, for: shapeId)
+        #endif
+        // iPad: image replace via PhotosPicker is deferred to a follow-up.
     }
 
     private func idx(for shapeId: UUID) -> (row: Int, shape: Int)? {

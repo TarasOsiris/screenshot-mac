@@ -27,7 +27,7 @@ struct FontPicker: View {
     }
 
     private static let fontFamilies: [String] = {
-        NSFontManager.shared.availableFontFamilies.sorted()
+        PlatformFonts.systemFamilyNames.sorted()
     }()
 
     private var customFontEntries: [String] {
@@ -71,6 +71,7 @@ struct FontPicker: View {
     }
 
     private func pickCustomFont() {
+        #if os(macOS)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.font]
         panel.allowsMultipleSelection = true
@@ -89,6 +90,8 @@ struct FontPicker: View {
         if let lastImportedSelection {
             applyImportedSelection(lastImportedSelection)
         }
+        #endif
+        // iOS: custom-font import via fileImporter is deferred to a follow-up.
     }
 
     var body: some View {

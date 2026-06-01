@@ -1,9 +1,13 @@
 import SwiftUI
+#if os(macOS)
 import AppKit
+#endif
 
 /// Modifier that enables middle-mouse-button drag to pan horizontal scroll views
-/// (Figma-style hand tool). Attach once at the top level.
+/// (Figma-style hand tool). Attach once at the top level. No-op on iOS (touch panning
+/// is native).
 struct MiddleMousePanModifier: ViewModifier {
+#if os(macOS)
     @State private var coordinator = PanCoordinator()
 
     func body(content: Content) -> some View {
@@ -11,8 +15,12 @@ struct MiddleMousePanModifier: ViewModifier {
             .onAppear { coordinator.install() }
             .onDisappear { coordinator.uninstall() }
     }
+#else
+    func body(content: Content) -> some View { content }
+#endif
 }
 
+#if os(macOS)
 @MainActor
 private final class PanCoordinator {
     private var monitors: [Any] = []
@@ -125,6 +133,7 @@ private final class PanCoordinator {
         return nil
     }
 }
+#endif
 
 extension View {
     func middleMousePan() -> some View {

@@ -1,3 +1,5 @@
+// WHOLE_FILE_MACOS_GUARD
+#if os(macOS)
 import Foundation
 import SwiftUI
 
@@ -177,3 +179,5 @@ enum ASCUploadValidator {
 extension Array where Element == ASCUploadIssue {
     var hasErrors: Bool { contains { $0.severity == .error } }
 }
+
+#endif

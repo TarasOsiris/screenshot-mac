@@ -74,7 +74,7 @@ struct ShowcaseExportSheet: View {
             HStack(alignment: .top, spacing: 0) {
                 previewColumn
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(NSColor.underPageBackgroundColor))
+                    .background(Color.platformUnderPageBackground)
 
                 Divider()
 
@@ -260,7 +260,7 @@ struct ShowcaseExportSheet: View {
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(selected ? Color.accentColor : Color(NSColor.controlBackgroundColor))
+                    .fill(selected ? Color.accentColor : Color.platformControlBackground)
             )
             .foregroundStyle(selected ? Color.white : Color.primary)
             .overlay(
@@ -343,7 +343,9 @@ struct ShowcaseExportSheet: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            #if os(macOS)
             .toggleStyle(.checkbox)
+            #endif
 
             if rowSelected, row.templates.count > 1 {
                 templateChipStrip(row)
@@ -460,7 +462,7 @@ struct ShowcaseExportSheet: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(selected ? Color.accentColor : Color(NSColor.controlBackgroundColor))
+                    .fill(selected ? Color.accentColor : Color.platformControlBackground)
             )
             .foregroundStyle(selected ? Color.white : Color.primary)
             .overlay(
@@ -721,7 +723,7 @@ private struct BackgroundSummarySwatch: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
         shape
-            .fill(Color(NSColor.controlBackgroundColor))
+            .fill(Color.platformControlBackground)
             .overlay(
                 config.backgroundFillView(image: backgroundImage)
                     .overlay(emptyImagePlaceholder)

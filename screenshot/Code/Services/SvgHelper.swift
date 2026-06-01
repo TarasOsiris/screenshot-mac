@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -12,6 +16,7 @@ enum SvgHelper {
     /// Returns nil if the user cancels or the file cannot be loaded.
     @MainActor
     static func pickImageOrSvg() -> PickedBackground? {
+        #if os(macOS)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image, .svg]
         panel.allowsMultipleSelection = false
@@ -27,6 +32,10 @@ enum SvgHelper {
         }
         guard let image = NSImage.fromSecurityScopedURL(url) else { return nil }
         return .image(image)
+        #else
+        // iPad: image/SVG import via PhotosPicker/fileImporter is deferred to a follow-up.
+        return nil
+        #endif
     }
 
     /// Reads an SVG file from a URL, converts to String, and sanitizes it.
@@ -124,6 +133,7 @@ enum SvgHelper {
         guard let targetSize, targetSize.width > 0, targetSize.height > 0 else {
             return baseImage
         }
+        #if os(macOS)
         let pixelW = Int(targetSize.width)
         let pixelH = Int(targetSize.height)
         guard let rep = NSBitmapImageRep(
@@ -148,5 +158,10 @@ enum SvgHelper {
         let result = NSImage(size: targetSize)
         result.addRepresentation(rep)
         return result
+        #else
+        return PlatformImageRenderer.image(size: targetSize) {
+            baseImage.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+        #endif
     }
 }

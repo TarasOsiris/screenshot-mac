@@ -1,8 +1,12 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SceneKit
 import SwiftUI
 
-struct LiveDeviceModelView: NSViewRepresentable {
+struct LiveDeviceModelView {
     let frame: DeviceFrame
     let width: CGFloat
     let height: CGFloat
@@ -46,41 +50,18 @@ struct LiveDeviceModelView: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    func makeNSView(context: Context) -> SCNView {
-        let scnView = RetinaSCNView(frame: NSRect(x: 0, y: 0, width: max(1, width), height: max(1, height)))
-        scnView.backgroundColor = .clear
-        scnView.wantsLayer = true
-        let initialScale = NSScreen.main?.backingScaleFactor ?? 2.0
-        scnView.layer?.contentsScale = max(2.0, initialScale)
-        scnView.layer?.isOpaque = false
-        scnView.layerContentsRedrawPolicy = .duringViewResize
+    fileprivate func makeConfiguredSCNView() -> SCNView {
+        let scnView = makePlatformSCNView()
         scnView.antialiasingMode = .multisampling4X
         scnView.autoenablesDefaultLighting = false
         scnView.allowsCameraControl = false
         scnView.rendersContinuously = false
         scnView.isJitteringEnabled = false
         scnView.preferredFramesPerSecond = 60
-        update(scnView, coordinator: context.coordinator)
         return scnView
     }
 
-    func updateNSView(_ nsView: SCNView, context: Context) {
-        let currentScale = nsView.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2.0
-        nsView.layer?.contentsScale = max(2.0, currentScale)
-        update(nsView, coordinator: context.coordinator)
-        nsView.needsDisplay = true
-    }
-
-    static func dismantleNSView(_ nsView: SCNView, coordinator: Coordinator) {
-        nsView.isPlaying = false
-        nsView.scene = nil
-        nsView.pointOfView = nil
-        coordinator.cameraNode = nil
-        coordinator.lastSignature = nil
-        coordinator.lastViewport = nil
-    }
-
-    private func update(_ scnView: SCNView, coordinator: Coordinator) {
+    fileprivate func update(_ scnView: SCNView, coordinator: Coordinator) {
         let viewport = CGSize(width: max(1, width), height: max(1, height))
         let signature = sceneSignature
 
@@ -96,7 +77,7 @@ struct LiveDeviceModelView: NSViewRepresentable {
                 )
                 coordinator.lastViewport = viewport
             }
-            scnView.frame = NSRect(origin: .zero, size: viewport)
+            scnView.frame = CGRect(origin: .zero, size: viewport)
             return
         }
 
@@ -114,10 +95,50 @@ struct LiveDeviceModelView: NSViewRepresentable {
         }
         scnView.scene = scene
         scnView.pointOfView = cameraNode
-        scnView.frame = NSRect(origin: .zero, size: viewport)
+        scnView.frame = CGRect(origin: .zero, size: viewport)
         coordinator.lastSignature = signature
         coordinator.lastViewport = viewport
         coordinator.cameraNode = cameraNode
+    }
+
+    fileprivate static func teardown(_ scnView: SCNView, coordinator: Coordinator) {
+        scnView.isPlaying = false
+        scnView.scene = nil
+        scnView.pointOfView = nil
+        coordinator.cameraNode = nil
+        coordinator.lastSignature = nil
+        coordinator.lastViewport = nil
+    }
+}
+
+#if os(macOS)
+extension LiveDeviceModelView: NSViewRepresentable {
+    private func makePlatformSCNView() -> SCNView {
+        let scnView = RetinaSCNView(frame: NSRect(x: 0, y: 0, width: max(1, width), height: max(1, height)))
+        scnView.backgroundColor = .clear
+        scnView.wantsLayer = true
+        let initialScale = NSScreen.main?.backingScaleFactor ?? 2.0
+        scnView.layer?.contentsScale = max(2.0, initialScale)
+        scnView.layer?.isOpaque = false
+        scnView.layerContentsRedrawPolicy = .duringViewResize
+        return scnView
+    }
+
+    func makeNSView(context: Context) -> SCNView {
+        let scnView = makeConfiguredSCNView()
+        update(scnView, coordinator: context.coordinator)
+        return scnView
+    }
+
+    func updateNSView(_ nsView: SCNView, context: Context) {
+        let currentScale = nsView.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2.0
+        nsView.layer?.contentsScale = max(2.0, currentScale)
+        update(nsView, coordinator: context.coordinator)
+        nsView.needsDisplay = true
+    }
+
+    static func dismantleNSView(_ nsView: SCNView, coordinator: Coordinator) {
+        teardown(nsView, coordinator: coordinator)
     }
 }
 
@@ -149,3 +170,28 @@ private final class RetinaSCNView: SCNView {
         }
     }
 }
+#else
+extension LiveDeviceModelView: UIViewRepresentable {
+    private func makePlatformSCNView() -> SCNView {
+        let scnView = SCNView(frame: CGRect(x: 0, y: 0, width: max(1, width), height: max(1, height)))
+        scnView.backgroundColor = .clear
+        scnView.isOpaque = false
+        return scnView
+    }
+
+    func makeUIView(context: Context) -> SCNView {
+        let scnView = makeConfiguredSCNView()
+        update(scnView, coordinator: context.coordinator)
+        return scnView
+    }
+
+    func updateUIView(_ uiView: SCNView, context: Context) {
+        update(uiView, coordinator: context.coordinator)
+        uiView.setNeedsDisplay()
+    }
+
+    static func dismantleUIView(_ uiView: SCNView, coordinator: Coordinator) {
+        teardown(uiView, coordinator: coordinator)
+    }
+}
+#endif

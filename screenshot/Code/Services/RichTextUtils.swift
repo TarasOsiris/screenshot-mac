@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 enum RichTextUtils {
@@ -211,7 +215,7 @@ enum RichTextUtils {
         case .fontName:
             rewriteFonts(in: decoded, range: fullRange) { font in
                 let size = font?.pointSize ?? shape.fontSize ?? CanvasShapeModel.defaultFontSize
-                let italic = font?.fontDescriptor.symbolicTraits.contains(.italic) ?? (shape.italic ?? false)
+                let italic = font.map(\.hasItalicTrait) ?? (shape.italic ?? false)
                 let managerWeight = font.map(fontManagerWeight(of:)) ?? fontManagerWeight(for: shape.fontWeight ?? 400)
                 return makeFont(
                     familyName: normalizedFontFamilyName(shape.fontName),
@@ -225,7 +229,7 @@ enum RichTextUtils {
             let size = shape.fontSize ?? CanvasShapeModel.defaultFontSize
             rewriteFonts(in: decoded, range: fullRange) { font in
                 let familyName = font.flatMap { preferredFamilyName(for: $0) }
-                let italic = font?.fontDescriptor.symbolicTraits.contains(.italic) ?? (shape.italic ?? false)
+                let italic = font.map(\.hasItalicTrait) ?? (shape.italic ?? false)
                 let managerWeight = font.map(fontManagerWeight(of:)) ?? fontManagerWeight(for: shape.fontWeight ?? 400)
                 return makeFont(
                     familyName: familyName,
@@ -240,7 +244,7 @@ enum RichTextUtils {
             rewriteFonts(in: decoded, range: fullRange) { font in
                 let familyName = font.flatMap { preferredFamilyName(for: $0) } ?? normalizedFontFamilyName(shape.fontName)
                 let size = font?.pointSize ?? shape.fontSize ?? CanvasShapeModel.defaultFontSize
-                let italic = font?.fontDescriptor.symbolicTraits.contains(.italic) ?? (shape.italic ?? false)
+                let italic = font.map(\.hasItalicTrait) ?? (shape.italic ?? false)
                 return makeFont(
                     familyName: familyName,
                     size: size,
@@ -296,7 +300,7 @@ enum RichTextUtils {
                 ?? NSFont.systemFont(ofSize: CanvasShapeModel.defaultFontSize)
             let defaultStyle = TextLayoutStyle.textAttributes(
                 font: baseFont,
-                color: .labelColor,
+                color: defaultLabelColor,
                 alignment: alignment,
                 letterSpacing: letterSpacing,
                 lineHeightMultiple: lineHeightMultiple,
@@ -342,8 +346,29 @@ enum RichTextUtils {
         return normalizedFontFamilyName(familyName)
     }
 
+    private static var defaultLabelColor: NSColor {
+        #if os(macOS)
+        .labelColor
+        #else
+        .label
+        #endif
+    }
+
     private static func fontManagerWeight(of font: NSFont) -> Int {
-        NSFontManager.shared.weight(of: font)
+        #if os(macOS)
+        return NSFontManager.shared.weight(of: font)
+        #else
+        let traits = font.fontDescriptor.object(forKey: .traits) as? [UIFontDescriptor.TraitKey: Any]
+        let weight = (traits?[.weight] as? CGFloat) ?? 0
+        // Map UIFont weight (-1...1, 0 ≈ regular) onto AppKit's 0...15 manager scale.
+        switch weight {
+        case ..<(-0.4): return 3
+        case (-0.4)..<0.0: return 4
+        case 0.0..<0.23: return 5
+        case 0.23..<0.4: return 7
+        default: return 9
+        }
+        #endif
     }
 
     private static func fontManagerWeight(for cssWeight: Int) -> Int {
@@ -385,6 +410,11 @@ enum RichTextUtils {
             )
         }
         let system = NSFont.systemFont(ofSize: size, weight: nsFontWeight(for: managerWeight))
-        return italic ? NSFontManager.shared.convert(system, toHaveTrait: .italicFontMask) : system
+        guard italic else { return system }
+        #if os(macOS)
+        return NSFontManager.shared.convert(system, toHaveTrait: .italicFontMask)
+        #else
+        return system.addingItalic()
+        #endif
     }
 }

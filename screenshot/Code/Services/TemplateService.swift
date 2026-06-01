@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import Foundation
 
 struct ProjectTemplate: Identifiable {
@@ -55,11 +59,17 @@ enum TemplateService {
                     .replacingOccurrences(of: "-", with: " ")
                     .localizedCapitalized
                 let previewImage = NSImage(contentsOf: url.appendingPathComponent(previewFileName))
-                let menuIcon = previewImage.flatMap { img in
-                    NSImage(size: NSSize(width: 64, height: 32), flipped: false) { rect in
+                let menuIcon = previewImage.flatMap { img -> NSImage? in
+                    #if os(macOS)
+                    return NSImage(size: NSSize(width: 64, height: 32), flipped: false) { rect in
                         img.draw(in: rect)
                         return true
                     }
+                    #else
+                    return PlatformImageRenderer.image(size: CGSize(width: 64, height: 32)) {
+                        img.draw(in: CGRect(x: 0, y: 0, width: 64, height: 32))
+                    }
+                    #endif
                 }
                 let metadata = loadMetadata(at: url)
                 return ProjectTemplate(

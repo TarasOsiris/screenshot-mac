@@ -1,4 +1,9 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 struct CodableColor: Codable, Equatable {
     var red: Double
@@ -71,9 +76,13 @@ extension Color {
 
     /// Extract sRGB components from a Color. Returns (0,0,0,1) on conversion failure.
     var sRGBComponents: (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) {
-        let nsColor = NSColor(self).usingColorSpace(.sRGB) ?? .black
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        #if os(macOS)
+        let nsColor = NSColor(self).usingColorSpace(.sRGB) ?? .black
         nsColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #else
+        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
+        #endif
         return (r, g, b, a)
     }
 

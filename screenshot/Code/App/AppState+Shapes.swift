@@ -399,12 +399,15 @@ extension AppState {
         guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return }
         let ids = selectedShapeIds
         clipboard = rows[rowIdx].shapes.filter { ids.contains($0.id) }
+        #if os(macOS)
         clipboardPasteboardChangeCount = NSPasteboard.general.changeCount
+        #endif
     }
 
     func pasteShapes() {
         guard let rowIdx = selectedRowIndex else { return }
 
+        #if os(macOS)
         let pasteboardChanged = NSPasteboard.general.changeCount != clipboardPasteboardChangeCount
 
         // If pasteboard changed since last internal copy, try system image first
@@ -415,6 +418,7 @@ extension AppState {
             addImageShape(image: image, centerX: center.x, centerY: center.y)
             return
         }
+        #endif
 
         // Otherwise paste from internal shape clipboard
         guard !clipboard.isEmpty else { return }

@@ -62,7 +62,11 @@ struct DebugProjectManagerView: View {
                 }
                 .tag(project.id)
             }
+            #if os(macOS)
             .listStyle(.inset(alternatesRowBackgrounds: true))
+            #else
+            .listStyle(.inset)
+            #endif
 
             Divider()
 

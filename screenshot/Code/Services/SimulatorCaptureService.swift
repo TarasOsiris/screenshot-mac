@@ -1,8 +1,12 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import Foundation
 import UniformTypeIdentifiers
 
-#if DEBUG
+#if DEBUG && os(macOS)
 /// Captures screenshots from the running iOS Simulator via a user-installed helper
 /// script that wraps `xcrun simctl`. The host app is sandboxed and `xcrun` deliberately
 /// refuses to run inside a sandboxed process — the only sanctioned escape hatch is

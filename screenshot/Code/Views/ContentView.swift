@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import StoreKit
 import SwiftUI
 import UniformTypeIdentifiers
@@ -118,7 +122,7 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .layoutPriority(0)
-                .background(Color(nsColor: .windowBackgroundColor))
+                .background(Color.platformWindowBackground)
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     proxy.size.height
                 } action: { newValue in
@@ -135,6 +139,7 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: state.hasSelection)
+        #if os(macOS)
         .onExitCommand {
             if state.hasSelection {
                 state.selectedShapeIds = []
@@ -142,6 +147,7 @@ struct ContentView: View {
                 state.deselectAll()
             }
         }
+        #endif
         #if DEBUG
         .overlay {
             if state.isEditingText,
@@ -282,10 +288,12 @@ struct ContentView: View {
                 store.dismissPurchaseCelebration()
             }
         }
+        #if os(macOS)
         .sheet(isPresented: $showingASCUploadSheet) {
             UploadToAppStoreConnectView()
                 .environment(state)
         }
+        #endif
         .sheet(item: $projectNamePrompt) { prompt in
             ProjectNameSheet(prompt: prompt)
                 .presentationSizing(.fitted)
@@ -318,6 +326,7 @@ struct ContentView: View {
         .onAppear {
             state.undoManager = undoManager
             undoManager?.levelsOfUndo = 50
+            #if os(macOS)
             scrollWheelMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
                 guard event.modifierFlags.contains(.command) else { return event }
                 let delta = event.hasPreciseScrollingDeltas
@@ -326,12 +335,15 @@ struct ContentView: View {
                 state.setZoomLevel(state.zoomLevel + delta, animated: false)
                 return nil
             }
+            #endif
         }
         .onDisappear {
+            #if os(macOS)
             if let monitor = scrollWheelMonitor {
                 NSEvent.removeMonitor(monitor)
                 scrollWheelMonitor = nil
             }
+            #endif
         }
     }
 
@@ -400,7 +412,7 @@ struct ContentView: View {
             Button("Show in Finder", systemImage: "folder") {
                 guard let id = state.activeProjectId else { return }
                 let folder = PersistenceService.projectDirectoryURL(id)
-                NSWorkspace.shared.activateFileViewerSelecting([folder])
+                PlatformReveal.inFileViewer([folder])
             }
             .disabled(state.activeProjectId == nil)
 
@@ -582,12 +594,14 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
         }
 
+        #if os(macOS)
         Divider()
 
         Button("Upload to App Store Connect…", systemImage: "icloud.and.arrow.up") {
             showingASCUploadSheet = true
         }
         .disabled(state.rows.isEmpty)
+        #endif
     }
 
     private var hasLastExportDestination: Bool {
@@ -641,9 +655,20 @@ struct ContentView: View {
     }
 
     private func exportScreenshotsAs(localeFilter: String? = nil) {
-        guard let url = chooseExportDestination() else { return }
+        guard let url = resolvedExportBaseURL() else { return }
         saveLastExportFolder(url)
         exportScreenshots(to: url, localeFilter: localeFilter)
+    }
+
+    /// Resolves a destination folder for export. On iPad, folder export is deferred, so this
+    /// reports a clear message and returns nil (rather than silently doing nothing).
+    private func resolvedExportBaseURL() -> URL? {
+        #if os(iOS)
+        exportError = ExportService.exportUnavailableMessage
+        return nil
+        #else
+        return chooseExportDestination()
+        #endif
     }
 
     private func exportRowImages() {
@@ -723,7 +748,7 @@ struct ContentView: View {
     ) {
         let rowsToExport = rows ?? state.rows
         guard !rowsToExport.isEmpty else { return }
-        guard let baseURL = chooseExportDestination() else { return }
+        guard let baseURL = resolvedExportBaseURL() else { return }
 
         exportSuccessTimer?.cancel()
         isExporting = true
@@ -760,7 +785,7 @@ struct ContentView: View {
                 }
 
                 if openExportFolderOnSuccess {
-                    NSWorkspace.shared.activateFileViewerSelecting([destDir])
+                    PlatformReveal.inFileViewer([destDir])
                 }
                 showExportSuccess()
             } catch is CancellationError {
@@ -868,7 +893,7 @@ struct ContentView: View {
                 )
                 showExportSuccess()
                 if openExportFolderOnSuccess {
-                    NSWorkspace.shared.activateFileViewerSelecting([destinationFolderURL])
+                    PlatformReveal.inFileViewer([destinationFolderURL])
                 }
             } catch is CancellationError {
                 // User cancelled — no error to show
@@ -903,7 +928,7 @@ struct ContentView: View {
 
     private func openLastExportFolder() {
         guard let url = lastExportFolderURL() else { return }
-        NSWorkspace.shared.activateFileViewerSelecting([url])
+        PlatformReveal.inFileViewer([url])
     }
 
 }

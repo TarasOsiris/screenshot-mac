@@ -1,3 +1,53 @@
+import SwiftUI
+
+/// Cross-platform cursor operations. macOS drives `NSCursor`; on iPad every call is a no-op
+/// (touch has no cursor), so call sites stay free of `#if os(macOS)`.
+enum PlatformCursor {
+    static func pop() {
+        #if os(macOS)
+        NSCursor.pop()
+        #endif
+    }
+
+    static func setArrow() {
+        #if os(macOS)
+        NSCursor.arrow.set()
+        #endif
+    }
+
+    static func setClosedHand() {
+        #if os(macOS)
+        NSCursor.closedHand.set()
+        #endif
+    }
+
+    /// Sets the open-hand cursor when hovering a draggable target, else the arrow.
+    static func setHover(grabbable: Bool) {
+        #if os(macOS)
+        (grabbable ? NSCursor.openHand : NSCursor.arrow).set()
+        #endif
+    }
+
+    static func pushRotate() {
+        #if os(macOS)
+        CursorHelper.rotateCursor.push()
+        #endif
+    }
+
+    static func setRotate() {
+        #if os(macOS)
+        CursorHelper.rotateCursor.set()
+        #endif
+    }
+
+    static func pushResize(edge: ResizeEdge, rotation: Double) {
+        #if os(macOS)
+        CursorHelper.resizeCursor(for: edge, rotation: rotation).push()
+        #endif
+    }
+}
+
+#if os(macOS)
 import AppKit
 
 enum CursorHelper {
@@ -81,3 +131,4 @@ enum CursorHelper {
         return NSCursor(image: image, hotSpot: NSPoint(x: size / 2, y: size / 2))
     }()
 }
+#endif

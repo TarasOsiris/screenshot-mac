@@ -1,5 +1,9 @@
 import SwiftUI
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 private struct EditorBlurBackgroundRenderKey: Equatable {
     let rowID: UUID

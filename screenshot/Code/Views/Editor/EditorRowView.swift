@@ -193,7 +193,7 @@ struct EditorRowView: View {
         } message: {
             Text(backgroundRemovalError ?? "")
         }
-        #if DEBUG
+        #if DEBUG && os(macOS)
         .alert("Enable iOS Simulator Capture", isPresented: $simulatorInstallPromptShapeId.isPresent()) {
             Button("Install…") {
                 let pendingShapeId = simulatorInstallPromptShapeId
@@ -236,7 +236,7 @@ struct EditorRowView: View {
     }
 
     private func simulatorCaptureAction(for shape: CanvasShapeModel) -> (() -> Void)? {
-        #if DEBUG
+        #if DEBUG && os(macOS)
         guard shape.type == .device else { return nil }
         return {
             if SimulatorCaptureService.isHelperInstalled {
@@ -826,7 +826,9 @@ struct EditorRowView: View {
     }
 
     private func tapSelectRow() {
+        #if os(macOS)
         NSApp.keyWindow?.makeFirstResponder(nil)
+        #endif
         state.selectRow(row.id)
     }
 
@@ -902,6 +904,9 @@ struct EditorRowView: View {
     }
 
     private func exportRowScreenshots() {
+        #if os(iOS)
+        exportError = ExportService.exportUnavailableMessage
+        #else
         guard let folder = ExportFolderService.chooseFolder() else { return }
         let didAccess = folder.startAccessingSecurityScopedResource()
 
@@ -936,11 +941,14 @@ struct EditorRowView: View {
                     }
                     try await group.waitForAll()
                 }
+                #if os(macOS)
                 NSWorkspace.shared.activateFileViewerSelecting([folder])
+                #endif
             } catch {
                 exportError = String(localized: "Could not export row screenshots: \(error.localizedDescription)")
             }
         }
+        #endif
     }
 
     private func exportRowImage(showcase: Bool) {

@@ -441,7 +441,8 @@ struct CanvasShapeModel: Identifiable, Codable {
         let boundingRect = (text as NSString).boundingRect(
             with: CGSize(width: width, height: .greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin, .usesFontLeading],
-            attributes: [.font: nsFont]
+            attributes: [.font: nsFont],
+            context: nil
         )
         let height = ceil(boundingRect.height) + fontSize * 0.2
         return CanvasShapeModel(

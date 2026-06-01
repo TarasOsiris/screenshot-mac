@@ -82,7 +82,7 @@ struct PostPurchaseCelebrationView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(nsColor: .windowBackgroundColor),
+                    Color.platformWindowBackground,
                     Color.purple.opacity(0.08),
                     Color.orange.opacity(0.06)
                 ],

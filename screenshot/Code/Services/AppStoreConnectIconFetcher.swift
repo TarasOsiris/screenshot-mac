@@ -1,5 +1,11 @@
+// WHOLE_FILE_MACOS_GUARD
+#if os(macOS)
 import Foundation
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 /// Resolves a public App Store icon URL for a given bundle identifier by querying
 /// the unauthenticated iTunes lookup endpoint. Results are cached in memory for the
@@ -49,3 +55,5 @@ actor AppStoreConnectIconFetcher {
         return result
     }
 }
+
+#endif

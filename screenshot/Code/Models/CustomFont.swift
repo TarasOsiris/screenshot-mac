@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import CoreText
 import Foundation
 
@@ -229,6 +233,7 @@ enum CustomFontRegistry {
     static func resolveNSFont(name: String, size: CGFloat, managerWeight: Int, italic: Bool) -> NSFont {
         let resolved = resolve(name)
         let effectiveItalic = italic || resolved.italic
+        #if os(macOS)
         let traits: NSFontTraitMask = resolved.italic ? .italicFontMask : []
         let fm = NSFontManager.shared
 
@@ -246,6 +251,20 @@ enum CustomFontRegistry {
             baseFont = CTFontCreateWithName(resolved.family as CFString, size, nil) as NSFont
         }
         return effectiveItalic ? fm.convert(baseFont, toHaveTrait: .italicFontMask) : baseFont
+        #else
+        let base: UIFont
+        if let exactName = resolved.exactName, let font = UIFont(name: exactName, size: size) {
+            base = font
+        } else {
+            let weight = UIFont.Weight(managerWeight: managerWeight)
+            let descriptor = UIFontDescriptor(fontAttributes: [
+                .family: resolved.family,
+                .traits: [UIFontDescriptor.TraitKey.weight: weight],
+            ])
+            base = UIFont(descriptor: descriptor, size: size)
+        }
+        return effectiveItalic ? base.addingItalic() : base
+        #endif
     }
 
     private static func normalizedPresetWeight(_ weight: Int) -> Int {

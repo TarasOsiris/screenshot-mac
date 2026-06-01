@@ -38,14 +38,16 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                     .frame(minWidth: 60, maxWidth: 200)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
-                    .background(Color(nsColor: .controlBackgroundColor))
+                    .background(Color.platformControlBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                     .focused(isLabelFieldFocused)
                     .onSubmit { onCommitLabelEdit() }
                     .onChange(of: isLabelFieldFocused.wrappedValue) {
                         if !isLabelFieldFocused.wrappedValue { onCommitLabelEdit() }
                     }
+                    #if os(macOS)
                     .onExitCommand { onCancelLabelEdit() }
+                    #endif
             } else {
                 Text(row.displayLabel)
                     .font(.system(size: 12, weight: isSelected ? .semibold : .medium))

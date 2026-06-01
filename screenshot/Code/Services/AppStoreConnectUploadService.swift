@@ -1,5 +1,11 @@
+// WHOLE_FILE_MACOS_GUARD
+#if os(macOS)
 import Foundation
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import CryptoKit
 
 enum AppStoreConnectUploadError: Error, LocalizedError {
@@ -440,3 +446,5 @@ enum ASCLocaleMatcher {
         return localizations.filter { $0.attributes.locale.lowercased().hasPrefix(prefix) }
     }
 }
+
+#endif

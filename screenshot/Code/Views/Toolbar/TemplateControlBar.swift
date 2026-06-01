@@ -285,7 +285,7 @@ struct TemplateControlBar: View {
                 displayScale: 1.0,
                 labelPrefix: "preview row"
             )
-            let fontFamilies = Set(NSFontManager.shared.availableFontFamilies)
+            let fontFamilies = Set(PlatformFonts.systemFamilyNames)
             var urls: [URL] = []
             for i in row.templates.indices {
                 let image = ExportService.renderSingleTemplateImage(

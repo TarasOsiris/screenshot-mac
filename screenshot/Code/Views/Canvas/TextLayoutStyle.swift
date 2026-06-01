@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import Foundation
 
 /// Layout manager delegate that compresses line spacing for lineHeightMultiple < 1.0
@@ -48,6 +52,14 @@ enum TextLayoutStyle {
 
     private static let sharedLayoutManager = NSLayoutManager()
 
+    private static func defaultLineHeight(for font: NSFont) -> CGFloat {
+        #if os(macOS)
+        return sharedLayoutManager.defaultLineHeight(for: font)
+        #else
+        return font.lineHeight
+        #endif
+    }
+
     static func effectiveLineHeightMultiple(
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
@@ -59,7 +71,7 @@ enum TextLayoutStyle {
         guard let legacyLineSpacing, legacyLineSpacing != 0 else {
             return defaultLineHeightMultiple
         }
-        let defaultLineHeight = sharedLayoutManager.defaultLineHeight(for: font)
+        let defaultLineHeight = defaultLineHeight(for: font)
         guard defaultLineHeight > 0 else {
             return defaultLineHeightMultiple
         }
@@ -72,7 +84,7 @@ enum TextLayoutStyle {
         font: NSFont
     ) -> CGFloat {
         if let lineHeightMultiple {
-            let defaultLineHeight = sharedLayoutManager.defaultLineHeight(for: font)
+            let defaultLineHeight = defaultLineHeight(for: font)
             guard defaultLineHeight > 0 else { return 0 }
             return defaultLineHeight * (clampLineHeightMultiple(lineHeightMultiple) - 1)
         }
@@ -84,7 +96,7 @@ enum TextLayoutStyle {
         legacyLineSpacing: CGFloat?,
         font: NSFont
     ) -> CGFloat {
-        let defaultLineHeight = sharedLayoutManager.defaultLineHeight(for: font)
+        let defaultLineHeight = defaultLineHeight(for: font)
         guard defaultLineHeight > 0 else { return 0 }
 
         let effectiveLineHeight: CGFloat
@@ -163,6 +175,7 @@ enum TextLayoutStyle {
         richTextData: String? = nil
     ) -> NSImage? {
         guard size.width > 0, size.height > 0 else { return nil }
+        #if os(macOS)
         let view = TextLayoutNSView(frame: NSRect(origin: .zero, size: size))
         view.configure(
             text: text,
@@ -182,7 +195,95 @@ enum TextLayoutStyle {
         let image = NSImage(size: size)
         image.addRepresentation(rep)
         return image
+        #else
+        // iPad: lay out the attributed string with TextKit and draw it into an image. Mirrors
+        // TextLayoutNSView.draw (which is macOS-only). UIKit's image renderer uses a top-left
+        // origin, matching the macOS view's `isFlipped = true`. This is the live-canvas text
+        // path on iPad (no persistent NSTextView), so results are memoized to avoid rebuilding
+        // a TextKit stack + re-rasterizing on every zoom/scroll re-layout.
+        let cacheKey = iosTextImageCacheKey(
+            size: size, text: text, font: font, color: color, alignment: alignment,
+            verticalAlignment: verticalAlignment, uppercase: uppercase, letterSpacing: letterSpacing,
+            lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
+            richTextData: richTextData
+        ) as NSString
+        if let cached = iosTextImageCache.object(forKey: cacheKey) {
+            return cached
+        }
+
+        let attributed = RichTextUtils.buildAttributedString(
+            richText: richTextData,
+            plainText: text,
+            font: font,
+            color: color,
+            alignment: alignment,
+            letterSpacing: letterSpacing,
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing,
+            uppercase: uppercase
+        )
+        let textStorage = NSTextStorage(attributedString: attributed)
+        let layoutManager = NSLayoutManager()
+        let compactDelegate = CompactLineLayoutDelegate()
+        compactDelegate.lineHeightMultiple = lineHeightMultiple ?? 1.0
+        layoutManager.delegate = compactDelegate
+        let textContainer = NSTextContainer(size: size)
+        textContainer.lineFragmentPadding = 0
+        textContainer.lineBreakMode = .byWordWrapping
+        layoutManager.addTextContainer(textContainer)
+        textStorage.addLayoutManager(layoutManager)
+
+        layoutManager.ensureLayout(for: textContainer)
+        let glyphRange = layoutManager.glyphRange(for: textContainer)
+        let usedRect = layoutManager.usedRect(for: textContainer)
+        let padding = verticalGlyphPadding(
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing,
+            font: font
+        )
+        let paddedTextHeight = usedRect.height + padding * 2
+        let yOffset: CGFloat = switch verticalAlignment {
+        case .top: padding
+        case .center: max(0, (size.height - paddedTextHeight) / 2) + padding
+        case .bottom: max(0, size.height - paddedTextHeight) + padding
+        }
+
+        let image = PlatformImageRenderer.image(size: size) {
+            let origin = CGPoint(x: 0, y: yOffset)
+            layoutManager.drawBackground(forGlyphRange: glyphRange, at: origin)
+            layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: origin)
+        }
+        iosTextImageCache.setObject(image, forKey: cacheKey)
+        return image
+        #endif
     }
+
+    #if os(iOS)
+    private static let iosTextImageCache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.countLimit = 256
+        return cache
+    }()
+
+    private static func iosTextImageCacheKey(
+        size: CGSize, text: String, font: NSFont, color: NSColor, alignment: NSTextAlignment,
+        verticalAlignment: TextVerticalAlign, uppercase: Bool, letterSpacing: CGFloat?,
+        lineHeightMultiple: CGFloat?, legacyLineSpacing: CGFloat?, richTextData: String?
+    ) -> String {
+        let traits = (font.fontDescriptor.object(forKey: .traits) as? [UIFontDescriptor.TraitKey: Any])
+        let weight = (traits?[.weight] as? CGFloat).map { String(format: "%.2f", $0) } ?? "-"
+        let colorDesc = color.cgColor.components?.map { String(format: "%.3f", $0) }.joined(separator: ",") ?? "?"
+        return [
+            "\(Int(size.width.rounded()))x\(Int(size.height.rounded()))",
+            text, font.fontName, "\(font.pointSize)", "\(font.fontDescriptor.symbolicTraits.rawValue)", weight,
+            colorDesc, "\(alignment.rawValue)", "\(verticalAlignment)", "\(uppercase)",
+            letterSpacing.map { "\($0)" } ?? "-",
+            lineHeightMultiple.map { "\($0)" } ?? "-",
+            legacyLineSpacing.map { "\($0)" } ?? "-",
+            richTextData ?? "-",
+        ].joined(separator: "|")
+    }
+    #endif
 
     static func textAttributes(
         font: NSFont? = nil,

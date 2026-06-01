@@ -1,3 +1,4 @@
+#if os(macOS)
 import AppKit
 import Quartz
 
@@ -82,3 +83,14 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
         }
     }
 }
+#else
+import UIKit
+
+/// iOS has no QLPreviewPanel (a macOS floating panel). Quick Look preview is deferred; this
+/// no-op keeps call sites compiling on iPad.
+final class QuickLookCoordinator {
+    static let shared = QuickLookCoordinator()
+    func preview(imageAt url: URL) {}
+    func preview(imagesAt urls: [URL], startingAt index: Int) {}
+}
+#endif

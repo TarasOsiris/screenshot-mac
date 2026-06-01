@@ -240,7 +240,7 @@ struct CanvasShapeView: View {
                     )
                     .simultaneousGesture(
                         TapGesture().onEnded {
-                            if NSEvent.modifierFlags.contains(.shift) {
+                            if PlatformModifiers.shiftDown {
                                 onShiftSelect?()
                             } else {
                                 onSelect()
@@ -288,15 +288,14 @@ struct CanvasShapeView: View {
                 if inside != isHovered {
                     isHovered = inside
                     if showsEditorHelpers && isSelected && !isDragging {
-                        let cursor: NSCursor = (inside && !shape.resolvedIsLocked) ? .openHand : .arrow
-                        cursor.set()
+                        PlatformCursor.setHover(grabbable: inside && !shape.resolvedIsLocked)
                     }
                 }
             case .ended:
                 if isHovered {
                     isHovered = false
                     if showsEditorHelpers && isSelected && !isDragging {
-                        NSCursor.arrow.set()
+                        PlatformCursor.setArrow()
                     }
                 }
             @unknown default:
@@ -466,10 +465,10 @@ struct CanvasShapeView: View {
                 }
                 if !isDragging {
                     isDragging = true
-                    NSCursor.closedHand.set()
+                    PlatformCursor.setClosedHand()
 
                     // Option+drag: leave original in place, create & drag a copy
-                    if NSEvent.modifierFlags.contains(.option) {
+                    if PlatformModifiers.optionDown {
                         _ = onOptionDragDuplicate?(shape.id)
                     }
 
@@ -494,7 +493,7 @@ struct CanvasShapeView: View {
                 }
             }
             .onEnded { _ in
-                NSCursor.arrow.set()
+                PlatformCursor.setArrow()
                 let finalOffset = dragOffset
                 dragOffset = .zero
                 isDragging = false
@@ -605,7 +604,11 @@ struct CanvasShapeView: View {
 
     private func italicized(_ font: NSFont, italic: Bool) -> NSFont {
         guard italic else { return font }
+        #if os(macOS)
         return NSFontManager.shared.convert(font, toHaveTrait: .italicFontMask)
+        #else
+        return font.addingItalic()
+        #endif
     }
 
     /// Maps NSFont.Weight to the 0–15 integer scale used by NSFontManager,

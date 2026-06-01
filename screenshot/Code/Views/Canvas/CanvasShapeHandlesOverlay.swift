@@ -101,11 +101,7 @@ struct CanvasShapeHandlesOverlay: View {
                     .frame(width: handleSize, height: handleSize)
             }
             .onHover { hovering in
-                if hovering {
-                    CursorHelper.rotateCursor.push()
-                } else {
-                    NSCursor.pop()
-                }
+                if hovering { PlatformCursor.pushRotate() } else { PlatformCursor.pop() }
             }
             .position(x: displayW / 2, y: -stemLength)
             .gesture(rotateGesture(stemLength: stemLength))
@@ -121,14 +117,14 @@ struct CanvasShapeHandlesOverlay: View {
 
         return DragGesture(coordinateSpace: .global)
             .onChanged { value in
-                CursorHelper.rotateCursor.set()
+                PlatformCursor.setRotate()
 
                 let currentX = handleVectorX + value.translation.width
                 let currentY = handleVectorY + value.translation.height
                 let currentAngle = atan2(currentY, currentX) * 180 / .pi
 
                 var delta = currentAngle - startAngle
-                if NSEvent.modifierFlags.contains(.shift) {
+                if PlatformModifiers.shiftDown {
                     let target = shape.rotation + delta
                     let snapped = (target / 15).rounded() * 15
                     delta = snapped - shape.rotation
@@ -137,7 +133,7 @@ struct CanvasShapeHandlesOverlay: View {
                 rotationDelta = delta
             }
             .onEnded { _ in
-                NSCursor.arrow.set()
+                PlatformCursor.setArrow()
                 var updated = shape
                 updated.rotation = normalizeAngle(shape.rotation + rotationDelta)
                 rotationDelta = 0
@@ -183,11 +179,7 @@ struct CanvasShapeHandlesOverlay: View {
                 .allowsHitTesting(false)
         }
         .onHover { hovering in
-            if hovering {
-                CursorHelper.resizeCursor(for: edge, rotation: currentRotation).push()
-            } else {
-                NSCursor.pop()
-            }
+            if hovering { PlatformCursor.pushResize(edge: edge, rotation: currentRotation) } else { PlatformCursor.pop() }
         }
         .position(position)
         .gesture(
@@ -196,7 +188,7 @@ struct CanvasShapeHandlesOverlay: View {
                     let effectiveScale = displayScale * zoom
                     let tx = value.translation.width / effectiveScale
                     let ty = value.translation.height / effectiveScale
-                    let lockAspectRatio = NSEvent.modifierFlags.contains(.shift) || (shape.type == .device && (shape.deviceFrameId != nil || shape.deviceCategory != .invisible))
+                    let lockAspectRatio = PlatformModifiers.shiftDown || (shape.type == .device && (shape.deviceFrameId != nil || shape.deviceCategory != .invisible))
                     resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
                 }
                 .onEnded { _ in

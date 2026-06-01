@@ -171,7 +171,7 @@ struct TranslationOverviewSheet: View {
                 }
             }
             .fixedSize(horizontal: true, vertical: false)
-            .background(Color(NSColor.textBackgroundColor))
+            .background(Color.platformTextBackground)
 
             Divider()
         }
@@ -192,7 +192,7 @@ struct TranslationOverviewSheet: View {
         }
         .frame(maxWidth: .infinity, minHeight: 92, alignment: .topLeading)
         .padding(columnPadding)
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.55))
+        .background(Color.platformControlBackground.opacity(0.55))
         .overlay(alignment: .trailing) {
             Divider()
         }
@@ -330,10 +330,10 @@ private struct MultilineCellEditor: View {
         .onChange(of: text) { _, newValue in
             if newValue != localText { localText = newValue }
         }
-        .background(Color(NSColor.textBackgroundColor))
+        .background(Color.platformTextBackground)
         .overlay(
             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
-                .stroke(Color(NSColor.separatorColor), lineWidth: UIMetrics.BorderWidth.standard)
+                .stroke(Color.platformSeparator, lineWidth: UIMetrics.BorderWidth.standard)
         )
         .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
         .modifier(OptionalHelp(help: help))

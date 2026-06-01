@@ -1,3 +1,5 @@
+// WHOLE_FILE_MACOS_GUARD
+#if os(macOS)
 import SwiftUI
 import UniformTypeIdentifiers
 import CryptoKit
@@ -434,3 +436,5 @@ struct AppStoreConnectSettingsView: View {
     AppStoreConnectSettingsView()
         .frame(width: 520, height: 560)
 }
+
+#endif

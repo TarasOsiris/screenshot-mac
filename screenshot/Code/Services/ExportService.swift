@@ -1,5 +1,9 @@
 import SwiftUI
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import OSLog
 import UniformTypeIdentifiers
 
@@ -292,7 +296,7 @@ struct ExportService {
 
         let totalWidth = row.templateWidth * CGFloat(count)
         let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
-        let fontFamilies = availableFontFamilies ?? Set(NSFontManager.shared.availableFontFamilies)
+        let fontFamilies = availableFontFamilies ?? Set(PlatformFonts.systemFamilyNames)
         let composedBackground = renderComposedBackgroundImage(
             row: row,
             screenshotImages: screenshotImages,
@@ -454,10 +458,15 @@ struct ExportService {
         ExportImageEncoder.encode(image, format: format)
     }
 
+    /// User-facing message for export-to-disk flows that aren't wired up on iPad yet, so the
+    /// buttons report clearly instead of silently doing nothing.
+    static let exportUnavailableMessage = String(localized: "Exporting to a folder isn't available on iPad yet — export from a Mac for now.")
+
     /// Presents a save panel and writes PNG data to disk.
     /// Returns an error message on failure, nil on success or user cancellation.
     @MainActor
     static func savePNGDataViaPanel(defaultName: String, data: () -> Data?) -> String? {
+        #if os(macOS)
         let panel = NSSavePanel()
         let safeName = defaultName.isEmpty ? "image" : sanitizedFileName(defaultName)
         panel.nameFieldStringValue = "\(safeName).png"
@@ -475,6 +484,11 @@ struct ExportService {
         } catch {
             return error.localizedDescription
         }
+        #else
+        // iPad: save via fileExporter/share sheet is deferred to a follow-up. Report clearly
+        // rather than silently no-op.
+        return exportUnavailableMessage
+        #endif
     }
 
     @MainActor
@@ -490,6 +504,7 @@ struct ExportService {
         at origin: CGPoint,
         canvasSize: NSSize
     ) -> NSImage {
+        #if os(macOS)
         guard let bitmapRep = bitmapRep(width: canvasSize.width, height: canvasSize.height) else {
             return background
         }
@@ -509,6 +524,12 @@ struct ExportService {
         let output = NSImage(size: canvasSize)
         output.addRepresentation(bitmapRep)
         return output
+        #else
+        return offscreenImage(size: canvasSize) {
+            background.draw(in: CGRect(origin: .zero, size: canvasSize))
+            image.draw(in: CGRect(origin: origin, size: image.size))
+        }
+        #endif
     }
 
     @MainActor
@@ -545,7 +566,7 @@ struct ExportService {
         let templateWidth = row.templateWidth
         let templateHeight = row.templateHeight
         let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
-        let fontFamilies = availableFontFamilies ?? Set(NSFontManager.shared.availableFontFamilies)
+        let fontFamilies = availableFontFamilies ?? Set(PlatformFonts.systemFamilyNames)
         let rowBackground = preRenderedRowBackground ?? renderComposedBackgroundImage(
             row: row,
             screenshotImages: screenshotImages,
@@ -691,6 +712,7 @@ struct ExportService {
 
     @MainActor
     static func renderViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, label: String) -> NSImage {
+        #if os(macOS)
         // Use NSHostingView + layer rendering into an explicit 1x CGContext.
         // bitmapImageRepForCachingDisplay implicitly scales by the screen's
         // backingScaleFactor, which breaks cropImage (it expects 1:1 pixel
@@ -720,11 +742,29 @@ struct ExportService {
         let image = NSImage(size: NSSize(width: width, height: height))
         image.addRepresentation(bitmapRep)
         return image
+        #else
+        // iPad renders via SwiftUI ImageRenderer at an explicit 1x scale so pixel dimensions
+        // match model space (cropImage depends on the 1:1 mapping).
+        let renderer = ImageRenderer(content:
+            view
+                .environment(\.isExportRendering, true)
+                .frame(width: width, height: height, alignment: .topLeading)
+                .clipped()
+        )
+        renderer.scale = 1
+        renderer.isOpaque = false
+        if let image = renderer.uiImage {
+            return image
+        }
+        AppLogger.export.warning("ImageRenderer produced no image for \(label, privacy: .public)")
+        return NSImage(size: NSSize(width: width, height: height))
+        #endif
     }
 
     /// Composites the blurred image over the original rendered background to remove edge alpha fringes.
     @MainActor
     static func flattenImage(_ image: NSImage, over background: NSImage, width: CGFloat, height: CGFloat) -> NSImage {
+        #if os(macOS)
         guard let bitmapRep = bitmapRep(width: width, height: height) else {
             return background
         }
@@ -739,8 +779,16 @@ struct ExportService {
         let flattened = NSImage(size: NSSize(width: width, height: height))
         flattened.addRepresentation(bitmapRep)
         return flattened
+        #else
+        let rect = CGRect(x: 0, y: 0, width: width, height: height)
+        return offscreenImage(size: CGSize(width: width, height: height)) {
+            background.draw(in: rect)
+            image.draw(in: rect)
+        }
+        #endif
     }
 
+    #if os(macOS)
     static func bitmapRep(width: CGFloat, height: CGFloat) -> NSBitmapImageRep? {
         let pixelW = max(Int(ceil(width)), 1)
         let pixelH = max(Int(ceil(height)), 1)
@@ -759,6 +807,12 @@ struct ExportService {
         rep?.size = NSSize(width: width, height: height)
         return rep
     }
+    #else
+    /// Offscreen 1x compositing helper for iPad (mirrors the macOS NSGraphicsContext path).
+    nonisolated static func offscreenImage(size: CGSize, _ draw: () -> Void) -> UIImage {
+        PlatformImageRenderer.image(size: size, draw)
+    }
+    #endif
 
     private static func normalizeDeviceAspectIfNeeded(_ shape: CanvasShapeModel) -> CanvasShapeModel {
         guard shape.type == .device else { return shape }

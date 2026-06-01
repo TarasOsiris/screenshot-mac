@@ -1,4 +1,8 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 struct ProjectNamePrompt: Identifiable {
@@ -56,6 +60,23 @@ struct ProjectNameSheet: View {
     }
 }
 
+#if os(iOS)
+private struct ProjectNameTextField: View {
+    @Binding var text: String
+    let placeholder: String
+    let onSubmit: () -> Void
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .textFieldStyle(.roundedBorder)
+            .focused($focused)
+            .submitLabel(.done)
+            .onSubmit(onSubmit)
+            .onAppear { focused = true }
+    }
+}
+#else
 private struct ProjectNameTextField: NSViewRepresentable {
     @Binding var text: String
     let placeholder: String
@@ -107,3 +128,4 @@ private struct ProjectNameTextField: NSViewRepresentable {
         }
     }
 }
+#endif

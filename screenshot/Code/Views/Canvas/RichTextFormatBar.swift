@@ -1,5 +1,9 @@
 import SwiftUI
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 enum RichTextFormatBarMetrics {
     static let width: CGFloat = 372
@@ -25,8 +29,8 @@ struct RichTextSelectionState: Equatable {
         self.hasRangeSelection = hasRangeSelection
         guard let attributes else { return }
         if let font = attributes[.font] as? NSFont {
-            isBold = font.fontDescriptor.symbolicTraits.contains(.bold)
-            isItalic = font.fontDescriptor.symbolicTraits.contains(.italic)
+            isBold = font.hasBoldTrait
+            isItalic = font.hasItalicTrait
             fontSize = font.pointSize
         }
         if let style = attributes[.underlineStyle] as? Int { isUnderline = style != 0 }

@@ -1,5 +1,6 @@
 import SwiftUI
 
+#if os(macOS)
 struct HelpView: View {
     static let windowID = "help"
 
@@ -20,7 +21,7 @@ struct HelpView: View {
                     .frame(maxWidth: 720, alignment: .leading)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
             }
-            .background(Color(nsColor: .textBackgroundColor))
+            .background(Color.platformTextBackground)
         }
         .navigationTitle("Screenshot Bro Help")
         .frame(minWidth: 880, minHeight: 600)
@@ -782,3 +783,4 @@ private struct SupportHelp: View {
         }
     }
 }
+#endif

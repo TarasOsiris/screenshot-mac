@@ -315,7 +315,9 @@ struct InspectorPanel: View {
                     }
                 }
             }
+            #if os(macOS)
             .toggleStyle(.checkbox)
+            #endif
             .font(.system(size: UIMetrics.FontSize.body))
             .controlSize(.small)
         } header: {

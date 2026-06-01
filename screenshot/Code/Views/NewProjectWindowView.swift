@@ -43,7 +43,7 @@ struct NewProjectWindowView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
             .padding(18)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(Color.platformControlBackground, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
 
             footer
         }
@@ -217,10 +217,10 @@ struct NewProjectWindowView: View {
         HStack(spacing: 8) {
             Text("Release")
                 .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(Color(nsColor: .systemGreen))
+                .foregroundStyle(Color.green)
                 .padding(.horizontal, 7)
                 .padding(.vertical, 4)
-                .background(Color(nsColor: .systemGreen).opacity(0.12), in: Capsule())
+                .background(Color.green.opacity(0.12), in: Capsule())
 
             Text("Badged templates are included in non-debug builds.")
                 .font(.system(size: 11))
@@ -319,7 +319,7 @@ struct NewProjectWindowView: View {
                 }
             }
             .padding(14)
-            .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(Color.platformWindowBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .strokeBorder(isSelected ? Color.accentColor : Color.secondary.opacity(0.12), lineWidth: isSelected ? 2 : 1)
@@ -434,7 +434,7 @@ private struct BlankProjectRowCard: View {
             }
         }
         .padding(14)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(Color.platformControlBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(Color.secondary.opacity(0.08), lineWidth: 1)
@@ -452,7 +452,7 @@ private struct TemplateSelectionCard: View {
         }
         #if DEBUG
         if template.isIncludedInReleaseBuild {
-            return Color(nsColor: .systemGreen).opacity(0.55)
+            return Color.green.opacity(0.55)
         }
         #endif
         return Color.secondary.opacity(0.12)
@@ -483,13 +483,13 @@ private struct TemplateSelectionCard: View {
                 if template.isIncludedInReleaseBuild {
                     Text("Release")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(Color(nsColor: .systemGreen))
+                        .foregroundStyle(Color.green)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 4)
                         .background(.regularMaterial, in: Capsule())
                         .overlay {
                             Capsule()
-                                .strokeBorder(Color(nsColor: .systemGreen).opacity(0.3), lineWidth: 1)
+                                .strokeBorder(Color.green.opacity(0.3), lineWidth: 1)
                         }
                         .padding(6)
                 }
@@ -515,9 +515,9 @@ private struct TemplateSelectionCard: View {
     private var cardBackgroundColor: Color {
         #if DEBUG
         if template.isIncludedInReleaseBuild && !isSelected {
-            return Color(nsColor: .systemGreen).opacity(0.05)
+            return Color.green.opacity(0.05)
         }
         #endif
-        return Color(nsColor: .controlBackgroundColor)
+        return Color.platformControlBackground
     }
 }

@@ -166,6 +166,7 @@ extension AppState {
                 autoreleasepool {
                     let url = resourcesURL.appendingPathComponent(fileName)
                     if let image = NSImage(contentsOf: url) {
+                        #if os(macOS)
                         // Create a new NSImage with point size equal to pixel
                         // dimensions so SwiftUI uses full resolution at 1x export
                         // rendering (not limited by DPI metadata). A new NSImage
@@ -180,6 +181,11 @@ extension AppState {
                             images[fileName] = image
                             cache[fileName] = image
                         }
+                        #else
+                        // UIImage already loads at native pixel resolution.
+                        images[fileName] = image
+                        cache[fileName] = image
+                        #endif
                     }
                 }
             }

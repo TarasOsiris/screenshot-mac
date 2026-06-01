@@ -1,6 +1,6 @@
 import SwiftUI
 
-#if DEBUG
+#if DEBUG && os(macOS)
 extension AppState {
     /// Captures the currently booted iOS Simulator screen and assigns the result to
     /// `shapeId` (a device shape) using the same path as a manual image replace.

@@ -1,6 +1,8 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+// Settings UI is the macOS Settings scene; an iPad settings surface is a follow-up.
+#if os(macOS)
 struct SettingsView: View {
     private static let privacyPolicyURL = URL(string: "https://screenshotbro.app/privacy")!
     private static let termsURL = URL(string: "https://screenshotbro.app/terms")!
@@ -607,3 +609,4 @@ struct SettingsView: View {
     SettingsView()
         .environment(StoreService())
 }
+#endif

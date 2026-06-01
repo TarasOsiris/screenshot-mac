@@ -126,9 +126,11 @@ struct GradientStopEditor: View {
         .onChange(of: config.stops) {
             ensureSelectedStopIsValid()
         }
+        #if os(macOS)
         .onDeleteCommand {
             deleteSelectedStop()
         }
+        #endif
         .onKeyPress(.delete) {
             deleteSelectedStop()
             return .handled

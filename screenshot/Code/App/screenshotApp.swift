@@ -3,7 +3,9 @@ import SwiftUI
 
 @main
 struct ScreenshotBroApp: App {
+    #if os(macOS)
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    #endif
     @State private var appState = AppState()
     @State private var storeService = StoreService()
     @AppStorage("appearance") private var appearance = "auto"
@@ -17,7 +19,7 @@ struct ScreenshotBroApp: App {
     /// otherwise the popover anchor is hidden behind the dismissing sheet and SwiftUI
     /// never shows the popover.
     @State private var pendingCoachStart: (() -> Void)?
-    #if DEBUG
+    #if DEBUG && os(macOS)
     @State private var isDebugTemplateSavePresented = false
     @State private var debugTemplateName = ""
     @State private var debugTemplateError: String?
@@ -35,6 +37,7 @@ struct ScreenshotBroApp: App {
     }
 
     var body: some Scene {
+        #if os(macOS)
         Window("Screenshot Bro", id: AppRootView.windowID) {
             AppRootView()
                 .environment(appState)
@@ -376,6 +379,28 @@ struct ScreenshotBroApp: App {
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
         }
+        #else
+        WindowGroup {
+            AppRootView()
+                .environment(appState)
+                .environment(storeService)
+                .preferredColorScheme(preferredColorScheme)
+                .task { storeService.start() }
+                .sheet(isPresented: Binding(
+                    get: { !onboardingCompleted && !welcomeDismissed },
+                    set: { _ in }
+                ), onDismiss: launchPendingCoachIfNeeded) {
+                    OnboardingView(
+                        persistCompletion: false,
+                        onComplete: {
+                            pendingCoachStart = { appState.startCoach(persistOnEnd: true) }
+                            welcomeDismissed = true
+                        }
+                    )
+                    .interactiveDismissDisabled()
+                }
+        }
+        #endif
     }
 
     private func launchPendingCoachIfNeeded() {
@@ -384,7 +409,7 @@ struct ScreenshotBroApp: App {
         start()
     }
 
-    #if DEBUG
+    #if DEBUG && os(macOS)
     private func withDebugBundleAccess<T>(_ body: (URL) throws -> T) rethrows -> T? {
         guard let bundleURL = DebugTemplateService.getTemplatesBundleURL() else { return nil }
         let didAccess = bundleURL.startAccessingSecurityScopedResource()
@@ -429,6 +454,7 @@ struct ScreenshotBroApp: App {
     #endif
 }
 
+#if os(macOS)
 private struct NewProjectCommands: Commands {
     @Environment(\.openWindow) private var openWindow
 
@@ -476,8 +502,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 }
+#endif
 
-#if DEBUG
+#if DEBUG && os(macOS)
 private struct DebugRequestReviewButton: View {
     @Environment(\.requestReview) private var requestReview
     var body: some View {

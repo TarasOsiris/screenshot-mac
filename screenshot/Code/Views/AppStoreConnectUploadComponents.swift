@@ -1,4 +1,10 @@
+// WHOLE_FILE_MACOS_GUARD
+#if os(macOS)
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 private struct ASCAppIconView: View {
@@ -96,7 +102,7 @@ struct ASCUploadFailureDetailsSheet: View {
                     .padding(12)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            .background(Color(nsColor: .textBackgroundColor))
+            .background(Color.platformTextBackground)
 
             Divider()
 
@@ -117,3 +123,5 @@ struct ASCUploadFailureDetailsSheet: View {
         .frame(width: 760, height: 520)
     }
 }
+
+#endif

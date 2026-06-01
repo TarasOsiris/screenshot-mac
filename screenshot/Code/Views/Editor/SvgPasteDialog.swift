@@ -162,6 +162,7 @@ struct SvgPasteDialog: View {
     }
 
     private func importFile() {
+        #if os(macOS)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [UTType(filenameExtension: "svg") ?? .xml]
         panel.allowsMultipleSelection = false
@@ -173,6 +174,8 @@ struct SvgPasteDialog: View {
             errorMessage = nil
             updatePreview()
         }
+        #endif
+        // iPad: SVG file import via fileImporter is deferred; paste still works.
     }
 
 }

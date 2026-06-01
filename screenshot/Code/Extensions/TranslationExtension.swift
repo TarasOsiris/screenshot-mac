@@ -215,7 +215,11 @@ extension View {
         self.alert("Translation Languages Not Available", isPresented: isPresented) {
             if let url = URL(string: "x-apple.systempreferences:com.apple.SystemPreferences.TranslationSettings") {
                 Button("Open System Settings") {
+                    #if os(macOS)
                     NSWorkspace.shared.open(url)
+                    #else
+                    UIApplication.shared.open(url)
+                    #endif
                 }
             }
             Button("OK", role: .cancel) {}

@@ -1,6 +1,10 @@
 import Combine
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
+#if os(macOS)
 struct LiveDisplayTextView: NSViewRepresentable {
     var text: String
     var font: NSFont
@@ -45,6 +49,37 @@ struct LiveDisplayTextView: NSViewRepresentable {
         )
     }
 }
+#else
+/// iPad renders live canvas text through the same rasterized path as preview (TextKit →
+/// image) for this foundation pass — no live NSView.
+struct LiveDisplayTextView: View {
+    var text: String
+    var font: NSFont
+    var color: NSColor
+    var alignment: NSTextAlignment
+    var verticalAlignment: TextVerticalAlign
+    var uppercase: Bool = false
+    var letterSpacing: CGFloat? = nil
+    var lineHeightMultiple: CGFloat? = nil
+    var legacyLineSpacing: CGFloat? = nil
+    var richTextData: String? = nil
+
+    var body: some View {
+        RasterizedDisplayTextView(
+            text: text,
+            font: font,
+            color: color,
+            alignment: alignment,
+            verticalAlignment: verticalAlignment,
+            uppercase: uppercase,
+            letterSpacing: letterSpacing,
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing,
+            richTextData: richTextData
+        )
+    }
+}
+#endif
 
 struct RasterizedDisplayTextView: View {
     var text: String
@@ -84,6 +119,7 @@ struct RasterizedDisplayTextView: View {
     }
 }
 
+#if os(macOS)
 struct InlineTextEditor: NSViewRepresentable {
     @Binding var text: String
     var font: NSFont
@@ -647,6 +683,124 @@ class RichTextFormatController: ObservableObject {
         return fm.convert(font, toHaveTrait: trait)
     }
 }
+#else
+
+// MARK: - iOS text editing (foundation pass)
+
+/// iPad inline text editor backed by UITextView. Plain-text editing for this pass; rich-text
+/// per-range formatting (bold/italic/color spans) is macOS-only for now.
+struct InlineTextEditor: View {
+    @Binding var text: String
+    var font: NSFont
+    var color: NSColor
+    var alignment: NSTextAlignment
+    var verticalAlignment: TextVerticalAlign = .center
+    var uppercase: Bool = false
+    var letterSpacing: CGFloat? = nil
+    var lineHeightMultiple: CGFloat? = nil
+    var legacyLineSpacing: CGFloat? = nil
+    var richTextData: String? = nil
+    var formatController: RichTextFormatController? = nil
+    var onCommit: () -> Void
+    var onRichTextChange: ((String?, String) -> Void)? = nil
+    var onSelectionChange: (([NSAttributedString.Key: Any]?, NSRange?) -> Void)? = nil
+
+    var body: some View {
+        UITextViewEditor(
+            text: $text,
+            font: font,
+            color: color,
+            alignment: alignment,
+            uppercase: uppercase,
+            hasRichText: richTextData != nil,
+            onCommit: onCommit,
+            onRichTextChange: onRichTextChange
+        )
+    }
+}
+
+private struct UITextViewEditor: UIViewRepresentable {
+    @Binding var text: String
+    var font: UIFont
+    var color: UIColor
+    var alignment: NSTextAlignment
+    var uppercase: Bool
+    var hasRichText: Bool
+    var onCommit: () -> Void
+    var onRichTextChange: ((String?, String) -> Void)?
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.backgroundColor = .clear
+        textView.textContainerInset = .zero
+        textView.textContainer.lineFragmentPadding = 0
+        textView.delegate = context.coordinator
+        textView.isScrollEnabled = false
+        applyStyle(to: textView)
+        DispatchQueue.main.async {
+            textView.becomeFirstResponder()
+            textView.selectAll(nil)
+        }
+        return textView
+    }
+
+    func updateUIView(_ textView: UITextView, context: Context) {
+        context.coordinator.parent = self
+        if textView.text != text { textView.text = uppercase ? text.uppercased() : text }
+        applyStyle(to: textView)
+    }
+
+    private func applyStyle(to textView: UITextView) {
+        textView.font = font
+        textView.textColor = color
+        textView.textAlignment = alignment
+    }
+
+    final class Coordinator: NSObject, UITextViewDelegate {
+        var parent: UITextViewEditor
+        private var didFlattenRichText = false
+        init(_ parent: UITextViewEditor) { self.parent = parent }
+
+        func textViewDidChange(_ textView: UITextView) {
+            if parent.uppercase {
+                let upper = textView.text.uppercased()
+                if textView.text != upper {
+                    // Preserve the caret/selection — uppercasing keeps character offsets, so the
+                    // NSRange stays valid (UITextRange objects would be invalidated by setting text).
+                    let selection = textView.selectedRange
+                    textView.text = upper
+                    textView.selectedRange = selection
+                }
+            }
+            parent.text = textView.text
+            // iPad can't edit per-range formatting, so the first real edit flattens the shape to
+            // plain text predictably (rather than leaving stale richText to retarget oddly).
+            if parent.hasRichText, !didFlattenRichText {
+                didFlattenRichText = true
+                parent.onRichTextChange?(nil, textView.text)
+            }
+        }
+
+        func textViewDidEndEditing(_ textView: UITextView) {
+            parent.onCommit()
+        }
+    }
+}
+
+/// No-op rich-text controller for iPad; keeps the editor/state call sites compiling.
+final class RichTextFormatController: ObservableObject {
+    private(set) var shouldEncodeRichText = false
+    private(set) var hasPendingTypingAttributes = false
+    var pendingClearFormatting = false
+
+    func beginRichTextSession() { shouldEncodeRichText = true }
+    func resetRichTextSession() { shouldEncodeRichText = false; hasPendingTypingAttributes = false }
+    func clearPendingTypingAttributes() { hasPendingTypingAttributes = false }
+    func applyAction(_ action: RichTextFormatAction) {}
+}
+#endif
 
 extension Font.Weight {
     var nsWeight: NSFont.Weight {
