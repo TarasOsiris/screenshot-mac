@@ -19,8 +19,13 @@ struct PaywallSheetContent: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
-            .frame(minWidth: 520, minHeight: 240)
             .padding(24)
+            // Fixed sizing is a macOS window concern; on iOS it fills the presenting sheet.
+            #if os(macOS)
+            .frame(minWidth: 520, minHeight: 240)
+            #else
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            #endif
         } else {
             RevenueCatUI.PaywallView(displayCloseButton: true)
                 .onPurchaseCompleted { store.handlePurchaseCompleted($0) }
@@ -28,7 +33,10 @@ struct PaywallSheetContent: View {
                 .onPurchaseFailure { store.handlePurchaseFailure($0) }
                 .onRestoreFailure { store.handleRestoreFailure($0) }
                 .onRequestedDismissal { store.dismissPaywall() }
+                // macOS needs an explicit window size; on iOS the paywall fills the sheet/screen.
+                #if os(macOS)
                 .frame(minWidth: 520, idealWidth: 560, maxWidth: 620, minHeight: 660, idealHeight: 700)
+                #endif
         }
     }
 }
