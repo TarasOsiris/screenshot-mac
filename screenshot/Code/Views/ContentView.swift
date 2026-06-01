@@ -210,6 +210,9 @@ struct ContentView: View {
                 .frame(minHeight: 200)
         }
         .toolbar(id: "main") {
+            // On iPad the Projects home screen + back button own project navigation,
+            // so the editor toolbar drops the project name / actions menu.
+            #if os(macOS)
             ToolbarItem(id: "projectSwitcher", placement: .navigation) {
                 projectSwitcherToolbarMenu
                     .padding(.leading, 8)
@@ -218,7 +221,9 @@ struct ContentView: View {
             ToolbarItem(id: "projectActions", placement: .navigation) {
                 projectActionsToolbarMenu
             }
+            #endif
 
+            #if os(macOS)
             ToolbarItem(id: "export", placement: .principal) {
                 exportControlGroup
             }
@@ -244,6 +249,12 @@ struct ContentView: View {
                     inspectorToggleButton
                 }
             }
+            #else
+            // iPad: a minimal toolbar — just zoom in/out.
+            ToolbarItem(id: "zoomControls", placement: .primaryAction) {
+                ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
+            }
+            #endif
 
         }
         .toolbarRole(.editor)

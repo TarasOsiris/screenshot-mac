@@ -84,13 +84,50 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
     }
 }
 #else
+import QuickLook
 import UIKit
 
-/// iOS has no QLPreviewPanel (a macOS floating panel). Quick Look preview is deferred; this
-/// no-op keeps call sites compiling on iPad.
-final class QuickLookCoordinator {
+/// iOS has no QLPreviewPanel (the macOS floating panel); the equivalent system image viewer
+/// is `QLPreviewController`, presented modally over the editor.
+final class QuickLookCoordinator: NSObject, QLPreviewControllerDataSource {
     static let shared = QuickLookCoordinator()
-    func preview(imageAt url: URL) {}
-    func preview(imagesAt urls: [URL], startingAt index: Int) {}
+
+    private var previewURLs: [URL] = []
+
+    func preview(imageAt url: URL) {
+        preview(imagesAt: [url], startingAt: 0)
+    }
+
+    func preview(imagesAt urls: [URL], startingAt index: Int) {
+        guard !urls.isEmpty, let presenter = Self.topViewController() else { return }
+        previewURLs = urls
+
+        let controller = QLPreviewController()
+        controller.dataSource = self
+        controller.currentPreviewItemIndex = max(0, min(index, urls.count - 1))
+        presenter.present(controller, animated: true)
+    }
+
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        previewURLs.count
+    }
+
+    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> any QLPreviewItem {
+        previewURLs[index] as NSURL
+    }
+
+    private static func topViewController() -> UIViewController? {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+            ?? UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        let root = scene?.windows.first(where: { $0.isKeyWindow })?.rootViewController
+            ?? scene?.windows.first?.rootViewController
+        var top = root
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
+    }
 }
 #endif

@@ -381,7 +381,7 @@ struct ScreenshotBroApp: App {
         }
         #else
         WindowGroup {
-            AppRootView()
+            iPadRootView()
                 .environment(appState)
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
@@ -389,13 +389,12 @@ struct ScreenshotBroApp: App {
                 .sheet(isPresented: Binding(
                     get: { !onboardingCompleted && !welcomeDismissed },
                     set: { _ in }
-                ), onDismiss: launchPendingCoachIfNeeded) {
+                )) {
+                    // iPad has no editor coach tour yet (its popovers anchor to the editor
+                    // toolbar, not the Projects home), so just persist completion and dismiss.
                     OnboardingView(
-                        persistCompletion: false,
-                        onComplete: {
-                            pendingCoachStart = { appState.startCoach(persistOnEnd: true) }
-                            welcomeDismissed = true
-                        }
+                        persistCompletion: true,
+                        onComplete: { welcomeDismissed = true }
                     )
                     .interactiveDismissDisabled()
                 }

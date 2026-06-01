@@ -8520,6 +8520,9 @@
         }
       }
     },
+    "Create your first project to start designing screenshots." : {
+
+    },
     "Create Your Next Project" : {
 
     },
@@ -9542,6 +9545,9 @@
       }
     },
     "Delete selected shapes" : {
+
+    },
+    "Delete…" : {
 
     },
     "Deleted projects are kept as **tombstones** for 30 days so iCloud sync can resolve conflicts cleanly. After 30 days the tombstone (and all images) are purged." : {
@@ -10826,6 +10832,9 @@
 
     },
     "Duplicate while dragging" : {
+
+    },
+    "Duplicate…" : {
 
     },
     "During resize, rendering is debounced for performance — release the mouse to see the final crisp output." : {
@@ -17322,6 +17331,9 @@
         }
       }
     },
+    "No Projects" : {
+
+    },
     "No Row Selected" : {
       "localizations" : {
         "de" : {
@@ -18049,6 +18061,9 @@
           }
         }
       }
+    },
+    "Open" : {
+
     },
     "Open %@ in App Store Connect" : {
       "localizations" : {
@@ -21472,6 +21487,9 @@
           }
         }
       }
+    },
+    "Rename…" : {
+
     },
     "Renaming, duplicating, deleting" : {
 
