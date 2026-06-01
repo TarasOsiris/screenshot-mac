@@ -45,14 +45,28 @@ struct NewProjectWindowView: View {
             .padding(18)
             .background(Color.platformControlBackground, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
 
+            #if os(macOS)
             footer
+            #endif
         }
         .padding(22)
         #if os(macOS)
         .frame(minWidth: 760, idealWidth: 760, minHeight: 620, idealHeight: 620)
         #else
+        // iPad presents this as a dedicated full-screen page; Cancel/Create live in the
+        // navigation bar instead of an inline footer.
         .frame(maxWidth: 820, maxHeight: .infinity)
-        .presentationSizing(.page)
+        .navigationTitle("New Project")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Create") { createProject() }
+                    .disabled(!canCreateProject)
+            }
+        }
         #endif
         .onAppear {
             templates = TemplateService.availableTemplates()
@@ -266,25 +280,31 @@ struct NewProjectWindowView: View {
     }
 
     private func createProject() {
-        store.requirePro(
-            allowed: store.canCreateProject(),
-            context: .projectLimit
-        ) {
-            let trimmedName = projectName.trimmingCharacters(in: .whitespacesAndNewlines)
-            let resolvedName = trimmedName.isEmpty ? "Project \(state.visibleProjects.count + 1)" : trimmedName
-
-            switch creationMode {
-            case .blank:
-                let configurations = rowDrafts.map(\.configuration)
-                state.createBlankProject(name: resolvedName, rowConfigurations: configurations)
-            case .template:
-                guard let selectedTemplate else { return }
-                state.createProjectFromTemplate(selectedTemplate, name: resolvedName)
-            }
-
-            AppWindowManager.shared.showMainWindow()
+        guard store.canCreateProject() else {
+            // Free-tier limit reached after this view opened (e.g. an iCloud sync added a
+            // project). Show the paywall; on iPad it's hosted at the navigation root, behind
+            // this full-screen cover, so close the cover to let it present.
+            store.presentPaywall(for: .projectLimit)
+            #if os(iOS)
             dismiss()
+            #endif
+            return
         }
+
+        let trimmedName = projectName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedName = trimmedName.isEmpty ? "Project \(state.visibleProjects.count + 1)" : trimmedName
+
+        switch creationMode {
+        case .blank:
+            let configurations = rowDrafts.map(\.configuration)
+            state.createBlankProject(name: resolvedName, rowConfigurations: configurations)
+        case .template:
+            guard let selectedTemplate else { return }
+            state.createProjectFromTemplate(selectedTemplate, name: resolvedName)
+        }
+
+        AppWindowManager.shared.showMainWindow()
+        dismiss()
     }
 
     private enum CreationMode: Hashable {

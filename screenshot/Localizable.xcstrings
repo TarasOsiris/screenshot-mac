@@ -570,6 +570,16 @@
         }
       }
     },
+    "%@ (%@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$@)"
+          }
+        }
+      }
+    },
     "%@ Check that the Issuer ID, Key ID, private key, and API key permissions match the App Store Connect key." : {
       "localizations" : {
         "de" : {
@@ -8419,6 +8429,9 @@
         }
       }
     },
+    "Create" : {
+
+    },
     "Create a key with **App Manager** access. Download the `.p8` private key file (you can only download it once)." : {
 
     },
@@ -11091,6 +11104,9 @@
     "Edit Translations..." : {
 
     },
+    "Editing" : {
+
+    },
     "Editing %@" : {
       "localizations" : {
         "de" : {
@@ -13717,6 +13733,9 @@
           }
         }
       }
+    },
+    "iCloud is not available. Sign in to iCloud in Settings." : {
+
     },
     "iCloud is not available. Sign in to iCloud in System Settings." : {
       "localizations" : {
@@ -16850,6 +16869,9 @@
           }
         }
       }
+    },
+    "New Project Defaults" : {
+
     },
     "New Project..." : {
       "localizations" : {
@@ -20321,6 +20343,9 @@
     "Projects autosave 0.3 seconds after the last change. You don't need to manually save. To make a one-off backup, use **Settings ▸ Export ▸ Back Up Projects**." : {
 
     },
+    "Projects will be kept locally. Other devices will no longer see updates." : {
+
+    },
     "Projects will be kept locally. Other Macs will no longer see updates." : {
       "localizations" : {
         "de" : {
@@ -20691,6 +20716,9 @@
           }
         }
       }
+    },
+    "Quit and reopen Screenshot Bro to switch the interface language." : {
+
     },
     "Radial" : {
       "localizations" : {
@@ -25180,6 +25208,9 @@
           }
         }
       }
+    },
+    "Settings" : {
+
     },
     "Settings & Defaults" : {
 

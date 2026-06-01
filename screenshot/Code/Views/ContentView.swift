@@ -298,7 +298,11 @@ struct ContentView: View {
         } message: {
             Text("Are you sure you want to delete \"\(state.activeProject?.name ?? "")\"? This cannot be undone.")
         }
-        .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })) {
+        // On iPad the paywall/celebration sheets live at the navigation root (`iPadRootView`)
+        // so they also present from the Projects home screen, not just the pushed editor.
+        #if os(macOS)
+        .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() }),
+               onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
             PaywallSheetContent(store: store)
         }
         .sheet(isPresented: Binding(get: { store.purchaseCelebrationContext != nil }, set: { if !$0 { store.dismissPurchaseCelebration() } })) {
@@ -306,7 +310,6 @@ struct ContentView: View {
                 store.dismissPurchaseCelebration()
             }
         }
-        #if os(macOS)
         .sheet(isPresented: $showingASCUploadSheet) {
             UploadToAppStoreConnectView()
                 .environment(state)

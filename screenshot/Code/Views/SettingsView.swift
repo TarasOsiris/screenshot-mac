@@ -4,9 +4,6 @@ import UniformTypeIdentifiers
 // Settings UI is the macOS Settings scene; an iPad settings surface is a follow-up.
 #if os(macOS)
 struct SettingsView: View {
-    private static let privacyPolicyURL = URL(string: "https://screenshotbro.app/privacy")!
-    private static let termsURL = URL(string: "https://screenshotbro.app/terms")!
-
     @Environment(StoreService.self) private var store
     @AppStorage("appearance") private var appearance = "auto"
     @AppStorage("appLanguageOverride") private var languageOverride = ""
@@ -197,12 +194,12 @@ struct SettingsView: View {
     private var languagePicker: some View {
         Picker("Language", selection: $languageOverride) {
             Text("System").tag("")
-            ForEach(Self.availableAppLanguages, id: \.self) { code in
-                Text(Self.displayName(forLanguageCode: code)).tag(code)
+            ForEach(AppLanguageOptions.available, id: \.self) { code in
+                Text(AppLanguageOptions.displayName(for: code)).tag(code)
             }
         }
         .onChange(of: languageOverride) { _, newValue in
-            applyLanguageOverride(newValue)
+            AppLanguageOptions.apply(newValue)
             showLanguageRelaunchAlert = true
         }
         .alert("Restart to change language", isPresented: $showLanguageRelaunchAlert) {
@@ -210,28 +207,6 @@ struct SettingsView: View {
             Button("Later", role: .cancel) {}
         } message: {
             Text("The interface language will switch the next time Screenshot Bro launches.")
-        }
-    }
-
-    private static var availableAppLanguages: [String] {
-        Bundle.main.localizations
-            .filter { $0 != "Base" }
-            .sorted()
-    }
-
-    private static func displayName(forLanguageCode code: String) -> String {
-        let localeInOwnLanguage = Locale(identifier: code)
-        if let name = localeInOwnLanguage.localizedString(forLanguageCode: code) {
-            return name.capitalized(with: localeInOwnLanguage)
-        }
-        return code
-    }
-
-    private func applyLanguageOverride(_ code: String) {
-        if code.isEmpty {
-            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
-        } else {
-            UserDefaults.standard.set([code], forKey: "AppleLanguages")
         }
     }
 
@@ -391,8 +366,8 @@ struct SettingsView: View {
             }
 
             Section("Legal") {
-                Link("Terms of Use", destination: Self.termsURL)
-                Link("Privacy Policy", destination: Self.privacyPolicyURL)
+                Link("Terms of Use", destination: AppLinks.terms)
+                Link("Privacy Policy", destination: AppLinks.privacy)
             }
         }
         .formStyle(.grouped)
@@ -474,64 +449,25 @@ struct SettingsView: View {
 
     private var attributionsSettings: some View {
         Form {
-            Section("3D Models") {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("iPhone 17 Pro")
-                        .fontWeight(.medium)
-                    Text("by Ibrahim.Bhl")
-                        .foregroundStyle(.secondary)
-                    HStack(spacing: 4) {
-                        Text("License: CC Attribution")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            ForEach(AppAttribution.Category.allCases) { category in
+                Section(category.title) {
+                    ForEach(AppAttribution.inCategory(category)) { credit in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(credit.title)
+                                .fontWeight(.medium)
+                            Text(credit.subtitle)
+                                .foregroundStyle(.secondary)
+                            if let license = credit.license {
+                                Text(license)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Link(credit.linkTitle, destination: credit.url)
+                                .font(.caption)
+                        }
+                        .padding(.vertical, 2)
                     }
-                    Link("View on Sketchfab",
-                         destination: URL(string: "https://sketchfab.com/3d-models/iphone-17-pro-4aeeeb41f9d14f96bb3f2589edc3edac")!)
-                        .font(.caption)
                 }
-                .padding(.vertical, 2)
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("iPhone 17 Pro Max")
-                        .fontWeight(.medium)
-                    Text("by izatrcsldssb")
-                        .foregroundStyle(.secondary)
-                    HStack(spacing: 4) {
-                        Text("License: CC Attribution")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Link("View on Sketchfab",
-                         destination: URL(string: "https://sketchfab.com/3d-models/iphone-17-pro-max-d24511d4d7534a4b89efdcf8fb6fae88")!)
-                        .font(.caption)
-                }
-                .padding(.vertical, 2)
-            }
-
-            Section("Templates") {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("500 App Store Screenshot Templates")
-                        .fontWeight(.medium)
-                    Text("for Android and iOS Apps")
-                        .foregroundStyle(.secondary)
-                    Link("View on Figma Community",
-                         destination: URL(string: "https://www.figma.com/community/file/1471925742378558731/500-app-store-screenshot-templates-for-android-and-ios-apps")!)
-                        .font(.caption)
-                }
-                .padding(.vertical, 2)
-            }
-
-            Section("SVG Presets") {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Shapes Gallery")
-                        .fontWeight(.medium)
-                    Text("Free SVG shapes bundled as presets in the SVG picker")
-                        .foregroundStyle(.secondary)
-                    Link("shapes.gallery",
-                         destination: URL(string: "https://www.shapes.gallery/")!)
-                        .font(.caption)
-                }
-                .padding(.vertical, 2)
             }
         }
         .formStyle(.grouped)

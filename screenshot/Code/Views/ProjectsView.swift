@@ -1,18 +1,50 @@
 #if os(iOS)
 import SwiftUI
 
-/// iPad root: a Projects home screen that lists every project. Opening one pushes
-/// the editor (`AppRootView`) onto the stack; the back button returns here.
+/// iPad root: a tab bar with Projects (a home screen listing every project) and Settings.
+/// Opening a project pushes the editor (`AppRootView`) onto the Projects stack and hides
+/// the tab bar; the back button returns here.
 struct iPadRootView: View {
     @Environment(AppState.self) private var state
+    @Environment(StoreService.self) private var store
     @State private var openedProjectId: UUID?
 
     var body: some View {
-        NavigationStack {
-            ProjectsView(onOpen: openProject)
-                .navigationDestination(isPresented: openedBinding) {
-                    AppRootView()
+        TabView {
+            Tab("Projects", systemImage: "square.grid.2x2") {
+                NavigationStack {
+                    ProjectsView(onOpen: openProject)
+                        .navigationDestination(isPresented: openedBinding) {
+                            AppRootView()
+                                .toolbar(.hidden, for: .tabBar)
+                        }
                 }
+            }
+
+            Tab("Settings", systemImage: "gearshape") {
+                NavigationStack {
+                    IPadSettingsView()
+                }
+            }
+        }
+        // If the active project changes underneath an open editor (e.g. an iCloud reload
+        // dropped or replaced it), pop back to Projects instead of silently showing a
+        // different project than the one the user opened.
+        .onChange(of: state.activeProjectId) { _, newId in
+            if let opened = openedProjectId, newId != opened {
+                openedProjectId = nil
+            }
+        }
+        // Paywall/celebration are presented from the root so they work on the Projects home
+        // screen (e.g. tapping New Project at the free-tier limit) as well as the editor.
+        .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() }),
+               onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
+            PaywallSheetContent(store: store)
+        }
+        .sheet(isPresented: Binding(get: { store.purchaseCelebrationContext != nil }, set: { if !$0 { store.dismissPurchaseCelebration() } })) {
+            PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
+                store.dismissPurchaseCelebration()
+            }
         }
     }
 
@@ -71,7 +103,7 @@ struct ProjectsView: View {
                 }
             }
         }
-        .sheet(isPresented: $showNewProject, onDismiss: openNewlyCreatedProject) {
+        .fullScreenCover(isPresented: $showNewProject, onDismiss: openNewlyCreatedProject) {
             NavigationStack {
                 NewProjectWindowView()
             }

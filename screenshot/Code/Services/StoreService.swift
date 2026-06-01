@@ -62,6 +62,10 @@ final class StoreService {
     private(set) var showPaywall = false
     private(set) var paywallContext: PaywallContext = .general
     private(set) var purchaseCelebrationContext: PaywallContext?
+    /// Held while the paywall sheet is still dismissing; promoted to `purchaseCelebrationContext`
+    /// from the paywall sheet's `onDismiss` so we never swap two sheets on the same node in one
+    /// render pass (which can drop the celebration sheet).
+    private(set) var pendingCelebrationContext: PaywallContext?
     private(set) var configurationIssue: String?
     private(set) var purchaseStatusMessage: String?
     private(set) var purchaseStatusIsError = false
@@ -124,6 +128,14 @@ final class StoreService {
 
     func dismissPaywall() {
         showPaywall = false
+    }
+
+    /// Call from the paywall sheet's `onDismiss`: shows the post-purchase celebration only
+    /// once the paywall has fully dismissed, so the two sheets present sequentially.
+    func presentPendingCelebrationIfNeeded() {
+        guard let context = pendingCelebrationContext else { return }
+        pendingCelebrationContext = nil
+        purchaseCelebrationContext = context
     }
 
     func dismissPurchaseCelebration() {
@@ -263,8 +275,8 @@ final class StoreService {
         let triggeringContext = paywallContext
         updateEntitlement(from: customerInfo)
         if isProUnlocked {
+            pendingCelebrationContext = triggeringContext
             showPaywall = false
-            purchaseCelebrationContext = triggeringContext
         } else {
             setPurchaseStatus(String(localized: "Purchase completed, but RevenueCat did not grant access. Check the entitlement or product mapping in RevenueCat."), isError: true)
         }
