@@ -85,7 +85,9 @@ struct ProjectsView: View {
                         } label: {
                             ProjectCard(project: project)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ProjectCardButtonStyle())
+                        .accessibilityLabel(project.name)
+                        .accessibilityHint("Opens the project")
                         .contextMenu { projectMenu(for: project) }
                     }
                 }
@@ -246,6 +248,19 @@ private struct ProjectCard: View {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
             }
+    }
+}
+
+/// Plain card rendering plus a subtle press-down scale for touch feedback (the Projects
+/// home screen has no other affordance to show a tap registered).
+private struct ProjectCardButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1.0)
+            .opacity(configuration.isPressed ? 0.85 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 #endif
