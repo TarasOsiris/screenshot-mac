@@ -192,6 +192,8 @@ struct InspectorPanel: View {
                 backgroundImageConfig: safeRowBinding(rowId, keyPath: \.backgroundImageConfig, default: BackgroundImageConfig()),
                 backgroundImage: state.rows[rowIndex].backgroundImageConfig.fileName.flatMap { state.screenshotImages[$0] },
                 onChanged: { },
+                // macOS file-panel path; on iPad BackgroundImageEditor picks via ImageSourceMenu
+                // and saves through onDropImage below.
                 onPickImage: { state.pickAndSaveBackgroundImage(for: rowId) },
                 onRemoveImage: { state.removeBackgroundImage(for: rowId) },
                 onDropImage: { image in
@@ -302,34 +304,33 @@ struct InspectorPanel: View {
         return DeviceFrameCatalog.frame(for: frameId) == nil
     }
 
-    // macOS uses checkbox toggles in two compact columns; iPad uses switch toggles, which need
-    // a full-width row each so the labels don't wrap.
-    private var visibilityColumns: [GridItem] {
-        #if os(macOS)
-        [GridItem(.flexible()), GridItem(.flexible())]
-        #else
-        [GridItem(.flexible())]
-        #endif
+    @ViewBuilder
+    private func visibilityToggles(rowId: UUID) -> some View {
+        Toggle(isOn: safeRowBinding(rowId, keyPath: \.showBorders, default: true)) {
+            Label("Borders", systemImage: "rectangle.split.3x3")
+        }
+        ForEach(ShapeType.allCases, id: \.self) { type in
+            Toggle(isOn: shapeTypeVisibilityBinding(rowId: rowId, type: type)) {
+                Label(type.pluralLabel, systemImage: type.icon)
+            }
+        }
     }
 
     @ViewBuilder
     private func optionsSection(rowId: UUID) -> some View {
         Section(isExpanded: $isVisibilityExpanded) {
-            LazyVGrid(columns: visibilityColumns, alignment: .leading, spacing: 4) {
-                Toggle(isOn: safeRowBinding(rowId, keyPath: \.showBorders, default: true)) {
-                    Label("Borders", systemImage: "rectangle.split.3x3")
-                }
-                ForEach(ShapeType.allCases, id: \.self) { type in
-                    Toggle(isOn: shapeTypeVisibilityBinding(rowId: rowId, type: type)) {
-                        Label(type.pluralLabel, systemImage: type.icon)
-                    }
-                }
-            }
             #if os(macOS)
+            // macOS packs checkbox toggles into two compact columns.
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 4) {
+                visibilityToggles(rowId: rowId)
+            }
             .toggleStyle(.checkbox)
-            #endif
             .font(.system(size: UIMetrics.FontSize.body))
             .controlSize(.small)
+            #else
+            // iPad renders each toggle as a native full-width Form row (label + switch).
+            visibilityToggles(rowId: rowId)
+            #endif
         } header: {
             HStack(spacing: 4) {
                 Text("Visibility")

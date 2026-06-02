@@ -479,6 +479,8 @@ struct EditorRowView: View {
                         }
                     },
                     onSave: { state.scheduleSave() },
+                    // macOS file-panel path; on iPad BackgroundImageEditor picks via ImageSourceMenu
+                    // and saves through onDropBackgroundImage below.
                     onPickBackgroundImage: { state.pickAndSaveBackgroundImage(for: row.id, templateIndex: index) },
                     onRemoveBackgroundImage: { state.removeBackgroundImage(for: row.id, templateIndex: index) },
                     onDropBackgroundImage: { image in

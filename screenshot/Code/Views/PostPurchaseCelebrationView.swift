@@ -61,7 +61,11 @@ struct PostPurchaseCelebrationView: View {
                     .padding(.bottom, 28)
             }
         }
+        #if os(macOS)
         .frame(width: 540, height: 620)
+        #else
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        #endif
         .onAppear {
             confettiStartedAt = Date()
             confettiActive = true

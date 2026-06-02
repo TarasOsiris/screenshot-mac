@@ -195,6 +195,26 @@ struct BackgroundImageEditor: View {
 
     private var previewImage: NSImage? { image ?? cachedSvgPreview }
 
+    private var dropZoneLabel: some View {
+        VStack(spacing: 4) {
+            Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.on.rectangle.angled")
+                .font(.system(size: 16))
+                .foregroundStyle(isDropTargeted ? Color.accentColor : Color.secondary)
+            Text(isDropTargeted ? "Drop Image" : "Choose or Drop Image")
+                .font(.system(size: UIMetrics.FontSize.inlineLabel))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 44)
+        .background(
+            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
+                .strokeBorder(
+                    style: StrokeStyle(lineWidth: isDropTargeted ? UIMetrics.BorderWidth.emphasis : UIMetrics.BorderWidth.standard, dash: [4, 4])
+                )
+                .foregroundStyle(isDropTargeted ? Color.accentColor : Color.secondary.opacity(0.4))
+        )
+    }
+
     var body: some View {
         Group {
             if let preview = previewImage {
@@ -212,35 +232,33 @@ struct BackgroundImageEditor: View {
                     )
 
                 HStack(spacing: 4) {
+                    #if os(macOS)
                     Button("Replace") { onPickImage() }
                         .controlSize(.small)
+                    #else
+                    ImageSourceMenu(onImage: { onDropImage?($0) }) {
+                        Text("Replace")
+                    }
+                    .controlSize(.small)
+                    #endif
                     Button("Remove", role: .destructive) { onRemoveImage() }
                         .controlSize(.small)
                 }
                 .font(.system(size: UIMetrics.FontSize.inlineLabel))
             } else {
+                #if os(macOS)
                 Button {
                     onPickImage()
                 } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.on.rectangle.angled")
-                            .font(.system(size: 16))
-                            .foregroundStyle(isDropTargeted ? Color.accentColor : Color.secondary)
-                        Text(isDropTargeted ? "Drop Image" : "Choose or Drop Image")
-                            .font(.system(size: UIMetrics.FontSize.inlineLabel))
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
-                            .strokeBorder(
-                                style: StrokeStyle(lineWidth: isDropTargeted ? UIMetrics.BorderWidth.emphasis : UIMetrics.BorderWidth.standard, dash: [4, 4])
-                            )
-                            .foregroundStyle(isDropTargeted ? Color.accentColor : Color.secondary.opacity(0.4))
-                    )
+                    dropZoneLabel
                 }
                 .buttonStyle(.plain)
+                #else
+                ImageSourceMenu(onImage: { onDropImage?($0) }) {
+                    dropZoneLabel
+                }
+                .buttonStyle(.plain)
+                #endif
             }
         }
         .onDrop(of: [.image, .svg, .fileURL], isTargeted: $isDropTargeted) { providers in

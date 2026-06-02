@@ -121,6 +121,7 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
     let shape: CanvasShapeModel
     let showsLocaleImageReset: Bool
     let onPickImage: () -> Void
+    let onImageSelected: (NSImage) -> Void
     let onResetLocaleImage: () -> Void
     private let devicePickerContent: DevicePickerContent
 
@@ -128,12 +129,14 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
         shape: CanvasShapeModel,
         showsLocaleImageReset: Bool,
         onPickImage: @escaping () -> Void,
+        onImageSelected: @escaping (NSImage) -> Void,
         onResetLocaleImage: @escaping () -> Void,
         @ViewBuilder devicePickerContent: () -> DevicePickerContent
     ) {
         self.shape = shape
         self.showsLocaleImageReset = showsLocaleImageReset
         self.onPickImage = onPickImage
+        self.onImageSelected = onImageSelected
         self.onResetLocaleImage = onResetLocaleImage
         self.devicePickerContent = devicePickerContent()
     }
@@ -158,6 +161,19 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
                     }
                 }
             }
+            #else
+            ShapePropertiesSeparator()
+
+            ImageSourceMenu(onImage: onImageSelected) {
+                Label(shape.screenshotFileName == nil ? "Add Screenshot" : "Replace Image", systemImage: "photo.badge.arrow.down")
+                    .foregroundStyle(.secondary)
+            }
+
+            if showsLocaleImageReset {
+                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: 24) {
+                    onResetLocaleImage()
+                }
+            }
             #endif
         }
     }
@@ -167,16 +183,23 @@ struct ImageShapeControls: View {
     let buttonTitle: LocalizedStringKey
     let showsLocaleImageReset: Bool
     let onPickImage: () -> Void
+    let onImageSelected: (NSImage) -> Void
     let onResetLocaleImage: () -> Void
 
     var body: some View {
-        #if os(macOS)
         ShapePropertiesSection {
+            #if os(macOS)
             Button(action: onPickImage) {
                 Label(buttonTitle, systemImage: "photo.badge.arrow.down")
             }
             .buttonStyle(.borderless)
             .foregroundStyle(.secondary)
+            #else
+            ImageSourceMenu(onImage: onImageSelected) {
+                Label(buttonTitle, systemImage: "photo.badge.arrow.down")
+                    .foregroundStyle(.secondary)
+            }
+            #endif
 
             if showsLocaleImageReset {
                 ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: 24) {
@@ -184,9 +207,6 @@ struct ImageShapeControls: View {
                 }
             }
         }
-        #else
-        EmptyView()
-        #endif
     }
 }
 

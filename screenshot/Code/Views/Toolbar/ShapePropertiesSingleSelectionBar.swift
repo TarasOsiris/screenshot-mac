@@ -7,7 +7,9 @@ struct ShapePropertiesSingleSelectionBar: View {
     private static let fontSizePresets: [Int] = CanvasShapeModel.fontSizePresets
     @Bindable var state: AppState
     @State private var isReplacingSvg = false
+    #if os(macOS)
     @State private var isReplacingFillImage = false
+    #endif
     @State private var isFillPopoverPresented = false
     @State private var isTextPopoverPresented = false
     @State private var editingFontSize: String = ""
@@ -46,7 +48,8 @@ struct ShapePropertiesSingleSelectionBar: View {
         guard let image = NSImage.fromSecurityScopedURL(url) else { return }
         state.saveImage(image, for: shapeId)
         #endif
-        // iPad: image replace via PhotosPicker is deferred to a follow-up.
+        // iPad routes image selection through ImageSourceMenu (Photo Library / Camera / Files)
+        // via `onImageSelected`, so this NSOpenPanel path is macOS-only.
     }
 
     private func idx(for shapeId: UUID) -> (row: Int, shape: Int)? {
@@ -89,6 +92,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                 shape: shape,
                                 showsLocaleImageReset: hasLocaleImageOverride(shapeId),
                                 onPickImage: { pickAndReplaceImage(for: shapeId) },
+                                onImageSelected: { state.saveImage($0, for: shapeId) },
                                 onResetLocaleImage: { state.resetLocaleImageOverride(shapeId: shapeId) }
                             ) {
                                 devicePicker(shape: shape, shapeId: shapeId)
@@ -140,7 +144,13 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
                                     }).flatMap { state.screenshotImages[$0] },
                                     onChanged: { state.scheduleSave() },
-                                    onPickImage: { isReplacingFillImage = true },
+                                    // macOS opens a file panel here; iPad picks via ImageSourceMenu
+                                    // inside BackgroundImageEditor (→ onDropImage → saveShapeFillImage).
+                                    onPickImage: {
+                                        #if os(macOS)
+                                        isReplacingFillImage = true
+                                        #endif
+                                    },
                                     onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
                                     onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
                                 )
@@ -297,6 +307,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                 buttonTitle: shape.imageFileName != nil ? "Replace Image" : "Choose Image",
                                 showsLocaleImageReset: hasLocaleImageOverride(shapeId),
                                 onPickImage: { pickAndReplaceImage(for: shapeId) },
+                                onImageSelected: { state.saveImage($0, for: shapeId) },
                                 onResetLocaleImage: { state.resetLocaleImageOverride(shapeId: shapeId) }
                             )
                         }
@@ -350,12 +361,16 @@ struct ShapePropertiesSingleSelectionBar: View {
             .font(.system(size: UIMetrics.FontSize.body))
             .controlSize(.small)
             .background(.bar)
+            // macOS-only: the fill swatch's "pick image" opens this file panel. iPad picks the
+            // fill image through ImageSourceMenu inside BackgroundImageEditor (→ saveShapeFillImage).
+            #if os(macOS)
             .fileImporter(isPresented: $isReplacingFillImage, allowedContentTypes: [.image]) { result in
                 if case .success(let url) = result,
                    let image = NSImage.fromSecurityScopedURL(url) {
                     state.saveShapeFillImage(image, for: shapeId)
                 }
             }
+            #endif
             .sheet(isPresented: $isReplacingSvg) {
                 SvgPasteDialog(isPresented: $isReplacingSvg) { svgContent, _, useColor, color in
                     guard let i = idx(for: shapeId) else { return }
