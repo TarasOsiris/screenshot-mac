@@ -67,9 +67,14 @@ extension AppState {
     func selectProject(_ id: UUID) {
         guard id != activeProjectId else { return }
 
-        saveCurrentProject()
+        // Snapshot + write the OLD project off-main while activeProjectId still points at
+        // it (and before switchToProject sets projectOpenTask), then switch. switchToProject
+        // sets the opening flag. saveIndexAsync runs AFTER the switch so the index persists
+        // the NEW activeProjectId (matching the old synchronous order). Keeps the disk
+        // encode/write off the runloop turn that animates the iPad push.
+        saveCurrentProjectAsync()
         switchToProject(id)
-        saveIndex()
+        saveIndexAsync()
     }
 
     func switchToProject(_ id: UUID) {
@@ -85,6 +90,10 @@ extension AppState {
                 PersistenceService.loadProject(id)
             }.value
             guard let self, !Task.isCancelled, self.activeProjectId == id else { return }
+            // Let the push + spinner paint a frame before the heavy `rows = …` rebuild,
+            // so the loader animates instead of freezing mid-transition.
+            await Task.yield()
+            guard !Task.isCancelled, self.activeProjectId == id else { return }
             self.loadProjectContents(for: id, preloaded: data)
             self.projectOpenTask = nil
         }

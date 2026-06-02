@@ -11,16 +11,43 @@ extension AppState {
 
     // MARK: - Image Cleanup
 
+    /// Image files in `files` that aren't referenced by the model and aren't fonts.
+    private static func orphanedResourceURLs(in files: [URL], referenced: Set<String>) -> [URL] {
+        files.filter { url in
+            !fontExtensions.contains(url.pathExtension.lowercased())
+                && !referenced.contains(url.lastPathComponent)
+        }
+    }
+
     func cleanupOrphanedResourceFiles(for projectId: UUID) {
         let resourcesURL = PersistenceService.resourcesDir(projectId)
         guard let files = try? FileManager.default.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
-        let referenced = allReferencedImageFileNames()
-        for fileURL in files {
-            let ext = fileURL.pathExtension.lowercased()
-            guard !Self.fontExtensions.contains(ext) else { continue }
-            let fileName = fileURL.lastPathComponent
-            if !referenced.contains(fileName) {
-                removeImageFile(fileName)
+        for fileURL in Self.orphanedResourceURLs(in: files, referenced: allReferencedImageFileNames()) {
+            removeImageFile(fileURL.lastPathComponent)
+        }
+    }
+
+    /// Project-open variant: scans the resources directory and deletes orphans off-main so
+    /// the switch doesn't block the push animation. The `referenced` set is re-read on the
+    /// main actor at deletion time (not snapshotted at call time) so an image imported
+    /// right after the open isn't mistaken for an orphan, and the task bails if the active
+    /// project changed. Skips the in-memory `screenshotImages` eviction (it uses
+    /// `removeItem`, not `removeImageFile`); on open that dict was just cleared and is
+    /// repopulated by `loadScreenshotImages`.
+    func cleanupOrphanedResourceFilesAsync(for projectId: UUID) {
+        let resourcesURL = PersistenceService.resourcesDir(projectId)
+        Task.detached(priority: .utility) { [weak self] in
+            guard let files = try? FileManager.default.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
+            // Read the live referenced set after listing the directory, so files created
+            // after the listing are never deletion candidates and the set reflects the
+            // current model. Bail if the project changed under us.
+            let referenced: Set<String>? = await MainActor.run {
+                guard let self, self.activeProjectId == projectId else { return nil }
+                return self.allReferencedImageFileNames()
+            }
+            guard let referenced else { return }
+            for fileURL in AppState.orphanedResourceURLs(in: files, referenced: referenced) {
+                try? FileManager.default.removeItem(at: fileURL)
             }
         }
     }

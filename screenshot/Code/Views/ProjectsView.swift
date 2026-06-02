@@ -107,6 +107,7 @@ struct ProjectsView: View {
                             ProjectCard(project: project)
                         }
                         .buttonStyle(ProjectCardButtonStyle())
+                        .contentShape(Rectangle())
                         .accessibilityLabel(project.name)
                         .accessibilityHint("Opens the project")
                         .contextMenu { projectMenu(for: project) }
@@ -238,6 +239,8 @@ private struct ProjectCard: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
         .task(id: project.modifiedAt) {
             snapshot = ProjectThumbnailService.thumbnail(for: project)
         }

@@ -138,14 +138,20 @@ extension AppState {
         }
     }
 
-    func applyProjectData(_ data: ProjectData, for projectId: UUID) {
+    /// `deferCleanup` runs the orphaned-resource scan off-main (project-open path) so the
+    /// switch doesn't block the push animation; iCloud reload keeps it synchronous.
+    func applyProjectData(_ data: ProjectData, for projectId: UUID, deferCleanup: Bool = false) {
         rows = data.rows
         localeState = data.localeState ?? .default
         activeProjectDataModifiedAt = data.modifiedAt
         // Drop any preview-mode entries that don't refer to a row in the new data.
         reconcilePreviewingRows(against: Set(rows.map(\.id)))
         selectRow(rows.first?.id)
-        cleanupOrphanedResourceFiles(for: projectId)
+        if deferCleanup {
+            cleanupOrphanedResourceFilesAsync(for: projectId)
+        } else {
+            cleanupOrphanedResourceFiles(for: projectId)
+        }
         seedReferencedFontFamiliesFromLoadedProject()
     }
 
@@ -199,6 +205,10 @@ extension AppState {
     @discardableResult
     func saveCurrentProject() -> Bool {
         guard let activeId = activeProjectId else { return true }
+        // Don't persist while a project load is in flight: `activeProjectId` already points
+        // at the project being opened but `rows` may still belong to the previously active
+        // project, so writing now would overwrite the new project's file with stale rows.
+        guard projectOpenTask == nil else { return true }
         let data = ProjectData(rows: rows, localeState: localeState)
         do {
             try PersistenceService.saveProject(activeId, data: data)
@@ -210,9 +220,56 @@ extension AppState {
         }
     }
 
+    /// Snapshots the active project's data on the main actor (a cheap value copy of
+    /// rows/localeState) and encodes+writes it off-main, so switching projects doesn't
+    /// block the push animation. Must be called while `activeProjectId` still points at the
+    /// project being saved.
+    func saveCurrentProjectAsync() {
+        guard let activeId = activeProjectId else { return }
+        // See saveCurrentProject(): skip while a load is in flight so we never write the
+        // previous project's stale rows into the newly-opened project's file.
+        guard projectOpenTask == nil else { return }
+        let data = ProjectData(rows: rows, localeState: localeState)
+        activeProjectDataModifiedAt = data.modifiedAt
+        let monitor = iCloudMonitor
+        monitor?.recordOwnWrite([PersistenceService.projectDataURL(activeId)])
+        Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                try PersistenceService.saveProject(activeId, data: data)
+            } catch {
+                await MainActor.run {
+                    self?.saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    /// Off-main sibling of `saveIndex()` — snapshots `ProjectIndex` on main, writes detached.
+    func saveIndexAsync() {
+        if let idx = projects.firstIndex(where: { $0.id == activeProjectId && !$0.isDeleted }) {
+            projects[idx].modifiedAt = Date()
+        }
+        let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
+        let monitor = iCloudMonitor
+        monitor?.recordOwnWrite([PersistenceService.indexURL])
+        Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                try PersistenceService.saveIndex(index)
+                // Snapshot AFTER the write completes so hasIndexChanged() treats it as our
+                // own save and the iCloud monitor doesn't trigger a reload (mirrors saveAll).
+                // On the main actor to match saveAll's thread for the unlocked snapshot.
+                await MainActor.run { monitor?.snapshotAfterWrite() }
+            } catch {
+                await MainActor.run {
+                    self?.saveError = String(localized: "Failed to save project index: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
     func loadRowsForProject(_ id: UUID, preloaded: ProjectData? = nil) {
         if let data = preloaded ?? PersistenceService.loadProject(id) {
-            applyProjectData(data, for: id)
+            applyProjectData(data, for: id, deferCleanup: true)
         } else {
             rows = [makeDefaultRow()]
             localeState = .default
