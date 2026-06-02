@@ -19,7 +19,11 @@ struct iPadRootView: View {
                 // tabs' own inner nav bars (Projects/Settings titles + toolbars) show.
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(isPresented: openedBinding) {
-                    AppRootView()
+                    // Push a lightweight gate first: it paints the spinner immediately (so the
+                    // open never looks frozen) and builds the heavy editor only once the
+                    // project's data has loaded. The spinner keeps animating on the render
+                    // server even while the editor build stalls the main thread.
+                    ProjectOpenGate(projectId: openedProjectId)
                 }
         }
         // If the active project changes underneath an open editor (e.g. an iCloud reload
@@ -67,17 +71,67 @@ struct iPadRootView: View {
     }
 
     private func openProject(_ id: UUID) {
-        // Reveal the editor immediately so the loading overlay (driven by
-        // `isOpeningProject`) paints right away — the menu must never look frozen
-        // while a large project decodes.
+        // Start the (off-main) load unless this is already the active/loaded project, then
+        // push the gate. The gate paints the spinner immediately and builds the heavy editor
+        // only once loading completes — so the cold first-open build never freezes a blank,
+        // feedback-less screen.
+        if id != state.activeProjectId {
+            // Flip the opening flag up-front so the gate shows the spinner before the load
+            // begins; switchToProject sets it again later (idempotent). selectProject runs off
+            // this runloop turn so the push animates before the load work starts.
+            state.beginProjectOpening()
+            Task { @MainActor in
+                await Task.yield()
+                state.selectProject(id)
+            }
+        }
         openedProjectId = id
-        guard id != state.activeProjectId else { return }  // already loaded, no reload
-        state.beginProjectOpening()
-        // Defer the switch one runloop turn so the push + overlay render before the
-        // (brief, main-thread) save of the previously-active project runs.
-        Task { @MainActor in
-            await Task.yield()
-            state.selectProject(id)
+    }
+}
+
+/// Pushed in place of the editor when opening a project: shows the loading spinner right
+/// away (so the open always has feedback), then reveals the real editor (`AppRootView`) once
+/// the project's structural load finishes. The spinner is committed to the screen before the
+/// editor is constructed, so it keeps animating on the render server even while the cold,
+/// first-time editor build stalls the main thread.
+private struct ProjectOpenGate: View {
+    @Environment(AppState.self) private var state
+    let projectId: UUID?
+    @State private var showEditor = false
+
+    /// Reveal on a positive "this project is loaded" condition rather than only the falling
+    /// edge of `isOpeningProject`. If that flag were ever stranded true (e.g. a switch that
+    /// no-ops), keying solely off it would hang the gate on a permanent spinner; and gating on
+    /// `activeProjectId == projectId` ensures we never reveal a different project's editor.
+    private var isReady: Bool {
+        guard let projectId else { return false }
+        return state.activeProjectId == projectId && !state.isOpeningProject
+    }
+
+    var body: some View {
+        gateContent
+            .task(id: isReady) {
+                guard isReady, !showEditor else { return }
+                // The spinner is already on screen (it's the gate's content during the
+                // navigation push). Wait one frame so the cold first-time editor build lands
+                // after the push settles; the spinner keeps animating on the render server
+                // through the build's main-thread stall.
+                try? await Task.sleep(for: .milliseconds(50))
+                showEditor = true
+            }
+    }
+
+    // AppRootView is the true branch of this conditional (not wrapped in a ZStack) so the
+    // editor's `.inspector`/toolbar host resolution is unchanged from pushing it directly.
+    @ViewBuilder
+    private var gateContent: some View {
+        if showEditor {
+            AppRootView()
+        } else {
+            ZStack {
+                Color.platformWindowBackground.ignoresSafeArea()
+                ProjectLoadingOverlay(message: "Opening Project…")
+            }
         }
     }
 }
@@ -105,12 +159,18 @@ struct ProjectsView: View {
                             onOpen(project.id)
                         } label: {
                             ProjectCard(project: project)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(ProjectCardButtonStyle())
                         .contentShape(Rectangle())
                         .accessibilityLabel(project.name)
                         .accessibilityHint("Opens the project")
-                        .contextMenu { projectMenu(for: project) }
+                        .contextMenuWithPreview {
+                            projectMenu(for: project)
+                        } preview: {
+                            ProjectContextMenuPreview(project: project)
+                        }
                     }
                 }
                 .padding(24)
@@ -222,6 +282,16 @@ struct ProjectsView: View {
     }
 }
 
+private struct ProjectContextMenuPreview: View {
+    let project: Project
+
+    var body: some View {
+        ProjectCard(project: project)
+            .frame(width: 260, alignment: .leading)
+            .contextMenuPreviewCard()
+    }
+}
+
 private struct ProjectCard: View {
     let project: Project
     @State private var snapshot: Image?
@@ -282,6 +352,8 @@ private struct ProjectCardButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1.0)
             .opacity(configuration.isPressed ? 0.85 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)

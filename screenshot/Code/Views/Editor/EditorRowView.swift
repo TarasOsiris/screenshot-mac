@@ -157,8 +157,10 @@ struct EditorRowView: View {
                     .allowsHitTesting(false)
             }
         }
-        .contextMenu {
+        .contextMenuWithPreview {
             rowMenuContent
+        } preview: {
+            RowContextMenuPreview(state: state, row: row)
         }
         .alert("Delete Row", isPresented: $isDeletingRow) {
             Button("Delete", role: .destructive) {
@@ -983,4 +985,31 @@ struct EditorRowView: View {
         }
     }
 
+}
+
+private struct RowContextMenuPreview: View {
+    let state: AppState
+    let row: ScreenshotRow
+
+    private let maxPreviewWidth: CGFloat = 360
+    private let maxPreviewHeight: CGFloat = 240
+    private let tileGap: CGFloat = 12
+
+    private var baseWidth: CGFloat {
+        let count = CGFloat(row.templates.count)
+        return row.displayWidth(zoom: 1.0) * count + tileGap * max(0, count - 1)
+    }
+
+    private var baseHeight: CGFloat {
+        row.displayHeight(zoom: 1.0)
+    }
+
+    private var previewZoom: CGFloat {
+        min(maxPreviewWidth / max(baseWidth, 1), maxPreviewHeight / max(baseHeight, 1), 1)
+    }
+
+    var body: some View {
+        RowPreviewView(state: state, row: row, zoom: previewZoom)
+            .contextMenuPreviewCard()
+    }
 }

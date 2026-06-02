@@ -197,8 +197,10 @@ struct ContentView: View {
             }
         }
         .overlay {
-            // Block only during the brief structural-open phase (hides the teardown→reload
-            // flash); image downsampling streams in behind the live UI so row controls stay visible.
+            // macOS + in-editor re-opens/switches only: blocks during the brief structural-open
+            // phase (hides the teardown→reload flash). On iPad the cold first open is owned by
+            // `ProjectOpenGate`, which paints this same spinner before ContentView is built.
+            // Image downsampling streams in behind the live UI so row controls stay visible.
             if !isExporting && state.isOpeningProject {
                 ProjectLoadingOverlay(message: "Opening Project…")
             }

@@ -42,6 +42,8 @@ enum UIMetrics {
         static let section: CGFloat = 8
         /// Floating bar / popover corner radius.
         static let floating: CGFloat = 12
+        /// Context-menu preview card corner radius.
+        static let preview: CGFloat = 16
     }
 
     enum BorderWidth {

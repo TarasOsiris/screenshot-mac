@@ -65,7 +65,13 @@ extension AppState {
     }
 
     func selectProject(_ id: UUID) {
-        guard id != activeProjectId else { return }
+        guard id != activeProjectId else {
+            // The switch is a no-op (already active), but a caller (the iPad open gate) may
+            // have optimistically set the opening flag — clear it so nothing waits forever
+            // for a switch that won't happen.
+            finishProjectOpening()
+            return
+        }
 
         // Snapshot + write the OLD project off-main while activeProjectId still points at
         // it (and before switchToProject sets projectOpenTask), then switch. switchToProject

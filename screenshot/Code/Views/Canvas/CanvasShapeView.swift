@@ -247,7 +247,6 @@ struct CanvasShapeView: View {
                             }
                         }
                     )
-                    .contextMenu { shapeContextMenu }
 
                 if isSelected && !isMultiSelected {
                     handlesContent
@@ -281,6 +280,11 @@ struct CanvasShapeView: View {
         .frame(width: aabb.width, height: aabb.height)
         .contentShape(hitPath)
         .scaleEffect(addBumpScale)
+        .contextMenuWithPreview {
+            shapeContextMenu
+        } preview: {
+            shapeContextMenuPreview
+        }
         .onContinuousHover { phase in
             switch phase {
             case .active(let location):
@@ -415,6 +419,73 @@ struct CanvasShapeView: View {
             onToggleLock: onToggleLock,
             lockToggleWillUnlock: lockToggleWillUnlock
         )
+    }
+
+    private var shapeContextMenuPreview: some View {
+        let aabb = rotatedDisplaySize
+        let maxPreviewSide: CGFloat = {
+            switch shape.type {
+            case .device, .image:
+                return 520
+            case .text, .svg:
+                return 420
+            case .rectangle, .circle, .star:
+                return 320
+            }
+        }()
+        let scale = min(maxPreviewSide / max(max(aabb.width, aabb.height), 1), 1)
+        let needsCompositing = shape.opacity < 1.0
+
+        return ZStack {
+            shapePreviewContent
+                .compositingGroupIfNeeded(needsCompositing)
+                .opacity(shape.opacity)
+                .rotationEffect(.degrees(currentRotation))
+        }
+        .frame(width: aabb.width, height: aabb.height)
+        .scaleEffect(scale, anchor: .center)
+        .frame(width: aabb.width * scale, height: aabb.height * scale)
+        .contextMenuPreviewCard(padding: 14)
+    }
+
+    @ViewBuilder
+    private var shapePreviewContent: some View {
+        if shape.type == .image && screenshotImage == nil {
+            RoundedRectangle(cornerRadius: shape.borderRadius * displayScale, style: .continuous)
+                .fill(Color.secondary.opacity(0.12))
+                .overlay {
+                    Image(systemName: "photo")
+                        .font(.system(size: min(32, max(16, min(displayW, displayH) * 0.2))))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: displayW, height: displayH)
+        } else {
+            CanvasShapeRenderContent(
+                shape: shape,
+                effectiveW: effectiveW,
+                effectiveH: effectiveH,
+                displayW: displayW,
+                displayH: displayH,
+                displayScale: displayScale,
+                displayOutlineWidth: displayOutlineWidth,
+                screenshotImage: screenshotImage,
+                fillImage: fillImage,
+                defaultDeviceBodyColor: defaultDeviceBodyColor,
+                deviceModelRenderingMode: deviceModelRenderingMode,
+                cachedSvgImage: cachedSvgImage,
+                showsEditorHelpers: false,
+                isEditingText: false,
+                editingTextValue: .constant(shape.text ?? ""),
+                editingRichTextData: .constant(shape.richText),
+                isDropTargeted: .constant(false),
+                onRequestImagePicker: {},
+                onHandleDrop: { _ in false },
+                onCommitTextEdit: {},
+                resolveNSFont: resolvedNSFont,
+                fontWeightResolver: fontWeight,
+                renderSvgImage: Self.svgImage
+            )
+        }
     }
 
     private var hoverOverlay: some View {
