@@ -2,30 +2,18 @@
 import SwiftUI
 
 /// iPad root: a tab bar with Projects (a home screen listing every project) and Settings.
-/// Opening a project pushes the editor (`AppRootView`) onto an *outer* NavigationStack that
-/// wraps the whole tab view — so the push covers the entire tab view as one unit (the tab bar
-/// is never hidden/re-shown, which made the tab items flash/reflow on return) while keeping a
-/// smooth, UIKit-driven horizontal slide that doesn't freeze the way an inline SwiftUI
-/// transition does (it builds the heavy editor synchronously inside the animation).
+/// Each tab owns its own NavigationStack (the supported pattern: a TabView placed *inside* a
+/// NavigationStack does not forward its tab content's title/toolbar to the outer bar, which
+/// silently dropped the Projects title + New Project button). Opening a project pushes the
+/// editor onto the Projects stack and hides the tab bar for the duration; the back button
+/// returns here.
 struct iPadRootView: View {
     @Environment(AppState.self) private var state
     @Environment(StoreService.self) private var store
     @State private var openedProjectId: UUID?
 
     var body: some View {
-        NavigationStack {
-            tabView
-                // Outer stack reserves an empty nav bar around the tab view; hide it so only the
-                // tabs' own inner nav bars (Projects/Settings titles + toolbars) show.
-                .toolbar(.hidden, for: .navigationBar)
-                .navigationDestination(isPresented: openedBinding) {
-                    // Push a lightweight gate first: it paints the spinner immediately (so the
-                    // open never looks frozen) and builds the heavy editor only once the
-                    // project's data has loaded. The spinner keeps animating on the render
-                    // server even while the editor build stalls the main thread.
-                    ProjectOpenGate(projectId: openedProjectId)
-                }
-        }
+        tabView
         // If the active project changes underneath an open editor (e.g. an iCloud reload
         // dropped or replaced it), pop back to Projects instead of silently showing a
         // different project than the one the user opened.
@@ -59,6 +47,14 @@ struct iPadRootView: View {
             Tab("Projects", systemImage: "square.grid.2x2") {
                 NavigationStack {
                     ProjectsView(onOpen: openProject)
+                        .navigationDestination(isPresented: openedBinding) {
+                            // Push a lightweight gate first: it paints the spinner immediately
+                            // (so the open never looks frozen) and builds the heavy editor only
+                            // once the project's data has loaded. The spinner keeps animating on
+                            // the render server even while the editor build stalls the main thread.
+                            ProjectOpenGate(projectId: openedProjectId)
+                                .toolbar(.hidden, for: .tabBar)
+                        }
                 }
             }
 
