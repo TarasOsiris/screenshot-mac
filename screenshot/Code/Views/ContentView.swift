@@ -51,7 +51,9 @@ struct ContentView: View {
     @State private var isResettingProject = false
     @State private var resetTemplate: ProjectTemplate?
     @State private var projectTemplates: [ProjectTemplate] = TemplateService.availableTemplates()
+    #if os(macOS)
     @State private var gestureZoomStartLevel: CGFloat?
+    #endif
     @State private var editorViewportHeight: CGFloat = 0
     @State private var scrollWheelMonitor: Any?
     @State private var showingASCUploadSheet = false
@@ -98,6 +100,8 @@ struct ContentView: View {
                     }
                 }
                 .id(state.activeProjectId)
+                #if os(macOS)
+                // Trackpad pinch-to-zoom (macOS only — iPad uses the toolbar zoom).
                 .simultaneousGesture(
                     MagnificationGesture()
                         .onChanged { value in
@@ -111,6 +115,7 @@ struct ContentView: View {
                             gestureZoomStartLevel = nil
                         }
                 )
+                #endif
                 .onChange(of: state.canvasFocusRequestNonce) { _, _ in
                     guard let rowId = state.canvasFocusRowId else { return }
                     if state.canvasFocusAnimated {
