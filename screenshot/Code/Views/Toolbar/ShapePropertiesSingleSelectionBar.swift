@@ -138,8 +138,8 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     isPresented: $isFillPopoverPresented,
                                     backgroundStyle: fillStyleBinding(shapeId),
                                     bgColor: shapeBinding(shapeId, \.color),
-                                    gradientConfig: shapeBinding(shapeId, \.fillGradientConfig, default: GradientConfig()),
-                                    backgroundImageConfig: shapeBinding(shapeId, \.fillImageConfig, default: BackgroundImageConfig()),
+                                    gradientConfig: shapeBinding(shapeId, \.fillGradientConfig, default: GradientConfig(), continuous: true),
+                                    backgroundImageConfig: shapeBinding(shapeId, \.fillImageConfig, default: BackgroundImageConfig(), continuous: true),
                                     backgroundImage: (idx(for: shapeId).flatMap { i in
                                         state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
                                     }).flatMap { state.screenshotImages[$0] },

@@ -181,6 +181,27 @@ struct AppStateTests {
         #expect(state.rows[0].isLabelManuallySet == false)
     }
 
+    @Test func continuousRowEditComposesPendingBackgroundChanges() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows[0].id
+        state.continuousRowEditLastApply = CFAbsoluteTimeGetCurrent()
+
+        var firstConfig = state.rows[0].gradientConfig
+        firstConfig.centerX = 0.25
+        state.updateRowContinuous(rowId) { $0.gradientConfig = firstConfig }
+
+        var secondConfig = try #require(state.continuousRowEditWorkingRow).gradientConfig
+        secondConfig.centerY = 0.75
+        state.updateRowContinuous(rowId) { $0.gradientConfig = secondConfig }
+
+        state.flushPendingContinuousRowEdit()
+        #expect(state.rows[0].gradientConfig.centerX == 0.25)
+        #expect(state.rows[0].gradientConfig.centerY == 0.75)
+
+        state.finishContinuousRowEditIfNeeded()
+    }
+
     // MARK: - Shape operations
 
     @Test func addShapeAppendsAndSelects() {

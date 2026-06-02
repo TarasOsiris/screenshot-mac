@@ -137,6 +137,91 @@ extension AppState {
         scheduleSave()
     }
 
+    /// Mutate a row without registering undo on every call — undo is captured once
+    /// at the start of a burst and finalized after edits stop (debounced). A working
+    /// row composes all in-flight changes while visible row updates are throttled to
+    /// ~30fps, so delayed flushes cannot replay stale intermediate values.
+    func updateRowContinuous(_ rowId: UUID, actionName: String = "Edit Background", _ mutate: @escaping (inout ScreenshotRow) -> Void) {
+        guard let idx = rowIndex(for: rowId) else { return }
+
+        if let activeId = continuousRowEditId, activeId != rowId {
+            finishContinuousRowEditIfNeeded()
+        }
+        if continuousRowEditBaseRow == nil {
+            continuousRowEditBaseRow = rows[idx]
+            continuousRowEditBaseLocaleState = localeState
+            continuousRowEditId = rowId
+        }
+        // Reflect the latest edit so the coalesced undo entry isn't mislabeled when a
+        // burst mixes sources (e.g. row background then per-template override).
+        continuousRowEditActionName = actionName
+        var workingRow = continuousRowEditWorkingRow ?? rows[idx]
+        mutate(&workingRow)
+        continuousRowEditWorkingRow = workingRow
+        continuousRowEditHasPendingApply = true
+
+        let now = CFAbsoluteTimeGetCurrent()
+        let interval = Self.continuousEditInterval
+        if now - continuousRowEditLastApply >= interval {
+            applyContinuousRowEdit(rowId)
+            continuousRowEditLastApply = now
+            continuousRowEditFlushTask?.cancel()
+            continuousRowEditFlushTask = nil
+        } else {
+            if continuousRowEditFlushTask == nil {
+                let task = DispatchWorkItem { [weak self] in
+                    self?.flushPendingContinuousRowEdit()
+                }
+                continuousRowEditFlushTask = task
+                let delay = interval - (now - continuousRowEditLastApply)
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: task)
+            }
+        }
+
+        continuousRowEditUndoTask?.cancel()
+        let undoTask = DispatchWorkItem { [weak self] in
+            self?.finishContinuousRowEditIfNeeded()
+        }
+        continuousRowEditUndoTask = undoTask
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.continuousUndoDebounceDelay, execute: undoTask)
+    }
+
+    @discardableResult
+    private func applyContinuousRowEdit(_ rowId: UUID) -> Bool {
+        guard continuousRowEditHasPendingApply,
+              let row = continuousRowEditWorkingRow,
+              let idx = rowIndex(for: rowId)
+        else { return false }
+        rows[idx] = row
+        continuousRowEditHasPendingApply = false
+        scheduleSave()
+        return true
+    }
+
+    func flushPendingContinuousRowEdit() {
+        guard let rowId = continuousRowEditId else { return }
+        let didApply = applyContinuousRowEdit(rowId)
+        continuousRowEditFlushTask?.cancel()
+        continuousRowEditFlushTask = nil
+        if didApply {
+            continuousRowEditLastApply = CFAbsoluteTimeGetCurrent()
+        }
+    }
+
+    func finishContinuousRowEditIfNeeded() {
+        continuousRowEditUndoTask?.cancel()
+        continuousRowEditUndoTask = nil
+        flushPendingContinuousRowEdit()
+        guard let baseRow = continuousRowEditBaseRow else { return }
+        registerUndoForRowWithBase(continuousRowEditActionName, baseRow: baseRow, baseLocaleState: continuousRowEditBaseLocaleState)
+        continuousRowEditBaseRow = nil
+        continuousRowEditBaseLocaleState = nil
+        continuousRowEditId = nil
+        continuousRowEditWorkingRow = nil
+        continuousRowEditHasPendingApply = false
+        continuousRowEditLastApply = 0
+    }
+
     func moveRowUp(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }), idx > 0 else { return }
         registerUndo("Move Row Up")

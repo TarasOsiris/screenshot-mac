@@ -58,6 +58,29 @@ struct TemplateControlBar: View {
         template.backgroundStyle == .image &&
         backgroundPreviewImage == nil
     }
+
+    /// Routes per-template background writes through `updateRowContinuous` so a drag
+    /// burst (gradient stops/angle/center, image sliders) collapses into a single
+    /// undo entry instead of one full-row snapshot per tick.
+    private func continuousTemplateBinding<T>(_ keyPath: WritableKeyPath<ScreenshotTemplate, T>) -> Binding<T> {
+        Binding(
+            get: {
+                if state.continuousRowEditId == row.id,
+                   let workingRow = state.continuousRowEditWorkingRow,
+                   index < workingRow.templates.count {
+                    return workingRow.templates[index][keyPath: keyPath]
+                }
+                return template[keyPath: keyPath]
+            },
+            set: { newValue in
+                let templateIndex = index
+                state.updateRowContinuous(row.id, actionName: "Edit Template") { r in
+                    guard templateIndex < r.templates.count else { return }
+                    r.templates[templateIndex][keyPath: keyPath] = newValue
+                }
+            }
+        )
+    }
     private var backgroundButtonHelp: LocalizedStringKey {
         if isImageBackgroundMissing {
             return "Background override (image not selected)"
@@ -167,8 +190,8 @@ struct TemplateControlBar: View {
                             BackgroundEditor(
                                 backgroundStyle: $template.backgroundStyle,
                                 bgColor: $template.bgColor,
-                                gradientConfig: $template.gradientConfig,
-                                backgroundImageConfig: $template.backgroundImageConfig,
+                                gradientConfig: continuousTemplateBinding(\.gradientConfig),
+                                backgroundImageConfig: continuousTemplateBinding(\.backgroundImageConfig),
                                 backgroundImage: backgroundPreviewImage,
                                 onChanged: onSave,
                                 onPickImage: onPickBackgroundImage,

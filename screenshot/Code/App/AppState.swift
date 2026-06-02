@@ -121,6 +121,18 @@ final class AppState {
     @ObservationIgnored var continuousEditPending: CanvasShapeModel?
     @ObservationIgnored var continuousEditFlushTask: DispatchWorkItem?
     @ObservationIgnored var continuousEditShapeId: UUID?
+    // Row-level continuous edits (e.g. dragging gradient stops/angle/center or
+    // background image sliders): capture undo once per burst, debounce a single
+    // undo registration instead of one per drag tick.
+    @ObservationIgnored var continuousRowEditUndoTask: DispatchWorkItem?
+    @ObservationIgnored var continuousRowEditBaseRow: ScreenshotRow?
+    @ObservationIgnored var continuousRowEditBaseLocaleState: LocaleState?
+    @ObservationIgnored var continuousRowEditId: UUID?
+    @ObservationIgnored var continuousRowEditActionName: String = "Edit Background"
+    @ObservationIgnored var continuousRowEditLastApply: CFAbsoluteTime = 0
+    @ObservationIgnored var continuousRowEditWorkingRow: ScreenshotRow?
+    @ObservationIgnored var continuousRowEditHasPendingApply = false
+    @ObservationIgnored var continuousRowEditFlushTask: DispatchWorkItem?
     @ObservationIgnored var zoomPersistTask: DispatchWorkItem?
 
     /// Single-selection convenience: returns the sole selected shape ID, or nil.
@@ -359,6 +371,16 @@ final class AppState {
         continuousEditFlushTask = nil
         continuousEditPending = nil
         resetContinuousEditState()
+        continuousRowEditUndoTask?.cancel()
+        continuousRowEditUndoTask = nil
+        continuousRowEditFlushTask?.cancel()
+        continuousRowEditFlushTask = nil
+        continuousRowEditWorkingRow = nil
+        continuousRowEditHasPendingApply = false
+        continuousRowEditBaseRow = nil
+        continuousRowEditBaseLocaleState = nil
+        continuousRowEditId = nil
+        continuousRowEditLastApply = 0
     }
 
     func resetContinuousEditState() {
@@ -369,6 +391,8 @@ final class AppState {
     }
 
     func finishContinuousEditIfNeeded() {
+        finishContinuousRowEditIfNeeded()
+
         guard continuousEditBaseRow != nil
             || continuousEditPending != nil
             || continuousEditUndoTask != nil

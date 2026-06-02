@@ -45,7 +45,9 @@ extension AppState {
         scheduleSave()
     }
 
-    private static let continuousEditInterval: CFAbsoluteTime = 1.0 / 30
+    // Shared by the shape- and row-level continuous-edit paths (AppState+Rows).
+    static let continuousEditInterval: CFAbsoluteTime = 1.0 / 30
+    static let continuousUndoDebounceDelay: TimeInterval = 0.5
 
     /// Update shape without registering undo on every call — undo is captured once
     /// at the start and finalized after changes stop (debounced). Throttled to ~30fps
@@ -90,7 +92,7 @@ extension AppState {
             self.resetContinuousEditState()
         }
         continuousEditUndoTask = undoTask
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: undoTask)
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.continuousUndoDebounceDelay, execute: undoTask)
     }
 
     func flushPendingContinuousEdit() {

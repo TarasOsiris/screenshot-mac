@@ -188,8 +188,8 @@ struct InspectorPanel: View {
             BackgroundEditor(
                 backgroundStyle: safeRowBinding(rowId, keyPath: \.backgroundStyle, default: .color),
                 bgColor: safeRowBinding(rowId, keyPath: \.bgColor, default: .blue),
-                gradientConfig: safeRowBinding(rowId, keyPath: \.gradientConfig, default: GradientConfig()),
-                backgroundImageConfig: safeRowBinding(rowId, keyPath: \.backgroundImageConfig, default: BackgroundImageConfig()),
+                gradientConfig: continuousRowBinding(rowId, keyPath: \.gradientConfig, default: GradientConfig()),
+                backgroundImageConfig: continuousRowBinding(rowId, keyPath: \.backgroundImageConfig, default: BackgroundImageConfig()),
                 backgroundImage: state.rows[rowIndex].backgroundImageConfig.fileName.flatMap { state.screenshotImages[$0] },
                 onChanged: { },
                 // macOS file-panel path; on iPad BackgroundImageEditor picks via ImageSourceMenu
@@ -380,6 +380,24 @@ struct InspectorPanel: View {
                 guard let idx = state.rowIndex(for: rowId) else { return }
                 state.rows[idx][keyPath: keyPath] = newValue
                 state.scheduleSave()
+            }
+        )
+    }
+
+    /// Like `safeRowBinding` but routes writes through `updateRowContinuous`, so a
+    /// drag burst (gradient stops/angle/center, image sliders) collapses into one
+    /// undo entry instead of registering a full-row snapshot per tick.
+    private func continuousRowBinding<T>(_ rowId: UUID, keyPath: WritableKeyPath<ScreenshotRow, T>, default defaultValue: T) -> Binding<T> {
+        Binding(
+            get: {
+                if state.continuousRowEditId == rowId, let row = state.continuousRowEditWorkingRow {
+                    return row[keyPath: keyPath]
+                }
+                guard let idx = state.rowIndex(for: rowId) else { return defaultValue }
+                return state.rows[idx][keyPath: keyPath]
+            },
+            set: { newValue in
+                state.updateRowContinuous(rowId) { $0[keyPath: keyPath] = newValue }
             }
         )
     }
