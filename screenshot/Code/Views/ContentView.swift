@@ -274,25 +274,26 @@ struct ContentView: View {
                 }
             }
 
-            // View / output section: zoom + inspector, divided from the export action.
+            // View / output section: zoom, divided from the export action.
             // An id-based toolbar requires ToolbarItem (not ToolbarItemGroup), so the
             // sub-groups live inside one item's HStack with dividers.
             ToolbarItem(id: "iPadViewControls", placement: .primaryAction) {
                 HStack(spacing: 8) {
                     iPadZoomOutButton
-                    iPadZoomLevelMenu
                     iPadZoomInButton
-
-                    Divider()
-                        .frame(height: 20)
-
-                    inspectorToggleButton
 
                     Divider()
                         .frame(height: 20)
 
                     iPadExportControl
                 }
+            }
+
+            // Inspector toggle is a separate, rightmost round button.
+            ToolbarItem(id: "iPadInspectorToggle", placement: .primaryAction) {
+                inspectorToggleButton
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.circle)
             }
             #endif
 
@@ -638,38 +639,6 @@ struct ContentView: View {
         }
         .disabled(state.zoomLevel >= ZoomConstants.max)
         .help("Zoom in")
-    }
-
-    // The big +/- buttons step zoom but, unlike the macOS ZoomControls popover, give no
-    // percentage readout or way to fit/reset — and iPad has no keyboard shortcut for those.
-    // This tappable percentage menu restores Fit / Actual Size / preset jumps.
-    private var iPadZoomLevelMenu: some View {
-        Menu {
-            Button("Fit to Window", systemImage: "arrow.up.left.and.arrow.down.right.magnifyingglass") {
-                fitZoomToWindow()
-            }
-            Button("Actual Size", systemImage: "1.magnifyingglass") {
-                state.resetZoom()
-            }
-
-            Picker("Zoom Level", selection: iPadZoomSelection) {
-                ForEach(ZoomConstants.presets, id: \.self) { preset in
-                    Text(verbatim: "\(Int(preset * 100))%").tag(preset)
-                }
-            }
-            .pickerStyle(.inline)
-        } label: {
-            Text(verbatim: "\(Int(state.zoomLevel * 100))%")
-                .font(.body.monospacedDigit())
-                .frame(minWidth: 50)
-        }
-        .help("Zoom options")
-        .accessibilityLabel("Zoom level")
-        .accessibilityValue("\(Int(state.zoomLevel * 100)) percent")
-    }
-
-    private var iPadZoomSelection: Binding<CGFloat> {
-        Binding(get: { state.zoomLevel }, set: { state.setZoomLevel($0) })
     }
 
     private var iPadUndoButton: some View {

@@ -1255,9 +1255,6 @@
         }
       }
     },
-    "%lld percent" : {
-
-    },
     "%lld projects" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12755,9 +12752,6 @@
 
     },
     "Fit the selected row to the editor" : {
-
-    },
-    "Fit to Window" : {
 
     },
     "Fix required" : {
@@ -31026,12 +31020,6 @@
           }
         }
       }
-    },
-    "Zoom level" : {
-
-    },
-    "Zoom Level" : {
-
     },
     "Zoom options" : {
       "localizations" : {
