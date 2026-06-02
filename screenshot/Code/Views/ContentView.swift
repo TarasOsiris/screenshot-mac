@@ -267,8 +267,12 @@ struct ContentView: View {
                 inspectorToggleButton
             }
 
-            ToolbarItem(id: "iPadZoomControls", placement: .primaryAction) {
-                ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
+            ToolbarItem(id: "iPadZoomOut", placement: .primaryAction) {
+                iPadZoomOutButton
+            }
+
+            ToolbarItem(id: "iPadZoomIn", placement: .primaryAction) {
+                iPadZoomInButton
             }
             #endif
 
@@ -593,6 +597,30 @@ struct ContentView: View {
         .help(isInspectorPresented ? String(localized: "Hide inspector") : String(localized: "Show inspector"))
     }
 
+    #if os(iOS)
+    // iPad zoom is two standard-sized toolbar buttons (same tap target as the other nav-bar
+    // buttons) rather than the compact macOS ZoomControls cluster, which is too small to tap.
+    private var iPadZoomOutButton: some View {
+        Button {
+            state.zoomOut()
+        } label: {
+            Label("Zoom Out", systemImage: "minus.magnifyingglass")
+        }
+        .disabled(state.zoomLevel <= ZoomConstants.min)
+        .help("Zoom out")
+    }
+
+    private var iPadZoomInButton: some View {
+        Button {
+            state.zoomIn()
+        } label: {
+            Label("Zoom In", systemImage: "plus.magnifyingglass")
+        }
+        .disabled(state.zoomLevel >= ZoomConstants.max)
+        .help("Zoom in")
+    }
+    #endif
+
     private var exportControlGroup: some View {
         ContentExportControl(
             isExporting: isExporting,
@@ -611,29 +639,33 @@ struct ContentView: View {
     @ViewBuilder
     private var iPadExportControl: some View {
         let isDisabled = isExporting || state.rows.isEmpty
-        Group {
-            if state.localeState.locales.count > 1 {
-                Menu {
-                    Button("Export All Screenshots", systemImage: "square.and.arrow.up") {
-                        exportScreenshotsForIPad()
-                    }
-                    Menu("Export Locale", systemImage: "globe") {
-                        ForEach(state.localeState.locales) { locale in
-                            Button(locale.flagLabel) {
-                                exportScreenshotsForIPad(localeFilter: locale.code)
-                            }
-                        }
-                    }
-                } label: {
-                    iPadExportLabel
+        Menu {
+            Button("Export All Screenshots", systemImage: "square.and.arrow.up") {
+                exportScreenshotsForIPad()
+            }
+
+            Menu("Export Rows", systemImage: "rectangle.3.group") {
+                Button("Continuous", systemImage: "rectangle.split.3x1") {
+                    exportRowImages()
                 }
-            } else {
-                Button {
-                    exportScreenshotsForIPad()
-                } label: {
-                    iPadExportLabel
+                Button("Showcase", systemImage: "rectangle.stack") {
+                    exportShowcaseImages()
                 }
             }
+
+            if state.localeState.locales.count > 1 {
+                Menu("Export Locale", systemImage: "globe") {
+                    ForEach(state.localeState.locales) { locale in
+                        Button(locale.flagLabel) {
+                            exportScreenshotsForIPad(localeFilter: locale.code)
+                        }
+                    }
+                }
+            }
+        } label: {
+            iPadExportLabel
+        } primaryAction: {
+            exportScreenshotsForIPad()
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
@@ -848,7 +880,17 @@ struct ContentView: View {
     ) {
         let rowsToExport = rows ?? state.rows
         guard !rowsToExport.isEmpty else { return }
+        #if os(iOS)
+        let baseURL: URL
+        do {
+            baseURL = try ExportService.makeTempExportFolder()
+        } catch {
+            exportError = error.localizedDescription
+            return
+        }
+        #else
         guard let baseURL = resolvedExportBaseURL() else { return }
+        #endif
 
         exportSuccessTimer?.cancel()
         isExporting = true
@@ -884,10 +926,17 @@ struct ContentView: View {
                     await Task.yield()
                 }
 
+                #if os(iOS)
+                PlatformShare.present(urls: [destDir]) { completed in
+                    try? FileManager.default.removeItem(at: baseURL)
+                    if completed { showExportSuccess() }
+                }
+                #else
                 if openExportFolderOnSuccess {
                     PlatformReveal.inFileViewer([destDir])
                 }
                 showExportSuccess()
+                #endif
             } catch is CancellationError {
                 // User cancelled
             } catch {
@@ -1027,9 +1076,7 @@ struct ContentView: View {
             do {
                 let projectName = state.activeProject?.name ?? ""
                 let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
-                let tempBase = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("Export-\(UUID().uuidString)", isDirectory: true)
-                try FileManager.default.createDirectory(at: tempBase, withIntermediateDirectories: true)
+                let tempBase = try ExportService.makeTempExportFolder()
 
                 var imageCache: [String: NSImage] = [:]
                 let folderURL = try await ExportService.exportAll(
@@ -1049,8 +1096,10 @@ struct ContentView: View {
                         exportProgress = completed
                     }
                 )
-                showExportSuccess()
-                PlatformShare.present(urls: [folderURL])
+                PlatformShare.present(urls: [folderURL]) { completed in
+                    try? FileManager.default.removeItem(at: tempBase)
+                    if completed { showExportSuccess() }
+                }
             } catch is CancellationError {
                 // User cancelled — no error to show
             } catch {

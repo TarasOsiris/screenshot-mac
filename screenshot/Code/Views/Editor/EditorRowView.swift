@@ -906,14 +906,24 @@ struct EditorRowView: View {
     }
 
     private func exportRowScreenshots() {
+        // macOS picks a destination folder; iPad stages a temp folder and shares it (no Finder).
         #if os(iOS)
-        exportError = ExportService.exportUnavailableMessage
+        let folder: URL
+        do {
+            folder = try ExportService.makeTempExportFolder()
+        } catch {
+            exportError = error.localizedDescription
+            return
+        }
         #else
         guard let folder = ExportFolderService.chooseFolder() else { return }
         let didAccess = folder.startAccessingSecurityScopedResource()
+        #endif
 
         Task { @MainActor in
+            #if os(macOS)
             defer { if didAccess { folder.stopAccessingSecurityScopedResource() } }
+            #endif
 
             do {
                 let localeCode = state.localeState.activeLocaleCode
@@ -943,14 +953,17 @@ struct EditorRowView: View {
                     }
                     try await group.waitForAll()
                 }
-                #if os(macOS)
+                #if os(iOS)
+                PlatformShare.present(urls: [folder]) { _ in
+                    try? FileManager.default.removeItem(at: folder)
+                }
+                #else
                 NSWorkspace.shared.activateFileViewerSelecting([folder])
                 #endif
             } catch {
                 exportError = String(localized: "Could not export row screenshots: \(error.localizedDescription)")
             }
         }
-        #endif
     }
 
     private func exportRowImage(showcase: Bool) {

@@ -151,8 +151,7 @@ struct SvgPasteDialog: View {
     private func addSvg() {
         let trimmed = svgText.trimmingCharacters(in: .whitespacesAndNewlines)
         let sanitized = SvgHelper.sanitize(trimmed)
-        guard let data = sanitized.data(using: .utf8),
-              let image = NSImage(data: data) else {
+        guard let image = SvgHelper.renderImage(from: sanitized, useColor: useColorOverride, color: overrideColor) else {
             errorMessage = String(localized: "Invalid SVG content")
             return
         }

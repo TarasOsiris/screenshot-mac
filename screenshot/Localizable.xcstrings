@@ -6496,6 +6496,9 @@
         }
       }
     },
+    "Choose File" : {
+
+    },
     "Choose Image" : {
       "localizations" : {
         "de" : {
@@ -12019,7 +12022,7 @@
         }
       }
     },
-    "Exporting to a folder isn't available on iPad yet — export from a Mac for now." : {
+    "Exporting to a folder isn't available on iPad — use the share sheet export instead." : {
 
     },
     "Exporting with languages" : {
@@ -19040,6 +19043,9 @@
       }
     },
     "Per-template controls" : {
+
+    },
+    "Photo Library" : {
 
     },
     "Pick a font file or a folder containing all variants" : {
@@ -26988,6 +26994,9 @@
           }
         }
       }
+    },
+    "Take Photo" : {
+
     },
     "Template Error" : {
       "extractionState" : "stale",

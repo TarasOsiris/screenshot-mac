@@ -458,17 +458,27 @@ struct ExportService {
         ExportImageEncoder.encode(image, format: format)
     }
 
-    /// User-facing message for export-to-disk flows that aren't wired up on iPad yet, so the
-    /// buttons report clearly instead of silently doing nothing.
-    static let exportUnavailableMessage = String(localized: "Exporting to a folder isn't available on iPad yet — export from a Mac for now.")
+    /// Defensive fallback for any export-to-folder path that isn't reachable on iPad (the iPad
+    /// menus route through the share sheet instead). Reports clearly rather than silently no-op.
+    static let exportUnavailableMessage = String(localized: "Exporting to a folder isn't available on iPad — use the share sheet export instead.")
 
-    /// Presents a save panel and writes PNG data to disk.
+    /// Creates a unique temporary directory to stage an iPad export before handing it to the
+    /// share sheet. The OS reclaims the temp directory, so callers don't clean it up.
+    static func makeTempExportFolder() throws -> URL {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("Export-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    /// Saves a single PNG. macOS uses a save panel; iPad writes to a temp file and presents the
+    /// system share sheet (Save to Files / AirDrop), since there's no Finder or save panel.
     /// Returns an error message on failure, nil on success or user cancellation.
     @MainActor
     static func savePNGDataViaPanel(defaultName: String, data: () -> Data?) -> String? {
+        let safeName = defaultName.isEmpty ? "image" : sanitizedFileName(defaultName)
         #if os(macOS)
         let panel = NSSavePanel()
-        let safeName = defaultName.isEmpty ? "image" : sanitizedFileName(defaultName)
         panel.nameFieldStringValue = "\(safeName).png"
         panel.allowedContentTypes = [.png]
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
@@ -485,9 +495,20 @@ struct ExportService {
             return error.localizedDescription
         }
         #else
-        // iPad: save via fileExporter/share sheet is deferred to a follow-up. Report clearly
-        // rather than silently no-op.
-        return exportUnavailableMessage
+        guard let pngData = data() else {
+            return ExportError.renderFailed.localizedDescription
+        }
+        do {
+            let folder = try makeTempExportFolder()
+            let fileURL = folder.appendingPathComponent("\(safeName).png")
+            try pngData.write(to: fileURL)
+            PlatformShare.present(urls: [fileURL]) { _ in
+                try? FileManager.default.removeItem(at: folder)
+            }
+            return nil
+        } catch {
+            return error.localizedDescription
+        }
         #endif
     }
 
