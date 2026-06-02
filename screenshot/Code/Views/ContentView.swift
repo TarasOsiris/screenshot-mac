@@ -259,20 +259,32 @@ struct ContentView: View {
                     .lineLimit(1)
             }
 
-            ToolbarItem(id: "iPadExport", placement: .primaryAction) {
-                iPadExportControl
+            // History section
+            ToolbarItem(id: "iPadHistory", placement: .navigation) {
+                HStack(spacing: 2) {
+                    iPadUndoButton
+                    iPadRedoButton
+                }
             }
 
-            ToolbarItem(id: "iPadInspector", placement: .primaryAction) {
-                inspectorToggleButton
-            }
+            // View / output section: zoom + inspector, divided from the export action.
+            // An id-based toolbar requires ToolbarItem (not ToolbarItemGroup), so the
+            // sub-groups live inside one item's HStack with dividers.
+            ToolbarItem(id: "iPadViewControls", placement: .primaryAction) {
+                HStack(spacing: 8) {
+                    iPadZoomOutButton
+                    iPadZoomInButton
 
-            ToolbarItem(id: "iPadZoomOut", placement: .primaryAction) {
-                iPadZoomOutButton
-            }
+                    Divider()
+                        .frame(height: 20)
 
-            ToolbarItem(id: "iPadZoomIn", placement: .primaryAction) {
-                iPadZoomInButton
+                    inspectorToggleButton
+
+                    Divider()
+                        .frame(height: 20)
+
+                    iPadExportControl
+                }
             }
             #endif
 
@@ -619,6 +631,26 @@ struct ContentView: View {
         .disabled(state.zoomLevel >= ZoomConstants.max)
         .help("Zoom in")
     }
+
+    private var iPadUndoButton: some View {
+        Button {
+            undoManager?.undo()
+        } label: {
+            Label("Undo", systemImage: "arrow.uturn.backward")
+        }
+        .disabled(!(undoManager?.canUndo ?? false))
+        .help("Undo")
+    }
+
+    private var iPadRedoButton: some View {
+        Button {
+            undoManager?.redo()
+        } label: {
+            Label("Redo", systemImage: "arrow.uturn.forward")
+        }
+        .disabled(!(undoManager?.canRedo ?? false))
+        .help("Redo")
+    }
     #endif
 
     private var exportControlGroup: some View {
@@ -667,8 +699,6 @@ struct ContentView: View {
         } primaryAction: {
             exportScreenshotsForIPad()
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
         .disabled(isDisabled)
     }
 
@@ -680,9 +710,16 @@ struct ContentView: View {
                 Text("Exporting…")
             }
         } else {
-            Label(exportSuccess ? "Exported" : "Export",
-                  systemImage: exportSuccess ? "checkmark.circle.fill" : "square.and.arrow.up")
-                .fontWeight(.semibold)
+            // Label with a custom icon closure so the share glyph can be nudged down to
+            // the others' centerline. square.and.arrow.up reserves space above the square
+            // for the up-arrow, so it renders high; the icon closure keeps Label's adaptive
+            // icon-only collapsing while letting us offset just the glyph (not the text).
+            Label {
+                Text(exportSuccess ? "Exported" : "Export")
+            } icon: {
+                Image(systemName: exportSuccess ? "checkmark.circle.fill" : "square.and.arrow.up")
+                    .offset(y: exportSuccess ? 0 : -2)
+            }
         }
     }
     #endif

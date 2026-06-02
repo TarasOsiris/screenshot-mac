@@ -21103,6 +21103,9 @@
         }
       }
     },
+    "Redo" : {
+
+    },
     "Refresh App Store data" : {
       "localizations" : {
         "de" : {
@@ -28756,6 +28759,9 @@
           }
         }
       }
+    },
+    "Undo" : {
+
     },
     "Unlimited" : {
       "localizations" : {
