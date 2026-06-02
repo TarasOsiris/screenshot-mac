@@ -479,6 +479,24 @@ private struct BlankProjectRowCard: View {
     }
 
     private var actionButtons: some View {
+        #if os(iOS)
+        HStack(spacing: 8) {
+            rowActionButton(
+                icon: "doc.on.doc",
+                accessibilityLabel: "Duplicate row",
+                disabled: !canDuplicate,
+                action: onDuplicate
+            )
+
+            rowActionButton(
+                icon: "trash",
+                accessibilityLabel: "Delete row",
+                disabled: !canDelete,
+                role: .destructive,
+                action: onDelete
+            )
+        }
+        #else
         HStack(spacing: 4) {
             Button(action: onDuplicate) {
                 Image(systemName: "doc.on.doc")
@@ -496,7 +514,28 @@ private struct BlankProjectRowCard: View {
             .disabled(!canDelete)
             .help("Delete row")
         }
+        #endif
     }
+
+    #if os(iOS)
+    private func rowActionButton(
+        icon: String,
+        accessibilityLabel: LocalizedStringKey,
+        disabled: Bool,
+        role: ButtonRole? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(role: role, action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.bordered)
+        .disabled(disabled)
+        .accessibilityLabel(accessibilityLabel)
+    }
+    #endif
 }
 
 private extension View {

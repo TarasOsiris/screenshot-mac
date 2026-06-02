@@ -699,6 +699,8 @@ struct ContentView: View {
         } primaryAction: {
             exportScreenshotsForIPad()
         }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.regular)
         .disabled(isDisabled)
     }
 
