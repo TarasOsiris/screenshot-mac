@@ -3,17 +3,19 @@ import SwiftUI
 struct ActionButton: View {
     let icon: String
     let tooltip: LocalizedStringKey
-    var iconSize: CGFloat = 11
-    var frameSize: CGFloat = 22
+    var iconSize: CGFloat = UIMetrics.ActionButton.iconSize
+    var frameSize: CGFloat = UIMetrics.ActionButton.frameSize
     var isDestructive: Bool = false
     var disabled: Bool = false
     let action: () -> Void
+
+    private var tapTarget: CGFloat { max(frameSize, UIMetrics.ActionButton.minTouchTarget) }
 
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: iconSize))
-                .frame(width: frameSize, height: frameSize)
+                .frame(width: tapTarget, height: tapTarget)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)

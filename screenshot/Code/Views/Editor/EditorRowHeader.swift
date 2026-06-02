@@ -25,9 +25,14 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: row.isCollapsed ? "chevron.right" : "chevron.down")
+                #if os(macOS)
                 .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
                 .frame(width: 12, height: 12)
+                #else
+                .font(.system(size: 15, weight: .medium))
+                .frame(width: 28, height: UIMetrics.ActionButton.frameSize)
+                #endif
+                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
                 .contentShape(Rectangle())
                 .onTapGesture(perform: onToggleCollapsed)
 
@@ -76,7 +81,9 @@ struct EditorRowHeader<RowMenuContent: View>: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            #if os(macOS)
             .controlSize(.small)
+            #endif
             .fixedSize()
             .help(isPreviewMode ? "Switch to Edit" : "Switch to Preview")
 
@@ -98,8 +105,14 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                     rowMenuContent()
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                        #if os(macOS)
                         .font(.system(size: 13))
+                        #else
+                        .font(.system(size: 20))
+                        .frame(width: UIMetrics.ActionButton.frameSize, height: UIMetrics.ActionButton.frameSize)
+                        #endif
                         .foregroundStyle(.secondary)
+                        .contentShape(Rectangle())
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)

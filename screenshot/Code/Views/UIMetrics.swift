@@ -106,4 +106,20 @@ enum UIMetrics {
     enum IconButton {
         static let frameSize: CGFloat = 24
     }
+
+    /// Default geometry for `ActionButton` and the manual icon buttons that mimic it.
+    /// iPad gets larger glyphs and a 40pt touch-target floor (Apple HIG); macOS keeps the
+    /// dense pointer-precision sizing unchanged.
+    enum ActionButton {
+        #if os(macOS)
+        static let iconSize: CGFloat = 11
+        static let frameSize: CGFloat = 22
+        /// Minimum tap target enforced even when a smaller `frameSize` is passed. 0 = no floor on macOS.
+        static let minTouchTarget: CGFloat = 0
+        #else
+        static let iconSize: CGFloat = 16
+        static let frameSize: CGFloat = 40
+        static let minTouchTarget: CGFloat = 40
+        #endif
+    }
 }

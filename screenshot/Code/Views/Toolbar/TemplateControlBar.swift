@@ -31,7 +31,25 @@ struct TemplateControlBar: View {
     @State private var isPreviewing = false
 
     private var canDelete: Bool { row.templates.count > 1 }
-    private var isCompact: Bool { row.displayWidth(zoom: zoom) < 200 }
+
+    // The bar is pinned to the (zoom-scaled) column width, so at low zoom it can get narrower
+    // than its buttons — especially with the larger iPad touch targets. Collapse adaptively:
+    // full → just preview/delete/menu → just the (complete) ellipsis menu.
+    private enum BarDensity { case full, compact, minimal }
+    private var density: BarDensity {
+        let buttonW = UIMetrics.ActionButton.frameSize
+        let spacing: CGFloat = 6
+        let available = row.displayWidth(zoom: zoom) - 8 // horizontal padding (4 each side)
+        func needed(_ count: Int) -> CGFloat {
+            CGFloat(count) * buttonW + CGFloat(max(0, count - 1)) * spacing
+        }
+        let trailing = (canDelete ? 1 : 0) + 1 // trash + ellipsis
+        if available >= needed(5 + trailing) { return .full }       // eye + download + left + right + bg
+        if available >= needed(1 + trailing) { return .compact }    // eye + trash + ellipsis
+        return .minimal                                             // ellipsis only
+    }
+    private var showsFullGroup: Bool { density == .full }
+    private var showsPrimaryButtons: Bool { density != .minimal }
     private var backgroundPreviewImage: NSImage? {
         template.backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
     }
@@ -57,17 +75,19 @@ struct TemplateControlBar: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            ActionButton(icon: "eye", tooltip: "Preview", disabled: isPreviewing) {
-                previewScreenshot()
-            }
-            .opacity(isPreviewing ? 0 : 1)
-            .overlay {
-                if isPreviewing {
-                    ProgressView()
-                        .controlSize(.small)
+            if showsPrimaryButtons {
+                ActionButton(icon: "eye", tooltip: "Preview", disabled: isPreviewing) {
+                    previewScreenshot()
+                }
+                .opacity(isPreviewing ? 0 : 1)
+                .overlay {
+                    if isPreviewing {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
                 }
             }
-            if !isCompact {
+            if showsFullGroup {
                 ActionButton(icon: "arrow.down.circle", tooltip: "Download") {
                     downloadScreenshot()
                 }
@@ -110,10 +130,10 @@ struct TemplateControlBar: View {
                             }
                         } else {
                             Image(systemName: "paintbrush")
-                                .font(.system(size: 11))
+                                .font(.system(size: UIMetrics.ActionButton.iconSize))
                         }
                     }
-                    .frame(width: 22, height: 22)
+                    .frame(width: UIMetrics.ActionButton.frameSize, height: UIMetrics.ActionButton.frameSize)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
@@ -185,7 +205,7 @@ struct TemplateControlBar: View {
             }
 
             Spacer()
-            if canDelete {
+            if canDelete && showsPrimaryButtons {
                 ActionButton(icon: "trash", tooltip: "Delete Screenshot", isDestructive: true) {
                     confirmDeleteTemplate()
                 }
@@ -228,8 +248,12 @@ struct TemplateControlBar: View {
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
+                    #if os(macOS)
                     .font(.system(size: UIMetrics.FontSize.body))
-                    .frame(width: 22, height: 22)
+                    #else
+                    .font(.system(size: 20))
+                    #endif
+                    .frame(width: UIMetrics.ActionButton.frameSize, height: UIMetrics.ActionButton.frameSize)
                     .foregroundStyle(.secondary)
                     .contentShape(Rectangle())
             }
