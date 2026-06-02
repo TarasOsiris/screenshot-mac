@@ -2,30 +2,25 @@
 import SwiftUI
 
 /// iPad root: a tab bar with Projects (a home screen listing every project) and Settings.
-/// Opening a project pushes the editor (`AppRootView`) onto the Projects stack and hides
-/// the tab bar; the back button returns here.
+/// Opening a project pushes the editor (`AppRootView`) onto an *outer* NavigationStack that
+/// wraps the whole tab view — so the push covers the entire tab view as one unit (the tab bar
+/// is never hidden/re-shown, which made the tab items flash/reflow on return) while keeping a
+/// smooth, UIKit-driven horizontal slide that doesn't freeze the way an inline SwiftUI
+/// transition does (it builds the heavy editor synchronously inside the animation).
 struct iPadRootView: View {
     @Environment(AppState.self) private var state
     @Environment(StoreService.self) private var store
     @State private var openedProjectId: UUID?
 
     var body: some View {
-        TabView {
-            Tab("Projects", systemImage: "square.grid.2x2") {
-                NavigationStack {
-                    ProjectsView(onOpen: openProject)
-                        .navigationDestination(isPresented: openedBinding) {
-                            AppRootView()
-                                .toolbar(.hidden, for: .tabBar)
-                        }
+        NavigationStack {
+            tabView
+                // Outer stack reserves an empty nav bar around the tab view; hide it so only the
+                // tabs' own inner nav bars (Projects/Settings titles + toolbars) show.
+                .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(isPresented: openedBinding) {
+                    AppRootView()
                 }
-            }
-
-            Tab("Settings", systemImage: "gearshape") {
-                NavigationStack {
-                    IPadSettingsView()
-                }
-            }
         }
         // If the active project changes underneath an open editor (e.g. an iCloud reload
         // dropped or replaced it), pop back to Projects instead of silently showing a
@@ -55,9 +50,35 @@ struct iPadRootView: View {
         )
     }
 
+    private var tabView: some View {
+        TabView {
+            Tab("Projects", systemImage: "square.grid.2x2") {
+                NavigationStack {
+                    ProjectsView(onOpen: openProject)
+                }
+            }
+
+            Tab("Settings", systemImage: "gearshape") {
+                NavigationStack {
+                    IPadSettingsView()
+                }
+            }
+        }
+    }
+
     private func openProject(_ id: UUID) {
-        state.selectProject(id)
+        // Reveal the editor immediately so the loading overlay (driven by
+        // `isOpeningProject`) paints right away — the menu must never look frozen
+        // while a large project decodes.
         openedProjectId = id
+        guard id != state.activeProjectId else { return }  // already loaded, no reload
+        state.beginProjectOpening()
+        // Defer the switch one runloop turn so the push + overlay render before the
+        // (brief, main-thread) save of the previously-active project runs.
+        Task { @MainActor in
+            await Task.yield()
+            state.selectProject(id)
+        }
     }
 }
 

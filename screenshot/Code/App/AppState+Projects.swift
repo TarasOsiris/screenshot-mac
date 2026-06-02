@@ -79,9 +79,13 @@ extension AppState {
         teardownActiveProject()
         activeProjectId = id
         projectOpenTask = Task { @MainActor [weak self] in
-            await Task.yield()
-            guard let self, !Task.isCancelled else { return }
-            self.loadProjectContents(for: id)
+            // Decode off the main thread so the loading spinner keeps animating and
+            // the project list (iPad) doesn't freeze while a large project.json is read.
+            let data = await Task.detached(priority: .userInitiated) {
+                PersistenceService.loadProject(id)
+            }.value
+            guard let self, !Task.isCancelled, self.activeProjectId == id else { return }
+            self.loadProjectContents(for: id, preloaded: data)
             self.projectOpenTask = nil
         }
     }
@@ -155,7 +159,7 @@ extension AppState {
         PersistenceService.copyProjectFromURL(template.url, to: id)
 
         // Reload from disk (font registration before row load, matching switchToProject order)
-        loadProjectContents(for: id)
+        loadProjectContents(for: id, preloaded: PersistenceService.loadProject(id))
     }
 
     func deleteProject(_ id: UUID) {
@@ -197,10 +201,10 @@ extension AppState {
         isOpeningProject = false
     }
 
-    private func loadProjectContents(for id: UUID) {
+    private func loadProjectContents(for id: UUID, preloaded: ProjectData?) {
         guard activeProjectId == id else { return }
         loadCustomFonts()
-        loadRowsForProject(id)
+        loadRowsForProject(id, preloaded: preloaded)
         // The chrome (locale bar, row headers) and canvas only need the project
         // *structure* — rows + localeState — which is now applied. Reveal the UI
         // immediately so a project with many languages / large images doesn't keep

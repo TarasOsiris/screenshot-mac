@@ -210,8 +210,8 @@ extension AppState {
         }
     }
 
-    func loadRowsForProject(_ id: UUID) {
-        if let data = PersistenceService.loadProject(id) {
+    func loadRowsForProject(_ id: UUID, preloaded: ProjectData? = nil) {
+        if let data = preloaded ?? PersistenceService.loadProject(id) {
             applyProjectData(data, for: id)
         } else {
             rows = [makeDefaultRow()]

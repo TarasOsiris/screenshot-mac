@@ -335,13 +335,17 @@ struct InspectorPanel: View {
             HStack(spacing: 4) {
                 Text("Visibility")
                 Spacer()
-                Button("Show All") { setVisibility(rowId: rowId, visible: true) }
-                Button("Hide All") { setVisibility(rowId: rowId, visible: false) }
+                visibilityHeaderButton("Show All") { setVisibility(rowId: rowId, visible: true) }
+                visibilityHeaderButton("Hide All") { setVisibility(rowId: rowId, visible: false) }
             }
+        }
+    }
+
+    private func visibilityHeaderButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(title, action: action)
             .buttonStyle(.plain)
             .font(.system(size: UIMetrics.FontSize.inlineLabel))
             .foregroundStyle(.secondary)
-        }
     }
 
     private func setVisibility(rowId: UUID, visible: Bool) {
