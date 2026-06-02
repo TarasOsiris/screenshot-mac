@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		760E3F392F7298FE00034CDB /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 76RC00022F5A00000072F7A4 /* RevenueCat */; };
 		760E3F3A2F7298FE00034CDB /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 76RC00032F5A00000072F7A4 /* RevenueCatUI */; };
+		76SD00032F5A00000072F7A4 /* SwiftDraw in Frameworks */ = {isa = PBXBuildFile; productRef = 76SD00022F5A00000072F7A4 /* SwiftDraw */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +47,7 @@
 			files = (
 				760E3F3A2F7298FE00034CDB /* RevenueCatUI in Frameworks */,
 				760E3F392F7298FE00034CDB /* RevenueCat in Frameworks */,
+				76SD00032F5A00000072F7A4 /* SwiftDraw in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,6 +101,7 @@
 			packageProductDependencies = (
 				76RC00022F5A00000072F7A4 /* RevenueCat */,
 				76RC00032F5A00000072F7A4 /* RevenueCatUI */,
+				76SD00022F5A00000072F7A4 /* SwiftDraw */,
 			);
 			productName = screenshot;
 			productReference = 768DF30B2F596DAB0072F7A4 /* Screenshot Bro.app */;
@@ -164,6 +167,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				76RC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				76SD00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "SwiftDraw" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 768DF30C2F596DAB0072F7A4 /* Products */;
@@ -520,6 +524,14 @@
 				minimumVersion = 5.0.0;
 			};
 		};
+		76SD00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "SwiftDraw" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/swhitty/SwiftDraw.git";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.27.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -532,6 +544,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 76RC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCatUI;
+		};
+		76SD00022F5A00000072F7A4 /* SwiftDraw */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 76SD00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "SwiftDraw" */;
+			productName = SwiftDraw;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
