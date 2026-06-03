@@ -3,6 +3,7 @@ import AppKit
 import SwiftUI
 @testable import Screenshot_Bro
 
+@Suite(.serialized)
 struct RichTextUtilsTests {
 
     private func rgbaComponents(_ color: NSColor?) -> (CGFloat, CGFloat, CGFloat, CGFloat)? {

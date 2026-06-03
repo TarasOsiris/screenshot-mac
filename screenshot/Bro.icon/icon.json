@@ -5,13 +5,12 @@
     },
     {
       "appearance" : "dark",
-      "value" : {
-        "solid" : "extended-gray:1.00000,1.00000"
-      }
+      "value" : "automatic"
     }
   ],
   "groups" : [
     {
+      "hidden" : false,
       "layers" : [
         {
           "fill" : "automatic",
@@ -28,6 +27,7 @@
           }
         }
       ],
+      "lighting" : "individual",
       "shadow" : {
         "kind" : "neutral",
         "opacity" : 0.5

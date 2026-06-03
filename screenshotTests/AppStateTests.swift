@@ -297,7 +297,10 @@ struct AppStateTests {
         let createdDevice = try #require(devices.first {
             updatedRow.owningTemplateIndex(for: $0) == 2
         })
-        #expect(createdDevice.deviceFrameId == commonFrame.id)
+        let createdFrameId = try #require(createdDevice.deviceFrameId)
+        let createdFrame = try #require(DeviceFrameCatalog.frame(for: createdFrameId))
+        #expect(createdFrame.modelName == commonFrame.modelName)
+        #expect(createdFrame.isLandscape == commonFrame.isLandscape)
         #expect(createdDevice.screenshotFileName != nil)
     }
 
