@@ -6,8 +6,15 @@ struct GradientStopEditor: View {
     @State private var selectedStopId: UUID?
     @FocusState private var isEditorFocused: Bool
 
-    private let barHeight: CGFloat = 24
     private let handleSize: CGFloat = 14
+    #if os(macOS)
+    private let barHeight: CGFloat = 24
+    private let handleHitTarget: CGFloat = 14
+    #else
+    // iPad: taller bar (easier tap-to-add) and a wider transparent grab area per handle.
+    private let barHeight: CGFloat = 36
+    private let handleHitTarget: CGFloat = 32
+    #endif
 
     var body: some View {
         VStack(spacing: 8) {
@@ -35,6 +42,8 @@ struct GradientStopEditor: View {
                     ForEach(config.stops) { stop in
                         let isSelected = selectedStopId == stop.id
                         stopHandle(stop: stop, isSelected: isSelected)
+                            .frame(width: handleHitTarget, height: handleHitTarget)
+                            .contentShape(Circle())
                             .position(
                                 x: stop.location * barWidth,
                                 y: barHeight / 2

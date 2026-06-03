@@ -13,6 +13,13 @@ struct ShapeFillSwatchButton: View {
     let onRemoveImage: () -> Void
     let onDropImage: (NSImage) -> Void
 
+    // iPad needs extra width so the enlarged gradient angle wheel + preset row fit on one line.
+    #if os(macOS)
+    private static let popoverWidth: CGFloat = 260
+    #else
+    private static let popoverWidth: CGFloat = 300
+    #endif
+
     var body: some View {
         Button {
             isPresented.toggle()
@@ -42,7 +49,7 @@ struct ShapeFillSwatchButton: View {
                 )
             }
             .padding(12)
-            .frame(width: 260)
+            .frame(width: Self.popoverWidth)
         }
     }
 

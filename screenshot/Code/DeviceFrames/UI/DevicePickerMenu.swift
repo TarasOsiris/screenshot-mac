@@ -460,6 +460,15 @@ private struct DeviceFrameColorChip: View {
     let isSelected: Bool
     let compact: Bool
 
+    // iPad enlarges the bare swatch and gives it a 40pt tap target; macOS keeps the dense size.
+    #if os(macOS)
+    private static let compactSwatchSize: CGFloat = 16
+    private static let compactHitTarget: CGFloat = 16
+    #else
+    private static let compactSwatchSize: CGFloat = 28
+    private static let compactHitTarget: CGFloat = 40
+    #endif
+
     var body: some View {
         if compact {
             compactChip
@@ -525,6 +534,8 @@ private struct DeviceFrameColorChip: View {
     }
 
     private var compactChip: some View {
-        swatch(size: 16)
+        swatch(size: Self.compactSwatchSize)
+            .frame(width: Self.compactHitTarget, height: Self.compactHitTarget)
+            .contentShape(Circle())
     }
 }

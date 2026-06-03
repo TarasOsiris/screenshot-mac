@@ -13,6 +13,22 @@ struct BackgroundEditor: View {
     var onDropImage: ((NSImage) -> Void)?
     var onDropSvg: ((String) -> Void)?
 
+    // iPad grows the gradient controls' tap targets; macOS keeps the dense pointer sizing.
+    // The angle presets stay narrow (8 share one row beside the wheel) but get a taller hit area.
+    #if os(macOS)
+    private static let gradientPresetTileHeight: CGFloat = 24
+    private static let angleWheelSize: CGFloat = 36
+    private static let anglePresetButtonWidth: CGFloat = 14
+    private static let anglePresetButtonHeight: CGFloat = 14
+    private static let anglePresetGlyphSize: CGFloat = 7
+    #else
+    private static let gradientPresetTileHeight: CGFloat = 40
+    private static let angleWheelSize: CGFloat = 44
+    private static let anglePresetButtonWidth: CGFloat = 22
+    private static let anglePresetButtonHeight: CGFloat = 36
+    private static let anglePresetGlyphSize: CGFloat = 10
+    #endif
+
     var body: some View {
         Picker("Style", selection: $backgroundStyle.onSet { onChanged() }) {
             Text("Color").tag(BackgroundStyle.color)
@@ -22,7 +38,7 @@ struct BackgroundEditor: View {
         .pickerStyle(.segmented)
         .labelsHidden()
         .frame(maxWidth: .infinity)
-        .controlSize(.mini)
+        .iPadTappableSegmentedControl()
 
         switch backgroundStyle {
         case .color:
@@ -45,7 +61,7 @@ struct BackgroundEditor: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(maxWidth: .infinity)
-                .controlSize(.mini)
+                .iPadTappableSegmentedControl()
 
                 GradientStopEditor(
                     config: $gradientConfig,
@@ -64,7 +80,7 @@ struct BackgroundEditor: View {
                         } label: {
                             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
                                 .fill(preset.config.linearGradient)
-                                .frame(height: 24)
+                                .frame(height: Self.gradientPresetTileHeight)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
                                         .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.standard)
@@ -108,7 +124,7 @@ struct BackgroundEditor: View {
             GradientAngleWheel(
                 angle: $gradientConfig.angle.onSet { onChanged() }
             )
-            .frame(width: 36, height: 36)
+            .frame(width: Self.angleWheelSize, height: Self.angleWheelSize)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(Int(gradientConfig.angle))°")
@@ -122,9 +138,9 @@ struct BackgroundEditor: View {
                             onChanged()
                         } label: {
                             Image(systemName: "arrow.up")
-                                .font(.system(size: 7))
+                                .font(.system(size: Self.anglePresetGlyphSize))
                                 .rotationEffect(.degrees(Double(a)))
-                                .frame(width: 14, height: 14)
+                                .frame(width: Self.anglePresetButtonWidth, height: Self.anglePresetButtonHeight)
                                 .background(
                                     RoundedRectangle(cornerRadius: 2)
                                         .fill(Int(gradientConfig.angle.rounded()) == a ? Color.accentColor.opacity(UIMetrics.Opacity.accentSelection) : Color.clear)
@@ -168,6 +184,7 @@ struct BackgroundEditor: View {
                 } label: {
                     Text("Reset")
                         .font(.system(size: UIMetrics.FontSize.hint))
+                        .iPadResetTapTarget()
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
@@ -282,7 +299,7 @@ struct BackgroundImageEditor: View {
         .pickerStyle(.segmented)
         .labelsHidden()
         .frame(maxWidth: .infinity)
-        .controlSize(.mini)
+        .iPadTappableSegmentedControl()
         .disabled(!hasImage)
 
         sliderRow("Opacity", value: $config.opacity)
@@ -416,5 +433,29 @@ struct BackgroundImageEditor: View {
         }
 
         return false
+    }
+}
+
+private extension View {
+    /// Segmented pickers use the dense `.mini` size on macOS but a tappable `.regular` on iPad.
+    @ViewBuilder
+    func iPadTappableSegmentedControl() -> some View {
+        #if os(macOS)
+        controlSize(.mini)
+        #else
+        controlSize(.regular)
+        #endif
+    }
+
+    /// Pads a text-only button up to the 40pt touch-target floor on iPad; no-op on macOS.
+    @ViewBuilder
+    func iPadResetTapTarget() -> some View {
+        #if os(macOS)
+        self
+        #else
+        padding(.horizontal, 10)
+            .frame(minHeight: 40)
+            .contentShape(Rectangle())
+        #endif
     }
 }

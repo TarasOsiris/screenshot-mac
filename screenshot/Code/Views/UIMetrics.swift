@@ -27,10 +27,16 @@ enum UIMetrics {
     }
 
     enum ColorSwatch {
+        #if os(macOS)
         /// Inline ColorPicker in toolbars and outline controls.
         static let inline: CGFloat = 30
         /// Fill swatch button preview.
         static let preview: CGFloat = 24
+        #else
+        // iPad gets larger swatches so the fill/color taps clear the touch-target floor.
+        static let inline: CGFloat = 36
+        static let preview: CGFloat = 40
+        #endif
     }
 
     enum CornerRadius {
@@ -97,8 +103,14 @@ enum UIMetrics {
     /// Tap-target dimensions for the small chevron menu placed next to a numeric text field
     /// (e.g. font-size / line-height presets in the properties bar).
     enum ChevronMenu {
+        #if os(macOS)
         static let width: CGFloat = 14
         static let height: CGFloat = 20
+        #else
+        // iPad: widen to a comfortable tap target (40pt floor, matching ActionButton).
+        static let width: CGFloat = 30
+        static let height: CGFloat = 40
+        #endif
     }
 
     /// Square tap target for icon-only buttons used in toolbars and bars (matches the explicit
