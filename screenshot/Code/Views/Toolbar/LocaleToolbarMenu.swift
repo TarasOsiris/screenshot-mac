@@ -25,43 +25,10 @@ struct LocaleBar: View {
     @State private var showFanOutLanguageDownloadAlert = false
 
     var body: some View {
-        let baseCode = state.localeState.baseLocaleCode
-        let activeCode = state.localeState.activeLocaleCode
-        FlowLayout(horizontalSpacing: 4, verticalSpacing: 4) {
-            localeActionsMenu
-
-            if state.isFanOutTranslating {
-                HStack(spacing: 4) {
-                    ProgressView().controlSize(.small)
-                    Text("Translating…")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 6)
-                .frame(height: UIMetrics.IconButton.frameSize)
-            }
-
-            ForEach(state.localeState.locales) { locale in
-                LocaleFlagChip(
-                    locale: locale,
-                    isActive: locale.code == activeCode,
-                    helpText: locale.code == baseCode ? "\(locale.label) — Base language" : locale.label,
-                    action: { state.setActiveLocale(locale.code) }
-                )
-            }
-
-            addLanguageButton
-
-            fanOutTranslateButton
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.platformWindowBackground)
-        .overlay(alignment: .bottom) {
-            Divider()
-        }
-        .coachPopover(step: .locale, state: state, arrowEdge: .top)
+        // On iPad the visible chip strip is replaced by the globe `LocaleToolbarButton`, but
+        // LocaleBar stays mounted (zero-height) so its sheets / dialogs / translationTask /
+        // onChange machinery keeps servicing the menu's state-driven requests.
+        chipStrip
         .sheet(isPresented: $isManagingLocales) {
             ManageLocalesSheet(state: state)
         }
@@ -154,6 +121,52 @@ struct LocaleBar: View {
             state.isFanOutTranslating = true
             fanOutConfig.refresh(source: base, target: targets[0])
         }
+    }
+
+    @ViewBuilder
+    private var chipStrip: some View {
+        #if os(macOS)
+        let baseCode = state.localeState.baseLocaleCode
+        let activeCode = state.localeState.activeLocaleCode
+        FlowLayout(horizontalSpacing: 4, verticalSpacing: 4) {
+            localeActionsMenu
+
+            if state.isFanOutTranslating {
+                HStack(spacing: 4) {
+                    ProgressView().controlSize(.small)
+                    Text("Translating…")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 6)
+                .frame(height: UIMetrics.IconButton.frameSize)
+            }
+
+            ForEach(state.localeState.locales) { locale in
+                LocaleFlagChip(
+                    locale: locale,
+                    isActive: locale.code == activeCode,
+                    helpText: locale.code == baseCode ? "\(locale.label) — Base language" : locale.label,
+                    action: { state.setActiveLocale(locale.code) }
+                )
+            }
+
+            addLanguageButton
+
+            fanOutTranslateButton
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.platformWindowBackground)
+        .overlay(alignment: .bottom) {
+            Divider()
+        }
+        .coachPopover(step: .locale, state: state, arrowEdge: .top)
+        #else
+        // iPad: invisible presenter; the globe toolbar button drives all locale actions.
+        Color.clear.frame(height: 0)
+        #endif
     }
 
     private var addLanguageButton: some View {
@@ -252,6 +265,99 @@ struct LocaleBar: View {
             source: state.localeState.baseLocaleCode,
             target: state.localeState.activeLocaleCode
         )
+    }
+}
+
+// MARK: - Locale Toolbar Button (iPad)
+
+/// iPad globe toolbar action that folds the whole language-toggle bar into one pull-down Menu.
+/// Drives everything through AppState (the same channels `LocaleBar` and the macOS menu bar use),
+/// so the mounted-but-hidden `LocaleBar` executes the actual sheets/dialogs/translations.
+struct LocaleToolbarButton: View {
+    @Bindable var state: AppState
+
+    var body: some View {
+        let localeState = state.localeState
+        let activeCode = localeState.activeLocaleCode
+        let baseCode = localeState.baseLocaleCode
+        let progress = state.translationProgress()
+        Menu {
+            ForEach(localeState.locales) { locale in
+                Button {
+                    state.setActiveLocale(locale.code)
+                } label: {
+                    let title = locale.code == baseCode
+                        ? "\(locale.flagLabel) (Base)"
+                        : locale.flagLabel
+                    if locale.code == activeCode {
+                        Label(title, systemImage: "checkmark")
+                    } else {
+                        Text(title)
+                    }
+                }
+            }
+
+            if localeState.isBaseLocale, localeState.nonBaseLocaleCount > 0 {
+                let ids = state.selectedTranslatableTextShapeIds
+                if !ids.isEmpty {
+                    Divider()
+                    Button("Translate Selected to All Languages", systemImage: "character.bubble") {
+                        state.pendingFanOutTranslateShapeIds = ids
+                    }
+                    .disabled(state.isFanOutTranslating)
+                }
+            }
+
+            if !localeState.isBaseLocale {
+                Divider()
+                Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
+                    state.pendingLocaleMenuRequest = .autoTranslateMissing
+                }
+                .disabled(progress.total == 0 || progress.translated >= progress.total)
+
+                Button("Re-Translate All Text...", systemImage: "arrow.triangle.2.circlepath") {
+                    state.pendingLocaleMenuRequest = .reTranslateAll
+                }
+                .disabled(progress.total == 0)
+
+                Button("Revert to Base Language...", systemImage: "arrow.uturn.backward", role: .destructive) {
+                    state.pendingLocaleMenuRequest = .revertToBase
+                }
+                .disabled(!localeState.activeLocaleHasOverrides)
+            }
+
+            Divider()
+            if localeState.locales.count > 1 {
+                Button("Edit Translation Table...", systemImage: "tablecells") {
+                    state.pendingLocaleMenuRequest = .editTranslations
+                }
+                .disabled(progress.total == 0)
+            }
+            Button("Manage Languages...", systemImage: "globe") {
+                state.pendingLocaleMenuRequest = .manageLocales
+            }
+        } label: {
+            localeLabel
+        }
+        .help("Language options")
+        .coachPopover(step: .locale, state: state, arrowEdge: .top)
+    }
+
+    @ViewBuilder
+    private var localeLabel: some View {
+        if state.localeState.isBaseLocale {
+            Label("Localization", systemImage: "globe")
+        } else {
+            // Surface that a translation is being edited: globe + active flag in the warning tint.
+            HStack(spacing: 4) {
+                Image(systemName: "globe")
+                let flag = state.localeState.locales.first { $0.code == state.localeState.activeLocaleCode }?.flag ?? ""
+                if !flag.isEmpty {
+                    Text(flag)
+                }
+            }
+            .foregroundStyle(Color.localeWarning)
+        }
     }
 }
 

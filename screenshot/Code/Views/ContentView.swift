@@ -274,6 +274,12 @@ struct ContentView: View {
                 }
             }
 
+            // Localization: the whole language-toggle bar folded into one globe pull-down.
+            // Sits on the leading edge near the title — kept out of the trailing control cluster.
+            ToolbarItem(id: "iPadLocale", placement: .topBarLeading) {
+                LocaleToolbarButton(state: state)
+            }
+
             // View / output section: zoom, divided from the export action.
             // An id-based toolbar requires ToolbarItem (not ToolbarItemGroup), so the
             // sub-groups live inside one item's HStack with dividers.
