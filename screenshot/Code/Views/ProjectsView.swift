@@ -178,6 +178,17 @@ struct ProjectsView: View {
         .background(Color.platformWindowBackground)
         .navigationTitle("Projects")
         .toolbar {
+            if !store.isProUnlocked {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        store.presentPaywall(for: .general)
+                    } label: {
+                        Label("Upgrade to Pro", systemImage: "crown")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     newProject()

@@ -26,6 +26,27 @@ struct NewProjectWindowView: View {
     }
 
     var body: some View {
+        platformContent
+            .onAppear {
+                templates = TemplateService.availableTemplates()
+                projectName = "Project \(state.visibleProjects.count + 1)"
+                creationMode = .template
+                selectedTemplateId = templates.first?.id
+                rowDrafts = [
+                    BlankProjectRowDraft(category: .iphone),
+                    BlankProjectRowDraft(category: .ipadPro13),
+                    BlankProjectRowDraft(category: .androidPhone),
+                ]
+                #if os(macOS)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isNameFieldFocused = true
+                }
+                #endif
+            }
+    }
+
+    #if os(macOS)
+    private var platformContent: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 16) {
                 projectNameField
@@ -45,17 +66,38 @@ struct NewProjectWindowView: View {
             .padding(18)
             .background(Color.platformControlBackground, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
 
-            #if os(macOS)
             footer
-            #endif
         }
         .padding(22)
-        #if os(macOS)
         .frame(minWidth: 760, idealWidth: 760, minHeight: 620, idealHeight: 620)
-        #else
-        // iPad presents this as a dedicated full-screen page; Cancel/Create live in the
-        // navigation bar instead of an inline footer.
-        .frame(maxWidth: 820, maxHeight: .infinity)
+    }
+    #else
+    // iPad presents this as a dedicated full-screen page: a native grouped Form with
+    // section headers, and Cancel/Create in the navigation bar instead of an inline footer.
+    private var platformContent: some View {
+        Form {
+            Section("Name") {
+                TextField("Project name", text: $projectName)
+                    .focused($isNameFieldFocused)
+                    .submitLabel(.done)
+            }
+
+            Section("Create From") {
+                Picker("Create From", selection: $creationMode) {
+                    Text("Template").tag(CreationMode.template)
+                    Text("Blank").tag(CreationMode.blank)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+
+            switch creationMode {
+            case .template:
+                templateSection
+            case .blank:
+                blankSection
+            }
+        }
         .navigationTitle("New Project")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -64,26 +106,89 @@ struct NewProjectWindowView: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Create") { createProject() }
+                    .fontWeight(.semibold)
                     .disabled(!canCreateProject)
-            }
-        }
-        #endif
-        .onAppear {
-            templates = TemplateService.availableTemplates()
-            projectName = "Project \(state.visibleProjects.count + 1)"
-            creationMode = .template
-            selectedTemplateId = templates.first?.id
-            rowDrafts = [
-                BlankProjectRowDraft(category: .iphone),
-                BlankProjectRowDraft(category: .ipadPro13),
-                BlankProjectRowDraft(category: .androidPhone),
-            ]
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isNameFieldFocused = true
             }
         }
     }
 
+    @ViewBuilder
+    private var templateSection: some View {
+        Section {
+            if templates.isEmpty {
+                ContentUnavailableView(
+                    "No Templates Available",
+                    systemImage: "square.grid.2x2",
+                    description: Text("Add templates to the app bundle.")
+                )
+            } else {
+                LazyVGrid(columns: templateGridColumns, spacing: templateGridSpacing) {
+                    ForEach(templates) { template in
+                        Button {
+                            selectedTemplateId = template.id
+                        } label: {
+                            TemplateSelectionCard(
+                                template: template,
+                                isSelected: selectedTemplateId == template.id
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.vertical, 6)
+                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                .listRowBackground(Color.clear)
+            }
+        } header: {
+            Text("Choose a Template")
+        } footer: {
+            #if DEBUG
+            if !templates.isEmpty {
+                Text("Badged templates are included in non-debug builds.")
+            }
+            #endif
+        }
+    }
+
+    @ViewBuilder
+    private var blankSection: some View {
+        Section {
+            ForEach(rowDrafts) { draft in
+                BlankProjectRowCard(
+                    draft: binding(for: draft.id),
+                    canDelete: rowDrafts.count > 1,
+                    canDuplicate: rowDrafts.count < 8,
+                    onDelete: { removeRow(id: draft.id) },
+                    onDuplicate: { duplicateRow(id: draft.id) }
+                )
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            }
+            .onMove { source, destination in
+                rowDrafts.move(fromOffsets: source, toOffset: destination)
+            }
+        } header: {
+            HStack(spacing: 12) {
+                Text("Rows")
+                Spacer()
+                if rowDrafts.count > 1 {
+                    EditButton()
+                        .textCase(nil)
+                }
+                Button {
+                    addRow()
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .disabled(rowDrafts.count >= 8)
+                .accessibilityLabel("Add Row")
+            }
+        }
+    }
+    #endif
+
+    #if os(macOS)
     private var projectNameField: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Name")
@@ -217,6 +322,7 @@ struct NewProjectWindowView: View {
             .keyboardShortcut(.return)
         }
     }
+    #endif
 
     private var canCreateProject: Bool {
         switch creationMode {
