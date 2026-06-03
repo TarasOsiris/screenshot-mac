@@ -10,7 +10,8 @@ private struct EditorBlurBackgroundRenderKey: Equatable {
     let templateWidth: CGFloat
     let templateHeight: CGFloat
     let templateCount: Int
-    let displayScale: CGFloat
+    // NB: deliberately excludes displayScale — the cached image is rendered at model
+    // resolution (renderScale = 1.0), so zoom changing displayScale must not invalidate it.
     let backgroundBlur: Double
     let spanBackgroundAcrossRow: Bool
     let rowBackgroundDescriptor: BackgroundDescriptor
@@ -81,7 +82,6 @@ struct EditorRasterizedBackgroundView: View {
             templateWidth: row.templateWidth,
             templateHeight: row.templateHeight,
             templateCount: row.templates.count,
-            displayScale: displayScale,
             backgroundBlur: row.backgroundBlur,
             spanBackgroundAcrossRow: row.spanBackgroundAcrossRow,
             rowBackgroundDescriptor: .init(

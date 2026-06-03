@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Renders selection outlines and resize/rotation handles for the row's
-/// selected shapes. Lives **outside** the row canvas's `.scaleEffect(zoom)`
-/// so handle and outline thickness stay pixel-perfect at every zoom level.
+/// selected shapes, at the canvas's full (zoom-inclusive) `visualScale` so
+/// handle and outline thickness stay pixel-perfect at every zoom level.
 struct CanvasSelectionLayer: View {
     @Environment(\.displayScale) private var screenScale
 

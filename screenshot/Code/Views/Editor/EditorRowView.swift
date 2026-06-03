@@ -36,8 +36,7 @@ struct EditorRowView: View {
     /// Cached snap targets for non-selected shapes during drag.
     @State private var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
     /// In-progress resize state per shape, owned by EditorRowView so the
-    /// selection overlay (outside .scaleEffect) and CanvasShapeView (inside)
-    /// see the same value during a drag.
+    /// selection overlay and CanvasShapeView see the same value during a drag.
     @State private var pendingResize: [UUID: ResizeState] = [:]
     @State private var pendingRotation: [UUID: Double] = [:]
     @State private var textEditingShapeId: UUID?
@@ -341,10 +340,13 @@ struct EditorRowView: View {
     private var horizontalScrollArea: some View {
         ScrollViewReader { hProxy in
             ScrollView(.horizontal, showsIndicators: true) {
-                // Render canvas at base scale (zoom=1); apply zoom as a GPU transform
-                let dw = row.displayWidth(zoom: 1.0)
-                let dh = row.displayHeight(zoom: 1.0)
-                let ds = row.displayScale(zoom: 1.0)
+                // Render the canvas at full (zoom-inclusive) scale instead of a visual-only
+                // `.scaleEffect(zoom)`. Each shape's layout frame then equals its on-screen
+                // size, which the iOS context-menu lift anchors to — a presentation-only zoom
+                // transform makes the lift mis-scale (shrink on press, snap back on dismiss).
+                let dw = row.displayWidth(zoom: zoom)
+                let dh = row.displayHeight(zoom: zoom)
+                let ds = row.displayScale(zoom: zoom)
 
                 let resolved = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
 
@@ -355,12 +357,11 @@ struct EditorRowView: View {
                         RowPreviewView(state: state, row: row, zoom: zoom)
                     } else {
                         HStack(alignment: .top, spacing: 0) {
-                            // Unified canvas with per-template scroll anchors.
-                            // The selection layer sits OUTSIDE `.scaleEffect(zoom)` so
-                            // resize/rotation handles stay pixel-perfect at every zoom.
+                            // Unified canvas with per-template scroll anchors. Rendered at
+                            // full scale (no `.scaleEffect`) so shape layout frames match
+                            // their on-screen size; the selection layer renders the same way.
                             ZStack(alignment: .topLeading) {
                                 canvasView(dw: dw, dh: dh, ds: ds, resolvedShapes: resolved)
-                                    .scaleEffect(zoom, anchor: .topLeading)
                                     .frame(
                                         width: row.totalDisplayWidth(zoom: zoom),
                                         height: row.displayHeight(zoom: zoom),
@@ -380,7 +381,7 @@ struct EditorRowView: View {
                                     state: state,
                                     row: row,
                                     resolvedShapes: resolved,
-                                    visualScale: ds * zoom,
+                                    visualScale: ds,
                                     pendingResize: $pendingResize,
                                     pendingRotation: $pendingRotation,
                                     textEditingShapeId: textEditingShapeId,
@@ -589,7 +590,9 @@ struct EditorRowView: View {
                 CanvasShapeView(
                     shape: shape,
                     displayScale: ds,
-                    zoom: zoom,
+                    // Canvas now renders at full scale (no outer `.scaleEffect`), so `zoom`
+                    // is folded into `displayScale` here — pass 1.0 like the selection layer.
+                    zoom: 1.0,
                     isSelected: isInSelection,
                     isMultiSelected: isMulti,
                     screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
@@ -990,6 +993,7 @@ struct EditorRowView: View {
 private struct RowContextMenuPreview: View {
     let state: AppState
     let row: ScreenshotRow
+    @Environment(\.displayScale) private var screenScale
 
     private let maxPreviewWidth: CGFloat = 360
     private let maxPreviewHeight: CGFloat = 240
@@ -1009,7 +1013,29 @@ private struct RowContextMenuPreview: View {
     }
 
     var body: some View {
-        RowPreviewView(state: state, row: row, zoom: previewZoom)
-            .contextMenuPreviewCard()
+        // Bake the preview to a flat image up front. The system renders context-menu
+        // previews in an offscreen pass where the row's SceneKit-backed device frames
+        // re-render incorrectly (smaller, inner-screen only); a pre-rasterized image —
+        // produced by a controlled `ImageRenderer` pass — renders devices correctly and
+        // isn't re-evaluated during the lift. Falls back to the live view if rendering fails.
+        let renderer = ImageRenderer(content: RowPreviewView(state: state, row: row, zoom: previewZoom))
+        renderer.scale = max(1, screenScale)
+        #if os(macOS)
+        let baked = renderer.nsImage
+        #else
+        let baked = renderer.uiImage
+        #endif
+
+        return Group {
+            if let baked {
+                Image(nsImage: baked)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: baseWidth * previewZoom, height: baseHeight * previewZoom)
+            } else {
+                RowPreviewView(state: state, row: row, zoom: previewZoom)
+            }
+        }
+        .contextMenuPreviewCard()
     }
 }
