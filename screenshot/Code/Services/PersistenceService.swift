@@ -2,9 +2,19 @@ import Foundation
 
 struct PersistenceService {
     private static let rootDirectoryOverrideKey = "SCREENSHOT_DATA_DIR"
+    private static let useTemporaryRootDirectoryKey = "SCREENSHOT_USE_TEMP_DATA_DIR"
+    private static let temporaryRootURL: URL = {
+        let root = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        let directory = root
+            .appendingPathComponent("screenshot-clean-install", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }()
 
     static var hasDataDirOverride: Bool {
         ProcessInfo.processInfo.environment[rootDirectoryOverrideKey]?.isEmpty == false
+            || isUsingTemporaryRootDirectory
     }
 
     static let encoder: JSONEncoder = {
@@ -28,7 +38,17 @@ struct PersistenceService {
         if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
             return URL(fileURLWithPath: override, isDirectory: true)
         }
+        if isUsingTemporaryRootDirectory {
+            return temporaryRootURL
+        }
         return ICloudSyncService.shared.activeRootURL
+    }
+
+    private static var isUsingTemporaryRootDirectory: Bool {
+        guard let value = ProcessInfo.processInfo.environment[useTemporaryRootDirectoryKey] else {
+            return false
+        }
+        return !value.isEmpty && value != "0" && value.lowercased() != "false"
     }
 
     private static let indexFileName = "projects.json"
