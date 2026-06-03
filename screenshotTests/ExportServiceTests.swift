@@ -288,6 +288,42 @@ struct ExportServiceTests {
         }
     }
 
+    /// Non-blurred spanning background: the single-template renderer slices the spanning view by
+    /// offset rather than building/cropping the full-row strip. That slice must be pixel-identical
+    /// to the full-row export, especially at the left boundary where the spanning gradient must
+    /// continue from the previous template rather than restart.
+    @Test func singleTemplateRendererMatchesFullExportForSpanningGradient() throws {
+        let tw: CGFloat = 220
+        let th: CGFloat = 220
+        let gradient = GradientConfig(
+            stops: [
+                GradientColorStop(color: Self.testRed, location: 0),
+                GradientColorStop(color: Self.testBlue, location: 1),
+            ],
+            angle: 0
+        )
+        let row = ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: tw,
+            templateHeight: th,
+            backgroundStyle: .gradient,
+            gradientConfig: gradient,
+            spanBackgroundAcrossRow: true
+        )
+
+        for index in 0..<3 {
+            let singleTemplateBitmap = try renderSingleTemplateBitmap(index: index, row: row)
+            let fullExportBitmap = try renderTemplateBitmap(index: index, row: row)
+            for (label, x, y) in [
+                ("left-edge", 2, Int(th) / 2),
+                ("right-edge", Int(tw) - 3, Int(th) / 2),
+                ("center", Int(tw) / 2, Int(th) / 2),
+            ] {
+                try expectPixelsClose(singleTemplateBitmap, fullExportBitmap, at: (x, y), label: "[\(index)] \(label)")
+            }
+        }
+    }
+
     @Test func blurredStepGradientChangesBoundaryPixelInExport() throws {
         let tw: CGFloat = 240
         let th: CGFloat = 240

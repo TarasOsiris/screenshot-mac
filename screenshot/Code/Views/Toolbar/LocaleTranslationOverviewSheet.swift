@@ -15,16 +15,36 @@ struct TranslationOverviewSheet: View {
     private let columnPadding: CGFloat = 12
 
     var body: some View {
+        platformContent
+            .translationTask(cellTranslationConfig) { session in
+                guard let pendingCellTranslation else { return }
+                defer { self.pendingCellTranslation = nil }
+                do {
+                    let translatedText = try await translatePreservingLineBreaks(pendingCellTranslation.baseText) { text in
+                        let response = try await session.translate(text)
+                        return response.targetText
+                    }
+                    state.updateTranslationText(
+                        shapeId: pendingCellTranslation.shapeId,
+                        localeCode: pendingCellTranslation.localeCode,
+                        text: translatedText
+                    )
+                } catch {
+                    AppLogger.translation.error("Translation failed for shape \(pendingCellTranslation.shapeId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                }
+            }
+    }
+
+    #if os(macOS)
+    private var platformContent: some View {
         let items = state.textShapesForTranslationMatrix()
         let baseLocale = state.localeState.locales.first
         let translationLocales = Array(state.localeState.locales.dropFirst())
 
-        VStack(spacing: 0) {
+        return VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
-                #if os(macOS)
                 Text(Self.title)
                     .font(.headline)
-                #endif
                 Text("Edit the base language and each translated language side by side. Leave a cell empty to use the base language text.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
@@ -57,7 +77,6 @@ struct TranslationOverviewSheet: View {
                 }
             }
 
-            #if os(macOS)
             HStack {
                 Spacer()
                 Button("Done") { dismiss() }
@@ -65,31 +84,135 @@ struct TranslationOverviewSheet: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
-            #endif
         }
-        #if os(macOS)
         .frame(width: 1120, height: 760)
-        #endif
-        .iosSheetChrome(Text(Self.title))
-        .translationTask(cellTranslationConfig) { session in
-            guard let pendingCellTranslation else { return }
-            defer { self.pendingCellTranslation = nil }
-            do {
-                let translatedText = try await translatePreservingLineBreaks(pendingCellTranslation.baseText) { text in
-                    let response = try await session.translate(text)
-                    return response.targetText
-                }
-                state.updateTranslationText(
-                    shapeId: pendingCellTranslation.shapeId,
-                    localeCode: pendingCellTranslation.localeCode,
-                    text: translatedText
+    }
+    #else
+    // iPad: a native inset-grouped list — one section per string (header is the base
+    // text), each language an inline buffered field. Translate is a visible button;
+    // Reset is a trailing swipe. Replaces the hover-driven horizontal matrix.
+    private var platformContent: some View {
+        let items = state.textShapesForTranslationMatrix()
+        let translationLocales = Array(state.localeState.locales.dropFirst())
+
+        return Group {
+            if items.isEmpty {
+                ContentUnavailableView(
+                    "No Text to Translate",
+                    systemImage: "textformat",
+                    description: Text("This project has no text shapes yet.")
                 )
-            } catch {
-                AppLogger.translation.error("Translation failed for shape \(pendingCellTranslation.shapeId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            } else if translationLocales.isEmpty {
+                ContentUnavailableView(
+                    "No Languages Added",
+                    systemImage: "globe",
+                    description: Text("Add another language to edit translations here.")
+                )
+            } else {
+                List {
+                    ForEach(items, id: \.shape.id) { item in
+                        Section {
+                            ForEach(translationLocales) { locale in
+                                iosTranslationRow(item: item, locale: locale)
+                            }
+                        } header: {
+                            iosSectionHeader(item: item)
+                        }
+                    }
+                }
+                .listStyle(.insetGrouped)
+            }
+        }
+        .iosSheetChrome(Text(Self.title))
+    }
+
+    @ViewBuilder
+    private func iosSectionHeader(item: (shape: CanvasShapeModel, rowLabel: String)) -> some View {
+        let baseText = (item.shape.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        VStack(alignment: .leading, spacing: 2) {
+            Text(baseText.isEmpty ? String(localized: "Untitled text") : baseText)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .textCase(nil)
+            if !item.rowLabel.isEmpty {
+                Text(item.rowLabel)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .textCase(nil)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private func iosTranslationRow(
+        item: (shape: CanvasShapeModel, rowLabel: String),
+        locale: LocaleDefinition
+    ) -> some View {
+        let baseText = item.shape.text ?? ""
+        let hasOverride = state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text != nil
+        let translating = isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code)
+
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Text(locale.flagLabel)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                if translating {
+                    ProgressView()
+                        .controlSize(.mini)
+                } else {
+                    Button {
+                        startCellTranslation(
+                            shapeId: item.shape.id,
+                            localeCode: locale.code,
+                            baseText: baseText
+                        )
+                    } label: {
+                        Image(systemName: "globe")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(baseText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .accessibilityLabel("Translate to \(locale.flagLabel)")
+                }
+            }
+
+            BufferedTranslationField(
+                placeholder: String(localized: "Same as base language"),
+                text: Binding(
+                    get: {
+                        state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text ?? ""
+                    },
+                    set: { newValue in
+                        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if trimmed.isEmpty {
+                            state.resetTranslationText(shapeId: item.shape.id, localeCode: locale.code)
+                        } else {
+                            state.updateTranslationText(
+                                shapeId: item.shape.id,
+                                localeCode: locale.code,
+                                text: newValue
+                            )
+                        }
+                    }
+                )
+            )
+        }
+        .padding(.vertical, 4)
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            if hasOverride {
+                Button(role: .destructive) {
+                    state.resetTranslationText(shapeId: item.shape.id, localeCode: locale.code)
+                } label: {
+                    Label("Reset", systemImage: "arrow.uturn.backward")
+                }
             }
         }
     }
+    #endif
 
+    #if os(macOS)
     private func headerColumn(title: String, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
@@ -207,6 +330,7 @@ struct TranslationOverviewSheet: View {
             Divider()
         }
     }
+    #endif
 
     private func startCellTranslation(shapeId: UUID, localeCode: String, baseText: String) {
         let trimmed = baseText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -227,6 +351,7 @@ struct TranslationOverviewSheet: View {
     }
 }
 
+#if os(macOS)
 private struct TranslationMatrixCell: View {
     let locale: LocaleDefinition
     let baseText: String
@@ -369,6 +494,34 @@ private struct OptionalHelp: ViewModifier {
         }
     }
 }
+#endif
+
+#if os(iOS)
+/// Buffers edits locally so binding straight to @Observable AppState doesn't reset the
+/// caret on every keystroke (the body recomputes and re-feeds the value otherwise).
+private struct BufferedTranslationField: View {
+    let placeholder: String
+    @Binding var text: String
+    @State private var localText: String
+
+    init(placeholder: String, text: Binding<String>) {
+        self.placeholder = placeholder
+        self._text = text
+        self._localText = State(initialValue: text.wrappedValue)
+    }
+
+    var body: some View {
+        TextField(placeholder, text: $localText, axis: .vertical)
+            .lineLimit(1...6)
+            .onChange(of: localText) { _, newValue in
+                if newValue != text { text = newValue }
+            }
+            .onChange(of: text) { _, newValue in
+                if newValue != localText { localText = newValue }
+            }
+    }
+}
+#endif
 
 private struct PendingCellTranslation: Equatable {
     let shapeId: UUID

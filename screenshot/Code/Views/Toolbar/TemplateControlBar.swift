@@ -332,7 +332,7 @@ struct TemplateControlBar: View {
         Task {
             defer { isPreviewing = false }
             let images = onLoadFullResImages?() ?? screenshotImages
-            let rowBackground = ExportService.renderComposedBackgroundImage(
+            let rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
                 row: row,
                 screenshotImages: images,
                 displayScale: 1.0,

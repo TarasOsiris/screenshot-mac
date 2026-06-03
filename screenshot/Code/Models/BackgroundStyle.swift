@@ -159,12 +159,18 @@ struct BackgroundImageView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            let resolvedImage = image ?? cachedSvgImage
-            if let resolvedImage {
-                renderFillMode(image: resolvedImage, geo: geo)
+        // Avoid GeometryReader: its size-dependent child isn't reliably resolved before an
+        // offscreen snapshot (NSHostingView/ImageRenderer) captures, which left image
+        // backgrounds blank intermittently in export/showcase previews. fill/fit/stretch size
+        // themselves to the parent frame; tile reads its draw size from Canvas synchronously.
+        Group {
+            if let resolvedImage = image ?? cachedSvgImage {
+                renderFillMode(image: resolvedImage)
             }
         }
+        // Stay greedy (fill the parent) even before the image resolves — matches the old
+        // GeometryReader so callers without an explicit frame don't collapse to zero size.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .opacity(config.opacity)
         .onChange(of: config.svgContent) { updateSvgCache() }
         .onChange(of: config.fillMode == .tile) { updateSvgCache() }
@@ -185,60 +191,63 @@ struct BackgroundImageView: View {
     }
 
     @ViewBuilder
-    private func renderFillMode(image: NSImage, geo: GeometryProxy) -> some View {
+    private func renderFillMode(image: NSImage) -> some View {
         let swiftImage = Image(nsImage: image)
         switch config.fillMode {
         case .fill:
             swiftImage
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: geo.size.width, height: geo.size.height)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
         case .fit:
             swiftImage
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: geo.size.width, height: geo.size.height)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .stretch:
             swiftImage
                 .resizable()
-                .frame(width: geo.size.width, height: geo.size.height)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .tile:
-            tileView(image: image, geo: geo)
+            tileView(image: image)
         }
     }
 
     @ViewBuilder
-    private func tileView(image: NSImage, geo: GeometryProxy) -> some View {
+    private func tileView(image: NSImage) -> some View {
         let scaleX = max(config.tileScaleX, 0.1)
         let scaleY = max(config.tileScaleY, 0.1)
         let imgW = image.size.width * scaleX
         let imgH = image.size.height * scaleY
-        let refSize = modelSize ?? geo.size
-        if imgW > 0, imgH > 0, refSize.width > 0, refSize.height > 0 {
-            let spacingX = config.tileSpacingX
-            let spacingY = config.tileSpacingY
-            let offsetX = config.tileOffsetX
-            let offsetY = config.tileOffsetY
-            let stepW = imgW * (1 + spacingX)
-            let stepH = imgH * (1 + spacingY)
-            let offW = imgW * offsetX
-            let offH = imgH * offsetY
-            let rawCols = max(1, Int(ceil((refSize.width + offW) / stepW)) + 1)
-            let rawRows = max(1, Int(ceil((refSize.height + offH) / stepH)) + 1)
-            let drawScale = rawCols * rawRows > 10_000
-                ? sqrt(Double(rawCols * rawRows) / 10_000.0) : 1.0
-            let cols = max(1, Int(Double(rawCols) / drawScale))
-            let rows = max(1, Int(Double(rawRows) / drawScale))
-            let toDisplayX = geo.size.width / refSize.width
-            let toDisplayY = geo.size.height / refSize.height
-            // When spacing is near 0, add a small overlap to prevent
-            // sub-pixel gaps caused by floating-point rounding.
-            let overlapX: CGFloat = spacingX < 0.001 ? 0.5 : 0
-            let overlapY: CGFloat = spacingY < 0.001 ? 0.5 : 0
-            let tileW = imgW * toDisplayX + overlapX
-            let tileH = imgH * toDisplayY + overlapY
+        if imgW > 0, imgH > 0 {
             Canvas { context, size in
+                // `size` is the rendered draw size (display-space in editor, model-space in
+                // export); `refSize` keeps tile counts driven by model space for parity.
+                let refSize = modelSize ?? size
+                guard refSize.width > 0, refSize.height > 0 else { return }
+                let spacingX = config.tileSpacingX
+                let spacingY = config.tileSpacingY
+                let offsetX = config.tileOffsetX
+                let offsetY = config.tileOffsetY
+                let stepW = imgW * (1 + spacingX)
+                let stepH = imgH * (1 + spacingY)
+                let offW = imgW * offsetX
+                let offH = imgH * offsetY
+                let rawCols = max(1, Int(ceil((refSize.width + offW) / stepW)) + 1)
+                let rawRows = max(1, Int(ceil((refSize.height + offH) / stepH)) + 1)
+                let drawScale = rawCols * rawRows > 10_000
+                    ? sqrt(Double(rawCols * rawRows) / 10_000.0) : 1.0
+                let cols = max(1, Int(Double(rawCols) / drawScale))
+                let rows = max(1, Int(Double(rawRows) / drawScale))
+                let toDisplayX = size.width / refSize.width
+                let toDisplayY = size.height / refSize.height
+                // When spacing is near 0, add a small overlap to prevent
+                // sub-pixel gaps caused by floating-point rounding.
+                let overlapX: CGFloat = spacingX < 0.001 ? 0.5 : 0
+                let overlapY: CGFloat = spacingY < 0.001 ? 0.5 : 0
+                let tileW = imgW * toDisplayX + overlapX
+                let tileH = imgH * toDisplayY + overlapY
                 let resolved = context.resolve(Image(nsImage: image))
                 for r in 0..<rows {
                     for c in 0..<cols {
@@ -249,7 +258,7 @@ struct BackgroundImageView: View {
                     }
                 }
             }
-            .frame(width: geo.size.width, height: geo.size.height)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
         }
     }
@@ -383,22 +392,28 @@ struct GradientConfig: Codable, Equatable {
         case .linear:
             Rectangle().fill(linearGradient)
         case .radial:
-            // GeometryReader reads the actual rendered frame size (display-space in editor,
-            // model-space in export) so endRadius is always correct for the view's coordinates.
-            GeometryReader { geo in
-                let w = geo.size.width
-                let h = geo.size.height
+            // Canvas exposes the actual rendered draw size synchronously (display-space in
+            // editor, model-space in export) so endRadius is correct for the view's coordinates.
+            // GeometryReader was unreliable here: its size-dependent child isn't always resolved
+            // before an offscreen snapshot (NSHostingView/ImageRenderer) captures, which left the
+            // background blank intermittently in export/showcase previews.
+            Canvas { context, size in
+                let w = size.width
+                let h = size.height
                 let cx = w * centerX
                 let cy = h * centerY
                 let dx = max(cx, w - cx)
                 let dy = max(cy, h - cy)
                 let endRadius = sqrt(dx * dx + dy * dy)
-                Rectangle().fill(RadialGradient(
-                    stops: swiftUIStops,
-                    center: UnitPoint(x: centerX, y: centerY),
-                    startRadius: 0,
-                    endRadius: endRadius
-                ))
+                context.fill(
+                    Path(CGRect(origin: .zero, size: size)),
+                    with: .radialGradient(
+                        Gradient(stops: swiftUIStops),
+                        center: CGPoint(x: cx, y: cy),
+                        startRadius: 0,
+                        endRadius: endRadius
+                    )
+                )
             }
         case .angular:
             Rectangle().fill(AngularGradient(

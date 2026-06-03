@@ -239,7 +239,7 @@ struct ExportService {
 
         let layout = ShowcaseLayout(row: row, config: config)
 
-        let rowBackground = renderComposedBackgroundImage(
+        let rowBackground = precomposedRowBackgroundIfNeeded(
             row: row,
             screenshotImages: screenshotImages,
             displayScale: 1.0,
@@ -437,7 +437,9 @@ struct ExportService {
 
     @MainActor
     static func renderTemplatePNG(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeState: LocaleState = .default) -> Data? {
-        let image = renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeState.activeLocaleCode, localeState: localeState)
+        // Per-template render (not the full-row strip) so wide rows export at full resolution
+        // instead of being downscaled to fit the GPU texture limit.
+        let image = renderSingleTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeState.activeLocaleCode, localeState: localeState)
         return opaquePNGData(from: image)
     }
 
@@ -450,7 +452,7 @@ struct ExportService {
         localeCode: String? = nil,
         localeState: LocaleState = .default
     ) -> Data? {
-        let image = renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
+        let image = renderSingleTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
         return encodeImage(image, format: format)
     }
 
@@ -574,6 +576,10 @@ struct ExportService {
 
     /// Renders only the single template at `index` without rendering the full row.
     /// Faster than `renderTemplateImage` which renders all templates then crops.
+    /// `displayScale` lets callers render at a fraction of model scale — previews pass a small
+    /// scale so they render cheaply and never approach the GPU texture limit; export passes 1.0
+    /// for full resolution. Shapes stay in model space (CanvasShapeView multiplies by the scale);
+    /// the background crop and final composite work in display pixels (model × scale).
     @MainActor
     static func renderSingleTemplateImage(
         index: Int,
@@ -582,19 +588,23 @@ struct ExportService {
         localeCode: String? = nil,
         localeState: LocaleState = .default,
         availableFontFamilies: Set<String>? = nil,
+        displayScale: CGFloat = 1.0,
         preRenderedRowBackground: NSImage? = nil
     ) -> NSImage {
         let templateWidth = row.templateWidth
         let templateHeight = row.templateHeight
+        let pxWidth = templateWidth * displayScale
+        let pxHeight = templateHeight * displayScale
         let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
         let fontFamilies = availableFontFamilies ?? Set(PlatformFonts.systemFamilyNames)
-        let rowBackground = preRenderedRowBackground ?? renderComposedBackgroundImage(
+        let backgroundImage = renderTemplateBackgroundImage(
+            index: index,
             row: row,
             screenshotImages: screenshotImages,
-            displayScale: 1.0,
-            labelPrefix: "single template row"
+            displayScale: displayScale,
+            preRenderedRowBackground: preRenderedRowBackground,
+            labelPrefix: "single template"
         )
-        let backgroundImage = cropTemplateImage(rowBackground, index: index, row: row)
 
         // --- Shapes ---
         // Filter resolved shapes to those visible in this template, then shift so template origin is at (0,0)
@@ -622,11 +632,11 @@ struct ExportService {
         let shapesView = RowCanvasShapeLayerView(
             row: singleTemplateRow,
             shapes: shiftedShapes,
-            displayScale: 1.0,
+            displayScale: displayScale,
             shapeContent: { shape, clipRect in
                 CanvasShapeView(
                     shape: shape,
-                    displayScale: 1.0,
+                    displayScale: displayScale,
                     isSelected: false,
                     screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
                     fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
@@ -642,12 +652,115 @@ struct ExportService {
         )
         let shapesImage = renderViewToImage(
             shapesView,
-            width: templateWidth,
-            height: templateHeight,
+            width: pxWidth,
+            height: pxHeight,
             label: "single template shapes [\(index)]"
         )
 
-        return flattenImage(shapesImage, over: backgroundImage, width: templateWidth, height: templateHeight)
+        return flattenImage(shapesImage, over: backgroundImage, width: pxWidth, height: pxHeight)
+    }
+
+    /// Pre-renders the full-width composed row background only when it's actually needed —
+    /// i.e. when the row background is blurred, where the blur must sample across template
+    /// boundaries so per-template slicing can't reproduce it. For non-blurred rows this returns
+    /// nil and each template renders its own slice (never building the oversized strip), so
+    /// callers that loop `renderSingleTemplateImage` should pass the result straight through.
+    @MainActor
+    static func precomposedRowBackgroundIfNeeded(
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage],
+        displayScale: CGFloat,
+        labelPrefix: String
+    ) -> NSImage? {
+        guard row.backgroundBlur > 0 else { return nil }
+        return renderComposedBackgroundImage(
+            row: row,
+            screenshotImages: screenshotImages,
+            displayScale: displayScale,
+            labelPrefix: labelPrefix
+        )
+    }
+
+    /// Renders a single template's background at `displayScale`, sized to one template rather
+    /// than the full-row strip — so wide multi-device rows never exceed the GPU texture limit
+    /// (the limit applies to ImageRenderer/NSHostingView rasterization, not CPU compositing).
+    /// The strip is only required when the row background is blurred (blur bleeds across template
+    /// boundaries); that path renders/reuses the composed strip and crops this template's slice.
+    @MainActor
+    private static func renderTemplateBackgroundImage(
+        index: Int,
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage],
+        displayScale: CGFloat,
+        preRenderedRowBackground: NSImage?,
+        labelPrefix: String
+    ) -> NSImage {
+        let pxWidth = row.templateWidth * displayScale
+        let pxHeight = row.templateHeight * displayScale
+
+        // Blurred row background: keep editor/export parity by cropping the full-width composed
+        // strip (reused via preRenderedRowBackground when the caller already built it).
+        if row.backgroundBlur > 0 {
+            let strip = preRenderedRowBackground ?? renderComposedBackgroundImage(
+                row: row,
+                screenshotImages: screenshotImages,
+                displayScale: displayScale,
+                labelPrefix: "\(labelPrefix) row"
+            )
+            return cropImage(strip, x: CGFloat(index) * pxWidth, width: pxWidth, height: pxHeight)
+        }
+
+        // Non-blurred: render just this template's slice. Spanning backgrounds render the
+        // full-width view offset to this slot (exact same pixels as cropping the strip, but the
+        // rasterization target is one template wide); non-spanning renders the row's own
+        // background at template size.
+        let base: NSImage
+        if row.isSpanningBackground {
+            let count = row.templates.count
+            let spanModelSize = CGSize(width: row.templateWidth * CGFloat(count), height: row.templateHeight)
+            let fullWidth = pxWidth * CGFloat(count)
+            base = renderViewToImage(
+                row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: spanModelSize)
+                    .frame(width: fullWidth, height: pxHeight)
+                    .offset(x: -CGFloat(index) * pxWidth)
+                    .frame(width: pxWidth, height: pxHeight, alignment: .topLeading)
+                    .clipped(),
+                width: pxWidth,
+                height: pxHeight,
+                label: "\(labelPrefix) span background '\(row.label)' [\(index)]"
+            )
+        } else {
+            base = renderViewToImage(
+                row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: row.templateSize)
+                    .frame(width: pxWidth, height: pxHeight),
+                width: pxWidth,
+                height: pxHeight,
+                label: "\(labelPrefix) background '\(row.label)' [\(index)]"
+            )
+        }
+
+        // Per-template override drawn over the base (matches renderOverrideBackgroundImage).
+        // Override blur is per-template (single slot, no neighbor) so it stays exact here.
+        let template = row.templates[index]
+        guard template.overrideBackground else { return base }
+
+        let overrideView = template
+            .resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: row.templateSize)
+            .frame(width: pxWidth, height: pxHeight)
+        let overrideLabel = "\(labelPrefix) override background '\(row.label)' [\(index)]"
+        let overrideImage: NSImage
+        if template.backgroundBlur > 0 {
+            overrideImage = renderBlurredViewToImage(
+                overrideView,
+                width: pxWidth,
+                height: pxHeight,
+                radius: template.backgroundBlur * displayScale,
+                label: overrideLabel
+            )
+        } else {
+            overrideImage = renderViewToImage(overrideView, width: pxWidth, height: pxHeight, label: overrideLabel)
+        }
+        return flattenImage(overrideImage, over: base, width: pxWidth, height: pxHeight)
     }
 
     @MainActor
@@ -764,15 +877,22 @@ struct ExportService {
         image.addRepresentation(bitmapRep)
         return image
         #else
-        // iPad renders via SwiftUI ImageRenderer at an explicit 1x scale so pixel dimensions
-        // match model space (cropImage depends on the 1:1 mapping).
+        // iPad renders via SwiftUI ImageRenderer at 1x so pixel dimensions match model space
+        // (cropImage depends on the mapping; it reads the real cgImage/size ratio so a sub-1
+        // scale stays correct). A full-row background can exceed the GPU texture limit (~8192px)
+        // — e.g. a wide multi-device row — and then ImageRenderer returns nil, leaving the
+        // background transparent. Cap the scale so the longest side stays within the limit; a
+        // slightly downscaled-but-present background beats a missing one (output is downscaled
+        // anyway). Per-template shape renders are small, so they stay at 1x.
+        let maxPixelDimension: CGFloat = 8192
+        let safeScale = min(1, maxPixelDimension / max(width, height, 1))
         let renderer = ImageRenderer(content:
             view
                 .environment(\.isExportRendering, true)
                 .frame(width: width, height: height, alignment: .topLeading)
                 .clipped()
         )
-        renderer.scale = 1
+        renderer.scale = safeScale
         renderer.isOpaque = false
         if let image = renderer.uiImage {
             return image

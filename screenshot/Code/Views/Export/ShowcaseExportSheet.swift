@@ -107,6 +107,7 @@ struct ShowcaseExportSheet: View {
         .iosSheetChrome(
             Text("Showcase Export"),
             confirmTitle: Text("Export…"),
+            confirmSystemImage: "square.and.arrow.up",
             confirmDisabled: selectedRowsOrdered.isEmpty,
             showsCancel: true,
             onConfirm: { onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds) }
@@ -826,6 +827,9 @@ private struct ShowcaseRowPreview: View {
     var body: some View {
         let layout = ShowcaseLayout(row: row, config: config)
         let scale = fitScale(layout: layout)
+        // Render previews at ~2x the displayed size — crisp on screen but cheap, never full
+        // model scale (a wide row at 1x exceeds the iPad GPU texture limit and renders blank).
+        let renderScale = min(1.0, scale * 2)
         let previewWidth = layout.totalWidth * scale
         let previewHeight = layout.totalHeight * scale
         let outputSize = layout.outputSize(maxDimension: config.maxOutputDimension)
@@ -869,9 +873,18 @@ private struct ShowcaseRowPreview: View {
             }
             .frame(width: previewWidth, height: previewHeight)
         }
-        // Re-render when templates change (e.g., user excludes one) — keying on row.id
-        // alone would miss exclusion edits since the parent passes the same row id.
-        .task(id: row.templates.map(\.id)) { await renderTemplates() }
+        // Re-render when the template set changes (exclusion edits keep the same row.id) OR when
+        // the render scale settles — the container width isn't final on first appearance, so a
+        // task that captured an early small scale would otherwise leave the row permanently
+        // low-res. Bucket the scale so sub-pixel jitter doesn't thrash re-renders.
+        .task(id: RenderKey(ids: row.templates.map(\.id), scaleBucket: Int((renderScale * 20).rounded()))) {
+            await renderTemplates(renderScale: renderScale)
+        }
+    }
+
+    private struct RenderKey: Equatable {
+        let ids: [UUID]
+        let scaleBucket: Int
     }
 
     private func fitScale(layout: ShowcaseLayout) -> CGFloat {
@@ -882,12 +895,12 @@ private struct ShowcaseRowPreview: View {
         return min(widthScale, heightScale, 1.0)
     }
 
-    private func renderTemplates() async {
+    private func renderTemplates(renderScale: CGFloat) async {
         let rowImages = loadImages()
-        let rowBackground = ExportService.renderComposedBackgroundImage(
+        let rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
             row: row,
             screenshotImages: rowImages,
-            displayScale: 1.0,
+            displayScale: renderScale,
             labelPrefix: "showcase preview"
         )
         var rendered: [NSImage] = []
@@ -901,6 +914,7 @@ private struct ShowcaseRowPreview: View {
                 localeCode: localeCode,
                 localeState: localeState,
                 availableFontFamilies: availableFontFamilies,
+                displayScale: renderScale,
                 preRenderedRowBackground: rowBackground
             ))
         }

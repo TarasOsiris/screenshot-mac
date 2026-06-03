@@ -8,6 +8,7 @@ import SwiftUI
 private struct IOSSheetChrome<Content: View>: View {
     let title: Text
     let confirmTitle: Text
+    let confirmSystemImage: String
     let confirmDisabled: Bool
     let showsCancel: Bool
     let onConfirm: (() -> Void)?
@@ -27,7 +28,7 @@ private struct IOSSheetChrome<Content: View>: View {
                         }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        // Prominent checkmark confirm. The confirm action owns dismissal: a
+                        // Prominent confirm icon. The confirm action owns dismissal: a
                         // bare "Done" dismisses, but a supplied onConfirm decides (e.g.
                         // SvgPasteDialog stays open and shows an error when validation fails).
                         // confirmTitle becomes the accessibility label for the icon.
@@ -36,7 +37,7 @@ private struct IOSSheetChrome<Content: View>: View {
                         } label: {
                             // Pin font + control size so the icon is identical regardless of
                             // the controlSize/font the presenting bar leaks into the sheet.
-                            Image(systemName: "checkmark")
+                            Image(systemName: confirmSystemImage)
                                 .font(.body.weight(.semibold))
                         }
                         .buttonStyle(.borderedProminent)
@@ -63,6 +64,7 @@ extension View {
     func iosSheetChrome(
         _ title: Text,
         confirmTitle: Text = Text("Done"),
+        confirmSystemImage: String = "checkmark",
         confirmDisabled: Bool = false,
         showsCancel: Bool = false,
         onConfirm: (() -> Void)? = nil,
@@ -72,6 +74,7 @@ extension View {
         IOSSheetChrome(
             title: title,
             confirmTitle: confirmTitle,
+            confirmSystemImage: confirmSystemImage,
             confirmDisabled: confirmDisabled,
             showsCancel: showsCancel,
             onConfirm: onConfirm,

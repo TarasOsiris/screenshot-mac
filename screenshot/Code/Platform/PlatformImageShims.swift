@@ -21,7 +21,12 @@ extension UIImage {
     }
 
     convenience init(cgImage: CGImage, size: CGSize) {
-        self.init(cgImage: cgImage)
+        // Honor the requested logical size by deriving a scale from the pixel dimensions, so
+        // `.size` matches macOS NSImage semantics (cropImage reads cgImage.width / size.width to
+        // recover the pixel ratio — passing scale through keeps that correct when the source was
+        // rendered below 1x, e.g. an ImageRenderer output capped to the GPU texture limit).
+        let scale = size.width > 0 ? CGFloat(cgImage.width) / size.width : 1
+        self.init(cgImage: cgImage, scale: max(scale, 0.0001), orientation: .up)
     }
 
     func cgImage(forProposedRect rect: UnsafeMutablePointer<CGRect>?, context: Any?, hints: [AnyHashable: Any]?) -> CGImage? {

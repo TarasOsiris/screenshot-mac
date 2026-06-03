@@ -10,10 +10,12 @@ struct GradientStopEditor: View {
     #if os(macOS)
     private let barHeight: CGFloat = 24
     private let handleHitTarget: CGFloat = 14
+    private let controlsRowHeight: CGFloat = 24
     #else
     // iPad: taller bar (easier tap-to-add) and a wider transparent grab area per handle.
     private let barHeight: CGFloat = 36
     private let handleHitTarget: CGFloat = 32
+    private let controlsRowHeight: CGFloat = 40
     #endif
 
     var body: some View {
@@ -40,7 +42,7 @@ struct GradientStopEditor: View {
                         }
 
                     ForEach(config.stops) { stop in
-                        let isSelected = selectedStopId == stop.id
+                        let isSelected = effectiveSelectedStopId == stop.id
                         stopHandle(stop: stop, isSelected: isSelected)
                             .frame(width: handleHitTarget, height: handleHitTarget)
                             .contentShape(Circle())
@@ -70,8 +72,7 @@ struct GradientStopEditor: View {
             .frame(height: barHeight)
 
             HStack(spacing: 8) {
-                if let selectedId = selectedStopId,
-                   config.stops.contains(where: { $0.id == selectedId }) {
+                if let selectedId = effectiveSelectedStopId {
                     ColorPicker(
                         "",
                         selection: selectedColorBinding(for: selectedId),
@@ -125,6 +126,7 @@ struct GradientStopEditor: View {
                 .focusable(false)
                 .help("Reverse gradient")
             }
+            .frame(minHeight: controlsRowHeight, alignment: .center)
         }
         .focusable(true)
         .focused($isEditorFocused)
@@ -165,6 +167,14 @@ struct GradientStopEditor: View {
     private func selectStop(_ id: UUID) {
         focusEditor()
         selectedStopId = id
+    }
+
+    private var effectiveSelectedStopId: UUID? {
+        if let selectedStopId,
+           config.stops.contains(where: { $0.id == selectedStopId }) {
+            return selectedStopId
+        }
+        return config.stops.first?.id
     }
 
     private func ensureSelectedStopIsValid() {

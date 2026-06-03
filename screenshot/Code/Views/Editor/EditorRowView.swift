@@ -963,7 +963,7 @@ struct EditorRowView: View {
             do {
                 let localeCode = state.localeState.activeLocaleCode
                 let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-                let rowBackground = ExportService.renderComposedBackgroundImage(
+                let rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
                     row: row,
                     screenshotImages: images,
                     displayScale: 1.0,
