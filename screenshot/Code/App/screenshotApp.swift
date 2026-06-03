@@ -14,11 +14,6 @@ struct ScreenshotBroApp: App {
     /// modal close without persisting completion — the interactive coach handles that
     /// when it finishes or is skipped, so quitting mid-tour reopens the welcome on relaunch.
     @State private var welcomeDismissed = false
-    /// Action to run on the next sheet `onDismiss`. Set inside the welcome modal's
-    /// "Get Started" handler so the coach launches AFTER the modal is fully gone —
-    /// otherwise the popover anchor is hidden behind the dismissing sheet and SwiftUI
-    /// never shows the popover.
-    @State private var pendingCoachStart: (() -> Void)?
     #if DEBUG && os(macOS)
     @State private var isDebugTemplateSavePresented = false
     @State private var debugTemplateName = ""
@@ -48,25 +43,24 @@ struct ScreenshotBroApp: App {
                 .sheet(isPresented: Binding(
                     get: { !onboardingCompleted && !welcomeDismissed },
                     set: { _ in }
-                ), onDismiss: launchPendingCoachIfNeeded) {
+                )) {
                     OnboardingView(
                         persistCompletion: false,
                         onComplete: {
-                            pendingCoachStart = { appState.startCoach(persistOnEnd: true) }
+                            // No project exists yet on first launch — defer the tour until
+                            // the first canvas appears (see EditorRowView).
+                            appState.pendingCoachPersistOnEnd = true
                             welcomeDismissed = true
                         }
                     )
                     .interactiveDismissDisabled()
                 }
                 #if DEBUG
-                .sheet(
-                    isPresented: $isDebugOnboardingPresented,
-                    onDismiss: launchPendingCoachIfNeeded
-                ) {
+                .sheet(isPresented: $isDebugOnboardingPresented) {
                     OnboardingView(
                         persistCompletion: false,
                         onComplete: {
-                            pendingCoachStart = { appState.startCoach(persistOnEnd: false) }
+                            appState.pendingCoachPersistOnEnd = false
                             isDebugOnboardingPresented = false
                         }
                     )
@@ -400,12 +394,6 @@ struct ScreenshotBroApp: App {
                 }
         }
         #endif
-    }
-
-    private func launchPendingCoachIfNeeded() {
-        guard let start = pendingCoachStart else { return }
-        pendingCoachStart = nil
-        start()
     }
 
     #if DEBUG && os(macOS)

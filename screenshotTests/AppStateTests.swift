@@ -17,13 +17,12 @@ struct AppStateTests {
 
     // MARK: - Initial state
 
-    @Test func initialStateHasOneProjectAndOneRow() {
-        let (state, tempDir) = makeState()
+    @Test func firstLaunchHasNoProjectOrRows() {
+        let (state, tempDir) = makeEmptyTestState()
         defer { cleanup(tempDir) }
-        #expect(state.projects.count == 1)
-        #expect(state.rows.count == 1)
-        #expect(state.activeProjectId != nil)
-        #expect(state.selectedRowId == state.rows.first?.id)
+        #expect(state.visibleProjects.isEmpty)
+        #expect(state.activeProjectId == nil)
+        #expect(state.rows.isEmpty)
     }
 
     @Test func initialRowKeepsGenericDefaultWhenNoFrameIsStored() throws {
@@ -274,6 +273,7 @@ struct AppStateTests {
         )
 
         var row = state.rows[0]
+        row.templates = Array(row.templates.prefix(2))
         row.defaultDeviceFrameId = alternateFrame.id
         row.shapes = [
             makeDevice(in: row, templateIndex: 0, frame: commonFrame),
@@ -1069,13 +1069,14 @@ struct AppStateTests {
         #expect(state.activeProject?.name == "Renamed")
     }
 
-    @Test func deleteProjectCreatesNewIfLast() {
+    @Test func deleteLastProjectLeavesEmptyState() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
         let projectId = state.activeProjectId!
         state.deleteProject(projectId)
-        #expect(state.visibleProjects.count == 1, "Should create fallback project")
-        #expect(state.activeProjectId != nil)
+        #expect(state.visibleProjects.isEmpty, "Deleting the last project should leave no project")
+        #expect(state.activeProjectId == nil)
+        #expect(state.rows.isEmpty)
     }
 
     @Test func selectProjectClearsOpeningIndicatorAfterStructureThenStreamsImages() async throws {

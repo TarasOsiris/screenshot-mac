@@ -174,14 +174,14 @@ struct AppStateDeleteTests {
         #expect(state.visibleProjects.count == 1)
     }
 
-    @Test func deleteLastProjectCreatesNewOne() {
+    @Test func deleteLastProjectLeavesEmptyState() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
         let onlyId = state.visibleProjects.first!.id
         state.deleteProject(onlyId)
 
-        #expect(state.visibleProjects.count == 1)
-        #expect(state.visibleProjects.first!.id != onlyId)
+        #expect(state.visibleProjects.isEmpty)
+        #expect(state.activeProjectId == nil)
     }
 }

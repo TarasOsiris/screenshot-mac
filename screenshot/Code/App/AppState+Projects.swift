@@ -187,9 +187,13 @@ extension AppState {
             if let nextProject = visibleProjects.first {
                 switchToProject(nextProject.id)
             } else {
-                // No visible projects left — create a new one
-                createProject(name: "Project 1")
-                return
+                // No visible projects left — drop to the empty "Create Project" state.
+                deselectAll()
+                rows = []
+                reconcilePreviewingRows(against: [])
+                localeState = .default
+                activeProjectId = nil
+                activeProjectDataModifiedAt = nil
             }
         } else {
             PersistenceService.deleteProject(id)

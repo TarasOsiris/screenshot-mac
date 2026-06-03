@@ -247,6 +247,8 @@ ES = {
     "Move Row Down": "Mover fila abajo",
     "Move Row Up": "Mover fila arriba",
     "Name": "Nombre",
+    "Create Project": "Crear proyecto",
+    "Create your first project to start designing screenshots.": "Crea tu primer proyecto para empezar a diseñar capturas de pantalla.",
     "New Project": "Nuevo proyecto",
     "New Project...": "Nuevo proyecto…",
     "Next": "Siguiente",
@@ -669,6 +671,15 @@ ES = {
     "The interface language will switch the next time Screenshot Bro launches.": "El idioma de la interfaz cambiará la próxima vez que se abra Screenshot Bro.",
 }
 
+LOCALIZATION_REPAIRS = {
+    "[Privacy Policy](https://screenshotbro.app/privacy)": {
+        "ja": "[プライバシーポリシー](https://screenshotbro.app/privacy)",
+    },
+    "[Terms of Service](https://screenshotbro.app/terms)": {
+        "ja": "[利用規約](https://screenshotbro.app/terms)",
+    },
+}
+
 
 def collect_extracted_keys() -> set[str]:
     """Read Xcode's .stringsdata outputs for the Localizable table."""
@@ -700,6 +711,7 @@ def main():
 
     added = 0
     kept = 0
+    repaired = 0
     missing = []
 
     for key, entry in strings.items():
@@ -722,11 +734,23 @@ def main():
             continue
         missing.append(key)
 
+    for key, repairs in LOCALIZATION_REPAIRS.items():
+        locs = strings.get(key, {}).setdefault("localizations", {})
+        for locale, value in repairs.items():
+            string_unit = locs.get(locale, {}).get("stringUnit", {})
+            if string_unit.get("value") == value:
+                continue
+            locs[locale] = {
+                "stringUnit": {"state": "translated", "value": value},
+            }
+            repaired += 1
+
     CATALOG.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
     print(f"Merged from stringsdata: {merged}")
     print(f"Added Spanish: {added}")
     print(f"Already translated: {kept}")
+    print(f"Repaired translations: {repaired}")
     print(f"Missing translations: {len(missing)}")
     for k in missing:
         print(f"  - {k!r}")

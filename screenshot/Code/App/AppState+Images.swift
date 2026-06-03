@@ -307,16 +307,31 @@ extension AppState {
     /// number of existing devices) are placed into freshly appended templates. Rows with no
     /// existing devices fall back to the legacy one-image-per-template behavior.
     /// Registers a single undo operation for the entire batch.
-    func batchImportImages(_ images: [NSImage], into rowId: UUID) {
+    /// `maxTemplatesPerRow` caps the row's resulting template count (free-tier limit) by
+    /// importing only as many images as fit; pass `nil` for unlimited (Pro). Returns the
+    /// number of images imported, so the caller can surface a paywall when some were dropped.
+    @discardableResult
+    func batchImportImages(_ images: [NSImage], into rowId: UUID, maxTemplatesPerRow: Int? = nil) -> Int {
         guard let idx = rowIndex(for: rowId),
               let activeId = activeProjectId,
-              !images.isEmpty else { return }
+              !images.isEmpty else { return 0 }
+
+        let templatesWithDevices = templatesContainingDevices(inRowAt: idx)
+        // Templates an image can fill without creating a new one.
+        let reusableCount = templatesWithDevices.isEmpty ? rows[idx].templates.count : templatesWithDevices.count
+        var images = images
+        if let cap = maxTemplatesPerRow {
+            let maxImages = reusableCount + max(0, cap - rows[idx].templates.count)
+            if images.count > maxImages {
+                images = Array(images.prefix(maxImages))
+            }
+        }
+        guard !images.isEmpty else { return 0 }
+
         registerUndoForRow(at: idx, "Import Screenshots")
         selectRow(rowId)
 
-        let templatesWithDevices = templatesContainingDevices(inRowAt: idx)
         var targetTemplateIndices: [Int]
-
         if templatesWithDevices.isEmpty {
             while rows[idx].templates.count < images.count {
                 appendTemplate(to: idx)
@@ -335,6 +350,7 @@ extension AppState {
         }
 
         scheduleSave()
+        return images.count
     }
 
     private func templatesContainingDevices(inRowAt rowIndex: Int) -> [Int] {

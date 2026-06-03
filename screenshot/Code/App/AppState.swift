@@ -65,6 +65,10 @@ final class AppState {
     /// When false, `endCoach()` skips persisting `onboardingCompleted`. Used by the debug
     /// "Show Onboarding…" command so it can be re-run without consuming the real flag.
     @ObservationIgnored var coachPersistsOnEnd: Bool = true
+    /// Set when onboarding finishes while no project is open. The tour is deferred until the
+    /// first row's canvas appears (its coach marks anchor on the editor). The wrapped Bool is
+    /// the `persistOnEnd` value to start the coach with. `nil` means no pending tour.
+    @ObservationIgnored var pendingCoachPersistOnEnd: Bool?
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
     /// Family names referenced by any shape at some point in the current session. A font
@@ -105,6 +109,9 @@ final class AppState {
     var isLoadingImages = false
     var isOpeningProject = false
     var isFanOutTranslating = false
+    /// False until the first `load()` completes. Lets the UI show a loading state instead of
+    /// the empty "no projects" screen while an iCloud-deferred load is still pending.
+    var hasCompletedInitialLoad = false
 
     // Debounce state for undo grouping
     @ObservationIgnored var translationUndoTask: DispatchWorkItem?

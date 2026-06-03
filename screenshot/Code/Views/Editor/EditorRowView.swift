@@ -89,7 +89,12 @@ struct EditorRowView: View {
                     withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
                 },
                 onDuplicate: {
-                    withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+                    store.requirePro(
+                        allowed: store.canAddRow(currentCount: state.rows.count),
+                        context: .rowLimit
+                    ) {
+                        withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
+                    }
                 },
                 onReset: {
                     if confirmBeforeDeleting {
@@ -133,6 +138,14 @@ struct EditorRowView: View {
                         arrowEdge: .top,
                         attachmentAnchor: .point(.center)
                     )
+                    // Launch a deferred onboarding tour once the first canvas (the `.canvas`
+                    // anchor) is on screen. `.onAppear` covers the first-launch path (flag set
+                    // before this view exists); `.onChange` covers a returning user whose canvas
+                    // is already visible when they tap "Get Started".
+                    .onAppear { startDeferredCoachIfNeeded() }
+                    .onChange(of: state.pendingCoachPersistOnEnd) { _, _ in
+                        startDeferredCoachIfNeeded()
+                    }
             }
         }
         .onScrollGeometryChange(for: CGRect.self) { geo in
@@ -332,7 +345,11 @@ struct EditorRowView: View {
         group.notify(queue: .main) { [self] in
             let images = loadedImages.sorted(by: { $0.0 < $1.0 }).map(\.1)
             guard !images.isEmpty else { return }
-            state.batchImportImages(images, into: row.id)
+            let cap = store.isProUnlocked ? nil : StoreService.freeMaxTemplatesPerRow
+            let imported = state.batchImportImages(images, into: row.id, maxTemplatesPerRow: cap)
+            if imported < images.count {
+                store.presentPaywall(for: .templateLimit)
+            }
         }
     }
 
@@ -837,6 +854,19 @@ struct EditorRowView: View {
         NSApp.keyWindow?.makeFirstResponder(nil)
         #endif
         state.selectRow(row.id)
+    }
+
+    /// Starts an onboarding tour deferred from when the welcome sheet closed (no project was
+    /// open then). Only the first row's canvas drives this, since the `.canvas` coach mark
+    /// anchors here. Yields a runloop turn so the anchor is laid out before the popover shows.
+    private func startDeferredCoachIfNeeded() {
+        guard state.rows.first?.id == row.id, !isPreviewMode else { return }
+        guard let persist = state.pendingCoachPersistOnEnd, !state.isOpeningProject else { return }
+        state.pendingCoachPersistOnEnd = nil
+        Task { @MainActor in
+            await Task.yield()
+            state.startCoach(persistOnEnd: persist)
+        }
     }
 
     private func startLabelEdit() {

@@ -6,16 +6,7 @@ extension AppState {
 
     func load() {
         reloadFromDisk()
-
-        if visibleProjects.isEmpty {
-            let project = Project(name: "My App")
-            projects = [project]
-            activeProjectId = project.id
-            PersistenceService.ensureProjectDirs(project.id)
-            rows = [makeDefaultRow()]
-            selectRow(rows.first?.id)
-            saveAll()
-        }
+        hasCompletedInitialLoad = true
     }
 
     // MARK: - iCloud

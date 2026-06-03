@@ -145,31 +145,34 @@ struct ProjectsView: View {
     private let columns = [GridItem(.adaptive(minimum: 220, maximum: 280), spacing: 20)]
 
     var body: some View {
-        ScrollView {
+        Group {
             if state.visibleProjects.isEmpty {
+                // Not wrapped in a ScrollView: NoProjectView fills the viewport and centers.
                 emptyState
             } else {
-                LazyVGrid(columns: columns, spacing: 24) {
-                    ForEach(state.visibleProjects) { project in
-                        Button {
-                            onOpen(project.id)
-                        } label: {
-                            ProjectCard(project: project)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(ProjectCardButtonStyle())
-                        .contentShape(Rectangle())
-                        .accessibilityLabel(project.name)
-                        .accessibilityHint("Opens the project")
-                        .contextMenuWithPreview {
-                            projectMenu(for: project)
-                        } preview: {
-                            ProjectContextMenuPreview(project: project)
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 24) {
+                        ForEach(state.visibleProjects) { project in
+                            Button {
+                                onOpen(project.id)
+                            } label: {
+                                ProjectCard(project: project)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(ProjectCardButtonStyle())
+                            .contentShape(Rectangle())
+                            .accessibilityLabel(project.name)
+                            .accessibilityHint("Opens the project")
+                            .contextMenuWithPreview {
+                                projectMenu(for: project)
+                            } preview: {
+                                ProjectContextMenuPreview(project: project)
+                            }
                         }
                     }
+                    .padding(24)
                 }
-                .padding(24)
             }
         }
         .background(Color.platformWindowBackground)
@@ -202,15 +205,7 @@ struct ProjectsView: View {
     }
 
     private var emptyState: some View {
-        ContentUnavailableView {
-            Label("No Projects", systemImage: "square.on.square.dashed")
-        } description: {
-            Text("Create your first project to start designing screenshots.")
-        } actions: {
-            Button("New Project") { newProject() }
-                .buttonStyle(.borderedProminent)
-        }
-        .padding(.top, 80)
+        NoProjectView(onCreate: newProject)
     }
 
     @ViewBuilder
@@ -231,7 +226,7 @@ struct ProjectsView: View {
 
         Button("Duplicate…", systemImage: "plus.square.on.square") {
             store.requirePro(
-                allowed: store.canCreateProject(),
+                allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
                 context: .projectLimit
             ) {
                 renamePrompt = ProjectNamePrompt(
@@ -249,7 +244,6 @@ struct ProjectsView: View {
         Button("Delete…", systemImage: "trash", role: .destructive) {
             projectPendingDeletion = project
         }
-        .disabled(state.visibleProjects.count <= 1)
     }
 
     private var deletionBinding: Binding<Bool> {
@@ -261,7 +255,7 @@ struct ProjectsView: View {
 
     private func newProject() {
         store.requirePro(
-            allowed: store.canCreateProject(),
+            allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
             context: .projectLimit
         ) {
             activeIdBeforeCreate = state.activeProjectId

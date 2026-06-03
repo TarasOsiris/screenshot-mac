@@ -10,7 +10,7 @@ struct NewProjectWindowView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var projectName = ""
-    @State private var creationMode: CreationMode = .blank
+    @State private var creationMode: CreationMode = .template
     @State private var selectedTemplateId: String?
     @State private var rowDrafts: [BlankProjectRowDraft] = []
     @State private var templates: [ProjectTemplate] = []
@@ -71,7 +71,7 @@ struct NewProjectWindowView: View {
         .onAppear {
             templates = TemplateService.availableTemplates()
             projectName = "Project \(state.visibleProjects.count + 1)"
-            creationMode = .blank
+            creationMode = .template
             selectedTemplateId = templates.first?.id
             rowDrafts = [
                 BlankProjectRowDraft(category: .iphone),
@@ -98,16 +98,16 @@ struct NewProjectWindowView: View {
     private var modePicker: some View {
         HStack(spacing: 12) {
             modeCard(
-                title: "Blank",
-                subtitle: "Set up your own rows",
-                icon: "square.on.square.dashed",
-                mode: .blank
-            )
-            modeCard(
                 title: "Template",
                 subtitle: "Pre-designed layouts",
                 icon: "square.grid.2x2",
                 mode: .template
+            )
+            modeCard(
+                title: "Blank",
+                subtitle: "Set up your own rows",
+                icon: "square.on.square.dashed",
+                mode: .blank
             )
         }
     }
@@ -280,7 +280,7 @@ struct NewProjectWindowView: View {
     }
 
     private func createProject() {
-        guard store.canCreateProject() else {
+        guard store.canCreateProject(currentCount: state.visibleProjects.count) else {
             // Free-tier limit reached after this view opened (e.g. an iCloud sync added a
             // project). Show the paywall; on iPad it's hosted at the navigation root, behind
             // this full-screen cover, so close the cover to let it present.

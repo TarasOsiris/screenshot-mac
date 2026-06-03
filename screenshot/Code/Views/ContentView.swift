@@ -461,7 +461,7 @@ struct ContentView: View {
 
             Button("Duplicate Project...", systemImage: "plus.square.on.square") {
                 store.requirePro(
-                    allowed: store.canCreateProject(),
+                    allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
                     context: .projectLimit
                 ) {
                     guard let id = state.activeProjectId else { return }
@@ -504,7 +504,7 @@ struct ContentView: View {
                     state.deleteProject(id)
                 }
             }
-            .disabled(state.activeProjectId == nil || state.visibleProjects.count <= 1)
+            .disabled(state.activeProjectId == nil)
         }
     }
 
@@ -582,7 +582,7 @@ struct ContentView: View {
         Menu {
             Button("New Project...", systemImage: "plus") {
                 store.requirePro(
-                    allowed: store.canCreateProject(),
+                    allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
                     context: .projectLimit
                 ) {
                     openWindow(id: NewProjectWindowView.windowID)

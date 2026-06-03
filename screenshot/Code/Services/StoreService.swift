@@ -80,6 +80,7 @@ final class StoreService {
 
     // MARK: - Free tier limits
 
+    nonisolated static let freeMaxProjects = 1
     nonisolated static let freeMaxRows = 3
     nonisolated static let freeMaxTemplatesPerRow = 5
 
@@ -100,12 +101,11 @@ final class StoreService {
         isProUnlocked || currentCount < Self.freeMaxTemplatesPerRow
     }
 
-    func canCreateProject() -> Bool {
+    func canCreateProject(currentCount: Int) -> Bool {
         #if DEBUG
-        return isProUnlocked || Self.isForceProUnlockedForCurrentProcess
-        #else
-        return isProUnlocked
+        if Self.isForceProUnlockedForCurrentProcess { return true }
         #endif
+        return isProUnlocked || currentCount < Self.freeMaxProjects
     }
 
     func requirePro(
