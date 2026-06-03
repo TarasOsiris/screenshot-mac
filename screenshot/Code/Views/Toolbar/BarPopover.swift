@@ -46,11 +46,10 @@ private struct IOSSheetChrome<Content: View>: View {
                     }
                 }
         }
-        // Detents (not `.presentationSizing(.fitted)`) give the sheet a real height — a
-        // NavigationStack has no finite ideal size, so `.fitted` collapses it to just the
-        // nav bar. `.fullScreenCover` (showcase export) ignores these, which is fine.
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        // A single full-height detent: a fixed full-size sheet, no drag handle / resizing.
+        // (Not `.presentationSizing(.fitted)`, which collapses a NavigationStack to just the
+        // nav bar.) `.fullScreenCover` (showcase export) ignores this, which is fine.
+        .presentationDetents([.large])
     }
 }
 #endif
