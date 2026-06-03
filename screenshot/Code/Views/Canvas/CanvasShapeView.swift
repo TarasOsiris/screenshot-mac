@@ -211,11 +211,8 @@ struct CanvasShapeView: View {
         if showsEditorHelpers {
             ZStack(alignment: .topLeading) {
                 svgAware
-                    .fileImporter(isPresented: $isPickerPresented, allowedContentTypes: [.image]) { result in
-                        if case .success(let url) = result,
-                           let image = loadImportedImage(from: url) {
-                            onScreenshotDrop?(image)
-                        }
+                    .imageSourcePicker(isPresented: $isPickerPresented) { image in
+                        onScreenshotDrop?(image)
                     }
                     .gesture(dragGesture, including: .gesture)
                     .simultaneousGesture(
