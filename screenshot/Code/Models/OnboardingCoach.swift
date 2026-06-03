@@ -5,6 +5,19 @@ import SwiftUI
 /// or future migration can be done in one place.
 enum OnboardingPersistence {
     static let completedKey = "onboardingCompleted"
+    private static let forceOnboardingEnvironmentKey = "SCREENSHOT_FORCE_ONBOARDING"
+
+    static func prepareForLaunch() {
+        guard isForceOnboardingEnabled else { return }
+        UserDefaults.standard.set(false, forKey: completedKey)
+    }
+
+    private static var isForceOnboardingEnabled: Bool {
+        guard let value = ProcessInfo.processInfo.environment[forceOnboardingEnvironmentKey] else {
+            return false
+        }
+        return !value.isEmpty && value != "0" && value.lowercased() != "false"
+    }
 }
 
 /// Steps of the interactive onboarding popover series ("coach marks").

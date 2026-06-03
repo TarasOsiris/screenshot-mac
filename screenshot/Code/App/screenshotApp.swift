@@ -31,6 +31,10 @@ struct ScreenshotBroApp: App {
         }
     }
 
+    init() {
+        OnboardingPersistence.prepareForLaunch()
+    }
+
     var body: some Scene {
         #if os(macOS)
         Window("Screenshot Bro", id: AppRootView.windowID) {
