@@ -10,19 +10,56 @@ struct OnboardingView: View {
     #endif
 
     var body: some View {
+        #if os(iOS)
+        iOSContent
+        #else
+        macOSContent
+        #endif
+    }
+
+    #if os(macOS)
+    private var macOSContent: some View {
         ZStack {
             background
 
             content
                 .padding(26)
         }
-        #if os(macOS)
         .frame(width: 760, height: 600)
-        #else
-        .frame(maxWidth: 760, maxHeight: 620)
-        .presentationSizing(.page)
-        #endif
     }
+    #endif
+
+    #if os(iOS)
+    private var iOSContent: some View {
+        NavigationStack {
+            List {
+                Section {
+                    iOSHeader
+                        .listRowInsets(.init(top: 22, leading: 24, bottom: 22, trailing: 24))
+                        .listRowBackground(Color.clear)
+                }
+
+                Section("Workflow") {
+                    ForEach(Array(Self.stepData.enumerated()), id: \.offset) { index, step in
+                        iOSStepRow(index: index, step: step)
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.platformWindowBackground)
+            .navigationTitle("Welcome")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Get Started", action: complete)
+                        .keyboardShortcut(.defaultAction)
+                }
+            }
+        }
+        .presentationSizing(.page)
+    }
+    #endif
 
     // MARK: - Background
 
@@ -104,6 +141,29 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity)
     }
 
+    #if os(iOS)
+    private var iOSHeader: some View {
+        VStack(spacing: 14) {
+            Image("Logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(height: 34)
+                .accessibilityLabel("Screenshot Bro")
+
+            Text("Create store screenshots on iPad")
+                .font(.title2.weight(.semibold))
+                .multilineTextAlignment(.center)
+
+            Text("Start from a template, arrange screenshots and text, then export every required size from one project.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+    }
+    #endif
+
     // MARK: - Steps
 
     private var stepColumns: [GridItem] {
@@ -131,10 +191,7 @@ struct OnboardingView: View {
 
     private var footer: some View {
         Button {
-            if persistCompletion {
-                onboardingCompleted = true
-            }
-            onComplete?()
+            complete()
         } label: {
             Text("Get Started")
                 .font(.system(size: 14, weight: .semibold))
@@ -145,6 +202,13 @@ struct OnboardingView: View {
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
         .frame(maxWidth: .infinity)
+    }
+
+    private func complete() {
+        if persistCompletion {
+            onboardingCompleted = true
+        }
+        onComplete?()
     }
 
     // MARK: - Data
@@ -177,6 +241,58 @@ struct OnboardingView: View {
             color: .green
         ),
     ]
+
+    #if os(iOS)
+    @ViewBuilder
+    private func iOSStepRow(index: Int, step: StepInfo) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(step.color.opacity(0.14))
+
+                Image(systemName: step.icon)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(step.color)
+            }
+            .frame(width: 38, height: 38)
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text("Step \(index + 1)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(step.color)
+
+                Text(step.title)
+                    .font(.headline)
+
+                Text(step.description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let hint = step.hint {
+                    iOSBadge { Text(hint) }
+                        .padding(.top, 3)
+                } else if let glyph = step.shortcutGlyph {
+                    iOSBadge { Text(verbatim: glyph) }
+                        .padding(.top, 3)
+                }
+            }
+        }
+        .padding(.vertical, 7)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func iOSBadge<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.secondary.opacity(0.12), in: Capsule())
+    }
+    #endif
 }
 
 private struct StepInfo {
