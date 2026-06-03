@@ -3,8 +3,11 @@ import SwiftUI
 import Translation
 
 struct TranslationOverviewSheet: View {
+    private static let title: LocalizedStringKey = "Edit Translations"
     @Bindable var state: AppState
+    #if os(macOS)
     @Environment(\.dismiss) private var dismiss
+    #endif
     @State private var cellTranslationConfig: TranslationSession.Configuration?
     @State private var pendingCellTranslation: PendingCellTranslation?
     private let baseColumnWidth: CGFloat = 320
@@ -18,8 +21,10 @@ struct TranslationOverviewSheet: View {
 
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Edit Translations")
+                #if os(macOS)
+                Text(Self.title)
                     .font(.headline)
+                #endif
                 Text("Edit the base language and each translated language side by side. Leave a cell empty to use the base language text.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
@@ -52,6 +57,7 @@ struct TranslationOverviewSheet: View {
                 }
             }
 
+            #if os(macOS)
             HStack {
                 Spacer()
                 Button("Done") { dismiss() }
@@ -59,8 +65,12 @@ struct TranslationOverviewSheet: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
+            #endif
         }
+        #if os(macOS)
         .frame(width: 1120, height: 760)
+        #endif
+        .iosSheetChrome(Text(Self.title))
         .translationTask(cellTranslationConfig) { session in
             guard let pendingCellTranslation else { return }
             defer { self.pendingCellTranslation = nil }

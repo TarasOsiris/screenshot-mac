@@ -190,7 +190,6 @@ struct ProjectsView: View {
         }
         .sheet(item: $renamePrompt) { prompt in
             ProjectNameSheet(prompt: prompt)
-                .presentationSizing(.fitted)
         }
         .alert("Delete Project", isPresented: deletionBinding, presenting: projectPendingDeletion) { project in
             Button("Delete", role: .destructive) {

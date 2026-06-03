@@ -806,7 +806,7 @@ struct ShapePropertiesSingleSelectionBar: View {
         }
         .buttonStyle(.borderless)
         .help("Text")
-        .barPopover(isPresented: $isTextPopoverPresented) {
+        .barPopover(isPresented: $isTextPopoverPresented, title: "Text") {
             textPopoverContent(shape: shape, shapeId: shapeId)
                 .padding(12)
                 .frame(width: 280)

@@ -1,16 +1,21 @@
 import SwiftUI
 
 struct ManageLocalesSheet: View {
+    private static let title: LocalizedStringKey = "Manage Languages"
     @Bindable var state: AppState
+    #if os(macOS)
     @Environment(\.dismiss) private var dismiss
+    #endif
     @State private var searchText = ""
     @State private var showPresets = false
 
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 4) {
-                Text("Manage Languages")
+                #if os(macOS)
+                Text(Self.title)
                     .font(.headline)
+                #endif
                 Text("The first language is the base. Drag to reorder.")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
@@ -82,13 +87,18 @@ struct ManageLocalesSheet: View {
                 }
                 .buttonStyle(.borderless)
                 Spacer()
+                #if os(macOS)
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.defaultAction)
+                #endif
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
+        #if os(macOS)
         .frame(width: 380, height: 340)
+        #endif
+        .iosSheetChrome(Text(Self.title))
         .sheet(isPresented: $showPresets) {
             LocalePresetsSheet(state: state, searchText: $searchText)
         }
@@ -96,9 +106,12 @@ struct ManageLocalesSheet: View {
 }
 
 private struct LocalePresetsSheet: View {
+    private static let title: LocalizedStringKey = "Add Language"
     @Bindable var state: AppState
     @Binding var searchText: String
+    #if os(macOS)
     @Environment(\.dismiss) private var dismiss
+    #endif
 
     private var availablePresets: [LocaleDefinition] {
         let existing = Set(state.localeState.locales.map(\.code))
@@ -112,10 +125,12 @@ private struct LocalePresetsSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("Add Language")
+            #if os(macOS)
+            Text(Self.title)
                 .font(.headline)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
+            #endif
 
             TextField("Search languages...", text: $searchText)
                 .textFieldStyle(.roundedBorder)
@@ -139,6 +154,7 @@ private struct LocalePresetsSheet: View {
                 }
             }
 
+            #if os(macOS)
             Divider()
 
             HStack {
@@ -148,7 +164,11 @@ private struct LocalePresetsSheet: View {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
+            #endif
         }
+        #if os(macOS)
         .frame(width: 340, height: 400)
+        #endif
+        .iosSheetChrome(Text(Self.title))
     }
 }

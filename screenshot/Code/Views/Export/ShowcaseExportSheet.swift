@@ -26,7 +26,9 @@ struct ShowcaseExportSheet: View {
     let availableFontFamilies: Set<String>?
     var onExport: (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>) -> Void
 
+    #if os(macOS)
     @Environment(\.dismiss) private var dismiss
+    #endif
     @State private var config = ShowcaseExportConfig()
     @State private var backgroundImage: NSImage?
     @State private var selectedRowIds: Set<UUID>
@@ -84,12 +86,15 @@ struct ShowcaseExportSheet: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
+            #if os(macOS)
             Divider()
 
             footer
                 .frame(height: ShowcaseExportSheetMetrics.footerHeight)
                 .frame(maxWidth: .infinity)
+            #endif
         }
+        #if os(macOS)
         .frame(
             minWidth: ShowcaseExportSheetMetrics.minWidth,
             idealWidth: ShowcaseExportSheetMetrics.idealWidth,
@@ -98,6 +103,15 @@ struct ShowcaseExportSheet: View {
             idealHeight: ShowcaseExportSheetMetrics.idealHeight,
             maxHeight: ShowcaseExportSheetMetrics.maxHeight
         )
+        #else
+        .iosSheetChrome(
+            Text("Showcase Export"),
+            confirmTitle: Text("Export…"),
+            confirmDisabled: selectedRowsOrdered.isEmpty,
+            showsCancel: true,
+            onConfirm: { onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds) }
+        )
+        #endif
         .alert("Reset Showcase Settings?", isPresented: $showingResetConfirmation) {
             Button("Reset", role: .destructive) {
                 withAnimation(.easeInOut(duration: 0.15)) {
@@ -571,6 +585,7 @@ struct ShowcaseExportSheet: View {
 
     // MARK: - Footer
 
+    #if os(macOS)
     @ViewBuilder
     private var footer: some View {
         HStack {
@@ -591,6 +606,7 @@ struct ShowcaseExportSheet: View {
         }
         .padding(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
     }
+    #endif
 
     // MARK: - Background image handling
 

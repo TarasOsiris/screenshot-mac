@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct SvgPasteDialog: View {
+    private static let title: LocalizedStringKey = "Add SVG"
     @Binding var isPresented: Bool
     var onConfirm: (String, CGSize, Bool, Color) -> Void
 
@@ -17,8 +18,10 @@ struct SvgPasteDialog: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Text("Add SVG")
+            #if os(macOS)
+            Text(Self.title)
                 .font(.headline)
+            #endif
 
             SvgPresetPicker(
                 selectedId: selectedPresetId,
@@ -81,6 +84,7 @@ struct SvgPasteDialog: View {
                     }
             }
 
+            #if os(macOS)
             HStack {
                 Button("Import File...") {
                     importFile()
@@ -99,9 +103,19 @@ struct SvgPasteDialog: View {
                 .keyboardShortcut(.defaultAction)
                 .disabled(!isValidSvg)
             }
+            #endif
         }
         .padding()
+        #if os(macOS)
         .frame(width: 480)
+        #endif
+        .iosSheetChrome(
+            Text(Self.title),
+            confirmTitle: Text("Add"),
+            confirmDisabled: !isValidSvg,
+            showsCancel: true,
+            onConfirm: addSvg
+        )
     }
 
     private func applyPreset(_ preset: SvgPreset) {

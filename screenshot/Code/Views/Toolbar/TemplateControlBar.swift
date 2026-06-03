@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct TemplateControlBar: View {
+    private static let backgroundOverrideTitle: LocalizedStringKey = "Background Override"
     @Environment(AppState.self) private var state
     @Binding var template: ScreenshotTemplate
     let row: ScreenshotRow
@@ -165,8 +166,9 @@ struct TemplateControlBar: View {
                 .help(backgroundButtonHelp)
                 .sheet(isPresented: $showBackgroundPopover) {
                     VStack(alignment: .leading, spacing: 8) {
+                        #if os(macOS)
                         HStack {
-                            Text("Background Override")
+                            Text(Self.backgroundOverrideTitle)
                                 .font(.headline)
                             Spacer()
                             Button {
@@ -177,6 +179,7 @@ struct TemplateControlBar: View {
                             }
                             .buttonStyle(.borderless)
                         }
+                        #endif
 
                         Toggle(
                             "Override background",
@@ -219,11 +222,10 @@ struct TemplateControlBar: View {
                         }
                     }
                     .padding(20)
+                    #if os(macOS)
                     .frame(width: 320)
-                    #if os(iOS)
-                    .presentationSizing(.fitted)
-                    .presentationDragIndicator(.visible)
                     #endif
+                    .iosSheetChrome(Text(Self.backgroundOverrideTitle))
                 }
             }
 

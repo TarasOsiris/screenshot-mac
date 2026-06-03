@@ -368,32 +368,19 @@ struct ContentView: View {
         #endif
         .sheet(item: $projectNamePrompt) { prompt in
             ProjectNameSheet(prompt: prompt)
-                .presentationSizing(.fitted)
         }
+        #if os(macOS)
         .sheet(item: $showcasePresentation) { presentation in
-            ShowcaseExportSheet(
-                candidateRows: presentation.candidateRows,
-                loadImages: { row in
-                    state.loadFullResolutionImages(
-                        forRow: row,
-                        localeCode: state.localeState.activeLocaleCode
-                    )
-                },
-                localeCode: state.localeState.activeLocaleCode,
-                localeState: state.localeState,
-                availableFontFamilies: state.availableFontFamilySet
-            ) { config, backgroundImage, selectedRowIds, excludedTemplateIds in
-                showcasePresentation = nil
-                runShowcaseExport(
-                    presentation: presentation,
-                    config: config,
-                    backgroundImage: backgroundImage,
-                    selectedRowIds: selectedRowIds,
-                    excludedTemplateIds: excludedTemplateIds
-                )
-            }
-            .presentationSizing(.page)
+            showcaseExportScreen(for: presentation)
+                .presentationSizing(.page)
         }
+        #else
+        // iPad: showcase export is a desktop-grade split view — present it as its own
+        // full-screen screen with a native nav bar rather than a fitted sheet.
+        .fullScreenCover(item: $showcasePresentation) { presentation in
+            showcaseExportScreen(for: presentation)
+        }
+        #endif
         .middleMousePan()
         .onAppear {
             state.undoManager = undoManager
@@ -860,6 +847,31 @@ struct ContentView: View {
     private func exportShowcaseImages() {
         guard let row = state.rows.first else { return }
         presentShowcaseSheet(for: row, mode: .allRows)
+    }
+
+    @ViewBuilder
+    private func showcaseExportScreen(for presentation: ShowcasePresentation) -> some View {
+        ShowcaseExportSheet(
+            candidateRows: presentation.candidateRows,
+            loadImages: { row in
+                state.loadFullResolutionImages(
+                    forRow: row,
+                    localeCode: state.localeState.activeLocaleCode
+                )
+            },
+            localeCode: state.localeState.activeLocaleCode,
+            localeState: state.localeState,
+            availableFontFamilies: state.availableFontFamilySet
+        ) { config, backgroundImage, selectedRowIds, excludedTemplateIds in
+            showcasePresentation = nil
+            runShowcaseExport(
+                presentation: presentation,
+                config: config,
+                backgroundImage: backgroundImage,
+                selectedRowIds: selectedRowIds,
+                excludedTemplateIds: excludedTemplateIds
+            )
+        }
     }
 
     private func presentShowcaseSheet(for row: ScreenshotRow, mode: ShowcaseExportMode) {
