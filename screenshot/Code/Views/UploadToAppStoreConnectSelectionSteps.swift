@@ -1,5 +1,3 @@
-// WHOLE_FILE_MACOS_GUARD
-#if os(macOS)
 import SwiftUI
 
 struct ASCAppSelectionStepView: View {
@@ -77,7 +75,7 @@ struct ASCAppSelectionStepView: View {
                     .tag(item.app.id as String?)
             }
         }
-        .listStyle(.inset)
+        .ascSelectionListStyle()
     }
 
     private func selectApp(id: String?) {
@@ -162,7 +160,7 @@ struct ASCVersionSelectionStepView: View {
                     .tag(version.id as String?)
             }
         }
-        .listStyle(.inset)
+        .ascSelectionListStyle()
     }
 
     @ViewBuilder
@@ -218,4 +216,14 @@ private struct ASCVersionSelectionRow: View {
     }
 }
 
-#endif
+private extension View {
+    /// Desktop inset list on macOS; grouped inset on iPad for a native selection look.
+    @ViewBuilder
+    func ascSelectionListStyle() -> some View {
+        #if os(macOS)
+        listStyle(.inset)
+        #else
+        listStyle(.insetGrouped)
+        #endif
+    }
+}

@@ -42,6 +42,13 @@ extension ContentView {
                     }
                 }
             }
+
+            Divider()
+
+            Button("Upload to App Store Connect…", systemImage: "icloud.and.arrow.up") {
+                showingASCUploadSheet = true
+            }
+            .disabled(state.rows.isEmpty)
         } label: {
             iPadExportLabel
         } primaryAction: {

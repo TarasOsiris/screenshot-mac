@@ -1,4 +1,3 @@
-#if os(macOS)
 import SwiftUI
 
 extension UploadToAppStoreConnectView {
@@ -106,7 +105,7 @@ extension UploadToAppStoreConnectView {
                 ) == .orderedDescending
             }
             selectedVersion = versions.first(where: { $0.isEditable }) ?? versions.first
-            step = .pickingVersion
+            advance(to: .pickingVersion)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -132,7 +131,7 @@ extension UploadToAppStoreConnectView {
             }
 
             buildMetadataDrafts(appInfoLocalizations: fetchedAppInfoLocalizations)
-            step = .editingMetadata
+            advance(to: .editingMetadata)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -260,7 +259,7 @@ extension UploadToAppStoreConnectView {
                 appInfoDrafts[i].markSaved()
             }
             rowPlans = buildRowPlans(preserving: rowPlans)
-            step = .configuringPlan
+            advance(to: .configuringPlan)
         } catch {
             errorMessage = String(localized: "Failed to save metadata: \(error.localizedDescription)")
         }
@@ -336,7 +335,8 @@ extension UploadToAppStoreConnectView {
             return
         }
 
-        step = .uploading
+        uploadProgress = nil   // clear any stale progress from a previous attempt
+        advance(to: .uploading)
         isBusy = true
         defer { isBusy = false; uploadTask = nil }
 
@@ -347,7 +347,10 @@ extension UploadToAppStoreConnectView {
                     appState: state,
                     progress: { p in self.uploadProgress = p }
                 )
-                if Task.isCancelled { return }
+                // `upload` is cancellation-aware and throws `CancellationError` if cancelled
+                // mid-flight (handled below). Reaching here means it completed, so show the
+                // result even if a Cancel tap landed late — otherwise the wizard would be
+                // stranded on the uploading screen (Back hidden, only a no-op Cancel button).
                 let summary = UploadSummary(
                     appId: selectedApp?.id,
                     appName: selectedApp?.attributes.name ?? "",
@@ -364,12 +367,12 @@ extension UploadToAppStoreConnectView {
                 NotificationService.notify(title: String(localized: "Upload complete"), body: body)
             } catch is CancellationError {
                 errorMessage = String(localized: "Upload cancelled. Any set that was already being replaced may be empty in App Store Connect — re-run the upload to refill it.")
-                step = .configuringPlan
+                retreatToConfiguringPlan()
             } catch {
                 let summary = uploadFailureSummary(for: error)
                 errorMessage = summary
                 errorDetailsText = buildErrorDetails(for: error)
-                step = .configuringPlan
+                retreatToConfiguringPlan()
                 NotificationService.notify(title: String(localized: "Upload failed"), body: summary)
             }
         }
@@ -418,5 +421,3 @@ extension UploadToAppStoreConnectView {
         return details.joined(separator: "\n\n")
     }
 }
-
-#endif

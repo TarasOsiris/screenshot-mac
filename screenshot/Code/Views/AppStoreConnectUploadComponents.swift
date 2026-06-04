@@ -1,5 +1,3 @@
-// WHOLE_FILE_MACOS_GUARD
-#if os(macOS)
 #if os(macOS)
 import AppKit
 #else
@@ -11,21 +9,12 @@ private struct ASCAppIconView: View {
     let bundleId: String
     let size: CGFloat
 
-    @State private var iconURL: URL?
+    @State private var icon: NSImage?
 
     var body: some View {
         Group {
-            if let iconURL {
-                AsyncImage(url: iconURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable()
-                    case .failure, .empty:
-                        placeholder
-                    @unknown default:
-                        placeholder
-                    }
-                }
+            if let icon {
+                Image(nsImage: icon).resizable()
             } else {
                 placeholder
             }
@@ -37,7 +26,7 @@ private struct ASCAppIconView: View {
                 .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
         .task(id: bundleId) {
-            iconURL = await AppStoreConnectIconFetcher.shared.iconURL(forBundleId: bundleId)
+            icon = await AppStoreConnectIconFetcher.shared.icon(forBundleId: bundleId)
         }
     }
 
@@ -108,8 +97,7 @@ struct ASCUploadFailureDetailsSheet: View {
 
             HStack {
                 Button("Copy Details") {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(details, forType: .string)
+                    PlatformPasteboard.copyString(details)
                 }
                 Spacer()
                 Button("OK") {
@@ -120,8 +108,10 @@ struct ASCUploadFailureDetailsSheet: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
         }
+        #if os(macOS)
         .frame(width: 760, height: 520)
+        #else
+        .presentationDetents([.large])
+        #endif
     }
 }
-
-#endif

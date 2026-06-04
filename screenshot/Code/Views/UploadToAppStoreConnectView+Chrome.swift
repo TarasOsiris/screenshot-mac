@@ -1,4 +1,3 @@
-#if os(macOS)
 import SwiftUI
 
 extension UploadToAppStoreConnectView {
@@ -58,11 +57,9 @@ extension UploadToAppStoreConnectView {
                     .font(.caption)
                     .lineLimit(4)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Details") {
-                    presentedErrorDetails = ASCUploadFailureDetailItem(message: errorDetailsText ?? errorMessage)
-                }
-                .font(.caption)
-                .buttonStyle(.borderless)
+                Button("Details") { presentErrorDetails(fallback: errorMessage) }
+                    .font(.caption)
+                    .buttonStyle(.borderless)
             }
             Spacer()
             dismissButton
@@ -70,6 +67,12 @@ extension UploadToAppStoreConnectView {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+    }
+
+    /// Show the full failure text, preferring the detailed report and falling back to the
+    /// short banner message. Shared by the macOS footer and the iPad error banner.
+    func presentErrorDetails(fallback message: String) {
+        presentedErrorDetails = ASCUploadFailureDetailItem(message: errorDetailsText ?? message)
     }
 
     @ViewBuilder
@@ -102,33 +105,42 @@ extension UploadToAppStoreConnectView {
         }
     }
 
-    @ViewBuilder
-    var primaryButton: some View {
+    /// The forward primary action for the four pre-upload steps (Next / Continue / Upload),
+    /// shared by the macOS footer button and the iPad nav-bar button so titles, actions, and
+    /// enabled rules stay in lockstep. `nil` on the terminal uploading/done screens.
+    struct ForwardPrimary {
+        let titleKey: LocalizedStringKey
+        let action: () -> Void
+        let isEnabled: Bool
+    }
+
+    func forwardPrimary(for step: Step) -> ForwardPrimary? {
         switch step {
         case .pickingApp:
-            Button("Next") { Task { await moveToVersion() } }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
-                .disabled(selectedApp == nil || isBusy)
+            ForwardPrimary(titleKey: "Next", action: { Task { await moveToVersion() } },
+                           isEnabled: selectedApp != nil && !isBusy)
         case .pickingVersion:
-            Button("Next") { Task { await moveToMetadata() } }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
-                .disabled(!canAdvanceFromVersion || isBusy)
+            ForwardPrimary(titleKey: "Next", action: { Task { await moveToMetadata() } },
+                           isEnabled: canAdvanceFromVersion && !isBusy)
         case .editingMetadata:
-            Button(hasMetadataChanges ? "Save & Continue" : "Continue") {
-                Task { await saveMetadataAndContinue() }
-            }
-            .buttonStyle(.borderedProminent)
-            .keyboardShortcut(.defaultAction)
-            .disabled(isBusy)
+            ForwardPrimary(titleKey: hasMetadataChanges ? "Save & Continue" : "Continue",
+                           action: { Task { await saveMetadataAndContinue() } },
+                           isEnabled: !isBusy)
         case .configuringPlan:
-            Button("Upload") { isConfirmingUpload = true }
+            ForwardPrimary(titleKey: "Upload", action: { isConfirmingUpload = true },
+                           isEnabled: canStartUpload && !isBusy)
+        case .uploading, .done:
+            nil
+        }
+    }
+
+    @ViewBuilder
+    var primaryButton: some View {
+        if let primary = forwardPrimary(for: step) {
+            Button(primary.titleKey, action: primary.action)
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
-                .disabled(!canStartUpload || isBusy)
-        case .uploading, .done:
-            EmptyView()
+                .disabled(!primary.isEnabled)
         }
     }
 
@@ -230,15 +242,19 @@ extension UploadToAppStoreConnectView {
     }
 
     var selectedLocaleGroups: [UploadLocaleGroup] {
-        let grouped = Dictionary(grouping: selectedUploadPlanEntries) { entry in
+        localeGroups(from: selectedUploadPlanEntries)
+    }
+
+    /// Group already-filtered entries by App Store (or project) locale. Takes the entries as a
+    /// parameter so callers that already computed `uploadPlanEntries` don't recompute it.
+    func localeGroups(from entries: [UploadPlanEntry]) -> [UploadLocaleGroup] {
+        let grouped = Dictionary(grouping: entries) { entry in
             entry.appStoreLocaleCode ?? entry.projectLocaleCode
         }
         return grouped.keys.sorted().map { code in
-            let entries = grouped[code] ?? []
-            let label = entries.first.map { "\($0.projectLocaleLabel) -> \(code)" } ?? code
-            return UploadLocaleGroup(id: code, label: label, entries: entries)
+            let groupEntries = grouped[code] ?? []
+            let label = groupEntries.first.map { "\($0.projectLocaleLabel) -> \(code)" } ?? code
+            return UploadLocaleGroup(id: code, label: label, entries: groupEntries)
         }
     }
 }
-
-#endif

@@ -3,7 +3,8 @@ import SwiftUI
 
 /// iPad Settings surface — the relevant subset of the macOS Settings scene, presented as a
 /// grouped Form inside the Settings tab. macOS-only features (Finder reveal, zip backup,
-/// export-folder bookmark, App Store Connect upload) are omitted.
+/// export-folder bookmark) are omitted; App Store Connect credentials are reachable via a
+/// pushed detail screen.
 struct IPadSettingsView: View {
     @Environment(StoreService.self) private var store
     @Environment(AppState.self) private var state
@@ -37,6 +38,7 @@ struct IPadSettingsView: View {
             defaultsSection
             editingSection
             exportSection
+            appStoreConnectSection
             iCloudSection
             purchaseSection
             legalSection
@@ -176,6 +178,20 @@ struct IPadSettingsView: View {
             let suffixPart = ExportService.formattedFileSuffix(exportCustomSuffix)
             let ext = (ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png).fileExtension
             Text("Example: 01_Onboarding_en\(suffixPart).\(ext)")
+        }
+    }
+
+    // MARK: - App Store Connect
+
+    private var appStoreConnectSection: some View {
+        Section {
+            NavigationLink {
+                AppStoreConnectSettingsView()
+                    .navigationTitle("App Store Connect")
+                    .navigationBarTitleDisplayMode(.inline)
+            } label: {
+                Label("App Store Connect", systemImage: "arrow.up.circle")
+            }
         }
     }
 

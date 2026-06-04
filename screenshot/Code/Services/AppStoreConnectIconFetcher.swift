@@ -1,5 +1,3 @@
-// WHOLE_FILE_MACOS_GUARD
-#if os(macOS)
 import Foundation
 #if os(macOS)
 import AppKit
@@ -15,10 +13,31 @@ actor AppStoreConnectIconFetcher {
 
     private var cache: [String: URL?] = [:]
     private var inflight: [String: Task<URL?, Never>] = [:]
+    private var imageCache: [String: NSImage] = [:]
+    private var imageInflight: [String: Task<NSImage?, Never>] = [:]
     private let session: URLSession
 
     init(session: URLSession = .shared) {
         self.session = session
+    }
+
+    /// Fetches and decodes the icon once per bundle id, caching the decoded image for the
+    /// session. Multiple views (e.g. the iPad wizard's per-step headers) share one decode
+    /// instead of each `AsyncImage` re-loading the same artwork.
+    func icon(forBundleId bundleId: String) async -> NSImage? {
+        if let cached = imageCache[bundleId] { return cached }
+        if let task = imageInflight[bundleId] { return await task.value }
+
+        let task = Task { [session] () -> NSImage? in
+            guard let url = await iconURL(forBundleId: bundleId) else { return nil }
+            guard let (data, _) = try? await session.data(from: url) else { return nil }
+            return NSImage(data: data)
+        }
+        imageInflight[bundleId] = task
+        let result = await task.value
+        imageInflight[bundleId] = nil
+        if let result { imageCache[bundleId] = result }
+        return result
     }
 
     func iconURL(forBundleId bundleId: String) async -> URL? {
@@ -55,5 +74,3 @@ actor AppStoreConnectIconFetcher {
         return result
     }
 }
-
-#endif

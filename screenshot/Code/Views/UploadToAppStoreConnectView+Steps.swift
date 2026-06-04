@@ -1,4 +1,3 @@
-#if os(macOS)
 import SwiftUI
 
 extension UploadToAppStoreConnectView {
@@ -6,6 +5,11 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     var content: some View {
+        stepContent(for: step)
+    }
+
+    @ViewBuilder
+    func stepContent(for step: Step) -> some View {
         if !credentials.isConfigured {
             missingCredentialsView
         } else {
@@ -30,10 +34,20 @@ extension UploadToAppStoreConnectView {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 400)
+            #if os(macOS)
             SettingsLink {
                 Label("Open Settings", systemImage: "gearshape")
             }
             .buttonStyle(.borderedProminent)
+            #else
+            // iPad: credentials live in the Settings tab. Dismiss so the user can switch tabs.
+            Button {
+                dismiss()
+            } label: {
+                Label("Open Settings", systemImage: "gearshape")
+            }
+            .buttonStyle(.borderedProminent)
+            #endif
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -67,6 +81,7 @@ extension UploadToAppStoreConnectView {
                 .padding(.bottom, 8)
             }
 
+            #if os(macOS)
             HStack(alignment: .top, spacing: 0) {
                 metadataLocaleSidebar
                     .frame(width: 180)
@@ -74,9 +89,59 @@ extension UploadToAppStoreConnectView {
                 metadataFormPane
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            #else
+            metadataLocalePicker
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+            Divider()
+            metadataFormPane
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            #endif
         }
     }
 
+    #if os(iOS)
+    /// iPad replacement for the desktop locale sidebar: a pull-down menu above the form. Each
+    /// row (and the current selection) shows a change-dot mirroring the sidebar's indicators.
+    var metadataLocalePicker: some View {
+        Menu {
+            ForEach(metadataLocaleCodes, id: \.self) { code in
+                Button {
+                    selectedMetadataLocale = code
+                } label: {
+                    if localeHasChanges(code) {
+                        Label(code, systemImage: "pencil.circle.fill")
+                    } else {
+                        Text(code)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "globe")
+                    .foregroundStyle(.secondary)
+                Text(selectedMetadataLocale ?? metadataLocaleCodes.first ?? "")
+                    .fontWeight(.medium)
+                if let selected = selectedMetadataLocale, localeHasChanges(selected) {
+                    Image(systemName: "circle.fill")
+                        .font(.system(size: 6))
+                        .foregroundStyle(.blue)
+                }
+                Spacer()
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(Color.secondary.opacity(0.08), in: .rect(cornerRadius: 8))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+    #endif
+
+    #if os(macOS)
     var metadataLocaleSidebar: some View {
         List(selection: Binding(
             get: { selectedMetadataLocale },
@@ -112,6 +177,7 @@ extension UploadToAppStoreConnectView {
         }
         .listStyle(.sidebar)
     }
+    #endif
 
     func localeHasChanges(_ code: String) -> Bool {
         if versionDrafts.contains(where: { $0.locale == code && $0.isChanged }) { return true }
@@ -181,7 +247,8 @@ extension UploadToAppStoreConnectView {
             metadataField(
                 label: "Privacy Policy URL",
                 text: $appInfoDrafts[index].privacyPolicyUrl,
-                limit: nil
+                limit: nil,
+                isURL: true
             )
         }
         .padding(10)
@@ -230,12 +297,14 @@ extension UploadToAppStoreConnectView {
             metadataField(
                 label: "Support URL",
                 text: $versionDrafts[index].supportUrl,
-                limit: nil
+                limit: nil,
+                isURL: true
             )
             metadataField(
                 label: "Marketing URL",
                 text: $versionDrafts[index].marketingUrl,
-                limit: nil
+                limit: nil,
+                isURL: true
             )
         }
         .padding(10)
@@ -265,7 +334,8 @@ extension UploadToAppStoreConnectView {
         text: Binding<String>,
         limit: Int?,
         multiline: Bool = false,
-        minHeight: CGFloat = 0
+        minHeight: CGFloat = 0,
+        isURL: Bool = false
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -280,6 +350,7 @@ extension UploadToAppStoreConnectView {
                 }
             }
             if multiline {
+                #if os(macOS)
                 TextEditor(text: text)
                     .font(.body)
                     .frame(minHeight: minHeight)
@@ -289,9 +360,20 @@ extension UploadToAppStoreConnectView {
                         RoundedRectangle(cornerRadius: 6)
                             .strokeBorder(Color.secondary.opacity(0.25), lineWidth: 1)
                     )
+                #else
+                // iOS: a native auto-growing multi-line field rather than a hand-bordered TextEditor.
+                TextField("", text: text, axis: .vertical)
+                    .lineLimit(3...)
+                    .textFieldStyle(.roundedBorder)
+                #endif
             } else {
                 TextField("", text: text)
                     .textFieldStyle(.roundedBorder)
+                    #if os(iOS)
+                    .keyboardType(isURL ? .URL : .default)
+                    .textInputAutocapitalization(isURL ? .never : nil)
+                    .autocorrectionDisabled(isURL)
+                    #endif
             }
         }
     }
@@ -324,7 +406,12 @@ extension UploadToAppStoreConnectView {
     }
 
     var uploadSummaryPanel: some View {
-        let entries = selectedUploadPlanEntries
+        // Compute the (relatively expensive) plan entries once, then derive everything from it,
+        // rather than re-running uploadPlanEntries via selected/skipped/group computed props.
+        let allEntries = uploadPlanEntries
+        let entries = allEntries.filter(\.isSelected)
+        let skipped = allEntries.filter { !$0.isSelected }
+        let groups = localeGroups(from: entries)
         let screenshotCount = entries.reduce(0) { $0 + $1.screenshotCount }
         let issues = validationIssues
 
@@ -358,24 +445,24 @@ extension UploadToAppStoreConnectView {
                 HStack(spacing: 10) {
                     summaryMetric("\(entries.count)", "sets")
                     summaryMetric("\(screenshotCount)", "screenshots")
-                    summaryMetric("\(selectedLocaleGroups.count)", "locales")
+                    summaryMetric("\(groups.count)", "locales")
                 }
 
-                if !selectedLocaleGroups.isEmpty {
+                if !groups.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Selected uploads")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        ForEach(selectedLocaleGroups) { group in
+                        ForEach(groups) { group in
                             localePlanGroupRow(group)
                         }
                     }
                 }
 
-                if !skippedUploadPlanEntries.isEmpty {
-                    DisclosureGroup("Skipped items (\(skippedUploadPlanEntries.count))") {
+                if !skipped.isEmpty {
+                    DisclosureGroup("Skipped items (\(skipped.count))") {
                         VStack(alignment: .leading, spacing: 6) {
-                            ForEach(skippedUploadPlanEntries.prefix(12)) { entry in
+                            ForEach(skipped.prefix(12)) { entry in
                                 HStack(alignment: .top, spacing: 6) {
                                     Image(systemName: "minus.circle")
                                         .foregroundStyle(.secondary)
@@ -386,8 +473,8 @@ extension UploadToAppStoreConnectView {
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
-                            if skippedUploadPlanEntries.count > 12 {
-                                Text("\(skippedUploadPlanEntries.count - 12) more skipped item\(skippedUploadPlanEntries.count - 12 == 1 ? "" : "s")")
+                            if skipped.count > 12 {
+                                Text("\(skipped.count - 12) more skipped item\(skipped.count - 12 == 1 ? "" : "s")")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
@@ -605,6 +692,10 @@ extension UploadToAppStoreConnectView {
                     displayTypeDetailsPlanId = plan.wrappedValue.id
                 } label: {
                     Image(systemName: "info.circle")
+                        #if os(iOS)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                        #endif
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: Binding(
@@ -637,10 +728,19 @@ extension UploadToAppStoreConnectView {
                         Text(selected?.label ?? "Select…")
                             .lineLimit(1)
                         Spacer()
+                        #if os(iOS)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        #endif
                     }
                 }
+                #if os(macOS)
                 .menuStyle(.borderlessButton)
                 .frame(maxWidth: 340, alignment: .leading)
+                #else
+                .buttonStyle(.bordered)
+                #endif
                 if let selected {
                     Text(selected.appStoreConnectValue)
                         .font(.caption2.monospaced())
@@ -682,7 +782,11 @@ extension UploadToAppStoreConnectView {
             }
         }
         .padding(14)
+        #if os(macOS)
         .frame(width: 360)
+        #else
+        .frame(maxWidth: 360)
+        #endif
     }
 
     func localeTargetRow(target: Binding<LocaleTarget>) -> some View {
@@ -694,9 +798,19 @@ extension UploadToAppStoreConnectView {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
+                // Fixed label column aligns the desktop rows; on iOS let it size naturally.
+                #if os(macOS)
                 .frame(width: 150, alignment: .leading)
+                #else
+                .frame(maxWidth: .infinity, alignment: .leading)
+                #endif
             }
+            #if os(macOS)
             .toggleStyle(.checkbox)
+            #else
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            #endif
             .disabled(target.wrappedValue.candidates.isEmpty)
 
             if target.wrappedValue.candidates.isEmpty {
@@ -716,6 +830,9 @@ extension UploadToAppStoreConnectView {
                     }
                 }
                 .labelsHidden()
+                #if os(iOS)
+                .pickerStyle(.menu)
+                #endif
                 .disabled(!target.wrappedValue.isEnabled)
                 if let selectedId = target.wrappedValue.selectedASCLocalizationId,
                    let selected = target.wrappedValue.candidates.first(where: { $0.id == selectedId }) {
@@ -781,5 +898,3 @@ extension UploadToAppStoreConnectView {
         }
     }
 }
-
-#endif

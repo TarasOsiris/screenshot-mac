@@ -364,6 +364,13 @@ struct ContentView: View {
             UploadToAppStoreConnectView()
                 .environment(state)
         }
+        #else
+        // iPad: the upload wizard is a desktop-grade multi-step flow — present it as its own
+        // full-screen screen with a native nav bar (it builds its own NavigationStack).
+        .fullScreenCover(isPresented: $showingASCUploadSheet) {
+            UploadToAppStoreConnectView()
+                .environment(state)
+        }
         #endif
         .sheet(item: $projectNamePrompt) { prompt in
             ProjectNameSheet(prompt: prompt)

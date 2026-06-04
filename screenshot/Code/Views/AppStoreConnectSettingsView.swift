@@ -1,5 +1,3 @@
-// WHOLE_FILE_MACOS_GUARD
-#if os(macOS)
 import SwiftUI
 import UniformTypeIdentifiers
 import CryptoKit
@@ -33,6 +31,7 @@ struct AppStoreConnectSettingsView: View {
             allowsMultipleSelection: false,
             onCompletion: handleImport
         )
+        #if os(macOS)
         .confirmationDialog(
             "Clear App Store Connect credentials?",
             isPresented: $showClearConfirmation,
@@ -45,6 +44,17 @@ struct AppStoreConnectSettingsView: View {
         } message: {
             Text("This removes the Issuer ID, Key ID, and imported private key from this Mac.")
         }
+        #else
+        // iPad: a centered alert, not an action-sheet popover anchored to the button.
+        .alert("Clear App Store Connect credentials?", isPresented: $showClearConfirmation) {
+            Button("Clear Credentials", role: .destructive) {
+                clearCredentials()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This removes the Issuer ID, Key ID, and imported private key from this Mac.")
+        }
+        #endif
         .onAppear { credentials.refreshPrivateKeyPresence() }
         .onChange(of: credentials.issuerId) { _, _ in resetConnectionState() }
         .onChange(of: credentials.keyId) { _, _ in resetConnectionState() }
@@ -59,9 +69,7 @@ struct AppStoreConnectSettingsView: View {
                 TextField("Issuer ID",
                           text: normalizedIssuerIdBinding,
                           prompt: Text("e.g. 57246542-96fe-1a63-e053-0824d011072a"))
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(.body, design: .monospaced))
-                    .textContentType(.oneTimeCode)
+                    .ascCredentialFieldStyle()
 
                 fieldStatus(
                     value: trimmedIssuerId,
@@ -75,9 +83,7 @@ struct AppStoreConnectSettingsView: View {
                 TextField("Key ID",
                           text: normalizedKeyIdBinding,
                           prompt: Text("10-character key ID"))
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(.body, design: .monospaced))
-                    .textContentType(.oneTimeCode)
+                    .ascCredentialFieldStyle(uppercase: true)
 
                 fieldStatus(
                     value: trimmedKeyId,
@@ -87,27 +93,18 @@ struct AppStoreConnectSettingsView: View {
                 )
             }
 
-            LabeledContent("Private Key (.p8)") {
-                HStack(spacing: 6) {
-                    if credentials.hasPrivateKey {
-                        Label("Imported", systemImage: "checkmark.seal.fill")
-                            .foregroundStyle(.green)
-                            .font(.caption)
-                        Button("Replace…") { fileImporterPresented = true }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                        Button("Remove") {
-                            credentials.deletePrivateKey()
-                            testResult = nil
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                    } else {
-                        Button("Import .p8 File…") { fileImporterPresented = true }
-                            .buttonStyle(.bordered)
-                    }
-                }
+            // On iOS, LabeledContent gives its trailing content a flexible frame, which
+            // balloons this row to a huge height inside a grouped Form — use a plain HStack
+            // there. macOS keeps LabeledContent for proper label-column alignment.
+            #if os(macOS)
+            LabeledContent("Private Key (.p8)") { privateKeyControls }
+            #else
+            HStack {
+                Text("Private Key (.p8)")
+                Spacer()
+                privateKeyControls
             }
+            #endif
 
             if let importError {
                 Label(importError, systemImage: "exclamationmark.triangle.fill")
@@ -119,6 +116,9 @@ struct AppStoreConnectSettingsView: View {
                     .font(.caption)
             }
 
+            // macOS: compact right-aligned buttons. iOS: full-width form-row actions with
+            // standard (≥44pt) tap targets.
+            #if os(macOS)
             HStack {
                 Spacer()
                 Button {
@@ -136,12 +136,26 @@ struct AppStoreConnectSettingsView: View {
                 .controlSize(.small)
                 .disabled(!canTestConnection)
             }
+            #else
+            Button {
+                Task { await runTest() }
+            } label: {
+                HStack(spacing: 6) {
+                    if isTesting { ProgressView().controlSize(.small) }
+                    Text(isTesting ? "Testing…" : "Test Connection")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!canTestConnection)
+            #endif
 
             if let testResult {
                 connectionFeedbackRow(result: testResult)
             }
 
             if credentials.isConfigured || credentials.hasPrivateKey {
+                #if os(macOS)
                 HStack {
                     Spacer()
                     Button("Clear Credentials…", role: .destructive) {
@@ -149,6 +163,12 @@ struct AppStoreConnectSettingsView: View {
                     }
                     .controlSize(.small)
                 }
+                #else
+                Button("Clear Credentials…", role: .destructive) {
+                    showClearConfirmation = true
+                }
+                .frame(maxWidth: .infinity)
+                #endif
             }
         } header: {
             Text("API Key")
@@ -159,6 +179,31 @@ struct AppStoreConnectSettingsView: View {
                 Text("Testing lists one app from the account. If this passes but uploads fail, check that the API key can edit the specific app and version.")
             }
             .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var privateKeyControls: some View {
+        // Small control size keeps the macOS row compact; iOS uses the default size so the
+        // Replace/Remove tap targets meet the ~44pt minimum.
+        HStack(spacing: 6) {
+            if credentials.hasPrivateKey {
+                Label("Imported", systemImage: "checkmark.seal.fill")
+                    .foregroundStyle(.green)
+                    .font(.caption)
+                Button("Replace…") { fileImporterPresented = true }
+                    .buttonStyle(.bordered)
+                    .ascCompactControlSize()
+                Button("Remove") {
+                    credentials.deletePrivateKey()
+                    testResult = nil
+                }
+                .buttonStyle(.bordered)
+                .ascCompactControlSize()
+            } else {
+                Button("Import .p8 File…") { fileImporterPresented = true }
+                    .buttonStyle(.bordered)
+            }
         }
     }
 
@@ -437,4 +482,30 @@ struct AppStoreConnectSettingsView: View {
         .frame(width: 520, height: 560)
 }
 
-#endif
+private extension View {
+    /// Credential field chrome. macOS keeps the rounded-border box; iOS uses the plain
+    /// grouped-Form cell (no box-in-a-box) and disables autocorrect/autocapitalization for
+    /// these opaque identifiers.
+    @ViewBuilder
+    func ascCredentialFieldStyle(uppercase: Bool = false) -> some View {
+        #if os(macOS)
+        textFieldStyle(.roundedBorder)
+            .font(.system(.body, design: .monospaced))
+            .textContentType(.oneTimeCode)
+        #else
+        font(.system(.body, design: .monospaced))
+            .textInputAutocapitalization(uppercase ? .characters : .never)
+            .autocorrectionDisabled()
+        #endif
+    }
+
+    /// `.controlSize(.small)` on macOS only; iOS keeps the default size for ≥44pt tap targets.
+    @ViewBuilder
+    func ascCompactControlSize() -> some View {
+        #if os(macOS)
+        controlSize(.small)
+        #else
+        self
+        #endif
+    }
+}
