@@ -330,22 +330,13 @@ extension UploadToAppStoreConnectView {
 
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Button {
+                disclosureChevronButton(expanded: isPreflightExpanded, action: {
                     isPreflightExpanded.toggle()
-                } label: {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Image(systemName: isPreflightExpanded ? "chevron.down" : "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text("Preflight")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                    }
-                    .padding(.vertical, 4)
-                    .padding(.trailing, 8)
-                    .contentShape(Rectangle())
+                }) {
+                    Text("Preflight")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                 }
-                .buttonStyle(.plain)
                 Spacer()
                 if issues.hasErrors {
                     Label("Fix required", systemImage: "xmark.circle.fill")
@@ -523,26 +514,38 @@ extension UploadToAppStoreConnectView {
         return Text(issue.message)
     }
 
+    /// Leading disclosure chevron with a comfortable hit target, shared by the collapsible sections.
+    func disclosureChevronButton<Label: View>(
+        expanded: Bool,
+        action: @escaping () -> Void,
+        @ViewBuilder label: () -> Label = { EmptyView() }
+    ) -> some View {
+        Button(action: action) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Image(systemName: expanded ? "chevron.down" : "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                label()
+            }
+            .padding(6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     func rowPlanCard(plan: Binding<RowPlan>) -> some View {
         let expanded = !collapsedRowPlanIds.contains(plan.wrappedValue.id)
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Button {
+                disclosureChevronButton(expanded: expanded, action: {
                     if expanded { collapsedRowPlanIds.insert(plan.wrappedValue.id) }
                     else { collapsedRowPlanIds.remove(plan.wrappedValue.id) }
-                } label: {
-                    Image(systemName: expanded ? "chevron.down" : "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(width: 28, height: 28)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+                })
                 Toggle(isOn: plan.isEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(plan.wrappedValue.rowLabel.isEmpty ? String(localized: "Row") : plan.wrappedValue.rowLabel)
                             .fontWeight(.medium)
-                        Text("\(Int(plan.wrappedValue.rowSize.width))×\(Int(plan.wrappedValue.rowSize.height)) · \(plan.wrappedValue.templateCount) screenshot\(plan.wrappedValue.templateCount == 1 ? "" : "s")")
+                        Text("\(String(Int(plan.wrappedValue.rowSize.width)))×\(String(Int(plan.wrappedValue.rowSize.height))) · \(plan.wrappedValue.templateCount) screenshot\(plan.wrappedValue.templateCount == 1 ? "" : "s")")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -582,7 +585,7 @@ extension UploadToAppStoreConnectView {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(width: 72, alignment: .leading)
-                Text("\(Int(plan.wrappedValue.rowSize.width))×\(Int(plan.wrappedValue.rowSize.height))")
+                Text(verbatim: "\(Int(plan.wrappedValue.rowSize.width))×\(Int(plan.wrappedValue.rowSize.height))")
                     .font(.caption)
                 if let detected, detected == selected {
                     Label("Auto-detected", systemImage: "checkmark.circle")
@@ -653,7 +656,7 @@ extension UploadToAppStoreConnectView {
             Text("Display Type")
                 .font(.headline)
             LabeledContent("Source size") {
-                Text("\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))")
+                Text(verbatim: "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))")
             }
             LabeledContent("Auto-detected") {
                 Text(plan.detectedDisplayType?.label ?? "No exact match")

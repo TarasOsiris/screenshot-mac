@@ -202,7 +202,7 @@ struct ShowcaseRowPreview: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 Spacer(minLength: 8)
-                Text("\(Int(outputSize.width)) × \(Int(outputSize.height)) px")
+                Text(verbatim: "\(Int(outputSize.width)) × \(Int(outputSize.height)) px")
                     .font(.system(size: 10))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
