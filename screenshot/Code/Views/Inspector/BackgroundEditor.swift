@@ -207,10 +207,28 @@ struct BackgroundImageEditor: View {
     var onDropSvg: ((String) -> Void)?
     @State private var isDropTargeted = false
     @State private var cachedSvgPreview: NSImage?
+    #if os(iOS)
+    @State private var showImagePicker = false
+    #endif
 
     private var hasImage: Bool { config.hasImage || image != nil }
 
     private var previewImage: NSImage? { image ?? cachedSvgPreview }
+
+    private func previewThumbnail(_ preview: NSImage) -> some View {
+        Image(nsImage: preview)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(maxHeight: 60)
+            .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip))
+            .overlay(
+                RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
+                    .strokeBorder(
+                        isDropTargeted ? Color.accentColor.opacity(UIMetrics.Opacity.accentEmphasis) : Color.secondary.opacity(UIMetrics.Opacity.accentSelection),
+                        style: StrokeStyle(lineWidth: isDropTargeted ? UIMetrics.BorderWidth.emphasis : UIMetrics.BorderWidth.standard)
+                    )
+            )
+    }
 
     private var dropZoneLabel: some View {
         VStack(spacing: 4) {
@@ -235,33 +253,41 @@ struct BackgroundImageEditor: View {
     var body: some View {
         Group {
             if let preview = previewImage {
-                Image(nsImage: preview)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxHeight: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
-                            .strokeBorder(
-                                isDropTargeted ? Color.accentColor.opacity(UIMetrics.Opacity.accentEmphasis) : Color.secondary.opacity(UIMetrics.Opacity.accentSelection),
-                                style: StrokeStyle(lineWidth: isDropTargeted ? UIMetrics.BorderWidth.emphasis : UIMetrics.BorderWidth.standard)
-                            )
-                    )
+                #if os(macOS)
+                previewThumbnail(preview)
 
                 HStack(spacing: 4) {
-                    #if os(macOS)
                     Button("Replace") { onPickImage() }
                         .controlSize(.small)
-                    #else
-                    ImageSourceMenu(onImage: { onDropImage?($0) }) {
-                        Text("Replace")
-                    }
-                    .controlSize(.small)
-                    #endif
                     Button("Remove", role: .destructive) { onRemoveImage() }
                         .controlSize(.small)
                 }
                 .font(.system(size: UIMetrics.FontSize.inlineLabel))
+                #else
+                HStack(spacing: 12) {
+                    previewThumbnail(preview)
+
+                    Spacer(minLength: 0)
+
+                    Button {
+                        showImagePicker = true
+                    } label: {
+                        Image(systemName: "photo")
+                    }
+                    .imageSourcePicker(isPresented: $showImagePicker) { onDropImage?($0) }
+                    .accessibilityLabel("Replace Image")
+
+                    Button(role: .destructive) {
+                        onRemoveImage()
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .tint(.red)
+                    .accessibilityLabel("Remove Image")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                #endif
             } else {
                 #if os(macOS)
                 Button {
@@ -271,10 +297,16 @@ struct BackgroundImageEditor: View {
                 }
                 .buttonStyle(.plain)
                 #else
-                ImageSourceMenu(onImage: { onDropImage?($0) }) {
-                    dropZoneLabel
+                Button {
+                    showImagePicker = true
+                } label: {
+                    Label("Add Image", systemImage: "photo.on.rectangle.angled")
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .imageSourcePicker(isPresented: $showImagePicker) { onDropImage?($0) }
                 #endif
             }
         }
@@ -284,11 +316,13 @@ struct BackgroundImageEditor: View {
         .onAppear { updateSvgPreview() }
         .onChange(of: config.svgContent) { updateSvgPreview() }
 
+        #if os(macOS)
         if !hasImage {
             Text("Drop or paste an image to configure fill and opacity.")
                 .font(.system(size: UIMetrics.FontSize.hint))
                 .foregroundStyle(.secondary)
         }
+        #endif
 
         Picker("Fill", selection: $config.fillMode.onSet { onChanged() }) {
             Text("Fill").tag(ImageFillMode.fill)

@@ -318,6 +318,7 @@ ES = {
     "Refresh App Store data": "Actualizar datos de la App Store",
     "Regular": "Regular",
     "Remove": "Quitar",
+    "Remove Image": "Quitar imagen",
     "Remove stop (min 2)": "Quitar parada (mínimo 2)",
     "Rename": "Renombrar",
     "Rename Project": "Renombrar proyecto",

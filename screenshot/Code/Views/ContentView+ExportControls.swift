@@ -51,8 +51,6 @@ extension ContentView {
             .disabled(state.rows.isEmpty)
         } label: {
             iPadExportLabel
-        } primaryAction: {
-            exportScreenshotsForIPad()
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.regular)
