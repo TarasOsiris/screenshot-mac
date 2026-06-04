@@ -105,7 +105,7 @@ struct ShadowConfig: Codable, Equatable {
             }
         }
 
-        /// (radius, offsetY, opacity) — offsetX is 0, color is black for all presets.
+        /// (radius, offsetY, opacity) — offsetX is 0; presets don't touch color.
         var values: (radius: CGFloat, offsetY: CGFloat, opacity: Double) {
             switch self {
             case .soft: return (24, 16, 0.18)
@@ -115,11 +115,11 @@ struct ShadowConfig: Codable, Equatable {
         }
     }
 
-    static func preset(_ preset: Preset) -> ShadowConfig {
+    static func preset(_ preset: Preset, color: Color = defaultColor) -> ShadowConfig {
         let v = preset.values
         return ShadowConfig(
             enabled: true,
-            color: defaultColor,
+            color: color,
             radius: v.radius,
             offsetX: 0,
             offsetY: v.offsetY,
@@ -133,8 +133,7 @@ struct ShadowConfig: Codable, Equatable {
 
     /// The preset whose values match the current config, or `nil` if it's been customized.
     var matchingPreset: Preset? {
-        guard CodableColor(resolvedColor) == CodableColor(Self.defaultColor),
-              abs(resolvedOffsetX) < 0.001 else { return nil }
+        guard abs(resolvedOffsetX) < 0.001 else { return nil }
         return Preset.allCases.first { p in
             let v = p.values
             return abs(resolvedRadius - v.radius) < 0.001

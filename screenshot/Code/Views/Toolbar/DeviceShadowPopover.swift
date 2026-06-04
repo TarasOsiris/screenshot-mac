@@ -61,7 +61,7 @@ struct DeviceShadowPopover: View {
     private func presetButton(_ preset: ShadowConfig.Preset) -> some View {
         let isSelected = shadow.matchingPreset == preset
         Button {
-            shadow = ShadowConfig.preset(preset)
+            shadow = ShadowConfig.preset(preset, color: shadow.resolvedColor)
         } label: {
             Text(preset.label)
                 .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
