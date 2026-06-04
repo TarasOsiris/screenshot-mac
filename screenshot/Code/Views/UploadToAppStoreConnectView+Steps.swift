@@ -330,9 +330,22 @@ extension UploadToAppStoreConnectView {
 
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Preflight")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                Button {
+                    isPreflightExpanded.toggle()
+                } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Image(systemName: isPreflightExpanded ? "chevron.down" : "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("Preflight")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.vertical, 4)
+                    .padding(.trailing, 8)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
                 Spacer()
                 if issues.hasErrors {
                     Label("Fix required", systemImage: "xmark.circle.fill")
@@ -350,46 +363,48 @@ extension UploadToAppStoreConnectView {
                 .disabled(isBusy)
             }
 
-            HStack(spacing: 10) {
-                summaryMetric("\(entries.count)", "sets")
-                summaryMetric("\(screenshotCount)", "screenshots")
-                summaryMetric("\(selectedLocaleGroups.count)", "locales")
-            }
+            if isPreflightExpanded {
+                HStack(spacing: 10) {
+                    summaryMetric("\(entries.count)", "sets")
+                    summaryMetric("\(screenshotCount)", "screenshots")
+                    summaryMetric("\(selectedLocaleGroups.count)", "locales")
+                }
 
-            if !selectedLocaleGroups.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Selected uploads")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    ForEach(selectedLocaleGroups) { group in
-                        localePlanGroupRow(group)
+                if !selectedLocaleGroups.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Selected uploads")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        ForEach(selectedLocaleGroups) { group in
+                            localePlanGroupRow(group)
+                        }
                     }
                 }
-            }
 
-            if !skippedUploadPlanEntries.isEmpty {
-                DisclosureGroup("Skipped items (\(skippedUploadPlanEntries.count))") {
-                    VStack(alignment: .leading, spacing: 6) {
-                        ForEach(skippedUploadPlanEntries.prefix(12)) { entry in
-                            HStack(alignment: .top, spacing: 6) {
-                                Image(systemName: "minus.circle")
+                if !skippedUploadPlanEntries.isEmpty {
+                    DisclosureGroup("Skipped items (\(skippedUploadPlanEntries.count))") {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(skippedUploadPlanEntries.prefix(12)) { entry in
+                                HStack(alignment: .top, spacing: 6) {
+                                    Image(systemName: "minus.circle")
+                                        .foregroundStyle(.secondary)
+                                        .font(.caption)
+                                    Text("\(entry.projectLocaleLabel) · \(entry.rowLabel): \(entry.skipReason ?? String(localized: "Skipped"))")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            if skippedUploadPlanEntries.count > 12 {
+                                Text("\(skippedUploadPlanEntries.count - 12) more skipped item\(skippedUploadPlanEntries.count - 12 == 1 ? "" : "s")")
+                                    .font(.caption2)
                                     .foregroundStyle(.secondary)
-                                    .font(.caption)
-                                Text("\(entry.projectLocaleLabel) · \(entry.rowLabel): \(entry.skipReason ?? String(localized: "Skipped"))")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
-                        if skippedUploadPlanEntries.count > 12 {
-                            Text("\(skippedUploadPlanEntries.count - 12) more skipped item\(skippedUploadPlanEntries.count - 12 == 1 ? "" : "s")")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
+                        .padding(.top, 6)
                     }
-                    .padding(.top, 6)
+                    .font(.caption)
                 }
-                .font(.caption)
             }
         }
         .padding(12)
@@ -509,8 +524,20 @@ extension UploadToAppStoreConnectView {
     }
 
     func rowPlanCard(plan: Binding<RowPlan>) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let expanded = !collapsedRowPlanIds.contains(plan.wrappedValue.id)
+        return VStack(alignment: .leading, spacing: 10) {
             HStack {
+                Button {
+                    if expanded { collapsedRowPlanIds.insert(plan.wrappedValue.id) }
+                    else { collapsedRowPlanIds.remove(plan.wrappedValue.id) }
+                } label: {
+                    Image(systemName: expanded ? "chevron.down" : "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
                 Toggle(isOn: plan.isEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(plan.wrappedValue.rowLabel.isEmpty ? String(localized: "Row") : plan.wrappedValue.rowLabel)
@@ -525,7 +552,7 @@ extension UploadToAppStoreConnectView {
                 Spacer()
             }
 
-            if plan.wrappedValue.isEnabled {
+            if expanded && plan.wrappedValue.isEnabled {
                 displayTypePicker(plan: plan)
 
                 Text("Locales")

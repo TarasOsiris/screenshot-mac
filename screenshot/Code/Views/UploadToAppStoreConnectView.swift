@@ -29,6 +29,8 @@ struct UploadToAppStoreConnectView: View {
     @State var selectedMetadataLocale: String?
 
     @State var rowPlans: [RowPlan] = []
+    @State var isPreflightExpanded = true
+    @State var collapsedRowPlanIds: Set<UUID> = []   // absent = expanded (default)
     @State var uploadProgress: ASCUploadProgress?
     @State var uploadTask: Task<Void, Never>?
     @State var uploadSummary: UploadSummary?
