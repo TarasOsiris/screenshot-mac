@@ -5,20 +5,17 @@ import SwiftUI
 /// Done/Cancel actions. macOS keeps its own popover/window chrome, so this type is
 /// iOS-only and `iosSheetChrome` is a no-op there. Titles are `Text` so callers can pass
 /// either a localized literal (`Text("Done")`) or a runtime string (`Text(verbatim:)`).
-private struct IOSSheetChrome<Content: View>: View {
+private struct IOSSheetChrome<Content: View, Confirm: View>: View {
     let title: Text
-    let confirmTitle: Text
-    let confirmSystemImage: String
-    let confirmDisabled: Bool
     let showsCancel: Bool
-    let onConfirm: (() -> Void)?
     let onCancel: (() -> Void)?
-    @ViewBuilder var content: Content
+    @ViewBuilder let confirm: (DismissAction) -> Confirm
+    @ViewBuilder let content: () -> Content
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
-            content
+            content()
                 .navigationTitle(title)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -27,30 +24,23 @@ private struct IOSSheetChrome<Content: View>: View {
                             Button(role: .cancel) { onCancel?(); dismiss() } label: { Text("Cancel") }
                         }
                     }
-                    ToolbarItem(placement: .confirmationAction) {
-                        // Prominent confirm icon. The confirm action owns dismissal: a
-                        // bare "Done" dismisses, but a supplied onConfirm decides (e.g.
-                        // SvgPasteDialog stays open and shows an error when validation fails).
-                        // confirmTitle becomes the accessibility label for the icon.
-                        Button {
-                            if let onConfirm { onConfirm() } else { dismiss() }
-                        } label: {
-                            // Pin font + control size so the icon is identical regardless of
-                            // the controlSize/font the presenting bar leaks into the sheet.
-                            Image(systemName: confirmSystemImage)
-                                .font(.body.weight(.semibold))
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .disabled(confirmDisabled)
-                        .accessibilityLabel(confirmTitle)
-                    }
+                    ToolbarItem(placement: .confirmationAction) { confirm(dismiss) }
                 }
         }
         // A single full-height detent: a fixed full-size sheet, no drag handle / resizing.
         // (Not `.presentationSizing(.fitted)`, which collapses a NavigationStack to just the
         // nav bar.) `.fullScreenCover` (showcase export) ignores this, which is fine.
         .presentationDetents([.large])
+    }
+}
+
+/// The prominent confirm control shared by both chrome variants — a borderedProminent icon
+/// button with a pinned font/control size so it looks identical regardless of the controlSize
+/// the presenting bar leaks into the sheet.
+private struct IOSConfirmLabel: View {
+    let systemImage: String
+    var body: some View {
+        Image(systemName: systemImage).font(.body.weight(.semibold))
     }
 }
 #endif
@@ -71,15 +61,49 @@ extension View {
         onCancel: (() -> Void)? = nil
     ) -> some View {
         #if os(iOS)
-        IOSSheetChrome(
-            title: title,
-            confirmTitle: confirmTitle,
-            confirmSystemImage: confirmSystemImage,
-            confirmDisabled: confirmDisabled,
-            showsCancel: showsCancel,
-            onConfirm: onConfirm,
-            onCancel: onCancel
-        ) { self }
+        IOSSheetChrome(title: title, showsCancel: showsCancel, onCancel: onCancel, confirm: { dismiss in
+            // The confirm action owns dismissal: a bare "Done" dismisses, but a supplied
+            // onConfirm decides (e.g. SvgPasteDialog stays open and shows an error on failure).
+            Button {
+                if let onConfirm { onConfirm() } else { dismiss() }
+            } label: {
+                IOSConfirmLabel(systemImage: confirmSystemImage)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .disabled(confirmDisabled)
+            .accessibilityLabel(confirmTitle)
+        }, content: { self })
+        #else
+        self
+        #endif
+    }
+
+    /// Like `iosSheetChrome`, but the confirm action is a pull-down `Menu` instead of a button —
+    /// used when the sheet stays open and the user picks a destination (e.g. showcase export:
+    /// Save to Photos / Files / Share). No-op on macOS.
+    @ViewBuilder
+    func iosSheetChrome<MenuItems: View>(
+        _ title: Text,
+        confirmTitle: Text,
+        confirmSystemImage: String,
+        confirmDisabled: Bool = false,
+        showsCancel: Bool = false,
+        onCancel: (() -> Void)? = nil,
+        @ViewBuilder confirmMenu: @escaping () -> MenuItems
+    ) -> some View {
+        #if os(iOS)
+        IOSSheetChrome(title: title, showsCancel: showsCancel, onCancel: onCancel, confirm: { _ in
+            Menu {
+                confirmMenu()
+            } label: {
+                IOSConfirmLabel(systemImage: confirmSystemImage)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .disabled(confirmDisabled)
+            .accessibilityLabel(confirmTitle)
+        }, content: { self })
         #else
         self
         #endif

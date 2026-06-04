@@ -24,7 +24,7 @@ struct ShowcaseExportSheet: View {
     let localeCode: String?
     let localeState: LocaleState
     let availableFontFamilies: Set<String>?
-    var onExport: (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>) -> Void
+    var onExport: (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>, ShowcaseExportDestination) -> Void
 
     #if os(macOS)
     @Environment(\.dismiss) private var dismiss
@@ -41,7 +41,7 @@ struct ShowcaseExportSheet: View {
         localeCode: String?,
         localeState: LocaleState,
         availableFontFamilies: Set<String>?,
-        onExport: @escaping (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>) -> Void
+        onExport: @escaping (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>, ShowcaseExportDestination) -> Void
     ) {
         self.candidateRows = candidateRows
         self.loadImages = loadImages
@@ -110,7 +110,7 @@ struct ShowcaseExportSheet: View {
             confirmSystemImage: "square.and.arrow.up",
             confirmDisabled: selectedRowsOrdered.isEmpty,
             showsCancel: true,
-            onConfirm: { onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds) }
+            confirmMenu: { exportDestinationMenu }
         )
         #endif
         .alert("Reset Showcase Settings?", isPresented: $showingResetConfirmation) {
@@ -584,6 +584,30 @@ struct ShowcaseExportSheet: View {
         }
     }
 
+    // MARK: - Export destination menu (iPad)
+
+    #if os(iOS)
+    @ViewBuilder
+    private var exportDestinationMenu: some View {
+        let count = selectedRowsOrdered.count
+        Section(count == 1 ? "Export 1 screenshot to…" : "Export \(count) screenshots to…") {
+            Button { export(to: .photos) } label: {
+                Label("Save to Photos", systemImage: "photo.on.rectangle")
+            }
+            Button { export(to: .files) } label: {
+                Label("Save to Files", systemImage: "folder")
+            }
+            Button { export(to: .share) } label: {
+                Label("Share…", systemImage: "square.and.arrow.up")
+            }
+        }
+    }
+
+    private func export(to destination: ShowcaseExportDestination) {
+        onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds, destination)
+    }
+    #endif
+
     // MARK: - Footer
 
     #if os(macOS)
@@ -599,7 +623,7 @@ struct ShowcaseExportSheet: View {
             Button("Cancel") { dismiss() }
                 .keyboardShortcut(.cancelAction)
             Button("Export…") {
-                onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds)
+                onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds, .files)
             }
             .keyboardShortcut(.defaultAction)
             .buttonStyle(.borderedProminent)

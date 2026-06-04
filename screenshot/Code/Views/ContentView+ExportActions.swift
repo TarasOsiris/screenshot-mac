@@ -6,6 +6,33 @@ import UIKit
 import StoreKit
 import SwiftUI
 
+private enum ExportRenderError: LocalizedError {
+    case encodingFailed(rowIndex: Int)
+    nonisolated var errorDescription: String? {
+        switch self {
+        case .encodingFailed(let index):
+            return String(localized: "Failed to render row \(index + 1)")
+        }
+    }
+}
+
+extension View {
+    /// Presents the shared "Export Failed" alert bound to `message`. Applied at the editor root and
+    /// again inside the iPad showcase full-screen cover: an alert on the covered editor can't
+    /// present over a full-screen cover, so the still-open showcase sheet needs its own.
+    @ViewBuilder
+    func exportFailedAlert(_ message: Binding<String?>) -> some View {
+        alert("Export Failed", isPresented: Binding(
+            get: { message.wrappedValue != nil },
+            set: { if !$0 { message.wrappedValue = nil } }
+        )) {
+            Button("OK") { message.wrappedValue = nil }
+        } message: {
+            Text(message.wrappedValue ?? "")
+        }
+    }
+}
+
 extension ContentView {
     var hasLastExportDestination: Bool {
         !lastExportFolderBookmark.isEmpty
@@ -98,7 +125,18 @@ extension ContentView {
             localeCode: state.localeState.activeLocaleCode,
             localeState: state.localeState,
             availableFontFamilies: state.availableFontFamilySet
-        ) { config, backgroundImage, selectedRowIds, excludedTemplateIds in
+        ) { config, backgroundImage, selectedRowIds, excludedTemplateIds, destination in
+            #if os(iOS)
+            // Keep the showcase sheet open; the chosen destination (Photos/Files/Share)
+            // presents over it so the user can pick another destination afterwards.
+            runShowcaseExportIPad(
+                config: config,
+                backgroundImage: backgroundImage,
+                selectedRowIds: selectedRowIds,
+                excludedTemplateIds: excludedTemplateIds,
+                destination: destination
+            )
+            #else
             showcasePresentation = nil
             runShowcaseExport(
                 presentation: presentation,
@@ -107,6 +145,7 @@ extension ContentView {
                 selectedRowIds: selectedRowIds,
                 excludedTemplateIds: excludedTemplateIds
             )
+            #endif
         }
     }
 
@@ -168,6 +207,36 @@ extension ContentView {
         }
     }
 
+    /// Renders each row to a zero-padded PNG in `destDir`, updating `exportProgress`, and returns
+    /// the written file URLs in order. Throws `CancellationError` or `ExportRenderError`. Shared by
+    /// `exportRowLevel` and the iPad showcase export so numbering/naming stay in one place.
+    func renderRows(
+        _ rows: [ScreenshotRow],
+        into destDir: URL,
+        imageCache: inout [String: NSImage],
+        render: @MainActor (ScreenshotRow, [String: NSImage], String?, LocaleState) -> NSImage
+    ) async throws -> [URL] {
+        let localeCode = state.localeState.activeLocaleCode
+        var fileURLs: [URL] = []
+        for (index, row) in rows.enumerated() {
+            try Task.checkCancellation()
+            let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
+            let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
+            let image = render(row, rowImages, localeCode, state.localeState)
+            guard let data = ExportService.encodeImage(image, format: .png) else {
+                throw ExportRenderError.encodingFailed(rowIndex: index)
+            }
+            let paddedIndex = String(format: "%02d", index + 1)
+            let fileName = row.label.isEmpty ? "\(paddedIndex).png" : "\(paddedIndex)_\(row.label).png"
+            let url = destDir.appendingPathComponent(fileName)
+            try data.write(to: url)
+            fileURLs.append(url)
+            exportProgress = index + 1
+            await Task.yield()
+        }
+        return fileURLs
+    }
+
     func exportRowLevel(
         folderName: String,
         rows: [ScreenshotRow]? = nil,
@@ -203,24 +272,8 @@ extension ContentView {
             do {
                 let destDir = ExportService.uniqueFolder(named: folderName, in: baseURL)
                 try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
-
-                let localeCode = state.localeState.activeLocaleCode
                 var imageCache: [String: NSImage] = seedCache
-                for (index, row) in rowsToExport.enumerated() {
-                    try Task.checkCancellation()
-                    let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
-                    let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
-                    let image = render(row, rowImages, localeCode, state.localeState)
-                    guard let data = ExportService.encodeImage(image, format: .png) else {
-                        exportError = String(localized: "Failed to render row \(index + 1)")
-                        return
-                    }
-                    let paddedIndex = String(format: "%02d", index + 1)
-                    let fileName = row.label.isEmpty ? "\(paddedIndex).png" : "\(paddedIndex)_\(row.label).png"
-                    try data.write(to: destDir.appendingPathComponent(fileName))
-                    exportProgress = index + 1
-                    await Task.yield()
-                }
+                _ = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache, render: render)
 
                 #if os(iOS)
                 PlatformShare.present(urls: [destDir]) { completed in
@@ -350,6 +403,96 @@ extension ContentView {
     }
 
     #if os(iOS)
+    /// iPad showcase export: renders the selected rows to PNGs in a temp folder, then routes them
+    /// to the chosen destination (Photos / Files / Share). The showcase sheet stays open so the
+    /// user can export again to another destination; temp files are cleaned up once the
+    /// destination flow finishes.
+    func runShowcaseExportIPad(
+        config: ShowcaseExportConfig,
+        backgroundImage: NSImage?,
+        selectedRowIds: Set<UUID>,
+        excludedTemplateIds: Set<UUID>,
+        destination: ShowcaseExportDestination
+    ) {
+        let rowsToExport = state.rows
+            .filter { selectedRowIds.contains($0.id) }
+            .compactMap { $0.filtering(excluding: excludedTemplateIds) }
+        guard !rowsToExport.isEmpty else { return }
+
+        var seedCache: [String: NSImage] = [:]
+        if let backgroundImage,
+           config.backgroundStyle == .image,
+           config.backgroundImageConfig.fileName == ShowcaseExportConfig.transientBackgroundKey {
+            seedCache[ShowcaseExportConfig.transientBackgroundKey] = backgroundImage
+        }
+
+        let baseURL: URL
+        do {
+            baseURL = try ExportService.makeTempExportFolder()
+        } catch {
+            exportError = error.localizedDescription
+            return
+        }
+
+        exportSuccessTimer?.cancel()
+        isExporting = true
+        exportSuccess = false
+        exportError = nil
+        exportProgress = 0
+        exportTotal = rowsToExport.count
+
+        exportTask = Task {
+            defer {
+                isExporting = false
+                exportTask = nil
+            }
+            do {
+                let destDir = ExportService.uniqueFolder(named: "showcase", in: baseURL)
+                try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
+                var imageCache: [String: NSImage] = seedCache
+                let fileURLs = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache) { row, images, locale, localeState in
+                    ExportService.renderShowcaseRowImage(
+                        row: row, screenshotImages: images,
+                        localeCode: locale, localeState: localeState, config: config
+                    )
+                }
+                routeShowcaseExport(destination: destination, fileURLs: fileURLs, cleanup: baseURL)
+            } catch is CancellationError {
+                try? FileManager.default.removeItem(at: baseURL)
+            } catch {
+                try? FileManager.default.removeItem(at: baseURL)
+                exportError = error.localizedDescription
+                NotificationService.notify(title: String(localized: "Export failed"), body: error.localizedDescription)
+            }
+        }
+    }
+
+    /// Hands rendered showcase files to the chosen destination and cleans up the temp folder once
+    /// the flow completes (or is cancelled).
+    private func routeShowcaseExport(destination: ShowcaseExportDestination, fileURLs: [URL], cleanup baseURL: URL) {
+        switch destination {
+        case .share:
+            PlatformShare.present(urls: fileURLs) { completed in
+                try? FileManager.default.removeItem(at: baseURL)
+                if completed { showExportSuccess() }
+            }
+        case .files:
+            PlatformDocumentExport.present(urls: fileURLs) { completed in
+                try? FileManager.default.removeItem(at: baseURL)
+                if completed { showExportSuccess() }
+            }
+        case .photos:
+            PlatformPhotoLibrary.save(fileURLs: fileURLs) { success, error in
+                try? FileManager.default.removeItem(at: baseURL)
+                if let error {
+                    exportError = error.localizedDescription
+                } else if success {
+                    showExportSuccess()
+                }
+            }
+        }
+    }
+
     /// iPad export: renders to a temp folder via the shared `exportAll` path, then hands the
     /// folder to the system share sheet (Save to Files / AirDrop) since there's no Finder.
     func exportScreenshotsForIPad(localeFilter: String? = nil) {

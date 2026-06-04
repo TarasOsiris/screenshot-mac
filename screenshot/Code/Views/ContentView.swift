@@ -318,14 +318,7 @@ struct ContentView: View {
             }
         }
         #endif
-        .alert("Export Failed", isPresented: .init(
-            get: { exportError != nil },
-            set: { if !$0 { exportError = nil } }
-        )) {
-            Button("OK") { exportError = nil }
-        } message: {
-            Text(exportError ?? "")
-        }
+        .exportFailedAlert($exportError)
         .alert(resetTemplate != nil ? String(localized: "Reset Project from Template") : String(localized: "Reset Project"), isPresented: $isResettingProject) {
             Button("Reset", role: .destructive) {
                 if let id = state.activeProjectId {
@@ -385,6 +378,7 @@ struct ContentView: View {
         // full-screen screen with a native nav bar rather than a fitted sheet.
         .fullScreenCover(item: $showcasePresentation) { presentation in
             showcaseExportScreen(for: presentation)
+                .exportFailedAlert($exportError)
         }
         #endif
         .middleMousePan()

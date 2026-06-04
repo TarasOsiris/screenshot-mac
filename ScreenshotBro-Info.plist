@@ -6,6 +6,8 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo to use as a screenshot or image in your designs.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save your exported screenshots to your photo library.</string>
 	<key>CFBundleDisplayName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundleExecutable</key>
