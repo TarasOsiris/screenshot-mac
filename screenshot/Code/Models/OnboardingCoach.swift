@@ -44,13 +44,21 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
     var message: LocalizedStringKey {
         switch self {
         case .canvas:
+            #if os(macOS)
             "Drag screenshots from Finder onto a canvas, or drop several at once to fill the row."
+            #else
+            "Drag screenshots from Photos or Files onto a canvas, or drop several at once to fill the row."
+            #endif
         case .inspector:
             "Use the inspector on the right to set the background, default device frame, and screenshot size."
         case .shapes:
             "Add text, images, devices, and shapes from here. They'll appear on the selected row."
         case .locale:
+            #if os(macOS)
             "Add languages to translate every text layer at once. Cmd+] cycles between them."
+            #else
+            "Add languages to translate every text layer at once."
+            #endif
         case .export:
             "Export every row in every language as PNG or JPEG, ready to upload to App Store Connect or Google Play."
         }

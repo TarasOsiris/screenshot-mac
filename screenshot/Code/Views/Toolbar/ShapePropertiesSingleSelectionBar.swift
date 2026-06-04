@@ -2,43 +2,43 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ShapePropertiesSingleSelectionBar: View {
-    private static let defaultFontSize: CGFloat = CanvasShapeModel.defaultFontSize
-    private static let fontSizeRange: ClosedRange<CGFloat> = 8...400
-    private static let fontSizePresets: [Int] = CanvasShapeModel.fontSizePresets
+    static let defaultFontSize: CGFloat = CanvasShapeModel.defaultFontSize
+    static let fontSizeRange: ClosedRange<CGFloat> = 8...400
+    static let fontSizePresets: [Int] = CanvasShapeModel.fontSizePresets
     @Bindable var state: AppState
-    @State private var isReplacingSvg = false
+    @State var isReplacingSvg = false
     #if os(macOS)
-    @State private var isReplacingFillImage = false
+    @State var isReplacingFillImage = false
     #endif
-    @State private var isFillPopoverPresented = false
-    @State private var isTextPopoverPresented = false
-    @State private var editingFontSize: String = ""
-    @State private var isFontSizeFieldActive = false
-    @State private var editingLineHeight: String = ""
-    @State private var isLineHeightFieldActive = false
-    @State private var editingOpacity: String = ""
-    @State private var isOpacityFieldActive = false
-    @State private var editingRotation: String = ""
-    @State private var isRotationFieldActive = false
-    @FocusState private var focusedField: Field?
-    private enum Field: Hashable { case opacity, fontSize, lineHeight, rotation }
-    private static let lineHeightPresets: [Int] = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 175, 200]
+    @State var isFillPopoverPresented = false
+    @State var isTextPopoverPresented = false
+    @State var editingFontSize: String = ""
+    @State var isFontSizeFieldActive = false
+    @State var editingLineHeight: String = ""
+    @State var isLineHeightFieldActive = false
+    @State var editingOpacity: String = ""
+    @State var isOpacityFieldActive = false
+    @State var editingRotation: String = ""
+    @State var isRotationFieldActive = false
+    @FocusState var focusedField: Field?
+    enum Field: Hashable { case opacity, fontSize, lineHeight, rotation }
+    static let lineHeightPresets: [Int] = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 175, 200]
 
-    private var rowIndex: Int? { state.selectedRowIndex }
-    private var shapeIndex: Int? {
+    var rowIndex: Int? { state.selectedRowIndex }
+    var shapeIndex: Int? {
         guard let rowIndex, let shapeId = state.selectedShapeId else { return nil }
         return state.rows[rowIndex].shapes.firstIndex { $0.id == shapeId }
     }
-    private var canBringToFront: Bool {
+    var canBringToFront: Bool {
         guard let rowIndex, let shapeIndex else { return false }
         return shapeIndex < state.rows[rowIndex].shapes.count - 1
     }
-    private var canSendToBack: Bool {
+    var canSendToBack: Bool {
         guard let shapeIndex else { return false }
         return shapeIndex > 0
     }
 
-    private func pickAndReplaceImage(for shapeId: UUID) {
+    func pickAndReplaceImage(for shapeId: UUID) {
         #if os(macOS)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image]
@@ -52,7 +52,7 @@ struct ShapePropertiesSingleSelectionBar: View {
         // via `onImageSelected`, so this NSOpenPanel path is macOS-only.
     }
 
-    private func idx(for shapeId: UUID) -> (row: Int, shape: Int)? {
+    func idx(for shapeId: UUID) -> (row: Int, shape: Int)? {
         guard let ri = rowIndex, ri < state.rows.count,
               let si = state.rows[ri].shapes.firstIndex(where: { $0.id == shapeId })
         else { return nil }
@@ -60,19 +60,19 @@ struct ShapePropertiesSingleSelectionBar: View {
     }
 
     /// The selected shape with locale overrides applied (for display).
-    private func resolvedShape(at rowIndex: Int, shapeIdx: Int) -> CanvasShapeModel {
+    func resolvedShape(at rowIndex: Int, shapeIdx: Int) -> CanvasShapeModel {
         let base = state.rows[rowIndex].shapes[shapeIdx]
         return LocaleService.resolveShape(base, localeState: state.localeState)
     }
 
     /// Whether the selected shape has any locale override for the active locale.
-    private var hasLocaleOverride: Bool {
+    var hasLocaleOverride: Bool {
         guard let shapeId = state.selectedShapeId, !state.localeState.isBaseLocale else { return false }
         return state.localeState.hasOverride(shapeId: shapeId)
     }
 
     /// Whether a shape has a locale image override for the active locale.
-    private func hasLocaleImageOverride(_ shapeId: UUID) -> Bool {
+    func hasLocaleImageOverride(_ shapeId: UUID) -> Bool {
         guard !state.localeState.isBaseLocale else { return false }
         return state.localeState.override(forCode: state.localeState.activeLocaleCode, shapeId: shapeId)?.overrideImageFileName != nil
     }
@@ -353,10 +353,17 @@ struct ShapePropertiesSingleSelectionBar: View {
 
                 Spacer(minLength: 0)
 
+                #if os(macOS)
                 ActionButton(icon: "xmark", tooltip: "Deselect shape (Esc)", frameSize: 24) {
                     state.selectedShapeIds = []
                 }
                 .padding(.trailing, 8)
+                #else
+                ActionButton(icon: "xmark", tooltip: "Deselect shape", frameSize: 24) {
+                    state.selectedShapeIds = []
+                }
+                .padding(.trailing, 8)
+                #endif
             }
             .font(.system(size: UIMetrics.FontSize.body))
             .controlSize(.small)
@@ -384,652 +391,4 @@ struct ShapePropertiesSingleSelectionBar: View {
             }
         }
     }
-
-    private func currentFontSizeString(for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId) else { return "\(Int(Self.defaultFontSize))" }
-        return "\(Int(resolvedShape(at: i.row, shapeIdx: i.shape).fontSize ?? Self.defaultFontSize))"
-    }
-
-    private func clampedFontSize(_ value: Int) -> CGFloat {
-        min(max(CGFloat(value), Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
-    }
-
-    private func commitFontSize(to shapeId: UUID?) {
-        isFontSizeFieldActive = false
-        guard let shapeId, let i = idx(for: shapeId) else { return }
-        guard let value = Int(editingFontSize) else {
-            editingFontSize = currentFontSizeString(for: shapeId)
-            return
-        }
-        let clamped = clampedFontSize(value)
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        if resolved.fontSize != clamped {
-            resolved.fontSize = clamped
-            RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
-            state.updateShape(resolved)
-        }
-        editingFontSize = "\(Int(clamped))"
-    }
-
-    private func currentOpacityString(for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId) else { return "100" }
-        return "\(Int((state.rows[i.row].shapes[i.shape].opacity * 100).rounded()))"
-    }
-
-    private func commitOpacity(to shapeId: UUID?) {
-        isOpacityFieldActive = false
-        guard let shapeId, let i = idx(for: shapeId) else { return }
-        guard let value = Int(editingOpacity) else {
-            editingOpacity = currentOpacityString(for: shapeId)
-            return
-        }
-        let clamped = min(max(value, 0), 100)
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        let newOpacity = Double(clamped) / 100.0
-        if resolved.opacity != newOpacity {
-            resolved.opacity = newOpacity
-            state.updateShape(resolved)
-        }
-        editingOpacity = "\(clamped)"
-    }
-
-    private func currentRotationString(for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId) else { return "0" }
-        return formatRotation(state.rows[i.row].shapes[i.shape].rotation)
-    }
-
-    private func formatRotation(_ value: Double) -> String {
-        let rounded = (value * 10).rounded() / 10
-        return rounded == rounded.rounded()
-            ? String(format: "%.0f", rounded)
-            : String(format: "%.1f", rounded)
-    }
-
-    private func commitRotation(to shapeId: UUID?) {
-        isRotationFieldActive = false
-        guard let shapeId, let i = idx(for: shapeId) else { return }
-        let trimmed = editingRotation.replacingOccurrences(of: ",", with: ".")
-        guard let value = Double(trimmed) else {
-            editingRotation = currentRotationString(for: shapeId)
-            return
-        }
-        var normalized = value.truncatingRemainder(dividingBy: 360)
-        if normalized < 0 { normalized += 360 }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        if resolved.rotation != normalized {
-            resolved.rotation = normalized
-            state.updateShape(resolved)
-        }
-        editingRotation = formatRotation(normalized)
-    }
-
-    private func resetRotation(shapeId: UUID) {
-        guard let i = idx(for: shapeId) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        guard resolved.rotation != 0 else { return }
-        resolved.rotation = 0
-        state.updateShape(resolved)
-        editingRotation = "0"
-    }
-
-    private func currentLineHeightString(for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId) else { return "\(Int(TextLayoutStyle.defaultLineHeightMultiple * 100))" }
-        let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
-        let font = NSFont.systemFont(
-            ofSize: shape.fontSize ?? Self.defaultFontSize,
-            weight: nsFontWeight(shape.fontWeight ?? 400)
-        )
-        let multiple = TextLayoutStyle.effectiveLineHeightMultiple(
-            lineHeightMultiple: shape.lineHeightMultiple,
-            legacyLineSpacing: shape.lineSpacing,
-            font: font
-        )
-        return "\(Int((multiple * 100).rounded()))"
-    }
-
-    private func commitLineHeight(to shapeId: UUID?) {
-        isLineHeightFieldActive = false
-        guard let shapeId, let i = idx(for: shapeId) else { return }
-        guard let value = Int(editingLineHeight) else {
-            editingLineHeight = currentLineHeightString(for: shapeId)
-            return
-        }
-        let clamped = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        if resolved.lineHeightMultiple != clamped || resolved.lineSpacing != nil {
-            resolved.lineHeightMultiple = clamped
-            resolved.lineSpacing = nil
-            RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
-            state.updateShape(resolved)
-        }
-        editingLineHeight = "\(Int((clamped * 100).rounded()))"
-    }
-
-    private func richTextStyleProperty<T>(for keyPath: WritableKeyPath<CanvasShapeModel, T>) -> RichTextUtils.ShapeStyleProperty? {
-        let anyKeyPath = keyPath as AnyKeyPath
-        if anyKeyPath == \CanvasShapeModel.color { return .color }
-        return nil
-    }
-
-    private func richTextStyleProperty<T>(for keyPath: WritableKeyPath<CanvasShapeModel, T?>) -> RichTextUtils.ShapeStyleProperty? {
-        let anyKeyPath = keyPath as AnyKeyPath
-        if anyKeyPath == \CanvasShapeModel.fontName { return .fontName }
-        if anyKeyPath == \CanvasShapeModel.fontWeight { return .fontWeight }
-        if anyKeyPath == \CanvasShapeModel.textAlign { return .alignment }
-        if anyKeyPath == \CanvasShapeModel.italic { return .italic }
-        if anyKeyPath == \CanvasShapeModel.letterSpacing { return .letterSpacing }
-        return nil
-    }
-
-    /// Creates a Binding that always resolves the shape index by ID at access time.
-    /// Reads the resolved (locale-aware) value; writes go through `updateShape` which handles locale splitting.
-    private func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T>, continuous: Bool = false) -> Binding<T> where T: Sendable {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else {
-                    return CanvasShapeModel.placeholder[keyPath: keyPath]
-                }
-                return resolvedShape(at: i.row, shapeIdx: i.shape)[keyPath: keyPath]
-            },
-            set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                resolved[keyPath: keyPath] = newValue
-                RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
-                if continuous {
-                    state.updateShapeContinuous(resolved)
-                } else {
-                    state.updateShape(resolved)
-                }
-            }
-        )
-    }
-
-    /// Overload for optional properties with a default value.
-    private func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T, continuous: Bool = false) -> Binding<T> where T: Sendable {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else { return defaultValue }
-                return resolvedShape(at: i.row, shapeIdx: i.shape)[keyPath: keyPath] ?? defaultValue
-            },
-            set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                resolved[keyPath: keyPath] = newValue
-                RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
-                if continuous {
-                    state.updateShapeContinuous(resolved)
-                } else {
-                    state.updateShape(resolved)
-                }
-            }
-        )
-    }
-
-    private func fontWeightBinding(_ shapeId: UUID) -> Binding<Int> {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else { return 400 }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
-                return CustomFontRegistry.controlState(for: shape)?.effectiveWeight ?? shape.fontWeight ?? 400
-            },
-            set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                RichTextUtils.applyFontWeightUpdate(to: &resolved, weight: newValue)
-                state.updateShape(resolved)
-            }
-        )
-    }
-
-    private func italicBinding(_ shapeId: UUID) -> Binding<Bool> {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else { return false }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
-                return CustomFontRegistry.controlState(for: shape)?.effectiveItalic ?? shape.italic ?? false
-            },
-            set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                RichTextUtils.applyItalicUpdate(to: &resolved, italic: newValue)
-                state.updateShape(resolved)
-            }
-        )
-    }
-
-    private func lineHeightBinding(_ shapeId: UUID) -> Binding<CGFloat> {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else {
-                    return TextLayoutStyle.defaultLineHeightMultiple
-                }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
-                let font = NSFont.systemFont(
-                    ofSize: shape.fontSize ?? Self.defaultFontSize,
-                    weight: nsFontWeight(shape.fontWeight ?? 400)
-                )
-                return TextLayoutStyle.effectiveLineHeightMultiple(
-                    lineHeightMultiple: shape.lineHeightMultiple,
-                    legacyLineSpacing: shape.lineSpacing,
-                    font: font
-                )
-            },
-            set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(newValue)
-                resolved.lineSpacing = nil
-                RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
-                state.updateShape(resolved)
-            }
-        )
-    }
-
-    private func nsFontWeight(_ weight: Int) -> NSFont.Weight {
-        switch weight {
-        case ...299: .thin
-        case 300...399: .light
-        case 400...499: .regular
-        case 500...599: .medium
-        case 600...699: .semibold
-        case 700...799: .bold
-        default: .heavy
-        }
-    }
-
-    // MARK: - Device Picker
-
-    /// Shared device picker used across toolbar/settings/inspector.
-    @ViewBuilder
-    private func devicePicker(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        DevicePickerMenu(
-            category: shape.deviceCategory ?? .iphone,
-            frameId: shape.deviceFrameId,
-            allowsNoDevice: false,
-            presentation: .toolbar,
-            bodyColor: shape.deviceCategory != .invisible && shape.resolvedDeviceFrame?.isModelBacked != false ? deviceBodyColorBinding(shapeId) : nil,
-            bodyColorLabel: String(localized: "Device color"),
-            canResetBodyColor: hasDeviceBodyColorOverride(shapeId),
-            onResetBodyColor: { resetDeviceBodyColor(shapeId) },
-            onSelectCategory: { cat in
-                selectAbstractDevice(shapeId: shapeId, category: cat)
-            },
-            onSelectFrame: { frame in
-                selectRealFrame(shapeId: shapeId, frame: frame)
-            }
-        )
-        .help(devicePickerHelp(shape: shape))
-    }
-
-    private func devicePickerHelp(shape: CanvasShapeModel) -> LocalizedStringKey {
-        if let frameId = shape.deviceFrameId, let frame = DeviceFrameCatalog.frame(for: frameId) {
-            return "Current device frame: \(frame.label)"
-        }
-        return "Current abstract device: \((shape.deviceCategory ?? .iphone).label)"
-    }
-
-    private func selectAbstractDevice(shapeId: UUID, category: DeviceCategory) {
-        guard let i = idx(for: shapeId) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        let imageSize = resolved.displayImageFileName.flatMap { state.screenshotImages[$0] }?.size
-        resolved.selectAbstractDevice(category, screenshotImageSize: imageSize)
-        state.updateShape(resolved)
-    }
-
-    private func selectRealFrame(shapeId: UUID, frame: DeviceFrame) {
-        guard let i = idx(for: shapeId) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        resolved.selectRealFrame(frame)
-        state.updateShape(resolved)
-    }
-
-    private func deviceBodyColorBinding(_ shapeId: UUID) -> Binding<Color> {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else { return CanvasShapeModel.defaultDeviceBodyColor }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
-                return shape.deviceBodyColorData?.color ?? state.rows[i.row].defaultDeviceBodyColor
-            },
-            set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                resolved.deviceBodyColorData = CodableColor(newValue)
-                state.updateShape(resolved)
-            }
-        )
-    }
-
-    private func hasDeviceBodyColorOverride(_ shapeId: UUID) -> Bool {
-        guard let i = idx(for: shapeId) else { return false }
-        return state.rows[i.row].shapes[i.shape].deviceBodyColorData != nil
-    }
-
-    private func resetDeviceBodyColor(_ shapeId: UUID) {
-        guard let i = idx(for: shapeId) else { return }
-        guard state.rows[i.row].shapes[i.shape].type == .device else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        resolved.deviceBodyColorData = nil
-        state.updateShape(resolved)
-    }
-
-    private func deviceModelRotationBinding(
-        _ shapeId: UUID,
-        _ keyPath: WritableKeyPath<CanvasShapeModel, Double?>,
-        defaultValue: KeyPath<CanvasShapeModel, Double>
-    ) -> Binding<Double> {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else {
-                    return CanvasShapeModel.placeholder[keyPath: defaultValue]
-                }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
-                return shape[keyPath: keyPath] ?? shape[keyPath: defaultValue]
-            },
-            set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                resolved[keyPath: keyPath] = newValue
-                state.updateShapeContinuous(resolved)
-            }
-        )
-    }
-
-    private func hasDeviceModelRotationOverride(_ shapeId: UUID) -> Bool {
-        guard let i = idx(for: shapeId) else { return false }
-        let shape = state.rows[i.row].shapes[i.shape]
-        return shape.devicePitch != nil || shape.deviceYaw != nil
-    }
-
-    private func resetDeviceModelRotation(_ shapeId: UUID) {
-        guard let i = idx(for: shapeId) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-        resolved.resetDeviceModelRotation()
-        state.updateShape(resolved)
-    }
-
-    private func optionalConfigBinding<T: Equatable>(
-        _ shapeId: UUID,
-        _ keyPath: WritableKeyPath<CanvasShapeModel, T?>,
-        fallback: T,
-        isEmpty: @escaping (T) -> Bool
-    ) -> Binding<T> {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else { return fallback }
-                return state.rows[i.row].shapes[i.shape][keyPath: keyPath] ?? fallback
-            },
-            set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                resolved[keyPath: keyPath] = isEmpty(newValue) ? nil : newValue
-                state.updateShapeContinuous(resolved)
-            }
-        )
-    }
-
-    private func fillStyleBinding(_ shapeId: UUID) -> Binding<BackgroundStyle> {
-        Binding(
-            get: {
-                guard let i = idx(for: shapeId) else { return .color }
-                return state.rows[i.row].shapes[i.shape].resolvedFillStyle
-            },
-            set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                resolved.fillStyle = newValue == .color ? nil : newValue
-                if newValue == .gradient && resolved.fillGradientConfig == nil {
-                    resolved.fillGradientConfig = GradientConfig()
-                }
-                if newValue == .image && resolved.fillImageConfig == nil {
-                    resolved.fillImageConfig = BackgroundImageConfig()
-                }
-                state.updateShape(resolved)
-            }
-        )
-    }
-
-    // MARK: - Text Popover
-
-    @ViewBuilder
-    private func textPopoverButton(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        Button {
-            isTextPopoverPresented.toggle()
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "textformat")
-                Text(textPopoverSummary(shape: shape))
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .transaction { $0.animation = nil }
-            }
-        }
-        .buttonStyle(.borderless)
-        .help("Text")
-        .barPopover(isPresented: $isTextPopoverPresented, title: "Text") {
-            textPopoverContent(shape: shape, shapeId: shapeId)
-                .padding(12)
-                .frame(width: 280)
-        }
-    }
-
-    private func textPopoverSummary(shape: CanvasShapeModel) -> String {
-        let fontName = shape.fontName?.isEmpty == false ? shape.fontName! : "System"
-        let size = Int(shape.fontSize ?? Self.defaultFontSize)
-        let controlState = CustomFontRegistry.controlState(for: shape)
-        let weight = RichTextUtils.fontWeightLabel(controlState?.effectiveWeight ?? shape.fontWeight ?? 400)
-        return "\(fontName) \(size) \(weight)"
-    }
-
-    @ViewBuilder
-    private func textPopoverContent(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        let customControlState = CustomFontRegistry.controlState(for: shape)
-
-        VStack(alignment: .leading, spacing: 10) {
-            LabeledContent("Font") {
-                FontPicker(
-                    selection: shapeBinding(shapeId, \.fontName, default: ""),
-                    fontWeight: fontWeightBinding(shapeId),
-                    italic: italicBinding(shapeId),
-                    customFonts: state.customFonts,
-                    onImportFont: { url in state.importCustomFont(from: url) }
-                )
-            }
-
-            LabeledContent("Size") {
-                HStack(spacing: 4) {
-                    HStack(spacing: 0) {
-                        TextField("", text: $editingFontSize, onEditingChanged: { editing in
-                            if editing {
-                                isFontSizeFieldActive = true
-                            } else {
-                                commitFontSize(to: state.selectedShapeId ?? shapeId)
-                            }
-                        })
-                        .focused($focusedField, equals: .fontSize)
-                        .frame(width: 48)
-                        .textFieldStyle(.roundedBorder)
-                        .multilineTextAlignment(.center)
-                        .onAppear {
-                            editingFontSize = currentFontSizeString(for: shapeId)
-                        }
-                        .onChange(of: shapeId) { oldId, newId in
-                            // Flush to the shape we were editing before rebinding — see the
-                            // opacity field; the captured shapeId goes stale otherwise.
-                            if isFontSizeFieldActive { commitFontSize(to: oldId) }
-                            editingFontSize = currentFontSizeString(for: newId)
-                        }
-                        .onChange(of: shape.fontSize) {
-                            guard !isFontSizeFieldActive else { return }
-                            editingFontSize = currentFontSizeString(for: shapeId)
-                        }
-                        .onChange(of: editingFontSize) {
-                            guard isFontSizeFieldActive else { return }
-                            let target = state.selectedShapeId ?? shapeId
-                            if let value = Int(editingFontSize), let i = idx(for: target) {
-                                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                                resolved.fontSize = clampedFontSize(value)
-                                RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
-                                state.updateShapeContinuous(resolved)
-                            }
-                        }
-
-                        Menu {
-                            ForEach(Self.fontSizePresets, id: \.self) { size in
-                                Button("\(size)") {
-                                    editingFontSize = "\(size)"
-                                    commitFontSize(to: state.selectedShapeId ?? shapeId)
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: UIMetrics.FontSize.hint))
-                                .foregroundStyle(.secondary)
-                                .frame(width: UIMetrics.ChevronMenu.width, height: UIMetrics.ChevronMenu.height)
-                                .contentShape(Rectangle())
-                        }
-                        .menuStyle(.button)
-                        .menuIndicator(.hidden)
-                        .fixedSize()
-                    }
-
-                    if customControlState?.showsWeightPicker ?? true {
-                        FontWeightPicker(
-                            selection: fontWeightBinding(shapeId),
-                            options: customControlState?.availableWeights ?? [300, 400, 500, 700],
-                            width: 100
-                        )
-                    }
-                }
-            }
-
-            Divider()
-
-            LabeledContent("Align") {
-                HStack(spacing: 8) {
-                    Picker("", selection: shapeBinding(shapeId, \.textAlign, default: .center)) {
-                        Image(systemName: "text.alignleft").tag(TextAlign.left)
-                        Image(systemName: "text.aligncenter").tag(TextAlign.center)
-                        Image(systemName: "text.alignright").tag(TextAlign.right)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .frame(width: 90)
-                    .help("Horizontal alignment")
-
-                    Picker("", selection: shapeBinding(shapeId, \.textVerticalAlign, default: .center)) {
-                        Image(systemName: "arrow.up.to.line").tag(TextVerticalAlign.top)
-                        Image(systemName: "arrow.up.and.down").tag(TextVerticalAlign.center)
-                        Image(systemName: "arrow.down.to.line").tag(TextVerticalAlign.bottom)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .frame(width: 90)
-                    .help("Vertical alignment")
-                }
-            }
-
-            HStack(spacing: 12) {
-                if customControlState?.showsItalicToggle ?? true {
-                    Toggle("Italic", isOn: italicBinding(shapeId))
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                }
-
-                Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-            }
-
-            Divider()
-
-            LabeledContent("Letter Spacing") {
-                let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0)
-                HStack(spacing: 4) {
-                    Slider(value: trackingBinding, in: -5...30)
-                        .frame(width: UIMetrics.SliderWidth.wide)
-
-                    Text(verbatim: String(format: "%.1f", trackingBinding.wrappedValue))
-                        .frame(width: 32, alignment: .trailing)
-                        .onTapGesture(count: 2) { trackingBinding.wrappedValue = 0 }
-                        .help("Double-click to reset")
-                }
-            }
-
-            LabeledContent("Line Spacing") {
-                HStack(spacing: 0) {
-                    TextField("", text: $editingLineHeight, onEditingChanged: { editing in
-                        if editing {
-                            isLineHeightFieldActive = true
-                        } else {
-                            commitLineHeight(to: state.selectedShapeId ?? shapeId)
-                        }
-                    })
-                    .focused($focusedField, equals: .lineHeight)
-                    .frame(width: 48)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.center)
-                    .onAppear {
-                        editingLineHeight = currentLineHeightString(for: shapeId)
-                    }
-                    .onChange(of: shapeId) { oldId, newId in
-                        // Flush to the shape we were editing before rebinding (see opacity).
-                        if isLineHeightFieldActive { commitLineHeight(to: oldId) }
-                        editingLineHeight = currentLineHeightString(for: newId)
-                    }
-                    .onChange(of: shape.lineHeightMultiple) {
-                        guard !isLineHeightFieldActive else { return }
-                        editingLineHeight = currentLineHeightString(for: shapeId)
-                    }
-                    .onChange(of: editingLineHeight) {
-                        guard isLineHeightFieldActive else { return }
-                        let target = state.selectedShapeId ?? shapeId
-                        if let value = Int(editingLineHeight), let i = idx(for: target) {
-                            var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                            resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
-                            resolved.lineSpacing = nil
-                            RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
-                            state.updateShapeContinuous(resolved)
-                        }
-                    }
-
-                    Menu {
-                        ForEach(Self.lineHeightPresets, id: \.self) { preset in
-                            Button("\(preset)%") {
-                                editingLineHeight = "\(preset)"
-                                commitLineHeight(to: state.selectedShapeId ?? shapeId)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: UIMetrics.FontSize.hint))
-                            .foregroundStyle(.secondary)
-                            .frame(width: UIMetrics.ChevronMenu.width, height: UIMetrics.ChevronMenu.height)
-                            .contentShape(Rectangle())
-                    }
-                    .menuStyle(.button)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-
-                    Text("%")
-                        .foregroundStyle(.secondary)
-                        .padding(.leading, 2)
-                }
-            }
-
-            if shape.hasRichText {
-                Divider()
-                Button("Clear Formatting") {
-                    guard let i = idx(for: shapeId) else { return }
-                    var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
-                    updated.richText = nil
-                    state.updateShape(updated)
-                }
-                .font(.system(size: UIMetrics.FontSize.body))
-            }
-        }
-        .font(.system(size: UIMetrics.FontSize.body))
-        .controlSize(.small)
-    }
-
 }

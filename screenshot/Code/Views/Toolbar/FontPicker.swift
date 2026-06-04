@@ -70,8 +70,8 @@ struct FontPicker: View {
         return selection
     }
 
+    #if os(macOS)
     private func pickCustomFont() {
-        #if os(macOS)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.font]
         panel.allowsMultipleSelection = true
@@ -90,13 +90,15 @@ struct FontPicker: View {
         if let lastImportedSelection {
             applyImportedSelection(lastImportedSelection)
         }
-        #endif
-        // iOS: custom-font import via fileImporter is deferred to a follow-up.
     }
+    #endif
+    // iOS: custom-font import via fileImporter is deferred to a follow-up.
 
     var body: some View {
         HStack(spacing: 4) {
             Menu {
+                #if os(macOS)
+                // iOS custom-font import is deferred; hide the item rather than show a no-op.
                 Button {
                     pickCustomFont()
                 } label: {
@@ -104,6 +106,7 @@ struct FontPicker: View {
                 }
 
                 Divider()
+                #endif
 
                 fontButton(String(localized: "System"), value: "")
 

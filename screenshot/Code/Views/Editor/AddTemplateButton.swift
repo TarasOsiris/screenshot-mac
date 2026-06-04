@@ -4,29 +4,11 @@ struct AddTemplateButton: View {
     let width: CGFloat
     let height: CGFloat
     let action: () -> Void
-    @State private var isHovered = false
 
     var body: some View {
-        Button(action: action) {
-            Rectangle()
-                .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-                .foregroundStyle(isHovered ? .primary : .secondary)
-                .frame(width: width, height: height)
-                .background(
-                    Rectangle()
-                        .fill(.primary.opacity(isHovered ? 0.04 : 0))
-                )
-                .contentShape(Rectangle())
-                .overlay {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20))
-                        .foregroundStyle(isHovered ? .primary : .secondary)
-                }
-        }
-        .buttonStyle(.plain)
-        .help("Add screenshot")
-        .accessibilityLabel("Add screenshot")
-        .onHover { isHovered = $0 }
-        .animation(.easeInOut(duration: 0.15), value: isHovered)
+        Button(action: action) { }
+            .buttonStyle(DashedPlaceholderButtonStyle(width: width, height: height))
+            .help("Add screenshot")
+            .accessibilityLabel("Add screenshot")
     }
 }

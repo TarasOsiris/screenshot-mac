@@ -97,6 +97,8 @@ struct ShapeSelectionActionsSection: View {
     var body: some View {
         ShapePropertiesSection {
             HStack(spacing: 4) {
+                // Shortcut hints only make sense on macOS; on iOS they'd be read aloud by VoiceOver.
+                #if os(macOS)
                 ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front (⇧⌘])", frameSize: 24, disabled: !canBringToFront) {
                     onBringToFront()
                 }
@@ -112,6 +114,23 @@ struct ShapeSelectionActionsSection: View {
                 ActionButton(icon: "trash", tooltip: "Delete (⌫)", frameSize: 24, isDestructive: true) {
                     onDelete()
                 }
+                #else
+                ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front", frameSize: 24, disabled: !canBringToFront) {
+                    onBringToFront()
+                }
+
+                ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back", frameSize: 24, disabled: !canSendToBack) {
+                    onSendToBack()
+                }
+
+                ActionButton(icon: "doc.on.doc", tooltip: "Duplicate", frameSize: 24) {
+                    onDuplicate()
+                }
+
+                ActionButton(icon: "trash", tooltip: "Delete", frameSize: 24, isDestructive: true) {
+                    onDelete()
+                }
+                #endif
             }
         }
     }

@@ -139,7 +139,9 @@ private struct RowHeaderActionButtons: View {
     let onReset: () -> Void
     let onDelete: () -> Void
 
+    #if os(macOS)
     @State private var isHovered = false
+    #endif
 
     var body: some View {
         HStack(spacing: 4) {
@@ -149,8 +151,11 @@ private struct RowHeaderActionButtons: View {
             ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset row", isDestructive: true, disabled: false, action: onReset)
             ActionButton(icon: "trash", tooltip: "Delete row", isDestructive: true, disabled: !canDelete, action: onDelete)
         }
+        // iPad has no hover to reveal these, so keep them full-strength; macOS dims until hover/selection.
+        #if os(macOS)
         .opacity(isSelected || isHovered ? 1 : 0.65)
         .animation(.easeInOut(duration: 0.15), value: isSelected || isHovered)
         .onHover { isHovered = $0 }
+        #endif
     }
 }
