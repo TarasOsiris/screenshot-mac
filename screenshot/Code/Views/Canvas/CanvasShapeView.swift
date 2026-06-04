@@ -164,37 +164,17 @@ struct CanvasShapeView: View {
     @ViewBuilder
     var body: some View {
         let svgAware = clippedBase
-            .onAppear {
-                updateSvgCache()
-                if let onDidAppearAfterAdd {
-                    withAnimation(.easeOut(duration: 0.08)) {
-                        addBumpScale = 1.12
-                    } completion: {
-                        withAnimation(.easeInOut(duration: 0.08)) {
-                            addBumpScale = 1.0
-                        }
-                    }
-                    onDidAppearAfterAdd()
-                }
-            }
+            .onAppear(perform: handleAppear)
             .onChange(of: isEditingText) { _, editing in
-                onEditingTextChanged?(editing)
+                handleEditingStateChange(editing)
             }
             .onChange(of: selectionState) { _, newState in
-                if isEditingText {
-                    onFormatBarStateChanged?(newState, formatController)
-                }
+                handleSelectionStateChange(newState)
             }
             .onChange(of: isSelected) { _, selected in
-                if !selected && isEditingText {
-                    commitTextEdit()
-                }
+                handleSelectionChange(selected)
             }
-            .onDisappear {
-                if isEditingText {
-                    commitTextEdit()
-                }
-            }
+            .onDisappear(perform: handleDisappear)
             .onChange(of: shape.svgContent) { updateSvgCache() }
             .onChange(of: shape.svgUseColor) { updateSvgCache() }
             .onChange(of: shape.color) { updateSvgCache() }
@@ -207,31 +187,12 @@ struct CanvasShapeView: View {
                     .gesture(dragGesture, including: .gesture)
                     .simultaneousGesture(
                         TapGesture(count: 2).onEnded {
-                            guard !shape.resolvedIsLocked else {
-                                onSelect()
-                                return
-                            }
-                            if shape.type == .text {
-                                editingTextValue = shape.text ?? ""
-                                editingRichTextData = shape.richText
-                                formatController.resetRichTextSession()
-                                if shape.richText != nil {
-                                    formatController.beginRichTextSession()
-                                }
-                                isEditingText = true
-                                onSelect()
-                            } else if shape.type == .device || shape.type == .image {
-                                isPickerPresented = true
-                            }
+                            handleDoubleTap()
                         }
                     )
                     .simultaneousGesture(
                         TapGesture().onEnded {
-                            if PlatformModifiers.shiftDown {
-                                onShiftSelect?()
-                            } else {
-                                onSelect()
-                            }
+                            handleTap()
                         }
                     )
 
@@ -458,61 +419,132 @@ struct CanvasShapeView: View {
         (value / displayPixelStep).rounded() * displayPixelStep
     }
 
+    // MARK: - Lifecycle and selection
+
+    private func handleAppear() {
+        updateSvgCache()
+        guard let onDidAppearAfterAdd else { return }
+        withAnimation(.easeOut(duration: 0.08)) {
+            addBumpScale = 1.12
+        } completion: {
+            withAnimation(.easeInOut(duration: 0.08)) {
+                addBumpScale = 1.0
+            }
+        }
+        onDidAppearAfterAdd()
+    }
+
+    private func handleEditingStateChange(_ editing: Bool) {
+        onEditingTextChanged?(editing)
+    }
+
+    private func handleSelectionStateChange(_ newState: RichTextSelectionState?) {
+        guard isEditingText else { return }
+        onFormatBarStateChanged?(newState, formatController)
+    }
+
+    private func handleSelectionChange(_ selected: Bool) {
+        if !selected && isEditingText {
+            commitTextEdit()
+        }
+    }
+
+    private func handleDisappear() {
+        if isEditingText {
+            commitTextEdit()
+        }
+    }
+
+    private func handleDoubleTap() {
+        guard !shape.resolvedIsLocked else {
+            onSelect()
+            return
+        }
+        if shape.type == .text {
+            beginTextEditing()
+        } else if shape.type == .device || shape.type == .image {
+            isPickerPresented = true
+        }
+    }
+
+    private func beginTextEditing() {
+        editingTextValue = shape.text ?? ""
+        editingRichTextData = shape.richText
+        formatController.resetRichTextSession()
+        if shape.richText != nil {
+            formatController.beginRichTextSession()
+        }
+        isEditingText = true
+        onSelect()
+    }
+
+    private func handleTap() {
+        if PlatformModifiers.shiftDown {
+            onShiftSelect?()
+        } else {
+            onSelect()
+        }
+    }
+
     // MARK: - Drag
 
     private var dragGesture: some Gesture {
         DragGesture()
-            .onChanged { value in
-                guard !shape.resolvedIsLocked else {
-                    if !isDragging && !isMultiSelected {
-                        onSelect()
-                    }
-                    return
-                }
-                if !isDragging {
-                    isDragging = true
-                    PlatformCursor.setClosedHand()
+            .onChanged(handleDragChanged)
+            .onEnded(handleDragEnded)
+    }
 
-                    // Option+drag: leave original in place, create & drag a copy
-                    if PlatformModifiers.optionDown {
-                        _ = onOptionDragDuplicate?(shape.id)
-                    }
+    private func handleDragChanged(_ value: DragGesture.Value) {
+        guard !shape.resolvedIsLocked else {
+            if !isDragging && !isMultiSelected {
+                onSelect()
+            }
+            return
+        }
+        if !isDragging {
+            beginDrag()
+        }
+        let rawOffset = CGSize(
+            width: value.translation.width / displayScale,
+            height: value.translation.height / displayScale
+        )
+        if let snap = onDragSnap?(shape, rawOffset) {
+            dragOffset = snap.snappedOffset
+        } else {
+            dragOffset = rawOffset
+        }
+        if isMultiSelected {
+            onDragProgress?(dragOffset)
+        }
+    }
 
-                    // Don't call onSelect if shape is already part of a multi-selection
-                    if !isMultiSelected {
-                        onSelect()
-                    }
-                }
-                let rawOffset = CGSize(
-                    width: value.translation.width / displayScale,
-                    height: value.translation.height / displayScale
-                )
-                if let snap = onDragSnap?(shape, rawOffset) {
-                    dragOffset = snap.snappedOffset
-                } else {
-                    dragOffset = rawOffset
-                }
-                // Report drag progress so the selection overlay (which lives
-                // outside the shape) can keep its handles in sync.
-                if isMultiSelected {
-                    onDragProgress?(dragOffset)
-                }
-            }
-            .onEnded { _ in
-                PlatformCursor.setArrow()
-                let finalOffset = dragOffset
-                dragOffset = .zero
-                isDragging = false
-                if isMultiSelected {
-                    onGroupDragEnd?(finalOffset)
-                } else {
-                    var updated = shape
-                    updated.x += finalOffset.width
-                    updated.y += finalOffset.height
-                    onUpdate(updated)
-                }
-                onDragEnd?()
-            }
+    private func beginDrag() {
+        isDragging = true
+        PlatformCursor.setClosedHand()
+
+        if PlatformModifiers.optionDown {
+            _ = onOptionDragDuplicate?(shape.id)
+        }
+
+        if !isMultiSelected {
+            onSelect()
+        }
+    }
+
+    private func handleDragEnded(_: DragGesture.Value) {
+        PlatformCursor.setArrow()
+        let finalOffset = dragOffset
+        dragOffset = .zero
+        isDragging = false
+        if isMultiSelected {
+            onGroupDragEnd?(finalOffset)
+        } else {
+            var updated = shape
+            updated.x += finalOffset.width
+            updated.y += finalOffset.height
+            onUpdate(updated)
+        }
+        onDragEnd?()
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {

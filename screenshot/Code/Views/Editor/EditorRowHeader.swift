@@ -24,8 +24,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
 
     var body: some View {
         Group {
-            // Keep the label field present while editing; otherwise drop the title
-            // and size labels first when the header is too narrow for everything.
+            // Don't let the fit fallback hide the field mid-rename.
             if isEditingLabel {
                 headerContent(showLabels: true)
             } else {

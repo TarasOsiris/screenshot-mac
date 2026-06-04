@@ -8,7 +8,7 @@ Screenshot Bro — app for generating App Store & Google Play screenshots with d
 
 ## Code Style
 
-- Avoid excessive comments. Don't narrate what the code already says; keep only short "why" notes for non-obvious decisions (workarounds, platform quirks, invariants). Prefer one concise line over a multi-line explanation.
+- **Comment sparingly — default to no comment.** Well-named code is self-documenting; do not narrate what it already says (no `// loop over rows`, no restating a modifier). Add a comment *only* when the reader would otherwise be misled or waste time: a non-obvious workaround, a platform quirk, an invariant, or a "why this and not the obvious alternative." When you do comment, write one concise line — never a multi-line paragraph explaining mechanics. If you feel the need to explain *how* the code works, rename or restructure it instead.
 
 ## UX Reference
 

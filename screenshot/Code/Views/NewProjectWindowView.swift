@@ -27,22 +27,7 @@ struct NewProjectWindowView: View {
 
     var body: some View {
         platformContent
-            .onAppear {
-                templates = TemplateService.availableTemplates()
-                projectName = "Project \(state.visibleProjects.count + 1)"
-                creationMode = .template
-                selectedTemplateId = templates.first?.id
-                rowDrafts = [
-                    BlankProjectRowDraft(category: .iphone),
-                    BlankProjectRowDraft(category: .ipadPro13),
-                    BlankProjectRowDraft(category: .androidPhone),
-                ]
-                #if os(macOS)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    isNameFieldFocused = true
-                }
-                #endif
-            }
+            .onAppear(perform: prepareInitialState)
     }
 
     #if os(macOS)
@@ -125,7 +110,7 @@ struct NewProjectWindowView: View {
                 LazyVGrid(columns: templateGridColumns, spacing: templateGridSpacing) {
                     ForEach(templates) { template in
                         Button {
-                            selectedTemplateId = template.id
+                            selectTemplate(template)
                         } label: {
                             TemplateSelectionCard(
                                 template: template,
@@ -289,7 +274,7 @@ struct NewProjectWindowView: View {
                     LazyVGrid(columns: templateGridColumns, spacing: templateGridSpacing) {
                         ForEach(templates) { template in
                             Button {
-                                selectedTemplateId = template.id
+                                selectTemplate(template)
                             } label: {
                                 TemplateSelectionCard(
                                     template: template,
@@ -361,6 +346,27 @@ struct NewProjectWindowView: View {
             guard let index = rowDrafts.firstIndex(where: { $0.id == id }) else { return }
             rowDrafts[index] = updatedDraft
         }
+    }
+
+    private func prepareInitialState() {
+        templates = TemplateService.availableTemplates()
+        projectName = "Project \(state.visibleProjects.count + 1)"
+        creationMode = .template
+        selectedTemplateId = templates.first?.id
+        rowDrafts = [
+            BlankProjectRowDraft(category: .iphone),
+            BlankProjectRowDraft(category: .ipadPro13),
+            BlankProjectRowDraft(category: .androidPhone),
+        ]
+        #if os(macOS)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            isNameFieldFocused = true
+        }
+        #endif
+    }
+
+    private func selectTemplate(_ template: ProjectTemplate) {
+        selectedTemplateId = template.id
     }
 
     private func addRow() {
@@ -538,11 +544,7 @@ private struct BlankProjectRowCard: View {
             .labelsHidden()
             .frame(maxWidth: .infinity, alignment: .leading)
             .onChange(of: draft.sizePreset) { _, newPreset in
-                if let category = DeviceCategory.suggestedCategory(forSizePreset: newPreset),
-                   category != draft.deviceCategory {
-                    draft.deviceCategory = category
-                    draft.deviceFrameId = DeviceFrameCatalog.firstPortraitFrameId(for: category)
-                }
+                applySizePreset(newPreset)
             }
     }
 
@@ -564,24 +566,43 @@ private struct BlankProjectRowCard: View {
             frameId: draft.deviceFrameId,
             presentation: .inline,
             onSelectNone: {
-                draft.deviceCategory = nil
-                draft.deviceFrameId = nil
+                selectNoDevice()
             },
             onSelectCategory: { category in
-                draft.deviceCategory = category
-                draft.deviceFrameId = nil
-                draft.sizePreset = category.suggestedSizePreset
+                selectDeviceCategory(category)
             },
             onSelectFrame: { frame in
-                draft.deviceCategory = frame.fallbackCategory
-                draft.deviceFrameId = frame.id
-                if let preset = DeviceFrameCatalog.suggestedSizePreset(forFrameId: frame.id) {
-                    draft.sizePreset = preset
-                }
+                selectDeviceFrame(frame)
             }
         )
         .frame(maxWidth: .infinity, alignment: .leading)
         .font(.system(size: 12))
+    }
+
+    private func applySizePreset(_ preset: String) {
+        guard let category = DeviceCategory.suggestedCategory(forSizePreset: preset),
+              category != draft.deviceCategory else { return }
+        draft.deviceCategory = category
+        draft.deviceFrameId = DeviceFrameCatalog.firstPortraitFrameId(for: category)
+    }
+
+    private func selectNoDevice() {
+        draft.deviceCategory = nil
+        draft.deviceFrameId = nil
+    }
+
+    private func selectDeviceCategory(_ category: DeviceCategory) {
+        draft.deviceCategory = category
+        draft.deviceFrameId = nil
+        draft.sizePreset = category.suggestedSizePreset
+    }
+
+    private func selectDeviceFrame(_ frame: DeviceFrame) {
+        draft.deviceCategory = frame.fallbackCategory
+        draft.deviceFrameId = frame.id
+        if let preset = DeviceFrameCatalog.suggestedSizePreset(forFrameId: frame.id) {
+            draft.sizePreset = preset
+        }
     }
 
     private var actionButtons: some View {

@@ -115,11 +115,7 @@ struct ShowcaseExportSheet: View {
         #endif
         .alert("Reset Showcase Settings?", isPresented: $showingResetConfirmation) {
             Button("Reset", role: .destructive) {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    config = ShowcaseExportConfig()
-                    backgroundImage = nil
-                    excludedTemplateIds = []
-                }
+                resetShowcaseSettings()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -131,79 +127,15 @@ struct ShowcaseExportSheet: View {
 
     @ViewBuilder
     private var previewColumn: some View {
-        if selectedRowsOrdered.isEmpty {
-            emptyPreview
-        } else {
-            GeometryReader { geo in
-                let inset = ShowcaseExportSheetMetrics.previewContentInset
-                let contentWidth = max(geo.size.width - inset * 2, 80)
-                if selectedRowsOrdered.count == 1 {
-                    let row = selectedRowsOrdered[0]
-                    let contentHeight = max(geo.size.height - inset * 2, 80)
-                    ShowcaseRowPreview(
-                        row: row,
-                        config: config,
-                        transientBackgroundImages: transientBackgroundImages,
-                        containerSize: CGSize(width: contentWidth, height: contentHeight),
-                        loadImages: { loadImages(row) },
-                        localeCode: localeCode,
-                        localeState: localeState,
-                        availableFontFamilies: availableFontFamilies
-                    )
-                    .padding(inset)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    multiRowPreview(contentWidth: contentWidth, inset: inset)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func multiRowPreview(contentWidth: CGFloat, inset: CGFloat) -> some View {
-        let useTwoColumns = contentWidth >= ShowcaseExportSheetMetrics.gridTwoColumnThreshold
-            && selectedRowsOrdered.count >= 2
-        let columnCount = useTwoColumns ? 2 : 1
-        let spacing = ShowcaseExportSheetMetrics.previewItemSpacing
-        let columnWidth = useTwoColumns
-            ? max((contentWidth - spacing) / 2, 80)
-            : contentWidth
-
-        ScrollView(.vertical) {
-            LazyVGrid(
-                columns: Array(
-                    repeating: GridItem(.flexible(minimum: 80), spacing: spacing, alignment: .top),
-                    count: columnCount
-                ),
-                spacing: spacing
-            ) {
-                ForEach(selectedRowsOrdered) { row in
-                    ShowcaseRowPreview(
-                        row: row,
-                        config: config,
-                        transientBackgroundImages: transientBackgroundImages,
-                        containerSize: CGSize(width: columnWidth, height: .infinity),
-                        loadImages: { loadImages(row) },
-                        localeCode: localeCode,
-                        localeState: localeState,
-                        availableFontFamilies: availableFontFamilies
-                    )
-                    .id(row.id)
-                }
-            }
-            .padding(inset)
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    @ViewBuilder
-    private var emptyPreview: some View {
-        ContentUnavailableView(
-            "No rows selected",
-            systemImage: "rectangle.stack.badge.minus",
-            description: Text("Select at least one row to preview and export.")
+        ShowcasePreviewColumn(
+            rows: selectedRowsOrdered,
+            config: config,
+            transientBackgroundImages: transientBackgroundImages,
+            loadImages: loadImages,
+            localeCode: localeCode,
+            localeState: localeState,
+            availableFontFamilies: availableFontFamilies
         )
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Settings panel
@@ -303,23 +235,11 @@ struct ShowcaseExportSheet: View {
 
     @ViewBuilder
     private var rowsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                sectionTitle("Rows", systemImage: "rectangle.stack")
-                Spacer()
-                Button(allSelected ? "None" : "All") {
-                    selectedRowIds = allSelected ? [] : Set(candidateRows.map(\.id))
-                }
-                .buttonStyle(.borderless)
-                .font(.system(size: 10, weight: .semibold))
-            }
-
-            VStack(spacing: 2) {
-                ForEach(candidateRows) { row in
-                    rowToggle(row)
-                }
-            }
-        }
+        ShowcaseRowsSection(
+            candidateRows: candidateRows,
+            selectedRowIds: $selectedRowIds,
+            excludedTemplateIds: $excludedTemplateIds
+        )
     }
 
     private var allSelected: Bool {
@@ -331,87 +251,6 @@ struct ShowcaseExportSheet: View {
         if count == 0 { return "No rows selected" }
         if count == candidateRows.count { return "Exporting all \(count) rows" }
         return "Exporting \(count) of \(candidateRows.count) rows"
-    }
-
-    @ViewBuilder
-    private func rowToggle(_ row: ScreenshotRow) -> some View {
-        let rowSelected = selectedRowIds.contains(row.id)
-        let binding = Binding<Bool>(
-            get: { rowSelected },
-            set: { isOn in
-                if isOn { selectedRowIds.insert(row.id) } else { selectedRowIds.remove(row.id) }
-            }
-        )
-        let includedCount = row.templates.count(where: { !excludedTemplateIds.contains($0.id) })
-
-        VStack(alignment: .leading, spacing: 4) {
-            Toggle(isOn: binding) {
-                HStack(spacing: 8) {
-                    Text(row.displayLabel)
-                        .font(.system(size: 12))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Spacer(minLength: 8)
-                    Text("\(includedCount)/\(row.templates.count)")
-                        .font(.system(size: 10))
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
-            }
-            #if os(macOS)
-            .toggleStyle(.checkbox)
-            #endif
-
-            if rowSelected, row.templates.count > 1 {
-                templateChipStrip(row)
-                    .padding(.leading, 18)
-            }
-        }
-        .padding(EdgeInsets(top: 2, leading: 4, bottom: 2, trailing: 6))
-    }
-
-    @ViewBuilder
-    private func templateChipStrip(_ row: ScreenshotRow) -> some View {
-        HStack(spacing: 4) {
-            ForEach(row.templates.indices, id: \.self) { index in
-                templateChip(index: index, template: row.templates[index])
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func templateChip(index: Int, template: ScreenshotTemplate) -> some View {
-        let included = !excludedTemplateIds.contains(template.id)
-        let shape = RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
-        Button {
-            if included {
-                excludedTemplateIds.insert(template.id)
-            } else {
-                excludedTemplateIds.remove(template.id)
-            }
-        } label: {
-            Text("\(index + 1)")
-                .font(.system(size: 10, weight: .medium))
-                .monospacedDigit()
-                .frame(width: 20, height: 18)
-                .background(
-                    shape.fill(included
-                               ? Color.accentColor.opacity(UIMetrics.Opacity.accentBadge)
-                               : Color.primary.opacity(UIMetrics.Opacity.sectionFill))
-                )
-                .overlay(
-                    shape.strokeBorder(
-                        included
-                            ? Color.accentColor.opacity(UIMetrics.Opacity.accentBorder)
-                            : Color.primary.opacity(UIMetrics.Opacity.sectionBorder),
-                        lineWidth: UIMetrics.BorderWidth.hairline
-                    )
-                )
-                .foregroundStyle(included ? Color.accentColor : Color.secondary)
-                .opacity(included ? 1 : 0.55)
-        }
-        .buttonStyle(.plain)
-        .help(included ? "Exclude screenshot \(index + 1)" : "Include screenshot \(index + 1)")
     }
 
     @ViewBuilder
@@ -661,5 +500,281 @@ struct ShowcaseExportSheet: View {
         backgroundImage = nil
         config.backgroundImageConfig.fileName = nil
         config.backgroundImageConfig.svgContent = nil
+    }
+
+    private func resetShowcaseSettings() {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            config = ShowcaseExportConfig()
+            backgroundImage = nil
+            excludedTemplateIds = []
+        }
+    }
+}
+
+private struct ShowcasePreviewColumn: View {
+    let rows: [ScreenshotRow]
+    let config: ShowcaseExportConfig
+    let transientBackgroundImages: [String: NSImage]
+    let loadImages: (ScreenshotRow) -> [String: NSImage]
+    let localeCode: String?
+    let localeState: LocaleState
+    let availableFontFamilies: Set<String>?
+
+    var body: some View {
+        if rows.isEmpty {
+            emptyPreview
+        } else {
+            GeometryReader { geo in
+                let inset = ShowcaseExportSheetMetrics.previewContentInset
+                let contentWidth = max(geo.size.width - inset * 2, 80)
+                if rows.count == 1 {
+                    singleRowPreview(row: rows[0], geo: geo, inset: inset, contentWidth: contentWidth)
+                } else {
+                    multiRowPreview(contentWidth: contentWidth, inset: inset)
+                }
+            }
+        }
+    }
+
+    private func singleRowPreview(
+        row: ScreenshotRow,
+        geo: GeometryProxy,
+        inset: CGFloat,
+        contentWidth: CGFloat
+    ) -> some View {
+        let contentHeight = max(geo.size.height - inset * 2, 80)
+        return ShowcaseRowPreview(
+            row: row,
+            config: config,
+            transientBackgroundImages: transientBackgroundImages,
+            containerSize: CGSize(width: contentWidth, height: contentHeight),
+            loadImages: { loadImages(row) },
+            localeCode: localeCode,
+            localeState: localeState,
+            availableFontFamilies: availableFontFamilies
+        )
+        .padding(inset)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func multiRowPreview(contentWidth: CGFloat, inset: CGFloat) -> some View {
+        let layout = ShowcasePreviewGridLayout(contentWidth: contentWidth, rowCount: rows.count)
+        return ScrollView(.vertical) {
+            LazyVGrid(
+                columns: Array(
+                    repeating: GridItem(.flexible(minimum: 80), spacing: layout.spacing, alignment: .top),
+                    count: layout.columnCount
+                ),
+                spacing: layout.spacing
+            ) {
+                ForEach(rows) { row in
+                    ShowcaseRowPreview(
+                        row: row,
+                        config: config,
+                        transientBackgroundImages: transientBackgroundImages,
+                        containerSize: CGSize(width: layout.columnWidth, height: .infinity),
+                        loadImages: { loadImages(row) },
+                        localeCode: localeCode,
+                        localeState: localeState,
+                        availableFontFamilies: availableFontFamilies
+                    )
+                    .id(row.id)
+                }
+            }
+            .padding(inset)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private var emptyPreview: some View {
+        ContentUnavailableView(
+            "No rows selected",
+            systemImage: "rectangle.stack.badge.minus",
+            description: Text("Select at least one row to preview and export.")
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct ShowcasePreviewGridLayout {
+    let contentWidth: CGFloat
+    let rowCount: Int
+
+    var spacing: CGFloat {
+        ShowcaseExportSheetMetrics.previewItemSpacing
+    }
+
+    var columnCount: Int {
+        contentWidth >= ShowcaseExportSheetMetrics.gridTwoColumnThreshold && rowCount >= 2 ? 2 : 1
+    }
+
+    var columnWidth: CGFloat {
+        columnCount == 2 ? max((contentWidth - spacing) / 2, 80) : contentWidth
+    }
+}
+
+private struct ShowcaseRowsSection: View {
+    let candidateRows: [ScreenshotRow]
+    @Binding var selectedRowIds: Set<UUID>
+    @Binding var excludedTemplateIds: Set<UUID>
+
+    private var allSelected: Bool {
+        selectedRowIds.count == candidateRows.count
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            header
+            VStack(spacing: 2) {
+                ForEach(candidateRows) { row in
+                    ShowcaseRowToggle(
+                        row: row,
+                        selectedRowIds: $selectedRowIds,
+                        excludedTemplateIds: $excludedTemplateIds
+                    )
+                }
+            }
+        }
+    }
+
+    private var header: some View {
+        HStack {
+            ShowcaseSectionTitle(text: "Rows", systemImage: "rectangle.stack")
+            Spacer()
+            Button(allSelected ? "None" : "All", action: toggleAllRows)
+                .buttonStyle(.borderless)
+                .font(.system(size: 10, weight: .semibold))
+        }
+    }
+
+    private func toggleAllRows() {
+        selectedRowIds = allSelected ? [] : Set(candidateRows.map(\.id))
+    }
+}
+
+private struct ShowcaseRowToggle: View {
+    let row: ScreenshotRow
+    @Binding var selectedRowIds: Set<UUID>
+    @Binding var excludedTemplateIds: Set<UUID>
+
+    private var rowSelected: Bool {
+        selectedRowIds.contains(row.id)
+    }
+
+    private var includedCount: Int {
+        row.templates.count(where: { !excludedTemplateIds.contains($0.id) })
+    }
+
+    private var selectionBinding: Binding<Bool> {
+        Binding(
+            get: { rowSelected },
+            set: { isOn in
+                if isOn { selectedRowIds.insert(row.id) } else { selectedRowIds.remove(row.id) }
+            }
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(isOn: selectionBinding) {
+                HStack(spacing: 8) {
+                    Text(row.displayLabel)
+                        .font(.system(size: 12))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Spacer(minLength: 8)
+                    Text("\(includedCount)/\(row.templates.count)")
+                        .font(.system(size: 10))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+            }
+            #if os(macOS)
+            .toggleStyle(.checkbox)
+            #endif
+
+            if rowSelected, row.templates.count > 1 {
+                templateChipStrip
+                    .padding(.leading, 18)
+            }
+        }
+        .padding(EdgeInsets(top: 2, leading: 4, bottom: 2, trailing: 6))
+    }
+
+    private var templateChipStrip: some View {
+        HStack(spacing: 4) {
+            ForEach(row.templates.indices, id: \.self) { index in
+                ShowcaseTemplateChip(
+                    index: index,
+                    template: row.templates[index],
+                    excludedTemplateIds: $excludedTemplateIds
+                )
+            }
+        }
+    }
+}
+
+private struct ShowcaseTemplateChip: View {
+    let index: Int
+    let template: ScreenshotTemplate
+    @Binding var excludedTemplateIds: Set<UUID>
+
+    private var included: Bool {
+        !excludedTemplateIds.contains(template.id)
+    }
+
+    var body: some View {
+        Button(action: toggleIncluded) {
+            Text("\(index + 1)")
+                .font(.system(size: 10, weight: .medium))
+                .monospacedDigit()
+                .frame(width: 20, height: 18)
+                .background(chipShape.fill(chipFill))
+                .overlay(chipShape.strokeBorder(chipStroke, lineWidth: UIMetrics.BorderWidth.hairline))
+                .foregroundStyle(included ? Color.accentColor : Color.secondary)
+                .opacity(included ? 1 : 0.55)
+        }
+        .buttonStyle(.plain)
+        .help(included ? "Exclude screenshot \(index + 1)" : "Include screenshot \(index + 1)")
+    }
+
+    private var chipShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
+    }
+
+    private var chipFill: Color {
+        included
+            ? Color.accentColor.opacity(UIMetrics.Opacity.accentBadge)
+            : Color.primary.opacity(UIMetrics.Opacity.sectionFill)
+    }
+
+    private var chipStroke: Color {
+        included
+            ? Color.accentColor.opacity(UIMetrics.Opacity.accentBorder)
+            : Color.primary.opacity(UIMetrics.Opacity.sectionBorder)
+    }
+
+    private func toggleIncluded() {
+        if included {
+            excludedTemplateIds.insert(template.id)
+        } else {
+            excludedTemplateIds.remove(template.id)
+        }
+    }
+}
+
+private struct ShowcaseSectionTitle: View {
+    let text: String
+    let systemImage: String
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: systemImage)
+                .font(.system(size: 10, weight: .semibold))
+            Text(text.uppercased())
+                .font(.system(size: 10, weight: .semibold))
+                .tracking(0.6)
+        }
+        .foregroundStyle(.secondary)
     }
 }

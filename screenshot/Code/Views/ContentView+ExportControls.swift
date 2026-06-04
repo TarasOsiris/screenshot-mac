@@ -65,10 +65,7 @@ extension ContentView {
                 Text("Exporting…")
             }
         } else {
-            // Label with a custom icon closure so the share glyph can be nudged down to
-            // the others' centerline. square.and.arrow.up reserves space above the square
-            // for the up-arrow, so it renders high; the icon closure keeps Label's adaptive
-            // icon-only collapsing while letting us offset just the glyph (not the text).
+            // square.and.arrow.up renders high (reserves space for the up-arrow); nudge the glyph down to align it.
             Label {
                 Text(exportSuccess ? "Exported" : "Export")
             } icon: {

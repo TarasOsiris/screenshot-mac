@@ -406,8 +406,6 @@ extension UploadToAppStoreConnectView {
     }
 
     var uploadSummaryPanel: some View {
-        // Compute the (relatively expensive) plan entries once, then derive everything from it,
-        // rather than re-running uploadPlanEntries via selected/skipped/group computed props.
         let allEntries = uploadPlanEntries
         let entries = allEntries.filter(\.isSelected)
         let skipped = allEntries.filter { !$0.isSelected }
@@ -415,433 +413,48 @@ extension UploadToAppStoreConnectView {
         let screenshotCount = entries.reduce(0) { $0 + $1.screenshotCount }
         let issues = validationIssues
 
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                disclosureChevronButton(expanded: isPreflightExpanded, action: {
-                    isPreflightExpanded.toggle()
-                }) {
-                    Text("Preflight")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                }
-                Spacer()
-                if issues.hasErrors {
-                    Label("Fix required", systemImage: "xmark.circle.fill")
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                } else {
-                    Label("Ready", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .font(.caption)
-                }
-                Button("Refresh App Store data") {
-                    Task { await refreshLocalizations() }
-                }
-                .font(.caption)
-                .disabled(isBusy)
-            }
-
-            if isPreflightExpanded {
-                HStack(spacing: 10) {
-                    summaryMetric("\(entries.count)", "sets")
-                    summaryMetric("\(screenshotCount)", "screenshots")
-                    summaryMetric("\(groups.count)", "locales")
-                }
-
-                if !groups.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Selected uploads")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        ForEach(groups) { group in
-                            localePlanGroupRow(group)
-                        }
-                    }
-                }
-
-                if !skipped.isEmpty {
-                    DisclosureGroup("Skipped items (\(skipped.count))") {
-                        VStack(alignment: .leading, spacing: 6) {
-                            ForEach(skipped.prefix(12)) { entry in
-                                HStack(alignment: .top, spacing: 6) {
-                                    Image(systemName: "minus.circle")
-                                        .foregroundStyle(.secondary)
-                                        .font(.caption)
-                                    Text("\(entry.projectLocaleLabel) · \(entry.rowLabel): \(entry.skipReason ?? String(localized: "Skipped"))")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                            }
-                            if skipped.count > 12 {
-                                Text("\(skipped.count - 12) more skipped item\(skipped.count - 12 == 1 ? "" : "s")")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.top, 6)
-                    }
-                    .font(.caption)
-                }
-            }
-        }
-        .padding(12)
-        .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
-    }
-
-    func summaryMetric(_ value: String, _ label: LocalizedStringKey) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value)
-                .font(.headline.monospacedDigit())
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .frame(minWidth: 78, alignment: .leading)
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
-        .background(Color.primary.opacity(0.04), in: .rect(cornerRadius: 6))
-    }
-
-    func localePlanGroupRow(_ group: UploadLocaleGroup) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(group.label)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                Spacer()
-                Text("\(group.screenshotCount) screenshot\(group.screenshotCount == 1 ? "" : "s")")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            ForEach(group.entries) { entry in
-                HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundStyle(.orange)
-                        .font(.caption)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("\(entry.rowLabel) -> \(entry.displayTypeLabel)")
-                            .font(.caption)
-                            .lineLimit(1)
-                        Text("Source \(entry.sourceSizeLabel) · \(entry.templateCount) screenshot\(entry.templateCount == 1 ? "" : "s") · \(entry.displayTypeRawValue)")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-            }
-        }
-        .padding(8)
-        .background(Color.primary.opacity(0.035), in: .rect(cornerRadius: 6))
+        return ASCUploadSummaryPanel(
+            entries: entries,
+            skipped: skipped,
+            groups: groups,
+            screenshotCount: screenshotCount,
+            issues: issues,
+            isExpanded: $isPreflightExpanded,
+            isBusy: isBusy,
+            onRefresh: refreshAppStoreData
+        )
     }
 
     var replaceWarningCallout: some View {
-        calloutBox(tint: .orange) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundStyle(.orange)
-                        .font(.system(size: 13))
-                    Text("If a matching display type already has screenshots, they will be deleted and replaced. You'll be asked to confirm before anything is uploaded.")
-                        .font(.caption)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
+        ASCReplaceWarningCallout()
     }
 
     @ViewBuilder
     var issuesPanel: some View {
-        let issues = validationIssues
-        if !issues.isEmpty {
-            calloutBox(tint: issues.hasErrors ? .red : .orange) {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(issues) { issue in
-                        issueRow(issue)
-                    }
-                }
-            }
-        }
-    }
-
-    func calloutBox<Content: View>(tint: Color, @ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(tint.opacity(0.08), in: .rect(cornerRadius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(tint.opacity(0.3), lineWidth: 1)
-            )
-    }
-
-    func issueRow(_ issue: ASCUploadIssue) -> some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(issue.severity.tint)
-                .font(.system(size: 13))
-            VStack(alignment: .leading, spacing: 2) {
-                issueMessageText(issue)
-                    .font(.caption)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let hint = issue.hint {
-                    Text(hint)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-    }
-
-    func issueMessageText(_ issue: ASCUploadIssue) -> Text {
-        if let scope = issue.scope {
-            return Text(scope).fontWeight(.semibold) + Text(" · ") + Text(issue.message)
-        }
-        return Text(issue.message)
-    }
-
-    /// Leading disclosure chevron with a comfortable hit target, shared by the collapsible sections.
-    func disclosureChevronButton<Label: View>(
-        expanded: Bool,
-        action: @escaping () -> Void,
-        @ViewBuilder label: () -> Label = { EmptyView() }
-    ) -> some View {
-        Button(action: action) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Image(systemName: expanded ? "chevron.down" : "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                label()
-            }
-            .padding(6)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+        ASCIssuesPanel(issues: validationIssues)
     }
 
     func rowPlanCard(plan: Binding<RowPlan>) -> some View {
         let expanded = !collapsedRowPlanIds.contains(plan.wrappedValue.id)
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                disclosureChevronButton(expanded: expanded, action: {
+        let availableDisplayTypes = ASCDisplayType.userSelectableCases(
+            forPlatform: selectedVersion?.attributes.ascPlatform
+        )
+        return ASCUploadRowPlanCard(
+            plan: plan,
+            expanded: expanded,
+            availableDisplayTypes: availableDisplayTypes,
+            displayTypeDetailsPlanId: $displayTypeDetailsPlanId,
+            onToggleExpanded: {
+                withAnimation(.easeInOut(duration: 0.15)) {
                     if expanded { collapsedRowPlanIds.insert(plan.wrappedValue.id) }
                     else { collapsedRowPlanIds.remove(plan.wrappedValue.id) }
-                })
-                Toggle(isOn: plan.isEnabled) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(plan.wrappedValue.rowLabel.isEmpty ? String(localized: "Row") : plan.wrappedValue.rowLabel)
-                            .fontWeight(.medium)
-                        Text("\(String(Int(plan.wrappedValue.rowSize.width)))×\(String(Int(plan.wrappedValue.rowSize.height))) · \(plan.wrappedValue.templateCount) screenshot\(plan.wrappedValue.templateCount == 1 ? "" : "s")")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .toggleStyle(.switch)
-                .controlSize(.small)
-                Spacer()
-            }
-
-            if expanded && plan.wrappedValue.isEnabled {
-                displayTypePicker(plan: plan)
-
-                Text("Locales")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                ForEach(plan.localeTargets) { $target in
-                    localeTargetRow(target: $target)
                 }
             }
-        }
-        .padding(12)
-        .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
+        )
     }
 
-    func displayTypePicker(plan: Binding<RowPlan>) -> some View {
-        let detected = plan.wrappedValue.detectedDisplayType
-        let selected = plan.wrappedValue.selectedDisplayType
-        let availableCases = ASCDisplayType.userSelectableCases(forPlatform: selectedVersion?.attributes.ascPlatform)
-        let groups: [(String, [ASCDisplayType])] = [
-            ("iPhone", availableCases.filter { $0.family == .iphone }),
-            ("iPad", availableCases.filter { $0.family == .ipad }),
-            ("Mac", availableCases.filter { $0.family == .mac }),
-        ]
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("Source")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 72, alignment: .leading)
-                Text(verbatim: "\(Int(plan.wrappedValue.rowSize.width))×\(Int(plan.wrappedValue.rowSize.height))")
-                    .font(.caption)
-                if let detected, detected == selected {
-                    Label("Auto-detected", systemImage: "checkmark.circle")
-                        .foregroundStyle(.green)
-                        .font(.caption)
-                } else if let detected, detected != selected {
-                    Button {
-                        plan.wrappedValue.selectedDisplayType = detected
-                    } label: {
-                        Label("Use detected (\(detected.label))", systemImage: "wand.and.stars")
-                    }
-                    .font(.caption)
-                    .buttonStyle(.borderless)
-                }
-                Spacer()
-                Button {
-                    displayTypeDetailsPlanId = plan.wrappedValue.id
-                } label: {
-                    Image(systemName: "info.circle")
-                        #if os(iOS)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
-                        #endif
-                }
-                .buttonStyle(.plain)
-                .popover(isPresented: Binding(
-                    get: { displayTypeDetailsPlanId == plan.wrappedValue.id },
-                    set: { isPresented in
-                        if !isPresented { displayTypeDetailsPlanId = nil }
-                    }
-                )) {
-                    displayTypeDetailsPopover(plan: plan.wrappedValue)
-                }
-            }
-            HStack {
-                Text("Upload as")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 72, alignment: .leading)
-                Menu {
-                    Button("Select…") { plan.wrappedValue.selectedDisplayType = nil }
-                    ForEach(groups, id: \.0) { (title, items) in
-                        if !items.isEmpty {
-                            Section(title) {
-                                ForEach(items) { type in
-                                    Button(type.label) { plan.wrappedValue.selectedDisplayType = type }
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Text(selected?.label ?? "Select…")
-                            .lineLimit(1)
-                        Spacer()
-                        #if os(iOS)
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        #endif
-                    }
-                }
-                #if os(macOS)
-                .menuStyle(.borderlessButton)
-                .frame(maxWidth: 340, alignment: .leading)
-                #else
-                .buttonStyle(.bordered)
-                #endif
-                if let selected {
-                    Text(selected.appStoreConnectValue)
-                        .font(.caption2.monospaced())
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-        }
-    }
-
-    func displayTypeDetailsPopover(plan: RowPlan) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Display Type")
-                .font(.headline)
-            LabeledContent("Source size") {
-                Text(verbatim: "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))")
-            }
-            LabeledContent("Auto-detected") {
-                Text(plan.detectedDisplayType?.label ?? "No exact match")
-            }
-            if let selected = plan.selectedDisplayType {
-                LabeledContent("Upload target") {
-                    Text(selected.label)
-                }
-                LabeledContent("ASC value") {
-                    Text(selected.appStoreConnectValue)
-                        .font(.caption.monospaced())
-                }
-                LabeledContent("Accepted sizes") {
-                    Text(selected.acceptedSizeDescription)
-                        .multilineTextAlignment(.trailing)
-                }
-                if selected.family == .ipad {
-                    Label("App Store Connect rejects this if the selected app version is iPhone-only.", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                        .font(.caption)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-        .padding(14)
-        #if os(macOS)
-        .frame(width: 360)
-        #else
-        .frame(maxWidth: 360)
-        #endif
-    }
-
-    func localeTargetRow(target: Binding<LocaleTarget>) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Toggle(isOn: target.isEnabled) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(target.wrappedValue.appLocaleLabel)
-                    Text("Project \(target.wrappedValue.appLocaleCode)")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                // Fixed label column aligns the desktop rows; on iOS let it size naturally.
-                #if os(macOS)
-                .frame(width: 150, alignment: .leading)
-                #else
-                .frame(maxWidth: .infinity, alignment: .leading)
-                #endif
-            }
-            #if os(macOS)
-            .toggleStyle(.checkbox)
-            #else
-            .toggleStyle(.switch)
-            .controlSize(.small)
-            #endif
-            .disabled(target.wrappedValue.candidates.isEmpty)
-
-            if target.wrappedValue.candidates.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("No matching App Store locale")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                    Text("Add this locale in App Store Connect, then refresh locales.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                Picker("", selection: target.selectedASCLocalizationId) {
-                    Text("Choose…").tag(String?.none)
-                    ForEach(target.wrappedValue.candidates) { candidate in
-                        Text(candidate.attributes.locale).tag(Optional(candidate.id))
-                    }
-                }
-                .labelsHidden()
-                #if os(iOS)
-                .pickerStyle(.menu)
-                #endif
-                .disabled(!target.wrappedValue.isEnabled)
-                if let selectedId = target.wrappedValue.selectedASCLocalizationId,
-                   let selected = target.wrappedValue.candidates.first(where: { $0.id == selectedId }) {
-                    Text("-> \(selected.attributes.locale)")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
+    private func refreshAppStoreData() {
+        Task { await refreshLocalizations() }
     }
 
     @ViewBuilder
