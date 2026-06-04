@@ -6239,6 +6239,46 @@
         }
       }
     },
+    "Add languages to translate every text layer at once.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fügen Sie Sprachen hinzu, um jede Textebene auf einmal zu übersetzen."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez des langues pour traduire chaque couche de texte en même temps."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語を追加して、すべてのテキストレイヤーを一度に翻訳します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 텍스트 레이어를 한 번에 번역하려면 언어를 추가하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicione idiomas para traduzir todas as camadas de texto de uma só vez."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加语言以一次翻译每个文本层。"
+          }
+        }
+      }
+    },
     "Add languages to translate every text layer at once. Cmd+] cycles between them.": {
       "localizations": {
         "de": {
@@ -6419,16 +6459,16 @@
     },
     "Add Row": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter une ligne"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Zeile hinzufügen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une ligne"
           }
         },
         "ja": {
@@ -7813,6 +7853,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "所有项目都将复制到 iCloud。对于大型项目，初始同步可能需要一些时间。"
+          }
+        }
+      }
+    },
+    "Allow photo access in Settings to save to your gallery.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erlauben Sie den Zugriff auf Fotos in den Einstellungen, um sie in Ihrer Galerie zu speichern."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite el acceso a Fotos en Ajustes para guardar en tu galería."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez l'accès aux photos dans Paramètres pour les enregistrer dans votre galerie."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定で写真へのアクセスを許可して、ギャラリーに保存します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "갤러리에 저장하려면 설정에서 사진 액세스를 허용하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permita o acesso às fotos em Configurações para salvá-las em sua galeria."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许在“设置”中访问照片以保存到您的图库。"
           }
         }
       }
@@ -10328,16 +10414,16 @@
     },
     "Blank": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vide"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Leer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vide"
           }
         },
         "ja": {
@@ -10660,6 +10746,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "将形状带到前面"
+          }
+        }
+      }
+    },
+    "Bring to front": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach vorne bringen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mettre au premier plan"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手前に持ってくる"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "맨 앞으로 가져오기"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traga para frente"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "带到前面"
           }
         }
       }
@@ -11953,16 +12079,16 @@
     },
     "Choose a Template": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choisissez un modèle"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Wählen Sie eine Vorlage"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un modèle"
           }
         },
         "ja": {
@@ -13762,6 +13888,52 @@
         }
       }
     },
+    "Continue with Free": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer avec Gratuit"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fahren Sie mit „Kostenlos“ fort"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無料で続行"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "무료로 계속하기"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar com Grátis"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续免费"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar con la versión gratuita"
+          }
+        }
+      }
+    },
     "Continuous": {
       "localizations": {
         "de": {
@@ -14954,16 +15126,16 @@
     },
     "Create From": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Créer à partir de"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Erstellen aus"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer à partir de"
           }
         },
         "ja": {
@@ -15125,17 +15297,18 @@
       }
     },
     "Create store screenshots on iPad": {
+      "extractionState": "stale",
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Créer des captures d'écran du magasin sur iPad"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Erstellen Sie Store-Screenshots am iPad"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer des captures d'écran du magasin sur iPad"
           }
         },
         "ja": {
@@ -17365,6 +17538,46 @@
         }
       }
     },
+    "Deselect shape": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Form abwählen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désélectionner la forme"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "形状の選択を解除します"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모양 선택 해제"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desmarcar forma"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消选择形状"
+          }
+        }
+      }
+    },
     "Deselect shape (Esc)": {
       "localizations": {
         "de": {
@@ -18197,6 +18410,46 @@
         }
       }
     },
+    "Double-tap to reset": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zum Zurücksetzen doppeltippen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appuyez deux fois pour réinitialiser"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダブルタップしてリセットします"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "재설정하려면 두 번 탭하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque duas vezes para redefinir"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双击重置"
+          }
+        }
+      }
+    },
     "Download": {
       "localizations": {
         "de": {
@@ -18359,6 +18612,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "将 Finder 中的屏幕截图拖到画布上，或一次放置多个屏幕截图以填充该行。"
+          }
+        }
+      }
+    },
+    "Drag screenshots from Photos or Files onto a canvas, or drop several at once to fill the row.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ziehen Sie Screenshots aus Fotos oder Dateien auf eine Leinwand oder legen Sie mehrere gleichzeitig ab, um die Zeile zu füllen."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser des captures d'écran de Photos ou de Fichiers sur un canevas, ou déposez-en plusieurs à la fois pour remplir la ligne."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真またはファイルからスクリーンショットをキャンバスにドラッグするか、複数のスクリーンショットを一度にドロップして行を埋めます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사진 또는 파일의 스크린샷을 캔버스로 드래그하거나 한 번에 여러 개를 드롭하여 행을 채웁니다."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arraste capturas de tela de Fotos ou Arquivos para uma tela ou solte várias de uma vez para preencher a linha."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将照片或文件中的屏幕截图拖到画布上，或一次放置多个屏幕截图以填充该行。"
           }
         }
       }
@@ -20479,6 +20772,52 @@
         }
       }
     },
+    "Everything is unlocked. Enjoy unlimited projects, rows, and screenshots.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout est débloqué. Profitez d'un nombre illimité de projets, de lignes et de captures d'écran."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles ist freigeschaltet. Genießen Sie unbegrenzte Projekte, Zeilen und Screenshots."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてがロック解除されます。無制限のプロジェクト、行、スクリーンショットをお楽しみください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 것이 잠금 해제되었습니다. 프로젝트, 행, 스크린샷을 무제한으로 즐겨보세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tudo está desbloqueado. Desfrute de projetos, linhas e capturas de tela ilimitadas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一切都已解锁。享受无限的项目、行和屏幕截图。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todo está desbloqueado. Disfruta de proyectos, filas y capturas ilimitados."
+          }
+        }
+      }
+    },
     "Everything you can do without the mouse.": {
       "localizations": {
         "de": {
@@ -20773,6 +21112,98 @@
           "stringUnit": {
             "state": "translated",
             "value": "出口"
+          }
+        }
+      }
+    },
+    "Export %lld screenshots to…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld Screenshots exportieren nach…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar %lld capturas a…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter les captures d'écran de %1$lld vers…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld のスクリーンショットを次の場所にエクスポートします…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld 스크린샷을 다음으로 내보내기…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar capturas de tela %1$lld para…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将 %1$lld 屏幕截图导出到..."
+          }
+        }
+      }
+    },
+    "Export 1 screenshot to…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 Screenshot exportieren nach…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar 1 captura a…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter 1 capture d'écran vers…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 つのスクリーンショットをエクスポート…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "스크린샷 1개를 다음으로 내보내기…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporte 1 captura de tela para…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将 1 个屏幕截图导出到..."
           }
         }
       }
@@ -24042,6 +24473,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "转至 **App Store Connect ▸ 用户和访问 ▸ 集成 ▸ App Store Connect API**。"
+          }
+        }
+      }
+    },
+    "Go unlimited and create as many screenshots as your apps need.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allez-y en illimité et créez autant de captures d'écran que vos applications en ont besoin."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gehen Sie unbegrenzt vor und erstellen Sie so viele Screenshots, wie Ihre Apps benötigen."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無制限に、アプリに必要なだけスクリーンショットを作成できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "무제한으로 앱에 필요한 만큼 스크린샷을 생성하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vá ilimitado e crie quantas capturas de tela seus aplicativos precisarem."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不受限制，根据您的应用程序需要创建尽可能多的屏幕截图。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hazte ilimitado y crea todas las capturas que tus apps necesiten."
           }
         }
       }
@@ -30686,16 +31163,16 @@
     },
     "No Languages Added": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune langue ajoutée"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Keine Sprachen hinzugefügt"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune langue ajoutée"
           }
         },
         "ja": {
@@ -31134,16 +31611,16 @@
     },
     "No Text to Translate": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun texte à traduire"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Kein zu übersetzender Text"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun texte à traduire"
           }
         },
         "ja": {
@@ -40031,16 +40508,16 @@
     },
     "Same as base language": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Identique à la langue de base"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Identisch mit der Basissprache"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identique à la langue de base"
           }
         },
         "ja": {
@@ -40466,6 +40943,98 @@
           "stringUnit": {
             "state": "translated",
             "value": "将脚本保存在此文件夹中。 Screenshot Bro 将使用它向 iOS 模拟器询问屏幕截图。"
+          }
+        }
+      }
+    },
+    "Save to Files": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Dateien speichern"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar en Archivos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer dans des fichiers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルに保存"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파일에 저장"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvar em arquivos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存到文件"
+          }
+        }
+      }
+    },
+    "Save to Photos": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unter Fotos speichern"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar en Fotos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer dans Photos"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真に保存"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사진에 저장"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvar em fotos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存到照片"
           }
         }
       }
@@ -41871,6 +42440,46 @@
         }
       }
     },
+    "Send to back": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach hinten senden"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoyer à l'arrière"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "背面に送信"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "뒤로 보내기"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar para trás"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送到后面"
+          }
+        }
+      }
+    },
     "Send to Back": {
       "localizations": {
         "de": {
@@ -42548,6 +43157,52 @@
         }
       }
     },
+    "Share…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teilen…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compartir…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シェア…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "공유…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compartilhe…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享..."
+          }
+        }
+      }
+    },
     "Ship screenshots that convert": {
       "localizations": {
         "de": {
@@ -43067,6 +43722,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "尺寸"
+          }
+        }
+      }
+    },
+    "Skip": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauter"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Überspringen"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スキップ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "건너뛰기"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pular"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跳过"
           }
         }
       }
@@ -43806,17 +44501,18 @@
       }
     },
     "Start from a template, arrange screenshots and text, then export every required size from one project.": {
+      "extractionState": "stale",
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Commencez à partir d'un modèle, organisez les captures d'écran et le texte, puis exportez toutes les tailles requises à partir d'un projet."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Beginnen Sie mit einer Vorlage, ordnen Sie Screenshots und Text an und exportieren Sie dann jede erforderliche Größe aus einem Projekt."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commencez à partir d'un modèle, organisez les captures d'écran et le texte, puis exportez toutes les tailles requises à partir d'un projet."
           }
         },
         "ja": {
@@ -45437,16 +46133,16 @@
     },
     "Template": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modèle"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Vorlage"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle"
           }
         },
         "ja": {
@@ -46777,16 +47473,16 @@
     },
     "This project has no text shapes yet.": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce projet n'a pas encore de formes de texte."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Dieses Projekt hat noch keine Textformen."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce projet n'a pas encore de formes de texte."
           }
         },
         "ja": {
@@ -48229,16 +48925,16 @@
     },
     "Translate to %@": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Traduire en %1$@"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Übersetzen in %1$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduire en %1$@"
           }
         },
         "ja": {
@@ -48921,6 +49617,46 @@
         }
       }
     },
+    "Unlock Pro": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Débloquez Pro"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schalte Pro frei"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プロのロックを解除する"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "프로 잠금 해제"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desbloquear profissional"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解锁专业版"
+          }
+        }
+      }
+    },
     "Unlock Screenshot Bro Pro": {
       "localizations": {
         "de": {
@@ -49015,16 +49751,16 @@
     },
     "Untitled text": {
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Texte sans titre"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Text ohne Titel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texte sans titre"
           }
         },
         "ja": {
@@ -51400,17 +52136,18 @@
       }
     },
     "Workflow": {
+      "extractionState": "stale",
       "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flux de travail"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Arbeitsablauf"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flux de travail"
           }
         },
         "ja": {
@@ -51745,6 +52482,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "你是专业人士！"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Ya eres Pro!"
           }
         }
       }
@@ -52221,522 +52964,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "缩小"
-          }
-        }
-      }
-    },
-    "Double-tap to reset": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appuyez deux fois pour réinitialiser"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zum Zurücksetzen doppeltippen"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ダブルタップしてリセットします"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "재설정하려면 두 번 탭하세요."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toque duas vezes para redefinir"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "双击重置"
-          }
-        }
-      }
-    },
-    "Bring to front": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mettre au premier plan"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nach vorne bringen"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "手前に持ってくる"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "맨 앞으로 가져오기"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Traga para frente"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "带到前面"
-          }
-        }
-      }
-    },
-    "Drag screenshots from Photos or Files onto a canvas, or drop several at once to fill the row.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Faites glisser des captures d'écran de Photos ou de Fichiers sur un canevas, ou déposez-en plusieurs à la fois pour remplir la ligne."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ziehen Sie Screenshots aus Fotos oder Dateien auf eine Leinwand oder legen Sie mehrere gleichzeitig ab, um die Zeile zu füllen."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "写真またはファイルからスクリーンショットをキャンバスにドラッグするか、複数のスクリーンショットを一度にドロップして行を埋めます。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "사진 또는 파일의 스크린샷을 캔버스로 드래그하거나 한 번에 여러 개를 드롭하여 행을 채웁니다."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arraste capturas de tela de Fotos ou Arquivos para uma tela ou solte várias de uma vez para preencher a linha."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "将照片或文件中的屏幕截图拖到画布上，或一次放置多个屏幕截图以填充该行。"
-          }
-        }
-      }
-    },
-    "Send to back": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Envoyer à l'arrière"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nach hinten senden"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "背面に送信"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "뒤로 보내기"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enviar para trás"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "发送到后面"
-          }
-        }
-      }
-    },
-    "Add languages to translate every text layer at once.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajoutez des langues pour traduire chaque couche de texte en même temps."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fügen Sie Sprachen hinzu, um jede Textebene auf einmal zu übersetzen."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "言語を追加して、すべてのテキストレイヤーを一度に翻訳します。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "모든 텍스트 레이어를 한 번에 번역하려면 언어를 추가하세요."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adicione idiomas para traduzir todas as camadas de texto de uma só vez."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加语言以一次翻译每个文本层。"
-          }
-        }
-      }
-    },
-    "Deselect shape": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Désélectionner la forme"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Form abwählen"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "形状の選択を解除します"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "모양 선택 해제"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desmarcar forma"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消选择形状"
-          }
-        }
-      }
-    },
-    "Save to Photos": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrer dans Photos"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unter Fotos speichern"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "写真に保存"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "사진에 저장"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Salvar em fotos"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "保存到照片"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guardar en Fotos"
-          }
-        }
-      }
-    },
-    "Allow photo access in Settings to save to your gallery.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Autorisez l'accès aux photos dans Paramètres pour les enregistrer dans votre galerie."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erlauben Sie den Zugriff auf Fotos in den Einstellungen, um sie in Ihrer Galerie zu speichern."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "設定で写真へのアクセスを許可して、ギャラリーに保存します。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "갤러리에 저장하려면 설정에서 사진 액세스를 허용하세요."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permita o acesso às fotos em Configurações para salvá-las em sua galeria."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "允许在“设置”中访问照片以保存到您的图库。"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permite el acceso a Fotos en Ajustes para guardar en tu galería."
-          }
-        }
-      }
-    },
-    "Save to Files": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrer dans des fichiers"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In Dateien speichern"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ファイルに保存"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "파일에 저장"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Salvar em arquivos"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "保存到文件"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guardar en Archivos"
-          }
-        }
-      }
-    },
-    "Export %lld screenshots to…": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporter les captures d'écran de %1$lld vers…"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld Screenshots exportieren nach…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld のスクリーンショットを次の場所にエクスポートします…"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld 스크린샷을 다음으로 내보내기…"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportar capturas de tela %1$lld para…"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "将 %1$lld 屏幕截图导出到..."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportar %lld capturas a…"
-          }
-        }
-      }
-    },
-    "Share…": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Partager…"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Teilen…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "シェア…"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "공유…"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compartilhe…"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "分享..."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compartir…"
-          }
-        }
-      }
-    },
-    "Export 1 screenshot to…": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporter 1 capture d'écran vers…"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 Screenshot exportieren nach…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 つのスクリーンショットをエクスポート…"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "스크린샷 1개를 다음으로 내보내기…"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporte 1 captura de tela para…"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "将 1 个屏幕截图导出到..."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportar 1 captura a…"
           }
         }
       }

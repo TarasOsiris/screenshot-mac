@@ -7,6 +7,8 @@ struct OnboardingView: View {
     @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(StoreService.self) private var store
+    @State private var pageIndex = 0
     #endif
 
     var body: some View {
@@ -30,34 +32,253 @@ struct OnboardingView: View {
     #endif
 
     #if os(iOS)
-    private var iOSContent: some View {
-        NavigationStack {
-            List {
-                Section {
-                    iOSHeader
-                        .listRowInsets(.init(top: 22, leading: 24, bottom: 22, trailing: 24))
-                        .listRowBackground(Color.clear)
-                }
+    // Index of the trailing Pro/paywall page (after the workflow step pages).
+    private var proPageIndex: Int { Self.stepData.count }
 
-                Section("Workflow") {
+    private var iOSContent: some View {
+        ZStack {
+            Color.platformWindowBackground.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                TabView(selection: $pageIndex) {
                     ForEach(Array(Self.stepData.enumerated()), id: \.offset) { index, step in
-                        iOSStepRow(index: index, step: step)
+                        iOSWorkflowPage(index: index, step: step)
+                            .tag(index)
                     }
+
+                    iOSProPage
+                        .tag(proPageIndex)
                 }
-            }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
-            .background(Color.platformWindowBackground)
-            .navigationTitle("Welcome")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Get Started", action: complete)
-                        .keyboardShortcut(.defaultAction)
-                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .animation(.easeInOut, value: pageIndex)
+
+                iOSControlBar
             }
         }
-        .presentationSizing(.page)
+        .sheet(isPresented: Binding(
+            get: { store.showPaywall },
+            set: { if !$0 { store.dismissPaywall() } }
+        )) {
+            PaywallSheetContent(store: store)
+        }
+    }
+
+    // MARK: - iOS control bar
+
+    @ViewBuilder
+    private var iOSControlBar: some View {
+        VStack(spacing: 16) {
+            iOSPageDots
+
+            // The Pro page carries its own actions; workflow pages get Continue/Skip.
+            if pageIndex < proPageIndex {
+                VStack(spacing: 10) {
+                    Button {
+                        withAnimation { pageIndex += 1 }
+                    } label: {
+                        Text("Continue")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+
+                    Button {
+                        withAnimation { pageIndex = proPageIndex }
+                    } label: {
+                        Text("Skip")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .frame(maxWidth: 360)
+            }
+        }
+        .padding(.horizontal, 32)
+        .padding(.bottom, 24)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var iOSPageDots: some View {
+        HStack(spacing: 8) {
+            ForEach(0...proPageIndex, id: \.self) { i in
+                Circle()
+                    .fill(i == pageIndex ? Color.accentColor : Color.secondary.opacity(0.3))
+                    .frame(width: 7, height: 7)
+            }
+        }
+        .animation(.easeInOut, value: pageIndex)
+    }
+
+    // MARK: - iOS pages
+
+    @ViewBuilder
+    private func iOSWorkflowPage(index: Int, step: StepInfo) -> some View {
+        let compact = horizontalSizeClass == .compact
+        let iconSide: CGFloat = compact ? 88 : 112
+
+        VStack(spacing: compact ? 20 : 28) {
+            Spacer()
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(step.color.opacity(0.14))
+
+                Image(systemName: step.icon)
+                    .font(.system(size: compact ? 40 : 52, weight: .semibold))
+                    .foregroundStyle(step.color)
+            }
+            .frame(width: iconSide, height: iconSide)
+            .accessibilityHidden(true)
+
+            VStack(spacing: 12) {
+                Text("Step \(index + 1)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(step.color)
+                    .textCase(.uppercase)
+
+                Text(step.title)
+                    .font(.title.weight(.bold))
+                    .multilineTextAlignment(.center)
+
+                Text(step.description)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let hint = step.hint {
+                    iOSBadge { Text(hint) }.padding(.top, 4)
+                } else if let glyph = step.shortcutGlyph {
+                    iOSBadge { Text(verbatim: glyph) }.padding(.top, 4)
+                }
+            }
+
+            Spacer()
+            Spacer()
+        }
+        .padding(.horizontal, 40)
+        .frame(maxWidth: 600)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var iOSProPage: some View {
+        let compact = horizontalSizeClass == .compact
+
+        return VStack(spacing: compact ? 20 : 28) {
+            Spacer()
+
+            if store.isProUnlocked {
+                proSuccessContent
+            } else {
+                proPitchContent
+            }
+
+            Spacer()
+            Spacer()
+        }
+        .padding(.horizontal, 40)
+        .frame(maxWidth: 600)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private var proPitchContent: some View {
+        ZStack {
+            Circle().fill(Color.accentColor.opacity(0.14))
+
+            Image(systemName: "lock.open.fill")
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+        }
+        .frame(width: 100, height: 100)
+        .accessibilityHidden(true)
+
+        VStack(spacing: 12) {
+            Text("Unlock Screenshot Bro Pro")
+                .font(.title.weight(.bold))
+                .multilineTextAlignment(.center)
+
+            Text("Go unlimited and create as many screenshots as your apps need.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+
+        VStack(alignment: .leading, spacing: 12) {
+            proFeatureBullet("Unlimited projects")
+            proFeatureBullet("Unlimited rows per project")
+            proFeatureBullet("Unlimited screenshots per row")
+        }
+        .padding(.vertical, 4)
+
+        VStack(spacing: 10) {
+            Button {
+                store.presentPaywall(for: .general)
+            } label: {
+                Text("Unlock Pro")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 4)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+
+            Button("Continue with Free") { complete() }
+                .buttonStyle(.plain)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: 360)
+    }
+
+    @ViewBuilder
+    private var proSuccessContent: some View {
+        ZStack {
+            Circle().fill(Color.green.opacity(0.14))
+
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(.green)
+        }
+        .frame(width: 100, height: 100)
+        .accessibilityHidden(true)
+
+        VStack(spacing: 12) {
+            Text("You’re Pro!")
+                .font(.title.weight(.bold))
+
+            Text("Everything is unlocked. Enjoy unlimited projects, rows, and screenshots.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+
+        Button {
+            complete()
+        } label: {
+            Text("Start Creating")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .frame(maxWidth: 360)
+    }
+
+    private func proFeatureBullet(_ text: LocalizedStringKey) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+            Text(text)
+            Spacer(minLength: 0)
+        }
+        .font(.body)
     }
     #endif
 
@@ -141,29 +362,6 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity)
     }
 
-    #if os(iOS)
-    private var iOSHeader: some View {
-        VStack(spacing: 14) {
-            Image("Logo")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(height: 34)
-                .accessibilityLabel("Screenshot Bro")
-
-            Text("Create store screenshots on iPad")
-                .font(.title2.weight(.semibold))
-                .multilineTextAlignment(.center)
-
-            Text("Start from a template, arrange screenshots and text, then export every required size from one project.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-    }
-    #endif
-
     // MARK: - Steps
 
     private var stepColumns: [GridItem] {
@@ -208,6 +406,11 @@ struct OnboardingView: View {
         if persistCompletion {
             onboardingCompleted = true
         }
+        #if os(iOS)
+        // A purchase made inside onboarding already showed its own success state, so drop any
+        // celebration the store queued — otherwise it would surface on the next root paywall.
+        store.cancelPendingCelebration()
+        #endif
         onComplete?()
     }
 
@@ -243,46 +446,6 @@ struct OnboardingView: View {
     ]
 
     #if os(iOS)
-    @ViewBuilder
-    private func iOSStepRow(index: Int, step: StepInfo) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(step.color.opacity(0.14))
-
-                Image(systemName: step.icon)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(step.color)
-            }
-            .frame(width: 38, height: 38)
-            .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Step \(index + 1)")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(step.color)
-
-                Text(step.title)
-                    .font(.headline)
-
-                Text(step.description)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if let hint = step.hint {
-                    iOSBadge { Text(hint) }
-                        .padding(.top, 3)
-                } else if let glyph = step.shortcutGlyph {
-                    iOSBadge { Text(verbatim: glyph) }
-                        .padding(.top, 3)
-                }
-            }
-        }
-        .padding(.vertical, 7)
-        .accessibilityElement(children: .combine)
-    }
-
     @ViewBuilder
     private func iOSBadge<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
@@ -385,5 +548,11 @@ private struct StepCardView: View {
 }
 
 #Preview {
+    #if os(iOS)
+    // iOS body reads StoreService from the environment — inject one so the preview doesn't trap.
     OnboardingView()
+        .environment(StoreService())
+    #else
+    OnboardingView()
+    #endif
 }

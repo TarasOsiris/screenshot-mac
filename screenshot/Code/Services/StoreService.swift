@@ -142,6 +142,12 @@ final class StoreService {
         purchaseCelebrationContext = nil
     }
 
+    /// Drop a queued celebration without showing it — used when a flow (e.g. onboarding) has
+    /// already acknowledged the purchase itself, so the root celebration sheet must not fire later.
+    func cancelPendingCelebration() {
+        pendingCelebrationContext = nil
+    }
+
     // MARK: - Lifecycle
 
     func start() {

@@ -384,16 +384,18 @@ struct ScreenshotBroApp: App {
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
                 .task { storeService.start() }
-                .sheet(isPresented: Binding(
+                .fullScreenCover(isPresented: Binding(
                     get: { !onboardingCompleted && !welcomeDismissed },
                     set: { _ in }
                 )) {
-                    // iPad has no editor coach tour yet (its popovers anchor to the editor
-                    // toolbar, not the Projects home), so just persist completion and dismiss.
+                    // Full-screen multi-step welcome ending in a Pro/paywall step; persists
+                    // completion on finish. (No editor coach tour on iPad — its popovers
+                    // anchor to the editor toolbar, not the Projects home.)
                     OnboardingView(
                         persistCompletion: true,
                         onComplete: { welcomeDismissed = true }
                     )
+                    .environment(storeService)
                     .interactiveDismissDisabled()
                 }
         }

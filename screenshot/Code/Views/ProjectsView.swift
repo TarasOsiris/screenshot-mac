@@ -10,6 +10,7 @@ import SwiftUI
 struct iPadRootView: View {
     @Environment(AppState.self) private var state
     @Environment(StoreService.self) private var store
+    @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
     @State private var openedProjectId: UUID?
 
     var body: some View {
@@ -24,11 +25,14 @@ struct iPadRootView: View {
         }
         // Paywall/celebration are presented from the root so they work on the Projects home
         // screen (e.g. tapping New Project at the free-tier limit) as well as the editor.
-        .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() }),
+        // Suppressed while the onboarding cover is up (onboardingCompleted == false): onboarding
+        // presents its own paywall on the same store state, and two sheets bound to one boolean
+        // would conflict / leak a stray celebration once the cover dismisses.
+        .sheet(isPresented: Binding(get: { store.showPaywall && onboardingCompleted }, set: { _ in store.dismissPaywall() }),
                onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
             PaywallSheetContent(store: store)
         }
-        .sheet(isPresented: Binding(get: { store.purchaseCelebrationContext != nil }, set: { if !$0 { store.dismissPurchaseCelebration() } })) {
+        .sheet(isPresented: Binding(get: { store.purchaseCelebrationContext != nil && onboardingCompleted }, set: { if !$0 { store.dismissPurchaseCelebration() } })) {
             PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
                 store.dismissPurchaseCelebration()
             }
