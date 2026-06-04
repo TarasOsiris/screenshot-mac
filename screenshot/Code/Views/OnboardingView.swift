@@ -143,17 +143,11 @@ struct OnboardingView: View {
                     .font(.title.weight(.bold))
                     .multilineTextAlignment(.center)
 
-                Text(step.description)
+                Text(step.iosDescription ?? step.description)
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-
-                if let hint = step.hint {
-                    iOSBadge { Text(hint) }.padding(.top, 4)
-                } else if let glyph = step.shortcutGlyph {
-                    iOSBadge { Text(verbatim: glyph) }.padding(.top, 4)
-                }
             }
 
             Spacer()
@@ -428,12 +422,14 @@ struct OnboardingView: View {
             description: "Drop in screenshots, add text and shapes, pick a device frame. Drag to arrange.",
             icon: "plus.rectangle.on.rectangle",
             hint: "Drop images onto canvas",
+            iosDescription: "Add screenshots from Photos or Files, then drop in text, shapes, and a device frame.",
             color: .purple
         ),
         StepInfo(
             title: "Style it",
             description: "Set backgrounds, colors, and gradients. Use the inspector on the right and properties bar at the bottom.",
             icon: "paintbrush",
+            iosDescription: "Set backgrounds, colors, and gradients, and fine-tune every element to match your brand.",
             color: .orange
         ),
         StepInfo(
@@ -444,18 +440,6 @@ struct OnboardingView: View {
             color: .green
         ),
     ]
-
-    #if os(iOS)
-    @ViewBuilder
-    private func iOSBadge<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.secondary.opacity(0.12), in: Capsule())
-    }
-    #endif
 }
 
 private struct StepInfo {
@@ -464,6 +448,9 @@ private struct StepInfo {
     let icon: String
     var hint: LocalizedStringKey? = nil
     var shortcutGlyph: String? = nil
+    // Used by the iPad/iOS flow when the desktop copy references mouse/keyboard or chrome
+    // (drag-drop, the right inspector, ⌘E) that doesn't exist there.
+    var iosDescription: LocalizedStringKey? = nil
     let color: Color
 }
 

@@ -52967,6 +52967,98 @@
           }
         }
       }
+    },
+    "Set backgrounds, colors, and gradients, and fine-tune every element to match your brand.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajusta fondos, colores y degradados, y perfecciona cada elemento para reflejar tu marca."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définissez les arrière-plans, les couleurs et les dégradés, et affinez chaque élément en fonction de votre marque."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legen Sie Hintergründe, Farben und Farbverläufe fest und passen Sie jedes Element an Ihre Marke an."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "背景、色、グラデーションを設定し、ブランドに合わせてすべての要素を微調整します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "배경, 색상, 그라데이션을 설정하고 브랜드에 맞게 모든 요소를 ​​세밀하게 조정하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defina planos de fundo, cores e gradientes e ajuste cada elemento para combinar com sua marca."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置背景、颜色和渐变，并微调每个元素以匹配您的品牌。"
+          }
+        }
+      }
+    },
+    "Add screenshots from Photos or Files, then drop in text, shapes, and a device frame.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade capturas desde Fotos o Archivos y luego inserta texto, formas y un marco de dispositivo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez des captures d'écran à partir de photos ou de fichiers, puis déposez du texte, des formes et un cadre d'appareil."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fügen Sie Screenshots aus Fotos oder Dateien hinzu und fügen Sie dann Text, Formen und einen Geräterahmen ein."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真またはファイルからスクリーンショットを追加し、テキスト、図形、デバイス フレームをドロップします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사진 또는 파일에서 스크린샷을 추가한 다음 텍스트, 모양 및 장치 프레임을 추가하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicione capturas de tela de Fotos ou Arquivos e insira texto, formas e uma moldura do dispositivo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加照片或文件中的屏幕截图，然后放入文本、形状和设备框架。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

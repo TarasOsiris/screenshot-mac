@@ -133,6 +133,8 @@ ES = {
     "Connection": "Conexión",
     "Continue": "Continuar",
     "Continue with Free": "Continuar con la versión gratuita",
+    "Add screenshots from Photos or Files, then drop in text, shapes, and a device frame.": "Añade capturas desde Fotos o Archivos y luego inserta texto, formas y un marco de dispositivo.",
+    "Set backgrounds, colors, and gradients, and fine-tune every element to match your brand.": "Ajusta fondos, colores y degradados, y perfecciona cada elemento para reflejar tu marca.",
     "Go unlimited and create as many screenshots as your apps need.": "Hazte ilimitado y crea todas las capturas que tus apps necesiten.",
     "Everything is unlocked. Enjoy unlimited projects, rows, and screenshots.": "Todo está desbloqueado. Disfruta de proyectos, filas y capturas ilimitados.",
     "You’re Pro!": "¡Ya eres Pro!",
