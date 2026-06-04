@@ -30,6 +30,15 @@ killall screenshot 2>/dev/null; xcodebuild -scheme screenshot -destination 'plat
 
 Tests in `screenshotTests/` cover `AppState` (operations, locale, deletion), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, `ProjectMerge` (iCloud merge), `DeviceFrameCatalog`, `TemplateService`, `SvgHelper`, `RichTextUtils`, and the App Store Connect auth/display-type/upload-validator services. No linter configured.
 
+Because the code is multiplatform, also compile the iOS branches after touching anything platform-conditional (`#if os` / `Platform/` shims) — a clean macOS build does not prove the iOS branch builds:
+```
+xcodebuild -scheme screenshot -destination 'generic/platform=iOS Simulator' build
+```
+
+**SourceKit per-file diagnostics are unreliable here** — it routinely reports phantom `Cannot find type … in scope` / `Cannot find 'UIMetrics' in scope` for symbols defined in sibling files. Trust the result of `xcodebuild`, not the editor diagnostics; only act on errors a full build actually reports.
+
+Shipping (via the `ship` skill) targets both platforms from the one `ExportOptions.plist` (`method: app-store-connect`): archive macOS with `-destination 'platform=macOS,arch=arm64'` and iOS with `-destination 'generic/platform=iOS'`, then `-exportArchive` with the plist's `destination` flipped from `export` to `upload` and reverted after. `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` appear 4× each in `project.pbxproj` (Debug/Release × app/tests) — bump all with `replace_all`.
+
 ## Skills, Agents & Harness
 
 Custom Claude Code skills live in `.claude/skills/`:
@@ -37,7 +46,7 @@ Custom Claude Code skills live in `.claude/skills/`:
 - `regression-checklist` — structured pre-commit walk of the Regression Prevention section below.
 - `ship` — bump build/marketing version, build, and upload to App Store Connect.
 - `import-svg-template` / `project-to-template` — create bundled templates from SVGs or existing projects.
-- `add-localized-string` — add user-facing strings and propagate translations via the Python scripts (see below). **Never hand-edit `Localizable.xcstrings`** — a PreToolUse hook blocks it; it is generated.
+- `add-localized-string` — add user-facing strings and propagate translations via the Python scripts (see below). **Never hand-edit `Localizable.xcstrings`** — a PreToolUse hook blocks it; it is generated. Gotcha: the catalog is committed in Xcode's serialization (`"k" : "v"`, space before the colon) but `translate_catalog.py` / `translate_popular_languages.py` rewrite the entire file in `json.dumps` style (`"k": "v"`), and `xcodebuild` does **not** renormalize it — so running the scripts wholesale yields a ~35k-line cosmetic diff (and opportunistically fills unrelated missing translations). To add one string's translations cleanly, generate them with the scripts, then inject just that key into the catalog in the existing Xcode format instead of committing the reflowed file.
 - `swiftui-patterns` / `swiftui-pro` — macOS SwiftUI reference + review.
 
 Reviewer/build agents in `.claude/agents/`: `export-parity-reviewer` (visual/export parity, coordinate space, Codable persistence, enum switch coverage), `xcode-build-validator` (runs xcodebuild, reports result). `/gwip` (stage+commit WIP+push) is a global command.
@@ -176,6 +185,7 @@ Bundled resources in `screenshot/`: `Templates.bundle` (35+ starter themes), `Sv
 - macOS-first code uses `NSImage`/`NSColor`/`NSFont` aliased to UIKit types on iOS via `Platform/PlatformAliases.swift`. AppKit-only drawing/window/event APIs (NSEvent, NSSavePanel, NSPasteboard, NSUserUnixTask, etc.) must be guarded with `#if os(macOS)` and given an iOS branch or no-op.
 - Route modifier-key reads through `PlatformModifiers` (off on iPad) rather than touching `NSEvent` directly.
 - Image encoding/decoding goes through the `Platform/` shims and `ExportImageEncoder` so both platforms produce identical PNG/JPEG output.
+- Image sourcing differs by platform: macOS uses drag-drop + `NSOpenPanel`; iOS routes through `ImageSourceMenu` (inline menu) or the `.imageSourcePicker(isPresented:onImage:)` modifier (confirmation dialog), both offering Photo Library / Camera / Files and normalizing EXIF orientation via `uprightNormalized()`. Prefer canonical iOS controls (`.borderedProminent` buttons, SF Symbols) over desktop drop-zone affordances on iPad.
 
 **UI consistency (`UIMetrics`):**
 - All view-layer constants — font sizes, slider widths, swatch sizes, corner radii, border widths, overlay opacities — live in `Code/Views/UIMetrics.swift`. Reach for those before hardcoding values, and add new entries there when you need a new shared constant.
