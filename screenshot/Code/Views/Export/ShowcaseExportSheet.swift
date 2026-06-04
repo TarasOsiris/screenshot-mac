@@ -168,7 +168,7 @@ struct ShowcaseExportSheet: View {
     private var sizeSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                sectionTitle("Output Size", systemImage: "ruler")
+                ShowcaseSectionTitle(text: "Output Size", systemImage: "ruler")
                 Spacer()
                 Text(predictedOutputDimensionsText)
                     .font(.system(size: 10))
@@ -242,10 +242,6 @@ struct ShowcaseExportSheet: View {
         )
     }
 
-    private var allSelected: Bool {
-        selectedRowIds.count == candidateRows.count
-    }
-
     private var exportCountText: LocalizedStringKey {
         let count = selectedRowIds.count
         if count == 0 { return "No rows selected" }
@@ -275,7 +271,7 @@ struct ShowcaseExportSheet: View {
     @ViewBuilder
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("Format", systemImage: "aspectratio")
+            ShowcaseSectionTitle(text: "Format", systemImage: "aspectratio")
 
             let selectedPreset = ShowcaseAspectPreset.matching(ratio: config.aspectRatio)
             LazyVGrid(
@@ -337,7 +333,7 @@ struct ShowcaseExportSheet: View {
     private var backgroundSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                sectionTitle("Background", systemImage: "paintpalette")
+                ShowcaseSectionTitle(text: "Background", systemImage: "paintpalette")
                 Spacer()
                 BackgroundSummarySwatch(
                     config: config,
@@ -386,7 +382,7 @@ struct ShowcaseExportSheet: View {
     @ViewBuilder
     private var layoutSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Layout", systemImage: "rectangle.3.group")
+            ShowcaseSectionTitle(text: "Layout", systemImage: "rectangle.3.group")
 
             sliderRow("Corner Radius", value: $config.cornerRadiusPercent, range: 0...10)
             sliderRow("Gap", value: $config.spacingPercent, range: 0...12)
@@ -395,18 +391,6 @@ struct ShowcaseExportSheet: View {
     }
 
     // MARK: - Shared pieces
-
-    @ViewBuilder
-    private func sectionTitle(_ text: String, systemImage: String) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: systemImage)
-                .font(.system(size: 10, weight: .semibold))
-            Text(text.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(0.6)
-        }
-        .foregroundStyle(.secondary)
-    }
 
     @ViewBuilder
     private func sliderRow(_ label: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
