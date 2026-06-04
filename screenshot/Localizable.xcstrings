@@ -3721,6 +3721,16 @@
         }
       }
     },
+    "%@×%@ · %lld screenshot%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@×%2$@ · %3$lld screenshot%4$@"
+          }
+        }
+      }
+    },
     "%lld" : {
       "localizations" : {
         "de" : {
@@ -39685,6 +39695,9 @@
           }
         }
       }
+    },
+    "RevenueCat is configured with a Test Store API key. Replace it with your Apple public SDK key before shipping." : {
+
     },
     "RevenueCat is not configured." : {
       "localizations" : {
