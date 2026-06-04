@@ -6,6 +6,7 @@ import SwiftUI
 /// export-folder bookmark, App Store Connect upload) are omitted.
 struct IPadSettingsView: View {
     @Environment(StoreService.self) private var store
+    @Environment(AppState.self) private var state
     @AppStorage("appearance") private var appearance = "auto"
     @AppStorage("appLanguageOverride") private var languageOverride = ""
     @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
@@ -29,6 +30,9 @@ struct IPadSettingsView: View {
 
     var body: some View {
         Form {
+            if !store.isProUnlocked {
+                proUpsellSection
+            }
             appearanceSection
             defaultsSection
             editingSection
@@ -46,11 +50,54 @@ struct IPadSettingsView: View {
         .onAppear(perform: refreshICloudState)
         .onReceive(NotificationCenter.default.publisher(for: .iCloudSyncDidEnable)) { _ in refreshICloudState() }
         .onReceive(NotificationCenter.default.publisher(for: .iCloudSyncDidDisable)) { _ in refreshICloudState() }
+        // Attached to the Form (not the iCloud Section): presentation modifiers on a Section
+        // inside a Form render a phantom full-height empty block.
+        .alert("Enable iCloud Sync", isPresented: $showEnableConfirmation) {
+            Button("Enable iCloud Sync") { toggleICloud(enable: true) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("All projects will be copied to iCloud. Initial sync may take time for large projects.")
+        }
+        .confirmationDialog("Disable iCloud Sync", isPresented: $showDisableConfirmation, titleVisibility: .visible) {
+            Button("Disable iCloud Sync", role: .destructive) { toggleICloud(enable: false) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Projects will be kept locally. Other devices will no longer see updates.")
+        }
     }
 
     private func refreshICloudState() {
         iCloudAvailable = ICloudSyncService.shared.isAvailable
         iCloudEnabled = ICloudSyncService.shared.isEnabled
+    }
+
+    // MARK: - Pro upsell
+
+    /// Large, prominent unlock-Pro call to action at the very top of Settings (free tier only).
+    private var proUpsellSection: some View {
+        Section {
+            Button {
+                store.presentPaywall(for: .general)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "crown.fill")
+                        .font(.title2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Unlock Screenshot Bro Pro")
+                            .font(.headline)
+                        Text("Unlimited projects, rows, and screenshots")
+                            .font(.subheadline)
+                            .opacity(0.85)
+                    }
+                    Spacer(minLength: 8)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+        }
     }
 
     // MARK: - Appearance
@@ -160,7 +207,14 @@ struct IPadSettingsView: View {
                 }
 
                 if iCloudEnabled {
-                    LabeledContent("Status") { iCloudStatusLabel }
+                    // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
+                    // content a flexible frame, which made this (conditional Label) row balloon
+                    // to a huge height.
+                    HStack {
+                        Text("Status")
+                        Spacer()
+                        iCloudStatusLabel
+                    }
                 }
 
                 if let error = iCloudError {
@@ -168,28 +222,25 @@ struct IPadSettingsView: View {
                 }
             }
         }
-        .confirmationDialog("Enable iCloud Sync", isPresented: $showEnableConfirmation, titleVisibility: .visible) {
-            Button("Enable iCloud Sync") { toggleICloud(enable: true) }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("All projects will be copied to iCloud. Initial sync may take time for large projects.")
-        }
-        .confirmationDialog("Disable iCloud Sync", isPresented: $showDisableConfirmation, titleVisibility: .visible) {
-            Button("Disable iCloud Sync", role: .destructive) { toggleICloud(enable: false) }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Projects will be kept locally. Other devices will no longer see updates.")
-        }
     }
 
     @ViewBuilder
     private var iCloudStatusLabel: some View {
-        if ICloudSyncService.shared.isUsingICloud {
-            Label("Syncing via iCloud", systemImage: "checkmark.icloud")
-                .foregroundStyle(.green)
-        } else {
+        if !ICloudSyncService.shared.isUsingICloud {
             Label("Connecting...", systemImage: "arrow.triangle.2.circlepath")
                 .foregroundStyle(.secondary)
+        } else {
+            switch state.iCloudSyncStatus {
+            case .downloading(let p):
+                Label("Downloading \(Int(p * 100))%", systemImage: "arrow.down.circle")
+                    .foregroundStyle(.secondary)
+            case .uploading(let p):
+                Label("Uploading \(Int(p * 100))%", systemImage: "arrow.up.circle")
+                    .foregroundStyle(.secondary)
+            case .idle:
+                Label("Syncing via iCloud", systemImage: "checkmark.icloud")
+                    .foregroundStyle(.green)
+            }
         }
     }
 

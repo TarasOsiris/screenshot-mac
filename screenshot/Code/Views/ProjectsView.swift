@@ -151,8 +151,13 @@ struct ProjectsView: View {
     var body: some View {
         Group {
             if state.visibleProjects.isEmpty {
-                // Not wrapped in a ScrollView: NoProjectView fills the viewport and centers.
-                emptyState
+                // Not wrapped in a ScrollView: NoProjectView (or the loading state) fills and centers.
+                if !state.hasCompletedInitialLoad {
+                    ProjectLoadingOverlay(message: "Loading from iCloud…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    emptyState
+                }
             } else {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 24) {
@@ -191,6 +196,16 @@ struct ProjectsView: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+                }
+            }
+            // A spinner whenever iCloud sync is in progress (upload or download), so the
+            // Projects screen always signals ongoing sync without a modal/blocking banner.
+            // Kept on the trailing side so it isn't glued to the leading "Upgrade to Pro" button.
+            if state.iCloudSyncStatus.isActive {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ProgressView()
+                        .controlSize(.small)
+                        .accessibilityLabel("Syncing with iCloud")
                 }
             }
             ToolbarItem(placement: .primaryAction) {
@@ -316,7 +331,7 @@ private struct ProjectCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .task(id: project.modifiedAt) {
-            snapshot = ProjectThumbnailService.thumbnail(for: project)
+            snapshot = await ProjectThumbnailService.thumbnail(for: project)
         }
     }
 

@@ -287,7 +287,8 @@ struct ExportService {
         screenshotImages: [String: NSImage] = [:],
         localeCode: String? = nil,
         localeState: LocaleState = .default,
-        availableFontFamilies: Set<String>? = nil
+        availableFontFamilies: Set<String>? = nil,
+        displayScale: CGFloat = 1.0
     ) -> NSImage {
         let count = row.templates.count
         guard count > 0 else {
@@ -295,23 +296,25 @@ struct ExportService {
         }
 
         let totalWidth = row.templateWidth * CGFloat(count)
+        let renderWidth = totalWidth * displayScale
+        let renderHeight = row.templateHeight * displayScale
         let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
         let fontFamilies = availableFontFamilies ?? Set(PlatformFonts.systemFamilyNames)
         let composedBackground = renderComposedBackgroundImage(
             row: row,
             screenshotImages: screenshotImages,
-            displayScale: 1.0,
+            displayScale: displayScale,
             labelPrefix: "row"
         )
 
         let shapesView = RowCanvasShapeLayerView(
             row: row,
             shapes: resolvedShapes,
-            displayScale: 1.0,
+            displayScale: displayScale,
             shapeContent: { shape, clipRect in
                 CanvasShapeView(
                     shape: shape,
-                    displayScale: 1.0,
+                    displayScale: displayScale,
                     isSelected: false,
                     screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
                     fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
@@ -327,15 +330,15 @@ struct ExportService {
         )
         let shapesImage = renderViewToImage(
             shapesView,
-            width: totalWidth,
-            height: row.templateHeight,
+            width: renderWidth,
+            height: renderHeight,
             label: "row shapes '\(row.label)'"
         )
         return flattenImage(
             shapesImage,
             over: composedBackground,
-            width: totalWidth,
-            height: row.templateHeight
+            width: renderWidth,
+            height: renderHeight
         )
     }
 

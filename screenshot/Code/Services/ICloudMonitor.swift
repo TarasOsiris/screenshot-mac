@@ -4,6 +4,12 @@ enum SyncStatus: Equatable {
     case idle
     case uploading(Double)
     case downloading(Double)
+
+    /// True while iCloud is uploading or downloading (i.e. sync is in progress).
+    var isActive: Bool {
+        if case .idle = self { return false }
+        return true
+    }
 }
 
 final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
@@ -12,6 +18,8 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
     let presentedItemOperationQueue = OperationQueue()
 
     var onRemoteChange: (() -> Void)?
+    /// Invoked on the main thread whenever upload/download progress changes.
+    var onSyncStatusChange: ((SyncStatus) -> Void)?
     private(set) var syncStatus: SyncStatus = .idle
 
     private var recentWriteURLs: Set<URL> = []
@@ -183,7 +191,9 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
         }
 
         DispatchQueue.main.async { [weak self] in
-            self?.syncStatus = newStatus
+            guard let self else { return }
+            self.syncStatus = newStatus
+            self.onSyncStatusChange?(newStatus)
         }
     }
 

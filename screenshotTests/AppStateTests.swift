@@ -954,10 +954,12 @@ struct AppStateTests {
         #expect(FileManager.default.fileExists(atPath: importedURL.path))
 
         state.saveAll()
+        state.unregisterCustomFonts()
+        #expect(state.customFonts.isEmpty)
+        state.loadCustomFonts()
 
-        let reopened = AppState()
         #expect(FileManager.default.fileExists(atPath: importedURL.path))
-        #expect(reopened.customFonts.keys.contains(sourceFontURL.lastPathComponent))
+        #expect(state.customFonts.keys.contains(sourceFontURL.lastPathComponent))
     }
 
     // MARK: - Nudge

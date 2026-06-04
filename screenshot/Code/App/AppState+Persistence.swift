@@ -6,7 +6,6 @@ extension AppState {
 
     func load() {
         reloadFromDisk()
-        hasCompletedInitialLoad = true
     }
 
     // MARK: - iCloud
@@ -66,6 +65,9 @@ extension AppState {
             self.flushPendingSaveTask()
             self.reloadFromDisk()
         }
+        monitor.onSyncStatusChange = { [weak self] status in
+            self?.iCloudSyncStatus = status
+        }
         monitor.startMonitoring(url: url)
         iCloudMonitor = monitor
     }
@@ -73,26 +75,64 @@ extension AppState {
     func stopICloudMonitoring() {
         iCloudMonitor?.stopMonitoring()
         iCloudMonitor = nil
+        iCloudSyncStatus = .idle
     }
 
     func reloadFromDisk() {
-        // Resolve conflicts on iCloud files before reading
-        if PersistenceService.isUsingICloud {
-            ICloudSyncService.shared.resolveConflicts(at: PersistenceService.indexURL)
-            // Resolve conflicts on all known projects, not just the active one,
-            // so switching projects later doesn't hit stale conflicts.
-            for project in projects {
-                ICloudSyncService.shared.resolveConflicts(at: PersistenceService.projectDataURL(project.id))
-            }
+        // The local path reads with plain `Data(contentsOf:)` — fast, no file coordination —
+        // so it stays synchronous. The iCloud path can block on undownloaded files and runs
+        // off-main to avoid freezing the UI (the freeze when enabling sync with many projects).
+        guard PersistenceService.isUsingICloud else {
+            reloadLocalFromDisk()
+            return
         }
+        reloadTask?.cancel()
+        reloadTask = Task { @MainActor [weak self] in
+            await self?.reloadICloudFromDisk()
+        }
+    }
 
+    private func reloadLocalFromDisk() {
         if let index = PersistenceService.loadIndex() {
-            if PersistenceService.isUsingICloud && !projects.isEmpty {
+            projects = index.projects.purgingOldTombstones()
+            selectActiveProjectAfterReload(preferred: index.activeProjectId)
+        }
+        if let activeId = activeProjectId {
+            loadCustomFonts()
+            loadRowsForProject(activeId)
+            loadScreenshotImages()
+        }
+        hasCompletedInitialLoad = true
+    }
+
+    /// iCloud reload: the blocking coordinated reads (index + active project) run off the main
+    /// thread; the in-memory merge and `@Observable` mutations are applied back on the main
+    /// actor. `reloadTask` serializes overlapping remote changes so the own-write bookkeeping
+    /// (`recordOwnWrite`/`saveIndex`/`snapshotAfterWrite`) never races.
+    @MainActor
+    private func reloadICloudFromDisk() async {
+        let indexURL = PersistenceService.indexURL
+        let projectURLs = projects.map { PersistenceService.projectDataURL($0.id) }
+
+        let index = await Task.detached(priority: .userInitiated) { () -> ProjectIndex? in
+            let sync = ICloudSyncService.shared
+            sync.resolveConflicts(at: indexURL)
+            // Resolve conflicts on all known projects, not just the active one, so switching
+            // projects later doesn't hit stale conflicts.
+            for url in projectURLs { sync.resolveConflicts(at: url) }
+            return PersistenceService.loadIndex()
+        }.value
+
+        if Task.isCancelled { return }
+
+        if let index {
+            if !projects.isEmpty {
                 // Tombstone-aware merge: union by UUID with LWW + resurrection semantics.
                 let mergedRaw = projects.merged(with: index.projects)
                 let changed = mergedRaw != projects
                 projects = mergedRaw.purgingOldTombstones()
-                // Persist merge result so tombstones propagate back
+                // Persist merge result so tombstones propagate back. Keep recordOwnWrite →
+                // saveIndex → snapshotAfterWrite together (no await between them).
                 if changed {
                     iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL])
                     saveIndex()
@@ -101,31 +141,41 @@ extension AppState {
             } else {
                 projects = index.projects.purgingOldTombstones()
             }
-            let visible = visibleProjects
-            if activeProjectId == nil || !visible.contains(where: { $0.id == activeProjectId }) {
-                if let preferredId = index.activeProjectId,
-                   visible.contains(where: { $0.id == preferredId }) {
-                    activeProjectId = preferredId
-                } else {
-                    activeProjectId = visible.first?.id
-                }
-            }
+            selectActiveProjectAfterReload(preferred: index.activeProjectId)
         }
 
-        if let activeId = activeProjectId {
-            if PersistenceService.isUsingICloud, let localModified = activeProjectDataModifiedAt {
-                // Only reload if the on-disk version is newer than our in-memory version
-                if let diskData = PersistenceService.loadProject(activeId),
-                   diskData.modifiedAt > localModified {
-                    loadCustomFonts()
-                    applyProjectData(diskData, for: activeId)
-                    loadScreenshotImages()
-                }
-            } else {
+        // Set once the index has been processed — independent of the (longer, more cancellable)
+        // active-project read below — so an overlapping reload can't strand the loading spinner.
+        hasCompletedInitialLoad = true
+
+        guard let activeId = activeProjectId else { return }
+
+        let diskData = await Task.detached(priority: .userInitiated) {
+            PersistenceService.loadProject(activeId)
+        }.value
+        if Task.isCancelled { return }
+
+        if let localModified = activeProjectDataModifiedAt {
+            // Only reload if the on-disk version is newer than our in-memory version.
+            if let diskData, diskData.modifiedAt > localModified {
                 loadCustomFonts()
-                loadRowsForProject(activeId)
+                applyProjectData(diskData, for: activeId)
                 loadScreenshotImages()
             }
+        } else {
+            loadCustomFonts()
+            loadRowsForProject(activeId, preloaded: diskData)
+            loadScreenshotImages()
+        }
+    }
+
+    private func selectActiveProjectAfterReload(preferred: UUID?) {
+        let visible = visibleProjects
+        guard activeProjectId == nil || !visible.contains(where: { $0.id == activeProjectId }) else { return }
+        if let preferred, visible.contains(where: { $0.id == preferred }) {
+            activeProjectId = preferred
+        } else {
+            activeProjectId = visible.first?.id
         }
     }
 

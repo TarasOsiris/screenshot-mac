@@ -106,12 +106,18 @@ final class AppState {
     @ObservationIgnored var saveTask: DispatchWorkItem?
     @ObservationIgnored var imageLoadTask: Task<Void, Never>?
     @ObservationIgnored var projectOpenTask: Task<Void, Never>?
+    /// Serializes off-main iCloud reloads so overlapping remote changes don't race on the
+    /// tombstone merge / own-write bookkeeping.
+    @ObservationIgnored var reloadTask: Task<Void, Never>?
     var isLoadingImages = false
     var isOpeningProject = false
     var isFanOutTranslating = false
     /// False until the first `load()` completes. Lets the UI show a loading state instead of
     /// the empty "no projects" screen while an iCloud-deferred load is still pending.
     var hasCompletedInitialLoad = false
+    /// Mirror of the iCloud monitor's upload/download progress, bridged here because
+    /// `ICloudMonitor` isn't `@Observable`. Drives the "Downloading from iCloud…" UI.
+    var iCloudSyncStatus: SyncStatus = .idle
 
     // Debounce state for undo grouping
     @ObservationIgnored var translationUndoTask: DispatchWorkItem?

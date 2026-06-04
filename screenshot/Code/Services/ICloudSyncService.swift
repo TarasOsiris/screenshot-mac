@@ -104,6 +104,11 @@ final class ICloudSyncService: @unchecked Sendable {
 
     /// Read data using NSFileCoordinator.
     func coordinatedRead(from url: URL) -> Data? {
+        // Kick a download for not-yet-materialized ubiquitous files so the coordinated read
+        // below resolves instead of stalling indefinitely. Idempotent; harmless if already
+        // local. Callers run this off the main thread, so blocking until bytes arrive is fine.
+        try? FileManager.default.startDownloadingUbiquitousItem(at: url)
+
         var coordinatedData: Data?
         var coordinatorError: NSError?
         let coordinator = NSFileCoordinator()

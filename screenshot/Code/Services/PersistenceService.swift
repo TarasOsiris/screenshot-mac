@@ -44,6 +44,18 @@ struct PersistenceService {
         return ICloudSyncService.shared.activeRootURL
     }
 
+    /// Like `rootURL`, but always local — never the iCloud container. For derived data
+    /// (e.g. thumbnails) that must not sync. Honors the test data-dir overrides.
+    static var localBaseURL: URL {
+        if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
+            return URL(fileURLWithPath: override, isDirectory: true)
+        }
+        if isUsingTemporaryRootDirectory {
+            return temporaryRootURL
+        }
+        return localRootURL
+    }
+
     private static var isUsingTemporaryRootDirectory: Bool {
         guard let value = ProcessInfo.processInfo.environment[useTemporaryRootDirectoryKey] else {
             return false
@@ -78,6 +90,25 @@ struct PersistenceService {
         projectDir(id).appendingPathComponent("resources", isDirectory: true)
     }
 
+    /// Rendered project-card thumbnails. Always local (never the iCloud root) — derived data
+    /// that must not sync or be file-coordinated. Keyed per project; freshness is decided by
+    /// comparing the PNG's file mod-date against the project's `modifiedAt`.
+    static var thumbnailsDir: URL {
+        thumbnailsDir(at: localBaseURL)
+    }
+
+    static func thumbnailsDir(at baseURL: URL) -> URL {
+        baseURL.appendingPathComponent("thumbnails", isDirectory: true)
+    }
+
+    static func thumbnailURL(_ id: UUID) -> URL {
+        thumbnailURL(id, at: localBaseURL)
+    }
+
+    static func thumbnailURL(_ id: UUID, at baseURL: URL) -> URL {
+        thumbnailsDir(at: baseURL).appendingPathComponent("\(id.uuidString).png")
+    }
+
     // MARK: - Setup
 
     static func ensureDirectories() {
@@ -95,14 +126,17 @@ struct PersistenceService {
     // MARK: - Generic load/save
 
     static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {
-        let data: Data?
-        if isUsingICloud {
-            data = ICloudSyncService.shared.coordinatedRead(from: url)
-        } else {
-            data = try? Data(contentsOf: url)
-        }
+        let data = readData(from: url)
         guard let data else { return nil }
         return try? decoder.decode(type, from: data)
+    }
+
+    static func readData(from url: URL) -> Data? {
+        if isUsingICloud {
+            ICloudSyncService.shared.coordinatedRead(from: url)
+        } else {
+            try? Data(contentsOf: url)
+        }
     }
 
     static func save<T: Encodable>(_ value: T, to url: URL) throws {
@@ -172,6 +206,12 @@ struct PersistenceService {
 
     static func deleteProject(_ id: UUID) {
         try? FileManager.default.removeItem(at: projectDir(id))
+        deleteThumbnail(id)
+    }
+
+    static func deleteThumbnail(_ id: UUID, at baseURL: URL? = nil) {
+        let url = baseURL.map { thumbnailURL(id, at: $0) } ?? thumbnailURL(id)
+        try? FileManager.default.removeItem(at: url)
     }
 
     static func deleteProject(_ id: UUID, at root: URL) {
