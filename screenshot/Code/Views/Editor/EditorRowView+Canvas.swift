@@ -267,7 +267,6 @@ extension EditorRowView {
                     groupDragOffset: groupOffset,
                     deviceModelRenderingMode: .snapshot,
                     clipBounds: clipRect,
-                    canvasGlobalOrigin: canvasGlobalOrigin,
                     resizeState: pendingResize[shape.id],
                     rotationDelta: pendingRotation[shape.id] ?? 0,
                     onSelect: { state.selectShape(shape.id, in: row.id) },
@@ -448,11 +447,6 @@ extension EditorRowView {
                     },
                     lockToggleWillUnlock: isInSelection ? selectionFullyLocked : shape.resolvedIsLocked
                 )
-            }
-            .onGeometryChange(for: CGPoint.self) { proxy in
-                proxy.frame(in: .global).origin
-            } action: { origin in
-                canvasGlobalOrigin = origin
             }
 
             ForEach(activeGuides) { guide in

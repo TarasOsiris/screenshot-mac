@@ -30,7 +30,6 @@ struct CanvasShapeView: View {
     var deviceModelRenderingMode: DeviceModelRenderingMode = .snapshot
 
     var clipBounds: CGRect?
-    var canvasGlobalOrigin: CGPoint = .zero
     var showsEditorHelpers: Bool = true
     /// In-progress resize/rotation reported by the selection overlay so this
     /// view can render the shape at the pending size/angle during the drag.
@@ -180,18 +179,12 @@ struct CanvasShapeView: View {
             }
             .onChange(of: isEditingText) { _, editing in
                 onEditingTextChanged?(editing)
-                if editing {
-                    updateFormatBarAnchor()
-                }
             }
             .onChange(of: selectionState) { _, newState in
                 if isEditingText {
                     onFormatBarStateChanged?(newState, formatController)
                 }
             }
-            .onChange(of: canvasGlobalOrigin) { if isEditingText { updateFormatBarAnchor() } }
-            .onChange(of: displayRect) { if isEditingText { updateFormatBarAnchor() } }
-            .onChange(of: zoom) { if isEditingText { updateFormatBarAnchor() } }
             .onChange(of: isSelected) { _, selected in
                 if !selected && isEditingText {
                     commitTextEdit()
@@ -278,6 +271,7 @@ struct CanvasShapeView: View {
         let base = ZStack {
             shapeContent
                 .frame(width: displayW, height: displayH)
+                .overlay { formatBarAnchorReader }
                 .compositingGroupIfNeeded(needsCompositing)
                 .opacity(shape.opacity)
                 .contentShape(Rectangle())
@@ -575,11 +569,21 @@ struct CanvasShapeView: View {
         onUpdate(updated)
     }
 
-    private func updateFormatBarAnchor() {
-        onFormatBarAnchorChanged?(CGPoint(
-            x: canvasGlobalOrigin.x + ((displayX + displayW / 2) * zoom),
-            y: canvasGlobalOrigin.y + (displayY * zoom) - 10
-        ))
+    /// While editing, track the shape's own global frame and report the rich-text
+    /// format bar anchor (top-center, lifted 10pt) from it. Reading the live
+    /// geometry here — rather than threading the canvas origin through per-row
+    /// @State — keeps the anchor correct at edit start and as the canvas scrolls,
+    /// resizes, or zooms, without re-rendering the whole canvas on every scroll
+    /// frame. Editing forces rotation to 0 (see `currentRotation`), so the frame
+    /// is axis-aligned and its top-center matches the old origin-based math.
+    @ViewBuilder
+    private var formatBarAnchorReader: some View {
+        if isEditingText {
+            Color.clear
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
+                    onFormatBarAnchorChanged?(CGPoint(x: frame.midX, y: frame.minY - 10))
+                }
+        }
     }
 
     private var customFontName: String? {

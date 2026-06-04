@@ -18,7 +18,6 @@ struct EditorRowView: View {
     @State var activeGuides: [AlignmentGuide] = []
     @State var activeDragOffset: CGSize = .zero
     @State var draggingShapeId: UUID?
-    @State var canvasGlobalOrigin: CGPoint = .zero
     @State var isEditingLabel = false
     @State var editingLabelText = ""
     /// True when the current mode (Edit or Preview) has had a chance to paint
