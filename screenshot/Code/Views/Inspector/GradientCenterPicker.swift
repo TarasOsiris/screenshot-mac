@@ -26,7 +26,7 @@ struct GradientCenterPicker: View {
 
                 Circle()
                     .fill(Color.accentColor)
-                    .frame(width: 8, height: 8)
+                    .frame(width: UIMetrics.GradientEditor.centerHandleSize, height: UIMetrics.GradientEditor.centerHandleSize)
                     .offset(
                         x: area * (centerX - 0.5),
                         y: area * (centerY - 0.5)
@@ -43,6 +43,6 @@ struct GradientCenterPicker: View {
                     }
             )
         }
-        .frame(width: 48, height: 48)
+        .frame(width: UIMetrics.GradientEditor.centerPickerSize, height: UIMetrics.GradientEditor.centerPickerSize)
     }
 }

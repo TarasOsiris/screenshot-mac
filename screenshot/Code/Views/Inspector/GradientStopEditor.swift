@@ -6,17 +6,12 @@ struct GradientStopEditor: View {
     @State private var selectedStopId: UUID?
     @FocusState private var isEditorFocused: Bool
 
-    private let handleSize: CGFloat = 14
-    #if os(macOS)
-    private let barHeight: CGFloat = 24
-    private let handleHitTarget: CGFloat = 14
-    private let controlsRowHeight: CGFloat = 24
-    #else
-    // iPad: taller bar (easier tap-to-add) and a wider transparent grab area per handle.
-    private let barHeight: CGFloat = 36
-    private let handleHitTarget: CGFloat = 32
-    private let controlsRowHeight: CGFloat = 40
-    #endif
+    private let handleSize = UIMetrics.GradientEditor.stopHandleSize
+    private let barHeight = UIMetrics.GradientEditor.stopBarHeight
+    private let handleHitTarget = UIMetrics.GradientEditor.stopHandleHitTarget
+    private let controlsRowHeight = UIMetrics.GradientEditor.controlsRowHeight
+
+    private var barCornerRadius: CGFloat { barHeight / 2 }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -25,13 +20,13 @@ struct GradientStopEditor: View {
 
                 ZStack(alignment: .leading) {
                     // Always horizontal so stop positions match visually
-                    RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
+                    RoundedRectangle(cornerRadius: barCornerRadius)
                         .fill(horizontalGradient)
                         .overlay(
-                            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
+                            RoundedRectangle(cornerRadius: barCornerRadius)
                                 .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.standard)
                         )
-                        .contentShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
+                        .contentShape(RoundedRectangle(cornerRadius: barCornerRadius))
                         .onTapGesture { location in
                             focusEditor()
                             let loc = location.x / barWidth
@@ -79,6 +74,7 @@ struct GradientStopEditor: View {
                         supportsOpacity: false
                     )
                     .labelsHidden()
+                    .frame(width: UIMetrics.ColorSwatch.inline, height: UIMetrics.ColorSwatch.inline)
                     .simultaneousGesture(TapGesture().onEnded { focusEditor() })
 
                     Text("\(selectedLocationPercent(for: selectedId))%")
@@ -97,6 +93,8 @@ struct GradientStopEditor: View {
                         Image(systemName: "minus.circle")
                             .font(.system(size: UIMetrics.FontSize.body))
                             .foregroundStyle(.secondary)
+                            .frame(width: UIMetrics.GradientEditor.iconTapTarget, height: UIMetrics.GradientEditor.iconTapTarget)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .focusable(false)
@@ -121,6 +119,8 @@ struct GradientStopEditor: View {
                     Image(systemName: "arrow.left.arrow.right")
                         .font(.system(size: UIMetrics.FontSize.inlineLabel))
                         .foregroundStyle(.secondary)
+                        .frame(width: UIMetrics.GradientEditor.iconTapTarget, height: UIMetrics.GradientEditor.iconTapTarget)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
@@ -221,7 +221,7 @@ struct GradientStopEditor: View {
 
             Circle()
                 .fill(stop.color)
-                .frame(width: handleSize - 4, height: handleSize - 4)
+                .frame(width: max(handleSize - 4, 8), height: max(handleSize - 4, 8))
 
             if isSelected {
                 Circle()

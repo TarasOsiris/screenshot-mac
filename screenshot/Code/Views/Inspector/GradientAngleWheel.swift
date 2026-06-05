@@ -2,7 +2,7 @@ import SwiftUI
 
 struct GradientAngleWheel: View {
     @Binding var angle: Double
-    let size: CGFloat = 48
+    let size = UIMetrics.GradientEditor.angleWheelSize
     private let edgeInset: Double = 4
 
     private func rad(_ deg: Double) -> Double {

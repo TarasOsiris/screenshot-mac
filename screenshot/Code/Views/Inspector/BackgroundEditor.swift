@@ -13,20 +13,10 @@ struct BackgroundEditor: View {
     var onDropImage: ((NSImage) -> Void)?
     var onDropSvg: ((String) -> Void)?
 
-    // iPad grows the gradient controls' tap targets; macOS keeps the dense pointer sizing.
-    // The angle presets stay narrow (8 share one row beside the wheel) but get a taller hit area.
     #if os(macOS)
     private static let gradientPresetTileHeight: CGFloat = 24
-    private static let angleWheelSize: CGFloat = 36
-    private static let anglePresetButtonWidth: CGFloat = 14
-    private static let anglePresetButtonHeight: CGFloat = 14
-    private static let anglePresetGlyphSize: CGFloat = 7
     #else
     private static let gradientPresetTileHeight: CGFloat = 40
-    private static let angleWheelSize: CGFloat = 44
-    private static let anglePresetButtonWidth: CGFloat = 22
-    private static let anglePresetButtonHeight: CGFloat = 36
-    private static let anglePresetGlyphSize: CGFloat = 10
     #endif
 
     var body: some View {
@@ -47,6 +37,7 @@ struct BackgroundEditor: View {
                 Spacer()
                 ColorPicker("", selection: $bgColor.onSet { onChanged() }, supportsOpacity: false)
                     .labelsHidden()
+                    .frame(width: UIMetrics.ColorSwatch.inline, height: UIMetrics.ColorSwatch.inline)
                     .fixedSize()
             }
             .font(.system(size: UIMetrics.FontSize.body))
@@ -124,37 +115,55 @@ struct BackgroundEditor: View {
             GradientAngleWheel(
                 angle: $gradientConfig.angle.onSet { onChanged() }
             )
-            .frame(width: Self.angleWheelSize, height: Self.angleWheelSize)
+            .frame(width: UIMetrics.GradientEditor.angleWheelSize, height: UIMetrics.GradientEditor.angleWheelSize)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(Int(gradientConfig.angle))°")
                     .font(.system(size: 14, weight: .medium).monospacedDigit())
                     .foregroundStyle(.primary)
 
-                HStack(spacing: 1) {
-                    ForEach([0, 45, 90, 135, 180, 225, 270, 315], id: \.self) { a in
-                        Button {
-                            gradientConfig.angle = Double(a)
-                            onChanged()
-                        } label: {
-                            Image(systemName: "arrow.up")
-                                .font(.system(size: Self.anglePresetGlyphSize))
-                                .rotationEffect(.degrees(Double(a)))
-                                .frame(width: Self.anglePresetButtonWidth, height: Self.anglePresetButtonHeight)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 2)
-                                        .fill(Int(gradientConfig.angle.rounded()) == a ? Color.accentColor.opacity(UIMetrics.Opacity.accentSelection) : Color.clear)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .focusable(false)
-                        .help("\(a)°")
-                    }
-                }
+                anglePresetButtons
             }
         }
         .padding(.leading, 4)
         .padding(.vertical, 6)
+    }
+
+    @ViewBuilder
+    private var anglePresetButtons: some View {
+        let angles = [0, 45, 90, 135, 180, 225, 270, 315]
+        #if os(macOS)
+        HStack(spacing: 1) {
+            ForEach(angles, id: \.self) { anglePresetButton($0) }
+        }
+        #else
+        LazyVGrid(columns: Array(repeating: GridItem(.fixed(UIMetrics.GradientEditor.anglePresetButtonWidth), spacing: 4), count: 4), spacing: 4) {
+            ForEach(angles, id: \.self) { anglePresetButton($0) }
+        }
+        #endif
+    }
+
+    private func anglePresetButton(_ a: Int) -> some View {
+        Button {
+            gradientConfig.angle = Double(a)
+            onChanged()
+        } label: {
+            Image(systemName: "arrow.up")
+                .font(.system(size: UIMetrics.GradientEditor.anglePresetGlyphSize))
+                .rotationEffect(.degrees(Double(a)))
+                .frame(
+                    width: UIMetrics.GradientEditor.anglePresetButtonWidth,
+                    height: UIMetrics.GradientEditor.anglePresetButtonHeight
+                )
+                .background(
+                    RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
+                        .fill(Int(gradientConfig.angle.rounded()) == a ? Color.accentColor.opacity(UIMetrics.Opacity.accentSelection) : Color.clear)
+                )
+                .contentShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip))
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .help("\(a)°")
     }
 
     @ViewBuilder
@@ -478,6 +487,9 @@ private extension View {
         controlSize(.mini)
         #else
         controlSize(.regular)
+            .frame(minHeight: UIMetrics.GradientEditor.iconTapTarget)
+            .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section))
+            .contentShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section))
         #endif
     }
 

@@ -34,7 +34,7 @@ enum UIMetrics {
         static let preview: CGFloat = 24
         #else
         // iPad gets larger swatches so the fill/color taps clear the touch-target floor.
-        static let inline: CGFloat = 36
+        static let inline: CGFloat = 40
         static let preview: CGFloat = 40
         #endif
     }
@@ -132,6 +132,34 @@ enum UIMetrics {
         static let iconSize: CGFloat = 16
         static let frameSize: CGFloat = 40
         static let minTouchTarget: CGFloat = 40
+        #endif
+    }
+
+    enum GradientEditor {
+        #if os(macOS)
+        static let stopHandleSize: CGFloat = 14
+        static let stopHandleHitTarget: CGFloat = 14
+        static let stopBarHeight: CGFloat = 24
+        static let controlsRowHeight: CGFloat = 24
+        static let iconTapTarget: CGFloat = 22
+        static let angleWheelSize: CGFloat = 36
+        static let anglePresetButtonWidth: CGFloat = 14
+        static let anglePresetButtonHeight: CGFloat = 14
+        static let anglePresetGlyphSize: CGFloat = 7
+        static let centerPickerSize: CGFloat = 48
+        static let centerHandleSize: CGFloat = 8
+        #else
+        static let stopHandleSize: CGFloat = 24
+        static let stopHandleHitTarget: CGFloat = 44
+        static let stopBarHeight: CGFloat = 44
+        static let controlsRowHeight: CGFloat = 44
+        static let iconTapTarget: CGFloat = 40
+        static let angleWheelSize: CGFloat = 56
+        static let anglePresetButtonWidth: CGFloat = 40
+        static let anglePresetButtonHeight: CGFloat = 40
+        static let anglePresetGlyphSize: CGFloat = 14
+        static let centerPickerSize: CGFloat = 56
+        static let centerHandleSize: CGFloat = 14
         #endif
     }
 }
