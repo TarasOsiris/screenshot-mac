@@ -111,19 +111,20 @@ struct BackgroundEditor: View {
 
     @ViewBuilder
     private var angleControls: some View {
-        HStack(alignment: .top, spacing: 8) {
-            GradientAngleWheel(
-                angle: $gradientConfig.angle.onSet { onChanged() }
-            )
-            .frame(width: UIMetrics.GradientEditor.angleWheelSize, height: UIMetrics.GradientEditor.angleWheelSize)
+        HStack(alignment: .center, spacing: 8) {
+            VStack(alignment: .center, spacing: 2) {
+                GradientAngleWheel(
+                    angle: $gradientConfig.angle.onSet { onChanged() }
+                )
+                .frame(width: UIMetrics.GradientEditor.angleWheelSize, height: UIMetrics.GradientEditor.angleWheelSize)
 
-            VStack(alignment: .leading, spacing: 2) {
                 Text("\(Int(gradientConfig.angle))°")
                     .font(.system(size: 14, weight: .medium).monospacedDigit())
                     .foregroundStyle(.primary)
-
-                anglePresetButtons
+                    .frame(width: UIMetrics.GradientEditor.angleWheelSize)
             }
+
+            anglePresetButtons
         }
         .padding(.leading, 4)
         .padding(.vertical, 6)

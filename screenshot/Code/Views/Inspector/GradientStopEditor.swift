@@ -84,22 +84,17 @@ struct GradientStopEditor: View {
 
                     Spacer()
 
-                    Button {
+                    GradientStopIconButton(
+                        icon: gradientStopRemoveIcon,
+                        accessibilityLabel: "Remove stop",
+                        help: "Remove stop (min 2)",
+                        disabled: config.stops.count <= 2
+                    ) {
                         focusEditor()
                         config.removeStop(id: selectedId)
                         selectedStopId = config.stops.first?.id
                         onChanged()
-                    } label: {
-                        Image(systemName: "minus.circle")
-                            .font(.system(size: UIMetrics.FontSize.body))
-                            .foregroundStyle(.secondary)
-                            .frame(width: UIMetrics.GradientEditor.iconTapTarget, height: UIMetrics.GradientEditor.iconTapTarget)
-                            .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
-                    .focusable(false)
-                    .disabled(config.stops.count <= 2)
-                    .help("Remove stop (min 2)")
                 } else {
                     Text("Click bar to add stops")
                         .font(.system(size: UIMetrics.FontSize.inlineLabel))
@@ -107,24 +102,15 @@ struct GradientStopEditor: View {
                     Spacer()
                 }
 
-                Text("\(config.stops.count) stops")
-                    .font(.system(size: UIMetrics.FontSize.inlineLabel))
-                    .foregroundStyle(.tertiary)
-
-                Button {
+                GradientStopIconButton(
+                    icon: "arrow.left.arrow.right",
+                    accessibilityLabel: "Reverse gradient",
+                    help: "Reverse gradient"
+                ) {
                     focusEditor()
                     config.reverseStops()
                     onChanged()
-                } label: {
-                    Image(systemName: "arrow.left.arrow.right")
-                        .font(.system(size: UIMetrics.FontSize.inlineLabel))
-                        .foregroundStyle(.secondary)
-                        .frame(width: UIMetrics.GradientEditor.iconTapTarget, height: UIMetrics.GradientEditor.iconTapTarget)
-                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .focusable(false)
-                .help("Reverse gradient")
             }
             .frame(minHeight: controlsRowHeight, alignment: .center)
         }
@@ -259,5 +245,65 @@ struct GradientStopEditor: View {
             green: Double(a.g + (b.g - a.g) * cg),
             blue: Double(a.b + (b.b - a.b) * cg)
         )
+    }
+}
+
+private var gradientStopRemoveIcon: String {
+    #if os(macOS)
+    "minus.circle"
+    #else
+    "minus"
+    #endif
+}
+
+private struct GradientStopIconButton: View {
+    let icon: String
+    let accessibilityLabel: LocalizedStringKey
+    let help: LocalizedStringKey
+    var disabled = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: iconSize, weight: .medium))
+                .frame(width: UIMetrics.GradientEditor.iconTapTarget, height: UIMetrics.GradientEditor.iconTapTarget)
+                .contentShape(buttonShape)
+        }
+        .gradientStopIconButtonStyle()
+        .focusable(false)
+        .foregroundStyle(disabled ? .tertiary : .secondary)
+        .disabled(disabled)
+        .accessibilityLabel(accessibilityLabel)
+        .help(help)
+    }
+
+    private var iconSize: CGFloat {
+        #if os(macOS)
+        UIMetrics.FontSize.inlineLabel
+        #else
+        15
+        #endif
+    }
+
+    private var buttonShape: some Shape {
+        #if os(macOS)
+        Rectangle()
+        #else
+        Circle()
+        #endif
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func gradientStopIconButtonStyle() -> some View {
+        #if os(macOS)
+        buttonStyle(.plain)
+        #else
+        buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .controlSize(.regular)
+        #endif
     }
 }

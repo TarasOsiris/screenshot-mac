@@ -4505,6 +4505,7 @@
       }
     },
     "%lld stops" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -37346,6 +37347,9 @@
           }
         }
       }
+    },
+    "Remove stop" : {
+
     },
     "Remove stop (min 2)" : {
       "localizations" : {
