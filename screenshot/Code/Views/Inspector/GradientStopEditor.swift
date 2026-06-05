@@ -80,7 +80,9 @@ struct GradientStopEditor: View {
                     Text("\(selectedLocationPercent(for: selectedId))%")
                         .font(.system(size: UIMetrics.FontSize.body).monospacedDigit())
                         .foregroundStyle(.secondary)
-                        .frame(width: 30)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .frame(minWidth: 30, alignment: .leading)
 
                     Spacer()
 
@@ -303,7 +305,7 @@ private extension View {
         #else
         buttonStyle(.bordered)
             .buttonBorderShape(.circle)
-            .controlSize(.regular)
+            .controlSize(.small)
         #endif
     }
 }

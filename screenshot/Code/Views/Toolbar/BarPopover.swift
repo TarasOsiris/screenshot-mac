@@ -9,6 +9,7 @@ private struct IOSSheetChrome<Content: View, Confirm: View>: View {
     let title: Text
     let showsCancel: Bool
     let onCancel: (() -> Void)?
+    let detents: Set<PresentationDetent>
     @ViewBuilder let confirm: (DismissAction) -> Confirm
     @ViewBuilder let content: () -> Content
     @Environment(\.dismiss) private var dismiss
@@ -27,10 +28,11 @@ private struct IOSSheetChrome<Content: View, Confirm: View>: View {
                     ToolbarItem(placement: .confirmationAction) { confirm(dismiss) }
                 }
         }
-        // A single full-height detent: a fixed full-size sheet, no drag handle / resizing.
+        // A single fixed detent by default: no drag handle / resizing. Compact sheets pass a
+        // `.height(...)` detent so a one-field dialog isn't presented full-screen.
         // (Not `.presentationSizing(.fitted)`, which collapses a NavigationStack to just the
         // nav bar.) `.fullScreenCover` (showcase export) ignores this, which is fine.
-        .presentationDetents([.large])
+        .presentationDetents(detents)
     }
 }
 
@@ -57,11 +59,12 @@ extension View {
         confirmSystemImage: String = "checkmark",
         confirmDisabled: Bool = false,
         showsCancel: Bool = false,
+        detents: Set<PresentationDetent> = [.large],
         onConfirm: (() -> Void)? = nil,
         onCancel: (() -> Void)? = nil
     ) -> some View {
         #if os(iOS)
-        IOSSheetChrome(title: title, showsCancel: showsCancel, onCancel: onCancel, confirm: { dismiss in
+        IOSSheetChrome(title: title, showsCancel: showsCancel, onCancel: onCancel, detents: detents, confirm: { dismiss in
             // The confirm action owns dismissal: a bare "Done" dismisses, but a supplied
             // onConfirm decides (e.g. SvgPasteDialog stays open and shows an error on failure).
             Button {
@@ -93,7 +96,7 @@ extension View {
         @ViewBuilder confirmMenu: @escaping () -> MenuItems
     ) -> some View {
         #if os(iOS)
-        IOSSheetChrome(title: title, showsCancel: showsCancel, onCancel: onCancel, confirm: { _ in
+        IOSSheetChrome(title: title, showsCancel: showsCancel, onCancel: onCancel, detents: [.large], confirm: { _ in
             Menu {
                 confirmMenu()
             } label: {

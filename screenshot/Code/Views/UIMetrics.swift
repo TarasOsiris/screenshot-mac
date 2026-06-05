@@ -153,7 +153,7 @@ enum UIMetrics {
         static let stopHandleHitTarget: CGFloat = 44
         static let stopBarHeight: CGFloat = 44
         static let controlsRowHeight: CGFloat = 44
-        static let iconTapTarget: CGFloat = 40
+        static let iconTapTarget: CGFloat = 28
         static let angleWheelSize: CGFloat = 56
         static let anglePresetButtonWidth: CGFloat = 40
         static let anglePresetButtonHeight: CGFloat = 40

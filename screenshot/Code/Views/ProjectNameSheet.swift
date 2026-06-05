@@ -25,11 +25,23 @@ struct ProjectNameSheet: View {
     }
 
     var body: some View {
+        content
+            .iosSheetChrome(
+                Text(verbatim: prompt.title),
+                confirmTitle: Text(verbatim: prompt.confirmTitle),
+                confirmDisabled: text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                showsCancel: true,
+                detents: [.height(140)],
+                onConfirm: confirm
+            )
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        #if os(macOS)
         VStack(alignment: .leading, spacing: 16) {
-            #if os(macOS)
             Text(prompt.title)
                 .font(.headline)
-            #endif
 
             ProjectNameTextField(
                 text: $text,
@@ -38,7 +50,6 @@ struct ProjectNameSheet: View {
             )
             .frame(height: 22)
 
-            #if os(macOS)
             HStack {
                 Spacer()
 
@@ -52,17 +63,20 @@ struct ProjectNameSheet: View {
                 }
                 .keyboardShortcut(.defaultAction)
             }
-            #endif
         }
         .padding(20)
         .frame(width: 360)
-        .iosSheetChrome(
-            Text(verbatim: prompt.title),
-            confirmTitle: Text(verbatim: prompt.confirmTitle),
-            confirmDisabled: text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-            showsCancel: true,
-            onConfirm: confirm
-        )
+        #else
+        VStack(alignment: .leading, spacing: 0) {
+            ProjectNameTextField(
+                text: $text,
+                placeholder: String(localized: "Project name"),
+                onSubmit: confirm
+            )
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+        #endif
     }
 
     private func confirm() {

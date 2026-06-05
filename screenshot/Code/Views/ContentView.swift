@@ -293,45 +293,15 @@ struct ContentView: View {
             }
             #else
             ToolbarItem(id: "iPadTitle", placement: .principal) {
-                Text(state.activeProject?.name ?? "")
-                    .font(.headline)
-                    .lineLimit(1)
+                iPadProjectTitleMenu
             }
 
-            // History section
-            ToolbarItem(id: "iPadHistory", placement: .navigation) {
-                HStack(spacing: 2) {
-                    iPadUndoButton
-                    iPadRedoButton
-                }
+            ToolbarItem(id: "iPadLeadingControls", placement: .navigation) {
+                iPadLeadingToolbarControls
             }
 
-            // Localization: the whole language-toggle bar folded into one globe pull-down.
-            // Sits on the leading edge near the title — kept out of the trailing control cluster.
-            ToolbarItem(id: "iPadLocale", placement: .topBarLeading) {
-                LocaleToolbarButton(state: state)
-            }
-
-            // View / output section: zoom, divided from the export action.
-            // An id-based toolbar requires ToolbarItem (not ToolbarItemGroup), so the
-            // sub-groups live inside one item's HStack with dividers.
-            ToolbarItem(id: "iPadViewControls", placement: .primaryAction) {
-                HStack(spacing: 8) {
-                    iPadZoomOutButton
-                    iPadZoomInButton
-
-                    Divider()
-                        .frame(height: 20)
-
-                    iPadExportControl
-                }
-            }
-
-            // Inspector toggle is a separate, rightmost round button.
-            ToolbarItem(id: "iPadInspectorToggle", placement: .primaryAction) {
-                inspectorToggleButton
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.circle)
+            ToolbarItem(id: "iPadTrailingControls", placement: .primaryAction) {
+                iPadTrailingToolbarControls
             }
             #endif
 

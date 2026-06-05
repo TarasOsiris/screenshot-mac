@@ -64,12 +64,14 @@ extension ContentView {
             }
             .disabled(state.activeProjectId == nil)
 
+            #if os(macOS)
             Button("Show in Finder", systemImage: "folder") {
                 guard let id = state.activeProjectId else { return }
                 let folder = PersistenceService.projectDirectoryURL(id)
                 PlatformReveal.inFileViewer([folder])
             }
             .disabled(state.activeProjectId == nil)
+            #endif
 
             Button("Reset Project...", systemImage: "arrow.counterclockwise", role: .destructive) {
                 if confirmBeforeDeleting {
@@ -197,26 +199,115 @@ extension ContentView {
     }
 
     #if os(iOS)
-    // iPad zoom is two standard-sized toolbar buttons (same tap target as the other nav-bar
-    // buttons) rather than the compact macOS ZoomControls cluster, which is too small to tap.
-    var iPadZoomOutButton: some View {
-        Button {
-            state.zoomOut()
+    var iPadProjectTitleMenu: some View {
+        Menu {
+            currentProjectSection
         } label: {
-            Label("Zoom Out", systemImage: "minus.magnifyingglass")
+            HStack(spacing: 4) {
+                Text(state.activeProject?.name ?? "No Project")
+                    .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: 280)
         }
-        .disabled(state.zoomLevel <= ZoomConstants.min)
-        .help("Zoom out")
+        .disabled(state.activeProjectId == nil)
+        .help("Project actions")
+        .accessibilityIdentifier("iPadProjectTitleMenu")
+        .iPadToolbarSecondaryStyle()
     }
 
-    var iPadZoomInButton: some View {
-        Button {
-            state.zoomIn()
-        } label: {
-            Label("Zoom In", systemImage: "plus.magnifyingglass")
+    var iPadLeadingToolbarControls: some View {
+        iPadGlassToolbarContainer {
+            HStack(spacing: 4) {
+                iPadUndoButton
+                iPadRedoButton
+                LocaleToolbarButton(state: state)
+            }
         }
-        .disabled(state.zoomLevel >= ZoomConstants.max)
-        .help("Zoom in")
+    }
+
+    var iPadTrailingToolbarControls: some View {
+        iPadGlassToolbarContainer {
+            HStack(spacing: 8) {
+                iPadZoomMenu
+                inspectorToggleButton
+                    .iPadToolbarSecondaryStyle()
+                iPadExportControl
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func iPadGlassToolbarContainer<Content: View>(
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        if #available(iOS 26.0, *) {
+            GlassEffectContainer(spacing: 8) {
+                content()
+            }
+        } else {
+            content()
+        }
+    }
+
+    @ViewBuilder
+    var iPadZoomMenu: some View {
+        let presets: [CGFloat] = [0.5, 0.75, 1.0, 1.5, 2.0]
+
+        Menu {
+            Button("Fit to Editor", systemImage: "arrow.up.left.and.arrow.down.right") {
+                fitZoomToWindow()
+            }
+            .disabled(state.rows.isEmpty)
+
+            Button("Actual Size", systemImage: "magnifyingglass") {
+                state.resetZoom()
+            }
+            .disabled(abs(state.zoomLevel - 1.0) < 0.001)
+
+            Divider()
+
+            Button("Zoom Out", systemImage: "minus.magnifyingglass") {
+                state.zoomOut()
+            }
+            .disabled(state.zoomLevel <= ZoomConstants.min)
+
+            Button("Zoom In", systemImage: "plus.magnifyingglass") {
+                state.zoomIn()
+            }
+            .disabled(state.zoomLevel >= ZoomConstants.max)
+
+            Divider()
+
+            Section("Presets") {
+                ForEach(presets, id: \.self) { preset in
+                    Button {
+                        state.setZoomLevel(preset)
+                    } label: {
+                        let title = "\(Int((preset * 100).rounded()))%"
+                        if abs(state.zoomLevel - preset) < 0.001 {
+                            Label(title, systemImage: "checkmark")
+                        } else {
+                            Text(title)
+                        }
+                    }
+                }
+            }
+        } label: {
+            Label {
+                Text("\(Int((state.zoomLevel * 100).rounded()))%")
+                    .monospacedDigit()
+            } icon: {
+                Image(systemName: "magnifyingglass")
+            }
+        }
+        .help("Zoom options")
+        .iPadToolbarSecondaryStyle()
     }
 
     var iPadUndoButton: some View {
@@ -227,6 +318,7 @@ extension ContentView {
         }
         .disabled(!(undoManager?.canUndo ?? false))
         .help("Undo")
+        .iPadToolbarSecondaryStyle()
     }
 
     var iPadRedoButton: some View {
@@ -237,6 +329,35 @@ extension ContentView {
         }
         .disabled(!(undoManager?.canRedo ?? false))
         .help("Redo")
+        .iPadToolbarSecondaryStyle()
     }
     #endif
+}
+
+extension View {
+    @ViewBuilder
+    func iPadToolbarSecondaryStyle() -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glass)
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
+    }
+
+    @ViewBuilder
+    func iPadToolbarProminentStyle() -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glassProminent)
+        } else {
+            buttonStyle(.borderedProminent)
+        }
+        #else
+        self
+        #endif
+    }
 }

@@ -52,7 +52,7 @@ extension ContentView {
         } label: {
             iPadExportLabel
         }
-        .buttonStyle(.borderedProminent)
+        .iPadToolbarProminentStyle()
         .controlSize(.regular)
         .disabled(isDisabled)
     }

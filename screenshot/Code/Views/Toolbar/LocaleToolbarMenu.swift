@@ -360,13 +360,15 @@ struct LocaleToolbarButton: View {
             localeLabel
         }
         .help("Language options")
+        .iPadToolbarSecondaryStyle()
         .coachPopover(step: .locale, state: state, arrowEdge: .top)
     }
 
     @ViewBuilder
     private var localeLabel: some View {
         if state.localeState.isBaseLocale {
-            Label("Localization", systemImage: "globe")
+            Image(systemName: "globe")
+                .accessibilityLabel("Localization")
         } else {
             // Surface that a translation is being edited: globe + active flag in the warning tint.
             HStack(spacing: 4) {
