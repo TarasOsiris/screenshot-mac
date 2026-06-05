@@ -101,6 +101,33 @@ struct ExportServiceTests {
         #expect(data.count > 0)
     }
 
+    /// A text shape persisted as rich text (Base64-RTF) must render through the export path —
+    /// the same path the iPad editor now feeds. Guards that rich-text glyphs aren't dropped.
+    @Test func renderTemplateDrawsRichTextShape() throws {
+        var row = makeTestRow(width: 200, height: 200, bgColor: .white)
+        let attributed = NSMutableAttributedString(string: "WWW", attributes: [
+            .font: NSFont.boldSystemFont(ofSize: 60),
+            .foregroundColor: NSColor.black
+        ])
+        var shape = CanvasShapeModel(
+            type: .text, x: 0, y: 0, width: 200, height: 200,
+            color: .black, text: "WWW", fontSize: 60
+        )
+        shape.richText = RichTextUtils.encode(attributed)
+        row.shapes = [shape]
+
+        let bmp = try renderTemplateBitmap(index: 0, row: row)
+        // White-only output would mean the rich-text glyphs were dropped; scan the center band.
+        var foundDark = false
+        outer: for y in [80, 100, 120] {
+            for x in stride(from: 20, to: 180, by: 4) {
+                let p = try pixelColor(bmp, at: (x, y))
+                if (p.r + p.g + p.b) / 3 < 0.5 { foundDark = true; break outer }
+            }
+        }
+        #expect(foundDark, "Rich-text shape should render visible glyphs in export")
+    }
+
     // MARK: - Filename sanitization
 
     @Test func sanitizedFileNameReplacesFilesystemReservedCharacters() {

@@ -71,14 +71,20 @@ extension AppState {
         isEditingText = false
     }
 
+    /// Request the canvas ScrollView to scroll a row to center (drives the `ScrollViewReader`
+    /// in `ContentView` via the nonce).
+    func requestCanvasFocus(on rowId: UUID, animated: Bool) {
+        canvasFocusAnimated = animated
+        canvasFocusRowId = rowId
+        canvasFocusRequestNonce += 1
+    }
+
     /// Scroll to center the selected shape(s) on screen.
     func focusOnSelection() {
         guard let rowId = selectedRowId,
               !selectedShapeIds.isEmpty else { return }
         guard rows.contains(where: { $0.id == rowId }) else { return }
-        canvasFocusAnimated = false
-        canvasFocusRowId = rowId
-        canvasFocusRequestNonce += 1
+        requestCanvasFocus(on: rowId, animated: false)
         focusShapeId = selectedShapeIds.first
         focusRequestNonce += 1
     }

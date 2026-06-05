@@ -185,12 +185,22 @@ struct CanvasShapeRenderContent: View {
         }
     }
 
+    @ViewBuilder
     private var textEditor: some View {
         let fontSize = shape.fontSize ?? CanvasShapeModel.defaultFontSize
         let weight = fontWeightResolver(shape.fontWeight ?? 700)
         let nsFont = resolveNSFont(fontSize, weight.nsWeight, shape.italic ?? false)
 
-        return InlineTextEditor(
+        // iPad renders the editor at display scale (font × displayScale in a display-size frame)
+        // so the UITextView's selection handles are screen-sized; macOS keeps model scale +
+        // scaleEffect since selection there is mouse-based.
+        #if os(iOS)
+        let editorScale = displayScale
+        #else
+        let editorScale: CGFloat = 1
+        #endif
+
+        let editor = InlineTextEditor(
             text: $editingTextValue,
             font: nsFont,
             color: NSColor(shape.color),
@@ -201,14 +211,21 @@ struct CanvasShapeRenderContent: View {
             lineHeightMultiple: shape.lineHeightMultiple,
             legacyLineSpacing: shape.lineSpacing,
             richTextData: editingRichTextData,
+            renderScale: editorScale,
             formatController: formatController,
             onCommit: onCommitTextEdit,
             onRichTextChange: onRichTextChange,
             onSelectionChange: onSelectionChange
         )
-        .frame(width: effectiveW, height: effectiveH)
-        .scaleEffect(displayScale, anchor: .topLeading)
-        .frame(width: displayW, height: displayH, alignment: .topLeading)
+
+        #if os(iOS)
+        editor.frame(width: displayW, height: displayH, alignment: .topLeading)
+        #else
+        editor
+            .frame(width: effectiveW, height: effectiveH)
+            .scaleEffect(displayScale, anchor: .topLeading)
+            .frame(width: displayW, height: displayH, alignment: .topLeading)
+        #endif
     }
 
     @ViewBuilder

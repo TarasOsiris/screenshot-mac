@@ -107,5 +107,14 @@ extension UIFont {
         }
         return UIFont(descriptor: descriptor, size: pointSize)
     }
+
+    /// Returns this font with the given symbolic trait toggled on/off (falls back to self if the
+    /// descriptor can't take it). Used by rich-text bold/italic formatting.
+    func toggling(_ trait: UIFontDescriptor.SymbolicTraits) -> UIFont {
+        var traits = fontDescriptor.symbolicTraits
+        if traits.contains(trait) { traits.remove(trait) } else { traits.insert(trait) }
+        guard let descriptor = fontDescriptor.withSymbolicTraits(traits) else { return self }
+        return UIFont(descriptor: descriptor, size: pointSize)
+    }
 }
 #endif

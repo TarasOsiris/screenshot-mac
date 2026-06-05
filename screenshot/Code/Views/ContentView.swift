@@ -134,6 +134,22 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .layoutPriority(0)
                 .background(Color.platformWindowBackground)
+                #if os(iOS)
+                // Rich-text format bar floats over the bottom of the canvas while editing text —
+                // above the element properties bar, with a transparent surround (no full-width
+                // strip). `richTextSelectionState` is read so it appears once the controller publishes.
+                .overlay(alignment: .bottom) {
+                    if state.isEditingText, state.richTextSelectionState != nil,
+                       let controller = state.richTextFormatController {
+                        RichTextDockedBar(controller: controller)
+                            .padding(.bottom, 8)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+                // Reserve scroll room equal to the floating bar so the bottom of a tall text shape
+                // can be scrolled clear of it (the bar surround stays transparent, no full-width strip).
+                .contentMargins(.bottom, state.isEditingText ? RichTextFormatBarMetrics.height + 16 : 0, for: .scrollContent)
+                #endif
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     proxy.size.height
                 } action: { newValue in
@@ -150,6 +166,19 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: state.hasSelection)
+        #if os(iOS)
+        .animation(.easeInOut(duration: 0.2), value: state.isEditingText)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            // Keyboard avoidance shrinks the canvas ScrollView; scroll the row being edited into
+            // the now-smaller visible area so the text isn't hidden behind the keyboard. Re-read
+            // the selected row inside the delay so switching shapes mid-delay scrolls the right row.
+            guard state.isEditingText else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                guard state.isEditingText, let rowId = state.selectedRowId else { return }
+                state.requestCanvasFocus(on: rowId, animated: true)
+            }
+        }
+        #endif
         #if os(macOS)
         .onExitCommand {
             if state.hasSelection {
@@ -159,7 +188,7 @@ struct ContentView: View {
             }
         }
         #endif
-        #if DEBUG
+        #if os(macOS)
         .overlay {
             if state.isEditingText,
                let selectionState = state.richTextSelectionState,

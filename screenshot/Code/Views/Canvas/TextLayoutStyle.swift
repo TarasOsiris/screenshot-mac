@@ -141,6 +141,23 @@ enum TextLayoutStyle {
         return padding + ceil(font.ascender * 0.2) + 4
     }
 
+    /// Vertical offset to place a text block of `contentHeight` within a box of `containerHeight`,
+    /// honoring top/center/bottom alignment and symmetric glyph `padding`. Shared by the rendered
+    /// display path and the iPad live editor so the editor overlay stays pixel-aligned.
+    static func verticalOffset(
+        containerHeight: CGFloat,
+        contentHeight: CGFloat,
+        padding: CGFloat,
+        alignment: TextVerticalAlign
+    ) -> CGFloat {
+        let paddedHeight = contentHeight + padding * 2
+        return switch alignment {
+        case .top: padding
+        case .center: max(0, (containerHeight - paddedHeight) / 2) + padding
+        case .bottom: max(0, containerHeight - paddedHeight) + padding
+        }
+    }
+
     static func paragraphStyle(
         alignment: NSTextAlignment,
         lineHeightMultiple: CGFloat?,
@@ -241,12 +258,12 @@ enum TextLayoutStyle {
             legacyLineSpacing: legacyLineSpacing,
             font: font
         )
-        let paddedTextHeight = usedRect.height + padding * 2
-        let yOffset: CGFloat = switch verticalAlignment {
-        case .top: padding
-        case .center: max(0, (size.height - paddedTextHeight) / 2) + padding
-        case .bottom: max(0, size.height - paddedTextHeight) + padding
-        }
+        let yOffset = verticalOffset(
+            containerHeight: size.height,
+            contentHeight: usedRect.height,
+            padding: padding,
+            alignment: verticalAlignment
+        )
 
         let image = PlatformImageRenderer.image(size: size) {
             let origin = CGPoint(x: 0, y: yOffset)

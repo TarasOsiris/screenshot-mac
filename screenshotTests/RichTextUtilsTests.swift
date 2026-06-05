@@ -287,4 +287,37 @@ struct RichTextUtilsTests {
         #expect(abs((actual?.1 ?? 0) - (expected?.1 ?? 0)) < 0.05)
         #expect(abs((actual?.2 ?? 0) - (expected?.2 ?? 0)) < 0.05)
     }
+
+    /// iPad rich-text editing persists per-range formatting through the same Base64-RTF path.
+    /// Guards that distinct bold/color runs survive an encode→decode round-trip intact.
+    @Test func mixedFormattingRunsSurviveRoundTrip() throws {
+        let attributed = NSMutableAttributedString(string: "Hello world")
+        let boldRed: [NSAttributedString.Key: Any] = [
+            .font: NSFontManager.shared.convert(NSFont.systemFont(ofSize: 24), toHaveTrait: .boldFontMask),
+            .foregroundColor: NSColor.systemRed
+        ]
+        let plain: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 24),
+            .foregroundColor: NSColor.white
+        ]
+        attributed.setAttributes(boldRed, range: NSRange(location: 0, length: 5))   // "Hello"
+        attributed.setAttributes(plain, range: NSRange(location: 5, length: 6))      // " world"
+
+        let encoded = try #require(RichTextUtils.encode(attributed))
+        let decoded = try #require(RichTextUtils.decode(encoded))
+
+        #expect(decoded.string == "Hello world")
+
+        let firstFont = decoded.attribute(.font, at: 0, effectiveRange: nil) as? NSFont
+        let lastFont = decoded.attribute(.font, at: 8, effectiveRange: nil) as? NSFont
+        #expect(firstFont?.hasBoldTrait == true)
+        #expect(lastFont?.hasBoldTrait == false)
+
+        let firstColor = rgbaComponents(decoded.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor)
+        let expectedRed = rgbaComponents(.systemRed)
+        #expect(firstColor != nil)
+        #expect(abs((firstColor?.0 ?? 0) - (expectedRed?.0 ?? 0)) < 0.05)
+        #expect(abs((firstColor?.1 ?? 0) - (expectedRed?.1 ?? 0)) < 0.05)
+        #expect(abs((firstColor?.2 ?? 0) - (expectedRed?.2 ?? 0)) < 0.05)
+    }
 }
