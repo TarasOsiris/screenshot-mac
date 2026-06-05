@@ -323,18 +323,10 @@ struct ContentView: View {
         #endif
         .exportFailedAlert($exportError)
         #if os(iOS)
-        .confirmationDialog(
-            pendingExportTitle,
-            isPresented: Binding(
-                get: { pendingExport != nil },
-                set: { if !$0 { discardPendingExport() } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("Save to Photos") { runPendingExport(to: .photos) }
-            Button("Save to Files") { runPendingExport(to: .files) }
-            Button("Share…") { runPendingExport(to: .share) }
-            Button("Cancel", role: .cancel) {}
+        .sheet(item: $pendingExport, onDismiss: { discardPendingExport() }) { _ in
+            ExportDestinationSheet(title: pendingExportTitle) { destination in
+                runPendingExport(to: destination)
+            }
         }
         #endif
         .alert(resetTemplate != nil ? String(localized: "Reset Project from Template") : String(localized: "Reset Project"), isPresented: $isResettingProject) {

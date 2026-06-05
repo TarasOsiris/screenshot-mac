@@ -7001,6 +7001,9 @@
         }
       }
     },
+    "Add to your photo library" : {
+
+    },
     "Add your content" : {
       "localizations" : {
         "de" : {
@@ -7366,6 +7369,9 @@
           }
         }
       }
+    },
+    "AirDrop, Mail, Messages and more" : {
+
     },
     "Align" : {
       "localizations" : {
@@ -40975,6 +40981,9 @@
           }
         }
       }
+    },
+    "Save into the Files app" : {
+
     },
     "Save iOS Simulator Capture Script" : {
       "extractionState" : "stale",
