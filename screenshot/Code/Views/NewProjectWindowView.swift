@@ -2,15 +2,16 @@ import SwiftUI
 
 struct NewProjectWindowView: View {
     static let windowID = "new-project"
-    private let templateGridSpacing: CGFloat = 12
-    private let templateGridHorizontalPadding: CGFloat = 8
 
     @Environment(AppState.self) private var state
     @Environment(StoreService.self) private var store
     @Environment(\.dismiss) private var dismiss
 
+    private let templateGridSpacing: CGFloat = 12
+    private let templateGridHorizontalPadding: CGFloat = 8
+
     @State private var projectName = ""
-    @State private var creationMode: CreationMode = .template
+    @State private var creationMode: NewProjectCreationMode = .template
     @State private var selectedTemplateId: String?
     @State private var rowDrafts: [BlankProjectRowDraft] = []
     @State private var templates: [ProjectTemplate] = []
@@ -35,14 +36,20 @@ struct NewProjectWindowView: View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 16) {
                 projectNameField
-                modePicker
+                NewProjectModePicker(selectedMode: $creationMode)
 
                 Group {
                     switch creationMode {
                     case .blank:
-                        blankProjectConfigurator
+                        BlankProjectConfigurator(rowDrafts: $rowDrafts)
                     case .template:
-                        templateConfigurator
+                        NewProjectTemplateConfigurator(
+                            templates: templates,
+                            selectedTemplateId: $selectedTemplateId,
+                            columns: templateGridColumns,
+                            spacing: templateGridSpacing,
+                            horizontalPadding: templateGridHorizontalPadding
+                        )
                     }
                 }
                 .animation(.easeInOut(duration: 0.2), value: creationMode)
@@ -69,8 +76,8 @@ struct NewProjectWindowView: View {
 
             Section("Create From") {
                 Picker("Create From", selection: $creationMode) {
-                    Text("Template").tag(CreationMode.template)
-                    Text("Blank").tag(CreationMode.blank)
+                    Text("Template").tag(NewProjectCreationMode.template)
+                    Text("Blank").tag(NewProjectCreationMode.blank)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
@@ -78,9 +85,14 @@ struct NewProjectWindowView: View {
 
             switch creationMode {
             case .template:
-                templateSection
+                NewProjectTemplateSection(
+                    templates: templates,
+                    selectedTemplateId: $selectedTemplateId,
+                    columns: templateGridColumns,
+                    spacing: templateGridSpacing
+                )
             case .blank:
-                blankSection
+                BlankProjectSection(rowDrafts: $rowDrafts)
             }
         }
         .navigationTitle("New Project")
@@ -97,80 +109,6 @@ struct NewProjectWindowView: View {
         }
     }
 
-    @ViewBuilder
-    private var templateSection: some View {
-        Section {
-            if templates.isEmpty {
-                ContentUnavailableView(
-                    "No Templates Available",
-                    systemImage: "square.grid.2x2",
-                    description: Text("Add templates to the app bundle.")
-                )
-            } else {
-                LazyVGrid(columns: templateGridColumns, spacing: templateGridSpacing) {
-                    ForEach(templates) { template in
-                        Button {
-                            selectTemplate(template)
-                        } label: {
-                            TemplateSelectionCard(
-                                template: template,
-                                isSelected: selectedTemplateId == template.id
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.vertical, 6)
-                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-                .listRowBackground(Color.clear)
-            }
-        } header: {
-            Text("Choose a Template")
-        } footer: {
-            #if DEBUG
-            if !templates.isEmpty {
-                Text("Badged templates are included in non-debug builds.")
-            }
-            #endif
-        }
-    }
-
-    @ViewBuilder
-    private var blankSection: some View {
-        Section {
-            ForEach(rowDrafts) { draft in
-                BlankProjectRowCard(
-                    draft: binding(for: draft.id),
-                    canDelete: rowDrafts.count > 1,
-                    canDuplicate: rowDrafts.count < 8,
-                    onDelete: { removeRow(id: draft.id) },
-                    onDuplicate: { duplicateRow(id: draft.id) }
-                )
-                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-            .onMove { source, destination in
-                rowDrafts.move(fromOffsets: source, toOffset: destination)
-            }
-        } header: {
-            HStack(spacing: 12) {
-                Text("Rows")
-                Spacer()
-                if rowDrafts.count > 1 {
-                    EditButton()
-                        .textCase(nil)
-                }
-                Button {
-                    addRow()
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .disabled(rowDrafts.count >= 8)
-                .accessibilityLabel("Add Row")
-            }
-        }
-    }
     #endif
 
     #if os(macOS)
@@ -182,111 +120,6 @@ struct NewProjectWindowView: View {
             TextField("Project name", text: $projectName)
                 .textFieldStyle(.roundedBorder)
                 .focused($isNameFieldFocused)
-        }
-    }
-
-    private var modePicker: some View {
-        HStack(spacing: 12) {
-            modeCard(
-                title: "Template",
-                subtitle: "Pre-designed layouts",
-                icon: "square.grid.2x2",
-                mode: .template
-            )
-            modeCard(
-                title: "Blank",
-                subtitle: "Set up your own rows",
-                icon: "square.on.square.dashed",
-                mode: .blank
-            )
-        }
-    }
-
-    private var blankProjectConfigurator: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Rows")
-                    .font(.headline)
-
-                Spacer()
-
-                Button {
-                    addRow()
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .semibold))
-                        .frame(width: 28, height: 28)
-                        .foregroundStyle(.secondary)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(Color.secondary.opacity(0.12))
-                        )
-                }
-                .buttonStyle(.plain)
-                .controlSize(.small)
-                .disabled(rowDrafts.count >= 8)
-            }
-
-            List {
-                ForEach(rowDrafts) { draft in
-                    BlankProjectRowCard(
-                        draft: binding(for: draft.id),
-                        canDelete: rowDrafts.count > 1,
-                        canDuplicate: rowDrafts.count < 8,
-                        onDelete: {
-                            removeRow(id: draft.id)
-                        },
-                        onDuplicate: {
-                            duplicateRow(id: draft.id)
-                        }
-                    )
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 5, leading: 0, bottom: 5, trailing: 0))
-                }
-                .onMove { source, destination in
-                    rowDrafts.move(fromOffsets: source, toOffset: destination)
-                }
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-        }
-    }
-
-    private var templateConfigurator: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Choose a template")
-                .font(.headline)
-
-            #if DEBUG
-            if !templates.isEmpty {
-                debugReleaseTemplateLegend
-            }
-            #endif
-
-            if templates.isEmpty {
-                ContentUnavailableView(
-                    "No Templates Available",
-                    systemImage: "square.grid.2x2",
-                    description: Text("Add templates to the app bundle.")
-                )
-            } else {
-                ScrollView {
-                    LazyVGrid(columns: templateGridColumns, spacing: templateGridSpacing) {
-                        ForEach(templates) { template in
-                            Button {
-                                selectTemplate(template)
-                            } label: {
-                                TemplateSelectionCard(
-                                    template: template,
-                                    isSelected: selectedTemplateId == template.id
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, templateGridHorizontalPadding)
-                }
-            }
         }
     }
 
@@ -322,32 +155,6 @@ struct NewProjectWindowView: View {
         [GridItem(.adaptive(minimum: 130, maximum: 200), spacing: templateGridSpacing)]
     }
 
-    #if DEBUG
-    private var debugReleaseTemplateLegend: some View {
-        HStack(spacing: 8) {
-            Text("Release")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(Color.green)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 4)
-                .background(Color.green.opacity(0.12), in: Capsule())
-
-            Text("Badged templates are included in non-debug builds.")
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-        }
-    }
-    #endif
-
-    private func binding(for id: UUID) -> Binding<BlankProjectRowDraft> {
-        Binding {
-            rowDrafts.first(where: { $0.id == id }) ?? BlankProjectRowDraft()
-        } set: { updatedDraft in
-            guard let index = rowDrafts.firstIndex(where: { $0.id == id }) else { return }
-            rowDrafts[index] = updatedDraft
-        }
-    }
-
     private func prepareInitialState() {
         templates = TemplateService.availableTemplates()
         projectName = "Project \(state.visibleProjects.count + 1)"
@@ -363,32 +170,6 @@ struct NewProjectWindowView: View {
             isNameFieldFocused = true
         }
         #endif
-    }
-
-    private func selectTemplate(_ template: ProjectTemplate) {
-        selectedTemplateId = template.id
-    }
-
-    private func addRow() {
-        guard rowDrafts.count < 8 else { return }
-        rowDrafts.append(BlankProjectRowDraft())
-    }
-
-    private func removeRow(id: UUID) {
-        guard rowDrafts.count > 1 else { return }
-        rowDrafts.removeAll { $0.id == id }
-    }
-
-    private func duplicateRow(id: UUID) {
-        guard rowDrafts.count < 8,
-              let index = rowDrafts.firstIndex(where: { $0.id == id }) else { return }
-        let source = rowDrafts[index]
-        var copy = BlankProjectRowDraft()
-        copy.sizePreset = source.sizePreset
-        copy.templateCount = source.templateCount
-        copy.deviceCategory = source.deviceCategory
-        copy.deviceFrameId = source.deviceFrameId
-        rowDrafts.insert(copy, at: index + 1)
     }
 
     private func createProject() {
@@ -417,341 +198,5 @@ struct NewProjectWindowView: View {
 
         AppWindowManager.shared.showMainWindow()
         dismiss()
-    }
-
-    private enum CreationMode: Hashable {
-        case blank
-        case template
-    }
-
-    private func modeCard(title: String, subtitle: String, icon: String, mode: CreationMode) -> some View {
-        let isSelected = creationMode == mode
-        return Button {
-            creationMode = mode
-        } label: {
-            HStack(spacing: 12) {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isSelected ? Color.accentColor.opacity(0.16) : Color.secondary.opacity(0.1))
-                    .frame(width: 38, height: 38)
-                    .overlay {
-                        Image(systemName: icon)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(isSelected ? Color.accentColor : .secondary)
-                    }
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.primary)
-                    Text(subtitle)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color.accentColor)
-                }
-            }
-            .padding(14)
-            .background(Color.platformWindowBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(isSelected ? Color.accentColor : Color.secondary.opacity(0.12), lineWidth: isSelected ? 2 : 1)
-            }
-        }
-        .buttonStyle(.plain)
-    }
-
-}
-
-private struct BlankProjectRowDraft: Identifiable, Equatable {
-    let id = UUID()
-    var sizePreset: String
-    var templateCount: Int
-    var deviceCategory: DeviceCategory?
-    var deviceFrameId: String?
-
-    init(category: DeviceCategory? = .iphone) {
-        let storedCount = UserDefaults.standard.integer(forKey: "defaultTemplateCount")
-        self.templateCount = storedCount > 0 ? storedCount : 3
-        self.deviceCategory = category
-        if let category {
-            self.sizePreset = category.suggestedSizePreset
-            self.deviceFrameId = DeviceFrameCatalog.firstPortraitFrameId(for: category)
-        } else {
-            self.sizePreset = UserDefaults.standard.string(forKey: "defaultScreenshotSize") ?? "1242x2688"
-            self.deviceFrameId = nil
-        }
-    }
-
-    var configuration: BlankProjectRowConfiguration {
-        BlankProjectRowConfiguration(
-            label: nil,
-            sizePreset: sizePreset,
-            templateCount: templateCount,
-            deviceCategory: deviceCategory,
-            deviceFrameId: deviceFrameId
-        )
-    }
-}
-
-private struct BlankProjectRowCard: View {
-    @Binding var draft: BlankProjectRowDraft
-    let canDelete: Bool
-    let canDuplicate: Bool
-    let onDelete: () -> Void
-    let onDuplicate: () -> Void
-
-    var body: some View {
-        #if os(iOS)
-        ViewThatFits(in: .horizontal) {
-            horizontalContent
-            verticalContent
-        }
-        #else
-        horizontalContent
-        #endif
-    }
-
-    private var horizontalContent: some View {
-        HStack(alignment: .center, spacing: 14) {
-            sizePicker
-            templateCountControl
-            devicePicker
-            actionButtons
-        }
-        .rowCardChrome()
-    }
-
-    private var verticalContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            sizePicker
-            HStack(spacing: 12) {
-                templateCountControl
-                devicePicker
-            }
-            actionButtons
-                .frame(maxWidth: .infinity, alignment: .trailing)
-        }
-        .rowCardChrome()
-    }
-
-    private var sizePicker: some View {
-        ScreenshotSizePicker(selection: $draft.sizePreset, label: "Size")
-            .labelsHidden()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .onChange(of: draft.sizePreset) { _, newPreset in
-                applySizePreset(newPreset)
-            }
-    }
-
-    private var templateCountControl: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "rectangle.split.3x1")
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-            TemplateCountPicker(selection: $draft.templateCount, label: "")
-                .labelsHidden()
-        }
-        .frame(width: 64)
-        .help("Screenshots per row")
-    }
-
-    private var devicePicker: some View {
-        DevicePickerMenu(
-            category: draft.deviceCategory,
-            frameId: draft.deviceFrameId,
-            presentation: .inline,
-            onSelectNone: {
-                selectNoDevice()
-            },
-            onSelectCategory: { category in
-                selectDeviceCategory(category)
-            },
-            onSelectFrame: { frame in
-                selectDeviceFrame(frame)
-            }
-        )
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .font(.system(size: 12))
-    }
-
-    private func applySizePreset(_ preset: String) {
-        guard let category = DeviceCategory.suggestedCategory(forSizePreset: preset),
-              category != draft.deviceCategory else { return }
-        draft.deviceCategory = category
-        draft.deviceFrameId = DeviceFrameCatalog.firstPortraitFrameId(for: category)
-    }
-
-    private func selectNoDevice() {
-        draft.deviceCategory = nil
-        draft.deviceFrameId = nil
-    }
-
-    private func selectDeviceCategory(_ category: DeviceCategory) {
-        draft.deviceCategory = category
-        draft.deviceFrameId = nil
-        draft.sizePreset = category.suggestedSizePreset
-    }
-
-    private func selectDeviceFrame(_ frame: DeviceFrame) {
-        draft.deviceCategory = frame.fallbackCategory
-        draft.deviceFrameId = frame.id
-        if let preset = DeviceFrameCatalog.suggestedSizePreset(forFrameId: frame.id) {
-            draft.sizePreset = preset
-        }
-    }
-
-    private var actionButtons: some View {
-        #if os(iOS)
-        HStack(spacing: 8) {
-            rowActionButton(
-                icon: "doc.on.doc",
-                accessibilityLabel: "Duplicate row",
-                disabled: !canDuplicate,
-                action: onDuplicate
-            )
-
-            rowActionButton(
-                icon: "trash",
-                accessibilityLabel: "Delete row",
-                disabled: !canDelete,
-                role: .destructive,
-                action: onDelete
-            )
-        }
-        #else
-        HStack(spacing: 4) {
-            Button(action: onDuplicate) {
-                Image(systemName: "doc.on.doc")
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(.borderless)
-            .disabled(!canDuplicate)
-            .help("Duplicate row")
-
-            Button(role: .destructive, action: onDelete) {
-                Image(systemName: "trash")
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(.borderless)
-            .disabled(!canDelete)
-            .help("Delete row")
-        }
-        #endif
-    }
-
-    #if os(iOS)
-    private func rowActionButton(
-        icon: String,
-        accessibilityLabel: LocalizedStringKey,
-        disabled: Bool,
-        role: ButtonRole? = nil,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(role: role, action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.bordered)
-        .disabled(disabled)
-        .accessibilityLabel(accessibilityLabel)
-    }
-    #endif
-}
-
-private extension View {
-    func rowCardChrome() -> some View {
-        padding(14)
-            .background(Color.platformControlBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(Color.secondary.opacity(0.08), lineWidth: 1)
-            }
-    }
-}
-
-private struct TemplateSelectionCard: View {
-    let template: ProjectTemplate
-    let isSelected: Bool
-
-    private var borderColor: Color {
-        if isSelected {
-            return Color.accentColor
-        }
-        #if DEBUG
-        if template.isIncludedInReleaseBuild {
-            return Color.green.opacity(0.55)
-        }
-        #endif
-        return Color.secondary.opacity(0.12)
-    }
-
-    private var borderWidth: CGFloat {
-        isSelected ? 2 : 1
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ZStack(alignment: .topTrailing) {
-                Color.secondary.opacity(0.12)
-                    .frame(height: 72)
-                    .overlay {
-                        if let previewImage = template.previewImage {
-                            Image(nsImage: previewImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } else {
-                            Image(systemName: "photo")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-
-                #if DEBUG
-                if template.isIncludedInReleaseBuild {
-                    Text("Release")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(Color.green)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 4)
-                        .background(.regularMaterial, in: Capsule())
-                        .overlay {
-                            Capsule()
-                                .strokeBorder(Color.green.opacity(0.3), lineWidth: 1)
-                        }
-                        .padding(6)
-                }
-                #endif
-
-            }
-            Text(template.name)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-        }
-        .padding(8)
-        .background(
-            cardBackgroundColor,
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(borderColor, lineWidth: borderWidth)
-        }
-    }
-
-    private var cardBackgroundColor: Color {
-        #if DEBUG
-        if template.isIncludedInReleaseBuild && !isSelected {
-            return Color.green.opacity(0.05)
-        }
-        #endif
-        return Color.platformControlBackground
     }
 }
