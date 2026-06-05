@@ -128,7 +128,8 @@ struct RichTextFormatBar: View {
 
     private func stepButton(systemName: String, helpText: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: systemName)
+            Label(helpText, systemImage: systemName)
+                .labelStyle(.iconOnly)
                 .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .semibold))
                 .frame(width: RichTextFormatBarMetrics.controlSize.width, height: RichTextFormatBarMetrics.controlSize.height)
         }
@@ -138,7 +139,8 @@ struct RichTextFormatBar: View {
 
     private func formatButton(systemName: String, isActive: Bool, helpText: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: systemName)
+            Label(helpText, systemImage: systemName)
+                .labelStyle(.iconOnly)
                 .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
                 .frame(width: RichTextFormatBarMetrics.controlSize.width, height: RichTextFormatBarMetrics.controlSize.height)
         }

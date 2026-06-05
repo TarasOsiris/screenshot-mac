@@ -1423,9 +1423,6 @@ struct ExportServiceTests {
                 defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                 clipBounds: clipRect,
                 showsEditorHelpers: true,
-                onSelect: {},
-                onUpdate: { _ in },
-                onDelete: {},
                 availableFontFamilies: Set(NSFontManager.shared.availableFontFamilies)
             )
         }

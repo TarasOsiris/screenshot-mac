@@ -16,7 +16,7 @@ struct ZoomControls: View {
     var body: some View {
         @Bindable var state = state
         HStack(spacing: 0) {
-            zoomButton("minus.magnifyingglass", disabled: state.zoomLevel <= ZoomConstants.min) {
+            zoomButton("minus.magnifyingglass", label: "Zoom out", disabled: state.zoomLevel <= ZoomConstants.min) {
                 state.zoomOut()
             }
 
@@ -74,7 +74,7 @@ struct ZoomControls: View {
                 .padding(12)
             }
 
-            zoomButton("plus.magnifyingglass", disabled: state.zoomLevel >= ZoomConstants.max) {
+            zoomButton("plus.magnifyingglass", label: "Zoom in", disabled: state.zoomLevel >= ZoomConstants.max) {
                 state.zoomIn()
             }
         }
@@ -94,9 +94,10 @@ struct ZoomControls: View {
         }
     }
 
-    private func zoomButton(_ icon: String, disabled: Bool, action: @escaping () -> Void) -> some View {
+    private func zoomButton(_ icon: String, label: LocalizedStringKey, disabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon)
+            Label(label, systemImage: icon)
+                .labelStyle(.iconOnly)
                 .font(.system(size: 11, weight: .semibold))
                 .frame(width: 20, height: 20)
                 .contentShape(Rectangle())
@@ -105,5 +106,6 @@ struct ZoomControls: View {
         .focusable(false)
         .foregroundStyle(.secondary)
         .disabled(disabled)
+        .help(label)
     }
 }

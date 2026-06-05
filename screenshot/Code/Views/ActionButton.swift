@@ -13,7 +13,8 @@ struct ActionButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: icon)
+            Label(tooltip, systemImage: icon)
+                .labelStyle(.iconOnly)
                 .font(.system(size: iconSize))
                 .frame(width: tapTarget, height: tapTarget)
                 .contentShape(Rectangle())

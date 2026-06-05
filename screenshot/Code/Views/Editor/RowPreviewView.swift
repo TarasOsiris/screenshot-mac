@@ -96,9 +96,6 @@ struct RowPreviewView: View {
             deviceModelRenderingMode: .snapshot,
             clipBounds: clipRect,
             showsEditorHelpers: false,
-            onSelect: {},
-            onUpdate: { _ in },
-            onDelete: {},
             availableFontFamilies: state.availableFontFamilySet
         )
     }

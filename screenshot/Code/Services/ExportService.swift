@@ -323,9 +323,6 @@ struct ExportService {
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                     clipBounds: clipRect,
                     showsEditorHelpers: false,
-                    onSelect: {},
-                    onUpdate: { _ in },
-                    onDelete: {},
                     availableFontFamilies: fontFamilies
                 )
             }
@@ -648,9 +645,6 @@ struct ExportService {
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                     clipBounds: clipRect,
                     showsEditorHelpers: false,
-                    onSelect: {},
-                    onUpdate: { _ in },
-                    onDelete: {},
                     availableFontFamilies: fontFamilies
                 )
             }
@@ -935,7 +929,7 @@ struct ExportService {
     }
 
     #if os(macOS)
-    static func bitmapRep(width: CGFloat, height: CGFloat) -> NSBitmapImageRep? {
+    nonisolated static func bitmapRep(width: CGFloat, height: CGFloat) -> NSBitmapImageRep? {
         let pixelW = max(Int(ceil(width)), 1)
         let pixelH = max(Int(ceil(height)), 1)
         let rep = NSBitmapImageRep(

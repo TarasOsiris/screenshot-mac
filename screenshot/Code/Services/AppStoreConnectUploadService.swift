@@ -124,7 +124,7 @@ struct ASCUploadFailureContext {
         }
     }
 
-    var summaryMessage: String {
+    nonisolated var summaryMessage: String {
         if isDisplayTypeNotAllowed {
             return String(localized: "\(displayTypeLabel) is not allowed for this app/version.")
         }
@@ -134,7 +134,7 @@ struct ASCUploadFailureContext {
         return String(localized: "Upload failed while trying to \(operation).")
     }
 
-    var detailedMessage: String {
+    nonisolated var detailedMessage: String {
         if isDisplayTypeNotAllowed {
             var messages = [
                 String(localized: "Could not create the screenshot set for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel)."),
@@ -167,7 +167,7 @@ struct ASCUploadFailureContext {
         return messages.joined(separator: "\n\n")
     }
 
-    var technicalMessage: String {
+    nonisolated var technicalMessage: String {
         [
             "Operation: \(operation)",
             "Row: \(rowLabel)",
@@ -182,7 +182,7 @@ struct ASCUploadFailureContext {
         ].joined(separator: "\n")
     }
 
-    private var isDisplayTypeNotAllowed: Bool {
+    nonisolated private var isDisplayTypeNotAllowed: Bool {
         guard httpStatus == 409 else { return false }
         let lower = (apiMessage ?? originalMessage).lowercased()
         return lower.contains("display type") && lower.contains("not allowed")

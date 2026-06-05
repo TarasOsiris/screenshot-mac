@@ -4,6 +4,7 @@ struct PostPurchaseCelebrationView: View {
     let context: StoreService.PaywallContext
     let onDismiss: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var heroAppeared = false
     @State private var contentAppeared = false
     @State private var confettiStartedAt: Date?
@@ -66,17 +67,9 @@ struct PostPurchaseCelebrationView: View {
         #else
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         #endif
-        .onAppear {
-            confettiStartedAt = Date()
-            confettiActive = true
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.62).delay(0.05)) {
-                heroAppeared = true
-            }
-            withAnimation(.easeOut(duration: 0.45).delay(0.25)) {
-                contentAppeared = true
-            }
-        }
+        .onAppear(perform: startPresentation)
         .task {
+            guard !reduceMotion else { return }
             try? await Task.sleep(for: .seconds(Self.confettiDuration))
             confettiActive = false
         }
@@ -106,7 +99,7 @@ struct PostPurchaseCelebrationView: View {
 
     @ViewBuilder
     private var confettiLayer: some View {
-        if confettiActive, let confettiStartedAt {
+        if !reduceMotion, confettiActive, let confettiStartedAt {
             TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: false)) { timeline in
                 let elapsed = timeline.date.timeIntervalSince(confettiStartedAt)
                 Canvas { context, size in
@@ -114,6 +107,25 @@ struct PostPurchaseCelebrationView: View {
                 }
             }
             .transition(.opacity)
+        }
+    }
+
+    private func startPresentation() {
+        if reduceMotion {
+            heroAppeared = true
+            contentAppeared = true
+            confettiActive = false
+            confettiStartedAt = nil
+            return
+        }
+
+        confettiStartedAt = Date()
+        confettiActive = true
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.62).delay(0.05)) {
+            heroAppeared = true
+        }
+        withAnimation(.easeOut(duration: 0.45).delay(0.25)) {
+            contentAppeared = true
         }
     }
 
@@ -128,7 +140,7 @@ struct PostPurchaseCelebrationView: View {
             guard y < size.height + 20 else { continue }
             let rotation = t * piece.rotationRate * .pi / 180.0
 
-            var transform = CGAffineTransform.identity
+            let transform = CGAffineTransform.identity
                 .translatedBy(x: x, y: y)
                 .rotated(by: rotation)
 

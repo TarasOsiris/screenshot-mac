@@ -9,6 +9,42 @@ private extension View {
     }
 }
 
+struct CanvasShapeInteractions {
+    var onSelect: () -> Void = {}
+    var onShiftSelect: (() -> Void)?
+    var onUpdate: (CanvasShapeModel) -> Void = { _ in }
+    var onDelete: () -> Void = {}
+    var onScreenshotDrop: ((NSImage) -> Void)?
+    var onClearImage: (() -> Void)?
+    var onRemoveBackground: (() -> Void)?
+    var onCaptureSimulator: (() -> Void)?
+    var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
+    var onDragEnd: (() -> Void)?
+    var onOptionDragDuplicate: ((UUID) -> UUID?)?
+    var onDragProgress: ((CGSize) -> Void)?
+    var onGroupDragEnd: ((CGSize) -> Void)?
+    var onDidAppearAfterAdd: (() -> Void)?
+    var onEditingTextChanged: ((Bool) -> Void)?
+    var onFormatBarStateChanged: ((RichTextSelectionState?, RichTextFormatController?) -> Void)?
+    var onFormatBarAnchorChanged: ((CGPoint?) -> Void)?
+    var onMatchDeviceSizes: (() -> Void)?
+    var onMatchSelectedDeviceSizes: (() -> Void)?
+    var onCenterDevice: ((AppState.CenterAxis) -> Void)?
+    var onTranslate: (() -> Void)?
+    var translateLocaleName: String?
+    var onTranslateAllLocales: (() -> Void)?
+    var translateAllLocalesDisabled = false
+    var nonBaseLocaleCount: Int = 0
+    var onCopyTextStyle: (() -> Void)?
+    var onPasteTextStyle: (() -> Void)?
+    var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
+    var onDeleteSelected: (() -> Void)?
+    var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
+    var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
+    var onToggleLock: (() -> Void)?
+    var lockToggleWillUnlock = false
+}
+
 struct CanvasShapeView: View {
     private static let fontCache: NSCache<NSString, NSFont> = {
         let cache = NSCache<NSString, NSFont>()
@@ -35,41 +71,8 @@ struct CanvasShapeView: View {
     /// view can render the shape at the pending size/angle during the drag.
     var resizeState: ResizeState?
     var rotationDelta: Double = 0
-    var onSelect: () -> Void
-    var onShiftSelect: (() -> Void)?
-    var onUpdate: (CanvasShapeModel) -> Void
-    var onDelete: () -> Void
-    var onScreenshotDrop: ((NSImage) -> Void)?
-    var onClearImage: (() -> Void)?
-    var onRemoveBackground: (() -> Void)?
-    var onCaptureSimulator: (() -> Void)?
-    var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
-    var onDragEnd: (() -> Void)?
-    var onOptionDragDuplicate: ((UUID) -> UUID?)?
-    var onDragProgress: ((CGSize) -> Void)?
-    var onGroupDragEnd: ((CGSize) -> Void)?
-    var onDidAppearAfterAdd: (() -> Void)?
-    var onEditingTextChanged: ((Bool) -> Void)?
-    var onFormatBarStateChanged: ((RichTextSelectionState?, RichTextFormatController?) -> Void)?
-    var onFormatBarAnchorChanged: ((CGPoint?) -> Void)?
-    var onMatchDeviceSizes: (() -> Void)?
-    var onMatchSelectedDeviceSizes: (() -> Void)?
-    var onCenterDevice: ((AppState.CenterAxis) -> Void)?
-    var onTranslate: (() -> Void)?
-    var translateLocaleName: String?
-    var onTranslateAllLocales: (() -> Void)?
-    var translateAllLocalesDisabled = false
-    var nonBaseLocaleCount: Int = 0
-    var onCopyTextStyle: (() -> Void)?
-    var onPasteTextStyle: (() -> Void)?
     var availableFontFamilies: Set<String> = []
-    /// When multi-selected with same-type shapes, applies update to all selected shapes
-    var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
-    var onDeleteSelected: (() -> Void)?
-    var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
-    var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
-    var onToggleLock: (() -> Void)?
-    var lockToggleWillUnlock: Bool = false
+    var interactions = CanvasShapeInteractions()
 
     @State private var addBumpScale: CGFloat = 1.0
     @State private var dragOffset: CGSize = .zero
@@ -208,7 +211,7 @@ struct CanvasShapeView: View {
                 Color.clear
                     .frame(width: displayW, height: displayH)
                     .imageSourcePicker(isPresented: $isPickerPresented) { image in
-                        onScreenshotDrop?(image)
+                        interactions.onScreenshotDrop?(image)
                     }
                     .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
                     .allowsHitTesting(false)
@@ -340,12 +343,12 @@ struct CanvasShapeView: View {
 
     /// Applies an update to this shape, or to all selected shapes if multi-selected with same type
     private func applyUpdate(_ update: @escaping (inout CanvasShapeModel) -> Void) {
-        if let onUpdateSelected {
+        if let onUpdateSelected = interactions.onUpdateSelected {
             onUpdateSelected(update)
         } else {
             var updated = shape
             update(&updated)
-            onUpdate(updated)
+            interactions.onUpdate(updated)
         }
     }
 
@@ -356,31 +359,31 @@ struct CanvasShapeView: View {
             isMultiSelected: isMultiSelected,
             screenshotImage: screenshotImage,
             isPickerPresented: $isPickerPresented,
-            onClearImage: onClearImage,
-            onRemoveBackground: onRemoveBackground,
-            onCaptureSimulator: onCaptureSimulator,
-            onMatchDeviceSizes: onMatchDeviceSizes,
-            onMatchSelectedDeviceSizes: onMatchSelectedDeviceSizes,
-            onCenterDevice: onCenterDevice,
-            onTranslate: onTranslate,
-            translateLocaleName: translateLocaleName,
-            onTranslateAllLocales: onTranslateAllLocales,
-            translateAllLocalesDisabled: translateAllLocalesDisabled,
-            nonBaseLocaleCount: nonBaseLocaleCount,
-            onCopyTextStyle: onCopyTextStyle,
-            onPasteTextStyle: onPasteTextStyle,
+            onClearImage: interactions.onClearImage,
+            onRemoveBackground: interactions.onRemoveBackground,
+            onCaptureSimulator: interactions.onCaptureSimulator,
+            onMatchDeviceSizes: interactions.onMatchDeviceSizes,
+            onMatchSelectedDeviceSizes: interactions.onMatchSelectedDeviceSizes,
+            onCenterDevice: interactions.onCenterDevice,
+            onTranslate: interactions.onTranslate,
+            translateLocaleName: interactions.translateLocaleName,
+            onTranslateAllLocales: interactions.onTranslateAllLocales,
+            translateAllLocalesDisabled: interactions.translateAllLocalesDisabled,
+            nonBaseLocaleCount: interactions.nonBaseLocaleCount,
+            onCopyTextStyle: interactions.onCopyTextStyle,
+            onPasteTextStyle: interactions.onPasteTextStyle,
             applyUpdate: applyUpdate,
             deleteAction: {
-                if let onDeleteSelected {
+                if let onDeleteSelected = interactions.onDeleteSelected {
                     onDeleteSelected()
                 } else {
-                    onDelete()
+                    interactions.onDelete()
                 }
             },
-            onAlignSelected: onAlignSelected,
-            onDuplicateToTemplates: onDuplicateToTemplates,
-            onToggleLock: onToggleLock,
-            lockToggleWillUnlock: lockToggleWillUnlock
+            onAlignSelected: interactions.onAlignSelected,
+            onDuplicateToTemplates: interactions.onDuplicateToTemplates,
+            onToggleLock: interactions.onToggleLock,
+            lockToggleWillUnlock: interactions.lockToggleWillUnlock
         )
     }
 
@@ -411,7 +414,7 @@ struct CanvasShapeView: View {
             handleDiameter: handleDiameter,
             rotationDelta: $localRotationDelta,
             resizeState: $localResizeState,
-            onUpdate: onUpdate
+            onUpdate: interactions.onUpdate
         )
     }
 
@@ -423,7 +426,7 @@ struct CanvasShapeView: View {
 
     private func handleAppear() {
         updateSvgCache()
-        guard let onDidAppearAfterAdd else { return }
+        guard let onDidAppearAfterAdd = interactions.onDidAppearAfterAdd else { return }
         withAnimation(.easeOut(duration: 0.08)) {
             addBumpScale = 1.12
         } completion: {
@@ -435,12 +438,12 @@ struct CanvasShapeView: View {
     }
 
     private func handleEditingStateChange(_ editing: Bool) {
-        onEditingTextChanged?(editing)
+        interactions.onEditingTextChanged?(editing)
     }
 
     private func handleSelectionStateChange(_ newState: RichTextSelectionState?) {
         guard isEditingText else { return }
-        onFormatBarStateChanged?(newState, formatController)
+        interactions.onFormatBarStateChanged?(newState, formatController)
     }
 
     private func handleSelectionChange(_ selected: Bool) {
@@ -457,7 +460,7 @@ struct CanvasShapeView: View {
 
     private func handleDoubleTap() {
         guard !shape.resolvedIsLocked else {
-            onSelect()
+            interactions.onSelect()
             return
         }
         if shape.type == .text {
@@ -475,14 +478,14 @@ struct CanvasShapeView: View {
             formatController.beginRichTextSession()
         }
         isEditingText = true
-        onSelect()
+        interactions.onSelect()
     }
 
     private func handleTap() {
         if PlatformModifiers.shiftDown {
-            onShiftSelect?()
+            interactions.onShiftSelect?()
         } else {
-            onSelect()
+            interactions.onSelect()
         }
     }
 
@@ -497,7 +500,7 @@ struct CanvasShapeView: View {
     private func handleDragChanged(_ value: DragGesture.Value) {
         guard !shape.resolvedIsLocked else {
             if !isDragging && !isMultiSelected {
-                onSelect()
+                interactions.onSelect()
             }
             return
         }
@@ -508,13 +511,13 @@ struct CanvasShapeView: View {
             width: value.translation.width / displayScale,
             height: value.translation.height / displayScale
         )
-        if let snap = onDragSnap?(shape, rawOffset) {
+        if let snap = interactions.onDragSnap?(shape, rawOffset) {
             dragOffset = snap.snappedOffset
         } else {
             dragOffset = rawOffset
         }
         if isMultiSelected {
-            onDragProgress?(dragOffset)
+            interactions.onDragProgress?(dragOffset)
         }
     }
 
@@ -523,11 +526,11 @@ struct CanvasShapeView: View {
         PlatformCursor.setClosedHand()
 
         if PlatformModifiers.optionDown {
-            _ = onOptionDragDuplicate?(shape.id)
+            _ = interactions.onOptionDragDuplicate?(shape.id)
         }
 
         if !isMultiSelected {
-            onSelect()
+            interactions.onSelect()
         }
     }
 
@@ -537,14 +540,14 @@ struct CanvasShapeView: View {
         dragOffset = .zero
         isDragging = false
         if isMultiSelected {
-            onGroupDragEnd?(finalOffset)
+            interactions.onGroupDragEnd?(finalOffset)
         } else {
             var updated = shape
             updated.x += finalOffset.width
             updated.y += finalOffset.height
-            onUpdate(updated)
+            interactions.onUpdate(updated)
         }
-        onDragEnd?()
+        interactions.onDragEnd?()
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
@@ -552,7 +555,7 @@ struct CanvasShapeView: View {
         provider.loadObject(ofClass: NSImage.self) { image, _ in
             if let image = image as? NSImage {
                 DispatchQueue.main.async {
-                    onScreenshotDrop?(image)
+                    interactions.onScreenshotDrop?(image)
                 }
             }
         }
@@ -598,7 +601,7 @@ struct CanvasShapeView: View {
             updated.richText = nil
         }
         formatController.resetRichTextSession()
-        onUpdate(updated)
+        interactions.onUpdate(updated)
     }
 
     /// While editing, track the shape's own global frame and report the rich-text
@@ -613,7 +616,7 @@ struct CanvasShapeView: View {
         if isEditingText {
             Color.clear
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
-                    onFormatBarAnchorChanged?(CGPoint(x: frame.midX, y: frame.minY - 10))
+                    interactions.onFormatBarAnchorChanged?(CGPoint(x: frame.midX, y: frame.minY - 10))
                 }
         }
     }
