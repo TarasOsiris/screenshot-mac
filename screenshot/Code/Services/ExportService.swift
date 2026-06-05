@@ -35,7 +35,7 @@ struct ExportService {
         customSuffix: String = "",
         availableFontFamilies: Set<String>? = nil,
         onProgress: (@MainActor (Int) -> Void)? = nil
-    ) async throws -> URL {
+    ) async throws -> (folderURL: URL, fileURLs: [URL]) {
         let rootName = sanitizedRootFolderName(projectName)
         let rootFolder = uniqueFolder(named: rootName, in: folderURL)
         try FileManager.default.createDirectory(at: rootFolder, withIntermediateDirectories: true)
@@ -57,6 +57,7 @@ struct ExportService {
         let suffixPart = formattedFileSuffix(customSuffix)
 
         var completed = 0
+        var writtenFileURLs: [URL] = []
 
         do {
             for locale in localesToExport {
@@ -107,6 +108,7 @@ struct ExportService {
                             let padded = String(format: "%02d", index + 1)
                             let filename = "\(padded)_\(rowName)_\(localeSuffix)\(suffixPart).\(format.fileExtension)"
                             let fileURL = destFolder.appendingPathComponent(filename)
+                            writtenFileURLs.append(fileURL)
 
                             let fmt = format
                             group.addTask {
@@ -131,7 +133,7 @@ struct ExportService {
             throw error
         }
 
-        return rootFolder
+        return (rootFolder, writtenFileURLs)
     }
 
     private static let invalidPathScalars: Set<Unicode.Scalar> = ["/", "\\", ":", "*", "?", "\"", "<", ">", "|"]

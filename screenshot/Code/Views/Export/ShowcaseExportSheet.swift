@@ -24,7 +24,7 @@ struct ShowcaseExportSheet: View {
     let localeCode: String?
     let localeState: LocaleState
     let availableFontFamilies: Set<String>?
-    var onExport: (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>, ShowcaseExportDestination) -> Void
+    var onExport: (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>, ExportDestination) -> Void
 
     #if os(macOS)
     @Environment(\.dismiss) private var dismiss
@@ -41,7 +41,7 @@ struct ShowcaseExportSheet: View {
         localeCode: String?,
         localeState: LocaleState,
         availableFontFamilies: Set<String>?,
-        onExport: @escaping (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>, ShowcaseExportDestination) -> Void
+        onExport: @escaping (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>, ExportDestination) -> Void
     ) {
         self.candidateRows = candidateRows
         self.loadImages = loadImages
@@ -426,7 +426,7 @@ struct ShowcaseExportSheet: View {
         }
     }
 
-    private func export(to destination: ShowcaseExportDestination) {
+    private func export(to destination: ExportDestination) {
         onExport(config, backgroundImage, selectedRowIds, excludedTemplateIds, destination)
     }
     #endif

@@ -59,6 +59,9 @@ struct ContentView: View {
     @State var showingASCUploadSheet = false
     @State var showcasePresentation: ShowcasePresentation?
     @State var projectNamePrompt: ProjectNamePrompt?
+    #if os(iOS)
+    @State var pendingExport: PendingExport?
+    #endif
 
     var body: some View {
         VStack(spacing: 0) {
@@ -319,6 +322,21 @@ struct ContentView: View {
         }
         #endif
         .exportFailedAlert($exportError)
+        #if os(iOS)
+        .confirmationDialog(
+            pendingExportTitle,
+            isPresented: Binding(
+                get: { pendingExport != nil },
+                set: { if !$0 { discardPendingExport() } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Save to Photos") { runPendingExport(to: .photos) }
+            Button("Save to Files") { runPendingExport(to: .files) }
+            Button("Share…") { runPendingExport(to: .share) }
+            Button("Cancel", role: .cancel) {}
+        }
+        #endif
         .alert(resetTemplate != nil ? String(localized: "Reset Project from Template") : String(localized: "Reset Project"), isPresented: $isResettingProject) {
             Button("Reset", role: .destructive) {
                 if let id = state.activeProjectId {

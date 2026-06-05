@@ -273,14 +273,12 @@ extension ContentView {
                 let destDir = ExportService.uniqueFolder(named: folderName, in: baseURL)
                 try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
                 var imageCache: [String: NSImage] = seedCache
-                _ = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache, render: render)
+                let fileURLs = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache, render: render)
 
                 #if os(iOS)
-                PlatformShare.present(urls: [destDir]) { completed in
-                    try? FileManager.default.removeItem(at: baseURL)
-                    if completed { showExportSuccess() }
-                }
+                presentExportDestinations(fileURLs: fileURLs, folderURL: destDir, cleanup: baseURL)
                 #else
+                _ = fileURLs
                 if openExportFolderOnSuccess {
                     PlatformReveal.inFileViewer([destDir])
                 }
@@ -372,7 +370,7 @@ extension ContentView {
                 let projectName = state.activeProject?.name ?? ""
                 let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
                 var imageCache: [String: NSImage] = [:]
-                let destinationFolderURL = try await ExportService.exportAll(
+                let export = try await ExportService.exportAll(
                     rows: state.rows,
                     projectName: projectName,
                     to: url,
@@ -391,7 +389,7 @@ extension ContentView {
                 )
                 showExportSuccess()
                 if openExportFolderOnSuccess {
-                    PlatformReveal.inFileViewer([destinationFolderURL])
+                    PlatformReveal.inFileViewer([export.folderURL])
                 }
             } catch is CancellationError {
                 // User cancelled — no error to show
@@ -412,7 +410,7 @@ extension ContentView {
         backgroundImage: NSImage?,
         selectedRowIds: Set<UUID>,
         excludedTemplateIds: Set<UUID>,
-        destination: ShowcaseExportDestination
+        destination: ExportDestination
     ) {
         let rowsToExport = state.rows
             .filter { selectedRowIds.contains($0.id) }
@@ -456,7 +454,7 @@ extension ContentView {
                         localeCode: locale, localeState: localeState, config: config
                     )
                 }
-                routeShowcaseExport(destination: destination, fileURLs: fileURLs, cleanup: baseURL)
+                route(destination: destination, fileURLs: fileURLs, folderURL: destDir, cleanup: baseURL)
             } catch is CancellationError {
                 try? FileManager.default.removeItem(at: baseURL)
             } catch {
@@ -467,20 +465,19 @@ extension ContentView {
         }
     }
 
-    /// Hands rendered showcase files to the chosen destination and cleans up the temp folder once
-    /// the flow completes (or is cancelled).
-    private func routeShowcaseExport(destination: ShowcaseExportDestination, fileURLs: [URL], cleanup baseURL: URL) {
+    /// Hands rendered files to the chosen destination and cleans up the temp folder once the flow
+    /// completes (or is cancelled). Photos/Share receive the individual image files; Files receives
+    /// the whole folder so multi-locale / multi-row subfolder structure is preserved on disk.
+    func route(destination: ExportDestination, fileURLs: [URL], folderURL: URL, cleanup baseURL: URL) {
+        let finish: (Bool) -> Void = { completed in
+            try? FileManager.default.removeItem(at: baseURL)
+            if completed { showExportSuccess() }
+        }
         switch destination {
         case .share:
-            PlatformShare.present(urls: fileURLs) { completed in
-                try? FileManager.default.removeItem(at: baseURL)
-                if completed { showExportSuccess() }
-            }
+            PlatformShare.present(urls: fileURLs, completion: finish)
         case .files:
-            PlatformDocumentExport.present(urls: fileURLs) { completed in
-                try? FileManager.default.removeItem(at: baseURL)
-                if completed { showExportSuccess() }
-            }
+            PlatformDocumentExport.present(urls: [folderURL], completion: finish)
         case .photos:
             PlatformPhotoLibrary.save(fileURLs: fileURLs) { success, error in
                 try? FileManager.default.removeItem(at: baseURL)
@@ -493,8 +490,18 @@ extension ContentView {
         }
     }
 
-    /// iPad export: renders to a temp folder via the shared `exportAll` path, then hands the
-    /// folder to the system share sheet (Save to Files / AirDrop) since there's no Finder.
+    /// Stashes rendered output so the editor's destination action sheet can present. The user then
+    /// picks Photos / Files / Share; routing and temp-folder cleanup happen from there.
+    func presentExportDestinations(fileURLs: [URL], folderURL: URL, cleanup baseURL: URL) {
+        guard !fileURLs.isEmpty else {
+            try? FileManager.default.removeItem(at: baseURL)
+            return
+        }
+        pendingExport = PendingExport(fileURLs: fileURLs, folderURL: folderURL, cleanupBaseURL: baseURL)
+    }
+
+    /// iPad export: renders to a temp folder via the shared `exportAll` path, then presents the
+    /// destination action sheet (Save to Photos / Save to Files / Share) since there's no Finder.
     func exportScreenshotsForIPad(localeFilter: String? = nil) {
         guard !state.rows.isEmpty else { return }
 
@@ -518,7 +525,7 @@ extension ContentView {
                 let tempBase = try ExportService.makeTempExportFolder()
 
                 var imageCache: [String: NSImage] = [:]
-                let folderURL = try await ExportService.exportAll(
+                let export = try await ExportService.exportAll(
                     rows: state.rows,
                     projectName: projectName,
                     to: tempBase,
@@ -535,10 +542,7 @@ extension ContentView {
                         exportProgress = completed
                     }
                 )
-                PlatformShare.present(urls: [folderURL]) { completed in
-                    try? FileManager.default.removeItem(at: tempBase)
-                    if completed { showExportSuccess() }
-                }
+                presentExportDestinations(fileURLs: export.fileURLs, folderURL: export.folderURL, cleanup: tempBase)
             } catch is CancellationError {
                 // User cancelled — no error to show
             } catch {
@@ -577,3 +581,37 @@ extension ContentView {
     }
 
 }
+
+#if os(iOS)
+/// Rendered iPad export output, held while the destination action sheet (Photos / Files / Share)
+/// is on screen so the user can choose where it goes.
+struct PendingExport: Identifiable {
+    let id = UUID()
+    let fileURLs: [URL]
+    let folderURL: URL
+    let cleanupBaseURL: URL
+}
+
+extension ContentView {
+    var pendingExportTitle: String {
+        guard let count = pendingExport?.fileURLs.count else { return "" }
+        return count == 1
+            ? String(localized: "Export 1 screenshot to…")
+            : String(localized: "Export \(count) screenshots to…")
+    }
+
+    func runPendingExport(to destination: ExportDestination) {
+        guard let pending = pendingExport else { return }
+        pendingExport = nil
+        route(destination: destination, fileURLs: pending.fileURLs, folderURL: pending.folderURL, cleanup: pending.cleanupBaseURL)
+    }
+
+    /// Dismissal without a chosen destination (Cancel / tap-outside): discard the rendered temp files.
+    /// A destination tap clears `pendingExport` first, so this no-ops in that case.
+    func discardPendingExport() {
+        guard let pending = pendingExport else { return }
+        try? FileManager.default.removeItem(at: pending.cleanupBaseURL)
+        pendingExport = nil
+    }
+}
+#endif

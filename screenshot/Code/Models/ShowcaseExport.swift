@@ -19,9 +19,9 @@ struct ShowcaseExportConfig: BackgroundFillable {
     var maxOutputDimension: Double = ShowcaseOutputSize.medium.maxDimension
 }
 
-/// Where a showcase export goes once rendered. iPad-only: macOS always writes to a chosen
-/// folder, so the macOS export path ignores this.
-enum ShowcaseExportDestination {
+/// Where a rendered export goes. iPad-only: macOS always writes to a chosen folder, so the
+/// macOS export path ignores this. Used by both showcase export and the regular export flows.
+enum ExportDestination {
     case photos
     case files
     case share
