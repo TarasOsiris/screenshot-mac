@@ -211,8 +211,6 @@ struct ProjectsView: View {
                     } label: {
                         Label("Upgrade to Pro", systemImage: "crown")
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
                 }
             }
             // A spinner whenever iCloud sync is in progress (upload or download), so the

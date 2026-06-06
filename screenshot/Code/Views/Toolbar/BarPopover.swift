@@ -72,7 +72,7 @@ extension View {
             } label: {
                 IOSConfirmLabel(systemImage: confirmSystemImage)
             }
-            .buttonStyle(.borderedProminent)
+            .iPadToolbarProminentStyle()
             .controlSize(.regular)
             .disabled(confirmDisabled)
             .accessibilityLabel(confirmTitle)
@@ -102,7 +102,7 @@ extension View {
             } label: {
                 IOSConfirmLabel(systemImage: confirmSystemImage)
             }
-            .buttonStyle(.borderedProminent)
+            .iPadToolbarProminentStyle()
             .controlSize(.regular)
             .disabled(confirmDisabled)
             .accessibilityLabel(confirmTitle)
