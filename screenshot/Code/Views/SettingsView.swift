@@ -115,7 +115,12 @@ struct SettingsView: View {
                     }
 
                     if iCloudEnabled {
-                        LabeledContent("Status") {
+                        // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
+                        // content a flexible frame, which made this (conditional Label) row balloon
+                        // to a huge height.
+                        HStack {
+                            Text("Status")
+                            Spacer()
                             iCloudStatusLabel
                         }
                     }
@@ -312,7 +317,12 @@ struct SettingsView: View {
     private var purchaseSettings: some View {
         Form {
             Section {
-                LabeledContent("Plan") {
+                // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
+                // content a flexible frame, which made this (conditional Label) row balloon
+                // to a huge height.
+                HStack {
+                    Text("Plan")
+                    Spacer()
                     if store.isProUnlocked {
                         Label(store.proTier?.displayName ?? String(localized: "Pro"), systemImage: "checkmark.seal.fill")
                             .foregroundStyle(.green)

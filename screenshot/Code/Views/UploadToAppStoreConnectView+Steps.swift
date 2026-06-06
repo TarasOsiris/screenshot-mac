@@ -40,8 +40,8 @@ extension UploadToAppStoreConnectView {
             }
             .buttonStyle(.borderedProminent)
             #else
-            // iPad: credentials live in the Settings tab. Dismiss so the user can switch tabs.
             Button {
+                router.openAppStoreConnectSettings()
                 dismiss()
             } label: {
                 Label("Open Settings", systemImage: "gearshape")

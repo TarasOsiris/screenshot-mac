@@ -8,6 +8,9 @@ struct ScreenshotBroApp: App {
     #endif
     @State private var appState = AppState()
     @State private var storeService = StoreService()
+    #if os(iOS)
+    @State private var appNavigationRouter = AppNavigationRouter()
+    #endif
     @AppStorage("appearance") private var appearance = "auto"
     @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
     /// Transient: set when the user clicks "Get Started" in the welcome sheet. Lets the
@@ -382,6 +385,7 @@ struct ScreenshotBroApp: App {
             iPadRootView()
                 .environment(appState)
                 .environment(storeService)
+                .environment(appNavigationRouter)
                 .preferredColorScheme(preferredColorScheme)
                 .task { storeService.start() }
                 .fullScreenCover(isPresented: Binding(

@@ -185,11 +185,7 @@ struct IPadSettingsView: View {
 
     private var appStoreConnectSection: some View {
         Section {
-            NavigationLink {
-                AppStoreConnectSettingsView()
-                    .navigationTitle("App Store Connect")
-                    .navigationBarTitleDisplayMode(.inline)
-            } label: {
+            NavigationLink(value: iPadSettingsDestination.appStoreConnect) {
                 Label("App Store Connect", systemImage: "arrow.up.circle")
             }
         }
@@ -265,7 +261,12 @@ struct IPadSettingsView: View {
     @ViewBuilder
     private var purchaseSection: some View {
         Section("Purchase") {
-            LabeledContent("Plan") {
+            // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
+            // content a flexible frame, which made this (conditional Label) row balloon
+            // to a huge height.
+            HStack {
+                Text("Plan")
+                Spacer()
                 if store.isProUnlocked {
                     Label(store.proTier?.displayName ?? String(localized: "Pro"), systemImage: "checkmark.seal.fill")
                         .foregroundStyle(.green)

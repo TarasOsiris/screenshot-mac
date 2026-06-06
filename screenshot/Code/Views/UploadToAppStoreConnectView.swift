@@ -9,6 +9,9 @@ import SwiftUI
 struct UploadToAppStoreConnectView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) var state
+    #if os(iOS)
+    @Environment(AppNavigationRouter.self) var router
+    #endif
 
     @State var step: Step = .pickingApp
     #if os(iOS)

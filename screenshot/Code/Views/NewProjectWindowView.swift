@@ -7,7 +7,7 @@ struct NewProjectWindowView: View {
     @Environment(StoreService.self) private var store
     @Environment(\.dismiss) private var dismiss
 
-    private let templateGridSpacing: CGFloat = 12
+    private let templateGridSpacing: CGFloat = 8
     private let templateGridHorizontalPadding: CGFloat = 8
 
     @State private var projectName = ""
@@ -152,7 +152,7 @@ struct NewProjectWindowView: View {
     }
 
     private var templateGridColumns: [GridItem] {
-        [GridItem(.adaptive(minimum: 130, maximum: 200), spacing: templateGridSpacing)]
+        [GridItem(.adaptive(minimum: 230, maximum: 320), spacing: templateGridSpacing)]
     }
 
     private func prepareInitialState() {

@@ -10,11 +10,17 @@ import SwiftUI
 struct iPadRootView: View {
     @Environment(AppState.self) private var state
     @Environment(StoreService.self) private var store
+    @Environment(AppNavigationRouter.self) private var router
     @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
     @State private var openedProjectId: UUID?
 
     var body: some View {
-        tabView
+        @Bindable var router = router
+
+        tabView(
+            selectedTab: $router.selectedTab,
+            settingsPath: $router.settingsPath
+        )
         // If the active project changes underneath an open editor (e.g. an iCloud reload
         // dropped or replaced it), pop back to Projects instead of silently showing a
         // different project than the one the user opened.
@@ -46,9 +52,12 @@ struct iPadRootView: View {
         )
     }
 
-    private var tabView: some View {
-        TabView {
-            Tab("Projects", systemImage: "square.grid.2x2") {
+    private func tabView(
+        selectedTab: Binding<iPadRootTab>,
+        settingsPath: Binding<[iPadSettingsDestination]>
+    ) -> some View {
+        TabView(selection: selectedTab) {
+            Tab("Projects", systemImage: "square.grid.2x2", value: iPadRootTab.projects) {
                 NavigationStack {
                     ProjectsView(onOpen: openProject)
                         .navigationDestination(isPresented: openedBinding) {
@@ -62,9 +71,17 @@ struct iPadRootView: View {
                 }
             }
 
-            Tab("Settings", systemImage: "gearshape") {
-                NavigationStack {
+            Tab("Settings", systemImage: "gearshape", value: iPadRootTab.settings) {
+                NavigationStack(path: settingsPath) {
                     IPadSettingsView()
+                        .navigationDestination(for: iPadSettingsDestination.self) { destination in
+                            switch destination {
+                            case .appStoreConnect:
+                                AppStoreConnectSettingsView()
+                                    .navigationTitle("App Store Connect")
+                                    .navigationBarTitleDisplayMode(.inline)
+                            }
+                        }
                 }
             }
         }

@@ -158,7 +158,7 @@ struct NewProjectTemplateSection: View {
         } footer: {
             #if DEBUG
             if !templates.isEmpty {
-                Text("Badged templates are included in non-debug builds.")
+                Text("Outlined templates are included in non-debug builds.")
             }
             #endif
         }
@@ -207,14 +207,11 @@ private struct NewProjectNoTemplatesView: View {
 private struct NewProjectReleaseTemplateLegend: View {
     var body: some View {
         HStack(spacing: 8) {
-            Text("Release")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(Color.green)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 4)
-                .background(Color.green.opacity(0.12), in: Capsule())
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .strokeBorder(Color.green.opacity(0.55), lineWidth: 2)
+                .frame(width: 18, height: 14)
 
-            Text("Badged templates are included in non-debug builds.")
+            Text("Outlined templates are included in non-debug builds.")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }
@@ -585,40 +582,26 @@ private struct TemplateSelectionCard: View {
         isSelected ? 2 : 1
     }
 
+    private var previewAspectRatio: CGFloat {
+        guard let size = template.previewImage?.size, size.height > 0 else { return 266.0 / 144.0 }
+        return size.width / size.height
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ZStack(alignment: .topTrailing) {
-                Color.secondary.opacity(0.12)
-                    .frame(height: 72)
-                    .overlay {
-                        if let previewImage = template.previewImage {
-                            Image(nsImage: previewImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } else {
-                            Image(systemName: "photo")
-                                .foregroundStyle(.secondary)
-                        }
+            Color.secondary.opacity(0.12)
+                .aspectRatio(previewAspectRatio, contentMode: .fit)
+                .overlay {
+                    if let previewImage = template.previewImage {
+                        Image(nsImage: previewImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        Image(systemName: "photo")
+                            .foregroundStyle(.secondary)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-
-                #if DEBUG
-                if template.isIncludedInReleaseBuild {
-                    Text("Release")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(Color.green)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 4)
-                        .background(.regularMaterial, in: Capsule())
-                        .overlay {
-                            Capsule()
-                                .strokeBorder(Color.green.opacity(0.3), lineWidth: 1)
-                        }
-                        .padding(6)
                 }
-                #endif
-
-            }
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             Text(template.name)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.primary)
