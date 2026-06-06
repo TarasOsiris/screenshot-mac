@@ -219,7 +219,6 @@ extension ContentView {
         .disabled(state.activeProjectId == nil)
         .help("Project actions")
         .accessibilityIdentifier("iPadProjectTitleMenu")
-        .iPadToolbarSecondaryStyle()
     }
 
     @ViewBuilder
@@ -274,7 +273,6 @@ extension ContentView {
             }
         }
         .help("Zoom options")
-        .iPadToolbarSecondaryStyle()
     }
 
     var iPadUndoButton: some View {
@@ -285,7 +283,6 @@ extension ContentView {
         }
         .disabled(!(undoManager?.canUndo ?? false))
         .help("Undo")
-        .iPadToolbarSecondaryStyle()
     }
 
     var iPadRedoButton: some View {
@@ -296,25 +293,11 @@ extension ContentView {
         }
         .disabled(!(undoManager?.canRedo ?? false))
         .help("Redo")
-        .iPadToolbarSecondaryStyle()
     }
     #endif
 }
 
 extension View {
-    @ViewBuilder
-    func iPadToolbarSecondaryStyle() -> some View {
-        #if os(iOS)
-        if #available(iOS 26.0, *) {
-            buttonStyle(.glass)
-        } else {
-            self
-        }
-        #else
-        self
-        #endif
-    }
-
     @ViewBuilder
     func iPadToolbarProminentStyle() -> some View {
         #if os(iOS)

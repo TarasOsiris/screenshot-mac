@@ -360,7 +360,6 @@ struct LocaleToolbarButton: View {
             localeLabel
         }
         .help("Language options")
-        .iPadToolbarSecondaryStyle()
         .coachPopover(step: .locale, state: state, arrowEdge: .top)
     }
 

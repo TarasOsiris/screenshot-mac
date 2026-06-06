@@ -342,6 +342,9 @@ struct IPadSettingsView: View {
 
     private func proFeatureRow(_ text: LocalizedStringKey) -> some View {
         Label(text, systemImage: "checkmark")
+            // Span the row separator full-width instead of letting iOS indent it past the
+            // checkmark icon, which left ragged half-width lines between the feature rows.
+            .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
     }
 
     private func comparisonRow(title: LocalizedStringKey, freeValue: String, proValue: String) -> some View {

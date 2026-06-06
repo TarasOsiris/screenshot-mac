@@ -312,7 +312,6 @@ struct ContentView: View {
             }
             ToolbarItem(id: "iPadInspector", placement: .primaryAction) {
                 inspectorToggleButton
-                    .iPadToolbarSecondaryStyle()
             }
             ToolbarItem(id: "iPadExport", placement: .primaryAction) {
                 iPadExportControl
