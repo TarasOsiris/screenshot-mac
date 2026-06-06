@@ -9,29 +9,43 @@ struct TranslationOverviewSheet: View {
     @Environment(\.dismiss) private var dismiss
     #endif
     @State private var cellTranslationConfig: TranslationSession.Configuration?
-    @State private var pendingCellTranslation: PendingCellTranslation?
+    // Serial queue: concurrent taps enqueue; one cell translates at a time because the
+    // session config holds a single language pair and refreshing it cancels the running task.
+    @State private var cellTranslationQueue: [PendingCellTranslation] = []
+    @State private var isProcessingCellTranslation = false
     private let baseColumnWidth: CGFloat = 320
     private let translationColumnWidth: CGFloat = 260
     private let columnPadding: CGFloat = 12
 
     var body: some View {
         platformContent
+            .onAppear {
+                // Any in-flight task died with the previous appearance; drop its stale state.
+                cellTranslationQueue.removeAll()
+                isProcessingCellTranslation = false
+            }
             .translationTask(cellTranslationConfig) { session in
-                guard let pendingCellTranslation else { return }
-                defer { self.pendingCellTranslation = nil }
+                guard let item = cellTranslationQueue.first else {
+                    isProcessingCellTranslation = false
+                    return
+                }
                 do {
-                    let translatedText = try await translatePreservingLineBreaks(pendingCellTranslation.baseText) { text in
+                    let translatedText = try await translatePreservingLineBreaks(item.baseText) { text in
                         let response = try await session.translate(text)
                         return response.targetText
                     }
                     state.updateTranslationText(
-                        shapeId: pendingCellTranslation.shapeId,
-                        localeCode: pendingCellTranslation.localeCode,
+                        shapeId: item.shapeId,
+                        localeCode: item.localeCode,
                         text: translatedText
                     )
                 } catch {
-                    AppLogger.translation.error("Translation failed for shape \(pendingCellTranslation.shapeId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                    AppLogger.translation.error("Translation failed for shape \(item.shapeId, privacy: .public): \(error.localizedDescription, privacy: .public)")
                 }
+                // Dequeue by identity, not position — survives any cancel/re-fire interleaving.
+                cellTranslationQueue.removeAll { $0.shapeId == item.shapeId && $0.localeCode == item.localeCode }
+                isProcessingCellTranslation = false
+                processNextCellTranslationIfIdle()
             }
     }
 
@@ -154,50 +168,39 @@ struct TranslationOverviewSheet: View {
         let hasOverride = state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text != nil
         let translating = isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code)
 
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(locale.flagLabel)
                     .font(.subheadline.weight(.semibold))
-                Spacer()
-                if translating {
-                    ProgressView()
-                        .controlSize(.mini)
-                } else {
-                    Button {
-                        startCellTranslation(
-                            shapeId: item.shape.id,
-                            localeCode: locale.code,
-                            baseText: baseText
-                        )
-                    } label: {
-                        Image(systemName: "globe")
-                    }
-                    .buttonStyle(.borderless)
-                    .disabled(baseText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .accessibilityLabel("Translate to \(locale.flagLabel)")
-                }
-            }
 
-            BufferedTranslationField(
-                placeholder: String(localized: "Same as base language"),
-                text: Binding(
-                    get: {
-                        state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text ?? ""
-                    },
-                    set: { newValue in
-                        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if trimmed.isEmpty {
-                            state.resetTranslationText(shapeId: item.shape.id, localeCode: locale.code)
-                        } else {
-                            state.updateTranslationText(
-                                shapeId: item.shape.id,
-                                localeCode: locale.code,
-                                text: newValue
-                            )
-                        }
-                    }
+                BufferedTranslationField(
+                    placeholder: String(localized: "Same as base language"),
+                    text: translationTextBinding(shapeId: item.shape.id, localeCode: locale.code)
                 )
-            )
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                startCellTranslation(
+                    shapeId: item.shape.id,
+                    localeCode: locale.code,
+                    baseText: baseText
+                )
+            } label: {
+                Group {
+                    if translating {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Label("Translate", systemImage: "translate")
+                    }
+                }
+                .frame(minHeight: UIMetrics.CapsuleButton.minContentHeight)
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .disabled(translating || isUntranslated(baseText))
+            .accessibilityLabel("Translate to \(locale.flagLabel)")
         }
         .padding(.vertical, 4)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -269,23 +272,7 @@ struct TranslationOverviewSheet: View {
                     TranslationMatrixCell(
                         locale: locale,
                         baseText: item.shape.text ?? "",
-                        text: Binding(
-                            get: {
-                                state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text ?? ""
-                            },
-                            set: { newValue in
-                                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                                if trimmed.isEmpty {
-                                    state.resetTranslationText(shapeId: item.shape.id, localeCode: locale.code)
-                                } else {
-                                    state.updateTranslationText(
-                                        shapeId: item.shape.id,
-                                        localeCode: locale.code,
-                                        text: newValue
-                                    )
-                                }
-                            }
-                        ),
+                        text: translationTextBinding(shapeId: item.shape.id, localeCode: locale.code),
                         columnPadding: columnPadding,
                         isTranslating: isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code),
                         canReset: state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text != nil,
@@ -332,22 +319,49 @@ struct TranslationOverviewSheet: View {
     }
     #endif
 
+    /// Override text for one cell; setting a blank value resets to the base language.
+    private func translationTextBinding(shapeId: UUID, localeCode: String) -> Binding<String> {
+        Binding(
+            get: {
+                state.localeState.override(forCode: localeCode, shapeId: shapeId)?.text ?? ""
+            },
+            set: { newValue in
+                if isUntranslated(newValue) {
+                    state.resetTranslationText(shapeId: shapeId, localeCode: localeCode)
+                } else {
+                    state.updateTranslationText(
+                        shapeId: shapeId,
+                        localeCode: localeCode,
+                        text: newValue
+                    )
+                }
+            }
+        )
+    }
+
     private func startCellTranslation(shapeId: UUID, localeCode: String, baseText: String) {
         let trimmed = baseText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        pendingCellTranslation = PendingCellTranslation(
+        guard !cellTranslationQueue.contains(where: { $0.shapeId == shapeId && $0.localeCode == localeCode }) else { return }
+        cellTranslationQueue.append(PendingCellTranslation(
             shapeId: shapeId,
             localeCode: localeCode,
             baseText: trimmed
-        )
+        ))
+        processNextCellTranslationIfIdle()
+    }
+
+    private func processNextCellTranslationIfIdle() {
+        guard !isProcessingCellTranslation, let next = cellTranslationQueue.first else { return }
+        isProcessingCellTranslation = true
         cellTranslationConfig.refresh(
             source: state.localeState.baseLocaleCode,
-            target: localeCode
+            target: next.localeCode
         )
     }
 
     private func isPendingTranslation(shapeId: UUID, localeCode: String) -> Bool {
-        pendingCellTranslation?.shapeId == shapeId && pendingCellTranslation?.localeCode == localeCode
+        cellTranslationQueue.contains { $0.shapeId == shapeId && $0.localeCode == localeCode }
     }
 }
 
@@ -523,7 +537,7 @@ private struct BufferedTranslationField: View {
 }
 #endif
 
-private struct PendingCellTranslation: Equatable {
+private struct PendingCellTranslation {
     let shapeId: UUID
     let localeCode: String
     let baseText: String

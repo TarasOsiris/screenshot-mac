@@ -10,12 +10,19 @@ struct ManageLocalesSheet: View {
     @State private var showPresets = false
 
     var body: some View {
+        platformContent
+            .iosSheetChrome(Text(Self.title))
+            .sheet(isPresented: $showPresets) {
+                LocalePresetsSheet(state: state, searchText: $searchText)
+            }
+    }
+
+    #if os(macOS)
+    private var platformContent: some View {
         VStack(spacing: 0) {
             VStack(spacing: 4) {
-                #if os(macOS)
                 Text(Self.title)
                     .font(.headline)
-                #endif
                 Text("The first language is the base. Drag to reorder.")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
@@ -40,18 +47,18 @@ struct ManageLocalesSheet: View {
                         if isBase {
                             Text("Base")
                                 .font(.system(size: 10, weight: .medium))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.accentColor.opacity(0.12), in: Capsule())
+                                .padding(.horizontal, UIMetrics.StatusBadge.horizontalPadding)
+                                .padding(.vertical, UIMetrics.StatusBadge.verticalPadding)
+                                .background(Color.accentColor.opacity(UIMetrics.Opacity.accentBadge), in: Capsule())
                                 .foregroundStyle(Color.accentColor)
                         } else {
                             if progress.total > 0 {
                                 let statusColor: Color = progress.translated >= progress.total ? .green : .orange
                                 Text("\(progress.translated)/\(progress.total)")
                                     .font(.system(size: 10, weight: .medium, design: .monospaced))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(statusColor.opacity(0.12), in: Capsule())
+                                    .padding(.horizontal, UIMetrics.StatusBadge.horizontalPadding)
+                                    .padding(.vertical, UIMetrics.StatusBadge.verticalPadding)
+                                    .background(statusColor.opacity(UIMetrics.Opacity.accentBadge), in: Capsule())
                                     .foregroundStyle(statusColor)
                             }
                             Button(role: .destructive) {
@@ -71,11 +78,7 @@ struct ManageLocalesSheet: View {
                     state.moveLocale(from: source, to: destination)
                 }
             }
-            #if os(macOS)
             .listStyle(.inset(alternatesRowBackgrounds: true))
-            #else
-            .listStyle(.inset)
-            #endif
 
             Divider()
 
@@ -87,22 +90,82 @@ struct ManageLocalesSheet: View {
                 }
                 .buttonStyle(.borderless)
                 Spacer()
-                #if os(macOS)
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.defaultAction)
-                #endif
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        #if os(macOS)
         .frame(width: 380, height: 340)
-        #endif
-        .iosSheetChrome(Text(Self.title))
-        .sheet(isPresented: $showPresets) {
-            LocalePresetsSheet(state: state, searchText: $searchText)
+    }
+    #else
+    // iPad: native inset-grouped manage list (Settings ▸ Preferred Languages pattern) —
+    // swipe or Edit mode to delete, drag to reorder, "Add Language" as a tappable row.
+    private var platformContent: some View {
+        List {
+            Section {
+                ForEach(state.localeState.locales) { locale in
+                    iosLocaleRow(locale)
+                }
+                .onMove { source, destination in
+                    state.moveLocale(from: source, to: destination)
+                }
+                .onDelete { offsets in
+                    let codes = offsets.map { state.localeState.locales[$0].code }
+                    codes.forEach { state.removeLocale($0) }
+                }
+
+                Button {
+                    searchText = ""
+                    showPresets = true
+                } label: {
+                    Label("Add Language", systemImage: "plus")
+                }
+            } footer: {
+                Text("The first language is the base. Drag to reorder.")
+            }
+        }
+        .listStyle(.insetGrouped)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                EditButton()
+            }
         }
     }
+
+    @ViewBuilder
+    private func iosLocaleRow(_ locale: LocaleDefinition) -> some View {
+        let isBase = locale.code == state.localeState.baseLocaleCode
+        let progress = state.translationProgress(for: locale.code)
+
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(locale.flagLabel)
+                Text(locale.code.uppercased())
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if isBase {
+                Text("Base")
+                    .font(.caption.weight(.medium))
+                    .padding(.horizontal, UIMetrics.StatusBadge.horizontalPadding)
+                    .padding(.vertical, UIMetrics.StatusBadge.verticalPadding)
+                    .background(Color.accentColor.opacity(UIMetrics.Opacity.accentBadge), in: Capsule())
+                    .foregroundStyle(Color.accentColor)
+            } else if progress.total > 0 {
+                let statusColor: Color = progress.translated >= progress.total ? .green : .orange
+                Text("\(progress.translated)/\(progress.total)")
+                    .font(.caption.weight(.medium).monospaced())
+                    .padding(.horizontal, UIMetrics.StatusBadge.horizontalPadding)
+                    .padding(.vertical, UIMetrics.StatusBadge.verticalPadding)
+                    .background(statusColor.opacity(UIMetrics.Opacity.accentBadge), in: Capsule())
+                    .foregroundStyle(statusColor)
+            }
+        }
+        .deleteDisabled(isBase)
+    }
+    #endif
 }
 
 private struct LocalePresetsSheet: View {
@@ -124,13 +187,17 @@ private struct LocalePresetsSheet: View {
     }
 
     var body: some View {
+        platformContent
+            .iosSheetChrome(Text(Self.title))
+    }
+
+    #if os(macOS)
+    private var platformContent: some View {
         VStack(spacing: 0) {
-            #if os(macOS)
             Text(Self.title)
                 .font(.headline)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-            #endif
 
             TextField("Search languages...", text: $searchText)
                 .textFieldStyle(.roundedBorder)
@@ -154,7 +221,6 @@ private struct LocalePresetsSheet: View {
                 }
             }
 
-            #if os(macOS)
             Divider()
 
             HStack {
@@ -164,11 +230,41 @@ private struct LocalePresetsSheet: View {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
-            #endif
         }
-        #if os(macOS)
         .frame(width: 340, height: 400)
-        #endif
-        .iosSheetChrome(Text(Self.title))
     }
+    #else
+    // iPad: tap a row to add it (it leaves the list as feedback); search lives in the nav bar.
+    private var platformContent: some View {
+        List {
+            ForEach(availablePresets) { locale in
+                Button {
+                    state.addLocale(locale)
+                } label: {
+                    HStack(spacing: 12) {
+                        Text(locale.flagLabel)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text(locale.code.uppercased())
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .searchable(
+            text: $searchText,
+            placement: .navigationBarDrawer(displayMode: .always),
+            prompt: Text("Search languages...")
+        )
+        .overlay {
+            if availablePresets.isEmpty && !searchText.isEmpty {
+                ContentUnavailableView.search(text: searchText)
+            }
+        }
+    }
+    #endif
 }

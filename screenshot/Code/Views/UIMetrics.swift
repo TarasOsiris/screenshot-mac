@@ -135,6 +135,22 @@ enum UIMetrics {
         #endif
     }
 
+    /// Capsule status badges in locale lists (Base tag, translation progress).
+    enum StatusBadge {
+        #if os(macOS)
+        static let horizontalPadding: CGFloat = 6
+        static let verticalPadding: CGFloat = 2
+        #else
+        static let horizontalPadding: CGFloat = 8
+        static let verticalPadding: CGFloat = 3
+        #endif
+    }
+
+    /// Bordered capsule action buttons inside list rows (e.g. per-language Translate).
+    enum CapsuleButton {
+        static let minContentHeight: CGFloat = 28
+    }
+
     enum GradientEditor {
         #if os(macOS)
         static let stopHandleSize: CGFloat = 14
