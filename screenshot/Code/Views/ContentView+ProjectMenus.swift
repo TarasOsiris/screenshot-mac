@@ -221,40 +221,6 @@ extension ContentView {
         .iPadToolbarSecondaryStyle()
     }
 
-    var iPadLeadingToolbarControls: some View {
-        iPadGlassToolbarContainer {
-            HStack(spacing: 4) {
-                iPadUndoButton
-                iPadRedoButton
-                LocaleToolbarButton(state: state)
-            }
-        }
-    }
-
-    var iPadTrailingToolbarControls: some View {
-        iPadGlassToolbarContainer {
-            HStack(spacing: 8) {
-                iPadZoomMenu
-                inspectorToggleButton
-                    .iPadToolbarSecondaryStyle()
-                iPadExportControl
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func iPadGlassToolbarContainer<Content: View>(
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: 8) {
-                content()
-            }
-        } else {
-            content()
-        }
-    }
-
     @ViewBuilder
     var iPadZoomMenu: some View {
         let presets: [CGFloat] = [0.5, 0.75, 1.0, 1.5, 2.0]

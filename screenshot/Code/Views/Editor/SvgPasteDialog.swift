@@ -58,10 +58,12 @@ struct SvgPasteDialog: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxHeight: 100)
+                    .padding(12)
                     .background(
                         CheckerboardPattern()
                             .foregroundStyle(Color.secondary.opacity(0.15))
                     )
+                    .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
             }
 
             if let errorMessage {

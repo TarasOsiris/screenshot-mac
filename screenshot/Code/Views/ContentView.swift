@@ -296,12 +296,25 @@ struct ContentView: View {
                 iPadProjectTitleMenu
             }
 
-            ToolbarItem(id: "iPadLeadingControls", placement: .navigation) {
-                iPadLeadingToolbarControls
+            ToolbarItem(id: "iPadUndo", placement: .navigation) {
+                iPadUndoButton
+            }
+            ToolbarItem(id: "iPadRedo", placement: .navigation) {
+                iPadRedoButton
+            }
+            ToolbarItem(id: "iPadLocale", placement: .navigation) {
+                LocaleToolbarButton(state: state)
             }
 
-            ToolbarItem(id: "iPadTrailingControls", placement: .primaryAction) {
-                iPadTrailingToolbarControls
+            ToolbarItem(id: "iPadZoom", placement: .primaryAction) {
+                iPadZoomMenu
+            }
+            ToolbarItem(id: "iPadInspector", placement: .primaryAction) {
+                inspectorToggleButton
+                    .iPadToolbarSecondaryStyle()
+            }
+            ToolbarItem(id: "iPadExport", placement: .primaryAction) {
+                iPadExportControl
             }
             #endif
 
