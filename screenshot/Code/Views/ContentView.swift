@@ -39,7 +39,7 @@ struct ContentView: View {
     @AppStorage("reviewLastPromptedVersion") var reviewLastPromptedVersion = ""
     @AppStorage("reviewFirstExportDate") var reviewFirstExportDate: Double = 0
     @AppStorage("reviewLastPromptDate") var reviewLastPromptDate: Double = 0
-    @State var isInspectorPresented = true
+    @AppStorage("inspectorPresented") var isInspectorPresented = true
     @State var isExporting = false
     @State var exportSuccess = false
     @State var exportSuccessTimer: DispatchWorkItem?

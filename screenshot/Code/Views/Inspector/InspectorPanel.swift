@@ -2,14 +2,14 @@ import SwiftUI
 
 struct InspectorPanel: View {
     @Bindable var state: AppState
-    @State private var isSizeExpanded = true
+    @AppStorage("inspectorSizeExpanded") private var isSizeExpanded = true
+    @AppStorage("inspectorBackgroundExpanded") private var isBackgroundExpanded = true
+    @AppStorage("inspectorShapesExpanded") private var isAddElementExpanded = true
+    @AppStorage("inspectorDeviceExpanded") private var isDeviceExpanded = true
+    @AppStorage("inspectorVisibilityExpanded") private var isVisibilityExpanded = true
     @State private var useCustomSize = false
     @State private var customWidth: String = ""
     @State private var customHeight: String = ""
-    @State private var isBackgroundExpanded = true
-    @State private var isAddElementExpanded = true
-    @State private var isDeviceExpanded = true
-    @State private var isVisibilityExpanded = true
 
     var body: some View {
         if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId {
@@ -25,7 +25,7 @@ struct InspectorPanel: View {
                     } header: {
                         Text("Shapes")
                     }
-                    optionsSection(rowId: rowId)
+                    visibilitySection(rowId: rowId)
                 }
                 .formStyle(.grouped)
                 .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
@@ -317,9 +317,18 @@ struct InspectorPanel: View {
     }
 
     @ViewBuilder
-    private func optionsSection(rowId: UUID) -> some View {
+    private func visibilitySection(rowId: UUID) -> some View {
         Section(isExpanded: $isVisibilityExpanded) {
             #if os(macOS)
+            HStack(spacing: 6) {
+                Button("Show All") { setVisibility(rowId: rowId, visible: true) }
+                Button("Hide All") { setVisibility(rowId: rowId, visible: false) }
+                Spacer()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .font(.system(size: UIMetrics.FontSize.body))
+
             // macOS packs checkbox toggles into two compact columns.
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 4) {
                 visibilityToggles(rowId: rowId)
@@ -328,24 +337,21 @@ struct InspectorPanel: View {
             .font(.system(size: UIMetrics.FontSize.body))
             .controlSize(.small)
             #else
+            // iPad needs comfortable touch targets — full-width buttons at regular size.
+            HStack(spacing: 12) {
+                Button("Show All") { setVisibility(rowId: rowId, visible: true) }
+                    .frame(maxWidth: .infinity)
+                Button("Hide All") { setVisibility(rowId: rowId, visible: false) }
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+
             // iPad renders each toggle as a native full-width Form row (label + switch).
             visibilityToggles(rowId: rowId)
             #endif
         } header: {
-            HStack(spacing: 4) {
-                Text("Visibility")
-                Spacer()
-                visibilityHeaderButton("Show All") { setVisibility(rowId: rowId, visible: true) }
-                visibilityHeaderButton("Hide All") { setVisibility(rowId: rowId, visible: false) }
-            }
+            Text("Visibility")
         }
-    }
-
-    private func visibilityHeaderButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
-        Button(title, action: action)
-            .buttonStyle(.plain)
-            .font(.system(size: UIMetrics.FontSize.inlineLabel))
-            .foregroundStyle(.secondary)
     }
 
     private func setVisibility(rowId: UUID, visible: Bool) {

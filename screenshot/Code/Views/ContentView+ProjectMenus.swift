@@ -196,6 +196,7 @@ extension ContentView {
             Label("Inspector", systemImage: "sidebar.trailing")
         }
         .help(isInspectorPresented ? String(localized: "Hide inspector") : String(localized: "Show inspector"))
+        .keyboardShortcut("i", modifiers: [.command, .option])
     }
 
     #if os(iOS)
