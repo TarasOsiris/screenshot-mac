@@ -73,6 +73,14 @@ extension AppState {
             return
         }
 
+        #if os(macOS)
+        // Synchronous write-before-read: the detached write below can lose a race with a
+        // quick switch-back (stale read of the old project) and is dropped on immediate
+        // quit. macOS has no push animation to keep smooth, so save inline.
+        saveCurrentProject()
+        switchToProject(id)
+        saveIndex()
+        #else
         // Snapshot + write the OLD project off-main while activeProjectId still points at
         // it (and before switchToProject sets projectOpenTask), then switch. switchToProject
         // sets the opening flag. saveIndexAsync runs AFTER the switch so the index persists
@@ -81,6 +89,7 @@ extension AppState {
         saveCurrentProjectAsync()
         switchToProject(id)
         saveIndexAsync()
+        #endif
     }
 
     func switchToProject(_ id: UUID) {

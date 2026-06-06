@@ -154,6 +154,9 @@ extension AppState {
             PersistenceService.loadProject(activeId)
         }.value
         if Task.isCancelled { return }
+        // The blocking iCloud read above can outlive a project switch — applying the old
+        // project's rows now would let the next save write them into the new project's file.
+        guard activeProjectId == activeId else { return }
 
         if let localModified = activeProjectDataModifiedAt {
             // Only reload if the on-disk version is newer than our in-memory version.
