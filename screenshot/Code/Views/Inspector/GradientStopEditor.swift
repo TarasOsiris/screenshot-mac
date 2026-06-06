@@ -74,7 +74,7 @@ struct GradientStopEditor: View {
                         supportsOpacity: false
                     )
                     .labelsHidden()
-                    .frame(width: UIMetrics.ColorSwatch.inline, height: UIMetrics.ColorSwatch.inline)
+                    .iPadColorSwatchFrame()
                     .simultaneousGesture(TapGesture().onEnded { focusEditor() })
 
                     Text("\(selectedLocationPercent(for: selectedId))%")
@@ -306,6 +306,16 @@ private extension View {
         buttonStyle(.bordered)
             .buttonBorderShape(.circle)
             .controlSize(.small)
+        #endif
+    }
+
+    /// Enlarges the inline ColorPicker to the iPad touch target; macOS keeps the native well size.
+    @ViewBuilder
+    func iPadColorSwatchFrame() -> some View {
+        #if os(macOS)
+        self
+        #else
+        frame(width: UIMetrics.ColorSwatch.inline, height: UIMetrics.ColorSwatch.inline)
         #endif
     }
 }

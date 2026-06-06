@@ -37,7 +37,7 @@ struct BackgroundEditor: View {
                 Spacer()
                 ColorPicker("", selection: $bgColor.onSet { onChanged() }, supportsOpacity: false)
                     .labelsHidden()
-                    .frame(width: UIMetrics.ColorSwatch.inline, height: UIMetrics.ColorSwatch.inline)
+                    .iPadColorSwatchFrame()
                     .fixedSize()
             }
             .font(.system(size: UIMetrics.FontSize.body))
@@ -503,6 +503,16 @@ private extension View {
         padding(.horizontal, 10)
             .frame(minHeight: 40)
             .contentShape(Rectangle())
+        #endif
+    }
+
+    /// Enlarges the inline ColorPicker to the iPad touch target; macOS keeps the native well size.
+    @ViewBuilder
+    func iPadColorSwatchFrame() -> some View {
+        #if os(macOS)
+        self
+        #else
+        frame(width: UIMetrics.ColorSwatch.inline, height: UIMetrics.ColorSwatch.inline)
         #endif
     }
 }
