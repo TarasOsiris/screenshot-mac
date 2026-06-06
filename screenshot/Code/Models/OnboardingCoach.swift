@@ -28,6 +28,10 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
     case shapes
     case locale
     case export
+    // Get Pro only exists in the macOS toolbar, so this step is macOS-only.
+    #if os(macOS)
+    case pro
+    #endif
 
     var id: Int { rawValue }
 
@@ -38,6 +42,9 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
         case .shapes: "Add text & shapes"
         case .locale: "Localize your screenshots"
         case .export: "Export when ready"
+        #if os(macOS)
+        case .pro: "Unlock everything with Pro"
+        #endif
         }
     }
 
@@ -61,6 +68,10 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
             #endif
         case .export:
             "Export every row in every language as PNG or JPEG, ready to upload to App Store Connect or Google Play."
+        #if os(macOS)
+        case .pro:
+            "Free covers one project. Upgrade here anytime to unlock unlimited projects, rows, and templates."
+        #endif
         }
     }
 
@@ -71,6 +82,9 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
         case .shapes: "plus.rectangle.on.rectangle"
         case .locale: "globe"
         case .export: "square.and.arrow.up"
+        #if os(macOS)
+        case .pro: "crown"
+        #endif
         }
     }
 
@@ -81,6 +95,9 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
         case .shapes: .purple
         case .locale: .teal
         case .export: .green
+        #if os(macOS)
+        case .pro: .yellow
+        #endif
         }
     }
 

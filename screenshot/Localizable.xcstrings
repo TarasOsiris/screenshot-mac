@@ -24047,6 +24047,9 @@
         }
       }
     },
+    "Free covers one project. Upgrade here anytime to unlock unlimited projects, rows, and templates." : {
+
+    },
     "Free SVG shapes bundled as presets in the SVG picker" : {
       "localizations" : {
         "de" : {
@@ -49795,6 +49798,9 @@
           }
         }
       }
+    },
+    "Unlock everything with Pro" : {
+
     },
     "Unlock Pro" : {
       "localizations" : {

@@ -280,6 +280,7 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .help("Unlock all projects, rows, and templates")
+                    .coachPopover(step: .pro, state: state, arrowEdge: .top)
                 }
             }
 
@@ -320,6 +321,9 @@ struct ContentView: View {
 
         }
         .toolbarRole(.editor)
+        .onChange(of: store.isProUnlocked, initial: true) { _, isUnlocked in
+            state.coachProStepAvailable = !isUnlocked
+        }
         #if os(iOS)
         // Without inline mode iPadOS reserves a large-title header, leaving a blank
         // band between the nav bar and the editor content.

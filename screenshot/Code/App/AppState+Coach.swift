@@ -23,6 +23,13 @@ extension AppState {
             endCoach()
             return
         }
+        #if os(macOS)
+        // The Pro step anchors on the Get Pro button, which is gone once Pro is unlocked.
+        if next == .pro, !coachProStepAvailable {
+            endCoach()
+            return
+        }
+        #endif
         // The inspector and shapes steps anchor on row-scoped UI, which only
         // renders when a row is selected.
         if next == .inspector || next == .shapes {
