@@ -165,6 +165,7 @@ extension ContentView {
         projectSwitcherSection
     }
 
+    #if os(macOS)
     var projectActionsToolbarMenu: some View {
         Menu {
             Button("New Project...", systemImage: "plus") {
@@ -188,6 +189,7 @@ extension ContentView {
         .help("Project actions")
         .accessibilityIdentifier("projectActionsMenu")
     }
+    #endif
 
     var inspectorToggleButton: some View {
         Button {

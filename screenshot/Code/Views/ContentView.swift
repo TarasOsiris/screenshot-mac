@@ -25,7 +25,10 @@ struct ContentView: View {
     #if os(iOS)
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif
+    // macOS-only: see AppRootView — \.openWindow must not be read on iPadOS.
+    #if os(macOS)
     @Environment(\.openWindow) var openWindow
+    #endif
     @Environment(\.undoManager) var undoManager
     @Environment(\.requestReview) var requestReview
     @AppStorage("exportFormat") var exportFormat = "png"
@@ -50,7 +53,8 @@ struct ContentView: View {
     @State var isDeletingProject = false
     @State var isResettingProject = false
     @State var resetTemplate: ProjectTemplate?
-    @State var projectTemplates: [ProjectTemplate] = TemplateService.availableTemplates()
+    // Loaded in `.task`: an init-time scan re-ran on every ancestor body re-eval only to be discarded.
+    @State var projectTemplates: [ProjectTemplate] = []
     #if os(macOS)
     @State var gestureZoomStartLevel: CGFloat?
     #endif
@@ -414,6 +418,9 @@ struct ContentView: View {
         }
         #endif
         .middleMousePan()
+        .task {
+            projectTemplates = TemplateService.availableTemplates()
+        }
         .onAppear {
             state.undoManager = undoManager
             undoManager?.levelsOfUndo = 50

@@ -34,7 +34,17 @@ enum TemplateService {
             .appendingPathComponent(sharedFontsSubpath, isDirectory: true)
     }
 
+    private static var cachedTemplates: [ProjectTemplate]?
+
+    /// Bundle.main is immutable per launch — scan once, reuse for every caller.
     static func availableTemplates() -> [ProjectTemplate] {
+        if let cachedTemplates { return cachedTemplates }
+        let templates = loadAvailableTemplates()
+        cachedTemplates = templates
+        return templates
+    }
+
+    private static func loadAvailableTemplates() -> [ProjectTemplate] {
         guard let bundleURL = Bundle.main.url(forResource: "Templates", withExtension: "bundle") else {
             return []
         }
