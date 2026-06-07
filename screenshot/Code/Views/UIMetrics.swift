@@ -112,6 +112,14 @@ enum UIMetrics {
         static var subtle: Color { Color.primary.opacity(Opacity.hairlineOverlay) }
     }
 
+    /// Read-only row preview ("App Store" tiles).
+    enum Preview {
+        /// Gap between template tiles at zoom 1.0; render sites scale it by zoom.
+        /// Shared by `RowPreviewView`, its loading placeholder, and `RowContextMenuPreview`
+        /// so their layouts stay in sync.
+        static let tileGap: CGFloat = 12
+    }
+
     /// Onboarding coach-mark popover card. Desktop-dense on macOS; iPad gets a
     /// wider card with larger type and touch-sized controls.
     enum Coach {
@@ -137,10 +145,6 @@ enum UIMetrics {
         static let dotActiveWidth: CGFloat = 22
         static let closeIconSize: CGFloat = 13
         static let closeButtonSize: CGFloat = 30
-        /// Where the shapes coach mark points on the inspector Form: the "Shapes"
-        /// section label, which the pre-scroll (InspectorPanel) places just above
-        /// the inspector's vertical center at the leading edge.
-        static let shapesAnchorPoint = UnitPoint(x: 0.1, y: 0.35)
         #endif
     }
 

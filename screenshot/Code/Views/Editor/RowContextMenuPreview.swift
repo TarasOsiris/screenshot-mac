@@ -7,7 +7,7 @@ struct RowContextMenuPreview: View {
 
     let maxPreviewWidth: CGFloat = 360
     let maxPreviewHeight: CGFloat = 240
-    let tileGap: CGFloat = 12
+    let tileGap = UIMetrics.Preview.tileGap
 
     var baseWidth: CGFloat {
         let count = CGFloat(row.templates.count)

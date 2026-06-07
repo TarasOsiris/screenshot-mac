@@ -97,7 +97,7 @@ extension EditorRowView {
     @ViewBuilder
     var modeLoadingPlaceholder: some View {
         let n = CGFloat(row.templates.count)
-        let tileGap: CGFloat = 12
+        let tileGap = UIMetrics.Preview.tileGap
         // Match whichever mode we're about to render so layout doesn't jump.
         let baseWidth = isPreviewMode
             ? row.displayWidth(zoom: 1.0) * n + tileGap * max(0, n - 1)

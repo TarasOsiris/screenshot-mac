@@ -9,15 +9,18 @@ struct RowPreviewView: View {
     let row: ScreenshotRow
     let zoom: CGFloat
 
-    private var displayScale: CGFloat { row.displayScale(zoom: 1.0) }
-    private var displayTemplateWidth: CGFloat { row.displayWidth(zoom: 1.0) }
-    private var displayTemplateHeight: CGFloat { row.displayHeight(zoom: 1.0) }
+    // Zoom is folded into the render scale (no `.scaleEffect`) — scaling an
+    // already-clipped tile magnifies the antialiased clip edge, bleeding content
+    // past the rounded corners.
+    private var displayScale: CGFloat { row.displayScale(zoom: zoom) }
+    private var displayTemplateWidth: CGFloat { row.displayWidth(zoom: zoom) }
+    private var displayTemplateHeight: CGFloat { row.displayHeight(zoom: zoom) }
     /// Matches `ShowcaseExportConfig.cornerRadiusPercent` default so the in-editor preview
     /// and the showcase export share the same tile look.
     private var tileCornerRadius: CGFloat {
         displayTemplateHeight * CGFloat(ShowcaseExportConfig().cornerRadiusPercent / 100)
     }
-    private var tileGap: CGFloat { 12 }
+    private var tileGap: CGFloat { UIMetrics.Preview.tileGap * zoom }
 
     var body: some View {
         let resolvedShapes = LocaleService.resolveShapes(
@@ -37,10 +40,9 @@ struct RowPreviewView: View {
                 tile(at: index, visibleShapes: visiblePerTemplate[index])
             }
         }
-        .scaleEffect(zoom, anchor: .topLeading)
         .frame(
-            width: rowDisplayWidthWithGaps * zoom,
-            height: displayTemplateHeight * zoom,
+            width: rowDisplayWidthWithGaps,
+            height: displayTemplateHeight,
             alignment: .topLeading
         )
     }

@@ -180,10 +180,15 @@ struct RowCanvasBaseBackgroundView: View {
                     .frame(width: displayTotalWidth, height: displayTemplateHeight)
             } else {
                 ZStack(alignment: .topLeading) {
-                    ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, _ in
-                        row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
-                            .frame(width: displayTemplateWidth, height: displayTemplateHeight)
-                            .offset(x: CGFloat(index) * displayTemplateWidth, y: 0)
+                    ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
+                        // Skip slots an opaque override will cover: stacking two layers with
+                        // coincident antialiased edges lets the row color bleed through as a
+                        // hairline ring around the template at fractional display scales.
+                        if !(template.overrideBackground && template.backgroundFullyCovers) {
+                            row.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
+                                .frame(width: displayTemplateWidth, height: displayTemplateHeight)
+                                .offset(x: CGFloat(index) * displayTemplateWidth, y: 0)
+                        }
                     }
                 }
                 .frame(width: displayTotalWidth, height: displayTemplateHeight, alignment: .topLeading)

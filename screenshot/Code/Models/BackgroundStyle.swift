@@ -131,6 +131,18 @@ extension BackgroundFillable {
         let bgImage = backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
         backgroundFillView(image: bgImage, modelSize: modelSize)
     }
+
+    /// True when this background is guaranteed to paint every pixel of its frame opaquely,
+    /// so any layer beneath it can be skipped. `.image` always paints `bgColor` under the
+    /// image (see `backgroundFillView`), so coverage reduces to the color's opacity.
+    var backgroundFullyCovers: Bool {
+        switch backgroundStyle {
+        case .color, .image:
+            return bgColor.sRGBComponents.a >= 1
+        case .gradient:
+            return !gradientConfig.stops.isEmpty && gradientConfig.stops.allSatisfy { $0.colorData.opacity >= 1 }
+        }
+    }
 }
 
 struct BackgroundImageView: View {
