@@ -64,7 +64,7 @@ struct ShapePropertiesMultiSelectionBar: View {
                         ShapePropertiesSection {
                             Toggle("Clip to Frame", isOn: multiShapeOptionalBinding(\.clipToTemplate, default: false))
                                 .toggleStyle(.switch)
-                                .controlSize(.small)
+                                .compactControlSize()
                         }
                     }
 
@@ -89,8 +89,8 @@ struct ShapePropertiesMultiSelectionBar: View {
             .padding(.trailing, 8)
         }
         .font(.system(size: UIMetrics.FontSize.body))
-        .controlSize(.small)
-        .background(.bar)
+        .compactControlSize()
+        .modifier(PropertiesBarChrome())
     }
 
     @ViewBuilder

@@ -6,10 +6,12 @@ enum ShapePropertiesSectionLayout {
     static let horizontalPadding: CGFloat = 10
     static let verticalPadding: CGFloat = 4
     // Taller sections on iPad give the bottom bar's controls touch-friendly breathing room.
+    // 52 = the 44pt ActionButton touch target + vertical padding, so every section in the
+    // row renders at the same height regardless of which controls it holds.
     #if os(macOS)
     static let minHeight: CGFloat = 28
     #else
-    static let minHeight: CGFloat = 40
+    static let minHeight: CGFloat = 52
     #endif
 }
 
@@ -39,10 +41,16 @@ struct ShapePropertiesSection<Content: View>: View {
 }
 
 struct ShapePropertiesSeparator: View {
+    #if os(macOS)
+    private static let height: CGFloat = 18
+    #else
+    private static let height: CGFloat = 24
+    #endif
+
     var body: some View {
         Rectangle()
             .fill(.separator)
-            .frame(width: UIMetrics.BorderWidth.standard, height: 18)
+            .frame(width: UIMetrics.BorderWidth.standard, height: Self.height)
             .padding(.horizontal, 4)
     }
 }
@@ -243,7 +251,7 @@ struct SVGShapeControls: View {
                     .help("Use custom color for SVG")
 
                 if usesCustomColor {
-                    ColorPicker("", selection: $color, supportsOpacity: false)
+                    ColorPicker("SVG custom color", selection: $color, supportsOpacity: false)
                         .labelsHidden()
                         .frame(width: UIMetrics.ColorSwatch.inline)
                         .help("SVG custom color")

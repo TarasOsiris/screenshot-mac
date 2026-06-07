@@ -32,10 +32,16 @@ enum UIMetrics {
     }
 
     enum SliderWidth {
+        #if os(macOS)
         /// Default width for sliders inside compact rows.
         static let standard: CGFloat = 80
         /// Wider sliders for fine-grained tuning (letter spacing).
         static let wide: CGFloat = 120
+        #else
+        // Longer tracks on iPad: finger dragging needs more travel for the same precision.
+        static let standard: CGFloat = 120
+        static let wide: CGFloat = 160
+        #endif
     }
 
     enum ColorSwatch {
@@ -124,9 +130,9 @@ enum UIMetrics {
         static let width: CGFloat = 14
         static let height: CGFloat = 20
         #else
-        // iPad: widen to a comfortable tap target (40pt floor, matching ActionButton).
-        static let width: CGFloat = 30
-        static let height: CGFloat = 40
+        // iPad: widen to a comfortable tap target (44pt floor, matching ActionButton).
+        static let width: CGFloat = 32
+        static let height: CGFloat = 44
         #endif
     }
 
@@ -137,7 +143,7 @@ enum UIMetrics {
     }
 
     /// Default geometry for `ActionButton` and the manual icon buttons that mimic it.
-    /// iPad gets larger glyphs and a 40pt touch-target floor (Apple HIG); macOS keeps the
+    /// iPad gets larger glyphs and a 44pt touch-target floor (Apple HIG); macOS keeps the
     /// dense pointer-precision sizing unchanged.
     enum ActionButton {
         #if os(macOS)
@@ -147,8 +153,8 @@ enum UIMetrics {
         static let minTouchTarget: CGFloat = 0
         #else
         static let iconSize: CGFloat = 16
-        static let frameSize: CGFloat = 40
-        static let minTouchTarget: CGFloat = 40
+        static let frameSize: CGFloat = 44
+        static let minTouchTarget: CGFloat = 44
         #endif
     }
 

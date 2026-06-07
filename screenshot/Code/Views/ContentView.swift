@@ -23,6 +23,16 @@ struct ContentView: View {
     @Environment(AppState.self) var state
     @Environment(StoreService.self) var store
     #if os(iOS)
+    /// Scroll room reserved under the canvas for the floating bottom chrome
+    /// (shape-properties bar and, while editing text, the format bar above it).
+    var floatingBottomChromeMargin: CGFloat {
+        var margin: CGFloat = 0
+        if state.hasSelection { margin += 72 }
+        if state.isEditingText { margin += RichTextFormatBarMetrics.height + 16 }
+        return margin
+    }
+    #endif
+    #if os(iOS)
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif
     // macOS-only: see AppRootView — \.openWindow must not be read on iPadOS.
@@ -139,20 +149,32 @@ struct ContentView: View {
                 .layoutPriority(0)
                 .background(Color.platformWindowBackground)
                 #if os(iOS)
-                // Rich-text format bar floats over the bottom of the canvas while editing text —
-                // above the element properties bar, with a transparent surround (no full-width
-                // strip). `richTextSelectionState` is read so it appears once the controller publishes.
+                // Reserve scroll room equal to the floating chrome so the bottom of a tall shape
+                // can be scrolled clear of it. Must be applied BEFORE the overlay below — the
+                // margins propagate to every descendant ScrollView, and the properties bar's
+                // horizontal section scroller would otherwise inherit the bottom inset and
+                // inflate the bar's height.
+                .contentMargins(.bottom, floatingBottomChromeMargin, for: .scrollContent)
+                // Floating bottom chrome: the rich-text format bar (while editing text) stacked
+                // above the shape-properties bar, both hovering over the canvas with a transparent
+                // surround. `richTextSelectionState` is read so the format bar appears once the
+                // controller publishes.
                 .overlay(alignment: .bottom) {
-                    if state.isEditingText, state.richTextSelectionState != nil,
-                       let controller = state.richTextFormatController {
-                        RichTextDockedBar(controller: controller)
-                            .padding(.bottom, 8)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    VStack(spacing: 8) {
+                        if state.isEditingText, state.richTextSelectionState != nil,
+                           let controller = state.richTextFormatController {
+                            RichTextDockedBar(controller: controller)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                        if state.hasSelection {
+                            ShapePropertiesBar(state: state)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 12)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
                     }
+                    .padding(.bottom, 8)
                 }
-                // Reserve scroll room equal to the floating bar so the bottom of a tall text shape
-                // can be scrolled clear of it (the bar surround stays transparent, no full-width strip).
-                .contentMargins(.bottom, state.isEditingText ? RichTextFormatBarMetrics.height + 16 : 0, for: .scrollContent)
                 #endif
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     proxy.size.height
@@ -161,6 +183,7 @@ struct ContentView: View {
                 }
             }
 
+            #if os(macOS)
             if state.hasSelection {
                 Divider()
                 ShapePropertiesBar(state: state)
@@ -168,6 +191,7 @@ struct ContentView: View {
                     .layoutPriority(1)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+            #endif
         }
         .animation(.easeInOut(duration: 0.2), value: state.hasSelection)
         #if os(iOS)

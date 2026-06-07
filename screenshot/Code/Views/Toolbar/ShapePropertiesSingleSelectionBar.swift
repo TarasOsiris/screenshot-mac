@@ -6,11 +6,13 @@ let propertiesNumericFieldWidth: CGFloat = 44
 let propertiesOpacityFieldWidth: CGFloat = 40
 let propertiesFontFieldWidth: CGFloat = 48
 let propertiesTrackingValueWidth: CGFloat = 32
+let propertiesSliderValueWidth: CGFloat = 28
 #else
 let propertiesNumericFieldWidth: CGFloat = 56
 let propertiesOpacityFieldWidth: CGFloat = 52
 let propertiesFontFieldWidth: CGFloat = 56
 let propertiesTrackingValueWidth: CGFloat = 40
+let propertiesSliderValueWidth: CGFloat = 36
 #endif
 
 struct ShapePropertiesSingleSelectionBar: View {
@@ -169,7 +171,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                             }
                         } else if shape.type != .device && shape.type != .svg && shape.type != .image {
                             ShapePropertiesSection {
-                                ColorPicker("", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
+                                ColorPicker("Fill color", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
                                     .labelsHidden()
                                     .frame(width: UIMetrics.ColorSwatch.inline)
                                     .help("Fill color")
@@ -278,7 +280,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         .frame(width: UIMetrics.SliderWidth.standard)
 
                                     Text(verbatim: "\(Int(shape.borderRadius))")
-                                        .frame(width: 28, alignment: .trailing)
+                                        .frame(width: propertiesSliderValueWidth, alignment: .trailing)
                                 }
                             }
                         }
@@ -381,7 +383,7 @@ struct ShapePropertiesSingleSelectionBar: View {
             }
             .font(.system(size: UIMetrics.FontSize.body))
             .compactControlSize()
-            .background(.bar)
+            .modifier(PropertiesBarChrome())
             // macOS-only: the fill swatch's "pick image" opens this file panel. iPad picks the
             // fill image through ImageSourceMenu inside BackgroundImageEditor (→ saveShapeFillImage).
             #if os(macOS)
