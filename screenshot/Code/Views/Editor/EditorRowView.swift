@@ -8,6 +8,9 @@ final class ModelPointStore {
 struct EditorRowView: View {
     @Bindable var state: AppState
     @Environment(StoreService.self) var store
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    #endif
     let row: ScreenshotRow
     let requestShowcaseExport: (ScreenshotRow) -> Void
     @AppStorage("confirmBeforeDeleting") var confirmBeforeDeleting = true
@@ -145,6 +148,18 @@ struct EditorRowView: View {
                     .onChange(of: state.pendingCoachPersistOnEnd) { _, _ in
                         startDeferredCoachIfNeeded()
                     }
+                    // Retry after a project open completes — on iPad the canvas can appear
+                    // while `isOpeningProject` is still true, and no other trigger re-fires.
+                    .onChange(of: state.isOpeningProject) { _, _ in
+                        startDeferredCoachIfNeeded()
+                    }
+                    #if os(iOS)
+                    // Retry when leaving compact width (Split View → full screen), where
+                    // the tour was deferred because the inspector presents as a sheet.
+                    .onChange(of: horizontalSizeClass) { _, _ in
+                        startDeferredCoachIfNeeded()
+                    }
+                    #endif
             }
         }
         .onScrollGeometryChange(for: CGRect.self) { geo in

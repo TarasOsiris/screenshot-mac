@@ -11105,6 +11105,46 @@
         }
       }
     },
+    "Buy Pro" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro kaufen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acheter Pro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロを購入する"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로 구매"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprar o Pro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "购买专业版"
+          }
+        }
+      }
+    },
     "Buying or restoring" : {
       "localizations" : {
         "de" : {
@@ -18473,6 +18513,46 @@
         }
       }
     },
+    "Double-tap the device to pick a screenshot from Photos or Files." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppeltippen Sie auf das Gerät, um einen Screenshot aus „Fotos“ oder „Dateien“ auszuwählen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez deux fois sur l'appareil pour choisir une capture d'écran dans Photos ou Fichiers."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デバイスをダブルタップして、写真またはファイルからスクリーンショットを選択します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진이나 파일에서 스크린샷을 선택하려면 기기를 두 번 탭하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque duas vezes no dispositivo para escolher uma captura de tela de Fotos ou Arquivos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双击设备即可从照片或文件中选择屏幕截图。"
+          }
+        }
+      }
+    },
     "Double-tap to reset" : {
       "localizations" : {
         "de" : {
@@ -18683,6 +18763,7 @@
       }
     },
     "Drag screenshots from Photos or Files onto a canvas, or drop several at once to fill the row." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -24048,7 +24129,44 @@
       }
     },
     "Free covers one project. Upgrade here anytime to unlock unlimited projects, rows, and templates." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kostenlos deckt ein Projekt ab. Upgraden Sie hier jederzeit, um eine unbegrenzte Anzahl an Projekten, Zeilen und Vorlagen freizuschalten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gratuit couvre un projet. Mettez à niveau ici à tout moment pour débloquer un nombre illimité de projets, de lignes et de modèles."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無料で 1 つのプロジェクトがカバーされます。ここからいつでもアップグレードして、無制限のプロジェクト、行、テンプレートのロックを解除してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무료에는 하나의 프로젝트가 포함됩니다. 무제한 프로젝트, 행 및 템플릿을 잠금 해제하려면 언제든지 여기에서 업그레이드하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gratuito cobre um projeto. Atualize aqui a qualquer momento para desbloquear projetos, linhas e modelos ilimitados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免费涵盖一个项目。随时在此处升级以解锁无限的项目、行和模板。"
+          }
+        }
+      }
     },
     "Free SVG shapes bundled as presets in the SVG picker" : {
       "localizations" : {
@@ -49800,7 +49918,44 @@
       }
     },
     "Unlock everything with Pro" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schalten Sie alles mit Pro frei"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débloquez tout avec Pro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro ですべてのロックを解除する"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro로 모든 것을 잠금 해제하세요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desbloqueie tudo com Pro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 Pro 解锁一切"
+          }
+        }
+      }
     },
     "Unlock Pro" : {
       "localizations" : {

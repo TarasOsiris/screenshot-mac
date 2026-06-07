@@ -62,6 +62,13 @@ final class AppState {
     var pendingLocaleMenuRequest: LocaleMenuRequest?
     /// Active step of the interactive onboarding tour. `nil` when no tour is in progress.
     var coachStep: OnboardingCoachStep?
+    #if os(iOS)
+    /// Set during the brief gap between coach marks (see `setCoachStep`) so anchor
+    /// views can prepare — e.g. scroll the upcoming anchor into view — before the
+    /// next popover presents.
+    var coachPreparingStep: OnboardingCoachStep?
+    @ObservationIgnored var coachTransitionTask: Task<Void, Never>?
+    #endif
     /// When false, `endCoach()` skips persisting `onboardingCompleted`. Used by the debug
     /// "Show Onboarding…" command so it can be re-run without consuming the real flag.
     @ObservationIgnored var coachPersistsOnEnd: Bool = true

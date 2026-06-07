@@ -389,15 +389,25 @@ struct ScreenshotBroApp: App {
                 .preferredColorScheme(preferredColorScheme)
                 .task { storeService.start() }
                 .fullScreenCover(isPresented: Binding(
-                    get: { !onboardingCompleted && !welcomeDismissed },
+                    get: {
+                        !OnboardingPersistence.launchOnboardingDisabledOnCurrentDevice
+                            && !onboardingCompleted
+                            && !welcomeDismissed
+                    },
                     set: { _ in }
                 )) {
                     // Full-screen multi-step welcome ending in a Pro/paywall step; persists
-                    // completion on finish. (No editor coach tour on iPad — its popovers
-                    // anchor to the editor toolbar, not the Projects home.)
+                    // completion on finish. Devices that support the editor coach defer that
+                    // tour until the first project's canvas appears.
                     OnboardingView(
                         persistCompletion: true,
-                        onComplete: { welcomeDismissed = true }
+                        onComplete: {
+                            if OnboardingCoachStep.tourSupportedOnDevice {
+                                OnboardingPersistence.setEditorCoachPending()
+                                appState.pendingCoachPersistOnEnd = true
+                            }
+                            welcomeDismissed = true
+                        }
                     )
                     .environment(storeService)
                     .interactiveDismissDisabled()

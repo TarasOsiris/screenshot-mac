@@ -11,17 +11,15 @@ extension EditorRowView {
         state.selectRow(row.id)
     }
 
-    /// Starts an onboarding tour deferred from when the welcome sheet closed (no project was
-    /// open then). Only the first row's canvas drives this, since the `.canvas` coach mark
-    /// anchors here. Yields a runloop turn so the anchor is laid out before the popover shows.
+    /// Only the first row's canvas reports to the deferred-tour logic, since the
+    /// `.canvas` coach mark anchors here.
     func startDeferredCoachIfNeeded() {
         guard state.rows.first?.id == row.id, !isPreviewMode else { return }
-        guard let persist = state.pendingCoachPersistOnEnd, !state.isOpeningProject else { return }
-        state.pendingCoachPersistOnEnd = nil
-        Task { @MainActor in
-            await Task.yield()
-            state.startCoach(persistOnEnd: persist)
-        }
+        #if os(iOS)
+        state.startDeferredCoachIfEligible(isCompactWidth: horizontalSizeClass != .regular)
+        #else
+        state.startDeferredCoachIfEligible(isCompactWidth: false)
+        #endif
     }
 
     func startLabelEdit() {

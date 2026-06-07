@@ -55,6 +55,7 @@ extension ContentView {
         .iPadToolbarProminentStyle()
         .controlSize(.regular)
         .disabled(isDisabled)
+        .coachPopoverAnchor(step: .export, state: state)
     }
 
     @ViewBuilder

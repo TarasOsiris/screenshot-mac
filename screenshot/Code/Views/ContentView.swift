@@ -321,8 +321,24 @@ struct ContentView: View {
                 }
             }
             #else
-            ToolbarItem(id: "iPadTitle", placement: .principal) {
-                iPadProjectTitleMenu
+            // Compact width (iPhone, narrow Split View) keeps the title in the roomy
+            // center slot and drops the Buy Pro capsule — the leading cluster can't
+            // also fit the title next to back/undo/redo/locale there.
+            if horizontalSizeClass == .compact {
+                ToolbarItem(id: "iPadTitleCompact", placement: .principal) {
+                    iPadProjectTitleMenu
+                }
+            } else {
+                if !store.isProUnlocked {
+                    ToolbarItem(id: "iPadBuyPro", placement: .principal) {
+                        iPadBuyProButton
+                            .coachPopover(step: .pro, state: state, arrowEdge: .top)
+                    }
+                }
+
+                ToolbarItem(id: "iPadTitle", placement: .topBarLeading) {
+                    iPadProjectTitleMenu
+                }
             }
 
             ToolbarItem(id: "iPadUndo", placement: .navigation) {
@@ -347,14 +363,30 @@ struct ContentView: View {
             #endif
 
         }
+        #if os(macOS)
         .toolbarRole(.editor)
+        #endif
         .onChange(of: store.isProUnlocked, initial: true) { _, isUnlocked in
             state.coachProStepAvailable = !isUnlocked
         }
+        // These steps anchor inside the inspector, which the user may have closed.
+        .onChange(of: state.coachStep) { _, step in
+            openInspectorIfCoachNeedsIt(step)
+        }
+        #if os(iOS)
+        // Open it during the transition gap so the anchor is laid out before the
+        // popover presents — iPadOS won't present from a not-yet-visible anchor.
+        .onChange(of: state.coachPreparingStep) { _, step in
+            openInspectorIfCoachNeedsIt(step)
+        }
+        #endif
         #if os(iOS)
         // Without inline mode iPadOS reserves a large-title header, leaving a blank
         // band between the nav bar and the editor content.
         .navigationBarTitleDisplayMode(.inline)
+        // Leaving the editor mid-tour (back to Projects, tab switch) would otherwise
+        // strand a coach step with no anchor — no popover, no way to end the tour.
+        .onDisappear { state.cancelActiveCoach() }
         // The inspector is a docked side panel at regular width (iPad/Mac) but a blocking
         // sheet at compact width (iPhone) — don't auto-present it there, or it covers the
         // canvas on open. The toolbar toggle still opens it on demand.
@@ -471,6 +503,12 @@ struct ContentView: View {
                 scrollWheelMonitor = nil
             }
             #endif
+        }
+    }
+
+    private func openInspectorIfCoachNeedsIt(_ step: OnboardingCoachStep?) {
+        if step == .inspector || step == .shapes {
+            isInspectorPresented = true
         }
     }
 }

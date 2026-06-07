@@ -9,7 +9,12 @@ private let blurValueWidth: CGFloat = 36
 #endif
 
 struct InspectorPanel: View {
+    private static let shapesCoachAnchorId = "coachShapesSection"
+
     @Bindable var state: AppState
+    #if DEBUG && os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
     @AppStorage("inspectorSizeExpanded") private var isSizeExpanded = true
     @AppStorage("inspectorBackgroundExpanded") private var isBackgroundExpanded = true
     @AppStorage("inspectorShapesExpanded") private var isAddElementExpanded = true
@@ -24,19 +29,53 @@ struct InspectorPanel: View {
             if state.previewingRows.contains(rowId) {
                 previewModePanel(rowId: rowId)
             } else {
-                Form {
-                    sizeSection(rowIndex: rowIndex, rowId: rowId)
-                    deviceSection(rowId: rowId)
-                    backgroundSection(rowIndex: rowIndex, rowId: rowId)
-                    Section(isExpanded: $isAddElementExpanded) {
-                        ShapeToolbar(state: state)
-                    } header: {
-                        Text("Shapes")
+                ScrollViewReader { proxy in
+                    Form {
+                        sizeSection(rowIndex: rowIndex, rowId: rowId)
+                        deviceSection(rowId: rowId)
+                        backgroundSection(rowIndex: rowIndex, rowId: rowId)
+                        Section(isExpanded: $isAddElementExpanded) {
+                            ShapeToolbar(state: state)
+                                .id(Self.shapesCoachAnchorId)
+                        } header: {
+                            Text("Shapes")
+                        }
+                        visibilitySection(rowId: rowId)
+                        #if DEBUG && os(iOS)
+                        debugSection
+                        #endif
                     }
-                    visibilitySection(rowId: rowId)
+                    .formStyle(.grouped)
+                    #if os(macOS)
+                    .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
+                    #else
+                    // iPadOS only honors the first popover modifier per hosting context, so
+                    // both inspector-hosted steps share this one. The shapes step points at
+                    // the "Shapes" section label, which the pre-scroll below places just
+                    // above the inspector's vertical center.
+                    .coachPopover(
+                        steps: [
+                            .inspector: CoachStepAnchor(attachmentAnchor: .rect(.bounds), arrowEdge: .trailing),
+                            // Arrow on the popover's trailing edge → the card opens to the
+                            // left of the anchor, over the canvas where there is room.
+                            .shapes: CoachStepAnchor(
+                                attachmentAnchor: .point(UIMetrics.Coach.shapesAnchorPoint),
+                                arrowEdge: .trailing
+                            ),
+                        ],
+                        state: state
+                    )
+                    // Scroll the shapes grid into view (and expand its section) during the
+                    // coach-mark transition gap, before the popover presents.
+                    .onChange(of: state.coachPreparingStep) { _, step in
+                        guard step == .shapes else { return }
+                        isAddElementExpanded = true
+                        withAnimation {
+                            proxy.scrollTo(Self.shapesCoachAnchorId, anchor: .center)
+                        }
+                    }
+                    #endif
                 }
-                .formStyle(.grouped)
-                .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
             }
         } else {
             ContentUnavailableView(
@@ -367,6 +406,25 @@ struct InspectorPanel: View {
     private func setVisibility(rowId: UUID, visible: Bool) {
         state.setAllShapeTypesVisibility(for: rowId, visible: visible)
     }
+
+    #if DEBUG && os(iOS)
+    private var debugSection: some View {
+        Section {
+            Button {
+                // pendingCoachPersistOnEnd is @ObservationIgnored, so setting it alone
+                // invalidates nothing — consume it through the eligibility path directly.
+                state.pendingCoachPersistOnEnd = false
+                state.startDeferredCoachIfEligible(isCompactWidth: horizontalSizeClass != .regular)
+            } label: {
+                Text(verbatim: "Show Onboarding Coach")
+            }
+        } header: {
+            Text(verbatim: "Debug")
+        } footer: {
+            Text(verbatim: "Starts the editor tour without consuming the real onboarding flag.")
+        }
+    }
+    #endif
 
     private func shapeTypeVisibilityBinding(rowId: UUID, type: ShapeType) -> Binding<Bool> {
         Binding(

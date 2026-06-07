@@ -112,6 +112,38 @@ enum UIMetrics {
         static var subtle: Color { Color.primary.opacity(Opacity.hairlineOverlay) }
     }
 
+    /// Onboarding coach-mark popover card. Desktop-dense on macOS; iPad gets a
+    /// wider card with larger type and touch-sized controls.
+    enum Coach {
+        #if os(macOS)
+        static let width: CGFloat = 300
+        static let titleSize: CGFloat = 15
+        static let iconBadgeSize: CGFloat = 28
+        static let iconSize: CGFloat = 14
+        static let stackSpacing: CGFloat = 14
+        static let padding = EdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 14)
+        static let dotHeight: CGFloat = 6
+        static let dotActiveWidth: CGFloat = 16
+        static let closeIconSize: CGFloat = 9
+        static let closeButtonSize: CGFloat = 18
+        #else
+        static let width: CGFloat = 400
+        static let titleSize: CGFloat = 19
+        static let iconBadgeSize: CGFloat = 38
+        static let iconSize: CGFloat = 18
+        static let stackSpacing: CGFloat = 16
+        static let padding = EdgeInsets(top: 20, leading: 22, bottom: 20, trailing: 20)
+        static let dotHeight: CGFloat = 8
+        static let dotActiveWidth: CGFloat = 22
+        static let closeIconSize: CGFloat = 13
+        static let closeButtonSize: CGFloat = 30
+        /// Where the shapes coach mark points on the inspector Form: the "Shapes"
+        /// section label, which the pre-scroll (InspectorPanel) places just above
+        /// the inspector's vertical center at the leading edge.
+        static let shapesAnchorPoint = UnitPoint(x: 0.1, y: 0.35)
+        #endif
+    }
+
     /// Standard fixed-size dimensions for secondary windows (Settings, debug pickers, etc.).
     enum Window {
         static let settings = CGSize(width: 520, height: 560)
@@ -172,6 +204,13 @@ enum UIMetrics {
     /// Bordered capsule action buttons inside list rows (e.g. per-language Translate).
     enum CapsuleButton {
         static let minContentHeight: CGFloat = 28
+    }
+
+    /// Prominent glass capsule built by hand where ButtonStyle can't apply
+    /// (e.g. the principal toolbar slot strips button styles).
+    enum ProminentCapsule {
+        static let horizontalPadding: CGFloat = 14
+        static let verticalPadding: CGFloat = 8
     }
 
     enum GradientEditor {

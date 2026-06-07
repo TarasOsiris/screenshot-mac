@@ -202,6 +202,28 @@ extension ContentView {
     }
 
     #if os(iOS)
+    // The principal (title) toolbar slot strips button styles, so the Liquid Glass
+    // capsule is applied to the label itself rather than via .glassProminent.
+    var iPadBuyProButton: some View {
+        Button {
+            store.presentPaywall(for: .general)
+        } label: {
+            buyProGlassLabel
+        }
+        .buttonStyle(.plain)
+        .help("Unlock all projects, rows, and templates")
+    }
+
+    private var buyProGlassLabel: some View {
+        Label("Buy Pro", systemImage: "crown")
+            .labelStyle(.titleAndIcon)
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(.white)
+            .padding(.horizontal, UIMetrics.ProminentCapsule.horizontalPadding)
+            .padding(.vertical, UIMetrics.ProminentCapsule.verticalPadding)
+            .glassProminentCapsule()
+    }
+
     var iPadProjectTitleMenu: some View {
         Menu {
             currentProjectSection
@@ -310,6 +332,21 @@ extension View {
         }
         #else
         self
+        #endif
+    }
+
+    /// Label-level counterpart of `iPadToolbarProminentStyle()` for slots that
+    /// strip ButtonStyle (e.g. the principal toolbar slot).
+    @ViewBuilder
+    func glassProminentCapsule() -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            glassEffect(.regular.tint(.accentColor).interactive())
+        } else {
+            background(Color.accentColor, in: Capsule())
+        }
+        #else
+        background(Color.accentColor, in: Capsule())
         #endif
     }
 }
