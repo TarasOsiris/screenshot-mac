@@ -87,6 +87,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                 .background(Color.platformControlBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                 .focused(isLabelFieldFocused)
+                .submitLabel(.done)
                 .onSubmit { onCommitLabelEdit() }
                 .onChange(of: isLabelFieldFocused.wrappedValue) {
                     if !isLabelFieldFocused.wrappedValue { onCommitLabelEdit() }

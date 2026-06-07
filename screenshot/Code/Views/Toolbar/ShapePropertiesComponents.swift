@@ -185,8 +185,8 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
 
             ImageSourceMenu(onImage: onImageSelected) {
                 Label(shape.screenshotFileName == nil ? "Add Screenshot" : "Replace Image", systemImage: "photo.badge.arrow.down")
-                    .foregroundStyle(.secondary)
             }
+            .buttonStyle(.bordered)
 
             if showsLocaleImageReset {
                 ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: 24) {
@@ -216,8 +216,8 @@ struct ImageShapeControls: View {
             #else
             ImageSourceMenu(onImage: onImageSelected) {
                 Label(buttonTitle, systemImage: "photo.badge.arrow.down")
-                    .foregroundStyle(.secondary)
             }
+            .buttonStyle(.bordered)
             #endif
 
             if showsLocaleImageReset {

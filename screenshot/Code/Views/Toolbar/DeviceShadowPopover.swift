@@ -2,11 +2,13 @@ import SwiftUI
 
 /// Popover for editing a device's drop shadow: enable toggle, presets, and
 /// fine-tune sliders for color, blur, offset, and opacity. Layout mirrors
-/// `Device3DAppearancePopover`.
+/// `Device3DAppearancePopover`. On iPad it's presented as a sheet, so the
+/// content is a standard `Form` instead of the dense desktop column.
 struct DeviceShadowPopover: View {
     @Binding var shadow: ShadowConfig
 
     var body: some View {
+        #if os(macOS)
         VStack(alignment: .leading, spacing: 12) {
             header
             Divider()
@@ -24,6 +26,26 @@ struct DeviceShadowPopover: View {
         .padding(14)
         .frame(width: 320)
         .font(.system(size: UIMetrics.FontSize.body))
+        #else
+        Form {
+            Section {
+                Toggle("Enable shadow", isOn: enabledBinding)
+            }
+            if shadow.isActive {
+                Section("Preset") {
+                    HStack(spacing: 8) {
+                        ForEach(ShadowConfig.Preset.allCases) { preset in
+                            presetButton(preset)
+                        }
+                    }
+                }
+                Section("Adjust") {
+                    ColorPicker("Color", selection: colorBinding, supportsOpacity: false)
+                    detailSliders
+                }
+            }
+        }
+        #endif
     }
 
     @ViewBuilder
@@ -64,9 +86,9 @@ struct DeviceShadowPopover: View {
             shadow = ShadowConfig.preset(preset, color: shadow.resolvedColor)
         } label: {
             Text(preset.label)
-                .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+                .font(presetFont(isSelected: isSelected))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 4)
+                .padding(.vertical, Self.presetVerticalPadding)
                 .background(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(isSelected ? Color.accentColor.opacity(0.18) : Color.primary.opacity(0.06))
@@ -79,6 +101,18 @@ struct DeviceShadowPopover: View {
         }
         .buttonStyle(.plain)
     }
+
+    #if os(macOS)
+    private static let presetVerticalPadding: CGFloat = 4
+    private func presetFont(isSelected: Bool) -> Font {
+        .system(size: 11, weight: isSelected ? .semibold : .regular)
+    }
+    #else
+    private static let presetVerticalPadding: CGFloat = 10
+    private func presetFont(isSelected: Bool) -> Font {
+        .subheadline.weight(isSelected ? .semibold : .regular)
+    }
+    #endif
 
     @ViewBuilder
     private var detailSection: some View {
@@ -93,27 +127,33 @@ struct DeviceShadowPopover: View {
             Spacer()
         }
 
-        sliderRow(
+        detailSliders
+    }
+
+    /// The four tuning sliders, shared by the macOS column and the iPad Form.
+    @ViewBuilder
+    private var detailSliders: some View {
+        PopoverSliderRow(
             label: "Blur",
-            binding: radiusBinding,
+            value: radiusBinding,
             range: ShadowConfig.radiusRange,
             displayValue: intLabel(shadow.resolvedRadius)
         )
-        sliderRow(
+        PopoverSliderRow(
             label: "Offset X",
-            binding: offsetXBinding,
+            value: offsetXBinding,
             range: ShadowConfig.offsetRange,
             displayValue: intLabel(shadow.resolvedOffsetX)
         )
-        sliderRow(
+        PopoverSliderRow(
             label: "Offset Y",
-            binding: offsetYBinding,
+            value: offsetYBinding,
             range: ShadowConfig.offsetRange,
             displayValue: intLabel(shadow.resolvedOffsetY)
         )
-        sliderRow(
+        PopoverSliderRow(
             label: "Opacity",
-            binding: opacityBinding,
+            value: opacityBinding,
             range: ShadowConfig.opacityRange,
             displayValue: "\(Int((shadow.resolvedOpacity * 100).rounded()))%"
         )
@@ -126,26 +166,6 @@ struct DeviceShadowPopover: View {
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
             .tracking(0.5)
-    }
-
-    @ViewBuilder
-    private func sliderRow(
-        label: LocalizedStringKey,
-        binding: Binding<Double>,
-        range: ClosedRange<Double>,
-        displayValue: String
-    ) -> some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .foregroundStyle(.secondary)
-                .frame(width: 60, alignment: .leading)
-            Slider(value: binding, in: range)
-                .controlSize(.regular)
-            Text(displayValue)
-                .frame(width: 44, alignment: .trailing)
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-        }
     }
 
     private func intLabel(_ value: CGFloat) -> String { "\(Int(value.rounded()))" }

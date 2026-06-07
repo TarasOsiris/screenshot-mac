@@ -172,6 +172,7 @@ struct IPadSettingsView: View {
             TextField("Custom filename suffix", text: $exportCustomSuffix, prompt: Text("optional"))
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
+                .submitLabel(.done)
         } header: {
             Text("Export")
         } footer: {

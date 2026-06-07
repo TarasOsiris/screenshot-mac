@@ -17,6 +17,10 @@ private struct IOSSheetChrome<Content: View, Confirm: View>: View {
     var body: some View {
         NavigationStack {
             content()
+                // The presenting bar leaks its compact font/controlSize into the sheet's
+                // environment — reset both so sheet content gets standard iPad typography.
+                .font(nil)
+                .controlSize(.regular)
                 .navigationTitle(title)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -122,6 +126,7 @@ extension View {
     func barPopover<Content: View>(
         isPresented: Binding<Bool>,
         title: LocalizedStringKey,
+        detents: Set<PresentationDetent> = [.large],
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         #if os(macOS)
@@ -129,7 +134,7 @@ extension View {
         #else
         sheet(isPresented: isPresented) {
             content()
-                .iosSheetChrome(Text(title))
+                .iosSheetChrome(Text(title), detents: detents)
         }
         #endif
     }

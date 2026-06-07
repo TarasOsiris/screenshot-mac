@@ -182,6 +182,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     .frame(width: 40)
                                     .textFieldStyle(.roundedBorder)
                                     .multilineTextAlignment(.center)
+                                    .integerKeyboard()
                                     .onAppear {
                                         editingOpacity = currentOpacityString(for: shapeId)
                                     }
@@ -225,6 +226,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     .frame(width: 44)
                                     .textFieldStyle(.roundedBorder)
                                     .multilineTextAlignment(.center)
+                                    .signedNumberKeyboard()
                                     .onAppear {
                                         editingRotation = currentRotationString(for: shapeId)
                                     }

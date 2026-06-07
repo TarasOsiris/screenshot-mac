@@ -3,6 +3,14 @@ import UniformTypeIdentifiers
 
 struct TemplateControlBar: View {
     private static let backgroundOverrideTitle: LocalizedStringKey = "Background Override"
+    // macOS saves via panel; iPad presents the share sheet — same action, different affordance.
+    #if os(macOS)
+    private static let exportIcon = "arrow.down.circle"
+    private static let exportTitle: LocalizedStringKey = "Download"
+    #else
+    private static let exportIcon = "square.and.arrow.up"
+    private static let exportTitle: LocalizedStringKey = "Share…"
+    #endif
     @Environment(AppState.self) private var state
     @Binding var template: ScreenshotTemplate
     let row: ScreenshotRow
@@ -112,7 +120,7 @@ struct TemplateControlBar: View {
                 }
             }
             if showsFullGroup {
-                ActionButton(icon: "arrow.down.circle", tooltip: "Download") {
+                ActionButton(icon: Self.exportIcon, tooltip: Self.exportTitle) {
                     downloadScreenshot()
                 }
                 ActionButton(icon: "chevron.left", tooltip: "Move left", disabled: !canMoveLeft) {
@@ -127,12 +135,13 @@ struct TemplateControlBar: View {
                 } label: {
                     HStack(spacing: 3) {
                         if template.overrideBackground {
+                            let swatch = UIMetrics.ColorSwatch.overrideIndicator
                             if template.backgroundStyle == .image {
                                 if let image = backgroundPreviewImage {
                                     Image(nsImage: image)
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
-                                        .frame(width: 12, height: 12)
+                                        .frame(width: swatch, height: swatch)
                                         .clipShape(RoundedRectangle(cornerRadius: 2))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 2)
@@ -140,12 +149,12 @@ struct TemplateControlBar: View {
                                         )
                                 } else {
                                     Image(systemName: "photo.badge.plus")
-                                        .font(.system(size: UIMetrics.FontSize.numericBadge))
-                                        .frame(width: 12, height: 12)
+                                        .font(.system(size: UIMetrics.ColorSwatch.overrideIndicatorIcon))
+                                        .frame(width: swatch, height: swatch)
                                 }
                             } else {
                                 template.backgroundFillView()
-                                    .frame(width: 12, height: 12)
+                                    .frame(width: swatch, height: swatch)
                                     .clipShape(RoundedRectangle(cornerRadius: 2))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 2)
@@ -240,9 +249,15 @@ struct TemplateControlBar: View {
                     previewScreenshot()
                 }
                 .disabled(isPreviewing)
+                #if os(macOS)
                 Button("Save as PNG...", systemImage: "square.and.arrow.down") {
                     downloadScreenshot()
                 }
+                #else
+                Button(Self.exportTitle, systemImage: Self.exportIcon) {
+                    downloadScreenshot()
+                }
+                #endif
                 Button("Move Left", systemImage: "chevron.left") {
                     onMoveLeft()
                 }

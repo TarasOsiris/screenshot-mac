@@ -62,6 +62,7 @@ extension ShapePropertiesSingleSelectionBar {
                         .frame(width: 48)
                         .textFieldStyle(.roundedBorder)
                         .multilineTextAlignment(.center)
+                        .integerKeyboard()
                         .onAppear {
                             editingFontSize = currentFontSizeString(for: shapeId)
                         }
@@ -185,6 +186,7 @@ extension ShapePropertiesSingleSelectionBar {
                     .frame(width: 48)
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.center)
+                    .integerKeyboard()
                     .onAppear {
                         editingLineHeight = currentLineHeightString(for: shapeId)
                     }

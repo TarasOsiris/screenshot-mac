@@ -144,6 +144,7 @@ struct NumericPercentField: View {
             .font(.system(size: 11))
             .multilineTextAlignment(.trailing)
             .monospacedDigit()
+            .decimalKeyboard()
             .focused($isFocused)
             .onChange(of: value) {
                 if !isFocused { text = Self.format(value) }

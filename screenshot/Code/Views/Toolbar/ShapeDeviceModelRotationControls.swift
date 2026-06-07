@@ -33,7 +33,7 @@ struct ShapeDeviceModelRotationControls: View {
             }
             .buttonStyle(.plain)
             .help("Rotation, material, and lighting")
-            .barPopover(isPresented: $isPopoverPresented, title: "Appearance") {
+            .barPopover(isPresented: $isPopoverPresented, title: "Appearance", detents: [.medium, .large]) {
                 Device3DAppearancePopover(
                     pitch: pitch,
                     yaw: yaw,

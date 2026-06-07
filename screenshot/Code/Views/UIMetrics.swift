@@ -32,10 +32,15 @@ enum UIMetrics {
         static let inline: CGFloat = 30
         /// Fill swatch button preview.
         static let preview: CGFloat = 24
+        /// Background-override indicator in the template control bar.
+        static let overrideIndicator: CGFloat = 12
+        static let overrideIndicatorIcon: CGFloat = 10
         #else
         // iPad gets larger swatches so the fill/color taps clear the touch-target floor.
         static let inline: CGFloat = 40
         static let preview: CGFloat = 40
+        static let overrideIndicator: CGFloat = 24
+        static let overrideIndicatorIcon: CGFloat = 16
         #endif
     }
 

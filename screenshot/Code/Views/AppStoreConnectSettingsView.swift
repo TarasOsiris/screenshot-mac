@@ -496,6 +496,7 @@ private extension View {
         font(.system(.body, design: .monospaced))
             .textInputAutocapitalization(uppercase ? .characters : .never)
             .autocorrectionDisabled()
+            .submitLabel(.done)
         #endif
     }
 

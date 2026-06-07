@@ -38,7 +38,8 @@ struct ImageSourceMenu<MenuLabel: View>: View {
         } label: {
             label()
         }
-        .menuStyle(.borderlessButton)
+        // Renders as a button using the call site's `buttonStyle` (the properties bar passes `.bordered`).
+        .menuStyle(.button)
         .modifier(ImageSourcePresenters(
             showPhotoPicker: $showPhotoPicker,
             showCamera: $showCamera,

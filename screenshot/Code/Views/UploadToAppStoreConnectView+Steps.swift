@@ -220,6 +220,7 @@ extension UploadToAppStoreConnectView {
                 .fontWeight(.semibold)
             TextField("© 2025 Your Company", text: $copyrightDraft)
                 .textFieldStyle(.roundedBorder)
+                .submitLabel(.done)
             Text("Applies to all locales for this version.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -369,6 +370,7 @@ extension UploadToAppStoreConnectView {
             } else {
                 TextField("", text: text)
                     .textFieldStyle(.roundedBorder)
+                    .submitLabel(.done)
                     #if os(iOS)
                     .keyboardType(isURL ? .URL : .default)
                     .textInputAutocapitalization(isURL ? .never : nil)

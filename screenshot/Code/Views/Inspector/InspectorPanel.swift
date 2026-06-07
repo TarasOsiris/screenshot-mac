@@ -128,6 +128,7 @@ struct InspectorPanel: View {
                 TextField("", text: $customWidth)
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.trailing)
+                    .integerKeyboard()
                     .onSubmit { applyCustomSize(rowId: rowId) }
                 Text("H")
                     .frame(width: 14, alignment: .trailing)
@@ -135,6 +136,7 @@ struct InspectorPanel: View {
                 TextField("", text: $customHeight)
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.trailing)
+                    .integerKeyboard()
                     .onSubmit { applyCustomSize(rowId: rowId) }
             }
         }

@@ -9,6 +9,7 @@ struct Device3DAppearancePopover: View {
     let onResetRotation: () -> Void
 
     var body: some View {
+        #if os(macOS)
         VStack(alignment: .leading, spacing: 12) {
             header
             Divider()
@@ -21,6 +22,30 @@ struct Device3DAppearancePopover: View {
         .padding(14)
         .frame(width: 320)
         .font(.system(size: UIMetrics.FontSize.body))
+        #else
+        Form {
+            Section("Rotation") {
+                rotationSliders
+            }
+            Section("Material") {
+                Picker("Finish", selection: finishBinding) {
+                    ForEach(DeviceBodyFinish.allCases) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+            Section("Lighting") {
+                lightingSliders
+            }
+            Section {
+                Button("Reset all", role: .destructive, action: resetAll)
+                    .disabled(!hasAnyOverride)
+            } footer: {
+                Text("3D device rendering is an experimental feature")
+            }
+        }
+        #endif
     }
 
     @ViewBuilder
@@ -55,16 +80,20 @@ struct Device3DAppearancePopover: View {
     @ViewBuilder
     private var rotationSection: some View {
         sectionHeader("Rotation")
+        rotationSliders
+    }
 
-        sliderRow(
+    @ViewBuilder
+    private var rotationSliders: some View {
+        PopoverSliderRow(
             label: "Pitch",
-            binding: $pitch,
+            value: $pitch,
             range: -90...90,
             displayValue: "\(Int(pitch.rounded()))°"
         )
-        sliderRow(
+        PopoverSliderRow(
             label: "Yaw",
-            binding: $yaw,
+            value: $yaw,
             range: -90...90,
             displayValue: "\(Int(yaw.rounded()))°"
         )
@@ -91,22 +120,26 @@ struct Device3DAppearancePopover: View {
     @ViewBuilder
     private var lightingSection: some View {
         sectionHeader("Lighting")
+        lightingSliders
+    }
 
-        sliderRow(
+    @ViewBuilder
+    private var lightingSliders: some View {
+        PopoverSliderRow(
             label: "Ambient",
-            binding: ambientBinding,
+            value: ambientBinding,
             range: DeviceLighting.ambientIntensityRange,
             displayValue: intLabel(lighting.resolvedAmbientIntensity)
         )
-        sliderRow(
+        PopoverSliderRow(
             label: "Key",
-            binding: keyBinding,
+            value: keyBinding,
             range: DeviceLighting.keyIntensityRange,
             displayValue: intLabel(lighting.resolvedKeyIntensity)
         )
-        sliderRow(
+        PopoverSliderRow(
             label: "Rim",
-            binding: rimBinding,
+            value: rimBinding,
             range: DeviceLighting.rimIntensityRange,
             displayValue: intLabel(lighting.resolvedRimIntensity)
         )
@@ -119,26 +152,6 @@ struct Device3DAppearancePopover: View {
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
             .tracking(0.5)
-    }
-
-    @ViewBuilder
-    private func sliderRow(
-        label: LocalizedStringKey,
-        binding: Binding<Double>,
-        range: ClosedRange<Double>,
-        displayValue: String
-    ) -> some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .foregroundStyle(.secondary)
-                .frame(width: 60, alignment: .leading)
-            Slider(value: binding, in: range)
-                .controlSize(.regular)
-            Text(displayValue)
-                .frame(width: 44, alignment: .trailing)
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-        }
     }
 
     private func intLabel(_ value: Double) -> String { "\(Int(value.rounded()))" }
