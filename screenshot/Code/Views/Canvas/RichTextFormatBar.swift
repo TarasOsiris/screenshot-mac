@@ -6,9 +6,18 @@ import UIKit
 #endif
 
 enum RichTextFormatBarMetrics {
+    #if os(macOS)
     static let width: CGFloat = 372
     static let height: CGFloat = 42
     static let controlSize = CGSize(width: 28, height: 28)
+    static let fontSizeFieldWidth: CGFloat = 42
+    #else
+    // Touch-sized controls and room for the larger iPad fonts.
+    static let width: CGFloat = 440
+    static let height: CGFloat = 50
+    static let controlSize = CGSize(width: 34, height: 34)
+    static let fontSizeFieldWidth: CGFloat = 52
+    #endif
     static let cornerRadius: CGFloat = UIMetrics.CornerRadius.floating
     static let edgeInset: CGFloat = 4
 }
@@ -77,7 +86,7 @@ struct RichTextFormatBar: View {
                     Text("\(Int(selectionState.fontSize.rounded()))")
                         .font(.system(size: UIMetrics.FontSize.body, weight: .semibold).monospacedDigit())
                         .foregroundStyle(.primary)
-                        .frame(width: 42, height: RichTextFormatBarMetrics.controlSize.height)
+                        .frame(width: RichTextFormatBarMetrics.fontSizeFieldWidth, height: RichTextFormatBarMetrics.controlSize.height)
                         .background(
                             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section)
                                 .fill(Color.primary.opacity(UIMetrics.Opacity.sectionFill))
@@ -110,15 +119,7 @@ struct RichTextFormatBar: View {
         }
         .padding(6)
         .frame(width: RichTextFormatBarMetrics.width, height: RichTextFormatBarMetrics.height)
-        .background {
-            RoundedRectangle(cornerRadius: RichTextFormatBarMetrics.cornerRadius)
-                .fill(.ultraThickMaterial)
-                .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: RichTextFormatBarMetrics.cornerRadius)
-                .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.standard)
-        }
+        .modifier(FormatBarChrome())
     }
 
     private var divider: some View {
@@ -146,6 +147,37 @@ struct RichTextFormatBar: View {
         }
         .buttonStyle(FormatBarButtonStyle(isActive: isActive))
         .help(helpText)
+    }
+}
+
+/// Liquid Glass chrome on iOS 26+ (the bar floats over canvas content); material fallback elsewhere.
+private struct FormatBarChrome: ViewModifier {
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            content
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: RichTextFormatBarMetrics.cornerRadius))
+        } else {
+            content.modifier(FormatBarMaterialChrome())
+        }
+        #else
+        content.modifier(FormatBarMaterialChrome())
+        #endif
+    }
+}
+
+private struct FormatBarMaterialChrome: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background {
+                RoundedRectangle(cornerRadius: RichTextFormatBarMetrics.cornerRadius)
+                    .fill(.ultraThickMaterial)
+                    .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: RichTextFormatBarMetrics.cornerRadius)
+                    .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.standard)
+            }
     }
 }
 

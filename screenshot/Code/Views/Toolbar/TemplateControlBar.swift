@@ -174,8 +174,8 @@ struct TemplateControlBar: View {
                 .foregroundStyle(backgroundButtonStyle)
                 .help(backgroundButtonHelp)
                 .sheet(isPresented: $showBackgroundPopover) {
+                    #if os(macOS)
                     VStack(alignment: .leading, spacing: 8) {
-                        #if os(macOS)
                         HStack {
                             Text(Self.backgroundOverrideTitle)
                                 .font(.headline)
@@ -188,7 +188,6 @@ struct TemplateControlBar: View {
                             }
                             .buttonStyle(.borderless)
                         }
-                        #endif
 
                         Toggle(
                             "Override background",
@@ -199,18 +198,7 @@ struct TemplateControlBar: View {
                         .font(.system(size: UIMetrics.FontSize.body))
 
                         if template.overrideBackground {
-                            BackgroundEditor(
-                                backgroundStyle: $template.backgroundStyle,
-                                bgColor: $template.bgColor,
-                                gradientConfig: continuousTemplateBinding(\.gradientConfig),
-                                backgroundImageConfig: continuousTemplateBinding(\.backgroundImageConfig),
-                                backgroundImage: backgroundPreviewImage,
-                                onChanged: onSave,
-                                onPickImage: onPickBackgroundImage,
-                                onRemoveImage: onRemoveBackgroundImage,
-                                onDropImage: onDropBackgroundImage,
-                                onDropSvg: onDropBackgroundSvg
-                            )
+                            backgroundEditorContent
 
                             if template.backgroundStyle != .color {
                                 HStack(spacing: 4) {
@@ -231,10 +219,36 @@ struct TemplateControlBar: View {
                         }
                     }
                     .padding(20)
-                    #if os(macOS)
                     .frame(width: 320)
-                    #endif
+                    #else
+                    // A Form keeps the sheet at full detent height, so toggling the override
+                    // doesn't resize/re-center the floating iPad sheet around its content.
+                    Form {
+                        Section {
+                            Toggle(
+                                "Override background",
+                                isOn: $template.overrideBackground.onSet { onSave() }
+                            )
+                        }
+                        if template.overrideBackground {
+                            Section {
+                                backgroundEditorContent
+                            }
+                            if template.backgroundStyle != .color {
+                                Section {
+                                    PopoverSliderRow(
+                                        label: "Blur",
+                                        value: $template.backgroundBlur.onSet { onSave() },
+                                        range: 0...100,
+                                        displayValue: "\(Int(template.backgroundBlur))"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    // Single fixed detent: always fully expanded, no drag-to-collapse.
                     .iosSheetChrome(Text(Self.backgroundOverrideTitle))
+                    #endif
                 }
             }
 
@@ -325,6 +339,22 @@ struct TemplateControlBar: View {
         } message: {
             Text(renderError ?? "")
         }
+    }
+
+    @ViewBuilder
+    private var backgroundEditorContent: some View {
+        BackgroundEditor(
+            backgroundStyle: $template.backgroundStyle,
+            bgColor: $template.bgColor,
+            gradientConfig: continuousTemplateBinding(\.gradientConfig),
+            backgroundImageConfig: continuousTemplateBinding(\.backgroundImageConfig),
+            backgroundImage: backgroundPreviewImage,
+            onChanged: onSave,
+            onPickImage: onPickBackgroundImage,
+            onRemoveImage: onRemoveBackgroundImage,
+            onDropImage: onDropBackgroundImage,
+            onDropSvg: onDropBackgroundSvg
+        )
     }
 
     private func confirmDeleteTemplate() {

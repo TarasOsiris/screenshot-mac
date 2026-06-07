@@ -91,7 +91,7 @@ private struct ShowcaseOutputSizeSection: View {
                 ShowcaseSectionTitle(text: "Output Size", systemImage: "ruler")
                 Spacer()
                 Text(predictedOutputDimensionsText)
-                    .font(.system(size: 10))
+                    .font(.system(size: UIMetrics.FontSize.numericBadge))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -119,9 +119,9 @@ private struct ShowcaseOutputSizeTile: View {
         Button(action: onSelect) {
             VStack(spacing: 1) {
                 Text(size.label)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
                 Text(size.caption)
-                    .font(.system(size: 9))
+                    .font(.system(size: UIMetrics.FontSize.hint))
                     .foregroundStyle(isSelected ? Color.white.opacity(0.75) : .secondary)
                     .monospacedDigit()
             }
@@ -213,9 +213,9 @@ private struct ShowcaseAspectPresetTile: View {
     private var titleStack: some View {
         VStack(spacing: 1) {
             Text(preset.label)
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
             Text(preset.shortRatio)
-                .font(.system(size: 10))
+                .font(.system(size: UIMetrics.FontSize.inlineLabel))
                 .foregroundStyle(isSelected ? Color.white.opacity(0.75) : .secondary)
                 .monospacedDigit()
         }
@@ -270,7 +270,7 @@ private struct ShowcaseBackgroundSection: View {
                 )
                 .frame(width: 32, height: 18)
                 Text(summaryText)
-                    .font(.system(size: 10))
+                    .font(.system(size: UIMetrics.FontSize.inlineLabel))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -320,13 +320,13 @@ private struct ShowcasePercentSliderRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Text(label)
-                    .font(.system(size: 12))
+                    .font(.system(size: UIMetrics.FontSize.menuRow))
                 Spacer()
                 NumericPercentField(value: $value, range: range)
                     .frame(width: 56)
             }
             Slider(value: $value, in: range, step: 0.5)
-                .controlSize(.small)
+                .compactControlSize()
         }
     }
 }

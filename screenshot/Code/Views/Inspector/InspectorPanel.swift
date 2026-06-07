@@ -1,5 +1,13 @@
 import SwiftUI
 
+#if os(macOS)
+private let sizeFieldLabelWidth: CGFloat = 14
+private let blurValueWidth: CGFloat = 28
+#else
+private let sizeFieldLabelWidth: CGFloat = 20
+private let blurValueWidth: CGFloat = 36
+#endif
+
 struct InspectorPanel: View {
     @Bindable var state: AppState
     @AppStorage("inspectorSizeExpanded") private var isSizeExpanded = true
@@ -73,7 +81,7 @@ struct InspectorPanel: View {
                 Text("Custom").tag(true)
             }
             .pickerStyle(.segmented)
-            .controlSize(.small)
+            .compactControlSize()
             .onChange(of: useCustomSize) { _, isCustom in
                 if isCustom { syncCustomFields(rowId: rowId) }
             }
@@ -115,7 +123,7 @@ struct InspectorPanel: View {
             }
         }
         .pickerStyle(.menu)
-        .controlSize(.small)
+        .compactControlSize()
     }
 
     @ViewBuilder
@@ -123,7 +131,7 @@ struct InspectorPanel: View {
         Grid(alignment: .leading, horizontalSpacing: 6, verticalSpacing: 4) {
             GridRow {
                 Text("W")
-                    .frame(width: 14, alignment: .trailing)
+                    .frame(width: sizeFieldLabelWidth, alignment: .trailing)
                     .foregroundStyle(.secondary)
                 TextField("", text: $customWidth)
                     .textFieldStyle(.roundedBorder)
@@ -131,7 +139,7 @@ struct InspectorPanel: View {
                     .integerKeyboard()
                     .onSubmit { applyCustomSize(rowId: rowId) }
                 Text("H")
-                    .frame(width: 14, alignment: .trailing)
+                    .frame(width: sizeFieldLabelWidth, alignment: .trailing)
                     .foregroundStyle(.secondary)
                 TextField("", text: $customHeight)
                     .textFieldStyle(.roundedBorder)
@@ -140,8 +148,8 @@ struct InspectorPanel: View {
                     .onSubmit { applyCustomSize(rowId: rowId) }
             }
         }
-        .font(.system(size: 11).monospacedDigit())
-        .controlSize(.small)
+        .font(.system(size: UIMetrics.FontSize.body).monospacedDigit())
+        .compactControlSize()
     }
 
     private func isPresetSize(rowId: UUID) -> Bool {
@@ -224,7 +232,7 @@ struct InspectorPanel: View {
                     Text("\(Int(state.rows[rowIndex].backgroundBlur))")
                         .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
                         .foregroundStyle(.secondary)
-                        .frame(width: 28, alignment: .trailing)
+                        .frame(width: blurValueWidth, alignment: .trailing)
                 }
             }
 
@@ -233,7 +241,7 @@ struct InspectorPanel: View {
                 Toggle("Stretch across all screenshots", isOn: safeRowBinding(rowId, keyPath: \.spanBackgroundAcrossRow, default: false))
                     .font(.system(size: UIMetrics.FontSize.body))
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .compactControlSize()
                     .disabled(!canSpanAcrossRow)
                     .help(spanAcrossRowHelp(for: rowIndex, canSpanAcrossRow: canSpanAcrossRow))
 
@@ -273,7 +281,7 @@ struct InspectorPanel: View {
                 )
                 .help(defaultDeviceHelp(for: rowId))
             }
-            .controlSize(.small)
+            .compactControlSize()
         } header: {
             Text("Device")
         }

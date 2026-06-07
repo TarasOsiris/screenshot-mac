@@ -4,6 +4,9 @@ import SwiftUI
 /// New views should reach for these values instead of hardcoding sizes/colors so the app stays visually coherent.
 enum UIMetrics {
     enum FontSize {
+        // macOS keeps the desktop-dense pointer-precision sizes; iPad bumps the small
+        // tiers toward standard iOS text styles so labels stay legible at arm's length.
+        #if os(macOS)
         /// Default body text for properties bar, popover content, and inspector sub-labels.
         /// Use for any small label that isn't a hint or a numeric badge.
         static let body: CGFloat = 11
@@ -13,6 +16,15 @@ enum UIMetrics {
         static let hint: CGFloat = 9
         /// Numeric badge / value display next to sliders.
         static let numericBadge: CGFloat = 10
+        /// Rows in compact menus/popovers (device picker, zoom presets, showcase toggles).
+        static let menuRow: CGFloat = 12
+        #else
+        static let body: CGFloat = 14
+        static let inlineLabel: CGFloat = 13
+        static let hint: CGFloat = 11
+        static let numericBadge: CGFloat = 12
+        static let menuRow: CGFloat = 14
+        #endif
         /// Section heading inside long-form copy (Help, settings descriptions).
         static let sectionHeading: CGFloat = 17
         /// Display title for help / about headers.

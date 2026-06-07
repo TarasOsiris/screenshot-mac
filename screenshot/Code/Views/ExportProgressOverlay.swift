@@ -19,10 +19,25 @@ struct ExportProgressOverlay: View {
                     .foregroundStyle(.secondary)
                 Button("Cancel", action: onCancel)
                     .keyboardShortcut(.cancelAction)
-                    .controlSize(.small)
+                    .compactControlSize()
             }
             .padding(UIMetrics.Spacing.modal)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.floating))
+            .modifier(ExportOverlayCardChrome())
         }
+    }
+}
+
+/// Liquid Glass card on iOS 26+ (the card floats over the dimmed editor); material fallback elsewhere.
+private struct ExportOverlayCardChrome: ViewModifier {
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            content.glassEffect(.regular, in: .rect(cornerRadius: UIMetrics.CornerRadius.floating))
+        } else {
+            content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.floating))
+        }
+        #else
+        content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.floating))
+        #endif
     }
 }

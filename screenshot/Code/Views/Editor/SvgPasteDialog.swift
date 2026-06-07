@@ -75,7 +75,7 @@ struct SvgPasteDialog: View {
             HStack(spacing: 8) {
                 Toggle("Override color", isOn: $useColorOverride)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .compactControlSize()
                     .onChange(of: useColorOverride) { updatePreview() }
 
                 ColorPicker("", selection: $overrideColor, supportsOpacity: false)

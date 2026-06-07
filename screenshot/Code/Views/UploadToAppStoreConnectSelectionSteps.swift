@@ -44,7 +44,7 @@ struct ASCAppSelectionStepView: View {
                 }
             }
             .toggleStyle(.switch)
-            .controlSize(.small)
+            .compactControlSize()
             .help("Hide apps with no editable App Store version. Apps in review or already live can't accept new screenshots until you create a new version.")
         }
         .padding(.horizontal, 16)

@@ -141,7 +141,7 @@ struct LocaleBar: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "character.bubble")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
                         Text("Translate Selected to All Languages")
                             .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
                     }
@@ -512,16 +512,16 @@ struct LocaleBanner: View {
             VStack(spacing: 8) {
                 HStack(alignment: .center, spacing: 10) {
                     Image(systemName: "globe")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: UIMetrics.FontSize.menuRow, weight: .semibold))
                         .foregroundStyle(Color.localeWarning)
 
                     HStack(spacing: 6) {
                         Text("Editing \(label)")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: UIMetrics.FontSize.menuRow, weight: .semibold))
                             .foregroundStyle(Color.localeWarning)
                         if progress.total > 0 {
                             Text("\(progress.translated) of \(progress.total)")
-                                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .medium, design: .monospaced))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(Color.localeWarning.opacity(0.12), in: Capsule())
@@ -531,7 +531,7 @@ struct LocaleBanner: View {
                             showLocaleHelp.toggle()
                         } label: {
                             Image(systemName: "questionmark.circle")
-                                .font(.system(size: 12))
+                                .font(.system(size: UIMetrics.FontSize.menuRow))
                                 .foregroundStyle(Color.localeWarning.opacity(0.6))
                         }
                         .buttonStyle(.borderless)
@@ -539,16 +539,16 @@ struct LocaleBanner: View {
                         .popover(isPresented: $showLocaleHelp, arrowEdge: .bottom) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Language Editing")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(.system(size: UIMetrics.FontSize.menuRow, weight: .semibold))
                                 Text("Changes here affect only \(label). The base language text is shared across all languages — edits to other languages are stored as overrides.")
-                                    .font(.system(size: 11))
+                                    .font(.system(size: UIMetrics.FontSize.body))
                                     .foregroundStyle(.secondary)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Label("Edit translations manually or use Auto-Translate", systemImage: "character.book.closed")
                                     Label("Leave a field empty to fall back to base language", systemImage: "arrow.uturn.backward")
                                     Label("Use Edit Translations for a side-by-side view", systemImage: "tablecells")
                                 }
-                                .font(.system(size: 11))
+                                .font(.system(size: UIMetrics.FontSize.body))
                                 .foregroundStyle(.secondary)
                             }
                             .padding(12)
@@ -567,8 +567,8 @@ struct LocaleBanner: View {
                             Label("Translate Selected", systemImage: "globe")
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .font(.system(size: 11, weight: .medium))
+                        .compactControlSize()
+                        .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
                         .disabled(isTranslating)
                         .help("Translate selected text layers into \(label)")
                     }
@@ -578,8 +578,8 @@ struct LocaleBanner: View {
                             isTranslationOverviewPresented = true
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .font(.system(size: 11, weight: .medium))
+                        .compactControlSize()
+                        .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
 
                         Menu {
                             Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
@@ -603,8 +603,8 @@ struct LocaleBanner: View {
                             }
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .font(.system(size: 11, weight: .medium))
+                        .compactControlSize()
+                        .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
                         .disabled(isTranslating)
                     }
 
@@ -612,8 +612,8 @@ struct LocaleBanner: View {
                         showResetToBaseConfirmation = true
                     }
                     .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .font(.system(size: 11, weight: .medium))
+                    .compactControlSize()
+                    .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
                 }
 
             }

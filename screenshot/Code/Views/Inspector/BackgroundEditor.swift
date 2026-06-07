@@ -1,6 +1,33 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// Desktop-dense fixed-point fonts on macOS; standard Dynamic Type styles on iPad.
+private enum EditorFont {
+    #if os(macOS)
+    static let row = Font.system(size: UIMetrics.FontSize.body)
+    static let label = Font.system(size: UIMetrics.FontSize.inlineLabel)
+    static let value = Font.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit()
+    static let hint = Font.system(size: UIMetrics.FontSize.hint)
+    static let axisValue = Font.system(size: UIMetrics.FontSize.hint).monospacedDigit()
+    #else
+    static let row = Font.body
+    static let label = Font.subheadline
+    static let value = Font.footnote.monospacedDigit()
+    static let hint = Font.footnote
+    static let axisValue = Font.footnote.monospacedDigit()
+    #endif
+}
+
+#if os(macOS)
+private let sliderValueColumnWidth: CGFloat = 38
+private let axisValueColumnWidth: CGFloat = 34
+private let axisLabelWidth: CGFloat = 10
+#else
+private let sliderValueColumnWidth: CGFloat = 48
+private let axisValueColumnWidth: CGFloat = 44
+private let axisLabelWidth: CGFloat = 14
+#endif
+
 struct BackgroundEditor: View {
     @Binding var backgroundStyle: BackgroundStyle
     @Binding var bgColor: Color
@@ -40,7 +67,7 @@ struct BackgroundEditor: View {
                     .iPadColorSwatchFrame()
                     .fixedSize()
             }
-            .font(.system(size: UIMetrics.FontSize.body))
+            .font(EditorFont.row)
 
         case .gradient:
             VStack(alignment: .leading, spacing: 10) {
@@ -177,14 +204,14 @@ struct BackgroundEditor: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Center")
-                    .font(.system(size: UIMetrics.FontSize.inlineLabel))
+                    .font(EditorFont.label)
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 4) {
                     Text("X: \(Int(gradientConfig.centerX * 100))%")
                     Text("Y: \(Int(gradientConfig.centerY * 100))%")
                 }
-                .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
+                .font(EditorFont.value)
                 .foregroundStyle(.primary)
 
                 Button {
@@ -193,7 +220,7 @@ struct BackgroundEditor: View {
                     onChanged()
                 } label: {
                     Text("Reset")
-                        .font(.system(size: UIMetrics.FontSize.hint))
+                        .font(EditorFont.hint)
                         .iPadResetTapTarget()
                 }
                 .buttonStyle(.plain)
@@ -372,16 +399,22 @@ struct BackgroundImageEditor: View {
     ) -> some View {
         HStack(spacing: 4) {
             Text(label)
-                .font(.system(size: UIMetrics.FontSize.inlineLabel))
+                .font(EditorFont.label)
+            #if os(macOS)
             Spacer()
             Slider(value: value.onSet { onChanged() }, in: range)
                 .frame(width: UIMetrics.SliderWidth.standard)
                 .disabled(!hasImage)
+            #else
+            Slider(value: value.onSet { onChanged() }, in: range)
+                .disabled(!hasImage)
+                .padding(.horizontal, 4)
+            #endif
             Text(formatLabel?() ?? "\(Int(value.wrappedValue * 100))%")
-                .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
+                .font(EditorFont.value)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-                .frame(width: 38, alignment: .trailing)
+                .frame(width: sliderValueColumnWidth, alignment: .trailing)
         }
         .opacity(hasImage ? 1 : UIMetrics.Opacity.disabled)
     }
@@ -396,9 +429,9 @@ struct BackgroundImageEditor: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
-                .font(.system(size: UIMetrics.FontSize.inlineLabel))
-            axisSlider("X", value: xValue, range: range, formatLabel: xFormat, valueWidth: 34)
-            axisSlider("Y", value: yValue, range: range, formatLabel: yFormat, valueWidth: 34)
+                .font(EditorFont.label)
+            axisSlider("X", value: xValue, range: range, formatLabel: xFormat, valueWidth: axisValueColumnWidth)
+            axisSlider("Y", value: yValue, range: range, formatLabel: yFormat, valueWidth: axisValueColumnWidth)
         }
         .opacity(hasImage ? 1 : UIMetrics.Opacity.disabled)
     }
@@ -412,13 +445,13 @@ struct BackgroundImageEditor: View {
     ) -> some View {
         HStack(spacing: 4) {
             Text(axis)
-                .font(.system(size: UIMetrics.FontSize.hint, weight: .medium))
+                .font(EditorFont.hint.weight(.medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 10)
+                .frame(width: axisLabelWidth)
             Slider(value: value.onSet { onChanged() }, in: range)
                 .disabled(!hasImage)
             Text(formatLabel?() ?? "\(Int(value.wrappedValue * 100))%")
-                .font(.system(size: UIMetrics.FontSize.hint).monospacedDigit())
+                .font(EditorFont.axisValue)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .frame(width: valueWidth, alignment: .trailing)

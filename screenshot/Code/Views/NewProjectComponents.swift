@@ -287,7 +287,7 @@ struct BlankProjectConfigurator: View {
                     )
             }
             .buttonStyle(.plain)
-            .controlSize(.small)
+            .compactControlSize()
             .disabled(rowDrafts.count >= maxBlankProjectRows)
         }
     }

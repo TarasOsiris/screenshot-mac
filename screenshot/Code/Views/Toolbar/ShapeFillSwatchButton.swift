@@ -69,7 +69,7 @@ struct ShapeFillSwatchButton: View {
                 Rectangle().fill(shape.color)
                     .overlay {
                         Image(systemName: "photo")
-                            .font(.system(size: 10))
+                            .font(.system(size: UIMetrics.FontSize.inlineLabel))
                             .foregroundStyle(.secondary)
                     }
             }

@@ -59,7 +59,7 @@ extension ShapePropertiesSingleSelectionBar {
                             }
                         })
                         .focused($focusedField, equals: .fontSize)
-                        .frame(width: 48)
+                        .frame(width: propertiesFontFieldWidth)
                         .textFieldStyle(.roundedBorder)
                         .multilineTextAlignment(.center)
                         .integerKeyboard()
@@ -146,12 +146,12 @@ extension ShapePropertiesSingleSelectionBar {
                 if customControlState?.showsItalicToggle ?? true {
                     Toggle("Italic", isOn: italicBinding(shapeId))
                         .toggleStyle(.switch)
-                        .controlSize(.small)
+                        .compactControlSize()
                 }
 
                 Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .compactControlSize()
             }
 
             Divider()
@@ -163,7 +163,7 @@ extension ShapePropertiesSingleSelectionBar {
                         .frame(width: UIMetrics.SliderWidth.wide)
 
                     Text(verbatim: String(format: "%.1f", trackingBinding.wrappedValue))
-                        .frame(width: 32, alignment: .trailing)
+                        .frame(width: propertiesTrackingValueWidth, alignment: .trailing)
                         .onTapGesture(count: 2) { trackingBinding.wrappedValue = 0 }
                         #if os(macOS)
                         .help("Double-click to reset")
@@ -183,7 +183,7 @@ extension ShapePropertiesSingleSelectionBar {
                         }
                     })
                     .focused($focusedField, equals: .lineHeight)
-                    .frame(width: 48)
+                    .frame(width: propertiesFontFieldWidth)
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.center)
                     .integerKeyboard()

@@ -117,7 +117,7 @@ struct BackgroundSummarySwatch: View {
            backgroundImage == nil,
            config.backgroundImageConfig.svgContent == nil {
             Image(systemName: "photo.badge.plus")
-                .font(.system(size: 10))
+                .font(.system(size: UIMetrics.FontSize.inlineLabel))
                 .foregroundStyle(.secondary)
         }
     }
@@ -141,7 +141,7 @@ struct NumericPercentField: View {
     var body: some View {
         TextField("", text: $text)
             .textFieldStyle(.roundedBorder)
-            .font(.system(size: 11))
+            .font(.system(size: UIMetrics.FontSize.body))
             .multilineTextAlignment(.trailing)
             .monospacedDigit()
             .decimalKeyboard()
@@ -198,13 +198,13 @@ struct ShowcaseRowPreview: View {
         VStack(spacing: 6) {
             HStack {
                 Text(row.displayLabel)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 Spacer(minLength: 8)
                 Text(verbatim: "\(Int(outputSize.width)) × \(Int(outputSize.height)) px")
-                    .font(.system(size: 10))
+                    .font(.system(size: UIMetrics.FontSize.numericBadge))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }

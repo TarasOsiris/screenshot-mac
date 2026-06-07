@@ -1,5 +1,13 @@
 import SwiftUI
 
+#if os(macOS)
+private let zoomButtonSize: CGFloat = 20
+private let zoomLabelMinWidth: CGFloat = 32
+#else
+private let zoomButtonSize: CGFloat = 32
+private let zoomLabelMinWidth: CGFloat = 42
+#endif
+
 enum ZoomConstants {
     static let min: CGFloat = 0.25
     static let max: CGFloat = 3.0
@@ -24,9 +32,9 @@ struct ZoomControls: View {
                 isPopoverPresented.toggle()
             } label: {
                 Text(verbatim: "\(Int(state.zoomLevel * 100))%")
-                    .font(.system(size: 10, weight: .medium).monospacedDigit())
+                    .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .medium).monospacedDigit())
                     .foregroundStyle(state.zoomLevel == 1.0 ? .tertiary : .secondary)
-                    .frame(minWidth: 32)
+                    .frame(minWidth: zoomLabelMinWidth)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
@@ -35,7 +43,7 @@ struct ZoomControls: View {
             .popover(isPresented: $isPopoverPresented, arrowEdge: .bottom) {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Zoom")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: UIMetrics.FontSize.menuRow, weight: .semibold))
 
                     #if os(macOS)
                     HStack(spacing: 6) { presetButtons }
@@ -69,7 +77,7 @@ struct ZoomControls: View {
                         }
                         .buttonStyle(.borderless)
                     }
-                    .font(.system(size: 12))
+                    .font(.system(size: UIMetrics.FontSize.menuRow))
                 }
                 .padding(12)
             }
@@ -78,7 +86,7 @@ struct ZoomControls: View {
                 state.zoomIn()
             }
         }
-        .controlSize(.small)
+        .compactControlSize()
     }
 
     @ViewBuilder
@@ -89,7 +97,7 @@ struct ZoomControls: View {
                 isPopoverPresented = false
             }
             .buttonStyle(.bordered)
-            .controlSize(.small)
+            .compactControlSize()
             .tint(state.zoomLevel == preset ? .accentColor : nil)
         }
     }
@@ -98,8 +106,8 @@ struct ZoomControls: View {
         Button(action: action) {
             Label(label, systemImage: icon)
                 .labelStyle(.iconOnly)
-                .font(.system(size: 11, weight: .semibold))
-                .frame(width: 20, height: 20)
+                .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
+                .frame(width: zoomButtonSize, height: zoomButtonSize)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)

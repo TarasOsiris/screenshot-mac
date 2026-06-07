@@ -1,5 +1,13 @@
 import SwiftUI
 
+#if os(macOS)
+private let coachCloseIconSize: CGFloat = 9
+private let coachCloseButtonSize: CGFloat = 18
+#else
+private let coachCloseIconSize: CGFloat = 13
+private let coachCloseButtonSize: CGFloat = 30
+#endif
+
 extension View {
     /// Anchors a coach-mark popover for the given onboarding step. The popover
     /// is shown when `state.coachStep` matches `step` AND `isActive` is true.
@@ -91,9 +99,9 @@ private struct CoachPopoverContent: View {
                 state.endCoach()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.system(size: coachCloseIconSize, weight: .bold))
                     .foregroundStyle(isCloseHovered ? Color.primary : .secondary)
-                    .frame(width: 18, height: 18)
+                    .frame(width: coachCloseButtonSize, height: coachCloseButtonSize)
                     .background(
                         Circle().fill(Color.primary.opacity(isCloseHovered ? 0.1 : 0))
                     )
@@ -143,7 +151,7 @@ private struct CoachPopoverContent: View {
                         .labelStyle(.titleAndIcon)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .compactControlSize()
             }
 
             Spacer(minLength: 0)
@@ -170,7 +178,7 @@ private struct CoachPopoverContent: View {
             }
             .keyboardShortcut(.defaultAction)
             .buttonStyle(.borderedProminent)
-            .controlSize(.small)
+            .compactControlSize()
         }
     }
 }

@@ -1,6 +1,18 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+#if os(macOS)
+let propertiesNumericFieldWidth: CGFloat = 44
+let propertiesOpacityFieldWidth: CGFloat = 40
+let propertiesFontFieldWidth: CGFloat = 48
+let propertiesTrackingValueWidth: CGFloat = 32
+#else
+let propertiesNumericFieldWidth: CGFloat = 56
+let propertiesOpacityFieldWidth: CGFloat = 52
+let propertiesFontFieldWidth: CGFloat = 56
+let propertiesTrackingValueWidth: CGFloat = 40
+#endif
+
 struct ShapePropertiesSingleSelectionBar: View {
     static let defaultFontSize: CGFloat = CanvasShapeModel.defaultFontSize
     static let fontSizeRange: ClosedRange<CGFloat> = 8...400
@@ -109,7 +121,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     set: { hideCamera.wrappedValue = !$0 }
                                 ))
                                 .toggleStyle(.switch)
-                                .controlSize(.small)
+                                .compactControlSize()
                                 .help("Show camera cutout on the abstract Android frame")
                             }
                         }
@@ -179,7 +191,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         }
                                     })
                                     .focused($focusedField, equals: .opacity)
-                                    .frame(width: 40)
+                                    .frame(width: propertiesOpacityFieldWidth)
                                     .textFieldStyle(.roundedBorder)
                                     .multilineTextAlignment(.center)
                                     .integerKeyboard()
@@ -223,7 +235,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         }
                                     })
                                     .focused($focusedField, equals: .rotation)
-                                    .frame(width: 44)
+                                    .frame(width: propertiesNumericFieldWidth)
                                     .textFieldStyle(.roundedBorder)
                                     .multilineTextAlignment(.center)
                                     .signedNumberKeyboard()
@@ -337,7 +349,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                         ShapePropertiesSection {
                             Toggle("Clip to Frame", isOn: shapeBinding(shapeId, \.clipToTemplate, default: false))
                                 .toggleStyle(.switch)
-                                .controlSize(.small)
+                                .compactControlSize()
                         }
 
                         ShapeSelectionActionsSection(
@@ -368,7 +380,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                 #endif
             }
             .font(.system(size: UIMetrics.FontSize.body))
-            .controlSize(.small)
+            .compactControlSize()
             .background(.bar)
             // macOS-only: the fill swatch's "pick image" opens this file panel. iPad picks the
             // fill image through ImageSourceMenu inside BackgroundImageEditor (→ saveShapeFillImage).
