@@ -65,16 +65,6 @@ struct EditorRowView: View {
 
     var isPreviewMode: Bool { state.previewingRows.contains(row.id) }
 
-    /// iPad points the first coach mark at the row's first device frame (see
-    /// `canvasView`); the scroll-area anchor is only the no-device fallback there.
-    var canvasCoachAnchorsOnDevice: Bool {
-        #if os(iOS)
-        row.activeShapes.contains { $0.type == .device }
-        #else
-        false
-        #endif
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             EditorRowHeader(
@@ -143,17 +133,10 @@ struct EditorRowView: View {
 
             if !row.isCollapsed {
                 horizontalScrollArea
-                    .coachPopover(
-                        step: .canvas,
-                        state: state,
-                        isActive: state.rows.first?.id == row.id && !isPreviewMode && !canvasCoachAnchorsOnDevice,
-                        arrowEdge: .top,
-                        attachmentAnchor: .point(.center)
-                    )
                     // Launch a deferred onboarding tour once the first canvas (the `.canvas`
-                    // anchor) is on screen. `.onAppear` covers the first-launch path (flag set
-                    // before this view exists); `.onChange` covers a returning user whose canvas
-                    // is already visible when they tap "Get Started".
+                    // anchor lives inside it) is on screen. `.onAppear` covers the first-launch
+                    // path (flag set before this view exists); `.onChange` covers a returning
+                    // user whose canvas is already visible when they tap "Get Started".
                     .onAppear { startDeferredCoachIfNeeded() }
                     .onChange(of: state.pendingCoachPersistOnEnd) { _, _ in
                         startDeferredCoachIfNeeded()
