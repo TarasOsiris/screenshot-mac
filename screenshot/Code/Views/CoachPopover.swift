@@ -1,10 +1,5 @@
 import SwiftUI
 
-struct CoachStepAnchor {
-    let attachmentAnchor: PopoverAttachmentAnchor
-    let arrowEdge: Edge
-}
-
 extension View {
     /// Anchors a coach-mark popover for the given onboarding step. The popover
     /// is shown when `state.coachStep` matches `step` AND `isActive` is true.
@@ -20,21 +15,12 @@ extension View {
         attachmentAnchor: PopoverAttachmentAnchor = .rect(.bounds)
     ) -> some View {
         modifier(CoachPopoverModifier(
-            steps: [step: CoachStepAnchor(attachmentAnchor: attachmentAnchor, arrowEdge: arrowEdge)],
+            step: step,
+            attachmentAnchor: attachmentAnchor,
+            arrowEdge: arrowEdge,
             state: state,
             isActive: isActive
         ))
-    }
-
-    /// Hosts several coach steps on one anchor view through a single popover
-    /// modifier. iPadOS only honors the first popover modifier in a hosting
-    /// context, so sibling steps inside the inspector must share one.
-    func coachPopover(
-        steps: [OnboardingCoachStep: CoachStepAnchor],
-        state: AppState,
-        isActive: Bool = true
-    ) -> some View {
-        modifier(CoachPopoverModifier(steps: steps, state: state, isActive: isActive))
     }
 
     /// Anchors a coach-mark popover on a plain background view sharing this
@@ -52,29 +38,22 @@ extension View {
 }
 
 private struct CoachPopoverModifier: ViewModifier {
-    let steps: [OnboardingCoachStep: CoachStepAnchor]
+    let step: OnboardingCoachStep
+    let attachmentAnchor: PopoverAttachmentAnchor
+    let arrowEdge: Edge
     @Bindable var state: AppState
     let isActive: Bool
-    /// Keeps the card content rendering while the popover animates out —
-    /// `activeStep` goes nil the instant the step clears, and a live-resolved
-    /// `if let` would collapse the dismissing popover to an empty view.
-    @State private var lastShownStep: OnboardingCoachStep?
 
-    private var activeStep: OnboardingCoachStep? {
-        guard isActive, let step = state.coachStep, steps[step] != nil else { return nil }
-        return step
-    }
-
-    private var contentStep: OnboardingCoachStep? {
-        activeStep ?? lastShownStep
+    private var isStepActive: Bool {
+        isActive && state.coachStep == step
     }
 
     private var isPresented: Binding<Bool> {
         Binding(
-            get: { activeStep != nil },
+            get: { isStepActive },
             set: { newValue in
                 // Dismissal driven by the system (click-outside, etc.) ends the tour.
-                if !newValue, activeStep != nil {
+                if !newValue, isStepActive {
                     state.endCoach()
                 }
             }
@@ -82,18 +61,12 @@ private struct CoachPopoverModifier: ViewModifier {
     }
 
     func body(content: Content) -> some View {
-        let anchor = activeStep.flatMap { steps[$0] }
         content.popover(
             isPresented: isPresented,
-            attachmentAnchor: anchor?.attachmentAnchor ?? .rect(.bounds),
-            arrowEdge: anchor?.arrowEdge ?? .top
+            attachmentAnchor: attachmentAnchor,
+            arrowEdge: arrowEdge
         ) {
-            if let step = contentStep {
-                CoachPopoverContent(step: step, state: state)
-            }
-        }
-        .onChange(of: activeStep) { _, step in
-            if let step { lastShownStep = step }
+            CoachPopoverContent(step: step, state: state)
         }
     }
 }

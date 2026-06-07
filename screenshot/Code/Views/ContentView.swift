@@ -369,7 +369,7 @@ struct ContentView: View {
         .onChange(of: store.isProUnlocked, initial: true) { _, isUnlocked in
             state.coachProStepAvailable = !isUnlocked
         }
-        // These steps anchor inside the inspector, which the user may have closed.
+        // The inspector step anchors inside the inspector, which the user may have closed.
         .onChange(of: state.coachStep) { _, step in
             openInspectorIfCoachNeedsIt(step)
         }
@@ -507,7 +507,7 @@ struct ContentView: View {
     }
 
     private func openInspectorIfCoachNeedsIt(_ step: OnboardingCoachStep?) {
-        if step == .inspector || step == .shapes {
+        if step == .inspector {
             isInspectorPresented = true
         }
     }

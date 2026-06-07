@@ -39,11 +39,6 @@ struct ShapeToolbar: View {
         // Container-level so every cell truncates instead of wrapping when the
         // inspector gets narrow (presented popovers are unaffected).
         .lineLimit(1)
-        // iPad anchors this step on the inspector Form instead (see InspectorPanel) —
-        // popovers attached inside a Form/List row don't present reliably on iPadOS.
-        #if os(macOS)
-        .coachPopover(step: .shapes, state: state, arrowEdge: .trailing)
-        #endif
         .sheet(isPresented: $isSvgDialogPresented) {
             SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
                 addSvgShape(svgContent: svgContent, size: size, useColor: useColor, color: color)

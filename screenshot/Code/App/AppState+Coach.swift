@@ -67,9 +67,9 @@ extension AppState {
             endCoach()
             return
         }
-        // The inspector and shapes steps anchor on row-scoped UI, which only
-        // renders when a row is selected.
-        if next == .inspector || next == .shapes {
+        // The inspector step anchors on row-scoped UI, which only renders
+        // when a row is selected.
+        if next == .inspector {
             ensureRowSelected()
         }
         setCoachStep(next)

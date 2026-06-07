@@ -6290,7 +6290,88 @@
         }
       }
     },
+    "Add languages from this menu and translate every text layer — by hand or automatically. Layouts stay identical in every language, and Cmd+] cycles between them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügen Sie über dieses Menü Sprachen hinzu und übersetzen Sie jede Textebene – manuell oder automatisch. Die Layouts bleiben in jeder Sprache identisch und mit Cmd+] wechseln Sie zwischen ihnen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez des langues à partir de ce menu et traduisez chaque calque de texte – manuellement ou automatiquement. Les mises en page restent identiques dans toutes les langues et Cmd+] alterne entre elles."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このメニューから言語を追加し、すべてのテキスト レイヤーを手動または自動で翻訳します。レイアウトはどの言語でも同一であり、Cmd+] で言語間を循環します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 메뉴에서 언어를 추가하고 모든 텍스트 레이어를 수동으로 또는 자동으로 번역하세요. 레이아웃은 모든 언어에서 동일하게 유지되며 Cmd+]는 그 사이를 순환합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione idiomas neste menu e traduza cada camada de texto – manualmente ou automaticamente. Os layouts permanecem idênticos em todos os idiomas e Cmd+] alterna entre eles."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从此菜单添加语言并翻译每个文本层 - 手动或自动。每种语言的布局都保持相同，并且 Cmd+] 在它们之间循环。"
+          }
+        }
+      }
+    },
+    "Add languages from this menu and translate every text layer — by hand or automatically. Layouts stay identical in every language." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügen Sie über dieses Menü Sprachen hinzu und übersetzen Sie jede Textebene – manuell oder automatisch. Die Layouts bleiben in jeder Sprache identisch."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez des langues à partir de ce menu et traduisez chaque calque de texte – manuellement ou automatiquement. Les mises en page restent identiques dans toutes les langues."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このメニューから言語を追加し、すべてのテキスト レイヤーを手動または自動で翻訳します。レイアウトはどの言語でも同じです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 메뉴에서 언어를 추가하고 모든 텍스트 레이어를 수동으로 또는 자동으로 번역하세요. 레이아웃은 모든 언어에서 동일하게 유지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione idiomas neste menu e traduza cada camada de texto – manualmente ou automaticamente. Os layouts permanecem idênticos em todos os idiomas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从此菜单添加语言并翻译每个文本层 - 手动或自动。每种语言的布局都保持相同。"
+          }
+        }
+      }
+    },
     "Add languages to translate every text layer at once." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -6331,6 +6412,7 @@
       }
     },
     "Add languages to translate every text layer at once. Cmd+] cycles between them." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -6917,6 +6999,7 @@
       }
     },
     "Add text & shapes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -6957,6 +7040,7 @@
       }
     },
     "Add text, images, devices, and shapes from here. They'll appear on the selected row." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -18554,6 +18638,7 @@
       }
     },
     "Double-tap the device to pick a screenshot from Photos or Files." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -18763,6 +18848,7 @@
       }
     },
     "Drag screenshots from Finder onto a canvas, or drop several at once to fill the row." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -19899,6 +19985,86 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "e.g. 57246542-96fe-1a63-e053-0824d011072a"
+          }
+        }
+      }
+    },
+    "Each canvas is one App Store screenshot. Double-tap the device to pick an image from Photos or Files." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Leinwand ist ein App Store Screenshot. Doppeltippen Sie auf das Gerät, um ein Bild aus „Fotos“ oder „Dateien“ auszuwählen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque toile correspond à une capture d'écran de App Store. Appuyez deux fois sur l'appareil pour sélectionner une image dans Photos ou Fichiers."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "各キャンバスは 1 つの App Store スクリーンショットです。デバイスをダブルタップして、写真またはファイルから画像を選択します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "각 캔버스는 하나의 App Store 스크린샷입니다. 사진이나 파일에서 이미지를 선택하려면 장치를 두 번 탭하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada tela é uma captura de tela App Store. Toque duas vezes no dispositivo para escolher uma imagem em Fotos ou Arquivos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每张画布都是一张 App Store 屏幕截图。双击设备可从照片或文件中选取图像。"
+          }
+        }
+      }
+    },
+    "Each canvas is one App Store screenshot. Drag images from Finder onto it, drop several at once to fill the whole row, or double-click the device to browse." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Leinwand ist ein App Store Screenshot. Ziehen Sie Bilder aus dem Finder darauf, legen Sie mehrere auf einmal ab, um die gesamte Zeile zu füllen, oder doppelklicken Sie zum Durchsuchen auf das Gerät."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque toile correspond à une capture d'écran de App Store. Faites glisser des images du Finder dessus, déposez-en plusieurs à la fois pour remplir toute la ligne ou double-cliquez sur l'appareil pour parcourir."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "各キャンバスは 1 つの App Store スクリーンショットです。 Finder から画像をドラッグするか、複数の画像を一度にドロップして行全体を埋めるか、デバイスをダブルクリックして参照します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "각 캔버스는 하나의 App Store 스크린샷입니다. Finder에서 이미지를 드래그하거나, 한 번에 여러 개를 드롭하여 전체 행을 채우거나, 장치를 두 번 클릭하여 찾아보세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada tela é uma captura de tela App Store. Arraste imagens do Finder para ele, solte várias de uma vez para preencher toda a linha ou clique duas vezes no dispositivo para navegar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每张画布都是一张 App Store 屏幕截图。将 Finder 中的图像拖到其上，一次放置多个图像以填充整行，或双击设备进行浏览。"
           }
         }
       }
@@ -21568,6 +21734,7 @@
       }
     },
     "Export every row in every language as PNG or JPEG, ready to upload to App Store Connect or Google Play." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -21603,6 +21770,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将每种语言的每一行导出为 PNG 或 JPEG，准备上传到 App Store Connect 或 Google Play。"
+          }
+        }
+      }
+    },
+    "Export everything at once" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportieren Sie alles auf einmal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportez tout en même temps"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてを一度にエクスポートする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 것을 한 번에 내보내기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporte tudo de uma vez"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次性导出所有内容"
           }
         }
       }
@@ -22010,6 +22217,7 @@
       }
     },
     "Export when ready" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -24169,6 +24377,7 @@
       }
     },
     "Free covers one project. Upgrade here anytime to unlock unlimited projects, rows, and templates." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -24204,6 +24413,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "免费涵盖一个项目。随时在此处升级以解锁无限的项目、行和模板。"
+          }
+        }
+      }
+    },
+    "Free includes one project with 3 rows of 5 templates each — enough to ship your first app. Upgrade here anytime for unlimited projects, rows, and templates." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kostenlos beinhaltet ein Projekt mit 3 Reihen mit jeweils 5 Vorlagen – genug, um Ihre erste App zu versenden. Upgraden Sie hier jederzeit für unbegrenzte Projekte, Zeilen und Vorlagen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free comprend un projet avec 3 rangées de 5 modèles chacune – suffisamment pour expédier votre première application. Mettez à niveau ici à tout moment pour un nombre illimité de projets, de lignes et de modèles."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無料には、それぞれ 5 つのテンプレートの 3 行を含む 1 つのプロジェクトが含まれており、最初のアプリを出荷するのに十分です。ここでいつでもアップグレードすると、プロジェクト、行、テンプレートを無制限に利用できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무료에는 각각 5개의 템플릿이 3줄로 구성된 프로젝트 1개가 포함되어 있어 첫 번째 앱을 출시하기에 충분합니다. 프로젝트, 행, 템플릿을 무제한으로 이용하려면 언제든지 여기에서 업그레이드하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gratuito inclui um projeto com 3 linhas de 5 modelos cada – o suficiente para enviar seu primeiro aplicativo. Atualize aqui a qualquer momento para projetos, linhas e modelos ilimitados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免费包含一个项目，其中包含 3 行，每行 5 个模板 — 足以交付您的第一个应用程序。随时在此处升级以获得无限的项目、行和模板。"
           }
         }
       }
@@ -29128,6 +29377,7 @@
       }
     },
     "Localize your screenshots" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -32555,6 +32805,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "每个应用程序或每个主要版本一个项目。"
+          }
+        }
+      }
+    },
+    "One project, every language" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Projekt, jede Sprache"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un projet, toutes les langues"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 つのプロジェクトであらゆる言語に対応"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "하나의 프로젝트, 모든 언어"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um projeto, cada idioma"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一个项目，每种语言"
           }
         }
       }
@@ -37815,6 +38105,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重命名、复制、删除"
+          }
+        }
+      }
+    },
+    "Render every row in every language as PNG or JPEG, organized into per-language folders — or upload them straight to App Store Connect from here." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendern Sie jede Zeile in jeder Sprache als PNG oder JPEG, organisiert in Ordnern pro Sprache – oder laden Sie sie von hier aus direkt nach App Store Connect hoch."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Affichez chaque ligne dans chaque langue sous la forme PNG ou JPEG, organisées en dossiers par langue, ou téléchargez-les directement dans App Store Connect à partir d'ici."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての言語のすべての行を PNG または JPEG としてレンダリングし、言語ごとのフォルダーに整理するか、ここから App Store Connect に直接アップロードします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 언어의 모든 행을 언어별 폴더로 구성된 PNG 또는 JPEG로 렌더링하거나 여기에서 App Store Connect에 바로 업로드하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renderize cada linha em cada idioma como PNG ou JPEG, organizada em pastas por idioma — ou carregue-as diretamente para App Store Connect daqui."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将每种语言的每一行渲染为 PNG 或 JPEG，组织到每种语言的文件夹中 - 或从此处将它们直接上传到 App Store Connect。"
           }
         }
       }
@@ -45272,6 +45602,7 @@
       }
     },
     "Style your row" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -48104,6 +48435,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "该行将其模板显示为单独的 App Store 样式图块。在退出预览模式之前，编辑将被禁用。"
+          }
+        }
+      }
+    },
+    "This sidebar always edits the currently selected row — set its screenshot size, background, and device frame, and add text, images, and shapes from the Shapes section." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Seitenleiste bearbeitet immer die aktuell ausgewählte Zeile – legen Sie deren Screenshot-Größe, Hintergrund und Geräterahmen fest und fügen Sie Text, Bilder und Formen aus dem Abschnitt „Formen“ hinzu."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette barre latérale modifie toujours la ligne actuellement sélectionnée : définissez sa taille de capture d'écran, son arrière-plan et le cadre de son appareil, et ajoutez du texte, des images et des formes à partir de la section Formes."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このサイドバーは常に、現在選択されている行を編集します。スクリーンショットのサイズ、背景、デバイス フレームを設定し、[図形] セクションからテキスト、画像、図形を追加します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 사이드바는 항상 현재 선택된 행을 편집합니다. 스크린샷 크기, 배경 및 장치 프레임을 설정하고 모양 섹션에서 텍스트, 이미지 및 모양을 추가합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta barra lateral sempre edita a linha atualmente selecionada – defina o tamanho da captura de tela, o plano de fundo e o quadro do dispositivo e adicione texto, imagens e formas da seção Formas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此侧边栏始终编辑当前选定的行 - 设置其屏幕截图大小、背景和设备框架，并从“形状”部分添加文本、图像和形状。"
           }
         }
       }
@@ -51287,6 +51658,7 @@
       }
     },
     "Use the inspector on the right to set the background, default device frame, and screenshot size." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -52997,6 +53369,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "您的 Screenshot Bro Pro 购买已恢复。"
+          }
+        }
+      }
+    },
+    "Your selected row's editor" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Editor Ihrer ausgewählten Zeile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'éditeur de la ligne sélectionnée"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択した行のエディター"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택한 행의 편집기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor da linha selecionada"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您所选行的编辑器"
           }
         }
       }

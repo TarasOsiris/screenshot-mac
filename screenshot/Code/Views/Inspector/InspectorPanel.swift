@@ -9,8 +9,6 @@ private let blurValueWidth: CGFloat = 36
 #endif
 
 struct InspectorPanel: View {
-    private static let shapesCoachAnchorId = "coachShapesSection"
-
     @Bindable var state: AppState
     #if DEBUG && os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -23,61 +21,33 @@ struct InspectorPanel: View {
     @State private var useCustomSize = false
     @State private var customWidth: String = ""
     @State private var customHeight: String = ""
-    #if os(iOS)
-    @State private var shapesCoachGlobalFrame: CGRect = .zero
-    #endif
 
     var body: some View {
         if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId {
             if state.previewingRows.contains(rowId) {
                 previewModePanel(rowId: rowId)
             } else {
-                ScrollViewReader { proxy in
-                    Form {
-                        sizeSection(rowIndex: rowIndex, rowId: rowId)
-                        deviceSection(rowId: rowId)
-                        backgroundSection(rowIndex: rowIndex, rowId: rowId)
-                        Section(isExpanded: $isAddElementExpanded) {
-                            ShapeToolbar(state: state)
-                                .id(Self.shapesCoachAnchorId)
-                                #if os(iOS)
-                                .onGeometryChange(for: CGRect.self) { proxy in
-                                    proxy.frame(in: .global)
-                                } action: { frame in
-                                    shapesCoachGlobalFrame = frame
-                                }
-                                #endif
-                        } header: {
-                            Text("Shapes")
-                        }
-                        visibilitySection(rowId: rowId)
-                        #if DEBUG && os(iOS)
-                        debugSection
-                        #endif
+                Form {
+                    sizeSection(rowIndex: rowIndex, rowId: rowId)
+                    deviceSection(rowId: rowId)
+                    backgroundSection(rowIndex: rowIndex, rowId: rowId)
+                    Section(isExpanded: $isAddElementExpanded) {
+                        ShapeToolbar(state: state)
+                    } header: {
+                        Text("Shapes")
                     }
-                    .formStyle(.grouped)
-                    #if os(macOS)
-                    .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
-                    #else
-                    .overlay(alignment: .topLeading) {
-                        inspectorCoachHost
-                    }
-                    // Scroll the shapes grid into view (and expand its section) during the
-                    // coach-mark transition gap, before the popover presents.
-                    .onChange(of: state.coachPreparingStep) { _, step in
-                        guard step == .shapes else { return }
-                        isAddElementExpanded = true
-                        Task { @MainActor in
-                            await Task.yield()
-                            try? await Task.sleep(for: .milliseconds(50))
-                            guard state.coachPreparingStep == .shapes || state.coachStep == .shapes else { return }
-                            withAnimation {
-                                proxy.scrollTo(Self.shapesCoachAnchorId, anchor: .center)
-                            }
-                        }
-                    }
+                    visibilitySection(rowId: rowId)
+                    #if DEBUG && os(iOS)
+                    debugSection
                     #endif
                 }
+                .formStyle(.grouped)
+                #if os(macOS)
+                .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
+                #else
+                // Popovers attached to a Form don't anchor reliably on iPadOS.
+                .coachPopoverAnchor(step: .inspector, state: state, arrowEdge: .trailing)
+                #endif
             }
         } else {
             ContentUnavailableView(
@@ -113,60 +83,6 @@ struct InspectorPanel: View {
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
-
-    #if os(iOS)
-    private var inspectorCoachHost: some View {
-        GeometryReader { proxy in
-            let hostFrame = inspectorCoachHostFrame(in: proxy)
-            Color.clear
-                .frame(width: hostFrame.width, height: hostFrame.height)
-                .position(x: hostFrame.midX, y: hostFrame.midY)
-                .coachPopover(
-                    steps: inspectorCoachAnchors,
-                    state: state,
-                    isActive: isInspectorCoachHostActive(in: proxy)
-                )
-                .allowsHitTesting(false)
-        }
-    }
-
-    private var inspectorCoachAnchors: [OnboardingCoachStep: CoachStepAnchor] {
-        [
-            .inspector: CoachStepAnchor(attachmentAnchor: .rect(.bounds), arrowEdge: .trailing),
-            .shapes: CoachStepAnchor(attachmentAnchor: .point(.center), arrowEdge: .trailing),
-        ]
-    }
-
-    private func isInspectorCoachHostActive(in proxy: GeometryProxy) -> Bool {
-        switch state.coachStep {
-        case .inspector:
-            return true
-        case .shapes:
-            guard !shapesCoachGlobalFrame.isEmpty else { return false }
-            let shapesCenter = CGPoint(x: shapesCoachGlobalFrame.midX, y: shapesCoachGlobalFrame.midY)
-            return proxy.frame(in: .global).contains(shapesCenter)
-        default:
-            return false
-        }
-    }
-
-    private func inspectorCoachHostFrame(in proxy: GeometryProxy) -> CGRect {
-        guard (state.coachStep ?? state.coachPreparingStep) == .shapes else {
-            return CGRect(origin: .zero, size: proxy.size)
-        }
-        let proxyOrigin = proxy.frame(in: .global).origin
-        let localCenter = CGPoint(
-            x: shapesCoachGlobalFrame.midX - proxyOrigin.x,
-            y: shapesCoachGlobalFrame.midY - proxyOrigin.y
-        )
-        return CGRect(
-            x: localCenter.x - 0.5,
-            y: localCenter.y - 0.5,
-            width: 1,
-            height: 1
-        )
-    }
-    #endif
 
     @ViewBuilder
     private func sizeSection(rowIndex: Int, rowId: UUID) -> some View {

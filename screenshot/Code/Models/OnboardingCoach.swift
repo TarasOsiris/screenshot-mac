@@ -62,7 +62,6 @@ enum OnboardingPersistence {
 enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
     case canvas
     case inspector
-    case shapes
     case locale
     case export
     case pro
@@ -77,10 +76,9 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
             #else
             "Add a screenshot"
             #endif
-        case .inspector: "Style your row"
-        case .shapes: "Add text & shapes"
-        case .locale: "Localize your screenshots"
-        case .export: "Export when ready"
+        case .inspector: "Your selected row's editor"
+        case .locale: "One project, every language"
+        case .export: "Export everything at once"
         case .pro: "Unlock everything with Pro"
         }
     }
@@ -89,24 +87,22 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
         switch self {
         case .canvas:
             #if os(macOS)
-            "Drag screenshots from Finder onto a canvas, or drop several at once to fill the row."
+            "Each canvas is one App Store screenshot. Drag images from Finder onto it, drop several at once to fill the whole row, or double-click the device to browse."
             #else
-            "Double-tap the device to pick a screenshot from Photos or Files."
+            "Each canvas is one App Store screenshot. Double-tap the device to pick an image from Photos or Files."
             #endif
         case .inspector:
-            "Use the inspector on the right to set the background, default device frame, and screenshot size."
-        case .shapes:
-            "Add text, images, devices, and shapes from here. They'll appear on the selected row."
+            "This sidebar always edits the currently selected row — set its screenshot size, background, and device frame, and add text, images, and shapes from the Shapes section."
         case .locale:
             #if os(macOS)
-            "Add languages to translate every text layer at once. Cmd+] cycles between them."
+            "Add languages from this menu and translate every text layer — by hand or automatically. Layouts stay identical in every language, and Cmd+] cycles between them."
             #else
-            "Add languages to translate every text layer at once."
+            "Add languages from this menu and translate every text layer — by hand or automatically. Layouts stay identical in every language."
             #endif
         case .export:
-            "Export every row in every language as PNG or JPEG, ready to upload to App Store Connect or Google Play."
+            "Render every row in every language as PNG or JPEG, organized into per-language folders — or upload them straight to App Store Connect from here."
         case .pro:
-            "Free covers one project. Upgrade here anytime to unlock unlimited projects, rows, and templates."
+            "Free includes one project with 3 rows of 5 templates each — enough to ship your first app. Upgrade here anytime for unlimited projects, rows, and templates."
         }
     }
 
@@ -114,7 +110,6 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
         switch self {
         case .canvas: "square.and.arrow.down.on.square"
         case .inspector: "sidebar.right"
-        case .shapes: "plus.rectangle.on.rectangle"
         case .locale: "globe"
         case .export: "square.and.arrow.up"
         case .pro: "crown"
@@ -125,7 +120,6 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
         switch self {
         case .canvas: .blue
         case .inspector: .orange
-        case .shapes: .purple
         case .locale: .teal
         case .export: .green
         case .pro: .yellow
