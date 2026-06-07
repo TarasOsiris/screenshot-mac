@@ -70,15 +70,11 @@ final class AppState {
     @ObservationIgnored var coachTransitionTask: Task<Void, Never>?
     #endif
     /// When false, `endCoach()` skips persisting `onboardingCompleted`. Used by the debug
-    /// "Show Onboarding…" command so it can be re-run without consuming the real flag.
+    /// "Run Coach Tour" command so it can be re-run without consuming the real flag.
     @ObservationIgnored var coachPersistsOnEnd: Bool = true
     /// Mirrors whether the Get Pro toolbar button is currently shown. The final coach
     /// step anchors on that button, so the tour skips it when Pro is already unlocked.
     @ObservationIgnored var coachProStepAvailable: Bool = true
-    /// Set when onboarding finishes while no project is open. The tour is deferred until the
-    /// first row's canvas appears (its coach marks anchor on the editor). The wrapped Bool is
-    /// the `persistOnEnd` value to start the coach with. `nil` means no pending tour.
-    @ObservationIgnored var pendingCoachPersistOnEnd: Bool?
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
     /// Family names referenced by any shape at some point in the current session. A font

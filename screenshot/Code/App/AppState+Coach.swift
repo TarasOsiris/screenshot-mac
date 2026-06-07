@@ -10,28 +10,19 @@ extension AppState {
         setCoachStep(.canvas)
     }
 
-    /// Consumes a tour deferred from when the welcome flow closed (no project was
-    /// open then) and starts it. Callers report that the `.canvas` anchor is on
-    /// screen and pass their size-class compactness — the iPad tour needs regular
-    /// width, so at compact width the flags stay pending and the tour fires next
-    /// time the canvas is visible full-width. Yields a runloop turn so the anchor
-    /// is laid out before the popover shows.
+    /// Consumes the tour armed at first launch (no project existed then) and starts
+    /// it. Callers report that the `.canvas` anchor is on screen and pass their
+    /// size-class compactness — the iPad tour needs regular width, so at compact
+    /// width the flag stays pending and the tour fires next time the canvas is
+    /// visible full-width. Yields a runloop turn so the anchor is laid out before
+    /// the popover shows.
     func startDeferredCoachIfEligible(isCompactWidth: Bool) {
-        guard !isOpeningProject else { return }
-        var pendingPersist = pendingCoachPersistOnEnd
-        #if os(iOS)
-        guard OnboardingCoachStep.tourSupportedOnDevice, !isCompactWidth else { return }
-        // The persisted flag covers a relaunch between welcome and first project open.
-        if pendingPersist == nil, OnboardingPersistence.isEditorCoachPending {
-            pendingPersist = true
-        }
-        #endif
-        guard let persist = pendingPersist else { return }
-        pendingCoachPersistOnEnd = nil
+        guard !isOpeningProject, !isCompactWidth else { return }
+        guard OnboardingPersistence.isEditorCoachPending else { return }
         OnboardingPersistence.clearEditorCoachPending()
         Task { @MainActor in
             await Task.yield()
-            startCoach(persistOnEnd: persist)
+            startCoach(persistOnEnd: true)
         }
     }
 

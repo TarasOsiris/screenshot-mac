@@ -383,10 +383,7 @@ struct InspectorPanel: View {
     private var debugSection: some View {
         Section {
             Button {
-                // pendingCoachPersistOnEnd is @ObservationIgnored, so setting it alone
-                // invalidates nothing — consume it through the eligibility path directly.
-                state.pendingCoachPersistOnEnd = false
-                state.startDeferredCoachIfEligible(isCompactWidth: horizontalSizeClass != .regular)
+                state.startCoach(persistOnEnd: false)
             } label: {
                 Text(verbatim: "Show Onboarding Coach")
             }

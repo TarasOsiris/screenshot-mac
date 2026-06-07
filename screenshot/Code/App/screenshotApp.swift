@@ -12,18 +12,12 @@ struct ScreenshotBroApp: App {
     @State private var appNavigationRouter = AppNavigationRouter()
     #endif
     @AppStorage("appearance") private var appearance = "auto"
-    @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
-    /// Transient: set when the user clicks "Get Started" in the welcome sheet. Lets the
-    /// modal close without persisting completion — the interactive coach handles that
-    /// when it finishes or is skipped, so quitting mid-tour reopens the welcome on relaunch.
-    @State private var welcomeDismissed = false
     #if DEBUG && os(macOS)
     @State private var isDebugTemplateSavePresented = false
     @State private var debugTemplateName = ""
     @State private var debugTemplateError: String?
     @State private var debugExistingTemplates: [String] = []
     @State private var isDebugProjectManagerPresented = false
-    @State private var isDebugOnboardingPresented = false
     #endif
 
     private var preferredColorScheme: ColorScheme? {
@@ -47,31 +41,7 @@ struct ScreenshotBroApp: App {
                 .preferredColorScheme(preferredColorScheme)
                 .background(MainWindowSceneBridge())
                 .task { storeService.start() }
-                .sheet(isPresented: Binding(
-                    get: { !onboardingCompleted && !welcomeDismissed },
-                    set: { _ in }
-                )) {
-                    OnboardingView(
-                        persistCompletion: false,
-                        onComplete: {
-                            // No project exists yet on first launch — defer the tour until
-                            // the first canvas appears (see EditorRowView).
-                            appState.pendingCoachPersistOnEnd = true
-                            welcomeDismissed = true
-                        }
-                    )
-                    .interactiveDismissDisabled()
-                }
                 #if DEBUG
-                .sheet(isPresented: $isDebugOnboardingPresented) {
-                    OnboardingView(
-                        persistCompletion: false,
-                        onComplete: {
-                            appState.pendingCoachPersistOnEnd = false
-                            isDebugOnboardingPresented = false
-                        }
-                    )
-                }
                 .task {
                     debugRefreshExistingTemplates()
                 }
@@ -311,9 +281,10 @@ struct ScreenshotBroApp: App {
 
             #if DEBUG
             CommandMenu("Debug") {
-                Button("Show Onboarding...") {
-                    isDebugOnboardingPresented = true
+                Button("Run Coach Tour") {
+                    appState.startCoach(persistOnEnd: false)
                 }
+                .disabled(appState.activeProjectId == nil)
 
                 Divider()
 
@@ -388,30 +359,6 @@ struct ScreenshotBroApp: App {
                 .environment(appNavigationRouter)
                 .preferredColorScheme(preferredColorScheme)
                 .task { storeService.start() }
-                .fullScreenCover(isPresented: Binding(
-                    get: {
-                        !OnboardingPersistence.launchOnboardingDisabledOnCurrentDevice
-                            && !onboardingCompleted
-                            && !welcomeDismissed
-                    },
-                    set: { _ in }
-                )) {
-                    // Full-screen multi-step welcome ending in a Pro/paywall step; persists
-                    // completion on finish. Devices that support the editor coach defer that
-                    // tour until the first project's canvas appears.
-                    OnboardingView(
-                        persistCompletion: true,
-                        onComplete: {
-                            if OnboardingCoachStep.tourSupportedOnDevice {
-                                OnboardingPersistence.setEditorCoachPending()
-                                appState.pendingCoachPersistOnEnd = true
-                            }
-                            welcomeDismissed = true
-                        }
-                    )
-                    .environment(storeService)
-                    .interactiveDismissDisabled()
-                }
         }
         #endif
     }

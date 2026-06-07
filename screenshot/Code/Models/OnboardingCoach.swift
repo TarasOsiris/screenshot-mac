@@ -5,22 +5,17 @@ import SwiftUI
 /// or future migration can be done in one place.
 enum OnboardingPersistence {
     static let completedKey = "onboardingCompleted"
-    /// iPad defers the editor coach tour until the first project opens, which can be a
-    /// different launch than the welcome flow — so the pending state must survive restarts.
+    /// The editor coach tour is deferred until the first project's canvas appears, which
+    /// can be a later launch than the first one — so the pending state must survive restarts.
     static let editorCoachPendingKey = "editorCoachPending"
     private static let forceOnboardingEnvironmentKey = "SCREENSHOT_FORCE_ONBOARDING"
 
+    /// Arms the deferred coach tour once, on first launch, on devices that support
+    /// it — or on every launch when force-onboarding is enabled.
     static func prepareForLaunch() {
-        if isForceOnboardingEnabled {
-            UserDefaults.standard.set(false, forKey: completedKey)
-            UserDefaults.standard.removeObject(forKey: editorCoachPendingKey)
-            return
-        }
-        guard launchOnboardingDisabledOnCurrentDevice else { return }
-        // iPad skips the welcome cover but still gets the editor tour — arm the
-        // deferred coach once, on first launch, before marking onboarding done.
         let defaults = UserDefaults.standard
-        if !defaults.bool(forKey: completedKey) {
+        guard isForceOnboardingEnabled || !defaults.bool(forKey: completedKey) else { return }
+        if OnboardingCoachStep.tourSupportedOnDevice {
             defaults.set(true, forKey: editorCoachPendingKey)
         }
         defaults.set(true, forKey: completedKey)
@@ -30,24 +25,9 @@ enum OnboardingPersistence {
         UserDefaults.standard.bool(forKey: editorCoachPendingKey)
     }
 
-    static func setEditorCoachPending() {
-        UserDefaults.standard.set(true, forKey: editorCoachPendingKey)
-    }
-
     static func clearEditorCoachPending() {
         UserDefaults.standard.removeObject(forKey: editorCoachPendingKey)
     }
-
-    // Cached: the env var and device idiom can't change mid-process, and the
-    // iOS welcome-cover binding re-reads this on every root body pass.
-    static let launchOnboardingDisabledOnCurrentDevice: Bool = {
-        guard !isForceOnboardingEnabled else { return false }
-        #if os(iOS)
-        return UIDevice.current.userInterfaceIdiom == .pad
-        #else
-        return false
-        #endif
-    }()
 
     private static let isForceOnboardingEnabled: Bool = {
         guard let value = ProcessInfo.processInfo.environment[forceOnboardingEnvironmentKey] else {

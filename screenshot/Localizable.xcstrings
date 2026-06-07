@@ -26274,6 +26274,46 @@
         }
       }
     },
+    "If this is your first time, an interactive tour walks you through the editor when your first project opens. Pick a new project from a template any time via **File ▸ New Project**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn dies Ihr erstes Mal ist, führt Sie eine interaktive Tour durch den Editor, wenn Ihr erstes Projekt geöffnet wird. Wählen Sie jederzeit über **Datei ▸ Neues Projekt** ein neues Projekt aus einer Vorlage aus."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si c'est votre première fois, une visite interactive vous guide à travers l'éditeur à l'ouverture de votre premier projet. Choisissez un nouveau projet à partir d'un modèle à tout moment via **Fichier ▸ Nouveau projet**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "初めての場合は、最初のプロジェクトを開いたときに、インタラクティブなツアーに従ってエディターを案内します。 **[ファイル] ▸ [新しいプロジェクト]** を使用して、いつでもテンプレートから新しいプロジェクトを選択します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "처음이라면 첫 번째 프로젝트가 열릴 때 대화형 둘러보기를 통해 편집기를 안내합니다. 언제든지 **파일 ▸ 새 프로젝트**를 통해 템플릿에서 새 프로젝트를 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se esta for sua primeira vez, um tour interativo guiará você pelo editor quando seu primeiro projeto for aberto. Escolha um novo projeto a partir de um modelo a qualquer momento em **Arquivo ▸ Novo Projeto**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果这是您第一次，当您的第一个项目打开时，交互式导览将引导您浏览编辑器。随时通过 **文件 ▸ 新项目** 从模板中选择一个新项目。"
+          }
+        }
+      }
+    },
     "If this is your first time, the **Onboarding** sheet will walk you through picking a default screenshot size and device. Pick a new project from a template any time via **File ▸ New Project**." : {
       "localizations" : {
         "de" : {
@@ -41077,6 +41117,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "首先运行导出，然后单击工具栏中的 **上传到 App Store Connect**。"
+          }
+        }
+      }
+    },
+    "Run Coach Tour" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Führen Sie eine Bustour durch"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar recorrido guiado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournée en autocar de course"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コーチツアーを実行する"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "코치 투어 실행"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executar tour de ônibus"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跑步教练之旅"
           }
         }
       }

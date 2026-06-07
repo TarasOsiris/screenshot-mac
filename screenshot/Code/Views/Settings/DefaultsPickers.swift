@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Screenshot size picker used in both Settings and Onboarding.
+/// Screenshot size picker used in Settings.
 struct ScreenshotSizePicker: View {
     @Binding var selection: String
     var label: LocalizedStringKey = "Default screenshot size"
@@ -31,7 +31,7 @@ struct ScreenshotSizePicker: View {
     }
 }
 
-/// Default device picker row used in both Settings and Onboarding.
+/// Default device picker row used in Settings.
 struct DefaultDevicePicker: View {
     @Binding var categoryRaw: String
     @Binding var frameId: String
@@ -59,7 +59,7 @@ struct DefaultDevicePicker: View {
     }
 }
 
-/// Template count picker used in both Settings and Onboarding.
+/// Template count picker used in Settings.
 struct TemplateCountPicker: View {
     @Binding var selection: Int
     var label: LocalizedStringKey = "Screenshots per new row"

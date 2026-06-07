@@ -133,14 +133,10 @@ struct EditorRowView: View {
 
             if !row.isCollapsed {
                 horizontalScrollArea
-                    // Launch a deferred onboarding tour once the first canvas (the `.canvas`
-                    // anchor lives inside it) is on screen. `.onAppear` covers the first-launch
-                    // path (flag set before this view exists); `.onChange` covers a returning
-                    // user whose canvas is already visible when they tap "Get Started".
+                    // Launch the deferred onboarding tour once the first canvas (the `.canvas`
+                    // anchor lives inside it) is on screen — the pending flag is armed at first
+                    // launch, before any project exists.
                     .onAppear { startDeferredCoachIfNeeded() }
-                    .onChange(of: state.pendingCoachPersistOnEnd) { _, _ in
-                        startDeferredCoachIfNeeded()
-                    }
                     // Retry after a project open completes — on iPad the canvas can appear
                     // while `isOpeningProject` is still true, and no other trigger re-fires.
                     .onChange(of: state.isOpeningProject) { _, _ in

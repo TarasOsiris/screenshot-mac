@@ -295,7 +295,7 @@ extension HelpSection {
                 .bullet("3. Pick a device frame, add a headline, choose a background, and arrange shapes."),
                 .bullet("4. Add languages you support — translate text once and let the layout follow."),
                 .bullet("5. Export. You'll get a folder organized by language and device, ready to upload."),
-                .tip("If this is your first time, the **Onboarding** sheet will walk you through picking a default screenshot size and device. Pick a new project from a template any time via **File ▸ New Project**."),
+                .tip("If this is your first time, an interactive tour walks you through the editor when your first project opens. Pick a new project from a template any time via **File ▸ New Project**."),
             ]
         )
     }

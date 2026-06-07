@@ -354,6 +354,7 @@ ES = {
     "Row label": "Etiqueta de fila",
     "Rows": "Filas",
     "Rows per project": "Filas por proyecto",
+    "Run Coach Tour": "Iniciar recorrido guiado",
     "Save & Continue": "Guardar y continuar",
     "Save as PNG...": "Guardar como PNG…",
     "Save Failed": "Error al guardar",
@@ -582,7 +583,6 @@ ES = {
     "Template name": "Nombre de la plantilla",
     "Upload to App Store Connect…": "Enviar a App Store Connect…",
     "Template Error": "Error de plantilla",
-    "Show Onboarding...": "Mostrar introducción…",
     "This cannot be undone.": "Esta acción no se puede deshacer.",
 
     # Second-pass extractions from App Store Connect settings, toolbar, backgrounds.
