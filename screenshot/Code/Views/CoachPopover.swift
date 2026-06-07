@@ -31,9 +31,10 @@ extension View {
     /// context, so sibling steps inside the inspector must share one.
     func coachPopover(
         steps: [OnboardingCoachStep: CoachStepAnchor],
-        state: AppState
+        state: AppState,
+        isActive: Bool = true
     ) -> some View {
-        modifier(CoachPopoverModifier(steps: steps, state: state, isActive: true))
+        modifier(CoachPopoverModifier(steps: steps, state: state, isActive: isActive))
     }
 
     /// Anchors a coach-mark popover on a plain background view sharing this

@@ -23,6 +23,9 @@ struct InspectorPanel: View {
     @State private var useCustomSize = false
     @State private var customWidth: String = ""
     @State private var customHeight: String = ""
+    #if os(iOS)
+    @State private var shapesCoachGlobalFrame: CGRect = .zero
+    #endif
 
     var body: some View {
         if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId {
@@ -37,6 +40,13 @@ struct InspectorPanel: View {
                         Section(isExpanded: $isAddElementExpanded) {
                             ShapeToolbar(state: state)
                                 .id(Self.shapesCoachAnchorId)
+                                #if os(iOS)
+                                .onGeometryChange(for: CGRect.self) { proxy in
+                                    proxy.frame(in: .global)
+                                } action: { frame in
+                                    shapesCoachGlobalFrame = frame
+                                }
+                                #endif
                         } header: {
                             Text("Shapes")
                         }
@@ -49,29 +59,21 @@ struct InspectorPanel: View {
                     #if os(macOS)
                     .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
                     #else
-                    // iPadOS only honors the first popover modifier per hosting context, so
-                    // both inspector-hosted steps share this one. The shapes step points at
-                    // the "Shapes" section label, which the pre-scroll below places just
-                    // above the inspector's vertical center.
-                    .coachPopover(
-                        steps: [
-                            .inspector: CoachStepAnchor(attachmentAnchor: .rect(.bounds), arrowEdge: .trailing),
-                            // Arrow on the popover's trailing edge → the card opens to the
-                            // left of the anchor, over the canvas where there is room.
-                            .shapes: CoachStepAnchor(
-                                attachmentAnchor: .point(UIMetrics.Coach.shapesAnchorPoint),
-                                arrowEdge: .trailing
-                            ),
-                        ],
-                        state: state
-                    )
+                    .overlay(alignment: .topLeading) {
+                        inspectorCoachHost
+                    }
                     // Scroll the shapes grid into view (and expand its section) during the
                     // coach-mark transition gap, before the popover presents.
                     .onChange(of: state.coachPreparingStep) { _, step in
                         guard step == .shapes else { return }
                         isAddElementExpanded = true
-                        withAnimation {
-                            proxy.scrollTo(Self.shapesCoachAnchorId, anchor: .center)
+                        Task { @MainActor in
+                            await Task.yield()
+                            try? await Task.sleep(for: .milliseconds(50))
+                            guard state.coachPreparingStep == .shapes || state.coachStep == .shapes else { return }
+                            withAnimation {
+                                proxy.scrollTo(Self.shapesCoachAnchorId, anchor: .center)
+                            }
                         }
                     }
                     #endif
@@ -111,6 +113,60 @@ struct InspectorPanel: View {
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
+
+    #if os(iOS)
+    private var inspectorCoachHost: some View {
+        GeometryReader { proxy in
+            let hostFrame = inspectorCoachHostFrame(in: proxy)
+            Color.clear
+                .frame(width: hostFrame.width, height: hostFrame.height)
+                .position(x: hostFrame.midX, y: hostFrame.midY)
+                .coachPopover(
+                    steps: inspectorCoachAnchors,
+                    state: state,
+                    isActive: isInspectorCoachHostActive(in: proxy)
+                )
+                .allowsHitTesting(false)
+        }
+    }
+
+    private var inspectorCoachAnchors: [OnboardingCoachStep: CoachStepAnchor] {
+        [
+            .inspector: CoachStepAnchor(attachmentAnchor: .rect(.bounds), arrowEdge: .trailing),
+            .shapes: CoachStepAnchor(attachmentAnchor: .point(.center), arrowEdge: .trailing),
+        ]
+    }
+
+    private func isInspectorCoachHostActive(in proxy: GeometryProxy) -> Bool {
+        switch state.coachStep {
+        case .inspector:
+            return true
+        case .shapes:
+            guard !shapesCoachGlobalFrame.isEmpty else { return false }
+            let shapesCenter = CGPoint(x: shapesCoachGlobalFrame.midX, y: shapesCoachGlobalFrame.midY)
+            return proxy.frame(in: .global).contains(shapesCenter)
+        default:
+            return false
+        }
+    }
+
+    private func inspectorCoachHostFrame(in proxy: GeometryProxy) -> CGRect {
+        guard (state.coachStep ?? state.coachPreparingStep) == .shapes else {
+            return CGRect(origin: .zero, size: proxy.size)
+        }
+        let proxyOrigin = proxy.frame(in: .global).origin
+        let localCenter = CGPoint(
+            x: shapesCoachGlobalFrame.midX - proxyOrigin.x,
+            y: shapesCoachGlobalFrame.midY - proxyOrigin.y
+        )
+        return CGRect(
+            x: localCenter.x - 0.5,
+            y: localCenter.y - 0.5,
+            width: 1,
+            height: 1
+        )
+    }
+    #endif
 
     @ViewBuilder
     private func sizeSection(rowIndex: Int, rowId: UUID) -> some View {
