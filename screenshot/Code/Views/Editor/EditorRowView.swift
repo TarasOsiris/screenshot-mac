@@ -65,6 +65,16 @@ struct EditorRowView: View {
 
     var isPreviewMode: Bool { state.previewingRows.contains(row.id) }
 
+    /// iPad points the first coach mark at the row's first device frame (see
+    /// `canvasView`); the scroll-area anchor is only the no-device fallback there.
+    var canvasCoachAnchorsOnDevice: Bool {
+        #if os(iOS)
+        row.activeShapes.contains { $0.type == .device }
+        #else
+        false
+        #endif
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             EditorRowHeader(
@@ -136,7 +146,7 @@ struct EditorRowView: View {
                     .coachPopover(
                         step: .canvas,
                         state: state,
-                        isActive: state.rows.first?.id == row.id && !isPreviewMode,
+                        isActive: state.rows.first?.id == row.id && !isPreviewMode && !canvasCoachAnchorsOnDevice,
                         arrowEdge: .top,
                         attachmentAnchor: .point(.center)
                     )

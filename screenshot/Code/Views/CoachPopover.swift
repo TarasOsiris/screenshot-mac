@@ -101,7 +101,9 @@ private struct CoachPopoverContent: View {
     let step: OnboardingCoachStep
     @Bindable var state: AppState
     @Environment(StoreService.self) private var store
+    #if os(macOS)
     @State private var isCloseHovered = false
+    #endif
 
     private var isLastStep: Bool { step.next == nil }
 
@@ -156,6 +158,8 @@ private struct CoachPopoverContent: View {
 
             Spacer(minLength: 0)
 
+            // iPad has no close button — tapping outside the popover ends the tour.
+            #if os(macOS)
             Button {
                 state.endCoach()
             } label: {
@@ -171,6 +175,7 @@ private struct CoachPopoverContent: View {
             .buttonStyle(.plain)
             .help("Skip tour")
             .onHover { isCloseHovered = $0 }
+            #endif
         }
     }
 
@@ -220,11 +225,14 @@ private struct CoachPopoverContent: View {
 
             Spacer(minLength: 0)
 
+            // The progress dots already show position on iPad; the counter is macOS-only.
+            #if os(macOS)
             Text("\(step.stepNumber) of \(OnboardingCoachStep.totalSteps)")
                 .font(.system(size: UIMetrics.FontSize.hint, design: .monospaced))
                 .foregroundStyle(.tertiary)
 
             Spacer(minLength: 0)
+            #endif
 
             // On the Pro step the Buy Pro CTA is the single prominent button.
             if isLastStep {

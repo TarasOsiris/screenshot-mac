@@ -463,6 +463,26 @@ extension EditorRowView {
                     templateDisplayHeight: dh
                 )
             }
+
+            #if os(iOS)
+            // iPad points the first coach mark at the row's first device frame;
+            // EditorRowView keeps a scroll-area anchor as the no-device fallback.
+            // The popover must attach to the device-sized frame BEFORE .position —
+            // .position fills the canvas, which would re-anchor to its full bounds.
+            if let device = resolvedShapes.first(where: { $0.type == .device }) {
+                Color.clear
+                    .frame(width: device.width * ds, height: device.height * ds)
+                    .coachPopover(
+                        step: .canvas,
+                        state: state,
+                        isActive: state.rows.first?.id == row.id && !isPreviewMode,
+                        arrowEdge: .top,
+                        attachmentAnchor: .point(.center)
+                    )
+                    .position(x: (device.x + device.width / 2) * ds, y: (device.y + device.height / 2) * ds)
+                    .allowsHitTesting(false)
+            }
+            #endif
         }
         .frame(
             width: dw * CGFloat(row.templates.count),

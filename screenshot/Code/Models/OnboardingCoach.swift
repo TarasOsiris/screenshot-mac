@@ -71,7 +71,12 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
 
     var title: LocalizedStringKey {
         switch self {
-        case .canvas: "Drop a screenshot here"
+        case .canvas:
+            #if os(macOS)
+            "Drop a screenshot here"
+            #else
+            "Add a screenshot"
+            #endif
         case .inspector: "Style your row"
         case .shapes: "Add text & shapes"
         case .locale: "Localize your screenshots"
