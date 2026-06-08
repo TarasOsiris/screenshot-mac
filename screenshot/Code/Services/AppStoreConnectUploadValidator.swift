@@ -134,16 +134,20 @@ enum ASCUploadValidator {
                 ))
             }
 
+            var reportedCollisionPartners: Set<String> = []
             for localeTarget in plan.localeTargets where localeTarget.isEnabled {
                 guard let localizationId = localeTarget.selectedASCLocalizationId else { continue }
                 let uploadTargetKey = "\(localizationId)|\(displayType.appStoreConnectValue)"
                 if let existingRowName = seenAppStoreConnectTargets[uploadTargetKey] {
-                    issues.append(ASCUploadIssue(
-                        severity: .error,
-                        scope: rowName,
-                        message: "This row uploads to the same App Store screenshot set as \(existingRowName).",
-                        hint: "Disable one of these rows or choose a different display type before uploading."
-                    ))
+                    // One error per colliding partner row, not per shared locale.
+                    if reportedCollisionPartners.insert(existingRowName).inserted {
+                        issues.append(ASCUploadIssue(
+                            severity: .error,
+                            scope: rowName,
+                            message: "This row uploads to the same App Store screenshot set as \(existingRowName).",
+                            hint: "Disable one of these rows or choose a different display type before uploading."
+                        ))
+                    }
                 } else {
                     seenAppStoreConnectTargets[uploadTargetKey] = rowName
                 }

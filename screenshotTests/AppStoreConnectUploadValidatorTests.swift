@@ -54,6 +54,46 @@ struct AppStoreConnectUploadValidatorTests {
         })
     }
 
+    @Test func collidingRowsAcrossManyLocalesEmitOneErrorPerPartner() {
+        let localizations = ["en-US", "fr-FR", "de-DE", "es-ES"].map { locale in
+            ASCAppStoreVersionLocalization(id: "localization-\(locale)", attributes: .init(locale: locale))
+        }
+        let localeTargets = localizations.map { localization in
+            UploadToAppStoreConnectView.LocaleTarget(
+                appLocaleCode: localization.attributes.locale,
+                appLocaleLabel: localization.attributes.locale,
+                selectedASCLocalizationId: localization.id,
+                candidates: [localization],
+                isEnabled: true
+            )
+        }
+        let version = ASCAppStoreVersion(
+            id: "version-1",
+            attributes: .init(
+                versionString: "1.0",
+                appStoreState: "PREPARE_FOR_SUBMISSION",
+                platform: "IOS"
+            )
+        )
+        func plan(_ label: String) -> UploadToAppStoreConnectView.RowPlan {
+            UploadToAppStoreConnectView.RowPlan(
+                id: UUID(),
+                rowLabel: label,
+                rowSize: CGSize(width: 2064, height: 2752),
+                templateCount: ASCUploadLimits.minScreenshotsPerSet,
+                isEnabled: true,
+                detectedDisplayType: .ipadPro129M4,
+                selectedDisplayType: .ipadPro129M4,
+                localeTargets: localeTargets
+            )
+        }
+        let issues = ASCUploadValidator.validate(version: version, plans: [plan("iPad 13"), plan("iPad 13 copy")])
+
+        let collisionErrors = issues.filter { $0.message.contains("same App Store screenshot set") }
+        #expect(collisionErrors.count == 1)
+        #expect(collisionErrors.first?.scope == "iPad 13 copy")
+    }
+
     @Test func rejectsDisplayTypeIncompatibleWithVersionPlatform() {
         let localization = ASCAppStoreVersionLocalization(
             id: "localization-en",
