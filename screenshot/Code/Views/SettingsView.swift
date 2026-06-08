@@ -130,6 +130,10 @@ struct SettingsView: View {
                             .foregroundStyle(.red)
                             .font(.caption)
                     }
+
+                    Text("Syncing may take a while if you have a lot of projects.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
                 }
             }
             .confirmationDialog(

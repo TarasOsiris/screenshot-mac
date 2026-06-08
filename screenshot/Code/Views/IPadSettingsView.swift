@@ -233,6 +233,10 @@ struct IPadSettingsView: View {
                 if let error = iCloudError {
                     Text(error).foregroundStyle(.red).font(.caption)
                 }
+
+                Text("Syncing may take a while if you have a lot of projects.")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
             }
         }
     }

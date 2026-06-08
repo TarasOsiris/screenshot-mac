@@ -46768,6 +46768,9 @@
         }
       }
     },
+    "Syncing may take a while if you have a lot of projects." : {
+
+    },
     "Syncing via iCloud" : {
       "localizations" : {
         "de" : {
