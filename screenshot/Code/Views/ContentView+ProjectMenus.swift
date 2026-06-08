@@ -65,10 +65,22 @@ extension ContentView {
             .disabled(state.activeProjectId == nil)
 
             #if os(macOS)
-            Button("Show in Finder", systemImage: "folder") {
-                guard let id = state.activeProjectId else { return }
-                let folder = PersistenceService.projectDirectoryURL(id)
-                PlatformReveal.inFileViewer([folder])
+            Menu("Project File", systemImage: "folder") {
+                Button("Show in Finder", systemImage: "folder") {
+                    guard let id = state.activeProjectId else { return }
+                    let folder = PersistenceService.projectDirectoryURL(id)
+                    PlatformReveal.inFileViewer([folder])
+                }
+
+                Button("Copy Project File Path", systemImage: "doc.on.clipboard") {
+                    guard let id = state.activeProjectId else { return }
+                    PlatformPasteboard.copyString(PersistenceService.projectDataURL(id).path)
+                }
+
+                Button("Copy AI Localization Prompt", systemImage: "character.bubble") {
+                    guard let id = state.activeProjectId else { return }
+                    PlatformPasteboard.copyString(LocalizationPromptService.prompt(forProjectId: id))
+                }
             }
             .disabled(state.activeProjectId == nil)
             #endif

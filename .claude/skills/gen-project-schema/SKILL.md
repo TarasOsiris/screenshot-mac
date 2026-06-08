@@ -82,7 +82,11 @@ Read these files — every `Codable` property you encounter must map to a schema
    print(f"checked {min(len(paths),25)} files")
    PY
    ```
-6. **Report** what changed (added/removed/renamed fields, new enum cases) so the user can confirm the diff matches their model edit.
+6. **Sync the bundled copy.** A second copy of the schema is bundled into the app (the "Copy AI Localization Prompt" menu item embeds it). Mirror the file so they don't drift:
+   ```bash
+   cp tools/project-schema.json screenshot/project-schema.json
+   ```
+7. **Report** what changed (added/removed/renamed fields, new enum cases) so the user can confirm the diff matches their model edit.
 
 ## Scope notes
 
