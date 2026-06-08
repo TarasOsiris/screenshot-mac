@@ -64,6 +64,26 @@ extension ContentView {
             }
             .disabled(state.activeProjectId == nil)
 
+            Button("Reset Project...", systemImage: "arrow.counterclockwise", role: .destructive) {
+                if confirmBeforeDeleting {
+                    isResettingProject = true
+                } else if let id = state.activeProjectId {
+                    state.resetProject(id)
+                }
+            }
+            .disabled(state.activeProjectId == nil)
+
+            resetFromTemplateMenu
+
+            Button("Delete Project...", systemImage: "trash", role: .destructive) {
+                if confirmBeforeDeleting {
+                    isDeletingProject = true
+                } else if let id = state.activeProjectId {
+                    state.deleteProject(id)
+                }
+            }
+            .disabled(state.activeProjectId == nil)
+
             #if os(macOS)
             Menu("Project File", systemImage: "folder") {
                 Button("Show in Finder", systemImage: "folder") {
@@ -84,26 +104,6 @@ extension ContentView {
             }
             .disabled(state.activeProjectId == nil)
             #endif
-
-            Button("Reset Project...", systemImage: "arrow.counterclockwise", role: .destructive) {
-                if confirmBeforeDeleting {
-                    isResettingProject = true
-                } else if let id = state.activeProjectId {
-                    state.resetProject(id)
-                }
-            }
-            .disabled(state.activeProjectId == nil)
-
-            resetFromTemplateMenu
-
-            Button("Delete Project...", systemImage: "trash", role: .destructive) {
-                if confirmBeforeDeleting {
-                    isDeletingProject = true
-                } else if let id = state.activeProjectId {
-                    state.deleteProject(id)
-                }
-            }
-            .disabled(state.activeProjectId == nil)
         }
     }
 
