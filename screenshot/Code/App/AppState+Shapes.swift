@@ -545,6 +545,53 @@ extension AppState {
         scheduleSave()
     }
 
+    // MARK: - Match Geometry to Source
+
+    enum GeometryMatchMode { case position, size, both }
+
+    /// Pushes the source shape's geometry onto the other selected shapes. Position is
+    /// template-relative: each target keeps its own column but adopts the source's offset
+    /// within that column (shape X is absolute across all columns). Size copies exactly.
+    /// Routes through `updateShapes` so a non-base locale records the change as a per-locale
+    /// override instead of mutating base geometry, matching what the canvas shows.
+    func matchShapeGeometry(toSource sourceId: UUID, mode: GeometryMatchMode) {
+        guard let rowIdx = selectedRowIndex else { return }
+        let ids = selectedShapeIds
+        guard ids.contains(sourceId),
+              let baseSource = rows[rowIdx].shapes.first(where: { $0.id == sourceId }) else { return }
+
+        let targetIds = Set(rows[rowIdx].shapes.filter {
+            ids.contains($0.id) && $0.id != sourceId && !$0.resolvedIsLocked
+        }.map(\.id))
+        guard !targetIds.isEmpty else { return }
+
+        let source = LocaleService.resolveShape(baseSource, localeState: localeState)
+        let templateWidth = rows[rowIdx].templateWidth
+        let templateCount = rows[rowIdx].templates.count
+        let sourceTemplate = rows[rowIdx].owningTemplateIndex(for: source)
+        let sourceRelX = source.x - CGFloat(sourceTemplate) * templateWidth
+
+        let undoName: String
+        switch mode {
+        case .position: undoName = "Match Position"
+        case .size: undoName = "Match Size"
+        case .both: undoName = "Match Position & Size"
+        }
+
+        updateShapes(targetIds, in: rows[rowIdx].id, undoName: undoName) { shape in
+            if mode != .size {
+                let centerX = shape.x + shape.width / 2
+                let targetTemplate = max(0, min(Int(floor(centerX / templateWidth)), templateCount - 1))
+                shape.x = sourceRelX + CGFloat(targetTemplate) * templateWidth
+                shape.y = source.y
+            }
+            if mode != .position {
+                shape.width = source.width
+                shape.height = source.height
+            }
+        }
+    }
+
     private func distributeShapes(indices: [Int], rowIdx: Int, posKey: WritableKeyPath<CanvasShapeModel, CGFloat>, sizeKey: KeyPath<CanvasShapeModel, CGFloat>) {
         let sorted = indices.sorted { rows[rowIdx].shapes[$0][keyPath: posKey] < rows[rowIdx].shapes[$1][keyPath: posKey] }
         let first = rows[rowIdx].shapes[sorted.first!]

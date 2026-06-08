@@ -40,6 +40,7 @@ struct CanvasShapeInteractions {
     var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
     var onDeleteSelected: (() -> Void)?
     var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
+    var onMatchGeometryToThis: ((AppState.GeometryMatchMode) -> Void)?
     var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
     var onToggleLock: (() -> Void)?
     var lockToggleWillUnlock = false
@@ -381,6 +382,7 @@ struct CanvasShapeView: View {
                 }
             },
             onAlignSelected: interactions.onAlignSelected,
+            onMatchGeometryToThis: interactions.onMatchGeometryToThis,
             onDuplicateToTemplates: interactions.onDuplicateToTemplates,
             onToggleLock: interactions.onToggleLock,
             lockToggleWillUnlock: interactions.lockToggleWillUnlock

@@ -436,6 +436,9 @@ extension EditorRowView {
                         onAlignSelected: isMulti ? { alignment in
                             state.alignSelectedShapes(alignment)
                         } : nil,
+                        onMatchGeometryToThis: isMulti ? { [shapeId = shape.id] mode in
+                            state.matchShapeGeometry(toSource: shapeId, mode: mode)
+                        } : nil,
                         onDuplicateToTemplates: row.templates.count > 1 ? { [shapeId = shape.id] direction in
                             let ids = state.selectedShapeIds.isEmpty ? [shapeId] : state.selectedShapeIds
                             state.duplicateShapesToTemplates(Set(ids), direction: direction)

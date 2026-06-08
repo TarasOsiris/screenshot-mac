@@ -21,6 +21,7 @@ struct CanvasShapeContextMenuContent: View {
     let applyUpdate: (@escaping (inout CanvasShapeModel) -> Void) -> Void
     let deleteAction: () -> Void
     var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
+    var onMatchGeometryToThis: ((AppState.GeometryMatchMode) -> Void)?
     var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
     var onToggleLock: (() -> Void)?
     /// True when invoking `onToggleLock` would unlock (rather than lock) the active
@@ -258,6 +259,22 @@ struct CanvasShapeContextMenuContent: View {
                 Button("Distribute Vertically", systemImage: "distribute.vertical.center") { onAlignSelected(.distributeV) }
             } label: {
                 Label("Align Selected", systemImage: "rectangle.3.group")
+            }
+        }
+
+        if let onMatchGeometryToThis {
+            Menu {
+                Button("Position", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
+                    onMatchGeometryToThis(.position)
+                }
+                Button("Size", systemImage: "arrow.up.left.and.arrow.down.right") {
+                    onMatchGeometryToThis(.size)
+                }
+                Button("Position & Size", systemImage: "square.on.square") {
+                    onMatchGeometryToThis(.both)
+                }
+            } label: {
+                Label("Match to This", systemImage: "square.on.square.dashed")
             }
         }
 
