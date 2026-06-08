@@ -5,136 +5,135 @@ extension AppState {
     // MARK: - Rows
 
     func addRow() {
-        registerUndo("Add New Row")
-        let row = makeDefaultRow()
-        rows.append(row)
-        selectRow(row.id)
-        scheduleSave()
+        withUndo("Add New Row") {
+            let row = makeDefaultRow()
+            rows.append(row)
+            selectRow(row.id)
+        }
     }
 
     func addRowAbove(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
-        registerUndo("Add New Row Above")
-        let row = makeDefaultRow()
-        rows.insert(row, at: idx)
-        selectRow(row.id)
-        scheduleSave()
+        withUndo("Add New Row Above") {
+            let row = makeDefaultRow()
+            rows.insert(row, at: idx)
+            selectRow(row.id)
+        }
     }
 
     func addRowBelow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
-        registerUndo("Add New Row Below")
-        let row = makeDefaultRow()
-        rows.insert(row, at: idx + 1)
-        selectRow(row.id)
-        scheduleSave()
+        withUndo("Add New Row Below") {
+            let row = makeDefaultRow()
+            rows.insert(row, at: idx + 1)
+            selectRow(row.id)
+        }
     }
 
     func duplicateRow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
-        registerUndo("Duplicate Row")
-        let source = rows[idx]
-        var newShapes = source.shapes.map { $0.duplicated() }
-        for i in newShapes.indices {
-            let originalId = source.shapes[i].id
-            LocaleService.copyShapeOverrides(&localeState, fromId: originalId, toId: newShapes[i].id)
-            copyImageFiles(for: &newShapes[i], originalId: originalId)
+        withUndo("Duplicate Row") {
+            let source = rows[idx]
+            var newShapes = source.shapes.map { $0.duplicated() }
+            for i in newShapes.indices {
+                let originalId = source.shapes[i].id
+                LocaleService.copyShapeOverrides(&localeState, fromId: originalId, toId: newShapes[i].id)
+                copyImageFiles(for: &newShapes[i], originalId: originalId)
+            }
+            let copy = ScreenshotRow(
+                label: String(localized: "\(source.label) copy"),
+                templates: source.templates.map { $0.duplicated() },
+                templateWidth: source.templateWidth,
+                templateHeight: source.templateHeight,
+                bgColor: source.bgColor,
+                defaultDeviceBodyColor: source.defaultDeviceBodyColor,
+                defaultDeviceCategory: source.defaultDeviceCategory,
+                backgroundStyle: source.backgroundStyle,
+                gradientConfig: source.gradientConfig,
+                spanBackgroundAcrossRow: source.spanBackgroundAcrossRow,
+                backgroundImageConfig: source.backgroundImageConfig,
+                backgroundBlur: source.backgroundBlur,
+                defaultDeviceFrameId: source.defaultDeviceFrameId,
+                hiddenShapeTypes: source.hiddenShapeTypes,
+                showBorders: source.showBorders,
+                shapes: newShapes,
+                isLabelManuallySet: true
+            )
+            rows.insert(copy, at: idx + 1)
+            selectRow(copy.id)
         }
-        let copy = ScreenshotRow(
-            label: String(localized: "\(source.label) copy"),
-            templates: source.templates.map { $0.duplicated() },
-            templateWidth: source.templateWidth,
-            templateHeight: source.templateHeight,
-            bgColor: source.bgColor,
-            defaultDeviceBodyColor: source.defaultDeviceBodyColor,
-            defaultDeviceCategory: source.defaultDeviceCategory,
-            backgroundStyle: source.backgroundStyle,
-            gradientConfig: source.gradientConfig,
-            spanBackgroundAcrossRow: source.spanBackgroundAcrossRow,
-            backgroundImageConfig: source.backgroundImageConfig,
-            backgroundBlur: source.backgroundBlur,
-            defaultDeviceFrameId: source.defaultDeviceFrameId,
-            hiddenShapeTypes: source.hiddenShapeTypes,
-            showBorders: source.showBorders,
-            shapes: newShapes,
-            isLabelManuallySet: true
-        )
-        rows.insert(copy, at: idx + 1)
-        selectRow(copy.id)
-        scheduleSave()
     }
 
     func deleteRow(_ id: UUID) {
         guard rows.count > 1,
               let idx = rows.firstIndex(where: { $0.id == id }) else { return }
-        registerUndo("Delete Row")
-        let row = rows[idx]
+        withUndo("Delete Row") {
+            let row = rows[idx]
 
-        let shapeImageCandidates = imageFileNames(for: row.shapes)
-        let templateBgImages = row.templates.compactMap { $0.backgroundImageConfig.fileName }
-        let rowBgImage = row.backgroundImageConfig.fileName
+            let shapeImageCandidates = imageFileNames(for: row.shapes)
+            let templateBgImages = row.templates.compactMap { $0.backgroundImageConfig.fileName }
+            let rowBgImage = row.backgroundImageConfig.fileName
 
-        for shape in row.shapes {
-            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+            for shape in row.shapes {
+                LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+            }
+
+            let wasSelectedRow = selectedRowId == id
+            exitPreview(for: id)
+            rows.remove(at: idx)
+            if wasSelectedRow {
+                let newIdx = min(idx, rows.count - 1)
+                selectRow(rows[newIdx].id)
+            } else {
+                normalizeSelection()
+            }
+
+            let allCandidates: [String?] = shapeImageCandidates + templateBgImages + [rowBgImage]
+            cleanupUnreferencedImages(allCandidates)
         }
-
-        let wasSelectedRow = selectedRowId == id
-        exitPreview(for: id)
-        rows.remove(at: idx)
-        if wasSelectedRow {
-            let newIdx = min(idx, rows.count - 1)
-            selectRow(rows[newIdx].id)
-        } else {
-            normalizeSelection()
-        }
-
-        let allCandidates: [String?] = shapeImageCandidates + templateBgImages + [rowBgImage]
-        cleanupUnreferencedImages(allCandidates)
-        scheduleSave()
     }
 
     func resetRow(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
-        registerUndoForRow(at: idx, "Reset Row")
-        let oldRow = rows[idx]
+        withUndo("Reset Row") {
+            let oldRow = rows[idx]
 
-        let shapeImageCandidates = imageFileNames(for: oldRow.shapes)
-        let templateBgImages = oldRow.templates.compactMap { $0.backgroundImageConfig.fileName }
-        let rowBgImage = oldRow.backgroundImageConfig.fileName
+            let shapeImageCandidates = imageFileNames(for: oldRow.shapes)
+            let templateBgImages = oldRow.templates.compactMap { $0.backgroundImageConfig.fileName }
+            let rowBgImage = oldRow.backgroundImageConfig.fileName
 
-        for shape in oldRow.shapes {
-            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+            for shape in oldRow.shapes {
+                LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+            }
+
+            // Replace with a fresh default row, preserving id and dimensions
+            rows[idx] = makeDefaultRow(
+                id: oldRow.id,
+                label: oldRow.isLabelManuallySet ? oldRow.label : nil,
+                width: oldRow.templateWidth,
+                height: oldRow.templateHeight
+            )
+
+            selectedShapeIds = []
+
+            let allCandidates: [String?] = shapeImageCandidates + templateBgImages + [rowBgImage]
+            cleanupUnreferencedImages(allCandidates)
         }
-
-        // Replace with a fresh default row, preserving id and dimensions
-        rows[idx] = makeDefaultRow(
-            id: oldRow.id,
-            label: oldRow.isLabelManuallySet ? oldRow.label : nil,
-            width: oldRow.templateWidth,
-            height: oldRow.templateHeight
-        )
-
-        selectedShapeIds = []
-
-        let allCandidates: [String?] = shapeImageCandidates + templateBgImages + [rowBgImage]
-        cleanupUnreferencedImages(allCandidates)
-
-        scheduleSave()
     }
 
     func updateRowLabel(_ rowId: UUID, text: String) {
         guard let ri = rowIndex(for: rowId) else { return }
-        registerUndoForRow(at: ri, "Edit Row Label")
-        let trimmed = text.trimmingCharacters(in: .whitespaces)
-        if trimmed.isEmpty {
-            let row = rows[ri]
-            rows[ri].label = presetLabel(forWidth: row.templateWidth, height: row.templateHeight)
-            rows[ri].isLabelManuallySet = false
-        } else {
-            rows[ri].label = String(trimmed.prefix(50))
-            rows[ri].isLabelManuallySet = true
+        withUndo("Edit Row Label") {
+            let trimmed = text.trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty {
+                let row = rows[ri]
+                rows[ri].label = presetLabel(forWidth: row.templateWidth, height: row.templateHeight)
+                rows[ri].isLabelManuallySet = false
+            } else {
+                rows[ri].label = String(trimmed.prefix(50))
+                rows[ri].isLabelManuallySet = true
+            }
         }
-        scheduleSave()
     }
 
     /// Mutate a row without registering undo on every call — undo is captured once
@@ -224,23 +223,21 @@ extension AppState {
 
     func moveRowUp(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }), idx > 0 else { return }
-        registerUndo("Move Row Up")
-        rows.swapAt(idx, idx - 1)
-        scheduleSave()
+        withUndo("Move Row Up") {
+            rows.swapAt(idx, idx - 1)
+        }
     }
 
     func moveRowDown(_ id: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == id }), idx < rows.count - 1 else { return }
-        registerUndo("Move Row Down")
-        rows.swapAt(idx, idx + 1)
-        scheduleSave()
+        withUndo("Move Row Down") {
+            rows.swapAt(idx, idx + 1)
+        }
     }
 
     func resizeRow(at rowIndex: Int, newWidth: CGFloat, newHeight: CGFloat) {
         var row = rows[rowIndex]
         guard row.templateWidth != newWidth || row.templateHeight != newHeight else { return }
-
-        registerUndoForRow(at: rowIndex, "Resize Row")
 
         let scaleX = newWidth / row.templateWidth
         let scaleY = newHeight / row.templateHeight
@@ -274,8 +271,7 @@ extension AppState {
         if !row.isLabelManuallySet {
             row.label = presetLabel(forWidth: newWidth, height: newHeight)
         }
-        rows[rowIndex] = row
-        scheduleSave()
+        withUndo("Resize Row") { rows[rowIndex] = row }
     }
 
     func updateRowDefaultDeviceBodyColor(_ color: Color, for rowId: UUID) {
@@ -284,19 +280,18 @@ extension AppState {
         let newDefault = CodableColor(color)
         guard oldDefault != newDefault else { return }
 
-        registerUndoForRow(at: rowIndex, "Change Device Color")
-        rows[rowIndex].defaultDeviceBodyColorData = newDefault
+        withUndo("Change Device Color") {
+            rows[rowIndex].defaultDeviceBodyColorData = newDefault
 
-        // Legacy projects stored the default frame color on each device shape.
-        // When row default changes, convert matching legacy values to inheritance.
-        for shapeIndex in rows[rowIndex].shapes.indices {
-            guard rows[rowIndex].shapes[shapeIndex].type == .device else { continue }
-            if rows[rowIndex].shapes[shapeIndex].deviceBodyColorData == oldDefault {
-                rows[rowIndex].shapes[shapeIndex].deviceBodyColorData = nil
+            // Legacy projects stored the default frame color on each device shape.
+            // When row default changes, convert matching legacy values to inheritance.
+            for shapeIndex in rows[rowIndex].shapes.indices {
+                guard rows[rowIndex].shapes[shapeIndex].type == .device else { continue }
+                if rows[rowIndex].shapes[shapeIndex].deviceBodyColorData == oldDefault {
+                    rows[rowIndex].shapes[shapeIndex].deviceBodyColorData = nil
+                }
             }
         }
-
-        scheduleSave()
     }
 
     // MARK: - Default Device
@@ -305,19 +300,19 @@ extension AppState {
         guard let idx = rowIndex(for: rowId) else { return }
         let row = rows[idx]
         guard row.defaultDeviceCategory != category || row.defaultDeviceFrameId != frameId else { return }
-        registerUndoForRow(at: idx, "Change Default Device")
-        rows[idx].defaultDeviceCategory = category
-        rows[idx].defaultDeviceFrameId = frameId
-        scheduleSave()
+        withUndo("Change Default Device") {
+            rows[idx].defaultDeviceCategory = category
+            rows[idx].defaultDeviceFrameId = frameId
+        }
     }
 
     // MARK: - Visibility
 
     func toggleShowDevice(for rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        registerUndoForRow(at: idx, rows[idx].showDevice ? String(localized: "Hide Devices") : String(localized: "Show Devices"))
-        rows[idx].showDevice.toggle()
-        scheduleSave()
+        withUndo(rows[idx].showDevice ? String(localized: "Hide Devices") : String(localized: "Show Devices")) {
+            rows[idx].showDevice.toggle()
+        }
     }
 
     func toggleRowCollapsed(for rowId: UUID) {
@@ -328,29 +323,29 @@ extension AppState {
 
     func toggleShowBorders(for rowId: UUID) {
         guard let idx = rowIndex(for: rowId) else { return }
-        registerUndoForRow(at: idx, rows[idx].showBorders ? String(localized: "Hide Borders") : String(localized: "Show Borders"))
-        rows[idx].showBorders.toggle()
-        scheduleSave()
+        withUndo(rows[idx].showBorders ? String(localized: "Hide Borders") : String(localized: "Show Borders")) {
+            rows[idx].showBorders.toggle()
+        }
     }
 
     func setAllShapeTypesVisibility(for rowId: UUID, visible: Bool) {
         guard let idx = rowIndex(for: rowId) else { return }
-        registerUndoForRow(at: idx, visible ? "Show All" : "Hide All")
-        rows[idx].showBorders = visible
-        rows[idx].hiddenShapeTypes = visible ? [] : Set(ShapeType.allCases)
-        scheduleSave()
+        withUndo(visible ? "Show All" : "Hide All") {
+            rows[idx].showBorders = visible
+            rows[idx].hiddenShapeTypes = visible ? [] : Set(ShapeType.allCases)
+        }
     }
 
     func toggleShapeTypeVisibility(for rowId: UUID, type: ShapeType) {
         guard let idx = rowIndex(for: rowId) else { return }
         let isCurrentlyVisible = !rows[idx].hiddenShapeTypes.contains(type)
-        registerUndoForRow(at: idx, isCurrentlyVisible ? "Hide \(type.pluralLabel)" : "Show \(type.pluralLabel)")
-        if isCurrentlyVisible {
-            rows[idx].hiddenShapeTypes.insert(type)
-        } else {
-            rows[idx].hiddenShapeTypes.remove(type)
+        withUndo(isCurrentlyVisible ? "Hide \(type.pluralLabel)" : "Show \(type.pluralLabel)") {
+            if isCurrentlyVisible {
+                rows[idx].hiddenShapeTypes.insert(type)
+            } else {
+                rows[idx].hiddenShapeTypes.remove(type)
+            }
         }
-        scheduleSave()
     }
 
 }

@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct CanvasShapeModel: Identifiable, Codable {
+struct CanvasShapeModel: Identifiable, Codable, Equatable {
     static let deviceMinSize: CGFloat = 200
     static let defaultDeviceBodyColor = Color.black
     static let defaultDevice3DBodyColor = Color(white: 0x91 / 255.0)

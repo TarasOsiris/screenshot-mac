@@ -26,9 +26,9 @@ extension AppState {
 
     func moveLocale(from source: IndexSet, to destination: Int) {
         guard let fromIdx = source.first, fromIdx != 0, destination != 0 else { return }
-        registerUndo("Reorder Language")
-        localeState.locales.move(fromOffsets: source, toOffset: destination)
-        scheduleSave()
+        withUndo("Reorder Language") {
+            localeState.locales.move(fromOffsets: source, toOffset: destination)
+        }
     }
 
     /// All text shapes across all rows with their base text and override for the requested locale.
@@ -123,10 +123,18 @@ extension AppState {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: task)
     }
 
+    /// Discards any in-flight debounced translation edit so its stale-base undo step
+    /// doesn't fire after a reset has already replaced the overrides.
+    private func cancelPendingTranslationEdit() {
+        translationUndoTask?.cancel()
+        translationUndoTask = nil
+        translationBaseLocaleState = nil
+    }
+
     func resetLocaleOverride(shapeId: UUID) {
-        registerUndo("Reset Override")
-        LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
-        scheduleSave()
+        withUndo("Reset Override") {
+            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
+        }
     }
 
     func resetTranslationText(shapeId: UUID) {
@@ -137,47 +145,43 @@ extension AppState {
         guard code != localeState.baseLocaleCode else { return }
         guard var override = localeState.override(forCode: code, shapeId: shapeId) else { return }
 
-        registerUndo("Reset Translation")
-        translationUndoTask?.cancel()
-        translationUndoTask = nil
-        translationBaseLocaleState = nil
-        override.text = nil
-        LocaleService.setShapeOverride(&localeState, localeCode: code, shapeId: shapeId, override: override.isEmpty ? nil : override)
-        scheduleSave()
+        withUndo("Reset Translation") {
+            cancelPendingTranslationEdit()
+            override.text = nil
+            LocaleService.setShapeOverride(&localeState, localeCode: code, shapeId: shapeId, override: override.isEmpty ? nil : override)
+        }
     }
 
     func resetLocaleImageOverride(shapeId: UUID) {
         let code = localeState.activeLocaleCode
         guard var override = localeState.override(forCode: code, shapeId: shapeId),
               let oldFile = override.overrideImageFileName else { return }
-        registerUndo("Reset Image Override")
-        override.overrideImageFileName = nil
-        if override.isEmpty {
-            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
-        } else {
-            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override)
+        withUndo("Reset Image Override") {
+            override.overrideImageFileName = nil
+            if override.isEmpty {
+                LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
+            } else {
+                LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override)
+            }
+            cleanupUnreferencedImage(oldFile)
         }
-        cleanupUnreferencedImage(oldFile)
-        scheduleSave()
     }
 
     func resetAllTranslations(shapeIds: Set<UUID>) {
         guard localeState.hasAnyOverride(shapeIds: shapeIds) else { return }
 
-        registerUndo("Reset All Translations")
-        translationUndoTask?.cancel()
-        translationUndoTask = nil
-        translationBaseLocaleState = nil
+        withUndo("Reset All Translations") {
+            cancelPendingTranslationEdit()
 
-        var removedImages: [String] = []
-        for shapeId in shapeIds {
-            for overrides in localeState.overrides.values {
-                if let image = overrides[shapeId.uuidString]?.overrideImageFileName { removedImages.append(image) }
+            var removedImages: [String] = []
+            for shapeId in shapeIds {
+                for overrides in localeState.overrides.values {
+                    if let image = overrides[shapeId.uuidString]?.overrideImageFileName { removedImages.append(image) }
+                }
+                LocaleService.removeShapeOverrides(&localeState, shapeId: shapeId)
             }
-            LocaleService.removeShapeOverrides(&localeState, shapeId: shapeId)
+            cleanupUnreferencedImages(removedImages)
         }
-        cleanupUnreferencedImages(removedImages)
-        scheduleSave()
     }
 
     func resetActiveLocaleToBase() {
@@ -185,32 +189,30 @@ extension AppState {
         guard code != localeState.baseLocaleCode else { return }
         guard let localeOverrides = localeState.overrides[code], !localeOverrides.isEmpty else { return }
 
-        registerUndo("Reset Language to Base")
-        translationUndoTask?.cancel()
-        translationUndoTask = nil
-        translationBaseLocaleState = nil
+        withUndo("Reset Language to Base") {
+            cancelPendingTranslationEdit()
 
-        let overrideImages = localeOverrides.values.compactMap(\.overrideImageFileName)
-        localeState.overrides.removeValue(forKey: code)
-        cleanupUnreferencedImages(overrideImages)
-        scheduleSave()
+            let overrideImages = localeOverrides.values.compactMap(\.overrideImageFileName)
+            localeState.overrides.removeValue(forKey: code)
+            cleanupUnreferencedImages(overrideImages)
+        }
     }
 
     func addLocale(_ locale: LocaleDefinition) {
         guard !localeState.hasLocale(locale.code) else { return }
-        registerUndo("Add Language")
-        LocaleService.addLocale(&localeState, locale: locale)
-        localeState.activeLocaleCode = locale.code
-        scheduleSave()
+        withUndo("Add Language") {
+            LocaleService.addLocale(&localeState, locale: locale)
+            localeState.activeLocaleCode = locale.code
+        }
     }
 
     func removeLocale(_ code: String) {
         guard code != localeState.baseLocaleCode else { return }
         guard localeState.hasLocale(code) else { return }
-        registerUndo("Remove Language")
-        let overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
-        LocaleService.removeLocale(&localeState, code: code)
-        cleanupUnreferencedImages(overrideImages)
-        scheduleSave()
+        withUndo("Remove Language") {
+            let overrideImages = localeState.overrides[code]?.values.compactMap(\.overrideImageFileName) ?? []
+            LocaleService.removeLocale(&localeState, code: code)
+            cleanupUnreferencedImages(overrideImages)
+        }
     }
 }

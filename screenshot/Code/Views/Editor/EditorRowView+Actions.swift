@@ -57,9 +57,9 @@ extension EditorRowView {
             set: { newValue in
                 guard let ri = state.rows.firstIndex(where: { $0.id == rowId }),
                       templateIndex < state.rows[ri].templates.count else { return }
-                state.registerUndoForRow(at: ri, "Edit Template")
-                state.rows[ri].templates[templateIndex] = newValue
-                state.scheduleSave()
+                state.withUndo("Edit Template") {
+                    state.rows[ri].templates[templateIndex] = newValue
+                }
             }
         )
     }

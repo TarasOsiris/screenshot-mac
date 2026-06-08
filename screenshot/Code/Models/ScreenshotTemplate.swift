@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct ScreenshotTemplate: Identifiable, Codable, BackgroundFillable {
+struct ScreenshotTemplate: Identifiable, Codable, Equatable, BackgroundFillable {
     let id: UUID
     var backgroundColor: CodableColor
     var overrideBackground: Bool

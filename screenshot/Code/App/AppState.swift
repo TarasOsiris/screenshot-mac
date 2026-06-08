@@ -294,40 +294,49 @@ final class AppState {
 
     // MARK: - Undo
 
-    /// Full snapshot undo — captures ALL rows + localeState. Use for multi-row operations
-    /// (add/delete/move row, etc.) where the row count or order changes.
-    func registerUndo(_ actionName: String) {
+    @ObservationIgnored private var isInUndoTransaction = false
+
+    /// Wraps a document mutation so undo is captured automatically: snapshots the whole
+    /// document before `body`, restores it on undo (re-registering redo), and schedules the
+    /// save. A `body` that changes nothing registers no undo step. Nested `withUndo` calls
+    /// join the outer transaction so a wrapped helper doesn't create a second step.
+    func withUndo(_ actionName: String, _ body: () -> Void) {
         finishContinuousEditIfNeeded()
-        registerUndoWithBase(actionName, base: rows, baseLocaleState: localeState)
+        if isInUndoTransaction { body(); return }
+        isInUndoTransaction = true
+        defer { isInUndoTransaction = false }
+
+        let baseRows = rows
+        let baseLocaleState = localeState
+        body()
+        guard rows != baseRows || localeState != baseLocaleState else { return }
+        registerSnapshot(actionName, baseRows: baseRows, baseLocaleState: baseLocaleState)
+        scheduleSave()
     }
 
-    func registerUndoWithBase(_ actionName: String, base: [ScreenshotRow], baseLocaleState: LocaleState? = nil) {
+    /// Registers a whole-document restore on the undo stack, re-registering its own inverse
+    /// so redo cycles back to the post-edit state. Shared by `withUndo` and the continuous-edit
+    /// commit path.
+    private func registerSnapshot(_ actionName: String, baseRows: [ScreenshotRow], baseLocaleState: LocaleState) {
         guard let undoManager else { return }
-        let savedLocaleState = baseLocaleState ?? localeState
         undoManager.registerUndo(withTarget: self) { target in
             let redoRows = target.rows
             let redoLocaleState = target.localeState
-            target.undoManager?.registerUndo(withTarget: target) { t in
-                t.rows = redoRows
-                t.localeState = redoLocaleState
-                t.normalizeSelection()
-                t.scheduleSave()
-                t.undoManager?.setActionName(actionName)
-            }
-            target.rows = base
-            target.localeState = savedLocaleState
+            target.rows = baseRows
+            target.localeState = baseLocaleState
             target.normalizeSelection()
             target.scheduleSave()
+            target.registerSnapshot(actionName, baseRows: redoRows, baseLocaleState: redoLocaleState)
             target.undoManager?.setActionName(actionName)
         }
         undoManager.setActionName(actionName)
     }
 
-    /// Row-scoped undo — captures only one row + localeState. Use for single-row mutations
-    /// (shape edits, template changes, row property edits) where row count/order doesn't change.
-    func registerUndoForRow(at rowIndex: Int, _ actionName: String) {
-        finishContinuousEditIfNeeded()
-        registerUndoForRowWithBase(actionName, baseRow: rows[rowIndex], baseLocaleState: localeState)
+    /// Full-snapshot undo with a pre-captured base — used by the debounced translation-edit
+    /// path, which captures its base before the keystroke burst. Discrete mutations go through
+    /// `withUndo` instead.
+    func registerUndoWithBase(_ actionName: String, base: [ScreenshotRow], baseLocaleState: LocaleState? = nil) {
+        registerSnapshot(actionName, baseRows: base, baseLocaleState: baseLocaleState ?? localeState)
     }
 
     /// Row-scoped undo with a pre-captured base row. Looks up the row by ID on undo/redo,

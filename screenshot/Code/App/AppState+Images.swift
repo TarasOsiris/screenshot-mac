@@ -23,9 +23,8 @@ extension AppState {
         guard let activeId = activeProjectId,
               let location = shapeLocation(for: shapeId) else { return }
         guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
-        registerUndoForRow(at: location.rowIndex, "Assign Screenshot")
-        if performSaveImage(image, for: shapeId, activeId: activeId, location: location) {
-            scheduleSave()
+        withUndo("Assign Screenshot") {
+            _ = performSaveImage(image, for: shapeId, activeId: activeId, location: location)
         }
     }
 
@@ -44,35 +43,35 @@ extension AppState {
         }
         guard hasImagesToClear else { return }
 
-        registerUndoForRow(at: idx, "Reset All Images")
-        // Snapshot locale codes — setShapeOverride can remove codes via cleanupEmptyOverrides.
-        let localeCodes = Array(localeState.overrides.keys)
-        var orphanCandidates: [String?] = []
+        withUndo("Reset All Images") {
+            // Snapshot locale codes — setShapeOverride can remove codes via cleanupEmptyOverrides.
+            let localeCodes = Array(localeState.overrides.keys)
+            var orphanCandidates: [String?] = []
 
-        for shapeIndex in deviceIndices {
-            let shapeId = rows[idx].shapes[shapeIndex].id
+            for shapeIndex in deviceIndices {
+                let shapeId = rows[idx].shapes[shapeIndex].id
 
-            for localeCode in localeCodes {
-                guard var override = localeState.override(forCode: localeCode, shapeId: shapeId),
-                      let oldFile = override.overrideImageFileName else { continue }
-                orphanCandidates.append(oldFile)
-                override.overrideImageFileName = nil
-                LocaleService.setShapeOverride(
-                    &localeState,
-                    localeCode: localeCode,
-                    shapeId: shapeId,
-                    override: override.isEmpty ? nil : override
-                )
+                for localeCode in localeCodes {
+                    guard var override = localeState.override(forCode: localeCode, shapeId: shapeId),
+                          let oldFile = override.overrideImageFileName else { continue }
+                    orphanCandidates.append(oldFile)
+                    override.overrideImageFileName = nil
+                    LocaleService.setShapeOverride(
+                        &localeState,
+                        localeCode: localeCode,
+                        shapeId: shapeId,
+                        override: override.isEmpty ? nil : override
+                    )
+                }
+
+                if let baseFile = rows[idx].shapes[shapeIndex].displayImageFileName {
+                    orphanCandidates.append(baseFile)
+                    rows[idx].shapes[shapeIndex].displayImageFileName = nil
+                }
             }
 
-            if let baseFile = rows[idx].shapes[shapeIndex].displayImageFileName {
-                orphanCandidates.append(baseFile)
-                rows[idx].shapes[shapeIndex].displayImageFileName = nil
-            }
+            cleanupUnreferencedImages(orphanCandidates)
         }
-
-        cleanupUnreferencedImages(orphanCandidates)
-        scheduleSave()
     }
 
     /// Loads the full-resolution image referenced by `shapeId`, runs Vision's foreground
@@ -93,10 +92,10 @@ extension AppState {
                 let result = try BackgroundRemovalService.removeBackground(at: url)
                 await MainActor.run {
                     guard let self, let location = self.shapeLocation(for: shapeId) else { return }
-                    self.registerUndoForRow(at: location.rowIndex, "Remove Background")
-                    if self.performSaveImage(result, for: shapeId, activeId: activeId, location: location) {
-                        self.rows[location.rowIndex].shapes[location.shapeIndex].adaptToImageAspectRatio(result.size)
-                        self.scheduleSave()
+                    self.withUndo("Remove Background") {
+                        if self.performSaveImage(result, for: shapeId, activeId: activeId, location: location) {
+                            self.rows[location.rowIndex].shapes[location.shapeIndex].adaptToImageAspectRatio(result.size)
+                        }
                     }
                 }
             } catch {
@@ -110,22 +109,21 @@ extension AppState {
         guard let location = shapeLocation(for: shapeId) else { return }
         guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
 
-        if !localeState.isBaseLocale {
-            let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
-            guard var override = existingOverride, override.overrideImageFileName != nil else { return }
-            registerUndoForRow(at: location.rowIndex, "Clear Screenshot")
-            let oldFile = override.overrideImageFileName
-            override.overrideImageFileName = nil
-            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override.isEmpty ? nil : override)
-            if let oldFile { cleanupUnreferencedImage(oldFile) }
-        } else {
-            let shape = rows[location.rowIndex].shapes[location.shapeIndex]
-            guard shape.displayImageFileName != nil else { return }
-            registerUndoForRow(at: location.rowIndex, "Clear Screenshot")
-            rows[location.rowIndex].shapes[location.shapeIndex].displayImageFileName = nil
-            if let oldFile = shape.displayImageFileName { cleanupUnreferencedImage(oldFile) }
+        withUndo("Clear Screenshot") {
+            if !localeState.isBaseLocale {
+                let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
+                guard var override = existingOverride, override.overrideImageFileName != nil else { return }
+                let oldFile = override.overrideImageFileName
+                override.overrideImageFileName = nil
+                LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override.isEmpty ? nil : override)
+                if let oldFile { cleanupUnreferencedImage(oldFile) }
+            } else {
+                let shape = rows[location.rowIndex].shapes[location.shapeIndex]
+                guard shape.displayImageFileName != nil else { return }
+                rows[location.rowIndex].shapes[location.shapeIndex].displayImageFileName = nil
+                if let oldFile = shape.displayImageFileName { cleanupUnreferencedImage(oldFile) }
+            }
         }
-        scheduleSave()
     }
 
     /// Saves image file and updates state without registering undo or scheduling save.
@@ -137,8 +135,7 @@ extension AppState {
         guard let location = location ?? shapeLocation(for: shapeId) else { return false }
 
         let isNonBaseLocale = !localeState.isBaseLocale
-        let suffix = isNonBaseLocale ? "-\(localeState.activeLocaleCode)" : ""
-        let fileName = "\(shapeId.uuidString)\(suffix).png"
+        let fileName = screenshotImageFileName(for: shapeId, localeCode: isNonBaseLocale ? localeState.activeLocaleCode : nil)
         guard let thumbnail = persistImageResource(
             image,
             named: fileName,
@@ -157,7 +154,7 @@ extension AppState {
             let previousOverrideFile = override.overrideImageFileName
             override.overrideImageFileName = fileName
             LocaleService.setShapeOverride(&localeState, shapeId: shape.id, override: override)
-            if let oldFile = previousOverrideFile, oldFile != fileName {
+            if let oldFile = previousOverrideFile, oldFile != fileName, undoManager == nil {
                 cleanupUnreferencedImage(oldFile)
             }
         } else {
@@ -174,11 +171,16 @@ extension AppState {
 
             rows[location.rowIndex].shapes[location.shapeIndex] = shape
 
-            if let oldFile = previousFile, oldFile != fileName {
+            if let oldFile = previousFile, oldFile != fileName, undoManager == nil {
                 cleanupUnreferencedImage(oldFile)
             }
         }
         return true
+    }
+
+    private func screenshotImageFileName(for shapeId: UUID, localeCode: String?) -> String {
+        let localePart = localeCode.map { "-\($0)" } ?? ""
+        return "\(shapeId.uuidString)\(localePart)-\(UUID().uuidString).png"
     }
 
     func loadScreenshotImages() {
@@ -240,22 +242,21 @@ extension AppState {
         guard let rowIdx = selectedRowIndex,
               let activeId = activeProjectId else { return }
         let shape = makeImageShape(image: image, row: rows[rowIdx], centerX: centerX, centerY: centerY)
-        registerUndoForRow(at: rowIdx, "Add Image")
-        let shapeIndex = rows[rowIdx].shapes.count
-        rows[rowIdx].shapes.append(shape)
-        selectShape(shape.id, in: rows[rowIdx].id)
-        justAddedShapeId = shape.id
-        if performSaveImage(
-            image,
-            for: shape.id,
-            activeId: activeId,
-            location: (rowIndex: rowIdx, shapeIndex: shapeIndex)
-        ) {
-            scheduleSave()
-        } else {
-            rows[rowIdx].shapes.removeAll { $0.id == shape.id }
-            selectedShapeIds = []
-            justAddedShapeId = nil
+        withUndo("Add Image") {
+            let shapeIndex = rows[rowIdx].shapes.count
+            rows[rowIdx].shapes.append(shape)
+            selectShape(shape.id, in: rows[rowIdx].id)
+            justAddedShapeId = shape.id
+            if !performSaveImage(
+                image,
+                for: shape.id,
+                activeId: activeId,
+                location: (rowIndex: rowIdx, shapeIndex: shapeIndex)
+            ) {
+                rows[rowIdx].shapes.removeAll { $0.id == shape.id }
+                selectedShapeIds = []
+                justAddedShapeId = nil
+            }
         }
     }
 
@@ -328,28 +329,27 @@ extension AppState {
         }
         guard !images.isEmpty else { return 0 }
 
-        registerUndoForRow(at: idx, "Import Screenshots")
-        selectRow(rowId)
+        withUndo("Import Screenshots") {
+            selectRow(rowId)
 
-        var targetTemplateIndices: [Int]
-        if templatesWithDevices.isEmpty {
-            while rows[idx].templates.count < images.count {
-                appendTemplate(to: idx)
+            var targetTemplateIndices: [Int]
+            if templatesWithDevices.isEmpty {
+                while rows[idx].templates.count < images.count {
+                    appendTemplate(to: idx)
+                }
+                targetTemplateIndices = Array(0..<images.count)
+            } else {
+                targetTemplateIndices = Array(templatesWithDevices.prefix(images.count))
+                while targetTemplateIndices.count < images.count {
+                    appendTemplate(to: idx)
+                    targetTemplateIndices.append(rows[idx].templates.count - 1)
+                }
             }
-            targetTemplateIndices = Array(0..<images.count)
-        } else {
-            targetTemplateIndices = Array(templatesWithDevices.prefix(images.count))
-            while targetTemplateIndices.count < images.count {
-                appendTemplate(to: idx)
-                targetTemplateIndices.append(rows[idx].templates.count - 1)
+
+            for (image, templateIndex) in zip(images, targetTemplateIndices) {
+                importImage(image, intoTemplateAt: templateIndex, rowIndex: idx, activeId: activeId)
             }
         }
-
-        for (image, templateIndex) in zip(images, targetTemplateIndices) {
-            importImage(image, intoTemplateAt: templateIndex, rowIndex: idx, activeId: activeId)
-        }
-
-        scheduleSave()
         return images.count
     }
 

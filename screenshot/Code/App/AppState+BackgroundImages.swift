@@ -8,42 +8,41 @@ extension AppState {
         guard let activeId = activeProjectId,
               let location = shapeLocation(for: shapeId) else { return }
 
-        registerUndoForRow(at: location.rowIndex, "Set Fill Image")
+        withUndo("Set Fill Image") {
+            let fileId = UUID().uuidString
+            let fileName = "fill-\(fileId).png"
+            guard let thumbnail = persistImageResource(
+                image,
+                named: fileName,
+                activeId: activeId,
+                action: "save fill image"
+            ) else {
+                return
+            }
 
-        let fileId = UUID().uuidString
-        let fileName = "fill-\(fileId).png"
-        guard let thumbnail = persistImageResource(
-            image,
-            named: fileName,
-            activeId: activeId,
-            action: "save fill image"
-        ) else {
-            return
-        }
+            screenshotImages[fileName] = thumbnail
 
-        screenshotImages[fileName] = thumbnail
-
-        var shape = rows[location.rowIndex].shapes[location.shapeIndex]
-        let oldFile = shape.fillImageConfig?.fileName
-        if shape.fillImageConfig == nil {
-            shape.fillImageConfig = BackgroundImageConfig()
+            var shape = rows[location.rowIndex].shapes[location.shapeIndex]
+            let oldFile = shape.fillImageConfig?.fileName
+            if shape.fillImageConfig == nil {
+                shape.fillImageConfig = BackgroundImageConfig()
+            }
+            shape.fillImageConfig?.fileName = fileName
+            if shape.fillStyle == nil {
+                shape.fillStyle = .image
+            }
+            rows[location.rowIndex].shapes[location.shapeIndex] = shape
+            if let oldFile { cleanupUnreferencedImage(oldFile) }
         }
-        shape.fillImageConfig?.fileName = fileName
-        if shape.fillStyle == nil {
-            shape.fillStyle = .image
-        }
-        rows[location.rowIndex].shapes[location.shapeIndex] = shape
-        if let oldFile { cleanupUnreferencedImage(oldFile) }
-        scheduleSave()
     }
 
     func removeShapeFillImage(for shapeId: UUID) {
         guard let location = shapeLocation(for: shapeId) else { return }
-        registerUndoForRow(at: location.rowIndex, "Remove Fill Image")
-        let oldFile = rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName
-        rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName = nil
-        if let oldFile { cleanupUnreferencedImage(oldFile) }
-        scheduleSave()
+        withUndo("Remove Fill Image") {
+            let oldFile = rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName
+            rows[location.rowIndex].shapes[location.shapeIndex].fillImageConfig?.fileName = nil
+            if let oldFile { cleanupUnreferencedImage(oldFile) }
+        }
     }
 
     // MARK: - Background Images
@@ -52,37 +51,36 @@ extension AppState {
         guard let activeId = activeProjectId,
               let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
 
-        registerUndoForRow(at: rowIndex, "Set Background Image")
+        withUndo("Set Background Image") {
+            let fileId = UUID().uuidString
+            let fileName = "bg-\(fileId).png"
+            guard let thumbnail = persistImageResource(
+                image,
+                named: fileName,
+                activeId: activeId,
+                action: "save background image"
+            ) else {
+                return
+            }
 
-        let fileId = UUID().uuidString
-        let fileName = "bg-\(fileId).png"
-        guard let thumbnail = persistImageResource(
-            image,
-            named: fileName,
-            activeId: activeId,
-            action: "save background image"
-        ) else {
-            return
+            screenshotImages[fileName] = thumbnail
+
+            setBackgroundImage(fileName: fileName, svgContent: nil, rowIndex: rowIndex, templateIndex: templateIndex)
         }
-
-        screenshotImages[fileName] = thumbnail
-
-        setBackgroundImage(fileName: fileName, svgContent: nil, rowIndex: rowIndex, templateIndex: templateIndex)
-        scheduleSave()
     }
 
     func saveBackgroundSvg(_ svgContent: String, for rowId: UUID, templateIndex: Int? = nil) {
         guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
-        registerUndoForRow(at: rowIndex, "Set Background SVG")
-        setBackgroundImage(fileName: nil, svgContent: svgContent, rowIndex: rowIndex, templateIndex: templateIndex)
-        scheduleSave()
+        withUndo("Set Background SVG") {
+            setBackgroundImage(fileName: nil, svgContent: svgContent, rowIndex: rowIndex, templateIndex: templateIndex)
+        }
     }
 
     func removeBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
         guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }) else { return }
-        registerUndoForRow(at: rowIndex, "Remove Background Image")
-        setBackgroundImage(fileName: nil, svgContent: nil, rowIndex: rowIndex, templateIndex: templateIndex)
-        scheduleSave()
+        withUndo("Remove Background Image") {
+            setBackgroundImage(fileName: nil, svgContent: nil, rowIndex: rowIndex, templateIndex: templateIndex)
+        }
     }
 
     @MainActor

@@ -231,14 +231,9 @@ struct InspectorPanel: View {
                         .font(.system(size: UIMetrics.FontSize.body))
                     Spacer()
                     Slider(
-                        value: liveRowBinding(rowId, keyPath: \.backgroundBlur, default: 0),
+                        value: continuousRowBinding(rowId, keyPath: \.backgroundBlur, default: 0, actionName: "Background Blur"),
                         in: 0...100
-                    ) { editing in
-                        if editing {
-                            guard let idx = state.rowIndex(for: rowId) else { return }
-                            state.registerUndoForRow(at: idx, "Background Blur")
-                        }
-                    }
+                    )
                     .frame(width: 100)
                     Text("\(Int(state.rows[rowIndex].backgroundBlur))")
                         .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
@@ -413,24 +408,10 @@ struct InspectorPanel: View {
 
     /// Binding that updates the row and schedules a save but does NOT register undo.
     /// Use with sliders where undo is registered once via `onEditingChanged`.
-    private func liveRowBinding<T>(_ rowId: UUID, keyPath: WritableKeyPath<ScreenshotRow, T>, default defaultValue: T) -> Binding<T> {
-        Binding(
-            get: {
-                guard let idx = state.rowIndex(for: rowId) else { return defaultValue }
-                return state.rows[idx][keyPath: keyPath]
-            },
-            set: { newValue in
-                guard let idx = state.rowIndex(for: rowId) else { return }
-                state.rows[idx][keyPath: keyPath] = newValue
-                state.scheduleSave()
-            }
-        )
-    }
-
     /// Like `safeRowBinding` but routes writes through `updateRowContinuous`, so a
     /// drag burst (gradient stops/angle/center, image sliders) collapses into one
     /// undo entry instead of registering a full-row snapshot per tick.
-    private func continuousRowBinding<T>(_ rowId: UUID, keyPath: WritableKeyPath<ScreenshotRow, T>, default defaultValue: T) -> Binding<T> {
+    private func continuousRowBinding<T>(_ rowId: UUID, keyPath: WritableKeyPath<ScreenshotRow, T>, default defaultValue: T, actionName: String = "Edit Background") -> Binding<T> {
         Binding(
             get: {
                 if state.continuousRowEditId == rowId, let row = state.continuousRowEditWorkingRow {
@@ -440,7 +421,7 @@ struct InspectorPanel: View {
                 return state.rows[idx][keyPath: keyPath]
             },
             set: { newValue in
-                state.updateRowContinuous(rowId) { $0[keyPath: keyPath] = newValue }
+                state.updateRowContinuous(rowId, actionName: actionName) { $0[keyPath: keyPath] = newValue }
             }
         )
     }
@@ -453,9 +434,9 @@ struct InspectorPanel: View {
             },
             set: { newValue in
                 guard let idx = state.rowIndex(for: rowId) else { return }
-                state.registerUndoForRow(at: idx, "Edit Row")
-                state.rows[idx][keyPath: keyPath] = newValue
-                state.scheduleSave()
+                state.withUndo("Edit Row") {
+                    state.rows[idx][keyPath: keyPath] = newValue
+                }
             }
         )
     }

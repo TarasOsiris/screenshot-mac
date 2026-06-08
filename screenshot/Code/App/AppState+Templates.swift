@@ -6,25 +6,19 @@ extension AppState {
 
     func addTemplate(to rowId: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == rowId }) else { return }
-        registerUndoForRow(at: idx, "Add Template")
-        appendTemplate(to: idx)
-        scheduleSave()
+        withUndo("Add Template") { appendTemplate(to: idx) }
     }
 
     func insertTemplateBefore(_ templateId: UUID, in rowId: UUID) {
         guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
               let templateIndex = rows[rowIdx].templates.firstIndex(where: { $0.id == templateId }) else { return }
-        registerUndoForRow(at: rowIdx, "Insert Screenshot Before")
-        insertTemplate(inRowAt: rowIdx, at: templateIndex)
-        scheduleSave()
+        withUndo("Insert Screenshot Before") { insertTemplate(inRowAt: rowIdx, at: templateIndex) }
     }
 
     func insertTemplateAfter(_ templateId: UUID, in rowId: UUID) {
         guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
               let templateIndex = rows[rowIdx].templates.firstIndex(where: { $0.id == templateId }) else { return }
-        registerUndoForRow(at: rowIdx, "Insert Screenshot After")
-        insertTemplate(inRowAt: rowIdx, at: templateIndex + 1)
-        scheduleSave()
+        withUndo("Insert Screenshot After") { insertTemplate(inRowAt: rowIdx, at: templateIndex + 1) }
     }
 
     /// Appends a new template (and its default device shape) to the row at the given index.
@@ -64,28 +58,28 @@ extension AppState {
     func removeTemplate(_ templateId: UUID, from rowId: UUID) {
         guard let idx = rows.firstIndex(where: { $0.id == rowId }),
               let templateIndex = rows[idx].templates.firstIndex(where: { $0.id == templateId }) else { return }
-        registerUndoForRow(at: idx, "Remove Template")
-        // Spanning shapes survive so their visible portion on neighboring (kept) templates is preserved.
-        let shapesToRemove = rows[idx].shapesContained(inTemplateAt: templateIndex)
-        let templateBgImage = rows[idx].templates[templateIndex].backgroundImageConfig.fileName
-        let shapeImageCandidates = imageFileNames(for: shapesToRemove)
-        for shape in shapesToRemove {
-            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
-        }
-        let shapeIdsToRemove = Set(shapesToRemove.map(\.id))
-        selectedShapeIds.subtract(shapeIdsToRemove)
-        rows[idx].shapes.removeAll { shapeIdsToRemove.contains($0.id) }
-        // Shift shapes from later templates left by one template width
-        let tw = rows[idx].templateWidth
-        for i in rows[idx].shapes.indices {
-            if rows[idx].owningTemplateIndex(for: rows[idx].shapes[i]) > templateIndex {
-                rows[idx].shapes[i].x -= tw
+        withUndo("Remove Template") {
+            // Spanning shapes survive so their visible portion on neighboring (kept) templates is preserved.
+            let shapesToRemove = rows[idx].shapesContained(inTemplateAt: templateIndex)
+            let templateBgImage = rows[idx].templates[templateIndex].backgroundImageConfig.fileName
+            let shapeImageCandidates = imageFileNames(for: shapesToRemove)
+            for shape in shapesToRemove {
+                LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
             }
+            let shapeIdsToRemove = Set(shapesToRemove.map(\.id))
+            selectedShapeIds.subtract(shapeIdsToRemove)
+            rows[idx].shapes.removeAll { shapeIdsToRemove.contains($0.id) }
+            // Shift shapes from later templates left by one template width
+            let tw = rows[idx].templateWidth
+            for i in rows[idx].shapes.indices {
+                if rows[idx].owningTemplateIndex(for: rows[idx].shapes[i]) > templateIndex {
+                    rows[idx].shapes[i].x -= tw
+                }
+            }
+            rows[idx].templates.remove(at: templateIndex)
+            let allCandidates: [String?] = shapeImageCandidates + [templateBgImage]
+            cleanupUnreferencedImages(allCandidates)
         }
-        rows[idx].templates.remove(at: templateIndex)
-        let allCandidates: [String?] = shapeImageCandidates + [templateBgImage]
-        cleanupUnreferencedImages(allCandidates)
-        scheduleSave()
     }
 
     func duplicateTemplate(_ templateId: UUID, in rowId: UUID) {
@@ -99,58 +93,57 @@ extension AppState {
     private func duplicateTemplate(_ templateId: UUID, in rowId: UUID, toEnd: Bool) {
         guard let rowIndex = rows.firstIndex(where: { $0.id == rowId }),
               let templateIndex = rows[rowIndex].templates.firstIndex(where: { $0.id == templateId }) else { return }
-        registerUndoForRow(at: rowIndex, "Duplicate Screenshot")
-        let sourceTemplate = rows[rowIndex].templates[templateIndex]
-        var newTemplate = sourceTemplate.duplicated()
+        withUndo("Duplicate Screenshot") {
+            let sourceTemplate = rows[rowIndex].templates[templateIndex]
+            var newTemplate = sourceTemplate.duplicated()
 
-        if let bgFileName = sourceTemplate.backgroundImageConfig.fileName,
-           let activeId = activeProjectId {
-            let resourcesURL = PersistenceService.resourcesDir(activeId)
-            let newBgFile = "\(newTemplate.id.uuidString)-bg.png"
-            let srcURL = resourcesURL.appendingPathComponent(bgFileName)
-            let dstURL = resourcesURL.appendingPathComponent(newBgFile)
-            do {
-                try FileManager.default.copyItem(at: srcURL, to: dstURL)
-                newTemplate.backgroundImageConfig.fileName = newBgFile
-                screenshotImages[newBgFile] = screenshotImages[bgFileName]
-            } catch CocoaError.fileReadNoSuchFile, CocoaError.fileNoSuchFile {
-                // Source background was already removed elsewhere; nothing to copy.
-            } catch {
-                saveError = String(localized: "Failed to copy template background: \(error.localizedDescription)")
+            if let bgFileName = sourceTemplate.backgroundImageConfig.fileName,
+               let activeId = activeProjectId {
+                let resourcesURL = PersistenceService.resourcesDir(activeId)
+                let newBgFile = "\(newTemplate.id.uuidString)-bg.png"
+                let srcURL = resourcesURL.appendingPathComponent(bgFileName)
+                let dstURL = resourcesURL.appendingPathComponent(newBgFile)
+                do {
+                    try FileManager.default.copyItem(at: srcURL, to: dstURL)
+                    newTemplate.backgroundImageConfig.fileName = newBgFile
+                    screenshotImages[newBgFile] = screenshotImages[bgFileName]
+                } catch CocoaError.fileReadNoSuchFile, CocoaError.fileNoSuchFile {
+                    // Source background was already removed elsewhere; nothing to copy.
+                } catch {
+                    saveError = String(localized: "Failed to copy template background: \(error.localizedDescription)")
+                }
             }
-        }
 
-        let insertIndex = toEnd ? rows[rowIndex].templates.count : templateIndex + 1
-        rows[rowIndex].templates.insert(newTemplate, at: insertIndex)
+            let insertIndex = toEnd ? rows[rowIndex].templates.count : templateIndex + 1
+            rows[rowIndex].templates.insert(newTemplate, at: insertIndex)
 
-        // Duplicate shapes belonging to this template and shift to the new column
-        let columnWidth = rows[rowIndex].templateWidth
-        let sourceShapes = rows[rowIndex].shapes.filter {
-            rows[rowIndex].owningTemplateIndex(for: $0) == templateIndex
-        }
-
-        // Shift existing shapes in templates after the insertion point to the right
-        for i in rows[rowIndex].shapes.indices {
-            let owner = rows[rowIndex].owningTemplateIndex(for: rows[rowIndex].shapes[i])
-            if owner >= insertIndex {
-                rows[rowIndex].shapes[i].x += columnWidth
+            // Duplicate shapes belonging to this template and shift to the new column
+            let columnWidth = rows[rowIndex].templateWidth
+            let sourceShapes = rows[rowIndex].shapes.filter {
+                rows[rowIndex].owningTemplateIndex(for: $0) == templateIndex
             }
-        }
 
-        let targetCenterX = rows[rowIndex].templateCenterX(at: insertIndex)
-        let sourceCenterX = rows[rowIndex].templateCenterX(at: templateIndex)
-        let shapeOffset = targetCenterX - sourceCenterX
-        var newShapes: [CanvasShapeModel] = []
-        for shape in sourceShapes {
-            var copy = shape.duplicated()
-            copy.x += shapeOffset
-            LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
-            copyImageFiles(for: &copy, originalId: shape.id)
-            newShapes.append(copy)
-        }
-        rows[rowIndex].shapes.append(contentsOf: newShapes)
+            // Shift existing shapes in templates after the insertion point to the right
+            for i in rows[rowIndex].shapes.indices {
+                let owner = rows[rowIndex].owningTemplateIndex(for: rows[rowIndex].shapes[i])
+                if owner >= insertIndex {
+                    rows[rowIndex].shapes[i].x += columnWidth
+                }
+            }
 
-        scheduleSave()
+            let targetCenterX = rows[rowIndex].templateCenterX(at: insertIndex)
+            let sourceCenterX = rows[rowIndex].templateCenterX(at: templateIndex)
+            let shapeOffset = targetCenterX - sourceCenterX
+            var newShapes: [CanvasShapeModel] = []
+            for shape in sourceShapes {
+                var copy = shape.duplicated()
+                copy.x += shapeOffset
+                LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
+                copyImageFiles(for: &copy, originalId: shape.id)
+                newShapes.append(copy)
+            }
+            rows[rowIndex].shapes.append(contentsOf: newShapes)
+        }
     }
 
     func moveTemplateLeft(_ templateId: UUID, in rowId: UUID) {
@@ -174,36 +167,35 @@ extension AppState {
         guard row.templates.indices.contains(sourceIndex),
               row.templates.indices.contains(destinationIndex) else { return }
 
-        registerUndoForRow(at: rowIndex, undoName)
+        withUndo(undoName) {
+            // Keep each shape visually attached to its screenshot column while columns are reordered.
+            // Shapes that span multiple templates stay in place — they aren't tied to one column.
+            let columnWidth = row.templateWidth
+            let lo = min(sourceIndex, destinationIndex)
+            let hi = max(sourceIndex, destinationIndex)
+            let betweenShift = sourceIndex < destinationIndex ? -columnWidth : columnWidth
+            for shapeIndex in row.shapes.indices {
+                let shape = row.shapes[shapeIndex]
 
-        // Keep each shape visually attached to its screenshot column while columns are reordered.
-        // Shapes that span multiple templates stay in place — they aren't tied to one column.
-        let columnWidth = row.templateWidth
-        let lo = min(sourceIndex, destinationIndex)
-        let hi = max(sourceIndex, destinationIndex)
-        let betweenShift = sourceIndex < destinationIndex ? -columnWidth : columnWidth
-        for shapeIndex in row.shapes.indices {
-            let shape = row.shapes[shapeIndex]
+                // Shapes spanning multiple templates stay in place unless clipped to one template.
+                if shape.clipToTemplate != true {
+                    let bb = shape.aabb
+                    let firstTemplate = max(0, Int(floor(bb.minX / columnWidth)))
+                    let lastTemplate = min(row.templates.count - 1, Int(floor((bb.maxX - 0.5) / columnWidth)))
+                    if firstTemplate != lastTemplate { continue }
+                }
 
-            // Shapes spanning multiple templates stay in place unless clipped to one template.
-            if shape.clipToTemplate != true {
-                let bb = shape.aabb
-                let firstTemplate = max(0, Int(floor(bb.minX / columnWidth)))
-                let lastTemplate = min(row.templates.count - 1, Int(floor((bb.maxX - 0.5) / columnWidth)))
-                if firstTemplate != lastTemplate { continue }
+                let owner = row.owningTemplateIndex(for: shape)
+                if owner == sourceIndex {
+                    row.shapes[shapeIndex].x += columnWidth * CGFloat(destinationIndex - sourceIndex)
+                } else if owner >= lo && owner <= hi {
+                    row.shapes[shapeIndex].x += betweenShift
+                }
             }
 
-            let owner = row.owningTemplateIndex(for: shape)
-            if owner == sourceIndex {
-                row.shapes[shapeIndex].x += columnWidth * CGFloat(destinationIndex - sourceIndex)
-            } else if owner >= lo && owner <= hi {
-                row.shapes[shapeIndex].x += betweenShift
-            }
+            let movedTemplate = row.templates.remove(at: sourceIndex)
+            row.templates.insert(movedTemplate, at: destinationIndex)
+            rows[rowIndex] = row
         }
-
-        let movedTemplate = row.templates.remove(at: sourceIndex)
-        row.templates.insert(movedTemplate, at: destinationIndex)
-        rows[rowIndex] = row
-        scheduleSave()
     }
 }

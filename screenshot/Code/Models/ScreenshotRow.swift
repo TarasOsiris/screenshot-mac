@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct ScreenshotRow: Identifiable, Codable, BackgroundFillable {
+struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
     let id: UUID
     var label: String
     var templates: [ScreenshotTemplate]

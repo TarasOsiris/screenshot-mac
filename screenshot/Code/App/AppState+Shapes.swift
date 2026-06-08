@@ -15,34 +15,25 @@ extension AppState {
 
     func addShape(_ shape: CanvasShapeModel) {
         guard let idx = selectedRowIndex else { return }
-        registerUndoForRow(at: idx, "Add Shape")
-        rows[idx].shapes.append(shape)
-        selectShape(shape.id, in: rows[idx].id)
-        justAddedShapeId = shape.id
-        scheduleSave()
+        withUndo("Add Shape") {
+            rows[idx].shapes.append(shape)
+            selectShape(shape.id, in: rows[idx].id)
+            justAddedShapeId = shape.id
+        }
     }
 
     func updateShape(_ shape: CanvasShapeModel) {
         guard let location = shapeLocation(for: shape.id) else { return }
         let shouldRebase = continuousEditShapeId == shape.id
         let staleBaseShape = shouldRebase ? rows[location.rowIndex].shapes[location.shapeIndex] : nil
-        if shouldRebase {
-            finishContinuousEditIfNeeded()
-            guard let refreshed = shapeLocation(for: shape.id) else { return }
-            let rowIdx = refreshed.rowIndex
-            let shapeIdx = refreshed.shapeIndex
-            registerUndoForRow(at: rowIdx, "Edit Shape")
-            let baseShape = rows[rowIdx].shapes[shapeIdx]
-            let updatedShape = shape.rebased(from: staleBaseShape!, onto: baseShape)
-            rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: updatedShape, localeState: &localeState)
-        } else {
-            let rowIdx = location.rowIndex
-            let shapeIdx = location.shapeIndex
-            registerUndoForRow(at: rowIdx, "Edit Shape")
-            let baseShape = rows[rowIdx].shapes[shapeIdx]
-            rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
+        // withUndo finishes any in-flight continuous burst first, so the rebase reads the
+        // post-flush base while staleBaseShape holds the pre-flush value.
+        withUndo("Edit Shape") {
+            guard let loc = shouldRebase ? shapeLocation(for: shape.id) : location else { return }
+            let baseShape = rows[loc.rowIndex].shapes[loc.shapeIndex]
+            let updated = staleBaseShape.map { shape.rebased(from: $0, onto: baseShape) } ?? shape
+            rows[loc.rowIndex].shapes[loc.shapeIndex] = LocaleService.splitUpdate(base: baseShape, updated: updated, localeState: &localeState)
         }
-        scheduleSave()
     }
 
     // Shared by the shape- and row-level continuous-edit paths (AppState+Rows).
@@ -117,16 +108,16 @@ extension AppState {
         guard let idx = rowIndex(for: rowId) else { return }
         let matching = rows[idx].shapes.filter { $0.type == type }
         guard !matching.isEmpty else { return }
-        registerUndoForRow(at: idx, "Delete All \(type.pluralLabel)")
-        let allCandidates = imageFileNames(for: matching)
-        let matchingIds = Set(matching.map(\.id))
-        for shape in matching {
-            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+        withUndo("Delete All \(type.pluralLabel)") {
+            let allCandidates = imageFileNames(for: matching)
+            let matchingIds = Set(matching.map(\.id))
+            for shape in matching {
+                LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+            }
+            selectedShapeIds.subtract(matchingIds)
+            rows[idx].shapes.removeAll { $0.type == type }
+            cleanupUnreferencedImages(allCandidates)
         }
-        selectedShapeIds.subtract(matchingIds)
-        rows[idx].shapes.removeAll { $0.type == type }
-        cleanupUnreferencedImages(allCandidates)
-        scheduleSave()
     }
 
     enum CenterAxis {
@@ -147,11 +138,11 @@ extension AppState {
             !row.shapes[$0].resolvedIsLocked
         }
         guard !deviceIndices.isEmpty else { return }
-        registerUndoForRow(at: idx, deviceIndices.count == 1 ? "Center Device" : "Center Devices")
-        for i in deviceIndices {
-            centerShape(at: i, in: idx, axis: axis)
+        withUndo(deviceIndices.count == 1 ? "Center Device" : "Center Devices") {
+            for i in deviceIndices {
+                centerShape(at: i, in: idx, axis: axis)
+            }
         }
-        scheduleSave()
     }
 
     private func centerShape(at shapeIndex: Int, in rowIndex: Int, axis: CenterAxis) {
@@ -185,24 +176,24 @@ extension AppState {
         let shapes = rows[idx].shapes
         let deviceIndices = shapes.indices.filter { shapes[$0].type == .device && !shapes[$0].resolvedIsLocked }
         guard !deviceIndices.isEmpty else { return }
-        registerUndoForRow(at: idx, "Change All Row Devices")
-        for i in deviceIndices {
-            mutate(&rows[idx].shapes[i])
+        withUndo("Change All Row Devices") {
+            for i in deviceIndices {
+                mutate(&rows[idx].shapes[i])
+            }
         }
-        scheduleSave()
     }
 
     func deleteShape(_ id: UUID) {
         guard let location = shapeLocation(for: id) else { return }
         guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
-        registerUndoForRow(at: location.rowIndex, "Delete Shape")
-        let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
-        let localeImageFiles = localeOverrideImageFileNames(for: id)
-        LocaleService.removeShapeOverrides(&localeState, shapeId: id)
-        let allCandidates: [String?] = removedShape.allImageFileNames + localeImageFiles
-        cleanupUnreferencedImages(allCandidates)
-        selectedShapeIds.remove(id)
-        scheduleSave()
+        withUndo("Delete Shape") {
+            let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
+            let localeImageFiles = localeOverrideImageFileNames(for: id)
+            LocaleService.removeShapeOverrides(&localeState, shapeId: id)
+            let allCandidates: [String?] = removedShape.allImageFileNames + localeImageFiles
+            cleanupUnreferencedImages(allCandidates)
+            selectedShapeIds.remove(id)
+        }
     }
 
     func deleteSelectedShapes() {
@@ -211,17 +202,17 @@ extension AppState {
         let matching = rows[rowIdx].shapes.filter { idsToDelete.contains($0.id) && !$0.resolvedIsLocked }
         guard !matching.isEmpty else { return }
         let deletedIds = Set(matching.map(\.id))
-        registerUndoForRow(at: rowIdx, "Delete Shapes")
-        var allCandidates: [String?] = []
-        for shape in matching {
-            allCandidates.append(contentsOf: shape.allImageFileNames)
-            allCandidates.append(contentsOf: localeOverrideImageFileNames(for: shape.id))
-            LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+        withUndo("Delete Shapes") {
+            var allCandidates: [String?] = []
+            for shape in matching {
+                allCandidates.append(contentsOf: shape.allImageFileNames)
+                allCandidates.append(contentsOf: localeOverrideImageFileNames(for: shape.id))
+                LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
+            }
+            rows[rowIdx].shapes.removeAll { deletedIds.contains($0.id) }
+            selectedShapeIds.subtract(deletedIds)
+            cleanupUnreferencedImages(allCandidates)
         }
-        rows[rowIdx].shapes.removeAll { deletedIds.contains($0.id) }
-        selectedShapeIds.subtract(deletedIds)
-        cleanupUnreferencedImages(allCandidates)
-        scheduleSave()
     }
 
     func duplicateSelectedShape() {
@@ -237,30 +228,30 @@ extension AppState {
         let ids = selectedShapeIds
         let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) }
         guard !shapes.isEmpty else { return }
-        registerUndoForRow(at: rowIdx, "Duplicate Shapes")
-        var newIds: Set<UUID> = []
-        for shape in shapes {
-            var copy = shape.duplicated(offsetX: 50, offsetY: 50)
-            LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
-            copyImageFiles(for: &copy, originalId: shape.id)
-            rows[rowIdx].shapes.append(copy)
-            newIds.insert(copy.id)
+        withUndo("Duplicate Shapes") {
+            var newIds: Set<UUID> = []
+            for shape in shapes {
+                var copy = shape.duplicated(offsetX: 50, offsetY: 50)
+                LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
+                copyImageFiles(for: &copy, originalId: shape.id)
+                rows[rowIdx].shapes.append(copy)
+                newIds.insert(copy.id)
+            }
+            selectedShapeIds = newIds
         }
-        selectedShapeIds = newIds
-        scheduleSave()
     }
 
     @discardableResult
     func insertDuplicate(of shapeId: UUID, offsetX: CGFloat = 0, offsetY: CGFloat = 0, undoName: String) -> UUID? {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) else { return nil }
-        registerUndoForRow(at: rowIdx, undoName)
         var copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: offsetX, offsetY: offsetY)
-        LocaleService.copyShapeOverrides(&localeState, fromId: shapeId, toId: copy.id)
-        copyImageFiles(for: &copy, originalId: shapeId)
-        rows[rowIdx].shapes.append(copy)
-        selectShape(copy.id, in: rows[rowIdx].id)
-        scheduleSave()
+        withUndo(undoName) {
+            LocaleService.copyShapeOverrides(&localeState, fromId: shapeId, toId: copy.id)
+            copyImageFiles(for: &copy, originalId: shapeId)
+            rows[rowIdx].shapes.append(copy)
+            selectShape(copy.id, in: rows[rowIdx].id)
+        }
         return copy.id
     }
 
@@ -274,48 +265,48 @@ extension AppState {
         guard row.templates.count > 1 else { return }
         let shapes = row.shapes.filter { shapeIds.contains($0.id) }
         guard !shapes.isEmpty else { return }
-        registerUndoForRow(at: rowIdx, "Duplicate to Screenshots")
-        for shape in shapes {
-            let sourceIndex = row.owningTemplateIndex(for: shape)
-            let sourceCenterX = row.templateCenterX(at: sourceIndex)
-            let targetIndices: Range<Int>
-            switch direction {
-            case .all: targetIndices = 0..<row.templates.count
-            case .left: targetIndices = 0..<sourceIndex
-            case .right: targetIndices = (sourceIndex + 1)..<row.templates.count
-            }
-            for targetIndex in targetIndices where targetIndex != sourceIndex {
-                let targetCenterX = row.templateCenterX(at: targetIndex)
-                let offset = targetCenterX - sourceCenterX
-                var copy = shape.duplicated(offsetX: offset)
-                LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
-                copyImageFiles(for: &copy, originalId: shape.id)
-                rows[rowIdx].shapes.append(copy)
+        withUndo("Duplicate to Screenshots") {
+            for shape in shapes {
+                let sourceIndex = row.owningTemplateIndex(for: shape)
+                let sourceCenterX = row.templateCenterX(at: sourceIndex)
+                let targetIndices: Range<Int>
+                switch direction {
+                case .all: targetIndices = 0..<row.templates.count
+                case .left: targetIndices = 0..<sourceIndex
+                case .right: targetIndices = (sourceIndex + 1)..<row.templates.count
+                }
+                for targetIndex in targetIndices where targetIndex != sourceIndex {
+                    let targetCenterX = row.templateCenterX(at: targetIndex)
+                    let offset = targetCenterX - sourceCenterX
+                    var copy = shape.duplicated(offsetX: offset)
+                    LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
+                    copyImageFiles(for: &copy, originalId: shape.id)
+                    rows[rowIdx].shapes.append(copy)
+                }
             }
         }
-        scheduleSave()
     }
 
     func bringShapeToFront(_ id: UUID) {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
               shapeIdx < rows[rowIdx].shapes.count - 1 else { return }
-        registerUndoForRow(at: rowIdx, "Bring to Front")
-        let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
-        rows[rowIdx].shapes.append(shape)
-        selectShape(id, in: rows[rowIdx].id)
-        scheduleSave()
+        withUndo("Bring to Front") {
+            let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
+            rows[rowIdx].shapes.append(shape)
+            selectShape(id, in: rows[rowIdx].id)
+        }
     }
 
     func sendShapeToBack(_ id: UUID) {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
               shapeIdx > 0 else { return }
-        registerUndoForRow(at: rowIdx, "Send to Back")
-        let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
-        rows[rowIdx].shapes.insert(shape, at: 0)
-        selectShape(id, in: rows[rowIdx].id)
-        scheduleSave()
+        withUndo("Send to Back") {
+            let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
+            rows[rowIdx].shapes.insert(shape, at: 0)
+            selectShape(id, in: rows[rowIdx].id)
+        }
     }
 
     func bringSelectedShapesToFront() {
@@ -323,11 +314,11 @@ extension AppState {
         let ids = selectedShapeIds
         let suffixIds = Set(rows[rowIdx].shapes.suffix(ids.count).map(\.id))
         guard suffixIds != ids else { return }
-        registerUndoForRow(at: rowIdx, "Bring to Front")
-        let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
-        rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
-        rows[rowIdx].shapes.append(contentsOf: selected)
-        scheduleSave()
+        withUndo("Bring to Front") {
+            let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
+            rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
+            rows[rowIdx].shapes.append(contentsOf: selected)
+        }
     }
 
     func sendSelectedShapesToBack() {
@@ -335,11 +326,11 @@ extension AppState {
         let ids = selectedShapeIds
         let prefixIds = Set(rows[rowIdx].shapes.prefix(ids.count).map(\.id))
         guard prefixIds != ids else { return }
-        registerUndoForRow(at: rowIdx, "Send to Back")
-        let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
-        rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
-        rows[rowIdx].shapes.insert(contentsOf: selected, at: 0)
-        scheduleSave()
+        withUndo("Send to Back") {
+            let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
+            rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
+            rows[rowIdx].shapes.insert(contentsOf: selected, at: 0)
+        }
     }
 
     func deleteSelectedShape() {
@@ -424,35 +415,35 @@ extension AppState {
 
         // Otherwise paste from internal shape clipboard
         guard !clipboard.isEmpty else { return }
-        registerUndoForRow(at: rowIdx, clipboard.count == 1 ? "Paste Shape" : "Paste Shapes")
-        var newIds: Set<UUID> = []
-        let groupMinX = clipboard.map(\.x).min() ?? 0
-        let groupMinY = clipboard.map(\.y).min() ?? 0
-        let groupMaxX = clipboard.map { $0.x + $0.width }.max() ?? 0
-        let groupMaxY = clipboard.map { $0.y + $0.height }.max() ?? 0
-        let groupCenterX = (groupMinX + groupMaxX) / 2
-        let groupCenterY = (groupMinY + groupMaxY) / 2
+        withUndo(clipboard.count == 1 ? "Paste Shape" : "Paste Shapes") {
+            var newIds: Set<UUID> = []
+            let groupMinX = clipboard.map(\.x).min() ?? 0
+            let groupMinY = clipboard.map(\.y).min() ?? 0
+            let groupMaxX = clipboard.map { $0.x + $0.width }.max() ?? 0
+            let groupMaxY = clipboard.map { $0.y + $0.height }.max() ?? 0
+            let groupCenterX = (groupMinX + groupMaxX) / 2
+            let groupCenterY = (groupMinY + groupMaxY) / 2
 
-        for source in clipboard {
-            var pasted: CanvasShapeModel
-            if let mousePos = canvasMouseModelPosition, clipboard.count == 1 {
-                pasted = source.duplicated()
-                pasted.x = mousePos.x - pasted.width / 2
-                pasted.y = mousePos.y - pasted.height / 2
-            } else if let mousePos = canvasMouseModelPosition {
-                pasted = source.duplicated()
-                pasted.x = mousePos.x + (source.x - groupCenterX)
-                pasted.y = mousePos.y + (source.y - groupCenterY)
-            } else {
-                pasted = source.duplicated(offsetX: 20, offsetY: 20)
+            for source in clipboard {
+                var pasted: CanvasShapeModel
+                if let mousePos = canvasMouseModelPosition, clipboard.count == 1 {
+                    pasted = source.duplicated()
+                    pasted.x = mousePos.x - pasted.width / 2
+                    pasted.y = mousePos.y - pasted.height / 2
+                } else if let mousePos = canvasMouseModelPosition {
+                    pasted = source.duplicated()
+                    pasted.x = mousePos.x + (source.x - groupCenterX)
+                    pasted.y = mousePos.y + (source.y - groupCenterY)
+                } else {
+                    pasted = source.duplicated(offsetX: 20, offsetY: 20)
+                }
+                LocaleService.copyShapeOverrides(&localeState, fromId: source.id, toId: pasted.id)
+                copyImageFiles(for: &pasted, originalId: source.id)
+                rows[rowIdx].shapes.append(pasted)
+                newIds.insert(pasted.id)
             }
-            LocaleService.copyShapeOverrides(&localeState, fromId: source.id, toId: pasted.id)
-            copyImageFiles(for: &pasted, originalId: source.id)
-            rows[rowIdx].shapes.append(pasted)
-            newIds.insert(pasted.id)
+            selectedShapeIds = newIds
         }
-        selectedShapeIds = newIds
-        scheduleSave()
     }
 
     // MARK: - Group Drag
@@ -464,12 +455,12 @@ extension AppState {
             ids.contains(rows[rowIdx].shapes[$0].id) && !rows[rowIdx].shapes[$0].resolvedIsLocked
         }
         guard !movableIndices.isEmpty else { return }
-        registerUndoForRow(at: rowIdx, movableIndices.count > 1 ? "Move Shapes" : "Move Shape")
-        for i in movableIndices {
-            rows[rowIdx].shapes[i].x += offset.width
-            rows[rowIdx].shapes[i].y += offset.height
+        withUndo(movableIndices.count > 1 ? "Move Shapes" : "Move Shape") {
+            for i in movableIndices {
+                rows[rowIdx].shapes[i].x += offset.width
+                rows[rowIdx].shapes[i].y += offset.height
+            }
         }
-        scheduleSave()
     }
 
     // MARK: - Option+Drag Duplicate for Multi-Selection
@@ -479,19 +470,19 @@ extension AppState {
         let ids = selectedShapeIds
         let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) && !$0.resolvedIsLocked }
         guard !shapes.isEmpty else { return }
-        registerUndoForRow(at: rowIdx, "Duplicate Shapes")
-        var newIds: Set<UUID> = []
-        for shape in shapes {
-            var copy = shape.duplicated()
-            copy.x = shape.x  // No offset — drag will position them
-            copy.y = shape.y
-            LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
-            copyImageFiles(for: &copy, originalId: shape.id)
-            rows[rowIdx].shapes.append(copy)
-            newIds.insert(copy.id)
+        withUndo("Duplicate Shapes") {
+            var newIds: Set<UUID> = []
+            for shape in shapes {
+                var copy = shape.duplicated()
+                copy.x = shape.x  // No offset — drag will position them
+                copy.y = shape.y
+                LocaleService.copyShapeOverrides(&localeState, fromId: shape.id, toId: copy.id)
+                copyImageFiles(for: &copy, originalId: shape.id)
+                rows[rowIdx].shapes.append(copy)
+                newIds.insert(copy.id)
+            }
+            selectedShapeIds = newIds
         }
-        selectedShapeIds = newIds
-        scheduleSave()
     }
 
     // MARK: - Align Selected Shapes
@@ -512,37 +503,36 @@ extension AppState {
             guard indices.count >= 3 else { return }
         }
 
-        registerUndoForRow(at: rowIdx, "Align Shapes")
+        withUndo("Align Shapes") {
+            let shapes = indices.map { rows[rowIdx].shapes[$0] }
 
-        let shapes = indices.map { rows[rowIdx].shapes[$0] }
-
-        switch alignment {
-        case .left:
-            let target = shapes.map(\.x).min()!
-            for i in indices { rows[rowIdx].shapes[i].x = target }
-        case .centerH:
-            let centers = shapes.map { $0.x + $0.width / 2 }
-            let target = centers.reduce(0, +) / CGFloat(centers.count)
-            for i in indices { rows[rowIdx].shapes[i].x = target - rows[rowIdx].shapes[i].width / 2 }
-        case .right:
-            let target = shapes.map { $0.x + $0.width }.max()!
-            for i in indices { rows[rowIdx].shapes[i].x = target - rows[rowIdx].shapes[i].width }
-        case .top:
-            let target = shapes.map(\.y).min()!
-            for i in indices { rows[rowIdx].shapes[i].y = target }
-        case .centerV:
-            let centers = shapes.map { $0.y + $0.height / 2 }
-            let target = centers.reduce(0, +) / CGFloat(centers.count)
-            for i in indices { rows[rowIdx].shapes[i].y = target - rows[rowIdx].shapes[i].height / 2 }
-        case .bottom:
-            let target = shapes.map { $0.y + $0.height }.max()!
-            for i in indices { rows[rowIdx].shapes[i].y = target - rows[rowIdx].shapes[i].height }
-        case .distributeH:
-            distributeShapes(indices: indices, rowIdx: rowIdx, posKey: \.x, sizeKey: \.width)
-        case .distributeV:
-            distributeShapes(indices: indices, rowIdx: rowIdx, posKey: \.y, sizeKey: \.height)
+            switch alignment {
+            case .left:
+                let target = shapes.map(\.x).min()!
+                for i in indices { rows[rowIdx].shapes[i].x = target }
+            case .centerH:
+                let centers = shapes.map { $0.x + $0.width / 2 }
+                let target = centers.reduce(0, +) / CGFloat(centers.count)
+                for i in indices { rows[rowIdx].shapes[i].x = target - rows[rowIdx].shapes[i].width / 2 }
+            case .right:
+                let target = shapes.map { $0.x + $0.width }.max()!
+                for i in indices { rows[rowIdx].shapes[i].x = target - rows[rowIdx].shapes[i].width }
+            case .top:
+                let target = shapes.map(\.y).min()!
+                for i in indices { rows[rowIdx].shapes[i].y = target }
+            case .centerV:
+                let centers = shapes.map { $0.y + $0.height / 2 }
+                let target = centers.reduce(0, +) / CGFloat(centers.count)
+                for i in indices { rows[rowIdx].shapes[i].y = target - rows[rowIdx].shapes[i].height / 2 }
+            case .bottom:
+                let target = shapes.map { $0.y + $0.height }.max()!
+                for i in indices { rows[rowIdx].shapes[i].y = target - rows[rowIdx].shapes[i].height }
+            case .distributeH:
+                distributeShapes(indices: indices, rowIdx: rowIdx, posKey: \.x, sizeKey: \.width)
+            case .distributeV:
+                distributeShapes(indices: indices, rowIdx: rowIdx, posKey: \.y, sizeKey: \.height)
+            }
         }
-        scheduleSave()
     }
 
     // MARK: - Match Geometry to Source
@@ -626,19 +616,15 @@ extension AppState {
         } else {
             return
         }
-        var changed = false
-        for i in rows[rowIdx].shapes.indices {
-            guard ids.contains(rows[rowIdx].shapes[i].id) else { continue }
-            // Register undo lazily on the first mutation so an empty-id call
-            // leaves no empty step on the undo stack.
-            if !changed { registerUndoForRow(at: rowIdx, undoName) }
-            let baseShape = rows[rowIdx].shapes[i]
-            var resolved = LocaleService.resolveShape(baseShape, localeState: localeState)
-            update(&resolved)
-            rows[rowIdx].shapes[i] = LocaleService.splitUpdate(base: baseShape, updated: resolved, localeState: &localeState)
-            changed = true
+        withUndo(undoName) {
+            for i in rows[rowIdx].shapes.indices {
+                guard ids.contains(rows[rowIdx].shapes[i].id) else { continue }
+                let baseShape = rows[rowIdx].shapes[i]
+                var resolved = LocaleService.resolveShape(baseShape, localeState: localeState)
+                update(&resolved)
+                rows[rowIdx].shapes[i] = LocaleService.splitUpdate(base: baseShape, updated: resolved, localeState: &localeState)
+            }
         }
-        if changed { scheduleSave() }
     }
 
     // MARK: - Lock
