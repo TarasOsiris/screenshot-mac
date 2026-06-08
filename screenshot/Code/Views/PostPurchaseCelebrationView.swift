@@ -61,6 +61,11 @@ struct PostPurchaseCelebrationView: View {
                     .padding(.horizontal, 32)
                     .padding(.bottom, 28)
             }
+            // Keep the content a readable centered column on a wide iPad sheet while the
+            // background/confetti below still fill the whole card.
+            #if !os(macOS)
+            .frame(maxWidth: 540)
+            #endif
         }
         #if os(macOS)
         .frame(width: 540, height: 620)
@@ -288,10 +293,12 @@ struct PostPurchaseCelebrationView: View {
             .controlSize(.large)
             .keyboardShortcut(.defaultAction)
 
-            Text(nextStepHint)
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            if let nextStepHint {
+                Text(nextStepHint)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
         }
         .opacity(contentAppeared ? 1 : 0)
     }
@@ -309,7 +316,7 @@ struct PostPurchaseCelebrationView: View {
         }
     }
 
-    private var nextStepHint: String {
+    private var nextStepHint: String? {
         switch context {
         case .projectLimit:
             return String(localized: "Pick up right where you left off — your project list is now unlimited.")
@@ -318,7 +325,11 @@ struct PostPurchaseCelebrationView: View {
         case .templateLimit:
             return String(localized: "Pick up right where you left off — add as many screenshots per row as you need.")
         case .general:
+            #if os(macOS)
             return String(localized: "Tip: drop a screenshot onto any canvas to get started.")
+            #else
+            return nil
+            #endif
         }
     }
 }
@@ -339,4 +350,11 @@ private struct ConfettiPiece {
 
 #Preview("Row limit") {
     PostPurchaseCelebrationView(context: .rowLimit, onDismiss: {})
+}
+
+// Approximates an iPad page-sheet card so the content's 540pt width cap and the
+// full-bleed background/confetti are visible without launching the simulator.
+#Preview("iPad sheet") {
+    PostPurchaseCelebrationView(context: .general, onDismiss: {})
+        .frame(width: 704, height: 760)
 }
