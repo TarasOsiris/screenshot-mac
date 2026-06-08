@@ -158,6 +158,7 @@ struct ProjectsView: View {
     @State private var activeIdBeforeCreate: UUID?
     @State private var renamePrompt: ProjectNamePrompt?
     @State private var projectPendingDeletion: Project?
+    @AppStorage("dismissedMacAppBanner") private var dismissedMacAppBanner = false
 
     private let columns = [GridItem(.adaptive(minimum: 220, maximum: 280), spacing: 20)]
 
@@ -173,6 +174,11 @@ struct ProjectsView: View {
                 }
             } else {
                 ScrollView {
+                    if !dismissedMacAppBanner {
+                        MacAppBanner { dismissedMacAppBanner = true }
+                            .padding(.horizontal, 24)
+                            .padding(.top, 24)
+                    }
                     LazyVGrid(columns: columns, spacing: 24) {
                         ForEach(state.visibleProjects) { project in
                             Button {
@@ -310,6 +316,36 @@ struct ProjectsView: View {
     private func openNewlyCreatedProject() {
         guard let active = state.activeProjectId, active != activeIdBeforeCreate else { return }
         onOpen(active)
+    }
+}
+
+private struct MacAppBanner: View {
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "desktopcomputer")
+                .font(.title2)
+                .foregroundStyle(Color.accentColor)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Screenshot Bro is also available on Mac.")
+                    .font(.subheadline.weight(.semibold))
+                Text("Use the desktop Mac app for the best experience.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss")
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.floating, style: .continuous))
     }
 }
 

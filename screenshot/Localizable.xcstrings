@@ -18370,6 +18370,9 @@
         }
       }
     },
+    "Dismiss" : {
+
+    },
     "Display Type" : {
       "localizations" : {
         "de" : {
@@ -41967,6 +41970,9 @@
         }
       }
     },
+    "Screenshot Bro is also available on Mac." : {
+
+    },
     "Screenshot Bro Pro is unlocked and ready to use." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -51764,6 +51770,9 @@
           }
         }
       }
+    },
+    "Use the desktop Mac app for the best experience." : {
+
     },
     "Use the inspector on the right to set the background, default device frame, and screenshot size." : {
       "extractionState" : "stale",
