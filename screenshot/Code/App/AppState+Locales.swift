@@ -161,6 +161,25 @@ extension AppState {
         scheduleSave()
     }
 
+    func resetAllTranslations(shapeIds: Set<UUID>) {
+        guard localeState.hasAnyOverride(shapeIds: shapeIds) else { return }
+
+        registerUndo("Reset All Translations")
+        translationUndoTask?.cancel()
+        translationUndoTask = nil
+        translationBaseLocaleState = nil
+
+        var removedImages: [String] = []
+        for shapeId in shapeIds {
+            for overrides in localeState.overrides.values {
+                if let image = overrides[shapeId.uuidString]?.overrideImageFileName { removedImages.append(image) }
+            }
+            LocaleService.removeShapeOverrides(&localeState, shapeId: shapeId)
+        }
+        cleanupUnreferencedImages(removedImages)
+        scheduleSave()
+    }
+
     func resetActiveLocaleToBase() {
         let code = localeState.activeLocaleCode
         guard code != localeState.baseLocaleCode else { return }

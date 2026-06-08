@@ -155,6 +155,13 @@ struct LocaleState: Codable, Equatable {
         override(forCode: activeLocaleCode, shapeId: shapeId) != nil
     }
 
+    /// Check if any of these shapes has a non-empty override in any locale.
+    func hasAnyOverride(shapeIds: Set<UUID>) -> Bool {
+        overrides.contains { _, shapeOverrides in
+            shapeIds.contains { shapeOverrides[$0.uuidString]?.isEmpty == false }
+        }
+    }
+
     /// Get the override for a shape in a specific locale.
     func override(forCode code: String, shapeId: UUID) -> ShapeLocaleOverride? {
         overrides[code]?[shapeId.uuidString]

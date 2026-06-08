@@ -232,6 +232,10 @@ extension EditorRowView {
             }
             return firstType != nil
         }()
+        // Multi-selected text shapes — the reset-all-translations action below targets this set.
+        let selectedTextShapeIds: Set<UUID> = selectedShapeIds.count > 1
+            ? Set(resolvedShapes.filter { selectedShapeIds.contains($0.id) && $0.type == .text }.map(\.id))
+            : []
         ZStack(alignment: .topLeading) {
             EditorRasterizedBackgroundView(
                 row: row,
@@ -419,6 +423,12 @@ extension EditorRowView {
                             }
                         } : nil,
                         translateAllLocalesDisabled: state.isFanOutTranslating,
+                        onResetAllTranslations: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
+                            state.resetAllTranslations(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
+                        } : nil,
+                        resetAllTranslationsDisabled: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0)
+                            ? !state.localeState.hasAnyOverride(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
+                            : false,
                         nonBaseLocaleCount: nonBaseLocaleCount,
                         onCopyTextStyle: shape.type == .text ? {
                             state.textStyleClipboard = shape.extractTextStyle()

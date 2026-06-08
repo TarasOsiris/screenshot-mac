@@ -15,6 +15,8 @@ struct CanvasShapeContextMenuContent: View {
     var translateLocaleName: String?
     var onTranslateAllLocales: (() -> Void)?
     var translateAllLocalesDisabled = false
+    var onResetAllTranslations: (() -> Void)?
+    var resetAllTranslationsDisabled = false
     var nonBaseLocaleCount: Int = 0
     var onCopyTextStyle: (() -> Void)?
     var onPasteTextStyle: (() -> Void)?
@@ -166,21 +168,36 @@ struct CanvasShapeContextMenuContent: View {
                 }
                 .disabled(onPasteTextStyle == nil)
             }
-            if !isMultiSelected, let onTranslate, let translateLocaleName {
+            if (onTranslate != nil && translateLocaleName != nil)
+                || (onTranslateAllLocales != nil && nonBaseLocaleCount > 0)
+                || (onResetAllTranslations != nil && nonBaseLocaleCount > 0) {
                 Divider()
-                Button("Translate into \(translateLocaleName)", systemImage: "character.bubble", action: onTranslate)
-                    .disabled((shape.text ?? "").isEmpty)
-            }
-            if let onTranslateAllLocales, nonBaseLocaleCount > 0 {
-                Divider()
-                if isMultiSelected {
-                    Button("Translate Selected into All Languages (\(nonBaseLocaleCount))",
-                           systemImage: "character.bubble", action: onTranslateAllLocales)
-                        .disabled(translateAllLocalesDisabled)
-                } else {
-                    Button("Translate into All Languages (\(nonBaseLocaleCount))",
-                           systemImage: "character.bubble", action: onTranslateAllLocales)
-                        .disabled(translateAllLocalesDisabled || !shape.hasTranslatableText)
+                Menu {
+                    if !isMultiSelected, let onTranslate, let translateLocaleName {
+                        Button("Translate into \(translateLocaleName)", systemImage: "character.bubble", action: onTranslate)
+                            .disabled((shape.text ?? "").isEmpty)
+                    }
+                    if let onTranslateAllLocales, nonBaseLocaleCount > 0 {
+                        if isMultiSelected {
+                            Button("Translate Selected into All Languages (\(nonBaseLocaleCount))",
+                                   systemImage: "character.bubble", action: onTranslateAllLocales)
+                                .disabled(translateAllLocalesDisabled)
+                        } else {
+                            Button("Translate into All Languages (\(nonBaseLocaleCount))",
+                                   systemImage: "character.bubble", action: onTranslateAllLocales)
+                                .disabled(translateAllLocalesDisabled || !shape.hasTranslatableText)
+                        }
+                    }
+                    if let onResetAllTranslations, nonBaseLocaleCount > 0 {
+                        Divider()
+                        Button(isMultiSelected ? "Reset All Translations for Selected" : "Reset All Translations",
+                               systemImage: "arrow.counterclockwise",
+                               role: .destructive,
+                               action: onResetAllTranslations)
+                            .disabled(resetAllTranslationsDisabled)
+                    }
+                } label: {
+                    Label("Localization", systemImage: "globe")
                 }
             }
             Divider()

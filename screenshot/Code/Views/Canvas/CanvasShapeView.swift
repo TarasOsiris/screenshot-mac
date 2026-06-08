@@ -34,6 +34,8 @@ struct CanvasShapeInteractions {
     var translateLocaleName: String?
     var onTranslateAllLocales: (() -> Void)?
     var translateAllLocalesDisabled = false
+    var onResetAllTranslations: (() -> Void)?
+    var resetAllTranslationsDisabled = false
     var nonBaseLocaleCount: Int = 0
     var onCopyTextStyle: (() -> Void)?
     var onPasteTextStyle: (() -> Void)?
@@ -370,6 +372,8 @@ struct CanvasShapeView: View {
             translateLocaleName: interactions.translateLocaleName,
             onTranslateAllLocales: interactions.onTranslateAllLocales,
             translateAllLocalesDisabled: interactions.translateAllLocalesDisabled,
+            onResetAllTranslations: interactions.onResetAllTranslations,
+            resetAllTranslationsDisabled: interactions.resetAllTranslationsDisabled,
             nonBaseLocaleCount: interactions.nonBaseLocaleCount,
             onCopyTextStyle: interactions.onCopyTextStyle,
             onPasteTextStyle: interactions.onPasteTextStyle,
