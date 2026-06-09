@@ -3,10 +3,10 @@ import SwiftUI
 
 extension ContentView {
     var sortedProjects: [Project] {
-        if projectSortOrder == "alphabetical" {
-            return state.visibleProjects.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-        }
-        return state.visibleProjects
+        let base = projectSortOrder == "alphabetical"
+            ? state.visibleProjects.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            : state.visibleProjects
+        return base.filter(\.isStarred) + base.filter { !$0.isStarred }
     }
 
     @ViewBuilder
@@ -18,6 +18,8 @@ extension ContentView {
             } label: {
                 if project.id == state.activeProjectId {
                     Label(project.name, systemImage: "checkmark")
+                } else if project.isStarred {
+                    Label(project.name, systemImage: "star.fill")
                 } else {
                     Text(project.name)
                 }
@@ -41,6 +43,16 @@ extension ContentView {
                         state.renameProject(id, to: newName)
                     }
                 }
+            }
+            .disabled(state.activeProjectId == nil)
+
+            let isStarred = state.activeProject?.isStarred == true
+            Button(
+                isStarred ? "Unstar Project" : "Star Project",
+                systemImage: isStarred ? "star.slash" : "star"
+            ) {
+                guard let id = state.activeProjectId else { return }
+                state.setProjectStarred(id, !isStarred)
             }
             .disabled(state.activeProjectId == nil)
 

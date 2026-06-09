@@ -7,6 +7,7 @@ struct Project: Identifiable, Codable, Equatable {
     var isDeleted: Bool
     var deletedAt: Date?
     var ascAppId: String?
+    var isStarred: Bool
 
     init(id: UUID = UUID(), name: String) {
         self.id = id
@@ -15,10 +16,11 @@ struct Project: Identifiable, Codable, Equatable {
         self.isDeleted = false
         self.deletedAt = nil
         self.ascAppId = nil
+        self.isStarred = false
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, modifiedAt, isDeleted, deletedAt, ascAppId
+        case id, name, modifiedAt, isDeleted, deletedAt, ascAppId, isStarred
     }
 
     init(from decoder: Decoder) throws {
@@ -29,6 +31,7 @@ struct Project: Identifiable, Codable, Equatable {
         isDeleted = try c.decodeIfPresent(Bool.self, forKey: .isDeleted) ?? false
         deletedAt = try c.decodeIfPresent(Date.self, forKey: .deletedAt)
         ascAppId = try c.decodeIfPresent(String.self, forKey: .ascAppId)
+        isStarred = try c.decodeIfPresent(Bool.self, forKey: .isStarred) ?? false
     }
 
     mutating func markDeleted() {

@@ -1074,6 +1074,21 @@ struct AppStateTests {
         #expect(state.activeProject?.name == "Renamed")
     }
 
+    @Test func setProjectStarredTogglesFlagAndBumpsModifiedAt() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let projectId = try #require(state.activeProjectId)
+        #expect(state.activeProject?.isStarred == false)
+        let before = try #require(state.activeProject?.modifiedAt)
+
+        state.setProjectStarred(projectId, true)
+        #expect(state.activeProject?.isStarred == true)
+        #expect(try #require(state.activeProject?.modifiedAt) >= before)
+
+        state.setProjectStarred(projectId, false)
+        #expect(state.activeProject?.isStarred == false)
+    }
+
     @Test func deleteLastProjectLeavesEmptyState() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }

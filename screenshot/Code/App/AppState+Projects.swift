@@ -130,6 +130,14 @@ extension AppState {
         }
     }
 
+    func setProjectStarred(_ id: UUID, _ starred: Bool) {
+        if let idx = projects.firstIndex(where: { $0.id == id }), projects[idx].isStarred != starred {
+            projects[idx].isStarred = starred
+            projects[idx].modifiedAt = Date()
+            scheduleSave()
+        }
+    }
+
     func uniqueProjectName(_ baseName: String, excludingId: UUID? = nil) -> String {
         let existingNames = Set(visibleProjects.filter { $0.id != excludingId }.map { $0.name })
         return Self.uniqueName(baseName, among: existingNames)
