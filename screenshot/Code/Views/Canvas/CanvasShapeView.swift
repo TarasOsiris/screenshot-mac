@@ -484,6 +484,10 @@ struct CanvasShapeView: View {
             formatController.beginRichTextSession()
         }
         isEditingText = true
+        // Publish the active controller immediately so Cmd+Z can reach this editor's undo
+        // manager from the first keystroke — otherwise the handle only lands via the async
+        // selection-change path, and the first edit after a load undoes nothing.
+        interactions.onFormatBarStateChanged?(nil, formatController)
         interactions.onSelect()
     }
 

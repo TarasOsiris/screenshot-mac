@@ -40,36 +40,58 @@ struct ScreenshotBroApp: App {
         NSApp.keyWindow?.firstResponder as? NSTextView
     }
 
+    // While editing a canvas text shape, the inline editor owns undo. Route to its isolated
+    // session manager directly (captured on the format controller) rather than chasing the
+    // first responder: any format-bar interaction (font-size menu, color picker, B/I buttons)
+    // can move first responder off the text view, and `textView.undoManager` resolves up the
+    // responder chain rather than to the session manager. `isEditingText` is observed, so the
+    // command's enablement re-evaluates synchronously the moment editing begins.
+    private var inlineEditorUndoManager: UndoManager? {
+        appState.isEditingText ? appState.richTextFormatController?.undoManager : nil
+    }
+
     private var textEditorHasFocus: Bool {
         focusedTextView != nil
     }
 
+    // While editing text the command is always available (its manager owns undo); otherwise a
+    // focused field owns it, falling back to the document's own undo availability.
+    private func commandDisabled(documentActionAvailable: Bool) -> Bool {
+        if appState.isEditingText { return false }
+        return focusedTextView != nil ? false : !documentActionAvailable
+    }
+
     private var undoCommandDisabled: Bool {
-        textEditorHasFocus ? false : !appState.canUndoDocumentAction
+        commandDisabled(documentActionAvailable: appState.canUndoDocumentAction)
     }
 
     private var redoCommandDisabled: Bool {
-        textEditorHasFocus ? false : !appState.canRedoDocumentAction
+        commandDisabled(documentActionAvailable: appState.canRedoDocumentAction)
     }
 
     // Drive the focused text view's *own* undo manager directly. The inline editor uses a
     // private session manager (InlineTextEditor.Coordinator), so routing through the window's
     // undo: would miss it and undo nothing. When a text view is focused it always owns undo —
     // never fall through to the document, which would undo a different screenshot.
-    private func performUndoCommand() {
-        if let textView = focusedTextView {
-            textView.undoManager?.undo()
+    private func performEditingOrDocumentCommand(
+        textViewAction: (UndoManager) -> Void,
+        documentAction: () -> Void
+    ) {
+        if appState.isEditingText {
+            (inlineEditorUndoManager ?? focusedTextView?.undoManager).map(textViewAction)
+        } else if let textView = focusedTextView {
+            textView.undoManager.map(textViewAction)
         } else {
-            appState.undoDocumentAction()
+            documentAction()
         }
     }
 
+    private func performUndoCommand() {
+        performEditingOrDocumentCommand(textViewAction: { $0.undo() }, documentAction: appState.undoDocumentAction)
+    }
+
     private func performRedoCommand() {
-        if let textView = focusedTextView {
-            textView.undoManager?.redo()
-        } else {
-            appState.redoDocumentAction()
-        }
+        performEditingOrDocumentCommand(textViewAction: { $0.redo() }, documentAction: appState.redoDocumentAction)
     }
     #endif
 

@@ -111,6 +111,28 @@ struct RichTextFormatUndoTests {
         #expect(delegate.manager.canUndo == false)
     }
 
+    /// Formatting must register on the controller's *explicitly captured* session manager, not
+    /// whatever `textView.undoManager` resolves to through the responder chain. In a real window
+    /// those differ on the first editor instance, which left the very first edit after a load
+    /// undoing nothing — Cmd+Z routed to the session manager while the step landed elsewhere.
+    @Test func formattingRegistersOnExplicitSessionManager() {
+        let (textView, delegate) = makeTextView("Hello")
+        // Stand in for the window/responder-chain manager that textView.undoManager would resolve to.
+        let strayManager = UndoManager()
+        let controller = RichTextFormatController()
+        controller.textView = textView
+        controller.undoManager = delegate.manager
+        textView.setSelectedRange(NSRange(location: 0, length: 5))
+
+        delegate.grouped { controller.applyAction(.toggleBold) }
+
+        #expect(delegate.manager.canUndo == true)
+        #expect(strayManager.canUndo == false)
+
+        delegate.manager.undo()
+        #expect(isBold(textView, at: 0) == false)
+    }
+
     /// The inline editor must register undo on its own session manager, NOT the
     /// document/window manager — otherwise formatting steps interleave with document
     /// undo and outlive the freed text view, crashing on a later document-level undo:.

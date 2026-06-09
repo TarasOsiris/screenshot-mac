@@ -106,6 +106,7 @@ struct InlineTextEditor: NSViewRepresentable {
         scrollView.verticalAlignment = verticalAlignment
 
         formatController?.textView = textView
+        formatController?.undoManager = context.coordinator.editingUndoManager
         textView.formatController = formatController
 
         DispatchQueue.main.async { [weak textView, weak scrollView] in
@@ -130,6 +131,7 @@ struct InlineTextEditor: NSViewRepresentable {
         if let textView = scrollView.documentView as? NSTextView,
            coordinator.parent.formatController?.textView === textView {
             coordinator.parent.formatController?.textView = nil
+            coordinator.parent.formatController?.undoManager = nil
         }
     }
 
@@ -137,6 +139,7 @@ struct InlineTextEditor: NSViewRepresentable {
         guard let textView = scrollView.documentView as? NSTextView else { return }
         context.coordinator.parent = self
         formatController?.textView = textView
+        formatController?.undoManager = context.coordinator.editingUndoManager
 
         // In rich text mode, don't rebuild the attributed string on every update
         // to avoid destroying per-range formatting during editing.
@@ -510,6 +513,11 @@ class RichTextFormatController: ObservableObject {
     private(set) var hasPendingTypingAttributes = false
     var pendingClearFormatting = false
     weak var textView: NSTextView?
+    // The editor's isolated session undo manager (the Coordinator's), captured explicitly so
+    // formatting steps register on — and Cmd+Z routes to — the *same* object. Going through
+    // `textView.undoManager` is unreliable: in a real window it resolves up the responder chain
+    // and isn't guaranteed to be the session manager on the first editor instance after a load.
+    weak var undoManager: UndoManager?
 
     func beginRichTextSession() {
         guard !shouldEncodeRichText else { return }
@@ -587,7 +595,7 @@ class RichTextFormatController: ObservableObject {
     /// skip re-encoding and the restored formatting would be dropped on commit. The undo block
     /// snapshots the live state and re-registers itself, giving redo.
     private func registerFormattingUndo(restoring prior: NSAttributedString, shouldEncode: Bool, on textView: NSTextView) {
-        guard let undoManager = textView.undoManager else { return }
+        guard let undoManager = self.undoManager ?? textView.undoManager else { return }
         undoManager.registerUndo(withTarget: textView) { [weak self] tv in
             guard let storage = tv.textStorage else { return }
             let redoPrior = NSAttributedString(attributedString: storage)
