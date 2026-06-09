@@ -24,6 +24,32 @@ func isUntranslated(_ overrideText: String?) -> Bool {
     (overrideText ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 }
 
+/// macOS' on-device translator can silently fall back to a *different* installed language
+/// when the requested pair isn't available (e.g. returning French when German isn't
+/// downloaded) instead of throwing. Storing that would write the wrong language into a
+/// locale's overrides, so verify the engine honored the requested target and throw
+/// otherwise — which fails the run loudly and surfaces the language-download alert.
+struct WrongTargetLanguageError: LocalizedError {
+    let requested: String
+    let returned: String
+    var errorDescription: String? {
+        "The translator returned \(returned) instead of the requested \(requested). The target language may not be downloaded."
+    }
+}
+
+/// Returns the response's translated text, but only after confirming it is in the language
+/// we asked for. Compares language code only (ignores region/script) so e.g. a "pt-BR"
+/// request still accepts a "pt" response.
+func validatedTargetText(_ response: TranslationSession.Response, requestedTarget: String) throws -> String {
+    let requested = Locale.Language(identifier: requestedTarget).languageCode
+    let returned = response.targetLanguage.languageCode
+    if let requested, let returned, requested != returned {
+        AppLogger.translation.error("Translator returned \(returned.identifier, privacy: .public) for requested target \(requested.identifier, privacy: .public)")
+        throw WrongTargetLanguageError(requested: requested.identifier, returned: returned.identifier)
+    }
+    return response.targetText
+}
+
 /// Translate text shapes for a specific locale using a caller-provided translation function.
 /// Returns `true` if all shapes translated successfully, `false` if translation was interrupted by an error.
 @discardableResult
@@ -56,24 +82,67 @@ func translateShapes(
     return true
 }
 
+/// Outcome of a session-driven translation run, so callers can show the right guidance.
+enum TranslationRunResult: Equatable {
+    case completed
+    /// The pair is downloadable but not installed (the inline download was declined or failed).
+    case languagesNotDownloaded
+    /// Apple's on-device translator doesn't support this language pair at all.
+    case unsupportedPair
+}
+
+/// Confirms the on-device model for `source`→`target` is ready before translating, and
+/// triggers Apple's native inline download confirmation when the pair is supported but not
+/// yet installed. Returns `nil` when translation may proceed, or the blocking result.
+/// This guards against the engine silently substituting a different installed language.
+func ensureTranslationAvailable(
+    session: TranslationSession,
+    source: String,
+    target: String
+) async -> TranslationRunResult? {
+    let status = await LanguageAvailability().status(
+        from: Locale.Language(identifier: source),
+        to: Locale.Language(identifier: target)
+    )
+    if status == .unsupported {
+        AppLogger.translation.error("Translation pair \(source, privacy: .public)->\(target, privacy: .public) is unsupported")
+        return .unsupportedPair
+    }
+    do {
+        // No-op when already installed; presents the system download sheet when supported.
+        try await session.prepareTranslation()
+        return nil
+    } catch {
+        AppLogger.translation.error("prepareTranslation failed for \(source, privacy: .public)->\(target, privacy: .public): \(error.localizedDescription, privacy: .public)")
+        return .languagesNotDownloaded
+    }
+}
+
 /// Thin wrapper that translates via the given session. Delegates to the primary overload.
-@discardableResult
 func translateShapes(
     session: TranslationSession,
     state: AppState,
     targetLocaleCode: String,
     onlyUntranslated: Bool = true,
     shapeFilter: ((UUID) -> Bool)? = nil
-) async -> Bool {
-    await translateShapes(
+) async -> TranslationRunResult {
+    if let blocked = await ensureTranslationAvailable(
+        session: session,
+        source: state.localeState.baseLocaleCode,
+        target: targetLocaleCode
+    ) {
+        return blocked
+    }
+    let success = await translateShapes(
         state: state,
         targetLocaleCode: targetLocaleCode,
         onlyUntranslated: onlyUntranslated,
         shapeFilter: shapeFilter
     ) { baseText in
         let response = try await session.translate(baseText)
-        return response.targetText
+        return try validatedTargetText(response, requestedTarget: targetLocaleCode)
     }
+    return success ? .completed : .languagesNotDownloaded
 }
 
 /// Translate the full text in one request while protecting the original newline
@@ -208,23 +277,75 @@ private extension String {
     }
 }
 
-// MARK: - Language Download Alert
+// MARK: - Language Issue Alert
+
+/// A translation that couldn't run because the on-device model for a specific language
+/// is missing or unsupported. Carries the human-readable language name so the alert can
+/// tell the user exactly what's wrong and what to do.
+enum TranslationLanguageIssue: Identifiable, Equatable {
+    case notDownloaded(language: String)
+    case unsupported(language: String)
+
+    var id: String {
+        switch self {
+        case .notDownloaded(let l): return "nd:\(l)"
+        case .unsupported(let l): return "un:\(l)"
+        }
+    }
+
+    /// Build the issue for a run result, or `nil` when the run succeeded.
+    init?(_ result: TranslationRunResult, language: String) {
+        switch result {
+        case .completed: return nil
+        case .languagesNotDownloaded: self = .notDownloaded(language: language)
+        case .unsupportedPair: self = .unsupported(language: language)
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .notDownloaded(let l): return "Download \(l) to Translate"
+        case .unsupported(let l): return "\(l) Isn't Available for Translation"
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .notDownloaded(let l):
+            return "\(l) needs to be downloaded before it can be used for on-device translation.\n\nOpen System Settings → General → Language & Region → Translation Languages, download \(l), then try again. Until then your text stays in the base language."
+        case .unsupported(let l):
+            return "Apple's on-device translator can't translate your base language into \(l).\n\nYou can still type \(l) text yourself in Edit Translations — leave a field empty to fall back to the base language."
+        }
+    }
+
+    /// Only the not-downloaded case is fixable via System Settings.
+    var offersSettings: Bool {
+        if case .notDownloaded = self { return true }
+        return false
+    }
+}
 
 extension View {
-    func translationLanguageDownloadAlert(isPresented: Binding<Bool>) -> some View {
-        self.alert("Translation Languages Not Available", isPresented: isPresented) {
-            if let url = URL(string: "x-apple.systempreferences:com.apple.SystemPreferences.TranslationSettings") {
-                Button("Open System Settings") {
-                    #if os(macOS)
+    func translationLanguageIssueAlert(item: Binding<TranslationLanguageIssue?>) -> some View {
+        let isPresented = Binding(
+            get: { item.wrappedValue != nil },
+            set: { if !$0 { item.wrappedValue = nil } }
+        )
+        return alert(
+            item.wrappedValue?.title ?? "",
+            isPresented: isPresented,
+            presenting: item.wrappedValue
+        ) { issue in
+            #if os(macOS)
+            if issue.offersSettings, let url = URL(string: "x-apple.systempreferences:com.apple.SystemPreferences.TranslationSettings") {
+                Button("Open Translation Settings") {
                     NSWorkspace.shared.open(url)
-                    #else
-                    UIApplication.shared.open(url)
-                    #endif
                 }
             }
+            #endif
             Button("OK", role: .cancel) {}
-        } message: {
-            Text("The required languages are not downloaded on your Mac.\n\nTo download them, go to:\nSystem Settings → General → Language & Region → Translation Languages\n\nThen download the languages you need and try again.")
+        } message: { issue in
+            Text(issue.message)
         }
     }
 }

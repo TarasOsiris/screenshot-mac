@@ -13,6 +13,7 @@ struct TranslationOverviewSheet: View {
     // session config holds a single language pair and refreshing it cancels the running task.
     @State private var cellTranslationQueue: [PendingCellTranslation] = []
     @State private var isProcessingCellTranslation = false
+    @State private var languageIssue: TranslationLanguageIssue?
     private let baseColumnWidth: CGFloat = 320
     private let translationColumnWidth: CGFloat = 260
     private let columnPadding: CGFloat = 12
@@ -29,10 +30,21 @@ struct TranslationOverviewSheet: View {
                     isProcessingCellTranslation = false
                     return
                 }
+                if let blocked = await ensureTranslationAvailable(
+                    session: session,
+                    source: state.localeState.baseLocaleCode,
+                    target: item.localeCode
+                ) {
+                    languageIssue = TranslationLanguageIssue(blocked, language: state.localeState.languageLabel(for: item.localeCode))
+                    cellTranslationQueue.removeAll { $0.shapeId == item.shapeId && $0.localeCode == item.localeCode }
+                    isProcessingCellTranslation = false
+                    processNextCellTranslationIfIdle()
+                    return
+                }
                 do {
                     let translatedText = try await translatePreservingLineBreaks(item.baseText) { text in
                         let response = try await session.translate(text)
-                        return response.targetText
+                        return try validatedTargetText(response, requestedTarget: item.localeCode)
                     }
                     state.updateTranslationText(
                         shapeId: item.shapeId,
@@ -47,6 +59,7 @@ struct TranslationOverviewSheet: View {
                 isProcessingCellTranslation = false
                 processNextCellTranslationIfIdle()
             }
+            .translationLanguageIssueAlert(item: $languageIssue)
     }
 
     #if os(macOS)

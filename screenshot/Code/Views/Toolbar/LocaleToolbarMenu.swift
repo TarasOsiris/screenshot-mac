@@ -18,11 +18,10 @@ struct LocaleBar: View {
     @State private var isQuickTranslating = false
     @State private var showReplaceAllConfirmation = false
     @State private var showResetToBaseConfirmation = false
-    @State private var showLanguageDownloadAlert = false
+    @State private var languageIssue: TranslationLanguageIssue?
     @State private var fanOutConfig: TranslationSession.Configuration?
     @State private var fanOutPendingTargets: [String] = []
     @State private var fanOutShapeIds: Set<UUID> = []
-    @State private var showFanOutLanguageDownloadAlert = false
 
     var body: some View {
         // On iPad the visible chip strip is replaced by the globe `LocaleToolbarButton`, but
@@ -60,11 +59,10 @@ struct LocaleBar: View {
         .translationTask(quickTranslationConfig) { session in
             await runQuickTranslation(session)
         }
-        .translationLanguageDownloadAlert(isPresented: $showLanguageDownloadAlert)
         .translationTask(fanOutConfig) { session in
             await runFanOutTranslation(session)
         }
-        .translationLanguageDownloadAlert(isPresented: $showFanOutLanguageDownloadAlert)
+        .translationLanguageIssueAlert(item: $languageIssue)
         .onChange(of: state.pendingLocaleMenuRequest) { _, newValue in
             handleLocaleMenuRequest(newValue)
         }
@@ -220,21 +218,20 @@ struct LocaleBar: View {
     private func runQuickTranslation(_ session: TranslationSession) async {
         isQuickTranslating = true
         defer { isQuickTranslating = false }
-        let success = await translateShapes(
+        let code = state.localeState.activeLocaleCode
+        let result = await translateShapes(
             session: session,
             state: state,
-            targetLocaleCode: state.localeState.activeLocaleCode,
+            targetLocaleCode: code,
             onlyUntranslated: quickTranslateOnlyUntranslated
         )
-        if !success {
-            showLanguageDownloadAlert = true
-        }
+        languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: code))
     }
 
     private func runFanOutTranslation(_ session: TranslationSession) async {
         guard let target = fanOutPendingTargets.first else { return }
         let ids = fanOutShapeIds
-        let success = await translateShapes(
+        let result = await translateShapes(
             session: session,
             state: state,
             targetLocaleCode: target,
@@ -242,9 +239,9 @@ struct LocaleBar: View {
             shapeFilter: { ids.contains($0) }
         )
 
-        guard success else {
+        guard result == .completed else {
             finishFanOutTranslation()
-            showFanOutLanguageDownloadAlert = true
+            languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: target))
             return
         }
 
@@ -499,7 +496,7 @@ struct LocaleBanner: View {
     @State private var showReplaceAllConfirmation = false
     @State private var showResetToBaseConfirmation = false
     @State private var isTranslationOverviewPresented = false
-    @State private var showLanguageDownloadAlert = false
+    @State private var languageIssue: TranslationLanguageIssue?
     @State private var showLocaleHelp = false
 
 
@@ -649,7 +646,7 @@ struct LocaleBanner: View {
             .translationTask(translationConfig) { session in
                 await runBannerTranslation(session)
             }
-            .translationLanguageDownloadAlert(isPresented: $showLanguageDownloadAlert)
+            .translationLanguageIssueAlert(item: $languageIssue)
             .onChange(of: state.pendingTranslateShapeId) { _, newValue in
                 handlePendingTranslateShapeId(newValue)
             }
@@ -670,16 +667,15 @@ struct LocaleBanner: View {
         defer { isTranslating = false }
         let filterIds = pendingShapeFilter
         pendingShapeFilter = nil
-        let success = await translateShapes(
+        let code = state.localeState.activeLocaleCode
+        let result = await translateShapes(
             session: session,
             state: state,
-            targetLocaleCode: state.localeState.activeLocaleCode,
+            targetLocaleCode: code,
             onlyUntranslated: translateOnlyUntranslated,
             shapeFilter: filterIds.map { ids in { ids.contains($0) } }
         )
-        if !success {
-            showLanguageDownloadAlert = true
-        }
+        languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: code))
     }
 
     private func handlePendingTranslateShapeId(_ shapeId: UUID?) {
