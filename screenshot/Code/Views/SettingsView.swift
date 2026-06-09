@@ -183,6 +183,13 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            Section {
+                LabeledContent("Version") {
+                    Text("\(Bundle.main.shortVersion) (\(Bundle.main.buildNumber))")
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .formStyle(.grouped)
     }
