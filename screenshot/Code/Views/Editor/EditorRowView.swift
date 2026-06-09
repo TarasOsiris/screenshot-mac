@@ -42,6 +42,8 @@ struct EditorRowView: View {
     @State var pendingResize: [UUID: ResizeState] = [:]
     @State var pendingRotation: [UUID: Double] = [:]
     @State var textEditingShapeId: UUID?
+    /// Drives the one-shot re-key of `horizontalScrollArea` (see its `.task`).
+    @State var scrollAreaRealized = false
     @FocusState var isLabelFieldFocused: Bool
 
     var isSelected: Bool {
@@ -133,6 +135,17 @@ struct EditorRowView: View {
 
             if !row.isCollapsed {
                 horizontalScrollArea
+                    .id(scrollAreaRealized)
+                    // One-shot, fired the first time the scroll area appears (at launch, or
+                    // when an initially-collapsed row is expanded): re-key it once so the
+                    // inner horizontal ScrollView re-measures against the now-settled width.
+                    // A LazyVStack's first lazy pass can propose an unbounded width, leaving
+                    // the ScrollView sized to its content and unscrollable. Scoping this to
+                    // the scroll area (not the row) means an already-realized row that's
+                    // collapsed/expanded mid-session keeps its id and doesn't rebuild.
+                    .task {
+                        if !scrollAreaRealized { scrollAreaRealized = true }
+                    }
                     // Launch the deferred onboarding tour once the first canvas (the `.canvas`
                     // anchor lives inside it) is on screen — the pending flag is armed at first
                     // launch, before any project exists.
