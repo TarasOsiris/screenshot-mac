@@ -347,6 +347,7 @@
       }
     },
     "**⌘+** / **⌘−** zoom in/out, **⌘0** resets to 100%, **F** focuses on the current selection." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -385,6 +386,9 @@
           }
         }
       }
+    },
+    "**⌘+** / **⌘−** zoom in/out, **⌘0** resets to the default zoom, **F** focuses on the current selection." : {
+
     },
     "**⌘⌥0** jumps back to the base language." : {
       "localizations" : {
@@ -587,6 +591,7 @@
       }
     },
     "**Android Phone** and **Android Tablet** — generic frames that flex to match the aspect ratio of any dropped screenshot." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -625,6 +630,9 @@
           }
         }
       }
+    },
+    "**Android Phone**, **Abstract Pixel 9**, and **Android Tablet** — abstract frames that flex to match the aspect ratio of dropped screenshots." : {
+
     },
     "**Angular**: a sweep gradient rotating around the center." : {
       "localizations" : {
@@ -706,6 +714,9 @@
         }
       }
     },
+    "**Ask before deleting rows and screenshots** — show a confirmation prompt for destructive row and screenshot actions." : {
+
+    },
     "**Auto-Translate Missing Text** — fills in text shapes that don't yet have an override for the current language." : {
       "localizations" : {
         "de" : {
@@ -747,6 +758,7 @@
       }
     },
     "**Back up projects** — write a one-off zip of your project library to a folder you choose." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -827,6 +839,7 @@
       }
     },
     "**Batch import**: drop multiple screenshots at once. Screenshot Bro inspects each image's pixel dimensions and routes it to the matching device row (iPhone vs iPad vs Android)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -865,6 +878,9 @@
           }
         }
       }
+    },
+    "**Batch import**: drop multiple screenshots onto a row. Screenshot Bro fills existing device shapes in template order, then appends templates as needed." : {
+
     },
     "**Color** — a solid fill picked from the inline color picker." : {
       "localizations" : {
@@ -907,6 +923,7 @@
       }
     },
     "**Confirm before deleting** — show a confirmation prompt for destructive actions on rows and screenshots." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -945,6 +962,12 @@
           }
         }
       }
+    },
+    "**Custom filename suffix** — append a suffix to exported screenshot filenames." : {
+
+    },
+    "**Custom filename suffix**: add a suffix to every exported screenshot filename." : {
+
     },
     "**Custom fonts persist.** Imported fonts are bundled per project, so a project shared via iCloud or zip backup keeps its typography." : {
       "localizations" : {
@@ -987,6 +1010,7 @@
       }
     },
     "**Custom fonts** — manage imported `.otf`/`.ttf` files." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1026,7 +1050,11 @@
         }
       }
     },
+    "**Default device frame** — pre-selects a device category and model for new rows." : {
+
+    },
     "**Default device** — pre-selects a device category and model for new rows." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1107,6 +1135,7 @@
       }
     },
     "**Default templates per row** — number of empty templates a new row starts with." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1187,6 +1216,7 @@
       }
     },
     "**Delete** removes the row. Settings ▸ General has a confirmation toggle." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1267,6 +1297,7 @@
       }
     },
     "**Drop folders, not files.** Drag a folder of screenshots onto the canvas — Screenshot Bro will batch-import and route by device size." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1305,6 +1336,9 @@
           }
         }
       }
+    },
+    "**Drop groups of screenshots together.** Select several image files and drop them onto a row — Screenshot Bro fills templates in order and detects device category/frame where possible." : {
+
     },
     "**Duplicate while dragging** with **⌥**. Combined with snap, this is the fastest way to lay out a row of equal-sized cards." : {
       "localizations" : {
@@ -1346,7 +1380,11 @@
         }
       }
     },
+    "**Edit Translation Table…** — open a side-by-side editor showing every text shape with its base content and per-language overrides." : {
+
+    },
     "**Edit Translations…** — open a side-by-side editor showing every text shape with its base content and per-language overrides." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1425,6 +1463,9 @@
           }
         }
       }
+    },
+    "**Export folder** — choose or clear the folder Screenshot Bro reuses for **⌘E**." : {
+
     },
     "**File ▸ New Project…** (⌘N) opens the New Project window." : {
       "localizations" : {
@@ -1867,6 +1908,7 @@
       }
     },
     "**iPhone** — iPhone 17, Air, Pro, Pro Max with the latest color variants." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1905,6 +1947,9 @@
           }
         }
       }
+    },
+    "**iPhone** — iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max, and 3D iPhone options." : {
+
     },
     "**Language** — override the app interface language. Requires a relaunch." : {
       "localizations" : {
@@ -1947,6 +1992,7 @@
       }
     },
     "**Last export folder** — Screenshot Bro remembers and reuses your folder choice." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2066,7 +2112,11 @@
         }
       }
     },
+    "**Mac** — MacBook Air 13\", MacBook Pro 14\", MacBook Pro 16\", and iMac 24\"." : {
+
+    },
     "**MacBook** — MacBook Air 13\", MacBook Pro 14\", MacBook Pro 16\", iMac 24\"." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2107,6 +2157,7 @@
       }
     },
     "**Open export folder on success** — auto-reveal results in Finder." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2227,6 +2278,7 @@
       }
     },
     "**Preview before exporting.** The export preview button on each template renders just that one template — handy for spot-checks." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2266,7 +2318,14 @@
         }
       }
     },
+    "**Preview before exporting.** The Quick Look button on each template renders the row's screenshots and opens the preview at that template — handy for spot-checks." : {
+
+    },
+    "**Project order** — By creation date or Alphabetically." : {
+
+    },
     "**Project order** — Creation date or Manual." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2506,6 +2565,9 @@
         }
       }
     },
+    "**Reveal in Finder after export** — auto-reveal results in Finder." : {
+
+    },
     "**Revert to Base Language…** — drops all overrides for the current language, falling back to base text everywhere." : {
       "localizations" : {
         "de" : {
@@ -2627,6 +2689,7 @@
       }
     },
     "**Scale** — 1×, 2×, 3×." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2667,6 +2730,7 @@
       }
     },
     "**Scale**: 1×, 2×, or 3×. The App Store and Google Play require exact pixel dimensions, so keep this at 1× unless you specifically need oversized assets." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2746,6 +2810,9 @@
         }
       }
     },
+    "**Screenshots per new row** — number of empty templates a new row starts with." : {
+
+    },
     "**Settings ▸ Export ▸ Format**: PNG or JPEG. PNG is recommended for marketing screenshots." : {
       "localizations" : {
         "de" : {
@@ -2787,6 +2854,7 @@
       }
     },
     "**Settings ▸ General ▸ Custom Fonts** — pick `.otf` / `.ttf` files to register them with the app." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3025,6 +3093,9 @@
           }
         }
       }
+    },
+    "**Storage** — open the project library in Finder or create a one-off backup zip." : {
+
     },
     "**Stretch** — fills exactly, distorting aspect if needed." : {
       "localizations" : {
@@ -3267,6 +3338,7 @@
       }
     },
     "**Use the SVG button for icons.** SVG scales infinitely, so your hero icon stays crisp at 1×, 2×, or 3× export." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3305,6 +3377,12 @@
           }
         }
       }
+    },
+    "**Use the SVG button for icons.** SVG scales infinitely, so your hero icon stays crisp at export size." : {
+
+    },
+    "**Watch** — Apple Watch Ultra 3 frame variants." : {
+
     },
     "%" : {
       "localizations" : {
@@ -5085,7 +5163,11 @@
         }
       }
     },
+    "2. Drop your raw device screenshots onto templates or rows — Screenshot Bro fills them in order and detects device category/frame where possible." : {
+
+    },
     "2. Drop your raw device screenshots onto the templates — Screenshot Bro detects iPhone vs iPad vs Android from the image dimensions and routes them to the right row." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -5815,6 +5897,7 @@
       }
     },
     "Actual size (100%)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -8581,6 +8664,7 @@
       }
     },
     "App Store Connect allows up to 10 screenshots per device family per locale. Screenshot Bro respects template ordering so the first 10 templates in each row will be uploaded in order." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -8896,6 +8980,9 @@
         }
       }
     },
+    "App Store Connect requires 3–10 screenshots per display type and locale. Screenshot Bro respects template ordering when uploading." : {
+
+    },
     "App Store Connect returned %lld while trying to %@." : {
       "localizations" : {
         "de" : {
@@ -8989,6 +9076,7 @@
       }
     },
     "App Store Connect upload." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -11398,6 +11486,7 @@
       }
     },
     "By default, Screenshot Bro exports every language, every row, and every template at 1× scale." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -12134,7 +12223,11 @@
         }
       }
     },
+    "Choose a device category: **iPhone**, **iPad Pro 11\"**, **iPad Pro 13\"**, **MacBook**, **Android Phone**, **Abstract Pixel 9**, **Android Tablet**, or **Invisible** (an abstract layout with no visible frame)." : {
+
+    },
     "Choose a device category: **iPhone**, **iPad Pro 11\"**, **iPad Pro 13\"**, **MacBook**, **Android Phone**, **Android Tablet**, or **Invisible** (an abstract layout with no visible frame)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -13008,6 +13101,7 @@
       }
     },
     "Click **Export** in the toolbar to render the current project to PNG." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -13046,6 +13140,9 @@
           }
         }
       }
+    },
+    "Click **Export** in the toolbar, or press **⌘E**, to render the current project to the remembered export folder. If no folder is set, Screenshot Bro asks you to choose one." : {
+
     },
     "Click **SVG** to import a vector file. Or paste raw SVG via the SVG paste dialog." : {
       "localizations" : {
@@ -13086,6 +13183,9 @@
           }
         }
       }
+    },
+    "Click **Upload to App Store Connect…** from the export menu. Screenshot Bro renders the selected screenshots directly from the project." : {
+
     },
     "Click a shape to select it. **Shift-click** to add to or remove from the selection." : {
       "localizations" : {
@@ -13718,6 +13818,9 @@
           }
         }
       }
+    },
+    "Concrete frames with portrait and landscape variants switch to the matching orientation when Screenshot Bro can infer it from a dropped screenshot." : {
+
     },
     "Configuration is complete." : {
       "extractionState" : "stale",
@@ -14435,6 +14538,7 @@
       }
     },
     "Copy selected shapes (or text in fields)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -14473,6 +14577,9 @@
           }
         }
       }
+    },
+    "Copy selected shapes, or focused text" : {
+
     },
     "Copy Text Style" : {
       "localizations" : {
@@ -15321,6 +15428,7 @@
       }
     },
     "Create a key with **App Manager** access. Download the `.p8` private key file (you can only download it once)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15359,6 +15467,9 @@
           }
         }
       }
+    },
+    "Create a key with permission to edit app metadata. Account Holder, Admin, or App Manager roles are typical for screenshot uploads. Download the `.p8` private key file (you can only download it once)." : {
+
     },
     "Create Backup…" : {
       "localizations" : {
@@ -16329,7 +16440,11 @@
         }
       }
     },
+    "Custom fonts: choose **Pick custom font** from the text font picker." : {
+
+    },
     "Custom fonts: import via **Settings ▸ General ▸ Custom Fonts**." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -16415,7 +16530,11 @@
         }
       }
     },
+    "Cut focused text" : {
+
+    },
     "Cut selected shapes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -17263,6 +17382,9 @@
         }
       }
     },
+    "Delete rows from the row header or row menu. Settings ▸ General has a confirmation toggle." : {
+
+    },
     "Delete Screenshot" : {
       "localizations" : {
         "de" : {
@@ -18078,7 +18200,11 @@
         }
       }
     },
+    "Device frames wrap your screenshot in an authentic device bezel. Screenshot Bro ships pixel-accurate frames for iPhone, iPad, Mac, Apple Watch, and Android-style layouts." : {
+
+    },
     "Device frames wrap your screenshot in an authentic phone or tablet bezel. Screenshot Bro ships pixel-accurate frames for the latest iPhones, iPads, MacBooks, and a generic Android catalog." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -18245,6 +18371,7 @@
       }
     },
     "Devices that support landscape (iPad, MacBook) auto-rotate the frame to match the dropped screenshot's aspect ratio." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -18865,7 +18992,11 @@
     "Downloading %lld%%" : {
 
     },
+    "Drag a row's header to reorder. Use **⌘D** to duplicate a selected row, or use the row header/menu actions." : {
+
+    },
     "Drag a row's header to reorder. Use **⌘D** to duplicate a selected row." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -19560,6 +19691,9 @@
           }
         }
       }
+    },
+    "Dropping a folder or a group of image files onto a row is the fastest way to fill a screenshot set in order." : {
+
     },
     "Duplicate" : {
       "localizations" : {
@@ -21273,6 +21407,7 @@
       }
     },
     "Everything you can do without the mouse." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -22278,6 +22413,9 @@
         }
       }
     },
+    "Export screenshots" : {
+
+    },
     "Export screenshots to %@ (⌘E)" : {
       "localizations" : {
         "de" : {
@@ -22816,6 +22954,9 @@
           }
         }
       }
+    },
+    "Exports use the row's exact pixel dimensions so App Store and Google Play sizes stay correct." : {
+
     },
     "Failed to %@: %@" : {
       "localizations" : {
@@ -24352,7 +24493,11 @@
         }
       }
     },
+    "Format and naming" : {
+
+    },
     "Format and scale" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -25238,6 +25383,9 @@
         }
       }
     },
+    "Help" : {
+
+    },
     "Hide All" : {
       "localizations" : {
         "de" : {
@@ -26093,6 +26241,7 @@
       }
     },
     "iCloud sync." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26132,7 +26281,11 @@
         }
       }
     },
+    "If a language has no override for a shape, it falls back to the base language's content." : {
+
+    },
     "If a language has no override for a text shape, it falls back to the base language's text." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26219,6 +26372,7 @@
       }
     },
     "If a screenshot doesn't match any existing row, a new row is offered." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26339,6 +26493,7 @@
       }
     },
     "If the issue affects a project, **Settings ▸ Export ▸ Back Up Projects** and attach the resulting backup so we can reproduce on the exact data." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26377,6 +26532,9 @@
           }
         }
       }
+    },
+    "If the issue affects a project, use **Settings ▸ General ▸ Storage ▸ Create Backup…** and attach the resulting backup so we can reproduce on the exact data." : {
+
     },
     "If this is your first time, an interactive tour walks you through the editor when your first project opens. Pick a new project from a template any time via **File ▸ New Project**." : {
       "localizations" : {
@@ -27022,7 +27180,11 @@
         }
       }
     },
+    "In a non-base language, edits are saved as **per-language overrides** — they don't change the base language." : {
+
+    },
     "In a non-base language, edits to text shapes are saved as **per-language overrides** — they don't change the base." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -27103,6 +27265,7 @@
       }
     },
     "In Screenshot Bro: **Settings ▸ App Store Connect**, paste the Issuer ID and Key ID, and import the `.p8` file." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -27141,6 +27304,9 @@
           }
         }
       }
+    },
+    "In Screenshot Bro: **Settings ▸ App Store Connect**, paste the Issuer ID and Key ID, import the `.p8` file, then run **Test Connection**." : {
+
     },
     "Include screenshot %lld" : {
       "localizations" : {
@@ -28572,6 +28738,7 @@
       }
     },
     "Languages let you generate localized screenshot sets without duplicating your project. Each language shares the same layout and shapes; only text properties (content, font, size, alignment) are overridden per language." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28610,6 +28777,9 @@
           }
         }
       }
+    },
+    "Languages let you generate localized screenshot sets without duplicating your project. Each language shares the same shape set and can keep its own text, text styling, image assignments, and layout adjustments where a translation needs more space." : {
+
     },
     "Last test failed" : {
       "extractionState" : "stale",
@@ -29602,6 +29772,9 @@
         }
       }
     },
+    "Lock or unlock selected shapes" : {
+
+    },
     "Looks valid" : {
       "localizations" : {
         "de" : {
@@ -29687,6 +29860,9 @@
           }
         }
       }
+    },
+    "Mac keyboard shortcuts and canvas gestures." : {
+
     },
     "macOS version (Apple menu ▸ About This Mac)." : {
       "localizations" : {
@@ -29990,6 +30166,7 @@
       }
     },
     "Manual rotation via the rotation control on the properties bar rotates the entire shape including frame and screen content." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -31961,6 +32138,9 @@
         }
       }
     },
+    "No row or screenshot-column limits when building larger launch sets." : {
+
+    },
     "No Row Selected" : {
       "localizations" : {
         "de" : {
@@ -33299,6 +33479,9 @@
         }
       }
     },
+    "Open a text shape's font picker and choose **Pick custom font** to import `.otf` / `.ttf` files or a folder of font variants." : {
+
+    },
     "Open API Keys" : {
       "localizations" : {
         "de" : {
@@ -33482,6 +33665,9 @@
           }
         }
       }
+    },
+    "Open Screenshot Bro Help" : {
+
     },
     "Open Settings" : {
       "localizations" : {
@@ -33875,6 +34061,7 @@
       }
     },
     "Other shape properties (position, size, color, image) are shared across all languages. Edit them once and every language picks up the change." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -34272,6 +34459,7 @@
       }
     },
     "Paste shapes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -34310,6 +34498,9 @@
           }
         }
       }
+    },
+    "Paste shapes, images, SVGs, or focused text" : {
+
     },
     "Paste SVG markup directly. Width and height are auto-detected; you can override them." : {
       "localizations" : {
@@ -34743,6 +34934,7 @@
       }
     },
     "Pick from 30 built-in language presets, or define a custom code." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -34782,7 +34974,14 @@
         }
       }
     },
+    "Pick from the built-in language presets, or define a custom code." : {
+
+    },
+    "Pick the app and an editable version, review metadata, then confirm the upload plan." : {
+
+    },
     "Pick the app and version. Screenshot Bro maps each row to the right device family automatically." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -36666,7 +36865,11 @@
         }
       }
     },
+    "Project order can be set to **By creation date** or **Alphabetically** in Settings ▸ General." : {
+
+    },
     "Project order can be set to **Creation date** or **Manual** in Settings ▸ General." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -36799,6 +37002,7 @@
       }
     },
     "Projects autosave 0.3 seconds after the last change. You don't need to manually save. To make a one-off backup, use **Settings ▸ Export ▸ Back Up Projects**." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -36837,6 +37041,9 @@
           }
         }
       }
+    },
+    "Projects autosave 0.3 seconds after the last change. You don't need to manually save. To make a one-off backup, use **Settings ▸ General ▸ Storage ▸ Create Backup…**." : {
+
     },
     "Projects will be kept locally. Other devices will no longer see updates." : {
       "localizations" : {
@@ -37641,6 +37848,9 @@
           }
         }
       }
+    },
+    "Recognized screenshot dimensions are used to pick an appropriate device category or frame when possible." : {
+
     },
     "Rectangle" : {
       "localizations" : {
@@ -40082,6 +40292,9 @@
         }
       }
     },
+    "Reset to default zoom" : {
+
+    },
     "Reset to defaults" : {
       "localizations" : {
         "de" : {
@@ -41378,6 +41591,7 @@
       }
     },
     "Run an export first, then click **Upload to App Store Connect** in the toolbar." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -42349,6 +42563,7 @@
       }
     },
     "Screenshot Bro remembers the last folder you exported to (security-scoped bookmark)." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -43095,6 +43310,7 @@
       }
     },
     "Select all shapes in the active row" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -43133,6 +43349,9 @@
           }
         }
       }
+    },
+    "Select all shapes in the active row, or focused text" : {
+
     },
     "Select an app" : {
       "localizations" : {
@@ -43621,6 +43840,9 @@
           }
         }
       }
+    },
+    "Set **Settings ▸ Export ▸ Export folder** to make **⌘E** export directly without prompting." : {
+
     },
     "Set backgrounds, colors, and gradients, and fine-tune every element to match your brand." : {
       "extractionState" : "stale",
@@ -47772,6 +47994,9 @@
         }
       }
     },
+    "Text content and styling, image replacements, and position/size adjustments can differ by language. Shared properties such as colors and device choices are edited in the base language." : {
+
+    },
     "Text editing" : {
       "localizations" : {
         "de" : {
@@ -47859,6 +48084,7 @@
       }
     },
     "The **⋯ menu** offers per-template actions like duplicate, delete, and export preview." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -47897,6 +48123,9 @@
           }
         }
       }
+    },
+    "The **⋯ menu** offers per-template actions like Quick Look, Save as PNG, move, duplicate, and delete." : {
+
     },
     "The **Template Control Bar** below each template lets you override the row background just for that template." : {
       "localizations" : {
@@ -48196,6 +48425,9 @@
         }
       }
     },
+    "The Projects screen shows sync progress while iCloud is uploading or downloading." : {
+
+    },
     "The properties bar shows font, weight, size, color, alignment, line height, and letter spacing." : {
       "localizations" : {
         "de" : {
@@ -48283,6 +48515,7 @@
       }
     },
     "The toolbar shows an iCloud status icon when an upload or download is in progress." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -48322,7 +48555,11 @@
         }
       }
     },
+    "The toolbar zoom control ranges from 25% to 300% in 25% steps, with Fit and Actual Size actions in the popover." : {
+
+    },
     "The zoom slider in the toolbar ranges from 50% to 200% in 25% steps." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -49357,6 +49594,7 @@
       }
     },
     "To capture screenshots from a connected simulator quickly, use the screenshot capture button in the template control bar — it pulls the most recent simulator screenshot directly into the template." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -49437,6 +49675,7 @@
       }
     },
     "Toggle **Open export folder on success** in Settings to auto-reveal the result in Finder." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -49475,6 +49714,9 @@
           }
         }
       }
+    },
+    "Toggle **Reveal in Finder after export** in Settings to auto-reveal the result." : {
+
     },
     "Toggle bold" : {
       "localizations" : {
@@ -49635,6 +49877,9 @@
           }
         }
       }
+    },
+    "Trackpad pinch and **⌘ + Scroll** also zoom on macOS." : {
+
     },
     "Translate" : {
       "localizations" : {
@@ -51934,6 +52179,7 @@
       }
     },
     "Use the **Export Preview** button in the template control bar to render a single template to a preview window — handy for spot-checking without going through the full export flow." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -51972,6 +52218,9 @@
           }
         }
       }
+    },
+    "Use the **Quick Look** button in the template control bar to preview rendered screenshots without going through the full export flow." : {
+
     },
     "Use the **Shapes** dropdown in the inspector to add a Rectangle, Circle, or Star." : {
       "localizations" : {
@@ -52056,6 +52305,9 @@
     "Use the desktop Mac app for the best experience." : {
 
     },
+    "Use the export menu for **Export All Screenshots to Folder…**, row exports, showcase exports, per-language exports, and App Store Connect upload." : {
+
+    },
     "Use the inspector on the right to set the background, default device frame, and screenshot size." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -52096,6 +52348,9 @@
           }
         }
       }
+    },
+    "Use the orientation control for supported frames, or the rotation control to rotate the entire shape including frame and screen content." : {
+
     },
     "Use the project picker in the toolbar to jump between projects." : {
       "localizations" : {
@@ -53943,6 +54198,9 @@
           }
         }
       }
+    },
+    "Zoom canvas" : {
+
     },
     "Zoom in" : {
       "localizations" : {
