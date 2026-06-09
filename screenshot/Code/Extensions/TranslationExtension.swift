@@ -66,6 +66,7 @@ func translateShapes(
         // `isTranslated` counts plain text AND manually-formatted rich-text overrides, so
         // auto-translate-missing never clobbers the user's own translations.
         if onlyUntranslated && item.isTranslated { continue }
+        // Translations always start from the base locale's text — never a non-base override.
         guard let baseText = item.shape.text, !baseText.isEmpty else { continue }
         do {
             let translatedText = try await translatePreservingLineBreaks(baseText, translate: translate)
@@ -121,6 +122,7 @@ func ensureTranslationAvailable(
 }
 
 /// Thin wrapper that translates via the given session. Delegates to the primary overload.
+/// Source is always the base locale — terms are only ever translated from base.
 func translateShapes(
     session: TranslationSession,
     state: AppState,

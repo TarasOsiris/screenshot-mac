@@ -328,11 +328,11 @@ final class RichTextFormatController: ObservableObject {
         guard let textView else { return }
         let storage = textView.textStorage
         let range = textView.selectedRange
-        shouldEncodeRichText = true
+        let priorShouldEncode = shouldEncodeRichText
 
         if range.length > 0 {
             let prior = NSAttributedString(attributedString: storage)
-            let priorShouldEncode = shouldEncodeRichText
+            shouldEncodeRichText = true
             storage.beginEditing()
             switch action {
             case .toggleBold:
@@ -368,6 +368,7 @@ final class RichTextFormatController: ObservableObject {
                 textView.delegate?.textViewDidChange?(textView)
             }
         } else {
+            shouldEncodeRichText = true
             textView.typingAttributes = updatedTypingAttributes(for: textView.typingAttributes, action: action)
             hasPendingTypingAttributes = true
         }

@@ -355,6 +355,32 @@ extension EditorRowView {
                                 textEditingShapeId = nil
                             }
                         },
+                        onCommitInlineText: { text, richText in
+                            state.commitInlineText(
+                                shapeId: shape.id,
+                                text: text,
+                                richText: richText,
+                                forLocaleCode: state.localeState.activeLocaleCode
+                            )
+                        },
+                        onInlineTextEditChanged: { shapeId, liveText, endEditing in
+                            if let liveText {
+                                // Capture the editing locale now so a flush after the active
+                                // locale changes still commits to the locale being edited.
+                                let localeCode = state.localeState.activeLocaleCode
+                                state.registerInlineTextCommit(for: shapeId, endEditing: endEditing) {
+                                    let value = liveText()
+                                    state.commitInlineText(
+                                        shapeId: shapeId,
+                                        text: value.text,
+                                        richText: value.richText,
+                                        forLocaleCode: localeCode
+                                    )
+                                }
+                            } else {
+                                state.clearInlineTextCommit(for: shapeId)
+                            }
+                        },
                         onFormatBarStateChanged: { selState, controller in
                             state.richTextSelectionState = selState
                             state.richTextFormatController = controller

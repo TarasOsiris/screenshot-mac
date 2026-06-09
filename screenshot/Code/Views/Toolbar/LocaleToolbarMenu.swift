@@ -14,6 +14,7 @@ struct LocaleBar: View {
     @State private var isManagingLocales = false
     @State private var isTranslationOverview = false
     @State private var quickTranslationConfig: TranslationSession.Configuration?
+    @State private var quickTranslationTargetCode = ""
     @State private var quickTranslateOnlyUntranslated = true
     @State private var isQuickTranslating = false
     @State private var showReplaceAllConfirmation = false
@@ -208,24 +209,28 @@ struct LocaleBar: View {
     }
 
     private func startQuickTranslation(onlyUntranslated: Bool) {
+        // Pin the target locale at start so a mid-run locale switch can't redirect output.
+        // Source is always the base locale.
+        quickTranslationTargetCode = state.localeState.activeLocaleCode
         quickTranslateOnlyUntranslated = onlyUntranslated
         quickTranslationConfig.refresh(
             source: state.localeState.baseLocaleCode,
-            target: state.localeState.activeLocaleCode
+            target: quickTranslationTargetCode
         )
     }
 
     private func runQuickTranslation(_ session: TranslationSession) async {
         isQuickTranslating = true
         defer { isQuickTranslating = false }
-        let code = state.localeState.activeLocaleCode
+        let targetCode = quickTranslationTargetCode
+        guard !targetCode.isEmpty else { return }
         let result = await translateShapes(
             session: session,
             state: state,
-            targetLocaleCode: code,
+            targetLocaleCode: targetCode,
             onlyUntranslated: quickTranslateOnlyUntranslated
         )
-        languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: code))
+        languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: targetCode))
     }
 
     private func runFanOutTranslation(_ session: TranslationSession) async {
@@ -490,6 +495,7 @@ private struct FlowLayout: Layout {
 struct LocaleBanner: View {
     @Bindable var state: AppState
     @State private var translationConfig: TranslationSession.Configuration?
+    @State private var translationTargetCode = ""
     @State private var isTranslating = false
     @State private var translateOnlyUntranslated = true
     @State private var pendingShapeFilter: Set<UUID>?
@@ -654,11 +660,13 @@ struct LocaleBanner: View {
     }
 
     private func startTranslation(onlyUntranslated: Bool, shapeIds: Set<UUID>? = nil) {
+        // Pin the target locale at start; source is always the base locale.
+        translationTargetCode = state.localeState.activeLocaleCode
         translateOnlyUntranslated = onlyUntranslated
         pendingShapeFilter = shapeIds
         translationConfig.refresh(
             source: state.localeState.baseLocaleCode,
-            target: state.localeState.activeLocaleCode
+            target: translationTargetCode
         )
     }
 
@@ -667,15 +675,16 @@ struct LocaleBanner: View {
         defer { isTranslating = false }
         let filterIds = pendingShapeFilter
         pendingShapeFilter = nil
-        let code = state.localeState.activeLocaleCode
+        let targetCode = translationTargetCode
+        guard !targetCode.isEmpty else { return }
         let result = await translateShapes(
             session: session,
             state: state,
-            targetLocaleCode: code,
+            targetLocaleCode: targetCode,
             onlyUntranslated: translateOnlyUntranslated,
             shapeFilter: filterIds.map { ids in { ids.contains($0) } }
         )
-        languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: code))
+        languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: targetCode))
     }
 
     private func handlePendingTranslateShapeId(_ shapeId: UUID?) {

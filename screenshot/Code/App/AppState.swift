@@ -22,12 +22,37 @@ final class AppState {
                 richTextSelectionState = nil
                 richTextFormatBarAnchor = nil
                 richTextFormatController = nil
+                // The inline commit registration is cleared by the editing view's keyed
+                // teardown (onInlineTextEditChanged(nil)); clearing it unkeyed here would
+                // wipe a newer editor's registration during an editor-to-editor handoff.
             }
         }
     }
     var richTextSelectionState: RichTextSelectionState?
     var richTextFormatBarAnchor: CGPoint?
     @ObservationIgnored var richTextFormatController: RichTextFormatController?
+    /// Commits the editing `CanvasShapeView`'s in-progress inline text under the *current*
+    /// locale; registered while editing, flushed by `commitAllPendingEdits` before locale switches.
+    @ObservationIgnored private(set) var commitActiveInlineTextEdit: (() -> Void)?
+    @ObservationIgnored private var endActiveInlineTextEdit: (() -> Void)?
+    @ObservationIgnored private var inlineTextEditShapeId: UUID?
+
+    /// Register the active inline text editor's commit closure, keyed by shape so a stale
+    /// teardown from a previously-editing shape can't clear a newer editor's registration.
+    func registerInlineTextCommit(for shapeId: UUID, endEditing: (() -> Void)? = nil, _ commit: @escaping () -> Void) {
+        inlineTextEditShapeId = shapeId
+        commitActiveInlineTextEdit = commit
+        endActiveInlineTextEdit = endEditing
+    }
+
+    /// Clear the registered inline commit. With a `shapeId`, only clears if it still owns the
+    /// registration (ignores a late clear from a shape that's already been superseded).
+    func clearInlineTextCommit(for shapeId: UUID? = nil) {
+        if let shapeId, inlineTextEditShapeId != shapeId { return }
+        inlineTextEditShapeId = nil
+        commitActiveInlineTextEdit = nil
+        endActiveInlineTextEdit = nil
+    }
     var zoomLevel: CGFloat = 1.0
     /// Rows currently shown in preview mode. Session-only — not persisted.
     private(set) var previewingRows: Set<UUID> = []
@@ -244,7 +269,7 @@ final class AppState {
     /// Flushes any in-flight continuous edits and pending debounced save so closing
     /// the main window (which terminates the app) doesn't drop unsaved changes.
     func flushPendingSavesSynchronously() {
-        finishContinuousEditIfNeeded()
+        commitAllPendingEdits()
         flushPendingSaveTask()
         flushPendingZoomPersist()
     }
@@ -420,6 +445,14 @@ final class AppState {
     /// when a different debounced interaction begins, so steps register in chronological
     /// order. Each finisher is a no-op when its own path has nothing captured.
     func commitAllPendingEdits() {
+        // Flush the canvas's in-progress inline text edit first, then tell the still-mounted
+        // editor to leave local edit mode so it can't recommit that draft after a locale switch.
+        // Clear handlers before invoking to avoid re-entry via commitInlineText's withUndo.
+        let inlineFlush = commitActiveInlineTextEdit
+        let inlineEnd = endActiveInlineTextEdit
+        clearInlineTextCommit()
+        inlineFlush?()
+        inlineEnd?()
         finishContinuousEditIfNeeded()
         finishNudgeIfNeeded()
         finishBaseTextEditIfNeeded()
@@ -444,6 +477,7 @@ final class AppState {
     }
 
     func cancelPendingDebounceTasks() {
+        clearInlineTextCommit()
         translationUndoTask?.cancel()
         translationUndoTask = nil
         translationBaseLocaleState = nil

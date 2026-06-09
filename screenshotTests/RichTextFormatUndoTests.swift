@@ -63,6 +63,23 @@ struct RichTextFormatUndoTests {
         #expect(isBold(textView, at: 0) == true)
     }
 
+    @Test func undoingFirstFormattingRestoresPlainTextEncodingState() {
+        let (textView, delegate) = makeTextView("Hello")
+        let controller = RichTextFormatController()
+        controller.textView = textView
+        textView.setSelectedRange(NSRange(location: 0, length: 5))
+
+        #expect(controller.shouldEncodeRichText == false)
+
+        delegate.grouped { controller.applyAction(.toggleBold) }
+        #expect(isBold(textView, at: 0) == true)
+        #expect(controller.shouldEncodeRichText == true)
+
+        delegate.manager.undo()
+        #expect(isBold(textView, at: 0) == false)
+        #expect(controller.shouldEncodeRichText == false)
+    }
+
     @Test func clearFormattingIsUndoable() {
         let (textView, delegate) = makeTextView("Hello")
         let controller = RichTextFormatController()

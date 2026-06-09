@@ -847,6 +847,66 @@ struct AppStateTests {
         #expect(state.translationProgress(for: "de").translated == 0)
     }
 
+    @Test func retranslateAllClearsExistingRichTextOverride() async {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        state.addLocale(.init(code: "de", label: "German"))
+        state.selectRow(state.rows.first!.id)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.text = "Hello"
+        state.addShape(shape)
+
+        state.setActiveLocale("de")
+        var formatted = shape
+        formatted.richText = "BASE64_RTF_DE"
+        state.updateShape(formatted)
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id)?.richText == "BASE64_RTF_DE")
+
+        await translateShapes(
+            state: state,
+            targetLocaleCode: "de",
+            onlyUntranslated: false
+        ) { _ in
+            "Hallo"
+        }
+
+        let override = state.localeState.override(forCode: "de", shapeId: shape.id)
+        #expect(override?.text == "Hallo")
+        #expect(override?.richText == nil)
+    }
+
+    /// Terms are always translated from the base locale: even when a non-base override already
+    /// exists for the target, the text fed to the translator is the base shape text, never the
+    /// existing override.
+    @Test func translateAlwaysUsesBaseLocaleTextAsSource() async {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        state.addLocale(.init(code: "de", label: "German"))
+        state.selectRow(state.rows.first!.id)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.text = "Hello"
+        state.addShape(shape)
+        // A pre-existing manual German translation must NOT become the source text.
+        state.updateTranslationText(shapeId: shape.id, localeCode: "de", text: "Hallo")
+
+        var receivedSource: String?
+        await translateShapes(
+            state: state,
+            targetLocaleCode: "de",
+            onlyUntranslated: false
+        ) { src in
+            receivedSource = src
+            return "Hallo (auto)"
+        }
+
+        #expect(receivedSource == "Hello")
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id)?.text == "Hallo (auto)")
+    }
+
     @Test func translatePreservingLineBreaksKeepsBlankLinesAndLinePadding() async throws {
         var translatedInputs: [String] = []
         let translated = try await translatePreservingLineBreaks("  Hello\n\nWorld  \r\nAgain") { text in
@@ -1106,6 +1166,33 @@ struct AppStateTests {
         #expect(state.projects.count == 2)
         #expect(state.activeProjectId != initialId)
         #expect(state.activeProject?.name == "New Project")
+    }
+
+    @Test func projectSwitchCommitsActiveInlineTextEditBeforeSavingOldProject() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let originalProjectId = try #require(state.activeProjectId)
+        let row = try #require(state.rows.first)
+        state.addShape(
+            CanvasShapeModel.defaultText(
+                centerX: row.templateWidth / 2,
+                centerY: row.templateHeight / 2
+            )
+        )
+        let shape = try #require(state.rows.first?.shapes.first(where: { $0.type == .text }))
+
+        state.isEditingText = true
+        state.registerInlineTextCommit(for: shape.id) {
+            var updated = shape
+            updated.text = "Edited before switch"
+            state.updateShape(updated)
+        }
+
+        state.createProject(name: "Second")
+
+        let saved = try #require(PersistenceService.loadProject(originalProjectId))
+        let savedShape = try #require(saved.rows.first?.shapes.first(where: { $0.id == shape.id }))
+        #expect(savedShape.text == "Edited before switch")
     }
 
     @Test func duplicateProjectSwitchesToCopy() async throws {

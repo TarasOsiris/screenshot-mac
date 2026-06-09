@@ -36,6 +36,27 @@ extension AppState {
         }
     }
 
+    /// Commit inline-text-editor output for `shapeId` under a specific locale. Applies only the
+    /// text/richText onto the *live* base shape (resolved for `code`), so concurrent geometry or
+    /// override changes made while the editor was open aren't reverted by a stale captured model,
+    /// and the edit always lands in the locale it was typed in regardless of the active locale.
+    func commitInlineText(shapeId: UUID, text: String, richText: String?, forLocaleCode code: String) {
+        guard shapeLocation(for: shapeId) != nil else { return }
+        withUndo("Edit Text") {
+            guard let loc = shapeLocation(for: shapeId) else { return }
+            let baseShape = rows[loc.rowIndex].shapes[loc.shapeIndex]
+            var resolved = LocaleService.resolveShape(baseShape, localeCode: code, localeState: localeState)
+            resolved.text = text
+            resolved.richText = richText
+            if resolved.text?.isEmpty != false {
+                resolved.richText = nil
+            }
+            rows[loc.rowIndex].shapes[loc.shapeIndex] = LocaleService.splitUpdate(
+                base: baseShape, updated: resolved, localeState: &localeState, forLocaleCode: code
+            )
+        }
+    }
+
     // Shared by the shape- and row-level continuous-edit paths (AppState+Rows).
     static let continuousEditInterval: CFAbsoluteTime = 1.0 / 30
     static let continuousUndoDebounceDelay: TimeInterval = 0.5

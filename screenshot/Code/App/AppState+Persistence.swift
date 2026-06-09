@@ -210,6 +210,9 @@ extension AppState {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
     }
 
+    /// Routine save path: never commits in-progress inline/continuous edits (that would create
+    /// undo steps on a debounced autosave tick). User-initiated saves go through
+    /// `saveCurrentProject`/`flushPendingSavesSynchronously`, which do commit.
     func saveAll() {
         // Record own writes so iCloud monitor ignores them
         if let monitor = iCloudMonitor {
@@ -221,7 +224,7 @@ extension AppState {
         }
 
         let didSaveIndex = saveIndex()
-        let didSaveProject = saveCurrentProject()
+        let didSaveProject = saveCurrentProject(commitPendingEdits: false)
         if didSaveIndex && didSaveProject {
             cleanupUnreferencedFonts()
         }
@@ -247,12 +250,15 @@ extension AppState {
     }
 
     @discardableResult
-    func saveCurrentProject() -> Bool {
+    func saveCurrentProject(commitPendingEdits: Bool = true) -> Bool {
         guard let activeId = activeProjectId else { return true }
         // Don't persist while a project load is in flight: `activeProjectId` already points
         // at the project being opened but `rows` may still belong to the previously active
         // project, so writing now would overwrite the new project's file with stale rows.
         guard projectOpenTask == nil else { return true }
+        if commitPendingEdits {
+            commitAllPendingEdits()
+        }
         let data = ProjectData(rows: rows, localeState: localeState)
         do {
             try PersistenceService.saveProject(activeId, data: data)
@@ -268,11 +274,14 @@ extension AppState {
     /// rows/localeState) and encodes+writes it off-main, so switching projects doesn't
     /// block the push animation. Must be called while `activeProjectId` still points at the
     /// project being saved.
-    func saveCurrentProjectAsync() {
+    func saveCurrentProjectAsync(commitPendingEdits: Bool = true) {
         guard let activeId = activeProjectId else { return }
         // See saveCurrentProject(): skip while a load is in flight so we never write the
         // previous project's stale rows into the newly-opened project's file.
         guard projectOpenTask == nil else { return }
+        if commitPendingEdits {
+            commitAllPendingEdits()
+        }
         let data = ProjectData(rows: rows, localeState: localeState)
         activeProjectDataModifiedAt = data.modifiedAt
         let monitor = iCloudMonitor

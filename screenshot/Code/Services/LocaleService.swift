@@ -23,11 +23,18 @@ enum LocaleService {
     /// Given the base shape and an updated (resolved) shape, split changes into base shape mutations
     /// and locale overrides. Updates localeState overrides directly. Returns the base shape to store.
     static func splitUpdate(base: CanvasShapeModel, updated: CanvasShapeModel, localeState: inout LocaleState) -> CanvasShapeModel {
-        guard !localeState.isBaseLocale else {
+        splitUpdate(base: base, updated: updated, localeState: &localeState, forLocaleCode: localeState.activeLocaleCode)
+    }
+
+    /// Split an update against an explicit locale code rather than the active locale, so a
+    /// deferred commit (e.g. inline text flushed after the active locale already changed)
+    /// always lands in the locale it was edited in.
+    static func splitUpdate(base: CanvasShapeModel, updated: CanvasShapeModel, localeState: inout LocaleState, forLocaleCode code: String) -> CanvasShapeModel {
+        guard code != localeState.baseLocaleCode else {
             return updated
         }
 
-        setShapeOverride(&localeState, shapeId: base.id, override: makeOverride(base: base, resolved: updated))
+        setShapeOverride(&localeState, localeCode: code, shapeId: base.id, override: makeOverride(base: base, resolved: updated))
         var baseResult = updated
         restoreOverridableFields(&baseResult, from: base)
         return baseResult

@@ -25,6 +25,12 @@ struct CanvasShapeInteractions {
     var onGroupDragEnd: ((CGSize) -> Void)?
     var onDidAppearAfterAdd: (() -> Void)?
     var onEditingTextChanged: ((Bool) -> Void)?
+    /// Commit the editor's current text/richText now (deselect/disappear), under the active locale.
+    var onCommitInlineText: ((_ text: String, _ richText: String?) -> Void)?
+    /// Register/clear a provider of the editor's *live* text, so a deferred flush (locale switch,
+    /// save) can read the current value, commit it under the locale editing started in, and then
+    /// force the still-mounted editor out of local edit mode. Passing `nil` clears the registration.
+    var onInlineTextEditChanged: ((_ shapeId: UUID, _ liveText: (() -> (text: String, richText: String?))?, _ endEditing: (() -> Void)?) -> Void)?
     var onFormatBarStateChanged: ((RichTextSelectionState?, RichTextFormatController?) -> Void)?
     var onFormatBarAnchorChanged: ((CGPoint?) -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
@@ -445,6 +451,15 @@ struct CanvasShapeView: View {
 
     private func handleEditingStateChange(_ editing: Bool) {
         interactions.onEditingTextChanged?(editing)
+        if editing {
+            interactions.onInlineTextEditChanged?(
+                shape.id,
+                { (editingTextValue, editingRichTextData) },
+                { endTextEditingAfterExternalCommit() }
+            )
+        } else {
+            interactions.onInlineTextEditChanged?(shape.id, nil, nil)
+        }
     }
 
     private func handleSelectionStateChange(_ newState: RichTextSelectionState?) {
@@ -459,9 +474,13 @@ struct CanvasShapeView: View {
     }
 
     private func handleDisappear() {
-        if isEditingText {
-            commitTextEdit()
-        }
+        guard isEditingText else { return }
+        commitTextEdit()
+        // `.onChange(of: isEditingText)` isn't reliably delivered during view teardown, so
+        // propagate the end-of-edit explicitly: clear this shape's registered commit and the
+        // shared editing flag. Both are keyed/idempotent, so a re-fired onChange is harmless.
+        interactions.onInlineTextEditChanged?(shape.id, nil, nil)
+        interactions.onEditingTextChanged?(false)
     }
 
     private func handleDoubleTap() {
@@ -604,14 +623,19 @@ struct CanvasShapeView: View {
         guard isEditingText else { return }
         isEditingText = false
         selectionState = nil
-        var updated = shape
-        updated.text = editingTextValue
-        updated.richText = editingRichTextData
-        if updated.text?.isEmpty != false {
-            updated.richText = nil
-        }
         formatController.resetRichTextSession()
-        interactions.onUpdate(updated)
+        // Hand the typed text to AppState, which merges it onto the *live* base shape under the
+        // current locale — avoids reverting concurrent edits with this view's captured `shape`.
+        interactions.onCommitInlineText?(editingTextValue, editingRichTextData)
+    }
+
+    private func endTextEditingAfterExternalCommit() {
+        guard isEditingText else { return }
+        isEditingText = false
+        selectionState = nil
+        formatController.resetRichTextSession()
+        interactions.onInlineTextEditChanged?(shape.id, nil, nil)
+        interactions.onEditingTextChanged?(false)
     }
 
     /// While editing, track the shape's own global frame and report the rich-text

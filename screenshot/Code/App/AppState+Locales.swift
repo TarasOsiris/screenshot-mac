@@ -7,6 +7,7 @@ extension AppState {
     func setActiveLocale(_ code: String) {
         guard code != localeState.activeLocaleCode else { return }
         guard localeState.hasLocale(code) else { return }
+        commitAllPendingEdits() // flush any in-progress edit to the old locale before switching
         localeState.activeLocaleCode = code
         loadScreenshotImages() // evict old locale images, load new ones
         scheduleSave()
@@ -124,6 +125,8 @@ extension AppState {
 
         let key = shapeId.uuidString
         var override = localeState.overrides[code]?[key] ?? ShapeLocaleOverride()
+        // A plain-text translation drops any prior rich-text override for this locale.
+        override.clearTranslatedText()
         override.text = text.isEmpty ? nil : text
         LocaleService.setShapeOverride(&localeState, localeCode: code, shapeId: shapeId, override: override.isEmpty ? nil : override)
         scheduleSave()

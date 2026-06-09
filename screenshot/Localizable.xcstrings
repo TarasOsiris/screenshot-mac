@@ -24672,6 +24672,9 @@
         }
       }
     },
+    "Formatted — edit on the canvas" : {
+
+    },
     "Free" : {
       "localizations" : {
         "de" : {
@@ -49394,6 +49397,9 @@
           }
         }
       }
+    },
+    "This translation uses custom formatting (colors, bold, sizes). The table edits plain text only — edit it directly on the canvas, or Reset to use the base language." : {
+
     },
     "This Version" : {
       "localizations" : {

@@ -537,11 +537,11 @@ class RichTextFormatController: ObservableObject {
     func applyAction(_ action: RichTextFormatAction) {
         guard let textView, let storage = textView.textStorage else { return }
         let range = textView.selectedRange()
-        shouldEncodeRichText = true
+        let priorShouldEncode = shouldEncodeRichText
 
         if range.length > 0 {
             let prior = NSAttributedString(attributedString: storage)
-            let priorShouldEncode = shouldEncodeRichText
+            shouldEncodeRichText = true
             storage.beginEditing()
             switch action {
             case .toggleBold:
@@ -580,6 +580,7 @@ class RichTextFormatController: ObservableObject {
                 textView.didChangeText()
             }
         } else {
+            shouldEncodeRichText = true
             textView.typingAttributes = updatedTypingAttributes(for: textView.typingAttributes, action: action)
             textView.defaultParagraphStyle = textView.typingAttributes[.paragraphStyle] as? NSParagraphStyle
             hasPendingTypingAttributes = true
