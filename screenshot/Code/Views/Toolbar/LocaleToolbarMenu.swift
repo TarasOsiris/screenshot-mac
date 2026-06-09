@@ -672,7 +672,12 @@ struct LocaleBanner: View {
 
     private func runBannerTranslation(_ session: TranslationSession) async {
         isTranslating = true
-        defer { isTranslating = false }
+        // Clear the config so a stale one can't re-fire when the banner reattaches its
+        // .translationTask on locale switch — that would silently re-translate everything.
+        defer {
+            isTranslating = false
+            translationConfig = nil
+        }
         let filterIds = pendingShapeFilter
         pendingShapeFilter = nil
         let targetCode = translationTargetCode
