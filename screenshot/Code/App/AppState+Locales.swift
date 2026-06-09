@@ -31,6 +31,16 @@ extension AppState {
         }
     }
 
+    /// Promote a language to base: bake its translations into every shape's base content,
+    /// re-anchor all other locales (including the old base) as overrides, then move it first.
+    func setBaseLocale(_ code: String) {
+        guard localeState.hasLocale(code), code != localeState.baseLocaleCode else { return }
+        withUndo("Set Base Language") {
+            LocaleService.setBaseLocale(code, rows: &rows, state: &localeState)
+        }
+        loadScreenshotImages()
+    }
+
     /// All text shapes across all rows with their base text and override for the requested locale.
     func textShapesForTranslation(localeCode: String? = nil) -> [(shape: CanvasShapeModel, rowId: UUID, rowLabel: String, overrideText: String?)] {
         var results: [(shape: CanvasShapeModel, rowId: UUID, rowLabel: String, overrideText: String?)] = []

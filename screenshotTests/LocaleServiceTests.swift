@@ -393,4 +393,149 @@ struct LocaleServiceTests {
         LocaleService.removeLocale(&state, code: "en")
         #expect(state.locales.count == 1, "Cannot remove base locale")
     }
+
+    // MARK: - setBaseLocale (change base locale)
+
+    /// Promote `code` to base for a single shape and return the new base shape.
+    private func promote(_ code: String, shape: CanvasShapeModel, state: inout LocaleState) -> CanvasShapeModel {
+        var rows = [ScreenshotRow(shapes: [shape])]
+        LocaleService.setBaseLocale(code, rows: &rows, state: &state)
+        return rows[0].shapes[0]
+    }
+
+    @Test func setBaseLocaleBakesTranslationIntoBaseAndAnchorsOldBase() {
+        let base = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello", fontSize: 24)
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [base.id.uuidString: ShapeLocaleOverride(text: "Bonjour", fontSize: 20)]]
+        )
+
+        let newBase = promote("fr", shape: base, state: &state)
+
+        #expect(newBase.text == "Bonjour")
+        #expect(newBase.fontSize == 20)
+        #expect(state.baseLocaleCode == "fr", "Promoted locale moves to front")
+        #expect(state.override(forCode: "fr", shapeId: base.id) == nil, "Promoted locale drops its override")
+        let enOverride = state.override(forCode: "en", shapeId: base.id)
+        #expect(enOverride?.text == "Hello", "Old base becomes a translation")
+        #expect(enOverride?.fontSize == 24)
+    }
+
+    @Test func setBaseLocaleInvertsPositionOffsets() {
+        let base = CanvasShapeModel(type: .rectangle, x: 100, y: 200, width: 300, height: 400)
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French"), .init(code: "de", label: "German")],
+            activeLocaleCode: "fr",
+            overrides: [
+                "fr": [base.id.uuidString: ShapeLocaleOverride(offsetX: 10, offsetY: -20)],
+                "de": [base.id.uuidString: ShapeLocaleOverride(offsetX: 30, offsetY: 5)],
+            ]
+        )
+
+        let newBase = promote("fr", shape: base, state: &state)
+
+        #expect(newBase.x == 110)
+        #expect(newBase.y == 180)
+        // en (old base) re-anchored relative to fr: 100-110 = -10, 200-180 = 20
+        let enOverride = state.override(forCode: "en", shapeId: base.id)
+        #expect(enOverride?.offsetX == -10)
+        #expect(enOverride?.offsetY == 20)
+        // de re-anchored relative to fr: 30-10 = 20, 5-(-20) = 25
+        let deOverride = state.override(forCode: "de", shapeId: base.id)
+        #expect(deOverride?.offsetX == 20)
+        #expect(deOverride?.offsetY == 25)
+    }
+
+    @Test func setBaseLocaleMovesImageOverrideToBase() {
+        var base = CanvasShapeModel(type: .image, x: 0, y: 0, width: 300, height: 400)
+        base.imageFileName = "en.png"
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [base.id.uuidString: ShapeLocaleOverride(overrideImageFileName: "fr.png")]]
+        )
+
+        let newBase = promote("fr", shape: base, state: &state)
+
+        #expect(newBase.displayImageFileName == "fr.png")
+        #expect(state.override(forCode: "en", shapeId: base.id)?.overrideImageFileName == "en.png")
+    }
+
+    @Test func setBaseLocaleWithoutOverrideLeavesNoOldBaseOverride() {
+        let base = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello")
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: [:]
+        )
+
+        let newBase = promote("fr", shape: base, state: &state)
+
+        #expect(newBase.text == "Hello", "Untranslated shape keeps its content")
+        #expect(state.override(forCode: "en", shapeId: base.id) == nil, "No override when content is identical")
+    }
+
+    @Test func setBaseLocaleToCurrentBaseIsNoOp() {
+        let base = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello")
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "en",
+            overrides: ["fr": [base.id.uuidString: ShapeLocaleOverride(text: "Bonjour")]]
+        )
+
+        let result = promote("en", shape: base, state: &state)
+
+        #expect(result.text == "Hello", "Promoting the existing base changes nothing")
+        #expect(state.baseLocaleCode == "en")
+        #expect(state.override(forCode: "fr", shapeId: base.id)?.text == "Bonjour")
+    }
+
+    @Test func setBaseLocaleIsReversible() {
+        let base = CanvasShapeModel(type: .text, x: 100, y: 200, width: 300, height: 50, text: "Hello", fontSize: 24)
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French"), .init(code: "de", label: "German")],
+            activeLocaleCode: "en",
+            overrides: [
+                "fr": [base.id.uuidString: ShapeLocaleOverride(offsetX: 10, text: "Bonjour", fontSize: 20)],
+                "de": [base.id.uuidString: ShapeLocaleOverride(offsetY: 5, text: "Hallo")],
+            ]
+        )
+
+        func resolvedAll(_ shape: CanvasShapeModel, _ s: LocaleState) -> [String: CanvasShapeModel] {
+            Dictionary(uniqueKeysWithValues: s.locales.map {
+                ($0.code, LocaleService.resolveShape(shape, localeCode: $0.code, localeState: s))
+            })
+        }
+
+        let originalResolved = resolvedAll(base, state)
+
+        // Promote fr, then promote en back.
+        let promoted = promote("fr", shape: base, state: &state)
+        let back = promote("en", shape: promoted, state: &state)
+
+        #expect(state.baseLocaleCode == "en", "Base returns to en")
+        let roundTripped = resolvedAll(back, state)
+        for code in ["en", "fr", "de"] {
+            #expect(roundTripped[code]?.text == originalResolved[code]?.text, "\(code) text preserved")
+            #expect(roundTripped[code]?.x == originalResolved[code]?.x, "\(code) x preserved")
+            #expect(roundTripped[code]?.y == originalResolved[code]?.y, "\(code) y preserved")
+            #expect(roundTripped[code]?.fontSize == originalResolved[code]?.fontSize, "\(code) fontSize preserved")
+        }
+    }
+
+    @Test func setBaseLocaleToleratesDuplicateLocaleCodes() {
+        let base = CanvasShapeModel(type: .text, x: 0, y: 0, width: 300, height: 50, text: "Hello")
+        // A malformed/duplicate-code locale list must not crash (regression guard).
+        var state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French"), .init(code: "fr", label: "French dup")],
+            activeLocaleCode: "en",
+            overrides: ["fr": [base.id.uuidString: ShapeLocaleOverride(text: "Bonjour")]]
+        )
+
+        let newBase = promote("fr", shape: base, state: &state)
+
+        #expect(newBase.text == "Bonjour")
+        #expect(state.baseLocaleCode == "fr")
+    }
 }

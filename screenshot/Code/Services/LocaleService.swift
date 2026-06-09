@@ -27,62 +27,110 @@ enum LocaleService {
             return updated
         }
 
-        // Start from updated, restore overridable properties to base values
+        setShapeOverride(&localeState, shapeId: base.id, override: makeOverride(base: base, resolved: updated))
         var baseResult = updated
-        baseResult.x = base.x
-        baseResult.y = base.y
-        baseResult.width = base.width
-        baseResult.height = base.height
+        restoreOverridableFields(&baseResult, from: base)
+        return baseResult
+    }
 
-        // Build override from position/size deltas vs base
+    /// Reset the fields `makeOverride` treats as locale-overridable back to their base values.
+    /// Keep this field set in lockstep with `makeOverride`.
+    private static func restoreOverridableFields(_ result: inout CanvasShapeModel, from base: CanvasShapeModel) {
+        result.x = base.x
+        result.y = base.y
+        result.width = base.width
+        result.height = base.height
+        if base.type == .text {
+            result.text = base.text
+            result.richText = base.richText
+            result.fontName = base.fontName
+            result.fontSize = base.fontSize
+            result.fontWeight = base.fontWeight
+            result.textAlign = base.textAlign
+            result.italic = base.italic
+            result.uppercase = base.uppercase
+            result.letterSpacing = base.letterSpacing
+            result.lineSpacing = base.lineSpacing
+            result.lineHeightMultiple = base.lineHeightMultiple
+        }
+        if base.type == .device || base.type == .image {
+            result.displayImageFileName = base.displayImageFileName
+        }
+    }
+
+    /// Build the override that expresses `resolved` as a delta from `base`. nil if identical.
+    static func makeOverride(base: CanvasShapeModel, resolved: CanvasShapeModel) -> ShapeLocaleOverride? {
         var override = ShapeLocaleOverride()
-        let dx = updated.x - base.x
-        let dy = updated.y - base.y
-        let dw = updated.width - base.width
-        let dh = updated.height - base.height
+        let dx = resolved.x - base.x
+        let dy = resolved.y - base.y
+        let dw = resolved.width - base.width
+        let dh = resolved.height - base.height
         if dx != 0 { override.offsetX = dx }
         if dy != 0 { override.offsetY = dy }
         if dw != 0 { override.offsetWidth = dw }
         if dh != 0 { override.offsetHeight = dh }
 
-        if updated.type == .text {
-            baseResult.text = base.text
-            baseResult.richText = base.richText
-            baseResult.fontName = base.fontName
-            baseResult.fontSize = base.fontSize
-            baseResult.fontWeight = base.fontWeight
-            baseResult.textAlign = base.textAlign
-            baseResult.italic = base.italic
-            baseResult.uppercase = base.uppercase
-            baseResult.letterSpacing = base.letterSpacing
-            baseResult.lineSpacing = base.lineSpacing
-            baseResult.lineHeightMultiple = base.lineHeightMultiple
-
-            if updated.text != base.text { override.text = updated.text }
-            if updated.richText != base.richText {
-                override.richText = updated.richText
-                override.clearsRichText = updated.richText == nil && base.richText != nil ? true : nil
+        if resolved.type == .text {
+            if resolved.text != base.text { override.text = resolved.text }
+            if resolved.richText != base.richText {
+                override.richText = resolved.richText
+                override.clearsRichText = resolved.richText == nil && base.richText != nil ? true : nil
             }
-            if updated.fontName != base.fontName { override.fontName = updated.fontName }
-            if updated.fontSize != base.fontSize { override.fontSize = updated.fontSize }
-            if updated.fontWeight != base.fontWeight { override.fontWeight = updated.fontWeight }
-            if updated.textAlign != base.textAlign { override.textAlign = updated.textAlign }
-            if updated.italic != base.italic { override.italic = updated.italic }
-            if updated.uppercase != base.uppercase { override.uppercase = updated.uppercase }
-            if updated.letterSpacing != base.letterSpacing { override.letterSpacing = updated.letterSpacing }
-            if updated.lineSpacing != base.lineSpacing { override.lineSpacing = updated.lineSpacing }
-            if updated.lineHeightMultiple != base.lineHeightMultiple { override.lineHeightMultiple = updated.lineHeightMultiple }
+            if resolved.fontName != base.fontName { override.fontName = resolved.fontName }
+            if resolved.fontSize != base.fontSize { override.fontSize = resolved.fontSize }
+            if resolved.fontWeight != base.fontWeight { override.fontWeight = resolved.fontWeight }
+            if resolved.textAlign != base.textAlign { override.textAlign = resolved.textAlign }
+            if resolved.italic != base.italic { override.italic = resolved.italic }
+            if resolved.uppercase != base.uppercase { override.uppercase = resolved.uppercase }
+            if resolved.letterSpacing != base.letterSpacing { override.letterSpacing = resolved.letterSpacing }
+            if resolved.lineSpacing != base.lineSpacing { override.lineSpacing = resolved.lineSpacing }
+            if resolved.lineHeightMultiple != base.lineHeightMultiple { override.lineHeightMultiple = resolved.lineHeightMultiple }
         }
 
-        if updated.type == .device || updated.type == .image {
-            if updated.displayImageFileName != base.displayImageFileName {
-                override.overrideImageFileName = updated.displayImageFileName
+        if resolved.type == .device || resolved.type == .image {
+            if resolved.displayImageFileName != base.displayImageFileName {
+                override.overrideImageFileName = resolved.displayImageFileName
             }
-            baseResult.displayImageFileName = base.displayImageFileName
         }
 
-        setShapeOverride(&localeState, shapeId: base.id, override: override.isEmpty ? nil : override)
-        return baseResult
+        return override.isEmpty ? nil : override
+    }
+
+    /// Promote `newBaseCode` to be the base locale: bake its resolved appearance into every
+    /// shape's base content, re-anchor all other locales as overrides relative to it, and move
+    /// it to the front of `state.locales`. Owns both the shape rebase and the reorder so callers
+    /// can't get the ordering wrong.
+    static func setBaseLocale(_ newBaseCode: String, rows: inout [ScreenshotRow], state: inout LocaleState) {
+        guard state.hasLocale(newBaseCode), newBaseCode != state.baseLocaleCode else { return }
+        for r in rows.indices {
+            for s in rows[r].shapes.indices {
+                rows[r].shapes[s] = rebaseShape(rows[r].shapes[s], to: newBaseCode, state: &state)
+            }
+        }
+        if let idx = state.locales.firstIndex(where: { $0.code == newBaseCode }) {
+            state.locales.insert(state.locales.remove(at: idx), at: 0)
+        }
+    }
+
+    /// Re-express one shape so `newBaseCode` becomes the base locale: returns the new base shape
+    /// and rewrites the shape's overrides across all locales (relative to the new base). The
+    /// caller reorders `state.locales` after rebasing every shape (see `setBaseLocale`).
+    private static func rebaseShape(_ shape: CanvasShapeModel, to newBaseCode: String, state: inout LocaleState) -> CanvasShapeModel {
+        // Snapshot every locale's resolved appearance before mutating any override.
+        let resolvedByCode = Dictionary(
+            state.locales.map { ($0.code, resolveShape(shape, localeCode: $0.code, localeState: state)) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        guard let newBaseShape = resolvedByCode[newBaseCode] else { return shape }
+
+        for (code, resolved) in resolvedByCode {
+            if code == newBaseCode {
+                setShapeOverride(&state, localeCode: code, shapeId: shape.id, override: nil)
+            } else {
+                setShapeOverride(&state, localeCode: code, shapeId: shape.id, override: makeOverride(base: newBaseShape, resolved: resolved))
+            }
+        }
+        return newBaseShape
     }
 
     /// Set or remove a shape's override for the active locale.

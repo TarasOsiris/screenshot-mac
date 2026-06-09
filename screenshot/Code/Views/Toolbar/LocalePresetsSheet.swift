@@ -8,6 +8,8 @@ struct ManageLocalesSheet: View {
     #endif
     @State private var searchText = ""
     @State private var showPresets = false
+    @State private var pendingBaseLocale: LocaleDefinition?
+    @State private var pendingDeleteLocale: LocaleDefinition?
 
     var body: some View {
         platformContent
@@ -15,6 +17,53 @@ struct ManageLocalesSheet: View {
             .sheet(isPresented: $showPresets) {
                 LocalePresetsSheet(state: state, searchText: $searchText)
             }
+            .confirmationDialog(
+                Text("Make \(pendingBaseLocale?.flagLabel ?? "") the base language?"),
+                isPresented: Binding(get: { pendingBaseLocale != nil }, set: { if !$0 { pendingBaseLocale = nil } }),
+                titleVisibility: .visible
+            ) {
+                Button("Set as Base") {
+                    if let code = pendingBaseLocale?.code { state.setBaseLocale(code) }
+                    pendingBaseLocale = nil
+                }
+                Button("Cancel", role: .cancel) { pendingBaseLocale = nil }
+            } message: {
+                Text("All other languages will be re-anchored to it as translations.")
+            }
+            .confirmationDialog(
+                Text("Delete \(pendingDeleteLocale?.flagLabel ?? "")?"),
+                isPresented: Binding(get: { pendingDeleteLocale != nil }, set: { if !$0 { pendingDeleteLocale = nil } }),
+                titleVisibility: .visible
+            ) {
+                Button("Delete language", role: .destructive) {
+                    if let code = pendingDeleteLocale?.code { state.removeLocale(code) }
+                    pendingDeleteLocale = nil
+                }
+                Button("Cancel", role: .cancel) { pendingDeleteLocale = nil }
+            } message: {
+                Text("Its translations will be removed from every screenshot.")
+            }
+    }
+
+    /// Right-click / long-press actions shared by both platforms.
+    @ViewBuilder
+    private func localeActions(_ locale: LocaleDefinition) -> some View {
+        Button { pendingBaseLocale = locale } label: {
+            Label("Set as Base", systemImage: "arrow.up.to.line")
+        }
+        Divider()
+        Button(role: .destructive) { pendingDeleteLocale = locale } label: {
+            Label("Delete language", systemImage: "trash")
+        }
+    }
+
+    /// Dragging a language above the base (to index 0) promotes it to base; other moves reorder.
+    private func handleMove(_ source: IndexSet, _ destination: Int) {
+        if destination == 0, let from = source.first, from != 0 {
+            pendingBaseLocale = state.localeState.locales[from]
+        } else {
+            state.moveLocale(from: source, to: destination)
+        }
     }
 
     #if os(macOS)
@@ -38,6 +87,8 @@ struct ManageLocalesSheet: View {
                         Image(systemName: "line.3.horizontal")
                             .font(.system(size: 10))
                             .foregroundStyle(.tertiary)
+                            .opacity(isBase ? 0 : 1)
+                            .accessibilityHidden(true)
                         Text(locale.flagLabel)
                             .font(.system(size: 13))
                         Text(locale.code.uppercased())
@@ -62,9 +113,10 @@ struct ManageLocalesSheet: View {
                                     .foregroundStyle(statusColor)
                             }
                             Button(role: .destructive) {
-                                state.removeLocale(locale.code)
+                                pendingDeleteLocale = locale
                             } label: {
-                                Image(systemName: "trash")
+                                Label("Delete language", systemImage: "trash")
+                                    .labelStyle(.iconOnly)
                                     .font(.system(size: 11))
                             }
                             .buttonStyle(.borderless)
@@ -73,9 +125,12 @@ struct ManageLocalesSheet: View {
                             .help("Delete language")
                         }
                     }
+                    .contextMenu {
+                        if !isBase { localeActions(locale) }
+                    }
                 }
                 .onMove { source, destination in
-                    state.moveLocale(from: source, to: destination)
+                    handleMove(source, destination)
                 }
             }
             .listStyle(.inset(alternatesRowBackgrounds: true))
@@ -108,11 +163,10 @@ struct ManageLocalesSheet: View {
                     iosLocaleRow(locale)
                 }
                 .onMove { source, destination in
-                    state.moveLocale(from: source, to: destination)
+                    handleMove(source, destination)
                 }
                 .onDelete { offsets in
-                    let codes = offsets.map { state.localeState.locales[$0].code }
-                    codes.forEach { state.removeLocale($0) }
+                    if let first = offsets.first { pendingDeleteLocale = state.localeState.locales[first] }
                 }
 
                 Button {
@@ -164,6 +218,10 @@ struct ManageLocalesSheet: View {
             }
         }
         .deleteDisabled(isBase)
+        .moveDisabled(isBase)
+        .contextMenu {
+            if !isBase { localeActions(locale) }
+        }
     }
     #endif
 }
