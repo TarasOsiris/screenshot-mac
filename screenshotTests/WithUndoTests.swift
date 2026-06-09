@@ -171,6 +171,98 @@ struct WithUndoTests {
         #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontSize == 96, "Pending continuous edit was committed")
     }
 
+    /// A continuous (row-scoped) edit must survive repeated undo↔redo cycling — the earlier
+    /// two-closure registration dropped the step after the first redo.
+    @Test func continuousEditRedoRemainsUndoable() {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 50, height: 50)
+        state.addShape(shape)
+        um.removeAllActions()
+        let baseX = state.rows.first!.shapes.first { $0.id == shape.id }!.x
+
+        shape.x = 99
+        state.updateShapeContinuous(shape)
+        state.finishContinuousEditIfNeeded()
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == 99)
+
+        for cycle in 0..<3 {
+            state.undoDocumentAction()
+            #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == baseX, "undo -> base (cycle \(cycle))")
+            #expect(state.canRedoDocumentAction, "redo available after undo (cycle \(cycle))")
+
+            state.redoDocumentAction()
+            #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == 99, "redo -> edited (cycle \(cycle))")
+            #expect(state.canUndoDocumentAction, "step still undoable after redo (cycle \(cycle))")
+        }
+    }
+
+    /// A pending arrow-key nudge interleaved with a discrete action must register in
+    /// chronological order, so neither edit clobbers the other on undo.
+    @Test func nudgeInterleavedWithDiscreteActionKeepsOrder() {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        let moved = CanvasShapeModel(type: .rectangle, x: 10, y: 10, width: 20, height: 20)
+        state.addShape(moved)
+        state.selectedShapeIds = [moved.id]
+        um.removeAllActions()
+        let baseX = state.rows.first!.shapes.first { $0.id == moved.id }!.x
+
+        // Nudge captures a base + schedules a debounced registration (not yet fired).
+        state.nudgeSelectedShapes(dx: 5, dy: 0)
+        #expect(!um.canUndo, "Nudge has not registered its debounced step yet")
+
+        // A discrete action lands inside the debounce window — it must flush the nudge first.
+        let added = CanvasShapeModel(type: .circle, x: 100, y: 100, width: 20, height: 20)
+        state.addShape(added)
+
+        func has(_ id: UUID) -> Bool { state.rows.first!.shapes.contains { $0.id == id } }
+        func x(_ id: UUID) -> CGFloat { state.rows.first!.shapes.first { $0.id == id }!.x }
+        #expect(x(moved.id) == baseX + 5)
+        #expect(has(added.id))
+
+        state.undoDocumentAction()  // undo the discrete add
+        #expect(!has(added.id), "Newest action (add) undoes first")
+        #expect(x(moved.id) == baseX + 5, "Nudge is untouched by undoing the later add")
+
+        state.undoDocumentAction()  // undo the nudge
+        #expect(x(moved.id) == baseX, "Nudge reverts on the second undo")
+        #expect(has(moved.id), "Undoing the nudge must not drop the moved shape")
+    }
+
+    /// The nudge finisher routes through the same row-scoped recursive registration, so it
+    /// too must survive repeated undo↔redo cycling.
+    @Test func nudgeRedoRemainsUndoable() {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        let shape = CanvasShapeModel(type: .rectangle, x: 10, y: 10, width: 20, height: 20)
+        state.addShape(shape)
+        state.selectedShapeIds = [shape.id]
+        um.removeAllActions()
+        let baseX = state.rows.first!.shapes.first { $0.id == shape.id }!.x
+
+        state.nudgeSelectedShapes(dx: 7, dy: 0)
+        state.finishNudgeIfNeeded()
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == baseX + 7)
+
+        for cycle in 0..<3 {
+            state.undoDocumentAction()
+            #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == baseX, "undo -> base (cycle \(cycle))")
+            state.redoDocumentAction()
+            #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == baseX + 7, "redo -> moved (cycle \(cycle))")
+            #expect(state.canUndoDocumentAction, "still undoable after redo (cycle \(cycle))")
+        }
+    }
+
     @Test func systemFontFamilyUndoRedoCycles() {
         let (state, tempDir, um) = makeUndoState()
         defer { cleanup(tempDir) }

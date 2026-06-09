@@ -133,6 +133,7 @@ final class AppState {
     @ObservationIgnored var arrowKeyMonitor: Any?
     @ObservationIgnored var nudgeUndoTask: DispatchWorkItem?
     @ObservationIgnored var nudgeBaseRow: ScreenshotRow?
+    @ObservationIgnored var nudgeActionName: String = "Move Shape"
     @ObservationIgnored var continuousEditUndoTask: DispatchWorkItem?
     @ObservationIgnored var continuousEditBaseRow: ScreenshotRow?
     @ObservationIgnored var continuousEditBaseLocaleState: LocaleState?
@@ -301,7 +302,7 @@ final class AppState {
     /// save. A `body` that changes nothing registers no undo step. Nested `withUndo` calls
     /// join the outer transaction so a wrapped helper doesn't create a second step.
     func withUndo(_ actionName: String, _ body: () -> Void) {
-        finishContinuousEditIfNeeded()
+        commitAllPendingEdits()
         if isInUndoTransaction { body(); return }
         isInUndoTransaction = true
         defer { isInUndoTransaction = false }
@@ -319,17 +320,32 @@ final class AppState {
     /// commit path.
     private func registerSnapshot(_ actionName: String, baseRows: [ScreenshotRow], baseLocaleState: LocaleState) {
         guard let undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
-            let redoRows = target.rows
-            let redoLocaleState = target.localeState
-            target.rows = baseRows
-            target.localeState = baseLocaleState
-            target.normalizeSelection()
-            target.scheduleSave()
-            target.registerSnapshot(actionName, baseRows: redoRows, baseLocaleState: redoLocaleState)
-            target.undoManager?.setActionName(actionName)
+        registeringUndoStep(on: undoManager) {
+            undoManager.registerUndo(withTarget: self) { target in
+                let redoRows = target.rows
+                let redoLocaleState = target.localeState
+                target.rows = baseRows
+                target.localeState = baseLocaleState
+                target.normalizeSelection()
+                target.scheduleSave()
+                target.registerSnapshot(actionName, baseRows: redoRows, baseLocaleState: redoLocaleState)
+                target.undoManager?.setActionName(actionName)
+            }
+            undoManager.setActionName(actionName)
         }
-        undoManager.setActionName(actionName)
+    }
+
+    /// `registerUndo` requires an open undo group. With the default `groupsByEvent`, the
+    /// run loop opens one per event (and `undo()`/`redo()` open one while replaying), so a
+    /// group is normally already active. But when none is — `groupsByEvent = false` with no
+    /// run loop (unit tests), where macOS throws "must begin a group before registering undo" —
+    /// open one around the registration. No-op whenever a group is already active, so
+    /// production grouping is unchanged.
+    private func registeringUndoStep(on undoManager: UndoManager, _ body: () -> Void) {
+        let needsGroup = undoManager.groupingLevel == 0
+        if needsGroup { undoManager.beginUndoGrouping() }
+        body()
+        if needsGroup { undoManager.endUndoGrouping() }
     }
 
     /// Full-snapshot undo with a pre-captured base — used by the debounced translation-edit
@@ -342,50 +358,72 @@ final class AppState {
     /// Row-scoped undo with a pre-captured base row. Looks up the row by ID on undo/redo,
     /// so it's safe even if row indices shift (though callers should only use this when row count is stable).
     func registerUndoForRowWithBase(_ actionName: String, baseRow: ScreenshotRow, baseLocaleState: LocaleState? = nil) {
+        registerRowSnapshot(actionName, rowId: baseRow.id, baseRow: baseRow, baseLocaleState: baseLocaleState ?? localeState)
+    }
+
+    /// Row-scoped counterpart to `registerSnapshot`: restores a single row by ID and
+    /// re-registers its own inverse, so undo↔redo cycles indefinitely (the earlier
+    /// two-closure form dropped the step after the first redo). If the row no longer
+    /// exists the step is skipped — callers only use this when the row count is stable.
+    private func registerRowSnapshot(_ actionName: String, rowId: UUID, baseRow: ScreenshotRow, baseLocaleState: LocaleState) {
         guard let undoManager else { return }
-        let savedLocaleState = baseLocaleState ?? localeState
-        let savedRowId = baseRow.id
-        undoManager.registerUndo(withTarget: self) { target in
-            guard let currentIdx = target.rows.firstIndex(where: { $0.id == savedRowId }) else { return }
-            let redoRow = target.rows[currentIdx]
-            let redoLocaleState = target.localeState
-            target.undoManager?.registerUndo(withTarget: target) { t in
-                guard let idx = t.rows.firstIndex(where: { $0.id == savedRowId }) else { return }
-                t.rows[idx] = redoRow
-                t.localeState = redoLocaleState
-                t.normalizeSelection()
-                t.scheduleSave()
-                t.undoManager?.setActionName(actionName)
+        registeringUndoStep(on: undoManager) {
+            undoManager.registerUndo(withTarget: self) { target in
+                guard let idx = target.rows.firstIndex(where: { $0.id == rowId }) else { return }
+                let redoRow = target.rows[idx]
+                let redoLocaleState = target.localeState
+                target.rows[idx] = baseRow
+                target.localeState = baseLocaleState
+                target.normalizeSelection()
+                target.scheduleSave()
+                target.registerRowSnapshot(actionName, rowId: rowId, baseRow: redoRow, baseLocaleState: redoLocaleState)
+                target.undoManager?.setActionName(actionName)
             }
-            target.rows[currentIdx] = baseRow
-            target.localeState = savedLocaleState
-            target.normalizeSelection()
-            target.scheduleSave()
-            target.undoManager?.setActionName(actionName)
+            undoManager.setActionName(actionName)
         }
-        undoManager.setActionName(actionName)
     }
 
     var canUndoDocumentAction: Bool {
-        hasPendingContinuousEdit || (undoManager?.canUndo ?? false)
+        hasPendingUndoableEdit || (undoManager?.canUndo ?? false)
     }
 
-    // A pending continuous edit is the user's most recent change: committing it (the flush
-    // inside redoDocumentAction) registers a fresh undo step, which clears the redo stack.
-    // So redo is unavailable while one is pending — the inverse of canUndoDocumentAction.
+    // A pending edit (continuous burst or debounced nudge/text) is the user's most recent
+    // change: committing it (the flush inside redo/undoDocumentAction) registers a fresh undo
+    // step, which clears the redo stack. So redo is unavailable while one is pending — the
+    // inverse of canUndoDocumentAction.
     var canRedoDocumentAction: Bool {
-        !hasPendingContinuousEdit && (undoManager?.canRedo ?? false)
+        !hasPendingUndoableEdit && (undoManager?.canRedo ?? false)
     }
 
     func undoDocumentAction() {
-        finishContinuousEditIfNeeded()
+        commitAllPendingEdits()
         undoManager?.undo()
     }
 
     func redoDocumentAction() {
-        finishContinuousEditIfNeeded()
+        commitAllPendingEdits()
         guard undoManager?.canRedo == true else { return }
         undoManager?.redo()
+    }
+
+    /// True while any continuous burst or debounced (nudge/base-text/translation) edit is
+    /// captured but not yet registered as an undo step.
+    private var hasPendingUndoableEdit: Bool {
+        hasPendingContinuousEdit
+            || nudgeBaseRow != nil
+            || baseTextBaseRow != nil
+            || translationBaseLocaleState != nil
+    }
+
+    /// Commits every pending continuous/debounced edit, registering each as its own undo
+    /// step. Called at undo-stack boundaries (discrete `withUndo` actions, undo, redo) and
+    /// when a different debounced interaction begins, so steps register in chronological
+    /// order. Each finisher is a no-op when its own path has nothing captured.
+    func commitAllPendingEdits() {
+        finishContinuousEditIfNeeded()
+        finishNudgeIfNeeded()
+        finishBaseTextEditIfNeeded()
+        finishTranslationEditIfNeeded()
     }
 
     // MARK: - Helpers
@@ -438,6 +476,9 @@ final class AppState {
         continuousEditBaseLocaleState = nil
         continuousEditShapeId = nil
         continuousEditLastApply = 0
+        // The debounced undo task nil-outs nothing on its own; clear it here so a settled
+        // burst doesn't leave `hasPendingContinuousEdit` stuck true until the next flush.
+        continuousEditUndoTask = nil
     }
 
     private var hasPendingContinuousEdit: Bool {

@@ -313,21 +313,21 @@ extension ContentView {
 
     var iPadUndoButton: some View {
         Button {
-            undoManager?.undo()
+            state.undoDocumentAction()
         } label: {
             Label("Undo", systemImage: "arrow.uturn.backward")
         }
-        .disabled(!(undoManager?.canUndo ?? false))
+        .disabled(!state.canUndoDocumentAction)
         .help("Undo")
     }
 
     var iPadRedoButton: some View {
         Button {
-            undoManager?.redo()
+            state.redoDocumentAction()
         } label: {
             Label("Redo", systemImage: "arrow.uturn.forward")
         }
-        .disabled(!(undoManager?.canRedo ?? false))
+        .disabled(!state.canRedoDocumentAction)
         .help("Redo")
     }
     #endif

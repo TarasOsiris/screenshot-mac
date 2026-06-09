@@ -147,6 +147,7 @@ extension AppState {
             finishContinuousRowEditIfNeeded()
         }
         if continuousRowEditBaseRow == nil {
+            commitAllPendingEdits()
             continuousRowEditBaseRow = rows[idx]
             continuousRowEditBaseLocaleState = localeState
             continuousRowEditId = rowId

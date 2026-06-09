@@ -48,10 +48,13 @@ extension AppState {
             finishContinuousEditIfNeeded()
         }
 
-        if continuousEditBaseRow == nil, let location = shapeLocation(for: shape.id) {
-            continuousEditBaseRow = rows[location.rowIndex]
-            continuousEditBaseLocaleState = localeState
-            continuousEditShapeId = shape.id
+        if continuousEditBaseRow == nil {
+            commitAllPendingEdits()
+            if let location = shapeLocation(for: shape.id) {
+                continuousEditBaseRow = rows[location.rowIndex]
+                continuousEditBaseLocaleState = localeState
+                continuousEditShapeId = shape.id
+            }
         }
 
         let now = CFAbsoluteTimeGetCurrent()
@@ -354,8 +357,10 @@ extension AppState {
         // we know at least one shape will actually move, so a fully-locked nudge
         // doesn't poison the baseline for a later, unrelated nudge.
         if nudgeBaseRow == nil {
+            commitAllPendingEdits()
             nudgeBaseRow = rows[rowIdx]
         }
+        nudgeActionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
 
         for i in rows[rowIdx].shapes.indices {
             if ids.contains(rows[rowIdx].shapes[i].id) && !rows[rowIdx].shapes[i].resolvedIsLocked {
@@ -367,15 +372,20 @@ extension AppState {
 
         // Debounce the undo registration so rapid key repeats collapse into one entry
         nudgeUndoTask?.cancel()
-        guard let savedBaseRow = nudgeBaseRow else { return }
-        let actionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
         let nudgeTask = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.registerUndoForRowWithBase(actionName, baseRow: savedBaseRow)
-            self.nudgeBaseRow = nil
+            self?.finishNudgeIfNeeded()
         }
         nudgeUndoTask = nudgeTask
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: nudgeTask)
+    }
+
+    /// Commits a pending arrow-key nudge as one undo step. No-op when no nudge is captured.
+    func finishNudgeIfNeeded() {
+        nudgeUndoTask?.cancel()
+        nudgeUndoTask = nil
+        guard let baseRow = nudgeBaseRow else { return }
+        nudgeBaseRow = nil
+        registerUndoForRowWithBase(nudgeActionName, baseRow: baseRow)
     }
 
     // MARK: - Option+Drag Duplicate

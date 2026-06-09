@@ -73,6 +73,7 @@ extension AppState {
 
         // Capture undo state only at the start of a base text editing sequence
         if baseTextBaseRow == nil {
+            commitAllPendingEdits()
             baseTextBaseRow = rows[loc.rowIndex]
         }
 
@@ -81,14 +82,20 @@ extension AppState {
 
         // Debounce undo registration so rapid keystrokes collapse into one entry
         baseTextUndoTask?.cancel()
-        guard let savedBaseRow = baseTextBaseRow else { return }
         let task = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.registerUndoForRowWithBase("Edit Base Text", baseRow: savedBaseRow, baseLocaleState: self.localeState)
-            self.baseTextBaseRow = nil
+            self?.finishBaseTextEditIfNeeded()
         }
         baseTextUndoTask = task
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: task)
+    }
+
+    /// Commits a pending base-text editing burst as one undo step. No-op when none is captured.
+    func finishBaseTextEditIfNeeded() {
+        baseTextUndoTask?.cancel()
+        baseTextUndoTask = nil
+        guard let baseRow = baseTextBaseRow else { return }
+        baseTextBaseRow = nil
+        registerUndoForRowWithBase("Edit Base Text", baseRow: baseRow, baseLocaleState: localeState)
     }
 
     func updateTranslationText(shapeId: UUID, text: String) {
@@ -102,6 +109,7 @@ extension AppState {
 
         // Capture undo state only at the start of a translation editing sequence
         if translationBaseLocaleState == nil {
+            commitAllPendingEdits()
             translationBaseLocaleState = localeState
         }
 
@@ -113,22 +121,20 @@ extension AppState {
 
         // Debounce undo registration so rapid keystrokes collapse into one entry
         translationUndoTask?.cancel()
-        guard let savedBase = translationBaseLocaleState else { return }
         let task = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.registerUndoWithBase("Edit Translation", base: self.rows, baseLocaleState: savedBase)
-            self.translationBaseLocaleState = nil
+            self?.finishTranslationEditIfNeeded()
         }
         translationUndoTask = task
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: task)
     }
 
-    /// Discards any in-flight debounced translation edit so its stale-base undo step
-    /// doesn't fire after a reset has already replaced the overrides.
-    private func cancelPendingTranslationEdit() {
+    /// Commits a pending translation editing burst as one undo step. No-op when none is captured.
+    func finishTranslationEditIfNeeded() {
         translationUndoTask?.cancel()
         translationUndoTask = nil
+        guard let savedBase = translationBaseLocaleState else { return }
         translationBaseLocaleState = nil
+        registerUndoWithBase("Edit Translation", base: rows, baseLocaleState: savedBase)
     }
 
     func resetLocaleOverride(shapeId: UUID) {
@@ -146,7 +152,6 @@ extension AppState {
         guard var override = localeState.override(forCode: code, shapeId: shapeId) else { return }
 
         withUndo("Reset Translation") {
-            cancelPendingTranslationEdit()
             override.text = nil
             LocaleService.setShapeOverride(&localeState, localeCode: code, shapeId: shapeId, override: override.isEmpty ? nil : override)
         }
@@ -171,8 +176,6 @@ extension AppState {
         guard localeState.hasAnyOverride(shapeIds: shapeIds) else { return }
 
         withUndo("Reset All Translations") {
-            cancelPendingTranslationEdit()
-
             var removedImages: [String] = []
             for shapeId in shapeIds {
                 for overrides in localeState.overrides.values {
@@ -190,8 +193,6 @@ extension AppState {
         guard let localeOverrides = localeState.overrides[code], !localeOverrides.isEmpty else { return }
 
         withUndo("Reset Language to Base") {
-            cancelPendingTranslationEdit()
-
             let overrideImages = localeOverrides.values.compactMap(\.overrideImageFileName)
             localeState.overrides.removeValue(forKey: code)
             cleanupUnreferencedImages(overrideImages)
