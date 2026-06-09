@@ -102,6 +102,21 @@ struct ShapeLocaleOverride: Codable, Equatable {
         self.overrideImageFileName = overrideImageFileName
     }
 
+    /// Whether this override carries translated text — plain `text` or formatted `richText`.
+    /// Auto-translate uses this so a manually-formatted (rich-text-only) translation isn't
+    /// mistaken for "missing" and overwritten.
+    var hasTextContent: Bool {
+        !(text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !(richText ?? "").isEmpty
+    }
+
+    /// Clear every translated-text field (plain + formatted) — e.g. when reverting to base.
+    mutating func clearTranslatedText() {
+        text = nil
+        richText = nil
+        clearsRichText = nil
+    }
+
     var isEmpty: Bool {
         offsetX == nil && offsetY == nil && offsetWidth == nil && offsetHeight == nil
             && text == nil && richText == nil && clearsRichText != true && fontName == nil && fontSize == nil && fontWeight == nil

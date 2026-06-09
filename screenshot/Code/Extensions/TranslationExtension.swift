@@ -63,7 +63,9 @@ func translateShapes(
     let items = state.textShapesForTranslation(localeCode: targetLocaleCode)
     for item in items {
         if let filter = shapeFilter, !filter(item.shape.id) { continue }
-        if onlyUntranslated && !isUntranslated(item.overrideText) { continue }
+        // `isTranslated` counts plain text AND manually-formatted rich-text overrides, so
+        // auto-translate-missing never clobbers the user's own translations.
+        if onlyUntranslated && item.isTranslated { continue }
         guard let baseText = item.shape.text, !baseText.isEmpty else { continue }
         do {
             let translatedText = try await translatePreservingLineBreaks(baseText, translate: translate)

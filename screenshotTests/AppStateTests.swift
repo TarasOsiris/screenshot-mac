@@ -787,6 +787,66 @@ struct AppStateTests {
         #expect(state.localeState.override(forCode: "fr", shapeId: shape.id)?.text == "Bonjour\nMonde")
     }
 
+    @Test func autoTranslateMissingSkipsRichTextOnlyOverride() async {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        state.addLocale(.init(code: "de", label: "German"))
+        state.selectRow(state.rows.first!.id)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.text = "Hello"
+        state.addShape(shape)
+
+        // Format the German translation without changing the plain text — this yields a
+        // rich-text-only override (override.richText set, override.text nil), the exact case
+        // that auto-translate-missing used to mistake for "untranslated" and overwrite.
+        state.setActiveLocale("de")
+        var formatted = shape
+        formatted.richText = "BASE64_RTF_DE"
+        state.updateShape(formatted)
+
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id)?.richText == "BASE64_RTF_DE")
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id)?.text == nil)
+        #expect(state.translationProgress(for: "de").translated == 1)
+
+        var translateCalled = false
+        await translateShapes(
+            state: state,
+            targetLocaleCode: "de",
+            onlyUntranslated: true
+        ) { _ in
+            translateCalled = true
+            return "Hallo"
+        }
+
+        #expect(translateCalled == false)
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id)?.richText == "BASE64_RTF_DE")
+    }
+
+    @Test func resetTranslationClearsRichTextOnlyOverride() async {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        state.addLocale(.init(code: "de", label: "German"))
+        state.selectRow(state.rows.first!.id)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.text = "Hello"
+        state.addShape(shape)
+
+        state.setActiveLocale("de")
+        var formatted = shape
+        formatted.richText = "BASE64_RTF_DE"
+        state.updateShape(formatted)
+        #expect(state.translationProgress(for: "de").translated == 1)
+
+        state.resetTranslationText(shapeId: shape.id, localeCode: "de")
+
+        #expect(state.localeState.override(forCode: "de", shapeId: shape.id) == nil)
+        #expect(state.translationProgress(for: "de").translated == 0)
+    }
+
     @Test func translatePreservingLineBreaksKeepsBlankLinesAndLinePadding() async throws {
         var translatedInputs: [String] = []
         let translated = try await translatePreservingLineBreaks("  Hello\n\nWorld  \r\nAgain") { text in

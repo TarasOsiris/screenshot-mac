@@ -178,7 +178,9 @@ struct TranslationOverviewSheet: View {
         locale: LocaleDefinition
     ) -> some View {
         let baseText = item.shape.text ?? ""
-        let hasOverride = state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text != nil
+        let override = state.localeState.override(forCode: locale.code, shapeId: item.shape.id)
+        let formatted = Self.formattedTranslation(for: override)
+        let hasOverride = override?.hasTextContent == true
         let translating = isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code)
 
         HStack(alignment: .center, spacing: 12) {
@@ -186,34 +188,46 @@ struct TranslationOverviewSheet: View {
                 Text(locale.flagLabel)
                     .font(.subheadline.weight(.semibold))
 
-                BufferedTranslationField(
-                    placeholder: String(localized: "Same as base language"),
-                    text: translationTextBinding(shapeId: item.shape.id, localeCode: locale.code)
-                )
+                if let formatted {
+                    Text(formatted.isEmpty ? String(localized: "Same as base language") : formatted)
+                        .font(.body)
+                        .foregroundStyle(formatted.isEmpty ? Color.secondary : Color.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Label("Formatted — edit on the canvas", systemImage: "paintbrush.pointed")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } else {
+                    BufferedTranslationField(
+                        placeholder: String(localized: "Same as base language"),
+                        text: translationTextBinding(shapeId: item.shape.id, localeCode: locale.code)
+                    )
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Button {
-                startCellTranslation(
-                    shapeId: item.shape.id,
-                    localeCode: locale.code,
-                    baseText: baseText
-                )
-            } label: {
-                Group {
-                    if translating {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Label("Translate", systemImage: "translate")
+            if formatted == nil {
+                Button {
+                    startCellTranslation(
+                        shapeId: item.shape.id,
+                        localeCode: locale.code,
+                        baseText: baseText
+                    )
+                } label: {
+                    Group {
+                        if translating {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Label("Translate", systemImage: "translate")
+                        }
                     }
+                    .frame(minHeight: UIMetrics.CapsuleButton.minContentHeight)
                 }
-                .frame(minHeight: UIMetrics.CapsuleButton.minContentHeight)
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .disabled(translating || isUntranslated(baseText))
+                .accessibilityLabel("Translate to \(locale.flagLabel)")
             }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-            .disabled(translating || isUntranslated(baseText))
-            .accessibilityLabel("Translate to \(locale.flagLabel)")
         }
         .padding(.vertical, 4)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -282,13 +296,15 @@ struct TranslationOverviewSheet: View {
                 .frame(width: baseColumnWidth, alignment: .topLeading)
 
                 ForEach(locales) { locale in
+                    let override = state.localeState.override(forCode: locale.code, shapeId: item.shape.id)
                     TranslationMatrixCell(
                         locale: locale,
                         baseText: item.shape.text ?? "",
                         text: translationTextBinding(shapeId: item.shape.id, localeCode: locale.code),
+                        formattedPlainText: Self.formattedTranslation(for: override),
                         columnPadding: columnPadding,
                         isTranslating: isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code),
-                        canReset: state.localeState.override(forCode: locale.code, shapeId: item.shape.id)?.text != nil,
+                        canReset: override?.hasTextContent == true,
                         onTranslate: {
                             startCellTranslation(
                                 shapeId: item.shape.id,
@@ -331,6 +347,16 @@ struct TranslationOverviewSheet: View {
         }
     }
     #endif
+
+    /// Plain text of a *formatted* translation override, or nil when the override has no rich
+    /// text. Cells with rich text are shown read-only because the plain-text field can't edit
+    /// formatting and the `richText` override wins at render time anyway.
+    private static func formattedTranslation(for override: ShapeLocaleOverride?) -> String? {
+        guard let override, let richText = override.richText, !richText.isEmpty else { return nil }
+        // Prefer the stored plain-text mirror; only decode the RTF when there isn't one
+        // (avoids a Base64+RTF decode per cell on every view-body recomputation).
+        return override.text ?? RichTextUtils.plainText(from: richText) ?? ""
+    }
 
     /// Override text for one cell; setting a blank value resets to the base language.
     private func translationTextBinding(shapeId: UUID, localeCode: String) -> Binding<String> {
@@ -383,6 +409,8 @@ private struct TranslationMatrixCell: View {
     let locale: LocaleDefinition
     let baseText: String
     @Binding var text: String
+    /// Non-nil when this translation carries custom formatting; shown read-only.
+    let formattedPlainText: String?
     let columnPadding: CGFloat
     let isTranslating: Bool
     let canReset: Bool
@@ -392,21 +420,29 @@ private struct TranslationMatrixCell: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            MultilineCellEditor(
-                placeholder: "\(locale.flagLabel) text",
-                text: $text,
-                help: "Leave empty to use the base language text"
-            )
+            if let formattedPlainText {
+                formattedReadOnlyCell(formattedPlainText)
+            } else {
+                MultilineCellEditor(
+                    placeholder: "\(locale.flagLabel) text",
+                    text: $text,
+                    help: "Leave empty to use the base language text"
+                )
+            }
             if isHovered {
                 HStack(spacing: 8) {
-                    Button {
-                        onTranslate()
-                    } label: {
-                        Label("Translate", systemImage: "globe")
-                            .font(.system(size: 10))
+                    // Translating would replace the formatted text with plain text, so offer it
+                    // only for plain cells; edit formatted translations on the canvas instead.
+                    if formattedPlainText == nil {
+                        Button {
+                            onTranslate()
+                        } label: {
+                            Label("Translate", systemImage: "globe")
+                                .font(.system(size: 10))
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(isTranslating || isUntranslated(baseText))
                     }
-                    .buttonStyle(.borderless)
-                    .disabled(isTranslating || isUntranslated(baseText))
 
                     if canReset {
                         Button {
@@ -426,6 +462,30 @@ private struct TranslationMatrixCell: View {
         .onHover { isHovered = $0 }
         .overlay(alignment: .trailing) {
             Divider()
+        }
+    }
+
+    @ViewBuilder
+    private func formattedReadOnlyCell(_ plain: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(plain.isEmpty ? String(localized: "Same as base language") : plain)
+                .font(.system(size: 12))
+                .foregroundStyle(plain.isEmpty ? Color.secondary : Color.primary)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 5)
+                .background(Color.platformTextBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
+                        .stroke(Color.platformSeparator, lineWidth: UIMetrics.BorderWidth.standard)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
+
+            Label("Formatted — edit on the canvas", systemImage: "paintbrush.pointed")
+                .font(.system(size: 9))
+                .foregroundStyle(.secondary)
+                .help("This translation uses custom formatting (colors, bold, sizes). The table edits plain text only — edit it directly on the canvas, or Reset to use the base language.")
         }
     }
 }

@@ -42,13 +42,13 @@ extension AppState {
     }
 
     /// All text shapes across all rows with their base text and override for the requested locale.
-    func textShapesForTranslation(localeCode: String? = nil) -> [(shape: CanvasShapeModel, rowId: UUID, rowLabel: String, overrideText: String?)] {
-        var results: [(shape: CanvasShapeModel, rowId: UUID, rowLabel: String, overrideText: String?)] = []
+    func textShapesForTranslation(localeCode: String? = nil) -> [(shape: CanvasShapeModel, rowId: UUID, rowLabel: String, isTranslated: Bool)] {
+        var results: [(shape: CanvasShapeModel, rowId: UUID, rowLabel: String, isTranslated: Bool)] = []
         let code = localeCode ?? localeState.activeLocaleCode
         for row in rows {
             for shape in row.shapes where shape.type == .text {
-                let overrideText = localeState.override(forCode: code, shapeId: shape.id)?.text
-                results.append((shape: shape, rowId: row.id, rowLabel: row.label, overrideText: overrideText))
+                let isTranslated = localeState.override(forCode: code, shapeId: shape.id)?.hasTextContent == true
+                results.append((shape: shape, rowId: row.id, rowLabel: row.label, isTranslated: isTranslated))
             }
         }
         return results
@@ -70,8 +70,7 @@ extension AppState {
         }
 
         let translated = textShapes.reduce(into: 0) { count, shape in
-            if let text = localeState.override(forCode: code, shapeId: shape.id)?.text,
-               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            if localeState.override(forCode: code, shapeId: shape.id)?.hasTextContent == true {
                 count += 1
             }
         }
@@ -162,7 +161,8 @@ extension AppState {
         guard var override = localeState.override(forCode: code, shapeId: shapeId) else { return }
 
         withUndo("Reset Translation") {
-            override.text = nil
+            // Clears plain + formatted text, so a rich-text-only translation reverts to base too.
+            override.clearTranslatedText()
             LocaleService.setShapeOverride(&localeState, localeCode: code, shapeId: shapeId, override: override.isEmpty ? nil : override)
         }
     }
