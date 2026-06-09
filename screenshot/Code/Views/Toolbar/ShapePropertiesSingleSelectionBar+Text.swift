@@ -44,6 +44,9 @@ extension ShapePropertiesSingleSelectionBar {
                     fontWeight: fontWeightBinding(shapeId),
                     italic: italicBinding(shapeId),
                     customFonts: state.customFonts,
+                    onApplyImportedSelection: { imported in
+                        applyImportedFontSelection(imported, to: shapeId)
+                    },
                     onImportFont: { url in state.importCustomFont(from: url) }
                 )
             }

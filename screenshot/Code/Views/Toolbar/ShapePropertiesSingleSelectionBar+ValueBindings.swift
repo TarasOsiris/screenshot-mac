@@ -214,6 +214,13 @@ extension ShapePropertiesSingleSelectionBar {
         )
     }
 
+    func applyImportedFontSelection(_ imported: ImportedCustomFontSelection, to shapeId: UUID) {
+        guard let i = idx(for: shapeId) else { return }
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        RichTextUtils.applyImportedFontSelection(imported, to: &resolved, property: .fontName)
+        state.updateShape(resolved)
+    }
+
     func lineHeightBinding(_ shapeId: UUID) -> Binding<CGFloat> {
         Binding(
             get: {

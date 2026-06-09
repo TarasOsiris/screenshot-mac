@@ -6,6 +6,7 @@ struct FontPicker: View {
     var fontWeight: Binding<Int>? = nil
     var italic: Binding<Bool>? = nil
     var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
+    var onApplyImportedSelection: ((ImportedCustomFontSelection) -> Void)?
     var onImportFont: ((URL) -> ImportedCustomFontSelection?)?
 
     private static let previewFontSize: CGFloat = 13
@@ -56,6 +57,10 @@ struct FontPicker: View {
     }
 
     private func applyImportedSelection(_ imported: ImportedCustomFontSelection) {
+        if let onApplyImportedSelection {
+            onApplyImportedSelection(imported)
+            return
+        }
         selection = imported.fontName
         if let value = imported.fontWeight {
             fontWeight?.wrappedValue = value
