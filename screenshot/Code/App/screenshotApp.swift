@@ -39,7 +39,7 @@ struct ScreenshotBroApp: App {
                 .environment(appState)
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
-                .background(MainWindowSceneBridge())
+                .background(WindowSceneBridge(role: .main))
                 .task { storeService.start() }
                 #if DEBUG
                 .task {
@@ -439,6 +439,12 @@ private struct HelpCommands: Commands {
         CommandGroup(replacing: .help) {
             Button("Screenshot Bro Help") {
                 openWindow(id: HelpView.windowID)
+                // openWindow is async; the NSWindow isn't registered until the
+                // next runloop, so defer the raise so it can come to front even
+                // when the main window holds an active text selection.
+                DispatchQueue.main.async {
+                    AppWindowManager.shared.raiseHelpWindow()
+                }
             }
             .keyboardShortcut("?", modifiers: .command)
         }

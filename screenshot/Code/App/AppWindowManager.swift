@@ -12,9 +12,18 @@ final class AppWindowManager {
 
 #if os(macOS)
     private weak var mainWindow: NSWindow?
+    private weak var helpWindow: NSWindow?
 
     func registerMainWindow(_ window: NSWindow) {
         mainWindow = window
+    }
+
+    func registerHelpWindow(_ window: NSWindow) {
+        helpWindow = window
+    }
+
+    func raiseHelpWindow() {
+        raiseWindow(helpWindow)
     }
 
     func setMainWindowOpener(_ opener: @escaping () -> Void) {
@@ -22,17 +31,21 @@ final class AppWindowManager {
     }
 
     func showMainWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-
         if let mainWindow {
-            if mainWindow.isMiniaturized {
-                mainWindow.deminiaturize(nil)
-            }
-            mainWindow.makeKeyAndOrderFront(nil)
+            raiseWindow(mainWindow)
             return
         }
-
+        NSApp.activate(ignoringOtherApps: true)
         mainWindowOpener?()
+    }
+
+    private func raiseWindow(_ window: NSWindow?) {
+        NSApp.activate(ignoringOtherApps: true)
+        guard let window else { return }
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
+        window.makeKeyAndOrderFront(nil)
     }
 #else
     func setMainWindowOpener(_ opener: @escaping () -> Void) {
@@ -46,15 +59,24 @@ final class AppWindowManager {
 #endif
 }
 
-struct MainWindowSceneBridge: View {
+/// Registers a SwiftUI scene's backing `NSWindow` with `AppWindowManager` so it
+/// can be raised on demand. The `.main` role additionally wires the reopen path.
+struct WindowSceneBridge: View {
+    enum Role { case main, help }
+    let role: Role
+
 #if os(macOS)
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        MainWindowAccessorView { window in
-            AppWindowManager.shared.registerMainWindow(window)
+        WindowAccessorView { window in
+            switch role {
+            case .main: AppWindowManager.shared.registerMainWindow(window)
+            case .help: AppWindowManager.shared.registerHelpWindow(window)
+            }
         }
         .task {
+            guard role == .main else { return }
             AppWindowManager.shared.setMainWindowOpener {
                 openWindow(id: AppRootView.windowID)
             }
@@ -66,7 +88,7 @@ struct MainWindowSceneBridge: View {
 }
 
 #if os(macOS)
-private struct MainWindowAccessorView: NSViewRepresentable {
+private struct WindowAccessorView: NSViewRepresentable {
     let onResolve: (NSWindow) -> Void
 
     func makeNSView(context: Context) -> NSView {

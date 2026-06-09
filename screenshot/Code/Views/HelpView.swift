@@ -25,6 +25,7 @@ struct HelpView: View {
         }
         .navigationTitle("Screenshot Bro Help")
         .frame(minWidth: 880, minHeight: 600)
+        .background(WindowSceneBridge(role: .help))
     }
 
     @ViewBuilder
