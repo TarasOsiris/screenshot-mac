@@ -292,7 +292,7 @@ extension HelpSection {
                 .bullet("**Templates** are the columns inside a row — the individual screenshots you'll submit. Most apps need 3–10 templates per row."),
                 .heading("A typical workflow"),
                 .bullet("1. Create a new project from a template, or start blank."),
-                .bullet("2. Drop your raw device screenshots onto the templates — Screenshot Bro detects iPhone vs iPad vs Android from the image dimensions and routes them to the right row."),
+                .bullet("2. Drop your raw device screenshots onto templates or rows — Screenshot Bro fills them in order and detects device category/frame where possible."),
                 .bullet("3. Pick a device frame, add a headline, choose a background, and arrange shapes."),
                 .bullet("4. Add languages you support — translate text once and let the layout follow."),
                 .bullet("5. Export. You'll get a folder organized by language and device, ready to upload."),
@@ -314,7 +314,7 @@ extension HelpSection {
                 .heading("Switching between projects"),
                 .bullet("Use the project picker in the toolbar to jump between projects."),
                 .bullet("Pinned and recent projects appear at the top."),
-                .bullet("Project order can be set to **Creation date** or **Manual** in Settings ▸ General."),
+                .bullet("Project order can be set to **By creation date** or **Alphabetically** in Settings ▸ General."),
                 .heading("Renaming, duplicating, deleting"),
                 .bullet("Right-click a project in the picker for rename, duplicate, and delete actions."),
                 .bullet("Deleted projects are kept as **tombstones** for 30 days so iCloud sync can resolve conflicts cleanly. After 30 days the tombstone (and all images) are purged."),
@@ -322,7 +322,7 @@ extension HelpSection {
                 .bullet("`~/Library/Application Support/screenshot/projects.json` — index of all projects."),
                 .bullet("`~/Library/Application Support/screenshot/projects/<uuid>/project.json` — project data."),
                 .bullet("`~/Library/Application Support/screenshot/projects/<uuid>/resources/` — imported images, screenshots, and SVGs."),
-                .tip("Projects autosave 0.3 seconds after the last change. You don't need to manually save. To make a one-off backup, use **Settings ▸ Export ▸ Back Up Projects**."),
+                .tip("Projects autosave 0.3 seconds after the last change. You don't need to manually save. To make a one-off backup, use **Settings ▸ General ▸ Storage ▸ Create Backup…**."),
             ]
         )
     }
@@ -335,7 +335,7 @@ extension HelpSection {
                 .paragraph("Rows are horizontal groups of screenshots inside a project. Each row has its own screenshot size (in pixels), device category, and a row-level background. The App Store requires separate uploads per device size — that's why rows exist."),
                 .heading("Adding rows"),
                 .bullet("Click **Add Row** at the bottom of the canvas, or use the inspector when no row is selected."),
-                .bullet("Choose a device category: **iPhone**, **iPad Pro 11\"**, **iPad Pro 13\"**, **MacBook**, **Android Phone**, **Android Tablet**, or **Invisible** (an abstract layout with no visible frame)."),
+                .bullet("Choose a device category: **iPhone**, **iPad Pro 11\"**, **iPad Pro 13\"**, **MacBook**, **Android Phone**, **Abstract Pixel 9**, **Android Tablet**, or **Invisible** (an abstract layout with no visible frame)."),
                 .bullet("Each category sets the row's default screenshot pixel size to a value the relevant store accepts."),
                 .heading("Row inspector"),
                 .bullet("Select a row (click empty canvas space inside it) to reveal row-level controls in the inspector."),
@@ -344,8 +344,8 @@ extension HelpSection {
                 .bullet("**Background editor** — color, gradient, or image. See the **Backgrounds** topic."),
                 .bullet("**Spanning background** — when on, the background spans the entire row width across all templates. When off, every template paints the same background independently."),
                 .heading("Reordering and deleting"),
-                .bullet("Drag a row's header to reorder. Use **⌘D** to duplicate a selected row."),
-                .bullet("**Delete** removes the row. Settings ▸ General has a confirmation toggle."),
+                .bullet("Drag a row's header to reorder. Use **⌘D** to duplicate a selected row, or use the row header/menu actions."),
+                .bullet("Delete rows from the row header or row menu. Settings ▸ General has a confirmation toggle."),
                 .tip("If you only see one row, you may be on the **Free** tier (limit: 3 rows per project). Upgrading to Pro removes this limit. See **Free vs Pro**."),
             ]
         )
@@ -364,7 +364,7 @@ extension HelpSection {
                 .heading("Per-template controls"),
                 .bullet("The **Template Control Bar** below each template lets you override the row background just for that template."),
                 .bullet("Drop a screenshot directly onto a template to attach it as the device screenshot."),
-                .bullet("The **⋯ menu** offers per-template actions like duplicate, delete, and export preview."),
+                .bullet("The **⋯ menu** offers per-template actions like Quick Look, Save as PNG, move, duplicate, and delete."),
                 .heading("How shapes relate to templates"),
                 .bullet("Shapes (text, images, devices, etc.) live on the **row canvas** — the unified area behind all templates in a row. A shape can be positioned to land entirely inside one template, or to span across templates."),
                 .bullet("On export, each template is clipped to its own bounds, so a shape that spans templates will appear on each of them at the right horizontal offset."),
@@ -387,7 +387,7 @@ extension HelpSection {
                 .bullet("Double-click a text shape to edit inline. Press **Esc** or click outside to commit."),
                 .bullet("The properties bar shows font, weight, size, color, alignment, line height, and letter spacing."),
                 .bullet("Text auto-grows vertically by default. Drag a side handle to fix the width and let it wrap."),
-                .bullet("Custom fonts: import via **Settings ▸ General ▸ Custom Fonts**."),
+                .bullet("Custom fonts: choose **Pick custom font** from the text font picker."),
                 .heading("Image"),
                 .bullet("Click the image well in the properties bar to pick a file, or drag and drop directly onto the shape."),
                 .bullet("Fill modes: **Fill** (crop to fit), **Fit** (letterbox), **Stretch** (distort), **Tile** (repeat). Tile mode unlocks spacing, offset, and scale controls."),
@@ -413,20 +413,21 @@ extension HelpSection {
             title: "Devices & Frames",
             subtitle: "Real device frames with accurate screen insets.",
             blocks: [
-                .paragraph("Device frames wrap your screenshot in an authentic phone or tablet bezel. Screenshot Bro ships pixel-accurate frames for the latest iPhones, iPads, MacBooks, and a generic Android catalog."),
+                .paragraph("Device frames wrap your screenshot in an authentic device bezel. Screenshot Bro ships pixel-accurate frames for iPhone, iPad, Mac, Apple Watch, and Android-style layouts."),
                 .heading("Categories"),
-                .bullet("**iPhone** — iPhone 17, Air, Pro, Pro Max with the latest color variants."),
+                .bullet("**iPhone** — iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max, and 3D iPhone options."),
                 .bullet("**iPad Pro 11\"** and **iPad Pro 13\"** — current generation with portrait and landscape."),
-                .bullet("**MacBook** — MacBook Air 13\", MacBook Pro 14\", MacBook Pro 16\", iMac 24\"."),
-                .bullet("**Android Phone** and **Android Tablet** — generic frames that flex to match the aspect ratio of any dropped screenshot."),
+                .bullet("**Mac** — MacBook Air 13\", MacBook Pro 14\", MacBook Pro 16\", and iMac 24\"."),
+                .bullet("**Android Phone**, **Abstract Pixel 9**, and **Android Tablet** — abstract frames that flex to match the aspect ratio of dropped screenshots."),
+                .bullet("**Watch** — Apple Watch Ultra 3 frame variants."),
                 .bullet("**Invisible** — no visible bezel, just the screenshot. Useful for clipped layouts or abstract designs."),
                 .heading("Picking a model and color"),
                 .bullet("With a device shape selected, click the device thumbnail in the properties bar to open the picker."),
                 .bullet("Models are grouped by category. Each shows available colors as small swatches."),
                 .bullet("Switching color preserves the screenshot and any rotation."),
                 .heading("Landscape mode"),
-                .bullet("Devices that support landscape (iPad, MacBook) auto-rotate the frame to match the dropped screenshot's aspect ratio."),
-                .bullet("Manual rotation via the rotation control on the properties bar rotates the entire shape including frame and screen content."),
+                .bullet("Concrete frames with portrait and landscape variants switch to the matching orientation when Screenshot Bro can infer it from a dropped screenshot."),
+                .bullet("Use the orientation control for supported frames, or the rotation control to rotate the entire shape including frame and screen content."),
                 .heading("Image-based vs programmatic frames"),
                 .bullet("Most modern devices use **image-based frames** — high-res PNG bezels with precise screen insets defined per model."),
                 .bullet("Some abstract categories use **programmatic frames** rendered as SwiftUI shapes. They scale flawlessly to any resolution."),
@@ -488,8 +489,9 @@ extension HelpSection {
                 .heading("Pan & zoom"),
                 .bullet("Scroll vertically to navigate rows."),
                 .bullet("Hold the **middle mouse button** and drag to pan."),
-                .bullet("**⌘+** / **⌘−** zoom in/out, **⌘0** resets to 100%, **F** focuses on the current selection."),
-                .bullet("The zoom slider in the toolbar ranges from 50% to 200% in 25% steps."),
+                .bullet("**⌘+** / **⌘−** zoom in/out, **⌘0** resets to the default zoom, **F** focuses on the current selection."),
+                .bullet("Trackpad pinch and **⌘ + Scroll** also zoom on macOS."),
+                .bullet("The toolbar zoom control ranges from 25% to 300% in 25% steps, with Fit and Actual Size actions in the popover."),
                 .tip("If a shape spans across templates and you only see part of it, that's expected — each template clips shapes to its own bounds. Switch to a different template view or use **F** to focus on the whole shape."),
             ]
         )
@@ -500,25 +502,25 @@ extension HelpSection {
             title: "Languages & Translations",
             subtitle: "Translate text once, lay it out once, ship every language.",
             blocks: [
-                .paragraph("Languages let you generate localized screenshot sets without duplicating your project. Each language shares the same layout and shapes; only text properties (content, font, size, alignment) are overridden per language."),
+                .paragraph("Languages let you generate localized screenshot sets without duplicating your project. Each language shares the same shape set and can keep its own text, text styling, image assignments, and layout adjustments where a translation needs more space."),
                 .heading("Adding languages"),
                 .bullet("Open the **Language** menu in the toolbar, or use **Language ▸ Manage Languages…** in the menu bar."),
-                .bullet("Pick from 30 built-in language presets, or define a custom code."),
+                .bullet("Pick from the built-in language presets, or define a custom code."),
                 .bullet("The first language you add is the **base language** — the one whose text is the source of truth."),
                 .heading("Switching the active language"),
                 .bullet("**⌘]** / **⌘[** cycle forward / backward through languages."),
                 .bullet("**⌘⌥0** jumps back to the base language."),
                 .bullet("When editing a non-base language, a banner appears at the top of the canvas reminding you which language you're in."),
                 .heading("How translations work"),
-                .bullet("In a non-base language, edits to text shapes are saved as **per-language overrides** — they don't change the base."),
-                .bullet("Other shape properties (position, size, color, image) are shared across all languages. Edit them once and every language picks up the change."),
-                .bullet("If a language has no override for a text shape, it falls back to the base language's text."),
+                .bullet("In a non-base language, edits are saved as **per-language overrides** — they don't change the base language."),
+                .bullet("Text content and styling, image replacements, and position/size adjustments can differ by language. Shared properties such as colors and device choices are edited in the base language."),
+                .bullet("If a language has no override for a shape, it falls back to the base language's content."),
                 .heading("Translation helpers"),
                 .bullet("**Auto-Translate Missing Text** — fills in text shapes that don't yet have an override for the current language."),
                 .bullet("**Re-Translate All Text…** — replaces every existing override with a fresh translation. Use after editing the base language's text."),
                 .bullet("**Translate Selected to All Languages** — appears in the language bar when editing the base language with text shapes selected. Translates the selection into every other language at once."),
                 .bullet("**Revert to Base Language…** — drops all overrides for the current language, falling back to base text everywhere."),
-                .bullet("**Edit Translations…** — open a side-by-side editor showing every text shape with its base content and per-language overrides."),
+                .bullet("**Edit Translation Table…** — open a side-by-side editor showing every text shape with its base content and per-language overrides."),
                 .heading("Exporting with languages"),
                 .bullet("On export, Screenshot Bro creates one folder per language, then sub-folders per row. The structure matches what App Store Connect's localized screenshot uploads expect."),
             ]
@@ -532,8 +534,8 @@ extension HelpSection {
             blocks: [
                 .heading("Screenshots"),
                 .bullet("Drag and drop a PNG / JPEG onto a template to attach it as a device screenshot. A device shape is auto-created if needed."),
-                .bullet("**Batch import**: drop multiple screenshots at once. Screenshot Bro inspects each image's pixel dimensions and routes it to the matching device row (iPhone vs iPad vs Android)."),
-                .bullet("If a screenshot doesn't match any existing row, a new row is offered."),
+                .bullet("**Batch import**: drop multiple screenshots onto a row. Screenshot Bro fills existing device shapes in template order, then appends templates as needed."),
+                .bullet("Recognized screenshot dimensions are used to pick an appropriate device category or frame when possible."),
                 .heading("Background images"),
                 .bullet("Drop directly into the background image well in the inspector, or pick via the file dialog."),
                 .bullet("Both raster and SVG images are supported as backgrounds."),
@@ -542,10 +544,10 @@ extension HelpSection {
                 .bullet("Paste SVG markup directly. Width and height are auto-detected; you can override them."),
                 .bullet("SVGs are sanitized — script and event handlers are stripped before rendering."),
                 .heading("Custom fonts"),
-                .bullet("**Settings ▸ General ▸ Custom Fonts** — pick `.otf` / `.ttf` files to register them with the app."),
+                .bullet("Open a text shape's font picker and choose **Pick custom font** to import `.otf` / `.ttf` files or a folder of font variants."),
                 .bullet("Imported fonts are bundled with the project so they survive iCloud sync and project transfer."),
                 .bullet("Fonts appear in the text shape font picker once registered."),
-                .tip("To capture screenshots from a connected simulator quickly, use the screenshot capture button in the template control bar — it pulls the most recent simulator screenshot directly into the template."),
+                .tip("Dropping a folder or a group of image files onto a row is the fastest way to fill a screenshot set in order."),
             ]
         )
     }
@@ -556,22 +558,23 @@ extension HelpSection {
             subtitle: "Produce store-ready PNGs and JPEGs.",
             blocks: [
                 .heading("Quick export"),
-                .bullet("Click **Export** in the toolbar to render the current project to PNG."),
-                .bullet("By default, Screenshot Bro exports every language, every row, and every template at 1× scale."),
+                .bullet("Click **Export** in the toolbar, or press **⌘E**, to render the current project to the remembered export folder. If no folder is set, Screenshot Bro asks you to choose one."),
+                .bullet("Use the export menu for **Export All Screenshots to Folder…**, row exports, showcase exports, per-language exports, and App Store Connect upload."),
                 .bullet("File names are zero-padded (`01_…`, `02_…`) so they sort correctly when uploaded."),
-                .heading("Format and scale"),
+                .heading("Format and naming"),
                 .bullet("**Settings ▸ Export ▸ Format**: PNG or JPEG. PNG is recommended for marketing screenshots."),
-                .bullet("**Scale**: 1×, 2×, or 3×. The App Store and Google Play require exact pixel dimensions, so keep this at 1× unless you specifically need oversized assets."),
+                .bullet("**Custom filename suffix**: add a suffix to every exported screenshot filename."),
+                .bullet("Exports use the row's exact pixel dimensions so App Store and Google Play sizes stay correct."),
                 .heading("Folder structure"),
                 .bullet("With one language and one row: a flat folder of templates."),
                 .bullet("With multiple languages: a top-level folder per language."),
                 .bullet("With multiple rows: a sub-folder per row label (e.g. `iPhone 6.9\"`, `iPad 13\"`)."),
                 .bullet("This mirrors the upload flow expected by App Store Connect's localized screenshot uploader."),
                 .heading("Export folder memory"),
-                .bullet("Screenshot Bro remembers the last folder you exported to (security-scoped bookmark)."),
-                .bullet("Toggle **Open export folder on success** in Settings to auto-reveal the result in Finder."),
+                .bullet("Set **Settings ▸ Export ▸ Export folder** to make **⌘E** export directly without prompting."),
+                .bullet("Toggle **Reveal in Finder after export** in Settings to auto-reveal the result."),
                 .heading("Preview vs export"),
-                .bullet("Use the **Export Preview** button in the template control bar to render a single template to a preview window — handy for spot-checking without going through the full export flow."),
+                .bullet("Use the **Quick Look** button in the template control bar to preview rendered screenshots without going through the full export flow."),
                 .bullet("Editor and export must always match exactly. If they don't, please report it as a bug."),
             ]
         )
@@ -585,14 +588,14 @@ extension HelpSection {
                 .paragraph("Connect your App Store Connect API key once and Screenshot Bro can upload exported screenshots to a specific app version without leaving the app."),
                 .heading("Set up an API key"),
                 .bullet("Go to **App Store Connect ▸ Users and Access ▸ Integrations ▸ App Store Connect API**."),
-                .bullet("Create a key with **App Manager** access. Download the `.p8` private key file (you can only download it once)."),
+                .bullet("Create a key with permission to edit app metadata. Account Holder, Admin, or App Manager roles are typical for screenshot uploads. Download the `.p8` private key file (you can only download it once)."),
                 .bullet("Note the **Issuer ID** and **Key ID**."),
-                .bullet("In Screenshot Bro: **Settings ▸ App Store Connect**, paste the Issuer ID and Key ID, and import the `.p8` file."),
+                .bullet("In Screenshot Bro: **Settings ▸ App Store Connect**, paste the Issuer ID and Key ID, import the `.p8` file, then run **Test Connection**."),
                 .heading("Uploading"),
-                .bullet("Run an export first, then click **Upload to App Store Connect** in the toolbar."),
-                .bullet("Pick the app and version. Screenshot Bro maps each row to the right device family automatically."),
+                .bullet("Click **Upload to App Store Connect…** from the export menu. Screenshot Bro renders the selected screenshots directly from the project."),
+                .bullet("Pick the app and an editable version, review metadata, then confirm the upload plan."),
                 .bullet("You can preview which screenshots will be uploaded for which locale before confirming."),
-                .tip("App Store Connect allows up to 10 screenshots per device family per locale. Screenshot Bro respects template ordering so the first 10 templates in each row will be uploaded in order."),
+                .tip("App Store Connect requires 3–10 screenshots per display type and locale. Screenshot Bro respects template ordering when uploading."),
             ]
         )
     }
@@ -612,7 +615,7 @@ extension HelpSection {
                 .bullet("Deletions are tracked as **tombstones** for 30 days, so a delete on Mac A correctly propagates to Mac B even if the device is offline at the moment of deletion."),
                 .bullet("File coordination (`NSFileCoordinator`) prevents corruption from concurrent reads/writes."),
                 .heading("Knowing what's syncing"),
-                .bullet("The toolbar shows an iCloud status icon when an upload or download is in progress."),
+                .bullet("The Projects screen shows sync progress while iCloud is uploading or downloading."),
                 .bullet("Behind the scenes, an `NSMetadataQuery` watches each project for upload/download progress."),
                 .tip("If sync seems stuck, open Finder ▸ iCloud Drive ▸ Screenshot Bro and check whether files are still uploading. Toggling iCloud off and on again forces a re-scan."),
             ]
@@ -628,19 +631,18 @@ extension HelpSection {
                 .bullet("**Appearance** — Auto / Light / Dark."),
                 .bullet("**Language** — override the app interface language. Requires a relaunch."),
                 .bullet("**Default screenshot size** — used when creating new rows."),
-                .bullet("**Default device** — pre-selects a device category and model for new rows."),
-                .bullet("**Default templates per row** — number of empty templates a new row starts with."),
+                .bullet("**Default device frame** — pre-selects a device category and model for new rows."),
+                .bullet("**Screenshots per new row** — number of empty templates a new row starts with."),
                 .bullet("**Default zoom** — initial zoom level when opening the app."),
-                .bullet("**Confirm before deleting** — show a confirmation prompt for destructive actions on rows and screenshots."),
-                .bullet("**Project order** — Creation date or Manual."),
-                .bullet("**Custom fonts** — manage imported `.otf`/`.ttf` files."),
+                .bullet("**Ask before deleting rows and screenshots** — show a confirmation prompt for destructive row and screenshot actions."),
+                .bullet("**Project order** — By creation date or Alphabetically."),
                 .bullet("**iCloud sync** — toggle and check status."),
-                .bullet("**Back up projects** — write a one-off zip of your project library to a folder you choose."),
+                .bullet("**Storage** — open the project library in Finder or create a one-off backup zip."),
                 .heading("Export"),
                 .bullet("**Format** — PNG or JPEG."),
-                .bullet("**Scale** — 1×, 2×, 3×."),
-                .bullet("**Open export folder on success** — auto-reveal results in Finder."),
-                .bullet("**Last export folder** — Screenshot Bro remembers and reuses your folder choice."),
+                .bullet("**Custom filename suffix** — append a suffix to exported screenshot filenames."),
+                .bullet("**Reveal in Finder after export** — auto-reveal results in Finder."),
+                .bullet("**Export folder** — choose or clear the folder Screenshot Bro reuses for **⌘E**."),
                 .heading("App Store Connect"),
                 .bullet("API key, Issuer ID, Key ID. See the App Store Connect topic."),
                 .heading("Purchase"),
@@ -664,8 +666,7 @@ extension HelpSection {
                 .bullet("Watermark-free exports."),
                 .heading("Pro"),
                 .bullet("Unlimited projects, rows, and templates."),
-                .bullet("App Store Connect upload."),
-                .bullet("iCloud sync."),
+                .bullet("No row or screenshot-column limits when building larger launch sets."),
                 .bullet("Future Pro-only features as they ship."),
                 .heading("Buying or restoring"),
                 .bullet("**Settings ▸ Purchase** lists the available plans. RevenueCat handles the transaction."),
@@ -681,16 +682,16 @@ extension HelpSection {
             title: "Tips & Tricks",
             subtitle: "Small things that save time.",
             blocks: [
-                .bullet("**Drop folders, not files.** Drag a folder of screenshots onto the canvas — Screenshot Bro will batch-import and route by device size."),
+                .bullet("**Drop groups of screenshots together.** Select several image files and drop them onto a row — Screenshot Bro fills templates in order and detects device category/frame where possible."),
                 .bullet("**Span backgrounds for storytelling.** Turn on row spanning and use a wide gradient or panoramic image to make a 3-template carousel feel like one continuous scene."),
                 .bullet("**Lock aspect when resizing icons** by holding **⇧** while dragging a corner handle."),
                 .bullet("**Duplicate while dragging** with **⌥**. Combined with snap, this is the fastest way to lay out a row of equal-sized cards."),
                 .bullet("**Type rotation degrees directly.** The rotation field accepts text input — type `45` for an exact 45° rotation instead of dragging."),
-                .bullet("**Use the SVG button for icons.** SVG scales infinitely, so your hero icon stays crisp at 1×, 2×, or 3× export."),
+                .bullet("**Use the SVG button for icons.** SVG scales infinitely, so your hero icon stays crisp at export size."),
                 .bullet("**Re-translate after editing base text.** If you change the base headline, run **Language ▸ Re-Translate All Text…** (or use **Translate Selected to All Languages** in the language bar with the edited text selected) so every language picks up the new wording."),
                 .bullet("**Use Invisible category for clipped designs.** When you want the screenshot to bleed off the canvas with no bezel, pick the Invisible device category."),
                 .bullet("**Pin frequently used projects.** Right-click in the project picker to pin and keep them at the top."),
-                .bullet("**Preview before exporting.** The export preview button on each template renders just that one template — handy for spot-checks."),
+                .bullet("**Preview before exporting.** The Quick Look button on each template renders the row's screenshots and opens the preview at that template — handy for spot-checks."),
                 .bullet("**Custom fonts persist.** Imported fonts are bundled per project, so a project shared via iCloud or zip backup keeps its typography."),
             ]
         )
@@ -707,14 +708,18 @@ private struct ShortcutsHelp: View {
 
     private let groups: [Group] = [
         Group(title: "File", rows: [
-            ("⌘N", "New project")
+            ("⌘N", "New project"),
+            ("⌘E", "Export screenshots")
         ]),
         Group(title: "Edit", rows: [
-            ("⌘C", "Copy selected shapes (or text in fields)"),
-            ("⌘X", "Cut selected shapes"),
-            ("⌘V", "Paste shapes"),
-            ("⌘A", "Select all shapes in the active row"),
+            ("⌘Z", "Undo"),
+            ("⌘⇧Z", "Redo"),
+            ("⌘C", "Copy selected shapes, or focused text"),
+            ("⌘X", "Cut focused text"),
+            ("⌘V", "Paste shapes, images, SVGs, or focused text"),
+            ("⌘A", "Select all shapes in the active row, or focused text"),
             ("⌘D", "Duplicate selected shapes / row"),
+            ("⌘L", "Lock or unlock selected shapes"),
             ("Delete", "Delete selected shapes"),
             ("Esc", "Deselect"),
             ("⌘⇧]", "Bring shape to front"),
@@ -726,8 +731,9 @@ private struct ShortcutsHelp: View {
         Group(title: "View", rows: [
             ("⌘+", "Zoom in"),
             ("⌘−", "Zoom out"),
-            ("⌘0", "Actual size (100%)"),
+            ("⌘0", "Reset to default zoom"),
             ("F", "Focus on selection"),
+            ("Pinch / ⌘ + Scroll", "Zoom canvas"),
             ("Middle-click + drag", "Pan canvas"),
         ]),
         Group(title: "Language", rows: [
@@ -739,11 +745,14 @@ private struct ShortcutsHelp: View {
             ("Double-click text", "Enter inline edit mode"),
             ("Esc / click outside", "Commit text edit"),
         ]),
+        Group(title: "Help", rows: [
+            ("⌘?", "Open Screenshot Bro Help"),
+        ]),
     ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HelpHeader("Keyboard Shortcuts", subtitle: "Everything you can do without the mouse.")
+            HelpHeader("Keyboard Shortcuts", subtitle: "Mac keyboard shortcuts and canvas gestures.")
             ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
                 VStack(alignment: .leading, spacing: 8) {
                     HelpHeading(group.title, topPadding: 0)
@@ -774,7 +783,7 @@ private struct SupportHelp: View {
             HelpBullet("macOS version (Apple menu ▸ About This Mac).")
             HelpBullet("Screenshot Bro version (Apple menu ▸ About Screenshot Bro).")
             HelpBullet("Steps to reproduce, ideally with a screen recording.")
-            HelpBullet("If the issue affects a project, **Settings ▸ Export ▸ Back Up Projects** and attach the resulting backup so we can reproduce on the exact data.")
+            HelpBullet("If the issue affects a project, use **Settings ▸ General ▸ Storage ▸ Create Backup…** and attach the resulting backup so we can reproduce on the exact data.")
 
             HelpHeading("Legal")
             HelpBullet("[Privacy Policy](https://screenshotbro.app/privacy)")
