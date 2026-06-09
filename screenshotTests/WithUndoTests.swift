@@ -114,4 +114,125 @@ struct WithUndoTests {
         #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == baseX, "Whole burst reverts at once")
         #expect(!um.canUndo, "A continuous burst is a single undo step")
     }
+
+    @Test func documentUndoFlushesPendingContinuousEditImmediately() {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.fontSize = 48
+        state.addShape(shape)
+        um.removeAllActions()
+
+        var updated = state.rows.first!.shapes.first { $0.id == shape.id }!
+        updated.fontSize = 96
+        state.updateShapeContinuous(updated)
+
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontSize == 96)
+        #expect(!um.canUndo, "The debounced continuous edit has not registered yet")
+        #expect(state.canUndoDocumentAction, "Document undo must be enabled while a continuous edit is pending")
+
+        state.undoDocumentAction()
+
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontSize == 48)
+        #expect(!state.canUndoDocumentAction, "The immediate undo consumed the flushed continuous edit")
+    }
+
+    @Test func redoIsUnavailableWhileContinuousEditPending() {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.fontSize = 48
+        state.addShape(shape)
+        um.removeAllActions()
+
+        // A discrete edit then undo leaves a redoable action on the stack.
+        var edited = state.rows.first!.shapes.first { $0.id == shape.id }!
+        edited.fontSize = 72
+        state.updateShape(edited)
+        state.undoDocumentAction()
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontSize == 48)
+        #expect(state.canRedoDocumentAction, "Redo of the discrete edit is available")
+
+        // Start a continuous edit (debounced — not yet registered).
+        var dragged = state.rows.first!.shapes.first { $0.id == shape.id }!
+        dragged.fontSize = 96
+        state.updateShapeContinuous(dragged)
+
+        #expect(!state.canRedoDocumentAction, "Redo must be disabled while a continuous edit is pending")
+
+        // Invoking redo commits the pending edit instead of silently discarding it; redo is a no-op.
+        state.redoDocumentAction()
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontSize == 96, "Pending continuous edit was committed")
+    }
+
+    @Test func systemFontFamilyUndoRedoCycles() {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        let shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        state.addShape(shape)
+        um.removeAllActions()
+
+        var updated = state.rows.first!.shapes.first { $0.id == shape.id }!
+        updated.fontName = "Helvetica"
+        RichTextUtils.syncShapeStyleIfNeeded(in: &updated, property: .fontName)
+        state.updateShape(updated)
+
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontName == "Helvetica")
+
+        state.undoDocumentAction()
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontName == nil)
+
+        state.redoDocumentAction()
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontName == "Helvetica")
+    }
+
+    @Test func importedFontSelectionUndoesAsOneStep() {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        var shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        shape.fontName = "System"
+        shape.fontWeight = 400
+        shape.italic = false
+        state.addShape(shape)
+        um.removeAllActions()
+
+        let imported = ImportedCustomFontSelection(
+            fontName: "Family Bold Italic",
+            fontWeight: 700,
+            italic: true
+        )
+        var updated = state.rows.first!.shapes.first { $0.id == shape.id }!
+        RichTextUtils.applyImportedFontSelection(imported, to: &updated, property: .fontName)
+        state.updateShape(updated)
+
+        let applied = state.rows.first!.shapes.first { $0.id == shape.id }!
+        #expect(applied.fontName == "Family Bold Italic")
+        #expect(applied.fontWeight == 700)
+        #expect(applied.italic == true)
+
+        state.undoDocumentAction()
+        let reverted = state.rows.first!.shapes.first { $0.id == shape.id }!
+        #expect(reverted.fontName == "System")
+        #expect(reverted.fontWeight == 400)
+        #expect(reverted.italic == false)
+        #expect(!um.canUndo, "Imported font selection should be one undo step")
+
+        state.redoDocumentAction()
+        let redone = state.rows.first!.shapes.first { $0.id == shape.id }!
+        #expect(redone.fontName == "Family Bold Italic")
+        #expect(redone.fontWeight == 700)
+        #expect(redone.italic == true)
+    }
 }

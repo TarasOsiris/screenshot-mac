@@ -32,6 +32,39 @@ struct ScreenshotBroApp: App {
         OnboardingPersistence.prepareForLaunch()
     }
 
+    #if os(macOS)
+    // Any focused text view — the canvas inline editor *or* an ordinary field editor
+    // (font size, row label, locale name, …) — owns Cmd+Z so typing undoes in place.
+    // Matches the firstResponder check used by the Cut/Copy/Paste commands below.
+    private var textEditorHasFocus: Bool {
+        NSApp.keyWindow?.firstResponder is NSTextView
+    }
+
+    private var undoCommandDisabled: Bool {
+        textEditorHasFocus ? false : !appState.canUndoDocumentAction
+    }
+
+    private var redoCommandDisabled: Bool {
+        textEditorHasFocus ? false : !appState.canRedoDocumentAction
+    }
+
+    private func performUndoCommand() {
+        if textEditorHasFocus {
+            NSApp.sendAction(Selector(("undo:")), to: nil, from: nil)
+        } else {
+            appState.undoDocumentAction()
+        }
+    }
+
+    private func performRedoCommand() {
+        if textEditorHasFocus {
+            NSApp.sendAction(Selector(("redo:")), to: nil, from: nil)
+        } else {
+            appState.redoDocumentAction()
+        }
+    }
+    #endif
+
     var body: some Scene {
         #if os(macOS)
         Window("Screenshot Bro", id: AppRootView.windowID) {
@@ -94,6 +127,16 @@ struct ScreenshotBroApp: App {
             NewProjectCommands()
             MainWindowCommands()
             HelpCommands()
+
+            CommandGroup(replacing: .undoRedo) {
+                Button("Undo", action: performUndoCommand)
+                    .keyboardShortcut("z", modifiers: .command)
+                    .disabled(undoCommandDisabled)
+
+                Button("Redo", action: performRedoCommand)
+                    .keyboardShortcut("z", modifiers: [.command, .shift])
+                    .disabled(redoCommandDisabled)
+            }
 
             CommandGroup(replacing: .pasteboard) {
                 Section {

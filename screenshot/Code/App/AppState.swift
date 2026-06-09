@@ -366,6 +366,28 @@ final class AppState {
         undoManager.setActionName(actionName)
     }
 
+    var canUndoDocumentAction: Bool {
+        hasPendingContinuousEdit || (undoManager?.canUndo ?? false)
+    }
+
+    // A pending continuous edit is the user's most recent change: committing it (the flush
+    // inside redoDocumentAction) registers a fresh undo step, which clears the redo stack.
+    // So redo is unavailable while one is pending — the inverse of canUndoDocumentAction.
+    var canRedoDocumentAction: Bool {
+        !hasPendingContinuousEdit && (undoManager?.canRedo ?? false)
+    }
+
+    func undoDocumentAction() {
+        finishContinuousEditIfNeeded()
+        undoManager?.undo()
+    }
+
+    func redoDocumentAction() {
+        finishContinuousEditIfNeeded()
+        guard undoManager?.canRedo == true else { return }
+        undoManager?.redo()
+    }
+
     // MARK: - Helpers
 
     func shapeLocation(for shapeId: UUID) -> (rowIndex: Int, shapeIndex: Int)? {
@@ -416,6 +438,18 @@ final class AppState {
         continuousEditBaseLocaleState = nil
         continuousEditShapeId = nil
         continuousEditLastApply = 0
+    }
+
+    private var hasPendingContinuousEdit: Bool {
+        continuousEditBaseRow != nil
+            || continuousEditPending != nil
+            || continuousEditUndoTask != nil
+            || continuousEditFlushTask != nil
+            || continuousRowEditBaseRow != nil
+            || continuousRowEditWorkingRow != nil
+            || continuousRowEditHasPendingApply
+            || continuousRowEditUndoTask != nil
+            || continuousRowEditFlushTask != nil
     }
 
     func finishContinuousEditIfNeeded() {
