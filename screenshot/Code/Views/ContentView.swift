@@ -220,7 +220,6 @@ struct ContentView: View {
         .overlay {
             if state.isEditingText,
                let selectionState = state.richTextSelectionState,
-               selectionState.hasRangeSelection,
                let anchor = state.richTextFormatBarAnchor,
                let controller = state.richTextFormatController {
                 GeometryReader { proxy in
