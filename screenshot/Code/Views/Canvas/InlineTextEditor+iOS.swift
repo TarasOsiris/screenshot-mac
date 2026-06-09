@@ -331,6 +331,8 @@ final class RichTextFormatController: ObservableObject {
         shouldEncodeRichText = true
 
         if range.length > 0 {
+            let prior = NSAttributedString(attributedString: storage)
+            let priorShouldEncode = shouldEncodeRichText
             storage.beginEditing()
             switch action {
             case .toggleBold:
@@ -358,13 +360,41 @@ final class RichTextFormatController: ObservableObject {
                 pendingClearFormatting = true
             }
             storage.endEditing()
-            textView.delegate?.textViewDidChange?(textView)
+            // Only register undo and re-encode when the action actually changed the text.
+            // SwiftUI's ColorPicker re-fires its binding with the already-applied color,
+            // which would otherwise register a phantom no-op "undo nothing" step.
+            if !storage.isEqual(to: prior) {
+                registerFormattingUndo(restoring: prior, shouldEncode: priorShouldEncode, on: textView)
+                textView.delegate?.textViewDidChange?(textView)
+            }
         } else {
             textView.typingAttributes = updatedTypingAttributes(for: textView.typingAttributes, action: action)
             hasPendingTypingAttributes = true
         }
 
         refreshSelectionState()
+    }
+
+    /// Records an undo step on the text view's own manager that restores the whole
+    /// attributed string `prior`, so undo reverts programmatic formatting (direct textStorage
+    /// mutation otherwise registers nothing). `shouldEncode` is the pre-action encode flag, so
+    /// undoing a clear (which sets it false) re-enables encoding — otherwise textViewDidChange
+    /// would skip re-encoding and the restored formatting would be dropped on commit. The undo
+    /// block snapshots the live state and re-registers itself, giving redo.
+    private func registerFormattingUndo(restoring prior: NSAttributedString, shouldEncode: Bool, on textView: UITextView) {
+        guard let undoManager = textView.undoManager else { return }
+        undoManager.registerUndo(withTarget: textView) { [weak self] tv in
+            let storage = tv.textStorage
+            let redoPrior = NSAttributedString(attributedString: storage)
+            let redoShouldEncode = self?.shouldEncodeRichText ?? false
+            self?.registerFormattingUndo(restoring: redoPrior, shouldEncode: redoShouldEncode, on: tv)
+            self?.shouldEncodeRichText = shouldEncode
+            storage.beginEditing()
+            storage.setAttributedString(prior)
+            storage.endEditing()
+            tv.delegate?.textViewDidChange?(tv)
+        }
+        undoManager.setActionName("Format Text")
     }
 
     private func updatedTypingAttributes(

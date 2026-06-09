@@ -36,8 +36,12 @@ struct ScreenshotBroApp: App {
     // Any focused text view — the canvas inline editor *or* an ordinary field editor
     // (font size, row label, locale name, …) — owns Cmd+Z so typing undoes in place.
     // Matches the firstResponder check used by the Cut/Copy/Paste commands below.
+    private var focusedTextView: NSTextView? {
+        NSApp.keyWindow?.firstResponder as? NSTextView
+    }
+
     private var textEditorHasFocus: Bool {
-        NSApp.keyWindow?.firstResponder is NSTextView
+        focusedTextView != nil
     }
 
     private var undoCommandDisabled: Bool {
@@ -48,17 +52,21 @@ struct ScreenshotBroApp: App {
         textEditorHasFocus ? false : !appState.canRedoDocumentAction
     }
 
+    // Drive the focused text view's *own* undo manager directly. The inline editor uses a
+    // private session manager (InlineTextEditor.Coordinator), so routing through the window's
+    // undo: would miss it and undo nothing. When a text view is focused it always owns undo —
+    // never fall through to the document, which would undo a different screenshot.
     private func performUndoCommand() {
-        if textEditorHasFocus {
-            NSApp.sendAction(Selector(("undo:")), to: nil, from: nil)
+        if let textView = focusedTextView {
+            textView.undoManager?.undo()
         } else {
             appState.undoDocumentAction()
         }
     }
 
     private func performRedoCommand() {
-        if textEditorHasFocus {
-            NSApp.sendAction(Selector(("redo:")), to: nil, from: nil)
+        if let textView = focusedTextView {
+            textView.undoManager?.redo()
         } else {
             appState.redoDocumentAction()
         }
@@ -146,7 +154,7 @@ struct ScreenshotBroApp: App {
                     .keyboardShortcut("x", modifiers: .command)
 
                     Button("Copy") {
-                        if let responder = NSApp.keyWindow?.firstResponder, responder is NSTextView {
+                        if focusedTextView != nil {
                             NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: nil)
                         } else {
                             appState.copySelectedShapes()
@@ -155,7 +163,7 @@ struct ScreenshotBroApp: App {
                     .keyboardShortcut("c", modifiers: .command)
 
                     Button("Paste") {
-                        if let responder = NSApp.keyWindow?.firstResponder, responder is NSTextView {
+                        if focusedTextView != nil {
                             NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: nil)
                         } else {
                             appState.pasteShapes()
@@ -164,7 +172,7 @@ struct ScreenshotBroApp: App {
                     .keyboardShortcut("v", modifiers: .command)
 
                     Button("Select All") {
-                        if let responder = NSApp.keyWindow?.firstResponder, responder is NSTextView {
+                        if focusedTextView != nil {
                             NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: nil)
                         } else {
                             appState.selectAllShapesInRow()
