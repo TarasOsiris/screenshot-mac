@@ -11,7 +11,7 @@ struct AppStoreConnectUploadValidatorTests {
         let localeTarget = UploadToAppStoreConnectView.LocaleTarget(
             appLocaleCode: "en",
             appLocaleLabel: "English",
-            selectedASCLocalizationId: localization.id,
+            selectedASCLocalizationIds: [localization.id],
             candidates: [localization],
             isEnabled: true
         )
@@ -62,7 +62,7 @@ struct AppStoreConnectUploadValidatorTests {
             UploadToAppStoreConnectView.LocaleTarget(
                 appLocaleCode: localization.attributes.locale,
                 appLocaleLabel: localization.attributes.locale,
-                selectedASCLocalizationId: localization.id,
+                selectedASCLocalizationIds: [localization.id],
                 candidates: [localization],
                 isEnabled: true
             )
@@ -102,7 +102,7 @@ struct AppStoreConnectUploadValidatorTests {
         let localeTarget = UploadToAppStoreConnectView.LocaleTarget(
             appLocaleCode: "en",
             appLocaleLabel: "English",
-            selectedASCLocalizationId: localization.id,
+            selectedASCLocalizationIds: [localization.id],
             candidates: [localization],
             isEnabled: true
         )
@@ -153,7 +153,7 @@ struct AppStoreConnectUploadValidatorTests {
         let localeTarget = UploadToAppStoreConnectView.LocaleTarget(
             appLocaleCode: "en",
             appLocaleLabel: "English",
-            selectedASCLocalizationId: localization.id,
+            selectedASCLocalizationIds: [localization.id],
             candidates: [localization],
             isEnabled: true
         )
@@ -179,5 +179,53 @@ struct AppStoreConnectUploadValidatorTests {
         ]
         let issues = ASCUploadValidator.validate(version: version, plans: plans)
         #expect(!issues.contains { $0.severity == .warning })
+    }
+
+    @Test func assignFansBroadCodeToEveryRegionVariant() {
+        let locs = ["en-US", "en-GB", "en-CA"].map {
+            ASCAppStoreVersionLocalization(id: "loc-\($0)", attributes: .init(locale: $0))
+        }
+        let assignment = ASCLocaleMatcher.assign(appCodes: ["en"], to: locs)
+        #expect(Set((assignment["en"] ?? []).map(\.id)) == Set(locs.map(\.id)))
+    }
+
+    @Test func assignDeconflictsSpecificCodeFromBroadCode() {
+        let locs = ["en-US", "en-GB", "en-CA"].map {
+            ASCAppStoreVersionLocalization(id: "loc-\($0)", attributes: .init(locale: $0))
+        }
+        let assignment = ASCLocaleMatcher.assign(appCodes: ["en", "en-GB"], to: locs)
+        #expect(assignment["en-GB"]?.map(\.attributes.locale) == ["en-GB"])
+        #expect(Set((assignment["en"] ?? []).map(\.attributes.locale)) == ["en-US", "en-CA"])
+    }
+
+    @Test func collidesWhenTwoRowsFanOutToSameAppStoreLocale() {
+        let locs = ["en-US", "en-GB"].map {
+            ASCAppStoreVersionLocalization(id: "loc-\($0)", attributes: .init(locale: $0))
+        }
+        let localeTarget = UploadToAppStoreConnectView.LocaleTarget(
+            appLocaleCode: "en",
+            appLocaleLabel: "English",
+            selectedASCLocalizationIds: Set(locs.map(\.id)),
+            candidates: locs,
+            isEnabled: true
+        )
+        let version = ASCAppStoreVersion(
+            id: "version-1",
+            attributes: .init(versionString: "1.0", appStoreState: "PREPARE_FOR_SUBMISSION", platform: "IOS")
+        )
+        func plan(_ label: String) -> UploadToAppStoreConnectView.RowPlan {
+            UploadToAppStoreConnectView.RowPlan(
+                id: UUID(),
+                rowLabel: label,
+                rowSize: CGSize(width: 2064, height: 2752),
+                templateCount: ASCUploadLimits.minScreenshotsPerSet,
+                isEnabled: true,
+                detectedDisplayType: .ipadPro129M4,
+                selectedDisplayType: .ipadPro129M4,
+                localeTargets: [localeTarget]
+            )
+        }
+        let issues = ASCUploadValidator.validate(version: version, plans: [plan("A"), plan("B")])
+        #expect(issues.contains { $0.scope == "B" && $0.message.contains("same App Store screenshot set") })
     }
 }

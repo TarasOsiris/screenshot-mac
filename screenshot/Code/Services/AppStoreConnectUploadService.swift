@@ -434,13 +434,28 @@ final class AppStoreConnectUploadService {
 }
 
 enum ASCLocaleMatcher {
-    /// Prefix-match "en" → "en-US"/"en-GB". Exact match wins alone.
-    static func matches(appCode: String, in localizations: [ASCAppStoreVersionLocalization]) -> [ASCAppStoreVersionLocalization] {
-        let lower = appCode.lowercased()
-        if let exact = localizations.first(where: { $0.attributes.locale.lowercased() == lower }) {
-            return [exact]
+    /// Assign each App Store localization to at most one project code so a broad code
+    /// ("en") doesn't double-claim a locale a more-specific code ("en-GB") already owns:
+    /// exact match wins, otherwise the longest matching prefix. Unmatched localizations
+    /// are dropped. Returns project code → its matched localizations.
+    static func assign(appCodes: [String], to localizations: [ASCAppStoreVersionLocalization]) -> [String: [ASCAppStoreVersionLocalization]] {
+        let lowered = appCodes.map { (code: $0, lower: $0.lowercased()) }
+        var result: [String: [ASCAppStoreVersionLocalization]] = [:]
+        for localization in localizations {
+            let ascLower = localization.attributes.locale.lowercased()
+            var bestCode: String?
+            var bestLength = -1
+            for (code, lower) in lowered {
+                let isMatch = ascLower == lower || ascLower.hasPrefix(lower + "-")
+                if isMatch && lower.count > bestLength {
+                    bestCode = code
+                    bestLength = lower.count
+                }
+            }
+            if let bestCode {
+                result[bestCode, default: []].append(localization)
+            }
         }
-        let prefix = lower + "-"
-        return localizations.filter { $0.attributes.locale.lowercased().hasPrefix(prefix) }
+        return result
     }
 }

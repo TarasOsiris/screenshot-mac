@@ -160,9 +160,13 @@ struct UploadToAppStoreConnectView: View {
         let id = UUID()
         var appLocaleCode: String
         var appLocaleLabel: String
-        var selectedASCLocalizationId: String?
+        var selectedASCLocalizationIds: Set<String>
         var candidates: [ASCAppStoreVersionLocalization]
         var isEnabled: Bool
+
+        var selectedCandidates: [ASCAppStoreVersionLocalization] {
+            candidates.filter { selectedASCLocalizationIds.contains($0.id) }
+        }
     }
 
     struct UploadPlanEntry: Identifiable {

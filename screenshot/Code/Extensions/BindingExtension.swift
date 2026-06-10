@@ -18,3 +18,17 @@ extension Binding {
         )
     }
 }
+
+extension Binding where Value: SetAlgebra {
+    /// A `Bool` binding for an element's membership in this set — insert on `true`,
+    /// remove on `false`. Useful for driving a `Toggle` per option in a multi-select.
+    func contains(_ element: Value.Element) -> Binding<Bool> {
+        Binding<Bool>(
+            get: { wrappedValue.contains(element) },
+            set: { isOn in
+                if isOn { wrappedValue.insert(element) }
+                else { wrappedValue.remove(element) }
+            }
+        )
+    }
+}

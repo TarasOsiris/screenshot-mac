@@ -477,26 +477,28 @@ private struct ASCLocaleTargetRow: View {
                     .foregroundStyle(.secondary)
             }
         } else {
-            Picker("", selection: $target.selectedASCLocalizationId) {
-                Text("Choose…").tag(String?.none)
+            VStack(alignment: .leading, spacing: 2) {
                 ForEach(target.candidates) { candidate in
-                    Text(candidate.attributes.locale).tag(Optional(candidate.id))
+                    Toggle(candidate.attributes.locale, isOn: $target.selectedASCLocalizationIds.contains(candidate.id))
+                        #if os(macOS)
+                        .toggleStyle(.checkbox)
+                        #else
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                        #endif
+                        .font(.caption)
+                        .disabled(!target.isEnabled)
                 }
             }
-            .labelsHidden()
-            #if os(iOS)
-            .pickerStyle(.menu)
-            #endif
-            .disabled(!target.isEnabled)
             selectedLocaleLabel
         }
     }
 
     @ViewBuilder
     private var selectedLocaleLabel: some View {
-        if let selectedId = target.selectedASCLocalizationId,
-           let selected = target.candidates.first(where: { $0.id == selectedId }) {
-            Text("-> \(selected.attributes.locale)")
+        let selected = target.selectedCandidates.map(\.attributes.locale)
+        if !selected.isEmpty {
+            Text("-> \(selected.joined(separator: ", "))")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }

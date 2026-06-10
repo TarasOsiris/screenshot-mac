@@ -44,6 +44,11 @@ struct LocaleDefinition: Codable, Identifiable, Equatable {
         ("bs", "Bosnian",     "🇧🇦"), ("is", "Icelandic",   "🇮🇸"), ("mt", "Maltese",     "🇲🇹"),
         ("ga", "Irish",       "🇮🇪"), ("cy", "Welsh",       "🏴󠁧󠁢󠁷󠁬󠁳󠁿"), ("eu", "Basque",      "🇪🇸"),
         ("gl", "Galician",    "🇪🇸"),
+        ("en-US", "English (US)",     "🇺🇸"), ("en-GB", "English (UK)",       "🇬🇧"),
+        ("en-CA", "English (Canada)", "🇨🇦"), ("en-AU", "English (Australia)", "🇦🇺"),
+        ("es-ES", "Spanish (Spain)",  "🇪🇸"), ("es-MX", "Spanish (Mexico)",   "🇲🇽"),
+        ("fr-FR", "French (France)",  "🇫🇷"), ("fr-CA", "French (Canada)",    "🇨🇦"),
+        ("zh-Hans", "Chinese (Simplified)", "🇨🇳"), ("zh-Hant", "Chinese (Traditional)", "🇹🇼"),
     ]
 
     private static let flagIndex: [String: String] = {

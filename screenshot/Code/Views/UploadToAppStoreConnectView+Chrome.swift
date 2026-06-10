@@ -198,15 +198,33 @@ extension UploadToAppStoreConnectView {
             let displayTypeLabel = plan.selectedDisplayType?.label ?? String(localized: "No display type selected")
             let displayTypeRawValue = plan.selectedDisplayType?.appStoreConnectValue ?? "none"
 
-            return plan.localeTargets.map { target in
-                let appStoreLocale = target.selectedASCLocalizationId.flatMap { selectedId in
-                    target.candidates.first(where: { $0.id == selectedId })?.attributes.locale
+            return plan.localeTargets.flatMap { target -> [UploadPlanEntry] in
+                func entry(idSuffix: String, appStoreLocaleCode: String?, isSelected: Bool, skipReason: String?) -> UploadPlanEntry {
+                    UploadPlanEntry(
+                        id: "\(plan.id.uuidString)-\(target.id.uuidString)\(idSuffix)",
+                        rowLabel: rowLabel,
+                        sourceSizeLabel: sourceSizeLabel,
+                        displayTypeLabel: displayTypeLabel,
+                        displayTypeRawValue: displayTypeRawValue,
+                        projectLocaleLabel: target.appLocaleLabel,
+                        projectLocaleCode: target.appLocaleCode,
+                        appStoreLocaleCode: appStoreLocaleCode,
+                        templateCount: plan.templateCount,
+                        isSelected: isSelected,
+                        skipReason: skipReason
+                    )
                 }
-                let isSelected = target.isEnabled && plan.selectedDisplayType != nil && appStoreLocale != nil
-                let skipReason: String?
-                if isSelected {
-                    skipReason = nil
-                } else if target.candidates.isEmpty {
+
+                let selectedCandidates = target.selectedCandidates
+                if target.isEnabled, plan.selectedDisplayType != nil, !selectedCandidates.isEmpty {
+                    // One entry per App Store destination this locale fans out to.
+                    return selectedCandidates.map { candidate in
+                        entry(idSuffix: "-\(candidate.id)", appStoreLocaleCode: candidate.attributes.locale, isSelected: true, skipReason: nil)
+                    }
+                }
+
+                let skipReason: String
+                if target.candidates.isEmpty {
                     skipReason = String(localized: "No matching App Store locale")
                 } else if !target.isEnabled {
                     skipReason = String(localized: "Unchecked")
@@ -215,20 +233,7 @@ extension UploadToAppStoreConnectView {
                 } else {
                     skipReason = String(localized: "No App Store locale selected")
                 }
-
-                return UploadPlanEntry(
-                    id: "\(plan.id.uuidString)-\(target.id.uuidString)",
-                    rowLabel: rowLabel,
-                    sourceSizeLabel: sourceSizeLabel,
-                    displayTypeLabel: displayTypeLabel,
-                    displayTypeRawValue: displayTypeRawValue,
-                    projectLocaleLabel: target.appLocaleLabel,
-                    projectLocaleCode: target.appLocaleCode,
-                    appStoreLocaleCode: appStoreLocale,
-                    templateCount: plan.templateCount,
-                    isSelected: isSelected,
-                    skipReason: skipReason
-                )
+                return [entry(idSuffix: "", appStoreLocaleCode: nil, isSelected: false, skipReason: skipReason)]
             }
         }
     }

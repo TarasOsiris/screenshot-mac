@@ -124,7 +124,7 @@ enum ASCUploadValidator {
                 ))
             }
 
-            let activeLocaleCount = plan.localeTargets.filter { $0.isEnabled && $0.selectedASCLocalizationId != nil }.count
+            let activeLocaleCount = plan.localeTargets.filter { $0.isEnabled && !$0.selectedASCLocalizationIds.isEmpty }.count
             if activeLocaleCount == 0 {
                 issues.append(ASCUploadIssue(
                     severity: .error,
@@ -136,24 +136,25 @@ enum ASCUploadValidator {
 
             var reportedCollisionPartners: Set<String> = []
             for localeTarget in plan.localeTargets where localeTarget.isEnabled {
-                guard let localizationId = localeTarget.selectedASCLocalizationId else { continue }
-                let uploadTargetKey = "\(localizationId)|\(displayType.appStoreConnectValue)"
-                if let existingRowName = seenAppStoreConnectTargets[uploadTargetKey] {
-                    // One error per colliding partner row, not per shared locale.
-                    if reportedCollisionPartners.insert(existingRowName).inserted {
-                        issues.append(ASCUploadIssue(
-                            severity: .error,
-                            scope: rowName,
-                            message: "This row uploads to the same App Store screenshot set as \(existingRowName).",
-                            hint: "Disable one of these rows or choose a different display type before uploading."
-                        ))
+                for localizationId in localeTarget.selectedASCLocalizationIds {
+                    let uploadTargetKey = "\(localizationId)|\(displayType.appStoreConnectValue)"
+                    if let existingRowName = seenAppStoreConnectTargets[uploadTargetKey] {
+                        // One error per colliding partner row, not per shared locale.
+                        if reportedCollisionPartners.insert(existingRowName).inserted {
+                            issues.append(ASCUploadIssue(
+                                severity: .error,
+                                scope: rowName,
+                                message: "This row uploads to the same App Store screenshot set as \(existingRowName).",
+                                hint: "Disable one of these rows or choose a different display type before uploading."
+                            ))
+                        }
+                    } else {
+                        seenAppStoreConnectTargets[uploadTargetKey] = rowName
                     }
-                } else {
-                    seenAppStoreConnectTargets[uploadTargetKey] = rowName
                 }
             }
 
-            let missingSelection = plan.localeTargets.filter { $0.isEnabled && !$0.candidates.isEmpty && $0.selectedASCLocalizationId == nil }
+            let missingSelection = plan.localeTargets.filter { $0.isEnabled && !$0.candidates.isEmpty && $0.selectedASCLocalizationIds.isEmpty }
             for target in missingSelection {
                 issues.append(ASCUploadIssue(
                     severity: .error,
