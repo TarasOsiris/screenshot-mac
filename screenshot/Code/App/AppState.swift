@@ -82,6 +82,7 @@ final class AppState {
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
     @ObservationIgnored var justAddedShapeId: UUID?
+    @ObservationIgnored var templateMoveContinuation: TemplateMoveContinuation?
     var pendingTranslateShapeId: UUID?
     var pendingFanOutTranslateShapeIds: Set<UUID>?
     var pendingLocaleMenuRequest: LocaleMenuRequest?
@@ -353,6 +354,7 @@ final class AppState {
                 let redoLocaleState = target.localeState
                 target.rows = baseRows
                 target.localeState = baseLocaleState
+                target.templateMoveContinuation = nil
                 target.normalizeSelection()
                 target.scheduleSave()
                 target.registerSnapshot(actionName, baseRows: redoRows, baseLocaleState: redoLocaleState)
@@ -401,6 +403,7 @@ final class AppState {
                 let redoLocaleState = target.localeState
                 target.rows[idx] = baseRow
                 target.localeState = baseLocaleState
+                target.templateMoveContinuation = nil
                 target.normalizeSelection()
                 target.scheduleSave()
                 target.registerRowSnapshot(actionName, rowId: rowId, baseRow: redoRow, baseLocaleState: redoLocaleState)

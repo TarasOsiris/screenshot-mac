@@ -217,17 +217,26 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         }
     }
 
-    /// Inverse of `visibleShapes(forTemplateAt:)`: shapes whose footprint is entirely inside this template's column.
+    /// Fraction of a shape's width that must lie outside its owning column before the shape
+    /// counts as deliberately spanning templates (rather than a tilted device or full-bleed
+    /// image merely bleeding past the column edge).
+    static let templateSpanThreshold: CGFloat = 1.0 / 3.0
+
+    /// True when a meaningful share of the shape's horizontal extent lies outside its owning
+    /// template — i.e. it deliberately straddles columns. Uses the unrotated extent
+    /// (rotation-invariant, like `owningTemplateIndex`) so a tilted device whose AABB
+    /// merely bleeds past the column edge still belongs to its column.
+    func spansMultipleTemplates(_ shape: CanvasShapeModel) -> Bool {
+        if shape.clipToTemplate == true { return false }
+        guard shape.width > 0 else { return false }
+        let tLeft = CGFloat(owningTemplateIndex(for: shape)) * templateWidth
+        let outside = max(0, tLeft - shape.x) + max(0, shape.x + shape.width - (tLeft + templateWidth))
+        return outside / shape.width > Self.templateSpanThreshold
+    }
+
+    /// Inverse of `visibleShapes(forTemplateAt:)`: shapes that belong to this template's column.
     /// Operates over `shapes` (not `activeShapes`) since callers like deletion must consider hidden shapes too.
     func shapesContained(inTemplateAt index: Int) -> [CanvasShapeModel] {
-        let tLeft = CGFloat(index) * templateWidth
-        let tRight = tLeft + templateWidth
-        return shapes.filter { s in
-            if s.clipToTemplate == true {
-                return owningTemplateIndex(for: s) == index
-            }
-            let bb = s.aabb
-            return bb.minX >= tLeft && bb.maxX <= tRight
-        }
+        shapes.filter { !spansMultipleTemplates($0) && owningTemplateIndex(for: $0) == index }
     }
 }

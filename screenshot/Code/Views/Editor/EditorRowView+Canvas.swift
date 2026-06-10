@@ -74,6 +74,9 @@ extension EditorRowView {
                         }
 
                         controlBarsRow
+                            // Bars must not slide during a reorder: the move buttons have to stay
+                            // under the cursor so rapid clicks keep landing on a button.
+                            .transaction { $0.animation = nil }
                             .padding(.bottom, 8)
                     }
                 }
