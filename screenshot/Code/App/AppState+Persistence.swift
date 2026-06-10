@@ -127,7 +127,7 @@ extension AppState {
 
         if let index {
             if !projects.isEmpty {
-                // Tombstone-aware merge: union by UUID with LWW + resurrection semantics.
+                // Tombstone-aware merge: union by UUID, LWW for alive pairs, delete-wins for conflicts.
                 let mergedRaw = projects.merged(with: index.projects)
                 let changed = mergedRaw != projects
                 projects = mergedRaw.purgingOldTombstones()

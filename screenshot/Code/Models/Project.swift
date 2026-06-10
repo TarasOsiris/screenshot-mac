@@ -43,13 +43,15 @@ struct Project: Identifiable, Codable, Equatable {
 }
 
 extension Array where Element == Project {
-    /// Merge two project lists by UUID. Union of both; tombstone-aware last-writer-wins.
+    /// Merge two project lists by UUID. Union of both; tombstone-aware, delete-wins.
     ///
     /// For projects present in both lists:
     /// - Both alive: higher `modifiedAt` wins
     /// - Both deleted: later `deletedAt` wins
-    /// - One deleted, one alive: if `modifiedAt > deletedAt`, alive wins (resurrection);
-    ///   otherwise tombstone wins
+    /// - One deleted, one alive: the tombstone always wins until `purgingOldTombstones()`
+    ///   drops it. A delete is an explicit user action and must stick across devices; we do
+    ///   not resurrect on `modifiedAt > deletedAt` because the active project's `modifiedAt`
+    ///   is bumped on every open/autosave, which would let an open copy out-race a real delete.
     ///
     /// `base` ordering is preserved first, then `incoming`-only projects are appended.
     func merged(with incoming: [Project]) -> [Project] {
@@ -84,9 +86,9 @@ extension Array where Element == Project {
         case (true, true):
             return (b.deletedAt ?? .distantPast) > (a.deletedAt ?? .distantPast) ? b : a
         case (true, false):
-            return b.modifiedAt > (a.deletedAt ?? .distantPast) ? b : a
+            return a
         case (false, true):
-            return a.modifiedAt > (b.deletedAt ?? .distantPast) ? a : b
+            return b
         }
     }
 

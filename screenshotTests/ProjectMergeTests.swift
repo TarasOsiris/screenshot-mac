@@ -55,9 +55,12 @@ struct ProjectMergeTests {
         #expect(merged[0].isDeleted == true)
     }
 
-    // MARK: - Resurrection: alive modified after deletion wins
+    // MARK: - Delete wins even when the alive copy looks newer
 
-    @Test func resurrectionWhenModifiedAfterDeletion() {
+    /// The exact resurrection-bug scenario: the alive copy's `modifiedAt` (t2) is later than
+    /// the tombstone's `deletedAt` (t1) — because the active project's modifiedAt is bumped on
+    /// every open/autosave. The delete must still win and stick.
+    @Test func tombstoneWinsEvenWhenAliveModifiedLater() {
         let id = UUID()
         var deleted = Project(id: id, name: "X")
         deleted.isDeleted = true
@@ -69,8 +72,28 @@ struct ProjectMergeTests {
 
         let merged = [deleted].merged(with: [alive])
         #expect(merged.count == 1)
-        #expect(merged[0].isDeleted == false)
-        #expect(merged[0].name == "X Resurrected")
+        #expect(merged[0].isDeleted == true)
+    }
+
+    @Test func tombstoneWinsRegardlessOfMergeDirection() {
+        let id = UUID()
+        var alive = Project(id: id, name: "X")
+        alive.modifiedAt = t3
+
+        var deleted = Project(id: id, name: "X")
+        deleted.isDeleted = true
+        deleted.deletedAt = t1
+        deleted.modifiedAt = t1
+
+        // Tombstone as incoming.
+        let mergedA = [alive].merged(with: [deleted])
+        #expect(mergedA.count == 1)
+        #expect(mergedA[0].isDeleted == true)
+
+        // Tombstone as base.
+        let mergedB = [deleted].merged(with: [alive])
+        #expect(mergedB.count == 1)
+        #expect(mergedB[0].isDeleted == true)
     }
 
     // MARK: - Both deleted: later deletedAt wins
