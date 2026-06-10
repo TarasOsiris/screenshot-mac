@@ -179,7 +179,7 @@ struct TranslationOverviewSheet: View {
     ) -> some View {
         let baseText = item.shape.text ?? ""
         let override = state.translationOverrideForDisplay(shape: item.shape, localeCode: locale.code)
-        let formatted = Self.formattedTranslation(for: override)
+        let formatted = formattedTranslationPlainText(for: override)
         let hasOverride = override?.hasTextContent == true
         let translating = isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code)
 
@@ -199,7 +199,7 @@ struct TranslationOverviewSheet: View {
                 } else {
                     BufferedTranslationField(
                         placeholder: String(localized: "Same as base language"),
-                        text: translationTextBinding(shape: item.shape, localeCode: locale.code)
+                        text: localeTranslationBinding(state, shape: item.shape, localeCode: locale.code)
                     )
                 }
             }
@@ -296,8 +296,8 @@ struct TranslationOverviewSheet: View {
                     TranslationMatrixCell(
                         locale: locale,
                         baseText: item.shape.text ?? "",
-                        text: translationTextBinding(shape: item.shape, localeCode: locale.code),
-                        formattedPlainText: Self.formattedTranslation(for: override),
+                        text: localeTranslationBinding(state, shape: item.shape, localeCode: locale.code),
+                        formattedPlainText: formattedTranslationPlainText(for: override),
                         columnPadding: columnPadding,
                         isTranslating: isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code),
                         canReset: override?.hasTextContent == true,
@@ -343,37 +343,6 @@ struct TranslationOverviewSheet: View {
         }
     }
     #endif
-
-    /// Plain text of a *formatted* translation override, or nil when the override has no rich
-    /// text. Cells with rich text are shown read-only because the plain-text field can't edit
-    /// formatting and the `richText` override wins at render time anyway.
-    private static func formattedTranslation(for override: ShapeLocaleOverride?) -> String? {
-        guard let override, let richText = override.richText, !richText.isEmpty else { return nil }
-        // Prefer the stored plain-text mirror; only decode the RTF when there isn't one
-        // (avoids a Base64+RTF decode per cell on every view-body recomputation).
-        return override.text ?? RichTextUtils.plainText(from: richText) ?? ""
-    }
-
-    /// Override text for one cell; setting a blank value resets to the base language. Reads through
-    /// the shape's (possibly shared) translation key so reused strings show their shared value.
-    private func translationTextBinding(shape: CanvasShapeModel, localeCode: String) -> Binding<String> {
-        Binding(
-            get: {
-                state.translationOverrideForDisplay(shape: shape, localeCode: localeCode)?.text ?? ""
-            },
-            set: { newValue in
-                if isUntranslated(newValue) {
-                    state.resetTranslationText(shapeId: shape.id, localeCode: localeCode)
-                } else {
-                    state.updateTranslationText(
-                        shapeId: shape.id,
-                        localeCode: localeCode,
-                        text: newValue
-                    )
-                }
-            }
-        )
-    }
 
     private func startCellTranslation(shapeId: UUID, localeCode: String, baseText: String) {
         let trimmed = baseText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -486,168 +455,7 @@ private struct TranslationMatrixCell: View {
         }
     }
 }
-
-/// Multiline editor that uses `TextEditor` so Return inserts a newline (a
-/// vertical-axis `TextField` treats Return as a submit gesture on macOS).
-private struct MultilineCellEditor: View {
-    let placeholder: String
-    @Binding var text: String
-    var help: String? = nil
-
-    // Local buffer: binding TextEditor straight to AppState-backed state recomputes
-    // the body on every keystroke and re-feeds the value, resetting the caret to the
-    // end. The buffer survives recomputes; we sync to/from `text` only on real changes.
-    @State private var localText: String
-    @State private var contentHeight: CGFloat = 0
-    @FocusState private var isFocused: Bool
-
-    private let fontSize: CGFloat = 12
-    // Match the TextEditor's intrinsic text origin so the placeholder/mirror align.
-    private let insetH: CGFloat = 5
-    private let insetV: CGFloat = 5
-    private let minHeight: CGFloat = 40   // ~2 lines
-    private let maxHeight: CGFloat = 100  // ~6 lines
-
-    init(placeholder: String, text: Binding<String>, help: String? = nil) {
-        self.placeholder = placeholder
-        self._text = text
-        self.help = help
-        self._localText = State(initialValue: text.wrappedValue)
-    }
-
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            // Invisible mirror sizes the editor so it grows with the text instead
-            // of clipping at a fixed height; shares the editor's width and insets.
-            Text(localText.isEmpty ? placeholder : localText)
-                .font(.system(size: fontSize))
-                .padding(.horizontal, insetH)
-                .padding(.vertical, insetV)
-                .frame(maxWidth: .infinity, alignment: .topLeading)
-                .background(GeometryReader { proxy in
-                    Color.clear.preference(key: CellHeightKey.self, value: proxy.size.height)
-                })
-                .hidden()
-
-            if localText.isEmpty {
-                Text(placeholder)
-                    .font(.system(size: fontSize))
-                    .foregroundStyle(.tertiary)
-                    .padding(.horizontal, insetH)
-                    .padding(.vertical, insetV)
-                    .allowsHitTesting(false)
-            }
-
-            TextEditor(text: $localText)
-                .font(.system(size: fontSize))
-                .scrollContentBackground(.hidden)
-                .focused($isFocused)
-        }
-        .frame(height: min(max(contentHeight, minHeight), maxHeight))
-        .onPreferenceChange(CellHeightKey.self) { contentHeight = $0 }
-        .debouncedFieldCommit(buffer: $localText, into: $text, isFocused: isFocused)
-        .background(Color.platformTextBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
-                .stroke(Color.platformSeparator, lineWidth: UIMetrics.BorderWidth.standard)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
-        .modifier(OptionalHelp(help: help))
-    }
-}
-
-/// Intrinsic content height of a cell editor, used to size it to fit.
-private struct CellHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
-private struct OptionalHelp: ViewModifier {
-    let help: String?
-
-    func body(content: Content) -> some View {
-        if let help {
-            content.help(help)
-        } else {
-            content
-        }
-    }
-}
 #endif
-
-#if os(iOS)
-/// Buffers edits locally so binding straight to @Observable AppState doesn't reset the
-/// caret on every keystroke (the body recomputes and re-feeds the value otherwise).
-private struct BufferedTranslationField: View {
-    let placeholder: String
-    @Binding var text: String
-    @State private var localText: String
-    @FocusState private var isFocused: Bool
-
-    init(placeholder: String, text: Binding<String>) {
-        self.placeholder = placeholder
-        self._text = text
-        self._localText = State(initialValue: text.wrappedValue)
-    }
-
-    var body: some View {
-        TextField(placeholder, text: $localText, axis: .vertical)
-            .lineLimit(1...6)
-            .focused($isFocused)
-            .debouncedFieldCommit(buffer: $localText, into: $text, isFocused: isFocused)
-    }
-}
-#endif
-
-/// Commits a cell's local editing buffer into its `@Observable`-backed binding on a debounce, and
-/// flushes immediately when the cell disappears (sheet dismiss, List/LazyVStack recycling). Writing
-/// the model on every keystroke would mutate `localeState`/`rows` and rebuild the entire grid per
-/// keystroke; debouncing means only the focused cell re-renders while typing.
-private struct DebouncedFieldCommit: ViewModifier {
-    @Binding var buffer: String
-    @Binding var committed: String
-    var isFocused: Bool
-    var delay: TimeInterval = 0.3
-    @State private var commitTask: DispatchWorkItem?
-
-    func body(content: Content) -> some View {
-        content
-            .onChange(of: buffer) { _, newValue in
-                commitTask?.cancel()
-                let task = DispatchWorkItem { if newValue != committed { committed = newValue } }
-                commitTask = task
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: task)
-            }
-            .onChange(of: committed) { _, newValue in
-                // An external write (Translate, auto-translate, locale switch) supersedes any in-flight
-                // buffer commit — cancel it so a stale debounce can't revert the new value.
-                guard newValue != buffer else { return }
-                commitTask?.cancel()
-                commitTask = nil
-                buffer = newValue
-            }
-            .onChange(of: isFocused) { _, focused in
-                // Commit immediately on blur so leaving the cell (e.g. to click Translate) flushes
-                // the latest text, and nothing is left pending past the edit.
-                if !focused { flush() }
-            }
-            .onDisappear { flush() }
-    }
-
-    private func flush() {
-        commitTask?.cancel()
-        commitTask = nil
-        if buffer != committed { committed = buffer }
-    }
-}
-
-private extension View {
-    func debouncedFieldCommit(buffer: Binding<String>, into committed: Binding<String>, isFocused: Bool) -> some View {
-        modifier(DebouncedFieldCommit(buffer: buffer, committed: committed, isFocused: isFocused))
-    }
-}
 
 private struct PendingCellTranslation {
     let shapeId: UUID

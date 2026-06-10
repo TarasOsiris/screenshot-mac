@@ -26,6 +26,7 @@ struct ShapePropertiesSingleSelectionBar: View {
     #endif
     @State var isFillPopoverPresented = false
     @State var isTextPopoverPresented = false
+    @State var isTextLocalizationPopoverPresented = false
     @State var editingFontSize: String = ""
     @State var isFontSizeFieldActive = false
     @State var editingLineHeight: String = ""
@@ -345,6 +346,11 @@ struct ShapePropertiesSingleSelectionBar: View {
                         if shape.type == .text {
                             TextShapeControls {
                                 textPopoverButton(shape: shape, shapeId: shapeId)
+                            }
+                            if state.localeState.nonBaseLocaleCount > 0 {
+                                ShapePropertiesSection {
+                                    textLocalizationButton(shape: shape, shapeId: shapeId)
+                                }
                             }
                         }
 

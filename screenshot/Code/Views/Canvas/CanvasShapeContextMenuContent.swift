@@ -321,24 +321,13 @@ struct CanvasShapeContextMenuContent: View {
     private func reuseTranslationMenu() -> some View {
         if shape.type == .text, !isMultiSelected, let onLinkTranslation {
             let targets = reuseTranslationTargets?() ?? []
-            let isLinked = shape.translationKey != nil
-            if isLinked || !targets.isEmpty {
-                Menu {
-                    if isLinked, let onUnlinkTranslation {
-                        Button("Stop Reusing Translation", systemImage: "link.badge.minus", action: onUnlinkTranslation)
-                        if !targets.isEmpty { Divider() }
-                    }
-                    if !targets.isEmpty {
-                        Section("Reuse translation from") {
-                            ForEach(targets, id: \.key) { target in
-                                Button(target.label) { onLinkTranslation(target.key) }
-                            }
-                        }
-                    }
-                } label: {
-                    Label("Reuse Translation", systemImage: "link")
-                }
-            }
+            reuseTranslationMenuContent(
+                isLinked: shape.translationKey != nil,
+                hasTargets: !targets.isEmpty,
+                targets: { targets },
+                onLink: onLinkTranslation,
+                onUnlink: onUnlinkTranslation
+            )
         }
     }
 

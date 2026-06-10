@@ -334,6 +334,19 @@ extension AppState {
         }
     }
 
+    /// Cheap existence check for `reusableTranslationTargets` — early-exits on the first match and
+    /// allocates nothing, so it's safe to call from a view body to gate the reuse menu's presence.
+    func hasReusableTranslationTargets(excludingShapeId id: UUID) -> Bool {
+        let excludeKey = textShape(for: id)?.textTranslationKey
+        for row in rows {
+            for shape in row.shapes where shape.type == .text {
+                if shape.textTranslationKey == excludeKey { continue }
+                if !(shape.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return true }
+            }
+        }
+        return false
+    }
+
     /// Distinct other strings in the project a shape could reuse, keyed by translation key, with a
     /// representative base text and the row labels that use them.
     func reusableTranslationTargets(excludingShapeId id: UUID) -> [(key: String, baseText: String, rowLabels: [String])] {
