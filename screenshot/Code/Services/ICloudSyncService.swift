@@ -138,6 +138,26 @@ final class ICloudSyncService: @unchecked Sendable {
         if let error = writeError { throw error }
     }
 
+    /// Delete a file using NSFileCoordinator.
+    func coordinatedDelete(at url: URL) throws {
+        var coordinatorError: NSError?
+        var deleteError: Error?
+        let coordinator = NSFileCoordinator()
+
+        coordinator.coordinate(writingItemAt: url, options: .forDeleting, error: &coordinatorError) { deleteURL in
+            do {
+                if FileManager.default.fileExists(atPath: deleteURL.path) {
+                    try FileManager.default.removeItem(at: deleteURL)
+                }
+            } catch {
+                deleteError = error
+            }
+        }
+
+        if let error = coordinatorError { throw error }
+        if let error = deleteError { throw error }
+    }
+
     // MARK: - Conflict Resolution
 
     /// Resolve NSFileVersion conflicts using last-writer-wins strategy.

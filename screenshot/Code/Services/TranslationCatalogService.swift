@@ -17,8 +17,16 @@ enum TranslationCatalogService {
         PersistenceService.load(TranslationCatalog.self, from: PersistenceService.translationCatalogURL(projectId))
     }
 
+    static func exists(projectId: UUID) -> Bool {
+        FileManager.default.fileExists(atPath: PersistenceService.translationCatalogURL(projectId).path)
+    }
+
     static func write(_ catalog: TranslationCatalog, projectId: UUID) throws {
         let data = try encoder.encode(catalog)
         try PersistenceService.writeData(data, to: PersistenceService.translationCatalogURL(projectId))
+    }
+
+    static func delete(projectId: UUID) throws {
+        try PersistenceService.removeItemIfExists(at: PersistenceService.translationCatalogURL(projectId))
     }
 }

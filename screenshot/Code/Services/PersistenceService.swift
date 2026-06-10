@@ -161,6 +161,14 @@ struct PersistenceService {
         }
     }
 
+    static func removeItemIfExists(at url: URL) throws {
+        if isUsingICloud {
+            try ICloudSyncService.shared.coordinatedDelete(at: url)
+        } else if FileManager.default.fileExists(atPath: url.path) {
+            try FileManager.default.removeItem(at: url)
+        }
+    }
+
     // MARK: - Project index
 
     static func loadIndex() -> ProjectIndex? {
@@ -178,7 +186,7 @@ struct PersistenceService {
         // Catalog wins on read: merge translator-editable `.xcstrings` text over the inline copy.
         // Absent catalog (old project, first run) leaves the inline `ls.o` text untouched.
         if var localeState = data.localeState, let catalog = TranslationCatalogService.read(projectId: id) {
-            catalog.apply(to: &localeState)
+            catalog.apply(to: &localeState, validKeys: TranslationCatalog.representedKeys(rows: data.rows))
             data.localeState = localeState
         }
         return data
@@ -189,12 +197,14 @@ struct PersistenceService {
         try save(data, to: projectDataURL(id))
         // Dual-write: mirror translations into the `.xcstrings` catalog. Inline text stays in
         // project.json during the transition so older builds / lagging iCloud devices don't lose it.
-        // Skip the (per-save) build entirely for single-locale projects with nothing to translate.
-        if let localeState = data.localeState, localeState.locales.count > 1 || !localeState.overrides.isEmpty {
+        // Existing catalogs are rewritten even when the build is empty, so stale translator files
+        // cannot keep reintroducing deleted text.
+        if let localeState = data.localeState,
+           localeState.locales.count > 1 || !localeState.overrides.isEmpty || TranslationCatalogService.exists(projectId: id) {
             let catalog = TranslationCatalog.build(rows: data.rows, localeState: localeState)
-            if !catalog.strings.isEmpty {
-                try? TranslationCatalogService.write(catalog, projectId: id)
-            }
+            try TranslationCatalogService.write(catalog, projectId: id)
+        } else if TranslationCatalogService.exists(projectId: id) {
+            try TranslationCatalogService.delete(projectId: id)
         }
     }
 

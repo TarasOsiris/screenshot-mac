@@ -84,11 +84,19 @@ struct TranslationCatalog: Codable, Equatable {
     /// ignored — the base string is owned by the shape. Clears any prior rich-text override for a
     /// translated locale so re-applied base styling matches.
     func apply(to localeState: inout LocaleState) {
+        apply(to: &localeState, validKeys: nil)
+    }
+
+    func apply(to localeState: inout LocaleState, validKeys: Set<String>? = nil) {
         for (shapeKey, entry) in strings {
+            if let validKeys, !validKeys.contains(shapeKey) { continue }
             for (code, localization) in entry.localizations where code != sourceLanguage {
                 guard localeState.hasLocale(code) else { continue }
                 let value = localization.stringUnit.value
-                guard !value.isEmpty else { continue }
+                guard !value.isEmpty else {
+                    clearTranslatedText(in: &localeState, localeCode: code, key: shapeKey)
+                    continue
+                }
                 let existing = localeState.overrides[code]?[shapeKey]
                 // The catalog can't carry RTF, so it stores a formatted translation's plain mirror.
                 // When that plain value is unchanged, keep the inline rich-text override rather than
@@ -107,6 +115,30 @@ struct TranslationCatalog: Codable, Equatable {
     }
 
     // MARK: - Helpers
+
+    static func representedKeys(rows: [ScreenshotRow]) -> Set<String> {
+        Set(rows.flatMap { row in
+            row.shapes.compactMap { shape in
+                guard shape.type == .text,
+                      visibleText(plain: shape.text, richText: shape.richText) != nil
+                else { return nil }
+                return shape.textTranslationKey
+            }
+        })
+    }
+
+    private func clearTranslatedText(in localeState: inout LocaleState, localeCode: String, key: String) {
+        guard var override = localeState.overrides[localeCode]?[key] else { return }
+        override.clearTranslatedText()
+        if override.isEmpty {
+            localeState.overrides[localeCode]?.removeValue(forKey: key)
+            if localeState.overrides[localeCode]?.isEmpty == true {
+                localeState.overrides.removeValue(forKey: localeCode)
+            }
+        } else {
+            localeState.overrides[localeCode]?[key] = override
+        }
+    }
 
     /// The visible plain string for a text field: prefer plain `text`, fall back to decoding
     /// rich-text RTF. Returns nil when there's no non-whitespace content.

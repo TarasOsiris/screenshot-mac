@@ -3,6 +3,7 @@ import Foundation
 import AppKit
 @testable import Screenshot_Bro
 
+@Suite(.serialized)
 struct TranslationCatalogTests {
 
     private func textShape(_ text: String, id: UUID = UUID()) -> CanvasShapeModel {
@@ -101,6 +102,39 @@ struct TranslationCatalogTests {
         #expect(override?.text == "Bonjour")
         #expect(override?.richText == nil)
         #expect(override?.offsetX == 12, "Non-text override fields are preserved")
+    }
+
+    @Test func applyEmptyCatalogValueClearsExistingTranslation() {
+        let id = UUID()
+        var ls = state(
+            locales: [("en", "English"), ("fr", "French")],
+            overrides: ["fr": [id.uuidString: ShapeLocaleOverride(offsetX: 12, text: "Bonjour")]]
+        )
+        let catalog = TranslationCatalog(sourceLanguage: "en", strings: [
+            id.uuidString: .init(comment: nil, localizations: [
+                "fr": .init(stringUnit: .init(state: "translated", value: ""))
+            ])
+        ])
+
+        catalog.apply(to: &ls)
+
+        let override = ls.override(forCode: "fr", shapeId: id)
+        #expect(override?.text == nil)
+        #expect(override?.offsetX == 12, "Non-text override fields are preserved")
+    }
+
+    @Test func applyIgnoresCatalogEntriesWithoutLiveTextKeys() {
+        let deletedKey = UUID().uuidString
+        var ls = state(locales: [("en", "English"), ("fr", "French")])
+        let catalog = TranslationCatalog(sourceLanguage: "en", strings: [
+            deletedKey: .init(comment: nil, localizations: [
+                "fr": .init(stringUnit: .init(state: "translated", value: "Bonjour"))
+            ])
+        ])
+
+        catalog.apply(to: &ls, validKeys: [])
+
+        #expect(ls.overrides["fr"]?[deletedKey] == nil)
     }
 
     @Test func applyKeepsRichTextWhenCatalogMirrorsItsPlainValue() {
@@ -246,6 +280,59 @@ struct TranslationCatalogTests {
 
             let loaded = try #require(PersistenceService.loadProject(id))
             #expect(loaded.localeState?.override(forCode: "fr", shapeId: shape.id)?.text == "Bonjour")
+        }
+    }
+
+    @MainActor
+    @Test func saveOverwritesStaleCatalogWhenNoTranslatableStringsRemain() throws {
+        try withTempDataDir { id in
+            let shape = textShape("Hello")
+            let translated = state(
+                locales: [("en", "English"), ("fr", "French")],
+                overrides: ["fr": [shape.id.uuidString: ShapeLocaleOverride(text: "Bonjour")]]
+            )
+            try PersistenceService.saveProject(
+                id,
+                data: ProjectData(rows: [ScreenshotRow(label: "Hero", shapes: [shape])], localeState: translated)
+            )
+
+            let emptyState = state(locales: [("en", "English"), ("fr", "French")])
+            try PersistenceService.saveProject(
+                id,
+                data: ProjectData(rows: [ScreenshotRow(label: "Hero", shapes: [])], localeState: emptyState)
+            )
+
+            let catalog = try #require(TranslationCatalogService.read(projectId: id))
+            #expect(catalog.strings.isEmpty)
+            let loaded = try #require(PersistenceService.loadProject(id))
+            #expect(loaded.localeState?.overrides.isEmpty == true)
+        }
+    }
+
+    @MainActor
+    @Test func saveThrowsWhenCatalogMirrorCannotBeWritten() throws {
+        try withTempDataDir { id in
+            try FileManager.default.createDirectory(
+                at: PersistenceService.translationCatalogURL(id),
+                withIntermediateDirectories: false
+            )
+            let shape = textShape("Hello")
+            let ls = state(
+                locales: [("en", "English"), ("fr", "French")],
+                overrides: ["fr": [shape.id.uuidString: ShapeLocaleOverride(text: "Bonjour")]]
+            )
+
+            var didThrow = false
+            do {
+                try PersistenceService.saveProject(
+                    id,
+                    data: ProjectData(rows: [ScreenshotRow(label: "Hero", shapes: [shape])], localeState: ls)
+                )
+            } catch {
+                didThrow = true
+            }
+
+            #expect(didThrow)
         }
     }
 }
