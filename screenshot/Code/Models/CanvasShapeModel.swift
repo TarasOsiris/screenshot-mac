@@ -39,6 +39,10 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     var lineSpacing: CGFloat?
     var lineHeightMultiple: CGFloat?
 
+    /// Catalog key this text shape sources its string from. `nil` means it owns its own string
+    /// (key = `id`). When set, the shape shares another string's base text + translations (reuse).
+    var translationKey: String?
+
     // Image properties
     var imageFileName: String?
 
@@ -85,6 +89,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         case text = "txt", richText = "rt", fontName = "fn", fontSize = "fs", fontWeight = "fw"
         case textAlign = "ta", textVerticalAlign = "tva", italic = "it", uppercase = "uc"
         case letterSpacing = "ls", lineSpacing = "lns", lineHeightMultiple = "lhm"
+        case translationKey = "tk"
         case imageFileName = "ifn"
         case deviceCategory = "dc", deviceBodyColorData = "dbc"
         case deviceFrameId = "dfi", screenshotFileName = "sfn"
@@ -125,6 +130,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         letterSpacing = try c.decodeIfPresent(CGFloat.self, forKey: .letterSpacing)
         lineSpacing = try c.decodeIfPresent(CGFloat.self, forKey: .lineSpacing)
         lineHeightMultiple = try c.decodeIfPresent(CGFloat.self, forKey: .lineHeightMultiple)
+        translationKey = try c.decodeIfPresent(String.self, forKey: .translationKey)
         imageFileName = try c.decodeIfPresent(String.self, forKey: .imageFileName)
         deviceCategory = try c.decodeIfPresent(DeviceCategory.self, forKey: .deviceCategory)
         deviceBodyColorData = try c.decodeIfPresent(CodableColor.self, forKey: .deviceBodyColorData)
@@ -172,6 +178,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         try c.encodeIfPresent(letterSpacing, forKey: .letterSpacing)
         try c.encodeIfPresent(lineSpacing, forKey: .lineSpacing)
         try c.encodeIfPresent(lineHeightMultiple, forKey: .lineHeightMultiple)
+        try c.encodeIfPresent(translationKey, forKey: .translationKey)
         try c.encodeIfPresent(imageFileName, forKey: .imageFileName)
         try c.encodeIfPresent(deviceCategory, forKey: .deviceCategory)
         try c.encodeIfPresent(deviceBodyColorData, forKey: .deviceBodyColorData)
@@ -236,7 +243,8 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         outlineWidth: CGFloat? = nil,
         starPointCount: Int? = nil,
         clipToTemplate: Bool? = nil,
-        shadow: ShadowConfig? = nil
+        shadow: ShadowConfig? = nil,
+        translationKey: String? = nil
     ) {
         self.id = id
         self.type = type
@@ -274,7 +282,11 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         self.starPointCount = starPointCount
         self.clipToTemplate = clipToTemplate
         self.shadow = shadow
+        self.translationKey = translationKey
     }
+
+    /// The catalog key this text shape's string lives under: a shared key when linked, else its own id.
+    var textTranslationKey: String { translationKey ?? id.uuidString }
 
     /// Used as a fallback when a Binding's get is called after the shape has been removed.
     static let placeholder = CanvasShapeModel(type: .rectangle)

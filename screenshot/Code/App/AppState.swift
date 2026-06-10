@@ -155,6 +155,8 @@ final class AppState {
     @ObservationIgnored var translationBaseLocaleState: LocaleState?
     @ObservationIgnored var baseTextUndoTask: DispatchWorkItem?
     @ObservationIgnored var baseTextBaseRow: ScreenshotRow?
+    /// Whole-document base for a base-text edit that propagates across rows (a shared/reused string).
+    @ObservationIgnored var baseTextBaseRows: [ScreenshotRow]?
     @ObservationIgnored var arrowKeyMonitor: Any?
     @ObservationIgnored var nudgeUndoTask: DispatchWorkItem?
     @ObservationIgnored var nudgeBaseRow: ScreenshotRow?
@@ -437,6 +439,7 @@ final class AppState {
         hasPendingContinuousEdit
             || nudgeBaseRow != nil
             || baseTextBaseRow != nil
+            || baseTextBaseRows != nil
             || translationBaseLocaleState != nil
     }
 
@@ -487,6 +490,7 @@ final class AppState {
         baseTextUndoTask?.cancel()
         baseTextUndoTask = nil
         baseTextBaseRow = nil
+        baseTextBaseRows = nil
         continuousEditUndoTask?.cancel()
         continuousEditUndoTask = nil
         continuousEditFlushTask?.cancel()

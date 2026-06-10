@@ -81,6 +81,7 @@ extension AppState {
             let wasSelectedRow = selectedRowId == id
             exitPreview(for: id)
             rows.remove(at: idx)
+            cleanupOrphanedTranslationOverrides()
             if wasSelectedRow {
                 let newIdx = min(idx, rows.count - 1)
                 selectRow(rows[newIdx].id)
@@ -113,6 +114,7 @@ extension AppState {
                 width: oldRow.templateWidth,
                 height: oldRow.templateHeight
             )
+            cleanupOrphanedTranslationOverrides()
 
             selectedShapeIds = []
 

@@ -14,10 +14,16 @@ enum LocaleService {
     }
 
     /// Resolve a single shape for a specific locale code.
+    ///
+    /// Translated *text* (`text`/`richText`) is keyed by the shape's `textTranslationKey` so reused
+    /// strings share one entry; per-shape styling/geometry (offsets, font, image) stays keyed by the
+    /// shape's own `id`. For an unlinked shape both keys coincide, matching the historical behavior.
     static func resolveShape(_ shape: CanvasShapeModel, localeCode: String, localeState: LocaleState) -> CanvasShapeModel {
         guard localeCode != localeState.baseLocaleCode else { return shape }
-        guard let override = localeState.override(forCode: localeCode, shapeId: shape.id) else { return shape }
-        return applyOverride(override, to: shape)
+        let styleOverride = localeState.override(forCode: localeCode, shapeId: shape.id)
+        let textOverride = localeState.overrides[localeCode]?[shape.textTranslationKey]
+        guard styleOverride != nil || textOverride != nil else { return shape }
+        return applyOverride(style: styleOverride, text: textOverride, to: shape)
     }
 
     /// Given the base shape and an updated (resolved) shape, split changes into base shape mutations
@@ -34,10 +40,29 @@ enum LocaleService {
             return updated
         }
 
-        setShapeOverride(&localeState, localeCode: code, shapeId: base.id, override: makeOverride(base: base, resolved: updated))
+        writeSplitOverride(&localeState, localeCode: code, shapeId: base.id, textKey: base.textTranslationKey,
+                           override: makeOverride(base: base, resolved: updated))
         var baseResult = updated
         restoreOverridableFields(&baseResult, from: base)
         return baseResult
+    }
+
+    /// Persist a full override split across the two key spaces: translated-text fields under the
+    /// shape's `textTranslationKey` (shared by reused strings), all other fields under its `id`.
+    /// For an unlinked shape the keys coincide, so the whole override lands under `id`. Pass
+    /// `writeText: false` to leave an already-written shared-text entry untouched (when rebasing
+    /// several members of one reused string in a single pass).
+    static func writeSplitOverride(_ state: inout LocaleState, localeCode code: String, shapeId: UUID, textKey: String, override: ShapeLocaleOverride?, writeText: Bool = true) {
+        if textKey == shapeId.uuidString {
+            setShapeOverride(&state, localeCode: code, shapeId: shapeId, override: override)
+            return
+        }
+        if writeText {
+            setTextFieldsOverride(&state, localeCode: code, key: textKey, text: override?.text, richText: override?.richText, clearsRichText: override?.clearsRichText)
+        }
+        var style = override ?? ShapeLocaleOverride()
+        style.clearTranslatedText()
+        setShapeOverride(&state, localeCode: code, shapeId: shapeId, override: style.isEmpty ? nil : style)
     }
 
     /// Reset the fields `makeOverride` treats as locale-overridable back to their base values.
@@ -109,35 +134,40 @@ enum LocaleService {
     /// can't get the ordering wrong.
     static func setBaseLocale(_ newBaseCode: String, rows: inout [ScreenshotRow], state: inout LocaleState) {
         guard state.hasLocale(newBaseCode), newBaseCode != state.baseLocaleCode else { return }
-        for r in rows.indices {
-            for s in rows[r].shapes.indices {
-                rows[r].shapes[s] = rebaseShape(rows[r].shapes[s], to: newBaseCode, state: &state)
+
+        // Snapshot every shape's resolved appearance per locale BEFORE mutating any override, so a
+        // text key shared by multiple shapes isn't read back after an earlier shape rewrote it.
+        var resolvedByShape: [UUID: [String: CanvasShapeModel]] = [:]
+        for row in rows {
+            for shape in row.shapes {
+                resolvedByShape[shape.id] = Dictionary(
+                    state.locales.map { ($0.code, resolveShape(shape, localeCode: $0.code, localeState: state)) },
+                    uniquingKeysWith: { first, _ in first }
+                )
             }
         }
+
+        var rewrittenTextKeys = Set<String>()
+        for r in rows.indices {
+            for s in rows[r].shapes.indices {
+                let shape = rows[r].shapes[s]
+                guard let resolved = resolvedByShape[shape.id], let newBaseShape = resolved[newBaseCode] else { continue }
+                let textKey = shape.textTranslationKey
+                let isLinked = textKey != shape.id.uuidString
+                // A shared text key is rewritten only once (the first member that reaches it).
+                let writeText = !isLinked || rewrittenTextKeys.insert(textKey).inserted
+
+                for (code, res) in resolved {
+                    let full = code == newBaseCode ? nil : makeOverride(base: newBaseShape, resolved: res)
+                    writeSplitOverride(&state, localeCode: code, shapeId: shape.id, textKey: textKey, override: full, writeText: writeText)
+                }
+                rows[r].shapes[s] = newBaseShape
+            }
+        }
+
         if let idx = state.locales.firstIndex(where: { $0.code == newBaseCode }) {
             state.locales.insert(state.locales.remove(at: idx), at: 0)
         }
-    }
-
-    /// Re-express one shape so `newBaseCode` becomes the base locale: returns the new base shape
-    /// and rewrites the shape's overrides across all locales (relative to the new base). The
-    /// caller reorders `state.locales` after rebasing every shape (see `setBaseLocale`).
-    private static func rebaseShape(_ shape: CanvasShapeModel, to newBaseCode: String, state: inout LocaleState) -> CanvasShapeModel {
-        // Snapshot every locale's resolved appearance before mutating any override.
-        let resolvedByCode = Dictionary(
-            state.locales.map { ($0.code, resolveShape(shape, localeCode: $0.code, localeState: state)) },
-            uniquingKeysWith: { first, _ in first }
-        )
-        guard let newBaseShape = resolvedByCode[newBaseCode] else { return shape }
-
-        for (code, resolved) in resolvedByCode {
-            if code == newBaseCode {
-                setShapeOverride(&state, localeCode: code, shapeId: shape.id, override: nil)
-            } else {
-                setShapeOverride(&state, localeCode: code, shapeId: shape.id, override: makeOverride(base: newBaseShape, resolved: resolved))
-            }
-        }
-        return newBaseShape
     }
 
     /// Set or remove a shape's override for the active locale.
@@ -171,6 +201,63 @@ enum LocaleService {
         }
     }
 
+    // MARK: - Shared translation text (reuse)
+
+    /// Set or clear just the translated-text fields under an explicit catalog `key` for one locale,
+    /// preserving any per-shape style/geometry already stored under that key. Used by translation
+    /// editing and reuse, where text and styling live under different keys for linked shapes.
+    static func setTextOverride(_ state: inout LocaleState, localeCode code: String, key: String, text: String?) {
+        setTextFieldsOverride(&state, localeCode: code, key: key, text: (text?.isEmpty == true) ? nil : text, richText: nil, clearsRichText: nil)
+    }
+
+    /// Set or clear the full translated-text triple (plain / rich / clears-rich) under a key for one
+    /// locale, preserving any per-shape style fields already stored there. Drops the override if it
+    /// becomes empty.
+    static func setTextFieldsOverride(_ state: inout LocaleState, localeCode code: String, key: String, text: String?, richText: String?, clearsRichText: Bool?) {
+        var override = state.overrides[code]?[key] ?? ShapeLocaleOverride()
+        override.text = text
+        override.richText = richText
+        override.clearsRichText = clearsRichText
+        if override.isEmpty {
+            state.overrides[code]?.removeValue(forKey: key)
+            cleanupEmptyOverrides(&state, forCode: code)
+        } else {
+            state.overrides[code, default: [:]][key] = override
+        }
+    }
+
+    /// Copy translated-text fields from one key to another for every locale. With `removeSource`,
+    /// also strips them from the source — i.e. a move. Used by reuse link (move) and unlink (copy).
+    static func copyTextOverrides(_ state: inout LocaleState, fromKey: String, toKey: String, removeSource: Bool = false) {
+        for code in Array(state.overrides.keys) {
+            guard let from = state.overrides[code]?[fromKey], from.hasTranslatedTextField else { continue }
+            var to = state.overrides[code]?[toKey] ?? ShapeLocaleOverride()
+            to.copyTranslatedText(from: from)
+            state.overrides[code, default: [:]][toKey] = to
+            if removeSource {
+                var src = from
+                src.clearTranslatedText()
+                if src.isEmpty { state.overrides[code]?.removeValue(forKey: fromKey) } else { state.overrides[code]?[fromKey] = src }
+                cleanupEmptyOverrides(&state, forCode: code)
+            }
+        }
+    }
+
+    static func moveTextOverrides(_ state: inout LocaleState, fromKey: String, toKey: String) {
+        copyTextOverrides(&state, fromKey: fromKey, toKey: toKey, removeSource: true)
+    }
+
+    /// Remove translated-text fields under a key for every locale, preserving any style fields and
+    /// dropping fully-empty overrides. Used to clear a shape's own text when it adopts a shared key.
+    static func stripTextOverrides(_ state: inout LocaleState, key: String) {
+        for code in Array(state.overrides.keys) {
+            guard var ov = state.overrides[code]?[key] else { continue }
+            ov.clearTranslatedText()
+            if ov.isEmpty { state.overrides[code]?.removeValue(forKey: key) } else { state.overrides[code]?[key] = ov }
+            cleanupEmptyOverrides(&state, forCode: code)
+        }
+    }
+
     /// Copy overrides from one shape ID to another (for duplication).
     static func copyShapeOverrides(_ state: inout LocaleState, fromId: UUID, toId: UUID) {
         let fromKey = fromId.uuidString
@@ -200,34 +287,34 @@ enum LocaleService {
 
     // MARK: - Private
 
-    private static func applyOverride(_ override: ShapeLocaleOverride, to shape: CanvasShapeModel) -> CanvasShapeModel {
+    private static func applyOverride(style: ShapeLocaleOverride?, text textOverride: ShapeLocaleOverride?, to shape: CanvasShapeModel) -> CanvasShapeModel {
         var result = shape
-        if let dx = override.offsetX { result.x = shape.x + dx }
-        if let dy = override.offsetY { result.y = shape.y + dy }
-        if let dw = override.offsetWidth { result.width = shape.width + dw }
-        if let dh = override.offsetHeight { result.height = shape.height + dh }
-        if let text = override.text {
-            result.text = text
-            if override.richText == nil {
-                result.richText = nil
+        if let style {
+            if let dx = style.offsetX { result.x = shape.x + dx }
+            if let dy = style.offsetY { result.y = shape.y + dy }
+            if let dw = style.offsetWidth { result.width = shape.width + dw }
+            if let dh = style.offsetHeight { result.height = shape.height + dh }
+            if let fontName = style.fontName { result.fontName = fontName }
+            if let fontSize = style.fontSize { result.fontSize = fontSize }
+            if let fontWeight = style.fontWeight { result.fontWeight = fontWeight }
+            if let textAlign = style.textAlign { result.textAlign = textAlign }
+            if let italic = style.italic { result.italic = italic }
+            if let uppercase = style.uppercase { result.uppercase = uppercase }
+            if let letterSpacing = style.letterSpacing { result.letterSpacing = letterSpacing }
+            if let lineSpacing = style.lineSpacing { result.lineSpacing = lineSpacing }
+            if let lineHeightMultiple = style.lineHeightMultiple { result.lineHeightMultiple = lineHeightMultiple }
+            if let fileName = style.overrideImageFileName { result.displayImageFileName = fileName }
+        }
+        if let textOverride {
+            if let text = textOverride.text {
+                result.text = text
+                if textOverride.richText == nil { result.richText = nil }
             }
-        }
-        if override.clearsRichText == true {
-            result.richText = nil
-        } else if let richText = override.richText {
-            result.richText = richText
-        }
-        if let fontName = override.fontName { result.fontName = fontName }
-        if let fontSize = override.fontSize { result.fontSize = fontSize }
-        if let fontWeight = override.fontWeight { result.fontWeight = fontWeight }
-        if let textAlign = override.textAlign { result.textAlign = textAlign }
-        if let italic = override.italic { result.italic = italic }
-        if let uppercase = override.uppercase { result.uppercase = uppercase }
-        if let letterSpacing = override.letterSpacing { result.letterSpacing = letterSpacing }
-        if let lineSpacing = override.lineSpacing { result.lineSpacing = lineSpacing }
-        if let lineHeightMultiple = override.lineHeightMultiple { result.lineHeightMultiple = lineHeightMultiple }
-        if let fileName = override.overrideImageFileName {
-            result.displayImageFileName = fileName
+            if textOverride.clearsRichText == true {
+                result.richText = nil
+            } else if let richText = textOverride.richText {
+                result.richText = richText
+            }
         }
         return result
     }

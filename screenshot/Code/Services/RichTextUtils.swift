@@ -18,7 +18,9 @@ enum RichTextUtils {
     }
 
     /// Encode an NSAttributedString to a Base64-encoded RTF string for persistence.
-    static func encode(_ attributedString: NSAttributedString) -> String? {
+    /// `nonisolated` because it's pure data work (no main-actor state) and runs off the main actor
+    /// during the background catalog build/merge in `PersistenceService`.
+    nonisolated static func encode(_ attributedString: NSAttributedString) -> String? {
         let range = NSRange(location: 0, length: attributedString.length)
         guard let rtfData = try? attributedString.data(
             from: range,
@@ -28,7 +30,7 @@ enum RichTextUtils {
     }
 
     /// Decode a Base64-encoded RTF string back to an NSAttributedString.
-    static func decode(_ base64RTF: String) -> NSAttributedString? {
+    nonisolated static func decode(_ base64RTF: String) -> NSAttributedString? {
         guard let data = Data(base64Encoded: base64RTF) else { return nil }
         return try? NSAttributedString(
             data: data,
@@ -126,7 +128,7 @@ enum RichTextUtils {
     }
 
     /// Extract plain text from a Base64-encoded RTF string.
-    static func plainText(from base64RTF: String) -> String? {
+    nonisolated static func plainText(from base64RTF: String) -> String? {
         decode(base64RTF)?.string
     }
 

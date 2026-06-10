@@ -54,6 +54,10 @@ extension AppState {
             rows[loc.rowIndex].shapes[loc.shapeIndex] = LocaleService.splitUpdate(
                 base: baseShape, updated: resolved, localeState: &localeState, forLocaleCode: code
             )
+            // A reused string's base text is shared: propagate a base-locale edit to every member.
+            if baseShape.translationKey != nil, code == localeState.baseLocaleCode {
+                setSharedBaseText(key: baseShape.textTranslationKey, text: text)
+            }
         }
     }
 
@@ -140,6 +144,7 @@ extension AppState {
             }
             selectedShapeIds.subtract(matchingIds)
             rows[idx].shapes.removeAll { $0.type == type }
+            cleanupOrphanedTranslationOverrides()
             cleanupUnreferencedImages(allCandidates)
         }
     }
@@ -214,6 +219,7 @@ extension AppState {
             let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
             let localeImageFiles = localeOverrideImageFileNames(for: id)
             LocaleService.removeShapeOverrides(&localeState, shapeId: id)
+            cleanupOrphanedTranslationOverrides()
             let allCandidates: [String?] = removedShape.allImageFileNames + localeImageFiles
             cleanupUnreferencedImages(allCandidates)
             selectedShapeIds.remove(id)
@@ -234,6 +240,7 @@ extension AppState {
                 LocaleService.removeShapeOverrides(&localeState, shapeId: shape.id)
             }
             rows[rowIdx].shapes.removeAll { deletedIds.contains($0.id) }
+            cleanupOrphanedTranslationOverrides()
             selectedShapeIds.subtract(deletedIds)
             cleanupUnreferencedImages(allCandidates)
         }

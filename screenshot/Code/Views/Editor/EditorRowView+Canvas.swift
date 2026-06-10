@@ -453,8 +453,18 @@ extension EditorRowView {
                             state.resetAllTranslations(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
                         } : nil,
                         resetAllTranslationsDisabled: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0)
-                            ? !state.localeState.hasAnyOverride(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
+                            ? !state.anyTranslationOrOverride(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
                             : false,
+                        reuseTranslationTargets: shape.type == .text ? {
+                            state.reusableTranslationTargets(excludingShapeId: shape.id)
+                                .map { (key: $0.key, label: $0.baseText.singleLineMenuLabel()) }
+                        } : nil,
+                        onLinkTranslation: shape.type == .text ? { key in
+                            state.linkTranslation(shapeId: shape.id, toTargetKey: key)
+                        } : nil,
+                        onUnlinkTranslation: shape.type == .text ? {
+                            state.unlinkTranslation(shapeId: shape.id)
+                        } : nil,
                         nonBaseLocaleCount: nonBaseLocaleCount,
                         onCopyTextStyle: shape.type == .text ? {
                             state.textStyleClipboard = shape.extractTextStyle()

@@ -285,7 +285,7 @@ extension AppState {
         let data = ProjectData(rows: rows, localeState: localeState)
         activeProjectDataModifiedAt = data.modifiedAt
         let monitor = iCloudMonitor
-        monitor?.recordOwnWrite([PersistenceService.projectDataURL(activeId)])
+        monitor?.recordOwnWrite([PersistenceService.projectDataURL(activeId), PersistenceService.translationCatalogURL(activeId)])
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 try PersistenceService.saveProject(activeId, data: data)

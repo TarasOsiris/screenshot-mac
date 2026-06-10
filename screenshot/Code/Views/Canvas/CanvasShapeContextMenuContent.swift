@@ -17,6 +17,9 @@ struct CanvasShapeContextMenuContent: View {
     var translateAllLocalesDisabled = false
     var onResetAllTranslations: (() -> Void)?
     var resetAllTranslationsDisabled = false
+    var reuseTranslationTargets: (() -> [(key: String, label: String)])?
+    var onLinkTranslation: ((String) -> Void)?
+    var onUnlinkTranslation: (() -> Void)?
     var nonBaseLocaleCount: Int = 0
     var onCopyTextStyle: (() -> Void)?
     var onPasteTextStyle: (() -> Void)?
@@ -196,6 +199,7 @@ struct CanvasShapeContextMenuContent: View {
                                action: onResetAllTranslations)
                             .disabled(resetAllTranslationsDisabled)
                     }
+                    reuseTranslationItems()
                 } label: {
                     Label("Localization", systemImage: "globe")
                 }
@@ -305,6 +309,31 @@ struct CanvasShapeContextMenuContent: View {
         }
 
         Button(isMultiSelected ? "Delete Selected" : "Delete", systemImage: "trash", role: .destructive, action: deleteAction)
+    }
+
+    /// Reuse picker for a selected text shape: link it to another string (share base text + all
+    /// translations) or stop reusing. Rendered inside the Localization submenu; the target list is
+    /// computed lazily on open.
+    @ViewBuilder
+    private func reuseTranslationItems() -> some View {
+        if shape.type == .text, !isMultiSelected, onLinkTranslation != nil || onUnlinkTranslation != nil {
+            let targets = reuseTranslationTargets?() ?? []
+            if shape.translationKey != nil || !targets.isEmpty {
+                Divider()
+                if shape.translationKey != nil, let onUnlinkTranslation {
+                    Button("Stop Reusing Translation", systemImage: "link.badge.minus", action: onUnlinkTranslation)
+                }
+                if !targets.isEmpty, let onLinkTranslation {
+                    Menu {
+                        ForEach(targets, id: \.key) { target in
+                            Button(target.label) { onLinkTranslation(target.key) }
+                        }
+                    } label: {
+                        Label("Reuse Translation From…", systemImage: "link")
+                    }
+                }
+            }
+        }
     }
 
     private var svgOriginalSize: CGSize? {

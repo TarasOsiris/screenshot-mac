@@ -178,7 +178,7 @@ struct TranslationOverviewSheet: View {
         locale: LocaleDefinition
     ) -> some View {
         let baseText = item.shape.text ?? ""
-        let override = state.localeState.override(forCode: locale.code, shapeId: item.shape.id)
+        let override = state.translationOverrideForDisplay(shape: item.shape, localeCode: locale.code)
         let formatted = Self.formattedTranslation(for: override)
         let hasOverride = override?.hasTextContent == true
         let translating = isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code)
@@ -199,7 +199,7 @@ struct TranslationOverviewSheet: View {
                 } else {
                     BufferedTranslationField(
                         placeholder: String(localized: "Same as base language"),
-                        text: translationTextBinding(shapeId: item.shape.id, localeCode: locale.code)
+                        text: translationTextBinding(shape: item.shape, localeCode: locale.code)
                     )
                 }
             }
@@ -288,19 +288,15 @@ struct TranslationOverviewSheet: View {
     ) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                baseColumn(
-                    shapeId: item.shape.id,
-                    text: item.shape.text ?? "",
-                    rowLabel: item.rowLabel
-                )
+                baseColumn(shape: item.shape, rowLabel: item.rowLabel)
                 .frame(width: baseColumnWidth, alignment: .topLeading)
 
                 ForEach(locales) { locale in
-                    let override = state.localeState.override(forCode: locale.code, shapeId: item.shape.id)
+                    let override = state.translationOverrideForDisplay(shape: item.shape, localeCode: locale.code)
                     TranslationMatrixCell(
                         locale: locale,
                         baseText: item.shape.text ?? "",
-                        text: translationTextBinding(shapeId: item.shape.id, localeCode: locale.code),
+                        text: translationTextBinding(shape: item.shape, localeCode: locale.code),
                         formattedPlainText: Self.formattedTranslation(for: override),
                         columnPadding: columnPadding,
                         isTranslating: isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code),
@@ -326,13 +322,13 @@ struct TranslationOverviewSheet: View {
         }
     }
 
-    private func baseColumn(shapeId: UUID, text: String, rowLabel: String) -> some View {
+    private func baseColumn(shape: CanvasShapeModel, rowLabel: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             MultilineCellEditor(
                 placeholder: "Base text",
                 text: Binding(
-                    get: { text },
-                    set: { state.updateBaseText(shapeId: shapeId, text: $0) }
+                    get: { shape.text ?? "" },
+                    set: { state.updateBaseText(shapeId: shape.id, text: $0) }
                 )
             )
             Text(rowLabel)
@@ -358,18 +354,19 @@ struct TranslationOverviewSheet: View {
         return override.text ?? RichTextUtils.plainText(from: richText) ?? ""
     }
 
-    /// Override text for one cell; setting a blank value resets to the base language.
-    private func translationTextBinding(shapeId: UUID, localeCode: String) -> Binding<String> {
+    /// Override text for one cell; setting a blank value resets to the base language. Reads through
+    /// the shape's (possibly shared) translation key so reused strings show their shared value.
+    private func translationTextBinding(shape: CanvasShapeModel, localeCode: String) -> Binding<String> {
         Binding(
             get: {
-                state.localeState.override(forCode: localeCode, shapeId: shapeId)?.text ?? ""
+                state.translationOverrideForDisplay(shape: shape, localeCode: localeCode)?.text ?? ""
             },
             set: { newValue in
                 if isUntranslated(newValue) {
-                    state.resetTranslationText(shapeId: shapeId, localeCode: localeCode)
+                    state.resetTranslationText(shapeId: shape.id, localeCode: localeCode)
                 } else {
                     state.updateTranslationText(
-                        shapeId: shapeId,
+                        shapeId: shape.id,
                         localeCode: localeCode,
                         text: newValue
                     )
@@ -546,12 +543,7 @@ private struct MultilineCellEditor: View {
         }
         .frame(height: min(max(contentHeight, minHeight), maxHeight))
         .onPreferenceChange(CellHeightKey.self) { contentHeight = $0 }
-        .onChange(of: localText) { _, newValue in
-            if newValue != text { text = newValue }
-        }
-        .onChange(of: text) { _, newValue in
-            if newValue != localText { localText = newValue }
-        }
+        .debouncedFieldCommit(buffer: $localText, into: $text)
         .background(Color.platformTextBackground)
         .overlay(
             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
@@ -600,15 +592,45 @@ private struct BufferedTranslationField: View {
     var body: some View {
         TextField(placeholder, text: $localText, axis: .vertical)
             .lineLimit(1...6)
-            .onChange(of: localText) { _, newValue in
-                if newValue != text { text = newValue }
-            }
-            .onChange(of: text) { _, newValue in
-                if newValue != localText { localText = newValue }
-            }
+            .debouncedFieldCommit(buffer: $localText, into: $text)
     }
 }
 #endif
+
+/// Commits a cell's local editing buffer into its `@Observable`-backed binding on a debounce, and
+/// flushes immediately when the cell disappears (sheet dismiss, List/LazyVStack recycling). Writing
+/// the model on every keystroke would mutate `localeState`/`rows` and rebuild the entire grid per
+/// keystroke; debouncing means only the focused cell re-renders while typing.
+private struct DebouncedFieldCommit: ViewModifier {
+    @Binding var buffer: String
+    @Binding var committed: String
+    var delay: TimeInterval = 0.3
+    @State private var commitTask: DispatchWorkItem?
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: buffer) { _, newValue in
+                commitTask?.cancel()
+                let task = DispatchWorkItem { if newValue != committed { committed = newValue } }
+                commitTask = task
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: task)
+            }
+            .onChange(of: committed) { _, newValue in
+                // External writes (Translate button, auto-translate, locale switch) update the buffer.
+                if newValue != buffer { buffer = newValue }
+            }
+            .onDisappear {
+                commitTask?.cancel()
+                if buffer != committed { committed = buffer }
+            }
+    }
+}
+
+private extension View {
+    func debouncedFieldCommit(buffer: Binding<String>, into committed: Binding<String>) -> some View {
+        modifier(DebouncedFieldCommit(buffer: buffer, committed: committed))
+    }
+}
 
 private struct PendingCellTranslation {
     let shapeId: UUID

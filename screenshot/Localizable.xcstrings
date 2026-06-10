@@ -40811,6 +40811,9 @@
         }
       }
     },
+    "Reuse Translation From…" : {
+
+    },
     "Reveal in Finder after export" : {
       "localizations" : {
         "de" : {
@@ -46235,6 +46238,9 @@
           }
         }
       }
+    },
+    "Stop Reusing Translation" : {
+
     },
     "Storage" : {
       "localizations" : {

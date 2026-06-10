@@ -90,6 +90,12 @@ struct PersistenceService {
         projectDir(id).appendingPathComponent("resources", isDirectory: true)
     }
 
+    /// Per-project String Catalog holding the screenshot-content translations. Lives inside the
+    /// project directory so directory-level copies (duplication, iCloud) carry it along.
+    static func translationCatalogURL(_ id: UUID) -> URL {
+        projectDir(id).appendingPathComponent("translations.xcstrings")
+    }
+
     /// Rendered project-card thumbnails. Always local (never the iCloud root) — derived data
     /// that must not sync or be file-coordinated. Keyed per project; freshness is decided by
     /// comparing the PNG's file mod-date against the project's `modifiedAt`.
@@ -168,11 +174,28 @@ struct PersistenceService {
     // MARK: - Project data
 
     static func loadProject(_ id: UUID) -> ProjectData? {
-        load(ProjectData.self, from: projectDataURL(id))
+        guard var data = load(ProjectData.self, from: projectDataURL(id)) else { return nil }
+        // Catalog wins on read: merge translator-editable `.xcstrings` text over the inline copy.
+        // Absent catalog (old project, first run) leaves the inline `ls.o` text untouched.
+        if var localeState = data.localeState, let catalog = TranslationCatalogService.read(projectId: id) {
+            catalog.apply(to: &localeState)
+            data.localeState = localeState
+        }
+        return data
     }
 
     static func saveProject(_ id: UUID, data: ProjectData) throws {
+        ensureProjectDirs(id)
         try save(data, to: projectDataURL(id))
+        // Dual-write: mirror translations into the `.xcstrings` catalog. Inline text stays in
+        // project.json during the transition so older builds / lagging iCloud devices don't lose it.
+        // Skip the (per-save) build entirely for single-locale projects with nothing to translate.
+        if let localeState = data.localeState, localeState.locales.count > 1 || !localeState.overrides.isEmpty {
+            let catalog = TranslationCatalog.build(rows: data.rows, localeState: localeState)
+            if !catalog.strings.isEmpty {
+                try? TranslationCatalogService.write(catalog, projectId: id)
+            }
+        }
     }
 
     static func copyProject(from sourceId: UUID, to destId: UUID) {

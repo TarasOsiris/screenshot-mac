@@ -82,7 +82,7 @@ struct ShapePropertiesSingleSelectionBar: View {
     /// Whether the selected shape has any locale override for the active locale.
     var hasLocaleOverride: Bool {
         guard let shapeId = state.selectedShapeId, !state.localeState.isBaseLocale else { return false }
-        return state.localeState.hasOverride(shapeId: shapeId)
+        return state.shapeHasActiveLocaleOverride(shapeId)
     }
 
     /// Whether a shape has a locale image override for the active locale.

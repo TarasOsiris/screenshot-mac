@@ -122,6 +122,19 @@ struct ShapeLocaleOverride: Codable, Equatable {
         clearsRichText = nil
     }
 
+    /// Copy the translated-text fields (plain / formatted / explicit-clear) from another override.
+    mutating func copyTranslatedText(from other: ShapeLocaleOverride) {
+        text = other.text
+        richText = other.richText
+        clearsRichText = other.clearsRichText
+    }
+
+    /// Whether any translated-text field is set — plain, formatted, or an explicit rich-text clear.
+    /// (Distinct from `hasTextContent`, which ignores `clearsRichText` and trims whitespace.)
+    var hasTranslatedTextField: Bool {
+        text != nil || richText != nil || clearsRichText != nil
+    }
+
     var isEmpty: Bool {
         offsetX == nil && offsetY == nil && offsetWidth == nil && offsetHeight == nil
             && text == nil && richText == nil && clearsRichText != true && fontName == nil && fontSize == nil && fontWeight == nil

@@ -42,6 +42,10 @@ struct CanvasShapeInteractions {
     var translateAllLocalesDisabled = false
     var onResetAllTranslations: (() -> Void)?
     var resetAllTranslationsDisabled = false
+    /// Reuse targets for this text shape (other strings it can share), computed lazily on menu open.
+    var reuseTranslationTargets: (() -> [(key: String, label: String)])?
+    var onLinkTranslation: ((String) -> Void)?
+    var onUnlinkTranslation: (() -> Void)?
     var nonBaseLocaleCount: Int = 0
     var onCopyTextStyle: (() -> Void)?
     var onPasteTextStyle: (() -> Void)?
@@ -380,6 +384,9 @@ struct CanvasShapeView: View {
             translateAllLocalesDisabled: interactions.translateAllLocalesDisabled,
             onResetAllTranslations: interactions.onResetAllTranslations,
             resetAllTranslationsDisabled: interactions.resetAllTranslationsDisabled,
+            reuseTranslationTargets: interactions.reuseTranslationTargets,
+            onLinkTranslation: interactions.onLinkTranslation,
+            onUnlinkTranslation: interactions.onUnlinkTranslation,
             nonBaseLocaleCount: interactions.nonBaseLocaleCount,
             onCopyTextStyle: interactions.onCopyTextStyle,
             onPasteTextStyle: interactions.onPasteTextStyle,

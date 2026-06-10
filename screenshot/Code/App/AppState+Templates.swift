@@ -69,6 +69,7 @@ extension AppState {
             let shapeIdsToRemove = Set(shapesToRemove.map(\.id))
             selectedShapeIds.subtract(shapeIdsToRemove)
             rows[idx].shapes.removeAll { shapeIdsToRemove.contains($0.id) }
+            cleanupOrphanedTranslationOverrides()
             // Shift shapes from later templates left by one template width
             let tw = rows[idx].templateWidth
             for i in rows[idx].shapes.indices {

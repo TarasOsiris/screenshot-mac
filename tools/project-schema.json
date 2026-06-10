@@ -165,6 +165,7 @@
         "ls":  { "description": "letterSpacing — points.", "type": "number" },
         "lns": { "description": "lineSpacing — points.", "type": "number" },
         "lhm": { "description": "lineHeightMultiple.", "type": "number" },
+        "tk": { "description": "translationKey — catalog key this text shape sources its string from. Absent = owns its own string (key = id); present = reuses a shared string (translations live in the sibling translations.xcstrings under this key).", "type": "string" },
 
         "ifn": { "description": "imageFileName — filename in resources/ for image shapes.", "type": "string" },
 
