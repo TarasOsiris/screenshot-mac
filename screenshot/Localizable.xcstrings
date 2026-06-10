@@ -40811,7 +40811,10 @@
         }
       }
     },
-    "Reuse Translation From…" : {
+    "Reuse Translation" : {
+
+    },
+    "Reuse translation from" : {
 
     },
     "Reveal in Finder after export" : {

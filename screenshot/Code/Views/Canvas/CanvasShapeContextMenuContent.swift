@@ -199,11 +199,11 @@ struct CanvasShapeContextMenuContent: View {
                                action: onResetAllTranslations)
                             .disabled(resetAllTranslationsDisabled)
                     }
-                    reuseTranslationItems()
                 } label: {
                     Label("Localization", systemImage: "globe")
                 }
             }
+            reuseTranslationMenu()
             Divider()
         }
 
@@ -314,23 +314,29 @@ struct CanvasShapeContextMenuContent: View {
     /// Reuse picker for a selected text shape: link it to another string (share base text + all
     /// translations) or stop reusing. Rendered inside the Localization submenu; the target list is
     /// computed lazily on open.
+    /// Own submenu (not nested in Localization) so reuse stays reachable even with a single
+    /// language. Shown only when there's something to act on (already linked, or other strings
+    /// to reuse). Targets are computed lazily when the context menu opens.
     @ViewBuilder
-    private func reuseTranslationItems() -> some View {
-        if shape.type == .text, !isMultiSelected, onLinkTranslation != nil || onUnlinkTranslation != nil {
+    private func reuseTranslationMenu() -> some View {
+        if shape.type == .text, !isMultiSelected, let onLinkTranslation {
             let targets = reuseTranslationTargets?() ?? []
-            if shape.translationKey != nil || !targets.isEmpty {
-                Divider()
-                if shape.translationKey != nil, let onUnlinkTranslation {
-                    Button("Stop Reusing Translation", systemImage: "link.badge.minus", action: onUnlinkTranslation)
-                }
-                if !targets.isEmpty, let onLinkTranslation {
-                    Menu {
-                        ForEach(targets, id: \.key) { target in
-                            Button(target.label) { onLinkTranslation(target.key) }
-                        }
-                    } label: {
-                        Label("Reuse Translation From…", systemImage: "link")
+            let isLinked = shape.translationKey != nil
+            if isLinked || !targets.isEmpty {
+                Menu {
+                    if isLinked, let onUnlinkTranslation {
+                        Button("Stop Reusing Translation", systemImage: "link.badge.minus", action: onUnlinkTranslation)
+                        if !targets.isEmpty { Divider() }
                     }
+                    if !targets.isEmpty {
+                        Section("Reuse translation from") {
+                            ForEach(targets, id: \.key) { target in
+                                Button(target.label) { onLinkTranslation(target.key) }
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Reuse Translation", systemImage: "link")
                 }
             }
         }

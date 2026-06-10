@@ -499,6 +499,7 @@ private struct MultilineCellEditor: View {
     // end. The buffer survives recomputes; we sync to/from `text` only on real changes.
     @State private var localText: String
     @State private var contentHeight: CGFloat = 0
+    @FocusState private var isFocused: Bool
 
     private let fontSize: CGFloat = 12
     // Match the TextEditor's intrinsic text origin so the placeholder/mirror align.
@@ -540,10 +541,11 @@ private struct MultilineCellEditor: View {
             TextEditor(text: $localText)
                 .font(.system(size: fontSize))
                 .scrollContentBackground(.hidden)
+                .focused($isFocused)
         }
         .frame(height: min(max(contentHeight, minHeight), maxHeight))
         .onPreferenceChange(CellHeightKey.self) { contentHeight = $0 }
-        .debouncedFieldCommit(buffer: $localText, into: $text)
+        .debouncedFieldCommit(buffer: $localText, into: $text, isFocused: isFocused)
         .background(Color.platformTextBackground)
         .overlay(
             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
@@ -582,6 +584,7 @@ private struct BufferedTranslationField: View {
     let placeholder: String
     @Binding var text: String
     @State private var localText: String
+    @FocusState private var isFocused: Bool
 
     init(placeholder: String, text: Binding<String>) {
         self.placeholder = placeholder
@@ -592,7 +595,8 @@ private struct BufferedTranslationField: View {
     var body: some View {
         TextField(placeholder, text: $localText, axis: .vertical)
             .lineLimit(1...6)
-            .debouncedFieldCommit(buffer: $localText, into: $text)
+            .focused($isFocused)
+            .debouncedFieldCommit(buffer: $localText, into: $text, isFocused: isFocused)
     }
 }
 #endif
@@ -604,6 +608,7 @@ private struct BufferedTranslationField: View {
 private struct DebouncedFieldCommit: ViewModifier {
     @Binding var buffer: String
     @Binding var committed: String
+    var isFocused: Bool
     var delay: TimeInterval = 0.3
     @State private var commitTask: DispatchWorkItem?
 
@@ -616,19 +621,31 @@ private struct DebouncedFieldCommit: ViewModifier {
                 DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: task)
             }
             .onChange(of: committed) { _, newValue in
-                // External writes (Translate button, auto-translate, locale switch) update the buffer.
-                if newValue != buffer { buffer = newValue }
-            }
-            .onDisappear {
+                // An external write (Translate, auto-translate, locale switch) supersedes any in-flight
+                // buffer commit — cancel it so a stale debounce can't revert the new value.
+                guard newValue != buffer else { return }
                 commitTask?.cancel()
-                if buffer != committed { committed = buffer }
+                commitTask = nil
+                buffer = newValue
             }
+            .onChange(of: isFocused) { _, focused in
+                // Commit immediately on blur so leaving the cell (e.g. to click Translate) flushes
+                // the latest text, and nothing is left pending past the edit.
+                if !focused { flush() }
+            }
+            .onDisappear { flush() }
+    }
+
+    private func flush() {
+        commitTask?.cancel()
+        commitTask = nil
+        if buffer != committed { committed = buffer }
     }
 }
 
 private extension View {
-    func debouncedFieldCommit(buffer: Binding<String>, into committed: Binding<String>) -> some View {
-        modifier(DebouncedFieldCommit(buffer: buffer, committed: committed))
+    func debouncedFieldCommit(buffer: Binding<String>, into committed: Binding<String>, isFocused: Bool) -> some View {
+        modifier(DebouncedFieldCommit(buffer: buffer, committed: committed, isFocused: isFocused))
     }
 }
 
