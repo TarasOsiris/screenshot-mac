@@ -272,6 +272,14 @@ struct ProjectsView: View {
             }
         }
 
+        let isStarred = project.isStarred
+        Button(
+            isStarred ? "Unstar Project" : "Star Project",
+            systemImage: isStarred ? "star.slash" : "star"
+        ) {
+            state.setProjectStarred(project.id, !isStarred)
+        }
+
         Button("Duplicate…", systemImage: "plus.square.on.square") {
             store.requirePro(
                 allowed: store.canCreateProject(currentCount: state.visibleProjects.count),
@@ -367,10 +375,18 @@ private struct ProjectCard: View {
         VStack(alignment: .leading, spacing: 10) {
             thumbnail
             VStack(alignment: .leading, spacing: 2) {
-                Text(project.name)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .foregroundStyle(.primary)
+                HStack(spacing: 4) {
+                    Text(project.name)
+                        .font(.headline)
+                        .lineLimit(1)
+                        .foregroundStyle(.primary)
+                    if project.isStarred {
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundStyle(.yellow)
+                            .accessibilityHidden(true)
+                    }
+                }
                 Text(project.modifiedAt, format: .relative(presentation: .named))
                     .font(.caption)
                     .foregroundStyle(.secondary)
