@@ -5,20 +5,18 @@ import SwiftUI
 struct BufferedTranslationField: View {
     let placeholder: String
     @Binding var text: String
-    var lineLimit: ClosedRange<Int>
     @State private var localText: String
     @FocusState private var isFocused: Bool
 
-    init(placeholder: String, text: Binding<String>, lineLimit: ClosedRange<Int> = 1...6) {
+    init(placeholder: String, text: Binding<String>) {
         self.placeholder = placeholder
         self._text = text
-        self.lineLimit = lineLimit
         self._localText = State(initialValue: text.wrappedValue)
     }
 
     var body: some View {
         TextField(placeholder, text: $localText, axis: .vertical)
-            .lineLimit(lineLimit)
+            .lineLimit(1...6)
             .focused($isFocused)
             .debouncedFieldCommit(buffer: $localText, into: $text, isFocused: isFocused)
     }
