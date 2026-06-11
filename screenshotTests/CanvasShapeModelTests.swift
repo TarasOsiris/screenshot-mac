@@ -202,6 +202,63 @@ struct CanvasShapeModelTests {
         #expect(decoded.lineHeightMultiple == nil)
     }
 
+    @Test func textBackgroundRoundTrips() throws {
+        let red = Color(red: 1, green: 0, blue: 0)
+        let outlineOpacity = 0.5
+        var shape = CanvasShapeModel(type: .text, x: 0, y: 0, width: 100, height: 100, text: "Hello")
+        shape.textBackgroundColor = red
+        shape.textBackgroundCornerRadius = 12
+        shape.textBackgroundPadding = 8
+        shape.textBackgroundOutlineColor = .black.opacity(outlineOpacity)
+        shape.textBackgroundOutlineWidth = 4
+
+        let data = try JSONEncoder().encode(shape)
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+        let decodedOutlineColor = try #require(decoded.textBackgroundOutlineColorData)
+
+        #expect(decoded.textBackgroundColorData == CodableColor(red))
+        #expect(decoded.textBackgroundCornerRadius == 12)
+        #expect(decoded.textBackgroundPadding == 8)
+        #expect(decodedOutlineColor.red == 0)
+        #expect(decodedOutlineColor.green == 0)
+        #expect(decodedOutlineColor.blue == 0)
+        #expect(abs(decodedOutlineColor.opacity - 128.0 / 255.0) < 0.001)
+        #expect(decoded.textBackgroundOutlineWidth == 4)
+    }
+
+    @Test func textBackgroundDefaultsToNilForLegacyProjects() throws {
+        let json = """
+        {"id":"00000000-0000-0000-0000-000000000001","t":"text","x":0,"y":0,"w":100,"h":100,"c":"#FFFFFF","txt":"Hello"}
+        """
+        let data = json.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
+
+        #expect(decoded.textBackgroundColorData == nil)
+        #expect(decoded.textBackgroundCornerRadius == nil)
+        #expect(decoded.textBackgroundPadding == nil)
+        #expect(decoded.textBackgroundOutlineColorData == nil)
+        #expect(decoded.textBackgroundOutlineWidth == nil)
+    }
+
+    @MainActor @Test func textBackgroundPresetsAreWellFormed() {
+        let presets = ShapePropertiesSingleSelectionBar.textBackgroundPresets
+        #expect(presets.count == 4)
+        for preset in presets {
+            #expect(!preset.name.isEmpty)
+            #expect((0...100).contains(preset.padding))
+            #expect((0...100).contains(preset.cornerRadius))
+            if let width = preset.outlineWidth {
+                // An outline width implies an outline color, and lives within the slider range.
+                #expect(preset.outlineColor != nil)
+                #expect((1...50).contains(width))
+            } else {
+                #expect(preset.outlineColor == nil)
+            }
+        }
+        // The "Outline" preset is the one that carries an outline.
+        #expect(presets.contains { $0.outlineWidth != nil })
+    }
+
     @Test func applyTextStyleClearsExistingRichText() {
         let source = CanvasShapeModel(type: .text, text: "Source", fontSize: 48)
         var target = CanvasShapeModel(type: .text, text: "Target", fontSize: 24)

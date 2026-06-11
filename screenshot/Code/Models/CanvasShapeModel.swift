@@ -66,6 +66,13 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     var outlineColorData: CodableColor?
     var outlineWidth: CGFloat?
 
+    // Text background (a rounded-rect plate behind a .text shape's glyphs)
+    var textBackgroundColorData: CodableColor?
+    var textBackgroundCornerRadius: CGFloat?
+    var textBackgroundPadding: CGFloat?
+    var textBackgroundOutlineColorData: CodableColor?
+    var textBackgroundOutlineWidth: CGFloat?
+
     // Star properties
     var starPointCount: Int?
 
@@ -98,6 +105,8 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         case shadow = "shd"
         case svgContent = "svg", svgUseColor = "suc"
         case outlineColorData = "olc", outlineWidth = "olw"
+        case textBackgroundColorData = "tbc", textBackgroundCornerRadius = "tbr", textBackgroundPadding = "tbp"
+        case textBackgroundOutlineColorData = "tboc", textBackgroundOutlineWidth = "tbow"
         case starPointCount = "spc"
         case fillStyle = "fst"
         case fillGradientConfig = "fgc"
@@ -146,6 +155,11 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         svgUseColor = try c.decodeIfPresent(Bool.self, forKey: .svgUseColor)
         outlineColorData = try c.decodeIfPresent(CodableColor.self, forKey: .outlineColorData)
         outlineWidth = try c.decodeIfPresent(CGFloat.self, forKey: .outlineWidth)
+        textBackgroundColorData = try c.decodeIfPresent(CodableColor.self, forKey: .textBackgroundColorData)
+        textBackgroundCornerRadius = try c.decodeIfPresent(CGFloat.self, forKey: .textBackgroundCornerRadius)
+        textBackgroundPadding = try c.decodeIfPresent(CGFloat.self, forKey: .textBackgroundPadding)
+        textBackgroundOutlineColorData = try c.decodeIfPresent(CodableColor.self, forKey: .textBackgroundOutlineColorData)
+        textBackgroundOutlineWidth = try c.decodeIfPresent(CGFloat.self, forKey: .textBackgroundOutlineWidth)
         starPointCount = try c.decodeIfPresent(Int.self, forKey: .starPointCount)
         fillStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .fillStyle)
         fillGradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .fillGradientConfig)
@@ -200,6 +214,11 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         try c.encodeIfPresent(svgUseColor, forKey: .svgUseColor)
         try c.encodeIfPresent(outlineColorData, forKey: .outlineColorData)
         try c.encodeIfPresent(outlineWidth, forKey: .outlineWidth)
+        try c.encodeIfPresent(textBackgroundColorData, forKey: .textBackgroundColorData)
+        if let radius = textBackgroundCornerRadius, radius != 0 { try c.encode(radius, forKey: .textBackgroundCornerRadius) }
+        if let padding = textBackgroundPadding, padding != 0 { try c.encode(padding, forKey: .textBackgroundPadding) }
+        try c.encodeIfPresent(textBackgroundOutlineColorData, forKey: .textBackgroundOutlineColorData)
+        try c.encodeIfPresent(textBackgroundOutlineWidth, forKey: .textBackgroundOutlineWidth)
         try c.encodeIfPresent(starPointCount, forKey: .starPointCount)
         try c.encodeIfPresent(fillStyle, forKey: .fillStyle)
         try c.encodeIfPresent(fillGradientConfig, forKey: .fillGradientConfig)
@@ -241,6 +260,11 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         svgUseColor: Bool? = nil,
         outlineColor: Color? = nil,
         outlineWidth: CGFloat? = nil,
+        textBackgroundColor: Color? = nil,
+        textBackgroundCornerRadius: CGFloat? = nil,
+        textBackgroundPadding: CGFloat? = nil,
+        textBackgroundOutlineColor: Color? = nil,
+        textBackgroundOutlineWidth: CGFloat? = nil,
         starPointCount: Int? = nil,
         clipToTemplate: Bool? = nil,
         shadow: ShadowConfig? = nil,
@@ -279,6 +303,11 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         self.svgUseColor = svgUseColor
         self.outlineColorData = outlineColor.map { CodableColor($0) }
         self.outlineWidth = outlineWidth
+        self.textBackgroundColorData = textBackgroundColor.map { CodableColor($0) }
+        self.textBackgroundCornerRadius = textBackgroundCornerRadius
+        self.textBackgroundPadding = textBackgroundPadding
+        self.textBackgroundOutlineColorData = textBackgroundOutlineColor.map { CodableColor($0) }
+        self.textBackgroundOutlineWidth = textBackgroundOutlineWidth
         self.starPointCount = starPointCount
         self.clipToTemplate = clipToTemplate
         self.shadow = shadow
@@ -299,6 +328,20 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     var outlineColor: Color? {
         get { outlineColorData?.color }
         set { outlineColorData = newValue.map { CodableColor($0) } }
+    }
+
+    static let defaultTextBackgroundColor: Color = .black
+    static let defaultTextBackgroundOutlineColor: Color = defaultOutlineColor
+    static let defaultTextBackgroundOutlineWidth: CGFloat = defaultOutlineWidth
+
+    var textBackgroundColor: Color? {
+        get { textBackgroundColorData?.color }
+        set { textBackgroundColorData = newValue.map { CodableColor($0) } }
+    }
+
+    var textBackgroundOutlineColor: Color? {
+        get { textBackgroundOutlineColorData?.color }
+        set { textBackgroundOutlineColorData = newValue.map { CodableColor($0) } }
     }
 
     var hasTranslatableText: Bool {
@@ -683,6 +726,11 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
 
         if outlineColorData != oldBase.outlineColorData { result.outlineColorData = outlineColorData }
         if outlineWidth != oldBase.outlineWidth { result.outlineWidth = outlineWidth }
+        if textBackgroundColorData != oldBase.textBackgroundColorData { result.textBackgroundColorData = textBackgroundColorData }
+        if textBackgroundCornerRadius != oldBase.textBackgroundCornerRadius { result.textBackgroundCornerRadius = textBackgroundCornerRadius }
+        if textBackgroundPadding != oldBase.textBackgroundPadding { result.textBackgroundPadding = textBackgroundPadding }
+        if textBackgroundOutlineColorData != oldBase.textBackgroundOutlineColorData { result.textBackgroundOutlineColorData = textBackgroundOutlineColorData }
+        if textBackgroundOutlineWidth != oldBase.textBackgroundOutlineWidth { result.textBackgroundOutlineWidth = textBackgroundOutlineWidth }
         if starPointCount != oldBase.starPointCount { result.starPointCount = starPointCount }
 
         if fillStyle != oldBase.fillStyle { result.fillStyle = fillStyle }

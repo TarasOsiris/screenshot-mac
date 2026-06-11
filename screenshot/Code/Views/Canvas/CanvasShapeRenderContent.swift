@@ -104,8 +104,38 @@ struct CanvasShapeRenderContent: View {
             }
         }
         .frame(width: effectiveW, height: effectiveH)
+        .background { textBackgroundLayer }
         .scaleEffect(displayScale, anchor: .topLeading)
         .frame(width: displayW, height: displayH, alignment: .topLeading)
+    }
+
+    /// Rounded-rect plate behind a text shape's glyphs. Sized in model space (the `effectiveW/H`
+    /// frame) so the enclosing `.scaleEffect(displayScale)` scales the radius for editor/export parity —
+    /// the radius is NOT pre-multiplied by displayScale (unlike the rectangle/image cases).
+    @ViewBuilder
+    private var textBackgroundLayer: some View {
+        if let bg = shape.textBackgroundColor {
+            // Padding grows the plate outward beyond the text frame (model space → scaled by the
+            // enclosing scaleEffect). Corner radius is clamped against the padded dimensions.
+            let pad = max(0, shape.textBackgroundPadding ?? 0)
+            let plateW = effectiveW + 2 * pad
+            let plateH = effectiveH + 2 * pad
+            let radius = min(shape.textBackgroundCornerRadius ?? 0, min(plateW, plateH) / 2)
+            let plate = RoundedRectangle(cornerRadius: radius, style: .continuous)
+            let outlineWidth = min(max(0, shape.textBackgroundOutlineWidth ?? 0), min(plateW, plateH) / 2)
+
+            if let outlineColor = shape.textBackgroundOutlineColor, outlineWidth > 0 {
+                ZStack {
+                    plate.fill(outlineColor)
+                    plate.inset(by: outlineWidth).fill(bg)
+                }
+                .clipShape(plate)
+                .padding(-pad)
+            } else {
+                plate.fill(bg)
+                    .padding(-pad)
+            }
+        }
     }
 
     @ViewBuilder
@@ -223,6 +253,7 @@ struct CanvasShapeRenderContent: View {
         #else
         editor
             .frame(width: effectiveW, height: effectiveH)
+            .background { textBackgroundLayer }
             .scaleEffect(displayScale, anchor: .topLeading)
             .frame(width: displayW, height: displayH, alignment: .topLeading)
         #endif

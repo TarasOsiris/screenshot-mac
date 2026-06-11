@@ -160,7 +160,7 @@ extension ShapePropertiesSingleSelectionBar {
             Divider()
 
             LabeledContent("Letter Spacing") {
-                let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0)
+                let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0, continuous: true)
                 HStack(spacing: 4) {
                     Slider(value: trackingBinding, in: -5...30)
                         .frame(width: UIMetrics.SliderWidth.wide)

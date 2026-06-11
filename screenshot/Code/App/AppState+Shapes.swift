@@ -665,6 +665,33 @@ extension AppState {
         }
     }
 
+    /// Multi-shape sibling of `updateShapeContinuous` for slider drags over a selection.
+    /// Routes through the row-scoped continuous path (throttled ~30fps, single debounced
+    /// undo step) instead of running `withUndo` per tick. Writes the closure directly onto
+    /// the base shapes in the buffered working row, so it's correct only for non-localized
+    /// properties (opacity/rotation/borderRadius/outline/shadow). Localized text edits must
+    /// stay on `updateShapes`/`updateShape`.
+    func updateShapesContinuous(
+        _ ids: Set<UUID>,
+        in rowId: UUID? = nil,
+        undoName: String = "Edit Shapes",
+        update: @escaping (inout CanvasShapeModel) -> Void
+    ) {
+        let targetRowId: UUID
+        if let rowId {
+            targetRowId = rowId
+        } else if let idx = selectedRowIndex {
+            targetRowId = rows[idx].id
+        } else {
+            return
+        }
+        updateRowContinuous(targetRowId, actionName: undoName) { row in
+            for i in row.shapes.indices where ids.contains(row.shapes[i].id) {
+                update(&row.shapes[i])
+            }
+        }
+    }
+
     // MARK: - Lock
 
     /// True when every selected shape is locked. False if there's no selection.

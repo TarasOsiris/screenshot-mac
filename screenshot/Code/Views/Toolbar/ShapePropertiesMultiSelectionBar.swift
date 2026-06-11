@@ -242,7 +242,7 @@ struct ShapePropertiesMultiSelectionBar: View {
             ShapePropertiesSeparator()
 
             ShapePropertiesControlGroup("Width") {
-                Slider(value: multiShapeOptionalBinding(\.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth), in: 1...50)
+                Slider(value: multiShapeOptionalBinding(\.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true), in: 1...50)
                     .frame(width: UIMetrics.SliderWidth.standard)
             }
         }
@@ -316,13 +316,14 @@ struct ShapePropertiesMultiSelectionBar: View {
                 return LocaleService.resolveShape(first, localeState: state.localeState).shadow ?? ShadowConfig()
             },
             set: { newValue in
-                state.updateShapes(state.selectedShapeIds) { shape in
+                state.updateShapesContinuous(state.selectedShapeIds) { shape in
                     shape.shadow = newValue.isEmpty ? nil : newValue
                 }
             }
         )
     }
 
+    // Slider-only binding: writes go through the throttled continuous path.
     private func multiShapeBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> {
         Binding(
             get: {
@@ -332,14 +333,14 @@ struct ShapePropertiesMultiSelectionBar: View {
                 return LocaleService.resolveShape(first, localeState: state.localeState)[keyPath: keyPath]
             },
             set: { newValue in
-                state.updateShapes(state.selectedShapeIds) { shape in
+                state.updateShapesContinuous(state.selectedShapeIds) { shape in
                     shape[keyPath: keyPath] = newValue
                 }
             }
         )
     }
 
-    private func multiShapeOptionalBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T) -> Binding<T> {
+    private func multiShapeOptionalBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T, continuous: Bool = false) -> Binding<T> {
         Binding(
             get: {
                 guard let rowIndex,
@@ -348,8 +349,14 @@ struct ShapePropertiesMultiSelectionBar: View {
                 return LocaleService.resolveShape(first, localeState: state.localeState)[keyPath: keyPath] ?? defaultValue
             },
             set: { newValue in
-                state.updateShapes(state.selectedShapeIds) { shape in
-                    shape[keyPath: keyPath] = newValue
+                if continuous {
+                    state.updateShapesContinuous(state.selectedShapeIds) { shape in
+                        shape[keyPath: keyPath] = newValue
+                    }
+                } else {
+                    state.updateShapes(state.selectedShapeIds) { shape in
+                        shape[keyPath: keyPath] = newValue
+                    }
                 }
             }
         )

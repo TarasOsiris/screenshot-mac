@@ -128,6 +128,57 @@ struct ExportServiceTests {
         #expect(foundDark, "Rich-text shape should render visible glyphs in export")
     }
 
+    @Test func renderTemplateDrawsTextBackground() throws {
+        var row = makeTestRow(width: 200, height: 200, bgColor: Self.testBlue)
+        var shape = CanvasShapeModel(
+            type: .text, x: 50, y: 50, width: 100, height: 100,
+            color: .white, text: "Hi", fontSize: 30
+        )
+        shape.textBackgroundColor = Self.testRed
+        shape.textBackgroundCornerRadius = 0
+        row.shapes = [shape]
+
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+        // The red plate fills the text frame (50,50)-(150,150)…
+        try expectDominant(bitmap, at: (60, 60), channel: .r, label: "text background plate")
+        // …and the blue template background shows outside it.
+        try expectDominant(bitmap, at: (10, 10), channel: .b, label: "outside text shape")
+    }
+
+    @Test func textBackgroundPaddingExpandsPlateBeyondFrame() throws {
+        var row = makeTestRow(width: 200, height: 200, bgColor: Self.testBlue)
+        var shape = CanvasShapeModel(
+            type: .text, x: 50, y: 50, width: 100, height: 100,
+            color: .white, text: "Hi", fontSize: 30
+        )
+        shape.textBackgroundColor = Self.testRed
+        shape.textBackgroundPadding = 30
+        row.shapes = [shape]
+
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+        // (30,100) is outside the text frame (x<50) but inside the padded plate (20…180) → red.
+        try expectDominant(bitmap, at: (30, 100), channel: .r, label: "padded plate")
+        // (5,100) is beyond the padded plate → still the blue template background.
+        try expectDominant(bitmap, at: (5, 100), channel: .b, label: "beyond padded plate")
+    }
+
+    @Test func textBackgroundOutlineRendersInsidePlate() throws {
+        var row = makeTestRow(width: 200, height: 200, bgColor: Self.testBlue)
+        var shape = CanvasShapeModel(
+            type: .text, x: 50, y: 50, width: 100, height: 100,
+            color: .white, text: "", fontSize: 30
+        )
+        shape.textBackgroundColor = Self.testRed
+        shape.textBackgroundOutlineColor = Self.testGreen
+        shape.textBackgroundOutlineWidth = 10
+        row.shapes = [shape]
+
+        let bitmap = try renderTemplateBitmap(index: 0, row: row)
+        try expectDominant(bitmap, at: (55, 100), channel: .g, label: "text background outline")
+        try expectDominant(bitmap, at: (70, 100), channel: .r, label: "text background fill inside outline")
+        try expectDominant(bitmap, at: (45, 100), channel: .b, label: "outside outlined plate")
+    }
+
     // MARK: - Filename sanitization
 
     @Test func sanitizedFileNameReplacesFilesystemReservedCharacters() {

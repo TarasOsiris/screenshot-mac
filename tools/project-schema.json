@@ -186,6 +186,12 @@
         "olc": { "description": "outlineColorData — stroke color (rectangle/circle/star).", "$ref": "#/$defs/Color" },
         "olw": { "description": "outlineWidth — stroke width in points.", "type": "number" },
 
+        "tbc": { "description": "textBackgroundColorData — fill color of the rounded plate behind a text shape (present iff a text background is set).", "$ref": "#/$defs/Color" },
+        "tbr": { "description": "textBackgroundCornerRadius — corner radius (points) of the text background plate, omitted when 0.", "type": "number" },
+        "tbp": { "description": "textBackgroundPadding — points the text background plate extends outward beyond the text frame on every side, omitted when 0.", "type": "number" },
+        "tboc": { "description": "textBackgroundOutlineColorData — outline color of the text background plate.", "$ref": "#/$defs/Color" },
+        "tbow": { "description": "textBackgroundOutlineWidth — outline width in points for the text background plate.", "type": "number" },
+
         "spc": { "description": "starPointCount — number of points on a star shape.", "type": "integer" },
 
         "fst": { "description": "fillStyle — gradient/image fill for rectangle/circle/star.", "$ref": "#/$defs/BackgroundStyle" },
