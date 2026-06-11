@@ -15,6 +15,17 @@ struct PersistenceService {
     static var hasDataDirOverride: Bool {
         ProcessInfo.processInfo.environment[rootDirectoryOverrideKey]?.isEmpty == false
             || isUsingTemporaryRootDirectory
+            || isRunningUnderXCTest
+    }
+
+    // Tests override SCREENSHOT_DATA_DIR per-test, but the env var is process-global and
+    // debounced saves can fire after a test unsets it — without this guard those saves
+    // land in the user's real (iCloud) store, leaking test projects.
+    private static var isRunningUnderXCTest: Bool {
+        let env = ProcessInfo.processInfo.environment
+        return env["XCTestConfigurationFilePath"] != nil
+            || env["XCTestSessionIdentifier"] != nil
+            || NSClassFromString("XCTestCase") != nil
     }
 
     static let encoder: JSONEncoder = {
@@ -38,7 +49,7 @@ struct PersistenceService {
         if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
             return URL(fileURLWithPath: override, isDirectory: true)
         }
-        if isUsingTemporaryRootDirectory {
+        if isUsingTemporaryRootDirectory || isRunningUnderXCTest {
             return temporaryRootURL
         }
         return ICloudSyncService.shared.activeRootURL
@@ -50,7 +61,7 @@ struct PersistenceService {
         if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
             return URL(fileURLWithPath: override, isDirectory: true)
         }
-        if isUsingTemporaryRootDirectory {
+        if isUsingTemporaryRootDirectory || isRunningUnderXCTest {
             return temporaryRootURL
         }
         return localRootURL
