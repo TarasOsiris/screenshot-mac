@@ -107,6 +107,12 @@ struct PersistenceService {
         projectDir(id).appendingPathComponent("translations.xcstrings")
     }
 
+    /// Modification date of the project's translation catalog, used to detect translator edits
+    /// made outside the app (e.g. in Xcode's String Catalog editor). Nil when the file is absent.
+    static func translationCatalogModifiedDate(_ id: UUID) -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: translationCatalogURL(id).path))?[.modificationDate] as? Date
+    }
+
     /// Rendered project-card thumbnails. Always local (never the iCloud root) — derived data
     /// that must not sync or be file-coordinated. Keyed per project; freshness is decided by
     /// comparing the PNG's file mod-date against the project's `modifiedAt`.
@@ -196,9 +202,8 @@ struct PersistenceService {
         guard var data = load(ProjectData.self, from: projectDataURL(id)) else { return nil }
         // Catalog wins on read: merge translator-editable `.xcstrings` text over the inline copy.
         // Absent catalog (old project, first run) leaves the inline `ls.o` text untouched.
-        if var localeState = data.localeState, let catalog = TranslationCatalogService.read(projectId: id) {
-            catalog.apply(to: &localeState, validKeys: TranslationCatalog.representedKeys(rows: data.rows))
-            data.localeState = localeState
+        if let localeState = data.localeState {
+            data.localeState = TranslationCatalogService.merging(localeState, projectId: id, rows: data.rows)
         }
         return data
     }

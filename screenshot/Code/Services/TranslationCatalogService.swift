@@ -17,6 +17,16 @@ enum TranslationCatalogService {
         PersistenceService.load(TranslationCatalog.self, from: PersistenceService.translationCatalogURL(projectId))
     }
 
+    /// Catalog-wins merge: overlay the project's translator-editable `.xcstrings` text onto
+    /// `localeState`. Returns `localeState` unchanged when no catalog exists (old project, first
+    /// run). The single source of truth for both project load and on-activation refresh.
+    static func merging(_ localeState: LocaleState, projectId: UUID, rows: [ScreenshotRow]) -> LocaleState {
+        guard let catalog = read(projectId: projectId) else { return localeState }
+        var merged = localeState
+        catalog.apply(to: &merged, validKeys: TranslationCatalog.representedKeys(rows: rows))
+        return merged
+    }
+
     static func exists(projectId: UUID) -> Bool {
         FileManager.default.fileExists(atPath: PersistenceService.translationCatalogURL(projectId).path)
     }

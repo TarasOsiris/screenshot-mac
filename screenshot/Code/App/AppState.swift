@@ -134,6 +134,10 @@ final class AppState {
     @ObservationIgnored var iCloudMonitor: ICloudMonitor?
     /// Tracks when the active project data was last saved/loaded, for merge decisions.
     @ObservationIgnored var activeProjectDataModifiedAt: Date?
+    /// `translations.xcstrings` mod-date the active project last read or wrote, so an external
+    /// (Xcode/translator) edit can be told apart from our own dual-write on re-activation.
+    /// Reset on every project load via `applyProjectData`, so it always tracks the active project.
+    @ObservationIgnored var lastSeenCatalogModified: Date?
 
     @ObservationIgnored var saveTask: DispatchWorkItem?
     @ObservationIgnored var imageLoadTask: Task<Void, Never>?
@@ -267,6 +271,18 @@ final class AppState {
                 self?.flushPendingSavesSynchronously()
             }
         }
+
+        // Pick up translation edits made in Xcode's String Catalog editor while we were
+        // backgrounded. macOS-only: editing the `.xcstrings` is a desktop workflow.
+        #if os(macOS)
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.refreshTranslationsIfCatalogChanged()
+        }
+        #endif
     }
 
     /// Flushes any in-flight continuous edits and pending debounced save so closing

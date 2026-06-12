@@ -309,6 +309,52 @@ struct TranslationCatalogTests {
         }
     }
 
+    // MARK: - AppState re-activation refresh
+
+    @MainActor
+    @Test func refreshAppliesExternalCatalogEditToLocaleState() throws {
+        let (appState, tempDir) = makeTestState()
+        defer { appState.saveTask?.cancel(); cleanupTestState(tempDir) }
+
+        let id = try #require(appState.activeProjectId)
+        let shape = textShape("Hello")
+        appState.rows = [ScreenshotRow(label: "Hero", shapes: [shape])]
+        appState.localeState = state(
+            locales: [("en", "English"), ("fr", "French")],
+            overrides: ["fr": [shape.id.uuidString: ShapeLocaleOverride(text: "Bonjour")]]
+        )
+        appState.saveAll()
+
+        // Simulate the user editing the catalog in Xcode while we were backgrounded.
+        var catalog = try #require(TranslationCatalogService.read(projectId: id))
+        catalog.strings[shape.id.uuidString]?.localizations["fr"] = .init(stringUnit: .init(state: "translated", value: "Salut"))
+        try TranslationCatalogService.write(catalog, projectId: id)
+        appState.lastSeenCatalogModified = .distantPast
+
+        appState.refreshTranslationsIfCatalogChanged()
+
+        #expect(appState.localeState.override(forCode: "fr", shapeId: shape.id)?.text == "Salut")
+    }
+
+    @MainActor
+    @Test func refreshIsNoOpWhenCatalogUnchanged() throws {
+        let (appState, tempDir) = makeTestState()
+        defer { appState.saveTask?.cancel(); cleanupTestState(tempDir) }
+
+        let shape = textShape("Hello")
+        appState.rows = [ScreenshotRow(label: "Hero", shapes: [shape])]
+        appState.localeState = state(
+            locales: [("en", "English"), ("fr", "French")],
+            overrides: ["fr": [shape.id.uuidString: ShapeLocaleOverride(text: "Bonjour")]]
+        )
+        appState.saveAll()
+
+        let before = appState.localeState
+        appState.refreshTranslationsIfCatalogChanged()
+
+        #expect(appState.localeState == before)
+    }
+
     @MainActor
     @Test func saveThrowsWhenCatalogMirrorCannotBeWritten() throws {
         try withTempDataDir { id in

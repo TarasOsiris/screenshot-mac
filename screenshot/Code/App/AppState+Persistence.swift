@@ -188,6 +188,7 @@ extension AppState {
         rows = data.rows
         localeState = data.localeState ?? .default
         activeProjectDataModifiedAt = data.modifiedAt
+        lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(projectId)
         // Drop any preview-mode entries that don't refer to a row in the new data.
         reconcilePreviewingRows(against: Set(rows.map(\.id)))
         selectRow(rows.first?.id)
@@ -197,6 +198,23 @@ extension AppState {
             cleanupOrphanedResourceFiles(for: projectId)
         }
         seedReferencedFontFamiliesFromLoadedProject()
+    }
+
+    /// Re-merge the active project's `translations.xcstrings` when it was edited outside the app
+    /// (Xcode's String Catalog editor / a translation tool). Uses the same catalog-wins merge as
+    /// `PersistenceService.loadProject`, so text shapes pick up translator edits on re-activation
+    /// without a project switch. A no-op when the file is unchanged or the merge changes nothing.
+    @MainActor
+    func refreshTranslationsIfCatalogChanged() {
+        guard let id = activeProjectId,
+              let diskModified = PersistenceService.translationCatalogModifiedDate(id),
+              diskModified > (lastSeenCatalogModified ?? .distantPast) else { return }
+        lastSeenCatalogModified = diskModified
+
+        let updated = TranslationCatalogService.merging(localeState, projectId: id, rows: rows)
+        guard updated != localeState else { return }
+        localeState = updated
+        scheduleSave()
     }
 
     // MARK: - Save
@@ -263,6 +281,7 @@ extension AppState {
         do {
             try PersistenceService.saveProject(activeId, data: data)
             activeProjectDataModifiedAt = data.modifiedAt
+            lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(activeId)
             return true
         } catch {
             saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
@@ -289,6 +308,13 @@ extension AppState {
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 try PersistenceService.saveProject(activeId, data: data)
+                let catalogModified = PersistenceService.translationCatalogModifiedDate(activeId)
+                await MainActor.run {
+                    // A project switch may have landed while we wrote off-main; only stamp the
+                    // active-project mtime if it's still the project we just saved.
+                    guard let self, self.activeProjectId == activeId else { return }
+                    self.lastSeenCatalogModified = catalogModified
+                }
             } catch {
                 await MainActor.run {
                     self?.saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
