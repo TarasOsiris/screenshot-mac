@@ -179,6 +179,27 @@ struct ExportServiceTests {
         try expectDominant(bitmap, at: (45, 100), channel: .b, label: "outside outlined plate")
     }
 
+    @Test func textBackgroundOpacityDimsPlate() throws {
+        func redInsidePlate(opacity: Double?) throws -> CGFloat {
+            var row = makeTestRow(width: 200, height: 200, bgColor: Self.testBlue)
+            var shape = CanvasShapeModel(
+                type: .text, x: 50, y: 50, width: 100, height: 100,
+                color: .white, text: "", fontSize: 30
+            )
+            shape.textBackgroundColor = Self.testRed
+            shape.textBackgroundOpacity = opacity
+            row.shapes = [shape]
+            let bitmap = try renderTemplateBitmap(index: 0, row: row)
+            return try pixelColor(bitmap, at: (100, 100)).r
+        }
+
+        let opaqueRed = try redInsidePlate(opacity: 1.0)
+        let dimmedRed = try redInsidePlate(opacity: 0.3)
+        // A translucent plate blends toward the blue template background, so its red channel drops.
+        #expect(dimmedRed < opaqueRed - 0.2,
+                "Lower textBackgroundOpacity should dim the plate: opaque=\(opaqueRed), dimmed=\(dimmedRed)")
+    }
+
     // MARK: - Filename sanitization
 
     @Test func sanitizedFileNameReplacesFilesystemReservedCharacters() {

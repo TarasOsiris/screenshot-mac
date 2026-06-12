@@ -32,6 +32,7 @@ extension ShapePropertiesSingleSelectionBar {
         updated.textBackgroundCornerRadius = preset.cornerRadius
         updated.textBackgroundOutlineColor = preset.outlineColor
         updated.textBackgroundOutlineWidth = preset.outlineWidth
+        updated.textBackgroundOpacity = nil
         state.updateShape(updated)
     }
 
@@ -86,8 +87,14 @@ extension ShapePropertiesSingleSelectionBar {
                 updated.textBackgroundPadding = enabled ? 0 : nil
                 updated.textBackgroundOutlineColor = nil
                 updated.textBackgroundOutlineWidth = nil
+                updated.textBackgroundOpacity = nil
                 state.updateShape(updated)
             }
+        )
+        let opacity = shapeBinding(shapeId, \.textBackgroundOpacity, default: 1.0, continuous: true)
+        let opacityPercent = Binding<CGFloat>(
+            get: { CGFloat(opacity.wrappedValue * 100) },
+            set: { opacity.wrappedValue = Double($0) / 100 }
         )
         let hasOutline = Binding<Bool>(
             get: { (shape.textBackgroundOutlineWidth ?? 0) > 0 },
@@ -139,6 +146,13 @@ extension ShapePropertiesSingleSelectionBar {
                     label: "Radius",
                     value: shapeBinding(shapeId, \.textBackgroundCornerRadius, default: 0, continuous: true),
                     range: 0...100
+                )
+
+                PopoverSliderField(
+                    label: "Opacity",
+                    value: opacityPercent,
+                    range: 0...100,
+                    resetValue: 100
                 )
 
                 Divider()

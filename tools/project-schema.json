@@ -191,6 +191,7 @@
         "tbp": { "description": "textBackgroundPadding — points the text background plate extends outward beyond the text frame on every side, omitted when 0.", "type": "number" },
         "tboc": { "description": "textBackgroundOutlineColorData — outline color of the text background plate.", "$ref": "#/$defs/Color" },
         "tbow": { "description": "textBackgroundOutlineWidth — outline width in points for the text background plate.", "type": "number" },
+        "tba": { "description": "textBackgroundOpacity — opacity (0…1) applied to the whole text background plate (fill and outline together), omitted when 1.", "type": "number" },
 
         "spc": { "description": "starPointCount — number of points on a star shape.", "type": "integer" },
 

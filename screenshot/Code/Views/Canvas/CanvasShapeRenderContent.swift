@@ -124,17 +124,20 @@ struct CanvasShapeRenderContent: View {
             let plate = RoundedRectangle(cornerRadius: radius, style: .continuous)
             let outlineWidth = min(max(0, shape.textBackgroundOutlineWidth ?? 0), min(plateW, plateH) / 2)
 
-            if let outlineColor = shape.textBackgroundOutlineColor, outlineWidth > 0 {
-                ZStack {
-                    plate.fill(outlineColor)
-                    plate.inset(by: outlineWidth).fill(bg)
-                }
-                .clipShape(plate)
-                .padding(-pad)
-            } else {
-                plate.fill(bg)
+            Group {
+                if let outlineColor = shape.textBackgroundOutlineColor, outlineWidth > 0 {
+                    ZStack {
+                        plate.fill(outlineColor)
+                        plate.inset(by: outlineWidth).fill(bg)
+                    }
+                    .clipShape(plate)
                     .padding(-pad)
+                } else {
+                    plate.fill(bg)
+                        .padding(-pad)
+                }
             }
+            .opacity(shape.textBackgroundOpacity ?? 1.0)
         }
     }
 

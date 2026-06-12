@@ -238,6 +238,7 @@ struct CanvasShapeModelTests {
         #expect(decoded.textBackgroundPadding == nil)
         #expect(decoded.textBackgroundOutlineColorData == nil)
         #expect(decoded.textBackgroundOutlineWidth == nil)
+        #expect(decoded.textBackgroundOpacity == nil)
     }
 
     @MainActor @Test func textBackgroundPresetsAreWellFormed() {

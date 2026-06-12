@@ -72,6 +72,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     var textBackgroundPadding: CGFloat?
     var textBackgroundOutlineColorData: CodableColor?
     var textBackgroundOutlineWidth: CGFloat?
+    var textBackgroundOpacity: Double?
 
     // Star properties
     var starPointCount: Int?
@@ -107,6 +108,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         case outlineColorData = "olc", outlineWidth = "olw"
         case textBackgroundColorData = "tbc", textBackgroundCornerRadius = "tbr", textBackgroundPadding = "tbp"
         case textBackgroundOutlineColorData = "tboc", textBackgroundOutlineWidth = "tbow"
+        case textBackgroundOpacity = "tba"
         case starPointCount = "spc"
         case fillStyle = "fst"
         case fillGradientConfig = "fgc"
@@ -160,6 +162,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         textBackgroundPadding = try c.decodeIfPresent(CGFloat.self, forKey: .textBackgroundPadding)
         textBackgroundOutlineColorData = try c.decodeIfPresent(CodableColor.self, forKey: .textBackgroundOutlineColorData)
         textBackgroundOutlineWidth = try c.decodeIfPresent(CGFloat.self, forKey: .textBackgroundOutlineWidth)
+        textBackgroundOpacity = try c.decodeIfPresent(Double.self, forKey: .textBackgroundOpacity)
         starPointCount = try c.decodeIfPresent(Int.self, forKey: .starPointCount)
         fillStyle = try c.decodeIfPresent(BackgroundStyle.self, forKey: .fillStyle)
         fillGradientConfig = try c.decodeIfPresent(GradientConfig.self, forKey: .fillGradientConfig)
@@ -219,6 +222,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         if let padding = textBackgroundPadding, padding != 0 { try c.encode(padding, forKey: .textBackgroundPadding) }
         try c.encodeIfPresent(textBackgroundOutlineColorData, forKey: .textBackgroundOutlineColorData)
         try c.encodeIfPresent(textBackgroundOutlineWidth, forKey: .textBackgroundOutlineWidth)
+        if let o = textBackgroundOpacity, o != 1.0 { try c.encode(o, forKey: .textBackgroundOpacity) }
         try c.encodeIfPresent(starPointCount, forKey: .starPointCount)
         try c.encodeIfPresent(fillStyle, forKey: .fillStyle)
         try c.encodeIfPresent(fillGradientConfig, forKey: .fillGradientConfig)
@@ -265,6 +269,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         textBackgroundPadding: CGFloat? = nil,
         textBackgroundOutlineColor: Color? = nil,
         textBackgroundOutlineWidth: CGFloat? = nil,
+        textBackgroundOpacity: Double? = nil,
         starPointCount: Int? = nil,
         clipToTemplate: Bool? = nil,
         shadow: ShadowConfig? = nil,
@@ -308,6 +313,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         self.textBackgroundPadding = textBackgroundPadding
         self.textBackgroundOutlineColorData = textBackgroundOutlineColor.map { CodableColor($0) }
         self.textBackgroundOutlineWidth = textBackgroundOutlineWidth
+        self.textBackgroundOpacity = textBackgroundOpacity
         self.starPointCount = starPointCount
         self.clipToTemplate = clipToTemplate
         self.shadow = shadow
@@ -731,6 +737,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         if textBackgroundPadding != oldBase.textBackgroundPadding { result.textBackgroundPadding = textBackgroundPadding }
         if textBackgroundOutlineColorData != oldBase.textBackgroundOutlineColorData { result.textBackgroundOutlineColorData = textBackgroundOutlineColorData }
         if textBackgroundOutlineWidth != oldBase.textBackgroundOutlineWidth { result.textBackgroundOutlineWidth = textBackgroundOutlineWidth }
+        if textBackgroundOpacity != oldBase.textBackgroundOpacity { result.textBackgroundOpacity = textBackgroundOpacity }
         if starPointCount != oldBase.starPointCount { result.starPointCount = starPointCount }
 
         if fillStyle != oldBase.fillStyle { result.fillStyle = fillStyle }
