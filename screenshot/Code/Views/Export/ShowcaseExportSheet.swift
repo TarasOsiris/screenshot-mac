@@ -27,6 +27,8 @@ struct ShowcaseExportSheet: View {
 
     #if os(macOS)
     @Environment(\.dismiss) private var dismiss
+    #else
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
     @State private var config = ShowcaseExportConfig()
     @State private var backgroundImage: NSImage?
@@ -72,18 +74,8 @@ struct ShowcaseExportSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(alignment: .top, spacing: 0) {
-                previewColumn
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.platformUnderPageBackground)
-
-                Divider()
-
-                settingsPanel
-                    .frame(width: ShowcaseExportSheetMetrics.settingsPanelWidth)
-                    .frame(maxHeight: .infinity)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            mainLayout
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             #if os(macOS)
             Divider()
@@ -119,6 +111,47 @@ struct ShowcaseExportSheet: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Format, background, layout, and excluded screenshots will return to defaults. Row selection is preserved.")
+        }
+    }
+
+    // MARK: - Adaptive layout
+
+    /// Side-by-side preview + settings on regular width (macOS/iPad); a vertical stack on
+    /// compact width (iPhone) where a 320pt settings column would leave no room for the preview.
+    @ViewBuilder
+    private var mainLayout: some View {
+        #if os(iOS)
+        if horizontalSizeClass == .compact {
+            VStack(spacing: 0) {
+                previewColumn
+                    .frame(maxWidth: .infinity, maxHeight: 320)
+                    .background(Color.platformUnderPageBackground)
+
+                Divider()
+
+                settingsPanel
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        } else {
+            regularSplitLayout
+        }
+        #else
+        regularSplitLayout
+        #endif
+    }
+
+    @ViewBuilder
+    private var regularSplitLayout: some View {
+        HStack(alignment: .top, spacing: 0) {
+            previewColumn
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.platformUnderPageBackground)
+
+            Divider()
+
+            settingsPanel
+                .frame(width: ShowcaseExportSheetMetrics.settingsPanelWidth)
+                .frame(maxHeight: .infinity)
         }
     }
 

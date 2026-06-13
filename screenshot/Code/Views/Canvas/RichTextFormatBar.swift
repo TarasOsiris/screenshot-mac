@@ -118,7 +118,15 @@ struct RichTextFormatBar: View {
             }
         }
         .padding(6)
+        #if os(macOS)
         .frame(width: RichTextFormatBarMetrics.width, height: RichTextFormatBarMetrics.height)
+        #else
+        // iPhone is narrower than the iPad bar width: size to content and cap at the
+        // ceiling so the floating bar never overflows a ~375pt screen.
+        .frame(height: RichTextFormatBarMetrics.height)
+        .frame(maxWidth: RichTextFormatBarMetrics.width)
+        .fixedSize(horizontal: true, vertical: false)
+        #endif
         .modifier(FormatBarChrome())
     }
 

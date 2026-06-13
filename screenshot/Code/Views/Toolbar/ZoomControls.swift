@@ -80,6 +80,7 @@ struct ZoomControls: View {
                     .font(.system(size: UIMetrics.FontSize.menuRow))
                 }
                 .padding(12)
+                .presentationCompactAdaptation(.popover)
             }
 
             zoomButton("plus.magnifyingglass", label: "Zoom in", disabled: state.zoomLevel >= ZoomConstants.max) {

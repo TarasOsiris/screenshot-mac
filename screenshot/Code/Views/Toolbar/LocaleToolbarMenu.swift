@@ -557,6 +557,7 @@ struct LocaleBanner: View {
                             .padding(12)
                             .frame(width: 300, alignment: .leading)
                             .fixedSize(horizontal: false, vertical: true)
+                            .presentationCompactAdaptation(.popover)
                         }
                     }
 
