@@ -72,6 +72,33 @@ struct RichTextUtilsTests {
         #expect(resolved.italic == false)
     }
 
+    @Test func postScriptNameResolvesBareFamilyToWeightSpecificInstance() {
+        // A variable font exposes one CustomFont per named instance; the picker/byFamily keep a
+        // single primary face, but the instance table must hold every weight so a bare family
+        // name (as templates store, e.g. "DM Sans") resolves to the exact PostScript name. iOS
+        // renders process-registered fonts only by PostScript name — family resolution yields
+        // the "????" tofu this guards against.
+        func variant(_ style: String, _ ps: String) -> CustomFont {
+            CustomFont(fileName: "DMSans.ttf", familyName: "DM Sans", styleName: style,
+                       postScriptName: ps, isBold: style.contains("Bold"), isItalic: false)
+        }
+        let instances = [
+            variant("Regular", "DMSans-Regular"),
+            variant("Medium", "DMSans-Medium"),
+            variant("SemiBold", "DMSans-SemiBold"),
+            variant("Bold", "DMSans-Bold"),
+        ]
+        CustomFontRegistry.update(with: [instances[0].fileName: instances[0]], instances: instances)
+        defer { CustomFontRegistry.update(with: [:]) }
+
+        // managerWeight: regular=5, medium=6, semibold=8, bold=9 (NSFontManager scale).
+        #expect(CustomFontRegistry.postScriptName(forFamily: "DM Sans", managerWeight: 5, italic: false) == "DMSans-Regular")
+        #expect(CustomFontRegistry.postScriptName(forFamily: "DM Sans", managerWeight: 6, italic: false) == "DMSans-Medium")
+        #expect(CustomFontRegistry.postScriptName(forFamily: "DM Sans", managerWeight: 8, italic: false) == "DMSans-SemiBold")
+        #expect(CustomFontRegistry.postScriptName(forFamily: "DM Sans", managerWeight: 9, italic: false) == "DMSans-Bold")
+        #expect(CustomFontRegistry.postScriptName(forFamily: "Unknown", managerWeight: 5, italic: false) == nil)
+    }
+
     @Test func preferredSelectionPrefersRegularVariantWhenAvailable() {
         let fonts: [String: CustomFont] = [
             "Family-Regular.otf": CustomFont(

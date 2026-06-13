@@ -16,6 +16,10 @@ struct CustomFont: Hashable {
     let isBold: Bool
     let isItalic: Bool
     let suggestedFontWeight: Int
+    /// Full 100–900 CSS weight inferred from the style name, used to pick the exact named
+    /// instance of a (variable) font when resolving a bare family name. Distinct from
+    /// `suggestedFontWeight`, which buckets to the picker's presets (300/400/500/700).
+    let typographicWeight: Int
 
     init(
         fileName: String,
@@ -32,6 +36,7 @@ struct CustomFont: Hashable {
         self.isBold = isBold
         self.isItalic = isItalic
         self.suggestedFontWeight = Self.deriveSuggestedFontWeight(styleName: styleName, isBold: isBold)
+        self.typographicWeight = Self.deriveTypographicWeight(styleName: styleName, isBold: isBold)
     }
 
     /// User-facing name used in the font picker and stored in `shape.fontName`.
@@ -43,32 +48,30 @@ struct CustomFont: Hashable {
         postScriptName
     }
 
+    /// Buckets the full typographic weight into the four presets the weight picker exposes,
+    /// so both derivations stay defined by a single style-name parser.
     private static func deriveSuggestedFontWeight(styleName: String?, isBold: Bool) -> Int {
+        switch deriveTypographicWeight(styleName: styleName, isBold: isBold) {
+        case ...300: return 300
+        case 400: return 400
+        case 500: return 500
+        default: return 700
+        }
+    }
+
+    private static func deriveTypographicWeight(styleName: String?, isBold: Bool) -> Int {
         let normalized = styleName?.lowercased() ?? ""
-        if normalized.contains("thin")
-            || normalized.contains("hairline")
-            || normalized.contains("ultralight")
-            || normalized.contains("ultra light")
-            || normalized.contains("extralight")
-            || normalized.contains("extra light")
-            || normalized.contains("light") {
-            return 300
-        }
-        if normalized.contains("medium") {
-            return 500
-        }
-        if isBold
-            || normalized.contains("semibold")
-            || normalized.contains("semi bold")
-            || normalized.contains("demibold")
-            || normalized.contains("demi bold")
-            || normalized.contains("extrabold")
-            || normalized.contains("extra bold")
-            || normalized.contains("bold")
-            || normalized.contains("black")
-            || normalized.contains("heavy") {
-            return 700
-        }
+        if normalized.contains("thin") || normalized.contains("hairline") { return 100 }
+        if normalized.contains("ultralight") || normalized.contains("ultra light")
+            || normalized.contains("extralight") || normalized.contains("extra light") { return 200 }
+        if normalized.contains("semibold") || normalized.contains("semi bold")
+            || normalized.contains("demibold") || normalized.contains("demi bold") { return 600 }
+        if normalized.contains("extrabold") || normalized.contains("extra bold")
+            || normalized.contains("ultrabold") || normalized.contains("ultra bold") { return 800 }
+        if normalized.contains("black") || normalized.contains("heavy") { return 900 }
+        if normalized.contains("light") { return 300 }
+        if normalized.contains("medium") { return 500 }
+        if isBold || normalized.contains("bold") { return 700 }
         return 400
     }
 
@@ -98,19 +101,37 @@ struct CustomFont: Hashable {
     /// by the caller) and by tooling that just needs to identify a font without registering.
     static func parseMetadata(at url: URL) -> CustomFont? {
         guard let descriptors = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor],
-              let first = descriptors.first,
-              let familyName = CTFontDescriptorCopyAttribute(first, kCTFontFamilyNameAttribute) as? String else {
+              let first = descriptors.first else {
             return nil
         }
-        let styleName = CTFontDescriptorCopyAttribute(first, kCTFontStyleNameAttribute) as? String
-        let traits = (CTFontDescriptorCopyAttribute(first, kCTFontTraitsAttribute) as? [String: Any]) ?? [:]
+        return make(from: first, fileName: url.lastPathComponent)
+    }
+
+    /// Every named instance a font file exposes. A variable font reports one descriptor per
+    /// named instance (Thin…Black); a static font reports a single descriptor. Used to build
+    /// the per-family variant table so a bare family name (e.g. "DM Sans") can resolve to the
+    /// exact named instance for a requested weight — required on iOS, where process-registered
+    /// variable fonts can't be instantiated reliably via `UIFontDescriptor(.family:)`.
+    static func allInstances(at url: URL) -> [CustomFont] {
+        guard let descriptors = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor] else {
+            return []
+        }
+        return descriptors.compactMap { make(from: $0, fileName: url.lastPathComponent) }
+    }
+
+    private static func make(from descriptor: CTFontDescriptor, fileName: String) -> CustomFont? {
+        guard let familyName = CTFontDescriptorCopyAttribute(descriptor, kCTFontFamilyNameAttribute) as? String else {
+            return nil
+        }
+        let styleName = CTFontDescriptorCopyAttribute(descriptor, kCTFontStyleNameAttribute) as? String
+        let traits = (CTFontDescriptorCopyAttribute(descriptor, kCTFontTraitsAttribute) as? [String: Any]) ?? [:]
         let symbolic = (traits[kCTFontSymbolicTrait as String] as? UInt32).map { CTFontSymbolicTraits(rawValue: $0) } ?? []
 
         return CustomFont(
-            fileName: url.lastPathComponent,
+            fileName: fileName,
             familyName: familyName,
             styleName: styleName,
-            postScriptName: CTFontDescriptorCopyAttribute(first, kCTFontNameAttribute) as? String,
+            postScriptName: CTFontDescriptorCopyAttribute(descriptor, kCTFontNameAttribute) as? String,
             isBold: symbolic.contains(.boldTrait),
             isItalic: symbolic.contains(.italicTrait)
         )
@@ -144,8 +165,12 @@ enum CustomFontRegistry {
 
     private static var byDisplayName: [String: CustomFont] = [:]
     private static var byFamily: [String: [CustomFont]] = [:]
+    /// All named instances per family (every weight a variable font exposes), used only to
+    /// resolve a bare family name to an exact PostScript name. Kept separate from `byFamily`
+    /// so the picker/control-state still see one primary face per imported file.
+    private static var instancesByFamily: [String: [CustomFont]] = [:]
 
-    static func update(with fonts: [String: CustomFont]) {
+    static func update(with fonts: [String: CustomFont], instances: [CustomFont] = []) {
         var map: [String: CustomFont] = [:]
         var familyMap: [String: [CustomFont]] = [:]
         for font in fonts.values {
@@ -154,6 +179,12 @@ enum CustomFontRegistry {
         }
         byDisplayName = map
         byFamily = familyMap
+
+        var instanceMap: [String: [CustomFont]] = [:]
+        for font in instances {
+            instanceMap[font.familyName, default: []].append(font)
+        }
+        instancesByFamily = instanceMap
     }
 
     static func font(forDisplayName name: String) -> CustomFont? {
@@ -252,8 +283,15 @@ enum CustomFontRegistry {
         }
         return effectiveItalic ? fm.convert(baseFont, toHaveTrait: .italicFontMask) : baseFont
         #else
+        // Prefer an exact PostScript name: a bare family (e.g. "DM Sans" from a template)
+        // resolves to a registered named instance. `UIFont(name:)` reliably instantiates
+        // process-registered fonts; `UIFontDescriptor(.family:)` does not for variable fonts
+        // (it yields missing glyphs / tofu), which is why family-named template text rendered
+        // as "????" on iOS.
+        let exactName = resolved.exactName
+            ?? postScriptName(forFamily: resolved.family, managerWeight: managerWeight, italic: effectiveItalic)
         let base: UIFont
-        if let exactName = resolved.exactName, let font = UIFont(name: exactName, size: size) {
+        if let exactName, let font = UIFont(name: exactName, size: size) {
             base = font
         } else {
             let weight = UIFont.Weight(managerWeight: managerWeight)
@@ -263,8 +301,68 @@ enum CustomFontRegistry {
             ])
             base = UIFont(descriptor: descriptor, size: size)
         }
+        // The named instance already carries its own slant; only synthesize italic when the
+        // chosen face isn't itself italic (matches the exact-PostScript path above).
         return effectiveItalic ? base.addingItalic() : base
         #endif
+    }
+
+    /// Best registered named-instance PostScript name for a custom family at the requested
+    /// weight/italic, or nil if the family isn't a known custom font.
+    static func postScriptName(forFamily family: String, managerWeight: Int, italic: Bool) -> String? {
+        guard let variants = instancesByFamily[family], !variants.isEmpty else { return nil }
+        return bestInstance(in: variants, weight: cssWeight(forManagerWeight: managerWeight), italic: italic)?.postScriptName
+    }
+
+    /// Maps NSFontManager's 0–15 weight scale onto the 100–900 CSS scale used to pick a named
+    /// instance.
+    private static func cssWeight(forManagerWeight weight: Int) -> Int {
+        switch weight {
+        case ...2: return 200
+        case 3...4: return 300
+        case 5: return 400
+        case 6: return 500
+        case 7...8: return 600
+        case 9...10: return 700
+        case 11...13: return 800
+        default: return 900
+        }
+    }
+
+    private static func bestInstance(in variants: [CustomFont], weight: Int, italic: Bool) -> CustomFont? {
+        bestMatch(in: variants, weight: weight, italic: italic, on: \.typographicWeight) {
+            ($0.postScriptName ?? "") < ($1.postScriptName ?? "")
+        }
+    }
+
+    /// Shared selection ladder for picking the closest face to a requested weight/italic:
+    /// optional regular-style preference, then italic match, then distance on the given weight
+    /// scale, then a caller-supplied stable tiebreak.
+    private static func bestMatch(
+        in variants: [CustomFont],
+        weight requested: Int,
+        italic: Bool,
+        on weightKey: KeyPath<CustomFont, Int>,
+        preferRegularStyle: Bool = false,
+        tieBreak: (CustomFont, CustomFont) -> Bool
+    ) -> CustomFont? {
+        variants.min { lhs, rhs in
+            if preferRegularStyle {
+                let leftRegularPenalty = CustomFont.isRegularStyle(lhs.styleName) ? 0 : 1
+                let rightRegularPenalty = CustomFont.isRegularStyle(rhs.styleName) ? 0 : 1
+                if leftRegularPenalty != rightRegularPenalty { return leftRegularPenalty < rightRegularPenalty }
+            }
+
+            let leftItalicPenalty = lhs.isItalic == italic ? 0 : 1
+            let rightItalicPenalty = rhs.isItalic == italic ? 0 : 1
+            if leftItalicPenalty != rightItalicPenalty { return leftItalicPenalty < rightItalicPenalty }
+
+            let leftWeightDistance = abs(lhs[keyPath: weightKey] - requested)
+            let rightWeightDistance = abs(rhs[keyPath: weightKey] - requested)
+            if leftWeightDistance != rightWeightDistance { return leftWeightDistance < rightWeightDistance }
+
+            return tieBreak(lhs, rhs)
+        }
     }
 
     private static func normalizedPresetWeight(_ weight: Int) -> Int {
@@ -295,23 +393,8 @@ enum CustomFontRegistry {
         italic: Bool,
         preferRegularStyle: Bool = false
     ) -> CustomFont? {
-        variants.min { lhs, rhs in
-            if preferRegularStyle {
-                let leftRegularPenalty = CustomFont.isRegularStyle(lhs.styleName) ? 0 : 1
-                let rightRegularPenalty = CustomFont.isRegularStyle(rhs.styleName) ? 0 : 1
-                if leftRegularPenalty != rightRegularPenalty { return leftRegularPenalty < rightRegularPenalty }
-            }
-
-            let leftItalicPenalty = lhs.isItalic == italic ? 0 : 1
-            let rightItalicPenalty = rhs.isItalic == italic ? 0 : 1
-            if leftItalicPenalty != rightItalicPenalty { return leftItalicPenalty < rightItalicPenalty }
-
-            let leftWeightDistance = abs(lhs.suggestedFontWeight - weight)
-            let rightWeightDistance = abs(rhs.suggestedFontWeight - weight)
-            if leftWeightDistance != rightWeightDistance { return leftWeightDistance < rightWeightDistance }
-
-            if lhs.displayName != rhs.displayName { return lhs.displayName < rhs.displayName }
-            return lhs.fileName < rhs.fileName
+        bestMatch(in: variants, weight: weight, italic: italic, on: \.suggestedFontWeight, preferRegularStyle: preferRegularStyle) {
+            $0.displayName != $1.displayName ? $0.displayName < $1.displayName : $0.fileName < $1.fileName
         }
     }
 }

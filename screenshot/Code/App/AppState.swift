@@ -117,12 +117,17 @@ final class AppState {
         // Process-registered fonts (via CTFontManager) don't appear in the system family
         // list, so add both family and display names.
         var families = Set(PlatformFonts.systemFamilyNames)
+        let resourcesURL = activeProjectId.map { PersistenceService.resourcesDir($0) }
+        var instances: [CustomFont] = []
         for font in customFonts.values {
             families.insert(font.familyName)
             families.insert(font.displayName)
+            if let resourcesURL {
+                instances.append(contentsOf: CustomFont.allInstances(at: resourcesURL.appendingPathComponent(font.fileName)))
+            }
         }
         availableFontFamilySet = families
-        CustomFontRegistry.update(with: customFonts)
+        CustomFontRegistry.update(with: customFonts, instances: instances)
     }
     var undoManager: UndoManager?
     var saveError: String?
