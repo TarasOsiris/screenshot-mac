@@ -159,8 +159,18 @@ struct ProjectsView: View {
     @State private var renamePrompt: ProjectNamePrompt?
     @State private var projectPendingDeletion: Project?
     @AppStorage("dismissedMacAppBanner") private var dismissedMacAppBanner = false
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
-    private let columns = [GridItem(.adaptive(minimum: 220, maximum: 280), spacing: 20)]
+    private var columns: [GridItem] {
+        #if os(iOS)
+        let compact = horizontalSizeClass == .compact
+        #else
+        let compact = false
+        #endif
+        return .adaptiveCards(minimum: 220, maximum: 280, spacing: 20, compact: compact)
+    }
 
     var body: some View {
         Group {

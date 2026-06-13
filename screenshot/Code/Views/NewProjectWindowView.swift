@@ -6,6 +6,9 @@ struct NewProjectWindowView: View {
     @Environment(AppState.self) private var state
     @Environment(StoreService.self) private var store
     @Environment(\.dismiss) private var dismiss
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     private let templateGridSpacing: CGFloat = 8
     private let templateGridHorizontalPadding: CGFloat = 8
@@ -104,6 +107,7 @@ struct NewProjectWindowView: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Create") { createProject() }
                     .fontWeight(.semibold)
+                    .iPadToolbarProminentStyle()
                     .disabled(!canCreateProject)
             }
         }
@@ -152,7 +156,12 @@ struct NewProjectWindowView: View {
     }
 
     private var templateGridColumns: [GridItem] {
-        [GridItem(.adaptive(minimum: 230, maximum: 320), spacing: templateGridSpacing)]
+        #if os(iOS)
+        let compact = horizontalSizeClass == .compact
+        #else
+        let compact = false
+        #endif
+        return .adaptiveCards(minimum: 230, maximum: 320, spacing: templateGridSpacing, compact: compact)
     }
 
     private func prepareInitialState() {
