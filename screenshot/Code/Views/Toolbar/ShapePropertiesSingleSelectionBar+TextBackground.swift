@@ -48,7 +48,7 @@ extension ShapePropertiesSingleSelectionBar {
         .barPopover(isPresented: $isTextBackgroundPopoverPresented, title: "Background") {
             textBackgroundPopoverContent(shape: shape, shapeId: shapeId)
                 .padding(12)
-                .frame(width: 280)
+                .barPopoverContentWidth(280)
         }
     }
 

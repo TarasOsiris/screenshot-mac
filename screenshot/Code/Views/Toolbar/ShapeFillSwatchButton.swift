@@ -49,7 +49,7 @@ struct ShapeFillSwatchButton: View {
                 )
             }
             .padding(12)
-            .frame(width: Self.popoverWidth)
+            .barPopoverContentWidth(Self.popoverWidth)
         }
     }
 

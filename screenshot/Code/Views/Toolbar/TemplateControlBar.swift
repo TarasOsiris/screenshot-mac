@@ -12,6 +12,9 @@ struct TemplateControlBar: View {
     private static let exportTitle: LocalizedStringKey = "Share…"
     #endif
     @Environment(AppState.self) private var state
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
     @Binding var template: ScreenshotTemplate
     let row: ScreenshotRow
     let index: Int
@@ -246,8 +249,12 @@ struct TemplateControlBar: View {
                             }
                         }
                     }
-                    // Single fixed detent: always fully expanded, no drag-to-collapse.
-                    .iosSheetChrome(Text(Self.backgroundOverrideTitle))
+                    // iPhone: a grabber + medium detent so it can be half-opened to keep the canvas
+                    // visible. iPad keeps the single full detent (the Form-sized floating card).
+                    .iosSheetChrome(
+                        Text(Self.backgroundOverrideTitle),
+                        detents: BarSheet.detents(compact: horizontalSizeClass == .compact)
+                    )
                     #endif
                 }
             }
@@ -301,18 +308,18 @@ struct TemplateControlBar: View {
                     }
                 }
             } label: {
-                Image(systemName: "ellipsis.circle")
-                    #if os(macOS)
-                    .font(.system(size: UIMetrics.FontSize.body))
-                    #else
-                    .font(.system(size: 20))
-                    #endif
+                Label("More actions", systemImage: "ellipsis.circle")
+                    .labelStyle(.iconOnly)
+                    .font(.system(size: UIMetrics.ActionButton.iconSize))
                     .frame(width: UIMetrics.ActionButton.frameSize, height: UIMetrics.ActionButton.frameSize)
                     .foregroundStyle(.secondary)
                     .contentShape(Rectangle())
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
+            #if !os(macOS)
+            .tint(.secondary)
+            #endif
             .help("More actions")
         }
         .controlSize(.small)

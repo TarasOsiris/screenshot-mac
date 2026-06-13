@@ -36,7 +36,9 @@ private struct IOSSheetChrome<Content: View, Confirm: View>: View {
         // `.height(...)` detent so a one-field dialog isn't presented full-screen.
         // (Not `.presentationSizing(.fitted)`, which collapses a NavigationStack to just the
         // nav bar.) `.fullScreenCover` (showcase export) ignores this, which is fine.
+        // Multiple detents → show the grabber so the resize affordance is discoverable.
         .presentationDetents(detents)
+        .presentationDragIndicator(detents.count > 1 ? .visible : .hidden)
     }
 }
 
@@ -126,16 +128,72 @@ extension View {
     func barPopover<Content: View>(
         isPresented: Binding<Bool>,
         title: LocalizedStringKey,
-        detents: Set<PresentationDetent> = [.large],
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         #if os(macOS)
         popover(isPresented: isPresented, arrowEdge: .top, content: content)
         #else
         sheet(isPresented: isPresented) {
-            content()
-                .iosSheetChrome(Text(title), detents: detents)
+            BarPopoverSheet(title: Text(title), content: content)
         }
         #endif
     }
+
+    /// Width for content shown via `barPopover`. macOS popover / iPad centered-card sheets
+    /// use the supplied fixed width; the iPhone full-width sheet fills instead, so the editor
+    /// reads like the row background editor rather than a narrow floating column.
+    @ViewBuilder
+    func barPopoverContentWidth(_ width: CGFloat) -> some View {
+        #if os(macOS)
+        frame(width: width)
+        #else
+        modifier(BarPopoverContentWidth(regularWidth: width))
+        #endif
+    }
 }
+
+#if os(iOS)
+private struct BarPopoverContentWidth: ViewModifier {
+    let regularWidth: CGFloat
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    func body(content: Content) -> some View {
+        if horizontalSizeClass == .compact {
+            content.frame(maxWidth: .infinity)
+        } else {
+            content.frame(width: regularWidth)
+        }
+    }
+}
+
+/// Detents for a bottom-bar sheet. iPhone (compact) can half-open via a grabber + medium
+/// detent to keep the canvas visible; iPad keeps the single full-height floating card.
+enum BarSheet {
+    static func detents(compact: Bool) -> Set<PresentationDetent> {
+        compact ? [.medium, .large] : [.large]
+    }
+}
+
+/// Bottom-bar popover content as an iOS sheet. iPhone: a scrollable, top-aligned, resizable
+/// sheet so content reads like the row background sheet and can be half-opened to keep the
+/// canvas visible. iPad: the prior content-sized floating card.
+private struct BarPopoverSheet<Content: View>: View {
+    let title: Text
+    @ViewBuilder let content: () -> Content
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    private var isPhone: Bool { horizontalSizeClass == .compact }
+
+    var body: some View {
+        Group {
+            if isPhone {
+                ScrollView {
+                    content().frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } else {
+                content()
+            }
+        }
+        .iosSheetChrome(title, detents: BarSheet.detents(compact: isPhone))
+    }
+}
+#endif
