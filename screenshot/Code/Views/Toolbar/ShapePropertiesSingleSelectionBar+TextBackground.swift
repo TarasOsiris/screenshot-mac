@@ -45,7 +45,7 @@ extension ShapePropertiesSingleSelectionBar {
         }
         .buttonStyle(.plain)
         .help("Background")
-        .barPopover(isPresented: $isTextBackgroundPopoverPresented, title: "Background") {
+        .barPopover(isPresented: $isTextBackgroundPopoverPresented, title: "Background", scrollableContent: true) {
             textBackgroundPopoverContent(shape: shape, shapeId: shapeId)
                 .padding(12)
                 .barPopoverContentWidth(280)

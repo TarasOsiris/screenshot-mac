@@ -20,8 +20,6 @@ extension ShapePropertiesSingleSelectionBar {
         .help("Text")
         .barPopover(isPresented: $isTextPopoverPresented, title: "Text") {
             textPopoverContent(shape: shape, shapeId: shapeId)
-                .padding(12)
-                .barPopoverContentWidth(280)
         }
     }
 
@@ -35,86 +33,35 @@ extension ShapePropertiesSingleSelectionBar {
 
     @ViewBuilder
     func textPopoverContent(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        #if os(macOS)
+        textPopoverColumn(shape: shape, shapeId: shapeId)
+            .font(.system(size: UIMetrics.FontSize.body))
+            .controlSize(.small)
+            .padding(12)
+            .barPopoverContentWidth(280)
+        #else
+        textPopoverForm(shape: shape, shapeId: shapeId)
+        #endif
+    }
+
+    // MARK: - macOS dense column
+
+    #if os(macOS)
+    @ViewBuilder
+    private func textPopoverColumn(shape: CanvasShapeModel, shapeId: UUID) -> some View {
         let customControlState = CustomFontRegistry.controlState(for: shape)
 
         VStack(alignment: .leading, spacing: 10) {
             LabeledContent("Font") {
-                FontPicker(
-                    selection: shapeBinding(shapeId, \.fontName, default: ""),
-                    fontWeight: fontWeightBinding(shapeId),
-                    italic: italicBinding(shapeId),
-                    customFonts: state.customFonts,
-                    onApplyImportedSelection: { imported in
-                        applyImportedFontSelection(imported, to: shapeId)
-                    },
-                    onImportFont: { url in state.importCustomFont(from: url) }
-                )
+                fontPickerControl(shapeId: shapeId)
             }
 
             LabeledContent("Size") {
                 HStack(spacing: 4) {
-                    HStack(spacing: 0) {
-                        TextField("", text: $editingFontSize, onEditingChanged: { editing in
-                            if editing {
-                                isFontSizeFieldActive = true
-                            } else {
-                                commitFontSize(to: state.selectedShapeId ?? shapeId)
-                            }
-                        })
-                        .focused($focusedField, equals: .fontSize)
-                        .frame(width: propertiesFontFieldWidth)
-                        .textFieldStyle(.roundedBorder)
-                        .multilineTextAlignment(.center)
-                        .integerKeyboard()
-                        .onAppear {
-                            editingFontSize = currentFontSizeString(for: shapeId)
-                        }
-                        .onChange(of: shapeId) { oldId, newId in
-                            // Flush to the shape we were editing before rebinding — see the
-                            // opacity field; the captured shapeId goes stale otherwise.
-                            if isFontSizeFieldActive { commitFontSize(to: oldId) }
-                            editingFontSize = currentFontSizeString(for: newId)
-                        }
-                        .onChange(of: shape.fontSize) {
-                            guard !isFontSizeFieldActive else { return }
-                            editingFontSize = currentFontSizeString(for: shapeId)
-                        }
-                        .onChange(of: editingFontSize) {
-                            guard isFontSizeFieldActive else { return }
-                            let target = state.selectedShapeId ?? shapeId
-                            if let value = Int(editingFontSize), let i = idx(for: target) {
-                                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                                resolved.fontSize = clampedFontSize(value)
-                                RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
-                                state.updateShapeContinuous(resolved)
-                            }
-                        }
-
-                        Menu {
-                            ForEach(Self.fontSizePresets, id: \.self) { size in
-                                Button("\(size)") {
-                                    editingFontSize = "\(size)"
-                                    commitFontSize(to: state.selectedShapeId ?? shapeId)
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: UIMetrics.FontSize.hint))
-                                .foregroundStyle(.secondary)
-                                .frame(width: UIMetrics.ChevronMenu.width, height: UIMetrics.ChevronMenu.height)
-                                .contentShape(Rectangle())
-                        }
-                        .menuStyle(.button)
-                        .menuIndicator(.hidden)
-                        .fixedSize()
-                    }
+                    fontSizeField(shape: shape, shapeId: shapeId)
 
                     if customControlState?.showsWeightPicker ?? true {
-                        FontWeightPicker(
-                            selection: fontWeightBinding(shapeId),
-                            options: customControlState?.availableWeights ?? [300, 400, 500, 700],
-                            width: 100
-                        )
+                        fontWeightControl(shapeId: shapeId, customControlState: customControlState)
                     }
                 }
             }
@@ -123,25 +70,10 @@ extension ShapePropertiesSingleSelectionBar {
 
             LabeledContent("Align") {
                 HStack(spacing: 8) {
-                    Picker("", selection: shapeBinding(shapeId, \.textAlign, default: .center)) {
-                        Image(systemName: "text.alignleft").tag(TextAlign.left)
-                        Image(systemName: "text.aligncenter").tag(TextAlign.center)
-                        Image(systemName: "text.alignright").tag(TextAlign.right)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .frame(width: 90)
-                    .help("Horizontal alignment")
-
-                    Picker("", selection: shapeBinding(shapeId, \.textVerticalAlign, default: .center)) {
-                        Image(systemName: "arrow.up.to.line").tag(TextVerticalAlign.top)
-                        Image(systemName: "arrow.up.and.down").tag(TextVerticalAlign.center)
-                        Image(systemName: "arrow.down.to.line").tag(TextVerticalAlign.bottom)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .frame(width: 90)
-                    .help("Vertical alignment")
+                    horizontalAlignPicker(shapeId: shapeId)
+                        .frame(width: 90)
+                    verticalAlignPicker(shapeId: shapeId)
+                        .frame(width: 90)
                 }
             }
 
@@ -160,96 +92,270 @@ extension ShapePropertiesSingleSelectionBar {
             Divider()
 
             LabeledContent("Letter Spacing") {
-                let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0, continuous: true)
-                HStack(spacing: 4) {
-                    Slider(value: trackingBinding, in: -5...30)
-                        .frame(width: UIMetrics.SliderWidth.wide)
-
-                    Text(verbatim: String(format: "%.1f", trackingBinding.wrappedValue))
-                        .frame(width: propertiesTrackingValueWidth, alignment: .trailing)
-                        .onTapGesture(count: 2) { trackingBinding.wrappedValue = 0 }
-                        #if os(macOS)
-                        .help("Double-click to reset")
-                        #else
-                        .help("Double-tap to reset")
-                        #endif
-                }
+                letterSpacingControl(shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.wide)
             }
 
             LabeledContent("Line Spacing") {
-                HStack(spacing: 0) {
-                    TextField("", text: $editingLineHeight, onEditingChanged: { editing in
-                        if editing {
-                            isLineHeightFieldActive = true
-                        } else {
-                            commitLineHeight(to: state.selectedShapeId ?? shapeId)
-                        }
-                    })
-                    .focused($focusedField, equals: .lineHeight)
-                    .frame(width: propertiesFontFieldWidth)
-                    .textFieldStyle(.roundedBorder)
-                    .multilineTextAlignment(.center)
-                    .integerKeyboard()
-                    .onAppear {
-                        editingLineHeight = currentLineHeightString(for: shapeId)
-                    }
-                    .onChange(of: shapeId) { oldId, newId in
-                        // Flush to the shape we were editing before rebinding (see opacity).
-                        if isLineHeightFieldActive { commitLineHeight(to: oldId) }
-                        editingLineHeight = currentLineHeightString(for: newId)
-                    }
-                    .onChange(of: shape.lineHeightMultiple) {
-                        guard !isLineHeightFieldActive else { return }
-                        editingLineHeight = currentLineHeightString(for: shapeId)
-                    }
-                    .onChange(of: editingLineHeight) {
-                        guard isLineHeightFieldActive else { return }
-                        let target = state.selectedShapeId ?? shapeId
-                        if let value = Int(editingLineHeight), let i = idx(for: target) {
-                            var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                            resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
-                            resolved.lineSpacing = nil
-                            RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
-                            state.updateShapeContinuous(resolved)
-                        }
-                    }
-
-                    Menu {
-                        ForEach(Self.lineHeightPresets, id: \.self) { preset in
-                            Button("\(preset)%") {
-                                editingLineHeight = "\(preset)"
-                                commitLineHeight(to: state.selectedShapeId ?? shapeId)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: UIMetrics.FontSize.hint))
-                            .foregroundStyle(.secondary)
-                            .frame(width: UIMetrics.ChevronMenu.width, height: UIMetrics.ChevronMenu.height)
-                            .contentShape(Rectangle())
-                    }
-                    .menuStyle(.button)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-
-                    Text("%")
-                        .foregroundStyle(.secondary)
-                        .padding(.leading, 2)
-                }
+                lineSpacingField(shape: shape, shapeId: shapeId)
             }
 
             if shape.hasRichText {
                 Divider()
-                Button("Clear Formatting") {
-                    guard let i = idx(for: shapeId) else { return }
-                    var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
-                    updated.richText = nil
-                    state.updateShape(updated)
-                }
-                .font(.system(size: UIMetrics.FontSize.body))
+                clearFormattingButton(shapeId: shapeId)
+                    .font(.system(size: UIMetrics.FontSize.body))
             }
         }
-        .font(.system(size: UIMetrics.FontSize.body))
-        .controlSize(.small)
+    }
+    #endif
+
+    // MARK: - iOS native form
+
+    #if os(iOS)
+    @ViewBuilder
+    private func textPopoverForm(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        let customControlState = CustomFontRegistry.controlState(for: shape)
+
+        Form {
+            Section("Font") {
+                fontPickerControl(shapeId: shapeId)
+
+                if customControlState?.showsWeightPicker ?? true {
+                    LabeledContent("Weight") {
+                        fontWeightControl(shapeId: shapeId, customControlState: customControlState)
+                    }
+                }
+            }
+
+            Section("Size") {
+                LabeledContent("Size") {
+                    fontSizeField(shape: shape, shapeId: shapeId)
+                }
+            }
+
+            Section("Alignment") {
+                horizontalAlignPicker(shapeId: shapeId)
+                verticalAlignPicker(shapeId: shapeId)
+            }
+
+            Section("Style") {
+                if customControlState?.showsItalicToggle ?? true {
+                    Toggle("Italic", isOn: italicBinding(shapeId))
+                }
+                Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
+            }
+
+            Section("Spacing") {
+                LabeledContent("Letter Spacing") {
+                    letterSpacingControl(shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
+                }
+                LabeledContent("Line Spacing") {
+                    lineSpacingField(shape: shape, shapeId: shapeId)
+                }
+            }
+
+            if shape.hasRichText {
+                Section {
+                    clearFormattingButton(shapeId: shapeId)
+                }
+            }
+        }
+    }
+    #endif
+
+    // MARK: - Shared controls
+
+    @ViewBuilder
+    private func fontPickerControl(shapeId: UUID) -> some View {
+        FontPicker(
+            selection: shapeBinding(shapeId, \.fontName, default: ""),
+            fontWeight: fontWeightBinding(shapeId),
+            italic: italicBinding(shapeId),
+            customFonts: state.customFonts,
+            onApplyImportedSelection: { imported in
+                applyImportedFontSelection(imported, to: shapeId)
+            },
+            onImportFont: { url in state.importCustomFont(from: url) }
+        )
+    }
+
+    @ViewBuilder
+    private func fontWeightControl(shapeId: UUID, customControlState: CustomFontControlState?) -> some View {
+        FontWeightPicker(
+            selection: fontWeightBinding(shapeId),
+            options: customControlState?.availableWeights ?? [300, 400, 500, 700],
+            width: 100
+        )
+    }
+
+    @ViewBuilder
+    private func fontSizeField(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        HStack(spacing: 0) {
+            TextField("", text: $editingFontSize, onEditingChanged: { editing in
+                if editing {
+                    isFontSizeFieldActive = true
+                } else {
+                    commitFontSize(to: state.selectedShapeId ?? shapeId)
+                }
+            })
+            .focused($focusedField, equals: .fontSize)
+            .frame(width: propertiesFontFieldWidth)
+            .textFieldStyle(.roundedBorder)
+            .multilineTextAlignment(.center)
+            .integerKeyboard()
+            .onAppear {
+                editingFontSize = currentFontSizeString(for: shapeId)
+            }
+            .onChange(of: shapeId) { oldId, newId in
+                // Flush to the shape we were editing before rebinding — see the
+                // opacity field; the captured shapeId goes stale otherwise.
+                if isFontSizeFieldActive { commitFontSize(to: oldId) }
+                editingFontSize = currentFontSizeString(for: newId)
+            }
+            .onChange(of: shape.fontSize) {
+                guard !isFontSizeFieldActive else { return }
+                editingFontSize = currentFontSizeString(for: shapeId)
+            }
+            .onChange(of: editingFontSize) {
+                guard isFontSizeFieldActive else { return }
+                let target = state.selectedShapeId ?? shapeId
+                if let value = Int(editingFontSize), let i = idx(for: target) {
+                    var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                    resolved.fontSize = clampedFontSize(value)
+                    RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
+                    state.updateShapeContinuous(resolved)
+                }
+            }
+
+            presetChevronMenu {
+                ForEach(Self.fontSizePresets, id: \.self) { size in
+                    Button("\(size)") {
+                        editingFontSize = "\(size)"
+                        commitFontSize(to: state.selectedShapeId ?? shapeId)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func horizontalAlignPicker(shapeId: UUID) -> some View {
+        Picker("", selection: shapeBinding(shapeId, \.textAlign, default: .center)) {
+            Image(systemName: "text.alignleft").tag(TextAlign.left)
+            Image(systemName: "text.aligncenter").tag(TextAlign.center)
+            Image(systemName: "text.alignright").tag(TextAlign.right)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .help("Horizontal alignment")
+    }
+
+    @ViewBuilder
+    private func verticalAlignPicker(shapeId: UUID) -> some View {
+        Picker("", selection: shapeBinding(shapeId, \.textVerticalAlign, default: .center)) {
+            Image(systemName: "arrow.up.to.line").tag(TextVerticalAlign.top)
+            Image(systemName: "arrow.up.and.down").tag(TextVerticalAlign.center)
+            Image(systemName: "arrow.down.to.line").tag(TextVerticalAlign.bottom)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .help("Vertical alignment")
+    }
+
+    @ViewBuilder
+    private func letterSpacingControl(shapeId: UUID, sliderWidth: CGFloat) -> some View {
+        let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0, continuous: true)
+        HStack(spacing: 4) {
+            Slider(value: trackingBinding, in: -5...30)
+                .frame(width: sliderWidth)
+
+            Text(verbatim: String(format: "%.1f", trackingBinding.wrappedValue))
+                .frame(width: propertiesTrackingValueWidth, alignment: .trailing)
+                .onTapGesture(count: 2) { trackingBinding.wrappedValue = 0 }
+                #if os(macOS)
+                .help("Double-click to reset")
+                #else
+                .help("Double-tap to reset")
+                #endif
+        }
+    }
+
+    @ViewBuilder
+    private func lineSpacingField(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+        HStack(spacing: 0) {
+            TextField("", text: $editingLineHeight, onEditingChanged: { editing in
+                if editing {
+                    isLineHeightFieldActive = true
+                } else {
+                    commitLineHeight(to: state.selectedShapeId ?? shapeId)
+                }
+            })
+            .focused($focusedField, equals: .lineHeight)
+            .frame(width: propertiesFontFieldWidth)
+            .textFieldStyle(.roundedBorder)
+            .multilineTextAlignment(.center)
+            .integerKeyboard()
+            .onAppear {
+                editingLineHeight = currentLineHeightString(for: shapeId)
+            }
+            .onChange(of: shapeId) { oldId, newId in
+                // Flush to the shape we were editing before rebinding (see opacity).
+                if isLineHeightFieldActive { commitLineHeight(to: oldId) }
+                editingLineHeight = currentLineHeightString(for: newId)
+            }
+            .onChange(of: shape.lineHeightMultiple) {
+                guard !isLineHeightFieldActive else { return }
+                editingLineHeight = currentLineHeightString(for: shapeId)
+            }
+            .onChange(of: editingLineHeight) {
+                guard isLineHeightFieldActive else { return }
+                let target = state.selectedShapeId ?? shapeId
+                if let value = Int(editingLineHeight), let i = idx(for: target) {
+                    var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                    resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
+                    resolved.lineSpacing = nil
+                    RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
+                    state.updateShapeContinuous(resolved)
+                }
+            }
+
+            presetChevronMenu {
+                ForEach(Self.lineHeightPresets, id: \.self) { preset in
+                    Button("\(preset)%") {
+                        editingLineHeight = "\(preset)"
+                        commitLineHeight(to: state.selectedShapeId ?? shapeId)
+                    }
+                }
+            }
+
+            Text("%")
+                .foregroundStyle(.secondary)
+                .padding(.leading, 2)
+        }
+    }
+
+    @ViewBuilder
+    private func presetChevronMenu<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        Menu {
+            content()
+        } label: {
+            Image(systemName: "chevron.down")
+                .font(.system(size: UIMetrics.FontSize.hint))
+                .foregroundStyle(.secondary)
+                .frame(width: UIMetrics.ChevronMenu.width, height: UIMetrics.ChevronMenu.height)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.button)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+
+    @ViewBuilder
+    private func clearFormattingButton(shapeId: UUID) -> some View {
+        Button("Clear Formatting") {
+            guard let i = idx(for: shapeId) else { return }
+            var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
+            updated.richText = nil
+            state.updateShape(updated)
+        }
     }
 }

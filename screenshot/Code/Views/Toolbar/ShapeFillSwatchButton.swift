@@ -34,7 +34,7 @@ struct ShapeFillSwatchButton: View {
         }
         .buttonStyle(.plain)
         .help("Fill")
-        .barPopover(isPresented: $isPresented, title: "Fill") {
+        .barPopover(isPresented: $isPresented, title: "Fill", scrollableContent: true) {
             VStack(spacing: 8) {
                 BackgroundEditor(
                     backgroundStyle: backgroundStyle,

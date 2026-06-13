@@ -124,17 +124,22 @@ extension View {
     /// anchored to a control sitting at the very bottom of the screen renders partly
     /// off-screen, so present a detent-sized sheet instead with a native nav bar + Done
     /// button (`iosSheetChrome`) that's always fully on-screen.
+    ///
+    /// `scrollableContent`: pass `true` for plain `VStack` content so the sheet adds a
+    /// `ScrollView` around it. Leave `false` (default) for self-scrolling `Form`/`List`
+    /// content — wrapping those in a `ScrollView` collapses them to zero height (empty sheet).
     @ViewBuilder
     func barPopover<Content: View>(
         isPresented: Binding<Bool>,
         title: LocalizedStringKey,
+        scrollableContent: Bool = false,
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         #if os(macOS)
         popover(isPresented: isPresented, arrowEdge: .top, content: content)
         #else
         sheet(isPresented: isPresented) {
-            BarPopoverSheet(title: Text(title), content: content)
+            BarPopoverSheet(title: Text(title), scrollableContent: scrollableContent, content: content)
         }
         #endif
     }
@@ -173,11 +178,14 @@ enum BarSheet {
     }
 }
 
-/// Bottom-bar popover content as an iOS sheet. iPhone: a scrollable, top-aligned, resizable
-/// sheet so content reads like the row background sheet and can be half-opened to keep the
-/// canvas visible. iPad: the prior content-sized floating card.
+/// Bottom-bar popover content as an iOS sheet, with a native nav bar + Done button and
+/// (on iPhone) a resizable, half-openable detent. `Form`/`List` content scrolls itself and
+/// is presented directly; plain `VStack` content (`scrollableContent: true`) is wrapped in a
+/// `ScrollView` so it can overflow the detent — wrapping a `Form`/`List` instead would
+/// collapse it to zero height (an empty sheet).
 private struct BarPopoverSheet<Content: View>: View {
     let title: Text
+    var scrollableContent: Bool = false
     @ViewBuilder let content: () -> Content
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -185,7 +193,7 @@ private struct BarPopoverSheet<Content: View>: View {
 
     var body: some View {
         Group {
-            if isPhone {
+            if scrollableContent {
                 ScrollView {
                     content().frame(maxWidth: .infinity, alignment: .leading)
                 }
