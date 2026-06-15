@@ -1030,6 +1030,36 @@ struct ExportServiceTests {
         }
     }
 
+    /// The drop shadow is generic across shape types — a non-device shape (rectangle)
+    /// must change export output when enabled, and its halo must fall BELOW the shape
+    /// (positive Y offset), proving the editor↔export Y-flip compensation holds for
+    /// shapes that are not devices.
+    @Test func nonDeviceShapeShadowFallsBelowInExport() throws {
+        let tw: CGFloat = 400, th: CGFloat = 800
+        func row(withShadow: Bool) -> ScreenshotRow {
+            var r = makeTestRow(width: tw, height: th, bgColor: .white)
+            var rect = CanvasShapeModel(
+                type: .rectangle, x: 120, y: 220, width: 160, height: 200,
+                color: .blue
+            )
+            rect.shadow = withShadow ? .strong : nil
+            r.shapes = [rect]
+            return r
+        }
+
+        let shadowed = try renderTemplateBitmap(index: 0, row: row(withShadow: true))
+        let plain = try renderTemplateBitmap(index: 0, row: row(withShadow: false))
+        try expectBitmapsDiffer(shadowed, plain, label: "rectangle shadow vs none")
+
+        // Rect spans ~y220..420. Sample background above vs below the body.
+        let above = try pixelColor(shadowed, at: (200, 180))
+        let below = try pixelColor(shadowed, at: (200, 470))
+        let aboveBright = (above.r + above.g + above.b) / 3
+        let belowBright = (below.r + below.g + below.b) / 3
+        #expect(belowBright < aboveBright - 0.02,
+                "rectangle shadow should darken below the shape, not above: above=\(aboveBright) below=\(belowBright)")
+    }
+
     /// Same as above but for a real image-based (bezel PNG) frame with a screenshot —
     /// the multi-sub-layer case that actually triggered the editor↔preview mismatch.
     /// Sensitive to the `.compositingGroup()` fix.

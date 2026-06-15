@@ -120,8 +120,6 @@ struct ShapePropertiesMultiSelectionBar: View {
                 .menuStyle(.button)
                 .fixedSize()
             }
-
-            ShapeDeviceShadowControls(shadow: multiShadowBinding())
         }
 
         if type == .text {
@@ -215,6 +213,8 @@ struct ShapePropertiesMultiSelectionBar: View {
                 multiOutlineControls(shapes: shapes)
             }
         }
+
+        ShapeShadowControls(shadow: multiShadowBinding())
     }
 
     @ViewBuilder

@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// Popover for editing a device's drop shadow: enable toggle, presets, and
+/// Popover for editing a shape's drop shadow: enable toggle, presets, and
 /// fine-tune sliders for color, blur, offset, and opacity. Layout mirrors
 /// `Device3DAppearancePopover`. On iPad it's presented as a sheet, so the
 /// content is a standard `Form` instead of the dense desktop column.
-struct DeviceShadowPopover: View {
+struct ShadowPopover: View {
     @Binding var shadow: ShadowConfig
 
     var body: some View {

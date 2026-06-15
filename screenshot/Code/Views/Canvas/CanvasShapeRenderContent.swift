@@ -30,6 +30,16 @@ struct CanvasShapeRenderContent: View {
     let renderSvgImage: (String, Bool, Color, CGSize?) -> NSImage?
 
     var body: some View {
+        shapeContent
+            .modifier(ShadowModifier(
+                shadow: shape.shadow,
+                displayScale: displayScale,
+                rotationDegrees: shape.rotation
+            ))
+    }
+
+    @ViewBuilder
+    private var shapeContent: some View {
         switch shape.type {
         case .rectangle:
             let maxRadius = min(displayW, displayH) / 2
@@ -200,11 +210,6 @@ struct CanvasShapeRenderContent: View {
             invisibleOutlineColor: isInvisible ? (shape.outlineColor ?? CanvasShapeModel.defaultOutlineColor) : .black,
             hideCameraCutout: shape.hideCameraCutout ?? false
         )
-        .modifier(DeviceShadowModifier(
-            shadow: shape.shadow,
-            displayScale: displayScale,
-            rotationDegrees: shape.rotation
-        ))
 
         if screenshotImage == nil && showsEditorHelpers {
             imageDropPlaceholder { frame }
@@ -340,12 +345,12 @@ extension EnvironmentValues {
     }
 }
 
-/// Applies a device's configurable drop shadow.
+/// Applies a shape's configurable drop shadow.
 ///
-/// `.compositingGroup()` flattens the device frame's sub-layers (screenshot + bezel, or
-/// programmatic body parts) into one image first, so exactly one drop shadow is cast from
-/// the unified silhouette — strictly behind the whole device. Without it, SwiftUI casts a
-/// shadow per sub-layer and the screenshot's own offset shadow bleeds *inside* the frame.
+/// `.compositingGroup()` flattens the shape's sub-layers (e.g. a device frame's screenshot +
+/// bezel, or an image's clipped content) into one image first, so exactly one drop shadow is
+/// cast from the unified silhouette — strictly behind the whole shape. Without it, SwiftUI casts
+/// a shadow per sub-layer and an inner layer's offset shadow can bleed *inside* the shape.
 ///
 /// Offscreen flip: SwiftUI's `.shadow` lowers to a CALayer `shadowOffset` that the
 /// offscreen `NSHostingView.cacheDisplay` path (export / Preview) renders with its
@@ -354,8 +359,8 @@ extension EnvironmentValues {
 /// `.blur`-based silhouette because `.blur` under-renders offscreen, which would make the
 /// editor and export blur differ; `.shadow`'s blur is identical in both paths.)
 ///
-/// The shadow's offset is applied in the device's local (pre-rotation) space, but the
-/// flip is global, so for a rotated device a plain Y-negation points the shadow the wrong
+/// The shadow's offset is applied in the shape's local (pre-rotation) space, but the
+/// flip is global, so for a rotated shape a plain Y-negation points the shadow the wrong
 /// way. We instead feed the export path the local offset `L = R(-θ)·F·R(θ)·(ox, oy)`
 /// (F = vertical mirror), which after the global flip lands exactly where the editor
 /// draws it, at any rotation. For θ = 0 this reduces to `(ox, -oy)`.
@@ -363,10 +368,10 @@ extension EnvironmentValues {
 /// Shadow geometry is stored in model space and scaled by `displayScale` so the editor
 /// (display scale) and export (scale 1.0) stay in parity — same precedent as
 /// `displayOutlineWidth`.
-struct DeviceShadowModifier: ViewModifier {
+struct ShadowModifier: ViewModifier {
     let shadow: ShadowConfig?
     let displayScale: CGFloat
-    /// The device's rotation in degrees — needed to compensate the offscreen flip when rotated.
+    /// The shape's rotation in degrees — needed to compensate the offscreen flip when rotated.
     let rotationDegrees: Double
     @Environment(\.isExportRendering) private var isExportRendering
 

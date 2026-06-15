@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Properties-bar section for a device's configurable drop shadow.
+/// Properties-bar section for a shape's configurable drop shadow.
 /// A button opens a popover with presets and fine-tune sliders, mirroring
 /// `ShapeDeviceModelRotationControls`.
-struct ShapeDeviceShadowControls: View {
+struct ShapeShadowControls: View {
     let shadow: Binding<ShadowConfig>
 
     @State private var isPopoverPresented = false
@@ -32,7 +32,7 @@ struct ShapeDeviceShadowControls: View {
             .buttonStyle(.plain)
             .help("Drop shadow")
             .barPopover(isPresented: $isPopoverPresented, title: "Shadow") {
-                DeviceShadowPopover(shadow: shadow)
+                ShadowPopover(shadow: shadow)
             }
         }
     }

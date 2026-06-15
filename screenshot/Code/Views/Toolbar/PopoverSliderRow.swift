@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Label + slider + numeric readout row shared by the device popovers
-/// (`DeviceShadowPopover`, `Device3DAppearancePopover`): dense column layout
+/// Label + slider + numeric readout row shared by the property popovers
+/// (`ShadowPopover`, `Device3DAppearancePopover`): dense column layout
 /// on macOS, touch-sized Form row on iPad.
 struct PopoverSliderRow: View {
     let label: LocalizedStringKey

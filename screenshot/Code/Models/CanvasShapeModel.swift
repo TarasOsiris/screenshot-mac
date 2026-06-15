@@ -417,7 +417,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
 
     var visualAABB: (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
         let bounds = aabb
-        guard type == .device, let shadow, shadow.isActive else {
+        guard let shadow, shadow.isActive else {
             return bounds
         }
 

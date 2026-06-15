@@ -141,11 +141,9 @@ struct ShapePropertiesSingleSelectionBar: View {
                             )
                         }
 
-                        if shape.type == .device {
-                            ShapeDeviceShadowControls(
-                                shadow: optionalConfigBinding(shapeId, \.shadow, fallback: ShadowConfig(), isEmpty: \.isEmpty)
-                            )
-                        }
+                        ShapeShadowControls(
+                            shadow: optionalConfigBinding(shapeId, \.shadow, fallback: ShadowConfig(), isEmpty: \.isEmpty)
+                        )
 
                         if shape.type.supportsFill {
                             ShapePropertiesSection {
