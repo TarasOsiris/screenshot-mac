@@ -67,6 +67,17 @@ struct EditorRowView: View {
 
     var isPreviewMode: Bool { state.previewingRows.contains(row.id) }
 
+    @ViewBuilder
+    private var selectionRule: some View {
+        if isSelected {
+            Rectangle()
+                .fill(Color.accentColor)
+                .frame(maxWidth: .infinity)
+                .frame(height: UIMetrics.BorderWidth.prominent)
+                .allowsHitTesting(false)
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             EditorRowHeader(
@@ -178,6 +189,8 @@ struct EditorRowView: View {
         .contentShape(Rectangle())
         .onTapGesture { tapSelectRow() }
         .background(isSelected ? Color.accentColor.opacity(UIMetrics.Opacity.accentRowSelection) : Color.clear)
+        .overlay(alignment: .top) { selectionRule }
+        .overlay(alignment: .bottom) { selectionRule }
         .animation(.easeInOut(duration: 0.15), value: isSelected)
         .contextMenuWithPreview {
             rowMenuContent

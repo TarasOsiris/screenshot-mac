@@ -82,6 +82,8 @@ enum UIMetrics {
         static let standard: CGFloat = 1
         /// Emphasized border (focus, drop target).
         static let emphasis: CGFloat = 1.5
+        /// Bold rule (selected-row top/bottom accent lines).
+        static let prominent: CGFloat = 2.5
     }
 
     /// Dark-mode-safe overlay opacities. Apply on top of `Color.primary` / `Color.secondary` rather than `.white` / `.black`
