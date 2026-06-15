@@ -185,8 +185,21 @@ extension UploadToAppStoreConnectView {
     }
 
     var metadataLocaleCodes: [String] {
-        let codes = Set(versionDrafts.map(\.locale)).union(appInfoDrafts.map(\.locale))
-        return codes.sorted()
+        let sorted = Set(versionDrafts.map(\.locale)).union(appInfoDrafts.map(\.locale)).sorted()
+        guard let base = baseLocaleCode(among: sorted) else { return sorted }
+        return [base] + sorted.filter { $0 != base }
+    }
+
+    /// The App Store Connect locale code matching the project's base locale, if present among
+    /// the metadata locales: exact match first, then the conventional same-region variant
+    /// ("en" → "en-US", "fr" → "fr-FR"), then the first region variant ("zh" → "zh-Hans").
+    /// `codes` must be sorted so the final fallback is deterministic.
+    func baseLocaleCode(among codes: [String]) -> String? {
+        let base = state.localeState.baseLocaleCode.lowercased()
+        let conventional = "\(base)-\(base)"
+        return codes.first { $0.lowercased() == base }
+            ?? codes.first { $0.lowercased() == conventional }
+            ?? codes.first { $0.lowercased().hasPrefix(base + "-") }
     }
 
     /// Patch a version localization, gracefully dropping "What's New" when App Store Connect
