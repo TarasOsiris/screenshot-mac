@@ -98,7 +98,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
         } else {
             Text(row.displayLabel)
                 .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
-                .foregroundStyle(isSelected ? Color.primary : .secondary)
+                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
                 .opacity(row.label.isEmpty ? 0.5 : 1)
                 .lineLimit(1)
                 .fixedSize()

@@ -132,6 +132,7 @@ struct EditorRowView: View {
             ) {
                 rowMenuContent
             }
+            .background(isSelected ? Color.accentColor.opacity(UIMetrics.Opacity.accentRowHeader) : Color.clear)
 
             if !row.isCollapsed {
                 horizontalScrollArea
@@ -176,15 +177,8 @@ struct EditorRowView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { tapSelectRow() }
-        .background(isSelected ? Color.accentColor.opacity(0.06) : Color.clear)
-        .overlay(alignment: .leading) {
-            if isSelected {
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Color.accentColor)
-                    .frame(width: 3)
-                    .allowsHitTesting(false)
-            }
-        }
+        .background(isSelected ? Color.accentColor.opacity(UIMetrics.Opacity.accentRowSelection) : Color.clear)
+        .animation(.easeInOut(duration: 0.15), value: isSelected)
         .contextMenuWithPreview {
             rowMenuContent
         } preview: {

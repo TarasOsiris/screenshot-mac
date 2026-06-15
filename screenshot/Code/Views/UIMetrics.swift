@@ -105,6 +105,11 @@ enum UIMetrics {
         static let accentBorder: Double = 0.38
         /// Strong accent emphasis for drop-target highlights and similar hover affordances.
         static let accentEmphasis: Double = 0.75
+        /// Light body tint behind the selected editor row (use on `Color.accentColor`).
+        static let accentRowSelection: Double = 0.10
+        /// Stronger tint behind the selected row's header strip. Layers over
+        /// `accentRowSelection`, so the header reads ≈ 0.21 effective vs the ~0.10 body.
+        static let accentRowHeader: Double = 0.12
     }
 
     enum Stroke {
