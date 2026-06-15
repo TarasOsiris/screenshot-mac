@@ -23,31 +23,35 @@ struct InspectorPanel: View {
     @State private var customHeight: String = ""
 
     var body: some View {
-        if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId {
-            if state.previewingRows.contains(rowId) {
-                previewModePanel(rowId: rowId)
-            } else {
-                Form {
-                    sizeSection(rowIndex: rowIndex, rowId: rowId)
-                    deviceSection(rowId: rowId)
-                    backgroundSection(rowIndex: rowIndex, rowId: rowId)
-                    Section(isExpanded: $isAddElementExpanded) {
-                        ShapeToolbar(state: state)
-                    } header: {
-                        Text("Shapes")
+        if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId, let row = state.selectedRow {
+            VStack(spacing: 0) {
+                rowTitleHeader(row: row)
+                Divider()
+                if state.previewingRows.contains(rowId) {
+                    previewModePanel(rowId: rowId)
+                } else {
+                    Form {
+                        sizeSection(rowIndex: rowIndex, rowId: rowId)
+                        deviceSection(rowId: rowId)
+                        backgroundSection(rowIndex: rowIndex, rowId: rowId)
+                        Section(isExpanded: $isAddElementExpanded) {
+                            ShapeToolbar(state: state)
+                        } header: {
+                            Text("Shapes")
+                        }
+                        visibilitySection(rowId: rowId)
+                        #if DEBUG && os(iOS)
+                        debugSection
+                        #endif
                     }
-                    visibilitySection(rowId: rowId)
-                    #if DEBUG && os(iOS)
-                    debugSection
+                    .formStyle(.grouped)
+                    #if os(macOS)
+                    .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
+                    #else
+                    // Popovers attached to a Form don't anchor reliably on iPadOS.
+                    .coachPopoverAnchor(step: .inspector, state: state, arrowEdge: .trailing)
                     #endif
                 }
-                .formStyle(.grouped)
-                #if os(macOS)
-                .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
-                #else
-                // Popovers attached to a Form don't anchor reliably on iPadOS.
-                .coachPopoverAnchor(step: .inspector, state: state, arrowEdge: .trailing)
-                #endif
             }
         } else {
             ContentUnavailableView(
@@ -57,6 +61,28 @@ struct InspectorPanel: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    @ViewBuilder
+    private func rowTitleHeader(row: ScreenshotRow) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(row.displayLabel)
+                .font(.headline)
+                .lineLimit(1)
+                .opacity(row.label.isEmpty ? 0.5 : 1)
+            Text(verbatim: row.resolutionLabel)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal)
+        #if os(macOS)
+        .padding(.vertical, 10)
+        #else
+        // Extra top room clears the sheet's drag grabber on iPhone.
+        .padding(.top, 18)
+        .padding(.bottom, 12)
+        #endif
     }
 
     @ViewBuilder

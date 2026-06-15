@@ -219,7 +219,11 @@ extension ContentView {
         Button {
             isInspectorPresented.toggle()
         } label: {
+            #if os(iOS)
+            Label("Inspector", systemImage: horizontalSizeClass == .compact ? "slider.horizontal.3" : "sidebar.trailing")
+            #else
             Label("Inspector", systemImage: "sidebar.trailing")
+            #endif
         }
         .help(isInspectorPresented ? String(localized: "Hide inspector") : String(localized: "Show inspector"))
         .keyboardShortcut("i", modifiers: [.command, .option])

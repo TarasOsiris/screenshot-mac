@@ -34,6 +34,7 @@ struct ContentView: View {
     #endif
     #if os(iOS)
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    private var isInspectorCompact: Bool { horizontalSizeClass == .compact }
     #endif
     // macOS-only: see AppRootView — \.openWindow must not be read on iPadOS.
     #if os(macOS)
@@ -53,6 +54,9 @@ struct ContentView: View {
     @AppStorage("reviewFirstExportDate") var reviewFirstExportDate: Double = 0
     @AppStorage("reviewLastPromptDate") var reviewLastPromptDate: Double = 0
     @AppStorage("inspectorPresented") var isInspectorPresented = true
+    #if os(iOS)
+    @State private var inspectorSheetDetent: PresentationDetent = .large
+    #endif
     @State var isExporting = false
     @State var exportSuccess = false
     @State var exportSuccessTimer: DispatchWorkItem?
@@ -269,15 +273,34 @@ struct ContentView: View {
                 ProjectLoadingOverlay(message: "Opening Project…")
             }
         }
+        #if os(macOS)
         .inspector(isPresented: $isInspectorPresented) {
             InspectorPanel(state: state)
-                #if os(macOS)
                 .inspectorColumnWidth(min: 220, ideal: 260, max: 320)
-                #else
-                .inspectorColumnWidth(min: 340, ideal: 380, max: 480)
-                #endif
                 .frame(minHeight: 200)
         }
+        #else
+        // Docked side panel only at regular width. Apple's `.inspector` ignores
+        // presentation-detent resizing when it auto-adapts to a sheet (it snaps back to
+        // full height), so present a real `.sheet` at compact width instead, where detents
+        // resize and the grabber persist properly.
+        .inspector(isPresented: Binding(
+            get: { !isInspectorCompact && isInspectorPresented },
+            set: { if !isInspectorCompact { isInspectorPresented = $0 } }
+        )) {
+            InspectorPanel(state: state)
+                .inspectorColumnWidth(min: 340, ideal: 380, max: 480)
+                .frame(minHeight: 200)
+        }
+        .sheet(isPresented: Binding(
+            get: { isInspectorCompact && isInspectorPresented },
+            set: { isInspectorPresented = $0 }
+        )) {
+            InspectorPanel(state: state)
+                .presentationDetents(BarSheet.detents(compact: isInspectorCompact), selection: $inspectorSheetDetent)
+                .presentationDragIndicator(.visible)
+        }
+        #endif
         .toolbar(id: "main") {
             // On iPad the Projects home screen + back button own project navigation,
             // so the editor toolbar drops the project name / actions menu.
