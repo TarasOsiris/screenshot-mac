@@ -297,6 +297,7 @@ struct LocaleBar: View {
 /// so the mounted-but-hidden `LocaleBar` executes the actual sheets/dialogs/translations.
 struct LocaleToolbarButton: View {
     @Bindable var state: AppState
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         let localeState = state.localeState
@@ -372,9 +373,12 @@ struct LocaleToolbarButton: View {
                 .accessibilityLabel("Localization")
         } else {
             // Surface that a translation is being edited: globe + active flag in the warning tint.
+            // On iPhone (compact) the flag alone carries it — drop the globe to save space.
+            let flag = state.localeState.locales.first { $0.code == state.localeState.activeLocaleCode }?.flag ?? ""
             HStack(spacing: 4) {
-                Image(systemName: "globe")
-                let flag = state.localeState.locales.first { $0.code == state.localeState.activeLocaleCode }?.flag ?? ""
+                if horizontalSizeClass != .compact || flag.isEmpty {
+                    Image(systemName: "globe")
+                }
                 if !flag.isEmpty {
                     Text(flag)
                 }
@@ -504,6 +508,7 @@ struct LocaleBanner: View {
     @State private var isTranslationOverviewPresented = false
     @State private var languageIssue: TranslationLanguageIssue?
     @State private var showLocaleHelp = false
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
 
     var body: some View {
@@ -519,7 +524,7 @@ struct LocaleBanner: View {
                         .foregroundStyle(Color.localeWarning)
 
                     HStack(spacing: 6) {
-                        Text("Editing \(label)")
+                        Text(label)
                             .font(.system(size: UIMetrics.FontSize.menuRow, weight: .semibold))
                             .foregroundStyle(Color.localeWarning)
                         if progress.total > 0 {
@@ -557,67 +562,22 @@ struct LocaleBanner: View {
                             .padding(12)
                             .frame(width: 300, alignment: .leading)
                             .fixedSize(horizontal: false, vertical: true)
+                            #if os(macOS)
                             .presentationCompactAdaptation(.popover)
+                            #else
+                            .presentationCompactAdaptation(.sheet)
+                            .presentationDetents([.medium])
+                            #endif
                         }
                     }
 
                     Spacer(minLength: 8)
 
-                    let selectedIds = state.selectedTranslatableTextShapeIds
-                    if !selectedIds.isEmpty {
-                        Button {
-                            startTranslation(onlyUntranslated: false, shapeIds: selectedIds)
-                        } label: {
-                            Label("Translate Selected", systemImage: "globe")
-                        }
-                        .buttonStyle(.bordered)
-                        .compactControlSize()
-                        .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
-                        .disabled(isTranslating)
-                        .help("Translate selected text layers into \(label)")
+                    if horizontalSizeClass == .compact {
+                        compactActionsMenu(label: label, progress: progress, missingCount: missingCount)
+                    } else {
+                        expandedActions(label: label, progress: progress, missingCount: missingCount)
                     }
-
-                    if progress.total > 0 {
-                        Button("Edit Translations") {
-                            isTranslationOverviewPresented = true
-                        }
-                        .buttonStyle(.bordered)
-                        .compactControlSize()
-                        .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
-
-                        Menu {
-                            Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
-                                startTranslation(onlyUntranslated: true)
-                            }
-                            .disabled(isTranslating || missingCount == 0)
-
-                            Button("Replace All Text…", systemImage: "arrow.triangle.2.circlepath") {
-                                showReplaceAllConfirmation = true
-                            }
-                            .disabled(isTranslating)
-                        } label: {
-                            if isTranslating {
-                                HStack(spacing: 4) {
-                                    ProgressView()
-                                        .controlSize(.small)
-                                    Text("Translating text…")
-                                }
-                            } else {
-                                Label("Auto-Translate", systemImage: "globe")
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                        .compactControlSize()
-                        .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
-                        .disabled(isTranslating)
-                    }
-
-                    Button("Revert to Base", role: .destructive) {
-                        showResetToBaseConfirmation = true
-                    }
-                    .buttonStyle(.bordered)
-                    .compactControlSize()
-                    .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
                 }
 
             }
@@ -658,6 +618,111 @@ struct LocaleBanner: View {
                 handlePendingTranslateShapeId(newValue)
             }
         }
+    }
+
+    @ViewBuilder
+    private func expandedActions(label: String, progress: (translated: Int, total: Int), missingCount: Int) -> some View {
+        let selectedIds = state.selectedTranslatableTextShapeIds
+        if !selectedIds.isEmpty {
+            Button {
+                startTranslation(onlyUntranslated: false, shapeIds: selectedIds)
+            } label: {
+                Label("Translate Selected", systemImage: "globe")
+            }
+            .buttonStyle(.bordered)
+            .compactControlSize()
+            .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
+            .disabled(isTranslating)
+            .help("Translate selected text layers into \(label)")
+        }
+
+        if progress.total > 0 {
+            Button("Edit Translations") {
+                isTranslationOverviewPresented = true
+            }
+            .buttonStyle(.bordered)
+            .compactControlSize()
+            .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
+
+            Menu {
+                Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
+                    startTranslation(onlyUntranslated: true)
+                }
+                .disabled(isTranslating || missingCount == 0)
+
+                Button("Replace All Text…", systemImage: "arrow.triangle.2.circlepath") {
+                    showReplaceAllConfirmation = true
+                }
+                .disabled(isTranslating)
+            } label: {
+                if isTranslating {
+                    HStack(spacing: 4) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Translating text…")
+                    }
+                } else {
+                    Label("Auto-Translate", systemImage: "globe")
+                }
+            }
+            .buttonStyle(.bordered)
+            .compactControlSize()
+            .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
+            .disabled(isTranslating)
+        }
+
+        Button("Revert to Base", role: .destructive) {
+            showResetToBaseConfirmation = true
+        }
+        .buttonStyle(.bordered)
+        .compactControlSize()
+        .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
+    }
+
+    @ViewBuilder
+    private func compactActionsMenu(label: String, progress: (translated: Int, total: Int), missingCount: Int) -> some View {
+        let selectedIds = state.selectedTranslatableTextShapeIds
+        Menu {
+            if !selectedIds.isEmpty {
+                Button("Translate Selected", systemImage: "globe") {
+                    startTranslation(onlyUntranslated: false, shapeIds: selectedIds)
+                }
+                .disabled(isTranslating)
+            }
+
+            if progress.total > 0 {
+                Button("Edit Translations", systemImage: "tablecells") {
+                    isTranslationOverviewPresented = true
+                }
+
+                Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
+                    startTranslation(onlyUntranslated: true)
+                }
+                .disabled(isTranslating || missingCount == 0)
+
+                Button("Replace All Text…", systemImage: "arrow.triangle.2.circlepath") {
+                    showReplaceAllConfirmation = true
+                }
+                .disabled(isTranslating)
+            }
+
+            Divider()
+
+            Button("Revert to Base", systemImage: "arrow.uturn.backward", role: .destructive) {
+                showResetToBaseConfirmation = true
+            }
+        } label: {
+            if isTranslating {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image(systemName: "ellipsis.circle")
+                    .foregroundStyle(Color.localeWarning)
+            }
+        }
+        .buttonStyle(.bordered)
+        .compactControlSize()
+        .disabled(isTranslating)
     }
 
     private func startTranslation(onlyUntranslated: Bool, shapeIds: Set<UUID>? = nil) {
