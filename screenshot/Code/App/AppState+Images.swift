@@ -93,7 +93,8 @@ extension AppState {
                 await MainActor.run {
                     guard let self, let location = self.shapeLocation(for: shapeId) else { return }
                     self.withUndo("Remove Background") {
-                        if self.performSaveImage(result, for: shapeId, activeId: activeId, location: location) {
+                        if self.performSaveImage(result, for: shapeId, activeId: activeId, location: location),
+                           self.rows[location.rowIndex].shapes[location.shapeIndex].flexesToImageAspect {
                             self.rows[location.rowIndex].shapes[location.shapeIndex].adaptToImageAspectRatio(result.size)
                         }
                     }
@@ -162,10 +163,7 @@ extension AppState {
             let previousFile = shape.displayImageFileName
             shape.displayImageFileName = fileName
 
-            if shape.deviceFrameId == nil,
-               shape.deviceCategory == .invisible
-                || shape.deviceCategory == .androidPhone
-                || shape.deviceCategory == .androidTablet {
+            if shape.flexesToImageAspect {
                 shape.adaptToImageAspectRatio(image.size)
             }
 

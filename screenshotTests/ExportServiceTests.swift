@@ -1200,6 +1200,37 @@ struct ExportServiceTests {
         }
     }
 
+    /// Regression: a frameless generic Android device flexes its box to the dropped screenshot's
+    /// aspect (`adaptToImageAspectRatio`), unlike a real iPhone frame. The export path must NOT
+    /// re-normalize it back to the category's fixed aspect — that shrank the device (gap at the
+    /// row edge), so the exported PNG no longer matched the editor canvas. Counterpart to
+    /// `deviceAspectRatioIsNormalizedInExport` (which asserts the iPhone IS normalized).
+    @Test func flexedAndroidDeviceKeepsImageAspectInExport() throws {
+        let tw: CGFloat = 400, th: CGFloat = 800
+        var row = makeTestRow(width: tw, height: th, bgColor: Self.testBlue)
+        // Square box vs Android intrinsic aspect (~0.48): normalization would narrow the device to
+        // ~144pt wide (centered, right edge ~272), exposing blue background where the device should
+        // still be. A green screenshot fills the device screen so it reads distinctly from the bg.
+        row.shapes = [CanvasShapeModel(
+            type: .device, x: 50, y: 100, width: 300, height: 300,
+            color: .clear, deviceCategory: .androidPhone,
+            screenshotFileName: "screen"
+        )]
+        let images = ["screen": makeSolidImage(NSColor(Self.testGreen), width: 600, height: 600)]
+
+        let exportBmp = try renderSingleTemplateBitmap(index: 0, row: row, screenshotImages: images)
+        let editorBmp = try renderEditorBitmap(index: 0, row: row, screenshotImages: images)
+
+        // (320, 250) is inside the box (x 50..350) but right of the would-be-normalized device
+        // (right edge ~272). The flexed device must fill it — green screen — in BOTH paths. Before
+        // the fix, export normalization left this point as blue background while the editor stayed
+        // green; afterwards both are green.
+        try expectDominant(exportBmp, at: (320, 250), channel: .g,
+                           label: "export: flexed Android device must fill its box (not normalized)")
+        try expectDominant(editorBmp, at: (320, 250), channel: .g,
+                           label: "editor: Android device fills its box (control)")
+    }
+
     @Test func modelBackedDeviceFrameRendersVisibleContentInExport() throws {
         var row = makeTestRow(width: 500, height: 900, bgColor: .white)
         row.shapes = [CanvasShapeModel(

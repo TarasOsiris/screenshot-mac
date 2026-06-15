@@ -957,8 +957,10 @@ struct ExportService {
     private static func normalizeDeviceAspectIfNeeded(_ shape: CanvasShapeModel) -> CanvasShapeModel {
         guard shape.type == .device else { return shape }
 
-        // Invisible frames have no fixed aspect ratio — they adapt to the user's screenshot.
-        if shape.deviceCategory == .invisible && shape.deviceFrameId == nil { return shape }
+        // Abstract frames (invisible / generic Android) have no fixed aspect — they flex to the
+        // user's screenshot, so normalizing them back to a category aspect undoes that flex and
+        // makes the export diverge from the editor.
+        if shape.flexesToImageAspect { return shape }
 
         let base = shape.resolvedBaseDimensions
         let targetAspect = base.width / base.height

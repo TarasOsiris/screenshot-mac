@@ -537,6 +537,16 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         return (deviceCategory ?? .iphone).baseDimensions
     }
 
+    /// Abstract device frames (no specific catalog frame) that size themselves to the user's
+    /// screenshot aspect instead of a fixed device aspect. These must not be re-normalized to a
+    /// fixed aspect on export, or the editor and exported image diverge.
+    var flexesToImageAspect: Bool {
+        deviceFrameId == nil
+            && (deviceCategory == .invisible
+                || deviceCategory == .androidPhone
+                || deviceCategory == .androidTablet)
+    }
+
     /// Selects an abstract device category (no specific frame).
     /// When switching to `.invisible`, pass the current screenshot image size so the frame
     /// adapts its aspect ratio to the image. A nice default corner radius is also applied.
