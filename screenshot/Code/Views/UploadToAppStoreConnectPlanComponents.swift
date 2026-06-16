@@ -255,20 +255,22 @@ struct ASCUploadRowPlanCard: View {
     }
 
     private var header: some View {
-        HStack {
-            ASCDisclosureChevronButton(expanded: expanded, action: onToggleExpanded)
-            Toggle(isOn: $plan.isEnabled) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel)
-                        .fontWeight(.medium)
-                    Text("\(String(Int(plan.rowSize.width)))×\(String(Int(plan.rowSize.height))) · \(plan.templateCount) screenshot\(plan.templateCount == 1 ? "" : "s")")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+        HStack(spacing: 6) {
+            if plan.isEnabled {
+                ASCDisclosureChevronButton(expanded: expanded, action: onToggleExpanded)
             }
-            .toggleStyle(.switch)
-            .controlSize(.small)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel)
+                    .fontWeight(.medium)
+                Text("\(String(Int(plan.rowSize.width)))×\(String(Int(plan.rowSize.height))) · \(plan.templateCount) screenshot\(plan.templateCount == 1 ? "" : "s")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Spacer()
+            Toggle("", isOn: $plan.isEnabled)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.small)
         }
     }
 }
