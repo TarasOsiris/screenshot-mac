@@ -297,7 +297,8 @@
           "items": { "$ref": "#/$defs/CanvasShapeModel" }
         },
         "lm":   { "description": "isLabelManuallySet — omitted when false.", "type": "boolean" },
-        "col":  { "description": "isCollapsed — omitted when false.", "type": "boolean" }
+        "col":  { "description": "isCollapsed — omitted when false.", "type": "boolean" },
+        "exasc": { "description": "excludeFromAppStoreConnect — hide this row from the App Store Connect upload wizard; omitted when false.", "type": "boolean" }
       }
     },
 

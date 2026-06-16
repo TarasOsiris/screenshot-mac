@@ -219,7 +219,8 @@ struct ScreenshotRowTests {
             showDevice: false,
             showBorders: false,
             shapes: [CanvasShapeModel.defaultRectangle(centerX: 621, centerY: 1344)],
-            isLabelManuallySet: true
+            isLabelManuallySet: true,
+            excludeFromAppStoreConnect: true
         )
         let encoder = JSONEncoder()
         let data = try encoder.encode(original)
@@ -234,6 +235,12 @@ struct ScreenshotRowTests {
         #expect(decoded.showBorders == false)
         #expect(decoded.shapes.count == 1)
         #expect(decoded.isLabelManuallySet == true)
+        #expect(decoded.excludeFromAppStoreConnect == true)
+    }
+
+    @Test func excludeFromAppStoreConnectDefaultsFalse() {
+        let row = ScreenshotRow()
+        #expect(row.excludeFromAppStoreConnect == false)
     }
 
     @Test func legacyRowWithoutDefaultDeviceCategoryDecodes() throws {
@@ -263,6 +270,7 @@ struct ScreenshotRowTests {
         #expect(decoded.defaultDeviceCategory == nil)
         #expect(decoded.showBorders == true)
         #expect(decoded.shapes.isEmpty)
+        #expect(decoded.excludeFromAppStoreConnect == false, "Legacy rows default to included")
     }
 
     @Test func backgroundImageConfigDecodesLegacyTileValuesIntoAxes() throws {

@@ -298,7 +298,7 @@ extension UploadToAppStoreConnectView {
             ? ASCDisplayType.userSelectableCases(forPlatform: platform).first
             : nil
         let assignment = ASCLocaleMatcher.assign(appCodes: state.localeState.locales.map(\.code), to: localizations)
-        return state.rows.map { row in
+        return state.rows.filter { !$0.excludeFromAppStoreConnect }.map { row in
             let detected = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight)
             let existingPlan = existingPlans.first(where: { $0.id == row.id })
             let targets = state.localeState.locales.map { locale -> LocaleTarget in
@@ -396,6 +396,8 @@ extension UploadToAppStoreConnectView {
     func buildUploadTargets() -> [ASCUploadTarget] {
         rowPlans.compactMap { plan -> ASCUploadTarget? in
             guard plan.isEnabled, let displayType = plan.selectedDisplayType else { return nil }
+            guard let row = state.rows.first(where: { $0.id == plan.id }),
+                  !row.excludeFromAppStoreConnect else { return nil }
             let localizations = plan.localeTargets.flatMap { target -> [ASCUploadLocalization] in
                 guard target.isEnabled else { return [] }
                 return target.selectedCandidates

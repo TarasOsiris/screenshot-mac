@@ -18,6 +18,7 @@ struct InspectorPanel: View {
     @AppStorage("inspectorShapesExpanded") private var isAddElementExpanded = true
     @AppStorage("inspectorDeviceExpanded") private var isDeviceExpanded = true
     @AppStorage("inspectorVisibilityExpanded") private var isVisibilityExpanded = true
+    @AppStorage("inspectorOtherExpanded") private var isOtherExpanded = true
     @State private var useCustomSize = false
     @State private var customWidth: String = ""
     @State private var customHeight: String = ""
@@ -40,6 +41,7 @@ struct InspectorPanel: View {
                             Text("Shapes")
                         }
                         visibilitySection(rowId: rowId)
+                        otherSection(rowId: rowId)
                         #if DEBUG && os(iOS)
                         debugSection
                         #endif
@@ -398,6 +400,19 @@ struct InspectorPanel: View {
 
     private func setVisibility(rowId: UUID, visible: Bool) {
         state.setAllShapeTypesVisibility(for: rowId, visible: visible)
+    }
+
+    @ViewBuilder
+    private func otherSection(rowId: UUID) -> some View {
+        Section(isExpanded: $isOtherExpanded) {
+            Toggle("Exclude when uploading to App Store Connect",
+                   isOn: safeRowBinding(rowId, keyPath: \.excludeFromAppStoreConnect, default: false))
+                .font(.system(size: UIMetrics.FontSize.body))
+                .toggleStyle(.switch)
+                .compactControlSize()
+        } header: {
+            Text("Other")
+        }
     }
 
     #if DEBUG && os(iOS)

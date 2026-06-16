@@ -57,7 +57,8 @@ extension AppState {
                 hiddenShapeTypes: source.hiddenShapeTypes,
                 showBorders: source.showBorders,
                 shapes: newShapes,
-                isLabelManuallySet: true
+                isLabelManuallySet: true,
+                excludeFromAppStoreConnect: source.excludeFromAppStoreConnect
             )
             rows.insert(copy, at: idx + 1)
             selectRow(copy.id)

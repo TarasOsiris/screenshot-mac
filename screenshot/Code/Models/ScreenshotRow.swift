@@ -21,6 +21,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
     var shapes: [CanvasShapeModel]
     var isLabelManuallySet: Bool
     var isCollapsed: Bool
+    var excludeFromAppStoreConnect: Bool
 
     /// User-facing label; falls back to "Untitled Row" when `label` is empty.
     var displayLabel: String { label.isEmpty ? String(localized: "Untitled Row") : label }
@@ -56,7 +57,8 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         showBorders: Bool = true,
         shapes: [CanvasShapeModel] = [],
         isLabelManuallySet: Bool = false,
-        isCollapsed: Bool = false
+        isCollapsed: Bool = false,
+        excludeFromAppStoreConnect: Bool = false
     ) {
         self.id = id
         self.label = label
@@ -79,6 +81,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         self.shapes = shapes
         self.isLabelManuallySet = isLabelManuallySet
         self.isCollapsed = isCollapsed
+        self.excludeFromAppStoreConnect = excludeFromAppStoreConnect
     }
 
     enum CodingKeys: String, CodingKey {
@@ -92,6 +95,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         case defaultDeviceFrameId = "ddfi"
         case hiddenShapeTypes = "hst"
         case showBorders = "sb", shapes = "s", isLabelManuallySet = "lm", isCollapsed = "col"
+        case excludeFromAppStoreConnect = "exasc"
     }
 
     init(from decoder: Decoder) throws {
@@ -116,6 +120,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         shapes = try c.decodeIfPresent([CanvasShapeModel].self, forKey: .shapes) ?? []
         isLabelManuallySet = try c.decodeIfPresent(Bool.self, forKey: .isLabelManuallySet) ?? false
         isCollapsed = try c.decodeIfPresent(Bool.self, forKey: .isCollapsed) ?? false
+        excludeFromAppStoreConnect = try c.decodeIfPresent(Bool.self, forKey: .excludeFromAppStoreConnect) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -139,6 +144,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         try c.encode(shapes, forKey: .shapes)
         if isLabelManuallySet { try c.encode(true, forKey: .isLabelManuallySet) }
         if isCollapsed { try c.encode(true, forKey: .isCollapsed) }
+        if excludeFromAppStoreConnect { try c.encode(true, forKey: .excludeFromAppStoreConnect) }
     }
 
     var bgColor: Color {
