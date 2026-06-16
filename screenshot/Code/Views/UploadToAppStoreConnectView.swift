@@ -171,6 +171,7 @@ struct UploadToAppStoreConnectView: View {
 
     struct UploadPlanEntry: Identifiable {
         let id: String
+        let rowPlanId: UUID
         let rowLabel: String
         let sourceSizeLabel: String
         let displayTypeLabel: String
@@ -188,6 +189,20 @@ struct UploadToAppStoreConnectView: View {
     struct UploadLocaleGroup: Identifiable {
         let id: String
         let label: String
+        let entries: [UploadPlanEntry]
+
+        var screenshotCount: Int { entries.reduce(0) { $0 + $1.screenshotCount } }
+    }
+
+    /// One per source row: the row/display-type details are constant across locales, so they're
+    /// shown once in the group header and the varying locale destinations are listed beneath.
+    struct UploadRowGroup: Identifiable {
+        let id: String
+        let rowLabel: String
+        let sourceSizeLabel: String
+        let displayTypeLabel: String
+        let displayTypeRawValue: String
+        let templateCount: Int
         let entries: [UploadPlanEntry]
 
         var screenshotCount: Int { entries.reduce(0) { $0 + $1.screenshotCount } }

@@ -411,14 +411,16 @@ extension UploadToAppStoreConnectView {
         let allEntries = uploadPlanEntries
         let entries = allEntries.filter(\.isSelected)
         let skipped = allEntries.filter { !$0.isSelected }
-        let groups = localeGroups(from: entries)
+        let rows = rowGroups(from: entries)
+        let localeCount = Set(entries.map { $0.appStoreLocaleCode ?? $0.projectLocaleCode }).count
         let screenshotCount = entries.reduce(0) { $0 + $1.screenshotCount }
         let issues = validationIssues
 
         return ASCUploadSummaryPanel(
             entries: entries,
             skipped: skipped,
-            groups: groups,
+            rowGroups: rows,
+            localeCount: localeCount,
             screenshotCount: screenshotCount,
             issues: issues,
             isExpanded: $isPreflightExpanded,

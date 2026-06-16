@@ -3,7 +3,8 @@ import SwiftUI
 struct ASCUploadSummaryPanel: View {
     let entries: [UploadToAppStoreConnectView.UploadPlanEntry]
     let skipped: [UploadToAppStoreConnectView.UploadPlanEntry]
-    let groups: [UploadToAppStoreConnectView.UploadLocaleGroup]
+    let rowGroups: [UploadToAppStoreConnectView.UploadRowGroup]
+    let localeCount: Int
     let screenshotCount: Int
     let issues: [ASCUploadIssue]
     @Binding var isExpanded: Bool
@@ -53,19 +54,19 @@ struct ASCUploadSummaryPanel: View {
         HStack(spacing: 10) {
             ASCSummaryMetric(value: "\(entries.count)", label: "sets")
             ASCSummaryMetric(value: "\(screenshotCount)", label: "screenshots")
-            ASCSummaryMetric(value: "\(groups.count)", label: "locales")
+            ASCSummaryMetric(value: "\(localeCount)", label: "locales")
         }
     }
 
     @ViewBuilder
     private var selectedUploads: some View {
-        if !groups.isEmpty {
+        if !rowGroups.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Selected uploads")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                ForEach(groups) { group in
-                    ASCLocalePlanGroupRow(group: group)
+                ForEach(rowGroups) { group in
+                    ASCRowPlanGroupRow(group: group)
                 }
             }
         }
@@ -111,34 +112,33 @@ private struct ASCSummaryMetric: View {
     }
 }
 
-private struct ASCLocalePlanGroupRow: View {
-    let group: UploadToAppStoreConnectView.UploadLocaleGroup
+private struct ASCRowPlanGroupRow: View {
+    let group: UploadToAppStoreConnectView.UploadRowGroup
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(group.label)
+                Text("\(group.rowLabel) -> \(group.displayTypeLabel)")
                     .font(.caption)
                     .fontWeight(.semibold)
+                    .lineLimit(1)
                 Spacer()
                 Text("\(group.screenshotCount) screenshot\(group.screenshotCount == 1 ? "" : "s")")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
+            Text("Source \(group.sourceSizeLabel) · \(group.templateCount) screenshot\(group.templateCount == 1 ? "" : "s") · \(group.displayTypeRawValue)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
             ForEach(group.entries) { entry in
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .foregroundStyle(.orange)
                         .font(.caption)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("\(entry.rowLabel) -> \(entry.displayTypeLabel)")
-                            .font(.caption)
-                            .lineLimit(1)
-                        Text("Source \(entry.sourceSizeLabel) · \(entry.templateCount) screenshot\(entry.templateCount == 1 ? "" : "s") · \(entry.displayTypeRawValue)")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
+                    Text("\(entry.projectLocaleLabel) -> \(entry.appStoreLocaleCode ?? entry.projectLocaleCode)")
+                        .font(.caption)
+                        .lineLimit(1)
                 }
             }
         }

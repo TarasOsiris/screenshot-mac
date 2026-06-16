@@ -202,6 +202,7 @@ extension UploadToAppStoreConnectView {
                 func entry(idSuffix: String, appStoreLocaleCode: String?, isSelected: Bool, skipReason: String?) -> UploadPlanEntry {
                     UploadPlanEntry(
                         id: "\(plan.id.uuidString)-\(target.id.uuidString)\(idSuffix)",
+                        rowPlanId: plan.id,
                         rowLabel: rowLabel,
                         sourceSizeLabel: sourceSizeLabel,
                         displayTypeLabel: displayTypeLabel,
@@ -260,6 +261,29 @@ extension UploadToAppStoreConnectView {
             let groupEntries = grouped[code] ?? []
             let label = groupEntries.first.map { "\($0.projectLocaleLabel) -> \(code)" } ?? code
             return UploadLocaleGroup(id: code, label: label, entries: groupEntries)
+        }
+    }
+
+    /// Group entries by source row, preserving the row order in which they were generated, so the
+    /// constant row/display-type details render once instead of repeating under every locale.
+    func rowGroups(from entries: [UploadPlanEntry]) -> [UploadRowGroup] {
+        var order: [UUID] = []
+        var grouped: [UUID: [UploadPlanEntry]] = [:]
+        for entry in entries {
+            if grouped[entry.rowPlanId] == nil { order.append(entry.rowPlanId) }
+            grouped[entry.rowPlanId, default: []].append(entry)
+        }
+        return order.compactMap { key in
+            guard let groupEntries = grouped[key], let first = groupEntries.first else { return nil }
+            return UploadRowGroup(
+                id: key.uuidString,
+                rowLabel: first.rowLabel,
+                sourceSizeLabel: first.sourceSizeLabel,
+                displayTypeLabel: first.displayTypeLabel,
+                displayTypeRawValue: first.displayTypeRawValue,
+                templateCount: first.templateCount,
+                entries: groupEntries
+            )
         }
     }
 }
