@@ -325,10 +325,11 @@ extension UploadToAppStoreConnectView {
                 rowLabel: row.label,
                 rowSize: row.templateSize,
                 templateCount: row.templates.count,
-                isEnabled: existingPlan?.isEnabled ?? true,
+                isEnabled: existingPlan?.isEnabled ?? (row.inferredStorePlatform != .android),
                 detectedDisplayType: detected,
                 selectedDisplayType: compatiblePreserved ?? detectedCompatible ?? demoFallbackDisplayType,
-                localeTargets: targets
+                localeTargets: targets,
+                inferredStorePlatform: row.inferredStorePlatform
             )
         }
     }

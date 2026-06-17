@@ -121,6 +121,13 @@ extension AppState {
         scheduleSave()
     }
 
+    func setGooglePlayPackageName(_ packageName: String?, forProject id: UUID) {
+        guard let idx = projects.firstIndex(where: { $0.id == id }) else { return }
+        guard projects[idx].googlePlayPackageName != packageName else { return }
+        projects[idx].googlePlayPackageName = packageName
+        scheduleSave()
+    }
+
     func renameProject(_ id: UUID, to name: String) {
         let trimmed = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
         guard !trimmed.isEmpty else { return }

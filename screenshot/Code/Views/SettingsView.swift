@@ -48,6 +48,12 @@ struct SettingsView: View {
                 AppStoreConnectSettingsView()
             }
 
+            #if DEBUG
+            Tab("Google Play", systemImage: "play.rectangle.on.rectangle") {
+                GooglePlaySettingsView()
+            }
+            #endif
+
             Tab("Purchase", systemImage: "star") {
                 purchaseSettings
             }

@@ -154,6 +154,7 @@ struct UploadToAppStoreConnectView: View {
         var detectedDisplayType: ASCDisplayType?
         var selectedDisplayType: ASCDisplayType?
         var localeTargets: [LocaleTarget]
+        var inferredStorePlatform: StorePlatform?
     }
 
     struct LocaleTarget: Identifiable {

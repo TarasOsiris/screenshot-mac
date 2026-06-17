@@ -265,6 +265,11 @@ struct ASCUploadRowPlanCard: View {
                 Text("\(String(Int(plan.rowSize.width)))×\(String(Int(plan.rowSize.height))) · \(plan.templateCount) screenshot\(plan.templateCount == 1 ? "" : "s")")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if plan.inferredStorePlatform == .android {
+                    Text("Looks like an Android row")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
             }
             Spacer()
             Toggle("", isOn: $plan.isEnabled)

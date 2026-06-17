@@ -39,6 +39,9 @@ struct IPadSettingsView: View {
             editingSection
             exportSection
             appStoreConnectSection
+            #if DEBUG
+            googlePlaySection
+            #endif
             iCloudSection
             purchaseSection
             legalSection
@@ -191,6 +194,16 @@ struct IPadSettingsView: View {
             }
         }
     }
+
+    #if DEBUG
+    private var googlePlaySection: some View {
+        Section {
+            NavigationLink(value: iPadSettingsDestination.googlePlay) {
+                Label("Google Play", systemImage: "play.rectangle.on.rectangle")
+            }
+        }
+    }
+    #endif
 
     // MARK: - iCloud
 

@@ -54,8 +54,6 @@ struct ExportService {
             localesToExport = allLocales
         }
 
-        let suffixPart = formattedFileSuffix(customSuffix)
-
         var completed = 0
         var writtenFileURLs: [URL] = []
 
@@ -72,8 +70,6 @@ struct ExportService {
                 let multiRow = rows.count > 1
                 var usedFolderNames: [String: Int] = [:]
 
-                let localeSuffix = sanitizedFileName(locale.code)
-
                 for row in rows {
                     let destFolder: URL
                     if multiRow {
@@ -87,7 +83,6 @@ struct ExportService {
                         destFolder = localeFolder
                     }
 
-                    let rowName = exportRowFileNameComponent(for: row)
                     let rowImages = imageProvider(row, locale.code)
                     let rowImage = renderRowImage(
                         row: row,
@@ -105,8 +100,7 @@ struct ExportService {
 
                             let image = cropTemplateImage(rowImage, index: index, row: row)
 
-                            let padded = String(format: "%02d", index + 1)
-                            let filename = "\(padded)_\(rowName)_\(localeSuffix)\(suffixPart).\(format.fileExtension)"
+                            let filename = screenshotFileName(row: row, localeCode: locale.code, index: index, customSuffix: customSuffix, format: format)
                             let fileURL = destFolder.appendingPathComponent(filename)
                             writtenFileURLs.append(fileURL)
 
@@ -202,6 +196,15 @@ struct ExportService {
     static func exportRowFileNameComponent(for row: ScreenshotRow) -> String {
         let sanitized = sanitizedFileName(row.displayLabel)
         return sanitized.isEmpty ? "row" : sanitized
+    }
+
+    /// The on-disk export filename for one template: `NN_Row_locale[_suffix].ext` (e.g. `01_Onboarding_en.png`).
+    /// Single source of truth so disk export and App Store Connect / Google Play uploads name files identically.
+    static func screenshotFileName(row: ScreenshotRow, localeCode: String, index: Int, customSuffix: String = "", format: ExportImageFormat = .png) -> String {
+        let padded = String(format: "%02d", index + 1)
+        let rowName = exportRowFileNameComponent(for: row)
+        let localeSuffix = sanitizedFileName(localeCode)
+        return "\(padded)_\(rowName)_\(localeSuffix)\(formattedFileSuffix(customSuffix)).\(format.fileExtension)"
     }
 
     private static func sanitizedRootFolderName(_ projectName: String) -> String {

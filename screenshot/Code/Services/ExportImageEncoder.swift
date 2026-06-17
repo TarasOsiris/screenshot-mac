@@ -32,6 +32,14 @@ enum ExportImageEncoder {
         return encode(cgImage: opaque, as: .png)
     }
 
+    /// PNG-encode an already-extracted source bitmap, flattened onto opaque white.
+    /// Takes a `CGImage` (Sendable) so callers can pull it off an `NSImage` on the main
+    /// actor and run this CPU-bound step off-actor.
+    nonisolated static func opaquePNGData(fromCGImage source: CGImage) -> Data? {
+        guard let opaque = opaqueCGImage(fromSource: source) else { return nil }
+        return encode(cgImage: opaque, as: .png)
+    }
+
     /// Encode JPEG from an opaque bitmap so transparent pixels are composited consistently.
     nonisolated static func opaqueJPEGData(from image: NSImage, compression: CGFloat = 0.9) -> Data? {
         guard let opaque = opaqueCGImage(from: image) else { return nil }
@@ -41,6 +49,10 @@ enum ExportImageEncoder {
     /// Composite onto a white background via CGContext, returning an opaque CGImage.
     private nonisolated static func opaqueCGImage(from image: NSImage) -> CGImage? {
         guard let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        return opaqueCGImage(fromSource: source)
+    }
+
+    private nonisolated static func opaqueCGImage(fromSource source: CGImage) -> CGImage? {
         let w = source.width
         let h = source.height
         guard w > 0, h > 0 else { return nil }
