@@ -10,7 +10,6 @@ struct GooglePlaySettingsView: View {
     @State private var isTesting = false
     @State private var testResult: TestResult?
     @State private var fileImporterPresented = false
-    @State private var pasteText = ""
     @State private var importError: String?
     @State private var showClearConfirmation = false
 
@@ -80,21 +79,6 @@ struct GooglePlaySettingsView: View {
                         Label("Imported", systemImage: "checkmark.seal.fill")
                             .foregroundStyle(.green)
                             .font(.caption)
-                    }
-                }
-            }
-
-            DisclosureGroup("Or paste JSON") {
-                VStack(alignment: .leading, spacing: 8) {
-                    TextEditor(text: $pasteText)
-                        .font(.system(.caption, design: .monospaced))
-                        .frame(height: 120)
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(.separator))
-                    HStack {
-                        Spacer()
-                        Button("Save Pasted Key") { savePasted() }
-                            .buttonStyle(.bordered)
-                            .disabled(pasteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                 }
             }
@@ -290,18 +274,6 @@ struct GooglePlaySettingsView: View {
             importError = error.localizedDescription
         } catch {
             importError = String(localized: "Could not import the key: \(error.localizedDescription)")
-        }
-    }
-
-    private func savePasted() {
-        importError = nil
-        do {
-            try save(json: pasteText)
-            pasteText = ""
-        } catch let error as GooglePlayCredentialsError {
-            importError = error.localizedDescription
-        } catch {
-            importError = error.localizedDescription
         }
     }
 
