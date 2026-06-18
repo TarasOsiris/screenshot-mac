@@ -186,6 +186,9 @@
         }
       }
     },
+    "(detected)" : {
+
+    },
     "[Privacy Policy](https://screenshotbro.app/privacy)" : {
       "localizations" : {
         "de" : {
@@ -4091,6 +4094,16 @@
         }
       }
     },
+    "%lld %@ to upload" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@ to upload"
+          }
+        }
+      }
+    },
     "%lld %@ will be uploaded across %lld %@ and %lld %@. " : {
       "localizations" : {
         "de" : {
@@ -4821,6 +4834,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld×%lld"
+          }
+        }
+      }
+    },
+    "%lld×%lld · %lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld×%2$lld · %3$lld %4$@"
           }
         }
       }
@@ -8040,6 +8063,9 @@
         }
       }
     },
+    "All done" : {
+
+    },
     "All locales" : {
       "localizations" : {
         "de" : {
@@ -9756,6 +9782,9 @@
           }
         }
       }
+    },
+    "Authorization documentation" : {
+
     },
     "Auto" : {
       "localizations" : {
@@ -12620,6 +12649,9 @@
         }
       }
     },
+    "Choose what to upload" : {
+
+    },
     "Choose…" : {
       "localizations" : {
         "de" : {
@@ -13620,6 +13652,9 @@
         }
       }
     },
+    "com.example.myapp" : {
+
+    },
     "Commit text edit" : {
       "localizations" : {
         "de" : {
@@ -13918,6 +13953,9 @@
         }
       }
     },
+    "Connect a Google service account first." : {
+
+    },
     "Connect your App Store Connect API key once and Screenshot Bro can upload exported screenshots to a specific app version without leaving the app." : {
       "localizations" : {
         "de" : {
@@ -13998,6 +14036,9 @@
         }
       }
     },
+    "Connected (Demo Mode). No traffic is sent to Google." : {
+
+    },
     "Connected (Demo Mode). Sample app: %@." : {
       "localizations" : {
         "de" : {
@@ -14037,6 +14078,9 @@
           }
         }
       }
+    },
+    "Connected. Authorized as %@." : {
+
     },
     "Connected. First app: %@" : {
       "localizations" : {
@@ -14946,6 +14990,9 @@
         }
       }
     },
+    "Could not import the key: %@" : {
+
+    },
     "Could not import the private key: %@" : {
       "localizations" : {
         "de" : {
@@ -15118,6 +15165,9 @@
           }
         }
       }
+    },
+    "Could not read the private key from the service account JSON. Re-download the key from the Google Cloud console." : {
+
     },
     "Could not refresh locales: %@" : {
       "localizations" : {
@@ -15518,6 +15568,9 @@
       }
     },
     "Create a key with permission to edit app metadata. Account Holder, Admin, or App Manager roles are typical for screenshot uploads. Download the `.p8` private key file (you can only download it once)." : {
+
+    },
+    "Create a service account in the Google Cloud console, enable the Google Play Android Developer API, and download its JSON key. In the Play Console, invite the service account under Users and permissions and grant it access to edit store listings." : {
 
     },
     "Create Backup…" : {
@@ -17812,6 +17865,9 @@
         }
       }
     },
+    "Demo mode — no screenshots are sent to Google Play." : {
+
+    },
     "Demo mode is active. Real API key fields above are ignored until you turn demo mode off." : {
       "localizations" : {
         "de" : {
@@ -17851,6 +17907,12 @@
           }
         }
       }
+    },
+    "Demo mode is active. The service account above is ignored until you turn demo mode off." : {
+
+    },
+    "Demo mode is on. The upload wizard never contacts Google Play." : {
+
     },
     "Demo mode is on. The upload wizard runs against built-in sample data and never contacts App Store Connect." : {
       "localizations" : {
@@ -21409,6 +21471,9 @@
         }
       }
     },
+    "Enter the app's package name" : {
+
+    },
     "Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard." : {
       "localizations" : {
         "de" : {
@@ -23600,6 +23665,9 @@
         }
       }
     },
+    "Failed to sign the authentication token." : {
+
+    },
     "Failed to sign the JWT token." : {
       "localizations" : {
         "de" : {
@@ -25399,6 +25467,51 @@
         }
       }
     },
+    "Google Play" : {
+
+    },
+    "Google Play could not find the target. Check that the package name is correct and that %@ is an active store-listing language for this app." : {
+
+    },
+    "Google Play did not accept the request. Check the package name, image type, and language, then retry." : {
+
+    },
+    "Google Play rejected the request because the service account is not authorized for this app. In the Play Console, invite the service account under Users and permissions and grant it access to edit this app's store listing." : {
+
+    },
+    "Google Play returned %lld while trying to %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Google Play returned %1$lld while trying to %2$@."
+          }
+        }
+      }
+    },
+    "Google Play returned %lld: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Google Play returned %1$lld: %2$@"
+          }
+        }
+      }
+    },
+    "Google Play won't hold this app's listing changes as an un-reviewed draft via the API (the Play Console's \"Save draft\" has no API equivalent for a published app). Committing would send the changes to review instead." : {
+
+    },
+    "Google rejected the sign-in (%lld): %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Google rejected the sign-in (%1$lld): %2$@"
+          }
+        }
+      }
+    },
     "Gradient" : {
       "localizations" : {
         "de" : {
@@ -27063,6 +27176,9 @@
         }
       }
     },
+    "Import .json File…" : {
+
+    },
     "Import .p8 File…" : {
       "localizations" : {
         "de" : {
@@ -27247,6 +27363,12 @@
           }
         }
       }
+    },
+    "Import the Google service account JSON key in Settings → Google Play." : {
+
+    },
+    "Import the service account JSON key below, then test the connection." : {
+
     },
     "Imported" : {
       "localizations" : {
@@ -27500,6 +27622,9 @@
       }
     },
     "In Screenshot Bro: **Settings ▸ App Store Connect**, paste the Issuer ID and Key ID, import the `.p8` file, then run **Test Connection**." : {
+
+    },
+    "Include" : {
 
     },
     "Include screenshot %lld" : {
@@ -28811,6 +28936,9 @@
         }
       }
     },
+    "language" : {
+
+    },
     "Language" : {
       "localizations" : {
         "de" : {
@@ -28936,6 +29064,12 @@
           }
         }
       }
+    },
+    "languages" : {
+
+    },
+    "Languages" : {
+
     },
     "Languages & Translations" : {
       "localizations" : {
@@ -30016,6 +30150,9 @@
 
     },
     "Looks like an Android row" : {
+
+    },
+    "Looks like an iOS row" : {
 
     },
     "Looks valid" : {
@@ -32476,6 +32613,9 @@
         }
       }
     },
+    "No rows × languages are selected." : {
+
+    },
     "No rows × locales are selected." : {
       "localizations" : {
         "de" : {
@@ -33056,6 +33196,9 @@
           }
         }
       }
+    },
+    "Nothing was uploaded — the edit was discarded, so your listing is untouched." : {
+
     },
     "Nudge" : {
       "localizations" : {
@@ -33955,6 +34098,12 @@
         }
       }
     },
+    "Open in Play Console" : {
+
+    },
+    "Open Play Console" : {
+
+    },
     "Open Screenshot Bro Help" : {
 
     },
@@ -34003,6 +34152,9 @@
           }
         }
       }
+    },
+    "Open Settings → Google Play and import your service account JSON key, or turn on demo mode." : {
+
     },
     "Open System Settings" : {
       "extractionState" : "stale",
@@ -34670,6 +34822,9 @@
           }
         }
       }
+    },
+    "Package name" : {
+
     },
     "Padding" : {
       "localizations" : {
@@ -35882,6 +36037,9 @@
         }
       }
     },
+    "PNG or JPEG, 320–3840 px per edge, aspect ratio up to 2:1, 2–8 images." : {
+
+    },
     "Points" : {
       "localizations" : {
         "de" : {
@@ -36157,6 +36315,9 @@
           }
         }
       }
+    },
+    "Preparing…" : {
+
     },
     "Preset" : {
       "localizations" : {
@@ -38726,6 +38887,12 @@
           }
         }
       }
+    },
+    "Remove Credentials…" : {
+
+    },
+    "Remove Google Play credentials?" : {
+
     },
     "Remove Image" : {
       "localizations" : {
@@ -42027,6 +42194,9 @@
         }
       }
     },
+    "Run a simulated upload — no service account required and no traffic is sent to Google Play." : {
+
+    },
     "Run an export first, then click **Upload to App Store Connect** in the toolbar." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -42691,6 +42861,9 @@
         }
       }
     },
+    "Saved as a draft — not sent for review. Send for review from the Play Console when ready." : {
+
+    },
     "Scale" : {
       "localizations" : {
         "de" : {
@@ -43304,6 +43477,9 @@
         }
       }
     },
+    "Screenshots are saved as an un-reviewed draft and never sent for review. If this app doesn't allow that (some published apps don't), the upload stops without changing anything — turn this on to send them to review instead." : {
+
+    },
     "Screenshots per new row" : {
       "localizations" : {
         "de" : {
@@ -43389,6 +43565,9 @@
           }
         }
       }
+    },
+    "Screenshots will be submitted to Google Play review when uploaded." : {
+
     },
     "Scroll vertically to navigate rows." : {
       "localizations" : {
@@ -44060,6 +44239,9 @@
         }
       }
     },
+    "Send changes to review" : {
+
+    },
     "Send shape to back" : {
       "localizations" : {
         "de" : {
@@ -44231,6 +44413,18 @@
           }
         }
       }
+    },
+    "Sent to Google Play. Review and publish from the Play Console (changes won't go live until you publish)." : {
+
+    },
+    "Service account" : {
+
+    },
+    "Service Account" : {
+
+    },
+    "Service account key (.json)" : {
+
     },
     "set" : {
       "localizations" : {
@@ -45525,6 +45719,7 @@
       }
     },
     "Skip tour" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -48739,6 +48934,9 @@
         }
       }
     },
+    "The application ID of the app on Google Play, e.g. com.example.myapp." : {
+
+    },
     "The existing %@ screenshot set for %@ may already have been deleted. After fixing the issue, re-run the upload to refill that set." : {
       "localizations" : {
         "de" : {
@@ -48957,6 +49155,9 @@
         }
       }
     },
+    "The key is stored in this device's Keychain." : {
+
+    },
     "The Projects screen shows sync progress while iCloud is uploading or downloading." : {
 
     },
@@ -49047,6 +49248,9 @@
         }
       }
     },
+    "The service account is connected and ready for screenshot uploads." : {
+
+    },
     "The toolbar shows an iCloud status icon when an upload or download is in progress." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -49131,6 +49335,9 @@
           }
         }
       }
+    },
+    "This app can't save an un-reviewed draft via the API — nothing was uploaded." : {
+
     },
     "This applies translation from the base language to every text layer in %@ and replaces the current translated text." : {
       "localizations" : {
@@ -49224,6 +49431,9 @@
         }
       }
     },
+    "This doesn't look like a Google service account key. Download the JSON key from the Google Cloud console (it must contain \"client_email\" and \"private_key\")." : {
+
+    },
     "This is what makes layouts like a single headline that flows across two screenshots possible." : {
       "localizations" : {
         "de" : {
@@ -49303,6 +49513,9 @@
           }
         }
       }
+    },
+    "This project has no rows to upload." : {
+
     },
     "This project has no text shapes yet." : {
       "localizations" : {
@@ -49517,6 +49730,9 @@
           }
         }
       }
+    },
+    "This removes the imported service account key from this Mac." : {
+
     },
     "This removes the Issuer ID, Key ID, and imported private key from this Mac." : {
       "localizations" : {
@@ -50209,6 +50425,9 @@
           }
         }
       }
+    },
+    "To upload: turn on Managed publishing in the Play Console (Publishing overview → Managed publishing) so reviewed changes are held until you publish, then enable \"Send changes to review\" here and upload again. Without Managed publishing, sending to review can make the changes go live after approval." : {
+
     },
     "Toggle **Open export folder on success** in Settings to auto-reveal the result in Finder." : {
       "extractionState" : "stale",
@@ -52040,6 +52259,9 @@
         }
       }
     },
+    "Upload cancelled. The draft edit was discarded." : {
+
+    },
     "Upload complete" : {
       "localizations" : {
         "de" : {
@@ -52085,6 +52307,9 @@
           }
         }
       }
+    },
+    "Upload error details" : {
+
     },
     "Upload failed" : {
       "localizations" : {
@@ -52402,6 +52627,12 @@
         }
       }
     },
+    "Upload to Google Play" : {
+
+    },
+    "Upload to Google Play…" : {
+
+    },
     "Uploading" : {
       "localizations" : {
         "de" : {
@@ -52443,6 +52674,9 @@
       }
     },
     "Uploading %lld%%" : {
+
+    },
+    "Uploading screenshots…" : {
 
     },
     "Uppercase" : {
@@ -52668,6 +52902,9 @@
           }
         }
       }
+    },
+    "Use demo mode to walk through the Google Play upload feature without a service account." : {
+
     },
     "Use detected (%@)" : {
       "localizations" : {
