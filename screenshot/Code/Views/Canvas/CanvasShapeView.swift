@@ -80,6 +80,7 @@ struct CanvasShapeView: View {
 
     var clipBounds: CGRect?
     var showsEditorHelpers: Bool = true
+    var allowSynchronousSvgRender = true
     /// In-progress resize/rotation reported by the selection overlay so this
     /// view can render the shape at the pending size/angle during the drag.
     var resizeState: ResizeState?
@@ -332,6 +333,7 @@ struct CanvasShapeView: View {
             defaultDeviceBodyColor: defaultDeviceBodyColor,
             deviceModelRenderingMode: deviceModelRenderingMode,
             cachedSvgImage: cachedSvgImage,
+            allowSynchronousSvgRender: allowSynchronousSvgRender,
             showsEditorHelpers: showsEditorHelpers,
             isEditingText: isEditingText,
             editingTextValue: $editingTextValue,

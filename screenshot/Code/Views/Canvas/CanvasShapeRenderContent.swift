@@ -14,6 +14,7 @@ struct CanvasShapeRenderContent: View {
     var defaultDeviceBodyColor: Color
     var deviceModelRenderingMode: DeviceModelRenderingMode
     var cachedSvgImage: NSImage?
+    var allowSynchronousSvgRender = true
     let showsEditorHelpers: Bool
     let isEditingText: Bool
     @Binding var editingTextValue: String
@@ -170,22 +171,32 @@ struct CanvasShapeRenderContent: View {
 
     @ViewBuilder
     private var svgContent: some View {
-        if let image = cachedSvgImage ?? renderSvgImage(
-            shape.svgContent ?? "",
-            shape.svgUseColor == true,
-            shape.color,
-            CGSize(width: effectiveW, height: effectiveH)
-        ) {
+        let svg = shape.svgContent ?? ""
+        let useColor = shape.svgUseColor == true
+        let targetSize = CGSize(width: effectiveW, height: effectiveH)
+        let cachedImage = cachedSvgImage ?? SvgHelper.cachedRender(
+            from: svg,
+            useColor: useColor,
+            color: shape.color,
+            targetSize: targetSize
+        )
+        let image = cachedImage ?? (allowSynchronousSvgRender
+            ? renderSvgImage(svg, useColor, shape.color, targetSize)
+            : nil)
+
+        if let image {
             Image(nsImage: image)
                 .resizable()
                 .interpolation(.high)
-        } else if showsEditorHelpers {
+        } else {
             RoundedRectangle(cornerRadius: 4 * displayScale)
                 .fill(Color.gray.opacity(0.2))
                 .overlay {
-                    Image(systemName: "chevron.left.forwardslash.chevron.right")
-                        .font(.system(size: 24 * displayScale))
-                        .foregroundStyle(.secondary)
+                    if showsEditorHelpers {
+                        Image(systemName: "chevron.left.forwardslash.chevron.right")
+                            .font(.system(size: 24 * displayScale))
+                            .foregroundStyle(.secondary)
+                    }
                 }
         }
     }

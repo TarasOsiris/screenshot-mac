@@ -27,13 +27,7 @@ struct RowPreviewView: View {
             row.activeShapes,
             localeState: state.localeState
         )
-        // Precompute each template's visible (locale-resolved) shapes once per
-        // render instead of rebuilding the id set + filter inside every tile's
-        // view builder. Filtering `resolvedShapes` preserves z-order.
-        let visiblePerTemplate: [[CanvasShapeModel]] = row.templates.indices.map { index in
-            let visibleIds = Set(row.visibleShapes(forTemplateAt: index).map(\.id))
-            return resolvedShapes.filter { visibleIds.contains($0.id) }
-        }
+        let visiblePerTemplate = visibleShapesByTemplate(resolvedShapes)
 
         HStack(alignment: .top, spacing: tileGap) {
             ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, _ in
@@ -50,6 +44,30 @@ struct RowPreviewView: View {
     private var rowDisplayWidthWithGaps: CGFloat {
         let n = CGFloat(row.templates.count)
         return displayTemplateWidth * n + tileGap * max(0, n - 1)
+    }
+
+    private func visibleShapesByTemplate(_ shapes: [CanvasShapeModel]) -> [[CanvasShapeModel]] {
+        guard !row.templates.isEmpty else { return [] }
+        var buckets = Array(repeating: [CanvasShapeModel](), count: row.templates.count)
+        for shape in shapes {
+            if shape.clipToTemplate == true {
+                buckets[row.owningTemplateIndex(for: shape)].append(shape)
+                continue
+            }
+
+            let bb = shape.visualAABB
+            let first = max(0, Int(floor(bb.minX / row.templateWidth)))
+            let last = min(row.templates.count - 1, Int(floor(max(bb.maxX - 1, 0) / row.templateWidth)))
+            guard first <= last else { continue }
+            for index in first...last {
+                let left = CGFloat(index) * row.templateWidth
+                let right = left + row.templateWidth
+                if bb.maxX > left && bb.minX < right {
+                    buckets[index].append(shape)
+                }
+            }
+        }
+        return buckets
     }
 
     @ViewBuilder
@@ -98,6 +116,7 @@ struct RowPreviewView: View {
             deviceModelRenderingMode: .snapshot,
             clipBounds: clipRect,
             showsEditorHelpers: false,
+            allowSynchronousSvgRender: false,
             availableFontFamilies: state.availableFontFamilySet
         )
     }

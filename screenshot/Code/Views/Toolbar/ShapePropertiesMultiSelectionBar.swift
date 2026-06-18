@@ -249,7 +249,17 @@ struct ShapePropertiesMultiSelectionBar: View {
     }
 
     private var firstTextShape: CanvasShapeModel? {
-        selectedShapes.first { $0.type == .text }
+        firstResolvedSelectedShape { $0.type == .text }
+    }
+
+    private func firstResolvedSelectedShape(where predicate: (CanvasShapeModel) -> Bool = { _ in true }) -> CanvasShapeModel? {
+        guard let rowIndex else { return nil }
+        let ids = state.selectedShapeIds
+        guard !ids.isEmpty else { return nil }
+        for shape in state.rows[rowIndex].shapes where ids.contains(shape.id) && predicate(shape) {
+            return LocaleService.resolveShape(shape, localeState: state.localeState)
+        }
+        return nil
     }
 
     private func showsMultiFontWeightPicker(primary: CustomFontControlState?, textShapes: [CanvasShapeModel]) -> Bool {
@@ -310,10 +320,7 @@ struct ShapePropertiesMultiSelectionBar: View {
     private func multiShadowBinding() -> Binding<ShadowConfig> {
         Binding(
             get: {
-                guard let rowIndex,
-                      let first = state.rows[rowIndex].shapes.first(where: { state.selectedShapeIds.contains($0.id) })
-                else { return ShadowConfig() }
-                return LocaleService.resolveShape(first, localeState: state.localeState).shadow ?? ShadowConfig()
+                firstResolvedSelectedShape()?.shadow ?? ShadowConfig()
             },
             set: { newValue in
                 state.updateShapesContinuous(state.selectedShapeIds) { shape in
@@ -327,10 +334,7 @@ struct ShapePropertiesMultiSelectionBar: View {
     private func multiShapeBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> {
         Binding(
             get: {
-                guard let rowIndex,
-                      let first = state.rows[rowIndex].shapes.first(where: { state.selectedShapeIds.contains($0.id) })
-                else { return CanvasShapeModel.placeholder[keyPath: keyPath] }
-                return LocaleService.resolveShape(first, localeState: state.localeState)[keyPath: keyPath]
+                firstResolvedSelectedShape()?[keyPath: keyPath] ?? CanvasShapeModel.placeholder[keyPath: keyPath]
             },
             set: { newValue in
                 state.updateShapesContinuous(state.selectedShapeIds) { shape in
@@ -343,10 +347,7 @@ struct ShapePropertiesMultiSelectionBar: View {
     private func multiShapeOptionalBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T, continuous: Bool = false) -> Binding<T> {
         Binding(
             get: {
-                guard let rowIndex,
-                      let first = state.rows[rowIndex].shapes.first(where: { state.selectedShapeIds.contains($0.id) })
-                else { return defaultValue }
-                return LocaleService.resolveShape(first, localeState: state.localeState)[keyPath: keyPath] ?? defaultValue
+                firstResolvedSelectedShape()?[keyPath: keyPath] ?? defaultValue
             },
             set: { newValue in
                 if continuous {

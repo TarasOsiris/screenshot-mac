@@ -13,6 +13,13 @@ enum PickedBackground {
 }
 
 enum SvgHelper {
+    private static let rasterCache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        cache.countLimit = 300
+        cache.totalCostLimit = 192 * 1024 * 1024
+        return cache
+    }()
+
     /// Prompts the user for an image or SVG file and returns the picked content.
     /// Returns nil if the user cancels or the file cannot be loaded.
     @MainActor
@@ -127,12 +134,17 @@ enum SvgHelper {
     }
 
     static func renderImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
+        let key = rasterCacheKey(svgContent: svgContent, useColor: useColor, color: color, targetSize: targetSize)
+        if let cached = rasterCache.object(forKey: key) {
+            return cached
+        }
         let svg = useColor ? applyColor(color, to: svgContent) : svgContent
         guard let data = svg.data(using: .utf8) else { return nil }
         #if os(macOS)
         guard let baseImage = NSImage(data: data) else { return nil }
 
         guard let targetSize, targetSize.width > 0, targetSize.height > 0 else {
+            rasterCache.setObject(baseImage, forKey: key, cost: rasterCost(for: baseImage.size))
             return baseImage
         }
         let pixelW = Int(targetSize.width)
@@ -158,15 +170,35 @@ enum SvgHelper {
         NSGraphicsContext.restoreGraphicsState()
         let result = NSImage(size: targetSize)
         result.addRepresentation(rep)
+        rasterCache.setObject(result, forKey: key, cost: rasterCost(for: targetSize))
         return result
         #else
         // UIKit has no native SVG support, so render the vector via SwiftDraw. Rasterize at scale 1
         // so the pixel dimensions equal targetSize, matching the macOS path above.
         guard let parsed = SwiftDraw.SVG(data: data) else { return nil }
         if let targetSize, targetSize.width > 0, targetSize.height > 0 {
-            return parsed.rasterize(size: targetSize, scale: 1)
+            let image = parsed.rasterize(size: targetSize, scale: 1)
+            rasterCache.setObject(image, forKey: key, cost: rasterCost(for: targetSize))
+            return image
         }
-        return parsed.rasterize(scale: 1)
+        let image = parsed.rasterize(scale: 1)
+        rasterCache.setObject(image, forKey: key, cost: rasterCost(for: image.size))
+        return image
         #endif
+    }
+
+    static func cachedRender(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
+        rasterCache.object(forKey: rasterCacheKey(svgContent: svgContent, useColor: useColor, color: color, targetSize: targetSize))
+    }
+
+    private static func rasterCacheKey(svgContent: String, useColor: Bool, color: Color, targetSize: CGSize?) -> NSString {
+        let width = targetSize.map { Int($0.width.rounded(.up)) } ?? 0
+        let height = targetSize.map { Int($0.height.rounded(.up)) } ?? 0
+        let colorKey = useColor ? color.hexString : "original"
+        return "\(svgContent.hashValue)|\(useColor)|\(colorKey)|\(width)x\(height)" as NSString
+    }
+
+    private static func rasterCost(for size: CGSize) -> Int {
+        max(1, Int(size.width.rounded(.up))) * max(1, Int(size.height.rounded(.up))) * 4
     }
 }

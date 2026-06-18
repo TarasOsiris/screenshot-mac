@@ -15,6 +15,7 @@ extension EditorRowView {
                 let ds = row.displayScale(zoom: zoom)
 
                 let resolved = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
+                let rowSelectedShapeIds = state.selectedRowId == row.id ? state.selectedShapeIds : []
 
                 VStack(alignment: .leading, spacing: 0) {
                     if !modeReady {
@@ -27,7 +28,13 @@ extension EditorRowView {
                             // full scale (no `.scaleEffect`) so shape layout frames match
                             // their on-screen size; the selection layer renders the same way.
                             ZStack(alignment: .topLeading) {
-                                canvasView(dw: dw, dh: dh, ds: ds, resolvedShapes: resolved)
+                                canvasView(
+                                    dw: dw,
+                                    dh: dh,
+                                    ds: ds,
+                                    resolvedShapes: resolved,
+                                    selectedShapeIds: rowSelectedShapeIds
+                                )
                                     .frame(
                                         width: row.totalDisplayWidth(zoom: zoom),
                                         height: row.displayHeight(zoom: zoom),
@@ -44,15 +51,16 @@ extension EditorRowView {
                                     }
 
                                 CanvasSelectionLayer(
-                                    state: state,
                                     row: row,
                                     resolvedShapes: resolved,
+                                    selectedShapeIds: rowSelectedShapeIds,
                                     visualScale: ds,
                                     pendingResize: $pendingResize,
                                     pendingRotation: $pendingRotation,
                                     textEditingShapeId: textEditingShapeId,
                                     activeDragOffset: activeDragOffset,
-                                    draggingShapeId: draggingShapeId
+                                    draggingShapeId: draggingShapeId,
+                                    onUpdate: { state.updateShape($0) }
                                 )
                                 .frame(
                                     width: row.totalDisplayWidth(zoom: zoom),
@@ -216,14 +224,19 @@ extension EditorRowView {
     }
 
     @ViewBuilder
-    func canvasView(dw: CGFloat, dh: CGFloat, ds: CGFloat, resolvedShapes: [CanvasShapeModel]) -> some View {
-        let selectedShapeIds = state.selectedShapeIds
+    func canvasView(
+        dw: CGFloat,
+        dh: CGFloat,
+        ds: CGFloat,
+        resolvedShapes: [CanvasShapeModel],
+        selectedShapeIds: Set<UUID>
+    ) -> some View {
         let isNonBaseLocale = !state.localeState.isBaseLocale
         let currentLocaleName: String? = isNonBaseLocale ? state.localeState.activeLocaleLabel : nil
         let nonBaseLocaleCount = state.localeState.nonBaseLocaleCount
         // Computed once per render — the per-shape closure below references it
         // instead of recomputing the O(N) walk for every shape's `lockToggleWillUnlock`.
-        let selectionFullyLocked = state.isSelectionFullyLocked
+        let selectionFullyLocked = selectedShapeIds.isEmpty ? false : state.isSelectionFullyLocked
         let allSelectedSameType: Bool = selectedShapeIds.count > 1 && {
             var firstType: ShapeType?
             for shape in resolvedShapes where selectedShapeIds.contains(shape.id) {
@@ -274,6 +287,7 @@ extension EditorRowView {
                     groupDragOffset: groupOffset,
                     deviceModelRenderingMode: .snapshot,
                     clipBounds: clipRect,
+                    allowSynchronousSvgRender: false,
                     resizeState: pendingResize[shape.id],
                     rotationDelta: pendingRotation[shape.id] ?? 0,
                     availableFontFamilies: state.availableFontFamilySet,

@@ -6,11 +6,11 @@ import SwiftUI
 struct CanvasSelectionLayer: View {
     @Environment(\.displayScale) private var screenScale
 
-    @Bindable var state: AppState
     let row: ScreenshotRow
     /// Resolved shapes (with locale overrides applied) — shared with the
     /// row's shape layer so we don't repeat `LocaleService.resolveShapes` here.
     let resolvedShapes: [CanvasShapeModel]
+    let selectedShapeIds: Set<UUID>
     /// Visual scale: model points × (base displayScale × zoom).
     let visualScale: CGFloat
     @Binding var pendingResize: [UUID: ResizeState]
@@ -18,11 +18,12 @@ struct CanvasSelectionLayer: View {
     let textEditingShapeId: UUID?
     let activeDragOffset: CGSize
     let draggingShapeId: UUID?
+    let onUpdate: (CanvasShapeModel) -> Void
 
     private let handleDiameter: CGFloat = 8
 
     var body: some View {
-        let selectedIds = state.selectedShapeIds
+        let selectedIds = selectedShapeIds
         if selectedIds.count > 1 {
             ZStack(alignment: .topLeading) {
                 ForEach(resolvedShapes) { shape in
@@ -71,7 +72,7 @@ struct CanvasSelectionLayer: View {
             handleDiameter: handleDiameter,
             rotationDelta: rotationBinding(for: shape.id),
             resizeState: resizeBinding(for: shape.id),
-            onUpdate: { state.updateShape($0) }
+            onUpdate: onUpdate
         )
     }
 

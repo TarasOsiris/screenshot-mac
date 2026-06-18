@@ -16,11 +16,49 @@ typealias SCNFloat = Float
 struct DeviceModelFrameView: View {
     private static let modelSnapshotScale: CGFloat = 3
     private static let snapshotExposureOffset: CGFloat = -0.7
+    private static let snapshotImageCache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        cache.countLimit = 160
+        cache.totalCostLimit = 256 * 1024 * 1024
+        return cache
+    }()
     private static let modelSceneCache: NSCache<NSString, SCNScene> = {
         let cache = NSCache<NSString, SCNScene>()
         cache.countLimit = 4
         return cache
     }()
+
+    private struct SnapshotKey: Hashable {
+        let frameId: String
+        let pixelWidth: Int
+        let pixelHeight: Int
+        let screenshotIdentity: ObjectIdentifier?
+        let screenshotWidth: Int
+        let screenshotHeight: Int
+        let pitch: Int
+        let yaw: Int
+        let materialFinish: String
+        let ambient: Int
+        let key: Int
+        let rim: Int
+        let bodyColor: String
+
+        var cacheKey: NSString {
+            [
+                frameId,
+                "\(pixelWidth)x\(pixelHeight)",
+                screenshotIdentity.map { String(describing: $0) } ?? "no-image",
+                "\(screenshotWidth)x\(screenshotHeight)",
+                "p\(pitch)",
+                "y\(yaw)",
+                materialFinish,
+                "a\(ambient)",
+                "k\(key)",
+                "r\(rim)",
+                bodyColor
+            ].joined(separator: "|") as NSString
+        }
+    }
 
     let frame: DeviceFrame
     let bodyColor: Color
@@ -35,6 +73,9 @@ struct DeviceModelFrameView: View {
     let invisibleCornerRadius: CGFloat
     let invisibleOutlineWidth: CGFloat
     let invisibleOutlineColor: Color
+    @Environment(\.isExportRendering) private var isExportRendering
+    @State private var renderedSnapshotKey: SnapshotKey?
+    @State private var renderedSnapshotImage: NSImage?
 
     var body: some View {
         switch modelRenderingMode {
@@ -52,23 +93,10 @@ struct DeviceModelFrameView: View {
             )
             .frame(width: width, height: height)
         case .snapshot:
-            if let image = Self.snapshotDeviceModel(
-                frame: frame,
-                width: width,
-                height: height,
-                screenshotImage: screenshotImage,
-                pitch: pitch,
-                yaw: yaw,
-                bodyMaterial: bodyMaterial,
-                lighting: lighting,
-                bodyTintColor: NSColor(bodyColor)
-            ) {
-                Image(nsImage: image)
-                    .resizable()
-                    .interpolation(.high)
-                    .frame(width: width, height: height)
+            if isExportRendering {
+                synchronousSnapshotView
             } else {
-                fallbackView
+                snapshotView
             }
         }
     }
@@ -84,6 +112,153 @@ struct DeviceModelFrameView: View {
             invisibleOutlineWidth: invisibleOutlineWidth,
             invisibleOutlineColor: invisibleOutlineColor
         )
+    }
+
+    @ViewBuilder
+    private var snapshotView: some View {
+        let key = Self.snapshotKey(
+            frame: frame,
+            width: width,
+            height: height,
+            screenshotImage: screenshotImage,
+            pitch: pitch,
+            yaw: yaw,
+            bodyMaterial: bodyMaterial,
+            lighting: lighting,
+            bodyColor: bodyColor
+        )
+
+        if let image = snapshotImage(for: key) {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: width, height: height)
+                .task(id: key) {
+                    await renderSnapshotIfNeeded(for: key)
+                }
+        } else {
+            fallbackView
+                .task(id: key) {
+                    await renderSnapshotIfNeeded(for: key)
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var synchronousSnapshotView: some View {
+        let key = Self.snapshotKey(
+            frame: frame,
+            width: width,
+            height: height,
+            screenshotImage: screenshotImage,
+            pitch: pitch,
+            yaw: yaw,
+            bodyMaterial: bodyMaterial,
+            lighting: lighting,
+            bodyColor: bodyColor
+        )
+
+        if let image = synchronousSnapshot(for: key) {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: width, height: height)
+        } else {
+            fallbackView
+        }
+    }
+
+    private func snapshotImage(for key: SnapshotKey) -> NSImage? {
+        if renderedSnapshotKey == key, let renderedSnapshotImage {
+            return renderedSnapshotImage
+        }
+        return Self.cachedSnapshot(for: key)
+    }
+
+    private func synchronousSnapshot(for key: SnapshotKey) -> NSImage? {
+        if let cached = Self.cachedSnapshot(for: key) {
+            return cached
+        }
+        guard let rendered = Self.snapshotDeviceModel(
+            frame: frame,
+            width: width,
+            height: height,
+            screenshotImage: screenshotImage,
+            pitch: pitch,
+            yaw: yaw,
+            bodyMaterial: bodyMaterial,
+            lighting: lighting,
+            bodyTintColor: NSColor(bodyColor)
+        ) else { return nil }
+        Self.storeSnapshot(rendered, for: key)
+        return rendered
+    }
+
+    private func renderSnapshotIfNeeded(for key: SnapshotKey) async {
+        if let cached = Self.cachedSnapshot(for: key) {
+            renderedSnapshotKey = key
+            renderedSnapshotImage = cached
+            return
+        }
+
+        guard let rendered = Self.snapshotDeviceModel(
+            frame: frame,
+            width: width,
+            height: height,
+            screenshotImage: screenshotImage,
+            pitch: pitch,
+            yaw: yaw,
+            bodyMaterial: bodyMaterial,
+            lighting: lighting,
+            bodyTintColor: NSColor(bodyColor)
+        ), !Task.isCancelled else { return }
+
+        Self.storeSnapshot(rendered, for: key)
+        renderedSnapshotKey = key
+        renderedSnapshotImage = rendered
+    }
+
+    private static func cachedSnapshot(for key: SnapshotKey) -> NSImage? {
+        snapshotImageCache.object(forKey: key.cacheKey)
+    }
+
+    private static func storeSnapshot(_ image: NSImage, for key: SnapshotKey) {
+        snapshotImageCache.setObject(image, forKey: key.cacheKey, cost: key.pixelWidth * key.pixelHeight * 4)
+    }
+
+    private static func snapshotKey(
+        frame: DeviceFrame,
+        width: CGFloat,
+        height: CGFloat,
+        screenshotImage: NSImage?,
+        pitch: Double,
+        yaw: Double,
+        bodyMaterial: DeviceBodyMaterial,
+        lighting: DeviceLighting,
+        bodyColor: Color
+    ) -> SnapshotKey {
+        let imageIdentity = screenshotImage.map(ObjectIdentifier.init)
+        let imageSize = screenshotImage?.size ?? .zero
+        let color = bodyColor.sRGBComponents
+        return SnapshotKey(
+            frameId: frame.id,
+            pixelWidth: max(1, Int((width * modelSnapshotScale).rounded(.up))),
+            pixelHeight: max(1, Int((height * modelSnapshotScale).rounded(.up))),
+            screenshotIdentity: imageIdentity,
+            screenshotWidth: max(0, Int(imageSize.width.rounded())),
+            screenshotHeight: max(0, Int(imageSize.height.rounded())),
+            pitch: quantized(pitch),
+            yaw: quantized(yaw),
+            materialFinish: bodyMaterial.resolvedFinish.rawValue,
+            ambient: quantized(lighting.resolvedAmbientIntensity),
+            key: quantized(lighting.resolvedKeyIntensity),
+            rim: quantized(lighting.resolvedRimIntensity),
+            bodyColor: "\(quantized(Double(color.r)))-\(quantized(Double(color.g)))-\(quantized(Double(color.b)))-\(quantized(Double(color.a)))"
+        )
+    }
+
+    private static func quantized(_ value: Double) -> Int {
+        Int((value * 1_000).rounded())
     }
 
     fileprivate static func snapshotDeviceModel(
