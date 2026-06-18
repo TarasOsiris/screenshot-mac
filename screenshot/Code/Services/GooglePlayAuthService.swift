@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 import Security
 
@@ -232,4 +231,3 @@ private struct DERParser {
         return Data(slice)
     }
 }
-#endif

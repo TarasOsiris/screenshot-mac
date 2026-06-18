@@ -8,9 +8,7 @@ enum iPadRootTab: Hashable {
 
 enum iPadSettingsDestination: Hashable {
     case appStoreConnect
-    #if DEBUG
     case googlePlay
-    #endif
 }
 
 @MainActor

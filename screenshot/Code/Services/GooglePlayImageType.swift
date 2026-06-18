@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 import CoreGraphics
 
@@ -64,4 +63,3 @@ enum GPUploadLimits {
     static let minScreenshotsPerType = 2
     static let maxScreenshotsPerType = 8
 }
-#endif

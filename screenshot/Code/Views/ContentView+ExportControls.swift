@@ -50,12 +50,10 @@ extension ContentView {
             }
             .disabled(state.rows.isEmpty)
 
-            #if DEBUG
             Button("Upload to Google Play…", systemImage: "play.rectangle.on.rectangle") {
                 showingGooglePlayUploadSheet = true
             }
             .disabled(state.rows.isEmpty)
-            #endif
         } label: {
             iPadExportLabel
         }
@@ -131,12 +129,10 @@ extension ContentView {
         }
         .disabled(state.rows.isEmpty)
 
-        #if DEBUG
         Button("Upload to Google Play…", systemImage: "play.rectangle.on.rectangle") {
             showingGooglePlayUploadSheet = true
         }
         .disabled(state.rows.isEmpty)
-        #endif
         #endif
     }
 }

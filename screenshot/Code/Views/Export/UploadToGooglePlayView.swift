@@ -1,4 +1,3 @@
-#if DEBUG
 #if os(macOS)
 import AppKit
 #else
@@ -254,4 +253,3 @@ struct GPUploadFailureDetailsSheet: View {
         .frame(width: 520, height: 420)
     }
 }
-#endif

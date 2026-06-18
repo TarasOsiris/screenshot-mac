@@ -1,4 +1,3 @@
-#if DEBUG
 import SwiftUI
 
 extension UploadToGooglePlayView {
@@ -304,4 +303,3 @@ extension UploadToGooglePlayView {
         return URL(string: "https://play.google.com/console/")
     }
 }
-#endif

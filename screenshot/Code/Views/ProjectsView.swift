@@ -76,12 +76,10 @@ struct iPadRootView: View {
                                 AppStoreConnectSettingsView()
                                     .navigationTitle("App Store Connect")
                                     .navigationBarTitleDisplayMode(.inline)
-                            #if DEBUG
                             case .googlePlay:
                                 GooglePlaySettingsView()
                                     .navigationTitle("Google Play")
                                     .navigationBarTitleDisplayMode(.inline)
-                            #endif
                             }
                         }
                 }

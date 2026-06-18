@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 
 /// In-memory mock for Google Play demo mode. Edits and image uploads are local no-ops so
@@ -25,4 +24,3 @@ final class GooglePlayDemoData: @unchecked Sendable {
         return GPImage(id: "demo-image-\(idCounter)", url: nil, sha256: nil, sha1: nil)
     }
 }
-#endif

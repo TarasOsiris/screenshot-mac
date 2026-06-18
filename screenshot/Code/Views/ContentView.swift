@@ -75,9 +75,7 @@ struct ContentView: View {
     @State var editorViewportHeight: CGFloat = 0
     @State var scrollWheelMonitor: Any?
     @State var showingASCUploadSheet = false
-    #if DEBUG
     @State var showingGooglePlayUploadSheet = false
-    #endif
     @State var showcasePresentation: ShowcasePresentation?
     @State var projectNamePrompt: ProjectNamePrompt?
     #if os(iOS)
@@ -474,12 +472,10 @@ struct ContentView: View {
             UploadToAppStoreConnectView()
                 .environment(state)
         }
-        #if DEBUG
         .sheet(isPresented: $showingGooglePlayUploadSheet) {
             UploadToGooglePlayView()
                 .environment(state)
         }
-        #endif
         #else
         // iPad: the upload wizard is a desktop-grade multi-step flow — present it as its own
         // full-screen screen with a native nav bar (it builds its own NavigationStack).
@@ -487,12 +483,10 @@ struct ContentView: View {
             UploadToAppStoreConnectView()
                 .environment(state)
         }
-        #if DEBUG
         .fullScreenCover(isPresented: $showingGooglePlayUploadSheet) {
             UploadToGooglePlayView()
                 .environment(state)
         }
-        #endif
         #endif
         .sheet(item: $projectNamePrompt) { prompt in
             ProjectNameSheet(prompt: prompt)

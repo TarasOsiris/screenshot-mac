@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 
 /// Maps the app's project locale codes (bare languages like "en", "de", or regioned ones
@@ -33,4 +32,3 @@ enum GooglePlayLanguageMatcher {
         "zh-Hans": "zh-CN", "zh-Hant": "zh-TW"
     ]
 }
-#endif

@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 import SwiftUI
 
@@ -153,4 +152,3 @@ enum GooglePlayUploadValidator {
 extension Array where Element == GPUploadIssue {
     var hasErrors: Bool { contains { $0.severity == .error } }
 }
-#endif

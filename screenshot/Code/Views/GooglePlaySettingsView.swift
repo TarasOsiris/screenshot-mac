@@ -1,4 +1,3 @@
-#if DEBUG
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -324,4 +323,3 @@ struct GooglePlaySettingsView: View {
         }
     }
 }
-#endif

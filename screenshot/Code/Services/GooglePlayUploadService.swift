@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 #if os(macOS)
 import AppKit
@@ -341,4 +340,3 @@ final class GooglePlayUploadService {
         }
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 
 enum GooglePlayAPIError: Error, LocalizedError {
@@ -198,4 +197,3 @@ struct GPImage: Decodable {
 private struct GPImageUploadResponse: Decodable {
     let image: GPImage
 }
-#endif

@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 import Observation
 
@@ -101,4 +100,3 @@ enum GooglePlayCredentialsError: Error, LocalizedError {
         }
     }
 }
-#endif

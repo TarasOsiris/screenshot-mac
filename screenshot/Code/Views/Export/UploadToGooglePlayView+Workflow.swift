@@ -1,4 +1,3 @@
-#if DEBUG
 import SwiftUI
 
 extension UploadToGooglePlayView {
@@ -137,4 +136,3 @@ extension UploadToGooglePlayView {
         return details.joined(separator: "\n\n")
     }
 }
-#endif
