@@ -159,16 +159,21 @@ extension AppState {
     }
 
     func centerDevices(_ shapeIds: Set<UUID>, in rowId: UUID, axis: CenterAxis) {
+        centerShapes(shapeIds, in: rowId, axis: axis, onlyDevices: true)
+    }
+
+    func centerShapes(_ shapeIds: Set<UUID>, in rowId: UUID, axis: CenterAxis, onlyDevices: Bool = false) {
         guard let idx = rowIndex(for: rowId) else { return }
         let row = rows[idx]
-        let deviceIndices = row.shapes.indices.filter {
+        let indices = row.shapes.indices.filter {
             shapeIds.contains(row.shapes[$0].id) &&
-            row.shapes[$0].type == .device &&
+            (!onlyDevices || row.shapes[$0].type == .device) &&
             !row.shapes[$0].resolvedIsLocked
         }
-        guard !deviceIndices.isEmpty else { return }
-        withUndo(deviceIndices.count == 1 ? "Center Device" : "Center Devices") {
-            for i in deviceIndices {
+        guard !indices.isEmpty else { return }
+        let noun = onlyDevices ? "Device" : "Element"
+        withUndo(indices.count == 1 ? "Center \(noun)" : "Center \(noun)s") {
+            for i in indices {
                 centerShape(at: i, in: idx, axis: axis)
             }
         }

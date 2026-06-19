@@ -436,17 +436,13 @@ extension EditorRowView {
                                 }
                             }
                         }(),
-                        onCenterDevice: shape.type == .device ? { axis in
-                            let isMultiDeviceSelection = isMulti
-                                && selectedShapeIds.contains(shape.id)
-                                && row.activeShapes.allSatisfy {
-                                    !selectedShapeIds.contains($0.id) || $0.type == .device
-                                }
-                            let targets: Set<UUID> = isMultiDeviceSelection ? selectedShapeIds : [shape.id]
+                        onCenterShape: { axis in
+                            let targets: Set<UUID> = (isMulti && selectedShapeIds.contains(shape.id))
+                                ? selectedShapeIds : [shape.id]
                             withAnimation(.easeInOut(duration: 0.2)) {
-                                state.centerDevices(targets, in: row.id, axis: axis)
+                                state.centerShapes(targets, in: row.id, axis: axis)
                             }
-                        } : nil,
+                        },
                         onTranslate: (shape.type == .text && isNonBaseLocale) ? {
                             state.pendingTranslateShapeId = shape.id
                         } : nil,

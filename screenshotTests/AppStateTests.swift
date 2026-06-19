@@ -1665,6 +1665,38 @@ struct AppStateTests {
         #expect(after.y == 10)
     }
 
+    @Test func centerShapesCentersNonDevice() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+        let row = state.rows.first!
+        let shape = CanvasShapeModel(type: .rectangle, x: 7, y: 13, width: 80, height: 120)
+        state.addShape(shape)
+
+        state.centerShapes([shape.id], in: rowId, axis: .both)
+
+        let after = state.rows.first!.shapes.first { $0.id == shape.id }!
+        #expect(after.x == (row.templateWidth - 80) / 2)
+        #expect(after.y == (row.templateHeight - 120) / 2)
+    }
+
+    @Test func centerShapesSkipsLocked() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+        var locked = CanvasShapeModel(type: .rectangle, x: 10, y: 10, width: 50, height: 100)
+        locked.isLocked = true
+        state.addShape(locked)
+
+        state.centerShapes([locked.id], in: rowId, axis: .both)
+
+        let after = state.rows.first!.shapes.first { $0.id == locked.id }!
+        #expect(after.x == 10)
+        #expect(after.y == 10)
+    }
+
     @Test func alignSelectedShapesSkipsLocked() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
