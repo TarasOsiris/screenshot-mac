@@ -346,13 +346,13 @@ private struct MacAppBanner: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "desktopcomputer")
+            Image(systemName: "macbook.and.ipad")
                 .font(.title2)
                 .foregroundStyle(Color.accentColor)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Screenshot Bro is also available on Mac.")
+                Text("Screenshot Bro is also available on Mac and iPad.")
                     .font(.subheadline.weight(.semibold))
-                Text("Use the desktop Mac app for the best experience.")
+                Text("Use the desktop Mac or iPad app for the best experience.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
