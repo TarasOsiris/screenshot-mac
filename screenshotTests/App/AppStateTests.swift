@@ -12,6 +12,7 @@ struct AppStateTests {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
+            .deletingLastPathComponent()
             .appendingPathComponent("screenshot/Templates.bundle/shared/fonts/\(fileName)")
     }
 

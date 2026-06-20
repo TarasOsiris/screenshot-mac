@@ -70,11 +70,13 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 **Source layout:** All Swift source lives under `screenshot/Code/`:
 - `App/` — `AppState` (split across `AppState+*` extensions) + app entry + window management.
 - `Models/` — data model structs/enums.
-- `Services/` — business logic (persistence, export, locale, alignment, iCloud, store, SVG, App Store Connect, simulator capture, etc.).
+- `Services/` — business logic. Feature suites live in subfolders: `AppStoreConnect/`, `GooglePlay/`, `Export/`, `Localization/`, `Media/`, and `Sync/`; cross-cutting services remain at the root.
 - `Platform/` — cross-platform shims that let macOS-first code (`NSImage`/`NSColor`/`NSFont`…) compile on iOS.
 - `DeviceFrames/` — `Models/`, `Rendering/`, `UI/` for device-frame rendering (2D PNG specs + SceneKit 3D models).
-- `Views/` — `Canvas/`, `Editor/`, `Export/`, `Inspector/`, `Settings/`, `Toolbar/`, plus top-level shell views.
+- `Views/` — `Canvas/`, `Editor/`, `Export/`, `Inspector/`, `Settings/`, `Toolbar/`, plus top-level shell views. Export UI is grouped by destination under `Export/AppStoreConnect/`, `Export/GooglePlay/`, `Export/Showcase/`, and `Export/Shared/`.
 - `Extensions/`.
+
+Tests under `screenshotTests/` mirror the app domains where practical: `App/`, `Models/`, and `Services/` with matching feature subfolders.
 
 Bundled resources in `screenshot/`: `Templates.bundle` (35+ starter themes), `SvgPresets.bundle` (SVG shapes for `SvgPresetCatalog`), `DeviceModels/` (USDZ 3D models, e.g. iPhone 17 Pro / Pro Max), `Assets.xcassets`.
 
@@ -109,24 +111,17 @@ Bundled resources in `screenshot/`: `Templates.bundle` (35+ starter themes), `Sv
 - `CustomFont` — metadata for user-imported font files. `AlignmentGuide` — snap guide line model.
 
 **Services:**
-- `PersistenceService` — JSON files in `~/Library/Application Support/screenshot/`. Index at `projects.json`, per-project data at `projects/<uuid>/project.json`, images in `projects/<uuid>/resources/`. `SCREENSHOT_DATA_DIR` env override for tests.
-- `ExportService` / `ExportImageEncoder` — render templates to PNG/JPEG via SwiftUI `ImageRenderer` at configurable scale (1x–3x). Multi-locale export creates locale subfolders; multi-row creates row-label subfolders. Also powers showcase export and thumbnails. `ExportImageEncoder` does the final NSImage→PNG/JPEG encoding (with iOS branch).
-- `ProjectThumbnailService` — renders a cached snapshot of a project's first row (through the shared export path) for project cards.
-- `LocaleService` — resolves shapes with locale overrides. `splitUpdate()` separates base shape mutations from locale-specific text. Base locale is first; non-base locales get text-only overrides.
-- `AlignmentService` — snap-to-grid alignment against other shapes and template boundaries (4px threshold); returns snap deltas + guide lines.
-- `ICloudSyncService` / `ICloudMonitor` — iCloud Drive sync (container `iCloud.xyz.tleskiv.screenshot`); last-writer-wins merge with tombstone awareness, `NSFileCoordinator`, `NSFilePresenter` watching, `NSMetadataQuery` progress, 1s debounced reload, own-write detection.
-- `StoreService` — RevenueCat Pro tier. Free tier: 1 project (cannot create additional), 3 rows/project, 5 templates/row. `PaywallContext` provides context-aware messages.
-- `SvgHelper` / `SvgPresetCatalog` — SVG sanitize (strip scripts/handlers), `parseSize`, `scaledSize`, render to image (via SwiftDraw) with optional color replacement; `SvgPresetCatalog` loads the bundled preset shapes.
-- `RichTextUtils` — encode/decode `NSAttributedString` ↔ Base64-RTF for text-shape persistence, plus per-property style application.
-- `BackgroundRemovalService` — Vision foreground-mask request to make an image's background transparent.
-- `SimulatorCaptureService` (DEBUG, macOS) — captures iOS Simulator screenshots via a user-installed helper script run through `NSUserUnixTask` (sandbox-safe escape hatch for `xcrun simctl`).
-- App Store Connect suite — `AppStoreConnectAuthService` / `…CredentialsStore` / `…APIService` / `…UploadService` / `…UploadValidator` / `…IconFetcher` / `…DisplayType` / `…DemoData`, backed by `KeychainService` for secret storage. Uploads exported screenshots to App Store Connect.
-- `NotificationService` — user notifications for completed long tasks (no-ops when frontmost).
-- `TemplateService`, `ExportFolderService`, `DebugTemplateService`, `QuickLookCoordinator`, `AppLogger`.
+- Root: `PersistenceService` (project JSON/resources), `AlignmentService`, `StoreService`, `TemplateService`, `SimulatorCaptureService`, `NotificationService`, `DebugTemplateService`, `QuickLookCoordinator`, `KeychainService`, `AppLogger`.
+- `Export/` — `ExportService`, `ExportImageEncoder`, `ExportFolderService`, `ProjectThumbnailService`. Renders templates/showcases/thumbnails to PNG/JPEG via SwiftUI `ImageRenderer` and handles final image encoding.
+- `Localization/` — `LocaleService`, `TranslationCatalogService`, `LocalizationPromptService`. Resolves locale overrides and translation prompt/catalog logic.
+- `Media/` — `SvgHelper`, `SvgPresetCatalog`, `RichTextUtils`, `BackgroundRemovalService`. Handles SVG presets/rendering, rich text RTF persistence, and Vision background removal.
+- `Sync/` — `ICloudSyncService`, `ICloudMonitor`. Handles iCloud Drive sync, file coordination, metadata progress, and conflict merge.
+- `AppStoreConnect/` — auth, credentials, API, upload, validation, icon fetching, display type mapping, and demo data for App Store Connect.
+- `GooglePlay/` — auth, credentials, API, upload, validation, image type/language matching, and demo data for Google Play.
 
 **View hierarchy** (under `Views/`):
 - Shell (top level): `AppRootView` → `ContentView` (toolbar: project selector, zoom, locale menu, export; vertical scroll of rows; bottom shape-properties bar; right inspector). `ProjectsView` (project home/cards), `NewProjectWindowView`, `ProjectNameSheet`, `OnboardingView`, `ProjectLoadingOverlay`, `HelpView`, `IPadSettingsView`, `DefaultsPickers` (settings), `PaywallSheetContent` / `PostPurchaseCelebrationView` (store), `CoachPopover` (onboarding coach marks), `ActionButton`, `UIMetrics`, `DebugProjectManagerView`, `ContentExportControl`.
-- `Export/` — `ShowcaseExportSheet`, `ShowcaseRowView`; App Store Connect upload UI: `UploadToAppStoreConnectView`, `UploadToAppStoreConnectSelectionSteps`, `AppStoreConnectUploadComponents`, `AppStoreConnectSettingsView`.
+- `Export/` — `Shared/` (`ExportDestinationSheet`, `ExportProgressOverlay`), `Showcase/` (`ShowcaseExportSheet`, `ShowcaseRowView`, preview/settings components), `AppStoreConnect/` (upload workflow, selection steps, settings, components), `GooglePlay/` (upload workflow and settings).
 - `Editor/` — `EditorRowView` (one row: header, horizontal scroll of canvases, per-template control bars), `EditorRowHeader`, `EditorRowMenuContent`, `AddRowButton`, `AddTemplateButton`, `RowPreviewView`, `SvgPasteDialog`, `ItemProviderImageLoader` (iOS image drops/picks).
 - `Canvas/` — `RowCanvasSceneView` (unified per-row canvas), `CanvasShapeView` (drag/resize/rotate, selection, hover, SVG caching, inline text edit, image/screenshot drops) split across `CanvasShapeRenderContent`, `CanvasShapeDisplayGeometry`, `CanvasShapeHandlesOverlay`, `CanvasShapeContextMenuContent`, `CanvasSelectionLayer`. Plus `ResizeHandles`, `CursorHelper`, `MiddleMousePanView`, `InlineTextEditor`, `RichTextFormatBar`, `AlignmentGuideLineView`, `CanvasTemplateSeparatorLines`, `StarShape`, `TextLayoutStyle`.
 - `Inspector/` — `InspectorPanel` (row label, size presets, background editor, shape toolbar, device/border toggles), `BackgroundEditor`, `GradientAngleWheel`, `GradientCenterPicker`, `GradientStopEditor`.
