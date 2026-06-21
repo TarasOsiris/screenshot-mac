@@ -179,6 +179,7 @@ final class StoreService {
         #endif
 
         Purchases.configure(withAPIKey: apiKey)
+        Purchases.shared.attribution.enableAdServicesAttributionTokenCollection()
         configurationIssue = nil
 
         let d = CustomerInfoDelegate { [weak self] info in
