@@ -32,8 +32,8 @@ struct ContentView: View {
         return margin
     }
     /// Always-reserved scroll room so canvas content can clear the floating
-    /// editor-mode button (52pt button + 16pt inset + an 8pt gap).
-    let editorModeFabClearance: CGFloat = 76
+    /// editor-mode pill (44pt tall + 16pt inset + an 8pt gap).
+    let editorModeFabClearance: CGFloat = 68
     #endif
     #if os(iOS)
     @Environment(\.horizontalSizeClass) var horizontalSizeClass

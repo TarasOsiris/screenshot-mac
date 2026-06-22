@@ -236,14 +236,20 @@ extension ContentView {
                 state.setViewMode(!state.isViewMode)
             }
         } label: {
-            Image(systemName: state.isViewMode ? "hand.draw.fill" : "pencil")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(state.isViewMode ? Color.white : Color.accentColor)
-                .frame(width: 52, height: 52)
-                .editorModeFloatingButtonBackground(active: state.isViewMode)
-                .contentShape(Circle())
+            HStack(spacing: 6) {
+                Image(systemName: state.isViewMode ? "hand.draw" : "pencil")
+                    .contentTransition(.symbolEffect(.replace))
+                Text(state.isViewMode ? "View" : "Edit")
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(state.isViewMode ? Color.white : Color.accentColor)
+            .padding(.horizontal, UIMetrics.ProminentCapsule.horizontalPadding)
+            .frame(height: 44)
+            .editorModeFloatingButtonBackground(active: state.isViewMode)
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: state.isViewMode)
         .help(state.isViewMode ? String(localized: "Switch to Edit mode") : String(localized: "Switch to View mode (pan & zoom only)"))
         .accessibilityLabel(state.isViewMode ? Text("Switch to Edit mode") : Text("Switch to View mode"))
     }
@@ -403,13 +409,13 @@ extension View {
         #if os(iOS)
         if #available(iOS 26.0, *) {
             // Liquid Glass provides its own elevation — no manual shadow.
-            glassEffect(active ? .regular.tint(.accentColor).interactive() : .regular.interactive(), in: .circle)
+            glassEffect(active ? .regular.tint(.accentColor).interactive() : .regular.interactive(), in: .capsule)
         } else {
-            background(active ? Color.accentColor : Color.platformWindowBackground, in: Circle())
+            background(active ? Color.accentColor : Color.platformWindowBackground, in: Capsule())
                 .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
         }
         #else
-        background(active ? Color.accentColor : Color.platformWindowBackground, in: Circle())
+        background(active ? Color.accentColor : Color.platformWindowBackground, in: Capsule())
             .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
         #endif
     }

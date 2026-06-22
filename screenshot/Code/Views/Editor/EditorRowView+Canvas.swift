@@ -50,25 +50,26 @@ extension EditorRowView {
                                         }
                                     }
 
-                                if !state.isViewMode {
-                                    CanvasSelectionLayer(
-                                        row: row,
-                                        resolvedShapes: resolved,
-                                        selectedShapeIds: rowSelectedShapeIds,
-                                        visualScale: ds,
-                                        pendingResize: $pendingResize,
-                                        pendingRotation: $pendingRotation,
-                                        textEditingShapeId: textEditingShapeId,
-                                        activeDragOffset: activeDragOffset,
-                                        draggingShapeId: draggingShapeId,
-                                        onUpdate: { state.updateShape($0) }
-                                    )
-                                    .frame(
-                                        width: row.totalDisplayWidth(zoom: zoom),
-                                        height: row.displayHeight(zoom: zoom),
-                                        alignment: .topLeading
-                                    )
-                                }
+                                // Always mounted (renders nothing unless 2+ shapes are
+                                // selected, which never happens in view mode) so toggling
+                                // mode doesn't add/remove a layer mid-animation.
+                                CanvasSelectionLayer(
+                                    row: row,
+                                    resolvedShapes: resolved,
+                                    selectedShapeIds: rowSelectedShapeIds,
+                                    visualScale: ds,
+                                    pendingResize: $pendingResize,
+                                    pendingRotation: $pendingRotation,
+                                    textEditingShapeId: textEditingShapeId,
+                                    activeDragOffset: activeDragOffset,
+                                    draggingShapeId: draggingShapeId,
+                                    onUpdate: { state.updateShape($0) }
+                                )
+                                .frame(
+                                    width: row.totalDisplayWidth(zoom: zoom),
+                                    height: row.displayHeight(zoom: zoom),
+                                    alignment: .topLeading
+                                )
                             }
 
                             AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {

@@ -198,43 +198,43 @@ struct CanvasShapeView: View {
             .onChange(of: shape.width) { debounceSvgCacheUpdate() }
             .onChange(of: shape.height) { debounceSvgCacheUpdate() }
 
-        if showsEditorHelpers {
-            ZStack(alignment: .topLeading) {
-                svgAware
-                    .gesture(dragGesture, including: .gesture)
-                    .simultaneousGesture(
-                        TapGesture(count: 2).onEnded {
-                            handleDoubleTap()
-                        }
-                    )
-                    .simultaneousGesture(
-                        TapGesture().onEnded {
-                            handleTap()
-                        }
-                    )
-
-                if isSelected && !isMultiSelected {
-                    handlesContent
-                        .zIndex(99)
-                }
-            }
-            // Anchor the image-source picker popup at the device's visual center. Lives in a
-            // `.background` (sharing this view's top-leading origin) rather than as a ZStack
-            // sibling so its greedy `.position` doesn't expand the shape view to fill the canvas.
-            .background(alignment: .topLeading) {
-                Color.clear
-                    .frame(width: displayW, height: displayH)
-                    .imageSourcePicker(isPresented: $isPickerPresented) { image in
-                        interactions.onScreenshotDrop?(image)
-                    }
-                    .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
-                    .allowsHitTesting(false)
-            }
-        } else {
+        // One structure for both edit and view mode. `showsEditorHelpers` toggles only
+        // modifier *values* (hit-testing, handle visibility) — never view identity — so
+        // switching modes can't tear down / rebuild the shape (which blinked and broke
+        // z-order as SwiftUI re-rendered SceneKit/SVG content and re-inserted the view).
+        ZStack(alignment: .topLeading) {
             svgAware
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
+                .gesture(dragGesture, including: .gesture)
+                .simultaneousGesture(
+                    TapGesture(count: 2).onEnded {
+                        handleDoubleTap()
+                    }
+                )
+                .simultaneousGesture(
+                    TapGesture().onEnded {
+                        handleTap()
+                    }
+                )
+                .allowsHitTesting(showsEditorHelpers)
+
+            if showsEditorHelpers, isSelected, !isMultiSelected {
+                handlesContent
+                    .zIndex(99)
+            }
         }
+        // Anchor the image-source picker popup at the device's visual center. Lives in a
+        // `.background` (sharing this view's top-leading origin) rather than as a ZStack
+        // sibling so its greedy `.position` doesn't expand the shape view to fill the canvas.
+        .background(alignment: .topLeading) {
+            Color.clear
+                .frame(width: displayW, height: displayH)
+                .imageSourcePicker(isPresented: $isPickerPresented) { image in
+                    interactions.onScreenshotDrop?(image)
+                }
+                .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+                .allowsHitTesting(false)
+        }
+        .accessibilityHidden(!showsEditorHelpers)
     }
 
     @ViewBuilder
