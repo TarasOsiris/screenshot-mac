@@ -43076,7 +43076,7 @@
         }
       }
     },
-    "Screenshot Bro is also available on Mac." : {
+    "Screenshot Bro is also available on Mac and iPad." : {
 
     },
     "Screenshot Bro Pro is unlocked and ready to use." : {
@@ -47752,6 +47752,46 @@
         }
       }
     },
+    "Switch to Edit mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In den Bearbeitungsmodus wechseln"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passer en mode Édition"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集モードに切り替える"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집 모드로 전환"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudar para o modo de edição"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换到编辑模式"
+          }
+        }
+      }
+    },
     "Switch to Preview" : {
       "localizations" : {
         "de" : {
@@ -47835,6 +47875,86 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Switch to the base language (⌥⌘0)"
+          }
+        }
+      }
+    },
+    "Switch to View mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In den Ansichtsmodus wechseln"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passer en mode Affichage"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表示モードに切り替える"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보기 모드로 전환"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudar para o modo de visualização"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换到查看模式"
+          }
+        }
+      }
+    },
+    "Switch to View mode (pan & zoom only)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In den Ansichtsmodus wechseln (nur Schwenken & Zoomen)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passer en mode Affichage (déplacement et zoom uniquement)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表示モードに切り替える（パンとズームのみ）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보기 모드로 전환 (이동 및 확대/축소만)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudar para o modo de visualização (apenas panorâmica e zoom)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切换到查看模式（仅平移和缩放）"
           }
         }
       }
@@ -49730,6 +49850,9 @@
           }
         }
       }
+    },
+    "This removes the imported service account key from this device." : {
+
     },
     "This removes the imported service account key from this Mac." : {
 
@@ -53122,7 +53245,7 @@
         }
       }
     },
-    "Use the desktop Mac app for the best experience." : {
+    "Use the desktop Mac or iPad app for the best experience." : {
 
     },
     "Use the export menu for **Export All Screenshots to Folder…**, row exports, showcase exports, per-language exports, and App Store Connect upload." : {

@@ -79,6 +79,21 @@ final class AppState {
     func reconcilePreviewingRows(against validIds: Set<UUID>) {
         previewingRows = previewingRows.intersection(validIds)
     }
+
+    /// iOS-only editor view mode: shapes are inert, only panning + pinch-zoom work.
+    /// Session-only, never persisted; always false on macOS.
+    var isViewMode = false
+
+    /// Toggle the editor view mode. Entering it clears any active text edit and
+    /// selection so no editing chrome lingers over the non-interactive canvas.
+    func setViewMode(_ on: Bool) {
+        guard isViewMode != on else { return }
+        isViewMode = on
+        if on {
+            isEditingText = false
+            deselectAll()
+        }
+    }
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
     @ObservationIgnored var justAddedShapeId: UUID?

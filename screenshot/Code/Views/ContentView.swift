@@ -31,6 +31,9 @@ struct ContentView: View {
         if state.isEditingText { margin += RichTextFormatBarMetrics.height + 16 }
         return margin
     }
+    /// Always-reserved scroll room so canvas content can clear the floating
+    /// editor-mode button (52pt button + 16pt inset + an 8pt gap).
+    let editorModeFabClearance: CGFloat = 76
     #endif
     #if os(iOS)
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -69,9 +72,8 @@ struct ContentView: View {
     @State var resetTemplate: ProjectTemplate?
     // Loaded in `.task`: an init-time scan re-ran on every ancestor body re-eval only to be discarded.
     @State var projectTemplates: [ProjectTemplate] = []
-    #if os(macOS)
+    // macOS: trackpad pinch. iOS: view-mode two-finger pinch.
     @State var gestureZoomStartLevel: CGFloat?
-    #endif
     @State var editorViewportHeight: CGFloat = 0
     @State var scrollWheelMonitor: Any?
     @State var showingASCUploadSheet = false
@@ -137,6 +139,23 @@ struct ContentView: View {
                             gestureZoomStartLevel = nil
                         }
                 )
+                #else
+                // iPad two-finger pinch-to-zoom, view mode only — the guard keeps
+                // edit-mode one-finger shape gestures untouched.
+                .simultaneousGesture(
+                    MagnificationGesture()
+                        .onChanged { value in
+                            guard state.isViewMode else { return }
+                            let startLevel = gestureZoomStartLevel ?? state.zoomLevel
+                            if gestureZoomStartLevel == nil {
+                                gestureZoomStartLevel = startLevel
+                            }
+                            state.setZoomLevel(startLevel * value, animated: false)
+                        }
+                        .onEnded { _ in
+                            gestureZoomStartLevel = nil
+                        }
+                )
                 #endif
                 .onChange(of: state.canvasFocusRequestNonce) { _, _ in
                     guard let rowId = state.canvasFocusRowId else { return }
@@ -159,7 +178,7 @@ struct ContentView: View {
                 // margins propagate to every descendant ScrollView, and the properties bar's
                 // horizontal section scroller would otherwise inherit the bottom inset and
                 // inflate the bar's height.
-                .contentMargins(.bottom, floatingBottomChromeMargin, for: .scrollContent)
+                .contentMargins(.bottom, max(floatingBottomChromeMargin, editorModeFabClearance), for: .scrollContent)
                 // Floating bottom chrome: the rich-text format bar (while editing text) stacked
                 // above the shape-properties bar, both hovering over the canvas with a transparent
                 // surround. `richTextSelectionState` is read so the format bar appears once the
@@ -179,6 +198,11 @@ struct ContentView: View {
                         }
                     }
                     .padding(.bottom, 8)
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    editorModeFloatingButton
+                        .padding(.trailing, 16)
+                        .padding(.bottom, state.hasSelection ? floatingBottomChromeMargin + 8 : 16)
                 }
                 #endif
                 .onGeometryChange(for: CGFloat.self) { proxy in

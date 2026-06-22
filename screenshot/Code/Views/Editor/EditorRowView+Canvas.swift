@@ -50,23 +50,25 @@ extension EditorRowView {
                                         }
                                     }
 
-                                CanvasSelectionLayer(
-                                    row: row,
-                                    resolvedShapes: resolved,
-                                    selectedShapeIds: rowSelectedShapeIds,
-                                    visualScale: ds,
-                                    pendingResize: $pendingResize,
-                                    pendingRotation: $pendingRotation,
-                                    textEditingShapeId: textEditingShapeId,
-                                    activeDragOffset: activeDragOffset,
-                                    draggingShapeId: draggingShapeId,
-                                    onUpdate: { state.updateShape($0) }
-                                )
-                                .frame(
-                                    width: row.totalDisplayWidth(zoom: zoom),
-                                    height: row.displayHeight(zoom: zoom),
-                                    alignment: .topLeading
-                                )
+                                if !state.isViewMode {
+                                    CanvasSelectionLayer(
+                                        row: row,
+                                        resolvedShapes: resolved,
+                                        selectedShapeIds: rowSelectedShapeIds,
+                                        visualScale: ds,
+                                        pendingResize: $pendingResize,
+                                        pendingRotation: $pendingRotation,
+                                        textEditingShapeId: textEditingShapeId,
+                                        activeDragOffset: activeDragOffset,
+                                        draggingShapeId: draggingShapeId,
+                                        onUpdate: { state.updateShape($0) }
+                                    )
+                                    .frame(
+                                        width: row.totalDisplayWidth(zoom: zoom),
+                                        height: row.displayHeight(zoom: zoom),
+                                        alignment: .topLeading
+                                    )
+                                }
                             }
 
                             AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
@@ -287,13 +289,19 @@ extension EditorRowView {
                     groupDragOffset: groupOffset,
                     deviceModelRenderingMode: .snapshot,
                     clipBounds: clipRect,
+                    showsEditorHelpers: !state.isViewMode,
                     allowSynchronousSvgRender: false,
                     resizeState: pendingResize[shape.id],
                     rotationDelta: pendingRotation[shape.id] ?? 0,
                     availableFontFamilies: state.availableFontFamilySet,
                     interactions: CanvasShapeInteractions(
-                        onSelect: { state.selectShape(shape.id, in: row.id) },
-                        onShiftSelect: { state.toggleShapeSelection(shape.id, in: row.id) },
+                        // View mode: shapes are inert. The FAB sits in an overlay above the
+                        // canvas, but the shape tap is a `.simultaneousGesture` that co-recognizes
+                        // with the button tap, so a tap on the FAB can still reach a shape here.
+                        // Guard so any leaked tap can't select; `setViewMode` deselects regardless
+                        // of gesture order, leaving the canvas untouched.
+                        onSelect: { guard !state.isViewMode else { return }; state.selectShape(shape.id, in: row.id) },
+                        onShiftSelect: { guard !state.isViewMode else { return }; state.toggleShapeSelection(shape.id, in: row.id) },
                         onUpdate: { state.updateShape($0) },
                         onDelete: { state.deleteShape(shape.id) },
                         onScreenshotDrop: { image in
@@ -548,7 +556,10 @@ extension EditorRowView {
         )
         .clipped()
         .contentShape(Rectangle())
-        .onTapGesture { tapSelectRow() }
+        .onTapGesture {
+            guard !state.isViewMode else { return }
+            tapSelectRow()
+        }
         .onContinuousHover { phase in
             switch phase {
             case .active(let location):

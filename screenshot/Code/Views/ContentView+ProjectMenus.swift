@@ -230,6 +230,24 @@ extension ContentView {
     }
 
     #if os(iOS)
+    var editorModeFloatingButton: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                state.setViewMode(!state.isViewMode)
+            }
+        } label: {
+            Image(systemName: state.isViewMode ? "hand.draw.fill" : "pencil")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(state.isViewMode ? Color.white : Color.accentColor)
+                .frame(width: 52, height: 52)
+                .editorModeFloatingButtonBackground(active: state.isViewMode)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(state.isViewMode ? String(localized: "Switch to Edit mode") : String(localized: "Switch to View mode (pan & zoom only)"))
+        .accessibilityLabel(state.isViewMode ? Text("Switch to Edit mode") : Text("Switch to View mode"))
+    }
+
     // The principal (title) toolbar slot strips button styles, so the Liquid Glass
     // capsule is applied to the label itself rather than via .glassProminent.
     var iPadBuyProButton: some View {
@@ -375,6 +393,24 @@ extension View {
         }
         #else
         background(Color.accentColor, in: Capsule())
+        #endif
+    }
+
+    /// Circular background for the editor-mode FAB: accent-tinted glass when
+    /// active (view mode), neutral glass when inactive (edit mode).
+    @ViewBuilder
+    func editorModeFloatingButtonBackground(active: Bool) -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            // Liquid Glass provides its own elevation — no manual shadow.
+            glassEffect(active ? .regular.tint(.accentColor).interactive() : .regular.interactive(), in: .circle)
+        } else {
+            background(active ? Color.accentColor : Color.platformWindowBackground, in: Circle())
+                .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
+        }
+        #else
+        background(active ? Color.accentColor : Color.platformWindowBackground, in: Circle())
+            .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
         #endif
     }
 }
