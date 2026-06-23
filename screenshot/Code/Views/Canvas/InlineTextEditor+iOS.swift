@@ -262,9 +262,16 @@ private struct UITextViewEditor: UIViewRepresentable {
                 : (textView.typingAttributes, nil)
             // Convert to model space once, so both the format bar and AppState see model-size fonts.
             let attrs = modelScaledAttributes(rawAttrs, renderScale: parent.renderScale)
-            parent.formatController?.setSelectionState(RichTextSelectionState(from: attrs, hasRangeSelection: range != nil))
+            // Defer the @Published write off the layout pass: this delegate fires synchronously from
+            // updateUIView (attributedText/selection reset) and layoutSubviews (textContainerInset),
+            // and a synchronous publish there is "Publishing changes from within view updates" — the
+            // iPad text-editor hang. macOS does only async work here for the same reason.
             DispatchQueue.main.async { [weak self] in
-                self?.parent.onSelectionChange?(attrs, range)
+                guard let self else { return }
+                self.parent.formatController?.setSelectionState(
+                    RichTextSelectionState(from: attrs, hasRangeSelection: range != nil)
+                )
+                self.parent.onSelectionChange?(attrs, range)
             }
         }
 

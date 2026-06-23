@@ -656,12 +656,17 @@ struct CanvasShapeView: View {
     /// is axis-aligned and its top-center matches the old origin-based math.
     @ViewBuilder
     private var formatBarAnchorReader: some View {
+        // The anchor positions the floating format bar, which only exists on macOS; on iOS the
+        // bar is bottom-docked. Observing geometry here would write AppState from inside the
+        // layout pass (Publishing-changes-within-view-updates) and hang the iPad text editor.
+        #if os(macOS)
         if isEditingText {
             Color.clear
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
                     interactions.onFormatBarAnchorChanged?(CGPoint(x: frame.midX, y: frame.minY - 10))
                 }
         }
+        #endif
     }
 
     private var customFontName: String? {
