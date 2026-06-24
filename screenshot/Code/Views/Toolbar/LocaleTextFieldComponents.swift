@@ -131,66 +131,138 @@ struct MultilineCellEditor: View {
     let placeholder: String
     @Binding var text: String
     var help: String? = nil
+    var autofocus: Bool = false
+    var onEditingEnded: (() -> Void)? = nil
 
     // Local buffer: binding TextEditor straight to AppState-backed state recomputes
     // the body on every keystroke and re-feeds the value, resetting the caret to the
     // end. The buffer survives recomputes; we sync to/from `text` only on real changes.
     @State private var localText: String
-    @State private var contentHeight: CGFloat = 0
     @FocusState private var isFocused: Bool
 
-    private let fontSize: CGFloat = 12
-    // Match the TextEditor's intrinsic text origin so the placeholder/mirror align.
-    private let insetH: CGFloat = 5
-    private let insetV: CGFloat = 5
-    private let minHeight: CGFloat = 40   // ~2 lines
-    private let maxHeight: CGFloat = 100  // ~6 lines
-
-    init(placeholder: String, text: Binding<String>, help: String? = nil) {
+    init(
+        placeholder: String,
+        text: Binding<String>,
+        help: String? = nil,
+        autofocus: Bool = false,
+        onEditingEnded: (() -> Void)? = nil
+    ) {
         self.placeholder = placeholder
         self._text = text
         self.help = help
+        self.autofocus = autofocus
+        self.onEditingEnded = onEditingEnded
         self._localText = State(initialValue: text.wrappedValue)
     }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // Invisible mirror sizes the editor so it grows with the text instead
-            // of clipping at a fixed height; shares the editor's width and insets.
-            Text(localText.isEmpty ? placeholder : localText)
-                .font(.system(size: fontSize))
-                .padding(.horizontal, insetH)
-                .padding(.vertical, insetV)
+            if localText.isEmpty {
+                Text(placeholder)
+                    .font(.system(size: CellEditorStyle.fontSize))
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, CellEditorStyle.insetH)
+                    .padding(.vertical, CellEditorStyle.insetV)
+                    .allowsHitTesting(false)
+            }
+
+            TextEditor(text: $localText)
+                .font(.system(size: CellEditorStyle.fontSize))
+                .scrollContentBackground(.hidden)
+                .focused($isFocused)
+        }
+        .cellEditorHeight(measuring: localText.isEmpty ? placeholder : localText)
+        .debouncedFieldCommit(buffer: $localText, into: $text, isFocused: isFocused)
+        .cellEditorChrome()
+        .modifier(OptionalHelp(help: help))
+        // Defer one tick: setting focus before the view is in a window can be dropped.
+        .onAppear { if autofocus { Task { @MainActor in isFocused = true } } }
+        .onChange(of: isFocused) { _, focused in if !focused { onEditingEnded?() } }
+    }
+}
+
+/// Shared geometry/visual tokens for the matrix cell editor and its read-only preview,
+/// so swapping one for the other never shifts a cell's size or chrome.
+enum CellEditorStyle {
+    static let fontSize: CGFloat = 12
+    // Match the TextEditor's intrinsic text origin so the placeholder/mirror align.
+    static let insetH: CGFloat = 5
+    static let insetV: CGFloat = 5
+    static let minHeight: CGFloat = 40   // ~2 lines
+    static let maxHeight: CGFloat = 100  // ~6 lines
+
+    static func clampHeight(_ height: CGFloat) -> CGFloat {
+        min(max(height, minHeight), maxHeight)
+    }
+}
+
+extension View {
+    /// Shared cell-editor box chrome (fill + hairline border + clip) so the live editor,
+    /// the read-only preview, and the formatted cell stay pixel-identical.
+    func cellEditorChrome() -> some View {
+        background(Color.platformTextBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
+                    .stroke(Color.platformSeparator, lineWidth: UIMetrics.BorderWidth.standard)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
+    }
+}
+
+extension View {
+    /// Sizes a cell to fit `text` at the editor's font/insets, clamped to the shared
+    /// min/max, so the live editor and the read-only preview measure identically and the
+    /// row never jumps height when one swaps for the other.
+    func cellEditorHeight(measuring text: String) -> some View {
+        modifier(CellEditorHeight(measuredText: text))
+    }
+}
+
+private struct CellEditorHeight: ViewModifier {
+    let measuredText: String
+    @State private var contentHeight: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        ZStack(alignment: .topLeading) {
+            // Invisible mirror reports the text's natural height via `CellHeightKey`.
+            Text(measuredText)
+                .font(.system(size: CellEditorStyle.fontSize))
+                .padding(.horizontal, CellEditorStyle.insetH)
+                .padding(.vertical, CellEditorStyle.insetV)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .background(GeometryReader { proxy in
                     Color.clear.preference(key: CellHeightKey.self, value: proxy.size.height)
                 })
                 .hidden()
 
-            if localText.isEmpty {
-                Text(placeholder)
-                    .font(.system(size: fontSize))
-                    .foregroundStyle(.tertiary)
-                    .padding(.horizontal, insetH)
-                    .padding(.vertical, insetV)
-                    .allowsHitTesting(false)
-            }
-
-            TextEditor(text: $localText)
-                .font(.system(size: fontSize))
-                .scrollContentBackground(.hidden)
-                .focused($isFocused)
+            content
         }
-        .frame(height: min(max(contentHeight, minHeight), maxHeight))
+        .frame(height: CellEditorStyle.clampHeight(contentHeight))
         .onPreferenceChange(CellHeightKey.self) { contentHeight = $0 }
-        .debouncedFieldCommit(buffer: $localText, into: $text, isFocused: isFocused)
-        .background(Color.platformTextBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
-                .stroke(Color.platformSeparator, lineWidth: UIMetrics.BorderWidth.standard)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
-        .modifier(OptionalHelp(help: help))
+    }
+}
+
+/// Cheap, read-only stand-in for `MultilineCellEditor`, shown while a cell isn't being
+/// edited so a large translation matrix doesn't mount one live `TextEditor` per cell.
+/// Matches the editor's font, insets, height clamp, and chrome.
+struct MatrixCellPreview: View {
+    let text: String
+    let placeholder: String
+    var help: String? = nil
+
+    var body: some View {
+        let isEmpty = text.isEmpty
+        Text(isEmpty ? placeholder : text)
+            .font(.system(size: CellEditorStyle.fontSize))
+            .foregroundStyle(isEmpty ? .tertiary : .primary)
+            .padding(.horizontal, CellEditorStyle.insetH)
+            .padding(.vertical, CellEditorStyle.insetV)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .allowsHitTesting(false)
+            .cellEditorHeight(measuring: isEmpty ? placeholder : text)
+            .cellEditorChrome()
+            .contentShape(Rectangle())
+            .modifier(OptionalHelp(help: help))
     }
 }
 

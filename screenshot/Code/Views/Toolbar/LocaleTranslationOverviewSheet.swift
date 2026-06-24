@@ -7,6 +7,9 @@ struct TranslationOverviewSheet: View {
     @Bindable var state: AppState
     #if os(macOS)
     @Environment(\.dismiss) private var dismiss
+    // Only the actively-edited cell mounts a live TextEditor; every other cell shows a
+    // cheap preview, so a large terms × languages matrix stays smooth to scroll.
+    @State private var editingCellId: MatrixCellID?
     #endif
     @State private var cellTranslationConfig: TranslationSession.Configuration?
     // Serial queue: concurrent taps enqueue; one cell translates at a time because the
@@ -89,16 +92,14 @@ struct TranslationOverviewSheet: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ScrollView(.horizontal) {
-                    ScrollView(.vertical) {
-                        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                            Section {
-                                ForEach(items, id: \.shape.id) { item in
-                                    translationRow(item: item, locales: translationLocales)
-                                }
-                            } header: {
-                                translationHeaderRow(baseLocale: baseLocale, locales: translationLocales)
+                ScrollView([.horizontal, .vertical]) {
+                    LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        Section {
+                            ForEach(items, id: \.shape.id) { item in
+                                translationRow(item: item, locales: translationLocales)
                             }
+                        } header: {
+                            translationHeaderRow(baseLocale: baseLocale, locales: translationLocales)
                         }
                     }
                 }
@@ -298,6 +299,8 @@ struct TranslationOverviewSheet: View {
                         baseText: item.shape.text ?? "",
                         text: localeTranslationBinding(state, shape: item.shape, localeCode: locale.code),
                         formattedPlainText: formattedTranslationPlainText(for: override),
+                        cellId: MatrixCellID(shapeId: item.shape.id, localeCode: locale.code),
+                        editingCellId: $editingCellId,
                         columnPadding: columnPadding,
                         isTranslating: isPendingTranslation(shapeId: item.shape.id, localeCode: locale.code),
                         canReset: override?.hasTextContent == true,
@@ -323,14 +326,23 @@ struct TranslationOverviewSheet: View {
     }
 
     private func baseColumn(shape: CanvasShapeModel, rowLabel: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            MultilineCellEditor(
-                placeholder: "Base text",
-                text: Binding(
-                    get: { shape.text ?? "" },
-                    set: { state.updateBaseText(shapeId: shape.id, text: $0) }
+        let cellId = MatrixCellID(shapeId: shape.id, localeCode: nil)
+        return VStack(alignment: .leading, spacing: 6) {
+            if editingCellId == cellId {
+                MultilineCellEditor(
+                    placeholder: "Base text",
+                    text: Binding(
+                        get: { shape.text ?? "" },
+                        set: { state.updateBaseText(shapeId: shape.id, text: $0) }
+                    ),
+                    autofocus: true,
+                    // Only clear if still ours: tapping another cell already moved editing on.
+                    onEditingEnded: { if editingCellId == cellId { editingCellId = nil } }
                 )
-            )
+            } else {
+                MatrixCellPreview(text: shape.text ?? "", placeholder: "Base text")
+                    .onTapGesture { editingCellId = cellId }
+            }
             Text(rowLabel)
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
@@ -371,12 +383,20 @@ struct TranslationOverviewSheet: View {
 }
 
 #if os(macOS)
+/// Identifies the one matrix cell currently being edited. `localeCode == nil` is the base column.
+struct MatrixCellID: Hashable {
+    let shapeId: UUID
+    let localeCode: String?
+}
+
 private struct TranslationMatrixCell: View {
     let locale: LocaleDefinition
     let baseText: String
     @Binding var text: String
     /// Non-nil when this translation carries custom formatting; shown read-only.
     let formattedPlainText: String?
+    let cellId: MatrixCellID
+    @Binding var editingCellId: MatrixCellID?
     let columnPadding: CGFloat
     let isTranslating: Bool
     let canReset: Bool
@@ -388,12 +408,22 @@ private struct TranslationMatrixCell: View {
         VStack(alignment: .leading, spacing: 6) {
             if let formattedPlainText {
                 formattedReadOnlyCell(formattedPlainText)
-            } else {
+            } else if editingCellId == cellId {
                 MultilineCellEditor(
                     placeholder: "\(locale.flagLabel) text",
                     text: $text,
+                    help: "Leave empty to use the base language text",
+                    autofocus: true,
+                    // Only clear if still ours: tapping another cell already moved editing on.
+                    onEditingEnded: { if editingCellId == cellId { editingCellId = nil } }
+                )
+            } else {
+                MatrixCellPreview(
+                    text: text,
+                    placeholder: "\(locale.flagLabel) text",
                     help: "Leave empty to use the base language text"
                 )
+                .onTapGesture { editingCellId = cellId }
             }
             if isHovered {
                 HStack(spacing: 8) {
@@ -438,15 +468,10 @@ private struct TranslationMatrixCell: View {
                 .font(.system(size: 12))
                 .foregroundStyle(plain.isEmpty ? Color.secondary : Color.primary)
                 .textSelection(.enabled)
-                .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 5)
-                .background(Color.platformTextBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
-                        .stroke(Color.platformSeparator, lineWidth: UIMetrics.BorderWidth.standard)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
+                .frame(maxWidth: .infinity, minHeight: CellEditorStyle.minHeight, alignment: .topLeading)
+                .padding(.horizontal, CellEditorStyle.insetH)
+                .padding(.vertical, CellEditorStyle.insetV)
+                .cellEditorChrome()
 
             Label("Formatted — edit on the canvas", systemImage: "paintbrush.pointed")
                 .font(.system(size: 9))
