@@ -362,7 +362,7 @@
 				CODE_SIGN_ENTITLEMENTS = screenshot/screenshot.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 93;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
@@ -379,7 +379,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 3.2;
 				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=macosx*]" = NSApplication;
@@ -408,7 +408,7 @@
 				CODE_SIGN_ENTITLEMENTS = screenshot/screenshot.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 93;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
@@ -425,7 +425,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 3.2;
 				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=macosx*]" = NSApplication;
@@ -450,11 +450,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 93;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -469,11 +469,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 93;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
