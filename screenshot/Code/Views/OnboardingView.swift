@@ -7,8 +7,10 @@ struct OnboardingView: View {
     @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(StoreService.self) private var store
     @State private var pageIndex = 0
+    @State private var templatePreviews: [NSImage] = []
     #endif
 
     var body: some View {
@@ -42,8 +44,14 @@ struct OnboardingView: View {
             VStack(spacing: 0) {
                 TabView(selection: $pageIndex) {
                     ForEach(Array(Self.stepData.enumerated()), id: \.offset) { index, step in
-                        iOSWorkflowPage(index: index, step: step)
-                            .tag(index)
+                        Group {
+                            if index == 0 {
+                                iOSTemplatesPage(index: index, step: step)
+                            } else {
+                                iOSWorkflowPage(index: index, step: step)
+                            }
+                        }
+                        .tag(index)
                     }
 
                     iOSProPage
@@ -53,6 +61,15 @@ struct OnboardingView: View {
                 .animation(.easeInOut, value: pageIndex)
 
                 iOSControlBar
+            }
+        }
+        .task {
+            // Decoding the bundled previews is off the main actor so the cover never hitches on
+            // first launch (onboarding is the first/only caller, so the template cache isn't contended).
+            if templatePreviews.isEmpty {
+                templatePreviews = await Task.detached(priority: .userInitiated) {
+                    Array(TemplateService.availableTemplates().compactMap(\.previewImage).prefix(16))
+                }.value
             }
         }
         .sheet(isPresented: Binding(
@@ -65,40 +82,75 @@ struct OnboardingView: View {
 
     // MARK: - iOS control bar
 
-    @ViewBuilder
+    // Every page shares one fixed-height action bar so paging only animates the centered
+    // illustration — the dots and buttons never move (no jump when reaching the Pro page).
     private var iOSControlBar: some View {
         VStack(spacing: 16) {
             iOSPageDots
 
-            // The Pro page carries its own actions; workflow pages get Continue/Skip.
-            if pageIndex < proPageIndex {
-                VStack(spacing: 10) {
-                    Button {
-                        withAnimation { pageIndex += 1 }
-                    } label: {
-                        Text("Continue")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 4)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-
-                    Button {
-                        withAnimation { pageIndex = proPageIndex }
-                    } label: {
-                        Text("Skip")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
+            VStack(spacing: 10) {
+                Button(action: primaryAction) {
+                    Text(primaryActionTitle)
+                        .font(.headline)
+                        .contentTransition(.opacity)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
                 }
-                .frame(maxWidth: 360)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                Button(action: secondaryAction) {
+                    // verbatim placeholder keeps the row's height without extracting a " " string.
+                    Group {
+                        if let secondaryActionTitle {
+                            Text(secondaryActionTitle)
+                        } else {
+                            Text(verbatim: " ")
+                        }
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .contentTransition(.opacity)
+                }
+                .buttonStyle(.plain)
+                .opacity(secondaryActionTitle == nil ? 0 : 1)
+                .disabled(secondaryActionTitle == nil)
             }
+            .frame(maxWidth: 360)
+            .animation(.easeInOut, value: pageIndex)
+            .animation(.easeInOut, value: store.isProUnlocked)
         }
         .padding(.horizontal, 32)
         .padding(.bottom, 24)
         .frame(maxWidth: .infinity)
+    }
+
+    private var primaryActionTitle: LocalizedStringKey {
+        if pageIndex < proPageIndex { return "Continue" }
+        return store.isProUnlocked ? "Start Creating" : "Unlock Pro"
+    }
+
+    private func primaryAction() {
+        if pageIndex < proPageIndex {
+            withAnimation { pageIndex += 1 }
+        } else if store.isProUnlocked {
+            complete()
+        } else {
+            store.presentPaywall(for: .general)
+        }
+    }
+
+    private var secondaryActionTitle: LocalizedStringKey? {
+        if pageIndex < proPageIndex { return "Skip" }
+        return store.isProUnlocked ? nil : "Continue with Free"
+    }
+
+    private func secondaryAction() {
+        if pageIndex < proPageIndex {
+            withAnimation { pageIndex = proPageIndex }
+        } else {
+            complete()
+        }
     }
 
     private var iOSPageDots: some View {
@@ -114,41 +166,74 @@ struct OnboardingView: View {
 
     // MARK: - iOS pages
 
+    private func iOSPageHeader(index: Int, step: StepInfo) -> some View {
+        VStack(spacing: 12) {
+            Text("Step \(index + 1)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(step.color)
+                .textCase(.uppercase)
+
+            Text(step.title)
+                .font(.title.weight(.bold))
+                .multilineTextAlignment(.center)
+
+            Text(step.iosDescription ?? step.description)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func iOSStepIcon(step: StepInfo, side: CGFloat) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(step.color.opacity(0.14))
+
+            Image(systemName: step.icon)
+                .font(.system(size: side < 100 ? 40 : 52, weight: .semibold))
+                .foregroundStyle(step.color)
+        }
+        .frame(width: side, height: side)
+        .accessibilityHidden(true)
+    }
+
+    // The "Pick a template" step leads with the text, then a live marquee of real template
+    // previews. Until they load (or if none decode) it falls back to the standard step icon.
+    @ViewBuilder
+    private func iOSTemplatesPage(index: Int, step: StepInfo) -> some View {
+        VStack(spacing: 20) {
+            iOSPageHeader(index: index, step: step)
+                .padding(.horizontal, 40)
+                .padding(.top, 24)
+
+            // Fills the remaining height; the marquee adapts its row count to fit, so the title
+            // above can never be pushed off-screen.
+            if templatePreviews.isEmpty {
+                iOSStepIcon(step: step, side: horizontalSizeClass == .compact ? 88 : 112)
+                    .frame(maxHeight: .infinity)
+            } else {
+                OnboardingTemplateMarquee(images: templatePreviews,
+                                          reduceMotion: reduceMotion,
+                                          isActive: pageIndex == index)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.4), value: templatePreviews.isEmpty)
+        .frame(maxWidth: 600)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
     @ViewBuilder
     private func iOSWorkflowPage(index: Int, step: StepInfo) -> some View {
         let compact = horizontalSizeClass == .compact
-        let iconSide: CGFloat = compact ? 88 : 112
 
         VStack(spacing: compact ? 20 : 28) {
             Spacer()
 
-            ZStack {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(step.color.opacity(0.14))
+            iOSStepIcon(step: step, side: compact ? 88 : 112)
 
-                Image(systemName: step.icon)
-                    .font(.system(size: compact ? 40 : 52, weight: .semibold))
-                    .foregroundStyle(step.color)
-            }
-            .frame(width: iconSide, height: iconSide)
-            .accessibilityHidden(true)
-
-            VStack(spacing: 12) {
-                Text("Step \(index + 1)")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(step.color)
-                    .textCase(.uppercase)
-
-                Text(step.title)
-                    .font(.title.weight(.bold))
-                    .multilineTextAlignment(.center)
-
-                Text(step.iosDescription ?? step.description)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            iOSPageHeader(index: index, step: step)
 
             Spacer()
             Spacer()
@@ -208,25 +293,6 @@ struct OnboardingView: View {
             proFeatureBullet("Unlimited screenshots per row")
         }
         .padding(.vertical, 4)
-
-        VStack(spacing: 10) {
-            Button {
-                store.presentPaywall(for: .general)
-            } label: {
-                Text("Unlock Pro")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-
-            Button("Continue with Free") { complete() }
-                .buttonStyle(.plain)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: 360)
     }
 
     @ViewBuilder
@@ -251,18 +317,6 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
-
-        Button {
-            complete()
-        } label: {
-            Text("Start Creating")
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 4)
-        }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
-        .frame(maxWidth: 360)
     }
 
     private func proFeatureBullet(_ text: LocalizedStringKey) -> some View {
