@@ -26,8 +26,6 @@ struct OnboardingTemplateMarquee: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            // Horizontal mask hides cards scrolling past the edges (no per-row clipping needed, so
-            // card shadows survive) and feathers both sides.
             .mask(
                 LinearGradient(
                     stops: [
@@ -40,6 +38,9 @@ struct OnboardingTemplateMarquee: View {
                 )
             )
         }
+        // Hard-clip horizontally so offset strips can't bleed onto the adjacent TabView page;
+        // vertical is left unclipped so card drop shadows survive.
+        .clipShape(HorizontalClip())
         .allowsHitTesting(false)
     }
 
@@ -56,6 +57,13 @@ struct OnboardingTemplateMarquee: View {
         let shift = (images.count / 3 * row) % images.count
         guard shift != 0 else { return images }
         return Array(images[shift...] + images[..<shift])
+    }
+}
+
+/// Clips the left/right edges to the view bounds while leaving top/bottom effectively unbounded.
+private struct HorizontalClip: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path(rect.insetBy(dx: 0, dy: -2000))
     }
 }
 
