@@ -6921,7 +6921,6 @@
       }
     },
     "Add screenshots from Photos or Files, then drop in text, shapes, and a device frame." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -7237,7 +7236,6 @@
 
     },
     "Add your content" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -14314,7 +14312,6 @@
       }
     },
     "Continue with Free" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -19642,7 +19639,6 @@
       }
     },
     "Drop images onto canvas" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -19683,7 +19679,6 @@
       }
     },
     "Drop in screenshots, add text and shapes, pick a device frame. Drag to arrange." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -21521,7 +21516,6 @@
       }
     },
     "Everything is unlocked. Enjoy unlimited projects, rows, and screenshots." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -22045,7 +22039,6 @@
       }
     },
     "Export all screenshots at once as PNG or JPEG, ready to upload to App Store Connect or Google Play." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -25334,7 +25327,6 @@
       }
     },
     "Get Started" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -25421,7 +25413,6 @@
       }
     },
     "Go unlimited and create as many screenshots as your apps need." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -35387,7 +35378,6 @@
       }
     },
     "Pick a template" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -44522,7 +44512,6 @@
       }
     },
     "Set backgrounds, colors, and gradients, and fine-tune every element to match your brand." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -44569,7 +44558,6 @@
       }
     },
     "Set backgrounds, colors, and gradients. Use the inspector on the right and properties bar at the bottom." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -45678,7 +45666,6 @@
       }
     },
     "Skip" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -46460,7 +46447,6 @@
       }
     },
     "Start from a ready-made layout or a blank project. Templates come pre-sized for each store." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -46588,7 +46574,6 @@
       }
     },
     "Step %lld" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -46902,7 +46887,6 @@
       }
     },
     "Style it" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -51888,7 +51872,6 @@
       }
     },
     "Unlock Pro" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

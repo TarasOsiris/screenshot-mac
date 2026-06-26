@@ -21,6 +21,7 @@ struct PostPurchaseCelebrationView: View {
         let rotationRate = 90.0 + seed * 11.0
         let isCircle = i % 3 == 0
         let color = confettiColors[i % confettiColors.count]
+        let scale = 0.7 + abs(sin(seed * 3.17)) * 0.7
         return ConfettiPiece(
             seed: seed,
             xBase: xBase,
@@ -28,7 +29,8 @@ struct PostPurchaseCelebrationView: View {
             delay: delay,
             rotationRate: rotationRate,
             isCircle: isCircle,
-            color: color
+            color: color,
+            scale: scale
         )
     }
 
@@ -73,6 +75,7 @@ struct PostPurchaseCelebrationView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         #endif
         .onAppear(perform: startPresentation)
+        .sensoryFeedback(.success, trigger: heroAppeared)
         .task {
             guard !reduceMotion else { return }
             try? await Task.sleep(for: .seconds(Self.confettiDuration))
@@ -149,7 +152,9 @@ struct PostPurchaseCelebrationView: View {
                 .translatedBy(x: x, y: y)
                 .rotated(by: rotation)
 
-            let rect = CGRect(x: -4, y: -3, width: 8, height: 6)
+            let w = 8.0 * piece.scale
+            let h = 6.0 * piece.scale
+            let rect = CGRect(x: -w / 2, y: -h / 2, width: w, height: h)
             let path: Path = piece.isCircle ? Path(ellipseIn: rect) : Path(rect)
 
             var ctx = context
@@ -181,11 +186,13 @@ struct PostPurchaseCelebrationView: View {
             .scaleEffect(heroAppeared ? 1.0 : 0.4)
             .rotationEffect(.degrees(heroAppeared ? 0 : -25))
             .opacity(heroAppeared ? 1 : 0)
+            .accessibilityHidden(true)
 
             VStack(spacing: 6) {
                 Text("You’re Pro!")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
+                    .accessibilityAddTraits(.isHeader)
 
                 Text("Your purchase is complete — Screenshot Bro Pro is unlocked on this Apple Account.")
                     .font(.system(size: 13))
@@ -232,6 +239,7 @@ struct PostPurchaseCelebrationView: View {
                     .foregroundStyle(color)
             }
             .frame(width: 28, height: 28)
+            .accessibilityHidden(true)
 
             Text(text)
                 .font(.system(size: 13, weight: .medium))
@@ -242,6 +250,7 @@ struct PostPurchaseCelebrationView: View {
             Image(systemName: "checkmark")
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(.green)
+                .accessibilityHidden(true)
         }
     }
 
@@ -255,6 +264,7 @@ struct PostPurchaseCelebrationView: View {
                     Color.orange.opacity(UIMetrics.Opacity.accentBadge),
                     in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section, style: .continuous)
                 )
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Ship screenshots that convert")
@@ -342,6 +352,7 @@ private struct ConfettiPiece {
     let rotationRate: Double
     let isCircle: Bool
     let color: Color
+    let scale: Double
 }
 
 #Preview("General") {

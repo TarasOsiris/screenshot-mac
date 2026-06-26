@@ -10,16 +10,34 @@ enum OnboardingPersistence {
     static let editorCoachPendingKey = "editorCoachPending"
     private static let forceOnboardingEnvironmentKey = "SCREENSHOT_FORCE_ONBOARDING"
 
-    /// Arms the deferred coach tour once, on first launch, on devices that support
-    /// it — or on every launch when force-onboarding is enabled.
+    /// On first launch (or every launch when force-onboarding is enabled): arms the
+    /// deferred coach tour on tour-capable devices (macOS, iPad). On iPhone it does
+    /// nothing — the launch welcome cover shows instead and persists completion itself.
     static func prepareForLaunch() {
         let defaults = UserDefaults.standard
-        guard isForceOnboardingEnabled || !defaults.bool(forKey: completedKey) else { return }
+        if isForceOnboardingEnabled {
+            defaults.set(false, forKey: completedKey)
+            defaults.removeObject(forKey: editorCoachPendingKey)
+        }
+        guard !defaults.bool(forKey: completedKey) else { return }
+        #if os(iOS)
+        if launchWelcomeSupportedOnDevice { return }
+        #endif
         if OnboardingCoachStep.tourSupportedOnDevice {
             defaults.set(true, forKey: editorCoachPendingKey)
         }
         defaults.set(true, forKey: completedKey)
     }
+
+    /// iPhone shows the full-screen launch welcome instead of the anchored coach tour
+    /// (which needs a docked inspector iPhone doesn't have).
+    static let launchWelcomeSupportedOnDevice: Bool = {
+        #if os(iOS)
+        UIDevice.current.userInterfaceIdiom == .phone
+        #else
+        false
+        #endif
+    }()
 
     static var isEditorCoachPending: Bool {
         UserDefaults.standard.bool(forKey: editorCoachPendingKey)

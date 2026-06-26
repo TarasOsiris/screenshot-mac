@@ -12,6 +12,14 @@ struct iPadRootView: View {
     @Environment(StoreService.self) private var store
     @Environment(AppNavigationRouter.self) private var router
     @State private var openedProjectId: UUID?
+    @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
+
+    /// The iPhone launch welcome (a fullScreenCover over this root) hosts its own paywall sheet.
+    /// Suppress the root paywall/celebration sheets while it's up so two sheets don't fight over
+    /// `store.showPaywall` (that race showed the paywall flickering open→close→open).
+    private var launchWelcomeActive: Bool {
+        OnboardingPersistence.launchWelcomeSupportedOnDevice && !onboardingCompleted
+    }
 
     var body: some View {
         @Bindable var router = router
@@ -30,11 +38,11 @@ struct iPadRootView: View {
         }
         // Paywall/celebration are presented from the root so they work on the Projects home
         // screen (e.g. tapping New Project at the free-tier limit) as well as the editor.
-        .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() }),
+        .sheet(isPresented: Binding(get: { store.showPaywall && !launchWelcomeActive }, set: { _ in store.dismissPaywall() }),
                onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
             PaywallSheetContent(store: store)
         }
-        .sheet(isPresented: Binding(get: { store.purchaseCelebrationContext != nil }, set: { if !$0 { store.dismissPurchaseCelebration() } })) {
+        .sheet(isPresented: Binding(get: { store.purchaseCelebrationContext != nil && !launchWelcomeActive }, set: { if !$0 { store.dismissPurchaseCelebration() } })) {
             PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
                 store.dismissPurchaseCelebration()
             }

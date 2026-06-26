@@ -12,6 +12,13 @@ struct ScreenshotBroApp: App {
     @State private var appNavigationRouter = AppNavigationRouter()
     #endif
     @AppStorage("appearance") private var appearance = "auto"
+    #if os(iOS)
+    @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
+    /// Drives dismissal of the iPhone welcome cover. The cover's isPresented binding is get-only,
+    /// and writing the shared `onboardingCompleted` @AppStorage from inside OnboardingView does not
+    /// reliably re-evaluate this App-level binding — so this transient @State is the dismissal signal.
+    @State private var welcomeDismissed = false
+    #endif
     #if DEBUG && os(macOS)
     @State private var isDebugTemplateSavePresented = false
     @State private var debugTemplateName = ""
@@ -432,6 +439,20 @@ struct ScreenshotBroApp: App {
                 .environment(appNavigationRouter)
                 .preferredColorScheme(preferredColorScheme)
                 .task { storeService.start() }
+                .fullScreenCover(isPresented: Binding(
+                    get: {
+                        OnboardingPersistence.launchWelcomeSupportedOnDevice
+                            && !onboardingCompleted && !welcomeDismissed
+                    },
+                    set: { _ in }
+                )) {
+                    OnboardingView(
+                        persistCompletion: true,
+                        onComplete: { welcomeDismissed = true }
+                    )
+                    .environment(storeService)
+                    .interactiveDismissDisabled()
+                }
         }
         #endif
     }
