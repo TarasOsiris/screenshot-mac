@@ -12,14 +12,13 @@ struct iPadRootView: View {
     @Environment(StoreService.self) private var store
     @Environment(AppNavigationRouter.self) private var router
     @State private var openedProjectId: UUID?
-    @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
 
-    /// The iPhone launch welcome (a fullScreenCover over this root) hosts its own paywall sheet.
-    /// Suppress the root paywall/celebration sheets while it's up so two sheets don't fight over
-    /// `store.showPaywall` (that race showed the paywall flickering open→close→open).
-    private var launchWelcomeActive: Bool {
-        OnboardingPersistence.launchWelcomeSupportedOnDevice && !onboardingCompleted
-    }
+    /// True only while the iPhone launch welcome cover (presented over this root) is up. The cover
+    /// hosts its own paywall sheet, so the root paywall/celebration sheets must stay suppressed
+    /// meanwhile or two sheets fight over `store.showPaywall` (paywall flickered open→close→open).
+    /// Driven from the App's @State — reading `onboardingCompleted` via @AppStorage here went stale
+    /// after completion, leaving the gate stuck on and blocking the paywall for the rest of the session.
+    let launchWelcomeActive: Bool
 
     var body: some View {
         @Bindable var router = router

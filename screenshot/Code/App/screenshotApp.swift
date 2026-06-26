@@ -18,6 +18,12 @@ struct ScreenshotBroApp: App {
     /// and writing the shared `onboardingCompleted` @AppStorage from inside OnboardingView does not
     /// reliably re-evaluate this App-level binding — so this transient @State is the dismissal signal.
     @State private var welcomeDismissed = false
+
+    /// True while the iPhone launch welcome cover is on screen. Single source for both the cover's
+    /// own visibility and the root sheet gate passed to `iPadRootView` — keep them in lockstep.
+    private var launchWelcomePresented: Bool {
+        OnboardingPersistence.launchWelcomeSupportedOnDevice && !onboardingCompleted && !welcomeDismissed
+    }
     #endif
     #if DEBUG && os(macOS)
     @State private var isDebugTemplateSavePresented = false
@@ -433,17 +439,14 @@ struct ScreenshotBroApp: App {
         }
         #else
         WindowGroup {
-            iPadRootView()
+            iPadRootView(launchWelcomeActive: launchWelcomePresented)
                 .environment(appState)
                 .environment(storeService)
                 .environment(appNavigationRouter)
                 .preferredColorScheme(preferredColorScheme)
                 .task { storeService.start() }
                 .fullScreenCover(isPresented: Binding(
-                    get: {
-                        OnboardingPersistence.launchWelcomeSupportedOnDevice
-                            && !onboardingCompleted && !welcomeDismissed
-                    },
+                    get: { launchWelcomePresented },
                     set: { _ in }
                 )) {
                     OnboardingView(
