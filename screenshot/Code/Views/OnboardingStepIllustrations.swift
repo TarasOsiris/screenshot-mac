@@ -9,6 +9,10 @@ import SwiftUI
 
 private let onboardingDeviceGroupId = "iphone17promax"
 
+// A small bundled home-screen capture shown inside every device frame across the onboarding
+// illustrations. Decoded once.
+private let onboardingDeviceScreen = NSImage(named: "OnboardingDeviceScreen")
+
 // MARK: - Step 2 · Add your content
 
 /// An empty real iPhone 17 Pro Max frame, surrounded by gently drifting "content" chips
@@ -30,7 +34,7 @@ struct OnboardingAddContentIllustration: View {
                 DeviceFrameView(
                     category: .iphone, bodyColor: .black,
                     width: phoneWidth, height: phoneHeight,
-                    screenshotImage: nil,
+                    screenshotImage: onboardingDeviceScreen,
                     deviceFrameId: frame?.id
                 )
                 .frame(width: phoneWidth, height: phoneHeight)
@@ -86,12 +90,8 @@ struct OnboardingAddContentIllustration: View {
                 StarShape(pointCount: 5).fill(accentColor).padding(11)
             }),
             AnyView(chipCard {
-                if let photo = images.dropFirst().first {
-                    Image(nsImage: photo).resizable().aspectRatio(contentMode: .fill)
-                } else {
-                    Image(systemName: "photo").font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(accentColor)
-                }
+                Image(systemName: "photo").font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(accentColor)
             }),
             AnyView(chipCard {
                 Image(systemName: "iphone").font(.system(size: 20, weight: .semibold))
@@ -139,13 +139,15 @@ struct OnboardingStyleIllustration: View {
     private var autoCycles: Bool { selection == nil && !reduceMotion && isActive }
 
     var body: some View {
-        VStack(spacing: 16) {
-            GeometryReader { geo in
-                panel(width: geo.size.width, height: geo.size.height)
-            }
-            backgroundSwitcher()
+        GeometryReader { geo in
+            panel(width: geo.size.width, height: geo.size.height)
+                .overlay(alignment: .bottom) {
+                    backgroundSwitcher()
+                        .padding(.bottom, 14)
+                }
         }
         .padding(.horizontal, 20)
+        .padding(.bottom, 14)
         .frame(maxWidth: 460)
         .frame(maxWidth: .infinity)
     }
@@ -153,7 +155,7 @@ struct OnboardingStyleIllustration: View {
     private func panel(width: CGFloat, height: CGFloat) -> some View {
         let frame = DeviceFrameCatalog.preferredFrame(forGroupId: onboardingDeviceGroupId)
         let aspect = frame.map { $0.baseDimensions.width / $0.baseDimensions.height } ?? 0.49
-        let deviceH = min(height * 0.46, width * 0.5)
+        let deviceH = min(height * 0.40, width * 0.44)
         let deviceW = deviceH * aspect
 
         return ZStack {
@@ -210,7 +212,7 @@ struct OnboardingStyleIllustration: View {
                     DeviceFrameView(
                         category: .iphone, bodyColor: .black,
                         width: deviceW, height: deviceH,
-                        screenshotImage: placeholder(c: c, r: r, rows: rows),
+                        screenshotImage: onboardingDeviceScreen,
                         deviceFrameId: frameId
                     )
                     .frame(width: deviceW, height: deviceH)
@@ -220,11 +222,6 @@ struct OnboardingStyleIllustration: View {
             }
         }
         .frame(width: width, height: height)
-    }
-
-    private func placeholder(c: Int, r: Int, rows: Int) -> NSImage? {
-        guard !images.isEmpty else { return nil }
-        return images[(c * rows + r) % images.count]
     }
 
     @ViewBuilder
@@ -317,7 +314,7 @@ struct OnboardingExportIllustration: View {
     private func card(_ i: Int, frameId: String?, aspect: CGFloat,
                       width: CGFloat, height: CGFloat, badge: String? = nil) -> ExportCard {
         ExportCard(
-            image: images.isEmpty ? nil : images[i % images.count],
+            image: onboardingDeviceScreen,
             frameId: frameId, aspect: aspect,
             gradient: cards[i].gradient, headline: cards[i].headline,
             width: width, height: height,

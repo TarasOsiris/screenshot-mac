@@ -7,6 +7,7 @@ struct OnboardingView: View {
     @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(StoreService.self) private var store
     @State private var pageIndex = 0
@@ -37,30 +38,17 @@ struct OnboardingView: View {
     // Index of the trailing Pro/paywall page (after the workflow step pages).
     private var proPageIndex: Int { Self.stepData.count }
 
+    // True only on an iPhone in landscape (iPad is always regular-height, macOS uses macOSContent).
+    private var isLandscapePhone: Bool { verticalSizeClass == .compact }
+
     private var iOSContent: some View {
         ZStack {
             Color.platformWindowBackground.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                TabView(selection: $pageIndex) {
-                    ForEach(Array(Self.stepData.enumerated()), id: \.offset) { index, step in
-                        Group {
-                            if index == 0 {
-                                iOSTemplatesPage(index: index, step: step)
-                            } else {
-                                iOSWorkflowPage(index: index, step: step)
-                            }
-                        }
-                        .tag(index)
-                    }
-
-                    iOSProPage
-                        .tag(proPageIndex)
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeInOut, value: pageIndex)
-
-                iOSControlBar
+            if isLandscapePhone {
+                iOSLandscapeContent
+            } else {
+                iOSPortraitContent
             }
         }
         .task {
@@ -77,6 +65,110 @@ struct OnboardingView: View {
             set: { if !$0 { store.dismissPaywall() } }
         )) {
             PaywallSheetContent(store: store)
+        }
+    }
+
+    // MARK: - iOS layouts
+
+    // Portrait: full-height paged content above one fixed control bar.
+    private var iOSPortraitContent: some View {
+        VStack(spacing: 0) {
+            TabView(selection: $pageIndex) {
+                ForEach(Array(Self.stepData.enumerated()), id: \.offset) { index, step in
+                    Group {
+                        if index == 0 {
+                            iOSTemplatesPage(index: index, step: step)
+                        } else {
+                            iOSWorkflowPage(index: index, step: step)
+                        }
+                    }
+                    .tag(index)
+                }
+
+                iOSProPage
+                    .tag(proPageIndex)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .animation(.easeInOut, value: pageIndex)
+
+            iOSControlBar
+        }
+    }
+
+    // Landscape: showcase pages on the left, text + actions in a fixed column on the right. Only the
+    // left showcase slides on swipe; the right text reacts to pageIndex while the buttons stay put.
+    private var iOSLandscapeContent: some View {
+        HStack(spacing: 0) {
+            TabView(selection: $pageIndex) {
+                ForEach(Array(Self.stepData.enumerated()), id: \.offset) { index, step in
+                    iOSShowcase(index: index, step: step)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.vertical, 16)
+                        .tag(index)
+                }
+
+                iOSShowcase(index: proPageIndex, step: nil)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.vertical, 16)
+                    .tag(proPageIndex)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .animation(.easeInOut, value: pageIndex)
+
+            iOSLandscapeTextColumn
+                .frame(width: 340)
+        }
+    }
+
+    private var iOSLandscapeTextColumn: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                Group {
+                    if pageIndex < proPageIndex {
+                        iOSPageHeader(index: pageIndex, step: Self.stepData[pageIndex], alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        VStack(spacing: 20) {
+                            if store.isProUnlocked {
+                                proSuccessContent
+                            } else {
+                                proPitchContent
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.horizontal, 28)
+                .padding(.top, 28)
+                .padding(.bottom, 12)
+                .animation(.easeInOut, value: pageIndex)
+            }
+
+            iOSControlBar
+        }
+    }
+
+    // The showcase (marquee or animated illustration) for a page, without any surrounding header.
+    @ViewBuilder
+    private func iOSShowcase(index: Int, step: StepInfo?) -> some View {
+        if index == proPageIndex {
+            if templatePreviews.isEmpty {
+                Color.clear
+            } else {
+                OnboardingTemplateMarquee(images: templatePreviews,
+                                          reduceMotion: reduceMotion,
+                                          isActive: pageIndex == index)
+            }
+        } else if index == 0 {
+            if templatePreviews.isEmpty {
+                iOSStepIcon(step: step!, side: horizontalSizeClass == .compact ? 88 : 112)
+            } else {
+                OnboardingTemplateMarquee(images: templatePreviews,
+                                          reduceMotion: reduceMotion,
+                                          isActive: pageIndex == index)
+            }
+        } else {
+            iOSStepIllustration(index: index, step: step!)
         }
     }
 
@@ -166,8 +258,9 @@ struct OnboardingView: View {
 
     // MARK: - iOS pages
 
-    private func iOSPageHeader(index: Int, step: StepInfo) -> some View {
-        VStack(spacing: 12) {
+    private func iOSPageHeader(index: Int, step: StepInfo, alignment: HorizontalAlignment = .center) -> some View {
+        let textAlignment: TextAlignment = alignment == .leading ? .leading : .center
+        return VStack(alignment: alignment, spacing: 12) {
             Text("Step \(index + 1)")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(step.color)
@@ -175,12 +268,12 @@ struct OnboardingView: View {
 
             Text(step.title)
                 .font(.title.weight(.bold))
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(textAlignment)
 
             Text(step.iosDescription ?? step.description)
                 .font(.body)
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(textAlignment)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
