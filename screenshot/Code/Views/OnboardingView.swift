@@ -348,7 +348,7 @@ struct OnboardingView: View {
             if templatePreviews.isEmpty {
                 iOSStepIcon(step: step, side: horizontalSizeClass == .compact ? 88 : 112)
             } else {
-                OnboardingExportIllustration(images: templatePreviews, accentColor: step.color,
+                OnboardingExportIllustration(images: templatePreviews,
                                              reduceMotion: reduceMotion, isActive: active)
             }
         case .none:

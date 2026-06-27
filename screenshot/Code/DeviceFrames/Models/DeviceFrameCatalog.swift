@@ -64,6 +64,13 @@ enum DeviceFrameCatalog {
         return preferredFrame(in: group, matching: currentFrame)
     }
 
+    /// The portrait frame id for each color variant of a group, in catalog order.
+    static func portraitColorFrameIds(forGroupId groupId: String) -> [String] {
+        (groupsByID[groupId]?.colorGroups ?? []).compactMap { colorGroup in
+            colorGroup.frames.first(where: { !$0.isLandscape })?.id
+        }
+    }
+
     static func variant(
         forFrameId frameId: String,
         colorGroupId: String? = nil,

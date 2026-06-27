@@ -35,6 +35,8 @@ struct OnboardingAddContentIllustration: View {
             ZStack {
                 gradient.gradientFill
 
+                backgroundAccents(in: geo.size)
+
                 DeviceFrameView(
                     category: .iphone, bodyColor: .black,
                     width: phoneWidth, height: phoneHeight,
@@ -59,6 +61,31 @@ struct OnboardingAddContentIllustration: View {
         .frame(maxWidth: .infinity)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+
+    /// Faint white text/vector accents scattered to the sides of the device so the canvas reads as a
+    /// styled work surface. Static and low-opacity — the foreground chips carry the motion.
+    private func backgroundAccents(in size: CGSize) -> some View {
+        let w = size.width, h = size.height
+        return ZStack {
+            StarShape(pointCount: 5).fill(.white).frame(width: w * 0.13, height: w * 0.13)
+                .offset(x: -0.36 * w, y: -0.32 * h)
+            accentSymbol("sparkles", w * 0.13).offset(x: 0.37 * w, y: -0.28 * h)
+            Text(verbatim: "Aa").font(.system(size: w * 0.11, weight: .heavy, design: .rounded))
+                .foregroundStyle(.white).offset(x: -0.41 * w, y: 0.04 * h)
+            accentSymbol("paintbrush.fill", w * 0.12).offset(x: 0.41 * w, y: 0.10 * h)
+            Circle().strokeBorder(.white, lineWidth: max(3, w * 0.012)).frame(width: w * 0.12, height: w * 0.12)
+                .offset(x: -0.30 * w, y: 0.36 * h)
+            StarShape(pointCount: 6).fill(.white).frame(width: w * 0.11, height: w * 0.11)
+                .offset(x: 0.33 * w, y: 0.36 * h)
+        }
+        .opacity(0.22)
+    }
+
+    private func accentSymbol(_ name: String, _ side: CGFloat) -> some View {
+        Image(systemName: name)
+            .font(.system(size: side, weight: .semibold))
+            .foregroundStyle(.white)
     }
 
     @ViewBuilder
@@ -166,14 +193,16 @@ struct OnboardingStyleIllustration: View {
     }
 
     private func panel(width: CGFloat, height: CGFloat) -> some View {
-        let frame = DeviceFrameCatalog.preferredFrame(forGroupId: onboardingDeviceGroupId)
-        let aspect = frame.map { $0.baseDimensions.width / $0.baseDimensions.height } ?? 0.49
-        let deviceH = min(height * 0.40, width * 0.44)
+        let preferred = DeviceFrameCatalog.preferredFrame(forGroupId: onboardingDeviceGroupId)
+        let colorFrameIds = DeviceFrameCatalog.portraitColorFrameIds(forGroupId: onboardingDeviceGroupId)
+        let frameIds = colorFrameIds.isEmpty ? [preferred?.id].compactMap { $0 } : colorFrameIds
+        let aspect = preferred.map { $0.baseDimensions.width / $0.baseDimensions.height } ?? 0.49
+        let deviceH = min(height * 0.46, width * 0.50)
         let deviceW = deviceH * aspect
 
         return ZStack {
             gradientBackdrop(width: width, height: height)
-            deviceGrid(width: width, height: height, frameId: frame?.id, deviceW: deviceW, deviceH: deviceH)
+            scrollingWall(width: width, height: height, frameIds: frameIds, deviceW: deviceW, deviceH: deviceH)
         }
         .frame(width: width, height: height)
         .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
@@ -203,35 +232,37 @@ struct OnboardingStyleIllustration: View {
         }
     }
 
-    /// Points per second the device wall drifts upward — gentle and endless.
-    private let gridScrollSpeed: Double = 16
+    /// Points per second the wall drifts up-and-to-the-left — gentle and endless.
+    private let wallScrollSpeed: Double = 13
 
-    /// A staggered grid (odd columns shifted down half a row) that overflows the panel so the
-    /// rounded-rect clip crops it, scrolling endlessly upward. The offset is taken modulo one row
-    /// step so the wrap is seamless. The grid itself is built once (the `grid` value) — only the
-    /// offset recomputes per tick, so the device frames don't rebuild every frame.
-    private func deviceGrid(width: CGFloat, height: CGFloat, frameId: String?,
-                            deviceW: CGFloat, deviceH: CGFloat) -> some View {
-        let gap: CGFloat = 22
+    /// A staggered wall of randomly-colored iPhone frames that overflows the panel so the rounded-rect
+    /// clip crops it. It scrolls diagonally, wrapping by the pattern's period (two columns horizontally,
+    /// one row vertically) so the drift stays seamless. The wall is built once (the `wall` value) — only
+    /// the offset recomputes per tick, so the device frames don't rebuild every frame.
+    private func scrollingWall(width: CGFloat, height: CGFloat, frameIds: [String],
+                               deviceW: CGFloat, deviceH: CGFloat) -> some View {
+        let gap: CGFloat = 26
         let colStep = deviceW + gap
         let rowStep = deviceH + gap
-        let cols = Int(ceil(width / colStep)) + 2
-        // Extra rows above and below so the modulo wrap never exposes a gap as the wall scrolls.
+        let xPeriod = colStep * 2
+        // Extra cells on every side so the modulo wrap never exposes a gap as the wall drifts.
+        let cols = Int(ceil(width / colStep)) + 4
         let rows = Int(ceil(height / rowStep)) + 4
         let gridW = CGFloat(cols - 1) * colStep
         let gridH = CGFloat(rows - 1) * rowStep
 
-        let grid = ZStack {
+        let wall = ZStack {
             ForEach(0..<cols, id: \.self) { c in
                 ForEach(0..<rows, id: \.self) { r in
                     let shift = c.isMultiple(of: 2) ? 0 : rowStep / 2
                     let x = width / 2 - gridW / 2 + CGFloat(c) * colStep
                     let y = height / 2 - gridH / 2 + CGFloat(r) * rowStep + shift
+                    let seed = abs((c &* 49_297) &+ (r &* 12_911)) % 997
                     DeviceFrameView(
                         category: .iphone, bodyColor: .black,
                         width: deviceW, height: deviceH,
                         screenshotImage: onboardingDeviceScreen,
-                        deviceFrameId: frameId
+                        deviceFrameId: frameIds.isEmpty ? nil : frameIds[seed % frameIds.count]
                     )
                     .frame(width: deviceW, height: deviceH)
                     .shadow(color: .black.opacity(0.18), radius: 8, y: 4)
@@ -243,12 +274,13 @@ struct OnboardingStyleIllustration: View {
 
         return Group {
             if reduceMotion || !isActive {
-                grid
+                wall
             } else {
                 TimelineView(.animation(paused: !isActive)) { timeline in
-                    let phase = (timeline.date.timeIntervalSinceReferenceDate * gridScrollSpeed)
-                        .truncatingRemainder(dividingBy: Double(rowStep))
-                    grid.offset(y: -CGFloat(phase))
+                    let d = timeline.date.timeIntervalSinceReferenceDate * wallScrollSpeed
+                    let dx = d.truncatingRemainder(dividingBy: Double(xPeriod))
+                    let dy = d.truncatingRemainder(dividingBy: Double(rowStep))
+                    wall.offset(x: -CGFloat(dx), y: -CGFloat(dy))
                 }
             }
         }
@@ -303,77 +335,72 @@ struct OnboardingStyleIllustration: View {
 
 // MARK: - Step 4 · Export
 
-/// A fan of finished-looking screenshots — each a gradient background with a padded iPhone 17 Pro
-/// Max frame and a headline, like a real template — with a copy of the front card repeatedly
-/// lifting off to suggest exporting them all at once.
+/// A fan of three finished-looking screenshots — each a gradient background with a padded iPhone 17
+/// Pro Max frame and a single punchy headline, like a real template.
 struct OnboardingExportIllustration: View {
     let images: [NSImage]
-    var accentColor: Color = .green
     var reduceMotion = false
     var isActive = true
 
     private let cards: [(gradient: GradientConfig, headline: String)] = [
-        (GradientConfig(color1: .green, color2: .teal, angle: 135), "Plan your day"),
-        (GradientConfig(color1: .blue, color2: .indigo, angle: 150), "Track progress"),
-        (GradientConfig(color1: .orange, color2: .pink, angle: 120), "Share instantly"),
+        (GradientConfig(color1: .green, color2: .teal, angle: 135), "Bold"),
+        (GradientConfig(color1: .blue, color2: .indigo, angle: 150), "Crisp"),
+        (GradientConfig(color1: .orange, color2: .pink, angle: 120), "Shine"),
     ]
-    private let period: Double = 2.6
+
+    /// Seconds for one full open→close→open accordion cycle.
+    private let accordionPeriod: Double = 5
 
     var body: some View {
         GeometryReader { geo in
             let frame = DeviceFrameCatalog.preferredFrame(forGroupId: onboardingDeviceGroupId)
             let aspect = frame.map { $0.baseDimensions.width / $0.baseDimensions.height } ?? 0.49
-            let cardH = min(geo.size.height * 0.66, 300)
+            let cardH = min(geo.size.height * 0.8, 360)
             let cardW = cardH * 0.6
-            let front = card(0, frameId: frame?.id, aspect: aspect, width: cardW, height: cardH, badge: "PNG")
+            // Built once — the accordion only animates each card's rotation/offset, never its content.
+            let leftCard = card(1, frameId: frame?.id, aspect: aspect, width: cardW, height: cardH)
+            let rightCard = card(2, frameId: frame?.id, aspect: aspect, width: cardW, height: cardH)
+            let frontCard = card(0, frameId: frame?.id, aspect: aspect, width: cardW, height: cardH)
 
-            ZStack {
-                card(1, frameId: frame?.id, aspect: aspect, width: cardW, height: cardH)
-                    .rotationEffect(.degrees(-12)).offset(x: -cardW * 0.5, y: 16)
-                card(2, frameId: frame?.id, aspect: aspect, width: cardW, height: cardH)
-                    .rotationEffect(.degrees(12)).offset(x: cardW * 0.5, y: 16)
-                front
-                flyer(front: front, height: cardH)
+            Group {
+                if reduceMotion || !isActive {
+                    fan(open: 1, cardW: cardW, left: leftCard, right: rightCard, front: frontCard)
+                } else {
+                    TimelineView(.animation(paused: !isActive)) { timeline in
+                        let t = timeline.date.timeIntervalSinceReferenceDate
+                        let open = 0.5 - 0.5 * cos(t * (2 * .pi / accordionPeriod))
+                        fan(open: open, cardW: cardW, left: leftCard, right: rightCard, front: frontCard)
+                    }
+                }
             }
-            .position(x: geo.size.width / 2, y: geo.size.height / 2 + cardH * 0.04)
+            .position(x: geo.size.width / 2, y: geo.size.height / 2 - cardH * 0.08)
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
 
+    /// The three-card fan at a given openness (0 = stacked tight, 1 = spread wide). The side cards
+    /// rotate out and slide apart together, breathing like an accordion.
+    private func fan(open: Double, cardW: CGFloat,
+                     left: ExportCard, right: ExportCard, front: ExportCard) -> some View {
+        let o = CGFloat(open)
+        let angle = 4 + 13 * o
+        let dx = cardW * (0.26 + 0.30 * o)
+        return ZStack {
+            left.rotationEffect(.degrees(-angle)).offset(x: -dx, y: 16)
+            right.rotationEffect(.degrees(angle)).offset(x: dx, y: 16)
+            front
+        }
+    }
+
     private func card(_ i: Int, frameId: String?, aspect: CGFloat,
-                      width: CGFloat, height: CGFloat, badge: String? = nil) -> ExportCard {
+                      width: CGFloat, height: CGFloat) -> ExportCard {
         ExportCard(
             image: onboardingDeviceScreen,
             frameId: frameId, aspect: aspect,
             gradient: cards[i].gradient, headline: cards[i].headline,
-            width: width, height: height,
-            badge: badge, accentColor: accentColor
+            width: width, height: height
         )
-    }
-
-    @ViewBuilder
-    private func flyer<V: View>(front: V, height: CGFloat) -> some View {
-        if reduceMotion || !isActive {
-            EmptyView()
-        } else {
-            TimelineView(.animation(paused: !isActive)) { timeline in
-                let p = timeline.date.timeIntervalSinceReferenceDate
-                    .truncatingRemainder(dividingBy: period) / period
-                let lift = smoothstep(p)
-                let opacity = min(1, p / 0.12) * (1 - smoothstep(max(0, (p - 0.55) / 0.45)))
-
-                front
-                .offset(y: -lift * height * 0.5)
-                .scaleEffect(1 - lift * 0.08)
-                .opacity(opacity)
-            }
-        }
-    }
-
-    private func smoothstep(_ x: Double) -> Double {
-        let t = min(1, max(0, x))
-        return t * t * (3 - 2 * t)
     }
 }
 
@@ -387,53 +414,40 @@ private struct ExportCard: View {
     let headline: String
     let width: CGFloat
     let height: CGFloat
-    var badge: String?
-    var accentColor: Color
 
     var body: some View {
         let deviceH = height * 0.72
         let deviceW = deviceH * aspect
 
-        ZStack(alignment: .bottomTrailing) {
-            ZStack {
-                gradient.gradientFill
+        ZStack {
+            gradient.gradientFill
 
-                VStack(spacing: height * 0.04) {
-                    Text(verbatim: headline)
-                        .font(.system(size: max(11, height * 0.075), weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, width * 0.1)
-                        .padding(.top, height * 0.08)
-
-                    DeviceFrameView(
-                        category: .iphone, bodyColor: .black,
-                        width: deviceW, height: deviceH,
-                        screenshotImage: image,
-                        deviceFrameId: frameId
-                    )
-                    .frame(width: deviceW, height: deviceH)
-                    .shadow(color: .black.opacity(0.18), radius: 8, y: 5)
-                }
-                .frame(width: width, height: height, alignment: .top)
-            }
-            .frame(width: width, height: height)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
-            )
-            .shadow(color: .black.opacity(0.12), radius: 9, y: 5)
-
-            if let badge {
-                Text(badge)
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
+            VStack(spacing: height * 0.04) {
+                Text(verbatim: headline)
+                    .font(.system(size: max(11, height * 0.075), weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 7).padding(.vertical, 3)
-                    .background(accentColor, in: Capsule())
-                    .padding(8)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, width * 0.1)
+                    .padding(.top, height * 0.08)
+
+                DeviceFrameView(
+                    category: .iphone, bodyColor: .black,
+                    width: deviceW, height: deviceH,
+                    screenshotImage: image,
+                    deviceFrameId: frameId
+                )
+                .frame(width: deviceW, height: deviceH)
+                .shadow(color: .black.opacity(0.18), radius: 8, y: 5)
             }
+            .frame(width: width, height: height, alignment: .top)
         }
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
+        )
+        .shadow(color: .black.opacity(0.12), radius: 9, y: 5)
     }
 }
 
