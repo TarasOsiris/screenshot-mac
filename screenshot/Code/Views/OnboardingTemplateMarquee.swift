@@ -26,20 +26,8 @@ struct OnboardingTemplateMarquee: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .mask(
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: 0.1),
-                        .init(color: .black, location: 0.9),
-                        .init(color: .clear, location: 1)
-                    ],
-                    startPoint: .leading, endPoint: .trailing
-                )
-            )
         }
-        // Hard-clip horizontally so offset strips can't bleed onto the adjacent TabView page;
-        // vertical is left unclipped so card drop shadows survive.
+        // Hard-clip horizontally so offset strips can't bleed onto the adjacent TabView page.
         .clipShape(HorizontalClip())
         .allowsHitTesting(false)
     }
@@ -139,7 +127,6 @@ private struct MarqueeCard: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
             )
-            .shadow(color: .black.opacity(0.12), radius: 6, y: 3)
     }
 }
 #endif

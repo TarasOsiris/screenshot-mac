@@ -226,39 +226,66 @@ struct OnboardingView: View {
 
     @ViewBuilder
     private func iOSWorkflowPage(index: Int, step: StepInfo) -> some View {
-        let compact = horizontalSizeClass == .compact
-
-        VStack(spacing: compact ? 20 : 28) {
-            Spacer()
-
-            iOSStepIcon(step: step, side: compact ? 88 : 112)
-
+        // Header pinned to the top exactly like the templates page, so the title/description
+        // never shift position between steps; the illustration fills (and centers within) the rest.
+        VStack(spacing: 20) {
             iOSPageHeader(index: index, step: step)
+                .padding(.horizontal, 40)
+                .padding(.top, 24)
 
-            Spacer()
-            Spacer()
+            iOSStepIllustration(index: index, step: step)
+                .frame(maxHeight: .infinity)
         }
-        .padding(.horizontal, 40)
         .frame(maxWidth: 600)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    @ViewBuilder
+    private func iOSStepIllustration(index: Int, step: StepInfo) -> some View {
+        let active = pageIndex == index
+        switch step.illustration {
+        case .addContent:
+            OnboardingAddContentIllustration(images: templatePreviews, accentColor: step.color,
+                                             reduceMotion: reduceMotion, isActive: active)
+        case .style:
+            OnboardingStyleIllustration(images: templatePreviews, accentColor: step.color,
+                                        reduceMotion: reduceMotion, isActive: active)
+        case .export:
+            // Only Export needs real previews; the others degrade gracefully without them.
+            if templatePreviews.isEmpty {
+                iOSStepIcon(step: step, side: horizontalSizeClass == .compact ? 88 : 112)
+            } else {
+                OnboardingExportIllustration(images: templatePreviews, accentColor: step.color,
+                                             reduceMotion: reduceMotion, isActive: active)
+            }
+        case .none:
+            iOSStepIcon(step: step, side: horizontalSizeClass == .compact ? 88 : 112)
+        }
     }
 
     private var iOSProPage: some View {
         let compact = horizontalSizeClass == .compact
 
-        return VStack(spacing: compact ? 20 : 28) {
-            Spacer()
-
-            if store.isProUnlocked {
-                proSuccessContent
+        return VStack(spacing: compact ? 18 : 24) {
+            if templatePreviews.isEmpty {
+                Spacer()
             } else {
-                proPitchContent
+                OnboardingTemplateMarquee(images: templatePreviews,
+                                          reduceMotion: reduceMotion,
+                                          isActive: pageIndex == proPageIndex)
+                    .frame(maxHeight: .infinity)
             }
 
-            Spacer()
-            Spacer()
+            VStack(spacing: compact ? 20 : 28) {
+                if store.isProUnlocked {
+                    proSuccessContent
+                } else {
+                    proPitchContent
+                }
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 8)
         }
-        .padding(.horizontal, 40)
         .frame(maxWidth: 600)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -477,6 +504,7 @@ struct OnboardingView: View {
             icon: "plus.rectangle.on.rectangle",
             hint: "Drop images onto canvas",
             iosDescription: "Add screenshots from Photos or Files, then drop in text, shapes, and a device frame.",
+            illustration: .addContent,
             color: .purple
         ),
         StepInfo(
@@ -484,6 +512,7 @@ struct OnboardingView: View {
             description: "Set backgrounds, colors, and gradients. Use the inspector on the right and properties bar at the bottom.",
             icon: "paintbrush",
             iosDescription: "Set backgrounds, colors, and gradients, and fine-tune every element to match your brand.",
+            illustration: .style,
             color: .orange
         ),
         StepInfo(
@@ -491,9 +520,16 @@ struct OnboardingView: View {
             description: "Export all screenshots at once as PNG or JPEG, ready to upload to App Store Connect or Google Play.",
             icon: "square.and.arrow.up",
             shortcutGlyph: "\u{2318}E",
+            illustration: .export,
             color: .green
         ),
     ]
+}
+
+/// The iOS-only animated illustration a step shows in place of its static icon. Keyed off the
+/// step's data rather than its array index so reordering steps can't mismatch the illustration.
+private enum StepIllustration {
+    case addContent, style, export
 }
 
 private struct StepInfo {
@@ -505,6 +541,7 @@ private struct StepInfo {
     // Used by the iPad/iOS flow when the desktop copy references mouse/keyboard or chrome
     // (drag-drop, the right inspector, ⌘E) that doesn't exist there.
     var iosDescription: LocalizedStringKey? = nil
+    var illustration: StepIllustration? = nil
     let color: Color
 }
 
