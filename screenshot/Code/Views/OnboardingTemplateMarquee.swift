@@ -10,9 +10,9 @@ struct OnboardingTemplateMarquee: View {
     /// Animation pauses when the page isn't on screen, so it costs nothing once the user swipes on.
     var isActive = true
 
-    private let cardWidth: CGFloat = 148
-    private let cardHeight: CGFloat = 80
-    private let spacing: CGFloat = 10
+    private let cardWidth: CGFloat = 200
+    private let cardHeight: CGFloat = 108
+    private let spacing: CGFloat = 12
 
     var body: some View {
         GeometryReader { geo in

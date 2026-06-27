@@ -23,14 +23,18 @@ struct OnboardingAddContentIllustration: View {
     var reduceMotion = false
     var isActive = true
 
+    private let gradient = GradientConfig(color1: .orange, color2: .pink, angle: 145, gradientType: .linear)
+
     var body: some View {
         GeometryReader { geo in
             let frame = DeviceFrameCatalog.preferredFrame(forGroupId: onboardingDeviceGroupId)
             let aspect = frame.map { $0.baseDimensions.width / $0.baseDimensions.height } ?? 0.49
-            let phoneHeight = min(geo.size.height * 0.82, 300)
+            let phoneHeight = min(geo.size.height * 0.78, 280)
             let phoneWidth = phoneHeight * aspect
 
             ZStack {
+                gradient.gradientFill
+
                 DeviceFrameView(
                     category: .iphone, bodyColor: .black,
                     width: phoneWidth, height: phoneHeight,
@@ -38,12 +42,21 @@ struct OnboardingAddContentIllustration: View {
                     deviceFrameId: frame?.id
                 )
                 .frame(width: phoneWidth, height: phoneHeight)
-                .shadow(color: .black.opacity(0.12), radius: 14, y: 8)
+                .shadow(color: .black.opacity(0.18), radius: 14, y: 8)
 
                 chips(in: geo.size)
             }
-            .position(x: geo.size.width / 2, y: geo.size.height / 2)
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
+            )
         }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 14)
+        .frame(maxWidth: 460)
+        .frame(maxWidth: .infinity)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
@@ -131,7 +144,7 @@ struct OnboardingStyleIllustration: View {
         GradientConfig(color1: .orange, color2: .pink, angle: 135, gradientType: .linear),
         GradientConfig(color1: .blue, color2: .purple, angle: 160, gradientType: .linear),
         GradientConfig(color1: .teal, color2: .green, angle: 120, gradientType: .radial),
-        GradientConfig(color1: .indigo, color2: .cyan, angle: 90, gradientType: .angular),
+        GradientConfig(color1: .indigo, color2: .cyan, angle: 90, gradientType: .linear),
         GradientConfig(color1: .pink, color2: .yellow, angle: 210, gradientType: .linear),
     ]
     private let period: Double = 2.4
@@ -195,7 +208,7 @@ struct OnboardingStyleIllustration: View {
     /// device frames don't rebuild every animation tick.
     private func deviceGrid(width: CGFloat, height: CGFloat, frameId: String?,
                             deviceW: CGFloat, deviceH: CGFloat) -> some View {
-        let gap: CGFloat = 14
+        let gap: CGFloat = 22
         let colStep = deviceW + gap
         let rowStep = deviceH + gap
         let cols = Int(ceil(width / colStep)) + 2
@@ -333,13 +346,7 @@ struct OnboardingExportIllustration: View {
                 let lift = smoothstep(p)
                 let opacity = min(1, p / 0.12) * (1 - smoothstep(max(0, (p - 0.55) / 0.45)))
 
-                ZStack {
-                    front
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(accentColor)
-                        .offset(y: -height * 0.32)
-                }
+                front
                 .offset(y: -lift * height * 0.5)
                 .scaleEffect(1 - lift * 0.08)
                 .opacity(opacity)
