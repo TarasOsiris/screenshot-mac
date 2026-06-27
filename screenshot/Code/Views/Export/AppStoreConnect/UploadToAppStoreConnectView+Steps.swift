@@ -263,6 +263,20 @@ extension UploadToAppStoreConnectView {
                 .font(.subheadline)
                 .fontWeight(.semibold)
             metadataField(
+                label: "What's New",
+                text: $versionDrafts[index].whatsNew,
+                limit: 4000,
+                multiline: true,
+                minHeight: 80
+            )
+            if canCopyWhatsNewToOtherLocales(from: index) {
+                Button("Copy to all locales") {
+                    copyWhatsNewToOtherLocales(from: index)
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+            }
+            metadataField(
                 label: "Promotional Text",
                 text: $versionDrafts[index].promotionalText,
                 limit: 170,
@@ -281,20 +295,6 @@ extension UploadToAppStoreConnectView {
                 text: $versionDrafts[index].keywords,
                 limit: 100
             )
-            metadataField(
-                label: "What's New",
-                text: $versionDrafts[index].whatsNew,
-                limit: 4000,
-                multiline: true,
-                minHeight: 80
-            )
-            if canCopyWhatsNewToOtherLocales(from: index) {
-                Button("Copy to all locales") {
-                    copyWhatsNewToOtherLocales(from: index)
-                }
-                .buttonStyle(.borderless)
-                .font(.caption)
-            }
             metadataField(
                 label: "Support URL",
                 text: $versionDrafts[index].supportUrl,
