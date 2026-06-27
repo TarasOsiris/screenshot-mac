@@ -29,7 +29,7 @@ struct OnboardingAddContentIllustration: View {
         GeometryReader { geo in
             let frame = DeviceFrameCatalog.preferredFrame(forGroupId: onboardingDeviceGroupId)
             let aspect = frame.map { $0.baseDimensions.width / $0.baseDimensions.height } ?? 0.49
-            let phoneHeight = min(geo.size.height * 0.78, 280)
+            let phoneHeight = min(geo.size.height * 0.88, 320)
             let phoneWidth = phoneHeight * aspect
 
             ZStack {
@@ -97,18 +97,18 @@ struct OnboardingAddContentIllustration: View {
         [
             AnyView(chipCard {
                 Text(verbatim: "Aa").font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(.white)
             }),
             AnyView(chipCard {
-                StarShape(pointCount: 5).fill(accentColor).padding(11)
+                StarShape(pointCount: 5).fill(.white).padding(11)
             }),
             AnyView(chipCard {
                 Image(systemName: "photo").font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(.white)
             }),
             AnyView(chipCard {
                 Image(systemName: "iphone").font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(.white)
             }),
         ]
     }
@@ -203,20 +203,25 @@ struct OnboardingStyleIllustration: View {
         }
     }
 
+    /// Points per second the device wall drifts upward — gentle and endless.
+    private let gridScrollSpeed: Double = 16
+
     /// A staggered grid (odd columns shifted down half a row) that overflows the panel so the
-    /// rounded-rect clip crops it. Built once — kept outside the gradient's TimelineView so the
-    /// device frames don't rebuild every animation tick.
+    /// rounded-rect clip crops it, scrolling endlessly upward. The offset is taken modulo one row
+    /// step so the wrap is seamless. The grid itself is built once (the `grid` value) — only the
+    /// offset recomputes per tick, so the device frames don't rebuild every frame.
     private func deviceGrid(width: CGFloat, height: CGFloat, frameId: String?,
                             deviceW: CGFloat, deviceH: CGFloat) -> some View {
         let gap: CGFloat = 22
         let colStep = deviceW + gap
         let rowStep = deviceH + gap
         let cols = Int(ceil(width / colStep)) + 2
-        let rows = Int(ceil(height / rowStep)) + 2
+        // Extra rows above and below so the modulo wrap never exposes a gap as the wall scrolls.
+        let rows = Int(ceil(height / rowStep)) + 4
         let gridW = CGFloat(cols - 1) * colStep
         let gridH = CGFloat(rows - 1) * rowStep
 
-        return ZStack {
+        let grid = ZStack {
             ForEach(0..<cols, id: \.self) { c in
                 ForEach(0..<rows, id: \.self) { r in
                     let shift = c.isMultiple(of: 2) ? 0 : rowStep / 2
@@ -235,6 +240,18 @@ struct OnboardingStyleIllustration: View {
             }
         }
         .frame(width: width, height: height)
+
+        return Group {
+            if reduceMotion || !isActive {
+                grid
+            } else {
+                TimelineView(.animation(paused: !isActive)) { timeline in
+                    let phase = (timeline.date.timeIntervalSinceReferenceDate * gridScrollSpeed)
+                        .truncatingRemainder(dividingBy: Double(rowStep))
+                    grid.offset(y: -CGFloat(phase))
+                }
+            }
+        }
     }
 
     @ViewBuilder
