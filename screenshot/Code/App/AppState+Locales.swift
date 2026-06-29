@@ -67,13 +67,13 @@ extension AppState {
                 if byKey[key] == nil {
                     byKey[key] = (shape, [row.label])
                     order.append(key)
-                } else if !byKey[key]!.rows.contains(row.label) {
+                } else if byKey[key]?.rows.contains(row.label) == false {
                     byKey[key]?.rows.append(row.label)
                 }
             }
         }
-        return order.map { key in
-            let entry = byKey[key]!
+        return order.compactMap { key in
+            guard let entry = byKey[key] else { return nil }
             return (shape: entry.shape, rowLabel: entry.rows.joined(separator: ", "))
         }
     }
@@ -363,7 +363,10 @@ extension AppState {
                 else { byKey[key]?.rows.append(row.label) }
             }
         }
-        return order.map { (key: $0, baseText: byKey[$0]!.baseText, rowLabels: byKey[$0]!.rows) }
+        return order.compactMap { key in
+            guard let entry = byKey[key] else { return nil }
+            return (key: key, baseText: entry.baseText, rowLabels: entry.rows)
+        }
     }
 
     /// Make `shapeId` reuse the string identified by `targetKey`: it adopts that string's base text

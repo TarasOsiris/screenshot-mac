@@ -41,7 +41,7 @@ private struct EditorBlurBackgroundRenderKey: Equatable {
 }
 
 struct EditorRasterizedBackgroundView: View {
-    private static let exactRenderDebounceNanoseconds: UInt64 = 120_000_000
+    private static let exactRenderDebounce: Duration = .milliseconds(120)
 
     let row: ScreenshotRow
     let screenshotImages: [String: NSImage]
@@ -133,7 +133,7 @@ struct EditorRasterizedBackgroundView: View {
                 renderedKey = nil
                 return
             }
-            try? await Task.sleep(nanoseconds: Self.exactRenderDebounceNanoseconds)
+            try? await Task.sleep(for: Self.exactRenderDebounce)
             guard !Task.isCancelled else { return }
             // Blur the background at model resolution, then downscale for the editor.
             // This avoids edge artifacts from blurring an already downsampled tile/image raster.

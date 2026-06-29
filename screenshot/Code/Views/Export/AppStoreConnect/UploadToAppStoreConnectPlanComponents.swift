@@ -218,7 +218,8 @@ private struct ASCIssueRow: View {
 
     private var message: Text {
         if let scope = issue.scope {
-            return Text(scope).fontWeight(.semibold) + Text(" · ") + Text(issue.message)
+            let scopeText = Text(scope).fontWeight(.semibold)
+            return Text("\(scopeText) · \(issue.message)")
         }
         return Text(issue.message)
     }

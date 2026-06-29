@@ -607,7 +607,7 @@ struct CanvasShapeView: View {
     private func debounceSvgCacheUpdate() {
         svgResizeDebounceTask?.cancel()
         svgResizeDebounceTask = Task {
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
+            try? await Task.sleep(for: .milliseconds(100))
             guard !Task.isCancelled else { return }
             updateSvgCache()
         }

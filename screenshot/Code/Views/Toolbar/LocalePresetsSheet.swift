@@ -19,7 +19,7 @@ struct ManageLocalesSheet: View {
             }
             .confirmationDialog(
                 Text("Make \(pendingBaseLocale?.flagLabel ?? "") the base language?"),
-                isPresented: Binding(get: { pendingBaseLocale != nil }, set: { if !$0 { pendingBaseLocale = nil } }),
+                isPresented: $pendingBaseLocale.isPresent(),
                 titleVisibility: .visible
             ) {
                 Button("Set as Base") {
@@ -32,7 +32,7 @@ struct ManageLocalesSheet: View {
             }
             .confirmationDialog(
                 Text("Delete \(pendingDeleteLocale?.flagLabel ?? "")?"),
-                isPresented: Binding(get: { pendingDeleteLocale != nil }, set: { if !$0 { pendingDeleteLocale = nil } }),
+                isPresented: $pendingDeleteLocale.isPresent(),
                 titleVisibility: .visible
             ) {
                 Button("Delete language", role: .destructive) {

@@ -798,11 +798,11 @@ struct ExportService {
         let ciImage = CIImage(cgImage: cgImage)
         let originalExtent = ciImage.extent
 
-        let clamp = CIFilter(name: "CIAffineClamp")!
+        guard let clamp = CIFilter(name: "CIAffineClamp"),
+              let blur = CIFilter(name: "CIGaussianBlur") else { return image }
         clamp.setValue(ciImage, forKey: kCIInputImageKey)
         clamp.setValue(CGAffineTransform.identity, forKey: kCIInputTransformKey)
 
-        let blur = CIFilter(name: "CIGaussianBlur")!
         blur.setValue(clamp.outputImage, forKey: kCIInputImageKey)
         blur.setValue(radius, forKey: kCIInputRadiusKey)
 

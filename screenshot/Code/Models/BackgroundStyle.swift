@@ -158,12 +158,12 @@ struct BackgroundImageView: View {
         self.config = config
         self.modelSize = modelSize
         // Eagerly render SVG so export doesn't depend on onAppear
-        if image == nil, config.svgContent != nil {
+        if image == nil, let svgContent = config.svgContent {
             let rendered = config.renderSvgImage(modelSize: modelSize)
             let fillKey = config.fillMode == .tile ? "tile" : "scaled"
             let refDim = max(modelSize?.width ?? 1200, modelSize?.height ?? 1200)
             _cachedSvgImage = State(initialValue: rendered)
-            _svgCacheKey = State(initialValue: "\(config.svgContent!.hashValue)-\(fillKey)-\(Int(refDim))")
+            _svgCacheKey = State(initialValue: "\(svgContent.hashValue)-\(fillKey)-\(Int(refDim))")
         } else {
             _cachedSvgImage = State(initialValue: nil)
             _svgCacheKey = State(initialValue: "")
@@ -189,14 +189,14 @@ struct BackgroundImageView: View {
     }
 
     private func updateSvgCache() {
-        guard image == nil, config.svgContent != nil else {
+        guard image == nil, let svgContent = config.svgContent else {
             cachedSvgImage = nil
             svgCacheKey = ""
             return
         }
         let refDim = max(modelSize?.width ?? 1200, modelSize?.height ?? 1200)
         let fillKey = config.fillMode == .tile ? "tile" : "scaled"
-        let key = "\(config.svgContent!.hashValue)-\(fillKey)-\(Int(refDim))"
+        let key = "\(svgContent.hashValue)-\(fillKey)-\(Int(refDim))"
         guard key != svgCacheKey else { return }
         svgCacheKey = key
         cachedSvgImage = config.renderSvgImage(modelSize: modelSize)

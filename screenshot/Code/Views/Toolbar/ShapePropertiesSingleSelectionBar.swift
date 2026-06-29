@@ -99,7 +99,7 @@ struct ShapePropertiesSingleSelectionBar: View {
             let shapeId = shape.id
 
             HStack(spacing: 0) {
-                ScrollView(.horizontal, showsIndicators: false) {
+                ScrollView(.horizontal) {
                     HStack(spacing: 8) {
                         ShapePropertiesBadge(shape: shape)
 
@@ -374,6 +374,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                     .padding(.horizontal, ShapePropertiesSectionLayout.horizontalPadding)
                     .padding(.vertical, ShapePropertiesSectionLayout.verticalPadding)
                 }
+                .scrollIndicators(.hidden)
 
                 Spacer(minLength: 0)
 

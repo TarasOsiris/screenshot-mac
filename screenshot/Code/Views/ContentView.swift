@@ -483,11 +483,11 @@ struct ContentView: View {
         // On iPad the paywall/celebration sheets live at the navigation root (`iPadRootView`)
         // so they also present from the Projects home screen, not just the pushed editor.
         #if os(macOS)
-        .sheet(isPresented: Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() }),
+        .sheet(isPresented: paywallPresented,
                onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
             PaywallSheetContent(store: store)
         }
-        .sheet(isPresented: Binding(get: { store.purchaseCelebrationContext != nil }, set: { if !$0 { store.dismissPurchaseCelebration() } })) {
+        .sheet(isPresented: celebrationPresented) {
             PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
                 store.dismissPurchaseCelebration()
             }
@@ -566,6 +566,17 @@ struct ContentView: View {
             isInspectorPresented = true
         }
     }
+
+    #if os(macOS)
+    private var paywallPresented: Binding<Bool> {
+        Binding(get: { store.showPaywall }, set: { _ in store.dismissPaywall() })
+    }
+
+    private var celebrationPresented: Binding<Bool> {
+        Binding(get: { store.purchaseCelebrationContext != nil },
+                set: { if !$0 { store.dismissPurchaseCelebration() } })
+    }
+    #endif
 }
 
 #Preview {

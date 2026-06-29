@@ -37,15 +37,24 @@ struct iPadRootView: View {
         }
         // Paywall/celebration are presented from the root so they work on the Projects home
         // screen (e.g. tapping New Project at the free-tier limit) as well as the editor.
-        .sheet(isPresented: Binding(get: { store.showPaywall && !launchWelcomeActive }, set: { _ in store.dismissPaywall() }),
+        .sheet(isPresented: paywallPresented,
                onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
             PaywallSheetContent(store: store)
         }
-        .sheet(isPresented: Binding(get: { store.purchaseCelebrationContext != nil && !launchWelcomeActive }, set: { if !$0 { store.dismissPurchaseCelebration() } })) {
+        .sheet(isPresented: celebrationPresented) {
             PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
                 store.dismissPurchaseCelebration()
             }
         }
+    }
+
+    private var paywallPresented: Binding<Bool> {
+        Binding(get: { store.showPaywall && !launchWelcomeActive }, set: { _ in store.dismissPaywall() })
+    }
+
+    private var celebrationPresented: Binding<Bool> {
+        Binding(get: { store.purchaseCelebrationContext != nil && !launchWelcomeActive },
+                set: { if !$0 { store.dismissPurchaseCelebration() } })
     }
 
     private var openedBinding: Binding<Bool> {

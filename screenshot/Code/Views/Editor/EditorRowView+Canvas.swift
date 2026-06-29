@@ -5,7 +5,7 @@ extension EditorRowView {
     @ViewBuilder
     var horizontalScrollArea: some View {
         ScrollViewReader { hProxy in
-            ScrollView(.horizontal, showsIndicators: true) {
+            ScrollView(.horizontal) {
                 // Render the canvas at full (zoom-inclusive) scale instead of a visual-only
                 // `.scaleEffect(zoom)`. Each shape's layout frame then equals its on-screen
                 // size, which the iOS context-menu lift anchors to — a presentation-only zoom

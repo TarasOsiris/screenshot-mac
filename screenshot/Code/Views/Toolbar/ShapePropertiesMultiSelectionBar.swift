@@ -19,7 +19,7 @@ struct ShapePropertiesMultiSelectionBar: View {
         let commonType = shapes.dropFirst().allSatisfy({ $0.type == shapes.first?.type }) ? shapes.first?.type : nil
 
         HStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     HStack(spacing: 6) {
                         if let type = commonType {
@@ -80,6 +80,7 @@ struct ShapePropertiesMultiSelectionBar: View {
                 .padding(.horizontal, ShapePropertiesSectionLayout.horizontalPadding)
                 .padding(.vertical, ShapePropertiesSectionLayout.verticalPadding)
             }
+            .scrollIndicators(.hidden)
 
             Spacer(minLength: 0)
 

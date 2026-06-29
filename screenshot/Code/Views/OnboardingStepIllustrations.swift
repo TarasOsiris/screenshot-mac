@@ -98,46 +98,50 @@ struct OnboardingAddContentIllustration: View {
             CGSize(width: -x * 0.9, height: y * 0.7),
             CGSize(width: x, height: y),
         ]
-        let cards = chipViews()
 
         if reduceMotion || !isActive {
-            chipStack(cards, slots) { _ in .zero }
+            chipStack(slots) { _ in .zero }
         } else {
             TimelineView(.animation(paused: !isActive)) { timeline in
                 let t = timeline.date.timeIntervalSinceReferenceDate
-                chipStack(cards, slots) { i in
+                chipStack(slots) { i in
                     CGSize(width: 0, height: sin(t * 0.85 + Double(i) * 1.4) * 6)
                 }
             }
         }
     }
 
-    private func chipStack(_ cards: [AnyView], _ slots: [CGSize], drift: @escaping (Int) -> CGSize) -> some View {
+    private func chipStack(_ slots: [CGSize], drift: @escaping (Int) -> CGSize) -> some View {
         ZStack {
-            ForEach(0..<cards.count, id: \.self) { i in
-                cards[i].offset(slots[i] + drift(i))
+            ForEach(slots.indices, id: \.self) { i in
+                chip(at: i).offset(slots[i] + drift(i))
             }
         }
     }
 
-    private func chipViews() -> [AnyView] {
-        [
-            AnyView(chipCard {
+    @ViewBuilder
+    private func chip(at index: Int) -> some View {
+        switch index {
+        case 0:
+            chipCard {
                 Text(verbatim: "Aa").font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-            }),
-            AnyView(chipCard {
+            }
+        case 1:
+            chipCard {
                 StarShape(pointCount: 5).fill(.white).padding(11)
-            }),
-            AnyView(chipCard {
+            }
+        case 2:
+            chipCard {
                 Image(systemName: "photo").font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(.white)
-            }),
-            AnyView(chipCard {
+            }
+        default:
+            chipCard {
                 Image(systemName: "iphone").font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(.white)
-            }),
-        ]
+            }
+        }
     }
 
     @ViewBuilder
