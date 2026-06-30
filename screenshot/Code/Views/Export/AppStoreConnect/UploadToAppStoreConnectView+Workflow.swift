@@ -22,7 +22,7 @@ extension UploadToAppStoreConnectView {
         }
         if selectedApp == nil,
            let projectName = state.activeProject?.name {
-            let uploadable = appsWithVersions.filter(\.hasEditableVersion).map(\.app)
+            let uploadable = appsWithVersions.filter(\.hasScreenshotUploadableVersion).map(\.app)
             let pool = uploadable.isEmpty ? apps : uploadable
             if let match = Self.closestAppByName(projectName: projectName, in: pool) {
                 selectedApp = match
@@ -98,16 +98,44 @@ extension UploadToAppStoreConnectView {
         do {
             let fetched = try await AppStoreConnectAPIService.shared.listAppStoreVersions(appId: app.id)
             versions = fetched.sorted { lhs, rhs in
-                if lhs.isEditable != rhs.isEditable { return lhs.isEditable }
+                if lhs.isScreenshotUploadable != rhs.isScreenshotUploadable { return lhs.isScreenshotUploadable }
+                if lhs.attributes.displayPlatform != rhs.attributes.displayPlatform {
+                    return (lhs.attributes.displayPlatform ?? "") < (rhs.attributes.displayPlatform ?? "")
+                }
                 return lhs.attributes.versionString.compare(
                     rhs.attributes.versionString,
                     options: .numeric
                 ) == .orderedDescending
             }
-            selectedVersion = versions.first(where: { $0.isEditable }) ?? versions.first
+            selectedVersionIds = defaultSelectedVersionIds(from: versions)
+            localizations = []
+            localizationsByVersionId = [:]
+            destinationPlans = []
             advance(to: .pickingVersion)
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    func defaultSelectedVersionIds(from versions: [ASCAppStoreVersion]) -> Set<String> {
+        let editable = versions.filter(\.isScreenshotUploadable)
+        let compatible = editable.filter { version in
+            state.rows.contains { row in
+                guard !row.excludeFromAppStoreConnect,
+                      let detected = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight)
+                else { return false }
+                return detected.accepts(platform: version.attributes.ascPlatform)
+            }
+        }
+        let defaultVersions = compatible.isEmpty ? Array(editable.prefix(1)) : compatible
+        return Set(defaultVersions.map(\.id))
+    }
+
+    func movePastVersionSelection() async {
+        if selectedVersions.count == 1 {
+            await moveToMetadata()
+        } else {
+            await moveToPlan()
         }
     }
 
@@ -121,6 +149,7 @@ extension UploadToAppStoreConnectView {
             async let appInfosTask = AppStoreConnectAPIService.shared.listAppInfos(appId: app.id)
             let (fetchedLocalizations, fetchedAppInfos) = try await (localizationsTask, appInfosTask)
             localizations = fetchedLocalizations
+            localizationsByVersionId[version.id] = fetchedLocalizations
 
             let editableInfo = fetchedAppInfos.first(where: { $0.isEditable }) ?? fetchedAppInfos.first
             let fetchedAppInfoLocalizations: [ASCAppInfoLocalization]
@@ -271,29 +300,73 @@ extension UploadToAppStoreConnectView {
             for i in appInfoDrafts.indices where appInfoDrafts[i].isChanged {
                 appInfoDrafts[i].markSaved()
             }
-            rowPlans = buildRowPlans(preserving: rowPlans)
+            destinationPlans = buildDestinationPlans(preserving: destinationPlans)
             advance(to: .configuringPlan)
         } catch {
             errorMessage = String(localized: "Failed to save metadata: \(error.localizedDescription)")
         }
     }
 
+    func moveToPlan() async {
+        isBusy = true
+        errorMessage = nil
+        defer { isBusy = false }
+        do {
+            try await loadSelectedVersionLocalizations()
+            destinationPlans = buildDestinationPlans(preserving: destinationPlans)
+            advance(to: .configuringPlan)
+        } catch {
+            errorMessage = String(localized: "Could not load App Store data: \(error.localizedDescription)")
+        }
+    }
+
     func refreshLocalizations() async {
-        guard let version = selectedVersion else { return }
+        guard !selectedVersions.isEmpty else { return }
         seedDemoContextIfNeeded()
         isBusy = true
         errorMessage = nil
         defer { isBusy = false }
         do {
-            localizations = try await AppStoreConnectAPIService.shared.listLocalizations(versionId: version.id)
-            rowPlans = buildRowPlans(preserving: rowPlans)
+            try await loadSelectedVersionLocalizations()
+            destinationPlans = buildDestinationPlans(preserving: destinationPlans)
         } catch {
             errorMessage = String(localized: "Could not refresh locales: \(error.localizedDescription)")
         }
     }
 
-    func buildRowPlans(preserving existingPlans: [RowPlan] = []) -> [RowPlan] {
-        let platform = selectedVersion?.attributes.ascPlatform
+    func loadSelectedVersionLocalizations() async throws {
+        for version in selectedVersions {
+            let fetched = try await AppStoreConnectAPIService.shared.listLocalizations(versionId: version.id)
+            localizationsByVersionId[version.id] = fetched
+            if selectedVersion?.id == version.id {
+                localizations = fetched
+            }
+        }
+    }
+
+    func buildDestinationPlans(preserving existingPlans: [DestinationPlan] = []) -> [DestinationPlan] {
+        selectedVersions.map { version in
+            let versionLocalizations = localizationsByVersionId[version.id] ?? []
+            let existingDestination = existingPlans.first(where: { $0.id == version.id })
+            return DestinationPlan(
+                id: version.id,
+                version: version,
+                localizations: versionLocalizations,
+                rowPlans: buildRowPlans(
+                    for: version,
+                    localizations: versionLocalizations,
+                    preserving: existingDestination?.rowPlans ?? []
+                )
+            )
+        }
+    }
+
+    func buildRowPlans(
+        for version: ASCAppStoreVersion,
+        localizations: [ASCAppStoreVersionLocalization],
+        preserving existingPlans: [RowPlan] = []
+    ) -> [RowPlan] {
+        let platform = version.attributes.ascPlatform
         let demoFallbackDisplayType = credentials.isDemoMode
             ? ASCDisplayType.userSelectableCases(forPlatform: platform).first
             : nil
@@ -320,12 +393,13 @@ extension UploadToAppStoreConnectView {
             }
             let compatiblePreserved = existingPlan?.selectedDisplayType.flatMap { $0.accepts(platform: platform) ? $0 : nil }
             let detectedCompatible = (detected?.accepts(platform: platform) ?? false) ? detected : nil
+            let detectedIncompatible = detected != nil && detectedCompatible == nil
             return RowPlan(
                 id: row.id,
                 rowLabel: row.label,
                 rowSize: row.templateSize,
                 templateCount: row.templates.count,
-                isEnabled: existingPlan?.isEnabled ?? (row.inferredStorePlatform != .android),
+                isEnabled: existingPlan?.isEnabled ?? (row.inferredStorePlatform != .android && !detectedIncompatible),
                 detectedDisplayType: detected,
                 selectedDisplayType: compatiblePreserved ?? detectedCompatible ?? demoFallbackDisplayType,
                 localeTargets: targets,
@@ -369,15 +443,19 @@ extension UploadToAppStoreConnectView {
                     appId: selectedApp?.id,
                     appName: selectedApp?.attributes.name ?? "",
                     totalScreenshots: targets.reduce(0) { $0 + $1.templateCount * $1.localizations.count },
-                    localizationCount: Set(targets.flatMap { $0.localizations.map(\.id) }).count
+                    localizationCount: Set(targets.flatMap { target in
+                        target.localizations.map { "\(target.versionId)|\($0.id)" }
+                    }).count,
+                    versionCount: Set(targets.map(\.versionId)).count
                 )
                 uploadSummary = summary
                 step = .done
                 let shotNoun = summary.totalScreenshots == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
                 let locNoun = summary.localizationCount == 1 ? String(localized: "locale") : String(localized: "locales")
+                let versionNoun = summary.versionCount == 1 ? String(localized: "version") : String(localized: "versions")
                 let body = summary.appName.isEmpty
-                    ? String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun)")
-                    : String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) · \(summary.appName)")
+                    ? String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) and \(summary.versionCount) \(versionNoun)")
+                    : String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) and \(summary.versionCount) \(versionNoun) · \(summary.appName)")
                 NotificationService.notify(title: String(localized: "Upload complete"), body: body)
             } catch is CancellationError {
                 errorMessage = String(localized: "Upload cancelled. Any set that was already being replaced may be empty in App Store Connect — re-run the upload to refill it.")
@@ -395,24 +473,28 @@ extension UploadToAppStoreConnectView {
     }
 
     func buildUploadTargets() -> [ASCUploadTarget] {
-        rowPlans.compactMap { plan -> ASCUploadTarget? in
-            guard plan.isEnabled, let displayType = plan.selectedDisplayType else { return nil }
-            guard let row = state.rows.first(where: { $0.id == plan.id }),
-                  !row.excludeFromAppStoreConnect else { return nil }
-            let localizations = plan.localeTargets.flatMap { target -> [ASCUploadLocalization] in
-                guard target.isEnabled else { return [] }
-                return target.selectedCandidates
-                    .map { ASCUploadLocalization(id: $0.id, label: $0.attributes.locale, localeCode: target.appLocaleCode) }
+        destinationPlans.flatMap { destination -> [ASCUploadTarget] in
+            destination.rowPlans.compactMap { plan -> ASCUploadTarget? in
+                guard plan.isEnabled, let displayType = plan.selectedDisplayType else { return nil }
+                guard let row = state.rows.first(where: { $0.id == plan.id }),
+                      !row.excludeFromAppStoreConnect else { return nil }
+                let localizations = plan.localeTargets.flatMap { target -> [ASCUploadLocalization] in
+                    guard target.isEnabled else { return [] }
+                    return target.selectedCandidates
+                        .map { ASCUploadLocalization(id: $0.id, label: $0.attributes.locale, localeCode: target.appLocaleCode) }
+                }
+                guard !localizations.isEmpty else { return nil }
+                return ASCUploadTarget(
+                    versionId: destination.id,
+                    versionLabel: destination.title,
+                    rowId: plan.id,
+                    rowLabel: plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel,
+                    rowSize: plan.rowSize,
+                    displayType: displayType,
+                    localizations: localizations,
+                    templateCount: plan.templateCount
+                )
             }
-            guard !localizations.isEmpty else { return nil }
-            return ASCUploadTarget(
-                rowId: plan.id,
-                rowLabel: plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel,
-                rowSize: plan.rowSize,
-                displayType: displayType,
-                localizations: localizations,
-                templateCount: plan.templateCount
-            )
         }
     }
 
@@ -428,9 +510,12 @@ extension UploadToAppStoreConnectView {
         if let app = selectedApp {
             details.append("App: \(app.attributes.name) (\(app.attributes.bundleId))")
         }
-        if let version = selectedVersion {
-            let platform = version.attributes.displayPlatform.map { " \($0)" } ?? ""
-            details.append("Version: \(version.attributes.versionString)\(platform) · \(version.attributes.displayState)")
+        if !selectedVersions.isEmpty {
+            let versionDetails = selectedVersions.map { version in
+                let platform = version.attributes.displayPlatform.map { "\($0) " } ?? ""
+                return "\(platform)\(version.attributes.versionString) · \(version.attributes.displayState)"
+            }.joined(separator: "\n")
+            details.append("Versions:\n\(versionDetails)")
         }
         if let uploadError = error as? AppStoreConnectUploadError {
             details.append("Technical details:\n\(uploadError.technicalDescription)")

@@ -48,6 +48,7 @@
       }
     },
     " · " : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3485,7 +3486,38 @@
         }
       }
     },
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %@ -> %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@ -> %3$@"
+          }
+        }
+      }
+    },
+    "%@ · %@ · %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@ · %3$@: %4$@"
+          }
+        }
+      }
+    },
     "%@ · %@: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3957,6 +3989,7 @@
       }
     },
     "%lld %@ across %lld %@ · %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3998,6 +4031,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld %@ 横跨 %lld %@ · %@"
+          }
+        }
+      }
+    },
+    "%lld %@ across %lld %@ and %lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@ across %3$lld %4$@ and %5$lld %6$@"
+          }
+        }
+      }
+    },
+    "%lld %@ across %lld %@ and %lld %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@ across %3$lld %4$@ and %5$lld %6$@ · %7$@"
           }
         }
       }
@@ -4105,6 +4158,7 @@
       }
     },
     "%lld %@ will be uploaded across %lld %@ and %lld %@. " : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -4146,6 +4200,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld %@ 将跨 %lld %@ 和 %lld %@ 上传。"
+          }
+        }
+      }
+    },
+    "%lld %@ will be uploaded across %lld %@, %lld %@, and %lld %@. " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@ will be uploaded across %3$lld %4$@, %5$lld %6$@, and %7$lld %8$@. "
           }
         }
       }
@@ -4198,6 +4262,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld × %lld px"
+          }
+        }
+      }
+    },
+    "%lld locale%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld locale%2$@"
           }
         }
       }
@@ -4497,7 +4571,18 @@
         }
       }
     },
+    "%lld screenshot%@ uploaded across %lld locale%@ and %lld version%@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld screenshot%2$@ uploaded across %3$lld locale%4$@ and %5$lld version%6$@."
+          }
+        }
+      }
+    },
     "%lld screenshot%@ uploaded across %lld locale%@." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15039,6 +15124,16 @@
         }
       }
     },
+    "Could not load App Store data: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not load App Store data: %1$@"
+          }
+        }
+      }
+    },
     "Could not load image." : {
       "localizations" : {
         "de" : {
@@ -18221,6 +18316,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消选择形状 (Esc)"
+          }
+        }
+      }
+    },
+    "Destination: %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Destination: %1$@."
           }
         }
       }
@@ -43827,6 +43932,7 @@
       }
     },
     "Select a version" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -44050,6 +44156,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "至少选择一行进行预览和导出。"
+          }
+        }
+      }
+    },
+    "Select versions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select versions"
           }
         }
       }
@@ -45532,6 +45648,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示入职..."
+          }
+        }
+      }
+    },
+    "Show read-only (%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show read-only (%1$lld)"
+          }
+        }
+      }
+    },
+    "Show versions that are locked for review or live. Screenshots can only be uploaded to editable versions." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show versions that are locked for review or live. Screenshots can only be uploaded to editable versions."
           }
         }
       }
@@ -50020,6 +50156,7 @@
       }
     },
     "This version is %@ — screenshots can't be changed. Pick an editable version or create a new one in App Store Connect." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -53367,6 +53504,16 @@
         }
       }
     },
+    "version" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "version"
+          }
+        }
+      }
+    },
     "Version" : {
       "localizations" : {
         "de" : {
@@ -53409,6 +53556,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "版本"
+          }
+        }
+      }
+    },
+    "Version %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Version %1$@"
+          }
+        }
+      }
+    },
+    "Version %@ is %@ — screenshots can't be changed. Pick an editable version or create a new one in App Store Connect." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Version %1$@ is %2$@ — screenshots can't be changed. Pick an editable version or create a new one in App Store Connect."
+          }
+        }
+      }
+    },
+    "versions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "versions"
           }
         }
       }

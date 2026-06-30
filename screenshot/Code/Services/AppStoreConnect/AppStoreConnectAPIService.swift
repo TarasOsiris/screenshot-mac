@@ -76,7 +76,7 @@ final class AppStoreConnectAPIService {
 
     /// Lists apps with their App Store versions inlined via JSON:API `?include`.
     /// One round-trip instead of N+1 — used by the upload wizard to pre-compute
-    /// which apps have an editable version (so the picker can hide locked ones).
+    /// which apps have a version that can accept screenshot uploads (so the picker can hide locked ones).
     func listAppsWithVersions(limit: Int = 200) async throws -> [ASCAppWithVersions] {
         if isDemoMode {
             await demoDelay()
@@ -401,7 +401,7 @@ struct ASCAppWithVersions {
     let app: ASCApp
     let versions: [ASCAppStoreVersion]
 
-    var hasEditableVersion: Bool { versions.contains(where: \.isEditable) }
+    var hasScreenshotUploadableVersion: Bool { versions.contains(where: \.isScreenshotUploadable) }
 }
 
 struct ASCAppListWithVersionsResponse: Decodable {
@@ -515,6 +515,19 @@ struct ASCAppStoreVersion: Decodable, Identifiable {
             return false
         }
     }
+
+    var isScreenshotUploadable: Bool {
+        guard let state = attributes.appStoreState else { return false }
+        return Self.screenshotUploadableStates.contains(state)
+    }
+
+    private static let screenshotUploadableStates: Set<String> = [
+        "PREPARE_FOR_SUBMISSION",
+        "DEVELOPER_REJECTED",
+        "REJECTED",
+        "METADATA_REJECTED",
+        "INVALID_BINARY"
+    ]
 }
 
 struct ASCAppStoreVersionLocalization: Decodable, Identifiable {

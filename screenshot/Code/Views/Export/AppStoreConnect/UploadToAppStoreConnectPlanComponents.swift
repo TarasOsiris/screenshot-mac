@@ -4,6 +4,7 @@ struct ASCUploadSummaryPanel: View {
     let entries: [UploadToAppStoreConnectView.UploadPlanEntry]
     let skipped: [UploadToAppStoreConnectView.UploadPlanEntry]
     let rowGroups: [UploadToAppStoreConnectView.UploadRowGroup]
+    let versionCount: Int
     let localeCount: Int
     let screenshotCount: Int
     let issues: [ASCUploadIssue]
@@ -53,6 +54,7 @@ struct ASCUploadSummaryPanel: View {
     private var metrics: some View {
         HStack(spacing: 10) {
             ASCSummaryMetric(value: "\(entries.count)", label: "sets")
+            ASCSummaryMetric(value: "\(versionCount)", label: "versions")
             ASCSummaryMetric(value: "\(screenshotCount)", label: "screenshots")
             ASCSummaryMetric(value: "\(localeCount)", label: "locales")
         }
@@ -61,7 +63,7 @@ struct ASCUploadSummaryPanel: View {
     @ViewBuilder
     private var selectedUploads: some View {
         if !rowGroups.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text("Selected uploads")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -114,14 +116,18 @@ private struct ASCSummaryMetric: View {
 
 private struct ASCRowPlanGroupRow: View {
     let group: UploadToAppStoreConnectView.UploadRowGroup
+    private static let visibleLocaleLimit = 12
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             HStack {
-                Text("\(group.rowLabel) -> \(group.displayTypeLabel)")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .lineLimit(1)
+                HStack(spacing: 5) {
+                    ASCPlatformBadge(platform: group.destinationPlatform, style: .iconOnly)
+                    Text("\(group.destinationLabel) · \(group.rowLabel) -> \(group.displayTypeLabel)")
+                        .lineLimit(1)
+                }
+                .font(.caption)
+                .fontWeight(.semibold)
                 Spacer()
                 Text("\(group.screenshotCount) screenshot\(group.screenshotCount == 1 ? "" : "s")")
                     .font(.caption2)
@@ -131,19 +137,45 @@ private struct ASCRowPlanGroupRow: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-            ForEach(group.entries) { entry in
-                HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundStyle(.orange)
-                        .font(.caption)
-                    Text("\(entry.projectLocaleLabel) -> \(entry.appStoreLocaleCode ?? entry.projectLocaleCode)")
-                        .font(.caption)
-                        .lineLimit(1)
-                }
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .foregroundStyle(.orange)
+                    .font(.caption2)
+                Text(verbatim: compactLocaleSummary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .help(fullLocaleSummary)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(fullLocaleSummary)
         }
-        .padding(8)
+        .padding(.vertical, 5)
+        .padding(.horizontal, 8)
         .background(Color.primary.opacity(0.035), in: .rect(cornerRadius: 6))
+    }
+
+    private var localeLabels: [String] {
+        group.entries.map { entry in
+            let targetCode = entry.appStoreLocaleCode ?? entry.projectLocaleCode
+            return entry.projectLocaleCode == targetCode
+                ? targetCode
+                : "\(entry.projectLocaleCode) -> \(targetCode)"
+        }
+    }
+
+    private var compactLocaleSummary: String {
+        let labels = localeLabels
+        let visible = labels.prefix(Self.visibleLocaleLimit)
+        let hiddenCount = labels.count - visible.count
+        let noun = labels.count == 1 ? String(localized: "locale") : String(localized: "locales")
+        let suffix = hiddenCount > 0 ? ", +\(hiddenCount)" : ""
+        return "\(labels.count) \(noun): \(visible.joined(separator: ", "))\(suffix)"
+    }
+
+    private var fullLocaleSummary: String {
+        localeLabels.joined(separator: ", ")
     }
 }
 
@@ -155,7 +187,8 @@ private struct ASCSkippedPlanEntryRow: View {
             Image(systemName: "minus.circle")
                 .foregroundStyle(.secondary)
                 .font(.caption)
-            Text("\(entry.projectLocaleLabel) · \(entry.rowLabel): \(entry.skipReason ?? String(localized: "Skipped"))")
+            ASCPlatformBadge(platform: entry.destinationPlatform, style: .iconOnly)
+            Text("\(entry.destinationLabel) · \(entry.projectLocaleLabel) · \(entry.rowLabel): \(entry.skipReason ?? String(localized: "Skipped"))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -227,9 +260,10 @@ private struct ASCIssueRow: View {
 
 struct ASCUploadRowPlanCard: View {
     @Binding var plan: UploadToAppStoreConnectView.RowPlan
+    let detailsId: String
     let expanded: Bool
     let availableDisplayTypes: [ASCDisplayType]
-    @Binding var displayTypeDetailsPlanId: UUID?
+    @Binding var displayTypeDetailsPlanId: String?
     let onToggleExpanded: () -> Void
 
     var body: some View {
@@ -239,6 +273,7 @@ struct ASCUploadRowPlanCard: View {
             if expanded && plan.isEnabled {
                 ASCDisplayTypePicker(
                     plan: $plan,
+                    detailsId: detailsId,
                     availableDisplayTypes: availableDisplayTypes,
                     displayTypeDetailsPlanId: $displayTypeDetailsPlanId
                 )
@@ -283,8 +318,9 @@ struct ASCUploadRowPlanCard: View {
 
 private struct ASCDisplayTypePicker: View {
     @Binding var plan: UploadToAppStoreConnectView.RowPlan
+    let detailsId: String
     let availableDisplayTypes: [ASCDisplayType]
-    @Binding var displayTypeDetailsPlanId: UUID?
+    @Binding var displayTypeDetailsPlanId: String?
 
     private var displayTypeGroups: [(String, [ASCDisplayType])] {
         [
@@ -317,11 +353,11 @@ private struct ASCDisplayTypePicker: View {
 
     @ViewBuilder
     private var detectedDisplayTypeAction: some View {
-        if let detected = plan.detectedDisplayType, detected == plan.selectedDisplayType {
+        if let detected = plan.detectedDisplayType, detected == plan.selectedDisplayType, availableDisplayTypes.contains(detected) {
             Label("Auto-detected", systemImage: "checkmark.circle")
                 .foregroundStyle(.green)
                 .font(.caption)
-        } else if let detected = plan.detectedDisplayType {
+        } else if let detected = plan.detectedDisplayType, availableDisplayTypes.contains(detected) {
             Button {
                 plan.selectedDisplayType = detected
             } label: {
@@ -334,7 +370,7 @@ private struct ASCDisplayTypePicker: View {
 
     private var detailsButton: some View {
         Button {
-            displayTypeDetailsPlanId = plan.id
+            displayTypeDetailsPlanId = detailsId
         } label: {
             Image(systemName: "info.circle")
                 #if os(iOS)
@@ -344,7 +380,7 @@ private struct ASCDisplayTypePicker: View {
         }
         .buttonStyle(.plain)
         .popover(isPresented: Binding(
-            get: { displayTypeDetailsPlanId == plan.id },
+            get: { displayTypeDetailsPlanId == detailsId },
             set: { isPresented in
                 if !isPresented { displayTypeDetailsPlanId = nil }
             }

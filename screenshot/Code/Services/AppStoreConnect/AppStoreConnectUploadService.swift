@@ -59,6 +59,8 @@ struct ASCUploadLocalization {
 
 struct ASCUploadTarget: Identifiable {
     let id = UUID()
+    let versionId: String
+    let versionLabel: String
     let rowId: UUID
     let rowLabel: String
     let rowSize: CGSize
@@ -75,6 +77,7 @@ struct ASCUploadProgress {
 
 struct ASCUploadFailureContext {
     let operation: String
+    let versionLabel: String
     let rowLabel: String
     let displayTypeLabel: String
     let displayTypeRawValue: String
@@ -94,6 +97,7 @@ struct ASCUploadFailureContext {
         underlyingError: Error
     ) {
         self.operation = operation
+        self.versionLabel = target.versionLabel
         self.rowLabel = target.rowLabel
         self.displayTypeLabel = target.displayType.label
         self.displayTypeRawValue = target.displayType.appStoreConnectValue
@@ -138,6 +142,7 @@ struct ASCUploadFailureContext {
         if isDisplayTypeNotAllowed {
             var messages = [
                 String(localized: "Could not create the screenshot set for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel)."),
+                String(localized: "Destination: \(versionLabel)."),
                 String(localized: "App Store Connect does not allow \(displayTypeLabel) (\(displayTypeRawValue)) for this app version/localization. This usually means the selected app version does not support that device family, such as uploading iPad screenshots for an iPhone-only app, or App Store Connect does not accept this display type for the selected platform."),
                 String(localized: "Disable this row, choose a display type that App Store Connect accepts for this app, or update the app's device support before retrying."),
             ]
@@ -151,6 +156,7 @@ struct ASCUploadFailureContext {
         if httpStatus == 401 || httpStatus == 403 {
             return [
                 String(localized: "Could not \(operation) for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel)."),
+                String(localized: "Destination: \(versionLabel)."),
                 String(localized: "App Store Connect rejected the request because the API key is not authorized for this app or action. Check that the key has access to this app and enough App Store Connect permissions to edit app metadata."),
                 String(localized: "Original response: \(originalMessage)")
             ].joined(separator: "\n\n")
@@ -158,6 +164,7 @@ struct ASCUploadFailureContext {
 
         var messages = [
             String(localized: "Could not \(operation) for \(rowLabel) (\(displayTypeLabel)) in \(localeLabel)."),
+            String(localized: "Destination: \(versionLabel)."),
             String(localized: "App Store Connect did not accept the request. Check the selected app, version, display type, and locale, then retry."),
         ]
         if existingSetWasDeleted {
@@ -170,6 +177,7 @@ struct ASCUploadFailureContext {
     nonisolated var technicalMessage: String {
         [
             "Operation: \(operation)",
+            "Destination: \(versionLabel)",
             "Row: \(rowLabel)",
             "Display type: \(displayTypeLabel)",
             "ASC display type: \(displayTypeRawValue)",
@@ -229,7 +237,7 @@ final class AppStoreConnectUploadService {
 
             for localization in target.localizations {
                 try Task.checkCancellation()
-                let planLabel = "\(target.rowLabel) · \(localization.label) · \(target.displayType.label)"
+                let planLabel = "\(target.versionLabel) · \(target.rowLabel) · \(localization.label) · \(target.displayType.label)"
                 let fileNames = appState.referencedImageFileNames(forRow: row, localeCode: localization.localeCode)
                 let rowImages = appState.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
                 let renderedScreenshots = try renderScreenshots(
@@ -280,7 +288,7 @@ final class AppStoreConnectUploadService {
 
                 for rendered in renderedScreenshots {
                     try Task.checkCancellation()
-                    let label = "\(target.rowLabel) · \(localization.label) · \(rendered.templateIndex + 1)/\(target.templateCount)"
+                    let label = "\(target.versionLabel) · \(target.rowLabel) · \(localization.label) · \(rendered.templateIndex + 1)/\(target.templateCount)"
                     emit(label)
                     try await uploadOneScreenshot(
                         setId: set.id,
@@ -316,7 +324,7 @@ final class AppStoreConnectUploadService {
 
         for templateIndex in 0..<target.templateCount {
             try Task.checkCancellation()
-            emit("Rendering \(target.rowLabel) · \(localization.label) · \(templateIndex + 1)/\(target.templateCount)")
+            emit("Rendering \(target.versionLabel) · \(target.rowLabel) · \(localization.label) · \(templateIndex + 1)/\(target.templateCount)")
             let image = ExportService.renderSingleTemplateImage(
                 index: templateIndex,
                 row: row,
@@ -354,7 +362,7 @@ final class AppStoreConnectUploadService {
         emit: (String) -> Void
     ) async throws {
         let screenshotLabel = "screenshot \(templateIndex + 1)"
-        let planLabel = "\(target.rowLabel) · \(localization.label) · \(screenshotLabel)"
+        let planLabel = "\(target.versionLabel) · \(target.rowLabel) · \(localization.label) · \(screenshotLabel)"
         emit("Reserving \(planLabel)")
         let reserved = try await performUploadStep(
             "reserve \(screenshotLabel)",

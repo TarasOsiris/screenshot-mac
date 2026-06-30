@@ -12,12 +12,12 @@ struct ASCAppSelectionStepView: View {
 
     private var visibleAppsWithVersions: [ASCAppWithVersions] {
         hideNonUploadable
-            ? appsWithVersions.filter(\.hasEditableVersion)
+            ? appsWithVersions.filter(\.hasScreenshotUploadableVersion)
             : appsWithVersions
     }
 
     private var nonUploadableAppCount: Int {
-        appsWithVersions.filter { !$0.hasEditableVersion }.count
+        appsWithVersions.filter { !$0.hasScreenshotUploadableVersion }.count
     }
 
     var body: some View {
@@ -87,17 +87,35 @@ struct ASCVersionSelectionStepView: View {
     let selectedApp: ASCApp?
     let versions: [ASCAppStoreVersion]
 
-    @Binding var selectedVersion: ASCAppStoreVersion?
+    @Binding var selectedVersionIds: Set<String>
+    @State private var showReadOnlyVersions = false
 
-    private var hasEditableVersion: Bool {
-        versions.contains(where: \.isEditable)
+    private var hasUploadableVersion: Bool {
+        versions.contains(where: \.isScreenshotUploadable)
+    }
+
+    private var readOnlyVersionCount: Int {
+        versions.filter { !$0.isScreenshotUploadable }.count
+    }
+
+    private var visibleVersions: [ASCAppStoreVersion] {
+        showReadOnlyVersions ? versions : versions.filter(\.isScreenshotUploadable)
+    }
+
+    private var versionGroups: [(String, [ASCAppStoreVersion])] {
+        let grouped = Dictionary(grouping: visibleVersions) { version in
+            version.attributes.displayPlatform ?? String(localized: "Other")
+        }
+        return grouped.keys.sorted().map { key in
+            (key, grouped[key] ?? [])
+        }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             title
             appHeader
-            if !versions.isEmpty && !hasEditableVersion {
+            if !versions.isEmpty && !hasUploadableVersion {
                 noEditableVersionCallout
             }
             versionList
@@ -106,10 +124,21 @@ struct ASCVersionSelectionStepView: View {
     }
 
     private var title: some View {
-        Text("Select a version")
-            .font(.headline)
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
+        HStack(alignment: .firstTextBaseline) {
+            Text("Select versions")
+                .font(.headline)
+            Spacer()
+            if readOnlyVersionCount > 0 {
+                Toggle(isOn: $showReadOnlyVersions) {
+                    Text("Show read-only (\(readOnlyVersionCount))")
+                }
+                .toggleStyle(.switch)
+                .compactControlSize()
+                .help("Show versions that are locked for review or live. Screenshots can only be uploaded to editable versions.")
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
     }
 
     @ViewBuilder
@@ -151,13 +180,22 @@ struct ASCVersionSelectionStepView: View {
     }
 
     private var versionList: some View {
-        List(selection: Binding(
-            get: { selectedVersion?.id },
-            set: selectVersion
-        )) {
-            ForEach(versions) { version in
-                ASCVersionSelectionRow(version: version)
-                    .tag(version.id as String?)
+        List {
+            ForEach(versionGroups, id: \.0) { group in
+                Section(group.0) {
+                    ForEach(group.1) { version in
+                        Toggle(isOn: $selectedVersionIds.contains(version.id)) {
+                            ASCVersionSelectionRow(version: version)
+                        }
+                        #if os(macOS)
+                        .toggleStyle(.checkbox)
+                        #else
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                        #endif
+                        .disabled(!version.isScreenshotUploadable)
+                    }
+                }
             }
         }
         .ascSelectionListStyle()
@@ -165,18 +203,15 @@ struct ASCVersionSelectionStepView: View {
 
     @ViewBuilder
     private var selectedReadOnlyVersionWarning: some View {
-        if let selectedVersion, !selectedVersion.isEditable {
-            Label("This version is \(selectedVersion.attributes.displayState) — screenshots can't be changed. Pick an editable version or create a new one in App Store Connect.",
+        let selectedReadOnlyVersions = versions.filter { selectedVersionIds.contains($0.id) && !$0.isScreenshotUploadable }
+        if let selectedVersion = selectedReadOnlyVersions.first {
+            Label("Version \(selectedVersion.attributes.versionString) is \(selectedVersion.attributes.displayState) — screenshots can't be changed. Pick an editable version or create a new one in App Store Connect.",
                   systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
                 .font(.caption)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 4)
         }
-    }
-
-    private func selectVersion(id: String?) {
-        selectedVersion = versions.first { $0.id == id }
     }
 }
 
@@ -196,7 +231,7 @@ private struct ASCVersionSelectionRow: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if !version.isEditable {
+            if !version.isScreenshotUploadable {
                 Label("Read-only", systemImage: "lock.fill")
                     .foregroundStyle(.orange)
                     .font(.caption)
@@ -206,13 +241,10 @@ private struct ASCVersionSelectionRow: View {
 
     @ViewBuilder
     private var platformBadge: some View {
-        if let platform = version.attributes.displayPlatform {
-            Text(platform)
-                .font(.caption2)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 1)
-                .background(Color.secondary.opacity(0.15), in: .capsule)
-        }
+        ASCPlatformBadge(
+            platform: version.attributes.ascPlatform,
+            fallbackName: version.attributes.displayPlatform
+        )
     }
 }
 

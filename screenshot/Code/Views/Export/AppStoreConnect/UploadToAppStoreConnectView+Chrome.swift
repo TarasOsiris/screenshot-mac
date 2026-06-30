@@ -2,15 +2,17 @@ import SwiftUI
 
 extension UploadToAppStoreConnectView {
     var confirmationMessage: String {
-        let groups = selectedLocaleGroups
-        let screenshotCount = groups.reduce(0) { $0 + $1.screenshotCount }
-        let localeCount = groups.count
-        let setCount = selectedUploadPlanEntries.count
+        let entries = selectedUploadPlanEntries
+        let screenshotCount = entries.reduce(0) { $0 + $1.screenshotCount }
+        let localeCount = Set(entries.map { "\($0.destinationId)|\($0.appStoreLocaleCode ?? $0.projectLocaleCode)" }).count
+        let versionCount = Set(entries.map(\.destinationId)).count
+        let setCount = entries.count
         let shotNoun = screenshotCount == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
         let setNoun = setCount == 1 ? String(localized: "set") : String(localized: "sets")
         let locNoun = localeCount == 1 ? String(localized: "locale") : String(localized: "locales")
+        let versionNoun = versionCount == 1 ? String(localized: "version") : String(localized: "versions")
         return String(localized: "Existing screenshots in each matching display type set will be deleted and replaced. ") +
-            String(localized: "\(screenshotCount) \(shotNoun) will be uploaded across \(setCount) \(setNoun) and \(localeCount) \(locNoun). ") +
+            String(localized: "\(screenshotCount) \(shotNoun) will be uploaded across \(setCount) \(setNoun), \(localeCount) \(locNoun), and \(versionCount) \(versionNoun). ") +
             String(localized: "This cannot be undone.")
     }
 
@@ -120,7 +122,7 @@ extension UploadToAppStoreConnectView {
             ForwardPrimary(titleKey: "Next", action: { Task { await moveToVersion() } },
                            isEnabled: selectedApp != nil && !isBusy)
         case .pickingVersion:
-            ForwardPrimary(titleKey: "Next", action: { Task { await moveToMetadata() } },
+            ForwardPrimary(titleKey: "Next", action: { Task { await movePastVersionSelection() } },
                            isEnabled: canAdvanceFromVersion && !isBusy)
         case .editingMetadata:
             ForwardPrimary(titleKey: hasMetadataChanges ? "Save & Continue" : "Continue",
@@ -152,8 +154,7 @@ extension UploadToAppStoreConnectView {
     }
 
     var canAdvanceFromVersion: Bool {
-        guard let version = selectedVersion else { return false }
-        return version.isEditable
+        !selectedVersions.isEmpty && selectedVersions.allSatisfy(\.isScreenshotUploadable)
     }
 
     func goBack() {
@@ -165,7 +166,7 @@ extension UploadToAppStoreConnectView {
         case .editingMetadata:
             step = .pickingVersion
         case .configuringPlan:
-            step = .editingMetadata
+            step = selectedVersions.count == 1 ? .editingMetadata : .pickingVersion
         default: break
         }
     }
@@ -175,15 +176,14 @@ extension UploadToAppStoreConnectView {
     }
 
     var validationIssues: [ASCUploadIssue] {
-        guard let version = selectedVersion else { return [] }
-        let raw = ASCUploadValidator.validate(version: version, plans: rowPlans)
+        let raw = ASCUploadValidator.validate(destinations: destinationPlans)
         guard credentials.isDemoMode else { return raw }
         // In demo mode the upload is simulated, so per-row App Store rules (size
         // match, 3–10 screenshot count, duplicate target, locale matching) become
         // advisory warnings instead of hard blockers — the wizard must run end-to-end
         // for any project. Structural issues (no rows / no enabled rows / version
         // not editable) keep their original severity.
-        return raw.map { $0.scope == nil ? $0 : $0.with(severity: .warning) }
+        return raw.map { $0.demoDowngradable ? $0.with(severity: .warning) : $0 }
     }
 
     var canStartUpload: Bool {
@@ -191,50 +191,55 @@ extension UploadToAppStoreConnectView {
     }
 
     var uploadPlanEntries: [UploadPlanEntry] {
-        rowPlans.flatMap { plan -> [UploadPlanEntry] in
-            guard plan.isEnabled else { return [] }
-            let rowLabel = plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel
-            let sourceSizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
-            let displayTypeLabel = plan.selectedDisplayType?.label ?? String(localized: "No display type selected")
-            let displayTypeRawValue = plan.selectedDisplayType?.appStoreConnectValue ?? "none"
+        destinationPlans.flatMap { destination -> [UploadPlanEntry] in
+            destination.rowPlans.flatMap { plan -> [UploadPlanEntry] in
+                guard plan.isEnabled else { return [] }
+                let rowLabel = plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel
+                let sourceSizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
+                let displayTypeLabel = plan.selectedDisplayType?.label ?? String(localized: "No display type selected")
+                let displayTypeRawValue = plan.selectedDisplayType?.appStoreConnectValue ?? "none"
 
-            return plan.localeTargets.flatMap { target -> [UploadPlanEntry] in
-                func entry(idSuffix: String, appStoreLocaleCode: String?, isSelected: Bool, skipReason: String?) -> UploadPlanEntry {
-                    UploadPlanEntry(
-                        id: "\(plan.id.uuidString)-\(target.id.uuidString)\(idSuffix)",
-                        rowPlanId: plan.id,
-                        rowLabel: rowLabel,
-                        sourceSizeLabel: sourceSizeLabel,
-                        displayTypeLabel: displayTypeLabel,
-                        displayTypeRawValue: displayTypeRawValue,
-                        projectLocaleLabel: target.appLocaleLabel,
-                        projectLocaleCode: target.appLocaleCode,
-                        appStoreLocaleCode: appStoreLocaleCode,
-                        templateCount: plan.templateCount,
-                        isSelected: isSelected,
-                        skipReason: skipReason
-                    )
-                }
-
-                let selectedCandidates = target.selectedCandidates
-                if target.isEnabled, plan.selectedDisplayType != nil, !selectedCandidates.isEmpty {
-                    // One entry per App Store destination this locale fans out to.
-                    return selectedCandidates.map { candidate in
-                        entry(idSuffix: "-\(candidate.id)", appStoreLocaleCode: candidate.attributes.locale, isSelected: true, skipReason: nil)
+                return plan.localeTargets.flatMap { target -> [UploadPlanEntry] in
+                    func entry(idSuffix: String, appStoreLocaleCode: String?, isSelected: Bool, skipReason: String?) -> UploadPlanEntry {
+                        UploadPlanEntry(
+                            id: "\(destination.id)-\(plan.id.uuidString)-\(target.id.uuidString)\(idSuffix)",
+                            destinationId: destination.id,
+                            destinationLabel: destination.title,
+                            destinationPlatform: destination.version.attributes.ascPlatform,
+                            rowPlanId: plan.id,
+                            rowLabel: rowLabel,
+                            sourceSizeLabel: sourceSizeLabel,
+                            displayTypeLabel: displayTypeLabel,
+                            displayTypeRawValue: displayTypeRawValue,
+                            projectLocaleLabel: target.appLocaleLabel,
+                            projectLocaleCode: target.appLocaleCode,
+                            appStoreLocaleCode: appStoreLocaleCode,
+                            templateCount: plan.templateCount,
+                            isSelected: isSelected,
+                            skipReason: skipReason
+                        )
                     }
-                }
 
-                let skipReason: String
-                if target.candidates.isEmpty {
-                    skipReason = String(localized: "No matching App Store locale")
-                } else if !target.isEnabled {
-                    skipReason = String(localized: "Unchecked")
-                } else if plan.selectedDisplayType == nil {
-                    skipReason = String(localized: "No display type selected")
-                } else {
-                    skipReason = String(localized: "No App Store locale selected")
+                    let selectedCandidates = target.selectedCandidates
+                    if target.isEnabled, plan.selectedDisplayType != nil, !selectedCandidates.isEmpty {
+                        // One entry per App Store destination this locale fans out to.
+                        return selectedCandidates.map { candidate in
+                            entry(idSuffix: "-\(candidate.id)", appStoreLocaleCode: candidate.attributes.locale, isSelected: true, skipReason: nil)
+                        }
+                    }
+
+                    let skipReason: String
+                    if target.candidates.isEmpty {
+                        skipReason = String(localized: "No matching App Store locale")
+                    } else if !target.isEnabled {
+                        skipReason = String(localized: "Unchecked")
+                    } else if plan.selectedDisplayType == nil {
+                        skipReason = String(localized: "No display type selected")
+                    } else {
+                        skipReason = String(localized: "No App Store locale selected")
+                    }
+                    return [entry(idSuffix: "", appStoreLocaleCode: nil, isSelected: false, skipReason: skipReason)]
                 }
-                return [entry(idSuffix: "", appStoreLocaleCode: nil, isSelected: false, skipReason: skipReason)]
             }
         }
     }
@@ -255,11 +260,11 @@ extension UploadToAppStoreConnectView {
     /// parameter so callers that already computed `uploadPlanEntries` don't recompute it.
     func localeGroups(from entries: [UploadPlanEntry]) -> [UploadLocaleGroup] {
         let grouped = Dictionary(grouping: entries) { entry in
-            entry.appStoreLocaleCode ?? entry.projectLocaleCode
+            "\(entry.destinationId)|\(entry.appStoreLocaleCode ?? entry.projectLocaleCode)"
         }
         return grouped.keys.sorted().map { code in
             let groupEntries = grouped[code] ?? []
-            let label = groupEntries.first.map { "\($0.projectLocaleLabel) -> \(code)" } ?? code
+            let label = groupEntries.first.map { "\($0.destinationLabel) · \($0.projectLocaleLabel) -> \($0.appStoreLocaleCode ?? $0.projectLocaleCode)" } ?? code
             return UploadLocaleGroup(id: code, label: label, entries: groupEntries)
         }
     }
@@ -267,16 +272,19 @@ extension UploadToAppStoreConnectView {
     /// Group entries by source row, preserving the row order in which they were generated, so the
     /// constant row/display-type details render once instead of repeating under every locale.
     func rowGroups(from entries: [UploadPlanEntry]) -> [UploadRowGroup] {
-        var order: [UUID] = []
-        var grouped: [UUID: [UploadPlanEntry]] = [:]
+        var order: [String] = []
+        var grouped: [String: [UploadPlanEntry]] = [:]
         for entry in entries {
-            if grouped[entry.rowPlanId] == nil { order.append(entry.rowPlanId) }
-            grouped[entry.rowPlanId, default: []].append(entry)
+            let key = "\(entry.destinationId)|\(entry.rowPlanId.uuidString)"
+            if grouped[key] == nil { order.append(key) }
+            grouped[key, default: []].append(entry)
         }
         return order.compactMap { key in
             guard let groupEntries = grouped[key], let first = groupEntries.first else { return nil }
             return UploadRowGroup(
-                id: key.uuidString,
+                id: key,
+                destinationLabel: first.destinationLabel,
+                destinationPlatform: first.destinationPlatform,
                 rowLabel: first.rowLabel,
                 sourceSizeLabel: first.sourceSizeLabel,
                 displayTypeLabel: first.displayTypeLabel,

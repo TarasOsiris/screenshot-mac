@@ -17,23 +17,64 @@ struct ASCUploadIssue: Identifiable {
     let scope: String?
     let message: String
     let hint: String?
+    let demoDowngradable: Bool
 
     // Stable identity so ForEach does not re-diff the whole panel every render.
     var id: String { "\(severity)|\(scope ?? "")|\(message)" }
 
-    init(severity: Severity, scope: String? = nil, message: String, hint: String? = nil) {
+    init(
+        severity: Severity,
+        scope: String? = nil,
+        message: String,
+        hint: String? = nil,
+        demoDowngradable: Bool = false
+    ) {
         self.severity = severity
         self.scope = scope
         self.message = message
         self.hint = hint
+        self.demoDowngradable = demoDowngradable
     }
 
     func with(severity: Severity) -> ASCUploadIssue {
-        ASCUploadIssue(severity: severity, scope: scope, message: message, hint: hint)
+        ASCUploadIssue(
+            severity: severity,
+            scope: scope,
+            message: message,
+            hint: hint,
+            demoDowngradable: demoDowngradable
+        )
+    }
+
+    func scoped(to destination: String) -> ASCUploadIssue {
+        let combinedScope = scope.map { "\(destination) · \($0)" } ?? destination
+        return ASCUploadIssue(
+            severity: severity,
+            scope: combinedScope,
+            message: message,
+            hint: hint,
+            demoDowngradable: demoDowngradable
+        )
     }
 }
 
 enum ASCUploadValidator {
+    static func validate(destinations: [UploadToAppStoreConnectView.DestinationPlan]) -> [ASCUploadIssue] {
+        if destinations.isEmpty {
+            return [
+                ASCUploadIssue(
+                    severity: .error,
+                    message: "Select at least one editable version."
+                )
+            ]
+        }
+
+        return destinations.flatMap { destination in
+            validate(version: destination.version, plans: destination.rowPlans)
+                .map { $0.scoped(to: destination.title) }
+        }
+    }
+
     /// Runs all pre-flight checks that don't require rendering or network calls.
     static func validate(
         version: ASCAppStoreVersion,
@@ -41,7 +82,7 @@ enum ASCUploadValidator {
     ) -> [ASCUploadIssue] {
         var issues: [ASCUploadIssue] = []
 
-        if !version.isEditable {
+        if !version.isScreenshotUploadable {
             issues.append(ASCUploadIssue(
                 severity: .error,
                 message: "Version \(version.attributes.versionString) is \(version.attributes.displayState). Screenshots can only be changed when the version is editable.",
@@ -78,7 +119,8 @@ enum ASCUploadValidator {
                     severity: .error,
                     scope: rowName,
                     message: "Pick a display type for this row (\(sizeLabel)).",
-                    hint: "Use the \"Display type\" picker above."
+                    hint: "Use the \"Display type\" picker above.",
+                    demoDowngradable: true
                 ))
                 continue
             }
@@ -93,7 +135,8 @@ enum ASCUploadValidator {
                     message: "Row size \(sizeLabel) isn't accepted by App Store Connect for \(displayType.label).",
                     hint: accepted.isEmpty
                         ? "Pick a different display type."
-                        : "Resize the row to one of: \(accepted), or pick a matching display type."
+                        : "Resize the row to one of: \(accepted), or pick a matching display type.",
+                    demoDowngradable: true
                 ))
             }
 
@@ -103,7 +146,8 @@ enum ASCUploadValidator {
                     severity: .error,
                     scope: rowName,
                     message: "\(displayType.label) can't be uploaded to a \(platform.displayName) version.",
-                    hint: "Pick a display type that matches the app's platform."
+                    hint: "Pick a display type that matches the app's platform.",
+                    demoDowngradable: true
                 ))
             }
 
@@ -112,7 +156,8 @@ enum ASCUploadValidator {
                     severity: .error,
                     scope: rowName,
                     message: "App Store Connect requires at least \(ASCUploadLimits.minScreenshotsPerSet) screenshots per display type; this row has \(plan.templateCount).",
-                    hint: "Add more screenshot columns to this row."
+                    hint: "Add more screenshot columns to this row.",
+                    demoDowngradable: true
                 ))
             }
             if plan.templateCount > ASCUploadLimits.maxScreenshotsPerSet {
@@ -120,7 +165,8 @@ enum ASCUploadValidator {
                     severity: .error,
                     scope: rowName,
                     message: "App Store Connect allows at most \(ASCUploadLimits.maxScreenshotsPerSet) screenshots per display type; this row has \(plan.templateCount).",
-                    hint: "Remove columns to bring the count to \(ASCUploadLimits.maxScreenshotsPerSet) or fewer."
+                    hint: "Remove columns to bring the count to \(ASCUploadLimits.maxScreenshotsPerSet) or fewer.",
+                    demoDowngradable: true
                 ))
             }
 
@@ -130,7 +176,8 @@ enum ASCUploadValidator {
                     severity: .error,
                     scope: rowName,
                     message: "Pick at least one App Store locale to upload to.",
-                    hint: "Enable a locale checkbox and choose an App Store locale."
+                    hint: "Enable a locale checkbox and choose an App Store locale.",
+                    demoDowngradable: true
                 ))
             }
 
@@ -145,7 +192,8 @@ enum ASCUploadValidator {
                                 severity: .error,
                                 scope: rowName,
                                 message: "This row uploads to the same App Store screenshot set as \(existingRowName).",
-                                hint: "Disable one of these rows or choose a different display type before uploading."
+                                hint: "Disable one of these rows or choose a different display type before uploading.",
+                                demoDowngradable: true
                             ))
                         }
                     } else {
@@ -160,7 +208,8 @@ enum ASCUploadValidator {
                     severity: .error,
                     scope: rowName,
                     message: "Choose the App Store locale for \(target.appLocaleLabel).",
-                    hint: "Use the locale picker in this row, or disable this locale."
+                    hint: "Use the locale picker in this row, or disable this locale.",
+                    demoDowngradable: true
                 ))
             }
 
@@ -170,7 +219,8 @@ enum ASCUploadValidator {
                     severity: .error,
                     scope: rowName,
                     message: "No App Store locale matches \(target.appLocaleLabel) on this version.",
-                    hint: "Add the locale in App Store Connect, or disable this locale here."
+                    hint: "Add the locale in App Store Connect, or disable this locale here.",
+                    demoDowngradable: true
                 ))
             }
         }

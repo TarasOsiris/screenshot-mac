@@ -25,9 +25,10 @@ struct UploadToAppStoreConnectView: View {
     @AppStorage("uploadHideNonUploadable") var hideNonUploadable: Bool = true
 
     @State var versions: [ASCAppStoreVersion] = []
-    @State var selectedVersion: ASCAppStoreVersion?
+    @State var selectedVersionIds: Set<String> = []
 
     @State var localizations: [ASCAppStoreVersionLocalization] = []
+    @State var localizationsByVersionId: [String: [ASCAppStoreVersionLocalization]] = [:]
 
     @State var versionDrafts: [VersionLocaleDraft] = []
     @State var appInfoDrafts: [AppInfoLocaleDraft] = []
@@ -35,9 +36,9 @@ struct UploadToAppStoreConnectView: View {
     @State var originalCopyright: String = ""
     @State var selectedMetadataLocale: String?
 
-    @State var rowPlans: [RowPlan] = []
+    @State var destinationPlans: [DestinationPlan] = []
     @State var isPreflightExpanded = true
-    @State var collapsedRowPlanIds: Set<UUID> = []   // absent = expanded (default)
+    @State var collapsedRowPlanIds: Set<String> = []   // absent = expanded (default)
     @State var uploadProgress: ASCUploadProgress?
     @State var uploadTask: Task<Void, Never>?
     @State var uploadSummary: UploadSummary?
@@ -46,7 +47,7 @@ struct UploadToAppStoreConnectView: View {
     /// Full error text (summary + API response + context). When nil, the Details button falls back to `errorMessage`.
     @State var errorDetailsText: String?
     @State var presentedErrorDetails: ASCUploadFailureDetailItem?
-    @State var displayTypeDetailsPlanId: UUID?
+    @State var displayTypeDetailsPlanId: String?
     @State var isBusy = false
     @State var isConfirmingUpload = false
     @State var credentials = AppStoreConnectCredentialsStore.shared
@@ -56,6 +57,7 @@ struct UploadToAppStoreConnectView: View {
         let appName: String
         let totalScreenshots: Int
         let localizationCount: Int
+        let versionCount: Int
     }
 
     enum Step: Hashable {
@@ -157,6 +159,25 @@ struct UploadToAppStoreConnectView: View {
         var inferredStorePlatform: StorePlatform?
     }
 
+    struct DestinationPlan: Identifiable {
+        let id: String
+        var version: ASCAppStoreVersion
+        var localizations: [ASCAppStoreVersionLocalization]
+        var rowPlans: [RowPlan]
+
+        var title: String {
+            let versionText = String(localized: "Version \(version.attributes.versionString)")
+            if let platform = version.attributes.displayPlatform {
+                return "\(platform) · \(versionText)"
+            }
+            return versionText
+        }
+
+        var subtitle: String {
+            version.attributes.displayState
+        }
+    }
+
     struct LocaleTarget: Identifiable {
         let id = UUID()
         var appLocaleCode: String
@@ -170,11 +191,14 @@ struct UploadToAppStoreConnectView: View {
         }
     }
 
-    struct UploadPlanEntry: Identifiable {
-        let id: String
-        let rowPlanId: UUID
-        let rowLabel: String
-        let sourceSizeLabel: String
+        struct UploadPlanEntry: Identifiable {
+            let id: String
+            let destinationId: String
+            let destinationLabel: String
+            let destinationPlatform: ASCPlatform?
+            let rowPlanId: UUID
+            let rowLabel: String
+            let sourceSizeLabel: String
         let displayTypeLabel: String
         let displayTypeRawValue: String
         let projectLocaleLabel: String
@@ -197,11 +221,13 @@ struct UploadToAppStoreConnectView: View {
 
     /// One per source row: the row/display-type details are constant across locales, so they're
     /// shown once in the group header and the varying locale destinations are listed beneath.
-    struct UploadRowGroup: Identifiable {
-        let id: String
-        let rowLabel: String
-        let sourceSizeLabel: String
-        let displayTypeLabel: String
+        struct UploadRowGroup: Identifiable {
+            let id: String
+            let destinationLabel: String
+            let destinationPlatform: ASCPlatform?
+            let rowLabel: String
+            let sourceSizeLabel: String
+            let displayTypeLabel: String
         let displayTypeRawValue: String
         let templateCount: Int
         let entries: [UploadPlanEntry]
@@ -210,6 +236,15 @@ struct UploadToAppStoreConnectView: View {
     }
 
     var apps: [ASCApp] { appsWithVersions.map(\.app) }
+
+    var selectedVersions: [ASCAppStoreVersion] {
+        versions.filter { selectedVersionIds.contains($0.id) }
+    }
+
+    var selectedVersion: ASCAppStoreVersion? {
+        let selected = selectedVersions
+        return selected.count == 1 ? selected.first : nil
+    }
 
     var body: some View {
         #if os(macOS)

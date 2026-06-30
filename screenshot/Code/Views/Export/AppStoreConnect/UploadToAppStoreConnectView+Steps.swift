@@ -65,7 +65,7 @@ extension UploadToAppStoreConnectView {
         ASCVersionSelectionStepView(
             selectedApp: selectedApp,
             versions: versions,
-            selectedVersion: $selectedVersion
+            selectedVersionIds: $selectedVersionIds
         )
     }
 
@@ -383,10 +383,12 @@ extension UploadToAppStoreConnectView {
     var configurePlanView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if let app = selectedApp, let version = selectedVersion {
+                if let app = selectedApp {
                     ASCAppHeaderView(
                         app: app,
-                        subtitle: "Version \(version.attributes.versionString) · \(version.attributes.displayState)"
+                        subtitle: selectedVersions.count == 1
+                            ? (selectedVersion.map { "Version \($0.attributes.versionString) · \($0.attributes.displayState)" } ?? "")
+                            : "\(selectedVersions.count) selected versions"
                     )
                 }
 
@@ -399,8 +401,8 @@ extension UploadToAppStoreConnectView {
 
                 issuesPanel
 
-                ForEach($rowPlans) { $plan in
-                    rowPlanCard(plan: $plan)
+                ForEach($destinationPlans) { $destination in
+                    destinationPlanSection(destination: $destination)
                 }
             }
             .padding(16)
@@ -412,7 +414,8 @@ extension UploadToAppStoreConnectView {
         let entries = allEntries.filter(\.isSelected)
         let skipped = allEntries.filter { !$0.isSelected }
         let rows = rowGroups(from: entries)
-        let localeCount = Set(entries.map { $0.appStoreLocaleCode ?? $0.projectLocaleCode }).count
+        let versionCount = Set(entries.map(\.destinationId)).count
+        let localeCount = Set(entries.map { "\($0.destinationId)|\($0.appStoreLocaleCode ?? $0.projectLocaleCode)" }).count
         let screenshotCount = entries.reduce(0) { $0 + $1.screenshotCount }
         let issues = validationIssues
 
@@ -420,6 +423,7 @@ extension UploadToAppStoreConnectView {
             entries: entries,
             skipped: skipped,
             rowGroups: rows,
+            versionCount: versionCount,
             localeCount: localeCount,
             screenshotCount: screenshotCount,
             issues: issues,
@@ -438,23 +442,65 @@ extension UploadToAppStoreConnectView {
         ASCIssuesPanel(issues: validationIssues)
     }
 
-    func rowPlanCard(plan: Binding<RowPlan>) -> some View {
-        let expanded = !collapsedRowPlanIds.contains(plan.wrappedValue.id)
+    func destinationPlanSection(destination: Binding<DestinationPlan>) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        ASCPlatformBadge(
+                            platform: destination.wrappedValue.version.attributes.ascPlatform,
+                            fallbackName: destination.wrappedValue.version.attributes.displayPlatform,
+                            style: .iconOnly
+                        )
+                        Text(destination.wrappedValue.title)
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    Text(destination.wrappedValue.subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text("\(destination.wrappedValue.localizations.count) locale\(destination.wrappedValue.localizations.count == 1 ? "" : "s")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            ForEach(destination.rowPlans) { $plan in
+                rowPlanCard(
+                    destinationId: destination.wrappedValue.id,
+                    platform: destination.wrappedValue.version.attributes.ascPlatform,
+                    plan: $plan
+                )
+            }
+        }
+        .padding(12)
+        .background(Color.secondary.opacity(0.04), in: .rect(cornerRadius: 8))
+    }
+
+    func rowPlanCard(destinationId: String, platform: ASCPlatform?, plan: Binding<RowPlan>) -> some View {
+        let detailsId = rowPlanKey(destinationId: destinationId, rowId: plan.wrappedValue.id)
+        let expanded = !collapsedRowPlanIds.contains(detailsId)
         let availableDisplayTypes = ASCDisplayType.userSelectableCases(
-            forPlatform: selectedVersion?.attributes.ascPlatform
+            forPlatform: platform
         )
         return ASCUploadRowPlanCard(
             plan: plan,
+            detailsId: detailsId,
             expanded: expanded,
             availableDisplayTypes: availableDisplayTypes,
             displayTypeDetailsPlanId: $displayTypeDetailsPlanId,
             onToggleExpanded: {
                 withAnimation(.easeInOut(duration: 0.15)) {
-                    if expanded { collapsedRowPlanIds.insert(plan.wrappedValue.id) }
-                    else { collapsedRowPlanIds.remove(plan.wrappedValue.id) }
+                    if expanded { collapsedRowPlanIds.insert(detailsId) }
+                    else { collapsedRowPlanIds.remove(detailsId) }
                 }
             }
         )
+    }
+
+    func rowPlanKey(destinationId: String, rowId: UUID) -> String {
+        "\(destinationId)|\(rowId.uuidString)"
     }
 
     private func refreshAppStoreData() {
@@ -500,7 +546,7 @@ extension UploadToAppStoreConnectView {
                 .font(.title3)
                 .fontWeight(.semibold)
             if let summary = uploadSummary {
-                Text("\(summary.totalScreenshots) screenshot\(summary.totalScreenshots == 1 ? "" : "s") uploaded across \(summary.localizationCount) locale\(summary.localizationCount == 1 ? "" : "s").")
+                Text("\(summary.totalScreenshots) screenshot\(summary.totalScreenshots == 1 ? "" : "s") uploaded across \(summary.localizationCount) locale\(summary.localizationCount == 1 ? "" : "s") and \(summary.versionCount) version\(summary.versionCount == 1 ? "" : "s").")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
