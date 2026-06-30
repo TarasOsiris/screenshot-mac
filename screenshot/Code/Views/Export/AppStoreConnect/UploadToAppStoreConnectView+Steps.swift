@@ -480,7 +480,7 @@ extension UploadToAppStoreConnectView {
 
     func rowPlanCard(destinationId: String, platform: ASCPlatform?, plan: Binding<RowPlan>) -> some View {
         let detailsId = rowPlanKey(destinationId: destinationId, rowId: plan.wrappedValue.id)
-        let expanded = !collapsedRowPlanIds.contains(detailsId)
+        let expanded = expandedRowPlanIds.contains(detailsId)
         let availableDisplayTypes = ASCDisplayType.userSelectableCases(
             forPlatform: platform
         )
@@ -492,8 +492,8 @@ extension UploadToAppStoreConnectView {
             displayTypeDetailsPlanId: $displayTypeDetailsPlanId,
             onToggleExpanded: {
                 withAnimation(.easeInOut(duration: 0.15)) {
-                    if expanded { collapsedRowPlanIds.insert(detailsId) }
-                    else { collapsedRowPlanIds.remove(detailsId) }
+                    if expanded { expandedRowPlanIds.remove(detailsId) }
+                    else { expandedRowPlanIds.insert(detailsId) }
                 }
             }
         )

@@ -38,7 +38,7 @@ struct UploadToAppStoreConnectView: View {
 
     @State var destinationPlans: [DestinationPlan] = []
     @State var isPreflightExpanded = true
-    @State var collapsedRowPlanIds: Set<String> = []   // absent = expanded (default)
+    @State var expandedRowPlanIds: Set<String> = []   // absent = collapsed (default)
     @State var uploadProgress: ASCUploadProgress?
     @State var uploadTask: Task<Void, Never>?
     @State var uploadSummary: UploadSummary?
