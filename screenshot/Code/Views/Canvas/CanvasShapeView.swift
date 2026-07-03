@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 private extension View {
     /// Only applies `.compositingGroup()` when needed, avoiding offscreen bitmap allocation for shapes at full opacity.
@@ -9,62 +8,7 @@ private extension View {
     }
 }
 
-struct CanvasShapeInteractions {
-    var onSelect: () -> Void = {}
-    var onShiftSelect: (() -> Void)?
-    var onUpdate: (CanvasShapeModel) -> Void = { _ in }
-    var onDelete: () -> Void = {}
-    var onScreenshotDrop: ((NSImage) -> Void)?
-    var onClearImage: (() -> Void)?
-    var onRemoveBackground: (() -> Void)?
-    var onCaptureSimulator: (() -> Void)?
-    var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
-    var onDragEnd: (() -> Void)?
-    var onOptionDragDuplicate: ((UUID) -> UUID?)?
-    var onDragProgress: ((CGSize) -> Void)?
-    var onGroupDragEnd: ((CGSize) -> Void)?
-    var onDidAppearAfterAdd: (() -> Void)?
-    var onEditingTextChanged: ((Bool) -> Void)?
-    /// Commit the editor's current text/richText now (deselect/disappear), under the active locale.
-    var onCommitInlineText: ((_ text: String, _ richText: String?) -> Void)?
-    /// Register/clear a provider of the editor's *live* text, so a deferred flush (locale switch,
-    /// save) can read the current value, commit it under the locale editing started in, and then
-    /// force the still-mounted editor out of local edit mode. Passing `nil` clears the registration.
-    var onInlineTextEditChanged: ((_ shapeId: UUID, _ liveText: (() -> (text: String, richText: String?))?, _ endEditing: (() -> Void)?) -> Void)?
-    var onFormatBarStateChanged: ((RichTextSelectionState?, RichTextFormatController?) -> Void)?
-    var onFormatBarAnchorChanged: ((CGPoint?) -> Void)?
-    var onMatchDeviceSizes: (() -> Void)?
-    var onMatchSelectedDeviceSizes: (() -> Void)?
-    var onCenterShape: ((AppState.CenterAxis) -> Void)?
-    var onTranslate: (() -> Void)?
-    var translateLocaleName: String?
-    var onTranslateAllLocales: (() -> Void)?
-    var translateAllLocalesDisabled = false
-    var onResetAllTranslations: (() -> Void)?
-    var resetAllTranslationsDisabled = false
-    /// Reuse targets for this text shape (other strings it can share), computed lazily on menu open.
-    var reuseTranslationTargets: (() -> [(key: String, label: String)])?
-    var onLinkTranslation: ((String) -> Void)?
-    var onUnlinkTranslation: (() -> Void)?
-    var nonBaseLocaleCount: Int = 0
-    var onCopyTextStyle: (() -> Void)?
-    var onPasteTextStyle: (() -> Void)?
-    var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
-    var onDeleteSelected: (() -> Void)?
-    var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
-    var onMatchGeometryToThis: ((AppState.GeometryMatchMode) -> Void)?
-    var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
-    var onToggleLock: (() -> Void)?
-    var lockToggleWillUnlock = false
-}
-
 struct CanvasShapeView: View {
-    private static let fontCache: NSCache<NSString, NSFont> = {
-        let cache = NSCache<NSString, NSFont>()
-        cache.countLimit = 200
-        return cache
-    }()
-
     @Environment(\.displayScale) private var screenScale
 
     let shape: CanvasShapeModel
@@ -88,22 +32,22 @@ struct CanvasShapeView: View {
     var availableFontFamilies: Set<String> = []
     var interactions = CanvasShapeInteractions()
 
-    @State private var addBumpScale: CGFloat = 1.0
-    @State private var dragOffset: CGSize = .zero
-    @State private var isDragging = false
+    @State var addBumpScale: CGFloat = 1.0
+    @State var dragOffset: CGSize = .zero
+    @State var isDragging = false
     @State private var isHovered = false
-    @State private var localResizeState: ResizeState?
-    @State private var isDropTargeted = false
-    @State private var isPickerPresented = false
-    @State private var isEditingText = false
-    @State private var editingTextValue = ""
-    @State private var editingRichTextData: String?
-    @State private var selectionState: RichTextSelectionState?
-    @StateObject private var formatController = RichTextFormatController()
-    @State private var cachedSvgImage: NSImage?
-    @State private var svgCacheKey = ""
-    @State private var localRotationDelta: Double = 0
-    @State private var svgResizeDebounceTask: Task<Void, Never>?
+    @State var localResizeState: ResizeState?
+    @State var isDropTargeted = false
+    @State var isPickerPresented = false
+    @State var isEditingText = false
+    @State var editingTextValue = ""
+    @State var editingRichTextData: String?
+    @State var selectionState: RichTextSelectionState?
+    @StateObject var formatController = RichTextFormatController()
+    @State var cachedSvgImage: NSImage?
+    @State var svgCacheKey = ""
+    @State var localRotationDelta: Double = 0
+    @State var svgResizeDebounceTask: Task<Void, Never>?
 
     private let handleDiameter: CGFloat = 8
     private var displayPixelStep: CGFloat { 1 / max(screenScale, 1) }
@@ -111,14 +55,14 @@ struct CanvasShapeView: View {
     private var activeRotationDelta: Double { isMultiSelected ? rotationDelta : localRotationDelta }
 
     // Current effective geometry (accounts for in-progress resize or drag)
-    private var effectiveX: CGFloat {
+    var effectiveX: CGFloat {
         if let rs = activeResizeState { return rs.newX } else { return shape.x + dragOffset.width + groupDragOffset.width }
     }
-    private var effectiveY: CGFloat {
+    var effectiveY: CGFloat {
         if let rs = activeResizeState { return rs.newY } else { return shape.y + dragOffset.height + groupDragOffset.height }
     }
-    private var effectiveW: CGFloat { activeResizeState?.newW ?? shape.width }
-    private var effectiveH: CGFloat { activeResizeState?.newH ?? shape.height }
+    var effectiveW: CGFloat { activeResizeState?.newW ?? shape.width }
+    var effectiveH: CGFloat { activeResizeState?.newH ?? shape.height }
 
     private var displayRect: CGRect {
         CanvasShapeDisplayGeometry.snappedRect(
@@ -356,58 +300,6 @@ struct CanvasShapeView: View {
         )
     }
 
-    /// Applies an update to this shape, or to all selected shapes if multi-selected with same type
-    private func applyUpdate(_ update: @escaping (inout CanvasShapeModel) -> Void) {
-        if let onUpdateSelected = interactions.onUpdateSelected {
-            onUpdateSelected(update)
-        } else {
-            var updated = shape
-            update(&updated)
-            interactions.onUpdate(updated)
-        }
-    }
-
-    @ViewBuilder
-    private var shapeContextMenu: some View {
-        CanvasShapeContextMenuContent(
-            shape: shape,
-            isMultiSelected: isMultiSelected,
-            screenshotImage: screenshotImage,
-            isPickerPresented: $isPickerPresented,
-            onClearImage: interactions.onClearImage,
-            onRemoveBackground: interactions.onRemoveBackground,
-            onCaptureSimulator: interactions.onCaptureSimulator,
-            onMatchDeviceSizes: interactions.onMatchDeviceSizes,
-            onMatchSelectedDeviceSizes: interactions.onMatchSelectedDeviceSizes,
-            onCenterShape: interactions.onCenterShape,
-            onTranslate: interactions.onTranslate,
-            translateLocaleName: interactions.translateLocaleName,
-            onTranslateAllLocales: interactions.onTranslateAllLocales,
-            translateAllLocalesDisabled: interactions.translateAllLocalesDisabled,
-            onResetAllTranslations: interactions.onResetAllTranslations,
-            resetAllTranslationsDisabled: interactions.resetAllTranslationsDisabled,
-            reuseTranslationTargets: interactions.reuseTranslationTargets,
-            onLinkTranslation: interactions.onLinkTranslation,
-            onUnlinkTranslation: interactions.onUnlinkTranslation,
-            nonBaseLocaleCount: interactions.nonBaseLocaleCount,
-            onCopyTextStyle: interactions.onCopyTextStyle,
-            onPasteTextStyle: interactions.onPasteTextStyle,
-            applyUpdate: applyUpdate,
-            deleteAction: {
-                if let onDeleteSelected = interactions.onDeleteSelected {
-                    onDeleteSelected()
-                } else {
-                    interactions.onDelete()
-                }
-            },
-            onAlignSelected: interactions.onAlignSelected,
-            onMatchGeometryToThis: interactions.onMatchGeometryToThis,
-            onDuplicateToTemplates: interactions.onDuplicateToTemplates,
-            onToggleLock: interactions.onToggleLock,
-            lockToggleWillUnlock: interactions.lockToggleWillUnlock
-        )
-    }
-
     private var hoverOverlay: some View {
         borderOverlay(opacity: 0.5, lineWidth: 1)
     }
@@ -441,301 +333,5 @@ struct CanvasShapeView: View {
 
     private func snapToDisplayPixel(_ value: CGFloat) -> CGFloat {
         (value / displayPixelStep).rounded() * displayPixelStep
-    }
-
-    // MARK: - Lifecycle and selection
-
-    private func handleAppear() {
-        updateSvgCache()
-        guard let onDidAppearAfterAdd = interactions.onDidAppearAfterAdd else { return }
-        withAnimation(.easeOut(duration: 0.08)) {
-            addBumpScale = 1.12
-        } completion: {
-            withAnimation(.easeInOut(duration: 0.08)) {
-                addBumpScale = 1.0
-            }
-        }
-        onDidAppearAfterAdd()
-    }
-
-    private func handleEditingStateChange(_ editing: Bool) {
-        interactions.onEditingTextChanged?(editing)
-        if editing {
-            interactions.onInlineTextEditChanged?(
-                shape.id,
-                { (editingTextValue, editingRichTextData) },
-                { endTextEditingAfterExternalCommit() }
-            )
-        } else {
-            interactions.onInlineTextEditChanged?(shape.id, nil, nil)
-        }
-    }
-
-    private func handleSelectionStateChange(_ newState: RichTextSelectionState?) {
-        guard isEditingText else { return }
-        interactions.onFormatBarStateChanged?(newState, formatController)
-    }
-
-    private func handleSelectionChange(_ selected: Bool) {
-        if !selected && isEditingText {
-            commitTextEdit()
-        }
-    }
-
-    private func handleDisappear() {
-        guard isEditingText else { return }
-        commitTextEdit()
-        // `.onChange(of: isEditingText)` isn't reliably delivered during view teardown, so
-        // propagate the end-of-edit explicitly: clear this shape's registered commit and the
-        // shared editing flag. Both are keyed/idempotent, so a re-fired onChange is harmless.
-        interactions.onInlineTextEditChanged?(shape.id, nil, nil)
-        interactions.onEditingTextChanged?(false)
-    }
-
-    private func handleDoubleTap() {
-        guard !shape.resolvedIsLocked else {
-            interactions.onSelect()
-            return
-        }
-        if shape.type == .text {
-            beginTextEditing()
-        } else if shape.type == .device || shape.type == .image {
-            isPickerPresented = true
-        }
-    }
-
-    private func beginTextEditing() {
-        editingTextValue = shape.text ?? ""
-        editingRichTextData = shape.richText
-        formatController.resetRichTextSession()
-        if shape.richText != nil {
-            formatController.beginRichTextSession()
-        }
-        isEditingText = true
-        // Publish the active controller immediately so Cmd+Z can reach this editor's undo
-        // manager from the first keystroke — otherwise the handle only lands via the async
-        // selection-change path, and the first edit after a load undoes nothing.
-        interactions.onFormatBarStateChanged?(nil, formatController)
-        interactions.onSelect()
-    }
-
-    private func handleTap() {
-        if PlatformModifiers.shiftDown {
-            interactions.onShiftSelect?()
-        } else {
-            interactions.onSelect()
-        }
-    }
-
-    // MARK: - Drag
-
-    private var dragGesture: some Gesture {
-        DragGesture()
-            .onChanged(handleDragChanged)
-            .onEnded(handleDragEnded)
-    }
-
-    private func handleDragChanged(_ value: DragGesture.Value) {
-        guard !shape.resolvedIsLocked else {
-            if !isDragging && !isMultiSelected {
-                interactions.onSelect()
-            }
-            return
-        }
-        if !isDragging {
-            beginDrag()
-        }
-        let rawOffset = CGSize(
-            width: value.translation.width / displayScale,
-            height: value.translation.height / displayScale
-        )
-        if let snap = interactions.onDragSnap?(shape, rawOffset) {
-            dragOffset = snap.snappedOffset
-        } else {
-            dragOffset = rawOffset
-        }
-        if isMultiSelected {
-            interactions.onDragProgress?(dragOffset)
-        }
-    }
-
-    private func beginDrag() {
-        isDragging = true
-        PlatformCursor.setClosedHand()
-
-        if PlatformModifiers.optionDown {
-            _ = interactions.onOptionDragDuplicate?(shape.id)
-        }
-
-        if !isMultiSelected {
-            interactions.onSelect()
-        }
-    }
-
-    private func handleDragEnded(_: DragGesture.Value) {
-        PlatformCursor.setArrow()
-        let finalOffset = dragOffset
-        dragOffset = .zero
-        isDragging = false
-        if isMultiSelected {
-            interactions.onGroupDragEnd?(finalOffset)
-        } else {
-            var updated = shape
-            updated.x += finalOffset.width
-            updated.y += finalOffset.height
-            interactions.onUpdate(updated)
-        }
-        interactions.onDragEnd?()
-    }
-
-    private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
-        guard let provider = providers.first else { return false }
-        provider.loadObject(ofClass: NSImage.self) { image, _ in
-            if let image = image as? NSImage {
-                DispatchQueue.main.async {
-                    interactions.onScreenshotDrop?(image)
-                }
-            }
-        }
-        return true
-    }
-
-    private func loadImportedImage(from url: URL) -> NSImage? {
-        NSImage.fromSecurityScopedURL(url)
-    }
-
-    private func debounceSvgCacheUpdate() {
-        svgResizeDebounceTask?.cancel()
-        svgResizeDebounceTask = Task {
-            try? await Task.sleep(for: .milliseconds(100))
-            guard !Task.isCancelled else { return }
-            updateSvgCache()
-        }
-    }
-
-    private func updateSvgCache() {
-        guard shape.type == .svg, let content = shape.svgContent else { return }
-        let w = Int(effectiveW)
-        let h = Int(effectiveH)
-        let key = "\(content.hashValue)-\(shape.svgUseColor ?? false)-\(shape.color.hexString)-\(w)x\(h)"
-        guard key != svgCacheKey else { return }
-        svgCacheKey = key
-        let targetSize = CGSize(width: effectiveW, height: effectiveH)
-        cachedSvgImage = Self.svgImage(from: content, useColor: shape.svgUseColor == true, color: shape.color, targetSize: targetSize)
-    }
-
-    nonisolated static func svgImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
-        SvgHelper.renderImage(from: svgContent, useColor: useColor, color: color, targetSize: targetSize)
-    }
-
-    private func commitTextEdit() {
-        guard isEditingText else { return }
-        isEditingText = false
-        selectionState = nil
-        formatController.resetRichTextSession()
-        // Hand the typed text to AppState, which merges it onto the *live* base shape under the
-        // current locale — avoids reverting concurrent edits with this view's captured `shape`.
-        interactions.onCommitInlineText?(editingTextValue, editingRichTextData)
-    }
-
-    private func endTextEditingAfterExternalCommit() {
-        guard isEditingText else { return }
-        isEditingText = false
-        selectionState = nil
-        formatController.resetRichTextSession()
-        interactions.onInlineTextEditChanged?(shape.id, nil, nil)
-        interactions.onEditingTextChanged?(false)
-    }
-
-    /// While editing, track the shape's own global frame and report the rich-text
-    /// format bar anchor (top-center, lifted 10pt) from it. Reading the live
-    /// geometry here — rather than threading the canvas origin through per-row
-    /// @State — keeps the anchor correct at edit start and as the canvas scrolls,
-    /// resizes, or zooms, without re-rendering the whole canvas on every scroll
-    /// frame. Editing forces rotation to 0 (see `currentRotation`), so the frame
-    /// is axis-aligned and its top-center matches the old origin-based math.
-    @ViewBuilder
-    private var formatBarAnchorReader: some View {
-        // The anchor positions the floating format bar, which only exists on macOS; on iOS the
-        // bar is bottom-docked. Observing geometry here would write AppState from inside the
-        // layout pass (Publishing-changes-within-view-updates) and hang the iPad text editor.
-        #if os(macOS)
-        if isEditingText {
-            Color.clear
-                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
-                    interactions.onFormatBarAnchorChanged?(CGPoint(x: frame.midX, y: frame.minY - 10))
-                }
-        }
-        #endif
-    }
-
-    private var customFontName: String? {
-        guard let name = shape.fontName, !name.isEmpty else { return nil }
-        // Custom-font display names ("Playfair Display Italic") aren't in NSFontManager's
-        // family list; the registry is the authoritative check for them. Fall back to the
-        // passed-in family set for system fonts.
-        if CustomFontRegistry.font(forDisplayName: name) != nil { return name }
-        if availableFontFamilies.contains(name) { return name }
-        return nil
-    }
-
-    private func resolvedNSFont(size: CGFloat, weight: NSFont.Weight, italic: Bool = false) -> NSFont {
-        let customName = customFontName
-        let cacheKey = "\(customName ?? "__system__")|\(size)|\(weight.rawValue)|\(italic)" as NSString
-        if let cached = Self.fontCache.object(forKey: cacheKey) {
-            return cached
-        }
-
-        let resolved: NSFont
-        if let name = customName {
-            resolved = CustomFontRegistry.resolveNSFont(
-                name: name,
-                size: size,
-                managerWeight: Self.fontManagerWeight(for: weight),
-                italic: italic
-            )
-        } else {
-            resolved = italicized(NSFont.systemFont(ofSize: size, weight: weight), italic: italic)
-        }
-        Self.fontCache.setObject(resolved, forKey: cacheKey)
-        return resolved
-    }
-
-    private func italicized(_ font: NSFont, italic: Bool) -> NSFont {
-        guard italic else { return font }
-        #if os(macOS)
-        return NSFontManager.shared.convert(font, toHaveTrait: .italicFontMask)
-        #else
-        return font.addingItalic()
-        #endif
-    }
-
-    /// Maps NSFont.Weight to the 0–15 integer scale used by NSFontManager,
-    /// avoiding creation of a throwaway system font just to query its weight.
-    private static func fontManagerWeight(for weight: NSFont.Weight) -> Int {
-        switch weight {
-        case .ultraLight: return 2
-        case .thin:       return 3
-        case .light:      return 4
-        case .regular:    return 5
-        case .medium:     return 6
-        case .semibold:   return 8
-        case .bold:       return 9
-        case .heavy:      return 11
-        case .black:      return 14
-        default:          return 5
-        }
-    }
-
-    private func fontWeight(_ weight: Int) -> Font.Weight {
-        switch weight {
-        case ...299: .thin
-        case 300...399: .light
-        case 400...499: .regular
-        case 500...599: .medium
-        case 600...699: .semibold
-        case 700...799: .bold
-        default: .heavy
-        }
     }
 }
