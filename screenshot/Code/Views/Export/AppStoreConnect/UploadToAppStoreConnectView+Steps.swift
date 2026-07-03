@@ -402,7 +402,11 @@ extension UploadToAppStoreConnectView {
                 issuesPanel
 
                 ForEach($destinationPlans) { $destination in
-                    destinationPlanSection(destination: $destination)
+                    ASCDestinationPlanSection(
+                        destination: $destination,
+                        expandedRowPlanIds: $expandedRowPlanIds,
+                        displayTypeDetailsPlanId: $displayTypeDetailsPlanId
+                    )
                 }
             }
             .padding(16)
@@ -440,67 +444,6 @@ extension UploadToAppStoreConnectView {
     @ViewBuilder
     var issuesPanel: some View {
         ASCIssuesPanel(issues: validationIssues)
-    }
-
-    func destinationPlanSection(destination: Binding<DestinationPlan>) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        ASCPlatformBadge(
-                            platform: destination.wrappedValue.version.attributes.ascPlatform,
-                            fallbackName: destination.wrappedValue.version.attributes.displayPlatform,
-                            style: .iconOnly
-                        )
-                        Text(destination.wrappedValue.title)
-                    }
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    Text(destination.wrappedValue.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Text("\(destination.wrappedValue.localizations.count) locale\(destination.wrappedValue.localizations.count == 1 ? "" : "s")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            ForEach(destination.rowPlans) { $plan in
-                rowPlanCard(
-                    destinationId: destination.wrappedValue.id,
-                    platform: destination.wrappedValue.version.attributes.ascPlatform,
-                    plan: $plan
-                )
-            }
-        }
-        .padding(12)
-        .background(Color.secondary.opacity(0.04), in: .rect(cornerRadius: 8))
-    }
-
-    func rowPlanCard(destinationId: String, platform: ASCPlatform?, plan: Binding<RowPlan>) -> some View {
-        let detailsId = rowPlanKey(destinationId: destinationId, rowId: plan.wrappedValue.id)
-        let expanded = expandedRowPlanIds.contains(detailsId)
-        let availableDisplayTypes = ASCDisplayType.userSelectableCases(
-            forPlatform: platform
-        )
-        return ASCUploadRowPlanCard(
-            plan: plan,
-            detailsId: detailsId,
-            expanded: expanded,
-            availableDisplayTypes: availableDisplayTypes,
-            displayTypeDetailsPlanId: $displayTypeDetailsPlanId,
-            onToggleExpanded: {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    if expanded { expandedRowPlanIds.remove(detailsId) }
-                    else { expandedRowPlanIds.insert(detailsId) }
-                }
-            }
-        )
-    }
-
-    func rowPlanKey(destinationId: String, rowId: UUID) -> String {
-        "\(destinationId)|\(rowId.uuidString)"
     }
 
     private func refreshAppStoreData() {
