@@ -125,8 +125,8 @@ final class AppStoreConnectAuthService {
 
     private static func base64URL(_ data: Data) -> String {
         data.base64EncodedString()
-            .replacingOccurrences(of: "+", with: "-")
-            .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: "=", with: "")
+            .replacing("+", with: "-")
+            .replacing("/", with: "_")
+            .replacing("=", with: "")
     }
 }

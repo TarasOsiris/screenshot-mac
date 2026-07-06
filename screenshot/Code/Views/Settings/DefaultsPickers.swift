@@ -14,7 +14,7 @@ struct ScreenshotSizePicker: View {
     var body: some View {
         Picker(label, selection: $selection) {
             if isCustomSize {
-                let dimensions = selection.replacingOccurrences(of: "x", with: "\u{00d7}")
+                let dimensions = selection.replacing("x", with: "\u{00d7}")
                 Text("\(dimensions) Custom")
                     .tag(selection)
             }

@@ -27,10 +27,10 @@ struct ShapeFillSwatchButton: View {
             preview
                 .frame(width: UIMetrics.ColorSwatch.preview, height: UIMetrics.ColorSwatch.preview)
                 .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip))
-                .overlay(
+                .overlay {
                     RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
                         .strokeBorder(.separator, lineWidth: UIMetrics.BorderWidth.hairline)
-                )
+                }
         }
         .buttonStyle(.plain)
         .help("Fill")

@@ -298,7 +298,7 @@ struct BackgroundBlurView<Content: View>: View {
     }
 }
 
-struct GradientColorStop: Codable, Equatable, Identifiable {
+struct GradientColorStop: Codable, Equatable, Identifiable, Comparable {
     var id: UUID
     var colorData: CodableColor
     var location: Double // 0.0 to 1.0
@@ -317,6 +317,10 @@ struct GradientColorStop: Codable, Equatable, Identifiable {
         get { colorData.color }
         set { colorData = CodableColor(newValue) }
     }
+
+    static func < (lhs: GradientColorStop, rhs: GradientColorStop) -> Bool {
+        lhs.location < rhs.location
+    }
 }
 
 enum GradientType: String, Codable, CaseIterable {
@@ -334,7 +338,7 @@ struct GradientConfig: Codable, Equatable {
 
     init(stops: [GradientColorStop], angle: Double = 135, gradientType: GradientType = .linear,
          centerX: Double = 0.5, centerY: Double = 0.5) {
-        self.stops = stops.sorted { $0.location < $1.location }
+        self.stops = stops.sorted()
         self.angle = angle
         self.gradientType = gradientType
         self.centerX = centerX
@@ -362,7 +366,7 @@ struct GradientConfig: Codable, Equatable {
         gradientType = try c.decodeIfPresent(GradientType.self, forKey: .gradientType) ?? .linear
         centerX = try c.decodeIfPresent(Double.self, forKey: .centerX) ?? 0.5
         centerY = try c.decodeIfPresent(Double.self, forKey: .centerY) ?? 0.5
-        stops = (try c.decode([GradientColorStop].self, forKey: .stops)).sorted { $0.location < $1.location }
+        stops = (try c.decode([GradientColorStop].self, forKey: .stops)).sorted()
     }
 
     func encode(to encoder: Encoder) throws {

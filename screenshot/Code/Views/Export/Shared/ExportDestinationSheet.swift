@@ -72,11 +72,11 @@ struct ExportDestinationSheet: View {
             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section)
                 .fill(Color.primary.opacity(UIMetrics.Opacity.sectionFill))
         )
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section)
                 .stroke(Color(.separator).opacity(UIMetrics.Opacity.sectionBorder),
                         lineWidth: UIMetrics.BorderWidth.hairline)
-        )
+        }
         .accessibilityElement(children: .combine)
     }
 }

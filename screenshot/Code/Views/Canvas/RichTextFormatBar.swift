@@ -199,10 +199,10 @@ private struct FormatBarButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section)
                     .fill(backgroundColor(isPressed: configuration.isPressed))
             )
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section)
                     .strokeBorder(borderColor(isPressed: configuration.isPressed), lineWidth: UIMetrics.BorderWidth.standard)
-            )
+            }
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
     }
 

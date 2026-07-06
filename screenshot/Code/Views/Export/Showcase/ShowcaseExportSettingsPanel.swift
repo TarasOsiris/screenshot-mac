@@ -129,7 +129,7 @@ private struct ShowcaseOutputSizeTile: View {
             .padding(.vertical, 8)
             .background(tileBackground)
             .foregroundStyle(isSelected ? Color.white : Color.primary)
-            .overlay(tileBorder)
+            .overlay { tileBorder }
         }
         .buttonStyle(.plain)
     }
@@ -204,7 +204,7 @@ private struct ShowcaseAspectPresetTile: View {
             .padding(.vertical, 10)
             .background(tileBackground)
             .foregroundStyle(isSelected ? Color.white : Color.primary)
-            .overlay(tileBorder)
+            .overlay { tileBorder }
         }
         .buttonStyle(.plain)
         .help(preset.hint)

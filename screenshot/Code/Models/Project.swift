@@ -46,6 +46,11 @@ struct Project: Identifiable, Codable, Equatable {
 }
 
 extension Array where Element == Project {
+    /// Alphabetical order using localized, numeric-aware comparison (e.g. "App 2" before "App 10").
+    func sortedByName() -> [Project] {
+        sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
     /// Merge two project lists by UUID. Union of both; tombstone-aware, delete-wins.
     ///
     /// For projects present in both lists:

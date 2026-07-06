@@ -56,15 +56,13 @@ extension ShapePropertiesSingleSelectionBar {
 
     func formatRotation(_ value: Double) -> String {
         let rounded = (value * 10).rounded() / 10
-        return rounded == rounded.rounded()
-            ? String(format: "%.0f", rounded)
-            : String(format: "%.1f", rounded)
+        return rounded.formatted(.number.precision(.fractionLength(0...1)))
     }
 
     func commitRotation(to shapeId: UUID?) {
         isRotationFieldActive = false
         guard let shapeId, let i = idx(for: shapeId) else { return }
-        let trimmed = editingRotation.replacingOccurrences(of: ",", with: ".")
+        let trimmed = editingRotation.replacing(",", with: ".")
         guard let value = Double(trimmed) else {
             editingRotation = currentRotationString(for: shapeId)
             return

@@ -21,10 +21,10 @@ struct ShowcasePresetThumbnail: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
                     .fill(canvasFill)
-                    .overlay(
+                    .overlay {
                         RoundedRectangle(cornerRadius: 4, style: .continuous)
                             .strokeBorder(borderColor, lineWidth: 1)
-                    )
+                    }
                     .frame(width: w, height: h)
 
                 if let sampleRow {
@@ -101,13 +101,13 @@ struct BackgroundSummarySwatch: View {
         let shape = RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
         shape
             .fill(Color.platformControlBackground)
-            .overlay(
+            .overlay {
                 config.backgroundFillView(image: backgroundImage)
-                    .overlay(emptyImagePlaceholder)
-            )
-            .overlay(
+                    .overlay { emptyImagePlaceholder }
+            }
+            .overlay {
                 shape.strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
-            )
+            }
             .clipShape(shape)
     }
 
@@ -160,7 +160,7 @@ struct NumericPercentField: View {
     }
 
     func commit() {
-        let cleaned = text.replacingOccurrences(of: "%", with: "")
+        let cleaned = text.replacing("%", with: "")
             .trimmingCharacters(in: .whitespaces)
         if let parsed = Double(cleaned) {
             let clamped = min(max(parsed, range.lowerBound), range.upperBound)
@@ -214,7 +214,7 @@ struct ShowcaseRowPreview: View {
                 if templateImages.isEmpty {
                     RoundedRectangle(cornerRadius: 4, style: .continuous)
                         .fill(Color.secondary.opacity(0.08))
-                        .overlay(ProgressView().controlSize(.small))
+                        .overlay { ProgressView().controlSize(.small) }
                 } else {
                     let modelSize = CGSize(width: layout.totalWidth, height: layout.totalHeight)
                     ShowcaseRowView(

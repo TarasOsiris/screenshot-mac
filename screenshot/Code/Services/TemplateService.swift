@@ -65,8 +65,8 @@ enum TemplateService {
             .map { url in
                 let dirName = url.lastPathComponent
                 let displayName = dirName
-                    .replacingOccurrences(of: "_", with: " ")
-                    .replacingOccurrences(of: "-", with: " ")
+                    .replacing("_", with: " ")
+                    .replacing("-", with: " ")
                     .localizedCapitalized
                 let previewImage = NSImage(contentsOf: url.appendingPathComponent(previewFileName))
                 let menuIcon = previewImage.flatMap { img -> NSImage? in

@@ -201,10 +201,10 @@ extension View {
     /// the read-only preview, and the formatted cell stay pixel-identical.
     func cellEditorChrome() -> some View {
         background(Color.platformTextBackground)
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card)
                     .stroke(Color.platformSeparator, lineWidth: UIMetrics.BorderWidth.standard)
-            )
+            }
             .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.card))
     }
 }

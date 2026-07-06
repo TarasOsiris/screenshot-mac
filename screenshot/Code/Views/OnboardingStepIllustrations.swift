@@ -50,10 +50,10 @@ struct OnboardingAddContentIllustration: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
             .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: 26, style: .continuous)
                     .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
-            )
+            }
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 14)
@@ -150,10 +150,10 @@ struct OnboardingAddContentIllustration: View {
             .frame(width: 48, height: 48)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
-            )
+            }
             .shadow(color: .black.opacity(0.1), radius: 7, y: 4)
     }
 }
@@ -210,10 +210,10 @@ struct OnboardingStyleIllustration: View {
         }
         .frame(width: width, height: height)
         .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 26, style: .continuous)
                 .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
-        )
+        }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
@@ -319,12 +319,12 @@ struct OnboardingStyleIllustration: View {
                     Circle()
                         .fill(gradients[i].linearGradient)
                         .frame(width: 34, height: 34)
-                        .overlay(Circle().strokeBorder(.white.opacity(0.8), lineWidth: 1.5))
-                        .overlay(
+                        .overlay { Circle().strokeBorder(.white.opacity(0.8), lineWidth: 1.5) }
+                        .overlay {
                             Circle().strokeBorder(accentColor, lineWidth: 2.5)
                                 .padding(-4)
                                 .opacity(i == active ? 1 : 0)
-                        )
+                        }
                         .scaleEffect(i == active ? 1.12 : 1)
                 }
                 .buttonStyle(.plain)
@@ -447,10 +447,10 @@ private struct ExportCard: View {
         }
         .frame(width: width, height: height)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
-        )
+        }
         .shadow(color: .black.opacity(0.12), radius: 9, y: 5)
     }
 }

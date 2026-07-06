@@ -71,10 +71,10 @@ struct ASCCalloutBox<Content: View>: View {
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(tint.opacity(0.08), in: .rect(cornerRadius: 8))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(tint.opacity(0.3), lineWidth: 1)
-            )
+            }
     }
 }
 

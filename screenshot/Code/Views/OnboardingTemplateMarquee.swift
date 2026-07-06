@@ -123,10 +123,10 @@ private struct MarqueeCard: View {
             .aspectRatio(contentMode: .fill)
             .frame(width: width, height: height)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.hairline)
-            )
+            }
     }
 }
 #endif

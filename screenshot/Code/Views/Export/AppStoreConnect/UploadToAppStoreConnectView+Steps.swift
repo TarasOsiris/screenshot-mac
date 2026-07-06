@@ -357,10 +357,10 @@ extension UploadToAppStoreConnectView {
                     .frame(minHeight: minHeight)
                     .padding(4)
                     .background(Color.platformTextBackground, in: .rect(cornerRadius: 6))
-                    .overlay(
+                    .overlay {
                         RoundedRectangle(cornerRadius: 6)
                             .strokeBorder(Color.secondary.opacity(0.25), lineWidth: 1)
-                    )
+                    }
                 #else
                 // iOS: a native auto-growing multi-line field rather than a hand-bordered TextEditor.
                 TextField("", text: text, axis: .vertical)
@@ -382,7 +382,7 @@ extension UploadToAppStoreConnectView {
 
     var configurePlanView: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: 16) {
                 if let app = selectedApp {
                     ASCAppHeaderView(
                         app: app,

@@ -93,10 +93,10 @@ struct ShadowPopover: View {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(isSelected ? Color.accentColor.opacity(0.18) : Color.primary.opacity(0.06))
                 )
-                .overlay(
+                .overlay {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .strokeBorder(isSelected ? Color.accentColor : .clear, lineWidth: 1)
-                )
+                }
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -127,7 +127,7 @@ enum DeviceFrameCatalog {
         let orientations: [Bool] = entry.landscapeOnly ? [true] : [false, true]
 
         let colorGroups = entry.colors.map { color -> DeviceFrameColorGroup in
-            let slug = color.lowercased().replacingOccurrences(of: " ", with: "")
+            let slug = color.lowercased().replacing(" ", with: "")
             let frames = orientations.map { isLandscape in
                 let orientation = isLandscape ? "landscape" : "portrait"
                 let frameId = "\(entry.groupId)-\(slug)-\(orientation)"

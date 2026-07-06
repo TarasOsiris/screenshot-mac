@@ -90,10 +90,10 @@ struct ProgrammaticDeviceFrameView: View {
             RoundedRectangle(cornerRadius: diH / 2, style: .continuous)
                 .fill(.black)
                 .frame(width: diW, height: diH)
-                .overlay(
+                .overlay {
                     RoundedRectangle(cornerRadius: diH / 2, style: .continuous)
                         .strokeBorder(.black.opacity(0.06), lineWidth: 0.5 * s)
-                )
+                }
                 .offset(y: -(screenH / 2 - diOffsetFromScreenTop))
 
             Capsule()
@@ -285,10 +285,10 @@ struct ProgrammaticDeviceFrameView: View {
                 Circle()
                     .fill(.black)
                     .frame(width: cameraD, height: cameraD)
-                    .overlay(
+                    .overlay {
                         Circle()
                             .strokeBorder(.black.opacity(0.06), lineWidth: 0.5 * s)
-                    )
+                    }
                     .offset(y: -(screenH / 2 - cameraOffsetFromScreenTop))
             }
 

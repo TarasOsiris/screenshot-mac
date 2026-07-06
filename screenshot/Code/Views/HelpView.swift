@@ -225,10 +225,10 @@ private struct HelpTip: View {
             Color.yellow.opacity(Self.fillOpacity),
             in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section, style: .continuous)
         )
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section, style: .continuous)
                 .stroke(Color.yellow.opacity(Self.borderOpacity), lineWidth: UIMetrics.BorderWidth.hairline)
-        )
+        }
     }
 }
 

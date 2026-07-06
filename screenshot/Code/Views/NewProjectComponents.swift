@@ -51,7 +51,7 @@ private struct NewProjectModeCard: View {
             }
             .padding(14)
             .background(Color.platformWindowBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(cardBorder)
+            .overlay { cardBorder }
         }
         .buttonStyle(.plain)
     }

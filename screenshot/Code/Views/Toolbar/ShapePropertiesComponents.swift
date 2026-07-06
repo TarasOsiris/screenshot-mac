@@ -33,10 +33,10 @@ struct ShapePropertiesSection<Content: View>: View {
             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section, style: .continuous)
                 .fill(Color.primary.opacity(UIMetrics.Opacity.sectionFill))
         )
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section, style: .continuous)
                 .strokeBorder(.separator.opacity(UIMetrics.Opacity.sectionBorder), lineWidth: UIMetrics.BorderWidth.hairline)
-        )
+        }
     }
 }
 

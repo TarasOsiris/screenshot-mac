@@ -21,10 +21,10 @@ private struct ASCAppIconView: View {
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
-        )
+        }
         .task(id: bundleId) {
             icon = await AppStoreConnectIconFetcher.shared.icon(forBundleId: bundleId)
         }

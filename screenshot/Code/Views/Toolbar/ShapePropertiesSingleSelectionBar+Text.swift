@@ -268,7 +268,7 @@ extension ShapePropertiesSingleSelectionBar {
             Slider(value: trackingBinding, in: -5...30)
                 .frame(width: sliderWidth)
 
-            Text(verbatim: String(format: "%.1f", trackingBinding.wrappedValue))
+            Text(trackingBinding.wrappedValue, format: .number.precision(.fractionLength(1)))
                 .frame(width: propertiesTrackingValueWidth, alignment: .trailing)
                 .onTapGesture(count: 2) { trackingBinding.wrappedValue = 0 }
                 #if os(macOS)

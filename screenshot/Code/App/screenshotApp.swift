@@ -126,7 +126,7 @@ struct ScreenshotBroApp: App {
                     Button("Save") {
                         let name = debugTemplateName
                             .trimmingCharacters(in: .whitespacesAndNewlines)
-                            .replacingOccurrences(of: " ", with: "_")
+                            .replacing(" ", with: "_")
                             .lowercased()
                         guard !name.isEmpty else { return }
                         debugSaveTemplate(name: name)

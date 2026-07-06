@@ -146,10 +146,10 @@ struct TemplateControlBar: View {
                                         .aspectRatio(contentMode: .fill)
                                         .frame(width: swatch, height: swatch)
                                         .clipShape(RoundedRectangle(cornerRadius: 2))
-                                        .overlay(
+                                        .overlay {
                                             RoundedRectangle(cornerRadius: 2)
                                                 .strokeBorder(.secondary.opacity(0.5), lineWidth: UIMetrics.BorderWidth.hairline)
-                                        )
+                                        }
                                 } else {
                                     Image(systemName: "photo.badge.plus")
                                         .font(.system(size: UIMetrics.ColorSwatch.overrideIndicatorIcon))
@@ -159,10 +159,10 @@ struct TemplateControlBar: View {
                                 template.backgroundFillView()
                                     .frame(width: swatch, height: swatch)
                                     .clipShape(RoundedRectangle(cornerRadius: 2))
-                                    .overlay(
+                                    .overlay {
                                         RoundedRectangle(cornerRadius: 2)
                                             .strokeBorder(.secondary.opacity(0.5), lineWidth: UIMetrics.BorderWidth.hairline)
-                                    )
+                                    }
                             }
                         } else {
                             Image(systemName: "paintbrush")

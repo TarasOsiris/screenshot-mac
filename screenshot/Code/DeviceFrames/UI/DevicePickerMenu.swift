@@ -497,10 +497,10 @@ private struct DeviceFrameColorChip: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(isSelected ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.06))
         )
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(borderColor, lineWidth: isSelected ? 1 : 0.5)
-        )
+        }
     }
 
     private func swatch(size: CGFloat) -> some View {
@@ -520,10 +520,10 @@ private struct DeviceFrameColorChip: View {
             }
         }
         .frame(width: size, height: size)
-        .overlay(
+        .overlay {
             Circle()
                 .strokeBorder(borderColor, lineWidth: isSelected ? 2 : 1)
-        )
+        }
     }
 
     private var borderColor: Color {

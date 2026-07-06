@@ -514,7 +514,7 @@ private struct ShowcaseTemplateChip: View {
                 .monospacedDigit()
                 .frame(width: 20, height: 18)
                 .background(chipShape.fill(chipFill))
-                .overlay(chipShape.strokeBorder(chipStroke, lineWidth: UIMetrics.BorderWidth.hairline))
+                .overlay { chipShape.strokeBorder(chipStroke, lineWidth: UIMetrics.BorderWidth.hairline) }
                 .foregroundStyle(included ? Color.accentColor : Color.secondary)
                 .opacity(included ? 1 : 0.55)
         }

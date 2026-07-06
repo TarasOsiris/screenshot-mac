@@ -99,10 +99,10 @@ struct BackgroundEditor: View {
                             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
                                 .fill(preset.config.linearGradient)
                                 .frame(height: Self.gradientPresetTileHeight)
-                                .overlay(
+                                .overlay {
                                     RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
                                         .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.standard)
-                                )
+                                }
                         }
                         .buttonStyle(.plain)
                         .focusable(false)
@@ -258,13 +258,13 @@ struct BackgroundImageEditor: View {
             .aspectRatio(contentMode: .fit)
             .frame(maxHeight: 60)
             .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
                     .strokeBorder(
                         isDropTargeted ? Color.accentColor.opacity(UIMetrics.Opacity.accentEmphasis) : Color.secondary.opacity(UIMetrics.Opacity.accentSelection),
                         style: StrokeStyle(lineWidth: isDropTargeted ? UIMetrics.BorderWidth.emphasis : UIMetrics.BorderWidth.standard)
                     )
-            )
+            }
     }
 
     private var dropZoneLabel: some View {
@@ -382,8 +382,8 @@ struct BackgroundImageEditor: View {
                     xValue: $config.tileScaleX,
                     yValue: $config.tileScaleY,
                     range: 0.1...3.0,
-                    xFormat: { "\(String(format: "%.1f", config.tileScaleX))x" },
-                    yFormat: { "\(String(format: "%.1f", config.tileScaleY))x" }
+                    xFormat: { "\(config.tileScaleX.formatted(.number.precision(.fractionLength(1))))x" },
+                    yFormat: { "\(config.tileScaleY.formatted(.number.precision(.fractionLength(1))))x" }
                 )
                 axisSliderRow("Spacing", xValue: $config.tileSpacingX, yValue: $config.tileSpacingY)
                 axisSliderRow("Offset", xValue: $config.tileOffsetX, yValue: $config.tileOffsetY)

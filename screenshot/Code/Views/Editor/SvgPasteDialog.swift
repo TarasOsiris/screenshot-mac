@@ -255,12 +255,12 @@ private struct SvgPresetThumbnail: View {
             }
         }
         .frame(width: size, height: size)
-        .overlay(
+        .overlay {
             shape.strokeBorder(
                 isSelected ? Color.accentColor : UIMetrics.Stroke.subtle,
                 lineWidth: isSelected ? UIMetrics.BorderWidth.emphasis : UIMetrics.BorderWidth.standard
             )
-        )
+        }
         .task(id: thumbnailKey) { await renderThumbnail() }
     }
 

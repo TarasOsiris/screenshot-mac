@@ -486,7 +486,7 @@ struct ASCAppStoreVersion: Decodable, Identifiable {
 
         var displayState: String {
             guard let raw = appStoreState, !raw.isEmpty else { return String(localized: "not editable") }
-            return raw.replacingOccurrences(of: "_", with: " ").lowercased()
+            return raw.replacing("_", with: " ").lowercased()
         }
 
         var ascPlatform: ASCPlatform? {
@@ -497,7 +497,7 @@ struct ASCAppStoreVersion: Decodable, Identifiable {
         var displayPlatform: String? {
             if let ascPlatform { return ascPlatform.displayName }
             guard let platform, !platform.isEmpty else { return nil }
-            return platform.replacingOccurrences(of: "_", with: " ").capitalized
+            return platform.replacing("_", with: " ").capitalized
         }
     }
 

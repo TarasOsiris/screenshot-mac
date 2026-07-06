@@ -25,7 +25,7 @@ struct LocaleFlagChip: View {
                           ? Color.accentColor
                           : Color.primary.opacity(UIMetrics.Opacity.sectionFill))
             )
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
                     .strokeBorder(
                         isActive
@@ -35,7 +35,7 @@ struct LocaleFlagChip: View {
                           ? UIMetrics.BorderWidth.emphasis
                           : UIMetrics.BorderWidth.hairline
                     )
-            )
+            }
             .shadow(
                 color: isActive ? Color.accentColor.opacity(0.35) : .clear,
                 radius: isActive ? 4 : 0,

@@ -4,7 +4,7 @@ import SwiftUI
 extension ContentView {
     var sortedProjects: [Project] {
         let base = projectSortOrder == "alphabetical"
-            ? state.visibleProjects.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            ? state.visibleProjects.sortedByName()
             : state.visibleProjects
         return base.filter(\.isStarred) + base.filter { !$0.isStarred }
     }

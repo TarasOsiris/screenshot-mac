@@ -22,10 +22,10 @@ struct GradientStopEditor: View {
                     // Always horizontal so stop positions match visually
                     RoundedRectangle(cornerRadius: barCornerRadius)
                         .fill(horizontalGradient)
-                        .overlay(
+                        .overlay {
                             RoundedRectangle(cornerRadius: barCornerRadius)
                                 .strokeBorder(UIMetrics.Stroke.subtle, lineWidth: UIMetrics.BorderWidth.standard)
-                        )
+                        }
                         .contentShape(RoundedRectangle(cornerRadius: barCornerRadius))
                         .onTapGesture { location in
                             focusEditor()

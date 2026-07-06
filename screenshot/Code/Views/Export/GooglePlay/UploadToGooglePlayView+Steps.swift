@@ -78,7 +78,7 @@ extension UploadToGooglePlayView {
     @ViewBuilder
     var planStep: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: 16) {
                 preflightPanel
                 if rowPlans.isEmpty {
                     Text("This project has no rows to upload.")
