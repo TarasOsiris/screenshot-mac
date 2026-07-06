@@ -9,9 +9,15 @@ extension ShapePropertiesSingleSelectionBar {
             isTextLocalizationPopoverPresented.toggle()
         } label: {
             Image(systemName: "globe")
+                .font(.system(size: UIMetrics.ActionButton.iconSize))
                 .foregroundStyle(state.shapeHasActiveLocaleOverride(shapeId) ? Color.accentColor : Color.primary)
+                .frame(
+                    width: max(UIMetrics.IconButton.frameSize, UIMetrics.ActionButton.minTouchTarget),
+                    height: max(UIMetrics.IconButton.frameSize, UIMetrics.ActionButton.minTouchTarget)
+                )
+                .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
+        .buttonStyle(.plain)
         .help("Localization")
         .barPopover(isPresented: $isTextLocalizationPopoverPresented, title: "Localization") {
             #if os(macOS)

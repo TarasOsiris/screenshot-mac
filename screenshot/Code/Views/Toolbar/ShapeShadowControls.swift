@@ -10,28 +10,15 @@ struct ShapeShadowControls: View {
 
     var body: some View {
         ShapePropertiesSection {
-            Button {
-                isPopoverPresented.toggle()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "square.bottomhalf.filled")
-                        .font(.system(size: 11))
-                    Text("Shadow")
-                        .font(.system(size: UIMetrics.FontSize.body))
-                    if shadow.wrappedValue.isActive {
-                        OverrideDot()
-                    }
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .help("Drop shadow")
-            .barPopover(isPresented: $isPopoverPresented, title: "Shadow") {
+            PropertiesBarPopoverTrigger(
+                systemImage: "square.bottomhalf.filled",
+                isPresented: $isPopoverPresented,
+                showsOverrideDot: shadow.wrappedValue.isActive,
+                help: "Drop shadow",
+                popoverTitle: "Shadow"
+            ) {
+                Text("Shadow")
+            } content: {
                 ShadowPopover(shadow: shadow)
             }
         }

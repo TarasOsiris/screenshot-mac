@@ -29,30 +29,38 @@ struct ShapePropertiesMultiSelectionBar: View {
                         Text("\(count) shapes")
                             .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(Color.accentColor.opacity(UIMetrics.Opacity.accentBadge))
-                    )
+                    .propertiesBadgeCapsule()
 
                     if let commonType {
                         multiSelectionTypeControls(commonType, shapes: shapes)
 
                         ShapePropertiesSection {
                             ShapePropertiesControlGroup("Opacity") {
-                                Slider(value: multiShapeBinding(\.opacity), in: 0...1)
+                                let opacity = multiShapeBinding(\.opacity)
+                                Slider(value: opacity, in: 0...1)
                                     .frame(width: UIMetrics.SliderWidth.standard)
+                                Text(verbatim: "\(Int((opacity.wrappedValue * 100).rounded()))%")
+                                    .font(.system(size: UIMetrics.FontSize.numericBadge))
+                                    .foregroundStyle(.secondary)
+                                    .monospacedDigit()
+                                    .frame(width: propertiesOpacityFieldWidth, alignment: .trailing)
                             }
                         }
 
                         ShapePropertiesSection {
                             ShapePropertiesControlGroup("Rotation") {
-                                Slider(value: multiShapeBinding(\.rotation), in: 0...360)
+                                let rotation = multiShapeBinding(\.rotation)
+                                Slider(value: rotation, in: 0...360)
                                     .frame(width: UIMetrics.SliderWidth.standard)
 
+                                Text(verbatim: "\(Int(rotation.wrappedValue.rounded()))°")
+                                    .font(.system(size: UIMetrics.FontSize.numericBadge))
+                                    .foregroundStyle(.secondary)
+                                    .monospacedDigit()
+                                    .frame(width: propertiesNumericFieldWidth, alignment: .trailing)
+
                                 if shapes.contains(where: { $0.rotation != 0 }) {
-                                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation") {
+                                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
                                         state.updateShapes(state.selectedShapeIds) { shape in
                                             shape.rotation = 0
                                         }
@@ -84,7 +92,7 @@ struct ShapePropertiesMultiSelectionBar: View {
 
             Spacer(minLength: 0)
 
-            ActionButton(icon: "xmark", tooltip: "Deselect all (Esc)", frameSize: 24) {
+            ActionButton(icon: "xmark", tooltip: "Deselect all (Esc)", frameSize: UIMetrics.IconButton.frameSize) {
                 state.selectedShapeIds = []
             }
             .padding(.trailing, 8)
@@ -168,12 +176,12 @@ struct ShapePropertiesMultiSelectionBar: View {
                 if showsMultiItalicToggle(textShapes: textShapes) {
                     Toggle("Italic", isOn: italicBinding)
                         .toggleStyle(.switch)
-                        .controlSize(.small)
+                        .compactControlSize()
                 }
 
                 Toggle("Uppercase", isOn: multiShapeOptionalBinding(\.uppercase, default: false))
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .compactControlSize()
             }
 
         }
@@ -181,8 +189,14 @@ struct ShapePropertiesMultiSelectionBar: View {
         if type == .rectangle || type == .image {
             ShapePropertiesSection {
                 ShapePropertiesControlGroup("Radius") {
-                    Slider(value: multiShapeBinding(\.borderRadius), in: 0...500)
+                    let radius = multiShapeBinding(\.borderRadius)
+                    Slider(value: radius, in: 0...500)
                         .frame(width: UIMetrics.SliderWidth.standard)
+                    Text(verbatim: "\(Int(radius.wrappedValue.rounded()))")
+                        .font(.system(size: UIMetrics.FontSize.numericBadge))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .frame(width: propertiesSliderValueWidth, alignment: .trailing)
                 }
             }
         }
@@ -195,7 +209,7 @@ struct ShapePropertiesMultiSelectionBar: View {
                         in: 3...20
                     ) {
                         Text(verbatim: "\(shapes.first?.starPointCount ?? CanvasShapeModel.defaultStarPointCount)")
-                            .frame(width: 20, alignment: .trailing)
+                            .frame(width: propertiesStepperValueWidth, alignment: .trailing)
                     }
                 }
             }
@@ -205,7 +219,7 @@ struct ShapePropertiesMultiSelectionBar: View {
             ShapePropertiesSection {
                 Toggle("Custom color", isOn: multiShapeOptionalBinding(\.svgUseColor, default: false))
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .compactControlSize()
             }
         }
 
@@ -232,7 +246,7 @@ struct ShapePropertiesMultiSelectionBar: View {
             }
         ))
         .toggleStyle(.switch)
-        .controlSize(.small)
+        .compactControlSize()
 
         if hasOutline {
             ColorPicker("", selection: multiShapeOptionalBinding(\.outlineColor, default: CanvasShapeModel.defaultOutlineColor), supportsOpacity: false)

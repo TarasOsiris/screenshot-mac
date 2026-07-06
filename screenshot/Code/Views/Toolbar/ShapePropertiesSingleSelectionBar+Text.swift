@@ -5,20 +5,17 @@ extension ShapePropertiesSingleSelectionBar {
 
     @ViewBuilder
     func textPopoverButton(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        Button {
-            isTextPopoverPresented.toggle()
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "textformat")
-                Text(textPopoverSummary(shape: shape))
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .transaction { $0.animation = nil }
-            }
-        }
-        .buttonStyle(.borderless)
-        .help("Text")
-        .barPopover(isPresented: $isTextPopoverPresented, title: "Text") {
+        PropertiesBarPopoverTrigger(
+            systemImage: "textformat",
+            isPresented: $isTextPopoverPresented,
+            help: "Text",
+            popoverTitle: "Text"
+        ) {
+            Text(verbatim: textPopoverSummary(shape: shape))
+                .monospacedDigit()
+                .lineLimit(1)
+                .transaction { $0.animation = nil }
+        } content: {
             textPopoverContent(shape: shape, shapeId: shapeId)
         }
     }
@@ -182,8 +179,7 @@ extension ShapePropertiesSingleSelectionBar {
     private func fontWeightControl(shapeId: UUID, customControlState: CustomFontControlState?) -> some View {
         FontWeightPicker(
             selection: fontWeightBinding(shapeId),
-            options: customControlState?.availableWeights ?? [300, 400, 500, 700],
-            width: 100
+            options: customControlState?.availableWeights ?? [300, 400, 500, 700]
         )
     }
 

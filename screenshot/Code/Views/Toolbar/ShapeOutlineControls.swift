@@ -9,7 +9,7 @@ struct ShapeOutlineControls: View {
     var body: some View {
         Toggle("Outline", isOn: hasOutline)
             .toggleStyle(.switch)
-            .controlSize(.small)
+            .compactControlSize()
             .help(hasOutline.wrappedValue ? String(localized: "Disable outline") : String(localized: "Enable outline"))
 
         if hasOutline.wrappedValue {
@@ -26,7 +26,7 @@ struct ShapeOutlineControls: View {
                     .frame(width: UIMetrics.SliderWidth.standard)
 
                 Text(verbatim: "\(Int((shape.outlineWidth ?? CanvasShapeModel.defaultOutlineWidth).rounded()))")
-                    .frame(width: 28, alignment: .trailing)
+                    .frame(width: propertiesSliderValueWidth, alignment: .trailing)
             }
         }
     }

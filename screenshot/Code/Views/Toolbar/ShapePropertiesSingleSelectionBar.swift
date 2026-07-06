@@ -7,12 +7,14 @@ let propertiesOpacityFieldWidth: CGFloat = 40
 let propertiesFontFieldWidth: CGFloat = 48
 let propertiesTrackingValueWidth: CGFloat = 32
 let propertiesSliderValueWidth: CGFloat = 28
+let propertiesStepperValueWidth: CGFloat = 20
 #else
 let propertiesNumericFieldWidth: CGFloat = 56
 let propertiesOpacityFieldWidth: CGFloat = 52
 let propertiesFontFieldWidth: CGFloat = 56
 let propertiesTrackingValueWidth: CGFloat = 40
 let propertiesSliderValueWidth: CGFloat = 36
+let propertiesStepperValueWidth: CGFloat = 28
 #endif
 
 struct ShapePropertiesSingleSelectionBar: View {
@@ -266,7 +268,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                 }
 
                                 if shape.rotation != 0 {
-                                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation") {
+                                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
                                         resetRotation(shapeId: shapeId)
                                     }
                                 }
@@ -312,7 +314,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                                         in: 3...20
                                     ) {
                                         Text(verbatim: "\(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)")
-                                            .frame(width: 20, alignment: .trailing)
+                                            .frame(width: propertiesStepperValueWidth, alignment: .trailing)
                                     }
                                 }
                             }
@@ -379,12 +381,12 @@ struct ShapePropertiesSingleSelectionBar: View {
                 Spacer(minLength: 0)
 
                 #if os(macOS)
-                ActionButton(icon: "xmark", tooltip: "Deselect shape (Esc)", frameSize: 24) {
+                ActionButton(icon: "xmark", tooltip: "Deselect shape (Esc)", frameSize: UIMetrics.IconButton.frameSize) {
                     state.selectedShapeIds = []
                 }
                 .padding(.trailing, 8)
                 #else
-                ActionButton(icon: "xmark", tooltip: "Deselect shape", frameSize: 24) {
+                ActionButton(icon: "xmark", tooltip: "Deselect shape", frameSize: UIMetrics.IconButton.frameSize) {
                     state.selectedShapeIds = []
                 }
                 .padding(.trailing, 8)

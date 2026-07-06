@@ -5,14 +5,43 @@ import SwiftUI
 enum ShapePropertiesSectionLayout {
     static let horizontalPadding: CGFloat = 10
     static let verticalPadding: CGFloat = 4
+    static let badgeHorizontalPadding: CGFloat = 8
+    static let badgeVerticalPadding: CGFloat = 4
     // Taller sections on iPad give the bottom bar's controls touch-friendly breathing room.
     // 52 = the 44pt ActionButton touch target + vertical padding, so every section in the
     // row renders at the same height regardless of which controls it holds.
+    // Floor tall enough that every section's natural height (the tallest control is the ~24pt
+    // fill/color swatch + vertical padding ≈ 32) is clamped to a single value, so all pills match.
     #if os(macOS)
-    static let minHeight: CGFloat = 28
+    static let minHeight: CGFloat = 34
     #else
     static let minHeight: CGFloat = 52
     #endif
+}
+
+extension View {
+    /// Accent capsule shared by the single-selection dimension badge and the multi-selection
+    /// count badge so both read identically.
+    func propertiesBadgeCapsule() -> some View {
+        padding(.horizontal, ShapePropertiesSectionLayout.badgeHorizontalPadding)
+            .padding(.vertical, ShapePropertiesSectionLayout.badgeVerticalPadding)
+            .frame(minHeight: ShapePropertiesSectionLayout.minHeight)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(Color.accentColor.opacity(UIMetrics.Opacity.accentBadge))
+            )
+    }
+
+    /// Secondary "replace"-style affordance in the properties bar: dense borderless-secondary on
+    /// macOS, tappable bordered on iPad. Keeps the three replace buttons identical per platform.
+    @ViewBuilder
+    func propertiesBarSecondaryButton() -> some View {
+        #if os(macOS)
+        buttonStyle(.borderless).foregroundStyle(.secondary)
+        #else
+        buttonStyle(.bordered)
+        #endif
+    }
 }
 
 struct ShapePropertiesSection<Content: View>: View {
@@ -135,12 +164,7 @@ struct ShapePropertiesBadge: View {
                 .foregroundStyle(.secondary)
                 .transaction { $0.animation = nil }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-            Capsule(style: .continuous)
-                .fill(Color.accentColor.opacity(UIMetrics.Opacity.accentBadge))
-        )
+        .propertiesBadgeCapsule()
     }
 }
 
@@ -157,35 +181,35 @@ struct ShapeSelectionActionsSection: View {
             HStack(spacing: 4) {
                 // Shortcut hints only make sense on macOS; on iOS they'd be read aloud by VoiceOver.
                 #if os(macOS)
-                ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front (⇧⌘])", frameSize: 24, disabled: !canBringToFront) {
+                ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front (⇧⌘])", frameSize: UIMetrics.IconButton.frameSize, disabled: !canBringToFront) {
                     onBringToFront()
                 }
 
-                ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back (⇧⌘[)", frameSize: 24, disabled: !canSendToBack) {
+                ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back (⇧⌘[)", frameSize: UIMetrics.IconButton.frameSize, disabled: !canSendToBack) {
                     onSendToBack()
                 }
 
-                ActionButton(icon: "doc.on.doc", tooltip: "Duplicate (⌘D)", frameSize: 24) {
+                ActionButton(icon: "doc.on.doc", tooltip: "Duplicate (⌘D)", frameSize: UIMetrics.IconButton.frameSize) {
                     onDuplicate()
                 }
 
-                ActionButton(icon: "trash", tooltip: "Delete (⌫)", frameSize: 24, isDestructive: true) {
+                ActionButton(icon: "trash", tooltip: "Delete (⌫)", frameSize: UIMetrics.IconButton.frameSize, isDestructive: true) {
                     onDelete()
                 }
                 #else
-                ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front", frameSize: 24, disabled: !canBringToFront) {
+                ActionButton(icon: "square.3.layers.3d.top.filled", tooltip: "Bring to front", frameSize: UIMetrics.IconButton.frameSize, disabled: !canBringToFront) {
                     onBringToFront()
                 }
 
-                ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back", frameSize: 24, disabled: !canSendToBack) {
+                ActionButton(icon: "square.3.layers.3d.bottom.filled", tooltip: "Send to back", frameSize: UIMetrics.IconButton.frameSize, disabled: !canSendToBack) {
                     onSendToBack()
                 }
 
-                ActionButton(icon: "doc.on.doc", tooltip: "Duplicate", frameSize: 24) {
+                ActionButton(icon: "doc.on.doc", tooltip: "Duplicate", frameSize: UIMetrics.IconButton.frameSize) {
                     onDuplicate()
                 }
 
-                ActionButton(icon: "trash", tooltip: "Delete", frameSize: 24, isDestructive: true) {
+                ActionButton(icon: "trash", tooltip: "Delete", frameSize: UIMetrics.IconButton.frameSize, isDestructive: true) {
                     onDelete()
                 }
                 #endif
@@ -229,11 +253,10 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
                 Button(action: onPickImage) {
                     Label("Replace Image", systemImage: "photo.badge.arrow.down")
                 }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
+                .propertiesBarSecondaryButton()
 
                 if showsLocaleImageReset {
-                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: 24) {
+                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: UIMetrics.IconButton.frameSize) {
                         onResetLocaleImage()
                     }
                 }
@@ -244,10 +267,10 @@ struct DeviceShapeControls<DevicePickerContent: View>: View {
             ImageSourceMenu(onImage: onImageSelected) {
                 Label(shape.screenshotFileName == nil ? "Add Screenshot" : "Replace Image", systemImage: "photo.badge.arrow.down")
             }
-            .buttonStyle(.bordered)
+            .propertiesBarSecondaryButton()
 
             if showsLocaleImageReset {
-                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: 24) {
+                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: UIMetrics.IconButton.frameSize) {
                     onResetLocaleImage()
                 }
             }
@@ -269,17 +292,16 @@ struct ImageShapeControls: View {
             Button(action: onPickImage) {
                 Label(buttonTitle, systemImage: "photo.badge.arrow.down")
             }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
+            .propertiesBarSecondaryButton()
             #else
             ImageSourceMenu(onImage: onImageSelected) {
                 Label(buttonTitle, systemImage: "photo.badge.arrow.down")
             }
-            .buttonStyle(.bordered)
+            .propertiesBarSecondaryButton()
             #endif
 
             if showsLocaleImageReset {
-                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: 24) {
+                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: UIMetrics.IconButton.frameSize) {
                     onResetLocaleImage()
                 }
             }
@@ -297,7 +319,7 @@ struct SVGShapeControls: View {
             HStack(spacing: 4) {
                 Toggle("Custom color", isOn: $usesCustomColor)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .compactControlSize()
                     .help("Use custom color for SVG")
 
                 if usesCustomColor {
@@ -313,8 +335,7 @@ struct SVGShapeControls: View {
             Button(action: onReplace) {
                 Label("Replace SVG", systemImage: "arrow.triangle.2.circlepath")
             }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
+            .propertiesBarSecondaryButton()
         }
     }
 }
@@ -322,7 +343,7 @@ struct SVGShapeControls: View {
 struct FontWeightPicker: View {
     @Binding var selection: Int
     var options: [Int] = [300, 400, 500, 700]
-    var width: CGFloat = 90
+    var width: CGFloat = 100
 
     var body: some View {
         Picker("", selection: $selection) {

@@ -12,28 +12,15 @@ struct ShapeDeviceModelRotationControls: View {
 
     var body: some View {
         ShapePropertiesSection {
-            Button {
-                isPopoverPresented.toggle()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "cube.transparent")
-                        .font(.system(size: 11))
-                    Text("3D")
-                        .font(.system(size: UIMetrics.FontSize.body))
-                    if hasAnyOverride {
-                        OverrideDot()
-                    }
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .help("Rotation, material, and lighting")
-            .barPopover(isPresented: $isPopoverPresented, title: "Appearance") {
+            PropertiesBarPopoverTrigger(
+                systemImage: "cube.transparent",
+                isPresented: $isPopoverPresented,
+                showsOverrideDot: hasAnyOverride,
+                help: "Rotation, material, and lighting",
+                popoverTitle: "Appearance"
+            ) {
+                Text("3D")
+            } content: {
                 Device3DAppearancePopover(
                     pitch: pitch,
                     yaw: yaw,
