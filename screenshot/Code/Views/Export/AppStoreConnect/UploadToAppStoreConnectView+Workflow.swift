@@ -108,7 +108,6 @@ extension UploadToAppStoreConnectView {
                 ) == .orderedDescending
             }
             selectedVersionIds = defaultSelectedVersionIds(from: versions)
-            localizations = []
             localizationsByVersionId = [:]
             destinationPlans = []
             advance(to: .pickingVersion)
@@ -132,24 +131,18 @@ extension UploadToAppStoreConnectView {
     }
 
     func movePastVersionSelection() async {
-        if selectedVersions.count == 1 {
-            await moveToMetadata()
-        } else {
-            await moveToPlan()
-        }
+        await moveToMetadata()
     }
 
     func moveToMetadata() async {
-        guard let version = selectedVersion, let app = selectedApp else { return }
+        guard let app = selectedApp, !selectedVersions.isEmpty else { return }
         isBusy = true
         errorMessage = nil
         defer { isBusy = false }
         do {
-            async let localizationsTask = AppStoreConnectAPIService.shared.listLocalizations(versionId: version.id)
             async let appInfosTask = AppStoreConnectAPIService.shared.listAppInfos(appId: app.id)
-            let (fetchedLocalizations, fetchedAppInfos) = try await (localizationsTask, appInfosTask)
-            localizations = fetchedLocalizations
-            localizationsByVersionId[version.id] = fetchedLocalizations
+            try await loadSelectedVersionLocalizations()
+            let fetchedAppInfos = try await appInfosTask
 
             let editableInfo = fetchedAppInfos.first(where: { $0.isEditable }) ?? fetchedAppInfos.first
             let fetchedAppInfoLocalizations: [ASCAppInfoLocalization]
@@ -159,6 +152,9 @@ extension UploadToAppStoreConnectView {
                 fetchedAppInfoLocalizations = []
             }
 
+            if !selectedVersions.contains(where: { $0.id == metadataVersionId }) {
+                metadataVersionId = selectedVersions.first?.id
+            }
             buildMetadataDrafts(appInfoLocalizations: fetchedAppInfoLocalizations)
             advance(to: .editingMetadata)
         } catch {
@@ -169,19 +165,22 @@ extension UploadToAppStoreConnectView {
     static let defaultWhatsNew = "New features and bug fixes"
 
     func buildMetadataDrafts(appInfoLocalizations: [ASCAppInfoLocalization]) {
-        let sortedLocalizations = localizations.sorted { $0.attributes.locale < $1.attributes.locale }
-        let englishWhatsNew = sortedLocalizations
-            .first { $0.attributes.locale.lowercased().hasPrefix("en") }
-            .flatMap { $0.attributes.whatsNew?.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .flatMap { $0.isEmpty ? nil : $0 }
-            ?? Self.defaultWhatsNew
-
-        versionDrafts = sortedLocalizations
-            .map { loc in
+        var allVersionDrafts: [VersionLocaleDraft] = []
+        var copyrights: [String: String] = [:]
+        for version in selectedVersions {
+            let sorted = (localizationsByVersionId[version.id] ?? [])
+                .sorted { $0.attributes.locale < $1.attributes.locale }
+            let englishWhatsNew = sorted
+                .first { $0.attributes.locale.lowercased().hasPrefix("en") }
+                .flatMap { $0.attributes.whatsNew?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .flatMap { $0.isEmpty ? nil : $0 }
+                ?? Self.defaultWhatsNew
+            allVersionDrafts += sorted.map { loc in
                 let existing = loc.attributes.whatsNew?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 let whatsNew = existing.isEmpty ? englishWhatsNew : existing
                 return VersionLocaleDraft(
                     id: loc.id,
+                    versionId: version.id,
                     locale: loc.attributes.locale,
                     description: loc.attributes.description ?? "",
                     keywords: loc.attributes.keywords ?? "",
@@ -192,6 +191,11 @@ extension UploadToAppStoreConnectView {
                     original: loc.attributes
                 )
             }
+            copyrights[version.id] = version.attributes.copyright ?? ""
+        }
+        versionDrafts = allVersionDrafts
+        originalCopyrightByVersion = copyrights
+        copyrightByVersion = copyrights
         appInfoDrafts = appInfoLocalizations
             .sorted { $0.attributes.locale < $1.attributes.locale }
             .map { loc in
@@ -204,8 +208,6 @@ extension UploadToAppStoreConnectView {
                     original: loc.attributes
                 )
             }
-        originalCopyright = selectedVersion?.attributes.copyright ?? ""
-        copyrightDraft = originalCopyright
         let codes = metadataLocaleCodes
         let currentStillValid = selectedMetadataLocale.map(codes.contains) ?? false
         if !currentStillValid {
@@ -213,8 +215,11 @@ extension UploadToAppStoreConnectView {
         }
     }
 
+    /// Metadata locales for the active version's tab: that version's localizations ∪ the
+    /// shared app-info locales.
     var metadataLocaleCodes: [String] {
-        let sorted = Set(versionDrafts.map(\.locale)).union(appInfoDrafts.map(\.locale)).sorted()
+        let versionLocales = versionDrafts.filter { $0.versionId == metadataVersionId }.map(\.locale)
+        let sorted = Set(versionLocales).union(appInfoDrafts.map(\.locale)).sorted()
         guard let base = baseLocaleCode(among: sorted) else { return sorted }
         return [base] + sorted.filter { $0 != base }
     }
@@ -256,23 +261,22 @@ extension UploadToAppStoreConnectView {
     }
 
     func saveMetadataAndContinue() async {
-        guard let version = selectedVersion else { return }
+        guard !selectedVersions.isEmpty else { return }
         isBusy = true
         errorMessage = nil
         defer { isBusy = false }
 
-        let copyrightChanged = copyrightDraft != originalCopyright
-        let copyrightValue = copyrightDraft
+        let changedCopyrights = copyrightByVersion.filter { $0.value != (originalCopyrightByVersion[$0.key] ?? "") }
         let versionSnapshot = versionDrafts
         let appInfoSnapshot = appInfoDrafts
         let api = AppStoreConnectAPIService.shared
 
         do {
             try await withThrowingTaskGroup(of: Void.self) { group in
-                if copyrightChanged {
+                for (versionId, copyrightValue) in changedCopyrights {
                     group.addTask {
                         try await api.updateAppStoreVersion(
-                            id: version.id,
+                            id: versionId,
                             attributes: ["copyright": AnyEncodable(copyrightValue)]
                         )
                     }
@@ -293,7 +297,9 @@ extension UploadToAppStoreConnectView {
                 }
                 try await group.waitForAll()
             }
-            if copyrightChanged { originalCopyright = copyrightValue }
+            for (versionId, copyrightValue) in changedCopyrights {
+                originalCopyrightByVersion[versionId] = copyrightValue
+            }
             for i in versionDrafts.indices where versionDrafts[i].isChanged {
                 versionDrafts[i].markSaved()
             }
@@ -338,9 +344,6 @@ extension UploadToAppStoreConnectView {
         for version in selectedVersions {
             let fetched = try await AppStoreConnectAPIService.shared.listLocalizations(versionId: version.id)
             localizationsByVersionId[version.id] = fetched
-            if selectedVersion?.id == version.id {
-                localizations = fetched
-            }
         }
     }
 

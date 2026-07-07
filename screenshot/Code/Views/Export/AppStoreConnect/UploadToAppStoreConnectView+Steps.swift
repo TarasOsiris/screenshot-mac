@@ -71,13 +71,18 @@ extension UploadToAppStoreConnectView {
 
     var editMetadataView: some View {
         VStack(spacing: 0) {
-            if let app = selectedApp, let version = selectedVersion {
+            if selectedVersions.count > 1 {
+                metadataVersionTabs
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+            }
+            if let app = selectedApp, let version = activeMetadataVersion {
                 ASCAppHeaderView(
                     app: app,
                     subtitle: "Version \(version.attributes.versionString) · \(version.attributes.displayState)"
                 )
                 .padding(.horizontal, 16)
-                .padding(.top, 12)
+                .padding(.top, selectedVersions.count > 1 ? 8 : 12)
                 .padding(.bottom, 8)
             }
 
@@ -98,6 +103,31 @@ extension UploadToAppStoreConnectView {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             #endif
         }
+    }
+
+    /// One tab per selected version (shown when 2+ versions are selected), so per-version
+    /// metadata (release notes, copyright, …) can be edited without leaving the screen.
+    var metadataVersionTabs: some View {
+        Picker("Version", selection: $metadataVersionId) {
+            ForEach(selectedVersions) { version in
+                Text(metadataTabLabel(version)).tag(version.id as String?)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .onChange(of: metadataVersionId) { _, _ in
+            let codes = metadataLocaleCodes
+            if !(selectedMetadataLocale.map(codes.contains) ?? false) {
+                selectedMetadataLocale = codes.first
+            }
+        }
+    }
+
+    func metadataTabLabel(_ version: ASCAppStoreVersion) -> String {
+        if let platform = version.attributes.displayPlatform {
+            return "\(platform) \(version.attributes.versionString)"
+        }
+        return version.attributes.versionString
     }
 
     #if os(iOS)
@@ -153,7 +183,7 @@ extension UploadToAppStoreConnectView {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    if copyrightDraft != originalCopyright {
+                    if activeVersionCopyrightChanged {
                         Image(systemName: "circle.fill")
                             .font(.system(size: 6))
                             .foregroundStyle(.blue)
@@ -180,9 +210,14 @@ extension UploadToAppStoreConnectView {
     #endif
 
     func localeHasChanges(_ code: String) -> Bool {
-        if versionDrafts.contains(where: { $0.locale == code && $0.isChanged }) { return true }
+        if versionDrafts.contains(where: { $0.versionId == metadataVersionId && $0.locale == code && $0.isChanged }) { return true }
         if appInfoDrafts.contains(where: { $0.locale == code && $0.isChanged }) { return true }
         return false
+    }
+
+    var activeVersionCopyrightChanged: Bool {
+        let id = metadataVersionId ?? ""
+        return (copyrightByVersion[id] ?? "") != (originalCopyrightByVersion[id] ?? "")
     }
 
     @ViewBuilder
@@ -194,10 +229,10 @@ extension UploadToAppStoreConnectView {
                     if let idx = appInfoDrafts.firstIndex(where: { $0.locale == code }) {
                         appInfoSection(index: idx)
                     }
-                    if let idx = versionDrafts.firstIndex(where: { $0.locale == code }) {
+                    if let idx = versionDrafts.firstIndex(where: { $0.versionId == metadataVersionId && $0.locale == code }) {
                         versionLocaleSection(index: idx)
                     }
-                    if !versionDrafts.contains(where: { $0.locale == code }),
+                    if !versionDrafts.contains(where: { $0.versionId == metadataVersionId && $0.locale == code }),
                        !appInfoDrafts.contains(where: { $0.locale == code }) {
                         Text("No editable metadata for this locale.")
                             .foregroundStyle(.secondary)
@@ -218,7 +253,10 @@ extension UploadToAppStoreConnectView {
             Text("Copyright")
                 .font(.subheadline)
                 .fontWeight(.semibold)
-            TextField("© 2025 Your Company", text: $copyrightDraft)
+            TextField("© 2025 Your Company", text: Binding(
+                get: { copyrightByVersion[metadataVersionId ?? ""] ?? "" },
+                set: { copyrightByVersion[metadataVersionId ?? ""] = $0 }
+            ))
                 .textFieldStyle(.roundedBorder)
                 .submitLabel(.done)
             Text("Applies to all locales for this version.")
@@ -317,14 +355,16 @@ extension UploadToAppStoreConnectView {
         let draft = versionDrafts[index]
         guard draft.locale.lowercased().hasPrefix("en") else { return false }
         guard !draft.whatsNew.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-        return versionDrafts.contains { $0.locale != draft.locale }
+        return versionDrafts.contains { $0.versionId == draft.versionId && $0.locale != draft.locale }
     }
 
     func copyWhatsNewToOtherLocales(from index: Int) {
         guard versionDrafts.indices.contains(index) else { return }
         let source = versionDrafts[index].whatsNew
         let sourceLocale = versionDrafts[index].locale
-        for i in versionDrafts.indices where versionDrafts[i].locale != sourceLocale {
+        let sourceVersionId = versionDrafts[index].versionId
+        for i in versionDrafts.indices
+        where versionDrafts[i].versionId == sourceVersionId && versionDrafts[i].locale != sourceLocale {
             versionDrafts[i].whatsNew = source
         }
     }

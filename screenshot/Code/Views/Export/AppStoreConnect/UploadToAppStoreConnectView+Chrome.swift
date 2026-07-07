@@ -147,7 +147,7 @@ extension UploadToAppStoreConnectView {
     }
 
     var hasMetadataChanges: Bool {
-        if copyrightDraft != originalCopyright { return true }
+        if copyrightByVersion.contains(where: { $0.value != (originalCopyrightByVersion[$0.key] ?? "") }) { return true }
         if versionDrafts.contains(where: \.isChanged) { return true }
         if appInfoDrafts.contains(where: \.isChanged) { return true }
         return false
@@ -166,7 +166,7 @@ extension UploadToAppStoreConnectView {
         case .editingMetadata:
             step = .pickingVersion
         case .configuringPlan:
-            step = selectedVersions.count == 1 ? .editingMetadata : .pickingVersion
+            step = .editingMetadata
         default: break
         }
     }

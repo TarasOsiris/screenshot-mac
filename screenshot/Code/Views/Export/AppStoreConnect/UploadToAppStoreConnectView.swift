@@ -27,14 +27,15 @@ struct UploadToAppStoreConnectView: View {
     @State var versions: [ASCAppStoreVersion] = []
     @State var selectedVersionIds: Set<String> = []
 
-    @State var localizations: [ASCAppStoreVersionLocalization] = []
     @State var localizationsByVersionId: [String: [ASCAppStoreVersionLocalization]] = [:]
 
     @State var versionDrafts: [VersionLocaleDraft] = []
     @State var appInfoDrafts: [AppInfoLocaleDraft] = []
-    @State var copyrightDraft: String = ""
-    @State var originalCopyright: String = ""
+    @State var copyrightByVersion: [String: String] = [:]
+    @State var originalCopyrightByVersion: [String: String] = [:]
     @State var selectedMetadataLocale: String?
+    /// The version whose metadata the editing screen is currently showing (the active tab).
+    @State var metadataVersionId: String?
 
     @State var destinationPlans: [DestinationPlan] = []
     @State var isPreflightExpanded = true
@@ -71,6 +72,7 @@ struct UploadToAppStoreConnectView: View {
 
     struct VersionLocaleDraft: Identifiable {
         let id: String
+        let versionId: String
         let locale: String
         var description: String
         var keywords: String
@@ -244,6 +246,11 @@ struct UploadToAppStoreConnectView: View {
     var selectedVersion: ASCAppStoreVersion? {
         let selected = selectedVersions
         return selected.count == 1 ? selected.first : nil
+    }
+
+    /// The selected version whose metadata the editing screen is showing (the active tab).
+    var activeMetadataVersion: ASCAppStoreVersion? {
+        selectedVersions.first { $0.id == metadataVersionId } ?? selectedVersions.first
     }
 
     var body: some View {
