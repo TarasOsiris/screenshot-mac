@@ -164,9 +164,9 @@ extension CanvasShapeView {
         } else {
             dragOffset = rawOffset
         }
-        if isMultiSelected {
-            interactions.onDragProgress?(dragOffset)
-        }
+        // Report progress for single- and multi-select alike so the lifted
+        // selection layer's handles track the shape during the drag.
+        interactions.onDragProgress?(dragOffset)
     }
 
     private func beginDrag() {

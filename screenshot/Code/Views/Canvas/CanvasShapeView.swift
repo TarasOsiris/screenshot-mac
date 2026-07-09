@@ -36,7 +36,6 @@ struct CanvasShapeView: View {
     @State var dragOffset: CGSize = .zero
     @State var isDragging = false
     @State private var isHovered = false
-    @State var localResizeState: ResizeState?
     @State var isDropTargeted = false
     @State var isPickerPresented = false
     @State var isEditingText = false
@@ -46,23 +45,19 @@ struct CanvasShapeView: View {
     @StateObject var formatController = RichTextFormatController()
     @State var cachedSvgImage: NSImage?
     @State var svgCacheKey = ""
-    @State var localRotationDelta: Double = 0
     @State var svgResizeDebounceTask: Task<Void, Never>?
 
-    private let handleDiameter: CGFloat = 8
     private var displayPixelStep: CGFloat { 1 / max(screenScale, 1) }
-    private var activeResizeState: ResizeState? { isMultiSelected ? resizeState : localResizeState }
-    private var activeRotationDelta: Double { isMultiSelected ? rotationDelta : localRotationDelta }
 
     // Current effective geometry (accounts for in-progress resize or drag)
     var effectiveX: CGFloat {
-        if let rs = activeResizeState { return rs.newX } else { return shape.x + dragOffset.width + groupDragOffset.width }
+        if let rs = resizeState { return rs.newX } else { return shape.x + dragOffset.width + groupDragOffset.width }
     }
     var effectiveY: CGFloat {
-        if let rs = activeResizeState { return rs.newY } else { return shape.y + dragOffset.height + groupDragOffset.height }
+        if let rs = resizeState { return rs.newY } else { return shape.y + dragOffset.height + groupDragOffset.height }
     }
-    var effectiveW: CGFloat { activeResizeState?.newW ?? shape.width }
-    var effectiveH: CGFloat { activeResizeState?.newH ?? shape.height }
+    var effectiveW: CGFloat { resizeState?.newW ?? shape.width }
+    var effectiveH: CGFloat { resizeState?.newH ?? shape.height }
 
     private var displayRect: CGRect {
         CanvasShapeDisplayGeometry.snappedRect(
@@ -84,7 +79,7 @@ struct CanvasShapeView: View {
     }
 
     private var currentRotation: Double {
-        isEditingText ? 0 : shape.rotation + activeRotationDelta
+        isEditingText ? 0 : shape.rotation + rotationDelta
     }
 
     /// Axis-aligned bounding box size for the rotated display rect.
@@ -160,11 +155,6 @@ struct CanvasShapeView: View {
                     }
                 )
                 .allowsHitTesting(showsEditorHelpers)
-
-            if showsEditorHelpers, isSelected, !isMultiSelected {
-                handlesContent
-                    .zIndex(99)
-            }
         }
         // Anchor the image-source picker popup at the device's visual center. Lives in a
         // `.background` (sharing this view's top-leading origin) rather than as a ZStack
@@ -311,24 +301,6 @@ struct CanvasShapeView: View {
             .rotationEffect(.degrees(currentRotation))
             .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
             .allowsHitTesting(false)
-    }
-
-    @ViewBuilder
-    private var handlesContent: some View {
-        CanvasShapeHandlesOverlay(
-            shape: shape,
-            displayScale: displayScale,
-            zoom: zoom,
-            displayX: displayX,
-            displayY: displayY,
-            displayW: displayW,
-            displayH: displayH,
-            currentRotation: currentRotation,
-            handleDiameter: handleDiameter,
-            rotationDelta: $localRotationDelta,
-            resizeState: $localResizeState,
-            onUpdate: interactions.onUpdate
-        )
     }
 
     private func snapToDisplayPixel(_ value: CGFloat) -> CGFloat {

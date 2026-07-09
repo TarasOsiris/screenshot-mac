@@ -50,7 +50,7 @@ extension EditorRowView {
                                         }
                                     }
 
-                                // Always mounted (renders nothing unless 2+ shapes are
+                                // Always mounted (renders nothing unless a shape is
                                 // selected, which never happens in view mode) so toggling
                                 // mode doesn't add/remove a layer mid-animation.
                                 CanvasSelectionLayer(

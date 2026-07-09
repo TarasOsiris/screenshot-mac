@@ -1,8 +1,11 @@
 import SwiftUI
 
-/// Renders selection outlines and resize/rotation handles for the row's
-/// selected shapes, at the canvas's full (zoom-inclusive) `visualScale` so
-/// handle and outline thickness stay pixel-perfect at every zoom level.
+/// The single owner of selection chrome (outlines + resize/rotation handles)
+/// for both single- and multi-select. Sits above the whole shape layer so
+/// handles always paint on top and stay grabbable even when the shape is
+/// behind another — don't reintroduce inline handles in `CanvasShapeView`.
+/// Drawn at the canvas's full (zoom-inclusive) `visualScale` so handle and
+/// outline thickness stay pixel-perfect at every zoom level.
 struct CanvasSelectionLayer: View {
     @Environment(\.displayScale) private var screenScale
 
@@ -21,14 +24,15 @@ struct CanvasSelectionLayer: View {
     let onUpdate: (CanvasShapeModel) -> Void
 
     private let handleDiameter: CGFloat = 8
+    private var isMultiSelected: Bool { selectedShapeIds.count > 1 }
 
     var body: some View {
         let selectedIds = selectedShapeIds
-        if selectedIds.count > 1 {
+        if !selectedIds.isEmpty {
             ZStack(alignment: .topLeading) {
                 ForEach(resolvedShapes) { shape in
                     if selectedIds.contains(shape.id), shape.id != textEditingShapeId {
-                        handles(for: shape, isMultiSelected: true)
+                        handles(for: shape)
                     }
                 }
             }
@@ -36,7 +40,7 @@ struct CanvasSelectionLayer: View {
     }
 
     @ViewBuilder
-    private func handles(for shape: CanvasShapeModel, isMultiSelected: Bool) -> some View {
+    private func handles(for shape: CanvasShapeModel) -> some View {
         let pendingR = pendingResize[shape.id]
         let pendingRot = pendingRotation[shape.id] ?? 0
 
