@@ -8,7 +8,7 @@ import UIKit
 final class AppState {
     static let maxProjectNameLength = 100
     static let templateColors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
-    static let fontExtensions: Set<String> = ["ttf", "otf", "ttc"]
+    nonisolated static let fontExtensions: Set<String> = ["ttf", "otf", "ttc"]
 
     var projects: [Project] = []
     var activeProjectId: UUID?
@@ -182,7 +182,7 @@ final class AppState {
     @ObservationIgnored var baseTextBaseRow: ScreenshotRow?
     /// Whole-document base for a base-text edit that propagates across rows (a shared/reused string).
     @ObservationIgnored var baseTextBaseRows: [ScreenshotRow]?
-    @ObservationIgnored var arrowKeyMonitor: Any?
+    @ObservationIgnored nonisolated(unsafe) var arrowKeyMonitor: Any?
     @ObservationIgnored var nudgeUndoTask: DispatchWorkItem?
     @ObservationIgnored var nudgeBaseRow: ScreenshotRow?
     @ObservationIgnored var nudgeActionName: String = "Move Shape"
@@ -288,7 +288,9 @@ final class AppState {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                self?.flushPendingSavesSynchronously()
+                Task { @MainActor [weak self] in
+                    self?.flushPendingSavesSynchronously()
+                }
             }
         }
 
@@ -300,7 +302,9 @@ final class AppState {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.refreshTranslationsIfCatalogChanged()
+            Task { @MainActor [weak self] in
+                self?.refreshTranslationsIfCatalogChanged()
+            }
         }
         #endif
     }

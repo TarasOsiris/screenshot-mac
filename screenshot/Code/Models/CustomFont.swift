@@ -187,6 +187,23 @@ enum CustomFontRegistry {
         instancesByFamily = instanceMap
     }
 
+    static func withTemporaryFonts<Result>(
+        _ fonts: [String: CustomFont],
+        instances: [CustomFont],
+        perform: () throws -> Result
+    ) rethrows -> Result {
+        let previousByDisplayName = byDisplayName
+        let previousByFamily = byFamily
+        let previousInstancesByFamily = instancesByFamily
+        update(with: fonts, instances: instances)
+        defer {
+            byDisplayName = previousByDisplayName
+            byFamily = previousByFamily
+            instancesByFamily = previousInstancesByFamily
+        }
+        return try perform()
+    }
+
     static func font(forDisplayName name: String) -> CustomFont? {
         byDisplayName[name]
     }

@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import SwiftUI
 @testable import Screenshot_Bro
 
 struct LocaleServiceTests {

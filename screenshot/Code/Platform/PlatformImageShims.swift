@@ -5,7 +5,7 @@ import SwiftUI
 // The slice of NSImage's API the codebase calls, mapped onto UIImage. Heavy AppKit drawing
 // (lockFocus, NSGraphicsContext compositing) is NOT shimmed here — those call sites are
 // guarded with `#if os(macOS)` and stubbed on iOS for this foundation pass.
-extension UIImage {
+nonisolated extension UIImage {
     convenience init?(contentsOf url: URL) {
         self.init(contentsOfFile: url.path)
     }
@@ -45,7 +45,7 @@ extension UIImage {
     var isValid: Bool { cgImage != nil || ciImage != nil }
 }
 
-extension Image {
+nonisolated extension Image {
     /// `Image(nsImage:)` is macOS-only in SwiftUI; map it to `Image(uiImage:)` on iOS so the
     /// (NSImage = UIImage) call sites compile unchanged.
     init(nsImage: UIImage) {

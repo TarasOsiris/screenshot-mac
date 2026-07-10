@@ -19,11 +19,15 @@ struct ProjectThumbnailServiceTests {
 
         let id = UUID()
         let url = PersistenceService.thumbnailURL(id, at: tempDir)
+        let versionURL = PersistenceService.thumbnailVersionURL(id, at: tempDir)
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         FileManager.default.createFile(atPath: url.path, contents: Data([0x1, 0x2, 0x3]))
+        FileManager.default.createFile(atPath: versionURL.path, contents: Data([0x2]))
         #expect(FileManager.default.fileExists(atPath: url.path))
+        #expect(FileManager.default.fileExists(atPath: versionURL.path))
 
         PersistenceService.deleteThumbnail(id, at: tempDir)
         #expect(!FileManager.default.fileExists(atPath: url.path))
+        #expect(!FileManager.default.fileExists(atPath: versionURL.path))
     }
 }

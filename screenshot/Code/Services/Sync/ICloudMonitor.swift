@@ -12,7 +12,7 @@ enum SyncStatus: Equatable {
     }
 }
 
-final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
+nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
 
     var presentedItemURL: URL?
     let presentedItemOperationQueue = OperationQueue()
@@ -109,8 +109,9 @@ final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
         scheduleDebouncedReload()
     }
 
-    func accommodatePresentedSubitemDeletion(at url: URL) async throws {
+    func accommodatePresentedSubitemDeletion(at url: URL, completionHandler: @escaping (Error?) -> Void) {
         scheduleDebouncedReload()
+        completionHandler(nil)
     }
 
     // MARK: - Metadata Query (upload/download progress)

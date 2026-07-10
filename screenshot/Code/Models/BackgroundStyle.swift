@@ -1,19 +1,19 @@
 import SwiftUI
 
-enum BackgroundStyle: String, Codable, CaseIterable {
+nonisolated enum BackgroundStyle: String, Codable, CaseIterable {
     case color
     case gradient
     case image
 }
 
-enum ImageFillMode: String, Codable, CaseIterable {
+nonisolated enum ImageFillMode: String, Codable, CaseIterable {
     case fill
     case fit
     case stretch
     case tile
 }
 
-struct BackgroundImageConfig: Codable, Equatable {
+nonisolated struct BackgroundImageConfig: Codable, Equatable {
     var fileName: String?
     var svgContent: String?
     var fillMode: ImageFillMode
@@ -99,7 +99,7 @@ struct BackgroundImageConfig: Codable, Equatable {
     }
 }
 
-protocol BackgroundFillable {
+nonisolated protocol BackgroundFillable {
     var backgroundStyle: BackgroundStyle { get }
     var bgColor: Color { get }
     var gradientConfig: GradientConfig { get }
@@ -298,7 +298,7 @@ struct BackgroundBlurView<Content: View>: View {
     }
 }
 
-struct GradientColorStop: Codable, Equatable, Identifiable, Comparable {
+nonisolated struct GradientColorStop: Codable, Equatable, Identifiable, Comparable {
     var id: UUID
     var colorData: CodableColor
     var location: Double // 0.0 to 1.0
@@ -323,13 +323,13 @@ struct GradientColorStop: Codable, Equatable, Identifiable, Comparable {
     }
 }
 
-enum GradientType: String, Codable, CaseIterable {
+nonisolated enum GradientType: String, Codable, CaseIterable {
     case linear
     case radial
     case angular
 }
 
-struct GradientConfig: Codable, Equatable {
+nonisolated struct GradientConfig: Codable, Equatable {
     var stops: [GradientColorStop]
     var angle: Double // degrees
     var gradientType: GradientType
@@ -461,7 +461,7 @@ struct GradientConfig: Codable, Equatable {
     }
 }
 
-struct GradientPreset: Identifiable {
+nonisolated struct GradientPreset: Identifiable {
     let id = UUID()
     let label: String
     let config: GradientConfig

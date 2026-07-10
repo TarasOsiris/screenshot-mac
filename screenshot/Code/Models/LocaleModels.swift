@@ -1,6 +1,6 @@
 import Foundation
 
-struct LocaleDefinition: Codable, Identifiable, Equatable {
+nonisolated struct LocaleDefinition: Codable, Identifiable, Equatable {
     var code: String
     var label: String
     var id: String { code }
@@ -58,7 +58,7 @@ struct LocaleDefinition: Codable, Identifiable, Equatable {
     }()
 }
 
-struct ShapeLocaleOverride: Codable, Equatable {
+nonisolated struct ShapeLocaleOverride: Codable, Equatable {
     var offsetX: CGFloat?
     var offsetY: CGFloat?
     var offsetWidth: CGFloat?
@@ -144,7 +144,7 @@ struct ShapeLocaleOverride: Codable, Equatable {
     }
 }
 
-struct LocaleState: Codable, Equatable {
+nonisolated struct LocaleState: Codable, Equatable {
     var locales: [LocaleDefinition]
     var activeLocaleCode: String
     var overrides: [String: [String: ShapeLocaleOverride]]
@@ -166,7 +166,7 @@ struct LocaleState: Codable, Equatable {
         overrides = try c.decodeIfPresent([String: [String: ShapeLocaleOverride]].self, forKey: .overrides) ?? [:]
     }
 
-    static let `default` = LocaleState(
+    nonisolated static let `default` = LocaleState(
         locales: [LocaleDefinition(code: "en", label: "English")],
         activeLocaleCode: "en",
         overrides: [:]

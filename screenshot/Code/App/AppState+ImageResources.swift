@@ -12,7 +12,7 @@ extension AppState {
     // MARK: - Image Cleanup
 
     /// Image files in `files` that aren't referenced by the model and aren't fonts.
-    private static func orphanedResourceURLs(in files: [URL], referenced: Set<String>) -> [URL] {
+    private nonisolated static func orphanedResourceURLs(in files: [URL], referenced: Set<String>) -> [URL] {
         files.filter { url in
             !fontExtensions.contains(url.pathExtension.lowercased())
                 && !referenced.contains(url.lastPathComponent)
@@ -152,20 +152,20 @@ extension AppState {
     }
 
     /// Efficiently loads a downsampled image from a file URL using CGImageSource.
-    static func downsampledImage(at url: URL, maxDimension: CGFloat) -> NSImage? {
+    nonisolated static func downsampledImage(at url: URL, maxDimension: CGFloat) -> NSImage? {
         let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithURL(url as CFURL, sourceOptions) else { return nil }
         return downsampledImage(from: source, maxDimension: maxDimension)
     }
 
     /// Downsamples from in-memory image data using CGImageSource (avoids disk round-trip).
-    static func downsampledImage(from data: Data, maxDimension: CGFloat) -> NSImage? {
+    nonisolated static func downsampledImage(from data: Data, maxDimension: CGFloat) -> NSImage? {
         let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else { return nil }
         return downsampledImage(from: source, maxDimension: maxDimension)
     }
 
-    private static func downsampledImage(from source: CGImageSource, maxDimension: CGFloat) -> NSImage? {
+    private nonisolated static func downsampledImage(from source: CGImageSource, maxDimension: CGFloat) -> NSImage? {
         let options = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceShouldCacheImmediately: true,

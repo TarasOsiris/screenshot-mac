@@ -2,17 +2,17 @@ import Foundation
 import SwiftUI
 
 struct CanvasShapeModel: Identifiable, Codable, Equatable {
-    static let deviceMinSize: CGFloat = 200
-    static let defaultDeviceBodyColor = Color.black
-    static let defaultDevice3DBodyColor = Color(white: 0x91 / 255.0)
-    static let defaultPixel9BodyColor = Color(white: 0xA9 / 255.0)
-    static let defaultDeviceModelPitch: Double = -22
-    static let defaultDeviceModelYaw: Double = -14
-    static let defaultFontSize: CGFloat = 72
-    static let fontSizePresets: [Int] = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96, 128, 144, 192, 256]
-    static let defaultStarPointCount = 5
-    static let defaultOutlineColor: Color = .black
-    static let defaultOutlineWidth: CGFloat = 4
+    nonisolated static let deviceMinSize: CGFloat = 200
+    nonisolated static let defaultDeviceBodyColor = Color.black
+    nonisolated static let defaultDevice3DBodyColor = Color(white: 0x91 / 255.0)
+    nonisolated static let defaultPixel9BodyColor = Color(white: 0xA9 / 255.0)
+    nonisolated static let defaultDeviceModelPitch: Double = -22
+    nonisolated static let defaultDeviceModelYaw: Double = -14
+    nonisolated static let defaultFontSize: CGFloat = 72
+    nonisolated static let fontSizePresets: [Int] = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96, 128, 144, 192, 256]
+    nonisolated static let defaultStarPointCount = 5
+    nonisolated static let defaultOutlineColor: Color = .black
+    nonisolated static let defaultOutlineWidth: CGFloat = 4
 
     var id: UUID
     var type: ShapeType
@@ -231,7 +231,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         try c.encodeIfPresent(isLocked, forKey: .isLocked)
     }
 
-    init(
+    nonisolated init(
         id: UUID = UUID(),
         type: ShapeType,
         x: CGFloat = 0,
@@ -321,7 +321,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     }
 
     /// The catalog key this text shape's string lives under: a shared key when linked, else its own id.
-    var textTranslationKey: String { translationKey ?? id.uuidString }
+    nonisolated var textTranslationKey: String { translationKey ?? id.uuidString }
 
     /// Used as a fallback when a Binding's get is called after the shape has been removed.
     static let placeholder = CanvasShapeModel(type: .rectangle)
@@ -367,7 +367,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     }
 
     /// All image filenames associated with this shape (for cleanup).
-    var allImageFileNames: [String] {
+    nonisolated var allImageFileNames: [String] {
         [screenshotFileName, imageFileName, fillImageConfig?.fileName].compactMap { $0 }
     }
 
@@ -397,7 +397,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     }
 
     /// Axis-aligned bounding box accounting for rotation.
-    var aabb: (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
+    nonisolated var aabb: (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
         let cx = x + width / 2
         let cy = y + height / 2
         let hw = width / 2

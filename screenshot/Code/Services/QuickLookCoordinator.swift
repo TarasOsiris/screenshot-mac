@@ -52,7 +52,9 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
                 object: panel,
                 queue: .main
             ) { [weak self] _ in
-                self?.teardownEdgeKeyMonitor()
+                Task { @MainActor [weak self] in
+                    self?.teardownEdgeKeyMonitor()
+                }
             }
         }
         edgeKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in

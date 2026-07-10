@@ -4,7 +4,7 @@ import Foundation
 /// file-coordination strategy as `PersistenceService` so it stays iCloud-safe. The catalog
 /// lives inside the project directory, so directory-level copies (duplication, iCloud
 /// dir replacement) carry it along automatically.
-enum TranslationCatalogService {
+nonisolated enum TranslationCatalogService {
     /// Pretty-printed + sorted so a translator-edited file produces minimal diffs and slashes
     /// in values aren't escaped.
     private static let encoder: JSONEncoder = {

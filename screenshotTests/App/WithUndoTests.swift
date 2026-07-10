@@ -1,3 +1,4 @@
+import CoreGraphics
 import Testing
 import AppKit
 @testable import Screenshot_Bro

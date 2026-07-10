@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreText
 
 /// Bounds how many thumbnails build concurrently. Without this, scrolling a grid of N cards
 /// fans out N detached IO tasks — each potentially blocking on an undownloaded iCloud file —
@@ -50,14 +51,16 @@ enum ProjectThumbnailService {
         let modifiedAt: Date
     }
 
-    private struct RenderInputs {
+    private nonisolated struct RenderInputs {
         let row: ScreenshotRow
         let images: [String: NSImage]
         let localeCode: String
         let localeState: LocaleState
+        let fontURLs: [URL]
     }
 
-    private static let targetDisplaySize = CGSize(width: 900, height: 675)
+    private nonisolated static let targetDisplaySize = CGSize(width: 900, height: 675)
+    private nonisolated static let diskCacheVersion = Data([2])
     private static var cache: [Key: Image] = [:]
 
     static func thumbnail(for project: Project) async -> Image? {
@@ -82,21 +85,17 @@ enum ProjectThumbnailService {
 
         guard let inputs, !Task.isCancelled else { return nil }
 
-        // Main: SwiftUI render (ImageRenderer must run on the main actor).
-        let displayScale = thumbnailDisplayScale(for: inputs.row)
-        let full = ExportService.renderRowImage(
-            row: inputs.row,
-            screenshotImages: inputs.images,
-            localeCode: inputs.localeCode,
-            localeState: inputs.localeState,
-            displayScale: displayScale
-        )
+        // Main: font registration and SwiftUI rendering both use process-wide UI state.
+        let full = render(inputs)
 
         // Persist for reuse across launches. Awaited (off-main) so the cache is reliably on
         // disk by the time we return; the bitmap was rendered directly at thumbnail scale.
         let url = PersistenceService.thumbnailURL(project.id)
+        let versionURL = PersistenceService.thumbnailVersionURL(project.id)
         let modifiedAt = project.modifiedAt
-        await Task.detached(priority: .utility) { writeDiskCache(full, to: url, modifiedAt: modifiedAt) }.value
+        await Task.detached(priority: .utility) {
+            writeDiskCache(full, to: url, versionURL: versionURL, modifiedAt: modifiedAt)
+        }.value
 
         return store(Image(nsImage: full), for: key)
     }
@@ -125,7 +124,49 @@ enum ProjectThumbnailService {
             projectId: projectId,
             maxDimension: imageMaxDimension
         )
-        return RenderInputs(row: row, images: images, localeCode: localeCode, localeState: localeState)
+        guard let fontURLs = loadFontURLs(projectId: projectId) else { return nil }
+        return RenderInputs(
+            row: row,
+            images: images,
+            localeCode: localeCode,
+            localeState: localeState,
+            fontURLs: fontURLs
+        )
+    }
+
+    private static func render(_ inputs: RenderInputs) -> NSImage {
+        var registeredURLs: [URL] = []
+        for url in inputs.fontURLs where CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil) {
+            registeredURLs.append(url)
+        }
+        defer {
+            for url in registeredURLs {
+                CTFontManagerUnregisterFontsForURL(url as CFURL, .process, nil)
+            }
+        }
+
+        let fonts = Dictionary(
+            uniqueKeysWithValues: inputs.fontURLs.compactMap { url in
+                CustomFont.parseMetadata(at: url).map { ($0.fileName, $0) }
+            }
+        )
+        let instances = inputs.fontURLs.flatMap(CustomFont.allInstances(at:))
+        var availableFontFamilies = Set(PlatformFonts.systemFamilyNames)
+        for font in fonts.values {
+            availableFontFamilies.insert(font.familyName)
+            availableFontFamilies.insert(font.displayName)
+        }
+
+        return CustomFontRegistry.withTemporaryFonts(fonts, instances: instances) {
+            ExportService.renderRowImage(
+                row: inputs.row,
+                screenshotImages: inputs.images,
+                localeCode: inputs.localeCode,
+                localeState: inputs.localeState,
+                availableFontFamilies: availableFontFamilies,
+                displayScale: thumbnailDisplayScale(for: inputs.row)
+            )
+        }
     }
 
     nonisolated private static func thumbnailDisplayScale(for row: ScreenshotRow) -> CGFloat {
@@ -181,6 +222,25 @@ enum ProjectThumbnailService {
         return images
     }
 
+    /// Materializes every font before rendering. Returning nil avoids caching a broken
+    /// thumbnail when iCloud has listed a font placeholder but its bytes are not available yet.
+    nonisolated private static func loadFontURLs(projectId: UUID) -> [URL]? {
+        let dir = PersistenceService.resourcesDir(projectId)
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: dir,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        ) else {
+            return []
+        }
+
+        let fontURLs = files.filter { AppState.fontExtensions.contains($0.pathExtension.lowercased()) }
+        for url in fontURLs {
+            guard PersistenceService.readData(from: url) != nil else { return nil }
+        }
+        return fontURLs
+    }
+
     /// A cached PNG counts as fresh only if its stamped mod-date is at least as new as the
     /// project's last edit. The mod-date is set to the project's `modifiedAt` at write time (see
     /// `writeDiskCache`), NOT the wall-clock write time — otherwise a thumbnail rendered locally
@@ -189,12 +249,19 @@ enum ProjectThumbnailService {
     /// mod-date rounding; real edits that change a thumbnail are never that close together.
     nonisolated private static func diskCachedImage(for project: Project) -> NSImage? {
         let url = PersistenceService.thumbnailURL(project.id)
+        let versionURL = PersistenceService.thumbnailVersionURL(project.id)
         guard let mtime = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date,
-              mtime.timeIntervalSince(project.modifiedAt) >= -1 else { return nil }
+              mtime.timeIntervalSince(project.modifiedAt) >= -1,
+              (try? Data(contentsOf: versionURL)) == diskCacheVersion else { return nil }
         return NSImage(contentsOf: url)
     }
 
-    nonisolated private static func writeDiskCache(_ image: NSImage, to url: URL, modifiedAt: Date) {
+    nonisolated private static func writeDiskCache(
+        _ image: NSImage,
+        to url: URL,
+        versionURL: URL,
+        modifiedAt: Date
+    ) {
         guard let data = ExportImageEncoder.pngData(from: image) else { return }
         let fm = FileManager.default
         try? fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -202,5 +269,6 @@ enum ProjectThumbnailService {
         // Stamp the file's mod-date to the project's logical edit time so freshness compares
         // content versions, not write time.
         try? fm.setAttributes([.modificationDate: modifiedAt], ofItemAtPath: url.path)
+        try? diskCacheVersion.write(to: versionURL, options: .atomic)
     }
 }

@@ -302,7 +302,9 @@ private enum CanvasShapeFontResolver {
         italic: Bool = false
     ) -> NSFont {
         let customName = customFontName(for: shape, availableFontFamilies: availableFontFamilies)
-        let cacheKey = "\(customName ?? "__system__")|\(size)|\(weight.rawValue)|\(italic)" as NSString
+        let resolvedCustomFont = customName.map(CustomFontRegistry.resolve)
+        let resolvedName = resolvedCustomFont?.exactName ?? resolvedCustomFont?.family ?? "__system__"
+        let cacheKey = "\(resolvedName)|\(size)|\(weight.rawValue)|\(italic)" as NSString
         if let cached = fontCache.object(forKey: cacheKey) {
             return cached
         }

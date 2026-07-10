@@ -1,7 +1,7 @@
 import Foundation
 
-enum AlignmentService {
-    struct OtherShapeBounds {
+nonisolated enum AlignmentService {
+    nonisolated struct OtherShapeBounds {
         let minX: CGFloat
         let minY: CGFloat
         let maxX: CGFloat

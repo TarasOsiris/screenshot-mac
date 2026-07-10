@@ -68,7 +68,9 @@ struct ASCAppSelectionStepView: View {
     private var appList: some View {
         List(selection: Binding(
             get: { selectedApp?.id },
-            set: selectApp
+            set: { id in
+                selectedApp = apps.first { $0.id == id }
+            }
         )) {
             ForEach(visibleAppsWithVersions, id: \.app.id) { item in
                 ASCAppHeaderView(app: item.app, subtitle: item.app.attributes.bundleId, iconSize: 36)
@@ -78,9 +80,6 @@ struct ASCAppSelectionStepView: View {
         .ascSelectionListStyle()
     }
 
-    private func selectApp(id: String?) {
-        selectedApp = apps.first { $0.id == id }
-    }
 }
 
 struct ASCVersionSelectionStepView: View {

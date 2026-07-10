@@ -5,7 +5,7 @@ import AppKit
 import UIKit
 #endif
 
-struct CodableColor: Codable, Equatable {
+nonisolated struct CodableColor: Codable, Equatable {
     var red: Double
     var green: Double
     var blue: Double
@@ -61,7 +61,7 @@ struct CodableColor: Codable, Equatable {
     }
 }
 
-extension NSImage {
+nonisolated extension NSImage {
     /// Load an image from a security-scoped URL (e.g., from file importers).
     static func fromSecurityScopedURL(_ url: URL) -> NSImage? {
         let didAccess = url.startAccessingSecurityScopedResource()
@@ -70,7 +70,7 @@ extension NSImage {
     }
 }
 
-extension Color {
+nonisolated extension Color {
     /// Accent color used for non-base locale UI (banner, window border).
     static let localeWarning = Color.orange
 

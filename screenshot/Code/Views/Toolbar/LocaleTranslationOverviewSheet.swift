@@ -1,6 +1,6 @@
 import OSLog
 import SwiftUI
-import Translation
+@preconcurrency import Translation
 
 struct TranslationOverviewSheet: View {
     private static let title: LocalizedStringKey = "Edit Translations"
@@ -45,10 +45,11 @@ struct TranslationOverviewSheet: View {
                     return
                 }
                 do {
-                    let translatedText = try await translatePreservingLineBreaks(item.baseText) { text in
-                        let response = try await session.translate(text)
-                        return try validatedTargetText(response, requestedTarget: item.localeCode)
-                    }
+                    let translatedText = try await translatePreservingLineBreaks(
+                        item.baseText,
+                        session: session,
+                        requestedTarget: item.localeCode
+                    )
                     state.updateTranslationText(
                         shapeId: item.shapeId,
                         localeCode: item.localeCode,

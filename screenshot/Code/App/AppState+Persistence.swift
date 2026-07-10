@@ -16,22 +16,27 @@ extension AppState {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            guard let self else { return }
-            self.saveTask?.cancel()
-            if let url = notification.object as? URL {
-                self.startICloudMonitoring(at: url)
+            let url = notification.object as? URL
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.saveTask?.cancel()
+                if let url {
+                    self.startICloudMonitoring(at: url)
+                }
+                self.reloadFromDisk()
             }
-            self.reloadFromDisk()
         }
         NotificationCenter.default.addObserver(
             forName: .iCloudSyncDidDisable,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self else { return }
-            self.saveTask?.cancel()
-            self.stopICloudMonitoring()
-            self.reloadFromDisk()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.saveTask?.cancel()
+                self.stopICloudMonitoring()
+                self.reloadFromDisk()
+            }
         }
 
         let sync = ICloudSyncService.shared

@@ -6,7 +6,7 @@ import UIKit
 import CoreImage
 import Vision
 
-enum BackgroundRemovalService {
+nonisolated enum BackgroundRemovalService {
     enum Failure: LocalizedError {
         case invalidImage
         case noSubjectFound

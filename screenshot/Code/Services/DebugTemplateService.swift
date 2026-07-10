@@ -93,7 +93,7 @@ enum DebugTemplateService {
         let metadataData = try JSONEncoder().encode(metadata)
         try metadataData.write(to: metadataURL, options: .atomic)
 
-        generatePreviewImage(templateURL: destURL, projectData: projectData)
+        _ = generatePreviewImage(templateURL: destURL, projectData: projectData)
 
         print("[DebugTemplateService] Saved template '\(templateName)' to \(destURL.path)")
     }

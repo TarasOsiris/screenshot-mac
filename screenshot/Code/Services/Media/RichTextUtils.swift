@@ -344,7 +344,11 @@ enum RichTextUtils {
     }
 
     private static func preferredFamilyName(for font: NSFont) -> String? {
+        #if os(macOS)
         let familyName = font.familyName ?? font.fontDescriptor.object(forKey: .family) as? String
+        #else
+        let familyName = font.familyName
+        #endif
         return normalizedFontFamilyName(familyName)
     }
 

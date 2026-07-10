@@ -74,7 +74,7 @@ struct GPUploadProgress {
     var currentLabel: String
 }
 
-struct GPUploadFailureContext {
+nonisolated struct GPUploadFailureContext {
     let operation: String
     let rowLabel: String
     let imageTypeLabel: String

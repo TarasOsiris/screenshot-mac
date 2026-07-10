@@ -1,3 +1,4 @@
+import CoreGraphics
 import Testing
 import Foundation
 import SwiftUI
@@ -35,6 +36,7 @@ struct CanvasShapeModelTests {
         let cx: CGFloat = 50, cy: CGFloat = 50
         let expectedHalf = 50 * sqrt(2.0)
         #expect(abs(bb.minX - (cx - expectedHalf)) < 0.01)
+        #expect(abs(bb.minY - (cy - expectedHalf)) < 0.01)
         #expect(abs(bb.maxX - (cx + expectedHalf)) < 0.01)
         #expect(abs(bb.maxY - bb.minY - expectedHalf * 2) < 0.01)
     }
@@ -519,9 +521,8 @@ struct CanvasShapeModelTests {
 
     @Test func newDeviceHasSubtleDefaultShadow() {
         let shape = CanvasShapeModel.defaultDevice(centerX: 500, centerY: 1000)
-        let shadow = try? #require(shape.shadow)
         #expect(shape.shadow?.isActive == true)
-        #expect(shadow?.matchingPreset == .medium)
+        #expect(shape.shadow?.matchingPreset == .medium)
     }
 
     @Test func legacyJsonWithoutShdDecodesWithoutShadow() throws {

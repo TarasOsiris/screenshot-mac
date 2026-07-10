@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum DeviceFrameCatalogDefinitions {
+nonisolated enum DeviceFrameCatalogDefinitions {
     private static let iphone17Spec = DeviceFrameImageSpec(
         frameWidth: 1350,
         frameHeight: 2760,

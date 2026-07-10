@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-enum ShapeType: String, Codable, CaseIterable {
+nonisolated enum ShapeType: String, Codable, CaseIterable {
     case rectangle
     case circle
     case star

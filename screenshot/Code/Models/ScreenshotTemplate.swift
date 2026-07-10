@@ -26,7 +26,7 @@ struct ScreenshotTemplate: Identifiable, Codable, Equatable, BackgroundFillable 
         case backgroundBlur = "bgbl"
     }
 
-    init(from decoder: Decoder) throws {
+    nonisolated init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(UUID.self, forKey: .id)
         backgroundColor = try c.decode(CodableColor.self, forKey: .backgroundColor)

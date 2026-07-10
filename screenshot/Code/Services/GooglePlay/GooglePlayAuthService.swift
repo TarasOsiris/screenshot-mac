@@ -1,7 +1,7 @@
 import Foundation
 import Security
 
-enum GooglePlayAuthError: Error, LocalizedError {
+nonisolated enum GooglePlayAuthError: Error, LocalizedError {
     case missingServiceAccount
     case invalidPrivateKey
     case signingFailed
@@ -31,7 +31,7 @@ enum GooglePlayAuthError: Error, LocalizedError {
 final class GooglePlayAuthService {
     static let shared = GooglePlayAuthService()
 
-    static let scope = "https://www.googleapis.com/auth/androidpublisher"
+    nonisolated static let scope = "https://www.googleapis.com/auth/androidpublisher"
 
     private struct CachedToken {
         let token: String
@@ -70,7 +70,7 @@ final class GooglePlayAuthService {
 
     // MARK: - JWT
 
-    static func makeAssertion(account: GooglePlayCredentialsStore.ServiceAccount) throws -> String {
+    nonisolated static func makeAssertion(account: GooglePlayCredentialsStore.ServiceAccount) throws -> String {
         var header: [String: String] = ["alg": "RS256", "typ": "JWT"]
         if let kid = account.privateKeyId, !kid.isEmpty { header["kid"] = kid }
 
@@ -128,7 +128,7 @@ final class GooglePlayAuthService {
 
     // MARK: - RSA (Security framework — CryptoKit has no RSA)
 
-    static func rsaPrivateKey(fromPEM pem: String) throws -> SecKey {
+    nonisolated static func rsaPrivateKey(fromPEM pem: String) throws -> SecKey {
         guard let der = pemToDER(pem) else { throw GooglePlayAuthError.invalidPrivateKey }
         // Google ships PKCS#8 ("BEGIN PRIVATE KEY"); SecKeyCreateWithData wants the inner PKCS#1 key.
         let pkcs1 = pem.contains("RSA PRIVATE KEY") ? der : (pkcs1FromPKCS8(der) ?? der)
@@ -144,7 +144,7 @@ final class GooglePlayAuthService {
         return key
     }
 
-    private static func sign(_ data: Data, with key: SecKey) throws -> Data {
+    private nonisolated static func sign(_ data: Data, with key: SecKey) throws -> Data {
         var error: Unmanaged<CFError>?
         guard let signature = SecKeyCreateSignature(
             key,
@@ -157,7 +157,7 @@ final class GooglePlayAuthService {
         return signature as Data
     }
 
-    private static func pemToDER(_ pem: String) -> Data? {
+    private nonisolated static func pemToDER(_ pem: String) -> Data? {
         let base64 = pem
             .components(separatedBy: "\n")
             .filter { !$0.hasPrefix("-----") }
@@ -168,7 +168,7 @@ final class GooglePlayAuthService {
 
     /// Unwraps a PKCS#8 PrivateKeyInfo to the inner PKCS#1 RSAPrivateKey by walking the
     /// DER: SEQUENCE { INTEGER version, SEQUENCE algorithm, OCTET STRING privateKey }.
-    static func pkcs1FromPKCS8(_ der: Data) -> Data? {
+    nonisolated static func pkcs1FromPKCS8(_ der: Data) -> Data? {
         var parser = DERParser(der)
         guard parser.readSequenceHeader() else { return nil }
         guard parser.skipElement() else { return nil }            // version INTEGER
@@ -176,7 +176,7 @@ final class GooglePlayAuthService {
         return parser.readOctetString()                            // privateKey OCTET STRING
     }
 
-    static func base64URL(_ data: Data) -> String {
+    nonisolated static func base64URL(_ data: Data) -> String {
         data.base64EncodedString()
             .replacing("+", with: "-")
             .replacing("/", with: "_")
@@ -185,7 +185,7 @@ final class GooglePlayAuthService {
 }
 
 /// Minimal DER reader — just enough to unwrap a PKCS#8 RSA key.
-private struct DERParser {
+private nonisolated struct DERParser {
     private let bytes: [UInt8]
     private var index = 0
 

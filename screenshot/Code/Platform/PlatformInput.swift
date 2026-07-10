@@ -196,7 +196,7 @@ enum PlatformPhotoLibrary {
 /// Canonical offscreen image renderer for iPad: non-opaque, 1x scale (so pixel dimensions
 /// match model space, which the export/crop math relies on). The `draw` block runs with the
 /// UIKit graphics context current, so `UIImage.draw(in:)` etc. work inside it.
-enum PlatformImageRenderer {
+nonisolated enum PlatformImageRenderer {
     static func image(size: CGSize, opaque: Bool = false, _ draw: () -> Void) -> UIImage {
         let format = UIGraphicsImageRendererFormat.preferred()
         format.opaque = opaque

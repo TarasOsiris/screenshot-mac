@@ -1,3 +1,4 @@
+import CoreGraphics
 import Testing
 import AppKit
 @testable import Screenshot_Bro
@@ -621,7 +622,7 @@ struct AppStateTests {
             height: 100
         )
         state.addShape(spanning)
-        let removedTemplateId = try #require(state.rows.first!.templates[1].id)
+        let removedTemplateId = state.rows.first!.templates[1].id
         state.removeTemplate(removedTemplateId, from: rowId)
         let row = state.rows.first!
         #expect(row.shapes.contains { $0.id == spanning.id }, "Spanning shape should survive deletion of a template it overlaps")
@@ -644,7 +645,7 @@ struct AppStateTests {
             height: 100
         )
         state.addShape(contained)
-        let removedTemplateId = try #require(state.rows.first!.templates[1].id)
+        let removedTemplateId = state.rows.first!.templates[1].id
         state.removeTemplate(removedTemplateId, from: rowId)
         #expect(!state.rows.first!.shapes.contains { $0.id == contained.id }, "Shape fully inside the deleted template should be removed")
     }
@@ -667,7 +668,7 @@ struct AppStateTests {
             clipToTemplate: true
         )
         state.addShape(clipped)
-        let removedTemplateId = try #require(state.rows.first!.templates[1].id)
+        let removedTemplateId = state.rows.first!.templates[1].id
         state.removeTemplate(removedTemplateId, from: rowId)
         #expect(!state.rows.first!.shapes.contains { $0.id == clipped.id }, "Clipped shape owned by the deleted template should be removed")
     }
@@ -691,7 +692,7 @@ struct AppStateTests {
         state.selectRow(rowId)
         let tilted = tiltedShapeInTemplate1(templateWidth: state.rows.first!.templateWidth)
         state.addShape(tilted)
-        let removedTemplateId = try #require(state.rows.first!.templates[1].id)
+        let removedTemplateId = state.rows.first!.templates[1].id
         state.removeTemplate(removedTemplateId, from: rowId)
         #expect(!state.rows.first!.shapes.contains { $0.id == tilted.id }, "Tilted shape belonging to the deleted template should be removed, not orphaned")
     }
@@ -704,7 +705,7 @@ struct AppStateTests {
         let tw = state.rows.first!.templateWidth
         let shape = CanvasShapeModel(type: .rectangle, x: 0.25 * tw, y: 0, width: 0.5 * tw, height: 100)
         state.addShape(shape)
-        let movedTemplateId = try #require(state.rows.first!.templates[0].id)
+        let movedTemplateId = state.rows.first!.templates[0].id
         state.moveTemplateRight(movedTemplateId, in: rowId)
         let row = state.rows.first!
         #expect(row.templates[1].id == movedTemplateId)
@@ -721,7 +722,7 @@ struct AppStateTests {
         // Full-bleed image shape drifted 2px into the previous column (typical after display-scale drags).
         let fullBleed = CanvasShapeModel(type: .image, x: tw - 2, y: 0, width: tw, height: 100)
         state.addShape(fullBleed)
-        let movedTemplateId = try #require(state.rows.first!.templates[1].id)
+        let movedTemplateId = state.rows.first!.templates[1].id
         state.moveTemplateRight(movedTemplateId, in: rowId)
         let moved = try #require(state.rows.first!.shapes.first { $0.id == fullBleed.id })
         #expect(moved.x == fullBleed.x + tw, "Slight overhang must not detach the shape from its column")
@@ -735,7 +736,7 @@ struct AppStateTests {
         let tw = state.rows.first!.templateWidth
         let tilted = tiltedShapeInTemplate1(templateWidth: tw)
         state.addShape(tilted)
-        let movedTemplateId = try #require(state.rows.first!.templates[1].id)
+        let movedTemplateId = state.rows.first!.templates[1].id
         state.moveTemplateLeft(movedTemplateId, in: rowId)
         let moved = try #require(state.rows.first!.shapes.first { $0.id == tilted.id })
         #expect(moved.x == tilted.x - tw, "Rotation widening the AABB past the edge must not detach the shape from its column")
@@ -750,7 +751,7 @@ struct AppStateTests {
         // Half in template 0, half in template 1 — a deliberate cross-panel shape.
         let straddler = CanvasShapeModel(type: .rectangle, x: 0.5 * tw, y: 0, width: tw, height: 100)
         state.addShape(straddler)
-        let movedTemplateId = try #require(state.rows.first!.templates[0].id)
+        let movedTemplateId = state.rows.first!.templates[0].id
         state.moveTemplateRight(movedTemplateId, in: rowId)
         let after = try #require(state.rows.first!.shapes.first { $0.id == straddler.id })
         #expect(after.x == straddler.x, "Shapes meaningfully spanning columns should stay in place")
@@ -1131,7 +1132,6 @@ struct AppStateTests {
     @Test func zoomInAndOut() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
-        let initial = state.zoomLevel
         state.zoomLevel = 1.0
         state.zoomLevel = min(ZoomConstants.max, state.zoomLevel + ZoomConstants.step)
         #expect(state.zoomLevel == 1.25)

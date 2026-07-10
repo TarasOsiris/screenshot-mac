@@ -1,6 +1,6 @@
 import Foundation
 
-enum DeviceFrameCatalog {
+nonisolated enum DeviceFrameCatalog {
     static let groups: [DeviceFrameGroup] = DeviceFrameCatalogDefinitions.entries.map(makeGroup)
 
     static let sections: [DeviceFrameCatalogSection] = DeviceFrameFamily.allCases.compactMap { family in

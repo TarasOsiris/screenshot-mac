@@ -1,5 +1,5 @@
 import SwiftUI
-import Translation
+@preconcurrency import Translation
 
 struct LocaleBanner: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -252,12 +252,18 @@ struct LocaleBanner: View {
         pendingShapeFilter = nil
         let targetCode = translationTargetCode
         guard !targetCode.isEmpty else { return }
+        let shapeFilter: (@Sendable (UUID) -> Bool)?
+        if let filterIds {
+            shapeFilter = { id in filterIds.contains(id) }
+        } else {
+            shapeFilter = nil
+        }
         let result = await translateShapes(
             session: session,
             state: state,
             targetLocaleCode: targetCode,
             onlyUntranslated: translateOnlyUntranslated,
-            shapeFilter: filterIds.map { ids in { ids.contains($0) } }
+            shapeFilter: shapeFilter
         )
         languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: targetCode))
     }

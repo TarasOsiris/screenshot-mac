@@ -127,7 +127,7 @@ let displayCategories: [DisplayCategory] = [
     ]),
 ]
 
-func parseSizeString(_ value: String) -> (width: CGFloat, height: CGFloat)? {
+nonisolated func parseSizeString(_ value: String) -> (width: CGFloat, height: CGFloat)? {
     let parts = value.split(separator: "x")
     guard parts.count == 2,
           let w = Double(parts[0]),

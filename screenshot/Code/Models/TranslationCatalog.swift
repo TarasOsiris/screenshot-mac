@@ -10,7 +10,7 @@ import Foundation
 /// catalog back into a `LocaleState` on load. Only plain text is represented — per-range
 /// rich-text formatting can't live in a String Catalog, so it's flattened to plain text and
 /// the base shape's styling is re-applied at render time.
-struct TranslationCatalog: Codable, Equatable {
+nonisolated struct TranslationCatalog: Codable, Equatable {
     var sourceLanguage: String
     var version: String
     var strings: [String: CatalogEntry]

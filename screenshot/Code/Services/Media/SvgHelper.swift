@@ -7,13 +7,13 @@ import SwiftDraw
 import SwiftUI
 import UniformTypeIdentifiers
 
-enum PickedBackground {
+nonisolated enum PickedBackground {
     case image(NSImage)
     case svg(String)
 }
 
-enum SvgHelper {
-    private static let rasterCache: NSCache<NSString, NSImage> = {
+nonisolated enum SvgHelper {
+    nonisolated(unsafe) private static let rasterCache: NSCache<NSString, NSImage> = {
         let cache = NSCache<NSString, NSImage>()
         cache.countLimit = 300
         cache.totalCostLimit = 192 * 1024 * 1024

@@ -1,6 +1,6 @@
 import OSLog
 
-enum AppLogger {
+nonisolated enum AppLogger {
     private static let subsystem = "xyz.tleskiv.screenshot"
 
     static let store = Logger(subsystem: subsystem, category: "Store")

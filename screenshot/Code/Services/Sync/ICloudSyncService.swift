@@ -5,7 +5,7 @@ extension Notification.Name {
     static let iCloudSyncDidDisable = Notification.Name("iCloudSyncDidDisable")
 }
 
-final class ICloudSyncService: @unchecked Sendable {
+nonisolated final class ICloudSyncService: @unchecked Sendable {
     static let shared = ICloudSyncService()
 
     private let containerID = "iCloud.xyz.tleskiv.screenshot"
@@ -55,9 +55,9 @@ final class ICloudSyncService: @unchecked Sendable {
         let url = await Task.detached {
             FileManager.default.url(forUbiquityContainerIdentifier: self.containerID)
         }.value
-        containerLock.lock()
-        _iCloudContainerURL = url
-        containerLock.unlock()
+        containerLock.withLock {
+            _iCloudContainerURL = url
+        }
         return url
     }
 

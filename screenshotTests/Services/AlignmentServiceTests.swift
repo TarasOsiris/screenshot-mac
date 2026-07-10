@@ -1,3 +1,4 @@
+import CoreGraphics
 import Testing
 import Foundation
 @testable import Screenshot_Bro
@@ -160,6 +161,6 @@ struct AlignmentServiceTests {
             type: .rectangle, x: 1, y: 200, width: 100, height: 100, rotation: 45
         )
         // Verify rotated shape AABB differs from raw position
-        #expect(shape.aabb.minX != shape.x, "Rotated shape AABB should differ from raw x")
+        #expect(shape.aabb.minX != 1, "Rotated shape AABB should differ from raw x")
     }
 }

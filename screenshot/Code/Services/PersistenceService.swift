@@ -1,6 +1,6 @@
 import Foundation
 
-struct PersistenceService {
+nonisolated struct PersistenceService {
     private static let rootDirectoryOverrideKey = "SCREENSHOT_DATA_DIR"
     private static let useTemporaryRootDirectoryKey = "SCREENSHOT_USE_TEMP_DATA_DIR"
     private static let temporaryRootURL: URL = {
@@ -132,6 +132,14 @@ struct PersistenceService {
         thumbnailsDir(at: baseURL).appendingPathComponent("\(id.uuidString).png")
     }
 
+    static func thumbnailVersionURL(_ id: UUID) -> URL {
+        thumbnailVersionURL(id, at: localBaseURL)
+    }
+
+    static func thumbnailVersionURL(_ id: UUID, at baseURL: URL) -> URL {
+        thumbnailURL(id, at: baseURL).appendingPathExtension("version")
+    }
+
     // MARK: - Setup
 
     static func ensureDirectories() {
@@ -260,7 +268,9 @@ struct PersistenceService {
 
     static func deleteThumbnail(_ id: UUID, at baseURL: URL? = nil) {
         let url = baseURL.map { thumbnailURL(id, at: $0) } ?? thumbnailURL(id)
+        let versionURL = baseURL.map { thumbnailVersionURL(id, at: $0) } ?? thumbnailVersionURL(id)
         try? FileManager.default.removeItem(at: url)
+        try? FileManager.default.removeItem(at: versionURL)
     }
 
     static func deleteProject(_ id: UUID, at root: URL) {

@@ -5,7 +5,7 @@ import UIKit
 #endif
 import Foundation
 
-struct ProjectTemplate: Identifiable {
+nonisolated struct ProjectTemplate: Identifiable {
     let id: String
     let name: String
     let url: URL
@@ -14,7 +14,7 @@ struct ProjectTemplate: Identifiable {
     var isIncludedInReleaseBuild: Bool = false
 }
 
-struct ProjectTemplateMetadata: Codable, Equatable {
+nonisolated struct ProjectTemplateMetadata: Codable, Equatable {
     var includeInReleaseBuild: Bool
 
     init(includeInReleaseBuild: Bool = false) {
@@ -24,27 +24,27 @@ struct ProjectTemplateMetadata: Codable, Equatable {
 
 enum TemplateService {
     /// Relative path for shared fonts within any Templates.bundle root.
-    static let sharedFontsSubpath = "shared/fonts"
-    static let metadataFileName = "template.json"
-    static let previewFileName = "preview.png"
+    nonisolated static let sharedFontsSubpath = "shared/fonts"
+    nonisolated static let metadataFileName = "template.json"
+    nonisolated static let previewFileName = "preview.png"
 
     /// URL of the shared fonts directory inside the app's Templates.bundle.
-    static var sharedFontsURL: URL? {
+    nonisolated static var sharedFontsURL: URL? {
         Bundle.main.url(forResource: "Templates", withExtension: "bundle")?
             .appendingPathComponent(sharedFontsSubpath, isDirectory: true)
     }
 
-    private static var cachedTemplates: [ProjectTemplate]?
+    nonisolated(unsafe) private static var cachedTemplates: [ProjectTemplate]?
 
     /// Bundle.main is immutable per launch — scan once, reuse for every caller.
-    static func availableTemplates() -> [ProjectTemplate] {
+    nonisolated static func availableTemplates() -> [ProjectTemplate] {
         if let cachedTemplates { return cachedTemplates }
         let templates = loadAvailableTemplates()
         cachedTemplates = templates
         return templates
     }
 
-    private static func loadAvailableTemplates() -> [ProjectTemplate] {
+    private nonisolated static func loadAvailableTemplates() -> [ProjectTemplate] {
         guard let bundleURL = Bundle.main.url(forResource: "Templates", withExtension: "bundle") else {
             return []
         }
@@ -104,19 +104,19 @@ enum TemplateService {
         #endif
     }
 
-    static func metadataURL(for templateURL: URL) -> URL {
+    nonisolated static func metadataURL(for templateURL: URL) -> URL {
         templateURL.appendingPathComponent(metadataFileName)
     }
 
     /// Removes template-only sidecar files (preview image, metadata) from a project directory
     /// after a template has been instantiated as a user project.
-    static func stripTemplateArtifacts(in projectDir: URL) {
+    nonisolated static func stripTemplateArtifacts(in projectDir: URL) {
         let fm = FileManager.default
         try? fm.removeItem(at: projectDir.appendingPathComponent(previewFileName))
         try? fm.removeItem(at: projectDir.appendingPathComponent(metadataFileName))
     }
 
-    static func loadMetadata(at templateURL: URL) -> ProjectTemplateMetadata {
+    nonisolated static func loadMetadata(at templateURL: URL) -> ProjectTemplateMetadata {
         let metadataURL = metadataURL(for: templateURL)
         guard let data = try? Data(contentsOf: metadataURL),
               let metadata = try? JSONDecoder().decode(ProjectTemplateMetadata.self, from: data) else {

@@ -4,7 +4,7 @@ import CoreGraphics
 /// Google Play store-listing image types the app uploads screenshots to.
 /// Unlike App Store Connect's exact-pixel display types, Play accepts any size within
 /// broad bounds, so the picker is a free choice rather than a size match.
-enum GPImageType: String, CaseIterable, Identifiable {
+nonisolated enum GPImageType: String, CaseIterable, Identifiable {
     case phoneScreenshots
     case sevenInchScreenshots
     case tenInchScreenshots
@@ -59,7 +59,7 @@ enum GPImageType: String, CaseIterable, Identifiable {
 }
 
 // Per Google Play listing requirements: 2–8 screenshots per type.
-enum GPUploadLimits {
+nonisolated enum GPUploadLimits {
     static let minScreenshotsPerType = 2
     static let maxScreenshotsPerType = 8
 }

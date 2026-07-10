@@ -1,11 +1,11 @@
 import SwiftUI
 
-enum DeviceFrameScreenRenderingMode: Equatable {
+nonisolated enum DeviceFrameScreenRenderingMode: Equatable {
     case replaceMaterial
     case overlayPlane
 }
 
-enum DeviceFrameFamily: String, CaseIterable, Identifiable {
+nonisolated enum DeviceFrameFamily: String, CaseIterable, Identifiable {
     case iphone = "iPhone"
     case android = "Android"
     case ipad = "iPad"
@@ -34,7 +34,7 @@ enum DeviceFrameFamily: String, CaseIterable, Identifiable {
 }
 
 /// Describes the screen area within a device frame PNG image.
-struct DeviceFrameImageSpec {
+nonisolated struct DeviceFrameImageSpec {
     /// Frame PNG dimensions.
     let frameWidth: CGFloat
     let frameHeight: CGFloat
@@ -69,7 +69,7 @@ struct DeviceFrameImageSpec {
     }
 }
 
-struct DeviceFrameModelSpec: Equatable {
+nonisolated struct DeviceFrameModelSpec: Equatable {
     let resourceName: String
     let resourceExtension: String
     let resourceSubdirectory: String?
@@ -85,7 +85,7 @@ struct DeviceFrameModelSpec: Equatable {
     let screenUVOffsetY: CGFloat
 }
 
-struct DeviceFrameCatalogEntry {
+nonisolated struct DeviceFrameCatalogEntry {
     let groupId: String
     let modelName: String
     let family: DeviceFrameFamily
@@ -100,7 +100,7 @@ struct DeviceFrameCatalogEntry {
 }
 
 /// A single real device frame image — one entry per PNG file.
-struct DeviceFrame: Identifiable, Equatable {
+nonisolated struct DeviceFrame: Identifiable, Equatable {
     let id: String
     let modelName: String
     let colorName: String
@@ -145,7 +145,7 @@ struct DeviceFrame: Identifiable, Equatable {
     static func == (lhs: DeviceFrame, rhs: DeviceFrame) -> Bool { lhs.id == rhs.id }
 }
 
-struct DeviceFrameColorGroup: Identifiable {
+nonisolated struct DeviceFrameColorGroup: Identifiable {
     let id: String
     let name: String
     let frames: [DeviceFrame]
@@ -153,7 +153,7 @@ struct DeviceFrameColorGroup: Identifiable {
     var swatch: Color? { DeviceFrameColorSwatches.color(named: name) }
 }
 
-struct DeviceFrameGroup: Identifiable {
+nonisolated struct DeviceFrameGroup: Identifiable {
     let id: String
     let name: String
     let family: DeviceFrameFamily
@@ -164,7 +164,7 @@ struct DeviceFrameGroup: Identifiable {
     var prefersVariantMenu: Bool { family == .watch }
 }
 
-struct DeviceFrameCatalogSection: Identifiable {
+nonisolated struct DeviceFrameCatalogSection: Identifiable {
     let family: DeviceFrameFamily
     let categories: [DeviceCategory]
     let groups: [DeviceFrameGroup]
@@ -173,7 +173,7 @@ struct DeviceFrameCatalogSection: Identifiable {
     var title: String { family.rawValue }
 }
 
-private enum DeviceFrameColorSwatches {
+private nonisolated enum DeviceFrameColorSwatches {
     static func color(named name: String) -> Color? {
         switch name.lowercased() {
         case "black":
@@ -209,4 +209,3 @@ private enum DeviceFrameColorSwatches {
         }
     }
 }
-

@@ -1,6 +1,6 @@
 import OSLog
 import SwiftUI
-import Translation
+@preconcurrency import Translation
 
 extension Optional where Wrapped == TranslationSession.Configuration {
     /// Creates or re-triggers a configuration for the language pair.
@@ -40,7 +40,7 @@ struct WrongTargetLanguageError: LocalizedError {
 /// Returns the response's translated text, but only after confirming it is in the language
 /// we asked for. Compares language code only (ignores region/script) so e.g. a "pt-BR"
 /// request still accepts a "pt" response.
-func validatedTargetText(_ response: TranslationSession.Response, requestedTarget: String) throws -> String {
+nonisolated func validatedTargetText(_ response: TranslationSession.Response, requestedTarget: String) throws -> String {
     let requested = Locale.Language(identifier: requestedTarget).languageCode
     let returned = response.targetLanguage.languageCode
     if let requested, let returned, requested != returned {
@@ -53,12 +53,13 @@ func validatedTargetText(_ response: TranslationSession.Response, requestedTarge
 /// Translate text shapes for a specific locale using a caller-provided translation function.
 /// Returns `true` if all shapes translated successfully, `false` if translation was interrupted by an error.
 @discardableResult
+@MainActor
 func translateShapes(
     state: AppState,
     targetLocaleCode: String,
     onlyUntranslated: Bool = true,
     shapeFilter: ((UUID) -> Bool)? = nil,
-    translate: @escaping (String) async throws -> String
+    translate: @MainActor (String) async throws -> String
 ) async -> Bool {
     let items = state.textShapesForTranslation(localeCode: targetLocaleCode)
     for item in items {
@@ -98,7 +99,7 @@ enum TranslationRunResult: Equatable {
 /// triggers Apple's native inline download confirmation when the pair is supported but not
 /// yet installed. Returns `nil` when translation may proceed, or the blocking result.
 /// This guards against the engine silently substituting a different installed language.
-func ensureTranslationAvailable(
+nonisolated func ensureTranslationAvailable(
     session: TranslationSession,
     source: String,
     target: String
@@ -123,38 +124,103 @@ func ensureTranslationAvailable(
 
 /// Thin wrapper that translates via the given session. Delegates to the primary overload.
 /// Source is always the base locale — terms are only ever translated from base.
-func translateShapes(
+nonisolated func translateShapes(
     session: TranslationSession,
     state: AppState,
     targetLocaleCode: String,
     onlyUntranslated: Bool = true,
-    shapeFilter: ((UUID) -> Bool)? = nil
+    shapeFilter: (@Sendable (UUID) -> Bool)? = nil
 ) async -> TranslationRunResult {
+    let sourceCode = await MainActor.run {
+        state.localeState.baseLocaleCode
+    }
     if let blocked = await ensureTranslationAvailable(
         session: session,
-        source: state.localeState.baseLocaleCode,
+        source: sourceCode,
         target: targetLocaleCode
     ) {
         return blocked
     }
-    let success = await translateShapes(
-        state: state,
-        targetLocaleCode: targetLocaleCode,
-        onlyUntranslated: onlyUntranslated,
-        shapeFilter: shapeFilter
-    ) { baseText in
-        let response = try await session.translate(baseText)
-        return try validatedTargetText(response, requestedTarget: targetLocaleCode)
+
+    let items = await MainActor.run {
+        state.textShapesForTranslation(localeCode: targetLocaleCode).map { item in
+            TranslationWorkItem(
+                shapeId: item.shape.id,
+                baseText: item.shape.text,
+                isTranslated: item.isTranslated
+            )
+        }
     }
-    return success ? .completed : .languagesNotDownloaded
+
+    for item in items {
+        if let shapeFilter, !shapeFilter(item.shapeId) { continue }
+        if onlyUntranslated && item.isTranslated { continue }
+        guard let baseText = item.baseText, !baseText.isEmpty else { continue }
+        do {
+            let translatedText = try await translatePreservingLineBreaks(
+                baseText,
+                session: session,
+                requestedTarget: targetLocaleCode
+            )
+            await MainActor.run {
+                state.updateTranslationText(
+                    shapeId: item.shapeId,
+                    localeCode: targetLocaleCode,
+                    text: translatedText
+                )
+            }
+        } catch {
+            AppLogger.translation.error("Translation failed for shape \(item.shapeId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            return .languagesNotDownloaded
+        }
+    }
+    return .completed
+}
+
+private nonisolated struct TranslationWorkItem: Sendable {
+    let shapeId: UUID
+    let baseText: String?
+    let isTranslated: Bool
+}
+
+nonisolated func translatePreservingLineBreaks(
+    _ text: String,
+    session: TranslationSession,
+    requestedTarget: String
+) async throws -> String {
+    guard text.contains(where: \.isNewline) else {
+        return try await translateWithValidatedTarget(
+            text,
+            session: session,
+            requestedTarget: requestedTarget
+        )
+    }
+
+    let protected = protectLineBreaks(in: text)
+    let translated = try await translateWithValidatedTarget(
+        protected.text,
+        session: session,
+        requestedTarget: requestedTarget
+    )
+    return restoringLineBreaks(in: translated, breaks: protected.breaks)
+}
+
+private nonisolated func translateWithValidatedTarget(
+    _ text: String,
+    session: TranslationSession,
+    requestedTarget: String
+) async throws -> String {
+    let response = try await session.translate(text)
+    return try validatedTargetText(response, requestedTarget: requestedTarget)
 }
 
 /// Translate the full text in one request while protecting the original newline
 /// separators. This keeps sentence context across lines, but prevents Apple's
 /// translation session from adding padding around explicit newlines.
+@MainActor
 func translatePreservingLineBreaks(
     _ text: String,
-    translate: @escaping (String) async throws -> String
+    translate: @MainActor (String) async throws -> String
 ) async throws -> String {
     guard text.contains(where: \.isNewline) else {
         return try await translate(text)
@@ -165,14 +231,14 @@ func translatePreservingLineBreaks(
     return restoringLineBreaks(in: translated, breaks: protected.breaks)
 }
 
-private struct ProtectedLineBreak {
+private nonisolated struct ProtectedLineBreak {
     let token: String
     let separator: String
     let beforePadding: String
     let afterPadding: String
 }
 
-private func protectLineBreaks(in text: String) -> (text: String, breaks: [ProtectedLineBreak]) {
+private nonisolated func protectLineBreaks(in text: String) -> (text: String, breaks: [ProtectedLineBreak]) {
     var protected = ""
     var breaks: [ProtectedLineBreak] = []
     var index = text.startIndex
@@ -225,7 +291,7 @@ private func protectLineBreaks(in text: String) -> (text: String, breaks: [Prote
     return (protected, breaks)
 }
 
-private func restoringLineBreaks(in text: String, breaks: [ProtectedLineBreak]) -> String {
+private nonisolated func restoringLineBreaks(in text: String, breaks: [ProtectedLineBreak]) -> String {
     var restored = text
 
     for lineBreak in breaks {
@@ -244,12 +310,12 @@ private func restoringLineBreaks(in text: String, breaks: [ProtectedLineBreak]) 
 /// Line-break sentinel as a Private Use Area scalar — opaque to the translation
 /// engine (no words/brackets/digits to translate, strip, or localize). `0xE000 +
 /// index` stays within the PUA block (U+E000–U+F8FF).
-private func lineBreakToken(at index: Int) -> String {
+private nonisolated func lineBreakToken(at index: Int) -> String {
     let scalar = UnicodeScalar(0xE000 + UInt32(index)) ?? UnicodeScalar(0xE000)!
     return String(scalar)
 }
 
-private func horizontalWhitespacePaddedRange(around range: Range<String.Index>, in text: String) -> Range<String.Index> {
+private nonisolated func horizontalWhitespacePaddedRange(around range: Range<String.Index>, in text: String) -> Range<String.Index> {
     var lowerBound = range.lowerBound
     while lowerBound > text.startIndex {
         let previous = text.index(before: lowerBound)
@@ -265,13 +331,13 @@ private func horizontalWhitespacePaddedRange(around range: Range<String.Index>, 
     return lowerBound..<upperBound
 }
 
-private extension Character {
+private nonisolated extension Character {
     var isHorizontalWhitespace: Bool {
         unicodeScalars.allSatisfy { CharacterSet.whitespaces.contains($0) }
     }
 }
 
-private extension String {
+private nonisolated extension String {
     mutating func removingTrailingHorizontalWhitespace() -> String {
         var removed = ""
         while let last = self.last, last.isHorizontalWhitespace {

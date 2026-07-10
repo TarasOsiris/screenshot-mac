@@ -389,22 +389,22 @@ private extension String {
 
 // MARK: - ASC DTOs
 
-struct ASCListResponse<T: Decodable>: Decodable {
+nonisolated struct ASCListResponse<T: Decodable>: Decodable {
     let data: [T]
 }
 
-struct ASCSingleResponse<T: Decodable>: Decodable {
+nonisolated struct ASCSingleResponse<T: Decodable>: Decodable {
     let data: T
 }
 
-struct ASCAppWithVersions {
+nonisolated struct ASCAppWithVersions {
     let app: ASCApp
     let versions: [ASCAppStoreVersion]
 
     var hasScreenshotUploadableVersion: Bool { versions.contains(where: \.isScreenshotUploadable) }
 }
 
-struct ASCAppListWithVersionsResponse: Decodable {
+nonisolated struct ASCAppListWithVersionsResponse: Decodable {
     let data: [AppRow]
     let included: [IncludedItem]?
 
@@ -434,7 +434,7 @@ struct ASCAppListWithVersionsResponse: Decodable {
     }
 }
 
-struct ASCApp: Decodable, Identifiable {
+nonisolated struct ASCApp: Decodable, Identifiable {
     let id: String
     let attributes: Attributes
 
@@ -446,7 +446,7 @@ struct ASCApp: Decodable, Identifiable {
     }
 }
 
-enum ASCPlatform: String, CaseIterable {
+nonisolated enum ASCPlatform: String, CaseIterable {
     case ios = "IOS"
     case macOS = "MAC_OS"
     case tvOS = "TV_OS"
@@ -462,7 +462,7 @@ enum ASCPlatform: String, CaseIterable {
     }
 }
 
-struct ASCAppStoreVersion: Decodable, Identifiable {
+nonisolated struct ASCAppStoreVersion: Decodable, Identifiable {
     let id: String
     let attributes: Attributes
 
@@ -530,7 +530,7 @@ struct ASCAppStoreVersion: Decodable, Identifiable {
     ]
 }
 
-struct ASCAppStoreVersionLocalization: Decodable, Identifiable {
+nonisolated struct ASCAppStoreVersionLocalization: Decodable, Identifiable {
     let id: String
     let attributes: Attributes
 
@@ -563,7 +563,7 @@ struct ASCAppStoreVersionLocalization: Decodable, Identifiable {
     }
 }
 
-struct ASCAppInfo: Decodable, Identifiable {
+nonisolated struct ASCAppInfo: Decodable, Identifiable {
     let id: String
     let attributes: Attributes?
 
@@ -596,7 +596,7 @@ struct ASCAppInfo: Decodable, Identifiable {
     ]
 }
 
-struct ASCAppInfoLocalization: Decodable, Identifiable {
+nonisolated struct ASCAppInfoLocalization: Decodable, Identifiable {
     let id: String
     let attributes: Attributes
 
@@ -626,7 +626,7 @@ struct ASCAppInfoLocalization: Decodable, Identifiable {
     }
 }
 
-struct ASCAppScreenshotSet: Decodable, Identifiable {
+nonisolated struct ASCAppScreenshotSet: Decodable, Identifiable {
     let id: String
     let attributes: Attributes
 
@@ -635,7 +635,7 @@ struct ASCAppScreenshotSet: Decodable, Identifiable {
     }
 }
 
-struct ASCAppScreenshot: Decodable, Identifiable {
+nonisolated struct ASCAppScreenshot: Decodable, Identifiable {
     let id: String
     let attributes: Attributes
 
@@ -648,7 +648,7 @@ struct ASCAppScreenshot: Decodable, Identifiable {
     }
 }
 
-struct ASCUploadOperation: Decodable {
+nonisolated struct ASCUploadOperation: Decodable {
     let method: String
     let url: String
     let length: Int
@@ -656,14 +656,14 @@ struct ASCUploadOperation: Decodable {
     let requestHeaders: [ASCUploadHeader]
 }
 
-struct ASCUploadHeader: Decodable {
+nonisolated struct ASCUploadHeader: Decodable {
     let name: String
     let value: String
 }
 
 // MARK: - ASC request bodies
 
-private struct ASCResourceCreate: Encodable {
+private nonisolated struct ASCResourceCreate: Encodable {
     let data: Payload
 
     struct Payload: Encodable {
@@ -673,7 +673,7 @@ private struct ASCResourceCreate: Encodable {
     }
 }
 
-private struct ASCResourceUpdate: Encodable {
+private nonisolated struct ASCResourceUpdate: Encodable {
     let data: Payload
 
     struct Payload: Encodable {
@@ -683,7 +683,7 @@ private struct ASCResourceUpdate: Encodable {
     }
 }
 
-private struct ASCRelationship: Encodable {
+private nonisolated struct ASCRelationship: Encodable {
     let data: Ref
 
     struct Ref: Encodable {

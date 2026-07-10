@@ -4,7 +4,7 @@ import Foundation
 /// like "pt-BR") to the BCP-47 listing language codes Google Play expects ("en-US", "de-DE").
 /// Play uses a few non-obvious codes (Hebrew "iw", Chinese "zh-CN"/"zh-TW"); a small hardcoded
 /// table is clearer than locale gymnastics. Unknown codes fall back to the code as-is.
-enum GooglePlayLanguageMatcher {
+nonisolated enum GooglePlayLanguageMatcher {
     static func playLanguageCode(forProjectCode code: String) -> String {
         if let mapped = table[code] { return mapped }
         if let mapped = table[code.lowercased()] { return mapped }

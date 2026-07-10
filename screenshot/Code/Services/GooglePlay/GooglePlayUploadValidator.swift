@@ -1,8 +1,8 @@
 import Foundation
 import SwiftUI
 
-struct GPUploadIssue: Identifiable {
-    enum Severity {
+nonisolated struct GPUploadIssue: Identifiable {
+    nonisolated enum Severity {
         case error, warning
         var tint: Color { self == .error ? .red : .orange }
     }
@@ -25,7 +25,7 @@ struct GPUploadIssue: Identifiable {
     }
 }
 
-enum GooglePlayUploadValidator {
+nonisolated enum GooglePlayUploadValidator {
     /// Pre-flight checks that need no rendering or network. In demo mode the package name is
     /// irrelevant (no traffic) and per-row issues are softened to warnings so the flow stays walkable.
     static func validate(
@@ -149,6 +149,6 @@ enum GooglePlayUploadValidator {
     private static let packageSegmentRegex = try! NSRegularExpression(pattern: "^[a-zA-Z][a-zA-Z0-9_]*$")
 }
 
-extension Array where Element == GPUploadIssue {
+nonisolated extension Array where Element == GPUploadIssue {
     var hasErrors: Bool { contains { $0.severity == .error } }
 }

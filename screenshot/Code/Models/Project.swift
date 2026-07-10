@@ -1,6 +1,6 @@
 import Foundation
 
-struct Project: Identifiable, Codable, Equatable {
+nonisolated struct Project: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
     var modifiedAt: Date
@@ -45,7 +45,7 @@ struct Project: Identifiable, Codable, Equatable {
     }
 }
 
-extension Array where Element == Project {
+nonisolated extension Array where Element == Project {
     /// Alphabetical order using localized, numeric-aware comparison (e.g. "App 2" before "App 10").
     func sortedByName() -> [Project] {
         sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
@@ -106,12 +106,12 @@ extension Array where Element == Project {
     }
 }
 
-struct ProjectIndex: Codable {
+nonisolated struct ProjectIndex: Codable {
     var projects: [Project]
     var activeProjectId: UUID?
 }
 
-struct ProjectData: Codable {
+nonisolated struct ProjectData: Codable {
     var rows: [ScreenshotRow]
     var localeState: LocaleState?
     var modifiedAt: Date

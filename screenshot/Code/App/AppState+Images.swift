@@ -79,7 +79,7 @@ extension AppState {
     /// transparent-background result. The shape's width is adjusted to match the new
     /// (tighter) aspect ratio in the same undo step.
     @MainActor
-    func removeImageBackground(for shapeId: UUID, onError: @escaping (String) -> Void) {
+    func removeImageBackground(for shapeId: UUID, onError: @escaping @MainActor (String) -> Void) {
         guard let location = shapeLocation(for: shapeId) else { return }
         let shape = rows[location.rowIndex].shapes[location.shapeIndex]
         guard !shape.resolvedIsLocked else { return }
@@ -87,23 +87,26 @@ extension AppState {
               let activeId = activeProjectId else { return }
         let url = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
 
-        Task.detached(priority: .userInitiated) { [weak self] in
+        Task { @MainActor [weak self] in
             do {
-                let result = try BackgroundRemovalService.removeBackground(at: url)
-                await MainActor.run {
-                    guard let self, let location = self.shapeLocation(for: shapeId) else { return }
-                    self.withUndo("Remove Background") {
-                        if self.performSaveImage(result, for: shapeId, activeId: activeId, location: location),
-                           self.rows[location.rowIndex].shapes[location.shapeIndex].flexesToImageAspect {
-                            self.rows[location.rowIndex].shapes[location.shapeIndex].adaptToImageAspectRatio(result.size)
-                        }
+                let result = try await Self.backgroundRemovedImage(at: url)
+                guard let self, let location = self.shapeLocation(for: shapeId) else { return }
+                self.withUndo("Remove Background") {
+                    if self.performSaveImage(result, for: shapeId, activeId: activeId, location: location),
+                       self.rows[location.rowIndex].shapes[location.shapeIndex].flexesToImageAspect {
+                        self.rows[location.rowIndex].shapes[location.shapeIndex].adaptToImageAspectRatio(result.size)
                     }
                 }
             } catch {
-                let message = error.localizedDescription
-                await MainActor.run { onError(message) }
+                onError(error.localizedDescription)
             }
         }
+    }
+
+    private nonisolated static func backgroundRemovedImage(at url: URL) async throws -> NSImage {
+        try await Task.detached(priority: .userInitiated) {
+            try BackgroundRemovalService.removeBackground(at: url)
+        }.value
     }
 
     func clearImage(for shapeId: UUID) {

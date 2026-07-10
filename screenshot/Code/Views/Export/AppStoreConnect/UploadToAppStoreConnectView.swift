@@ -53,7 +53,7 @@ struct UploadToAppStoreConnectView: View {
     @State var isConfirmingUpload = false
     @State var credentials = AppStoreConnectCredentialsStore.shared
 
-    struct UploadSummary {
+    nonisolated struct UploadSummary {
         let appId: String?
         let appName: String
         let totalScreenshots: Int
@@ -61,7 +61,7 @@ struct UploadToAppStoreConnectView: View {
         let versionCount: Int
     }
 
-    enum Step: Hashable {
+    nonisolated enum Step: Hashable {
         case pickingApp
         case pickingVersion
         case editingMetadata
@@ -149,7 +149,7 @@ struct UploadToAppStoreConnectView: View {
         }
     }
 
-    struct RowPlan: Identifiable {
+    nonisolated struct RowPlan: Identifiable {
         let id: UUID
         var rowLabel: String
         var rowSize: CGSize
@@ -161,7 +161,7 @@ struct UploadToAppStoreConnectView: View {
         var inferredStorePlatform: StorePlatform?
     }
 
-    struct DestinationPlan: Identifiable {
+    nonisolated struct DestinationPlan: Identifiable {
         let id: String
         var version: ASCAppStoreVersion
         var localizations: [ASCAppStoreVersionLocalization]
@@ -180,7 +180,7 @@ struct UploadToAppStoreConnectView: View {
         }
     }
 
-    struct LocaleTarget: Identifiable {
+    nonisolated struct LocaleTarget: Identifiable {
         let id = UUID()
         var appLocaleCode: String
         var appLocaleLabel: String

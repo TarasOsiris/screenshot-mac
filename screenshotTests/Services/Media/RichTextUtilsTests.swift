@@ -1,3 +1,4 @@
+import CoreGraphics
 import Testing
 import AppKit
 import SwiftUI
@@ -70,6 +71,46 @@ struct RichTextUtilsTests {
         #expect(resolved.family == "Family")
         #expect(resolved.exactName == "Family-Bold")
         #expect(resolved.italic == false)
+    }
+
+    @Test func temporaryCustomFontRegistryRestoresActiveProjectFonts() {
+        let active = CustomFont(
+            fileName: "Active.otf",
+            familyName: "Active Family",
+            styleName: "Regular",
+            postScriptName: "Active-Regular",
+            isBold: false,
+            isItalic: false
+        )
+        let thumbnail = CustomFont(
+            fileName: "Thumbnail.otf",
+            familyName: "Thumbnail Family",
+            styleName: "Regular",
+            postScriptName: "Thumbnail-Regular",
+            isBold: false,
+            isItalic: false
+        )
+        CustomFontRegistry.update(with: [active.fileName: active], instances: [active])
+        defer { CustomFontRegistry.update(with: [:]) }
+
+        CustomFontRegistry.withTemporaryFonts(
+            [thumbnail.fileName: thumbnail],
+            instances: [thumbnail]
+        ) {
+            #expect(CustomFontRegistry.resolve("Thumbnail Family Regular").exactName == "Thumbnail-Regular")
+            #expect(CustomFontRegistry.postScriptName(
+                forFamily: "Active Family",
+                managerWeight: 5,
+                italic: false
+            ) == nil)
+        }
+
+        #expect(CustomFontRegistry.resolve("Active Family Regular").exactName == "Active-Regular")
+        #expect(CustomFontRegistry.postScriptName(
+            forFamily: "Active Family",
+            managerWeight: 5,
+            italic: false
+        ) == "Active-Regular")
     }
 
     @Test func postScriptNameResolvesBareFamilyToWeightSpecificInstance() {

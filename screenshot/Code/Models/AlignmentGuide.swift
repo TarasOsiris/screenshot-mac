@@ -1,11 +1,11 @@
 import Foundation
 
-enum AlignmentAxis: Hashable {
+nonisolated enum AlignmentAxis: Hashable {
     case horizontal // Y-aligned (horizontal line)
     case vertical   // X-aligned (vertical line)
 }
 
-struct AlignmentGuide: Identifiable, Equatable {
+nonisolated struct AlignmentGuide: Identifiable, Equatable {
     var id: AlignmentAxis { axis }
     let axis: AlignmentAxis
     let position: CGFloat   // canvas coordinate of the line
@@ -13,7 +13,7 @@ struct AlignmentGuide: Identifiable, Equatable {
     let end: CGFloat        // line extent end on perpendicular axis
 }
 
-struct SnapResult {
+nonisolated struct SnapResult {
     let snappedOffset: CGSize  // adjusted drag offset in canvas coords
     let guides: [AlignmentGuide]
 }

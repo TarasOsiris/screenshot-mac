@@ -1,3 +1,4 @@
+import CoreGraphics
 import XCTest
 import SwiftUI
 @testable import Screenshot_Bro
@@ -6,8 +7,8 @@ import SwiftUI
 /// override background fully covers them. Stacking the row fill under an opaque
 /// override produced a light hairline ring at every template edge (visible at
 /// fractional display scales, e.g. iPad pinch zoom).
-@MainActor
-final class RowBackgroundOverrideBleedTests: XCTestCase {
+nonisolated final class RowBackgroundOverrideBleedTests: XCTestCase {
+    @MainActor
     func testOpaqueOverrideHidesRowBackgroundAtTileEdges() throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }

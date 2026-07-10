@@ -61,7 +61,7 @@ private struct SavedDefaultValue {
     let value: Any?
 }
 
-private let deterministicDefaultValues: [String: Any] = [
+nonisolated(unsafe) private let deterministicDefaultValues: [String: Any] = [
     "defaultScreenshotSize": "1242x2688",
     "defaultTemplateCount": 3,
     "defaultDeviceCategory": DeviceCategory.iphone.rawValue,
