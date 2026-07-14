@@ -44,6 +44,17 @@ enum TemplateService {
         return templates
     }
 
+    /// Off-main variant for first-open UI call sites: the uncached scan does ~35
+    /// directory reads + preview file loads. The cache stays main-actor-owned.
+    static func availableTemplatesAsync() async -> [ProjectTemplate] {
+        if let cachedTemplates { return cachedTemplates }
+        let templates = await Task.detached(priority: .userInitiated) {
+            loadAvailableTemplates()
+        }.value
+        cachedTemplates = templates
+        return templates
+    }
+
     private static func loadAvailableTemplates() -> [ProjectTemplate] {
         guard let bundleURL = Bundle.main.url(forResource: "Templates", withExtension: "bundle") else {
             return []

@@ -374,7 +374,7 @@ struct ExportService {
         let renderWidth = totalWidth * displayScale
         let renderHeight = row.templateHeight * displayScale
         let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
-        let fontFamilies = availableFontFamilies ?? Set(PlatformFonts.systemFamilyNames)
+        let fontFamilies = availableFontFamilies ?? PlatformFonts.familyNameSet
         let composedBackground = renderComposedBackgroundImage(
             row: row,
             screenshotImages: screenshotImages,
@@ -671,7 +671,7 @@ struct ExportService {
         let pxWidth = templateWidth * displayScale
         let pxHeight = templateHeight * displayScale
         let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
-        let fontFamilies = availableFontFamilies ?? Set(PlatformFonts.systemFamilyNames)
+        let fontFamilies = availableFontFamilies ?? PlatformFonts.familyNameSet
         let backgroundImage = renderTemplateBackgroundImage(
             index: index,
             row: row,

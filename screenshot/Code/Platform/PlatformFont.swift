@@ -17,6 +17,22 @@ enum PlatformFonts {
         return UIFont.familyNames
         #endif
     }
+
+    private static var cachedFamilyNameSet: Set<String>?
+
+    /// Cached: enumerating font families allocates hundreds of strings per call, and
+    /// render fallbacks (thumbnails, template drags) probe this set per render.
+    /// `AppState.refreshAvailableFontFamilies` invalidates it when fonts change.
+    static var familyNameSet: Set<String> {
+        if let cachedFamilyNameSet { return cachedFamilyNameSet }
+        let set = Set(systemFamilyNames)
+        cachedFamilyNameSet = set
+        return set
+    }
+
+    static func invalidateFamilyNameCache() {
+        cachedFamilyNameSet = nil
+    }
 }
 
 extension NSFont {

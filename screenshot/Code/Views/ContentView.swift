@@ -539,7 +539,7 @@ struct ContentView: View {
         #endif
         .middleMousePan()
         .task {
-            projectTemplates = TemplateService.availableTemplates()
+            projectTemplates = await TemplateService.availableTemplatesAsync()
         }
         .onAppear {
             state.undoManager = undoManager

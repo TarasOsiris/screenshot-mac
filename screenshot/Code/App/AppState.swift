@@ -126,12 +126,13 @@ final class AppState {
     /// Includes both system family names and custom font display names so render-time
     /// `.contains(name)` checks succeed for style-qualified variants like
     /// "Playfair Display Italic".
-    @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = Set(PlatformFonts.systemFamilyNames)
+    @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = PlatformFonts.familyNameSet
 
     func refreshAvailableFontFamilies() {
         // Process-registered fonts (via CTFontManager) don't appear in the system family
         // list, so add both family and display names.
-        var families = Set(PlatformFonts.systemFamilyNames)
+        PlatformFonts.invalidateFamilyNameCache()
+        var families = PlatformFonts.familyNameSet
         let resourcesURL = activeProjectId.map { PersistenceService.resourcesDir($0) }
         var instances: [CustomFont] = []
         for font in customFonts.values {
