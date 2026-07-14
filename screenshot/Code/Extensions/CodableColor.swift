@@ -54,10 +54,30 @@ struct CodableColor: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let hex = try container.decode(String.self)
-        guard let parsed = CodableColor(hexString: hex) else {
+        guard hex.hasPrefix("#") else {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid hex color")
         }
-        self = parsed
+        if let parsed = CodableColor(hexString: hex) {
+            self = parsed
+            return
+        }
+        // Legacy tolerance: existing files may hold nonstandard hex (e.g. CSS shorthand "#fff"
+        // from SVG-imported templates). The historical Scanner-based decode produced a
+        // wrong-but-loadable color for those; failing here would fail the whole project load.
+        let hexStr = String(hex.dropFirst())
+        var value: UInt64 = 0
+        Scanner(string: hexStr).scanHexInt64(&value)
+        if hexStr.count == 6 {
+            red = Double((value >> 16) & 0xFF) / 255.0
+            green = Double((value >> 8) & 0xFF) / 255.0
+            blue = Double(value & 0xFF) / 255.0
+            opacity = 1.0
+        } else {
+            red = Double((value >> 24) & 0xFF) / 255.0
+            green = Double((value >> 16) & 0xFF) / 255.0
+            blue = Double((value >> 8) & 0xFF) / 255.0
+            opacity = Double(value & 0xFF) / 255.0
+        }
     }
 
     var color: Color {

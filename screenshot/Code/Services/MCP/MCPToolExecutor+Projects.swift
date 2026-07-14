@@ -56,7 +56,7 @@ extension MCPToolExecutor {
             }
             state.createBlankProject(name: name, rowConfigurations: configurations)
         }
-        return try activeProjectSnapshotResult()
+        return try await settledActiveProjectSnapshotResult()
     }
 
     func renameProject(_ args: MCPArguments) throws -> CallTool.Result {
@@ -72,11 +72,20 @@ extension MCPToolExecutor {
         return try listProjects()
     }
 
-    func switchProject(_ args: MCPArguments) throws -> CallTool.Result {
+    func switchProject(_ args: MCPArguments) async throws -> CallTool.Result {
         let project = try requireProject(args)
         if project.id != state.activeProjectId {
-            state.switchToProject(project.id)
+            // selectProject (not switchToProject) so the outgoing project's debounced edits
+            // are saved before its rows are torn down — same path as every UI caller.
+            state.selectProject(project.id)
         }
+        return try await settledActiveProjectSnapshotResult()
+    }
+
+    /// Snapshot the active project only after its asynchronous open has finished; right
+    /// after a create/switch the rows still belong to the previous project.
+    func settledActiveProjectSnapshotResult() async throws -> CallTool.Result {
+        await state.projectOpenTask?.value
         return try activeProjectSnapshotResult()
     }
 }

@@ -264,18 +264,12 @@ enum CustomFontRegistry {
     static func resolveNSFont(name: String, size: CGFloat, managerWeight: Int, italic: Bool) -> NSFont {
         let resolved = resolve(name)
         let effectiveItalic = italic || resolved.italic
-        // Prefer an exact registered PostScript face: neither NSFontManager (macOS) nor
-        // UIFontDescriptor(.family:) (iOS) can instantiate process-registered fonts by bare
-        // family name — macOS falls through to CTFontCreateWithName, which ignores the
-        // requested weight ("DM Sans" at 700 renders Regular); iOS yields tofu.
-        let exactName = resolved.exactName
-            ?? postScriptName(forFamily: resolved.family, managerWeight: managerWeight, italic: effectiveItalic)
         #if os(macOS)
         let traits: NSFontTraitMask = resolved.italic ? .italicFontMask : []
         let fm = NSFontManager.shared
 
         let baseFont: NSFont
-        if let exactName, let font = NSFont(name: exactName, size: size) {
+        if let exactName = resolved.exactName, let font = NSFont(name: exactName, size: size) {
             baseFont = font
         } else if let font = fm.font(withFamily: resolved.family, traits: traits, weight: managerWeight, size: size) {
             baseFont = font
@@ -284,11 +278,21 @@ enum CustomFontRegistry {
             baseFont = managerWeight >= 9 ? fm.convert(font, toHaveTrait: .boldFontMask) : font
         } else if let font = fm.font(withFamily: resolved.family, traits: [], weight: managerWeight, size: size) {
             baseFont = font
+        } else if let psName = postScriptName(forFamily: resolved.family, managerWeight: managerWeight, italic: effectiveItalic),
+                  let font = NSFont(name: psName, size: size) {
+            // NSFontManager can't see process-registered fonts, so a bare custom family
+            // ("DM Sans" at weight 700) only resolves through its registered named
+            // instance's PostScript name — CTFontCreateWithName below ignores the weight.
+            baseFont = font
         } else {
             baseFont = CTFontCreateWithName(resolved.family as CFString, size, nil) as NSFont
         }
         return effectiveItalic ? fm.convert(baseFont, toHaveTrait: .italicFontMask) : baseFont
         #else
+        // Prefer an exact registered PostScript face: UIFontDescriptor(.family:) can't
+        // instantiate process-registered (variable) fonts — family-named text renders tofu.
+        let exactName = resolved.exactName
+            ?? postScriptName(forFamily: resolved.family, managerWeight: managerWeight, italic: effectiveItalic)
         let base: UIFont
         if let exactName, let font = UIFont(name: exactName, size: size) {
             base = font

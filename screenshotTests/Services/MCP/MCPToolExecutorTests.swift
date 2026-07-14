@@ -202,6 +202,115 @@ struct MCPToolExecutorTests {
         #expect(state.rows[0].shapes.last!.fontName == "Helvetica")
     }
 
+    @Test func addShapeWithBadFontAddsNothing() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let shapeCount = state.rows[0].shapes.count
+
+        let result = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "text": "Hello",
+            "font_name": "No Such Font Family",
+        ])
+        #expect(result.isError == true)
+        #expect(state.rows[0].shapes.count == shapeCount)
+    }
+
+    @Test func updateShapeEditsBaseEvenWhenViewingAnotherLocale() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        _ = await executor.call(name: "add_shape", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "type": "text",
+            "text": "Hello",
+        ])
+        let shapeId = state.rows[0].shapes.last!.id
+
+        expectSuccess(await executor.call(name: "add_locale", arguments: ["code": "de-DE"]))
+        state.localeState.activeLocaleCode = "de-DE"
+
+        let result = await executor.call(name: "update_shape", arguments: [
+            "shape_id": .string(shapeId.uuidString),
+            "x": 42,
+            "font_size": 99,
+        ])
+        expectSuccess(result)
+
+        let shape = state.rows[0].shapes.last!
+        #expect(shape.x == 42)
+        #expect(shape.fontSize == 99)
+        #expect(state.localeState.overrides["de-DE"]?[shapeId.uuidString] == nil)
+    }
+
+    @Test func updateRowRejectsInvalidSizeWithoutPartialApply() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let originalLabel = state.rows[0].label
+
+        let result = await executor.call(name: "update_row", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "label": "Hero",
+            "width": 50,
+        ])
+        #expect(result.isError == true)
+        #expect(state.rows[0].label == originalLabel)
+    }
+
+    @Test func deleteLastRowFailsInsteadOfFalseAck() async {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        #expect(state.rows.count == 1)
+
+        let result = await executor.call(name: "delete_row", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+        ])
+        #expect(result.isError == true)
+        #expect(state.rows.count == 1)
+    }
+
+    @Test func switchProjectSavesOutgoingEditsAndSettlesBeforeSnapshot() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let firstProjectId = try #require(state.activeProjectId)
+        let firstRowId = state.rows[0].id
+
+        // Leave only a debounced (unsaved) edit behind before switching away.
+        expectSuccess(await executor.call(name: "update_row", arguments: [
+            "row_id": .string(firstRowId.uuidString),
+            "label": "Edited before switch",
+        ]))
+        let created = await executor.call(name: "create_project", arguments: [
+            "name": "Second",
+            "rows": .array([.object(["template_count": 1])]),
+        ])
+        expectSuccess(created)
+        #expect(state.activeProjectId != firstProjectId)
+
+        // The debounced edit must have been flushed by the save-before-switch. Read the
+        // file directly — PersistenceService routes through the process-global data-dir
+        // env var, which parallel tests mutate.
+        let firstProjectJSON = tempDir
+            .appendingPathComponent("projects/\(firstProjectId.uuidString)/project.json")
+        let savedData = try Data(contentsOf: firstProjectJSON)
+        #expect(String(decoding: savedData, as: UTF8.self).contains("Edited before switch"))
+
+        let switched = await executor.call(name: "switch_project", arguments: [
+            "project_id": .string(firstProjectId.uuidString),
+        ])
+        expectSuccess(switched)
+        // The snapshot must be taken only after the async project open has settled;
+        // an in-flight open task here means the tool answered with stale rows.
+        #expect(state.projectOpenTask == nil)
+        #expect(state.activeProjectId == firstProjectId)
+        guard case .text(let json, _, _) = switched.content.first else {
+            Issue.record("expected text content")
+            return
+        }
+        #expect(json.contains(firstProjectId.uuidString))
+    }
+
     @Test func updateShapePatchesOnlyProvidedFields() async {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }

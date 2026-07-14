@@ -69,7 +69,7 @@ struct MCPArguments {
     func int(_ key: String) -> Int? {
         switch raw[key] {
         case .int(let i): i
-        case .double(let d) where d == d.rounded(): Int(d)
+        case .double(let d): Int(exactly: d)
         default: nil
         }
     }

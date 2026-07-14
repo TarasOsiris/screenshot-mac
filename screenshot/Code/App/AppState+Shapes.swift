@@ -22,7 +22,9 @@ extension AppState {
         }
     }
 
-    func updateShape(_ shape: CanvasShapeModel) {
+    /// Pass `forLocaleCode` to commit against a specific locale (e.g. the MCP tools always
+    /// edit the base shape regardless of which locale the UI is viewing); nil = active locale.
+    func updateShape(_ shape: CanvasShapeModel, forLocaleCode code: String? = nil) {
         guard let location = shapeLocation(for: shape.id) else { return }
         let shouldRebase = continuousEditShapeId == shape.id
         let staleBaseShape = shouldRebase ? rows[location.rowIndex].shapes[location.shapeIndex] : nil
@@ -32,7 +34,12 @@ extension AppState {
             guard let loc = shouldRebase ? shapeLocation(for: shape.id) : location else { return }
             let baseShape = rows[loc.rowIndex].shapes[loc.shapeIndex]
             let updated = staleBaseShape.map { shape.rebased(from: $0, onto: baseShape) } ?? shape
-            rows[loc.rowIndex].shapes[loc.shapeIndex] = LocaleService.splitUpdate(base: baseShape, updated: updated, localeState: &localeState)
+            rows[loc.rowIndex].shapes[loc.shapeIndex] = LocaleService.splitUpdate(
+                base: baseShape,
+                updated: updated,
+                localeState: &localeState,
+                forLocaleCode: code ?? localeState.activeLocaleCode
+            )
         }
     }
 

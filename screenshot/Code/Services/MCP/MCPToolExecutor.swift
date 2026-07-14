@@ -35,7 +35,7 @@ final class MCPToolExecutor {
         case .createProject: try await createProject(args)
         case .renameProject: try renameProject(args)
         case .deleteProject: try deleteProject(args)
-        case .switchProject: try switchProject(args)
+        case .switchProject: try await switchProject(args)
         case .addRow: try addRow(args)
         case .updateRow: try updateRow(args)
         case .moveRow: try moveRow(args)

@@ -18,7 +18,11 @@ struct MCPHTTPRequestHead {
     }
 
     var contentLength: Int? {
-        header("content-length").flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        // Negative values must read as absent, not pass through: Data.prefix/removeFirst
+        // trap on negative lengths, so a hostile "Content-Length: -1" would crash the app.
+        header("content-length")
+            .flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+            .flatMap { $0 >= 0 ? $0 : nil }
     }
 
     var hasTransferEncoding: Bool {

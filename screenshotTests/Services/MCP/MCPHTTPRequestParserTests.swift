@@ -18,6 +18,11 @@ struct MCPHTTPRequestParserTests {
         #expect(parsed.header("content-type") == "application/json")
     }
 
+    @Test func negativeContentLengthReadsAsAbsent() throws {
+        let parsed = try head("POST /mcp HTTP/1.1\r\nContent-Length: -1")
+        #expect(parsed.contentLength == nil)
+    }
+
     @Test func headerLookupIsCaseInsensitive() throws {
         let parsed = try head("GET /mcp HTTP/1.1\r\nACCEPT: application/json")
         #expect(parsed.header("Accept") == "application/json")

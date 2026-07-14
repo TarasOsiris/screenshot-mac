@@ -44,25 +44,55 @@ extension MCPToolExecutor {
 
     func updateRow(_ args: MCPArguments) throws -> CallTool.Result {
         let rowIndex = try requireRowIndex(args)
-        let rowId = state.rows[rowIndex].id
+        let row = state.rows[rowIndex]
+        let rowId = row.id
 
-        if let label = args.string("label") {
-            state.updateRowLabel(rowId, text: label)
-        }
-
+        // Parse and validate every argument before the first mutation, so an invalid call
+        // can't partially apply (e.g. commit the label and then reject the width).
+        let size: (width: CGFloat, height: CGFloat)?
         if args.has("width") || args.has("height") {
-            let row = state.rows[rowIndex]
             let width = args.double("width").map { CGFloat($0) } ?? row.templateWidth
             let height = args.double("height").map { CGFloat($0) } ?? row.templateHeight
             guard width >= 100, height >= 100 else {
                 throw MCPToolError.invalidArgument("width/height", "must be at least 100 pixels")
             }
-            state.resizeRow(at: rowIndex, newWidth: width, newHeight: height)
+            size = (width, height)
+        } else {
+            size = nil
         }
-
         let color = try args.color("background_color")
         let gradient = try args.object("background_gradient").map(Self.parseGradient)
         let span = args.bool("span_background")
+        let defaultDevice: (category: DeviceCategory?, frameId: String?)?
+        if args.has("device_category") || args.has("device_frame_id") {
+            defaultDevice = (
+                try args.enumValue("device_category", DeviceCategory.self) ?? row.defaultDeviceCategory,
+                args.string("device_frame_id") ?? row.defaultDeviceFrameId
+            )
+        } else {
+            defaultDevice = nil
+        }
+        let label = args.string("label")
+        let showDevice = args.bool("show_device")
+
+        if label != nil || size != nil || showDevice != nil || defaultDevice != nil {
+            // One transaction for the discrete edits; the nested withUndo calls join it.
+            state.withUndo("Update Row") {
+                if let label {
+                    state.updateRowLabel(rowId, text: label)
+                }
+                if let size {
+                    state.resizeRow(at: rowIndex, newWidth: size.width, newHeight: size.height)
+                }
+                if let showDevice, state.rows[rowIndex].showDevice != showDevice {
+                    state.toggleShowDevice(for: rowId)
+                }
+                if let defaultDevice {
+                    state.setDefaultDevice(for: rowId, category: defaultDevice.category, frameId: defaultDevice.frameId)
+                }
+            }
+        }
+
         if color != nil || gradient != nil || span != nil {
             state.updateRowContinuous(rowId) { row in
                 if let color {
@@ -78,17 +108,6 @@ extension MCPToolExecutor {
                 }
             }
             state.finishContinuousRowEditIfNeeded()
-        }
-
-        if let showDevice = args.bool("show_device"), state.rows[rowIndex].showDevice != showDevice {
-            state.toggleShowDevice(for: rowId)
-        }
-
-        if args.has("device_category") || args.has("device_frame_id") {
-            let row = state.rows[rowIndex]
-            let category = try args.enumValue("device_category", DeviceCategory.self) ?? row.defaultDeviceCategory
-            let frameId = args.string("device_frame_id") ?? row.defaultDeviceFrameId
-            state.setDefaultDevice(for: rowId, category: category, frameId: frameId)
         }
 
         return try rowResult(rowIndex)
@@ -115,6 +134,11 @@ extension MCPToolExecutor {
 
     func deleteRow(_ args: MCPArguments) throws -> CallTool.Result {
         let rowIndex = try requireRowIndex(args)
+        // AppState.deleteRow silently no-ops on the last row — surface that instead of
+        // acking a delete that never happened.
+        guard state.rows.count > 1 else {
+            throw MCPToolError.failed("Cannot delete the last row of a project")
+        }
         let rowId = state.rows[rowIndex].id
         state.deleteRow(rowId)
         return try MCPResultEncoding.result(DeleteRowResult(

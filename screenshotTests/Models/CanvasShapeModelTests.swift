@@ -549,4 +549,23 @@ struct CanvasShapeModelTests {
         let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: data)
         #expect(decoded.shadow == nil, "An empty shadow config should be skipped during encoding")
     }
+
+    // MARK: - CodableColor decoding
+
+    @Test func codableColorDecodesStandardAndLegacyHex() throws {
+        let standard = try JSONDecoder().decode(CodableColor.self, from: Data("\"#FF8000\"".utf8))
+        #expect(standard.red == 1.0)
+        #expect(abs(standard.green - 128.0 / 255.0) < 0.001)
+        #expect(standard.blue == 0)
+        #expect(standard.opacity == 1.0)
+
+        // Nonstandard lengths (e.g. CSS shorthand from SVG-imported templates) must keep
+        // decoding — a throw here would fail the entire project load.
+        let shorthand = try JSONDecoder().decode(CodableColor.self, from: Data("\"#fff\"".utf8))
+        #expect(shorthand.opacity == 1.0)
+
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(CodableColor.self, from: Data("\"FF8000\"".utf8))
+        }
+    }
 }

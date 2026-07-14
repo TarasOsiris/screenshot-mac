@@ -11,6 +11,7 @@ extension MCPToolExecutor {
         guard let type = try args.enumValue("type", ShapeType.self) else {
             throw MCPToolError.missingArgument("type")
         }
+        try validateShapeArgs(args)
 
         let templateIndex = min(max(args.int("template_index") ?? 0, 0), max(row.templates.count - 1, 0))
         let centerX = row.templateCenterX(at: templateIndex)
@@ -66,25 +67,28 @@ extension MCPToolExecutor {
             patch.text = text
         }
         if patch != newShape {
-            state.updateShape(patch)
+            state.updateShape(patch, forLocaleCode: state.localeState.baseLocaleCode)
         }
         return try shapeResult(rowIndex: rowIndex, shapeId: newShape.id)
     }
 
     func updateShape(_ args: MCPArguments) throws -> CallTool.Result {
         let location = try requireShapeLocation(args)
+        try validateShapeArgs(args)
 
         if let text = args.string("text") {
             state.updateBaseText(shapeId: location.shapeId, text: text)
             state.finishBaseTextEditIfNeeded()
         }
 
+        // The shapes array holds the base-locale model; patch and commit against the base
+        // explicitly so agent edits never land in whichever locale the UI happens to view.
         let base = state.rows[location.rowIndex].shapes[location.shapeIndex]
         var patch = base
         try applyCommonPatch(&patch, args: args)
         try applyShapePatch(&patch, args: args)
         if patch != base {
-            state.updateShape(patch)
+            state.updateShape(patch, forLocaleCode: state.localeState.baseLocaleCode)
         }
 
         switch args.string("z_order") {
@@ -94,6 +98,25 @@ extension MCPToolExecutor {
         }
 
         return try shapeResult(rowIndex: location.rowIndex, shapeId: location.shapeId)
+    }
+
+    /// All throwing argument parses up front, so a bad argument can't leave a tool call
+    /// half-applied (e.g. add_shape inserting a shape and then failing font validation).
+    private func validateShapeArgs(_ args: MCPArguments) throws {
+        _ = try args.color("color")
+        _ = try args.color("outline_color")
+        _ = try args.enumValue("text_align", TextAlign.self)
+        _ = try args.enumValue("device_category", DeviceCategory.self)
+        try validateFontName(args)
+    }
+
+    private func validateFontName(_ args: MCPArguments) throws {
+        guard let fontName = args.string("font_name") else { return }
+        guard state.availableFontFamilySet.contains(fontName) else {
+            let custom = state.customFonts.values.map(\.displayName).sorted().joined(separator: ", ")
+            let hint = custom.isEmpty ? "no custom fonts are imported in this project" : "imported custom fonts: \(custom)"
+            throw MCPToolError.invalidArgument("font_name", "font \(fontName) is not available — it would silently render as the system font. Use a system font family or import the font into this project first (\(hint))")
+        }
     }
 
     struct DeleteShapeResult: Encodable {
@@ -119,11 +142,7 @@ extension MCPToolExecutor {
         if let color = try args.color("color") { shape.colorData = color }
         if let fontSize = args.double("font_size") { shape.fontSize = fontSize }
         if let fontName = args.string("font_name") {
-            guard state.availableFontFamilySet.contains(fontName) else {
-                let custom = state.customFonts.values.map(\.displayName).sorted().joined(separator: ", ")
-                let hint = custom.isEmpty ? "no custom fonts are imported in this project" : "imported custom fonts: \(custom)"
-                throw MCPToolError.invalidArgument("font_name", "font \(fontName) is not available — it would silently render as the system font. Use a system font family or import the font into this project first (\(hint))")
-            }
+            try validateFontName(args)
             shape.fontName = fontName
         }
         if let fontWeight = args.int("font_weight") { shape.fontWeight = fontWeight }
