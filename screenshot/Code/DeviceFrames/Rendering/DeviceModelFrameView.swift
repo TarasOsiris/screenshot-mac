@@ -15,13 +15,14 @@ typealias SCNFloat = Float
 
 struct DeviceModelFrameView: View {
     private static let modelSnapshotScale: CGFloat = 3
+    private static let exportSnapshotPixelBudget: CGFloat = 4096
     /// Editor snapshots render at 3× their on-screen points for retina headroom.
     /// Export shapes are already at full model resolution, so a blanket 3× would
     /// rasterize ~9× the pixels actually needed on a large device — cap the
     /// supersample budget instead. Small shapes keep the full 3×.
     private static func snapshotScale(width: CGFloat, height: CGFloat, isExport: Bool) -> CGFloat {
         guard isExport else { return modelSnapshotScale }
-        return min(modelSnapshotScale, max(1, 4096 / max(width, height, 1)))
+        return min(modelSnapshotScale, max(1, exportSnapshotPixelBudget / max(width, height, 1)))
     }
     private static let snapshotExposureOffset: CGFloat = -0.7
     private static let snapshotImageCache: NSCache<NSString, NSImage> = {

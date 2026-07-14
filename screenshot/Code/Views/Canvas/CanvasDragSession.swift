@@ -15,12 +15,9 @@ final class CanvasDragSession {
     @ObservationIgnored var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
 
     func reset() {
-        activeDragOffset = .zero
-        draggingShapeId = nil
+        endDrag()
         pendingResize = [:]
         pendingRotation = [:]
-        activeGuides = []
-        cachedSnapTargets = nil
     }
 
     func endDrag() {

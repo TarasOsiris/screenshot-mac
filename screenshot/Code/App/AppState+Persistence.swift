@@ -256,6 +256,25 @@ extension AppState {
         iCloudMonitor?.snapshotAfterWrite()
     }
 
+    /// Builds the index snapshot for a save, stamping the active project's
+    /// `modifiedAt` (skipping tombstones). Shared by every sync/async index save.
+    private func makeIndexSnapshotForSave() -> ProjectIndex {
+        if let idx = projects.firstIndex(where: { $0.id == activeProjectId && !$0.isDeleted }) {
+            projects[idx].modifiedAt = Date()
+        }
+        return ProjectIndex(projects: projects, activeProjectId: activeProjectId)
+    }
+
+    /// Snapshot of the active project for a save (a cheap COW value copy), or nil
+    /// while a project load is in flight: `activeProjectId` already points at the
+    /// project being opened but `rows` may still belong to the previously active
+    /// project, so writing now would overwrite the new project's file with stale
+    /// rows. Shared by every sync/async project save.
+    private func activeProjectSnapshotForSave() -> (id: UUID, data: ProjectData)? {
+        guard let activeId = activeProjectId, projectOpenTask == nil else { return nil }
+        return (activeId, ProjectData(rows: rows, localeState: localeState))
+    }
+
     /// Debounced-autosave sibling of `saveAll()`: snapshots index + project on the
     /// main actor (cheap COW value copies), then encodes and writes on the serial
     /// save queue — the JSON encode, `.xcstrings` catalog build (with its RTF
@@ -263,18 +282,11 @@ extension AppState {
     /// every edit tick. `flushPendingSaveTask` drains the queue before its
     /// synchronous fallback, so quit can't lose an in-flight write.
     func saveAllAsync() {
-        if let idx = projects.firstIndex(where: { $0.id == activeProjectId && !$0.isDeleted }) {
-            projects[idx].modifiedAt = Date()
-        }
-        let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
+        let index = makeIndexSnapshotForSave()
 
-        // See saveCurrentProject(): never write rows while a project load is in
-        // flight — they may still belong to the previously active project.
-        var projectSnapshot: (id: UUID, data: ProjectData)?
-        if projectOpenTask == nil, let activeId = activeProjectId {
-            let data = ProjectData(rows: rows, localeState: localeState)
-            activeProjectDataModifiedAt = data.modifiedAt
-            projectSnapshot = (activeId, data)
+        let projectSnapshot = activeProjectSnapshotForSave()
+        if let snapshot = projectSnapshot {
+            activeProjectDataModifiedAt = snapshot.data.modifiedAt
         }
 
         let monitor = iCloudMonitor
@@ -319,11 +331,7 @@ extension AppState {
 
     @discardableResult
     func saveIndex() -> Bool {
-        // Update modifiedAt for the active project (skip tombstones)
-        if let idx = projects.firstIndex(where: { $0.id == activeProjectId && !$0.isDeleted }) {
-            projects[idx].modifiedAt = Date()
-        }
-        let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
+        let index = makeIndexSnapshotForSave()
         do {
             try PersistenceService.saveIndex(index)
             return true
@@ -335,19 +343,15 @@ extension AppState {
 
     @discardableResult
     func saveCurrentProject(commitPendingEdits: Bool = true) -> Bool {
-        guard let activeId = activeProjectId else { return true }
-        // Don't persist while a project load is in flight: `activeProjectId` already points
-        // at the project being opened but `rows` may still belong to the previously active
-        // project, so writing now would overwrite the new project's file with stale rows.
-        guard projectOpenTask == nil else { return true }
+        guard activeProjectId != nil, projectOpenTask == nil else { return true }
         if commitPendingEdits {
             commitAllPendingEdits()
         }
-        let data = ProjectData(rows: rows, localeState: localeState)
+        guard let snapshot = activeProjectSnapshotForSave() else { return true }
         do {
-            try PersistenceService.saveProject(activeId, data: data)
-            activeProjectDataModifiedAt = data.modifiedAt
-            lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(activeId)
+            try PersistenceService.saveProject(snapshot.id, data: snapshot.data)
+            activeProjectDataModifiedAt = snapshot.data.modifiedAt
+            lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(snapshot.id)
             return true
         } catch {
             saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
@@ -355,19 +359,15 @@ extension AppState {
         }
     }
 
-    /// Snapshots the active project's data on the main actor (a cheap value copy of
-    /// rows/localeState) and encodes+writes it off-main, so switching projects doesn't
-    /// block the push animation. Must be called while `activeProjectId` still points at the
-    /// project being saved.
+    /// Snapshots the active project's data on the main actor and encodes+writes it
+    /// off-main, so switching projects doesn't block the push animation. Must be
+    /// called while `activeProjectId` still points at the project being saved.
     func saveCurrentProjectAsync(commitPendingEdits: Bool = true) {
-        guard let activeId = activeProjectId else { return }
-        // See saveCurrentProject(): skip while a load is in flight so we never write the
-        // previous project's stale rows into the newly-opened project's file.
-        guard projectOpenTask == nil else { return }
+        guard activeProjectId != nil, projectOpenTask == nil else { return }
         if commitPendingEdits {
             commitAllPendingEdits()
         }
-        let data = ProjectData(rows: rows, localeState: localeState)
+        guard let (activeId, data) = activeProjectSnapshotForSave() else { return }
         activeProjectDataModifiedAt = data.modifiedAt
         let monitor = iCloudMonitor
         monitor?.recordOwnWrite([PersistenceService.projectDataURL(activeId), PersistenceService.translationCatalogURL(activeId)])
@@ -391,10 +391,7 @@ extension AppState {
 
     /// Off-main sibling of `saveIndex()` — snapshots `ProjectIndex` on main, writes detached.
     func saveIndexAsync() {
-        if let idx = projects.firstIndex(where: { $0.id == activeProjectId && !$0.isDeleted }) {
-            projects[idx].modifiedAt = Date()
-        }
-        let index = ProjectIndex(projects: projects, activeProjectId: activeProjectId)
+        let index = makeIndexSnapshotForSave()
         let monitor = iCloudMonitor
         monitor?.recordOwnWrite([PersistenceService.indexURL])
         Self.saveQueue.async { [weak self] in

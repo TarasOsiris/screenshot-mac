@@ -405,7 +405,17 @@ final class AppState {
         guard let idx = rowIndex(for: rowId) else { return }
         let baseRow = rows[idx]
         let baseLocaleState = localeState
+        #if DEBUG
+        let allRowsBase = rows
+        #endif
         body()
+        #if DEBUG
+        assert(
+            rows.count == allRowsBase.count
+                && zip(rows, allRowsBase).allSatisfy { $0.id == $1.id && ($0.id == rowId || $0 == $1) },
+            "withRowUndo(\"\(actionName)\") body mutated rows other than the target row — use withUndo"
+        )
+        #endif
         guard let newIdx = rowIndex(for: rowId) else { return }
         guard rows[newIdx] != baseRow || localeState != baseLocaleState else { return }
         registerRowSnapshot(actionName, rowId: rowId, baseRow: baseRow, baseLocaleState: baseLocaleState)

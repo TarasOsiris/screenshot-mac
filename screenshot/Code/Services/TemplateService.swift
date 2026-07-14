@@ -35,22 +35,18 @@ enum TemplateService {
     }
 
     private static var cachedTemplates: [ProjectTemplate]?
+    private static var templateLoadTask: Task<[ProjectTemplate], Never>?
 
-    /// Bundle.main is immutable per launch — scan once, reuse for every caller.
-    static func availableTemplates() -> [ProjectTemplate] {
-        if let cachedTemplates { return cachedTemplates }
-        let templates = loadAvailableTemplates()
-        cachedTemplates = templates
-        return templates
-    }
-
-    /// Off-main variant for first-open UI call sites: the uncached scan does ~35
-    /// directory reads + preview file loads. The cache stays main-actor-owned.
+    /// Bundle.main is immutable per launch — scan once, off-main (the uncached scan
+    /// does ~35 directory reads + preview file loads). Concurrent first callers
+    /// (editor, onboarding, new-project window) coalesce onto one load task.
     static func availableTemplatesAsync() async -> [ProjectTemplate] {
         if let cachedTemplates { return cachedTemplates }
-        let templates = await Task.detached(priority: .userInitiated) {
+        let task = templateLoadTask ?? Task.detached(priority: .userInitiated) {
             loadAvailableTemplates()
-        }.value
+        }
+        templateLoadTask = task
+        let templates = await task.value
         cachedTemplates = templates
         return templates
     }

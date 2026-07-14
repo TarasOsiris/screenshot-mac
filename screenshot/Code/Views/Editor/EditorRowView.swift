@@ -14,7 +14,6 @@ struct EditorRowView: View {
     let row: ScreenshotRow
     let isFirst: Bool
     let isLast: Bool
-    let canDelete: Bool
     let requestShowcaseExport: (ScreenshotRow) -> Void
     @AppStorage("confirmBeforeDeleting") var confirmBeforeDeleting = true
     @State var isDeletingRow = false
@@ -47,6 +46,8 @@ struct EditorRowView: View {
 
     var canMoveUp: Bool { !isFirst }
     var canMoveDown: Bool { !isLast }
+    /// The only undeletable row is the sole row — i.e. both first and last.
+    var canDelete: Bool { !(isFirst && isLast) }
 
     var zoom: CGFloat { state.zoomLevel }
     let canvasHorizontalPadding: CGFloat = 16
@@ -263,6 +264,5 @@ extension EditorRowView: Equatable {
         lhs.row == rhs.row
             && lhs.isFirst == rhs.isFirst
             && lhs.isLast == rhs.isLast
-            && lhs.canDelete == rhs.canDelete
     }
 }

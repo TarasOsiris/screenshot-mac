@@ -78,31 +78,45 @@ struct ExportService {
                 return count == 0 ? baseName : "\(baseName) (\(count + 1))"
             }
 
-            func destFolder(rowIndex: Int, localeCode: String) throws -> URL {
-                let base = localeFolders[localeCode] ?? rootFolder
-                guard multiRow else { return base }
-                let folder = base.appendingPathComponent(rowFolderNames[rowIndex])
-                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                return folder
-            }
-
-            // Row-outer, locale-inner: locales whose overrides don't touch a row
-            // render (and encode) once, and the encoded bytes are written into each
-            // such locale's folder. Only genuinely localized rows re-render per
-            // locale. Backgrounds are locale-independent, so the (blur-only)
-            // precomposed row strip is shared across every locale of the row.
+            // Row-outer, locale-inner: locales whose overrides don't touch a row form
+            // one group sharing a single render (encoded once, bytes cloned into each
+            // locale's folder); each genuinely localized locale is its own group.
+            // Backgrounds are locale-independent, so the (blur-only) precomposed row
+            // strip is shared across every group of the row.
             for (rowIndex, row) in rows.enumerated() {
-                let neutralLocales = localesToExport.filter {
-                    LocaleService.rowIsLocaleNeutral(row: row, localeCode: $0.code, localeState: localeState)
+                var neutralLocales: [LocaleDefinition] = []
+                var localeGroups: [[LocaleDefinition]] = []
+                for locale in localesToExport {
+                    if LocaleService.rowIsLocaleNeutral(row: row, localeCode: locale.code, localeState: localeState) {
+                        neutralLocales.append(locale)
+                    } else {
+                        localeGroups.append([locale])
+                    }
                 }
-                let neutralCodes = Set(neutralLocales.map(\.code))
-                let affectedLocales = localesToExport.filter { !neutralCodes.contains($0.code) }
+                if !neutralLocales.isEmpty {
+                    localeGroups.insert(neutralLocales, at: 0)
+                }
+
+                // Every (row, locale) folder receives files, so create them all up
+                // front — destFolder stays pure URL construction on the hot path.
+                var rowDestFolders: [String: URL] = [:]
+                for locale in localesToExport {
+                    let base = localeFolders[locale.code] ?? rootFolder
+                    let folder = multiRow ? base.appendingPathComponent(rowFolderNames[rowIndex]) : base
+                    if multiRow {
+                        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                    }
+                    rowDestFolders[locale.code] = folder
+                }
+                func destFolder(for localeCode: String) -> URL {
+                    rowDestFolders[localeCode] ?? rootFolder
+                }
 
                 var rowBackground: NSImage?
-                var didRenderRowBackground = false
-                func sharedRowBackground(_ images: [String: NSImage]) -> NSImage? {
-                    if !didRenderRowBackground {
-                        didRenderRowBackground = true
+                for (groupIndex, group) in localeGroups.enumerated() {
+                    let renderCode = group[0].code
+                    let images = imageProvider(row, renderCode)
+                    if groupIndex == 0 {
                         rowBackground = precomposedRowBackgroundIfNeeded(
                             row: row,
                             screenshotImages: images,
@@ -110,13 +124,10 @@ struct ExportService {
                             labelPrefix: "export row"
                         )
                     }
-                    return rowBackground
-                }
 
-                if let firstNeutral = neutralLocales.first {
-                    let images = imageProvider(row, firstNeutral.code)
-                    let background = sharedRowBackground(images)
-                    try await withThrowingTaskGroup(of: Int.self) { group in
+                    // Encode all templates of this group concurrently, then await
+                    // before the next group to bound memory usage.
+                    try await withThrowingTaskGroup(of: Int.self) { taskGroup in
                         for index in row.templates.indices {
                             try Task.checkCancellation()
 
@@ -124,24 +135,27 @@ struct ExportService {
                                 index: index,
                                 row: row,
                                 screenshotImages: images,
-                                localeCode: firstNeutral.code,
+                                localeCode: renderCode,
                                 localeState: localeState,
                                 availableFontFamilies: availableFontFamilies,
-                                preRenderedRowBackground: background
+                                preRenderedRowBackground: rowBackground
                             )
-                            let fileURLs: [URL] = try neutralLocales.map { locale in
+                            let fileURLs: [URL] = group.map { locale in
                                 let filename = screenshotFileName(row: row, localeCode: locale.code, index: index, customSuffix: customSuffix, format: format)
-                                return try destFolder(rowIndex: rowIndex, localeCode: locale.code).appendingPathComponent(filename)
+                                return destFolder(for: locale.code).appendingPathComponent(filename)
                             }
                             writtenFileURLs.append(contentsOf: fileURLs)
 
                             let fmt = format
-                            group.addTask {
+                            taskGroup.addTask {
                                 guard let imageData = encodeImage(image, format: fmt) else {
                                     throw ExportError.renderFailed
                                 }
-                                for fileURL in fileURLs {
-                                    try imageData.write(to: fileURL)
+                                try imageData.write(to: fileURLs[0])
+                                // Clone the encoded file into the remaining neutral
+                                // locales' folders (APFS makes copies nearly free).
+                                for fileURL in fileURLs.dropFirst() {
+                                    try FileManager.default.copyItem(at: fileURLs[0], to: fileURL)
                                 }
                                 return fileURLs.count
                             }
@@ -149,44 +163,8 @@ struct ExportService {
 
                         // Report progress as each encode/write actually finishes,
                         // not when it's merely scheduled.
-                        for try await written in group {
+                        for try await written in taskGroup {
                             completed += written
-                            onProgress?(completed)
-                        }
-                    }
-                }
-
-                for locale in affectedLocales {
-                    let images = imageProvider(row, locale.code)
-                    let background = sharedRowBackground(images)
-                    try await withThrowingTaskGroup(of: Void.self) { group in
-                        for index in row.templates.indices {
-                            try Task.checkCancellation()
-
-                            let image = renderSingleTemplateImage(
-                                index: index,
-                                row: row,
-                                screenshotImages: images,
-                                localeCode: locale.code,
-                                localeState: localeState,
-                                availableFontFamilies: availableFontFamilies,
-                                preRenderedRowBackground: background
-                            )
-                            let filename = screenshotFileName(row: row, localeCode: locale.code, index: index, customSuffix: customSuffix, format: format)
-                            let fileURL = try destFolder(rowIndex: rowIndex, localeCode: locale.code).appendingPathComponent(filename)
-                            writtenFileURLs.append(fileURL)
-
-                            let fmt = format
-                            group.addTask {
-                                guard let imageData = encodeImage(image, format: fmt) else {
-                                    throw ExportError.renderFailed
-                                }
-                                try imageData.write(to: fileURL)
-                            }
-                        }
-
-                        for try await _ in group {
-                            completed += 1
                             onProgress?(completed)
                         }
                     }
