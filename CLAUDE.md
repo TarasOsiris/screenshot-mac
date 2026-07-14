@@ -28,7 +28,7 @@ Run unit tests (always kill the running app first to avoid Xcode crash/hang — 
 killall screenshot 2>/dev/null; xcodebuild -scheme screenshot -destination 'platform=macOS' test
 ```
 
-Tests in `screenshotTests/` cover `AppState` (operations, locale, deletion), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, `ProjectMerge` (iCloud merge), `DeviceFrameCatalog`, `TemplateService`, `SvgHelper`, `RichTextUtils`, and the App Store Connect auth/display-type/upload-validator services. No linter configured.
+Tests in `screenshotTests/` cover `AppState` (operations, locale, deletion), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, `ProjectMerge` (iCloud merge), `DeviceFrameCatalog`, `TemplateService`, `SvgHelper`, `RichTextUtils`, the App Store Connect auth/display-type/upload-validator services, and the MCP server (HTTP parser, tool executor, JSON-RPC round trip). No linter configured.
 
 Because the code is multiplatform, also compile the iOS branches after touching anything platform-conditional (`#if os` / `Platform/` shims) — a clean macOS build does not prove the iOS branch builds:
 ```
@@ -52,6 +52,15 @@ Custom Claude Code skills live in `.claude/skills/`:
 Reviewer/build agents in `.claude/agents/`: `export-parity-reviewer` (visual/export parity, coordinate space, Codable persistence, enum switch coverage), `xcode-build-validator` (runs xcodebuild, reports result). `/gwip` (stage+commit WIP+push) is a global command.
 
 `.codex/` mirrors the hooks and agent definitions for the cloud (Codex) harness; `AGENTS.md` is the agent registry. `tools/` holds Python utilities: `gen_template.py` (SVG→template), `translate_catalog.py` + `translate_popular_languages.py` (localization), and `project-schema.json` (JSON Schema for `project.json`).
+
+### In-app MCP server (DEBUG only)
+
+Debug builds can host an MCP server at `http://127.0.0.1:8722/mcp` (streamable HTTP) so agents drive the running app directly: 22 tools covering project CRUD (incl. create-from-template), row/template/shape editing, screenshot import, translations, `render_preview` (returns a downscaled PNG so the agent can see the canvas), and `export_project`. Code lives in `Code/Services/MCP/` (all `#if DEBUG && os(macOS)`), built on the official `modelcontextprotocol/swift-sdk` (`MCP` product) + a minimal loopback `NWListener` HTTP front end feeding `StatelessHTTPServerTransport`.
+
+- Enable via **Debug ▸ Start MCP Server** (persists in UserDefaults `mcpServerEnabled` and auto-starts on later launches; port override: `mcpServerPort`). The app must be running or clients get connection refused.
+- `.mcp.json` at the repo root registers the server for Claude Code sessions here; elsewhere run `claude mcp add --transport http screenshot-bro http://127.0.0.1:8722/mcp`.
+- Tool handlers are `MCPToolExecutor` (`@MainActor`, hence implicitly Sendable — the SDK Server actor's handlers capture it and hop to main automatically). They call the normal `AppState` APIs, so agent edits are undoable and autosaved. Network.framework callbacks inside `MCPHTTPListener` (an `actor`) must stay explicit `@Sendable` closure literals that only resume continuations or spawn `Task { await self... }` — the default-MainActor-isolation crash gotcha applies.
+- Debug builds sign with `screenshot/screenshotDebug.entitlements` on macOS only (`CODE_SIGN_ENTITLEMENTS[sdk=macosx*]` in the Debug config): adds `network.server` (the listener) and a read-only absolute-path temporary exception (screenshot import from arbitrary paths). Release/iOS entitlements are untouched — keep it that way. Exports default to a temp folder because arbitrary-path *writes* stay sandboxed.
 
 ## Git Workflow
 

@@ -264,12 +264,18 @@ enum CustomFontRegistry {
     static func resolveNSFont(name: String, size: CGFloat, managerWeight: Int, italic: Bool) -> NSFont {
         let resolved = resolve(name)
         let effectiveItalic = italic || resolved.italic
+        // Prefer an exact registered PostScript face: neither NSFontManager (macOS) nor
+        // UIFontDescriptor(.family:) (iOS) can instantiate process-registered fonts by bare
+        // family name — macOS falls through to CTFontCreateWithName, which ignores the
+        // requested weight ("DM Sans" at 700 renders Regular); iOS yields tofu.
+        let exactName = resolved.exactName
+            ?? postScriptName(forFamily: resolved.family, managerWeight: managerWeight, italic: effectiveItalic)
         #if os(macOS)
         let traits: NSFontTraitMask = resolved.italic ? .italicFontMask : []
         let fm = NSFontManager.shared
 
         let baseFont: NSFont
-        if let exactName = resolved.exactName, let font = NSFont(name: exactName, size: size) {
+        if let exactName, let font = NSFont(name: exactName, size: size) {
             baseFont = font
         } else if let font = fm.font(withFamily: resolved.family, traits: traits, weight: managerWeight, size: size) {
             baseFont = font
@@ -283,13 +289,6 @@ enum CustomFontRegistry {
         }
         return effectiveItalic ? fm.convert(baseFont, toHaveTrait: .italicFontMask) : baseFont
         #else
-        // Prefer an exact PostScript name: a bare family (e.g. "DM Sans" from a template)
-        // resolves to a registered named instance. `UIFont(name:)` reliably instantiates
-        // process-registered fonts; `UIFontDescriptor(.family:)` does not for variable fonts
-        // (it yields missing glyphs / tofu), which is why family-named template text rendered
-        // as "????" on iOS.
-        let exactName = resolved.exactName
-            ?? postScriptName(forFamily: resolved.family, managerWeight: managerWeight, italic: effectiveItalic)
         let base: UIFont
         if let exactName, let font = UIFont(name: exactName, size: size) {
             base = font

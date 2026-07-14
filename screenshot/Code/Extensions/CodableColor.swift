@@ -33,16 +33,11 @@ struct CodableColor: Codable, Equatable {
         }
     }
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let hex = try container.decode(String.self)
-        guard hex.hasPrefix("#") else {
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid hex color")
-        }
-        let hexStr = String(hex.dropFirst())
-        let scanner = Scanner(string: hexStr)
-        var value: UInt64 = 0
-        scanner.scanHexInt64(&value)
+    /// Parses "#RRGGBB" / "#RRGGBBAA" (the encode format above); the "#" is optional.
+    init?(hexString: String) {
+        let hexStr = hexString.hasPrefix("#") ? String(hexString.dropFirst()) : hexString
+        guard hexStr.count == 6 || hexStr.count == 8,
+              let value = UInt64(hexStr, radix: 16) else { return nil }
         if hexStr.count == 6 {
             red = Double((value >> 16) & 0xFF) / 255.0
             green = Double((value >> 8) & 0xFF) / 255.0
@@ -54,6 +49,15 @@ struct CodableColor: Codable, Equatable {
             blue = Double((value >> 8) & 0xFF) / 255.0
             opacity = Double(value & 0xFF) / 255.0
         }
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let hex = try container.decode(String.self)
+        guard let parsed = CodableColor(hexString: hex) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid hex color")
+        }
+        self = parsed
     }
 
     var color: Color {

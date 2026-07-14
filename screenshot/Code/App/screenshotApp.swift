@@ -31,6 +31,7 @@ struct ScreenshotBroApp: App {
     @State private var debugTemplateError: String?
     @State private var debugExistingTemplates: [String] = []
     @State private var isDebugProjectManagerPresented = false
+    @State private var mcpServer = MCPServerService()
     #endif
 
     private var preferredColorScheme: ColorScheme? {
@@ -120,6 +121,7 @@ struct ScreenshotBroApp: App {
                 #if DEBUG
                 .task {
                     debugRefreshExistingTemplates()
+                    mcpServer.autostartIfEnabled(state: appState)
                 }
                 .alert("Save as New Template", isPresented: $isDebugTemplateSavePresented) {
                     TextField("Template name", text: $debugTemplateName)
@@ -417,6 +419,27 @@ struct ScreenshotBroApp: App {
                 Button("Generate Missing Previews") {
                     guard let bundleURL = DebugTemplateService.getTemplatesBundleURL() else { return }
                     DebugTemplateService.generateMissingPreviews(bundleURL: bundleURL)
+                }
+
+                Divider()
+
+                switch mcpServer.status {
+                case .running(let port):
+                    Button("Stop MCP Server (running on :\(port))") {
+                        mcpServer.setEnabled(false, state: appState)
+                    }
+                case .starting:
+                    Text("Starting MCP Server...")
+                case .stopped, .failed:
+                    Button("Start MCP Server") {
+                        mcpServer.setEnabled(true, state: appState)
+                    }
+                }
+                if case .failed(let message) = mcpServer.status {
+                    Text(message)
+                }
+                Button("Copy claude mcp add Command") {
+                    PlatformPasteboard.copyString(mcpServer.claudeRegistrationCommand)
                 }
 
                 Divider()
