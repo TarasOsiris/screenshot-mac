@@ -15,7 +15,7 @@ extension AppState {
 
     func addShape(_ shape: CanvasShapeModel) {
         guard let idx = selectedRowIndex else { return }
-        withUndo("Add Shape") {
+        withRowUndo("Add Shape", rowId: rows[idx].id) {
             rows[idx].shapes.append(shape)
             selectShape(shape.id, in: rows[idx].id)
             justAddedShapeId = shape.id
@@ -26,9 +26,9 @@ extension AppState {
         guard let location = shapeLocation(for: shape.id) else { return }
         let shouldRebase = continuousEditShapeId == shape.id
         let staleBaseShape = shouldRebase ? rows[location.rowIndex].shapes[location.shapeIndex] : nil
-        // withUndo finishes any in-flight continuous burst first, so the rebase reads the
+        // withRowUndo finishes any in-flight continuous burst first, so the rebase reads the
         // post-flush base while staleBaseShape holds the pre-flush value.
-        withUndo("Edit Shape") {
+        withRowUndo("Edit Shape", rowId: rows[location.rowIndex].id) {
             guard let loc = shouldRebase ? shapeLocation(for: shape.id) : location else { return }
             let baseShape = rows[loc.rowIndex].shapes[loc.shapeIndex]
             let updated = staleBaseShape.map { shape.rebased(from: $0, onto: baseShape) } ?? shape
@@ -136,7 +136,7 @@ extension AppState {
         guard let idx = rowIndex(for: rowId) else { return }
         let matching = rows[idx].shapes.filter { $0.type == type }
         guard !matching.isEmpty else { return }
-        withUndo("Delete All \(type.pluralLabel)") {
+        withRowUndo("Delete All \(type.pluralLabel)", rowId: rowId) {
             let allCandidates = imageFileNames(for: matching)
             let matchingIds = Set(matching.map(\.id))
             for shape in matching {
@@ -172,7 +172,7 @@ extension AppState {
         }
         guard !indices.isEmpty else { return }
         let noun = onlyDevices ? "Device" : "Element"
-        withUndo(indices.count == 1 ? "Center \(noun)" : "Center \(noun)s") {
+        withRowUndo(indices.count == 1 ? "Center \(noun)" : "Center \(noun)s", rowId: rowId) {
             for i in indices {
                 centerShape(at: i, in: idx, axis: axis)
             }
@@ -210,7 +210,7 @@ extension AppState {
         let shapes = rows[idx].shapes
         let deviceIndices = shapes.indices.filter { shapes[$0].type == .device && !shapes[$0].resolvedIsLocked }
         guard !deviceIndices.isEmpty else { return }
-        withUndo("Change All Row Devices") {
+        withRowUndo("Change All Row Devices", rowId: rowId) {
             for i in deviceIndices {
                 mutate(&rows[idx].shapes[i])
             }
@@ -220,7 +220,7 @@ extension AppState {
     func deleteShape(_ id: UUID) {
         guard let location = shapeLocation(for: id) else { return }
         guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
-        withUndo("Delete Shape") {
+        withRowUndo("Delete Shape", rowId: rows[location.rowIndex].id) {
             let removedShape = rows[location.rowIndex].shapes.remove(at: location.shapeIndex)
             let localeImageFiles = localeOverrideImageFileNames(for: id)
             LocaleService.removeShapeOverrides(&localeState, shapeId: id)
@@ -237,7 +237,7 @@ extension AppState {
         let matching = rows[rowIdx].shapes.filter { idsToDelete.contains($0.id) && !$0.resolvedIsLocked }
         guard !matching.isEmpty else { return }
         let deletedIds = Set(matching.map(\.id))
-        withUndo("Delete Shapes") {
+        withRowUndo("Delete Shapes", rowId: rows[rowIdx].id) {
             var allCandidates: [String?] = []
             for shape in matching {
                 allCandidates.append(contentsOf: shape.allImageFileNames)
@@ -264,7 +264,7 @@ extension AppState {
         let ids = selectedShapeIds
         let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) }
         guard !shapes.isEmpty else { return }
-        withUndo("Duplicate Shapes") {
+        withRowUndo("Duplicate Shapes", rowId: rows[rowIdx].id) {
             var newIds: Set<UUID> = []
             for shape in shapes {
                 var copy = shape.duplicated(offsetX: 50, offsetY: 50)
@@ -282,7 +282,7 @@ extension AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == shapeId }) else { return nil }
         var copy = rows[rowIdx].shapes[shapeIdx].duplicated(offsetX: offsetX, offsetY: offsetY)
-        withUndo(undoName) {
+        withRowUndo(undoName, rowId: rows[rowIdx].id) {
             LocaleService.copyShapeOverrides(&localeState, fromId: shapeId, toId: copy.id)
             copyImageFiles(for: &copy, originalId: shapeId)
             rows[rowIdx].shapes.append(copy)
@@ -301,7 +301,7 @@ extension AppState {
         guard row.templates.count > 1 else { return }
         let shapes = row.shapes.filter { shapeIds.contains($0.id) }
         guard !shapes.isEmpty else { return }
-        withUndo("Duplicate to Screenshots") {
+        withRowUndo("Duplicate to Screenshots", rowId: row.id) {
             for shape in shapes {
                 let sourceIndex = row.owningTemplateIndex(for: shape)
                 let sourceCenterX = row.templateCenterX(at: sourceIndex)
@@ -327,7 +327,7 @@ extension AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
               shapeIdx < rows[rowIdx].shapes.count - 1 else { return }
-        withUndo("Bring to Front") {
+        withRowUndo("Bring to Front", rowId: rows[rowIdx].id) {
             let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
             rows[rowIdx].shapes.append(shape)
             selectShape(id, in: rows[rowIdx].id)
@@ -338,7 +338,7 @@ extension AppState {
         guard let rowIdx = selectedRowIndex,
               let shapeIdx = rows[rowIdx].shapes.firstIndex(where: { $0.id == id }),
               shapeIdx > 0 else { return }
-        withUndo("Send to Back") {
+        withRowUndo("Send to Back", rowId: rows[rowIdx].id) {
             let shape = rows[rowIdx].shapes.remove(at: shapeIdx)
             rows[rowIdx].shapes.insert(shape, at: 0)
             selectShape(id, in: rows[rowIdx].id)
@@ -350,7 +350,7 @@ extension AppState {
         let ids = selectedShapeIds
         let suffixIds = Set(rows[rowIdx].shapes.suffix(ids.count).map(\.id))
         guard suffixIds != ids else { return }
-        withUndo("Bring to Front") {
+        withRowUndo("Bring to Front", rowId: rows[rowIdx].id) {
             let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
             rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
             rows[rowIdx].shapes.append(contentsOf: selected)
@@ -362,7 +362,7 @@ extension AppState {
         let ids = selectedShapeIds
         let prefixIds = Set(rows[rowIdx].shapes.prefix(ids.count).map(\.id))
         guard prefixIds != ids else { return }
-        withUndo("Send to Back") {
+        withRowUndo("Send to Back", rowId: rows[rowIdx].id) {
             let selected = rows[rowIdx].shapes.filter { ids.contains($0.id) }
             rows[rowIdx].shapes.removeAll { ids.contains($0.id) }
             rows[rowIdx].shapes.insert(contentsOf: selected, at: 0)
@@ -458,7 +458,7 @@ extension AppState {
 
         // Otherwise paste from internal shape clipboard
         guard !clipboard.isEmpty else { return }
-        withUndo(clipboard.count == 1 ? "Paste Shape" : "Paste Shapes") {
+        withRowUndo(clipboard.count == 1 ? "Paste Shape" : "Paste Shapes", rowId: rows[rowIdx].id) {
             var newIds: Set<UUID> = []
             let groupMinX = clipboard.map(\.x).min() ?? 0
             let groupMinY = clipboard.map(\.y).min() ?? 0
@@ -498,7 +498,7 @@ extension AppState {
             ids.contains(rows[rowIdx].shapes[$0].id) && !rows[rowIdx].shapes[$0].resolvedIsLocked
         }
         guard !movableIndices.isEmpty else { return }
-        withUndo(movableIndices.count > 1 ? "Move Shapes" : "Move Shape") {
+        withRowUndo(movableIndices.count > 1 ? "Move Shapes" : "Move Shape", rowId: rows[rowIdx].id) {
             for i in movableIndices {
                 rows[rowIdx].shapes[i].x += offset.width
                 rows[rowIdx].shapes[i].y += offset.height
@@ -513,7 +513,7 @@ extension AppState {
         let ids = selectedShapeIds
         let shapes = rows[rowIdx].shapes.filter { ids.contains($0.id) && !$0.resolvedIsLocked }
         guard !shapes.isEmpty else { return }
-        withUndo("Duplicate Shapes") {
+        withRowUndo("Duplicate Shapes", rowId: rows[rowIdx].id) {
             var newIds: Set<UUID> = []
             for shape in shapes {
                 var copy = shape.duplicated()
@@ -546,7 +546,7 @@ extension AppState {
             guard indices.count >= 3 else { return }
         }
 
-        withUndo("Align Shapes") {
+        withRowUndo("Align Shapes", rowId: rows[rowIdx].id) {
             let shapes = indices.map { rows[rowIdx].shapes[$0] }
 
             switch alignment {
@@ -659,7 +659,7 @@ extension AppState {
         } else {
             return
         }
-        withUndo(undoName) {
+        withRowUndo(undoName, rowId: rows[rowIdx].id) {
             for i in rows[rowIdx].shapes.indices {
                 guard ids.contains(rows[rowIdx].shapes[i].id) else { continue }
                 let baseShape = rows[rowIdx].shapes[i]

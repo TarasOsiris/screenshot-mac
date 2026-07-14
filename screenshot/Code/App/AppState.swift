@@ -390,6 +390,28 @@ final class AppState {
         scheduleSave()
     }
 
+    /// Row-scoped `withUndo` for mutations confined to one row (plus `localeState` and
+    /// selection): the no-op check compares a single row instead of the whole document,
+    /// and the undo step retains one row. Shares `isInUndoTransaction`, so nesting with
+    /// `withUndo` (either direction) joins the outer transaction. The row must exist
+    /// before and after `body` — ops that add/remove/reorder rows, or that touch other
+    /// rows (e.g. shared-base-text fan-out), stay on `withUndo`.
+    func withRowUndo(_ actionName: String, rowId: UUID, _ body: () -> Void) {
+        commitAllPendingEdits()
+        if isInUndoTransaction { body(); return }
+        isInUndoTransaction = true
+        defer { isInUndoTransaction = false }
+
+        guard let idx = rowIndex(for: rowId) else { return }
+        let baseRow = rows[idx]
+        let baseLocaleState = localeState
+        body()
+        guard let newIdx = rowIndex(for: rowId) else { return }
+        guard rows[newIdx] != baseRow || localeState != baseLocaleState else { return }
+        registerRowSnapshot(actionName, rowId: rowId, baseRow: baseRow, baseLocaleState: baseLocaleState)
+        scheduleSave()
+    }
+
     /// Registers a whole-document restore on the undo stack, re-registering its own inverse
     /// so redo cycles back to the post-edit state. Shared by `withUndo` and the continuous-edit
     /// commit path.
