@@ -160,6 +160,8 @@ final class AppState {
     @ObservationIgnored var lastSeenCatalogModified: Date?
 
     @ObservationIgnored var saveTask: DispatchWorkItem?
+    /// Last time the autosave completion ran the full-document font-reference walk.
+    @ObservationIgnored var lastFontCleanupAt: Date = .distantPast
     @ObservationIgnored var imageLoadTask: Task<Void, Never>?
     @ObservationIgnored var projectOpenTask: Task<Void, Never>?
     /// Serializes off-main iCloud reloads so overlapping remote changes don't race on the
@@ -315,6 +317,10 @@ final class AppState {
 
     /// If a debounced save is queued, cancel it and run `saveAll()` immediately.
     func flushPendingSaveTask() {
+        // Drain in-flight async saves first: a write queued by saveAllAsync would
+        // be lost at process exit, and the synchronous saveAll below must not
+        // interleave with one mid-write.
+        Self.saveQueue.sync {}
         guard saveTask != nil else { return }
         saveTask?.cancel()
         saveTask = nil

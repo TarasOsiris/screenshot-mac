@@ -177,6 +177,17 @@ extension AppState {
         refreshAvailableFontFamilies()
     }
 
+    /// Autosave-path variant: reclaiming unused font files only needs to happen
+    /// eventually, so the full-document walk is throttled instead of running on
+    /// every 0.3 s save tick. Quit (`saveAll`) and project switch still run the
+    /// unthrottled cleanup.
+    func cleanupUnreferencedFontsThrottled() {
+        guard !customFonts.isEmpty else { return }
+        guard Date().timeIntervalSince(lastFontCleanupAt) > 30 else { return }
+        lastFontCleanupAt = Date()
+        cleanupUnreferencedFonts()
+    }
+
     /// Rebuilds the in-session reference tracker from the loaded project so subsequent
     /// cleanup only removes fonts that were once used in this project.
     func seedReferencedFontFamiliesFromLoadedProject() {
