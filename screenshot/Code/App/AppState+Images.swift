@@ -227,9 +227,7 @@ extension AppState {
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 guard let self, self.activeProjectId == activeId else { return }
-                for (key, image) in loaded {
-                    self.screenshotImages[key] = image
-                }
+                self.screenshotImages.merge(loaded) { _, new in new }
                 self.isLoadingImages = false
                 self.finishProjectOpening()
             }

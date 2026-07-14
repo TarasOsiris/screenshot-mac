@@ -12,15 +12,16 @@ struct EditorRowView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif
     let row: ScreenshotRow
+    let isFirst: Bool
+    let isLast: Bool
+    let canDelete: Bool
     let requestShowcaseExport: (ScreenshotRow) -> Void
     @AppStorage("confirmBeforeDeleting") var confirmBeforeDeleting = true
     @State var isDeletingRow = false
     @State var isResettingRow = false
     @State var isSvgDialogPresented = false
     @State var contextMenuPointStore = ModelPointStore()
-    @State var activeGuides: [AlignmentGuide] = []
-    @State var activeDragOffset: CGSize = .zero
-    @State var draggingShapeId: UUID?
+    @State var dragSession = CanvasDragSession()
     @State var isEditingLabel = false
     @State var editingLabelText = ""
     /// True when the current mode (Edit or Preview) has had a chance to paint
@@ -35,12 +36,6 @@ struct EditorRowView: View {
     @State var simulatorInstallPromptShapeId: UUID?
     #endif
     @State var backgroundRemovalError: String?
-    /// Cached snap targets for non-selected shapes during drag.
-    @State var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
-    /// In-progress resize state per shape, owned by EditorRowView so the
-    /// selection overlay and CanvasShapeView see the same value during a drag.
-    @State var pendingResize: [UUID: ResizeState] = [:]
-    @State var pendingRotation: [UUID: Double] = [:]
     @State var textEditingShapeId: UUID?
     /// Drives the one-shot re-key of `horizontalScrollArea` (see its `.task`).
     @State var scrollAreaRealized = false
@@ -50,17 +45,8 @@ struct EditorRowView: View {
         state.selectedRowId == row.id
     }
 
-    var canMoveUp: Bool {
-        state.rows.first?.id != row.id
-    }
-
-    var canMoveDown: Bool {
-        state.rows.last?.id != row.id
-    }
-
-    var canDelete: Bool {
-        state.rows.count > 1
-    }
+    var canMoveUp: Bool { !isFirst }
+    var canMoveDown: Bool { !isLast }
 
     var zoom: CGFloat { state.zoomLevel }
     let canvasHorizontalPadding: CGFloat = 16
@@ -131,13 +117,8 @@ struct EditorRowView: View {
                     let wasPreview = isPreviewMode
                     state.togglePreview(for: row.id)
                     if !wasPreview {
-                        pendingResize = [:]
-                        pendingRotation = [:]
                         textEditingShapeId = nil
-                        activeDragOffset = .zero
-                        draggingShapeId = nil
-                        cachedSnapTargets = nil
-                        activeGuides = []
+                        dragSession.reset()
                     }
                 }
             ) {
@@ -270,5 +251,18 @@ struct EditorRowView: View {
                 state.addShape(shape)
             }
         }
+    }
+}
+
+/// Used via `.equatable()` in ContentView so an edit in one row doesn't re-run
+/// every visible row's body. `state` is a stable reference and the closure only
+/// touches stable @State storage, so comparing the value inputs is sufficient;
+/// properties the body reads off `state` still trigger via @Observable tracking.
+extension EditorRowView: Equatable {
+    static func == (lhs: EditorRowView, rhs: EditorRowView) -> Bool {
+        lhs.row == rhs.row
+            && lhs.isFirst == rhs.isFirst
+            && lhs.isLast == rhs.isLast
+            && lhs.canDelete == rhs.canDelete
     }
 }

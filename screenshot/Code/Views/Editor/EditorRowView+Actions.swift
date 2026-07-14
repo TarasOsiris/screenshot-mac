@@ -14,7 +14,7 @@ extension EditorRowView {
     /// Only the first row's canvas reports to the deferred-tour logic, since the
     /// `.canvas` coach mark anchors here.
     func startDeferredCoachIfNeeded() {
-        guard state.rows.first?.id == row.id, !isPreviewMode else { return }
+        guard isFirst, !isPreviewMode else { return }
         #if os(iOS)
         state.startDeferredCoachIfEligible(isCompactWidth: horizontalSizeClass != .regular)
         #else

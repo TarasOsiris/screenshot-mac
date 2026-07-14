@@ -8,6 +8,23 @@ private extension View {
     }
 }
 
+/// Single-entry memo for the rotated clipped hit path. Plain (non-observable)
+/// class held in `@State` so writing to it during body evaluation is legal and
+/// triggers nothing.
+final class ClipPathMemo {
+    struct Key: Equatable {
+        var offsetX: CGFloat
+        var offsetY: CGFloat
+        var displayW: CGFloat
+        var displayH: CGFloat
+        var rotation: Double
+        var clipBounds: CGRect
+    }
+
+    var key: Key?
+    var path = Path()
+}
+
 struct CanvasShapeView: View {
     @Environment(\.displayScale) private var screenScale
 
@@ -19,16 +36,15 @@ struct CanvasShapeView: View {
     var screenshotImage: NSImage?
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor
-    var groupDragOffset: CGSize = .zero
     var deviceModelRenderingMode: DeviceModelRenderingMode = .snapshot
 
     var clipBounds: CGRect?
     var showsEditorHelpers: Bool = true
     var allowSynchronousSvgRender = true
-    /// In-progress resize/rotation reported by the selection overlay so this
-    /// view can render the shape at the pending size/angle during the drag.
-    var resizeState: ResizeState?
-    var rotationDelta: Double = 0
+    /// Editor-only transient drag/resize/rotate state. Nil in export/preview
+    /// paths. Read through the gated computed properties below so shapes that
+    /// aren't part of the interaction never observe per-tick session changes.
+    var dragSession: CanvasDragSession?
     var availableFontFamilies: Set<String> = []
     var interactions = CanvasShapeInteractions()
 
@@ -46,8 +62,35 @@ struct CanvasShapeView: View {
     @State var cachedSvgImage: NSImage?
     @State var svgCacheKey = ""
     @State var svgResizeDebounceTask: Task<Void, Never>?
+    @State private var clipPathMemo = ClipPathMemo()
 
     private var displayPixelStep: CGFloat { 1 / max(screenScale, 1) }
+
+    /// In-progress resize reported by the selection overlay. Gated on `isSelected`
+    /// so unselected shapes never subscribe to the session's per-tick mutations.
+    var resizeState: ResizeState? {
+        guard isSelected, let dragSession else { return nil }
+        return dragSession.pendingResize[shape.id]
+    }
+
+    var rotationDelta: Double {
+        guard isSelected, let dragSession else { return 0 }
+        return dragSession.pendingRotation[shape.id] ?? 0
+    }
+
+    /// Offset applied to the other shapes of a multi-selection while one of them
+    /// is dragged. Locked shapes don't follow — `applyGroupDrag` skips them at
+    /// commit time, so following visually would snap back on release. The guard
+    /// order matters: the driver bails on `draggingId != shape.id` before ever
+    /// reading `activeDragOffset` (its local `dragOffset` drives it), so it isn't
+    /// re-invalidated by its own per-tick session writes.
+    var groupDragOffset: CGSize {
+        guard isMultiSelected, !shape.resolvedIsLocked,
+              let dragSession,
+              let draggingId = dragSession.draggingShapeId,
+              draggingId != shape.id else { return .zero }
+        return dragSession.activeDragOffset
+    }
 
     // Current effective geometry (accounts for in-progress resize or drag)
     var effectiveX: CGFloat {
@@ -232,9 +275,13 @@ struct CanvasShapeView: View {
             if aabbRect.intersection(cb).isEmpty {
                 base.allowsHitTesting(false).opacity(0)
             } else {
-                let clippedCGPath = hitPath.offsetBy(dx: offsetX, dy: offsetY)
-                    .cgPath.intersection(CGPath(rect: cb, transform: nil))
-                let clippedHitPath = Path(clippedCGPath)
+                let clippedHitPath = clippedHitPath(
+                    hitPath: hitPath,
+                    offsetX: offsetX,
+                    offsetY: offsetY,
+                    aabbRect: aabbRect,
+                    clipBounds: cb
+                )
                 if clippedHitPath.isEmpty {
                     base.allowsHitTesting(false).opacity(0)
                 } else {
@@ -250,6 +297,38 @@ struct CanvasShapeView: View {
         } else {
             base
         }
+    }
+
+    /// `CGPath.intersection` is a geometric boolean op — too expensive to run on
+    /// every body eval. Unrotated shapes reduce to a rect∩rect; rotated ones are
+    /// memoized on the inputs the path depends on.
+    private func clippedHitPath(
+        hitPath: Path,
+        offsetX: CGFloat,
+        offsetY: CGFloat,
+        aabbRect: CGRect,
+        clipBounds cb: CGRect
+    ) -> Path {
+        let rotation = currentRotation.truncatingRemainder(dividingBy: 360)
+        if abs(rotation) < 1e-6 {
+            return Path(aabbRect.intersection(cb))
+        }
+        let key = ClipPathMemo.Key(
+            offsetX: offsetX,
+            offsetY: offsetY,
+            displayW: displayW,
+            displayH: displayH,
+            rotation: rotation,
+            clipBounds: cb
+        )
+        if clipPathMemo.key == key { return clipPathMemo.path }
+        let clipped = Path(
+            hitPath.offsetBy(dx: offsetX, dy: offsetY)
+                .cgPath.intersection(CGPath(rect: cb, transform: nil))
+        )
+        clipPathMemo.key = key
+        clipPathMemo.path = clipped
+        return clipped
     }
 
     @ViewBuilder

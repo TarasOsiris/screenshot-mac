@@ -16,11 +16,10 @@ struct CanvasSelectionLayer: View {
     let selectedShapeIds: Set<UUID>
     /// Visual scale: model points × (base displayScale × zoom).
     let visualScale: CGFloat
-    @Binding var pendingResize: [UUID: ResizeState]
-    @Binding var pendingRotation: [UUID: Double]
+    /// Read inside `body` on purpose: per-tick drag/resize updates re-render
+    /// just this overlay, not the row that owns it.
+    let dragSession: CanvasDragSession
     let textEditingShapeId: UUID?
-    let activeDragOffset: CGSize
-    let draggingShapeId: UUID?
     let onUpdate: (CanvasShapeModel) -> Void
 
     private let handleDiameter: CGFloat = 8
@@ -41,13 +40,14 @@ struct CanvasSelectionLayer: View {
 
     @ViewBuilder
     private func handles(for shape: CanvasShapeModel) -> some View {
-        let pendingR = pendingResize[shape.id]
-        let pendingRot = pendingRotation[shape.id] ?? 0
+        let pendingR = dragSession.pendingResize[shape.id]
+        let pendingRot = dragSession.pendingRotation[shape.id] ?? 0
 
         // Drag offset applies to the driver shape and — during a multi-select
         // drag — to every other unlocked selected shape that's moving with it.
+        let draggingShapeId = dragSession.draggingShapeId
         let isPartOfDrag = draggingShapeId != nil && (shape.id == draggingShapeId || isMultiSelected)
-        let appliedDrag: CGSize = (isPartOfDrag && !shape.resolvedIsLocked) ? activeDragOffset : .zero
+        let appliedDrag: CGSize = (isPartOfDrag && !shape.resolvedIsLocked) ? dragSession.activeDragOffset : .zero
 
         let effectiveX = (pendingR?.newX ?? (shape.x + appliedDrag.width))
         let effectiveY = (pendingR?.newY ?? (shape.y + appliedDrag.height))
@@ -82,12 +82,12 @@ struct CanvasSelectionLayer: View {
 
     private func resizeBinding(for id: UUID) -> Binding<ResizeState?> {
         Binding(
-            get: { pendingResize[id] },
+            get: { dragSession.pendingResize[id] },
             set: { newValue in
                 if let newValue {
-                    pendingResize[id] = newValue
+                    dragSession.pendingResize[id] = newValue
                 } else {
-                    pendingResize.removeValue(forKey: id)
+                    dragSession.pendingResize.removeValue(forKey: id)
                 }
             }
         )
@@ -95,12 +95,12 @@ struct CanvasSelectionLayer: View {
 
     private func rotationBinding(for id: UUID) -> Binding<Double> {
         Binding(
-            get: { pendingRotation[id] ?? 0 },
+            get: { dragSession.pendingRotation[id] ?? 0 },
             set: { newValue in
                 if newValue == 0 {
-                    pendingRotation.removeValue(forKey: id)
+                    dragSession.pendingRotation.removeValue(forKey: id)
                 } else {
-                    pendingRotation[id] = newValue
+                    dragSession.pendingRotation[id] = newValue
                 }
             }
         )
