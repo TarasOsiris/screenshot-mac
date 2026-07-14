@@ -407,15 +407,20 @@ struct ShowcaseRowsSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            header
-            VStack(spacing: 2) {
-                ForEach(candidateRows) { row in
-                    ShowcaseRowToggle(
-                        row: row,
-                        selectedRowIds: $selectedRowIds,
-                        excludedTemplateIds: $excludedTemplateIds
-                    )
+        // A single row has no row-level selection to make — surface its screenshots directly.
+        if candidateRows.count == 1, let row = candidateRows.first {
+            ShowcaseScreenshotsSection(row: row, excludedTemplateIds: $excludedTemplateIds)
+        } else {
+            VStack(alignment: .leading, spacing: 8) {
+                header
+                VStack(spacing: 2) {
+                    ForEach(candidateRows) { row in
+                        ShowcaseRowToggle(
+                            row: row,
+                            selectedRowIds: $selectedRowIds,
+                            excludedTemplateIds: $excludedTemplateIds
+                        )
+                    }
                 }
             }
         }
@@ -433,6 +438,56 @@ struct ShowcaseRowsSection: View {
 
     private func toggleAllRows() {
         selectedRowIds = allSelected ? [] : Set(candidateRows.map(\.id))
+    }
+}
+
+/// Single-row variant: toggle individual screenshots on/off directly, with no
+/// redundant row checkbox. Excluding every screenshot leaves nothing to export,
+/// which disables the Export button (`selectedRowsOrdered` drops empty rows).
+private struct ShowcaseScreenshotsSection: View {
+    let row: ScreenshotRow
+    @Binding var excludedTemplateIds: Set<UUID>
+
+    private var allIncluded: Bool {
+        row.templates.allSatisfy { !excludedTemplateIds.contains($0.id) }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                ShowcaseSectionTitle(text: "Screenshots", systemImage: "photo.on.rectangle")
+                Spacer()
+                Button(allIncluded ? "None" : "All", action: toggleAll)
+                    .buttonStyle(.borderless)
+                    .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold))
+            }
+            ShowcaseTemplateChipStrip(templates: row.templates, excludedTemplateIds: $excludedTemplateIds)
+        }
+    }
+
+    private func toggleAll() {
+        if allIncluded {
+            excludedTemplateIds.formUnion(row.templates.map(\.id))
+        } else {
+            row.templates.forEach { excludedTemplateIds.remove($0.id) }
+        }
+    }
+}
+
+private struct ShowcaseTemplateChipStrip: View {
+    let templates: [ScreenshotTemplate]
+    @Binding var excludedTemplateIds: Set<UUID>
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(templates.indices, id: \.self) { index in
+                ShowcaseTemplateChip(
+                    index: index,
+                    template: templates[index],
+                    excludedTemplateIds: $excludedTemplateIds
+                )
+            }
+        }
     }
 }
 
@@ -478,23 +533,11 @@ private struct ShowcaseRowToggle: View {
             #endif
 
             if rowSelected, row.templates.count > 1 {
-                templateChipStrip
+                ShowcaseTemplateChipStrip(templates: row.templates, excludedTemplateIds: $excludedTemplateIds)
                     .padding(.leading, 18)
             }
         }
         .padding(EdgeInsets(top: 2, leading: 4, bottom: 2, trailing: 6))
-    }
-
-    private var templateChipStrip: some View {
-        HStack(spacing: 4) {
-            ForEach(row.templates.indices, id: \.self) { index in
-                ShowcaseTemplateChip(
-                    index: index,
-                    template: row.templates[index],
-                    excludedTemplateIds: $excludedTemplateIds
-                )
-            }
-        }
     }
 }
 

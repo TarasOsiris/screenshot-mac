@@ -390,7 +390,7 @@ struct TemplateControlBar: View {
                 displayScale: 1.0,
                 labelPrefix: "preview row"
             )
-            let fontFamilies = Set(PlatformFonts.systemFamilyNames)
+            let fontFamilies = PlatformFonts.familyNameSet
             var urls: [URL] = []
             for i in row.templates.indices {
                 let image = ExportService.renderSingleTemplateImage(

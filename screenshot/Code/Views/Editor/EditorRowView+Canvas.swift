@@ -50,7 +50,7 @@ extension EditorRowView {
                                         }
                                     }
 
-                                // Always mounted (renders nothing unless 2+ shapes are
+                                // Always mounted (renders nothing unless a shape is
                                 // selected, which never happens in view mode) so toggling
                                 // mode doesn't add/remove a layer mid-animation.
                                 CanvasSelectionLayer(
@@ -58,11 +58,8 @@ extension EditorRowView {
                                     resolvedShapes: resolved,
                                     selectedShapeIds: rowSelectedShapeIds,
                                     visualScale: ds,
-                                    pendingResize: $pendingResize,
-                                    pendingRotation: $pendingRotation,
+                                    dragSession: dragSession,
                                     textEditingShapeId: textEditingShapeId,
-                                    activeDragOffset: activeDragOffset,
-                                    draggingShapeId: draggingShapeId,
                                     onUpdate: { state.updateShape($0) }
                                 )
                                 .frame(
@@ -255,6 +252,16 @@ extension EditorRowView {
         let selectedTextShapeIds: Set<UUID> = selectedShapeIds.count > 1
             ? Set(resolvedShapes.filter { selectedShapeIds.contains($0.id) && $0.type == .text }.map(\.id))
             : []
+        // Hoisted so the per-shape `onMatchSelectedDeviceSizes` below doesn't re-walk
+        // the shape list for every shape on every render.
+        let allSelectedAreDevices: Bool = selectedShapeIds.count > 1 && {
+            var deviceCount = 0
+            for shape in resolvedShapes where selectedShapeIds.contains(shape.id) {
+                guard shape.type == .device else { return false }
+                deviceCount += 1
+            }
+            return deviceCount == selectedShapeIds.count
+        }()
         ZStack(alignment: .topLeading) {
             EditorRasterizedBackgroundView(
                 row: row,
@@ -269,12 +276,6 @@ extension EditorRowView {
             ) { shape, clipRect in
                 let isInSelection = selectedShapeIds.contains(shape.id)
                 let isMulti = isInSelection && selectedShapeIds.count > 1
-                // Locked shapes don't follow a group drag visually either —
-                // `applyGroupDrag` already skips them at commit time, so without
-                // this guard the locked shape would slide with the cursor and
-                // then snap back when the drag ends.
-                let isFollowingDrag = isMulti && draggingShapeId != nil && draggingShapeId != shape.id && !shape.resolvedIsLocked
-                let groupOffset: CGSize = isFollowingDrag ? activeDragOffset : .zero
 
                 CanvasShapeView(
                     shape: shape,
@@ -287,13 +288,11 @@ extension EditorRowView {
                     screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
                     fillImage: shape.fillImageConfig?.fileName.flatMap { state.screenshotImages[$0] },
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-                    groupDragOffset: groupOffset,
                     deviceModelRenderingMode: .snapshot,
                     clipBounds: clipRect,
                     showsEditorHelpers: !state.isViewMode,
                     allowSynchronousSvgRender: false,
-                    resizeState: pendingResize[shape.id],
-                    rotationDelta: pendingRotation[shape.id] ?? 0,
+                    dragSession: dragSession,
                     availableFontFamilies: state.availableFontFamilySet,
                     interactions: CanvasShapeInteractions(
                         // View mode: shapes are inert. The FAB sits in an overlay above the
@@ -319,19 +318,19 @@ extension EditorRowView {
                         onCaptureSimulator: simulatorCaptureAction(for: shape),
                         onDragSnap: { draggedShape, rawOffset in
                             let targets: [AlignmentService.OtherShapeBounds]
-                            if let cached = cachedSnapTargets {
+                            if let cached = dragSession.cachedSnapTargets {
                                 targets = cached
                             } else if isInSelection {
                                 let filtered = AlignmentService.makeSnapTargets(
                                     from: resolvedShapes.filter { !selectedShapeIds.contains($0.id) }
                                 )
-                                cachedSnapTargets = filtered
+                                dragSession.cachedSnapTargets = filtered
                                 targets = filtered
                             } else {
                                 let filtered = AlignmentService.makeSnapTargets(
                                     from: resolvedShapes.filter { $0.id != draggedShape.id }
                                 )
-                                cachedSnapTargets = filtered
+                                dragSession.cachedSnapTargets = filtered
                                 targets = filtered
                             }
                             let threshold = 4 / row.displayScale(zoom: zoom)
@@ -344,16 +343,13 @@ extension EditorRowView {
                                 templateCount: row.templates.count,
                                 snapThreshold: threshold
                             )
-                            if activeGuides != result.guides {
-                                activeGuides = result.guides
+                            if dragSession.activeGuides != result.guides {
+                                dragSession.activeGuides = result.guides
                             }
                             return result
                         },
                         onDragEnd: {
-                            activeGuides = []
-                            activeDragOffset = .zero
-                            draggingShapeId = nil
-                            cachedSnapTargets = nil
+                            dragSession.endDrag()
                         },
                         onOptionDragDuplicate: { shapeId in
                             if isMulti {
@@ -363,14 +359,16 @@ extension EditorRowView {
                             return state.duplicateShapeForOptionDrag(shapeId)
                         },
                         onDragProgress: { offset in
-                            draggingShapeId = shape.id
-                            activeDragOffset = offset
+                            // Same-value writes still notify @Observable observers, so only
+                            // touch draggingShapeId on the first tick of a drag.
+                            if dragSession.draggingShapeId != shape.id {
+                                dragSession.draggingShapeId = shape.id
+                            }
+                            dragSession.activeDragOffset = offset
                         },
                         onGroupDragEnd: { offset in
                             state.applyGroupDrag(offset: offset)
-                            activeDragOffset = .zero
-                            draggingShapeId = nil
-                            cachedSnapTargets = nil
+                            dragSession.endDrag()
                         },
                         onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
                         onEditingTextChanged: { editing in
@@ -426,25 +424,16 @@ extension EditorRowView {
                                 other.height = shape.height
                             }
                         } : nil,
-                        onMatchSelectedDeviceSizes: {
-                            guard isMulti,
-                                  shape.type == .device,
-                                  selectedShapeIds.contains(shape.id) else { return nil }
-                            let selectedDeviceIds = row.activeShapes.compactMap {
-                                (selectedShapeIds.contains($0.id) && $0.type == .device) ? $0.id : nil
+                        onMatchSelectedDeviceSizes: (isMulti && shape.type == .device && allSelectedAreDevices) ? {
+                            let targetIds = selectedShapeIds.subtracting([shape.id])
+                            guard !targetIds.isEmpty else { return }
+                            state.updateShapes(targetIds,
+                                               in: row.id,
+                                               undoName: "Match Size to Selected Devices") { other in
+                                other.width = shape.width
+                                other.height = shape.height
                             }
-                            guard selectedDeviceIds.count == selectedShapeIds.count else { return nil }
-                            let targetIds = Set(selectedDeviceIds.filter { $0 != shape.id })
-                            guard !targetIds.isEmpty else { return nil }
-                            return {
-                                state.updateShapes(targetIds,
-                                                   in: row.id,
-                                                   undoName: "Match Size to Selected Devices") { other in
-                                    other.width = shape.width
-                                    other.height = shape.height
-                                }
-                            }
-                        }(),
+                        } : nil,
                         onCenterShape: { axis in
                             let targets: Set<UUID> = (isMulti && selectedShapeIds.contains(shape.id))
                                 ? selectedShapeIds : [shape.id]
@@ -474,9 +463,11 @@ extension EditorRowView {
                         onResetAllTranslations: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
                             state.resetAllTranslations(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
                         } : nil,
+                        // Closure so the O(overrides) walk runs when the context menu opens,
+                        // not for every text shape on every render.
                         resetAllTranslationsDisabled: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0)
-                            ? !state.anyTranslationOrOverride(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
-                            : false,
+                            ? { !state.anyTranslationOrOverride(shapeIds: isMulti ? selectedTextShapeIds : [shape.id]) }
+                            : { false },
                         reuseTranslationTargets: shape.type == .text ? {
                             state.reusableTranslationTargets(excludingShapeId: shape.id)
                                 .map { (key: $0.key, label: $0.baseText.singleLineMenuLabel()) }
@@ -522,10 +513,8 @@ extension EditorRowView {
                 )
             }
 
-            ForEach(activeGuides) { guide in
-                AlignmentGuideLineView(guide: guide, displayScale: ds)
-            }
-            .zIndex(100)
+            ActiveGuidesLayer(dragSession: dragSession, displayScale: ds)
+                .zIndex(100)
 
             if row.showBorders && row.templates.count > 1 {
                 CanvasTemplateSeparatorLines(
@@ -543,7 +532,7 @@ extension EditorRowView {
                 .coachPopover(
                     step: .canvas,
                     state: state,
-                    isActive: state.rows.first?.id == row.id && !isPreviewMode,
+                    isActive: isFirst && !isPreviewMode,
                     arrowEdge: .top,
                     attachmentAnchor: .point(.center)
                 )

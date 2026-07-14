@@ -34,12 +34,19 @@ enum TemplateService {
             .appendingPathComponent(sharedFontsSubpath, isDirectory: true)
     }
 
-    nonisolated(unsafe) private static var cachedTemplates: [ProjectTemplate]?
+    private static var cachedTemplates: [ProjectTemplate]?
+    private static var templateLoadTask: Task<[ProjectTemplate], Never>?
 
-    /// Bundle.main is immutable per launch — scan once, reuse for every caller.
-    nonisolated static func availableTemplates() -> [ProjectTemplate] {
+    /// Bundle.main is immutable per launch — scan once, off-main (the uncached scan
+    /// does ~35 directory reads + preview file loads). Concurrent first callers
+    /// (editor, onboarding, new-project window) coalesce onto one load task.
+    static func availableTemplatesAsync() async -> [ProjectTemplate] {
         if let cachedTemplates { return cachedTemplates }
-        let templates = loadAvailableTemplates()
+        let task = templateLoadTask ?? Task.detached(priority: .userInitiated) {
+            loadAvailableTemplates()
+        }
+        templateLoadTask = task
+        let templates = await task.value
         cachedTemplates = templates
         return templates
     }

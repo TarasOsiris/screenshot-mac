@@ -52,12 +52,13 @@ struct OnboardingView: View {
             }
         }
         .task {
-            // Decoding the bundled previews is off the main actor so the cover never hitches on
-            // first launch (onboarding is the first/only caller, so the template cache isn't contended).
+            // The bundle scan runs off the main actor so the cover never hitches on first launch.
             if templatePreviews.isEmpty {
-                templatePreviews = await Task.detached(priority: .userInitiated) {
-                    Array(TemplateService.availableTemplates().compactMap(\.previewImage).prefix(16))
-                }.value
+                templatePreviews = Array(
+                    await TemplateService.availableTemplatesAsync()
+                        .compactMap(\.previewImage)
+                        .prefix(16)
+                )
             }
         }
         .sheet(isPresented: Binding(

@@ -295,16 +295,19 @@ enum CustomFontRegistry {
             baseFont = managerWeight >= 9 ? fm.convert(font, toHaveTrait: .boldFontMask) : font
         } else if let font = fm.font(withFamily: resolved.family, traits: [], weight: managerWeight, size: size) {
             baseFont = font
+        } else if let psName = postScriptName(forFamily: resolved.family, managerWeight: managerWeight, italic: effectiveItalic),
+                  let font = NSFont(name: psName, size: size) {
+            // NSFontManager can't see process-registered fonts, so a bare custom family
+            // ("DM Sans" at weight 700) only resolves through its registered named
+            // instance's PostScript name — CTFontCreateWithName below ignores the weight.
+            baseFont = font
         } else {
             baseFont = CTFontCreateWithName(resolved.family as CFString, size, nil) as NSFont
         }
         return effectiveItalic ? fm.convert(baseFont, toHaveTrait: .italicFontMask) : baseFont
         #else
-        // Prefer an exact PostScript name: a bare family (e.g. "DM Sans" from a template)
-        // resolves to a registered named instance. `UIFont(name:)` reliably instantiates
-        // process-registered fonts; `UIFontDescriptor(.family:)` does not for variable fonts
-        // (it yields missing glyphs / tofu), which is why family-named template text rendered
-        // as "????" on iOS.
+        // Prefer an exact registered PostScript face: UIFontDescriptor(.family:) can't
+        // instantiate process-registered (variable) fonts — family-named text renders tofu.
         let exactName = resolved.exactName
             ?? postScriptName(forFamily: resolved.family, managerWeight: managerWeight, italic: effectiveItalic)
         let base: UIFont

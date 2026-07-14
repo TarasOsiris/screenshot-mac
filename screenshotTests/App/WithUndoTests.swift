@@ -328,4 +328,139 @@ struct WithUndoTests {
         #expect(redone.fontWeight == 700)
         #expect(redone.italic == true)
     }
+
+    // MARK: - Row-scoped undo (withRowUndo)
+
+    /// Deleting a shape removes its locale overrides; the row-scoped undo step
+    /// must restore both the shape and the overrides (full localeState capture).
+    @Test func deleteShapeUndoRestoresLocaleOverrides() throws {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        let shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        state.addShape(shape)
+        state.addLocale(.init(code: "fr", label: "French"))
+        var translated = LocaleService.resolveShape(
+            state.rows.first!.shapes.first { $0.id == shape.id }!,
+            localeState: state.localeState
+        )
+        translated.text = "Bonjour"
+        state.updateShape(translated)
+        let overrideKey = shape.textTranslationKey
+        #expect(state.localeState.overrides["fr"]?[overrideKey]?.text == "Bonjour")
+        um.removeAllActions()
+
+        state.deleteShape(shape.id)
+        #expect(!state.rows.first!.shapes.contains { $0.id == shape.id })
+        #expect(state.localeState.overrides["fr"]?[overrideKey] == nil, "Delete drops the override")
+
+        um.undo()
+        #expect(state.rows.first!.shapes.contains { $0.id == shape.id }, "Undo restores the shape")
+        #expect(state.localeState.overrides["fr"]?[overrideKey]?.text == "Bonjour", "Undo restores the locale override")
+
+        um.redo()
+        #expect(!state.rows.first!.shapes.contains { $0.id == shape.id })
+        #expect(state.localeState.overrides["fr"]?[overrideKey] == nil)
+    }
+
+    /// Duplicating a shape copies its locale overrides to the new id; undo must
+    /// remove both the copy and its copied overrides.
+    @Test func duplicateUndoRemovesCopiedOverrides() throws {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        let shape = CanvasShapeModel.defaultText(centerX: 621, centerY: 1344)
+        state.addShape(shape)
+        state.addLocale(.init(code: "fr", label: "French"))
+        var translated = LocaleService.resolveShape(
+            state.rows.first!.shapes.first { $0.id == shape.id }!,
+            localeState: state.localeState
+        )
+        translated.text = "Bonjour"
+        state.updateShape(translated)
+        um.removeAllActions()
+
+        state.selectShape(shape.id, in: rowId)
+        let copyId = try #require(state.insertDuplicate(of: shape.id, offsetX: 10, offsetY: 10, undoName: "Duplicate Shape"))
+        #expect(state.localeState.overrides["fr"]?[copyId.uuidString]?.text == "Bonjour", "Duplicate copies the override")
+
+        um.undo()
+        #expect(!state.rows.first!.shapes.contains { $0.id == copyId }, "Undo removes the copy")
+        #expect(state.localeState.overrides["fr"]?[copyId.uuidString] == nil, "Undo removes the copied override")
+
+        um.redo()
+        #expect(state.rows.first!.shapes.contains { $0.id == copyId })
+        #expect(state.localeState.overrides["fr"]?[copyId.uuidString]?.text == "Bonjour")
+    }
+
+    /// Row-scoped steps re-register their inverse recursively, so a converted op
+    /// must survive repeated undo↔redo cycling like the whole-document path.
+    @Test func rowScopedUndoRedoCyclesRepeatedly() {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        let shape = CanvasShapeModel(type: .rectangle, x: 10, y: 10, width: 20, height: 20)
+        state.addShape(shape)
+        state.selectedShapeIds = [shape.id]
+        um.removeAllActions()
+        let baseX = state.rows.first!.shapes.first { $0.id == shape.id }!.x
+
+        state.applyGroupDrag(offset: CGSize(width: 25, height: 0))
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == baseX + 25)
+
+        for cycle in 0..<3 {
+            um.undo()
+            #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == baseX, "undo -> base (cycle \(cycle))")
+            um.redo()
+            #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.x == baseX + 25, "redo -> moved (cycle \(cycle))")
+            #expect(um.canUndo, "still undoable after redo (cycle \(cycle))")
+        }
+    }
+
+    /// A row-scoped op invoked inside `withUndo` joins the outer transaction —
+    /// exactly one (whole-document) step is registered.
+    @Test func rowUndoNestedInWithUndoRegistersOneStep() {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        let shape = CanvasShapeModel(type: .rectangle, x: 10, y: 10, width: 20, height: 20)
+        state.withUndo("Outer") {
+            state.addShape(shape)  // addShape's withRowUndo must join, not double-register
+        }
+        #expect(state.rows.first!.shapes.contains { $0.id == shape.id })
+
+        um.undo()
+        #expect(!state.rows.first!.shapes.contains { $0.id == shape.id }, "One undo reverts the nested op")
+        #expect(!um.canUndo, "Nested row-scoped op must not register a second step")
+    }
+
+    /// The inverse nesting: `withUndo` inside `withRowUndo` also joins, leaving
+    /// a single row-scoped step.
+    @Test func withUndoNestedInRowUndoRegistersOneStep() throws {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let rowId = state.rows.first!.id
+        state.selectRow(rowId)
+
+        let shape = CanvasShapeModel(type: .rectangle, x: 10, y: 10, width: 20, height: 20)
+        state.addShape(shape)
+        um.removeAllActions()
+
+        state.withRowUndo("Outer", rowId: rowId) {
+            state.updateShapes([shape.id], in: rowId, undoName: "Inner") { $0.opacity = 0.5 }
+        }
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.opacity == 0.5)
+
+        um.undo()
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.opacity == 1.0, "One undo reverts the nested edit")
+        #expect(!um.canUndo, "Nested withUndo must not register a second step")
+    }
 }

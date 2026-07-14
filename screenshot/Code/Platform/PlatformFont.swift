@@ -17,6 +17,33 @@ enum PlatformFonts {
         return UIFont.familyNames
         #endif
     }
+
+    private static var cachedFamilyNameSet: Set<String>?
+
+    /// Clears the cache whenever CTFontManager registrations change (covers both
+    /// in-process custom-font registration and system-wide installs). Installed
+    /// lazily on first cache access.
+    private static let fontChangeObserver: NSObjectProtocol = NotificationCenter.default.addObserver(
+        forName: NSNotification.Name(kCTFontManagerRegisteredFontsChangedNotification as String),
+        object: nil,
+        queue: .main
+    ) { _ in
+        MainActor.assumeIsolated { cachedFamilyNameSet = nil }
+    }
+
+    /// Cached: enumerating font families allocates hundreds of strings per call, and
+    /// render fallbacks (thumbnails, template drags) probe this set per render.
+    static var familyNameSet: Set<String> {
+        if let cachedFamilyNameSet { return cachedFamilyNameSet }
+        _ = fontChangeObserver
+        let set = Set(systemFamilyNames)
+        cachedFamilyNameSet = set
+        return set
+    }
+
+    static func invalidateFamilyNameCache() {
+        cachedFamilyNameSet = nil
+    }
 }
 
 extension NSFont {

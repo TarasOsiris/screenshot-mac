@@ -15,6 +15,15 @@ typealias SCNFloat = Float
 
 struct DeviceModelFrameView: View {
     private static let modelSnapshotScale: CGFloat = 3
+    private static let exportSnapshotPixelBudget: CGFloat = 4096
+    /// Editor snapshots render at 3× their on-screen points for retina headroom.
+    /// Export shapes are already at full model resolution, so a blanket 3× would
+    /// rasterize ~9× the pixels actually needed on a large device — cap the
+    /// supersample budget instead. Small shapes keep the full 3×.
+    private static func snapshotScale(width: CGFloat, height: CGFloat, isExport: Bool) -> CGFloat {
+        guard isExport else { return modelSnapshotScale }
+        return min(modelSnapshotScale, max(1, exportSnapshotPixelBudget / max(width, height, 1)))
+    }
     private static let snapshotExposureOffset: CGFloat = -0.7
     private static let snapshotImageCache: NSCache<NSString, NSImage> = {
         let cache = NSCache<NSString, NSImage>()
@@ -77,6 +86,10 @@ struct DeviceModelFrameView: View {
     @State private var renderedSnapshotKey: SnapshotKey?
     @State private var renderedSnapshotImage: NSImage?
 
+    private var effectiveSnapshotScale: CGFloat {
+        Self.snapshotScale(width: width, height: height, isExport: isExportRendering)
+    }
+
     var body: some View {
         switch modelRenderingMode {
         case .live:
@@ -120,6 +133,7 @@ struct DeviceModelFrameView: View {
             frame: frame,
             width: width,
             height: height,
+            scale: effectiveSnapshotScale,
             screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw,
@@ -150,6 +164,7 @@ struct DeviceModelFrameView: View {
             frame: frame,
             width: width,
             height: height,
+            scale: effectiveSnapshotScale,
             screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw,
@@ -183,6 +198,7 @@ struct DeviceModelFrameView: View {
             frame: frame,
             width: width,
             height: height,
+            scale: effectiveSnapshotScale,
             screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw,
@@ -205,6 +221,7 @@ struct DeviceModelFrameView: View {
             frame: frame,
             width: width,
             height: height,
+            scale: effectiveSnapshotScale,
             screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw,
@@ -230,6 +247,7 @@ struct DeviceModelFrameView: View {
         frame: DeviceFrame,
         width: CGFloat,
         height: CGFloat,
+        scale: CGFloat,
         screenshotImage: NSImage?,
         pitch: Double,
         yaw: Double,
@@ -242,8 +260,8 @@ struct DeviceModelFrameView: View {
         let color = bodyColor.sRGBComponents
         return SnapshotKey(
             frameId: frame.id,
-            pixelWidth: max(1, Int((width * modelSnapshotScale).rounded(.up))),
-            pixelHeight: max(1, Int((height * modelSnapshotScale).rounded(.up))),
+            pixelWidth: max(1, Int((width * scale).rounded(.up))),
+            pixelHeight: max(1, Int((height * scale).rounded(.up))),
             screenshotIdentity: imageIdentity,
             screenshotWidth: max(0, Int(imageSize.width.rounded())),
             screenshotHeight: max(0, Int(imageSize.height.rounded())),
@@ -265,6 +283,7 @@ struct DeviceModelFrameView: View {
         frame: DeviceFrame,
         width: CGFloat,
         height: CGFloat,
+        scale: CGFloat,
         screenshotImage: NSImage?,
         pitch: Double,
         yaw: Double,
@@ -272,8 +291,8 @@ struct DeviceModelFrameView: View {
         lighting: DeviceLighting,
         bodyTintColor: NSColor? = nil
     ) -> NSImage? {
-        let safeWidth = max(1, (width * modelSnapshotScale).rounded(.up))
-        let safeHeight = max(1, (height * modelSnapshotScale).rounded(.up))
+        let safeWidth = max(1, (width * scale).rounded(.up))
+        let safeHeight = max(1, (height * scale).rounded(.up))
         let viewportSize = CGSize(width: safeWidth, height: safeHeight)
         guard let (scene, cameraNode) = makeDeviceModelScene(
             frame: frame,

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		760E3F392F7298FE00034CDB /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 76RC00022F5A00000072F7A4 /* RevenueCat */; };
 		760E3F3A2F7298FE00034CDB /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 76RC00032F5A00000072F7A4 /* RevenueCatUI */; };
+		76MC00032F5A00000072F7A4 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 76MC00022F5A00000072F7A4 /* MCP */; };
 		76SD00032F5A00000072F7A4 /* SwiftDraw in Frameworks */ = {isa = PBXBuildFile; productRef = 76SD00022F5A00000072F7A4 /* SwiftDraw */; };
 /* End PBXBuildFile section */
 
@@ -48,6 +49,7 @@
 				760E3F3A2F7298FE00034CDB /* RevenueCatUI in Frameworks */,
 				760E3F392F7298FE00034CDB /* RevenueCat in Frameworks */,
 				76SD00032F5A00000072F7A4 /* SwiftDraw in Frameworks */,
+				76MC00032F5A00000072F7A4 /* MCP in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,6 +104,7 @@
 				76RC00022F5A00000072F7A4 /* RevenueCat */,
 				76RC00032F5A00000072F7A4 /* RevenueCatUI */,
 				76SD00022F5A00000072F7A4 /* SwiftDraw */,
+				76MC00022F5A00000072F7A4 /* MCP */,
 			);
 			productName = screenshot;
 			productReference = 768DF30B2F596DAB0072F7A4 /* Screenshot Bro.app */;
@@ -168,6 +171,7 @@
 			packageReferences = (
 				76RC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				76SD00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "SwiftDraw" */,
+				76MC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "swift-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 768DF30C2F596DAB0072F7A4 /* Products */;
@@ -360,6 +364,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = screenshot/screenshot.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = screenshot/screenshotDebug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 97;
@@ -522,6 +527,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		76MC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "swift-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/modelcontextprotocol/swift-sdk.git";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.12.1;
+			};
+		};
 		76RC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
@@ -541,6 +554,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		76MC00022F5A00000072F7A4 /* MCP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 76MC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "swift-sdk" */;
+			productName = MCP;
+		};
 		76RC00022F5A00000072F7A4 /* RevenueCat */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 76RC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;

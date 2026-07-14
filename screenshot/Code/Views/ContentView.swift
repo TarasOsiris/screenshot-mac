@@ -101,12 +101,19 @@ struct ContentView: View {
             ScrollViewReader { proxy in
                 ScrollView(.vertical) {
                     LazyVStack(spacing: 0) {
+                        let firstRowId = state.rows.first?.id
+                        let lastRowId = state.rows.last?.id
                         ForEach(state.rows) { row in
+                            // `.equatable()` so an edit in one row doesn't re-run every
+                            // visible row's body (see EditorRowView's Equatable).
                             EditorRowView(
                                 state: state,
                                 row: row,
+                                isFirst: row.id == firstRowId,
+                                isLast: row.id == lastRowId,
                                 requestShowcaseExport: { presentShowcaseSheet(for: $0, mode: .singleRow) }
                             )
+                                .equatable()
                                 .id(row.id)
                             Divider()
                         }
@@ -530,7 +537,7 @@ struct ContentView: View {
         #endif
         .middleMousePan()
         .task {
-            projectTemplates = TemplateService.availableTemplates()
+            projectTemplates = await TemplateService.availableTemplatesAsync()
         }
         .onAppear {
             state.undoManager = undoManager

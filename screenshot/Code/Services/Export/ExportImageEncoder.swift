@@ -15,12 +15,12 @@ enum ExportImageEncoder {
         }
     }
 
+    /// Alpha-preserving PNG encode straight from the backing CGImage — no TIFF
+    /// serialize/re-parse round trip.
     nonisolated static func pngData(from image: NSImage) -> Data? {
         #if os(macOS)
-        guard let tiffData = image.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmap.representation(using: .png, properties: [:]) else { return nil }
-        return pngData
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        return NSBitmapImageRep(cgImage: cgImage).representation(using: .png, properties: [:])
         #else
         return image.pngData()
         #endif

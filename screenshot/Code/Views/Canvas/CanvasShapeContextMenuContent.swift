@@ -16,7 +16,8 @@ struct CanvasShapeContextMenuContent: View {
     var onTranslateAllLocales: (() -> Void)?
     var translateAllLocalesDisabled = false
     var onResetAllTranslations: (() -> Void)?
-    var resetAllTranslationsDisabled = false
+    /// Evaluated when the menu opens — the answer needs an O(overrides) walk.
+    var resetAllTranslationsDisabled: () -> Bool = { false }
     var reuseTranslationTargets: (() -> [(key: String, label: String)])?
     var onLinkTranslation: ((String) -> Void)?
     var onUnlinkTranslation: (() -> Void)?
@@ -182,7 +183,7 @@ struct CanvasShapeContextMenuContent: View {
                                systemImage: "arrow.counterclockwise",
                                role: .destructive,
                                action: onResetAllTranslations)
-                            .disabled(resetAllTranslationsDisabled)
+                            .disabled(resetAllTranslationsDisabled())
                     }
                 } label: {
                     Label("Localization", systemImage: "globe")

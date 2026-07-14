@@ -28,7 +28,9 @@ struct CanvasShapeInteractions {
     var onTranslateAllLocales: (() -> Void)?
     var translateAllLocalesDisabled = false
     var onResetAllTranslations: (() -> Void)?
-    var resetAllTranslationsDisabled = false
+    /// Closure, not a Bool: the answer needs an O(overrides) document walk, so
+    /// it's evaluated when the context menu opens rather than on every render.
+    var resetAllTranslationsDisabled: () -> Bool = { false }
     var reuseTranslationTargets: (() -> [(key: String, label: String)])?
     var onLinkTranslation: ((String) -> Void)?
     var onUnlinkTranslation: (() -> Void)?

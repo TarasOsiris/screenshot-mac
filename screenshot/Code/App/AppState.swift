@@ -126,12 +126,13 @@ final class AppState {
     /// Includes both system family names and custom font display names so render-time
     /// `.contains(name)` checks succeed for style-qualified variants like
     /// "Playfair Display Italic".
-    @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = Set(PlatformFonts.systemFamilyNames)
+    @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = PlatformFonts.familyNameSet
 
     func refreshAvailableFontFamilies() {
         // Process-registered fonts (via CTFontManager) don't appear in the system family
         // list, so add both family and display names.
-        var families = Set(PlatformFonts.systemFamilyNames)
+        PlatformFonts.invalidateFamilyNameCache()
+        var families = PlatformFonts.familyNameSet
         let resourcesURL = activeProjectId.map { PersistenceService.resourcesDir($0) }
         var instances: [CustomFont] = []
         for font in customFonts.values {
@@ -160,6 +161,8 @@ final class AppState {
     @ObservationIgnored var lastSeenCatalogModified: Date?
 
     @ObservationIgnored var saveTask: DispatchWorkItem?
+    /// Last time the autosave completion ran the full-document font-reference walk.
+    @ObservationIgnored var lastFontCleanupAt: Date = .distantPast
     @ObservationIgnored var imageLoadTask: Task<Void, Never>?
     @ObservationIgnored var projectOpenTask: Task<Void, Never>?
     /// Serializes off-main iCloud reloads so overlapping remote changes don't race on the
@@ -319,6 +322,10 @@ final class AppState {
 
     /// If a debounced save is queued, cancel it and run `saveAll()` immediately.
     func flushPendingSaveTask() {
+        // Drain in-flight async saves first: a write queued by saveAllAsync would
+        // be lost at process exit, and the synchronous saveAll below must not
+        // interleave with one mid-write.
+        Self.saveQueue.sync {}
         guard saveTask != nil else { return }
         saveTask?.cancel()
         saveTask = nil
@@ -384,6 +391,38 @@ final class AppState {
         body()
         guard rows != baseRows || localeState != baseLocaleState else { return }
         registerSnapshot(actionName, baseRows: baseRows, baseLocaleState: baseLocaleState)
+        scheduleSave()
+    }
+
+    /// Row-scoped `withUndo` for mutations confined to one row (plus `localeState` and
+    /// selection): the no-op check compares a single row instead of the whole document,
+    /// and the undo step retains one row. Shares `isInUndoTransaction`, so nesting with
+    /// `withUndo` (either direction) joins the outer transaction. The row must exist
+    /// before and after `body` — ops that add/remove/reorder rows, or that touch other
+    /// rows (e.g. shared-base-text fan-out), stay on `withUndo`.
+    func withRowUndo(_ actionName: String, rowId: UUID, _ body: () -> Void) {
+        commitAllPendingEdits()
+        if isInUndoTransaction { body(); return }
+        isInUndoTransaction = true
+        defer { isInUndoTransaction = false }
+
+        guard let idx = rowIndex(for: rowId) else { return }
+        let baseRow = rows[idx]
+        let baseLocaleState = localeState
+        #if DEBUG
+        let allRowsBase = rows
+        #endif
+        body()
+        #if DEBUG
+        assert(
+            rows.count == allRowsBase.count
+                && zip(rows, allRowsBase).allSatisfy { $0.id == $1.id && ($0.id == rowId || $0 == $1) },
+            "withRowUndo(\"\(actionName)\") body mutated rows other than the target row — use withUndo"
+        )
+        #endif
+        guard let newIdx = rowIndex(for: rowId) else { return }
+        guard rows[newIdx] != baseRow || localeState != baseLocaleState else { return }
+        registerRowSnapshot(actionName, rowId: rowId, baseRow: baseRow, baseLocaleState: baseLocaleState)
         scheduleSave()
     }
 

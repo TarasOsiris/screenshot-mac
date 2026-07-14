@@ -21,7 +21,7 @@ nonisolated struct PersistenceService {
     // Tests override SCREENSHOT_DATA_DIR per-test, but the env var is process-global and
     // debounced saves can fire after a test unsets it — without this guard those saves
     // land in the user's real (iCloud) store, leaking test projects.
-    private static var isRunningUnderXCTest: Bool {
+    static var isRunningUnderXCTest: Bool {
         let env = ProcessInfo.processInfo.environment
         return env["XCTestConfigurationFilePath"] != nil
             || env["XCTestSessionIdentifier"] != nil

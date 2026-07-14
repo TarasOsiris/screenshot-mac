@@ -20,10 +20,34 @@ enum LocaleService {
     /// shape's own `id`. For an unlinked shape both keys coincide, matching the historical behavior.
     static func resolveShape(_ shape: CanvasShapeModel, localeCode: String, localeState: LocaleState) -> CanvasShapeModel {
         guard localeCode != localeState.baseLocaleCode else { return shape }
-        let styleOverride = localeState.override(forCode: localeCode, shapeId: shape.id)
-        let textOverride = localeState.overrides[localeCode]?[shape.textTranslationKey]
+        let (styleOverride, textOverride) = shapeOverrides(for: shape, localeCode: localeCode, localeState: localeState)
         guard styleOverride != nil || textOverride != nil else { return shape }
         return applyOverride(style: styleOverride, text: textOverride, to: shape)
+    }
+
+    /// The two override sources a shape resolves against: style/geometry keyed by the
+    /// shape's `id`, translated text keyed by its `textTranslationKey`. Single source of
+    /// truth shared by `resolveShape` and `rowIsLocaleNeutral` so the neutrality check can
+    /// never drift from what resolution actually reads.
+    private static func shapeOverrides(
+        for shape: CanvasShapeModel,
+        localeCode: String,
+        localeState: LocaleState
+    ) -> (style: ShapeLocaleOverride?, text: ShapeLocaleOverride?) {
+        (localeState.override(forCode: localeCode, shapeId: shape.id),
+         localeState.overrides[localeCode]?[shape.textTranslationKey])
+    }
+
+    /// True when `localeCode` resolves every shape in the row unchanged, so a neutral row
+    /// renders pixel-identical to the base locale and export can reuse one render for all
+    /// such locales. Backgrounds are not locale-overridable, so shapes are the only inputs
+    /// that matter.
+    static func rowIsLocaleNeutral(row: ScreenshotRow, localeCode: String, localeState: LocaleState) -> Bool {
+        guard localeCode != localeState.baseLocaleCode else { return true }
+        return !row.activeShapes.contains { shape in
+            let (style, text) = shapeOverrides(for: shape, localeCode: localeCode, localeState: localeState)
+            return style != nil || text != nil
+        }
     }
 
     /// Given the base shape and an updated (resolved) shape, split changes into base shape mutations

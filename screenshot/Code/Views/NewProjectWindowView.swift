@@ -165,10 +165,14 @@ struct NewProjectWindowView: View {
     }
 
     private func prepareInitialState() {
-        templates = TemplateService.availableTemplates()
+        Task {
+            templates = await TemplateService.availableTemplatesAsync()
+            if selectedTemplateId == nil {
+                selectedTemplateId = templates.first?.id
+            }
+        }
         projectName = "Project \(state.visibleProjects.count + 1)"
         creationMode = .template
-        selectedTemplateId = templates.first?.id
         rowDrafts = [
             BlankProjectRowDraft(category: .iphone),
             BlankProjectRowDraft(category: .ipadPro13),

@@ -14,6 +14,12 @@ struct ShowcaseSettingsPanel: View {
     let onSetBackgroundImage: (NSImage) -> Void
     let onSetBackgroundSvg: (String) -> Void
 
+    /// Show the selection section when there's anything to toggle: multiple rows, or a
+    /// single row with more than one screenshot to include/exclude.
+    private var showRowsSection: Bool {
+        candidateRows.count > 1 || (candidateRows.first?.templates.count ?? 0) > 1
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ShowcaseSettingsPanelHeader(onReset: onReset)
@@ -22,7 +28,7 @@ struct ShowcaseSettingsPanel: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    if candidateRows.count > 1 {
+                    if showRowsSection {
                         ShowcaseRowsSection(
                             candidateRows: candidateRows,
                             selectedRowIds: $selectedRowIds,

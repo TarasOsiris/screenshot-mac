@@ -51,10 +51,15 @@ nonisolated enum ShapeType: String, Codable, CaseIterable {
 
     var supportsOutline: Bool {
         switch self {
+        case .rectangle, .circle, .star, .image: true
+        case .text, .device, .svg: false
+        }
+    }
+
+    var supportsFill: Bool {
+        switch self {
         case .rectangle, .circle, .star: true
         case .text, .image, .device, .svg: false
         }
     }
-
-    var supportsFill: Bool { supportsOutline }
 }
