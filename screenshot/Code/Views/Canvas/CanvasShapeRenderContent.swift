@@ -154,18 +154,31 @@ struct CanvasShapeRenderContent: View {
 
     @ViewBuilder
     private var imageContent: some View {
+        let clip = RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
         if let screenshotImage {
             Image(nsImage: screenshotImage)
                 .resizable()
                 .interpolation(.high)
                 .aspectRatio(contentMode: .fill)
                 .frame(width: displayW, height: displayH)
-                .clipShape(RoundedRectangle(cornerRadius: shape.borderRadius * displayScale))
+                .clipShape(clip)
+                .overlay { imageOutline(clip) }
         } else if showsEditorHelpers {
             imageDropPlaceholder {
-                RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
-                    .fill(Color.gray.opacity(0.3))
+                clip.fill(Color.gray.opacity(0.3))
+                    .overlay { imageOutline(clip) }
             }
+        }
+    }
+
+    /// Border drawn inside the image's rounded-rect bounds — same "band from the edge inward"
+    /// behavior as `outlinedShape`, so an image outline matches a rectangle outline in parity.
+    @ViewBuilder
+    private func imageOutline<S: InsettableShape>(_ clip: S) -> some View {
+        let maxInset = max(0, min(displayW, displayH) / 2)
+        let inset = min(displayOutlineWidth, maxInset)
+        if let outlineColor = shape.outlineColor, inset > 0 {
+            clip.strokeBorder(outlineColor, lineWidth: inset)
         }
     }
 

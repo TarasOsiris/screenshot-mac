@@ -285,9 +285,18 @@ struct CanvasShapeModelTests {
         #expect(copy.id != shape.id)
     }
 
-    @Test func supportsFillMatchesSupportsOutline() {
+    @Test func fillAndOutlineSupport() {
+        // Vector shapes support both; images support outline (a border) but not fill;
+        // everything else supports neither.
         for type in ShapeType.allCases {
-            #expect(type.supportsFill == type.supportsOutline)
+            switch type {
+            case .rectangle, .circle, .star:
+                #expect(type.supportsFill && type.supportsOutline)
+            case .image:
+                #expect(!type.supportsFill && type.supportsOutline)
+            case .text, .device, .svg:
+                #expect(!type.supportsFill && !type.supportsOutline)
+            }
         }
     }
 
@@ -362,8 +371,8 @@ struct CanvasShapeModelTests {
         #expect(ShapeType.rectangle.supportsOutline == true)
         #expect(ShapeType.circle.supportsOutline == true)
         #expect(ShapeType.star.supportsOutline == true)
+        #expect(ShapeType.image.supportsOutline == true)
         #expect(ShapeType.text.supportsOutline == false)
-        #expect(ShapeType.image.supportsOutline == false)
         #expect(ShapeType.device.supportsOutline == false)
         #expect(ShapeType.svg.supportsOutline == false)
     }

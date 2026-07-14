@@ -1088,6 +1088,34 @@ struct ExportServiceTests {
         }
     }
 
+    /// An image shape's outline must render in export: the edge band takes the outline color
+    /// while the interior stays the image content, and an outlined image differs from a plain one.
+    @Test func imageOutlineRendersInExport() throws {
+        let tw: CGFloat = 500, th: CGFloat = 1000
+        func row(withOutline: Bool) -> ScreenshotRow {
+            var r = makeTestRow(width: tw, height: th, bgColor: .white)
+            var image = CanvasShapeModel(
+                type: .image, x: 120, y: 220, width: 200, height: 300,
+                color: .clear, imageFileName: "pic"
+            )
+            image.outlineColor = withOutline ? .red : nil
+            image.outlineWidth = withOutline ? 20 : nil
+            r.shapes = [image]
+            return r
+        }
+        let images = ["pic": makeSolidImage(.green, width: 400, height: 600)]
+
+        let outlined = try renderTemplateBitmap(index: 0, row: row(withOutline: true), screenshotImages: images)
+        let plain = try renderTemplateBitmap(index: 0, row: row(withOutline: false), screenshotImages: images)
+        try expectBitmapsDiffer(outlined, plain, label: "image outline vs none")
+
+        // Image spans x120..320, y220..520 with a 20px band. Left edge is outline (red),
+        // center is the image (green — not red).
+        try expectDominant(outlined, at: (126, 370), channel: .r, label: "image outline edge")
+        try expectDominant(outlined, at: (220, 370), channel: .g, label: "image outline interior")
+        try expectDominant(plain, at: (126, 370), channel: .g, label: "plain image edge")
+    }
+
     /// A ROTATED device's shadow must still fall below it in export, matching the editor.
     /// Guards the rotation-aware offscreen-flip compensation: a naive per-component
     /// Y-negation would push the shadow to the wrong side once the device is rotated.
