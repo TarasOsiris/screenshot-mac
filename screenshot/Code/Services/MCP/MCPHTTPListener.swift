@@ -1,4 +1,4 @@
-#if DEBUG && os(macOS)
+#if os(macOS)
 import Foundation
 import MCP
 import Network
@@ -23,12 +23,15 @@ actor MCPHTTPListener {
     private let port: UInt16
     private let maxBodyBytes: Int
     private let handler: Handler
+    /// When non-nil/non-empty, every /mcp request must carry a matching `Authorization: Bearer`.
+    private let expectedToken: String?
     private let queue = DispatchQueue(label: "mcp.http.listener")
     private var listener: NWListener?
     private var connections: [ObjectIdentifier: NWConnection] = [:]
 
-    init(port: UInt16, maxBodyBytes: Int = 20 * 1024 * 1024, handler: @escaping Handler) {
+    init(port: UInt16, expectedToken: String? = nil, maxBodyBytes: Int = 20 * 1024 * 1024, handler: @escaping Handler) {
         self.port = port
+        self.expectedToken = expectedToken
         self.maxBodyBytes = maxBodyBytes
         self.handler = handler
     }
@@ -161,6 +164,12 @@ actor MCPHTTPListener {
                 continue requestLoop
             }
 
+            if !isAuthorized(head) {
+                await sendSimpleResponse(connection, status: 401, close: head.wantsClose)
+                if head.wantsClose { return }
+                continue requestLoop
+            }
+
             let request = HTTPRequest(method: head.method, headers: head.headers, body: body, path: path)
             let response = await handler(request)
 
@@ -169,6 +178,28 @@ actor MCPHTTPListener {
                 return
             }
         }
+    }
+
+    private func isAuthorized(_ head: MCPHTTPRequestHead) -> Bool {
+        Self.authorize(head, expectedToken: expectedToken)
+    }
+
+    static func authorize(_ head: MCPHTTPRequestHead, expectedToken: String?) -> Bool {
+        guard let expectedToken, !expectedToken.isEmpty else { return true }
+        guard let value = head.header("authorization")?.trimmingCharacters(in: .whitespaces),
+              value.count > 7,
+              value.prefix(7).caseInsensitiveCompare("Bearer ") == .orderedSame
+        else { return false }
+        return constantTimeEqual(String(value.dropFirst(7)), expectedToken)
+    }
+
+    private static func constantTimeEqual(_ a: String, _ b: String) -> Bool {
+        let lhs = Array(a.utf8)
+        let rhs = Array(b.utf8)
+        guard lhs.count == rhs.count else { return false }
+        var diff: UInt8 = 0
+        for i in lhs.indices { diff |= lhs[i] ^ rhs[i] }
+        return diff == 0
     }
 
     private func receiveChunk(_ connection: NWConnection) async -> Data? {
@@ -216,6 +247,7 @@ actor MCPHTTPListener {
         case 200: "OK"
         case 202: "Accepted"
         case 400: "Bad Request"
+        case 401: "Unauthorized"
         case 403: "Forbidden"
         case 404: "Not Found"
         case 405: "Method Not Allowed"

@@ -1,4 +1,4 @@
-#if DEBUG && os(macOS)
+#if os(macOS)
 import Foundation
 import MCP
 import OSLog
@@ -20,8 +20,21 @@ final class MCPServerService {
     static let enabledDefaultsKey = "mcpServerEnabled"
     static let portDefaultsKey = "mcpServerPort"
     static let defaultPort: UInt16 = 8722
+    private static let tokenAccount = "mcpAuthToken"
 
     private(set) var status: Status = .stopped
+
+    /// Bearer token required to call the server. Enforced in Release builds so an arbitrary local
+    /// process can't drive the app; nil in DEBUG so the repo's `.mcp.json` / agent harness keep
+    /// working without a header. Loaded (not created) at launch so users who never enable the
+    /// server get no Keychain item; `start` mints one on first enable.
+    private(set) var authToken: String? = {
+        #if DEBUG
+        nil
+        #else
+        KeychainService.load(account: MCPServerService.tokenAccount)
+        #endif
+    }()
 
     private var server: Server?
     private var listener: MCPHTTPListener?
@@ -32,12 +45,50 @@ final class MCPServerService {
     }
 
     var claudeRegistrationCommand: String {
-        "claude mcp add --transport http screenshot-bro http://127.0.0.1:\(port)/mcp"
+        var command = "claude mcp add --transport http screenshot-bro http://127.0.0.1:\(port)/mcp"
+        if let authToken, !authToken.isEmpty {
+            command += " --header \"Authorization: Bearer \(authToken)\""
+        }
+        return command
+    }
+
+    /// Discards the current token, issues a fresh one, and restarts the listener if running so the
+    /// new token takes effect. No-op in DEBUG (no token is enforced there).
+    func regenerateToken(state: AppState) {
+        #if !DEBUG
+        KeychainService.delete(account: Self.tokenAccount)
+        authToken = Self.loadOrCreateToken()
+        if case .running = status {
+            Task {
+                await stop(keepStatus: true)
+                await start(state: state)
+            }
+        }
+        #endif
+    }
+
+    private static func loadOrCreateToken() -> String {
+        if let existing = KeychainService.load(account: tokenAccount) { return existing }
+        let token = makeToken()
+        try? KeychainService.save(token, account: tokenAccount)
+        return token
+    }
+
+    private static func makeToken() -> String {
+        let bytes = (0..<32).map { _ in UInt8.random(in: .min ... .max) }
+        return Data(bytes).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
+    var isEnabled: Bool {
+        UserDefaults.standard.bool(forKey: Self.enabledDefaultsKey)
     }
 
     func autostartIfEnabled(state: AppState) {
         guard !PersistenceService.isRunningUnderXCTest else { return }
-        guard UserDefaults.standard.bool(forKey: Self.enabledDefaultsKey) else { return }
+        guard isEnabled else { return }
         Task { await start(state: state) }
     }
 
@@ -57,9 +108,13 @@ final class MCPServerService {
         status = .starting
         await stop(keepStatus: true)
 
+        #if !DEBUG
+        if authToken == nil { authToken = Self.loadOrCreateToken() }
+        #endif
+
         let executor = MCPToolExecutor(state: state)
         let transport = StatelessHTTPServerTransport()
-        let listener = MCPHTTPListener(port: port) { @Sendable [transport] request in
+        let listener = MCPHTTPListener(port: port, expectedToken: authToken) { @Sendable [transport] request in
             await transport.handleRequest(request)
         }
 

@@ -31,6 +31,8 @@ struct ScreenshotBroApp: App {
     @State private var debugTemplateError: String?
     @State private var debugExistingTemplates: [String] = []
     @State private var isDebugProjectManagerPresented = false
+    #endif
+    #if os(macOS)
     @State private var mcpServer = MCPServerService()
     #endif
 
@@ -118,10 +120,10 @@ struct ScreenshotBroApp: App {
                 .preferredColorScheme(preferredColorScheme)
                 .background(WindowSceneBridge(role: .main))
                 .task { storeService.start() }
+                .task { mcpServer.autostartIfEnabled(state: appState) }
                 #if DEBUG
                 .task {
                     debugRefreshExistingTemplates()
-                    mcpServer.autostartIfEnabled(state: appState)
                 }
                 .alert("Save as New Template", isPresented: $isDebugTemplateSavePresented) {
                     TextField("Template name", text: $debugTemplateName)
@@ -423,27 +425,6 @@ struct ScreenshotBroApp: App {
 
                 Divider()
 
-                switch mcpServer.status {
-                case .running(let port):
-                    Button("Stop MCP Server (running on :\(port))") {
-                        mcpServer.setEnabled(false, state: appState)
-                    }
-                case .starting:
-                    Text("Starting MCP Server...")
-                case .stopped, .failed:
-                    Button("Start MCP Server") {
-                        mcpServer.setEnabled(true, state: appState)
-                    }
-                }
-                if case .failed(let message) = mcpServer.status {
-                    Text(message)
-                }
-                Button("Copy claude mcp add Command") {
-                    PlatformPasteboard.copyString(mcpServer.claudeRegistrationCommand)
-                }
-
-                Divider()
-
                 DebugRequestReviewButton()
 
                 Button("Reset App Review State") {
@@ -458,6 +439,8 @@ struct ScreenshotBroApp: App {
         Settings {
             SettingsView()
                 .environment(storeService)
+                .environment(appState)
+                .environment(mcpServer)
                 .preferredColorScheme(preferredColorScheme)
         }
         #else

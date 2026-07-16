@@ -5,6 +5,8 @@ import UniformTypeIdentifiers
 #if os(macOS)
 struct SettingsView: View {
     @Environment(StoreService.self) private var store
+    @Environment(AppState.self) private var appState
+    @Environment(MCPServerService.self) private var mcpServer
     @AppStorage("appearance") private var appearance = "auto"
     @AppStorage("appLanguageOverride") private var languageOverride = ""
     @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
@@ -50,6 +52,10 @@ struct SettingsView: View {
 
             Tab("Google Play", systemImage: "play.rectangle.on.rectangle") {
                 GooglePlaySettingsView()
+            }
+
+            Tab("Automation", systemImage: "terminal") {
+                automationSettings
             }
 
             Tab("Purchase", systemImage: "star") {
@@ -329,6 +335,75 @@ struct SettingsView: View {
         .help(lastExportFolderPath)
     }
 
+    private var automationSettings: some View {
+        Form {
+            Section {
+                Toggle("Enable MCP server", isOn: Binding(
+                    get: { mcpServer.isEnabled },
+                    set: { mcpServer.setEnabled($0, state: appState) }
+                ))
+            } footer: {
+                Text("Runs a local server on 127.0.0.1 so AI agents and MCP clients (like Claude Code) can create and edit projects, translate text, and export screenshots on your behalf.")
+                    .foregroundStyle(.secondary)
+            }
+
+            if mcpServer.isEnabled {
+                Section("Status") {
+                    mcpStatusRow
+                }
+
+                Section {
+                    Button("Copy Connection Command") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(mcpServer.claudeRegistrationCommand, forType: .string)
+                    }
+                    if mcpServer.authToken != nil {
+                        Button("Regenerate Access Token") {
+                            mcpServer.regenerateToken(state: appState)
+                        }
+                    }
+                } header: {
+                    Text("Connection")
+                } footer: {
+                    if mcpServer.authToken != nil {
+                        Text("The command includes a secret access token. Keep it private — anyone with it can control the app while the server is running.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Register this server with your MCP client, then restart the client.")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private var mcpStatusRow: some View {
+        switch mcpServer.status {
+        case .stopped:
+            Label("Not running", systemImage: "circle")
+                .foregroundStyle(.secondary)
+        case .starting:
+            Label("Starting…", systemImage: "arrow.triangle.2.circlepath")
+                .foregroundStyle(.secondary)
+        case .running(let port):
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                Text("Running")
+                Spacer()
+                Text(verbatim: "127.0.0.1:\(port)")
+                    .foregroundStyle(.secondary)
+                    .monospaced()
+            }
+        case .failed(let message):
+            Label(message, systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+                .font(.callout)
+        }
+    }
+
     private var purchaseSettings: some View {
         Form {
             Section {
@@ -569,5 +644,7 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .environment(StoreService())
+        .environment(AppState())
+        .environment(MCPServerService())
 }
 #endif
