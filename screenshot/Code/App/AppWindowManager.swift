@@ -13,6 +13,7 @@ final class AppWindowManager {
 #if os(macOS)
     private weak var mainWindow: NSWindow?
     private weak var helpWindow: NSWindow?
+    private weak var settingsWindow: NSWindow?
 
     func registerMainWindow(_ window: NSWindow) {
         mainWindow = window
@@ -22,8 +23,16 @@ final class AppWindowManager {
         helpWindow = window
     }
 
+    func registerSettingsWindow(_ window: NSWindow) {
+        settingsWindow = window
+    }
+
     func raiseHelpWindow() {
         raiseWindow(helpWindow)
+    }
+
+    func raiseSettingsWindow() {
+        raiseWindow(settingsWindow)
     }
 
     func setMainWindowOpener(_ opener: @escaping () -> Void) {
@@ -62,7 +71,7 @@ final class AppWindowManager {
 /// Registers a SwiftUI scene's backing `NSWindow` with `AppWindowManager` so it
 /// can be raised on demand. The `.main` role additionally wires the reopen path.
 struct WindowSceneBridge: View {
-    enum Role { case main, help }
+    enum Role { case main, help, settings }
     let role: Role
 
 #if os(macOS)
@@ -73,6 +82,7 @@ struct WindowSceneBridge: View {
             switch role {
             case .main: AppWindowManager.shared.registerMainWindow(window)
             case .help: AppWindowManager.shared.registerHelpWindow(window)
+            case .settings: AppWindowManager.shared.registerSettingsWindow(window)
             }
         }
         .task {

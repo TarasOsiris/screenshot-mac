@@ -174,6 +174,7 @@ struct ScreenshotBroApp: App {
             NewProjectCommands()
             MainWindowCommands()
             HelpCommands()
+            SettingsCommands()
 
             CommandGroup(replacing: .undoRedo) {
                 Button("Undo", action: performUndoCommand)
@@ -436,13 +437,17 @@ struct ScreenshotBroApp: App {
             #endif
         }
 
-        Settings {
+        // A plain Window instead of the Settings scene: on macOS 26 the Settings
+        // scene pins its window to a fixed size, ignoring windowResizability.
+        Window("Screenshot Bro Settings", id: SettingsView.windowID) {
             SettingsView()
                 .environment(storeService)
                 .environment(appState)
                 .environment(mcpServer)
                 .preferredColorScheme(preferredColorScheme)
         }
+        .defaultSize(width: UIMetrics.Window.settings.width, height: UIMetrics.Window.settings.height)
+        .windowResizability(.contentMinSize)
         #else
         WindowGroup {
             iPadRootView(launchWelcomeActive: launchWelcomePresented)
@@ -531,6 +536,24 @@ private struct MainWindowCommands: Commands {
             Button("Show Main Window") {
                 AppWindowManager.shared.showMainWindow()
             }
+        }
+    }
+}
+
+private struct SettingsCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some Commands {
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings…") {
+                openWindow(id: SettingsView.windowID)
+                // Same deferred raise as HelpCommands: openWindow registers the
+                // NSWindow on the next runloop.
+                DispatchQueue.main.async {
+                    AppWindowManager.shared.raiseSettingsWindow()
+                }
+            }
+            .keyboardShortcut(",", modifiers: .command)
         }
     }
 }

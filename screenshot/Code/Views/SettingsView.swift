@@ -1,9 +1,12 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-// Settings UI is the macOS Settings scene; an iPad settings surface is a follow-up.
+// Settings UI lives in a plain Window scene (the Settings scene is non-resizable on
+// macOS 26); an iPad settings surface is a follow-up.
 #if os(macOS)
 struct SettingsView: View {
+    static let windowID = "settings"
+
     @Environment(StoreService.self) private var store
     @Environment(AppState.self) private var appState
     @Environment(MCPServerService.self) private var mcpServer
@@ -22,6 +25,7 @@ struct SettingsView: View {
     @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
     @AppStorage("projectSortOrder") private var projectSortOrder = "creation"
 
+    @State private var selection: SettingsSection? = .general
     @State private var showLanguageRelaunchAlert = false
 
     @State private var iCloudEnabled = ICloudSyncService.shared.isEnabled
@@ -36,37 +40,86 @@ struct SettingsView: View {
 
     enum BackupResult { case success; case failure(String) }
 
-    var body: some View {
-        TabView {
-            Tab("General", systemImage: "gear") {
-                generalSettings
-            }
+    enum SettingsSection: String, CaseIterable, Identifiable {
+        case general, export, appStoreConnect, googlePlay, automation, purchase, attributions
 
-            Tab("Export", systemImage: "square.and.arrow.up") {
-                exportSettings
-            }
+        var id: String { rawValue }
 
-            Tab("App Store Connect", systemImage: "arrow.up.circle") {
-                AppStoreConnectSettingsView()
-            }
-
-            Tab("Google Play", systemImage: "play.rectangle.on.rectangle") {
-                GooglePlaySettingsView()
-            }
-
-            Tab("Automation", systemImage: "terminal") {
-                automationSettings
-            }
-
-            Tab("Purchase", systemImage: "star") {
-                purchaseSettings
-            }
-
-            Tab("Attributions", systemImage: "heart") {
-                attributionsSettings
+        var title: LocalizedStringKey {
+            switch self {
+            case .general: "General"
+            case .export: "Export"
+            case .appStoreConnect: "App Store Connect"
+            case .googlePlay: "Google Play"
+            case .automation: "Automation"
+            case .purchase: "Purchase"
+            case .attributions: "Attributions"
             }
         }
-        .frame(width: UIMetrics.Window.settings.width, height: UIMetrics.Window.settings.height)
+
+        var systemImage: String {
+            switch self {
+            case .general: "gearshape"
+            case .export: "square.and.arrow.up"
+            case .appStoreConnect: "arrow.up.circle"
+            case .googlePlay: "play.rectangle.on.rectangle"
+            case .automation: "terminal"
+            case .purchase: "star"
+            case .attributions: "heart"
+            }
+        }
+    }
+
+    var body: some View {
+        NavigationSplitView {
+            List(SettingsSection.allCases, selection: $selection) { section in
+                Label(section.title, systemImage: section.systemImage)
+                    .tag(section)
+            }
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(UIMetrics.Window.settingsSidebarWidth)
+            .toolbar(removing: .sidebarToggle)
+        } detail: {
+            detailContent
+                .navigationTitle((selection ?? .general).title)
+        }
+        .frame(
+            minWidth: UIMetrics.Window.settingsMinSize.width,
+            idealWidth: UIMetrics.Window.settings.width,
+            maxWidth: .infinity,
+            minHeight: UIMetrics.Window.settingsMinSize.height,
+            idealHeight: UIMetrics.Window.settings.height,
+            maxHeight: .infinity
+        )
+        .background(WindowSceneBridge(role: .settings))
+    }
+
+    // Keep every pane mounted and toggle visibility rather than switching (which would rebuild the
+    // selected pane on each navigation, discarding transient @State like a shown "Connection
+    // succeeded" result or an in-flight test spinner in the App Store Connect / Google Play panes).
+    private var detailContent: some View {
+        let active = selection ?? .general
+        return ZStack {
+            ForEach(SettingsSection.allCases) { section in
+                detailView(for: section)
+                    .opacity(section == active ? 1 : 0)
+                    .allowsHitTesting(section == active)
+                    .accessibilityHidden(section != active)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func detailView(for section: SettingsSection) -> some View {
+        switch section {
+        case .general: generalSettings
+        case .export: exportSettings
+        case .appStoreConnect: AppStoreConnectSettingsView()
+        case .googlePlay: GooglePlaySettingsView()
+        case .automation: automationSettings
+        case .purchase: purchaseSettings
+        case .attributions: attributionsSettings
+        }
     }
 
     private var generalSettings: some View {
@@ -338,24 +391,46 @@ struct SettingsView: View {
     private var automationSettings: some View {
         Form {
             Section {
-                Toggle("Enable MCP server", isOn: Binding(
-                    get: { mcpServer.isEnabled },
-                    set: { mcpServer.setEnabled($0, state: appState) }
-                ))
+                if mcpServer.isTransitioning {
+                    LabeledContent("Enable MCP server") {
+                        HStack(spacing: 8) {
+                            Text(mcpTransitionLabel)
+                                .foregroundStyle(.secondary)
+                            ProgressView().controlSize(.small)
+                        }
+                    }
+                } else {
+                    Toggle("Enable MCP server", isOn: Binding(
+                        get: { mcpServer.isEnabled },
+                        set: { mcpServer.setEnabled($0, state: appState) }
+                    ))
+                }
             } footer: {
                 Text("Runs a local server on 127.0.0.1 so AI agents and MCP clients (like Claude Code) can create and edit projects, translate text, and export screenshots on your behalf.")
                     .foregroundStyle(.secondary)
             }
 
-            if mcpServer.isEnabled {
+            if mcpServer.isEnabled && !mcpServer.isTransitioning {
                 Section("Status") {
                     mcpStatusRow
                 }
 
                 Section {
-                    Button("Copy Connection Command") {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(mcpServer.claudeRegistrationCommand, forType: .string)
+                    LabeledContent("Server URL") {
+                        copyableValue(mcpServer.serverURL, monospaced: true, tooltip: "Copy server URL")
+                    }
+                    if let token = mcpServer.authToken {
+                        LabeledContent("Access Token") {
+                            copyableValue(token, masked: true, tooltip: "Copy access token")
+                        }
+                    }
+                    Button {
+                        copyToPasteboard(mcpServer.agentPrompt)
+                    } label: {
+                        Label("Copy Agent Prompt", systemImage: "sparkles")
+                    }
+                    Button("Copy Configuration (JSON)") {
+                        copyToPasteboard(mcpServer.configurationJSON)
                     }
                     if mcpServer.authToken != nil {
                         Button("Regenerate Access Token") {
@@ -366,10 +441,10 @@ struct SettingsView: View {
                     Text("Connection")
                 } footer: {
                     if mcpServer.authToken != nil {
-                        Text("The command includes a secret access token. Keep it private — anyone with it can control the app while the server is running.")
+                        Text("Easiest: paste the agent prompt into your AI assistant and let it connect. Or add the server by hand with the URL and access token, or the JSON configuration. Keep the token private — anyone with it can control the app while the server is running.")
                             .foregroundStyle(.secondary)
                     } else {
-                        Text("Register this server with your MCP client, then restart the client.")
+                        Text("Easiest: paste the agent prompt into your AI assistant and let it connect. Or add the server by hand with the URL or the JSON configuration, then restart the client.")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -402,6 +477,34 @@ struct SettingsView: View {
                 .foregroundStyle(.red)
                 .font(.callout)
         }
+    }
+
+    private var mcpTransitionLabel: LocalizedStringKey {
+        switch mcpServer.transition {
+        case .starting: "Starting…"
+        case .stopping: "Stopping…"
+        case .restarting: "Restarting…"
+        case nil: "Working…"
+        }
+    }
+
+    private func copyableValue(_ value: String, monospaced: Bool = false, masked: Bool = false, tooltip: LocalizedStringKey) -> some View {
+        HStack(spacing: 6) {
+            Text(verbatim: masked ? "••••••••••••" : value)
+                .font(monospaced ? .system(.callout, design: .monospaced) : .callout)
+                .textSelection(.enabled)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .foregroundStyle(.secondary)
+            ActionButton(icon: "doc.on.doc", tooltip: tooltip) {
+                copyToPasteboard(value)
+            }
+        }
+    }
+
+    private func copyToPasteboard(_ string: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(string, forType: .string)
     }
 
     private var purchaseSettings: some View {

@@ -35,10 +35,7 @@ extension UploadToAppStoreConnectView {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 400)
             #if os(macOS)
-            SettingsLink {
-                Label("Open Settings", systemImage: "gearshape")
-            }
-            .buttonStyle(.borderedProminent)
+            OpenSettingsWindowButton()
             #else
             Button {
                 router.openAppStoreConnectSettings()
@@ -544,3 +541,18 @@ extension UploadToAppStoreConnectView {
         }
     }
 }
+
+#if os(macOS)
+private struct OpenSettingsWindowButton: View {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button {
+            openWindow(id: SettingsView.windowID)
+        } label: {
+            Label("Open Settings", systemImage: "gearshape")
+        }
+        .buttonStyle(.borderedProminent)
+    }
+}
+#endif

@@ -155,9 +155,12 @@ enum UIMetrics {
         #endif
     }
 
-    /// Standard fixed-size dimensions for secondary windows (Settings, debug pickers, etc.).
+    /// Dimensions for secondary windows (Settings, debug pickers, etc.). `settings` is the
+    /// ideal open size; the window is resizable down to `settingsMinSize`.
     enum Window {
-        static let settings = CGSize(width: 520, height: 560)
+        static let settings = CGSize(width: 740, height: 560)
+        static let settingsMinSize = CGSize(width: 600, height: 460)
+        static let settingsSidebarWidth: CGFloat = 210
         static let debug = CGSize(width: 420, height: 400)
     }
 

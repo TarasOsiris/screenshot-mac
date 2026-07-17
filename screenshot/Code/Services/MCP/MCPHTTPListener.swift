@@ -2,6 +2,7 @@
 import Foundation
 import MCP
 import Network
+import OSLog
 
 /// Minimal loopback-only HTTP/1.1 front end for `StatelessHTTPServerTransport`:
 /// parses POST requests and feeds them to `handler`, which returns the SDK response.
@@ -65,29 +66,54 @@ actor MCPHTTPListener {
         for await state in states {
             switch state {
             case .ready:
+                AppLogger.mcp.log("Listener ready on port \(self.port)")
                 listener.stateUpdateHandler = { @Sendable _ in }
                 return
             case .failed(let error):
+                AppLogger.mcp.error("Listener failed on port \(self.port): \(String(describing: error), privacy: .public)")
                 listener.cancel()
                 self.listener = nil
                 throw ListenerError.failed(error)
             case .cancelled:
+                AppLogger.mcp.log("Listener cancelled during start on port \(self.port)")
                 self.listener = nil
                 throw ListenerError.cancelled
             default:
+                AppLogger.mcp.log("Listener state: \(String(describing: state), privacy: .public)")
                 continue
             }
         }
         throw ListenerError.cancelled
     }
 
-    func stop() {
-        listener?.cancel()
-        listener = nil
+    func stop() async {
         for connection in connections.values {
             connection.cancel()
         }
         connections.removeAll()
+        guard let listener else { return }
+        self.listener = nil
+        // cancel() releases the socket asynchronously — wait for the terminal state, or an immediate
+        // restart binds the same port while it's still held and fails with EADDRINUSE. The wait is
+        // bounded: if the listener was already terminal, cancel() delivers no new state, and an
+        // unbounded wait would wedge the MCP lifecycle chain (pinning the Settings toggle spinner).
+        let states = AsyncStream<NWListener.State> { continuation in
+            listener.stateUpdateHandler = { @Sendable state in
+                switch state {
+                case .cancelled, .failed: continuation.finish()
+                default: break
+                }
+            }
+            let timeout = Task {
+                try? await Task.sleep(for: .seconds(2))
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in timeout.cancel() }
+        }
+        listener.cancel()
+        for await _ in states {}
+        listener.stateUpdateHandler = { @Sendable _ in }
+        AppLogger.mcp.log("Listener cancelled, port \(self.port) released")
     }
 
     private func accept(_ connection: NWConnection) {

@@ -5912,6 +5912,9 @@
         }
       }
     },
+    "Access Token" : {
+
+    },
     "Actions" : {
       "localizations" : {
         "de" : {
@@ -7316,6 +7319,12 @@
           }
         }
       }
+    },
+    "Add this server to any MCP client using the URL and access token, or paste the JSON configuration. Keep the token private — anyone with it can control the app while the server is running." : {
+
+    },
+    "Add this server to any MCP client using the URL, or paste the JSON configuration, then restart the client." : {
+
     },
     "Add to your photo library" : {
 
@@ -10052,6 +10061,9 @@
           }
         }
       }
+    },
+    "Automation" : {
+
     },
     "Available after setup is complete" : {
       "extractionState" : "stale",
@@ -14307,7 +14319,6 @@
       }
     },
     "Connection" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -14537,6 +14548,9 @@
         }
       }
     },
+    "Copy access token" : {
+
+    },
     "Copy AI Localization Prompt" : {
       "localizations" : {
         "de" : {
@@ -14582,6 +14596,9 @@
           }
         }
       }
+    },
+    "Copy Configuration (JSON)" : {
+
     },
     "Copy Details" : {
       "localizations" : {
@@ -14757,6 +14774,9 @@
       }
     },
     "Copy selected shapes, or focused text" : {
+
+    },
+    "Copy server URL" : {
 
     },
     "Copy Text Style" : {
@@ -21360,6 +21380,9 @@
           }
         }
       }
+    },
+    "Enable MCP server" : {
+
     },
     "Enable outline" : {
       "localizations" : {
@@ -33209,6 +33232,9 @@
         }
       }
     },
+    "Not running" : {
+
+    },
     "Not tested yet" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -38720,6 +38746,9 @@
         }
       }
     },
+    "Regenerate Access Token" : {
+
+    },
     "Regenerate All Previews" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -42423,6 +42452,12 @@
         }
       }
     },
+    "Running" : {
+
+    },
+    "Runs a local server on 127.0.0.1 so AI agents and MCP clients (like Claude Code) can create and edit projects, translate text, and export screenshots on your behalf." : {
+
+    },
     "Same as base language" : {
       "localizations" : {
         "de" : {
@@ -43307,6 +43342,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Screenshot Bro 会记住您导出到的最后一个文件夹（安全范围的书签）。"
+          }
+        }
+      }
+    },
+    "Screenshot Bro Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Einstellungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes de Screenshot Bro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Paramètres"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro 設定"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro 설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro Configurações"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot Bro 设置"
           }
         }
       }
@@ -44526,6 +44607,9 @@
     "Sent to Google Play. Review and publish from the Play Console (changes won't go live until you publish)." : {
 
     },
+    "Server URL" : {
+
+    },
     "Service account" : {
 
     },
@@ -44878,6 +44962,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置和默认值"
+          }
+        }
+      }
+    },
+    "Settings…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paramètres…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurações…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置..."
           }
         }
       }
@@ -46666,6 +46796,9 @@
         }
       }
     },
+    "Starting…" : {
+
+    },
     "Status" : {
       "localizations" : {
         "de" : {
@@ -46799,6 +46932,9 @@
       }
     },
     "Stop Reusing Translation" : {
+
+    },
+    "Stopping…" : {
 
     },
     "Storage" : {
