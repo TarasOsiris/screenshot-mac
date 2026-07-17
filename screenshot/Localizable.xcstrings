@@ -7320,12 +7320,6 @@
         }
       }
     },
-    "Add this server to any MCP client using the URL and access token, or paste the JSON configuration. Keep the token private — anyone with it can control the app while the server is running." : {
-
-    },
-    "Add this server to any MCP client using the URL, or paste the JSON configuration, then restart the client." : {
-
-    },
     "Add to your photo library" : {
 
     },
@@ -14551,6 +14545,9 @@
     "Copy access token" : {
 
     },
+    "Copy Agent Prompt" : {
+
+    },
     "Copy AI Localization Prompt" : {
       "localizations" : {
         "de" : {
@@ -20742,6 +20739,12 @@
           }
         }
       }
+    },
+    "Easiest: paste the agent prompt into your AI assistant and let it connect. Or add the server by hand with the URL and access token, or the JSON configuration. Keep the token private — anyone with it can control the app while the server is running." : {
+
+    },
+    "Easiest: paste the agent prompt into your AI assistant and let it connect. Or add the server by hand with the URL or the JSON configuration, then restart the client." : {
+
     },
     "Edit" : {
       "localizations" : {
@@ -41204,6 +41207,9 @@
         }
       }
     },
+    "Restarting…" : {
+
+    },
     "Restore failed: %@" : {
       "localizations" : {
         "de" : {
@@ -54829,6 +54835,9 @@
           }
         }
       }
+    },
+    "Working…" : {
+
     },
     "X" : {
       "localizations" : {

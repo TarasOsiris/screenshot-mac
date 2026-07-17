@@ -53,7 +53,9 @@ enum HelpSection: String, CaseIterable, Identifiable, Hashable {
     case importing
     case exporting
     case appStoreConnect
+    case googlePlay
     case iCloud
+    case automation
     case settings
     case proFeatures
     case shortcuts
@@ -76,7 +78,9 @@ enum HelpSection: String, CaseIterable, Identifiable, Hashable {
         case .importing: "Importing"
         case .exporting: "Exporting"
         case .appStoreConnect: "App Store Connect"
+        case .googlePlay: "Google Play"
         case .iCloud: "iCloud Sync"
+        case .automation: "Automation & MCP"
         case .settings: "Settings & Defaults"
         case .proFeatures: "Free vs Pro"
         case .shortcuts: "Keyboard Shortcuts"
@@ -99,7 +103,9 @@ enum HelpSection: String, CaseIterable, Identifiable, Hashable {
         case .importing: "square.and.arrow.down"
         case .exporting: "square.and.arrow.up"
         case .appStoreConnect: "arrow.up.circle"
+        case .googlePlay: "play.rectangle.on.rectangle"
         case .iCloud: "icloud"
+        case .automation: "terminal"
         case .settings: "gear"
         case .proFeatures: "star"
         case .shortcuts: "keyboard"
@@ -271,7 +277,9 @@ extension HelpSection {
         case .importing: importingEntry
         case .exporting: exportingEntry
         case .appStoreConnect: appStoreConnectEntry
+        case .googlePlay: googlePlayEntry
         case .iCloud: iCloudEntry
+        case .automation: automationEntry
         case .settings: settingsEntry
         case .proFeatures: proFeaturesEntry
         case .tips: tipsEntry
@@ -559,7 +567,7 @@ extension HelpSection {
             blocks: [
                 .heading("Quick export"),
                 .bullet("Click **Export** in the toolbar, or press **⌘E**, to render the current project to the remembered export folder. If no folder is set, Screenshot Bro asks you to choose one."),
-                .bullet("Use the export menu for **Export All Screenshots to Folder…**, row exports, showcase exports, per-language exports, and App Store Connect upload."),
+                .bullet("Use the export menu for **Export All Screenshots to Folder…**, row exports, showcase exports, per-language exports, and direct upload to **App Store Connect** or **Google Play**."),
                 .bullet("File names are zero-padded (`01_…`, `02_…`) so they sort correctly when uploaded."),
                 .heading("Format and naming"),
                 .bullet("**Settings ▸ Export ▸ Format**: PNG or JPEG. PNG is recommended for marketing screenshots."),
@@ -600,6 +608,28 @@ extension HelpSection {
         )
     }
 
+    private var googlePlayEntry: HelpEntry {
+        HelpEntry(
+            title: "Google Play",
+            subtitle: "Upload store listing screenshots to Google Play.",
+            blocks: [
+                .paragraph("Connect a Google Play service account once and Screenshot Bro can upload exported screenshots to your app's store listing without leaving the app."),
+                .heading("Set up a service account"),
+                .bullet("In the **Google Cloud console**, create a service account and enable the **Google Play Android Developer API**."),
+                .bullet("Create a **JSON key** for that service account and download it — this is the file Screenshot Bro imports."),
+                .bullet("In the **Play Console ▸ Users and permissions**, invite the service account's email and grant it access to edit your app's store listing."),
+                .bullet("In Screenshot Bro: **Settings ▸ Google Play**, click **Import .json File…**, then run **Test Connection**. The key is stored in your Mac's Keychain."),
+                .heading("Uploading"),
+                .bullet("Choose **Upload to Google Play…** from the export menu. Screenshot Bro renders the selected screenshots directly from the project."),
+                .bullet("Pick the app, then review which screenshots go to which language before confirming. The upload is staged as a Play **edit** and committed when you confirm."),
+                .heading("Demo mode"),
+                .bullet("**Settings ▸ Google Play ▸ Demo mode** runs a simulated upload — no service account required and nothing is ever sent to Google Play."),
+                .bullet("Use it to walk through the whole upload flow before you have credentials set up. While demo mode is on, the imported service account is ignored."),
+                .tip("Google Play enforces stricter screenshot aspect-ratio and dimension limits than the App Store. The default 1242×2688 iPhone size is too tall for Play — if an upload is rejected, switch the row to a screenshot-size preset Play accepts."),
+            ]
+        )
+    }
+
     private var iCloudEntry: HelpEntry {
         HelpEntry(
             title: "iCloud Sync",
@@ -618,6 +648,35 @@ extension HelpSection {
                 .bullet("The Projects screen shows sync progress while iCloud is uploading or downloading."),
                 .bullet("Behind the scenes, an `NSMetadataQuery` watches each project for upload/download progress."),
                 .tip("If sync seems stuck, open Finder ▸ iCloud Drive ▸ Screenshot Bro and check whether files are still uploading. Toggling iCloud off and on again forces a re-scan."),
+            ]
+        )
+    }
+
+    private var automationEntry: HelpEntry {
+        HelpEntry(
+            title: "Automation & MCP",
+            subtitle: "Let an AI assistant build screenshots for you.",
+            blocks: [
+                .paragraph("Screenshot Bro can host a local **MCP server** — a small server running only on your Mac that AI assistants and MCP clients (such as Claude Code, Claude Desktop, or Cursor) connect to. Once connected, the assistant can create and edit projects, arrange shapes, translate text, and export screenshots on your behalf, driving the app while you watch."),
+                .heading("Turning it on"),
+                .bullet("**Settings ▸ Automation ▸ Enable MCP server.** It's off by default."),
+                .bullet("The server runs on `127.0.0.1` (loopback only) — it is not reachable from other computers or the internet."),
+                .bullet("Once enabled it stays on and starts automatically the next time you launch. The app has to be running for a client to connect."),
+                .heading("Connecting an assistant"),
+                .bullet("The easiest way: click **Copy Agent Prompt** and paste it into your AI assistant. It contains everything the assistant needs to add the server itself, then reconnect."),
+                .bullet("Prefer to configure by hand? Use **Copy Configuration (JSON)** for a standard `mcpServers` entry, or copy the **Server URL** and **Access Token** individually and add them in your client."),
+                .bullet("The **Status** row shows whether the server is running and on which port."),
+                .heading("What the assistant can do"),
+                .bullet("Create projects (including from bundled templates), rename, delete, and switch between them."),
+                .bullet("Add, edit, move, and remove rows, template columns, and shapes."),
+                .bullet("Import screenshots into device frames, add and translate languages, and set per-language text."),
+                .bullet("**Render a preview** so it can actually see the current canvas, and **export** the finished screenshots."),
+                .bullet("Everything goes through the same actions you use by hand — so the assistant's changes are undoable with **⌘Z** and autosaved like any other edit."),
+                .heading("Security & the access token"),
+                .bullet("The server requires an **access token**: every request must present it, so another app on your Mac can't quietly drive Screenshot Bro."),
+                .bullet("Keep the token private — anyone who has it can control the app while the server is running."),
+                .bullet("**Regenerate Access Token** issues a fresh token and restarts the server; any client using the old token must be updated."),
+                .tip("If the server can't start because the port is already in use, change the port and reconnect. Turning the server off releases the port immediately."),
             ]
         )
     }
@@ -645,6 +704,10 @@ extension HelpSection {
                 .bullet("**Export folder** — choose or clear the folder Screenshot Bro reuses for **⌘E**."),
                 .heading("App Store Connect"),
                 .bullet("API key, Issuer ID, Key ID. See the App Store Connect topic."),
+                .heading("Google Play"),
+                .bullet("Import a service account JSON key, test the connection, and toggle demo mode. See the Google Play topic."),
+                .heading("Automation"),
+                .bullet("Enable the local MCP server and copy the agent prompt, connection JSON, or access token. See the Automation & MCP topic."),
                 .heading("Purchase"),
                 .bullet("Current plan, restore purchases, manage subscription."),
                 .heading("Attributions"),
