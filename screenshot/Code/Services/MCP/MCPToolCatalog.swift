@@ -25,6 +25,8 @@ enum MCPToolName: String, CaseIterable {
     case setTranslation = "set_translation"
     case exportProject = "export_project"
     case renderPreview = "render_preview"
+    case getAppStoreMetadata = "get_app_store_metadata"
+    case updateAppStoreDescription = "update_app_store_description"
 }
 
 nonisolated enum MCPToolCatalog {
@@ -270,6 +272,29 @@ nonisolated enum MCPToolCatalog {
                 "locale": MCPSchema.string("Locale to render (default: active locale)"),
                 "max_dimension": MCPSchema.integer("Longest output side in pixels, 100-1200 (default 700)"),
             ], required: ["row_id"])
+        ),
+        Tool(
+            name: MCPToolName.getAppStoreMetadata.rawValue,
+            description: "Read App Store Connect listing metadata for the active project's linked app: every App Store version (one per platform, e.g. iOS and macOS) with its per-locale current descriptions. Call this first to discover the exact App Store locale codes (e.g. en-US, fr-FR, de-DE, pt-BR, zh-Hans) to translate a new description into, then pass those same codes to update_app_store_description.",
+            inputSchema: MCPSchema.object([
+                "app_id": MCPSchema.string("App Store Connect app id (default: the active project's linked app)"),
+                "version_id": MCPSchema.string("Limit to a single App Store version id (default: all versions)"),
+            ])
+        ),
+        Tool(
+            name: MCPToolName.updateAppStoreDescription.rawValue,
+            description: "Update the App Store 'description' text for one or more locales on App Store Connect. Supply already-translated descriptions per locale — this tool does not translate, it only applies what you give it. By default it updates every editable App Store version (all platforms); only locales that already exist on a version are updated, the rest are reported as skipped. Discover valid locale codes with get_app_store_metadata first.",
+            inputSchema: MCPSchema.object([
+                "descriptions": MCPSchema.array(
+                    of: MCPSchema.object([
+                        "locale": MCPSchema.string("App Store locale code, e.g. en-US, fr-FR, de-DE"),
+                        "description": MCPSchema.string("Full localized description (App Store limit 4000 characters)"),
+                    ], required: ["locale", "description"]),
+                    "Per-locale descriptions to apply — include the base locale too"
+                ),
+                "app_id": MCPSchema.string("App Store Connect app id (default: the active project's linked app)"),
+                "version_id": MCPSchema.string("Update only this App Store version id (default: every editable version)"),
+            ], required: ["descriptions"])
         ),
     ]
 }

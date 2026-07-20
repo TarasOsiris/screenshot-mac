@@ -503,4 +503,74 @@ struct MCPToolExecutorTests {
         }
         try? FileManager.default.removeItem(atPath: payload.folder)
     }
+
+    // MARK: - App Store Connect metadata
+
+    @Test func appStoreDescriptionRoundTripInDemoMode() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        let credentials = AppStoreConnectCredentialsStore.shared
+        let originalDemoMode = credentials.isDemoMode
+        credentials.isDemoMode = true
+        defer { credentials.isDemoMode = originalDemoMode }
+
+        // One editable iOS version with en-US + fr-FR localizations.
+        AppStoreConnectDemoData.shared.updateContext(localeCodes: ["fr-FR"], rowSizes: [])
+
+        let projectId = try #require(state.activeProject?.id)
+        state.setASCAppId("demo-app-1", forProject: projectId)
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        let metaResult = await executor.call(name: "get_app_store_metadata", arguments: [:])
+        expectSuccess(metaResult)
+        guard case .text(let metaJson, _, _) = metaResult.content.first else {
+            Issue.record("expected text content")
+            return
+        }
+        struct Meta: Decodable {
+            struct Version: Decodable {
+                let versionId: String
+                let editable: Bool
+                let locales: [Locale]
+                struct Locale: Decodable { let locale: String }
+            }
+            let appId: String
+            let versions: [Version]
+        }
+        let meta = try decoder.decode(Meta.self, from: Data(metaJson.utf8))
+        #expect(meta.appId == "demo-app-1")
+        let discovered = try #require(meta.versions.first)
+        #expect(discovered.editable)
+        #expect(Set(discovered.locales.map(\.locale)) == ["en-US", "fr-FR"])
+
+        let descriptions: Value = .array([
+            .object(["locale": "en-US", "description": "Fresh English description."]),
+            .object(["locale": "fr-FR", "description": "Nouvelle description française."]),
+            .object(["locale": "zz-ZZ", "description": "Unmatched locale."]),
+        ])
+        let updateResult = await executor.call(
+            name: "update_app_store_description",
+            arguments: ["descriptions": descriptions]
+        )
+        expectSuccess(updateResult)
+        guard case .text(let updateJson, _, _) = updateResult.content.first else {
+            Issue.record("expected text content")
+            return
+        }
+        struct UpdateResult: Decodable {
+            struct VersionResult: Decodable {
+                let updated: [String]
+                let skipped: [Skip]
+                struct Skip: Decodable { let locale: String; let reason: String }
+            }
+            let results: [VersionResult]
+        }
+        let update = try decoder.decode(UpdateResult.self, from: Data(updateJson.utf8))
+        let versionResult = try #require(update.results.first)
+        #expect(Set(versionResult.updated) == ["en-US", "fr-FR"])
+        #expect(versionResult.skipped.map(\.locale) == ["zz-ZZ"])
+    }
 }

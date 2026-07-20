@@ -51,6 +51,8 @@ final class MCPToolExecutor {
         case .setTranslation: try setTranslation(args)
         case .exportProject: try await exportProject(args)
         case .renderPreview: try renderPreview(args)
+        case .getAppStoreMetadata: try await getAppStoreMetadata(args)
+        case .updateAppStoreDescription: try await updateAppStoreDescription(args)
         }
     }
 
