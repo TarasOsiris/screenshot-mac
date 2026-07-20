@@ -4,6 +4,17 @@ import UniformTypeIdentifiers
 // Settings UI lives in a plain Window scene (the Settings scene is non-resizable on
 // macOS 26); an iPad settings surface is a follow-up.
 #if os(macOS)
+// Lets callers request a specific tab when opening the settings window (e.g. the
+// missing-API-key prompts). The plain Window scene can't carry a value, so this
+// singleton bridges the request to the already-mounted SettingsView.
+@MainActor
+@Observable
+final class SettingsWindowNavigation {
+    static let shared = SettingsWindowNavigation()
+    var requestedSection: SettingsView.SettingsSection?
+    private init() {}
+}
+
 struct SettingsView: View {
     static let windowID = "settings"
 
@@ -92,6 +103,16 @@ struct SettingsView: View {
             maxHeight: .infinity
         )
         .background(WindowSceneBridge(role: .settings))
+        .onAppear(perform: applyRequestedSection)
+        .onChange(of: SettingsWindowNavigation.shared.requestedSection) { _, _ in
+            applyRequestedSection()
+        }
+    }
+
+    private func applyRequestedSection() {
+        guard let requested = SettingsWindowNavigation.shared.requestedSection else { return }
+        selection = requested
+        SettingsWindowNavigation.shared.requestedSection = nil
     }
 
     // Keep every pane mounted and toggle visibility rather than switching (which would rebuild the

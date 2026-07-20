@@ -544,11 +544,18 @@ extension UploadToAppStoreConnectView {
 
 #if os(macOS)
 private struct OpenSettingsWindowButton: View {
+    var section: SettingsView.SettingsSection = .appStoreConnect
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Button {
+            SettingsWindowNavigation.shared.requestedSection = section
             openWindow(id: SettingsView.windowID)
+            // openWindow registers the NSWindow on the next runloop; raise it then
+            // so it comes forward even if it was already open behind this sheet.
+            DispatchQueue.main.async {
+                AppWindowManager.shared.raiseSettingsWindow()
+            }
         } label: {
             Label("Open Settings", systemImage: "gearshape")
         }
