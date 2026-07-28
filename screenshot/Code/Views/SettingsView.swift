@@ -373,7 +373,7 @@ struct SettingsView: View {
             Section {
                 TextField("Custom filename suffix", text: $exportCustomSuffix, prompt: Text("optional"))
             } footer: {
-                let suffixPart = ExportService.formattedFileSuffix(exportCustomSuffix)
+                let suffixPart = ExportFileNaming.formattedFileSuffix(exportCustomSuffix)
                 let ext = (ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png).fileExtension
                 Text("Example: 01_Onboarding_en\(suffixPart).\(ext)")
                     .foregroundStyle(.secondary)

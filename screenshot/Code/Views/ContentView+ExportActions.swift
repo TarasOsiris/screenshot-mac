@@ -270,7 +270,7 @@ extension ContentView {
                 exportTask = nil
             }
             do {
-                let destDir = ExportService.uniqueFolder(named: folderName, in: baseURL)
+                let destDir = ExportFileNaming.uniqueFolder(named: folderName, in: baseURL)
                 try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
                 var imageCache: [String: NSImage] = seedCache
                 let fileURLs = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache, render: render)
@@ -445,7 +445,7 @@ extension ContentView {
                 exportTask = nil
             }
             do {
-                let destDir = ExportService.uniqueFolder(named: "showcase", in: baseURL)
+                let destDir = ExportFileNaming.uniqueFolder(named: "showcase", in: baseURL)
                 try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
                 var imageCache: [String: NSImage] = seedCache
                 let fileURLs = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache) { row, images, locale, localeState in

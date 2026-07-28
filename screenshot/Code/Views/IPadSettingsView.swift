@@ -177,7 +177,7 @@ struct IPadSettingsView: View {
         } header: {
             Text("Export")
         } footer: {
-            let suffixPart = ExportService.formattedFileSuffix(exportCustomSuffix)
+            let suffixPart = ExportFileNaming.formattedFileSuffix(exportCustomSuffix)
             let ext = (ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png).fileExtension
             Text("Example: 01_Onboarding_en\(suffixPart).\(ext)")
         }
