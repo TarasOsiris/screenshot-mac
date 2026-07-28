@@ -85,6 +85,11 @@ struct ContentView: View {
     #endif
 
     var body: some View {
+        contentModals(coreContent)
+    }
+
+    /// The editor shell: canvas, inspector, toolbar, and canvas-level change handlers.
+    private var coreContent: some View {
         VStack(spacing: 0) {
             LocaleBar(state: state)
 
@@ -450,6 +455,11 @@ struct ContentView: View {
             }
         }
         #endif
+    }
+
+    /// Sheets, alerts, covers, and window lifecycle attached to the editor shell.
+    private func contentModals(_ base: some View) -> some View {
+        base
         .exportFailedAlert($exportError)
         #if os(iOS)
         .sheet(item: $pendingExport, onDismiss: { discardPendingExport() }) { _ in
