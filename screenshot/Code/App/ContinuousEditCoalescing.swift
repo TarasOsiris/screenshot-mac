@@ -22,11 +22,10 @@ final class DebouncedUndoCoalescer {
     /// True while a burst is captured but not yet registered as an undo step.
     var isActive: Bool { commit != nil }
 
-    /// Start a burst if none is active — `makeCommit` runs once, capturing the base and returning
-    /// the finish action — recording `id` as the active target. Call `arm()` after applying each
-    /// edit to (re)start the debounce timer.
-    func begin(id: UUID?, makeCommit: () -> (() -> Void)) {
-        if commit == nil { commit = makeCommit() }
+    /// Start a burst if none is active — capturing `commit` as the finish action — and record `id`
+    /// as the active target. Call `arm()` after applying each edit to (re)start the debounce timer.
+    func begin(id: UUID?, commit: @escaping () -> Void) {
+        if self.commit == nil { self.commit = commit }
         activeId = id
     }
 
@@ -80,7 +79,6 @@ final class ContinuousApplyThrottle<Payload> {
 
     /// The latest value awaiting a throttled flush, or nil once applied.
     var pendingValue: Payload? { pending }
-    var hasPending: Bool { pending != nil }
 
     /// Apply `value` now if the interval has elapsed since the last apply, otherwise stash it as
     /// the pending value and schedule a flush for the remainder of the interval.

@@ -109,19 +109,15 @@ extension AppState {
             commitAllPendingEdits()
             if isShared {
                 let baseRows = rows
-                baseTextCoalescer.begin(id: nil) {
-                    { [weak self] in
-                        guard let self else { return }
-                        self.registerUndoWithBase("Edit Base Text", base: baseRows, baseLocaleState: self.localeState)
-                    }
+                baseTextCoalescer.begin(id: nil) { [weak self] in
+                    guard let self else { return }
+                    self.registerUndoWithBase("Edit Base Text", base: baseRows, baseLocaleState: self.localeState)
                 }
             } else {
                 let baseRow = rows[loc.rowIndex]
-                baseTextCoalescer.begin(id: shapeId) {
-                    { [weak self] in
-                        guard let self else { return }
-                        self.registerUndoForRowWithBase("Edit Base Text", baseRow: baseRow, baseLocaleState: self.localeState)
-                    }
+                baseTextCoalescer.begin(id: shapeId) { [weak self] in
+                    guard let self else { return }
+                    self.registerUndoForRowWithBase("Edit Base Text", baseRow: baseRow, baseLocaleState: self.localeState)
                 }
             }
         }
@@ -154,11 +150,9 @@ extension AppState {
         if !translationCoalescer.isActive {
             commitAllPendingEdits()
             let baseLocaleState = localeState
-            translationCoalescer.begin(id: nil) {
-                { [weak self] in
-                    guard let self else { return }
-                    self.registerUndoWithBase("Edit Translation", base: self.rows, baseLocaleState: baseLocaleState)
-                }
+            translationCoalescer.begin(id: nil) { [weak self] in
+                guard let self else { return }
+                self.registerUndoWithBase("Edit Translation", base: self.rows, baseLocaleState: baseLocaleState)
             }
         }
 

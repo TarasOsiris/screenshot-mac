@@ -144,31 +144,30 @@ extension AppState {
     /// composes all in-flight changes while the visible write is throttled to ~30fps
     /// (`rowEditThrottle`), so a delayed flush can't replay a stale intermediate value.
     func updateRowContinuous(_ rowId: UUID, actionName: String = "Edit Background", _ mutate: (inout ScreenshotRow) -> Void) {
-        guard rowIndex(for: rowId) != nil else { return }
+        guard var idx = rowIndex(for: rowId) else { return }
 
         if let activeId = rowEditCoalescer.activeId, activeId != rowId {
             finishContinuousRowEditIfNeeded()
         }
         if !rowEditCoalescer.isActive {
             commitAllPendingEdits()
-            guard let idx = rowIndex(for: rowId) else { return }
+            // commitAllPendingEdits settles other bursts; re-resolve the row before capturing the base.
+            guard let startIdx = rowIndex(for: rowId) else { return }
+            idx = startIdx
             let baseRow = rows[idx]
             let baseLocaleState = localeState
-            rowEditCoalescer.begin(id: rowId) {
-                { [weak self] in
-                    guard let self else { return }
-                    self.rowEditThrottle.flush()
-                    self.registerUndoForRowWithBase(self.continuousRowEditActionName, baseRow: baseRow, baseLocaleState: baseLocaleState)
-                    self.rowEditThrottle.reset()
-                    self.continuousRowEditWorkingRow = nil
-                }
+            rowEditCoalescer.begin(id: rowId) { [weak self] in
+                guard let self else { return }
+                self.rowEditThrottle.flush()
+                self.registerUndoForRowWithBase(self.continuousRowEditActionName, baseRow: baseRow, baseLocaleState: baseLocaleState)
+                self.rowEditThrottle.reset()
+                self.continuousRowEditWorkingRow = nil
             }
         }
         // Reflect the latest edit so the coalesced undo entry isn't mislabeled when a
         // burst mixes sources (e.g. row background then per-template override).
         continuousRowEditActionName = actionName
 
-        guard let idx = rowIndex(for: rowId) else { return }
         var workingRow = continuousRowEditWorkingRow ?? rows[idx]
         mutate(&workingRow)
         continuousRowEditWorkingRow = workingRow

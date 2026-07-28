@@ -374,7 +374,6 @@ extension ContentView {
 }
 
 extension View {
-
     /// Label-level counterpart of `iPadToolbarProminentStyle()` for slots that
     /// strip ButtonStyle (e.g. the principal toolbar slot).
     @ViewBuilder

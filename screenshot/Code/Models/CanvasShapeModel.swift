@@ -74,6 +74,9 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         var opacity: Double?
     }
 
+    // Unlike the sibling payloads this can't be a `nonisolated struct`: its ShadowConfig /
+    // DeviceBodyMaterial / DeviceLighting members have main-actor-isolated Equatable. The
+    // nonisolated init lets the `= DevicePayload()` default be built from the off-main Codable path.
     struct DevicePayload: Equatable {
         nonisolated init() {}
         var category: DeviceCategory?

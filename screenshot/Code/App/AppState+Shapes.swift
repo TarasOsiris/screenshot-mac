@@ -87,13 +87,11 @@ extension AppState {
             guard let location = shapeLocation(for: shape.id) else { return }
             let baseRow = rows[location.rowIndex]
             let baseLocaleState = localeState
-            shapeEditCoalescer.begin(id: shape.id) {
-                { [weak self] in
-                    guard let self else { return }
-                    self.shapeEditThrottle.flush()
-                    self.registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: baseLocaleState)
-                    self.shapeEditThrottle.reset()
-                }
+            shapeEditCoalescer.begin(id: shape.id) { [weak self] in
+                guard let self else { return }
+                self.shapeEditThrottle.flush()
+                self.registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: baseLocaleState)
+                self.shapeEditThrottle.reset()
             }
         }
 
@@ -104,10 +102,6 @@ extension AppState {
     /// Commits a pending continuous shape edit as one undo step. No-op when none is captured.
     func finishContinuousEditIfNeeded() {
         shapeEditCoalescer.finish()
-    }
-
-    func flushPendingContinuousEdit() {
-        shapeEditThrottle.flush()
     }
 
     func applyContinuousEdit(_ shape: CanvasShapeModel) {
@@ -379,11 +373,9 @@ extension AppState {
         if !nudgeCoalescer.isActive {
             commitAllPendingEdits()
             let baseRow = rows[rowIdx]
-            nudgeCoalescer.begin(id: rows[rowIdx].id) {
-                { [weak self] in
-                    guard let self else { return }
-                    self.registerUndoForRowWithBase(self.nudgeActionName, baseRow: baseRow)
-                }
+            nudgeCoalescer.begin(id: rows[rowIdx].id) { [weak self] in
+                guard let self else { return }
+                self.registerUndoForRowWithBase(self.nudgeActionName, baseRow: baseRow)
             }
         }
         nudgeActionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
