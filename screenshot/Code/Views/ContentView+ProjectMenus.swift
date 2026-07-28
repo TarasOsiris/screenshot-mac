@@ -374,18 +374,6 @@ extension ContentView {
 }
 
 extension View {
-    @ViewBuilder
-    func iPadToolbarProminentStyle() -> some View {
-        #if os(iOS)
-        if #available(iOS 26.0, *) {
-            buttonStyle(.glassProminent)
-        } else {
-            buttonStyle(.borderedProminent)
-        }
-        #else
-        self
-        #endif
-    }
 
     /// Label-level counterpart of `iPadToolbarProminentStyle()` for slots that
     /// strip ButtonStyle (e.g. the principal toolbar slot).

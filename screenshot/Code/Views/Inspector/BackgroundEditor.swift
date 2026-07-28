@@ -513,39 +513,3 @@ struct BackgroundImageEditor: View {
     }
 }
 
-private extension View {
-    /// Segmented pickers use the dense `.mini` size on macOS but a tappable `.regular` on iPad.
-    @ViewBuilder
-    func iPadTappableSegmentedControl() -> some View {
-        #if os(macOS)
-        controlSize(.mini)
-        #else
-        controlSize(.regular)
-            .frame(minHeight: UIMetrics.GradientEditor.iconTapTarget)
-            .clipShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section))
-            .contentShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.section))
-        #endif
-    }
-
-    /// Pads a text-only button up to the 40pt touch-target floor on iPad; no-op on macOS.
-    @ViewBuilder
-    func iPadResetTapTarget() -> some View {
-        #if os(macOS)
-        self
-        #else
-        padding(.horizontal, 10)
-            .frame(minHeight: 40)
-            .contentShape(Rectangle())
-        #endif
-    }
-
-    /// Enlarges the inline ColorPicker to the iPad touch target; macOS keeps the native well size.
-    @ViewBuilder
-    func iPadColorSwatchFrame() -> some View {
-        #if os(macOS)
-        self
-        #else
-        frame(width: UIMetrics.ColorSwatch.inline, height: UIMetrics.ColorSwatch.inline)
-        #endif
-    }
-}
