@@ -178,8 +178,8 @@ final class AppState {
 
     // ~30fps apply throttles for the two continuous (slider/drag) paths: the coalescers above own
     // the single debounced undo step; these own how often the model is actually written mid-burst.
-    @ObservationIgnored let shapeEditThrottle = ContinuousApplyThrottle<CanvasShapeModel>(interval: AppState.continuousEditInterval)
-    @ObservationIgnored let rowEditThrottle = ContinuousApplyThrottle<ScreenshotRow>(interval: AppState.continuousEditInterval)
+    @ObservationIgnored let shapeEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
+    @ObservationIgnored let rowEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
 
     @ObservationIgnored var nudgeActionName: String = "Move Shape"
     @ObservationIgnored var continuousRowEditActionName: String = "Edit Background"
@@ -192,8 +192,6 @@ final class AppState {
 
     /// The shape targeted by an in-flight continuous edit (nil when idle).
     var continuousEditShapeId: UUID? { shapeEditCoalescer.activeId }
-    /// The latest shape value awaiting a throttled apply (nil once applied/idle).
-    var continuousEditPending: CanvasShapeModel? { shapeEditThrottle.pendingValue }
     /// The row targeted by an in-flight continuous row edit (nil when idle).
     var continuousRowEditId: UUID? { rowEditCoalescer.activeId }
 
@@ -237,8 +235,6 @@ final class AppState {
     }
 
     init() {
-        shapeEditThrottle.apply = { [weak self] in self?.applyContinuousEdit($0) }
-        rowEditThrottle.apply = { [weak self] in self?.applyContinuousRowValue($0) }
         coach.app = self
 
         let lastZoom = UserDefaults.standard.double(forKey: "lastZoomLevel")

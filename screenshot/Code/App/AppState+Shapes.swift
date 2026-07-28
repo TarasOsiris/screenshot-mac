@@ -95,7 +95,7 @@ extension AppState {
             }
         }
 
-        shapeEditThrottle.submit(shape)
+        shapeEditThrottle.submit { [weak self] in self?.applyContinuousEdit(shape) }
         shapeEditCoalescer.arm()
     }
 

@@ -64,34 +64,32 @@ final class DebouncedUndoCoalescer {
 /// per `interval`, with the latest value flushed when the interval elapses. This keeps expensive
 /// re-renders off every slider/drag tick while never dropping the final value.
 ///
-/// The apply action is set once (in `AppState.init`, where `self` is available) rather than at
-/// construction, so the throttle can be a stored `let`.
+/// Callers pass the write as a closure (`submit { … }`) that captures the latest value, so the
+/// throttle stays value-type-agnostic — no generic parameter, no `apply` to wire up post-init.
 @MainActor
-final class ContinuousApplyThrottle<Payload> {
+final class ContinuousApplyThrottle {
     let interval: CFAbsoluteTime
-    /// Writes `Payload` into the document. Set once after construction.
-    var apply: ((Payload) -> Void)?
     private(set) var lastApply: CFAbsoluteTime = 0
     private var flushTask: DispatchWorkItem?
-    private var pending: Payload?
+    private var pendingApply: (() -> Void)?
 
     init(interval: CFAbsoluteTime) { self.interval = interval }
 
-    /// The latest value awaiting a throttled flush, or nil once applied.
-    var pendingValue: Payload? { pending }
+    /// True while a write is stashed awaiting a throttled flush.
+    var hasPending: Bool { pendingApply != nil }
 
-    /// Apply `value` now if the interval has elapsed since the last apply, otherwise stash it as
-    /// the pending value and schedule a flush for the remainder of the interval.
-    func submit(_ value: Payload) {
+    /// Run `apply` now if the interval has elapsed since the last write, otherwise stash it as the
+    /// pending write (replacing any earlier one) and schedule a flush for the remainder of the interval.
+    func submit(_ apply: @escaping () -> Void) {
         let now = CFAbsoluteTimeGetCurrent()
         if now - lastApply >= interval {
-            apply?(value)
-            pending = nil
+            apply()
+            pendingApply = nil
             lastApply = now
             flushTask?.cancel()
             flushTask = nil
         } else {
-            pending = value
+            pendingApply = apply
             if flushTask == nil {
                 let task = DispatchWorkItem { [weak self] in self?.flush() }
                 flushTask = task
@@ -100,13 +98,13 @@ final class ContinuousApplyThrottle<Payload> {
         }
     }
 
-    /// Apply the pending value immediately, if any.
+    /// Run the pending write immediately, if any.
     func flush() {
         flushTask?.cancel()
         flushTask = nil
-        guard let value = pending else { return }
-        apply?(value)
-        pending = nil
+        guard let apply = pendingApply else { return }
+        apply()
+        pendingApply = nil
         lastApply = CFAbsoluteTimeGetCurrent()
     }
 
@@ -114,7 +112,7 @@ final class ContinuousApplyThrottle<Payload> {
     func reset() {
         flushTask?.cancel()
         flushTask = nil
-        pending = nil
+        pendingApply = nil
         lastApply = 0
     }
 

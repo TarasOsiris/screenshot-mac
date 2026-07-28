@@ -1269,7 +1269,7 @@ struct AppStateTests {
         let updated = try #require(state.rows.first?.shapes.first(where: { $0.id == shape.id }))
         #expect(updated.borderRadius == 120)
         #expect(updated.opacity == 0.35)
-        #expect(state.continuousEditPending == nil)
+        #expect(!state.shapeEditThrottle.hasPending)
         #expect(state.continuousEditShapeId == nil)
     }
 
@@ -1298,7 +1298,7 @@ struct AppStateTests {
         let updatedRect = try #require(state.rows[0].shapes.first(where: { $0.id == rect.id }))
         #expect(updatedRect.borderRadius == 90)
         #expect(state.selectedShapeId == text.id)
-        #expect(state.continuousEditPending == nil)
+        #expect(!state.shapeEditThrottle.hasPending)
         #expect(state.continuousEditShapeId == nil)
     }
 

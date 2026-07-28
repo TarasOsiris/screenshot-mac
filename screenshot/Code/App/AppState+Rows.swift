@@ -172,7 +172,7 @@ extension AppState {
         mutate(&workingRow)
         continuousRowEditWorkingRow = workingRow
 
-        rowEditThrottle.submit(workingRow)
+        rowEditThrottle.submit { [weak self] in self?.applyContinuousRowValue(workingRow) }
         rowEditCoalescer.arm()
     }
 
