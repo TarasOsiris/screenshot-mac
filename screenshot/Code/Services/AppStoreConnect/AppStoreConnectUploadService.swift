@@ -69,12 +69,6 @@ struct ASCUploadTarget: Identifiable {
     let templateCount: Int
 }
 
-struct ASCUploadProgress {
-    var totalSteps: Int
-    var completedSteps: Int
-    var currentLabel: String
-}
-
 struct ASCUploadFailureContext {
     let operation: String
     let versionLabel: String
@@ -213,7 +207,7 @@ final class AppStoreConnectUploadService {
     func upload(
         targets: [ASCUploadTarget],
         appState: AppState,
-        progress: @escaping (ASCUploadProgress) -> Void
+        progress: @escaping (UploadProgress) -> Void
     ) async throws {
         guard !targets.isEmpty else { throw AppStoreConnectUploadError.noRowsSelected }
 
@@ -227,7 +221,7 @@ final class AppStoreConnectUploadService {
         var imageCache: [String: NSImage] = [:]
 
         func emit(_ label: String) {
-            progress(ASCUploadProgress(totalSteps: totalSteps, completedSteps: completedSteps, currentLabel: label))
+            progress(UploadProgress(totalSteps: totalSteps, completedSteps: completedSteps, currentLabel: label))
         }
 
         emit("Starting…")

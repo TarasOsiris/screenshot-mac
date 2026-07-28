@@ -7,62 +7,11 @@ enum ASCUploadLimits {
     static let maxScreenshotsPerSet = 10
 }
 
-struct ASCUploadIssue: Identifiable {
-    enum Severity {
-        case error, warning
-
-        var tint: Color { self == .error ? .red : .orange }
-    }
-    let severity: Severity
-    let scope: String?
-    let message: String
-    let hint: String?
-    let demoDowngradable: Bool
-
-    // Stable identity so ForEach does not re-diff the whole panel every render.
-    var id: String { "\(severity)|\(scope ?? "")|\(message)" }
-
-    init(
-        severity: Severity,
-        scope: String? = nil,
-        message: String,
-        hint: String? = nil,
-        demoDowngradable: Bool = false
-    ) {
-        self.severity = severity
-        self.scope = scope
-        self.message = message
-        self.hint = hint
-        self.demoDowngradable = demoDowngradable
-    }
-
-    func with(severity: Severity) -> ASCUploadIssue {
-        ASCUploadIssue(
-            severity: severity,
-            scope: scope,
-            message: message,
-            hint: hint,
-            demoDowngradable: demoDowngradable
-        )
-    }
-
-    func scoped(to destination: String) -> ASCUploadIssue {
-        let combinedScope = scope.map { "\(destination) · \($0)" } ?? destination
-        return ASCUploadIssue(
-            severity: severity,
-            scope: combinedScope,
-            message: message,
-            hint: hint,
-            demoDowngradable: demoDowngradable
-        )
-    }
-}
-
 enum ASCUploadValidator {
-    static func validate(destinations: [UploadToAppStoreConnectView.DestinationPlan]) -> [ASCUploadIssue] {
+    static func validate(destinations: [UploadToAppStoreConnectView.DestinationPlan]) -> [UploadIssue] {
         if destinations.isEmpty {
             return [
-                ASCUploadIssue(
+                UploadIssue(
                     severity: .error,
                     message: "Select at least one editable version."
                 )
@@ -79,11 +28,11 @@ enum ASCUploadValidator {
     static func validate(
         version: ASCAppStoreVersion,
         plans: [UploadToAppStoreConnectView.RowPlan]
-    ) -> [ASCUploadIssue] {
-        var issues: [ASCUploadIssue] = []
+    ) -> [UploadIssue] {
+        var issues: [UploadIssue] = []
 
         if !version.isScreenshotUploadable {
-            issues.append(ASCUploadIssue(
+            issues.append(UploadIssue(
                 severity: .error,
                 message: "Version \(version.attributes.versionString) is \(version.attributes.displayState). Screenshots can only be changed when the version is editable.",
                 hint: "Create a new version in App Store Connect, or wait for this one to return to an editable state."
@@ -91,7 +40,7 @@ enum ASCUploadValidator {
         }
 
         if plans.isEmpty {
-            issues.append(ASCUploadIssue(
+            issues.append(UploadIssue(
                 severity: .error,
                 message: "This project has no rows to upload.",
                 hint: "Add a row in the editor before running the upload."
@@ -101,7 +50,7 @@ enum ASCUploadValidator {
 
         let enabledPlans = plans.filter { $0.isEnabled }
         if enabledPlans.isEmpty {
-            issues.append(ASCUploadIssue(
+            issues.append(UploadIssue(
                 severity: .error,
                 message: "Enable at least one row to upload."
             ))
@@ -115,7 +64,7 @@ enum ASCUploadValidator {
             let sizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
 
             guard let displayType = plan.selectedDisplayType else {
-                issues.append(ASCUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "Pick a display type for this row (\(sizeLabel)).",
@@ -129,7 +78,7 @@ enum ASCUploadValidator {
                 let accepted = displayType.acceptedPortraitSizes
                     .map { "\($0.0)×\($0.1)" }
                     .joined(separator: ", ")
-                issues.append(ASCUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "Row size \(sizeLabel) isn't accepted by App Store Connect for \(displayType.label).",
@@ -142,7 +91,7 @@ enum ASCUploadValidator {
 
             if let platform = version.attributes.ascPlatform,
                !displayType.accepts(platform: platform) {
-                issues.append(ASCUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "\(displayType.label) can't be uploaded to a \(platform.displayName) version.",
@@ -152,7 +101,7 @@ enum ASCUploadValidator {
             }
 
             if plan.templateCount < ASCUploadLimits.minScreenshotsPerSet {
-                issues.append(ASCUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "App Store Connect requires at least \(ASCUploadLimits.minScreenshotsPerSet) screenshots per display type; this row has \(plan.templateCount).",
@@ -161,7 +110,7 @@ enum ASCUploadValidator {
                 ))
             }
             if plan.templateCount > ASCUploadLimits.maxScreenshotsPerSet {
-                issues.append(ASCUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "App Store Connect allows at most \(ASCUploadLimits.maxScreenshotsPerSet) screenshots per display type; this row has \(plan.templateCount).",
@@ -172,7 +121,7 @@ enum ASCUploadValidator {
 
             let activeLocaleCount = plan.localeTargets.filter { $0.isEnabled && !$0.selectedASCLocalizationIds.isEmpty }.count
             if activeLocaleCount == 0 {
-                issues.append(ASCUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "Pick at least one App Store locale to upload to.",
@@ -188,7 +137,7 @@ enum ASCUploadValidator {
                     if let existingRowName = seenAppStoreConnectTargets[uploadTargetKey] {
                         // One error per colliding partner row, not per shared locale.
                         if reportedCollisionPartners.insert(existingRowName).inserted {
-                            issues.append(ASCUploadIssue(
+                            issues.append(UploadIssue(
                                 severity: .error,
                                 scope: rowName,
                                 message: "This row uploads to the same App Store screenshot set as \(existingRowName).",
@@ -204,7 +153,7 @@ enum ASCUploadValidator {
 
             let missingSelection = plan.localeTargets.filter { $0.isEnabled && !$0.candidates.isEmpty && $0.selectedASCLocalizationIds.isEmpty }
             for target in missingSelection {
-                issues.append(ASCUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "Choose the App Store locale for \(target.appLocaleLabel).",
@@ -215,7 +164,7 @@ enum ASCUploadValidator {
 
             let unmatched = plan.localeTargets.filter { $0.isEnabled && $0.candidates.isEmpty }
             for target in unmatched {
-                issues.append(ASCUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "No App Store locale matches \(target.appLocaleLabel) on this version.",
@@ -229,6 +178,3 @@ enum ASCUploadValidator {
     }
 }
 
-extension Array where Element == ASCUploadIssue {
-    var hasErrors: Bool { contains { $0.severity == .error } }
-}

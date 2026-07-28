@@ -7,7 +7,7 @@ struct ASCUploadSummaryPanel: View {
     let versionCount: Int
     let localeCount: Int
     let screenshotCount: Int
-    let issues: [ASCUploadIssue]
+    let issues: [UploadIssue]
     @Binding var isExpanded: Bool
     let isBusy: Bool
     let onRefresh: () -> Void

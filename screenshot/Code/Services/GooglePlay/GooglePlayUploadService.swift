@@ -68,12 +68,6 @@ struct GPUploadTarget: Identifiable {
     let templateCount: Int
 }
 
-struct GPUploadProgress {
-    var totalSteps: Int
-    var completedSteps: Int
-    var currentLabel: String
-}
-
 nonisolated struct GPUploadFailureContext {
     let operation: String
     let rowLabel: String
@@ -190,7 +184,7 @@ final class GooglePlayUploadService {
         targets: [GPUploadTarget],
         sendForReview: Bool,
         appState: AppState,
-        progress: @escaping (GPUploadProgress) -> Void
+        progress: @escaping (UploadProgress) -> Void
     ) async throws -> Bool {
         guard !targets.isEmpty else { throw GooglePlayUploadError.noRowsSelected }
 
@@ -200,7 +194,7 @@ final class GooglePlayUploadService {
         var imageCache: [String: NSImage] = [:]
 
         func emit(_ label: String) {
-            progress(GPUploadProgress(totalSteps: totalSteps, completedSteps: completedSteps, currentLabel: label))
+            progress(UploadProgress(totalSteps: totalSteps, completedSteps: completedSteps, currentLabel: label))
         }
 
         emit("Starting…")

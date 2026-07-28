@@ -1,30 +1,6 @@
 import Foundation
 import SwiftUI
 
-nonisolated struct GPUploadIssue: Identifiable {
-    nonisolated enum Severity {
-        case error, warning
-        var tint: Color { self == .error ? .red : .orange }
-    }
-    let severity: Severity
-    let scope: String?
-    let message: String
-    let hint: String?
-
-    var id: String { "\(severity)|\(scope ?? "")|\(message)" }
-
-    init(severity: Severity, scope: String? = nil, message: String, hint: String? = nil) {
-        self.severity = severity
-        self.scope = scope
-        self.message = message
-        self.hint = hint
-    }
-
-    func with(severity: Severity) -> GPUploadIssue {
-        GPUploadIssue(severity: severity, scope: scope, message: message, hint: hint)
-    }
-}
-
 nonisolated enum GooglePlayUploadValidator {
     /// Pre-flight checks that need no rendering or network. In demo mode the package name is
     /// irrelevant (no traffic) and per-row issues are softened to warnings so the flow stays walkable.
@@ -32,19 +8,19 @@ nonisolated enum GooglePlayUploadValidator {
         packageName: String,
         plans: [UploadToGooglePlayView.GPRowPlan],
         isDemoMode: Bool
-    ) -> [GPUploadIssue] {
-        var issues: [GPUploadIssue] = []
+    ) -> [UploadIssue] {
+        var issues: [UploadIssue] = []
 
         if !isDemoMode {
             let trimmed = packageName.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmed.isEmpty {
-                issues.append(GPUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     message: "Enter the app's package name (application ID).",
                     hint: "For example: com.example.myapp"
                 ))
             } else if !isValidPackageName(trimmed) {
-                issues.append(GPUploadIssue(
+                issues.append(UploadIssue(
                     severity: .error,
                     message: "\"\(trimmed)\" doesn't look like a valid package name.",
                     hint: "Use the reverse-DNS application ID, e.g. com.example.myapp"
@@ -53,7 +29,7 @@ nonisolated enum GooglePlayUploadValidator {
         }
 
         if plans.isEmpty {
-            issues.append(GPUploadIssue(
+            issues.append(UploadIssue(
                 severity: .error,
                 message: "This project has no rows to upload.",
                 hint: "Add a row in the editor before running the upload."
@@ -63,14 +39,14 @@ nonisolated enum GooglePlayUploadValidator {
 
         let enabledPlans = plans.filter { $0.isEnabled }
         if enabledPlans.isEmpty {
-            issues.append(GPUploadIssue(
+            issues.append(UploadIssue(
                 severity: .error,
                 message: "Enable at least one row to upload."
             ))
             return issues
         }
 
-        var perRow: [GPUploadIssue] = []
+        var perRow: [UploadIssue] = []
         var seenTargets: [String: String] = [:]
 
         for plan in enabledPlans {
@@ -78,7 +54,7 @@ nonisolated enum GooglePlayUploadValidator {
             let sizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
 
             if !GPImageType.accepts(width: plan.rowSize.width, height: plan.rowSize.height) {
-                perRow.append(GPUploadIssue(
+                perRow.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "Row size \(sizeLabel) is outside Google Play's limits.",
@@ -87,7 +63,7 @@ nonisolated enum GooglePlayUploadValidator {
             }
 
             if plan.templateCount < GPUploadLimits.minScreenshotsPerType {
-                perRow.append(GPUploadIssue(
+                perRow.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "Google Play requires at least \(GPUploadLimits.minScreenshotsPerType) screenshots per type; this row has \(plan.templateCount).",
@@ -95,7 +71,7 @@ nonisolated enum GooglePlayUploadValidator {
                 ))
             }
             if plan.templateCount > GPUploadLimits.maxScreenshotsPerType {
-                perRow.append(GPUploadIssue(
+                perRow.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "Google Play allows at most \(GPUploadLimits.maxScreenshotsPerType) screenshots per type; this row has \(plan.templateCount).",
@@ -105,7 +81,7 @@ nonisolated enum GooglePlayUploadValidator {
 
             let enabledLocales = plan.localeTargets.filter { $0.isEnabled }
             if enabledLocales.isEmpty {
-                perRow.append(GPUploadIssue(
+                perRow.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
                     message: "Enable at least one language to upload to."
@@ -117,7 +93,7 @@ nonisolated enum GooglePlayUploadValidator {
                 let key = "\(locale.playLanguageCode)|\(plan.selectedImageType.apiValue)"
                 if let partner = seenTargets[key] {
                     if reportedCollisionPartners.insert(partner).inserted {
-                        perRow.append(GPUploadIssue(
+                        perRow.append(UploadIssue(
                             severity: .error,
                             scope: rowName,
                             message: "This row uploads \(plan.selectedImageType.label) for \(locale.playLanguageCode) to the same place as \(partner).",
@@ -149,6 +125,3 @@ nonisolated enum GooglePlayUploadValidator {
     private static let packageSegmentRegex = try! NSRegularExpression(pattern: "^[a-zA-Z][a-zA-Z0-9_]*$")
 }
 
-nonisolated extension Array where Element == GPUploadIssue {
-    var hasErrors: Bool { contains { $0.severity == .error } }
-}

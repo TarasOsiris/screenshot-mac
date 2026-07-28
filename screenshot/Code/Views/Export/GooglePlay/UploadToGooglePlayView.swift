@@ -20,7 +20,7 @@ struct UploadToGooglePlayView: View {
     @State var sendForReview: Bool = false
     @State var rowPlans: [GPRowPlan] = []
     @State var collapsedRowPlanIds: Set<UUID> = []   // absent = expanded (default)
-    @State var uploadProgress: GPUploadProgress?
+    @State var uploadProgress: UploadProgress?
     @State var uploadTask: Task<Void, Never>?
     @State var uploadSummary: UploadSummary?
 
@@ -65,7 +65,7 @@ struct UploadToGooglePlayView: View {
         var isEnabled: Bool
     }
 
-    var validationIssues: [GPUploadIssue] {
+    var validationIssues: [UploadIssue] {
         GooglePlayUploadValidator.validate(
             packageName: packageName,
             plans: rowPlans,

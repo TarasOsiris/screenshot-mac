@@ -16,7 +16,7 @@ struct ASCReplaceWarningCallout: View {
 }
 
 struct ASCIssuesPanel: View {
-    let issues: [ASCUploadIssue]
+    let issues: [UploadIssue]
 
     var body: some View {
         if !issues.isEmpty {
@@ -32,7 +32,7 @@ struct ASCIssuesPanel: View {
 }
 
 private struct ASCIssueRow: View {
-    let issue: ASCUploadIssue
+    let issue: UploadIssue
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
