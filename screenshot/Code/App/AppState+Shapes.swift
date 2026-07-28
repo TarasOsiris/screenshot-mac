@@ -68,69 +68,49 @@ extension AppState {
         }
     }
 
-    // Shared by the shape- and row-level continuous-edit paths (AppState+Rows).
+    // Debounce delays shared by the continuous-edit / nudge / text-edit coalescers.
     static let continuousEditInterval: CFAbsoluteTime = 1.0 / 30
     static let continuousUndoDebounceDelay: TimeInterval = 0.5
+    static let nudgeUndoDebounceDelay: TimeInterval = 0.4
+    static let textEditUndoDebounceDelay: TimeInterval = 0.5
 
-    /// Update shape without registering undo on every call — undo is captured once
-    /// at the start and finalized after changes stop (debounced). Throttled to ~30fps
-    /// to avoid expensive re-renders on every slider tick.
+    /// Update shape without registering undo on every call — undo is captured once at the start
+    /// and finalized after changes stop (debounced via `shapeEditCoalescer`). Application of the
+    /// value is throttled to ~30fps (`shapeEditThrottle`) to avoid expensive re-renders per tick.
     func updateShapeContinuous(_ shape: CanvasShapeModel) {
-        if let activeShapeId = continuousEditShapeId, activeShapeId != shape.id {
+        if let activeShapeId = shapeEditCoalescer.activeId, activeShapeId != shape.id {
             finishContinuousEditIfNeeded()
         }
 
-        if continuousEditBaseRow == nil {
+        if !shapeEditCoalescer.isActive {
             commitAllPendingEdits()
-            if let location = shapeLocation(for: shape.id) {
-                continuousEditBaseRow = rows[location.rowIndex]
-                continuousEditBaseLocaleState = localeState
-                continuousEditShapeId = shape.id
-            }
-        }
-
-        let now = CFAbsoluteTimeGetCurrent()
-        let interval = Self.continuousEditInterval
-
-        if now - continuousEditLastApply >= interval {
-            applyContinuousEdit(shape)
-            continuousEditLastApply = now
-            flushPendingContinuousEdit()
-        } else {
-            continuousEditPending = shape
-            if continuousEditFlushTask == nil {
-                let task = DispatchWorkItem { [weak self] in
+            guard let location = shapeLocation(for: shape.id) else { return }
+            let baseRow = rows[location.rowIndex]
+            let baseLocaleState = localeState
+            shapeEditCoalescer.begin(id: shape.id) {
+                { [weak self] in
                     guard let self else { return }
-                    self.flushPendingContinuousEdit()
+                    self.shapeEditThrottle.flush()
+                    self.registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: baseLocaleState)
+                    self.shapeEditThrottle.reset()
                 }
-                continuousEditFlushTask = task
-                let delay = interval - (now - continuousEditLastApply)
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: task)
             }
         }
 
-        // Debounced undo registration
-        continuousEditUndoTask?.cancel()
-        let undoTask = DispatchWorkItem { [weak self] in
-            guard let self, let baseRow = self.continuousEditBaseRow else { return }
-            self.flushPendingContinuousEdit()
-            self.registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: self.continuousEditBaseLocaleState)
-            self.resetContinuousEditState()
-        }
-        continuousEditUndoTask = undoTask
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.continuousUndoDebounceDelay, execute: undoTask)
+        shapeEditThrottle.submit(shape)
+        shapeEditCoalescer.arm()
+    }
+
+    /// Commits a pending continuous shape edit as one undo step. No-op when none is captured.
+    func finishContinuousEditIfNeeded() {
+        shapeEditCoalescer.finish()
     }
 
     func flushPendingContinuousEdit() {
-        guard let pending = continuousEditPending else { return }
-        applyContinuousEdit(pending)
-        continuousEditPending = nil
-        continuousEditFlushTask?.cancel()
-        continuousEditFlushTask = nil
-        continuousEditLastApply = CFAbsoluteTimeGetCurrent()
+        shapeEditThrottle.flush()
     }
 
-    private func applyContinuousEdit(_ shape: CanvasShapeModel) {
+    func applyContinuousEdit(_ shape: CanvasShapeModel) {
         guard let location = shapeLocation(for: shape.id) else { return }
         let rowIdx = location.rowIndex
         let shapeIdx = location.shapeIndex
@@ -396,9 +376,15 @@ extension AppState {
         // Capture undo state only at the start of a nudge sequence — and only when
         // we know at least one shape will actually move, so a fully-locked nudge
         // doesn't poison the baseline for a later, unrelated nudge.
-        if nudgeBaseRow == nil {
+        if !nudgeCoalescer.isActive {
             commitAllPendingEdits()
-            nudgeBaseRow = rows[rowIdx]
+            let baseRow = rows[rowIdx]
+            nudgeCoalescer.begin(id: rows[rowIdx].id) {
+                { [weak self] in
+                    guard let self else { return }
+                    self.registerUndoForRowWithBase(self.nudgeActionName, baseRow: baseRow)
+                }
+            }
         }
         nudgeActionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
 
@@ -409,23 +395,12 @@ extension AppState {
             }
         }
         scheduleSave()
-
-        // Debounce the undo registration so rapid key repeats collapse into one entry
-        nudgeUndoTask?.cancel()
-        let nudgeTask = DispatchWorkItem { [weak self] in
-            self?.finishNudgeIfNeeded()
-        }
-        nudgeUndoTask = nudgeTask
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: nudgeTask)
+        nudgeCoalescer.arm()
     }
 
     /// Commits a pending arrow-key nudge as one undo step. No-op when no nudge is captured.
     func finishNudgeIfNeeded() {
-        nudgeUndoTask?.cancel()
-        nudgeUndoTask = nil
-        guard let baseRow = nudgeBaseRow else { return }
-        nudgeBaseRow = nil
-        registerUndoForRowWithBase(nudgeActionName, baseRow: baseRow)
+        nudgeCoalescer.finish()
     }
 
     // MARK: - Option+Drag Duplicate

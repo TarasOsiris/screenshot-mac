@@ -178,37 +178,40 @@ final class AppState {
     /// `ICloudMonitor` isn't `@Observable`. Drives the "Downloading from iCloud…" UI.
     var iCloudSyncStatus: SyncStatus = .idle
 
-    // Debounce state for undo grouping
-    @ObservationIgnored var translationUndoTask: DispatchWorkItem?
-    @ObservationIgnored var translationBaseLocaleState: LocaleState?
-    @ObservationIgnored var baseTextUndoTask: DispatchWorkItem?
-    @ObservationIgnored var baseTextBaseRow: ScreenshotRow?
-    /// Whole-document base for a base-text edit that propagates across rows (a shared/reused string).
-    @ObservationIgnored var baseTextBaseRows: [ScreenshotRow]?
-    @ObservationIgnored nonisolated(unsafe) var arrowKeyMonitor: Any?
-    @ObservationIgnored var nudgeUndoTask: DispatchWorkItem?
-    @ObservationIgnored var nudgeBaseRow: ScreenshotRow?
+    // MARK: - Debounced edit coalescing
+    // Each debounced interaction (continuous shape/row edits, arrow-key nudge, base-text and
+    // translation typing) captures its undo base once and commits a single undo step when the
+    // burst settles. Because starting any burst first runs `commitAllPendingEdits`, at most one
+    // coalescer is ever active. See `ContinuousEditCoalescing.swift`.
+    @ObservationIgnored let shapeEditCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.continuousUndoDebounceDelay)
+    @ObservationIgnored let rowEditCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.continuousUndoDebounceDelay)
+    @ObservationIgnored let nudgeCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.nudgeUndoDebounceDelay)
+    @ObservationIgnored let baseTextCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.textEditUndoDebounceDelay)
+    @ObservationIgnored let translationCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.textEditUndoDebounceDelay)
+    @ObservationIgnored var undoCoalescers: [DebouncedUndoCoalescer] {
+        [shapeEditCoalescer, rowEditCoalescer, nudgeCoalescer, baseTextCoalescer, translationCoalescer]
+    }
+
+    // ~30fps apply throttles for the two continuous (slider/drag) paths: the coalescers above own
+    // the single debounced undo step; these own how often the model is actually written mid-burst.
+    @ObservationIgnored let shapeEditThrottle = ContinuousApplyThrottle<CanvasShapeModel>(interval: AppState.continuousEditInterval)
+    @ObservationIgnored let rowEditThrottle = ContinuousApplyThrottle<ScreenshotRow>(interval: AppState.continuousEditInterval)
+
     @ObservationIgnored var nudgeActionName: String = "Move Shape"
-    @ObservationIgnored var continuousEditUndoTask: DispatchWorkItem?
-    @ObservationIgnored var continuousEditBaseRow: ScreenshotRow?
-    @ObservationIgnored var continuousEditBaseLocaleState: LocaleState?
-    @ObservationIgnored var continuousEditLastApply: CFAbsoluteTime = 0
-    @ObservationIgnored var continuousEditPending: CanvasShapeModel?
-    @ObservationIgnored var continuousEditFlushTask: DispatchWorkItem?
-    @ObservationIgnored var continuousEditShapeId: UUID?
-    // Row-level continuous edits (e.g. dragging gradient stops/angle/center or
-    // background image sliders): capture undo once per burst, debounce a single
-    // undo registration instead of one per drag tick.
-    @ObservationIgnored var continuousRowEditUndoTask: DispatchWorkItem?
-    @ObservationIgnored var continuousRowEditBaseRow: ScreenshotRow?
-    @ObservationIgnored var continuousRowEditBaseLocaleState: LocaleState?
-    @ObservationIgnored var continuousRowEditId: UUID?
     @ObservationIgnored var continuousRowEditActionName: String = "Edit Background"
-    @ObservationIgnored var continuousRowEditLastApply: CFAbsoluteTime = 0
+    /// The row being composed by an in-flight continuous row edit — read by the inspector and
+    /// template control bar so the UI reflects the drag before the throttled write reaches `rows`.
     @ObservationIgnored var continuousRowEditWorkingRow: ScreenshotRow?
-    @ObservationIgnored var continuousRowEditHasPendingApply = false
-    @ObservationIgnored var continuousRowEditFlushTask: DispatchWorkItem?
+
+    @ObservationIgnored nonisolated(unsafe) var arrowKeyMonitor: Any?
     @ObservationIgnored var zoomPersistTask: DispatchWorkItem?
+
+    /// The shape targeted by an in-flight continuous edit (nil when idle).
+    var continuousEditShapeId: UUID? { shapeEditCoalescer.activeId }
+    /// The latest shape value awaiting a throttled apply (nil once applied/idle).
+    var continuousEditPending: CanvasShapeModel? { shapeEditThrottle.pendingValue }
+    /// The row targeted by an in-flight continuous row edit (nil when idle).
+    var continuousRowEditId: UUID? { rowEditCoalescer.activeId }
 
     /// Single-selection convenience: returns the sole selected shape ID, or nil.
     var selectedShapeId: UUID? {
@@ -250,6 +253,9 @@ final class AppState {
     }
 
     init() {
+        shapeEditThrottle.apply = { [weak self] in self?.applyContinuousEdit($0) }
+        rowEditThrottle.apply = { [weak self] in self?.applyContinuousRowValue($0) }
+
         let lastZoom = UserDefaults.standard.double(forKey: "lastZoomLevel")
         if lastZoom > 0 {
             zoomLevel = lastZoom
@@ -520,19 +526,16 @@ final class AppState {
     }
 
     /// True while any continuous burst or debounced (nudge/base-text/translation) edit is
-    /// captured but not yet registered as an undo step.
+    /// captured but not yet registered as an undo step. At most one coalescer is ever active,
+    /// since starting any burst first commits all others.
     private var hasPendingUndoableEdit: Bool {
-        hasPendingContinuousEdit
-            || nudgeBaseRow != nil
-            || baseTextBaseRow != nil
-            || baseTextBaseRows != nil
-            || translationBaseLocaleState != nil
+        undoCoalescers.contains { $0.isActive }
     }
 
     /// Commits every pending continuous/debounced edit, registering each as its own undo
     /// step. Called at undo-stack boundaries (discrete `withUndo` actions, undo, redo) and
     /// when a different debounced interaction begins, so steps register in chronological
-    /// order. Each finisher is a no-op when its own path has nothing captured.
+    /// order. Each coalescer's `finish()` is a no-op when its own path has nothing captured.
     func commitAllPendingEdits() {
         // Flush the canvas's in-progress inline text edit first, then tell the still-mounted
         // editor to leave local edit mode so it can't recommit that draft after a locale switch.
@@ -542,10 +545,7 @@ final class AppState {
         clearInlineTextCommit()
         inlineFlush?()
         inlineEnd?()
-        finishContinuousEditIfNeeded()
-        finishNudgeIfNeeded()
-        finishBaseTextEditIfNeeded()
-        finishTranslationEditIfNeeded()
+        for coalescer in undoCoalescers { coalescer.finish() }
     }
 
     // MARK: - Helpers
@@ -565,76 +565,13 @@ final class AppState {
         }
     }
 
+    /// Drops every debounced edit without registering an undo step (project switch / reset).
     func cancelPendingDebounceTasks() {
         clearInlineTextCommit()
-        translationUndoTask?.cancel()
-        translationUndoTask = nil
-        translationBaseLocaleState = nil
-        nudgeUndoTask?.cancel()
-        nudgeUndoTask = nil
-        nudgeBaseRow = nil
-        baseTextUndoTask?.cancel()
-        baseTextUndoTask = nil
-        baseTextBaseRow = nil
-        baseTextBaseRows = nil
-        continuousEditUndoTask?.cancel()
-        continuousEditUndoTask = nil
-        continuousEditFlushTask?.cancel()
-        continuousEditFlushTask = nil
-        continuousEditPending = nil
-        resetContinuousEditState()
-        continuousRowEditUndoTask?.cancel()
-        continuousRowEditUndoTask = nil
-        continuousRowEditFlushTask?.cancel()
-        continuousRowEditFlushTask = nil
+        for coalescer in undoCoalescers { coalescer.cancel() }
+        shapeEditThrottle.reset()
+        rowEditThrottle.reset()
         continuousRowEditWorkingRow = nil
-        continuousRowEditHasPendingApply = false
-        continuousRowEditBaseRow = nil
-        continuousRowEditBaseLocaleState = nil
-        continuousRowEditId = nil
-        continuousRowEditLastApply = 0
-    }
-
-    func resetContinuousEditState() {
-        continuousEditBaseRow = nil
-        continuousEditBaseLocaleState = nil
-        continuousEditShapeId = nil
-        continuousEditLastApply = 0
-        // The debounced undo task nil-outs nothing on its own; clear it here so a settled
-        // burst doesn't leave `hasPendingContinuousEdit` stuck true until the next flush.
-        continuousEditUndoTask = nil
-    }
-
-    private var hasPendingContinuousEdit: Bool {
-        continuousEditBaseRow != nil
-            || continuousEditPending != nil
-            || continuousEditUndoTask != nil
-            || continuousEditFlushTask != nil
-            || continuousRowEditBaseRow != nil
-            || continuousRowEditWorkingRow != nil
-            || continuousRowEditHasPendingApply
-            || continuousRowEditUndoTask != nil
-            || continuousRowEditFlushTask != nil
-    }
-
-    func finishContinuousEditIfNeeded() {
-        finishContinuousRowEditIfNeeded()
-
-        guard continuousEditBaseRow != nil
-            || continuousEditPending != nil
-            || continuousEditUndoTask != nil
-            || continuousEditFlushTask != nil
-        else { return }
-
-        continuousEditUndoTask?.cancel()
-        continuousEditUndoTask = nil
-        flushPendingContinuousEdit()
-
-        if let baseRow = continuousEditBaseRow {
-            registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: continuousEditBaseLocaleState)
-        }
-
-        resetContinuousEditState()
     }
 
     func makeDefaultRow(id: UUID = UUID(), label: String? = nil, width: CGFloat? = nil, height: CGFloat? = nil) -> ScreenshotRow {

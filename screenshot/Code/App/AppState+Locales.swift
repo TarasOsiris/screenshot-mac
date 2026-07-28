@@ -105,9 +105,25 @@ extension AppState {
         let isShared = editedShape.translationKey != nil
 
         // Capture undo state only at the start of a base text editing sequence
-        if baseTextBaseRow == nil && baseTextBaseRows == nil {
+        if !baseTextCoalescer.isActive {
             commitAllPendingEdits()
-            if isShared { baseTextBaseRows = rows } else { baseTextBaseRow = rows[loc.rowIndex] }
+            if isShared {
+                let baseRows = rows
+                baseTextCoalescer.begin(id: nil) {
+                    { [weak self] in
+                        guard let self else { return }
+                        self.registerUndoWithBase("Edit Base Text", base: baseRows, baseLocaleState: self.localeState)
+                    }
+                }
+            } else {
+                let baseRow = rows[loc.rowIndex]
+                baseTextCoalescer.begin(id: shapeId) {
+                    { [weak self] in
+                        guard let self else { return }
+                        self.registerUndoForRowWithBase("Edit Base Text", baseRow: baseRow, baseLocaleState: self.localeState)
+                    }
+                }
+            }
         }
 
         if isShared {
@@ -116,28 +132,12 @@ extension AppState {
             rows[loc.rowIndex].shapes[loc.shapeIndex].text = text
         }
         scheduleSave()
-
-        // Debounce undo registration so rapid keystrokes collapse into one entry
-        baseTextUndoTask?.cancel()
-        let task = DispatchWorkItem { [weak self] in
-            self?.finishBaseTextEditIfNeeded()
-        }
-        baseTextUndoTask = task
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: task)
+        baseTextCoalescer.arm()
     }
 
     /// Commits a pending base-text editing burst as one undo step. No-op when none is captured.
     func finishBaseTextEditIfNeeded() {
-        baseTextUndoTask?.cancel()
-        baseTextUndoTask = nil
-        if let baseRows = baseTextBaseRows {
-            baseTextBaseRows = nil
-            baseTextBaseRow = nil
-            registerUndoWithBase("Edit Base Text", base: baseRows, baseLocaleState: localeState)
-        } else if let baseRow = baseTextBaseRow {
-            baseTextBaseRow = nil
-            registerUndoForRowWithBase("Edit Base Text", baseRow: baseRow, baseLocaleState: localeState)
-        }
+        baseTextCoalescer.finish()
     }
 
     func updateTranslationText(shapeId: UUID, text: String) {
@@ -151,32 +151,27 @@ extension AppState {
         let textKey = rows[loc.rowIndex].shapes[loc.shapeIndex].textTranslationKey
 
         // Capture undo state only at the start of a translation editing sequence
-        if translationBaseLocaleState == nil {
+        if !translationCoalescer.isActive {
             commitAllPendingEdits()
-            translationBaseLocaleState = localeState
+            let baseLocaleState = localeState
+            translationCoalescer.begin(id: nil) {
+                { [weak self] in
+                    guard let self else { return }
+                    self.registerUndoWithBase("Edit Translation", base: self.rows, baseLocaleState: baseLocaleState)
+                }
+            }
         }
 
         // Text is keyed by the (possibly shared) translation key, so editing one member of a reused
         // string updates them all. Per-shape style fields under the shape's own id are untouched.
         LocaleService.setTextOverride(&localeState, localeCode: code, key: textKey, text: text.isEmpty ? nil : text)
         scheduleSave()
-
-        // Debounce undo registration so rapid keystrokes collapse into one entry
-        translationUndoTask?.cancel()
-        let task = DispatchWorkItem { [weak self] in
-            self?.finishTranslationEditIfNeeded()
-        }
-        translationUndoTask = task
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: task)
+        translationCoalescer.arm()
     }
 
     /// Commits a pending translation editing burst as one undo step. No-op when none is captured.
     func finishTranslationEditIfNeeded() {
-        translationUndoTask?.cancel()
-        translationUndoTask = nil
-        guard let savedBase = translationBaseLocaleState else { return }
-        translationBaseLocaleState = nil
-        registerUndoWithBase("Edit Translation", base: rows, baseLocaleState: savedBase)
+        translationCoalescer.finish()
     }
 
     func resetLocaleOverride(shapeId: UUID) {

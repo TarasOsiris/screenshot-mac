@@ -186,7 +186,7 @@ struct AppStateTests {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
         let rowId = state.rows[0].id
-        state.continuousRowEditLastApply = CFAbsoluteTimeGetCurrent()
+        state.rowEditThrottle.markRecentApply()
 
         var firstConfig = state.rows[0].gradientConfig
         firstConfig.centerX = 0.25
