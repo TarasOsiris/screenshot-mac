@@ -14,6 +14,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     nonisolated static let defaultOutlineColor: Color = .black
     nonisolated static let defaultOutlineWidth: CGFloat = 4
 
+    // MARK: Universal geometry
     var id: UUID
     var type: ShapeType
     var x: CGFloat
@@ -25,68 +26,119 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     var colorData: CodableColor
     var opacity: Double
 
-    // Text properties
-    var text: String?
-    var richText: String?  // Base64-encoded RTF data for per-range styling
-    var fontName: String?
-    var fontSize: CGFloat?
-    var fontWeight: Int?
-    var textAlign: TextAlign?
-    var textVerticalAlign: TextVerticalAlign?
-    var italic: Bool?
-    var uppercase: Bool?
-    var letterSpacing: CGFloat?
-    var lineSpacing: CGFloat?
-    var lineHeightMultiple: CGFloat?
+    // MARK: Type-specific field groups
+    // Storage is grouped by shape type; the flat properties below are computed passthroughs so
+    // the persisted JSON (via the flat CodingKeys), the `shape.text`/`shape.fontSize` API, and the
+    // `\.keyPath` shape bindings are all unchanged. Payloads are `nonisolated` because `encode`/
+    // `init(from:)` run off the main actor during saves.
+    var textPayload = TextPayload()
+    var textBackgroundPayload = TextBackgroundPayload()
+    var devicePayload = DevicePayload()
+    var fillPayload = FillPayload()
+    var outlinePayload = OutlinePayload()
 
-    /// Catalog key this text shape sources its string from. `nil` means it owns its own string
-    /// (key = `id`). When set, the shape shares another string's base text + translations (reuse).
-    var translationKey: String?
-
-    // Image properties
+    // Ungrouped type-specific fields (no cohesive cluster).
     var imageFileName: String?
-
-    // Device properties
-    var deviceCategory: DeviceCategory?
-    var deviceBodyColorData: CodableColor?
-    var deviceFrameId: String?
-    var screenshotFileName: String?
-    var devicePitch: Double?
-    var deviceYaw: Double?
-    var deviceBodyMaterial: DeviceBodyMaterial?
-    var deviceLighting: DeviceLighting?
-    var hideCameraCutout: Bool?
-    var shadow: ShadowConfig?
-
-    // SVG properties
     var svgContent: String?
     var svgUseColor: Bool?
-
-    // Outline properties
-    var outlineColorData: CodableColor?
-    var outlineWidth: CGFloat?
-
-    // Text background (a rounded-rect plate behind a .text shape's glyphs)
-    var textBackgroundColorData: CodableColor?
-    var textBackgroundCornerRadius: CGFloat?
-    var textBackgroundPadding: CGFloat?
-    var textBackgroundOutlineColorData: CodableColor?
-    var textBackgroundOutlineWidth: CGFloat?
-    var textBackgroundOpacity: Double?
-
-    // Star properties
     var starPointCount: Int?
-
-    // Fill style (for rectangle, circle, star)
-    var fillStyle: BackgroundStyle?
-    var fillGradientConfig: GradientConfig?
-    var fillImageConfig: BackgroundImageConfig?
-
-    // Clipping
     var clipToTemplate: Bool?
-
-    // Lock — when true, the shape is frozen: no drag, resize, rotate, or edit.
+    /// Lock — when true, the shape is frozen: no drag, resize, rotate, or edit.
     var isLocked: Bool?
+
+    nonisolated struct TextPayload: Equatable {
+        var text: String?
+        var richText: String?  // Base64-encoded RTF data for per-range styling
+        var fontName: String?
+        var fontSize: CGFloat?
+        var fontWeight: Int?
+        var textAlign: TextAlign?
+        var textVerticalAlign: TextVerticalAlign?
+        var italic: Bool?
+        var uppercase: Bool?
+        var letterSpacing: CGFloat?
+        var lineSpacing: CGFloat?
+        var lineHeightMultiple: CGFloat?
+        /// Catalog key this text shape sources its string from. `nil` means it owns its own string
+        /// (key = `id`). When set, the shape shares another string's base text + translations.
+        var translationKey: String?
+    }
+
+    /// A rounded-rect plate behind a `.text` shape's glyphs.
+    nonisolated struct TextBackgroundPayload: Equatable {
+        var colorData: CodableColor?
+        var cornerRadius: CGFloat?
+        var padding: CGFloat?
+        var outlineColorData: CodableColor?
+        var outlineWidth: CGFloat?
+        var opacity: Double?
+    }
+
+    struct DevicePayload: Equatable {
+        nonisolated init() {}
+        var category: DeviceCategory?
+        var bodyColorData: CodableColor?
+        var frameId: String?
+        var screenshotFileName: String?
+        var pitch: Double?
+        var yaw: Double?
+        var bodyMaterial: DeviceBodyMaterial?
+        var lighting: DeviceLighting?
+        var hideCameraCutout: Bool?
+        var shadow: ShadowConfig?
+    }
+
+    /// Fill style (for rectangle, circle, star).
+    nonisolated struct FillPayload: Equatable {
+        var style: BackgroundStyle?
+        var gradientConfig: GradientConfig?
+        var imageConfig: BackgroundImageConfig?
+    }
+
+    nonisolated struct OutlinePayload: Equatable {
+        var colorData: CodableColor?
+        var width: CGFloat?
+    }
+
+    // MARK: Flat passthroughs (preserve the pre-existing API, keypaths, and on-disk keys)
+    nonisolated var text: String? { get { textPayload.text } set { textPayload.text = newValue } }
+    nonisolated var richText: String? { get { textPayload.richText } set { textPayload.richText = newValue } }
+    nonisolated var fontName: String? { get { textPayload.fontName } set { textPayload.fontName = newValue } }
+    nonisolated var fontSize: CGFloat? { get { textPayload.fontSize } set { textPayload.fontSize = newValue } }
+    nonisolated var fontWeight: Int? { get { textPayload.fontWeight } set { textPayload.fontWeight = newValue } }
+    nonisolated var textAlign: TextAlign? { get { textPayload.textAlign } set { textPayload.textAlign = newValue } }
+    nonisolated var textVerticalAlign: TextVerticalAlign? { get { textPayload.textVerticalAlign } set { textPayload.textVerticalAlign = newValue } }
+    nonisolated var italic: Bool? { get { textPayload.italic } set { textPayload.italic = newValue } }
+    nonisolated var uppercase: Bool? { get { textPayload.uppercase } set { textPayload.uppercase = newValue } }
+    nonisolated var letterSpacing: CGFloat? { get { textPayload.letterSpacing } set { textPayload.letterSpacing = newValue } }
+    nonisolated var lineSpacing: CGFloat? { get { textPayload.lineSpacing } set { textPayload.lineSpacing = newValue } }
+    nonisolated var lineHeightMultiple: CGFloat? { get { textPayload.lineHeightMultiple } set { textPayload.lineHeightMultiple = newValue } }
+    nonisolated var translationKey: String? { get { textPayload.translationKey } set { textPayload.translationKey = newValue } }
+
+    nonisolated var textBackgroundColorData: CodableColor? { get { textBackgroundPayload.colorData } set { textBackgroundPayload.colorData = newValue } }
+    nonisolated var textBackgroundCornerRadius: CGFloat? { get { textBackgroundPayload.cornerRadius } set { textBackgroundPayload.cornerRadius = newValue } }
+    nonisolated var textBackgroundPadding: CGFloat? { get { textBackgroundPayload.padding } set { textBackgroundPayload.padding = newValue } }
+    nonisolated var textBackgroundOutlineColorData: CodableColor? { get { textBackgroundPayload.outlineColorData } set { textBackgroundPayload.outlineColorData = newValue } }
+    nonisolated var textBackgroundOutlineWidth: CGFloat? { get { textBackgroundPayload.outlineWidth } set { textBackgroundPayload.outlineWidth = newValue } }
+    nonisolated var textBackgroundOpacity: Double? { get { textBackgroundPayload.opacity } set { textBackgroundPayload.opacity = newValue } }
+
+    nonisolated var deviceCategory: DeviceCategory? { get { devicePayload.category } set { devicePayload.category = newValue } }
+    nonisolated var deviceBodyColorData: CodableColor? { get { devicePayload.bodyColorData } set { devicePayload.bodyColorData = newValue } }
+    nonisolated var deviceFrameId: String? { get { devicePayload.frameId } set { devicePayload.frameId = newValue } }
+    nonisolated var screenshotFileName: String? { get { devicePayload.screenshotFileName } set { devicePayload.screenshotFileName = newValue } }
+    nonisolated var devicePitch: Double? { get { devicePayload.pitch } set { devicePayload.pitch = newValue } }
+    nonisolated var deviceYaw: Double? { get { devicePayload.yaw } set { devicePayload.yaw = newValue } }
+    nonisolated var deviceBodyMaterial: DeviceBodyMaterial? { get { devicePayload.bodyMaterial } set { devicePayload.bodyMaterial = newValue } }
+    nonisolated var deviceLighting: DeviceLighting? { get { devicePayload.lighting } set { devicePayload.lighting = newValue } }
+    nonisolated var hideCameraCutout: Bool? { get { devicePayload.hideCameraCutout } set { devicePayload.hideCameraCutout = newValue } }
+    nonisolated var shadow: ShadowConfig? { get { devicePayload.shadow } set { devicePayload.shadow = newValue } }
+
+    nonisolated var fillStyle: BackgroundStyle? { get { fillPayload.style } set { fillPayload.style = newValue } }
+    nonisolated var fillGradientConfig: GradientConfig? { get { fillPayload.gradientConfig } set { fillPayload.gradientConfig = newValue } }
+    nonisolated var fillImageConfig: BackgroundImageConfig? { get { fillPayload.imageConfig } set { fillPayload.imageConfig = newValue } }
+
+    nonisolated var outlineColorData: CodableColor? { get { outlinePayload.colorData } set { outlinePayload.colorData = newValue } }
+    nonisolated var outlineWidth: CGFloat? { get { outlinePayload.width } set { outlinePayload.width = newValue } }
 
     enum CodingKeys: String, CodingKey {
         case id, x, y
