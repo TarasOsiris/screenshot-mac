@@ -101,21 +101,8 @@ final class AppState {
     var pendingTranslateShapeId: UUID?
     var pendingFanOutTranslateShapeIds: Set<UUID>?
     var pendingLocaleMenuRequest: LocaleMenuRequest?
-    /// Active step of the interactive onboarding tour. `nil` when no tour is in progress.
-    var coachStep: OnboardingCoachStep?
-    #if os(iOS)
-    /// Set during the brief gap between coach marks (see `setCoachStep`) so anchor
-    /// views can prepare — e.g. scroll the upcoming anchor into view — before the
-    /// next popover presents.
-    var coachPreparingStep: OnboardingCoachStep?
-    @ObservationIgnored var coachTransitionTask: Task<Void, Never>?
-    #endif
-    /// When false, `endCoach()` skips persisting `onboardingCompleted`. Used by the debug
-    /// "Run Coach Tour" command so it can be re-run without consuming the real flag.
-    @ObservationIgnored var coachPersistsOnEnd: Bool = true
-    /// Mirrors whether the Get Pro toolbar button is currently shown. The final coach
-    /// step anchors on that button, so the tour skips it when Pro is already unlocked.
-    @ObservationIgnored var coachProStepAvailable: Bool = true
+    /// Interactive onboarding-tour runtime state + flow (see `OnboardingCoachController`).
+    let coach = OnboardingCoachController()
     var screenshotImages: [String: NSImage] = [:]
     var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
     /// Family names referenced by any shape at some point in the current session. A font
@@ -255,6 +242,7 @@ final class AppState {
     init() {
         shapeEditThrottle.apply = { [weak self] in self?.applyContinuousEdit($0) }
         rowEditThrottle.apply = { [weak self] in self?.applyContinuousRowValue($0) }
+        coach.app = self
 
         let lastZoom = UserDefaults.standard.double(forKey: "lastZoomLevel")
         if lastZoom > 0 {

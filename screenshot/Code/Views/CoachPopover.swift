@@ -2,7 +2,7 @@ import SwiftUI
 
 extension View {
     /// Anchors a coach-mark popover for the given onboarding step. The popover
-    /// is shown when `state.coachStep` matches `step` AND `isActive` is true.
+    /// is shown when `state.coach.step` matches `step` AND `isActive` is true.
     /// `isActive` lets callers gate which instance owns the anchor when a view
     /// is rendered multiple times (e.g. one per row). `attachmentAnchor` defaults
     /// to the source view's bounds; use `.point(.center)` to anchor at the
@@ -45,7 +45,7 @@ private struct CoachPopoverModifier: ViewModifier {
     let isActive: Bool
 
     private var isStepActive: Bool {
-        isActive && state.coachStep == step
+        isActive && state.coach.step == step
     }
 
     private var isPresented: Binding<Bool> {
@@ -54,7 +54,7 @@ private struct CoachPopoverModifier: ViewModifier {
             set: { newValue in
                 // Dismissal driven by the system (click-outside, etc.) ends the tour.
                 if !newValue, isStepActive {
-                    state.endCoach()
+                    state.coach.end()
                 }
             }
         )
@@ -94,7 +94,7 @@ private struct CoachPopoverContent: View {
 
     private var buyProButton: some View {
         Button {
-            state.endCoach()
+            state.coach.end()
             #if os(iOS)
             // Let the popover dismiss before the paywall sheet presents.
             Task { @MainActor in
@@ -166,7 +166,7 @@ private struct CoachPopoverContent: View {
         HStack(spacing: 8) {
             if step.previous != nil {
                 Button {
-                    state.goBackInCoach()
+                    state.coach.goBack()
                 } label: {
                     Label("Back", systemImage: "chevron.left")
                         .labelStyle(.titleAndIcon)
@@ -188,7 +188,7 @@ private struct CoachPopoverContent: View {
 
     private var advanceButton: some View {
         Button {
-            state.advanceCoach()
+            state.coach.advance()
         } label: {
             if isLastStep {
                 Text("Done")

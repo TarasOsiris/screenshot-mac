@@ -373,7 +373,7 @@ struct ScreenshotBroApp: App {
             #if DEBUG
             CommandMenu("Debug") {
                 Button("Run Coach Tour") {
-                    appState.startCoach(persistOnEnd: false)
+                    appState.coach.start(persistOnEnd: false)
                 }
                 .disabled(appState.activeProjectId == nil)
 

@@ -419,7 +419,7 @@ struct InspectorPanel: View {
     private var debugSection: some View {
         Section {
             Button {
-                state.startCoach(persistOnEnd: false)
+                state.coach.start(persistOnEnd: false)
             } label: {
                 Text(verbatim: "Show Onboarding Coach")
             }

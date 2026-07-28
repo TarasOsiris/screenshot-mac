@@ -16,9 +16,9 @@ extension EditorRowView {
     func startDeferredCoachIfNeeded() {
         guard isFirst, !isPreviewMode else { return }
         #if os(iOS)
-        state.startDeferredCoachIfEligible(isCompactWidth: horizontalSizeClass != .regular)
+        state.coach.startDeferredIfEligible(isCompactWidth: horizontalSizeClass != .regular)
         #else
-        state.startDeferredCoachIfEligible(isCompactWidth: false)
+        state.coach.startDeferredIfEligible(isCompactWidth: false)
         #endif
     }
 

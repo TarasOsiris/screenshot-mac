@@ -1,13 +1,33 @@
 import SwiftUI
 
-extension AppState {
+/// Runtime state and flow for the interactive onboarding tour, split out of `AppState`. Holds a
+/// weak back-reference to `AppState` for the row selection the tour drives.
+@Observable
+final class OnboardingCoachController {
+    weak var app: AppState?
+
+    /// Active step of the tour. `nil` when no tour is in progress.
+    var step: OnboardingCoachStep?
+    #if os(iOS)
+    /// Set during the brief gap between coach marks so anchor views can prepare — e.g. scroll the
+    /// upcoming anchor into view — before the next popover presents.
+    var preparingStep: OnboardingCoachStep?
+    @ObservationIgnored private var transitionTask: Task<Void, Never>?
+    #endif
+    /// When false, `end()` skips persisting `onboardingCompleted`. Used by the debug "Run Coach
+    /// Tour" command so it can be re-run without consuming the real flag.
+    @ObservationIgnored var persistsOnEnd = true
+    /// Mirrors whether the Get Pro toolbar button is currently shown. The final coach step anchors
+    /// on that button, so the tour skips it when Pro is already unlocked.
+    @ObservationIgnored var proStepAvailable = true
+
     /// Starts the interactive onboarding tour at the first step.
     /// Pass `persistOnEnd: false` from debug entry points so re-running the
     /// tour doesn't consume the real `onboardingCompleted` flag.
-    func startCoach(persistOnEnd: Bool = true) {
-        coachPersistsOnEnd = persistOnEnd
+    func start(persistOnEnd: Bool = true) {
+        persistsOnEnd = persistOnEnd
         ensureRowSelected()
-        setCoachStep(.canvas)
+        setStep(.canvas)
     }
 
     /// Consumes the tour armed at first launch (no project existed then) and starts
@@ -16,13 +36,13 @@ extension AppState {
     /// width the flag stays pending and the tour fires next time the canvas is
     /// visible full-width. Yields a runloop turn so the anchor is laid out before
     /// the popover shows.
-    func startDeferredCoachIfEligible(isCompactWidth: Bool) {
-        guard !isOpeningProject, !isCompactWidth else { return }
+    func startDeferredIfEligible(isCompactWidth: Bool) {
+        guard let app, !app.isOpeningProject, !isCompactWidth else { return }
         guard OnboardingPersistence.isEditorCoachPending else { return }
         OnboardingPersistence.clearEditorCoachPending()
         Task { @MainActor in
             await Task.yield()
-            startCoach(persistOnEnd: true)
+            start(persistOnEnd: true)
         }
     }
 
@@ -30,32 +50,32 @@ extension AppState {
     /// Ends an in-flight tour when the editor leaves the screen (back to Projects,
     /// tab switch). Without this, a step set during the transition gap has no anchor,
     /// no popover presents, and the stale tour resurfaces on the next project open.
-    func cancelActiveCoach() {
-        let hadPendingTransition = coachTransitionTask != nil || coachPreparingStep != nil
-        coachTransitionTask?.cancel()
-        coachTransitionTask = nil
-        coachPreparingStep = nil
-        guard coachStep != nil || hadPendingTransition else { return }
-        endCoach()
+    func cancelActive() {
+        let hadPendingTransition = transitionTask != nil || preparingStep != nil
+        transitionTask?.cancel()
+        transitionTask = nil
+        preparingStep = nil
+        guard step != nil || hadPendingTransition else { return }
+        end()
     }
     #endif
 
     /// Returns to the previous coach step, if any.
-    func goBackInCoach() {
-        guard let current = coachStep, let previous = current.previous else { return }
-        setCoachStep(previous)
+    func goBack() {
+        guard let current = step, let previous = current.previous else { return }
+        setStep(previous)
     }
 
     /// Advances to the next coach step, or ends the tour if on the last step.
-    func advanceCoach() {
-        guard let current = coachStep else { return }
+    func advance() {
+        guard let current = step else { return }
         guard let next = current.next else {
-            endCoach()
+            end()
             return
         }
         // The Pro step anchors on the Get Pro button, which is gone once Pro is unlocked.
-        if next == .pro, !coachProStepAvailable {
-            endCoach()
+        if next == .pro, !proStepAvailable {
+            end()
             return
         }
         // The inspector step anchors on row-scoped UI, which only renders
@@ -63,14 +83,14 @@ extension AppState {
         if next == .inspector {
             ensureRowSelected()
         }
-        setCoachStep(next)
+        setStep(next)
     }
 
     /// Ends the coach tour and persists onboarding completion (unless the tour
     /// was started with `persistOnEnd: false`).
-    func endCoach() {
-        setCoachStep(nil)
-        guard coachPersistsOnEnd else { return }
+    func end() {
+        setStep(nil)
+        guard persistsOnEnd else { return }
         let defaults = UserDefaults.standard
         let key = OnboardingPersistence.completedKey
         if !defaults.bool(forKey: key) {
@@ -78,36 +98,36 @@ extension AppState {
         }
     }
 
-    private func setCoachStep(_ step: OnboardingCoachStep?) {
+    private func setStep(_ newStep: OnboardingCoachStep?) {
         #if os(iOS)
-        coachTransitionTask?.cancel()
-        coachTransitionTask = nil
+        transitionTask?.cancel()
+        transitionTask = nil
         // iPadOS silently drops a popover presented while the previous one is still
         // dismissing, and the next anchor may be scrolled offscreen. Clear the current
-        // mark, let anchor views prepare (via coachPreparingStep), then present once
+        // mark, let anchor views prepare (via preparingStep), then present once
         // the dismissal has settled.
-        if let step, coachStep != nil {
-            coachStep = nil
-            coachPreparingStep = step
-            coachTransitionTask = Task { @MainActor in
+        if let newStep, step != nil {
+            step = nil
+            preparingStep = newStep
+            transitionTask = Task { @MainActor in
                 try? await Task.sleep(for: OnboardingCoachStep.presentationSettleDelay)
                 guard !Task.isCancelled else { return }
-                coachPreparingStep = nil
+                preparingStep = nil
                 withAnimation(.easeOut(duration: 0.2)) {
-                    coachStep = step
+                    step = newStep
                 }
             }
             return
         }
-        coachPreparingStep = nil
+        preparingStep = nil
         #endif
         withAnimation(.easeOut(duration: 0.2)) {
-            coachStep = step
+            step = newStep
         }
     }
 
     private func ensureRowSelected() {
-        guard selectedRowId == nil, let first = rows.first else { return }
-        selectRow(first.id)
+        guard let app, app.selectedRowId == nil, let first = app.rows.first else { return }
+        app.selectRow(first.id)
     }
 }

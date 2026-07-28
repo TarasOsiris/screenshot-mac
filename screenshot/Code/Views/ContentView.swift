@@ -421,16 +421,16 @@ struct ContentView: View {
         .toolbarRole(.editor)
         #endif
         .onChange(of: store.isProUnlocked, initial: true) { _, isUnlocked in
-            state.coachProStepAvailable = !isUnlocked
+            state.coach.proStepAvailable = !isUnlocked
         }
         // The inspector step anchors inside the inspector, which the user may have closed.
-        .onChange(of: state.coachStep) { _, step in
+        .onChange(of: state.coach.step) { _, step in
             openInspectorIfCoachNeedsIt(step)
         }
         #if os(iOS)
         // Open it during the transition gap so the anchor is laid out before the
         // popover presents — iPadOS won't present from a not-yet-visible anchor.
-        .onChange(of: state.coachPreparingStep) { _, step in
+        .onChange(of: state.coach.preparingStep) { _, step in
             openInspectorIfCoachNeedsIt(step)
         }
         #endif
@@ -440,7 +440,7 @@ struct ContentView: View {
         .navigationBarTitleDisplayMode(.inline)
         // Leaving the editor mid-tour (back to Projects, tab switch) would otherwise
         // strand a coach step with no anchor — no popover, no way to end the tour.
-        .onDisappear { state.cancelActiveCoach() }
+        .onDisappear { state.coach.cancelActive() }
         // The inspector is a docked side panel at regular width (iPad/Mac) but a blocking
         // sheet at compact width (iPhone) — don't auto-present it there, or it covers the
         // canvas on open. The toolbar toggle still opens it on demand.
