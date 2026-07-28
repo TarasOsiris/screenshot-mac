@@ -92,15 +92,15 @@ extension EditorRowView {
                 .padding(.top, 4)
                 .padding(.bottom, 12)
             }
-            .onChange(of: state.focusRequestNonce) { _, _ in
+            .onChange(of: state.canvasFocus.shapeRequestNonce) { _, _ in
                 guard state.selectedRowId == row.id,
-                      let shapeId = state.focusShapeId,
+                      let shapeId = state.canvasFocus.shapeId,
                       let shape = row.shapes.first(where: { $0.id == shapeId }) else { return }
                 let templateIndex = row.owningTemplateIndex(for: shape)
                 guard templateIndex < row.templates.count else { return }
                 let templateId = row.templates[templateIndex].id
                 hProxy.scrollTo("focus_\(templateId)", anchor: .center)
-                state.focusShapeId = nil
+                state.canvasFocus.shapeId = nil
             }
         }
     }

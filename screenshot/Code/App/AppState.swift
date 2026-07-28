@@ -134,11 +134,8 @@ final class AppState {
     }
     var undoManager: UndoManager?
     var saveError: String?
-    var canvasFocusRowId: UUID?
-    var canvasFocusRequestNonce = 0
-    var canvasFocusAnimated = true
-    var focusShapeId: UUID?
-    var focusRequestNonce = 0
+    /// Canvas "scroll into view" request signals (see `CanvasFocusController`).
+    let canvasFocus = CanvasFocusController()
     @ObservationIgnored var iCloudMonitor: ICloudMonitor?
     /// Tracks when the active project data was last saved/loaded, for merge decisions.
     @ObservationIgnored var activeProjectDataModifiedAt: Date?

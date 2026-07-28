@@ -164,17 +164,17 @@ struct ContentView: View {
                         }
                 )
                 #endif
-                .onChange(of: state.canvasFocusRequestNonce) { _, _ in
-                    guard let rowId = state.canvasFocusRowId else { return }
-                    if state.canvasFocusAnimated {
+                .onChange(of: state.canvasFocus.rowRequestNonce) { _, _ in
+                    guard let rowId = state.canvasFocus.rowId else { return }
+                    if state.canvasFocus.animated {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             proxy.scrollTo(rowId, anchor: .center)
                         }
                     } else {
                         proxy.scrollTo(rowId, anchor: .center)
-                        state.canvasFocusAnimated = true
+                        state.canvasFocus.animated = true
                     }
-                    state.canvasFocusRowId = nil
+                    state.canvasFocus.rowId = nil
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .layoutPriority(0)
