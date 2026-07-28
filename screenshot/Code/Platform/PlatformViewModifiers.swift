@@ -52,4 +52,15 @@ extension View {
         self
         #endif
     }
+
+    /// Presents `content` as a fitted sheet on macOS and a full-screen cover on iPad. Desktop-grade
+    /// multi-step flows (the upload wizards) want a Mac sheet but a native full-screen screen on iPad.
+    @ViewBuilder
+    func platformAdaptiveSheet<C: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> C) -> some View {
+        #if os(macOS)
+        sheet(isPresented: isPresented, content: content)
+        #else
+        fullScreenCover(isPresented: isPresented, content: content)
+        #endif
+    }
 }

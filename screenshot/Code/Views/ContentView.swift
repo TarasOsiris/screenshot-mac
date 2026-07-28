@@ -499,26 +499,16 @@ struct ContentView: View {
                 store.dismissPurchaseCelebration()
             }
         }
-        .sheet(isPresented: $showingASCUploadSheet) {
-            UploadToAppStoreConnectView()
-                .environment(state)
-        }
-        .sheet(isPresented: $showingGooglePlayUploadSheet) {
-            UploadToGooglePlayView()
-                .environment(state)
-        }
-        #else
-        // iPad: the upload wizard is a desktop-grade multi-step flow — present it as its own
-        // full-screen screen with a native nav bar (it builds its own NavigationStack).
-        .fullScreenCover(isPresented: $showingASCUploadSheet) {
-            UploadToAppStoreConnectView()
-                .environment(state)
-        }
-        .fullScreenCover(isPresented: $showingGooglePlayUploadSheet) {
-            UploadToGooglePlayView()
-                .environment(state)
-        }
         #endif
+        // Upload wizards: fitted sheet on macOS, native full-screen screen on iPad.
+        .platformAdaptiveSheet(isPresented: $showingASCUploadSheet) {
+            UploadToAppStoreConnectView()
+                .environment(state)
+        }
+        .platformAdaptiveSheet(isPresented: $showingGooglePlayUploadSheet) {
+            UploadToGooglePlayView()
+                .environment(state)
+        }
         .sheet(item: $projectNamePrompt) { prompt in
             ProjectNameSheet(prompt: prompt)
         }
