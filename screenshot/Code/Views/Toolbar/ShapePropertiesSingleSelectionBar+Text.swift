@@ -216,7 +216,12 @@ extension ShapePropertiesSingleSelectionBar {
                 let target = state.selectedShapeId ?? shapeId
                 if let value = Int(editingFontSize), let i = idx(for: target) {
                     var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                    resolved.fontSize = clampedFontSize(value)
+                    let newSize = clampedFontSize(value)
+                    // A no-op size (e.g. the field reprogrammed to the current value during an
+                    // edit→commit transition) must not run syncShapeStyle(.fontSize) — that flattens
+                    // mixed per-run rich-text sizes to one. Mirrors commitFontSize's guard.
+                    guard resolved.fontSize != newSize else { return }
+                    resolved.fontSize = newSize
                     RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
                     state.updateShapeContinuous(resolved)
                 }

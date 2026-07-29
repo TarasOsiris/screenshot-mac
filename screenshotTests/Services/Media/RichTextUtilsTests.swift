@@ -388,4 +388,157 @@ struct RichTextUtilsTests {
         #expect(abs((firstColor?.1 ?? 0) - (expectedRed?.1 ?? 0)) < 0.05)
         #expect(abs((firstColor?.2 ?? 0) - (expectedRed?.2 ?? 0)) < 0.05)
     }
+
+    private func distinctPointSizes(_ string: NSAttributedString) -> Set<CGFloat> {
+        var sizes = Set<CGFloat>()
+        string.enumerateAttribute(.font, in: NSRange(location: 0, length: string.length)) { value, _, _ in
+            if let font = value as? NSFont { sizes.insert(font.pointSize) }
+        }
+        return sizes
+    }
+
+    private func mixedSizeShape() -> CanvasShapeModel {
+        // "Hello " at 72pt, "world" at 120pt — the default system font, mirroring what the
+        // floating format bar produces when a word is given a different size.
+        let attributed = NSMutableAttributedString(string: "Hello world")
+        attributed.setAttributes(
+            [.font: NSFont.systemFont(ofSize: 72), .foregroundColor: NSColor.white],
+            range: NSRange(location: 0, length: 6)
+        )
+        attributed.setAttributes(
+            [.font: NSFont.systemFont(ofSize: 120), .foregroundColor: NSColor.white],
+            range: NSRange(location: 6, length: 5)
+        )
+        var shape = CanvasShapeModel(type: .text, text: "Hello world", fontSize: 72)
+        shape.richText = RichTextUtils.encode(attributed)
+        return shape
+    }
+
+    /// `syncShapeStyle(.fontSize)` intentionally flattens mixed per-run sizes to the shape's single
+    /// `fontSize`. This is why callers must NOT invoke it for a no-op size change — the properties-bar
+    /// font-size field guards on `resolved.fontSize != newSize` so a stray re-render (which reprograms
+    /// the field to the current value) can't silently collapse an enlarged word.
+    @Test func fontSizeSyncFlattensMixedRunSizes() throws {
+        var shape = mixedSizeShape()          // runs at 72 and 120, shape.fontSize == 72
+        RichTextUtils.syncShapeStyle(in: &shape, property: .fontSize)
+        let decoded = try #require(RichTextUtils.decode(shape.richText ?? ""))
+        #expect(distinctPointSizes(decoded) == [72])
+    }
+
+    /// Repro (hypothesis 2): re-applying the font family must not flatten per-run sizes in the
+    /// stored rich text.
+    @Test func fontNameSyncPreservesMixedRunSizes() throws {
+        var shape = mixedSizeShape()
+        #expect(distinctPointSizes(try #require(RichTextUtils.decode(shape.richText ?? ""))) == [72, 120])
+
+        RichTextUtils.syncShapeStyle(in: &shape, property: .fontName)
+
+        let decoded = try #require(RichTextUtils.decode(shape.richText ?? ""))
+        #expect(decoded.string == "Hello world")
+        #expect(distinctPointSizes(decoded) == [72, 120])
+    }
+
+    /// Repro (hypothesis 1): after the font-name re-encode, the render path (`buildAttributedString`
+    /// with `plainText == shape.text`) must still show two distinct sizes — i.e. the stale-text
+    /// `retargetAttributedString` fallback must NOT fire and collapse every run to the first.
+    @Test func fontNameSyncThenBuildKeepsMixedSizes() throws {
+        var shape = mixedSizeShape()
+        RichTextUtils.syncShapeStyle(in: &shape, property: .fontName)
+
+        let rebuilt = RichTextUtils.buildAttributedString(
+            richText: shape.richText,
+            plainText: shape.text ?? "",
+            font: NSFont.systemFont(ofSize: 72),
+            color: .white,
+            alignment: .center,
+            letterSpacing: nil,
+            lineHeightMultiple: nil,
+            legacyLineSpacing: nil,
+            uppercase: false
+        )
+
+        #expect(rebuilt.string == "Hello world")
+        #expect(distinctPointSizes(rebuilt) == [72, 120])
+    }
+
+    /// Directly exposes any string drift introduced by the font-name re-encode: the decoded
+    /// rich-text string must keep matching `shape.text`, or the render's equality guard trips.
+    @Test func fontNameSyncKeepsRichTextStringMatchingPlainText() throws {
+        var shape = mixedSizeShape()
+        RichTextUtils.syncShapeStyle(in: &shape, property: .fontName)
+
+        let decoded = try #require(RichTextUtils.decode(shape.richText ?? ""))
+        #expect(decoded.string == (shape.text ?? ""))
+    }
+
+    /// Repro of the reported bug: a MULTI-LINE label with one enlarged word. When the edit commits
+    /// and the canvas re-renders through `buildAttributedString`, mixed per-run sizes must survive —
+    /// the newline must not trip the stale-text `retargetAttributedString` fallback that flattens runs.
+    @Test func multilineMixedSizesSurviveDisplayBuild() throws {
+        let text = "Light up\nyour workflow"
+        let attributed = NSMutableAttributedString(string: text)
+        let splitIndex = (text as NSString).range(of: "your").location
+        attributed.setAttributes(
+            [.font: NSFont.systemFont(ofSize: 108, weight: .bold), .foregroundColor: NSColor.white],
+            range: NSRange(location: 0, length: splitIndex)
+        )
+        attributed.setAttributes(
+            [.font: NSFont.systemFont(ofSize: 192, weight: .bold), .foregroundColor: NSColor.white],
+            range: NSRange(location: splitIndex, length: (text as NSString).length - splitIndex)
+        )
+        let encoded = try #require(RichTextUtils.encode(attributed))
+
+        let decoded = try #require(RichTextUtils.decode(encoded))
+        #expect(decoded.string == text)
+
+        let rebuilt = RichTextUtils.buildAttributedString(
+            richText: encoded,
+            plainText: text,
+            font: NSFont.systemFont(ofSize: 108, weight: .bold),
+            color: .white,
+            alignment: .center,
+            letterSpacing: nil,
+            lineHeightMultiple: nil,
+            legacyLineSpacing: nil,
+            uppercase: false
+        )
+        #expect(rebuilt.string == text)
+        #expect(distinctPointSizes(rebuilt) == [108, 192])
+    }
+
+    /// Mirrors the *real* creation path: a uniform build from the shape font (bold system default),
+    /// then the format controller's `NSFont(descriptor:size:)` applied to one word — then a
+    /// font-name re-apply. This is the path the user actually exercises.
+    @Test func formatBarSizeChangeSurvivesFontNameReapply() throws {
+        let baseFont = NSFont.systemFont(ofSize: 72, weight: .bold)
+        let initial = RichTextUtils.buildAttributedString(
+            richText: nil,
+            plainText: "Hello world",
+            font: baseFont,
+            color: .white,
+            alignment: .center,
+            letterSpacing: nil,
+            lineHeightMultiple: nil,
+            legacyLineSpacing: nil,
+            uppercase: false
+        )
+        let storage = NSMutableAttributedString(attributedString: initial)
+        let range = NSRange(location: 6, length: 5) // "world"
+        storage.enumerateAttribute(.font, in: range) { value, attrRange, _ in
+            let font = (value as? NSFont) ?? baseFont
+            let newFont = NSFont(descriptor: font.fontDescriptor, size: 120) ?? font
+            storage.addAttribute(.font, value: newFont, range: attrRange)
+        }
+
+        var shape = CanvasShapeModel(type: .text, text: "Hello world", fontSize: 72)
+        shape.fontWeight = 700
+        shape.richText = RichTextUtils.encode(storage)
+        #expect(distinctPointSizes(try #require(RichTextUtils.decode(shape.richText ?? ""))) == [72, 120])
+
+        RichTextUtils.syncShapeStyle(in: &shape, property: .fontName)
+
+        let decoded = try #require(RichTextUtils.decode(shape.richText ?? ""))
+        #expect(decoded.string == "Hello world")
+        #expect(distinctPointSizes(decoded) == [72, 120])
+    }
 }
