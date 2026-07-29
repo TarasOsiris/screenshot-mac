@@ -179,7 +179,10 @@ final class StoreService {
         #endif
 
         Purchases.configure(withAPIKey: apiKey)
+        #if os(iOS)
+        // Apple Search Ads exists only on iOS; on macOS this call just logs an ATT warning.
         Purchases.shared.attribution.enableAdServicesAttributionTokenCollection()
+        #endif
         configurationIssue = nil
 
         let d = CustomerInfoDelegate { [weak self] info in
