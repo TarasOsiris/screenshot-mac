@@ -46,7 +46,7 @@ extension ShapePropertiesSingleSelectionBar {
         .buttonStyle(.plain)
         .help("Background")
         .barPopover(isPresented: $isTextBackgroundPopoverPresented, title: "Background", scrollableContent: true) {
-            textBackgroundPopoverContent(shape: shape, shapeId: shapeId)
+            textBackgroundPopoverContent(shapeId: shapeId)
                 .padding(12)
                 .barPopoverContentWidth(280)
         }
@@ -73,12 +73,14 @@ extension ShapePropertiesSingleSelectionBar {
         }
     }
 
+    /// Reads the shape through `resolvedShape` rather than taking it as a parameter: the iPad
+    /// docked panel holds this closure across updates, so a captured shape would go stale.
     @ViewBuilder
-    func textBackgroundPopoverContent(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+    func textBackgroundPopoverContent(shapeId: UUID) -> some View {
         // Enable/disable toggles both fields together against the live selection — same shape as the
         // outline toggle. Background is a base-shape (non-localized) style, so writes land on base.
         let isOn = Binding<Bool>(
-            get: { shape.textBackgroundColorData != nil },
+            get: { liveShape(shapeId)?.textBackgroundColorData != nil },
             set: { enabled in
                 guard let i = idx(for: shapeId) else { return }
                 var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
@@ -97,7 +99,7 @@ extension ShapePropertiesSingleSelectionBar {
             set: { opacity.wrappedValue = Double($0) / 100 }
         )
         let hasOutline = Binding<Bool>(
-            get: { (shape.textBackgroundOutlineWidth ?? 0) > 0 },
+            get: { (liveShape(shapeId)?.textBackgroundOutlineWidth ?? 0) > 0 },
             set: { enabled in
                 guard let i = idx(for: shapeId) else { return }
                 var updated = resolvedShape(at: i.row, shapeIdx: i.shape)

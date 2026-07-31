@@ -83,6 +83,12 @@ struct ShapePropertiesSingleSelectionBar: View {
         return LocaleService.resolveShape(base, localeState: state.localeState)
     }
 
+    /// Resolves a shape by id at call time. Popover content that the iPad docked panel keeps
+    /// across updates must read through this instead of capturing a shape value.
+    func liveShape(_ shapeId: UUID) -> CanvasShapeModel? {
+        idx(for: shapeId).map { resolvedShape(at: $0.row, shapeIdx: $0.shape) }
+    }
+
     /// Whether the selected shape has any locale override for the active locale.
     var hasLocaleOverride: Bool {
         guard let shapeId = state.selectedShapeId, !state.localeState.isBaseLocale else { return false }
@@ -156,9 +162,11 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     bgColor: shapeBinding(shapeId, \.color),
                                     gradientConfig: shapeBinding(shapeId, \.fillGradientConfig, default: GradientConfig(), continuous: true),
                                     backgroundImageConfig: shapeBinding(shapeId, \.fillImageConfig, default: BackgroundImageConfig(), continuous: true),
-                                    backgroundImage: (idx(for: shapeId).flatMap { i in
-                                        state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
-                                    }).flatMap { state.screenshotImages[$0] },
+                                    backgroundImage: {
+                                        (idx(for: shapeId).flatMap { i in
+                                            state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
+                                        }).flatMap { state.screenshotImages[$0] }
+                                    },
                                     onChanged: { state.scheduleSave() },
                                     // macOS opens a file panel here; iPad picks via ImageSourceMenu
                                     // inside BackgroundImageEditor (→ onDropImage → saveShapeFillImage).

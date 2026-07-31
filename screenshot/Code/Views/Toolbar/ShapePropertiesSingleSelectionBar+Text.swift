@@ -16,7 +16,7 @@ extension ShapePropertiesSingleSelectionBar {
                 .lineLimit(1)
                 .transaction { $0.animation = nil }
         } content: {
-            textPopoverContent(shape: shape, shapeId: shapeId)
+            textPopoverContent(shapeId: shapeId)
         }
     }
 
@@ -28,17 +28,21 @@ extension ShapePropertiesSingleSelectionBar {
         return "\(fontName) \(size) \(weight)"
     }
 
+    /// Resolves the shape here rather than taking it as a parameter: the iPad docked panel holds
+    /// this closure across updates, so a shape captured at open time would go stale.
     @ViewBuilder
-    func textPopoverContent(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        #if os(macOS)
-        textPopoverColumn(shape: shape, shapeId: shapeId)
-            .font(.system(size: UIMetrics.FontSize.body))
-            .controlSize(.small)
-            .padding(12)
-            .barPopoverContentWidth(280)
-        #else
-        textPopoverForm(shape: shape, shapeId: shapeId)
-        #endif
+    func textPopoverContent(shapeId: UUID) -> some View {
+        if let shape = liveShape(shapeId) {
+            #if os(macOS)
+            textPopoverColumn(shape: shape, shapeId: shapeId)
+                .font(.system(size: UIMetrics.FontSize.body))
+                .controlSize(.small)
+                .padding(12)
+                .barPopoverContentWidth(280)
+            #else
+            textPopoverForm(shape: shape, shapeId: shapeId)
+            #endif
+        }
     }
 
     // MARK: - macOS dense column

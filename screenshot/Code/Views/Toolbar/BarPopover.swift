@@ -1,5 +1,15 @@
 import SwiftUI
 
+/// How `barPopover` presents on iOS. macOS ignores it and always shows an anchored popover.
+enum BarPopoverStyle {
+    /// iPad: a panel docked above the properties bar, leaving the canvas visible and interactive.
+    /// iPhone (compact) falls back to the sheet — a bottom sheet is already bottom-anchored there.
+    case panel
+    /// Always the modal sheet. For sheet-scale content: long lists, or text fields that a
+    /// bottom-docked panel would leave under the software keyboard.
+    case sheet
+}
+
 #if os(iOS)
 /// iPad sheet chrome: a `NavigationStack` with an inline title and native toolbar
 /// Done/Cancel actions. macOS keeps its own popover/window chrome, so this type is
@@ -120,12 +130,12 @@ extension View {
 
     /// A popover anchored to a control in the bottom properties bar.
     ///
-    /// macOS shows a real popover above the anchor (`arrowEdge: .top`). On iPad a popover
-    /// anchored to a control sitting at the very bottom of the screen renders partly
-    /// off-screen, so present a detent-sized sheet instead with a native nav bar + Done
-    /// button (`iosSheetChrome`) that's always fully on-screen.
+    /// macOS shows a real popover above the anchor (`arrowEdge: .top`). A popover anchored to a
+    /// control sitting at the very bottom of an iOS screen renders partly off-screen, so:
+    /// iPad docks a floating panel above the bar (`.panel`, the default — the canvas behind stays
+    /// undimmed and interactive), and iPhone uses a resizable bottom sheet.
     ///
-    /// `scrollableContent`: pass `true` for plain `VStack` content so the sheet adds a
+    /// `scrollableContent`: pass `true` for plain `VStack` content so the presentation adds a
     /// `ScrollView` around it. Leave `false` (default) for self-scrolling `Form`/`List`
     /// content — wrapping those in a `ScrollView` collapses them to zero height (empty sheet).
     @ViewBuilder
@@ -133,14 +143,19 @@ extension View {
         isPresented: Binding<Bool>,
         title: LocalizedStringKey,
         scrollableContent: Bool = false,
+        style: BarPopoverStyle = .panel,
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         #if os(macOS)
         popover(isPresented: isPresented, arrowEdge: .top, content: content)
         #else
-        sheet(isPresented: isPresented) {
-            BarPopoverSheet(title: Text(title), scrollableContent: scrollableContent, content: content)
-        }
+        modifier(BarPopoverPresentation(
+            isPresented: isPresented,
+            title: title,
+            scrollableContent: scrollableContent,
+            style: style,
+            panelContent: content
+        ))
         #endif
     }
 
@@ -178,6 +193,35 @@ enum BarSheet {
     }
 }
 
+/// Picks the iOS presentation for `barPopover`. The size class can only be read from inside a
+/// view, hence a modifier rather than a branch in the `barPopover` builder itself.
+private struct BarPopoverPresentation<PanelContent: View>: ViewModifier {
+    @Binding var isPresented: Bool
+    let title: LocalizedStringKey
+    let scrollableContent: Bool
+    let style: BarPopoverStyle
+    @ViewBuilder let panelContent: () -> PanelContent
+
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    private var usesDockedPanel: Bool { style == .panel && horizontalSizeClass != .compact }
+
+    func body(content: Content) -> some View {
+        if usesDockedPanel {
+            content.modifier(BarPanelPresenter(
+                isPresented: $isPresented,
+                title: title,
+                scrollableContent: scrollableContent,
+                panelContent: panelContent
+            ))
+        } else {
+            content.sheet(isPresented: $isPresented) {
+                BarPopoverSheet(title: Text(title), scrollableContent: scrollableContent, content: panelContent)
+            }
+        }
+    }
+}
+
 /// Bottom-bar popover content as an iOS sheet, with a native nav bar + Done button and
 /// (on iPhone) a resizable, half-openable detent. `Form`/`List` content scrolls itself and
 /// is presented directly; plain `VStack` content (`scrollableContent: true`) is wrapped in a
@@ -202,6 +246,9 @@ private struct BarPopoverSheet<Content: View>: View {
             }
         }
         .iosSheetChrome(title, detents: BarSheet.detents(compact: isPhone))
+        // Half-open (iPhone medium detent) stops dimming the canvas, so the shape being edited
+        // stays visible and draggable; expanding to `.large` goes modal again.
+        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
     }
 }
 #endif

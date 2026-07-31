@@ -7,7 +7,9 @@ struct ShapeFillSwatchButton: View {
     let bgColor: Binding<Color>
     let gradientConfig: Binding<GradientConfig>
     let backgroundImageConfig: Binding<BackgroundImageConfig>
-    var backgroundImage: NSImage?
+    /// Resolved lazily: the iPad docked panel holds the popover content across updates, so a
+    /// pre-fetched image would go stale after the user replaces it.
+    let backgroundImage: () -> NSImage?
     let onChanged: () -> Void
     let onPickImage: () -> Void
     let onRemoveImage: () -> Void
@@ -41,7 +43,7 @@ struct ShapeFillSwatchButton: View {
                     bgColor: bgColor,
                     gradientConfig: gradientConfig,
                     backgroundImageConfig: backgroundImageConfig,
-                    backgroundImage: backgroundImage,
+                    backgroundImage: backgroundImage(),
                     onChanged: onChanged,
                     onPickImage: onPickImage,
                     onRemoveImage: onRemoveImage,
@@ -61,8 +63,8 @@ struct ShapeFillSwatchButton: View {
         case .gradient:
             (shape.fillGradientConfig ?? GradientConfig()).gradientFill
         case .image:
-            if let backgroundImage {
-                Image(nsImage: backgroundImage)
+            if let image = backgroundImage() {
+                Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } else {

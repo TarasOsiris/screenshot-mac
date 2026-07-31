@@ -169,6 +169,16 @@ enum UIMetrics {
         static let modal: CGFloat = 24
     }
 
+    /// The iPad properties-bar panel that replaces the modal sheet (see `BarDockedPanel`).
+    /// Wide enough for the widest panel content (`ShapeFillSwatchButton`'s 300pt editor plus its
+    /// padding); the height cap keeps the shape being edited visible above it.
+    enum BarPanel {
+        static let width: CGFloat = 340
+        static let maxHeight: CGFloat = 400
+        static let headerHorizontalPadding: CGFloat = 14
+        static let headerVerticalPadding: CGFloat = 10
+    }
+
     /// Tap-target dimensions for the small chevron menu placed next to a numeric text field
     /// (e.g. font-size / line-height presets in the properties bar).
     enum ChevronMenu {

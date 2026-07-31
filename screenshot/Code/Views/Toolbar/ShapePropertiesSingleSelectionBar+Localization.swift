@@ -19,7 +19,9 @@ extension ShapePropertiesSingleSelectionBar {
         }
         .buttonStyle(.plain)
         .help("Localization")
-        .barPopover(isPresented: $isTextLocalizationPopoverPresented, title: "Localization") {
+        // Sheet, not a docked panel: a row per language with an inline text field is sheet-scale,
+        // and a bottom-docked panel would put those fields under the software keyboard.
+        .barPopover(isPresented: $isTextLocalizationPopoverPresented, title: "Localization", style: .sheet) {
             #if os(macOS)
             textLocalizationPopoverContent(shape: shape, shapeId: shapeId)
                 .padding(12)
