@@ -12,9 +12,6 @@ struct TemplateControlBar: View {
     private static let exportTitle: LocalizedStringKey = "Share…"
     #endif
     @Environment(AppState.self) private var state
-    #if os(iOS)
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    #endif
     @Binding var template: ScreenshotTemplate
     let row: ScreenshotRow
     let index: Int
@@ -176,86 +173,14 @@ struct TemplateControlBar: View {
                 .focusable(false)
                 .foregroundStyle(backgroundButtonStyle)
                 .help(backgroundButtonHelp)
-                .sheet(isPresented: $showBackgroundPopover) {
-                    #if os(macOS)
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(Self.backgroundOverrideTitle)
-                                .font(.headline)
-                            Spacer()
-                            Button {
-                                showBackgroundPopover = false
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .buttonStyle(.borderless)
-                        }
-
-                        Toggle(
-                            "Override background",
-                            isOn: $template.overrideBackground.onSet { onSave() }
-                        )
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                        .font(.system(size: UIMetrics.FontSize.body))
-
-                        if template.overrideBackground {
-                            backgroundEditorContent
-
-                            if template.backgroundStyle != .color {
-                                HStack(spacing: 4) {
-                                    Text("Blur")
-                                        .font(.system(size: UIMetrics.FontSize.body))
-                                    Spacer()
-                                    Slider(
-                                        value: $template.backgroundBlur.onSet { onSave() },
-                                        in: 0...100
-                                    )
-                                    .frame(width: UIMetrics.SliderWidth.standard)
-                                    Text("\(Int(template.backgroundBlur))")
-                                        .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 38, alignment: .trailing)
-                                }
-                            }
-                        }
-                    }
-                    .padding(20)
-                    .frame(width: 320)
-                    #else
-                    // A Form keeps the sheet at full detent height, so toggling the override
-                    // doesn't resize/re-center the floating iPad sheet around its content.
-                    Form {
-                        Section {
-                            Toggle(
-                                "Override background",
-                                isOn: $template.overrideBackground.onSet { onSave() }
-                            )
-                        }
-                        if template.overrideBackground {
-                            Section {
-                                backgroundEditorContent
-                            }
-                            if template.backgroundStyle != .color {
-                                Section {
-                                    PopoverSliderRow(
-                                        label: "Blur",
-                                        value: $template.backgroundBlur.onSet { onSave() },
-                                        range: 0...100,
-                                        displayValue: "\(Int(template.backgroundBlur))"
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    // iPhone: a grabber + medium detent so it can be half-opened to keep the canvas
-                    // visible. iPad keeps the single full detent (the Form-sized floating card).
-                    .iosSheetChrome(
-                        Text(Self.backgroundOverrideTitle),
-                        detents: BarSheet.detents(compact: horizontalSizeClass == .compact)
-                    )
-                    #endif
+                // `.sheet` rather than the docked `.panel`: the panel needs a `BarPanelHost`,
+                // which only `ShapePropertiesBar` provides.
+                .barPopover(
+                    isPresented: $showBackgroundPopover,
+                    title: Self.backgroundOverrideTitle,
+                    style: .sheet
+                ) {
+                    backgroundOverrideContent
                 }
             }
 
@@ -346,6 +271,76 @@ struct TemplateControlBar: View {
         } message: {
             Text(renderError ?? "")
         }
+    }
+
+    private var blurSlider: some View {
+        PopoverSliderRow(
+            label: "Blur",
+            value: $template.backgroundBlur.onSet { onSave() },
+            range: 0...100,
+            displayValue: "\(Int(template.backgroundBlur))"
+        )
+    }
+
+    @ViewBuilder
+    private var backgroundOverrideContent: some View {
+        #if os(macOS)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(Self.backgroundOverrideTitle)
+                    .font(.headline)
+                Spacer()
+                Button {
+                    showBackgroundPopover = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.borderless)
+            }
+
+            Toggle(
+                "Override background",
+                isOn: $template.overrideBackground.onSet { onSave() }
+            )
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            .font(.system(size: UIMetrics.FontSize.body))
+
+            if template.overrideBackground {
+                backgroundEditorContent
+
+                if template.backgroundStyle != .color {
+                    blurSlider
+                }
+            }
+        }
+        .padding(20)
+        .frame(width: 320)
+        // Otherwise the system color panel taking key focus dismisses the popover mid-edit;
+        // `onExitCommand` puts Esc back.
+        .interactiveDismissDisabled()
+        .onExitCommand { showBackgroundPopover = false }
+        #else
+        // A Form keeps the sheet at full detent height, so toggling the override doesn't
+        // resize/re-center the floating iPad sheet around its content.
+        Form {
+            Section {
+                Toggle(
+                    "Override background",
+                    isOn: $template.overrideBackground.onSet { onSave() }
+                )
+            }
+            if template.overrideBackground {
+                Section {
+                    backgroundEditorContent
+                }
+                if template.backgroundStyle != .color {
+                    Section { blurSlider }
+                }
+            }
+        }
+        #endif
     }
 
     @ViewBuilder
