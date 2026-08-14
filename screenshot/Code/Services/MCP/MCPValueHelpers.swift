@@ -176,5 +176,17 @@ enum MCPResultEncoding {
             structuredContent: structured
         )
     }
+
+    static func result<T: Encodable>(_ payload: T, pngImage: Data) throws -> CallTool.Result {
+        let data = try encoder.encode(payload)
+        let structured: Value? = try JSONDecoder().decode(Value.self, from: data)
+        return CallTool.Result(
+            content: [
+                .text(String(decoding: data, as: UTF8.self)),
+                .image(data: pngImage.base64EncodedString(), mimeType: "image/png"),
+            ],
+            structuredContent: structured
+        )
+    }
 }
 #endif

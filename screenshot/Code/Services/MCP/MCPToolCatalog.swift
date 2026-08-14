@@ -27,6 +27,8 @@ enum MCPToolName: String, CaseIterable {
     case renderPreview = "render_preview"
     case getAppStoreMetadata = "get_app_store_metadata"
     case updateAppStoreDescription = "update_app_store_description"
+    case previewAppStoreScreenshotSync = "preview_app_store_screenshot_sync"
+    case applyAppStoreScreenshotSync = "apply_app_store_screenshot_sync"
 }
 
 nonisolated enum MCPToolCatalog {
@@ -295,6 +297,25 @@ nonisolated enum MCPToolCatalog {
                 "app_id": MCPSchema.string("App Store Connect app id (default: the active project's linked app)"),
                 "version_id": MCPSchema.string("Update only this App Store version id (default: every editable version)"),
             ], required: ["descriptions"])
+        ),
+        Tool(
+            name: MCPToolName.previewAppStoreScreenshotSync.rawValue,
+            description: "Render the active Screenshot Bro project, compare exact checksums and order with App Store Connect, and return a cached 15-minute screenshot sync plan plus a contact sheet. Ambiguous or incompatible rows/locales are reported and skipped.",
+            inputSchema: MCPSchema.object([
+                "app_id": MCPSchema.string("App Store Connect app id (default: linked app)"),
+                "version_ids": MCPSchema.array(of: MCPSchema.string("App Store version id"), "Editable version ids (default: every compatible editable version)"),
+                "row_ids": MCPSchema.array(of: MCPSchema.string("Screenshot Bro row UUID"), "Rows to include (default: non-excluded rows with detectable display types)"),
+                "locale_codes": MCPSchema.array(of: MCPSchema.string("Project locale code"), "Project locales to include (default: all project locales)"),
+            ])
+        ),
+        Tool(
+            name: MCPToolName.applyAppStoreScreenshotSync.rawValue,
+            description: "Apply explicitly selected sets from a cached screenshot sync preview. Revalidates the project and every remote set, preserves matching assets, and verifies the final order.",
+            inputSchema: MCPSchema.object([
+                "plan_id": MCPSchema.string("Plan id returned by preview_app_store_screenshot_sync"),
+                "set_ids": MCPSchema.array(of: MCPSchema.string("Set id returned by preview"), "Explicit nonempty set selection"),
+                "confirm": MCPSchema.boolean("Must be true to authorize App Store mutations"),
+            ], required: ["plan_id", "set_ids", "confirm"])
         ),
     ]
 }

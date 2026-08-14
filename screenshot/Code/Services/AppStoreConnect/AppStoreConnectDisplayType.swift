@@ -3,7 +3,7 @@ import Foundation
 /// Screenshot display type — the device/size bucket a screenshot set targets.
 /// Some newer App Store labels still upload through older `screenshotDisplayType`
 /// enum values because the ASC API does not expose a distinct enum case for them.
-enum ASCDisplayType: String, CaseIterable, Identifiable {
+enum ASCDisplayType: String, CaseIterable, Identifiable, Sendable {
     // iPhone
     case iphone69 = "APP_IPHONE_69"  // 6.9" (1320x2868) — 16/17 Pro Max
     case iphone67 = "APP_IPHONE_67"  // 6.7" (1290x2796) — 16 Plus / 15 Pro Max

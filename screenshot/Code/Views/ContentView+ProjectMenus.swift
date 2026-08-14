@@ -96,6 +96,13 @@ extension ContentView {
             }
             .disabled(state.activeProjectId == nil)
 
+            Menu("App Store", systemImage: "app.badge") {
+                Button("Update Metadata…", systemImage: "text.badge.checkmark") {
+                    showingASCMetadataSheet = true
+                }
+            }
+            .disabled(state.activeProjectId == nil)
+
             #if os(macOS)
             Menu("Project File", systemImage: "folder") {
                 Button("Show in Finder", systemImage: "folder") {

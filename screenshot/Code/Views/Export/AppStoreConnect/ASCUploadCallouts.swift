@@ -1,20 +1,5 @@
 import SwiftUI
 
-struct ASCReplaceWarningCallout: View {
-    var body: some View {
-        ASCCalloutBox(tint: .orange) {
-            HStack(alignment: .top, spacing: 8) {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .foregroundStyle(.orange)
-                    .font(.system(size: 13))
-                Text("If a matching display type already has screenshots, they will be deleted and replaced. You'll be asked to confirm before anything is uploaded.")
-                    .font(.caption)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-}
-
 struct ASCIssuesPanel: View {
     let issues: [UploadIssue]
 

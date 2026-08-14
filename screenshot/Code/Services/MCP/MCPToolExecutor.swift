@@ -53,6 +53,8 @@ final class MCPToolExecutor {
         case .renderPreview: try renderPreview(args)
         case .getAppStoreMetadata: try await getAppStoreMetadata(args)
         case .updateAppStoreDescription: try await updateAppStoreDescription(args)
+        case .previewAppStoreScreenshotSync: try await previewAppStoreScreenshotSync(args)
+        case .applyAppStoreScreenshotSync: try await applyAppStoreScreenshotSync(args)
         }
     }
 

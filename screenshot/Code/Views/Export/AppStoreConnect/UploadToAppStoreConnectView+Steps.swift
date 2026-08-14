@@ -18,6 +18,7 @@ extension UploadToAppStoreConnectView {
             case .pickingVersion: pickVersionView
             case .editingMetadata: editMetadataView
             case .configuringPlan: configurePlanView
+            case .reviewingChanges: reviewChangesView
             case .uploading, .done: uploadProgressView
             }
         }
@@ -51,6 +52,7 @@ extension UploadToAppStoreConnectView {
 
     var pickAppView: some View {
         ASCAppSelectionStepView(
+            mode: mode,
             appsWithVersions: appsWithVersions,
             selectedApp: $selectedApp,
             hideNonUploadable: $hideNonUploadable
@@ -60,6 +62,7 @@ extension UploadToAppStoreConnectView {
 
     var pickVersionView: some View {
         ASCVersionSelectionStepView(
+            mode: mode,
             selectedApp: selectedApp,
             versions: versions,
             selectedVersionIds: $selectedVersionIds
@@ -429,12 +432,10 @@ extension UploadToAppStoreConnectView {
                     )
                 }
 
-                Text("Review and upload plan")
+                Text("Configure screenshot sync")
                     .font(.headline)
 
                 uploadSummaryPanel
-
-                replaceWarningCallout
 
                 issuesPanel
 
@@ -474,8 +475,11 @@ extension UploadToAppStoreConnectView {
         )
     }
 
-    var replaceWarningCallout: some View {
-        ASCReplaceWarningCallout()
+    var reviewChangesView: some View {
+        ASCScreenshotReviewChangesView(
+            coordinator: screenshotSync,
+            refresh: { startScreenshotReviewRefresh() }
+        )
     }
 
     @ViewBuilder
@@ -518,26 +522,64 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     var doneView: some View {
+        if mode == .metadata {
+            metadataSavedView
+        } else {
+            uploadDoneView
+        }
+    }
+
+    @ViewBuilder
+    var uploadDoneView: some View {
         VStack(spacing: 14) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 56))
                 .foregroundStyle(.green)
-            Text("Upload complete")
+            Text("Screenshot sync complete")
                 .font(.title3)
                 .fontWeight(.semibold)
             if let summary = uploadSummary {
-                Text("\(summary.totalScreenshots) screenshot\(summary.totalScreenshots == 1 ? "" : "s") uploaded across \(summary.localizationCount) locale\(summary.localizationCount == 1 ? "" : "s") and \(summary.versionCount) version\(summary.versionCount == 1 ? "" : "s").")
+                Text("\(summary.totalScreenshots) screenshot\(summary.totalScreenshots == 1 ? "" : "s") synced across \(summary.localizationCount) locale\(summary.localizationCount == 1 ? "" : "s") and \(summary.versionCount) version\(summary.versionCount == 1 ? "" : "s").")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                if let appId = summary.appId,
-                   let url = URL(string: "https://appstoreconnect.apple.com/apps/\(appId)/appstore") {
-                    Link(destination: url) {
-                        Label("Open \(summary.appName) in App Store Connect", systemImage: "arrow.up.right.square")
-                    }
-                    .buttonStyle(.bordered)
-                }
+                appStoreConnectLink(appId: summary.appId, appName: summary.appName)
             }
+        }
+    }
+
+    @ViewBuilder
+    var metadataSavedView: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(.green)
+            Text("Metadata updated")
+                .font(.title3)
+                .fontWeight(.semibold)
+            if let summary = metadataSummary {
+                if summary.fieldCount == 0 {
+                    Text("No changes to save.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("\(summary.fieldCount) field\(summary.fieldCount == 1 ? "" : "s") saved across \(summary.localeCount) locale\(summary.localeCount == 1 ? "" : "s") and \(summary.versionCount) version\(summary.versionCount == 1 ? "" : "s").")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                appStoreConnectLink(appId: summary.appId, appName: summary.appName)
+            }
+        }
+    }
+
+    @ViewBuilder
+    func appStoreConnectLink(appId: String?, appName: String) -> some View {
+        if let appId, let url = URL(string: "https://appstoreconnect.apple.com/apps/\(appId)/appstore") {
+            Link(destination: url) {
+                Label("Open \(appName) in App Store Connect", systemImage: "arrow.up.right.square")
+            }
+            .buttonStyle(.bordered)
         }
     }
 }

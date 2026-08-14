@@ -77,6 +77,7 @@ struct ContentView: View {
     @State var editorViewportHeight: CGFloat = 0
     @State var scrollWheelMonitor: Any?
     @State var showingASCUploadSheet = false
+    @State var showingASCMetadataSheet = false
     @State var showingGooglePlayUploadSheet = false
     @State var showcasePresentation: ShowcasePresentation?
     @State var projectNamePrompt: ProjectNamePrompt?
@@ -513,6 +514,10 @@ struct ContentView: View {
         // Upload wizards: fitted sheet on macOS, native full-screen screen on iPad.
         .platformAdaptiveSheet(isPresented: $showingASCUploadSheet) {
             UploadToAppStoreConnectView()
+                .environment(state)
+        }
+        .platformAdaptiveSheet(isPresented: $showingASCMetadataSheet) {
+            UploadToAppStoreConnectView(mode: .metadata)
                 .environment(state)
         }
         .platformAdaptiveSheet(isPresented: $showingGooglePlayUploadSheet) {

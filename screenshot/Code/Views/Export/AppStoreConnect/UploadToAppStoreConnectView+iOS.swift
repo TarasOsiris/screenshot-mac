@@ -18,8 +18,14 @@ extension UploadToAppStoreConnectView {
             // setting `errorMessage`, so keep that one — the plan screen explains why it stopped.
             if newPath.count < oldPath.count,
                oldPath.last != .uploading, oldPath.last != .done {
+                if oldPath.last == .reviewingChanges, screenshotSync.phase == .loading {
+                    uploadTask?.cancel()
+                }
                 errorMessage = nil
                 errorDetailsText = nil
+                if oldPath.last == .reviewingChanges {
+                    screenshotSync.discard()
+                }
             }
         }
     }
@@ -36,9 +42,11 @@ extension UploadToAppStoreConnectView {
             stepContent(for: stepValue)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .navigationTitle("Upload to App Store Connect")
+        .navigationTitle(flowTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(stepValue == .uploading || stepValue == .done)
+        .navigationBarBackButtonHidden(
+            stepValue == .uploading || stepValue == .done || screenshotSync.phase == .applying
+        )
         .interactiveDismissDisabled(stepValue == .uploading)
         .toolbar { iosToolbar(for: stepValue) }
     }
@@ -77,6 +85,11 @@ extension UploadToAppStoreConnectView {
                 ProgressView().controlSize(.small)
             }
         }
+        if stepValue == .configuringPlan {
+            ToolbarItem(placement: .topBarTrailing) {
+                reviewChangesButton
+            }
+        }
         ToolbarItem(placement: .confirmationAction) {
             iosPrimaryButton(for: stepValue)
         }
@@ -93,7 +106,7 @@ extension UploadToAppStoreConnectView {
         } else if step == .done {
             Button("Close") { dismiss() }
         } else {
-            Button("Cancel Upload", role: .cancel) { cancelUpload() }
+            Button("Cancel Sync", role: .cancel) { cancelUpload() }
         }
     }
 }

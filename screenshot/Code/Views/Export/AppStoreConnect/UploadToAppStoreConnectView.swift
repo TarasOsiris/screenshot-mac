@@ -7,6 +7,9 @@ import SwiftUI
 
 
 struct UploadToAppStoreConnectView: View {
+    /// Declared first so the memberwise initializer reads `UploadToAppStoreConnectView(mode:)`.
+    var mode: ASCFlowMode = .screenshots
+
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) var state
     #if os(iOS)
@@ -43,6 +46,8 @@ struct UploadToAppStoreConnectView: View {
     @State var uploadProgress: UploadProgress?
     @State var uploadTask: Task<Void, Never>?
     @State var uploadSummary: UploadSummary?
+    @State var metadataSummary: MetadataSaveSummary?
+    @State var screenshotSync = ASCScreenshotSyncCoordinator()
 
     @State var errorMessage: String?
     /// Full error text (summary + API response + context). When nil, the Details button falls back to `errorMessage`.
@@ -51,6 +56,7 @@ struct UploadToAppStoreConnectView: View {
     @State var displayTypeDetailsPlanId: String?
     @State var isBusy = false
     @State var isConfirmingUpload = false
+    @State var isConfirmingReviewedSync = false
     @State var credentials = AppStoreConnectCredentialsStore.shared
 
     nonisolated struct UploadSummary {
@@ -61,11 +67,20 @@ struct UploadToAppStoreConnectView: View {
         let versionCount: Int
     }
 
+    nonisolated struct MetadataSaveSummary {
+        let appId: String?
+        let appName: String
+        let versionCount: Int
+        let localeCount: Int
+        let fieldCount: Int
+    }
+
     nonisolated enum Step: Hashable {
         case pickingApp
         case pickingVersion
         case editingMetadata
         case configuringPlan
+        case reviewingChanges
         case uploading
         case done
     }
@@ -261,20 +276,33 @@ struct UploadToAppStoreConnectView: View {
         #endif
     }
 
-    /// `.task`, error-details sheet, and replace-confirmation are identical on both platforms.
+    /// `.task`, error-details sheet, and sync confirmation are identical on both platforms.
     private func sharedModifiers(_ content: some View) -> some View {
         content
             .task { await loadAppsIfNeeded() }
+            .onDisappear {
+                uploadTask?.cancel()
+                screenshotSync.discard()
+            }
             .sheet(item: $presentedErrorDetails) { details in
                 ASCUploadFailureDetailsSheet(details: details.message)
             }
             .confirmationDialog(
-                "Replace existing screenshots?",
+                isConfirmingReviewedSync
+                    ? "Apply reviewed screenshot changes?"
+                    : "Upload to App Store Connect",
                 isPresented: $isConfirmingUpload,
                 titleVisibility: .visible
             ) {
-                Button("Upload and Replace", role: .destructive) {
-                    Task { await startUpload() }
+                Button(
+                    isConfirmingReviewedSync ? "Apply Selected Changes" : "Upload",
+                    role: .destructive
+                ) {
+                    if isConfirmingReviewedSync {
+                        startReviewedScreenshotSync()
+                    } else {
+                        startDirectScreenshotSync()
+                    }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -309,10 +337,9 @@ struct UploadToAppStoreConnectView: View {
         #endif
     }
 
-    /// Return to the plan screen after an upload error/cancel. macOS swaps state; iPad pops the
-    /// pushed uploading screen (the plan screen below it shows the error banner).
-    func retreatToConfiguringPlan() {
-        step = .configuringPlan
+    /// Return to the originating plan/review after a sync error or cancellation.
+    func retreatAfterScreenshotSync(to destination: Step) {
+        step = destination
         #if os(iOS)
         if path.last == .uploading || path.last == .done {
             path.removeLast()

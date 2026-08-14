@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ASCAppSelectionStepView: View {
+    var mode: ASCFlowMode = .screenshots
     let appsWithVersions: [ASCAppWithVersions]
 
     @Binding var selectedApp: ASCApp?
@@ -12,12 +13,12 @@ struct ASCAppSelectionStepView: View {
 
     private var visibleAppsWithVersions: [ASCAppWithVersions] {
         hideNonUploadable
-            ? appsWithVersions.filter(\.hasScreenshotUploadableVersion)
+            ? appsWithVersions.filter { $0.hasSelectableVersion(for: mode) }
             : appsWithVersions
     }
 
-    private var nonUploadableAppCount: Int {
-        appsWithVersions.filter { !$0.hasScreenshotUploadableVersion }.count
+    private var hiddenAppCount: Int {
+        appsWithVersions.filter { !$0.hasSelectableVersion(for: mode) }.count
     }
 
     var body: some View {
@@ -37,15 +38,23 @@ struct ASCAppSelectionStepView: View {
                 .font(.headline)
             Spacer()
             Toggle(isOn: $hideNonUploadable) {
-                if nonUploadableAppCount > 0 {
-                    Text("Hide non-uploadable (\(nonUploadableAppCount))")
+                if mode == .metadata {
+                    if hiddenAppCount > 0 {
+                        Text("Hide non-editable (\(hiddenAppCount))")
+                    } else {
+                        Text("Hide non-editable")
+                    }
+                } else if hiddenAppCount > 0 {
+                    Text("Hide non-uploadable (\(hiddenAppCount))")
                 } else {
                     Text("Hide non-uploadable")
                 }
             }
             .toggleStyle(.switch)
             .compactControlSize()
-            .help("Hide apps with no editable App Store version. Apps in review or already live can't accept new screenshots until you create a new version.")
+            .help(mode == .metadata
+                  ? String(localized: "Hide apps with no editable App Store version. Apps that are already live can't accept metadata changes until you create a new version.")
+                  : String(localized: "Hide apps with no editable App Store version. Apps in review or already live can't accept new screenshots until you create a new version."))
         }
         .padding(.horizontal, 16)
         .padding(.top, 12)
@@ -83,22 +92,23 @@ struct ASCAppSelectionStepView: View {
 }
 
 struct ASCVersionSelectionStepView: View {
+    var mode: ASCFlowMode = .screenshots
     let selectedApp: ASCApp?
     let versions: [ASCAppStoreVersion]
 
     @Binding var selectedVersionIds: Set<String>
     @State private var showReadOnlyVersions = false
 
-    private var hasUploadableVersion: Bool {
-        versions.contains(where: \.isScreenshotUploadable)
+    private var hasSelectableVersion: Bool {
+        versions.contains { $0.isSelectable(for: mode) }
     }
 
     private var readOnlyVersionCount: Int {
-        versions.filter { !$0.isScreenshotUploadable }.count
+        versions.filter { !$0.isSelectable(for: mode) }.count
     }
 
     private var visibleVersions: [ASCAppStoreVersion] {
-        showReadOnlyVersions ? versions : versions.filter(\.isScreenshotUploadable)
+        showReadOnlyVersions ? versions : versions.filter { $0.isSelectable(for: mode) }
     }
 
     private var versionGroups: [(String, [ASCAppStoreVersion])] {
@@ -114,7 +124,7 @@ struct ASCVersionSelectionStepView: View {
         VStack(alignment: .leading, spacing: 8) {
             title
             appHeader
-            if !versions.isEmpty && !hasUploadableVersion {
+            if !versions.isEmpty && !hasSelectableVersion {
                 noEditableVersionCallout
             }
             versionList
@@ -133,7 +143,9 @@ struct ASCVersionSelectionStepView: View {
                 }
                 .toggleStyle(.switch)
                 .compactControlSize()
-                .help("Show versions that are locked for review or live. Screenshots can only be uploaded to editable versions.")
+                .help(mode == .metadata
+                      ? String(localized: "Show versions that are already live. Metadata can only be changed on editable versions.")
+                      : String(localized: "Show versions that are locked for review or live. Screenshots can only be uploaded to editable versions."))
             }
         }
         .padding(.horizontal, 16)
@@ -154,7 +166,9 @@ struct ASCVersionSelectionStepView: View {
                 .foregroundStyle(.orange)
                 .font(.callout)
                 .fontWeight(.medium)
-            Text("Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard.")
+            Text(mode == .metadata
+                 ? "Every version on this app is already live. Create a new version in App Store Connect, then refresh this wizard."
+                 : "Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -184,7 +198,7 @@ struct ASCVersionSelectionStepView: View {
                 Section(group.0) {
                     ForEach(group.1) { version in
                         Toggle(isOn: $selectedVersionIds.contains(version.id)) {
-                            ASCVersionSelectionRow(version: version)
+                            ASCVersionSelectionRow(version: version, mode: mode)
                         }
                         #if os(macOS)
                         .toggleStyle(.checkbox)
@@ -192,7 +206,7 @@ struct ASCVersionSelectionStepView: View {
                         .toggleStyle(.switch)
                         .controlSize(.small)
                         #endif
-                        .disabled(!version.isScreenshotUploadable)
+                        .disabled(!version.isSelectable(for: mode))
                     }
                 }
             }
@@ -202,9 +216,11 @@ struct ASCVersionSelectionStepView: View {
 
     @ViewBuilder
     private var selectedReadOnlyVersionWarning: some View {
-        let selectedReadOnlyVersions = versions.filter { selectedVersionIds.contains($0.id) && !$0.isScreenshotUploadable }
+        let selectedReadOnlyVersions = versions.filter { selectedVersionIds.contains($0.id) && !$0.isSelectable(for: mode) }
         if let selectedVersion = selectedReadOnlyVersions.first {
-            Label("Version \(selectedVersion.attributes.versionString) is \(selectedVersion.attributes.displayState) — screenshots can't be changed. Pick an editable version or create a new one in App Store Connect.",
+            Label(mode == .metadata
+                  ? "Version \(selectedVersion.attributes.versionString) is \(selectedVersion.attributes.displayState) — metadata can't be changed. Pick an editable version or create a new one in App Store Connect."
+                  : "Version \(selectedVersion.attributes.versionString) is \(selectedVersion.attributes.displayState) — screenshots can't be changed. Pick an editable version or create a new one in App Store Connect.",
                   systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
                 .font(.caption)
@@ -216,6 +232,7 @@ struct ASCVersionSelectionStepView: View {
 
 private struct ASCVersionSelectionRow: View {
     let version: ASCAppStoreVersion
+    let mode: ASCFlowMode
 
     var body: some View {
         HStack(spacing: 8) {
@@ -230,7 +247,7 @@ private struct ASCVersionSelectionRow: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if !version.isScreenshotUploadable {
+            if !version.isSelectable(for: mode) {
                 Label("Read-only", systemImage: "lock.fill")
                     .foregroundStyle(.orange)
                     .font(.caption)

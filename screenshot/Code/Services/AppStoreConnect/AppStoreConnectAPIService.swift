@@ -214,12 +214,111 @@ final class AppStoreConnectAPIService {
     // MARK: - Screenshots (reserve / upload / commit)
 
     func listScreenshots(setId: String, limit: Int = 50) async throws -> [ASCAppScreenshot] {
-        let path = "/v1/appScreenshotSets/\(setId)/appScreenshots?limit=\(limit)"
+        if isDemoMode { await demoDelay(); return [] }
+        let fields = "fileSize,fileName,sourceFileChecksum,imageAsset,assetToken,assetType,assetDeliveryState"
+        let path = "/v1/appScreenshotSets/\(setId)/appScreenshots?limit=\(limit)&fields%5BappScreenshots%5D=\(fields)"
         let response: ASCListResponse<ASCAppScreenshot> = try await get(path)
         return response.data
     }
 
+    func screenshot(id: String) async throws -> ASCAppScreenshot {
+        if isDemoMode {
+            await demoDelay()
+            throw AppStoreConnectAPIError.httpError(status: 404, message: "Demo screenshot not found")
+        }
+        let fields = "fileSize,fileName,sourceFileChecksum,imageAsset,assetToken,assetType,assetDeliveryState"
+        let response: ASCSingleResponse<ASCAppScreenshot> = try await get(
+            "/v1/appScreenshots/\(id)?fields%5BappScreenshots%5D=\(fields)"
+        )
+        return response.data
+    }
+
+    func listScreenshotOrder(setId: String) async throws -> [String] {
+        if isDemoMode { await demoDelay(); return [] }
+        let response: ASCRelationshipListResponse = try await get(
+            "/v1/appScreenshotSets/\(setId)/relationships/appScreenshots?limit=50"
+        )
+        return response.data.map(\.id)
+    }
+
+    func setScreenshotOrder(setId: String, screenshotIds: [String]) async throws {
+        if isDemoMode { await demoDelay(); return }
+        let body = ASCRelationshipListRequest(
+            data: screenshotIds.map { ASCResourceReference(type: "appScreenshots", id: $0) }
+        )
+        _ = try await rawRequest(
+            method: "PATCH",
+            path: "/v1/appScreenshotSets/\(setId)/relationships/appScreenshots",
+            body: body
+        )
+    }
+
+    func downloadScreenshotData(_ screenshot: ASCAppScreenshot, maxDimension: Int? = nil) async throws -> Data {
+        let resolvedScreenshot: ASCAppScreenshot
+        if screenshot.attributes.imageAsset == nil {
+            resolvedScreenshot = try await self.screenshot(id: screenshot.id)
+        } else {
+            resolvedScreenshot = screenshot
+        }
+        guard let imageAsset = resolvedScreenshot.attributes.imageAsset,
+              let url = Self.resolvedImageAssetURL(
+                imageAsset,
+                fileName: resolvedScreenshot.attributes.fileName,
+                maxDimension: maxDimension
+              ) else {
+            throw AppStoreConnectAPIError.invalidURL
+        }
+
+        do {
+            let (data, response) = try await session.data(from: url)
+            guard let http = response as? HTTPURLResponse else {
+                throw AppStoreConnectAPIError.httpError(status: -1, message: "Non-HTTP image response")
+            }
+            guard (200..<300).contains(http.statusCode) else {
+                throw AppStoreConnectAPIError.httpError(
+                    status: http.statusCode,
+                    message: "Screenshot download failed"
+                )
+            }
+            return data
+        } catch let error as AppStoreConnectAPIError {
+            throw error
+        } catch {
+            throw AppStoreConnectAPIError.transport(error)
+        }
+    }
+
+    nonisolated static func resolvedImageAssetURL(
+        _ asset: ASCImageAsset,
+        fileName: String?,
+        maxDimension: Int? = nil
+    ) -> URL? {
+        guard asset.width > 0, asset.height > 0 else { return nil }
+        var width = asset.width
+        var height = asset.height
+        // The template host renders whatever {w}x{h} we ask for, so requesting a thumbnail
+        // here avoids pulling multi-MB source renditions just to draw a preview.
+        if let maxDimension, maxDimension > 0, max(width, height) > maxDimension {
+            let scale = Double(maxDimension) / Double(max(width, height))
+            width = max(1, Int((Double(width) * scale).rounded()))
+            height = max(1, Int((Double(height) * scale).rounded()))
+        }
+        let trimmedFileName = fileName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let ext = URL(fileURLWithPath: trimmedFileName).pathExtension
+            .trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty ?? "png"
+        let resolved = asset.templateUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacing("{w}", with: String(width))
+            .replacing("{h}", with: String(height))
+            .replacing("{f}", with: ext)
+        guard !resolved.contains("{"), !resolved.contains("}") else { return nil }
+        guard let url = URL(string: resolved), ["http", "https"].contains(url.scheme?.lowercased() ?? "") else {
+            return nil
+        }
+        return url
+    }
+
     func deleteScreenshot(id: String) async throws {
+        if isDemoMode { await demoDelay(); return }
         try await delete("/v1/appScreenshots/\(id)")
     }
 
@@ -339,6 +438,12 @@ final class AppStoreConnectAPIService {
 
         var request = URLRequest(url: url)
         request.httpMethod = method
+        if method == "GET" {
+            // Screenshot relationship reads are used to validate writes made moments earlier.
+            // A cached pre-mutation response can otherwise look like a failed order update.
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+        }
         let token = try auth.token()
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
@@ -383,7 +488,7 @@ final class AppStoreConnectAPIService {
     }
 }
 
-private extension String {
+private nonisolated extension String {
     var nonEmpty: String? { isEmpty ? nil : self }
 }
 
@@ -645,7 +750,50 @@ nonisolated struct ASCAppScreenshot: Decodable, Identifiable {
         let uploaded: Bool?
         let sourceFileChecksum: String?
         let uploadOperations: [ASCUploadOperation]?
+        let imageAsset: ASCImageAsset?
+        let assetToken: String?
+        let assetType: String?
+        let assetDeliveryState: ASCAssetDeliveryState?
+
+        init(
+            fileName: String? = nil,
+            fileSize: Int? = nil,
+            uploaded: Bool? = nil,
+            sourceFileChecksum: String? = nil,
+            uploadOperations: [ASCUploadOperation]? = nil,
+            imageAsset: ASCImageAsset? = nil,
+            assetToken: String? = nil,
+            assetType: String? = nil,
+            assetDeliveryState: ASCAssetDeliveryState? = nil
+        ) {
+            self.fileName = fileName
+            self.fileSize = fileSize
+            self.uploaded = uploaded
+            self.sourceFileChecksum = sourceFileChecksum
+            self.uploadOperations = uploadOperations
+            self.imageAsset = imageAsset
+            self.assetToken = assetToken
+            self.assetType = assetType
+            self.assetDeliveryState = assetDeliveryState
+        }
     }
+}
+
+nonisolated struct ASCImageAsset: Decodable, Sendable {
+    let templateUrl: String
+    let width: Int
+    let height: Int
+}
+
+nonisolated struct ASCAssetDeliveryState: Decodable, Sendable {
+    let state: String?
+    let errors: [ASCAssetDeliveryError]?
+    let warnings: [ASCAssetDeliveryError]?
+}
+
+nonisolated struct ASCAssetDeliveryError: Decodable, Sendable {
+    let code: String?
+    let message: String?
 }
 
 nonisolated struct ASCUploadOperation: Decodable {
@@ -694,6 +842,19 @@ private nonisolated struct ASCRelationship: Encodable {
     static func single(type: String, id: String) -> ASCRelationship {
         ASCRelationship(data: Ref(type: type, id: id))
     }
+}
+
+nonisolated struct ASCResourceReference: Codable, Sendable {
+    let type: String
+    let id: String
+}
+
+nonisolated struct ASCRelationshipListResponse: Decodable, Sendable {
+    let data: [ASCResourceReference]
+}
+
+private nonisolated struct ASCRelationshipListRequest: Encodable {
+    let data: [ASCResourceReference]
 }
 
 /// Tiny type-erasing wrapper so we can build heterogeneous JSON:API attribute dictionaries.

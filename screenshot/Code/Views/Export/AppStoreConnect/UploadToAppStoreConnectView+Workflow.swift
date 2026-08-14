@@ -22,8 +22,8 @@ extension UploadToAppStoreConnectView {
         }
         if selectedApp == nil,
            let projectName = state.activeProject?.name {
-            let uploadable = appsWithVersions.filter(\.hasScreenshotUploadableVersion).map(\.app)
-            let pool = uploadable.isEmpty ? apps : uploadable
+            let selectable = appsWithVersions.filter { $0.hasSelectableVersion(for: mode) }.map(\.app)
+            let pool = selectable.isEmpty ? apps : selectable
             if let match = Self.closestAppByName(projectName: projectName, in: pool) {
                 selectedApp = match
             }
@@ -98,7 +98,9 @@ extension UploadToAppStoreConnectView {
         do {
             let fetched = try await AppStoreConnectAPIService.shared.listAppStoreVersions(appId: app.id)
             versions = fetched.sorted { lhs, rhs in
-                if lhs.isScreenshotUploadable != rhs.isScreenshotUploadable { return lhs.isScreenshotUploadable }
+                let lhsSelectable = lhs.isSelectable(for: mode)
+                let rhsSelectable = rhs.isSelectable(for: mode)
+                if lhsSelectable != rhsSelectable { return lhsSelectable }
                 if lhs.attributes.displayPlatform != rhs.attributes.displayPlatform {
                     return (lhs.attributes.displayPlatform ?? "") < (rhs.attributes.displayPlatform ?? "")
                 }
@@ -117,7 +119,9 @@ extension UploadToAppStoreConnectView {
     }
 
     func defaultSelectedVersionIds(from versions: [ASCAppStoreVersion]) -> Set<String> {
-        let editable = versions.filter(\.isScreenshotUploadable)
+        let editable = versions.filter { $0.isSelectable(for: mode) }
+        // Metadata edits don't involve rows, so every editable version is a valid default.
+        guard mode == .screenshots else { return Set(editable.map(\.id)) }
         let compatible = editable.filter { version in
             state.rows.contains { row in
                 guard !row.excludeFromAppStoreConnect,
@@ -266,51 +270,80 @@ extension UploadToAppStoreConnectView {
         errorMessage = nil
         defer { isBusy = false }
 
+        do {
+            let summary = try await saveMetadataChanges()
+            switch mode {
+            case .screenshots:
+                destinationPlans = buildDestinationPlans(preserving: destinationPlans)
+                advance(to: .configuringPlan)
+            case .metadata:
+                metadataSummary = summary
+                advance(to: .done)
+            }
+        } catch {
+            errorMessage = String(localized: "Failed to save metadata: \(error.localizedDescription)")
+        }
+    }
+
+    /// Patches every changed draft (copyright, version localizations, app-info localizations) in
+    /// parallel, then re-baselines the drafts so the change dots clear. Returns what was written.
+    func saveMetadataChanges() async throws -> MetadataSaveSummary {
         let changedCopyrights = copyrightByVersion.filter { $0.value != (originalCopyrightByVersion[$0.key] ?? "") }
         let versionSnapshot = versionDrafts
         let appInfoSnapshot = appInfoDrafts
         let api = AppStoreConnectAPIService.shared
 
-        do {
-            try await withThrowingTaskGroup(of: Void.self) { group in
-                for (versionId, copyrightValue) in changedCopyrights {
-                    group.addTask {
-                        try await api.updateAppStoreVersion(
-                            id: versionId,
-                            attributes: ["copyright": AnyEncodable(copyrightValue)]
-                        )
-                    }
-                }
-                for draft in versionSnapshot {
-                    let changes = draft.changedAttributes()
-                    guard !changes.isEmpty else { continue }
-                    group.addTask {
-                        try await Self.patchVersionLocalization(api, id: draft.id, changes: changes)
-                    }
-                }
-                for draft in appInfoSnapshot {
-                    let changes = draft.changedAttributes()
-                    guard !changes.isEmpty else { continue }
-                    group.addTask {
-                        try await api.updateAppInfoLocalization(id: draft.id, attributes: changes)
-                    }
-                }
-                try await group.waitForAll()
-            }
+        try await withThrowingTaskGroup(of: Void.self) { group in
             for (versionId, copyrightValue) in changedCopyrights {
-                originalCopyrightByVersion[versionId] = copyrightValue
+                group.addTask {
+                    try await api.updateAppStoreVersion(
+                        id: versionId,
+                        attributes: ["copyright": AnyEncodable(copyrightValue)]
+                    )
+                }
             }
-            for i in versionDrafts.indices where versionDrafts[i].isChanged {
-                versionDrafts[i].markSaved()
+            for draft in versionSnapshot {
+                let changes = draft.changedAttributes()
+                guard !changes.isEmpty else { continue }
+                group.addTask {
+                    try await Self.patchVersionLocalization(api, id: draft.id, changes: changes)
+                }
             }
-            for i in appInfoDrafts.indices where appInfoDrafts[i].isChanged {
-                appInfoDrafts[i].markSaved()
+            for draft in appInfoSnapshot {
+                let changes = draft.changedAttributes()
+                guard !changes.isEmpty else { continue }
+                group.addTask {
+                    try await api.updateAppInfoLocalization(id: draft.id, attributes: changes)
+                }
             }
-            destinationPlans = buildDestinationPlans(preserving: destinationPlans)
-            advance(to: .configuringPlan)
-        } catch {
-            errorMessage = String(localized: "Failed to save metadata: \(error.localizedDescription)")
+            try await group.waitForAll()
         }
+
+        let changedVersionDrafts = versionSnapshot.filter(\.isChanged)
+        let changedAppInfoDrafts = appInfoSnapshot.filter(\.isChanged)
+
+        for (versionId, copyrightValue) in changedCopyrights {
+            originalCopyrightByVersion[versionId] = copyrightValue
+        }
+        for i in versionDrafts.indices where versionDrafts[i].isChanged {
+            versionDrafts[i].markSaved()
+        }
+        for i in appInfoDrafts.indices where appInfoDrafts[i].isChanged {
+            appInfoDrafts[i].markSaved()
+        }
+
+        let locales = Set(changedVersionDrafts.map(\.locale)).union(changedAppInfoDrafts.map(\.locale))
+        let versionIds = Set(changedVersionDrafts.map(\.versionId)).union(changedCopyrights.keys)
+        let fieldCount = changedVersionDrafts.reduce(0) { $0 + $1.changedAttributes().count }
+            + changedAppInfoDrafts.reduce(0) { $0 + $1.changedAttributes().count }
+            + changedCopyrights.count
+        return MetadataSaveSummary(
+            appId: selectedApp?.id,
+            appName: selectedApp?.attributes.name ?? "",
+            versionCount: versionIds.count,
+            localeCount: locales.count,
+            fieldCount: fieldCount
+        )
     }
 
     func moveToPlan() async {
@@ -411,68 +444,163 @@ extension UploadToAppStoreConnectView {
         }
     }
 
-    func startUpload() async {
+    func startScreenshotReviewBuild() {
+        uploadTask = Task { await buildScreenshotReview() }
+    }
+
+    func startDirectScreenshotSync() {
+        uploadTask = Task { await buildAndApplyDirectScreenshotSync() }
+    }
+
+    func startReviewedScreenshotSync() {
+        uploadTask = Task { await applyPreparedScreenshotSync(returnOnFailure: .reviewingChanges) }
+    }
+
+    func startScreenshotReviewRefresh() {
+        uploadTask = Task { await refreshScreenshotReview() }
+    }
+
+    func buildScreenshotReview() async {
         errorMessage = nil
         errorDetailsText = nil
         let issues = validationIssues
         guard !issues.hasErrors else {
-            errorMessage = String(localized: "Fix the preflight errors before uploading.")
+            errorMessage = String(localized: "Fix the preflight errors before reviewing changes.")
             return
         }
         let targets = buildUploadTargets()
         guard !targets.isEmpty else {
             errorMessage = String(localized: "No rows × locales are selected.")
-            step = .configuringPlan
+            return
+        }
+        guard let appId = selectedApp?.id else { return }
+
+        isBusy = true
+        defer { isBusy = false; uploadTask = nil }
+        advance(to: .reviewingChanges)
+        await screenshotSync.build(appId: appId, targets: targets, appState: state)
+        if screenshotSync.plan == nil {
+            errorMessage = screenshotSync.errorMessage
+        }
+    }
+
+    func refreshScreenshotReview() async {
+        guard let appId = selectedApp?.id else { return }
+        isBusy = true
+        defer { isBusy = false; uploadTask = nil }
+        await screenshotSync.build(appId: appId, targets: buildUploadTargets(), appState: state)
+        errorMessage = screenshotSync.errorMessage
+    }
+
+    func buildAndApplyDirectScreenshotSync() async {
+        errorMessage = nil
+        errorDetailsText = nil
+        let issues = validationIssues
+        guard !issues.hasErrors else {
+            errorMessage = String(localized: "Fix the preflight errors before uploading.")
+            uploadTask = nil
+            return
+        }
+        let targets = buildUploadTargets()
+        guard !targets.isEmpty else {
+            errorMessage = String(localized: "No rows × locales are selected.")
+            uploadTask = nil
+            return
+        }
+        guard let appId = selectedApp?.id else {
+            uploadTask = nil
             return
         }
 
-        uploadProgress = nil   // clear any stale progress from a previous attempt
+        uploadProgress = UploadProgress(totalSteps: 1, completedSteps: 0, currentLabel: "Preparing safe screenshot sync…")
         advance(to: .uploading)
+        isBusy = true
+        await screenshotSync.build(appId: appId, targets: targets, appState: state)
+        isBusy = false
+
+        guard let plan = screenshotSync.plan else {
+            if !screenshotSync.wasCancelled {
+                errorMessage = screenshotSync.errorMessage ?? String(localized: "Could not prepare the screenshot sync.")
+                errorDetailsText = errorMessage
+            }
+            uploadTask = nil
+            retreatAfterScreenshotSync(to: .configuringPlan)
+            return
+        }
+
+        let blockedSets = plan.changedSets.filter { !$0.canApply }
+        guard blockedSets.isEmpty else {
+            errorMessage = String(localized: "Some screenshot sets require review before they can be synced.")
+            errorDetailsText = blockedSets.flatMap(\.issues).joined(separator: "\n")
+            uploadTask = nil
+            retreatAfterScreenshotSync(to: .configuringPlan)
+            return
+        }
+
+        let selectedSets = screenshotSync.selectedSets
+        if selectedSets.isEmpty {
+            finishScreenshotSync(using: plan.sets)
+            screenshotSync.discard()
+            uploadTask = nil
+            return
+        }
+        await applyPreparedScreenshotSync(
+            returnOnFailure: .configuringPlan,
+            advanceToUploading: false
+        )
+    }
+
+    func applyPreparedScreenshotSync(
+        returnOnFailure: Step,
+        advanceToUploading: Bool = true
+    ) async {
+        errorMessage = nil
+        errorDetailsText = nil
+        let selectedSets = screenshotSync.selectedSets
+        guard !selectedSets.isEmpty else {
+            errorMessage = ASCScreenshotSyncError.noSetsSelected.localizedDescription
+            uploadTask = nil
+            return
+        }
+
+        uploadProgress = nil
+        if advanceToUploading {
+            advance(to: .uploading)
+        }
         isBusy = true
         defer { isBusy = false; uploadTask = nil }
 
-        let task = Task {
-            do {
-                try await AppStoreConnectUploadService.shared.upload(
-                    targets: targets,
-                    appState: state,
-                    progress: { p in self.uploadProgress = p }
-                )
-                // `upload` is cancellation-aware and throws `CancellationError` if cancelled
-                // mid-flight (handled below). Reaching here means it completed, so show the
-                // result even if a Cancel tap landed late — otherwise the wizard would be
-                // stranded on the uploading screen (Back hidden, only a no-op Cancel button).
-                let summary = UploadSummary(
-                    appId: selectedApp?.id,
-                    appName: selectedApp?.attributes.name ?? "",
-                    totalScreenshots: targets.reduce(0) { $0 + $1.templateCount * $1.localizations.count },
-                    localizationCount: Set(targets.flatMap { target in
-                        target.localizations.map { "\(target.versionId)|\($0.id)" }
-                    }).count,
-                    versionCount: Set(targets.map(\.versionId)).count
-                )
-                uploadSummary = summary
-                step = .done
-                let shotNoun = summary.totalScreenshots == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
-                let locNoun = summary.localizationCount == 1 ? String(localized: "locale") : String(localized: "locales")
-                let versionNoun = summary.versionCount == 1 ? String(localized: "version") : String(localized: "versions")
-                let body = summary.appName.isEmpty
-                    ? String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) and \(summary.versionCount) \(versionNoun)")
-                    : String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) and \(summary.versionCount) \(versionNoun) · \(summary.appName)")
-                NotificationService.notify(title: String(localized: "Upload complete"), body: body)
-            } catch is CancellationError {
-                errorMessage = String(localized: "Upload cancelled. Any set that was already being replaced may be empty in App Store Connect — re-run the upload to refill it.")
-                retreatToConfiguringPlan()
-            } catch {
-                let summary = uploadFailureSummary(for: error)
-                errorMessage = summary
-                errorDetailsText = buildErrorDetails(for: error)
-                retreatToConfiguringPlan()
-                NotificationService.notify(title: String(localized: "Upload failed"), body: summary)
-            }
+        await screenshotSync.apply(appState: state, progress: { p in self.uploadProgress = p })
+        if screenshotSync.result?.succeeded == true {
+            finishScreenshotSync(using: selectedSets)
+        } else {
+            let message = screenshotSync.errorMessage
+                ?? screenshotSync.result?.sets.compactMap(\.error).first
+                ?? String(localized: "Screenshot sync did not complete.")
+            errorMessage = message
+            errorDetailsText = message
+            retreatAfterScreenshotSync(to: returnOnFailure)
+            NotificationService.notify(title: String(localized: "Screenshot sync stopped"), body: message)
         }
-        uploadTask = task
-        await task.value
+    }
+
+    func finishScreenshotSync(using sets: [ASCScreenshotSetDiff]) {
+        let summary = UploadSummary(
+            appId: selectedApp?.id,
+            appName: selectedApp?.attributes.name ?? "",
+            totalScreenshots: sets.reduce(0) { $0 + $1.proposedAssets.count },
+            localizationCount: Set(sets.map { "\($0.versionId)|\($0.localizationId)" }).count,
+            versionCount: Set(sets.map(\.versionId)).count
+        )
+        uploadSummary = summary
+        step = .done
+        let shotNoun = summary.totalScreenshots == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
+        let locNoun = summary.localizationCount == 1 ? String(localized: "locale") : String(localized: "locales")
+        let versionNoun = summary.versionCount == 1 ? String(localized: "version") : String(localized: "versions")
+        let body = summary.appName.isEmpty
+            ? String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) and \(summary.versionCount) \(versionNoun)")
+            : String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) and \(summary.versionCount) \(versionNoun) · \(summary.appName)")
+        NotificationService.notify(title: String(localized: "Screenshot sync complete"), body: body)
     }
 
     func buildUploadTargets() -> [ASCUploadTarget] {

@@ -3400,6 +3400,9 @@
     "**Watch** — Apple Watch Ultra 3 frame variants." : {
 
     },
+    "#%lld" : {
+
+    },
     "%" : {
       "localizations" : {
         "de" : {
@@ -3627,6 +3630,9 @@
         }
       }
     },
+    "%@ Changes already made in App Store Connect were not reverted." : {
+
+    },
     "%@ Check that the Issuer ID, Key ID, private key, and API key permissions match the App Store Connect key." : {
       "localizations" : {
         "de" : {
@@ -3754,6 +3760,7 @@
       }
     },
     "%@ is not allowed for this app/version." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3950,6 +3957,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld / %lld"
+          }
+        }
+      }
+    },
+    "%lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@"
           }
         }
       }
@@ -4169,6 +4186,16 @@
         }
       }
     },
+    "%lld %@ will be safely synced across %lld %@, %lld %@, and %lld %@. Exact checksum matches will be preserved." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@ will be safely synced across %3$lld %4$@, %5$lld %6$@, and %7$lld %8$@. Exact checksum matches will be preserved."
+          }
+        }
+      }
+    },
     "%lld %@ will be uploaded across %lld %@ and %lld %@. " : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4212,16 +4239,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld %@ 将跨 %lld %@ 和 %lld %@ 上传。"
-          }
-        }
-      }
-    },
-    "%lld %@ will be uploaded across %lld %@, %lld %@, and %lld %@. " : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld %2$@ will be uploaded across %3$lld %4$@, %5$lld %6$@, and %7$lld %8$@. "
           }
         }
       }
@@ -4274,6 +4291,19 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld × %lld px"
+          }
+        }
+      }
+    },
+    "%lld current screenshots have no App Store checksum, so they will be replaced instead of preserved." : {
+
+    },
+    "%lld field%@ saved across %lld locale%@ and %lld version%@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld field%2$@ saved across %3$lld locale%4$@ and %5$lld version%6$@."
           }
         }
       }
@@ -4531,6 +4561,9 @@
         }
       }
     },
+    "%lld screenshot sets included." : {
+
+    },
     "%lld screenshot%@" : {
       "localizations" : {
         "de" : {
@@ -4583,12 +4616,12 @@
         }
       }
     },
-    "%lld screenshot%@ uploaded across %lld locale%@ and %lld version%@." : {
+    "%lld screenshot%@ synced across %lld locale%@ and %lld version%@." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$lld screenshot%2$@ uploaded across %3$lld locale%4$@ and %5$lld version%6$@."
+            "value" : "%1$lld screenshot%2$@ synced across %3$lld locale%4$@ and %5$lld version%6$@."
           }
         }
       }
@@ -4645,6 +4678,9 @@
           }
         }
       }
+    },
+    "%lld screenshots must be removed first to stay within Apple's 10-screenshot limit." : {
+
     },
     "%lld shapes" : {
       "localizations" : {
@@ -4735,6 +4771,19 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld stops"
+          }
+        }
+      }
+    },
+    "%lld unchanged screenshots will keep their App Store asset IDs." : {
+
+    },
+    "%lld uploads, %lld removals, and %lld moves." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld uploads, %2$lld removals, and %3$lld moves."
           }
         }
       }
@@ -5242,6 +5291,9 @@
           }
         }
       }
+    },
+    "1 current screenshot has no App Store checksum, so it will be replaced instead of preserved." : {
+
     },
     "1. Create a new project from a template, or start blank." : {
       "localizations" : {
@@ -8793,6 +8845,52 @@
         }
       }
     },
+    "App Store" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store"
+          }
+        }
+      }
+    },
     "App Store Connect" : {
       "localizations" : {
         "de" : {
@@ -8839,6 +8937,9 @@
         }
       }
     },
+    "App Store Connect accepts 1–10 screenshots per display type and locale — one is enough to submit, though most apps use three or more. Screenshot Bro respects template ordering when uploading." : {
+
+    },
     "App Store Connect allows up to 10 screenshots per device family per locale. Screenshot Bro respects template ordering so the first 10 templates in each row will be uploaded in order." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -8879,6 +8980,9 @@
           }
         }
       }
+    },
+    "App Store Connect already matches the proposed screenshots." : {
+
     },
     "App Store Connect API documentation" : {
       "localizations" : {
@@ -8972,7 +9076,11 @@
         }
       }
     },
+    "App Store Connect completed an upload with an unexpected checksum." : {
+
+    },
     "App Store Connect did not accept the request. Check the selected app, version, display type, and locale, then retry." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -9018,7 +9126,14 @@
         }
       }
     },
+    "App Store Connect did not confirm the final screenshot order for %@." : {
+
+    },
+    "App Store Connect did not finish processing the uploaded screenshot in time." : {
+
+    },
     "App Store Connect does not allow %@ (%@) for this app version/localization. This usually means the selected app version does not support that device family, such as uploading iPad screenshots for an iPhone-only app, or App Store Connect does not accept this display type for the selected platform." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -9064,7 +9179,18 @@
         }
       }
     },
+    "App Store Connect does not allow %@ for %@. This usually means the app version doesn't support that device family. Exclude this row, choose a display type the app accepts, or update the app's device support, then try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "App Store Connect does not allow %1$@ for %2$@. This usually means the app version doesn't support that device family. Exclude this row, choose a display type the app accepts, or update the app's device support, then try again."
+          }
+        }
+      }
+    },
     "App Store Connect rejected the request because the API key is not authorized for this app or action. Check that the key has access to this app and enough App Store Connect permissions to edit app metadata." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -9109,6 +9235,12 @@
           }
         }
       }
+    },
+    "App Store Connect rejected the screenshot upload." : {
+
+    },
+    "App Store Connect rejected the screenshot: %@" : {
+
     },
     "App Store Connect rejects this if the selected app version is iPhone-only." : {
       "localizations" : {
@@ -9155,9 +9287,6 @@
           }
         }
       }
-    },
-    "App Store Connect requires 3–10 screenshots per display type and locale. Screenshot Bro respects template ordering when uploading." : {
-
     },
     "App Store Connect returned %lld while trying to %@." : {
       "localizations" : {
@@ -9338,6 +9467,9 @@
         }
       }
     },
+    "Apple allows at most 10 screenshots in a display-type set; this proposal has %lld." : {
+
+    },
     "Applies to all locales for this version." : {
       "localizations" : {
         "de" : {
@@ -9423,6 +9555,12 @@
           }
         }
       }
+    },
+    "Apply reviewed screenshot changes?" : {
+
+    },
+    "Apply Selected Changes" : {
+
     },
     "Are you sure you want to delete \"%@\"?" : {
       "localizations" : {
@@ -11886,6 +12024,9 @@
         }
       }
     },
+    "Cancel Sync" : {
+
+    },
     "Cancel Upload" : {
       "localizations" : {
         "de" : {
@@ -14066,6 +14207,9 @@
         }
       }
     },
+    "Configure screenshot sync" : {
+
+    },
     "Connect a Google Play service account once and Screenshot Bro can upload exported screenshots to your app's store listing without leaving the app." : {
 
     },
@@ -14982,6 +15126,7 @@
       }
     },
     "Could not create the screenshot set for %@ (%@) in %@." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15264,6 +15409,9 @@
         }
       }
     },
+    "Could not prepare the screenshot sync." : {
+
+    },
     "Could not read the captured screenshot." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -15442,6 +15590,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法渲染 %@ 中 %@ (%@) 的屏幕截图 %lld。检查该行在编辑器中预览是否正确，然后再次尝试上传。"
+          }
+        }
+      }
+    },
+    "Could not render screenshot %lld for %@ (%@) in %@. Check that this row previews correctly, then try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not render screenshot %1$lld for %2$@ (%3$@) in %4$@. Check that this row previews correctly, then try again."
           }
         }
       }
@@ -16222,6 +16380,9 @@
           }
         }
       }
+    },
+    "Current App Store" : {
+
     },
     "Current default abstract device: %@" : {
       "localizations" : {
@@ -18370,16 +18531,6 @@
         }
       }
     },
-    "Destination: %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Destination: %1$@."
-          }
-        }
-      }
-    },
     "Details" : {
       "localizations" : {
         "de" : {
@@ -18816,6 +18967,7 @@
       }
     },
     "Disable this row, choose a display type that App Store Connect accepts for this app, or update the app's device support before retrying." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -21290,6 +21442,9 @@
         }
       }
     },
+    "Empty set" : {
+
+    },
     "Enable demo mode" : {
       "localizations" : {
         "de" : {
@@ -21639,6 +21794,52 @@
     "Enter the app's package name" : {
 
     },
+    "Every version on this app is already live. Create a new version in App Store Connect, then refresh this wizard." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Version dieser App ist bereits live. Erstellen Sie eine neue Version in App Store Connect und aktualisieren Sie dann diesen Assistenten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las versiones de esta app ya están publicadas. Crea una nueva versión en App Store Connect y luego actualiza este asistente."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque version de cette application est déjà en ligne. Créez une nouvelle version dans App Store Connect, puis actualisez cet assistant."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアプリのすべてのバージョンはすでに公開されています。App Store Connect で新しいバージョンを作成し、このウィザードを更新してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 앱의 모든 버전이 이미 게시되었습니다. App Store Connect에서 새 버전을 생성한 후 이 마법사를 새로 고치세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as versões deste aplicativo já estão publicadas. Crie uma nova versão em App Store Connect e atualize este assistente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此应用程序的每个版本都已上线。请在 App Store Connect 中创建新版本，然后刷新此向导。"
+          }
+        }
+      }
+    },
     "Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard." : {
       "localizations" : {
         "de" : {
@@ -21908,6 +22109,7 @@
       }
     },
     "Existing screenshots in each matching display type set will be deleted and replaced. " : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -24473,6 +24675,9 @@
         }
       }
     },
+    "Fix the preflight errors before reviewing changes." : {
+
+    },
     "Fix the preflight errors before uploading." : {
       "localizations" : {
         "de" : {
@@ -25900,6 +26105,52 @@
         }
       }
     },
+    "Hide apps with no editable App Store version. Apps that are already live can't accept metadata changes until you create a new version." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ohne bearbeitbare App Store-Version ausblenden. Apps, die bereits live sind, können keine Metadatenänderungen akzeptieren, bis Sie eine neue Version erstellen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar las apps sin una versión editable de la App Store. Las apps ya publicadas no pueden aceptar cambios de metadatos hasta que crees una nueva versión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer les applications sans version App Store modifiable. Les applications déjà en ligne ne peuvent pas accepter de modifications de métadonnées tant que vous n'avez pas créé une nouvelle version."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集可能な App Store バージョンのないアプリを非表示にします。すでに公開されているアプリは、新しいバージョンを作成するまでメタデータの変更を受け入れることができません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집 가능한 App Store 버전이 없는 앱을 숨깁니다. 이미 게시된 앱은 새 버전을 만들 때까지 메타데이터 변경을 허용할 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oculte aplicativos sem versão editável App Store. Os aplicativos já ativos não podem aceitar alterações de metadados até que você crie uma nova versão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏没有可编辑 App Store 版本的应用。在您创建新版本之前，已上线的应用程序无法接受元数据更改。"
+          }
+        }
+      }
+    },
     "Hide Borders" : {
       "localizations" : {
         "de" : {
@@ -26034,6 +26285,98 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隐藏检查器"
+          }
+        }
+      }
+    },
+    "Hide non-editable" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht bearbeitbare ausblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar no editables"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer les non modifiables"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集できないものを非表示にする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집할 수 없는 항목 숨기기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar não editáveis"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏不可编辑的"
+          }
+        }
+      }
+    },
+    "Hide non-editable (%lld)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht bearbeitbare ausblenden (%1$lld)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar no editables (%1$lld)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer les non modifiables (%1$lld)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集できないものを非表示にする (%1$lld)"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집할 수 없는 항목 숨기기(%1$lld)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar não editáveis (%1$lld)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏不可编辑的 (%1$lld)"
           }
         }
       }
@@ -26800,6 +27143,7 @@
       }
     },
     "If a matching display type already has screenshots, they will be deleted and replaced. You'll be asked to confirm before anything is uploaded." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -27851,6 +28195,9 @@
           }
         }
       }
+    },
+    "Include set" : {
+
     },
     "Included" : {
       "localizations" : {
@@ -31087,6 +31434,52 @@
         }
       }
     },
+    "Metadata updated" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadaten aktualisiert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadatos actualizados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Métadonnées mises à jour"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メタデータを更新しました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메타데이터가 업데이트되었습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadados atualizados"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "元数据已更新"
+          }
+        }
+      }
+    },
     "Missing: %@." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -31262,6 +31655,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更多行动"
+          }
+        }
+      }
+    },
+    "More than one row targets %@ · %@ · %@. Choose one row for this set." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "More than one row targets %1$@ · %2$@ · %3$@. Choose one row for this set."
           }
         }
       }
@@ -31714,6 +32117,9 @@
         }
       }
     },
+    "Moved" : {
+
+    },
     "Name" : {
       "localizations" : {
         "de" : {
@@ -31805,6 +32211,9 @@
           }
         }
       }
+    },
+    "New" : {
+
     },
     "New project" : {
       "localizations" : {
@@ -32323,6 +32732,58 @@
           }
         }
       }
+    },
+    "No changes to save." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Änderungen zum Speichern."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay cambios que guardar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune modification à enregistrer."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存する変更はありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장할 변경 사항이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma alteração para salvar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有需要保存的更改。"
+          }
+        }
+      }
+    },
+    "No comparison available" : {
+
+    },
+    "No compatible screenshot sets were found." : {
+
     },
     "No default device" : {
       "localizations" : {
@@ -33255,6 +33716,9 @@
         }
       }
     },
+    "Not attempted because an earlier screenshot set failed." : {
+
+    },
     "not editable" : {
       "localizations" : {
         "de" : {
@@ -33769,6 +34233,9 @@
     "Once enabled it stays on and starts automatically the next time you launch. The app has to be running for a client to connect." : {
 
     },
+    "One or more selected screenshot sets cannot be applied." : {
+
+    },
     "One project per app — or per major release." : {
       "localizations" : {
         "de" : {
@@ -33976,6 +34443,9 @@
         }
       }
     },
+    "Only included, changed sets will be synced. Exact checksum matches are preserved." : {
+
+    },
     "Opacity" : {
       "localizations" : {
         "de" : {
@@ -34107,6 +34577,9 @@
           }
         }
       }
+    },
+    "Open a project before reviewing screenshots." : {
+
     },
     "Open a text shape's font picker and choose **Pick custom font** to import `.otf` / `.ttf` files or a folder of font variants." : {
 
@@ -36518,6 +36991,9 @@
         }
       }
     },
+    "Preparing screenshot comparison…" : {
+
+    },
     "Preparing…" : {
 
     },
@@ -36698,6 +37174,9 @@
           }
         }
       }
+    },
+    "Preview unavailable" : {
+
     },
     "Preview vs export" : {
       "localizations" : {
@@ -37971,6 +38450,12 @@
         }
       }
     },
+    "Proposed" : {
+
+    },
+    "Proposed Screenshot Bro" : {
+
+    },
     "Purchase" : {
       "localizations" : {
         "de" : {
@@ -38778,6 +39263,9 @@
         }
       }
     },
+    "Refresh" : {
+
+    },
     "Refresh App Store data" : {
       "localizations" : {
         "de" : {
@@ -38823,6 +39311,9 @@
           }
         }
       }
+    },
+    "Refresh Changes" : {
+
     },
     "Regenerate Access Token" : {
 
@@ -39233,6 +39724,9 @@
           }
         }
       }
+    },
+    "Removed" : {
+
     },
     "Rename" : {
       "localizations" : {
@@ -39803,6 +40297,7 @@
       }
     },
     "Replace existing screenshots?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -41841,6 +42336,7 @@
       }
     },
     "Review and upload plan" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -41885,6 +42381,15 @@
           }
         }
       }
+    },
+    "Review Changes" : {
+
+    },
+    "Review expires %@" : {
+
+    },
+    "Review is out of date" : {
+
     },
     "Right" : {
       "localizations" : {
@@ -42579,7 +43084,11 @@
         }
       }
     },
+    "Sample apps and a simulated screenshot sync. Nothing is sent to App Store Connect." : {
+
+    },
     "Sample apps and a simulated upload. Nothing is sent to App Store Connect." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -42620,7 +43129,6 @@
       }
     },
     "Save" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -43648,6 +44156,21 @@
         }
       }
     },
+    "Screenshot sync complete" : {
+
+    },
+    "Screenshot sync did not complete." : {
+
+    },
+    "Screenshot sync stopped" : {
+
+    },
+    "Screenshot sync was cancelled before anything was changed in App Store Connect." : {
+
+    },
+    "Screenshot sync was cancelled. Changes already made in App Store Connect were not reverted." : {
+
+    },
     "screenshots" : {
       "localizations" : {
         "de" : {
@@ -44281,6 +44804,9 @@
           }
         }
       }
+    },
+    "Select at least one changed screenshot set." : {
+
     },
     "Select at least one row to preview and export." : {
       "localizations" : {
@@ -45882,6 +46408,52 @@
         }
       }
     },
+    "Show versions that are already live. Metadata can only be changed on editable versions." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versionen anzeigen, die bereits live sind. Metadaten können nur in bearbeitbaren Versionen geändert werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar las versiones que ya están publicadas. Los metadatos solo se pueden cambiar en versiones editables."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les versions déjà en ligne. Les métadonnées ne peuvent être modifiées que dans les versions modifiables."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すでに公開されているバージョンを表示します。メタデータは編集可能なバージョンでのみ変更できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미 게시된 버전을 표시합니다. 메타데이터는 편집 가능한 버전에서만 변경할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar versões que já estão publicadas. Os metadados só podem ser alterados em versões editáveis."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示已上线的版本。元数据只能在可编辑的版本中更改。"
+          }
+        }
+      }
+    },
     "Show versions that are locked for review or live. Screenshots can only be uploaded to editable versions." : {
       "localizations" : {
         "en" : {
@@ -46396,6 +46968,12 @@
           }
         }
       }
+    },
+    "Some current screenshots could not be previewed. They are shown as placeholders; refresh to retry." : {
+
+    },
+    "Some screenshot sets require review before they can be synced." : {
+
     },
     "Source" : {
       "localizations" : {
@@ -48428,6 +49006,12 @@
         }
       }
     },
+    "Sync App Store Screenshots" : {
+
+    },
+    "Sync Selected Sets" : {
+
+    },
     "Sync with iCloud" : {
       "localizations" : {
         "de" : {
@@ -49406,13 +49990,20 @@
         }
       }
     },
+    "The App Store screenshots for %@ changed after review. Refresh before syncing." : {
+
+    },
     "The application ID of the app on Google Play, e.g. com.example.myapp." : {
+
+    },
+    "The cached reviewed bytes for %@ changed or are unavailable. Refresh before syncing." : {
 
     },
     "The easiest way: click **Copy Agent Prompt** and paste it into your AI assistant. It contains everything the assistant needs to add the server itself, then reconnect." : {
 
     },
     "The existing %@ screenshot set for %@ may already have been deleted. After fixing the issue, re-run the upload to refill that set." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -49633,6 +50224,9 @@
     "The key is stored in this device's Keychain." : {
 
     },
+    "The project changed after the preview was created. Refresh the review before syncing." : {
+
+    },
     "The Projects screen shows sync progress while iCloud is uploading or downloading." : {
 
     },
@@ -49722,6 +50316,15 @@
           }
         }
       }
+    },
+    "The reviewed screenshot plan expired. Refresh it before syncing." : {
+
+    },
+    "The reviewed screenshot plan is no longer available. Refresh it and try again." : {
+
+    },
+    "The reviewed screenshot set is incomplete." : {
+
     },
     "The server requires an **access token**: every request must present it, so another app on your Mac can't quietly drive Screenshot Bro." : {
 
@@ -49867,6 +50470,7 @@
       }
     },
     "This cannot be undone." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -50303,6 +50907,9 @@
           }
         }
       }
+    },
+    "This set cannot be included because required App Store data is unavailable." : {
+
     },
     "This sidebar always edits the currently selected row — set its screenshot size, background, and device frame, and add text, images, and shapes from the Shapes section." : {
       "localizations" : {
@@ -51813,6 +52420,9 @@
         }
       }
     },
+    "Unchanged" : {
+
+    },
     "Unchecked" : {
       "localizations" : {
         "de" : {
@@ -52470,6 +53080,98 @@
         }
       }
     },
+    "Update App Store Metadata" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store-Metadaten aktualisieren"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar metadatos de la App Store"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour les métadonnées App Store"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store のメタデータを更新"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store 메타데이터 업데이트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar metadados da App Store"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新 App Store 元数据"
+          }
+        }
+      }
+    },
+    "Update Metadata…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadaten aktualisieren…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar metadatos…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour les métadonnées…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メタデータを更新…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메타데이터 업데이트…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar metadados…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新元数据…"
+          }
+        }
+      }
+    },
     "Upgrade" : {
       "localizations" : {
         "de" : {
@@ -52609,6 +53311,7 @@
       }
     },
     "Upload and Replace" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -52701,6 +53404,7 @@
       }
     },
     "Upload cancelled. Any set that was already being replaced may be empty in App Store Connect — re-run the upload to refill it." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -53813,6 +54517,52 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Version %1$@"
+          }
+        }
+      }
+    },
+    "Version %@ is %@ — metadata can't be changed. Pick an editable version or create a new one in App Store Connect." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %1$@ ist %2$@ – Metadaten können nicht geändert werden. Wählen Sie eine bearbeitbare Version oder erstellen Sie eine neue in App Store Connect."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %1$@ está %2$@: los metadatos no se pueden cambiar. Elige una versión editable o crea una nueva en App Store Connect."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %1$@ est %2$@ — les métadonnées ne peuvent pas être modifiées. Choisissez une version modifiable ou créez-en une nouvelle dans App Store Connect."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バージョン %1$@ は %2$@ です。メタデータは変更できません。編集可能なバージョンを選択するか、App Store Connect で新しいバージョンを作成してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전 %1$@은(는) %2$@ 상태입니다 — 메타데이터를 변경할 수 없습니다. 편집 가능한 버전을 선택하거나 App Store Connect에서 새 버전을 만드세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão %1$@ está %2$@ — os metadados não podem ser alterados. Escolha uma versão editável ou crie uma nova em App Store Connect."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %1$@ 为%2$@ — 元数据无法更改。请选择可编辑的版本，或在 App Store Connect 中创建一个新版本。"
           }
         }
       }
