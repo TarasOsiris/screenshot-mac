@@ -282,6 +282,8 @@ extension AppState {
             if let preferredFrame = preferredImportFrame(for: image, in: row, detectedCategory: detectedCategory) {
                 shape.selectRealFrame(preferredFrame)
                 shape.adjustToDeviceAspectRatio(centerX: centerX)
+                // A landscape flip preserves the long side, which overflows a portrait template.
+                shape.scaleToFitWidth(row.templateWidth * 0.9)
             }
             return shape
         }
@@ -433,7 +435,10 @@ extension AppState {
             return landscapeVariant(of: defaultFrame, isLandscape: isLandscape)
         }
 
-        return nil
+        // The Apple categories' abstract frames are drawn portrait-only, so a landscape shot
+        // has to be promoted to a real catalog frame.
+        guard isLandscape == true else { return nil }
+        return DeviceFrameCatalog.firstFrame(for: detectedCategory, isLandscape: true)
     }
 
     private func landscapeVariant(of frame: DeviceFrame, isLandscape: Bool?) -> DeviceFrame {

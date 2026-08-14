@@ -306,6 +306,72 @@ struct AppStateTests {
         #expect(createdDevice.screenshotFileName != nil)
     }
 
+    @Test func landscapeScreenshotGetsLandscapeFrameWhenRowHasNoMatchingFrame() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let iphoneFrameId = try #require(DeviceFrameCatalog.firstPortraitFrameId(for: .iphone))
+        var row = state.rows[0]
+        row.defaultDeviceFrameId = iphoneFrameId
+        row.shapes = []
+
+        let shape = state.makeImageShape(
+            image: makeTestImage(width: 2420, height: 1668),
+            row: row,
+            centerX: row.templateWidth / 2,
+            centerY: row.templateHeight / 2
+        )
+
+        #expect(shape.type == .device)
+        #expect(shape.deviceFrameId == "ipadpro11-silver-landscape")
+        #expect(shape.deviceCategory == .ipadPro11)
+        #expect(shape.width > shape.height)
+        #expect(shape.width <= row.templateWidth * 0.9)
+    }
+
+    @Test func portraitScreenshotStillUsesGenericFrameWhenRowHasNoMatchingFrame() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let iphoneFrameId = try #require(DeviceFrameCatalog.firstPortraitFrameId(for: .iphone))
+        var row = state.rows[0]
+        row.defaultDeviceFrameId = iphoneFrameId
+        row.shapes = []
+
+        let shape = state.makeImageShape(
+            image: makeTestImage(width: 1668, height: 2420),
+            row: row,
+            centerX: row.templateWidth / 2,
+            centerY: row.templateHeight / 2
+        )
+
+        #expect(shape.type == .device)
+        #expect(shape.deviceFrameId == nil)
+        #expect(shape.deviceCategory == .ipadPro11)
+        #expect(shape.height > shape.width)
+    }
+
+    @Test func landscapeScreenshotFlipsExistingRowFrameToLandscape() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let ipadFrameId = try #require(DeviceFrameCatalog.firstPortraitFrameId(for: .ipadPro13))
+        var row = state.rows[0]
+        row.defaultDeviceFrameId = ipadFrameId
+        row.shapes = []
+
+        let shape = state.makeImageShape(
+            image: makeTestImage(width: 2752, height: 2064),
+            row: row,
+            centerX: row.templateWidth / 2,
+            centerY: row.templateHeight / 2
+        )
+
+        #expect(shape.deviceFrameId == "ipadpro13-silver-landscape")
+        #expect(shape.width > shape.height)
+        #expect(shape.width <= row.templateWidth * 0.9)
+    }
+
     @Test func batchImportImagesSkipsTemplatesWithoutDevices() throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }

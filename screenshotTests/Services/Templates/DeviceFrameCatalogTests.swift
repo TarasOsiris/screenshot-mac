@@ -29,6 +29,17 @@ struct DeviceFrameCatalogTests {
         #expect(DeviceFrameCatalog.firstPortraitFrameId(for: .macbook) == nil)
     }
 
+    @Test func firstFrameResolvesLandscapePerCategory() {
+        #expect(DeviceFrameCatalog.firstFrame(for: .ipadPro11, isLandscape: true)?.id == "ipadpro11-silver-landscape")
+        #expect(DeviceFrameCatalog.firstFrame(for: .ipadPro13, isLandscape: true)?.id == "ipadpro13-silver-landscape")
+        #expect(DeviceFrameCatalog.firstFrame(for: .iphone, isLandscape: true)?.id == "iphone17-black-landscape")
+        // Macs are landscapeOnly, so they have no portrait frame at all.
+        #expect(DeviceFrameCatalog.firstFrame(for: .macbook, isLandscape: false) == nil)
+        #expect(DeviceFrameCatalog.firstFrame(for: .macbook, isLandscape: true) != nil)
+        // Android categories have no catalog frames in either orientation.
+        #expect(DeviceFrameCatalog.firstFrame(for: .androidTablet, isLandscape: true) == nil)
+    }
+
     @Test func preferredFramePreservesColorAndOrientation() {
         let currentFrameId = "iphone17pro-deepblue-landscape"
         let preferredFrame = DeviceFrameCatalog.preferredFrame(

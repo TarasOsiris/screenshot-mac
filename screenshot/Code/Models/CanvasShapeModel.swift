@@ -667,6 +667,18 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         y = oldCenterY - height / 2
     }
 
+    /// Shrinks the shape to `maxWidth` when it overflows, preserving aspect ratio and current center.
+    mutating func scaleToFitWidth(_ maxWidth: CGFloat) {
+        guard maxWidth > 0, width > maxWidth else { return }
+        let centerX = x + width / 2
+        let centerY = y + height / 2
+        let scale = maxWidth / width
+        width *= scale
+        height *= scale
+        x = centerX - width / 2
+        y = centerY - height / 2
+    }
+
     static func defaultDevice(centerX: CGFloat, centerY: CGFloat, templateHeight: CGFloat = 2688, category: DeviceCategory = .iphone) -> CanvasShapeModel {
         let dims = category.baseDimensions
         // Device should fill ~80% of template height, like typical App Store screenshots

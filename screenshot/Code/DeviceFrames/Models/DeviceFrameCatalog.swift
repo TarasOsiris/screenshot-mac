@@ -30,22 +30,16 @@ nonisolated enum DeviceFrameCatalog {
         uniqueKeysWithValues: groups.map { ($0.id, $0) }
     )
 
-    private static let firstPortraitFrameByCategory: [DeviceCategory: String] = {
-        var map: [DeviceCategory: String] = [:]
-        for frame in allFrames where !frame.isLandscape {
-            if map[frame.fallbackCategory] == nil {
-                map[frame.fallbackCategory] = frame.id
-            }
-        }
-        return map
-    }()
-
     static func frame(for id: String) -> DeviceFrame? {
         framesByID[id]
     }
 
+    static func firstFrame(for category: DeviceCategory, isLandscape: Bool) -> DeviceFrame? {
+        allFrames.first { $0.fallbackCategory == category && $0.isLandscape == isLandscape }
+    }
+
     static func firstPortraitFrameId(for category: DeviceCategory) -> String? {
-        firstPortraitFrameByCategory[category]
+        firstFrame(for: category, isLandscape: false)?.id
     }
 
     static func group(forFrameId frameId: String) -> DeviceFrameGroup? {
