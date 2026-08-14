@@ -66,7 +66,24 @@ xcodebuild -scheme screenshot -destination 'platform=macOS,arch=arm64' -archiveP
 xcodebuild -scheme screenshot -destination 'generic/platform=iOS' -archivePath build/screenshot-ios.xcarchive archive
 ```
 
-## Step 6: Upload to App Store Connect
+## Step 6: Upload dSYMs to Sentry
+
+Upload debug symbols for each archived platform so crash reports symbolicate:
+
+```bash
+# macOS
+sentry-cli debug-files upload -o nineva-studios -p screenshot-bro build/screenshot-macos.xcarchive
+# iOS
+sentry-cli debug-files upload -o nineva-studios -p screenshot-bro build/screenshot-ios.xcarchive
+```
+
+- Auth comes from `~/.sentryclirc` (outside the repo, same convention as the `.p8`). Never put a
+  Sentry token in the repo.
+- `-p screenshot-bro` is mandatory — the CLI's default project is `captions-bro`.
+- If an upload fails, **report it as a warning and continue**. The App Store upload is the critical
+  path; missing dSYMs only cost symbolication and can be uploaded later from the same archive.
+
+## Step 7: Upload to App Store Connect
 
 `ExportOptions.plist` already exists with `method: app-store-connect` and
 `destination: export`. Authenticate with the App Store Connect API key (the
@@ -94,7 +111,7 @@ build submissions" / `CFBundleShortVersionString` must be higher), auto-bump
 platform(s) (the version is embedded in the archive), and re-upload. iOS and macOS track
 build numbers per-platform, so the same build number can be used across platforms.
 
-## Step 7: Commit, tag, and push
+## Step 8: Commit, tag, and push
 
 Stage and commit the version changes, create a git tag, then push both the commit and
 the tag:
@@ -108,10 +125,11 @@ git push && git push --tags
 `git push --tags` is mandatory — local-only tags from prior ships should never be left
 behind.
 
-## Step 8: Report
+## Step 9: Report
 
 Print a summary:
 - Platform(s) shipped
 - Previous version and build number
 - New version and build number
 - Upload status (per platform)
+- Sentry dSYM upload status (per platform)

@@ -184,6 +184,7 @@ final class StoreService {
         Purchases.shared.attribution.enableAdServicesAttributionTokenCollection()
         #endif
         configurationIssue = nil
+        CrashReportingService.setUser(id: appUserID)
 
         let d = CustomerInfoDelegate { [weak self] info in
             self?.updateEntitlement(from: info)

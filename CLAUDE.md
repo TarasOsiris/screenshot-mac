@@ -16,7 +16,7 @@ Sketch is the main reference project. UX patterns (cursors, handles, interaction
 
 ## Build
 
-Project: `screenshot.xcodeproj` (no workspace). Scheme: `screenshot`. Targets: `screenshot` (app), `screenshotTests` (unit tests). `SUPPORTED_PLATFORMS = iphoneos iphonesimulator macosx`, `TARGETED_DEVICE_FAMILY = 1,2`; macOS deployment 15.0, iOS deployment 18.0. Dependencies via Xcode-managed SPM: RevenueCat `purchases-ios-spm` (5.0+) and SwiftDraw (0.27+).
+Project: `screenshot.xcodeproj` (no workspace). Scheme: `screenshot`. Targets: `screenshot` (app), `screenshotTests` (unit tests). `SUPPORTED_PLATFORMS = iphoneos iphonesimulator macosx`, `TARGETED_DEVICE_FAMILY = 1,2`; macOS deployment 15.0, iOS deployment 18.0. Dependencies via Xcode-managed SPM: RevenueCat `purchases-ios-spm` (5.0+), SwiftDraw (0.27+), `modelcontextprotocol/swift-sdk` (0.12.x, the `MCP` product) and `getsentry/sentry-cocoa` (9.26+). `Package.resolved` is tracked in git — commit it alongside any `project.pbxproj` package change.
 
 Build (macOS is the primary dev target):
 ```
@@ -44,7 +44,7 @@ Shipping (via the `ship` skill) targets both platforms from the one `ExportOptio
 Custom Claude Code skills live in `.claude/skills/`:
 - `gen-project-schema` — regenerate `tools/project-schema.json` from the Swift Codable models after any change to the on-disk JSON shape.
 - `regression-checklist` — structured pre-commit walk of the Regression Prevention section below.
-- `ship` — bump build/marketing version, build, and upload to App Store Connect.
+- `ship` — bump build/marketing version, build, upload dSYMs to Sentry, and upload to App Store Connect.
 - `import-svg-template` / `project-to-template` — create bundled templates from SVGs or existing projects.
 - `add-localized-string` — add user-facing strings and propagate translations via the Python scripts (see below). **Never hand-edit `Localizable.xcstrings`** — a PreToolUse hook blocks it; it is generated. Gotcha: the catalog is committed in Xcode's serialization (`"k" : "v"`, space before the colon) but `translate_catalog.py` / `translate_popular_languages.py` rewrite the entire file in `json.dumps` style (`"k": "v"`), and `xcodebuild` does **not** renormalize it — so running the scripts wholesale yields a ~35k-line cosmetic diff (and opportunistically fills unrelated missing translations). To add one string's translations cleanly, generate them with the scripts, then inject just that key into the catalog in the existing Xcode format instead of committing the reflowed file.
 - `swiftui-patterns` / `swiftui-pro` — macOS SwiftUI reference + review.
@@ -95,7 +95,7 @@ Bundled resources in `screenshot/`: `Templates.bundle` (35+ starter themes), `Sv
 - `PlatformFont.swift`, `PlatformImageShims.swift` — the slice of AppKit API the code actually calls, reimplemented for UIKit.
 - `PlatformInput.swift` — `PlatformModifiers` (live shift/option flags on macOS; off on iPad, so shift-constrain / option-duplicate are macOS-only).
 
-**App entry:** `screenshotApp.swift` — injects `AppState` into the SwiftUI environment via `@State` + `.environment()`. Defines keyboard shortcuts and menu items (Edit, View, Locale, Debug). `AppWindowManager` handles standalone windows (new-project, etc.).
+**App entry:** `screenshotApp.swift` — injects `AppState` into the SwiftUI environment via `@State` + `.environment()`. Defines keyboard shortcuts and menu items (Edit, View, Locale, Debug). `AppWindowManager` handles standalone windows (new-project, etc.). Its `init()` calls `CrashReportingService.start()` first — Sentry is always-on (no opt-out), with `environment` = `debug`/`production`, `sendDefaultPii = false`, app-hang tracking on and performance tracing off. It self-disables under XCTest via `PersistenceService.isRunningUnderXCTest`, so never assume test runs are inert for other reasons. The Sentry user id is the RevenueCat `appUserID`, attached from `StoreService.start()` once `Purchases.configure` has run — so events in the first few hundred ms of launch have no user. Keep `import Sentry` confined to `CrashReportingService`.
 
 **State management:** `AppState` (`@Observable`) is the single source of truth, split across extension files: `AppState+Images`, `+BackgroundImages`, `+ImageResources`, `+Locales`, `+Persistence`, `+Projects`, `+Rows`, `+Selection`, `+Shapes`, `+Templates`, `+Zoom`, `+CustomFonts`, `+Coach` (onboarding), `+SimulatorCapture`. Persistence is debounced 0.3s via `scheduleSave()`, which routes through `saveAllAsync()`: the snapshot is taken on the main actor but JSON encode + `.xcstrings` catalog build + (iCloud-coordinated) writes run on the serial `AppState.saveQueue`. Explicit saves (quit flush, project ops) stay synchronous; `flushPendingSaveTask` drains the queue (`saveQueue.sync {}`) before its synchronous fallback so quit can't lose an in-flight write.
 
@@ -121,7 +121,7 @@ Bundled resources in `screenshot/`: `Templates.bundle` (35+ starter themes), `Sv
 - `CustomFont` — metadata for user-imported font files. `AlignmentGuide` — snap guide line model.
 
 **Services:**
-- Root: `PersistenceService` (project JSON/resources), `AlignmentService`, `StoreService`, `TemplateService`, `SimulatorCaptureService`, `NotificationService`, `DebugTemplateService`, `QuickLookCoordinator`, `KeychainService`, `AppLogger`.
+- Root: `PersistenceService` (project JSON/resources), `AlignmentService`, `StoreService`, `TemplateService`, `SimulatorCaptureService`, `NotificationService`, `DebugTemplateService`, `QuickLookCoordinator`, `KeychainService`, `AppLogger`, `CrashReportingService`.
 - `Export/` — `ExportService`, `ExportImageEncoder`, `ExportFolderService`, `ProjectThumbnailService`. Renders templates/showcases/thumbnails to PNG/JPEG via SwiftUI `ImageRenderer` and handles final image encoding.
 - `Localization/` — `LocaleService`, `TranslationCatalogService`, `LocalizationPromptService`. Resolves locale overrides and translation prompt/catalog logic.
 - `Media/` — `SvgHelper`, `SvgPresetCatalog`, `RichTextUtils`, `BackgroundRemovalService`. Handles SVG presets/rendering, rich text RTF persistence, and Vision background removal.

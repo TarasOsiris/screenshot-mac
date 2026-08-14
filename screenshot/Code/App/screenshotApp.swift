@@ -45,6 +45,7 @@ struct ScreenshotBroApp: App {
     }
 
     init() {
+        CrashReportingService.start()
         OnboardingPersistence.prepareForLaunch()
     }
 
@@ -432,6 +433,14 @@ struct ScreenshotBroApp: App {
                     for key in ["reviewExportCount", "reviewLastPromptedVersion", "reviewFirstExportDate", "reviewLastPromptDate"] {
                         UserDefaults.standard.removeObject(forKey: key)
                     }
+                }
+
+                Divider()
+
+                // A captured message rather than a crash: the SDK disables crash handling while a
+                // debugger is attached, so only a manual event proves the DSN end to end from Xcode.
+                Button("Send Sentry Test Event") {
+                    CrashReportingService.captureTestEvent()
                 }
             }
             #endif

@@ -11,6 +11,7 @@
 		760E3F3A2F7298FE00034CDB /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 76RC00032F5A00000072F7A4 /* RevenueCatUI */; };
 		76MC00032F5A00000072F7A4 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 76MC00022F5A00000072F7A4 /* MCP */; };
 		76SD00032F5A00000072F7A4 /* SwiftDraw in Frameworks */ = {isa = PBXBuildFile; productRef = 76SD00022F5A00000072F7A4 /* SwiftDraw */; };
+		76SE00032F5A00000072F7A4 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 76SE00022F5A00000072F7A4 /* Sentry */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +51,7 @@
 				760E3F392F7298FE00034CDB /* RevenueCat in Frameworks */,
 				76SD00032F5A00000072F7A4 /* SwiftDraw in Frameworks */,
 				76MC00032F5A00000072F7A4 /* MCP in Frameworks */,
+				76SE00032F5A00000072F7A4 /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,6 +107,7 @@
 				76RC00032F5A00000072F7A4 /* RevenueCatUI */,
 				76SD00022F5A00000072F7A4 /* SwiftDraw */,
 				76MC00022F5A00000072F7A4 /* MCP */,
+				76SE00022F5A00000072F7A4 /* Sentry */,
 			);
 			productName = screenshot;
 			productReference = 768DF30B2F596DAB0072F7A4 /* Screenshot Bro.app */;
@@ -172,6 +175,7 @@
 				76RC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				76SD00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "SwiftDraw" */,
 				76MC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "swift-sdk" */,
+				76SE00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 768DF30C2F596DAB0072F7A4 /* Products */;
@@ -367,7 +371,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = screenshot/screenshotDebug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 107;
+				CURRENT_PROJECT_VERSION = 108;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
@@ -384,7 +388,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.9;
+				MARKETING_VERSION = 4.0;
 				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=macosx*]" = NSApplication;
@@ -413,7 +417,7 @@
 				CODE_SIGN_ENTITLEMENTS = screenshot/screenshot.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 107;
+				CURRENT_PROJECT_VERSION = 108;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
@@ -430,7 +434,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.9;
+				MARKETING_VERSION = 4.0;
 				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=macosx*]" = NSApplication;
@@ -455,11 +459,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 107;
+				CURRENT_PROJECT_VERSION = 108;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 3.9;
+				MARKETING_VERSION = 4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -477,11 +481,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 107;
+				CURRENT_PROJECT_VERSION = 108;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 3.9;
+				MARKETING_VERSION = 4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -551,6 +555,14 @@
 				minimumVersion = 0.27.0;
 			};
 		};
+		76SE00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.26.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -573,6 +585,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 76SD00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "SwiftDraw" */;
 			productName = SwiftDraw;
+		};
+		76SE00022F5A00000072F7A4 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 76SE00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
