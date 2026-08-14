@@ -1,9 +1,10 @@
 import Foundation
 import SwiftUI
 
-// Per App Store Connect screenshot specifications: 3–10 assets per display type.
+// Apple's specs allow 1–10 assets per display type; three is a marketing convention, not a rule.
 enum ASCUploadLimits {
-    static let minScreenshotsPerSet = 3
+    static let minScreenshotsPerSet = 1
+    static let recommendedScreenshotsPerSet = 3
     static let maxScreenshotsPerSet = 10
 }
 
@@ -104,9 +105,17 @@ enum ASCUploadValidator {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "App Store Connect requires at least \(ASCUploadLimits.minScreenshotsPerSet) screenshots per display type; this row has \(plan.templateCount).",
-                    hint: "Add more screenshot columns to this row.",
+                    message: "This row has no screenshots to upload.",
+                    hint: "Add at least one screenshot column to this row.",
                     demoDowngradable: true
+                ))
+            } else if plan.templateCount < ASCUploadLimits.recommendedScreenshotsPerSet {
+                let noun = plan.templateCount == 1 ? "screenshot" : "screenshots"
+                issues.append(UploadIssue(
+                    severity: .warning,
+                    scope: rowName,
+                    message: "This row uploads \(plan.templateCount) \(noun). App Store Connect accepts \(ASCUploadLimits.minScreenshotsPerSet)–\(ASCUploadLimits.maxScreenshotsPerSet), but most apps show at least \(ASCUploadLimits.recommendedScreenshotsPerSet).",
+                    hint: "Add more screenshot columns, or upload as is."
                 ))
             }
             if plan.templateCount > ASCUploadLimits.maxScreenshotsPerSet {

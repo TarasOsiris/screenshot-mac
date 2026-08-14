@@ -75,7 +75,7 @@ struct AppStoreConnectUploadValidatorTests {
                 id: UUID(),
                 rowLabel: "iPad 13-inch",
                 rowSize: CGSize(width: 2064, height: 2752),
-                templateCount: ASCUploadLimits.minScreenshotsPerSet,
+                templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
                 detectedDisplayType: .ipadPro129M4,
                 selectedDisplayType: .ipadPro129M4,
@@ -85,7 +85,7 @@ struct AppStoreConnectUploadValidatorTests {
                 id: UUID(),
                 rowLabel: "iPad 12.9-inch",
                 rowSize: CGSize(width: 2048, height: 2732),
-                templateCount: ASCUploadLimits.minScreenshotsPerSet,
+                templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
                 detectedDisplayType: .ipadPro3Gen129,
                 selectedDisplayType: .ipadPro3Gen129,
@@ -127,7 +127,7 @@ struct AppStoreConnectUploadValidatorTests {
                 id: UUID(),
                 rowLabel: label,
                 rowSize: CGSize(width: 2064, height: 2752),
-                templateCount: ASCUploadLimits.minScreenshotsPerSet,
+                templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
                 detectedDisplayType: .ipadPro129M4,
                 selectedDisplayType: .ipadPro129M4,
@@ -166,7 +166,7 @@ struct AppStoreConnectUploadValidatorTests {
                 id: UUID(),
                 rowLabel: "iPhone row on a macOS version",
                 rowSize: CGSize(width: 1290, height: 2796),
-                templateCount: ASCUploadLimits.minScreenshotsPerSet,
+                templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
                 detectedDisplayType: .iphone67,
                 selectedDisplayType: .iphone67,
@@ -217,7 +217,7 @@ struct AppStoreConnectUploadValidatorTests {
                 id: UUID(),
                 rowLabel: "iPad",
                 rowSize: CGSize(width: 2064, height: 2752),
-                templateCount: ASCUploadLimits.minScreenshotsPerSet,
+                templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
                 detectedDisplayType: .ipadPro129M4,
                 selectedDisplayType: .ipadPro129M4,
@@ -265,7 +265,7 @@ struct AppStoreConnectUploadValidatorTests {
                 id: UUID(),
                 rowLabel: label,
                 rowSize: CGSize(width: 2064, height: 2752),
-                templateCount: ASCUploadLimits.minScreenshotsPerSet,
+                templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
                 detectedDisplayType: .ipadPro129M4,
                 selectedDisplayType: .ipadPro129M4,
@@ -368,17 +368,53 @@ struct AppStoreConnectUploadValidatorTests {
         #expect(!issues.filter { $0.message.contains("can't be uploaded") }.contains { !$0.demoDowngradable })
     }
 
+    @Test func screenshotCountRulesFollowAppleMinimumOfOne() {
+        let localization = ASCAppStoreVersionLocalization(id: "loc-en", attributes: .init(locale: "en-US"))
+        let version = ASCAppStoreVersion(
+            id: "version-1",
+            attributes: .init(versionString: "1.0", appStoreState: "PREPARE_FOR_SUBMISSION", platform: "IOS")
+        )
+        func issues(templateCount: Int) -> [UploadIssue] {
+            ASCUploadValidator.validate(
+                version: version,
+                plans: [
+                    plan(
+                        label: "Phone",
+                        size: CGSize(width: 1290, height: 2796),
+                        displayType: .iphone67,
+                        localization: localization,
+                        templateCount: templateCount
+                    )
+                ]
+            )
+        }
+
+        let single = issues(templateCount: 1)
+        #expect(!single.hasErrors)
+        #expect(single.contains { $0.severity == .warning && $0.message.contains("1 screenshot.") })
+
+        #expect(issues(templateCount: ASCUploadLimits.recommendedScreenshotsPerSet).isEmpty)
+
+        #expect(issues(templateCount: 0).contains {
+            $0.severity == .error && $0.message.contains("no screenshots")
+        })
+        #expect(issues(templateCount: ASCUploadLimits.maxScreenshotsPerSet + 1).contains {
+            $0.severity == .error && $0.message.contains("at most")
+        })
+    }
+
     private func plan(
         label: String,
         size: CGSize,
         displayType: ASCDisplayType,
-        localization: ASCAppStoreVersionLocalization
+        localization: ASCAppStoreVersionLocalization,
+        templateCount: Int = ASCUploadLimits.recommendedScreenshotsPerSet
     ) -> UploadToAppStoreConnectView.RowPlan {
         UploadToAppStoreConnectView.RowPlan(
             id: UUID(),
             rowLabel: label,
             rowSize: size,
-            templateCount: ASCUploadLimits.minScreenshotsPerSet,
+            templateCount: templateCount,
             isEnabled: true,
             detectedDisplayType: displayType,
             selectedDisplayType: displayType,

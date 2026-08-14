@@ -179,7 +179,7 @@ extension UploadToAppStoreConnectView {
         let raw = ASCUploadValidator.validate(destinations: destinationPlans)
         guard credentials.isDemoMode else { return raw }
         // In demo mode the upload is simulated, so per-row App Store rules (size
-        // match, 3–10 screenshot count, duplicate target, locale matching) become
+        // match, screenshot count, duplicate target, locale matching) become
         // advisory warnings instead of hard blockers — the wizard must run end-to-end
         // for any project. Structural issues (no rows / no enabled rows / version
         // not editable) keep their original severity.

@@ -603,7 +603,7 @@ extension HelpSection {
                 .bullet("Click **Upload to App Store Connect…** from the export menu. Screenshot Bro renders the selected screenshots directly from the project."),
                 .bullet("Pick the app and an editable version, review metadata, then confirm the upload plan."),
                 .bullet("You can preview which screenshots will be uploaded for which locale before confirming."),
-                .tip("App Store Connect requires 3–10 screenshots per display type and locale. Screenshot Bro respects template ordering when uploading."),
+                .tip("App Store Connect accepts 1–10 screenshots per display type and locale — one is enough to submit, though most apps use three or more. Screenshot Bro respects template ordering when uploading."),
             ]
         )
     }
