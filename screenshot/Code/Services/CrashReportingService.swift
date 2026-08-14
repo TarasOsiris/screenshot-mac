@@ -43,10 +43,4 @@ nonisolated enum CrashReportingService {
         user.userId = id
         SentrySDK.setUser(user)
     }
-
-    #if DEBUG
-    static func captureTestEvent() {
-        SentrySDK.capture(message: "Test event from Screenshot Bro")
-    }
-    #endif
 }

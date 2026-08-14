@@ -434,14 +434,6 @@ struct ScreenshotBroApp: App {
                         UserDefaults.standard.removeObject(forKey: key)
                     }
                 }
-
-                Divider()
-
-                // A captured message rather than a crash: the SDK disables crash handling while a
-                // debugger is attached, so only a manual event proves the DSN end to end from Xcode.
-                Button("Send Sentry Test Event") {
-                    CrashReportingService.captureTestEvent()
-                }
             }
             #endif
         }
