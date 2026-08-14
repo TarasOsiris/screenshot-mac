@@ -3,6 +3,8 @@ import AppKit
 #else
 import UIKit
 #endif
+import Metal
+import os
 import SceneKit
 import SwiftUI
 
@@ -36,12 +38,15 @@ struct DeviceModelFrameView: View {
         cache.countLimit = 4
         return cache
     }()
+    /// One device across all snapshots keeps Metal's compiled-shader cache warm between renders.
+    private static let sharedMetalDevice: (any MTLDevice)? = MTLCreateSystemDefaultDevice()
 
-    private struct SnapshotKey: Hashable {
+    struct SnapshotKey: Hashable {
         let frameId: String
         let pixelWidth: Int
         let pixelHeight: Int
-        let screenshotIdentity: ObjectIdentifier?
+        let hasScreenshot: Bool
+        let screenshotIdentity: String?
         let screenshotWidth: Int
         let screenshotHeight: Int
         let pitch: Int
@@ -52,11 +57,15 @@ struct DeviceModelFrameView: View {
         let rim: Int
         let bodyColor: String
 
+        /// A screenshot with no stable identity can't be told apart from any other, so it
+        /// must re-render rather than risk serving a different shape's snapshot.
+        var isCacheable: Bool { !hasScreenshot || screenshotIdentity != nil }
+
         var cacheKey: NSString {
             [
                 frameId,
                 "\(pixelWidth)x\(pixelHeight)",
-                screenshotIdentity.map { String(describing: $0) } ?? "no-image",
+                screenshotIdentity ?? "no-image",
                 "\(screenshotWidth)x\(screenshotHeight)",
                 "p\(pitch)",
                 "y\(yaw)",
@@ -74,6 +83,7 @@ struct DeviceModelFrameView: View {
     let width: CGFloat
     let height: CGFloat
     let screenshotImage: NSImage?
+    let screenshotImageIdentity: String?
     let pitch: Double
     let yaw: Double
     let bodyMaterial: DeviceBodyMaterial
@@ -98,6 +108,7 @@ struct DeviceModelFrameView: View {
                 width: width,
                 height: height,
                 screenshotImage: screenshotImage,
+                screenshotImageIdentity: screenshotImageIdentity,
                 pitch: pitch,
                 yaw: yaw,
                 bodyMaterial: bodyMaterial,
@@ -127,20 +138,25 @@ struct DeviceModelFrameView: View {
         )
     }
 
-    @ViewBuilder
-    private var snapshotView: some View {
-        let key = Self.snapshotKey(
+    private var currentSnapshotKey: SnapshotKey {
+        Self.snapshotKey(
             frame: frame,
             width: width,
             height: height,
             scale: effectiveSnapshotScale,
             screenshotImage: screenshotImage,
+            screenshotImageIdentity: screenshotImageIdentity,
             pitch: pitch,
             yaw: yaw,
             bodyMaterial: bodyMaterial,
             lighting: lighting,
             bodyColor: bodyColor
         )
+    }
+
+    @ViewBuilder
+    private var snapshotView: some View {
+        let key = currentSnapshotKey
 
         if let image = snapshotImage(for: key) {
             Image(nsImage: image)
@@ -160,18 +176,7 @@ struct DeviceModelFrameView: View {
 
     @ViewBuilder
     private var synchronousSnapshotView: some View {
-        let key = Self.snapshotKey(
-            frame: frame,
-            width: width,
-            height: height,
-            scale: effectiveSnapshotScale,
-            screenshotImage: screenshotImage,
-            pitch: pitch,
-            yaw: yaw,
-            bodyMaterial: bodyMaterial,
-            lighting: lighting,
-            bodyColor: bodyColor
-        )
+        let key = currentSnapshotKey
 
         if let image = synchronousSnapshot(for: key) {
             Image(nsImage: image)
@@ -236,33 +241,36 @@ struct DeviceModelFrameView: View {
     }
 
     private static func cachedSnapshot(for key: SnapshotKey) -> NSImage? {
-        snapshotImageCache.object(forKey: key.cacheKey)
+        guard key.isCacheable else { return nil }
+        return snapshotImageCache.object(forKey: key.cacheKey)
     }
 
     private static func storeSnapshot(_ image: NSImage, for key: SnapshotKey) {
+        guard key.isCacheable else { return }
         snapshotImageCache.setObject(image, forKey: key.cacheKey, cost: key.pixelWidth * key.pixelHeight * 4)
     }
 
-    private static func snapshotKey(
+    static func snapshotKey(
         frame: DeviceFrame,
         width: CGFloat,
         height: CGFloat,
         scale: CGFloat,
         screenshotImage: NSImage?,
+        screenshotImageIdentity: String?,
         pitch: Double,
         yaw: Double,
         bodyMaterial: DeviceBodyMaterial,
         lighting: DeviceLighting,
         bodyColor: Color
     ) -> SnapshotKey {
-        let imageIdentity = screenshotImage.map(ObjectIdentifier.init)
         let imageSize = screenshotImage?.size ?? .zero
         let color = bodyColor.sRGBComponents
         return SnapshotKey(
             frameId: frame.id,
             pixelWidth: max(1, Int((width * scale).rounded(.up))),
             pixelHeight: max(1, Int((height * scale).rounded(.up))),
-            screenshotIdentity: imageIdentity,
+            hasScreenshot: screenshotImage != nil,
+            screenshotIdentity: screenshotImage == nil ? nil : screenshotImageIdentity,
             screenshotWidth: max(0, Int(imageSize.width.rounded())),
             screenshotHeight: max(0, Int(imageSize.height.rounded())),
             pitch: quantized(pitch),
@@ -279,7 +287,7 @@ struct DeviceModelFrameView: View {
         Int((value * 1_000).rounded())
     }
 
-    fileprivate static func snapshotDeviceModel(
+    static func snapshotDeviceModel(
         frame: DeviceFrame,
         width: CGFloat,
         height: CGFloat,
@@ -304,25 +312,62 @@ struct DeviceModelFrameView: View {
             lighting: lighting,
             bodyTintColor: bodyTintColor
         ) else {
+            AppLogger.export.warning("Device model scene unavailable for frame \(frame.id, privacy: .public)")
             return nil
         }
 
-        let renderer = SCNRenderer(device: nil, options: nil)
+        let renderer = SCNRenderer(device: sharedMetalDevice, options: nil)
         renderer.scene = scene
         renderer.pointOfView = cameraNode
         if let camera = cameraNode.camera {
             camera.wantsExposureAdaptation = false
             camera.exposureOffset = .init(snapshotExposureOffset)
         }
-        let image = renderer.snapshot(
-            atTime: 0,
-            with: CGSize(width: safeWidth, height: safeHeight),
-            antialiasingMode: .multisampling4X
-        )
+        // Forces shader compilation and texture upload before the one-shot snapshot, which
+        // otherwise has no frame to recover on if the scene isn't GPU-resident yet.
+        renderer.prepare(scene, shouldAbortBlock: nil)
+
+        let snapshotSize = CGSize(width: safeWidth, height: safeHeight)
+        var image = renderer.snapshot(atTime: 0, with: snapshotSize, antialiasingMode: .multisampling4X)
+        if isBlank(image) {
+            image = renderer.snapshot(atTime: 0, with: snapshotSize, antialiasingMode: .multisampling4X)
+            guard !isBlank(image) else {
+                AppLogger.export.warning("Device model snapshot came back blank for frame \(frame.id, privacy: .public)")
+                return nil
+            }
+        }
         #if os(macOS)
         image.size = NSSize(width: max(1, width), height: max(1, height))
         #endif
         return image
+    }
+
+    /// True when every sampled pixel is fully transparent. A blank snapshot is indistinguishable
+    /// from a valid one downstream, so it has to be caught here or the device vanishes silently.
+    private static func isBlank(_ image: NSImage) -> Bool {
+        #if os(macOS)
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return true }
+        #else
+        guard let cgImage = image.cgImage else { return true }
+        #endif
+        let sampleCount = 32
+        let width = cgImage.width
+        let height = cgImage.height
+        guard width > 0, height > 0 else { return true }
+
+        var alpha = [UInt8](repeating: 0, count: sampleCount * sampleCount)
+        guard let context = CGContext(
+            data: &alpha,
+            width: sampleCount,
+            height: sampleCount,
+            bitsPerComponent: 8,
+            bytesPerRow: sampleCount,
+            space: CGColorSpaceCreateDeviceGray(),
+            bitmapInfo: CGImageAlphaInfo.alphaOnly.rawValue
+        ) else { return false }
+
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: sampleCount, height: sampleCount))
+        return alpha.allSatisfy { $0 == 0 }
     }
 
     static func makeDeviceModelScene(

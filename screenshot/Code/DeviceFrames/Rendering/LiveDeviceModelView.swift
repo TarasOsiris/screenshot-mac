@@ -11,6 +11,7 @@ struct LiveDeviceModelView {
     let width: CGFloat
     let height: CGFloat
     let screenshotImage: NSImage?
+    let screenshotImageIdentity: String?
     let pitch: Double
     let yaw: Double
     let bodyMaterial: DeviceBodyMaterial
@@ -22,7 +23,7 @@ struct LiveDeviceModelView {
     /// change only needs a camera re-fit, not a full scene rebuild.
     struct SceneSignature: Equatable {
         let frame: DeviceFrame
-        let screenshot: ObjectIdentifier?
+        let screenshot: String?
         let pitch: Double
         let yaw: Double
         let bodyMaterial: DeviceBodyMaterial
@@ -33,7 +34,7 @@ struct LiveDeviceModelView {
     private var sceneSignature: SceneSignature {
         SceneSignature(
             frame: frame,
-            screenshot: screenshotImage.map(ObjectIdentifier.init),
+            screenshot: screenshotImage == nil ? nil : screenshotImageIdentity,
             pitch: pitch,
             yaw: yaw,
             bodyMaterial: bodyMaterial,

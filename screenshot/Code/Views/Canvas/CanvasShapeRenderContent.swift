@@ -10,6 +10,7 @@ struct CanvasShapeRenderContent: View {
     let displayScale: CGFloat
     let displayOutlineWidth: CGFloat
     var screenshotImage: NSImage?
+    var screenshotImageIdentity: String?
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color
     var deviceModelRenderingMode: DeviceModelRenderingMode
@@ -223,6 +224,7 @@ struct CanvasShapeRenderContent: View {
             width: displayW,
             height: displayH,
             screenshotImage: screenshotImage,
+            screenshotImageIdentity: screenshotImageIdentity,
             deviceFrameId: shape.deviceFrameId,
             devicePitch: shape.resolvedDevicePitch,
             deviceYaw: shape.resolvedDeviceYaw,

@@ -34,6 +34,9 @@ struct CanvasShapeView: View {
     let isSelected: Bool
     var isMultiSelected: Bool = false
     var screenshotImage: NSImage?
+    /// Stable content identity for `screenshotImage` (its resource file name). Backs the 3D
+    /// device snapshot cache key, which must not fall back to a recyclable object address.
+    var screenshotImageIdentity: String?
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor
     var deviceModelRenderingMode: DeviceModelRenderingMode = .snapshot
@@ -342,6 +345,7 @@ struct CanvasShapeView: View {
             displayScale: displayScale,
             displayOutlineWidth: displayOutlineWidth,
             screenshotImage: screenshotImage,
+            screenshotImageIdentity: screenshotImageIdentity,
             fillImage: fillImage,
             defaultDeviceBodyColor: defaultDeviceBodyColor,
             deviceModelRenderingMode: deviceModelRenderingMode,

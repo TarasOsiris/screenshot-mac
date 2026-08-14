@@ -123,6 +123,7 @@ enum ASCScreenshotSyncError: LocalizedError {
     case staleRemote(set: String)
     case noSetsSelected
     case invalidPlan(String)
+    case unreadableImages(rowLabel: String, localeLabel: String, fileNames: [String])
 
     var errorDescription: String? {
         switch self {
@@ -138,6 +139,8 @@ enum ASCScreenshotSyncError: LocalizedError {
             String(localized: "Select at least one changed screenshot set.")
         case .invalidPlan(let message):
             message
+        case .unreadableImages(let rowLabel, let localeLabel, let fileNames):
+            String(localized: "\(rowLabel) · \(localeLabel) uses \(fileNames.count) image file(s) that could not be read, so the screenshots would upload with missing content. Re-add the affected images, then try again.")
         }
     }
 }
@@ -203,6 +206,16 @@ final class AppStoreConnectScreenshotSyncService {
                     progress("Rendering \(target.rowLabel) · \(localization.label)")
                     let imageNames = appState.referencedImageFileNames(forRow: row, localeCode: localization.localeCode)
                     let rowImages = appState.loadFullResolutionImages(fileNames: imageNames, cache: &imageCache)
+                    // Rendering degrades silently to a hole, so refuse to ship a screenshot
+                    // whose image the model references but disk can't produce.
+                    let unreadable = imageNames.subtracting(rowImages.keys).sorted()
+                    if !unreadable.isEmpty {
+                        throw ASCScreenshotSyncError.unreadableImages(
+                            rowLabel: target.rowLabel,
+                            localeLabel: localization.label,
+                            fileNames: unreadable
+                        )
+                    }
                     let localAssets = try await renderAssets(
                         row: row,
                         target: target,

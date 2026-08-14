@@ -16,6 +16,7 @@ struct DeviceFrameView: View {
     let width: CGFloat
     let height: CGFloat
     var screenshotImage: NSImage? = nil
+    var screenshotImageIdentity: String? = nil
     var deviceFrameId: String? = nil
     var devicePitch: Double = 0
     var deviceYaw: Double = 0
@@ -45,6 +46,7 @@ struct DeviceFrameView: View {
                 width: width,
                 height: height,
                 screenshotImage: screenshotImage,
+                screenshotImageIdentity: screenshotImageIdentity,
                 pitch: devicePitch,
                 yaw: deviceYaw,
                 bodyMaterial: bodyMaterial,

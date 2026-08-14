@@ -3531,6 +3531,16 @@
         }
       }
     },
+    "%@ · %@ uses %lld image file(s) that could not be read, so the screenshots would upload with missing content. Re-add the affected images, then try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@ uses %3$lld image file(s) that could not be read, so the screenshots would upload with missing content. Re-add the affected images, then try again."
+          }
+        }
+      }
+    },
     "%@ · %@: %@" : {
       "extractionState" : "stale",
       "localizations" : {

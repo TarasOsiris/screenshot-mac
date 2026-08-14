@@ -3,6 +3,7 @@ import AppKit
 #else
 import UIKit
 #endif
+import os
 import SwiftUI
 
 struct DeviceFrameImageView: View {
@@ -83,7 +84,10 @@ struct DeviceFrameImageView: View {
             return cached
         }
 
-        guard let image = NSImage(named: imageName) else { return nil }
+        guard let image = NSImage(named: imageName) else {
+            AppLogger.export.warning("Device bezel asset missing: \(imageName, privacy: .public)")
+            return nil
+        }
         frameImageCache.setObject(image, forKey: key)
         return image
     }

@@ -286,6 +286,7 @@ extension EditorRowView {
                     isSelected: isInSelection,
                     isMultiSelected: isMulti,
                     screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
+                    screenshotImageIdentity: shape.displayImageFileName,
                     fillImage: shape.fillImageConfig?.fileName.flatMap { state.screenshotImages[$0] },
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                     deviceModelRenderingMode: .snapshot,
