@@ -376,7 +376,8 @@ final class AppStoreConnectAPIService {
         }
     }
 
-    nonisolated private static func slice(of data: Data, from lower: Int, to upper: Int) async -> Data {
+    /// `@concurrent` is load-bearing — see the concurrency note in CLAUDE.md.
+    @concurrent nonisolated private static func slice(of data: Data, from lower: Int, to upper: Int) async -> Data {
         data.subdata(in: lower..<upper)
     }
 

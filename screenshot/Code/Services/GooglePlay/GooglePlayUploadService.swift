@@ -206,14 +206,27 @@ final class GooglePlayUploadService {
             for target in targets {
                 guard let row = appState.rows.first(where: { $0.id == target.rowId }) else { continue }
 
-                for language in target.languages {
+                // Backgrounds are locale-independent, so the (blur-only) precomposed row strip is
+                // built once and shared across every language — same as `ExportService.exportAll`.
+                var rowBackground: NSImage?
+
+                for (languageIndex, language) in target.languages.enumerated() {
                     try Task.checkCancellation()
                     let planLabel = "\(target.rowLabel) · \(language.label) · \(target.imageType.label)"
                     let fileNames = appState.referencedImageFileNames(forRow: row, localeCode: language.projectCode)
                     let rowImages = appState.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
+                    if languageIndex == 0 {
+                        rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
+                            row: row,
+                            screenshotImages: rowImages,
+                            displayScale: 1.0,
+                            labelPrefix: "play upload row"
+                        )
+                    }
                     let rendered = try await renderScreenshots(
                         row: row,
                         rowImages: rowImages,
+                        rowBackground: rowBackground,
                         target: target,
                         language: language,
                         localeState: appState.localeState,
@@ -268,6 +281,7 @@ final class GooglePlayUploadService {
     private func renderScreenshots(
         row: ScreenshotRow,
         rowImages: [String: NSImage],
+        rowBackground: NSImage?,
         target: GPUploadTarget,
         language: GPUploadLanguage,
         localeState: LocaleState,
@@ -286,13 +300,12 @@ final class GooglePlayUploadService {
                 screenshotImages: rowImages,
                 localeCode: language.projectCode,
                 localeState: localeState,
-                availableFontFamilies: fontFamilies
+                availableFontFamilies: fontFamilies,
+                preRenderedRowBackground: rowBackground
             )
-            // The SwiftUI render must stay on the main actor, but pull out the source bitmap
-            // here and run the (CPU-bound) flatten + PNG encode off-actor so the upload UI
-            // keeps animating. Play rejects an alpha channel, so encode opaque.
-            let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
-            guard let source, let data = await Self.encodeOpaquePNG(source: source) else {
+            // The SwiftUI render must stay on the main actor; the encode must not, or the upload UI
+            // freezes. Play rejects an alpha channel, so encode opaque.
+            guard let data = await ExportImageEncoder.opaquePNGDataOffMain(from: image) else {
                 throw GooglePlayUploadError.renderFailed(
                     rowLabel: target.rowLabel,
                     imageTypeLabel: target.imageType.label,
@@ -305,12 +318,6 @@ final class GooglePlayUploadService {
             screenshots.append(RenderedScreenshot(templateIndex: templateIndex, fileName: fileName, data: data))
         }
         return screenshots
-    }
-
-    /// Flatten + PNG-encode is pure CPU on an immutable `CGImage`; `nonisolated async` runs it
-    /// on the cooperative pool so the main actor stays responsive during the upload.
-    nonisolated private static func encodeOpaquePNG(source: CGImage) async -> Data? {
-        ExportImageEncoder.opaquePNGData(fromCGImage: source)
     }
 
     private func performStep<T>(

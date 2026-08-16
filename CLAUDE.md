@@ -147,6 +147,13 @@ Bundled resources in `screenshot/`: `Templates.bundle` (35+ starter themes), `Sv
 
 ## Regression Prevention
 
+**Offloading CPU work — `nonisolated async` does NOT do it here:**
+- The target builds with `SWIFT_APPROACHABLE_CONCURRENCY = YES` (plus `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`), which enables `NonisolatedNonsendingByDefault`: a bare `nonisolated async func` inherits the **caller's** executor. Called from `@MainActor` code it runs on the main thread — and if its body has no suspension point the `await` doesn't even yield the main queue, so a whole loop runs as one uninterrupted main-actor job. This shipped as a multi-second app hang in 4.0 (108) (Sentry `SCREENSHOT-BRO-2`/`-3`: PNG encode + SwiftUI render during a Google Play upload).
+- Use `@concurrent` for a pure-CPU leaf (`ExportImageEncoder.opaquePNGDataOffMain`); use `Task.detached` only when you also need a detached lifetime. `nonisolated` alone offloads nothing.
+- The trap also applies to members of `nonisolated` **types**, which carry no keyword on the func — grepping for `nonisolated.*async` will not find them.
+- `TaskGroup.addTask` does *not* inherit isolation, so `ExportService.exportAll`'s encode/write group is already off-main.
+- `ExportImageEncoderIsolationTests.expectSuspendsMainActor` pins the invariant — extend it when adding a `@concurrent` helper.
+
 **Export/preview parity (CRITICAL):**
 - Exported images must always match exactly what the editor shows. After implementing any visual feature (backgrounds, shapes, effects, layout), always verify that `ExportService.renderTemplateImage` produces the same result as the editor canvas.
 - The export ZStack must use `ZStack(alignment: .topLeading)` — same as the editor — because `CanvasShapeView` uses `.position()` which is relative to the parent's coordinate origin.

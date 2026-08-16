@@ -397,7 +397,7 @@ struct TemplateControlBar: View {
                 let tempURL = FileManager.default.temporaryDirectory
                     .appendingPathComponent("screenshot-\(i + 1)-\(localeState.activeLocaleCode).png")
                 do {
-                    guard let pngData = await Task.detached(operation: { ExportService.opaquePNGData(from: image) }).value else {
+                    guard let pngData = await ExportImageEncoder.opaquePNGDataOffMain(from: image) else {
                         renderError = String(localized: "Could not render screenshot for preview.")
                         return
                     }

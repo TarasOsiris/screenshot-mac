@@ -50,7 +50,7 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
 
     // MARK: - Container Resolution
 
-    /// Resolve the iCloud container URL. Must be called off the main thread.
+    /// Resolve the iCloud container URL. The blocking lookup runs off the main thread.
     func resolveContainer() async -> URL? {
         let url = await Task.detached {
             FileManager.default.url(forUbiquityContainerIdentifier: self.containerID)
@@ -64,7 +64,9 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
     // MARK: - Enable / Disable
 
     /// Enable iCloud sync: merges local projects into iCloud, then switches to iCloud.
-    func enable(progressHandler: @escaping @Sendable (Double) -> Void) async throws {
+    /// `@concurrent` is load-bearing — `mergeProjects` is synchronous and its coordinated iCloud
+    /// reads block; without it this inherits the calling view's main actor. See CLAUDE.md.
+    @concurrent func enable(progressHandler: @escaping @Sendable (Double) -> Void) async throws {
         if iCloudContainerURL == nil {
             _ = await resolveContainer()
         }
@@ -84,7 +86,7 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
     }
 
     /// Disable iCloud sync: merges iCloud projects back to local, then switches to local.
-    func disable(progressHandler: @escaping @Sendable (Double) -> Void) async throws {
+    @concurrent func disable(progressHandler: @escaping @Sendable (Double) -> Void) async throws {
         guard let dataURL = iCloudDataURL else {
             throw ICloudSyncError.containerUnavailable
         }

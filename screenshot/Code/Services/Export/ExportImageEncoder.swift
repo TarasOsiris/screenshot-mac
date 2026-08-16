@@ -32,10 +32,15 @@ enum ExportImageEncoder {
         return encode(cgImage: opaque, as: .png)
     }
 
-    /// PNG-encode an already-extracted source bitmap, flattened onto opaque white.
-    /// Takes a `CGImage` (Sendable) so callers can pull it off an `NSImage` on the main
-    /// actor and run this CPU-bound step off-actor.
-    nonisolated static func opaquePNGData(fromCGImage source: CGImage) -> Data? {
+    /// Opaque PNG encode for callers that render on the main actor: the bitmap is pulled here (on
+    /// the caller's actor, since `NSImage` isn't Sendable) and the CPU work runs off-actor.
+    nonisolated static func opaquePNGDataOffMain(from image: NSImage) async -> Data? {
+        guard let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        return await opaquePNGDataOffMain(fromCGImage: source)
+    }
+
+    /// `@concurrent` is load-bearing — see the concurrency note in CLAUDE.md.
+    @concurrent nonisolated static func opaquePNGDataOffMain(fromCGImage source: CGImage) async -> Data? {
         guard let opaque = opaqueCGImage(fromSource: source) else { return nil }
         return encode(cgImage: opaque, as: .png)
     }

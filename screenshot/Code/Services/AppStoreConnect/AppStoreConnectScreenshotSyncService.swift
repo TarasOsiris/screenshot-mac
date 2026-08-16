@@ -195,7 +195,12 @@ final class AppStoreConnectScreenshotSyncService {
         do {
             for target in targets {
                 guard let row = appState.rows.first(where: { $0.id == target.rowId }) else { continue }
-                for localization in target.localizations {
+
+                // Backgrounds are locale-independent, so the (blur-only) precomposed row strip is
+                // built once and shared across every localization — same as `ExportService.exportAll`.
+                var rowBackground: NSImage?
+
+                for (localizationIndex, localization) in target.localizations.enumerated() {
                     try Task.checkCancellation()
                     let diffId = Self.diffSetId(target: target, localization: localization)
                     guard targetsBySetId[diffId] == nil else {
@@ -216,11 +221,20 @@ final class AppStoreConnectScreenshotSyncService {
                             fileNames: unreadable
                         )
                     }
+                    if localizationIndex == 0 {
+                        rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
+                            row: row,
+                            screenshotImages: rowImages,
+                            displayScale: 1.0,
+                            labelPrefix: "asc sync row"
+                        )
+                    }
                     let localAssets = try await renderAssets(
                         row: row,
                         target: target,
                         localization: localization,
                         rowImages: rowImages,
+                        rowBackground: rowBackground,
                         localeState: appState.localeState,
                         fontFamilies: fontFamilies,
                         directory: directory.appendingPathComponent(Self.safeFileName(diffId), isDirectory: true)
@@ -230,7 +244,7 @@ final class AppStoreConnectScreenshotSyncService {
                         .appendingPathComponent("remote-previews", isDirectory: true)
                         .appendingPathComponent(Self.safeFileName(diffId), isDirectory: true)
                     let remote = AppStoreConnectCredentialsStore.shared.isDemoMode
-                        ? try demoRemoteSet(
+                        ? try await demoRemoteSet(
                             from: localAssets,
                             diffId: diffId,
                             previewDirectory: remotePreviewDirectory
@@ -570,7 +584,7 @@ final class AppStoreConnectScreenshotSyncService {
             if let previewMaxDimension {
                 do {
                     let data = try await api.downloadScreenshotData(resolved, maxDimension: previewMaxDimension)
-                    previewData = Self.downscaledPNG(data, maxDimension: previewMaxDimension) ?? data
+                    previewData = await Self.downscaledPNG(data, maxDimension: previewMaxDimension) ?? data
                     previewError = nil
                 }
                 catch { previewError = error.localizedDescription }
@@ -625,28 +639,29 @@ final class AppStoreConnectScreenshotSyncService {
         from localAssets: [ASCScreenshotLocalAsset],
         diffId: String,
         previewDirectory: URL
-    ) throws -> RemoteSetSnapshot {
+    ) async throws -> RemoteSetSnapshot {
         guard !localAssets.isEmpty else {
             return RemoteSetSnapshot(setId: "demo-set-\(diffId)", assets: [], warnings: [])
         }
         var remotes: [ASCScreenshotRemoteAsset] = []
 
-        func remote(from local: ASCScreenshotLocalAsset, index: Int, suffix: String) throws -> ASCScreenshotRemoteAsset {
-            let data = try Data(contentsOf: local.fileURL)
-            return ASCScreenshotRemoteAsset(
+        // `previewData` is already the 420px downscale of these exact bytes, so reuse it rather
+        // than re-reading and re-encoding the file.
+        func remote(from local: ASCScreenshotLocalAsset, index: Int, suffix: String) -> ASCScreenshotRemoteAsset {
+            ASCScreenshotRemoteAsset(
                 id: "demo-\(diffId)-\(suffix)", index: index, fileName: local.fileName,
                 checksum: local.checksum, width: local.width, height: local.height,
-                previewData: Self.downscaledPNG(data, maxDimension: 420) ?? data,
+                previewData: local.previewData,
                 previewFileURL: local.fileURL,
                 previewError: nil
             )
         }
 
         if localAssets.count >= 3 {
-            remotes.append(try remote(from: localAssets[0], index: 0, suffix: "unchanged"))
-            remotes.append(try remote(from: localAssets[2], index: 1, suffix: "moved"))
+            remotes.append(remote(from: localAssets[0], index: 0, suffix: "unchanged"))
+            remotes.append(remote(from: localAssets[2], index: 1, suffix: "moved"))
         } else if localAssets.count == 2 {
-            remotes.append(try remote(from: localAssets[1], index: 0, suffix: "moved"))
+            remotes.append(remote(from: localAssets[1], index: 0, suffix: "moved"))
         }
 
         var removedData = try Data(contentsOf: localAssets[0].fileURL)
@@ -661,7 +676,7 @@ final class AppStoreConnectScreenshotSyncService {
             checksum: Self.md5Hex(removedData),
             width: localAssets[0].width,
             height: localAssets[0].height,
-            previewData: Self.downscaledPNG(removedData, maxDimension: 420) ?? removedData,
+            previewData: await Self.downscaledPNG(removedData, maxDimension: 420) ?? removedData,
             previewFileURL: removedPreviewURL,
             previewError: nil
         ))
@@ -673,6 +688,7 @@ final class AppStoreConnectScreenshotSyncService {
         target: ASCUploadTarget,
         localization: ASCUploadLocalization,
         rowImages: [String: NSImage],
+        rowBackground: NSImage?,
         localeState: LocaleState,
         fontFamilies: Set<String>,
         directory: URL
@@ -688,9 +704,10 @@ final class AppStoreConnectScreenshotSyncService {
                 screenshotImages: rowImages,
                 localeCode: localization.localeCode,
                 localeState: localeState,
-                availableFontFamilies: fontFamilies
+                availableFontFamilies: fontFamilies,
+                preRenderedRowBackground: rowBackground
             )
-            guard let data = ExportService.encodeImage(image, format: .png) else {
+            guard let data = await ExportImageEncoder.opaquePNGDataOffMain(from: image) else {
                 throw AppStoreConnectUploadError.renderFailed(
                     rowLabel: target.rowLabel,
                     displayTypeLabel: target.displayType.label,
@@ -867,26 +884,25 @@ final class AppStoreConnectScreenshotSyncService {
         Insecure.MD5.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
 
-    /// Hashing and thumbnailing a multi-MB PNG is pure CPU; `nonisolated async` runs these off
-    /// the main actor (on the cooperative pool) so the sync UI stays responsive.
-    nonisolated static func fileChecksum(at url: URL) async throws -> String {
+    /// `@concurrent` is load-bearing — see the concurrency note in CLAUDE.md.
+    @concurrent nonisolated static func fileChecksum(at url: URL) async throws -> String {
         md5Hex(try Data(contentsOf: url, options: .mappedIfSafe))
     }
 
-    nonisolated private static func store(
+    @concurrent nonisolated private static func store(
         _ data: Data,
         at url: URL,
         previewMaxDimension: Int
     ) async throws -> (checksum: String, preview: Data) {
         try data.write(to: url, options: .atomic)
-        return (md5Hex(data), downscaledPNG(data, maxDimension: previewMaxDimension) ?? data)
+        return (md5Hex(data), await downscaledPNG(data, maxDimension: previewMaxDimension) ?? data)
     }
 
     nonisolated static func remoteFingerprint(_ assets: [ASCScreenshotRemoteAsset]) -> String {
         assets.map { "\($0.id):\($0.checksum):\($0.index)" }.joined(separator: "|")
     }
 
-    nonisolated private static func downscaledPNG(_ data: Data, maxDimension: Int) -> Data? {
+    @concurrent nonisolated private static func downscaledPNG(_ data: Data, maxDimension: Int) async -> Data? {
         guard maxDimension > 0,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
