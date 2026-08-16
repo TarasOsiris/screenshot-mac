@@ -1,5 +1,6 @@
 import Foundation
 import CryptoKit
+import OSLog
 
 enum AppStoreConnectAuthError: Error, LocalizedError {
     case missingIssuerId
@@ -86,6 +87,9 @@ final class AppStoreConnectAuthService {
             cachedKey = (pem, key)
             return key
         } catch {
+            // The thrown case is deliberately generic for the user; keep the real reason in the
+            // log so a support report can say *why* the .p8 was rejected.
+            AppLogger.upload.error("ASC private key parse failed: \(String(describing: error), privacy: .public)")
             throw AppStoreConnectAuthError.invalidPrivateKey
         }
     }
@@ -111,6 +115,7 @@ final class AppStoreConnectAuthService {
         do {
             signature = try privateKey.signature(for: Data(signingInput.utf8))
         } catch {
+            AppLogger.upload.error("ASC JWT signing failed: \(String(describing: error), privacy: .public)")
             throw AppStoreConnectAuthError.signingFailed
         }
 

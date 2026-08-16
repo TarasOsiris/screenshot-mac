@@ -223,7 +223,10 @@ extension ContentView {
             let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
             let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
             let image = render(row, rowImages, localeCode, state.localeState)
-            guard let data = ExportService.encodeImage(image, format: .png) else {
+            // Showcase rows are the largest images the app produces, and the PNG deflate is where
+            // SCREENSHOT-BRO-2 hung — it must not run on the main actor. Same bytes as
+            // `encodeImage(_:format: .png)`, which also flattens onto opaque white.
+            guard let data = await ExportImageEncoder.opaquePNGDataOffMain(from: image) else {
                 throw ExportRenderError.encodingFailed(rowIndex: index)
             }
             let paddedIndex = String(format: "%02d", index + 1)

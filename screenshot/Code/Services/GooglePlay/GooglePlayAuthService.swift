@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import Security
 
 nonisolated enum GooglePlayAuthError: Error, LocalizedError {
@@ -139,6 +140,9 @@ final class GooglePlayAuthService {
         ]
         var error: Unmanaged<CFError>?
         guard let key = SecKeyCreateWithData(pkcs1 as CFData, attributes as CFDictionary, &error) else {
+            // The thrown case is deliberately generic for the user; keep the real reason in the
+            // log so a support report can say *why* the service-account key was rejected.
+            AppLogger.upload.error("Play private key load failed: \(String(describing: error?.takeRetainedValue()), privacy: .public)")
             throw GooglePlayAuthError.invalidPrivateKey
         }
         return key
@@ -152,6 +156,7 @@ final class GooglePlayAuthService {
             data as CFData,
             &error
         ) else {
+            AppLogger.upload.error("Play JWT signing failed: \(String(describing: error?.takeRetainedValue()), privacy: .public)")
             throw GooglePlayAuthError.signingFailed
         }
         return signature as Data

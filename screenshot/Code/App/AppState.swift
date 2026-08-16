@@ -245,6 +245,10 @@ final class AppState {
             if defaultZoom > 0 { zoomLevel = defaultZoom }
         }
 
+        // Tag before the first load, not after: a decode failure during `load()` is the one
+        // report where "was this an iCloud read?" decides whether it's a sync bug or disk rot.
+        CrashReportingService.setTag(PersistenceService.isUsingICloud ? "icloud" : "local", for: "storage")
+
         // If iCloud is enabled (and we're not in test mode), defer loading until
         // the container is resolved — setupICloudIfNeeded will call load() after.
         let iCloudPending = !PersistenceService.hasDataDirOverride && ICloudSyncService.shared.isEnabled
@@ -302,6 +306,7 @@ final class AppState {
     /// Flushes any in-flight continuous edits and pending debounced save so closing
     /// the main window (which terminates the app) doesn't drop unsaved changes.
     func flushPendingSavesSynchronously() {
+        CrashReportingService.breadcrumb(.persistence, "Flushing pending saves", data: ["rows": rows.count])
         commitAllPendingEdits()
         flushPendingSaveTask()
         flushPendingZoomPersist()
@@ -377,6 +382,7 @@ final class AppState {
         let baseLocaleState = localeState
         body()
         guard rows != baseRows || localeState != baseLocaleState else { return }
+        CrashReportingService.breadcrumb(.edit, actionName, data: ["rows": rows.count])
         registerSnapshot(actionName, baseRows: baseRows, baseLocaleState: baseLocaleState)
         scheduleSave()
     }
@@ -396,6 +402,7 @@ final class AppState {
         guard let idx = rowIndex(for: rowId) else { return }
         let baseRow = rows[idx]
         let baseLocaleState = localeState
+        let baseRowCount = rows.count
         #if DEBUG
         let allRowsBase = rows
         #endif
@@ -407,8 +414,17 @@ final class AppState {
             "withRowUndo(\"\(actionName)\") body mutated rows other than the target row — use withUndo"
         )
         #endif
+        // The deep DEBUG assert needs a whole-document copy, which is exactly what this path
+        // avoids; the row count is O(1) and still catches the corrupting misuse in release.
+        if rows.count != baseRowCount {
+            CrashReportingService.report(
+                .undoScopeViolation,
+                extra: ["action": actionName, "base_rows": baseRowCount, "rows": rows.count]
+            )
+        }
         guard let newIdx = rowIndex(for: rowId) else { return }
         guard rows[newIdx] != baseRow || localeState != baseLocaleState else { return }
+        CrashReportingService.breadcrumb(.edit, actionName, data: ["shapes": rows[newIdx].shapes.count])
         registerRowSnapshot(actionName, rowId: rowId, baseRow: baseRow, baseLocaleState: baseLocaleState)
         scheduleSave()
     }
@@ -451,12 +467,14 @@ final class AppState {
     /// path, which captures its base before the keystroke burst. Discrete mutations go through
     /// `withUndo` instead.
     func registerUndoWithBase(_ actionName: String, base: [ScreenshotRow], baseLocaleState: LocaleState? = nil) {
+        CrashReportingService.breadcrumb(.edit, actionName, data: ["rows": rows.count])
         registerSnapshot(actionName, baseRows: base, baseLocaleState: baseLocaleState ?? localeState)
     }
 
     /// Row-scoped undo with a pre-captured base row. Looks up the row by ID on undo/redo,
     /// so it's safe even if row indices shift (though callers should only use this when row count is stable).
     func registerUndoForRowWithBase(_ actionName: String, baseRow: ScreenshotRow, baseLocaleState: LocaleState? = nil) {
+        CrashReportingService.breadcrumb(.edit, actionName, data: ["shapes": baseRow.shapes.count])
         registerRowSnapshot(actionName, rowId: baseRow.id, baseRow: baseRow, baseLocaleState: baseLocaleState ?? localeState)
     }
 
@@ -497,12 +515,14 @@ final class AppState {
 
     func undoDocumentAction() {
         commitAllPendingEdits()
+        CrashReportingService.breadcrumb(.edit, "Undo", data: ["action": undoManager?.undoActionName ?? ""])
         undoManager?.undo()
     }
 
     func redoDocumentAction() {
         commitAllPendingEdits()
         guard undoManager?.canRedo == true else { return }
+        CrashReportingService.breadcrumb(.edit, "Redo", data: ["action": undoManager?.redoActionName ?? ""])
         undoManager?.redo()
     }
 

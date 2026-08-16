@@ -167,12 +167,16 @@ final class StoreService {
         #endif
 
         guard let apiKey = Self.resolvedAPIKey() else {
+            // A shipped build with no key can never sell anything — that's a packaging bug, not
+            // a user or network problem.
+            CrashReportingService.report(.storeConfigurationInvalid, extra: ["reason": "missingAPIKey"])
             configurationIssue = String(localized: "RevenueCat API key is missing. Set REVENUECAT_API_KEY in the app environment or Info.plist.")
             return
         }
 
         #if !DEBUG
         guard !apiKey.hasPrefix("test_") else {
+            CrashReportingService.report(.storeConfigurationInvalid, extra: ["reason": "testKeyInRelease"])
             configurationIssue = String(localized: "RevenueCat is configured with a Test Store API key. Replace it with your Apple public SDK key before shipping.")
             return
         }
@@ -265,6 +269,7 @@ final class StoreService {
 
         if isProUnlocked != entitled {
             isProUnlocked = entitled
+            CrashReportingService.setTag(entitled ? "true" : "false", for: "pro")
         }
         if proTier != newTier {
             proTier = newTier

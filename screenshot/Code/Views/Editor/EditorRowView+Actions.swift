@@ -138,6 +138,9 @@ extension EditorRowView {
                             }
                             try data.write(to: fileURL)
                         }
+                        // `addTask` doesn't suspend — without this the row's renders run as one
+                        // uninterrupted main-actor job (SCREENSHOT-BRO-3's app-hang shape).
+                        await Task.yield()
                     }
                     try await group.waitForAll()
                 }

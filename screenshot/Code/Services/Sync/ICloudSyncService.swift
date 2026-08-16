@@ -74,10 +74,12 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
             throw ICloudSyncError.containerUnavailable
         }
 
+        CrashReportingService.breadcrumb(.sync, "Enabling iCloud sync")
         let localRoot = PersistenceService.localRootURL
         try mergeProjects(from: localRoot, into: dataURL, progressHandler: progressHandler)
 
         FileManager.default.createFile(atPath: Self.enabledMarkerURL.path, contents: nil)
+        CrashReportingService.breadcrumb(.sync, "iCloud merge complete")
 
         await MainActor.run {
             PersistenceService.ensureDirectories()
@@ -91,10 +93,12 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
             throw ICloudSyncError.containerUnavailable
         }
 
+        CrashReportingService.breadcrumb(.sync, "Disabling iCloud sync")
         let localRoot = PersistenceService.localRootURL
         try mergeProjects(from: dataURL, into: localRoot, progressHandler: progressHandler)
 
         try? FileManager.default.removeItem(at: Self.enabledMarkerURL)
+        CrashReportingService.breadcrumb(.sync, "Local merge complete")
 
         await MainActor.run {
             PersistenceService.ensureDirectories()
@@ -113,10 +117,25 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
 
         var coordinatedData: Data?
         var coordinatorError: NSError?
+        var readError: Error?
         let coordinator = NSFileCoordinator()
 
         coordinator.coordinate(readingItemAt: url, options: [], error: &coordinatorError) { readURL in
-            coordinatedData = try? Data(contentsOf: readURL)
+            do {
+                coordinatedData = try Data(contentsOf: readURL)
+            } catch {
+                readError = error
+            }
+        }
+
+        // Unlike the write/delete siblings this can't throw, so callers read a failure as
+        // "no such project" — report it here or it's invisible all the way to a blank document.
+        if coordinatedData == nil, let error = coordinatorError ?? readError,
+           FileManager.default.fileExists(atPath: url.path) {
+            CrashReportingService.report(.iCloudCoordinatedReadFailed, error: error, extra: [
+                "file": url.lastPathComponent,
+                "coordination": coordinatorError != nil,
+            ])
         }
 
         return coordinatedData

@@ -41,6 +41,7 @@ extension AppState {
         rows = configuredRows.isEmpty ? [makeDefaultRow()] : configuredRows
         localeState = .default
         selectRow(rows.first?.id)
+        CrashReportingService.breadcrumb(.project, "Created blank project", data: ["rows": rows.count])
         saveAll()
     }
 
@@ -55,10 +56,13 @@ extension AppState {
         // Verify the template data can be loaded before committing
         guard PersistenceService.loadProject(project.id) != nil else {
             PersistenceService.deleteProject(project.id)
+            // A bundled template that won't load is entirely our bug — the id is ours, not user content.
+            CrashReportingService.report(.bundledTemplateLoadFailed, extra: ["template": template.id])
             saveError = String(localized: "Failed to create project from template \"\(template.name)\". The template data could not be loaded.")
             return
         }
 
+        CrashReportingService.breadcrumb(.project, "Created project from template", data: ["template": template.id])
         projects.append(project)
         switchToProject(project.id)
         saveIndex()
@@ -93,6 +97,7 @@ extension AppState {
     }
 
     func switchToProject(_ id: UUID) {
+        CrashReportingService.breadcrumb(.project, "Switching project", data: ["projects": projects.count])
         undoManager?.removeAllActions()
         projectOpenTask?.cancel()
         beginProjectOpening()
@@ -133,6 +138,7 @@ extension AppState {
         guard !trimmed.isEmpty else { return }
         if let idx = projects.firstIndex(where: { $0.id == id }) {
             projects[idx].name = uniqueProjectName(trimmed, excludingId: id)
+            CrashReportingService.breadcrumb(.project, "Renamed project")
             scheduleSave()
         }
     }
@@ -172,6 +178,7 @@ extension AppState {
         let trimmed = name.map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength)) } ?? ""
         let chosenName = trimmed.isEmpty ? source.name + " Copy" : trimmed
         let newProject = Project(name: uniqueProjectName(chosenName))
+        CrashReportingService.breadcrumb(.project, "Duplicating project", data: ["rows": rows.count])
         PersistenceService.copyProject(from: id, to: newProject.id)
         projects.append(newProject)
 
@@ -181,6 +188,7 @@ extension AppState {
 
     func resetProject(_ id: UUID) {
         guard id == activeProjectId else { return }
+        CrashReportingService.breadcrumb(.project, "Reset project")
         undoManager?.removeAllActions()
         teardownActiveProject()
         rows = [makeDefaultRow()]
@@ -191,6 +199,7 @@ extension AppState {
 
     func resetProjectFromTemplate(_ id: UUID, template: ProjectTemplate) {
         guard id == activeProjectId else { return }
+        CrashReportingService.breadcrumb(.project, "Reset project from template", data: ["template": template.id])
         undoManager?.removeAllActions()
         beginProjectOpening()
         teardownActiveProject()
@@ -204,6 +213,7 @@ extension AppState {
     func deleteProject(_ id: UUID) {
         guard let idx = projects.firstIndex(where: { $0.id == id }) else { return }
         projects[idx].markDeleted()
+        CrashReportingService.breadcrumb(.project, "Deleted project", data: ["was_active": activeProjectId == id])
 
         if activeProjectId == id {
             teardownActiveProject()

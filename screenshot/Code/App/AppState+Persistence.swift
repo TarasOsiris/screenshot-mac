@@ -19,6 +19,8 @@ extension AppState {
             let url = notification.object as? URL
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                CrashReportingService.setTag("icloud", for: "storage")
+                CrashReportingService.breadcrumb(.sync, "iCloud sync enabled")
                 self.saveTask?.cancel()
                 if let url {
                     self.startICloudMonitoring(at: url)
@@ -33,6 +35,8 @@ extension AppState {
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                CrashReportingService.setTag("local", for: "storage")
+                CrashReportingService.breadcrumb(.sync, "iCloud sync disabled")
                 self.saveTask?.cancel()
                 self.stopICloudMonitoring()
                 self.reloadFromDisk()
@@ -46,12 +50,17 @@ extension AppState {
             _ = await sync.resolveContainer()
             guard let dataURL = sync.iCloudDataURL else {
                 // Container resolution failed — fall back to local
+                CrashReportingService.breadcrumb(.sync, "iCloud container unavailable, using local", level: .warning)
                 PersistenceService.ensureDirectories()
                 load()
                 return
             }
 
-            try? FileManager.default.createDirectory(at: dataURL, withIntermediateDirectories: true)
+            do {
+                try FileManager.default.createDirectory(at: dataURL, withIntermediateDirectories: true)
+            } catch {
+                CrashReportingService.report(.directoryCreateFailed, error: error, extra: ["directory": "icloudData"])
+            }
             startICloudMonitoring(at: dataURL)
 
             PersistenceService.ensureDirectories()
@@ -65,6 +74,7 @@ extension AppState {
         let monitor = ICloudMonitor()
         monitor.onRemoteChange = { [weak self] in
             guard let self else { return }
+            CrashReportingService.breadcrumb(.sync, "Remote change, reloading", data: ["projects": self.projects.count])
             // Flush any pending save so locally-created projects are persisted
             // before we reload (otherwise the remote index would drop them).
             self.flushPendingSaveTask()
@@ -84,6 +94,11 @@ extension AppState {
     }
 
     func reloadFromDisk() {
+        CrashReportingService.breadcrumb(
+            .persistence,
+            "Reloading from disk",
+            data: ["storage": PersistenceService.isUsingICloud ? "icloud" : "local", "projects": projects.count]
+        )
         // The local path reads with plain `Data(contentsOf:)` — fast, no file coordination —
         // so it stays synchronous. The iCloud path can block on undownloaded files and runs
         // off-main to avoid freezing the UI (the freeze when enabling sync with many projects).
@@ -222,6 +237,50 @@ extension AppState {
         scheduleSave()
     }
 
+    /// Shape of the open document, attached to every crash/hang report so a render or export
+    /// failure says how much it was chewing on. Counts and enum names only — never project,
+    /// row, locale, or text content. Runs on the debounced save tick, not the edit hot path.
+    private func updateCrashDocumentContext() {
+        var templates = 0
+        var shapes = 0
+        var deviceCategories: Set<String> = []
+        var maxRowPixels: CGFloat = 0
+
+        for row in rows {
+            templates += row.templates.count
+            shapes += row.shapes.count
+            maxRowPixels = max(maxRowPixels, row.templateWidth * row.templateHeight * CGFloat(row.templates.count))
+            for shape in row.shapes {
+                if let category = shape.deviceCategory { deviceCategories.insert(category.rawValue) }
+            }
+        }
+
+        CrashReportingService.setDocumentContext([
+            "rows": rows.count,
+            "templates": templates,
+            "shapes": shapes,
+            "locales": localeState.locales.count,
+            "image_resources": screenshotImages.count,
+            "device_categories": deviceCategories.sorted(),
+            "max_row_pixels": Int(maxRowPixels),
+            "zoom": zoomLevel,
+        ])
+    }
+
+    // MARK: - Save failures
+
+    /// Shows the alert *and* reports the failure. Sentry gets the `Error`, never the localized
+    /// message — that would fragment one issue across 30 languages.
+    func reportProjectSaveFailure(_ error: Error) {
+        CrashReportingService.report(.projectSaveFailed, error: error)
+        saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
+    }
+
+    func reportIndexSaveFailure(_ error: Error) {
+        CrashReportingService.report(.projectIndexSaveFailed, error: error)
+        saveError = String(localized: "Failed to save project index: \(error.localizedDescription)")
+    }
+
     // MARK: - Save
 
     /// Serial queue for all off-main project writes (debounced autosave and
@@ -287,6 +346,7 @@ extension AppState {
     /// every edit tick. `flushPendingSaveTask` drains the queue before its
     /// synchronous fallback, so quit can't lose an in-flight write.
     func saveAllAsync() {
+        updateCrashDocumentContext()
         let index = makeIndexSnapshotForSave()
 
         let projectSnapshot = activeProjectSnapshotForSave()
@@ -318,10 +378,10 @@ extension AppState {
                 // On the main actor to match saveAll's thread for the unlocked snapshot.
                 monitor?.snapshotAfterWrite()
                 if let indexError {
-                    self.saveError = String(localized: "Failed to save project index: \(indexError.localizedDescription)")
+                    self.reportIndexSaveFailure(indexError)
                 }
                 if let projectError {
-                    self.saveError = String(localized: "Failed to save project: \(projectError.localizedDescription)")
+                    self.reportProjectSaveFailure(projectError)
                 }
                 if let snapshot = projectSnapshot, projectError == nil,
                    self.activeProjectId == snapshot.id {
@@ -341,7 +401,7 @@ extension AppState {
             try PersistenceService.saveIndex(index)
             return true
         } catch {
-            saveError = String(localized: "Failed to save project index: \(error.localizedDescription)")
+            reportIndexSaveFailure(error)
             return false
         }
     }
@@ -359,7 +419,7 @@ extension AppState {
             lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(snapshot.id)
             return true
         } catch {
-            saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
+            reportProjectSaveFailure(error)
             return false
         }
     }
@@ -388,7 +448,7 @@ extension AppState {
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self?.saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
+                    self?.reportProjectSaveFailure(error)
                 }
             }
         }
@@ -408,7 +468,7 @@ extension AppState {
                 DispatchQueue.main.async { monitor?.snapshotAfterWrite() }
             } catch {
                 DispatchQueue.main.async {
-                    self?.saveError = String(localized: "Failed to save project index: \(error.localizedDescription)")
+                    self?.reportIndexSaveFailure(error)
                 }
             }
         }
@@ -418,6 +478,11 @@ extension AppState {
         if let data = preloaded ?? PersistenceService.loadProject(id) {
             applyProjectData(data, for: id, deferCleanup: true)
         } else {
+            // The project file exists but wouldn't load: the user sees an empty project and the
+            // next autosave overwrites their real data. Report it before that happens.
+            if PersistenceService.projectDataExists(id) {
+                CrashReportingService.report(.projectLoadFellBackToEmpty, extra: ["project": id.uuidString])
+            }
             rows = [makeDefaultRow()]
             localeState = .default
             activeProjectDataModifiedAt = nil

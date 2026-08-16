@@ -101,6 +101,10 @@ nonisolated struct PersistenceService {
         projectDir(id).appendingPathComponent("resources", isDirectory: true)
     }
 
+    static func projectDataExists(_ id: UUID) -> Bool {
+        FileManager.default.fileExists(atPath: projectDataURL(id).path)
+    }
+
     /// Per-project String Catalog holding the screenshot-content translations. Lives inside the
     /// project directory so directory-level copies (duplication, iCloud) carry it along.
     static func translationCatalogURL(_ id: UUID) -> URL {
@@ -143,15 +147,22 @@ nonisolated struct PersistenceService {
     // MARK: - Setup
 
     static func ensureDirectories() {
-        let fm = FileManager.default
-        try? fm.createDirectory(at: rootURL, withIntermediateDirectories: true)
-        try? fm.createDirectory(at: projectsDir, withIntermediateDirectories: true)
+        createDirectory(at: rootURL, label: "root")
+        createDirectory(at: projectsDir, label: "projects")
     }
 
     static func ensureProjectDirs(_ id: UUID) {
-        let fm = FileManager.default
-        try? fm.createDirectory(at: projectDir(id), withIntermediateDirectories: true)
-        try? fm.createDirectory(at: resourcesDir(id), withIntermediateDirectories: true)
+        createDirectory(at: projectDir(id), label: "project")
+        createDirectory(at: resourcesDir(id), label: "resources")
+    }
+
+    /// A failure here makes every later write fail for a reason nobody would otherwise record.
+    private static func createDirectory(at url: URL, label: String) {
+        do {
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        } catch {
+            CrashReportingService.report(.directoryCreateFailed, error: error, extra: ["directory": label])
+        }
     }
 
     // MARK: - Generic load/save
@@ -159,14 +170,32 @@ nonisolated struct PersistenceService {
     static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {
         let data = readData(from: url)
         guard let data else { return nil }
-        return try? decoder.decode(type, from: data)
+        do {
+            return try decoder.decode(type, from: data)
+        } catch {
+            // Callers can't tell this apart from "file missing" and fall back to an empty
+            // document, which the next autosave then writes over the real one.
+            CrashReportingService.report(.projectDecodeFailed, error: error, extra: [
+                "file": url.lastPathComponent,
+                "type": String(describing: type),
+                "bytes": data.count,
+            ])
+            return nil
+        }
     }
 
     static func readData(from url: URL) -> Data? {
         if isUsingICloud {
-            ICloudSyncService.shared.coordinatedRead(from: url)
-        } else {
-            try? Data(contentsOf: url)
+            return ICloudSyncService.shared.coordinatedRead(from: url)
+        }
+        do {
+            return try Data(contentsOf: url)
+        } catch {
+            // A missing file is the normal "not created yet" case; anything else is a real fault.
+            if FileManager.default.fileExists(atPath: url.path) {
+                CrashReportingService.report(.projectReadFailed, error: error, extra: ["file": url.lastPathComponent])
+            }
+            return nil
         }
     }
 
@@ -280,7 +309,12 @@ nonisolated struct PersistenceService {
     private static func copyDirectory(from src: URL, to dst: URL) {
         let fm = FileManager.default
         try? fm.removeItem(at: dst)
-        try? fm.copyItem(at: src, to: dst)
+        do {
+            try fm.copyItem(at: src, to: dst)
+        } catch {
+            // Silently yields an empty duplicated / template-instantiated project.
+            CrashReportingService.report(.projectDirectoryCopyFailed, error: error)
+        }
     }
 
     // MARK: - Explicit-root helpers (for iCloud migration)

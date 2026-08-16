@@ -191,6 +191,10 @@ final class AppStoreConnectScreenshotSyncService {
         var localizationsBySetId: [String: ASCUploadLocalization] = [:]
         var imageCache: [String: NSImage] = [:]
         let fontFamilies = appState.availableFontFamilySet
+        CrashReportingService.breadcrumb(.upload, "ASC plan build started", data: [
+            "targets": targets.count,
+            "localizations": targets.reduce(0) { $0 + $1.localizations.count },
+        ])
 
         do {
             for target in targets {
@@ -344,11 +348,21 @@ final class AppStoreConnectScreenshotSyncService {
         let total = selected.reduce(0) { $0 + max(1, $1.uploadCount + $1.removalCount + ($1.moveCount > 0 ? 1 : 0)) }
         var completed = 0
         progress(UploadProgress(totalSteps: total, completedSteps: 0, currentLabel: "Starting screenshot sync…"))
+        // Counts and ASC display types only — set labels are built from row labels, which are
+        // user content and must never leave the device.
+        CrashReportingService.breadcrumb(.upload, "ASC apply started", data: ["sets": selected.count, "steps": total])
 
         do {
             for diff in selected {
                 try Task.checkCancellation()
                 activeSet = diff
+                CrashReportingService.breadcrumb(.upload, "ASC applying set", data: [
+                    "display_type": diff.displayType.appStoreConnectValue,
+                    "uploads": diff.uploadCount,
+                    "removals": diff.removalCount,
+                    "moves": diff.moveCount,
+                    "new_set": diff.remoteSetId == nil,
+                ])
                 guard cached.targetsBySetId[diff.id] != nil,
                       cached.localizationsBySetId[diff.id] != nil else {
                     throw ASCScreenshotSyncError.invalidPlan(String(localized: "The reviewed screenshot set is incomplete."))
@@ -436,9 +450,17 @@ final class AppStoreConnectScreenshotSyncService {
                 activeSet = nil
             }
             progress(UploadProgress(totalSteps: total, completedSteps: total, currentLabel: "Done"))
+            CrashReportingService.breadcrumb(.upload, "ASC apply finished", data: ["sets": results.count])
             discardPlan(planId)
             return ASCScreenshotSyncResult(planId: planId, sets: results)
         } catch {
+            // `didMutate` is the difference between "nothing was touched" and "the user's real
+            // App Store Connect is now half-updated" — the single most useful bit here.
+            CrashReportingService.breadcrumb(.upload, "ASC apply failed", data: [
+                "did_mutate": didMutate,
+                "cancelled": error is CancellationError,
+                "completed_sets": results.count,
+            ], level: .warning)
             let completedIds = Set(results.map(\.id))
             let failureMessage: String
             if error is CancellationError {
@@ -751,7 +773,14 @@ final class AppStoreConnectScreenshotSyncService {
             // An unstructured Task doesn't inherit cancellation, so this cleanup still runs when
             // the failure *is* cancellation — otherwise the reservation is orphaned in the set.
             let reservedId = reserved.id
-            Task { try? await api.deleteScreenshot(id: reservedId) }
+            Task {
+                do {
+                    try await api.deleteScreenshot(id: reservedId)
+                } catch let cleanupError {
+                    // The reservation is now orphaned in the user's real App Store Connect set.
+                    CrashReportingService.report(.appStoreOrphanCleanupFailed, error: cleanupError)
+                }
+            }
             throw error
         }
     }

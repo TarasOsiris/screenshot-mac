@@ -76,6 +76,16 @@ extension AppState {
         }
     }
 
+    /// A failed copy leaves the duplicated shape pointing at a file that was never written, so
+    /// it renders as a hole rather than an error.
+    private func copyImageResource(from src: URL, to dst: URL, kind: String) {
+        do {
+            try FileManager.default.copyItem(at: src, to: dst)
+        } catch {
+            CrashReportingService.report(.imageResourceCopyFailed, error: error, extra: ["kind": kind])
+        }
+    }
+
     /// Copy image files for a duplicated shape so it has its own independent files.
     /// Updates the shape's image references in-place and copies locale override image files.
     func copyImageFiles(for newShape: inout CanvasShapeModel, originalId: UUID) {
@@ -89,7 +99,7 @@ extension AppState {
             let newFile = "\(newShape.id.uuidString).png"
             let dstURL = resourcesURL.appendingPathComponent(newFile)
             if fm.fileExists(atPath: srcURL.path) {
-                try? fm.copyItem(at: srcURL, to: dstURL)
+                copyImageResource(from: srcURL, to: dstURL, kind: "display")
                 newShape.displayImageFileName = newFile
                 screenshotImages[newFile] = screenshotImages[originalFile]
             }
@@ -100,7 +110,7 @@ extension AppState {
             let newFillFile = "fill-\(newShape.id.uuidString).png"
             let dstURL = resourcesURL.appendingPathComponent(newFillFile)
             if fm.fileExists(atPath: srcURL.path) {
-                try? fm.copyItem(at: srcURL, to: dstURL)
+                copyImageResource(from: srcURL, to: dstURL, kind: "fill")
                 newShape.fillImageConfig?.fileName = newFillFile
                 screenshotImages[newFillFile] = screenshotImages[originalFillFile]
             }
@@ -115,7 +125,7 @@ extension AppState {
             let newFile = "\(newShape.id.uuidString)-\(localeCode).png"
             let dstURL = resourcesURL.appendingPathComponent(newFile)
             if fm.fileExists(atPath: srcURL.path) {
-                try? fm.copyItem(at: srcURL, to: dstURL)
+                copyImageResource(from: srcURL, to: dstURL, kind: "localeOverride")
                 override.overrideImageFileName = newFile
                 localeState.overrides[localeCode]?[newKey] = override
                 screenshotImages[newFile] = screenshotImages[originalFile]

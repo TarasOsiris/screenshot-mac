@@ -57,6 +57,14 @@ struct ExportService {
         var completed = 0
         var writtenFileURLs: [URL] = []
 
+        let startedAt = Date()
+        CrashReportingService.breadcrumb(.export, "Export started", data: [
+            "rows": rows.count,
+            "locales": localesToExport.count,
+            "templates": rows.reduce(0) { $0 + $1.templates.count },
+            "format": format.rawValue,
+        ])
+
         do {
             var localeFolders: [String: URL] = [:]
             for locale in localesToExport {
@@ -112,6 +120,12 @@ struct ExportService {
                     rowDestFolders[localeCode] ?? rootFolder
                 }
 
+                CrashReportingService.breadcrumb(.export, "Exporting row \(rowIndex + 1)/\(rows.count)", data: [
+                    "templates": row.templates.count,
+                    "locale_groups": localeGroups.count,
+                    "pixels": Int(row.templateWidth * row.templateHeight),
+                ])
+
                 var rowBackground: NSImage?
                 for (groupIndex, group) in localeGroups.enumerated() {
                     let renderCode = group[0].code
@@ -159,6 +173,12 @@ struct ExportService {
                                 }
                                 return fileURLs.count
                             }
+
+                            // `addTask` doesn't suspend, so without this the whole group's
+                            // renders run as one uninterrupted main-actor job — the app-hang
+                            // shape of SCREENSHOT-BRO-3. The yielded continuation lands in the
+                            // next run-loop pass, giving AppKit a full turn between templates.
+                            await Task.yield()
                         }
 
                         // Report progress as each encode/write actually finishes,
@@ -171,10 +191,19 @@ struct ExportService {
                 }
             }
         } catch {
+            CrashReportingService.breadcrumb(.export, "Export failed", data: [
+                "written": completed,
+                "elapsed_ms": Int(Date().timeIntervalSince(startedAt) * 1000),
+                "cancelled": error is CancellationError,
+            ], level: .warning)
             try? FileManager.default.removeItem(at: rootFolder)
             throw error
         }
 
+        CrashReportingService.breadcrumb(.export, "Export finished", data: [
+            "files": writtenFileURLs.count,
+            "elapsed_ms": Int(Date().timeIntervalSince(startedAt) * 1000),
+        ])
         return (rootFolder, writtenFileURLs)
     }
 
@@ -802,8 +831,29 @@ struct ExportService {
         return flattenImage(blurred, over: rendered, width: width, height: height)
     }
 
+    /// A render this slow is already an app-hang report waiting to happen — leave a crumb naming
+    /// the view and its pixel size so the hang has something to point at.
+    private static let slowRenderThreshold: TimeInterval = 0.5
+
+    /// Render labels quote the row's label for local debugging (`showcase row 'Onboarding'`).
+    /// That's user content, so quoted spans are elided before a label reaches a crash report.
+    static func reportableRenderLabel(_ label: String) -> String {
+        label.replacing(/'[^']*'/, with: "'…'")
+    }
+
     @MainActor
     static func renderViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, label: String) -> NSImage {
+        let startedAt = Date()
+        defer {
+            let elapsed = Date().timeIntervalSince(startedAt)
+            if elapsed >= slowRenderThreshold {
+                CrashReportingService.breadcrumb(.export, "Slow render", data: [
+                    "label": reportableRenderLabel(label),
+                    "pixels": Int(width * height),
+                    "elapsed_ms": Int(elapsed * 1000),
+                ], level: .warning)
+            }
+        }
         #if os(macOS)
         // Use NSHostingView + layer rendering into an explicit 1x CGContext.
         // bitmapImageRepForCachingDisplay implicitly scales by the screen's
@@ -825,7 +875,12 @@ struct ExportService {
         hostingView.displayIfNeeded()
 
         guard let bitmapRep = bitmapRep(width: width, height: height) else {
-            AppLogger.export.warning("Failed to create bitmap rep for \(label, privacy: .public)")
+            CrashReportingService.report(.renderProducedBlankImage, extra: [
+                "label": reportableRenderLabel(label),
+                "stage": "bitmapRep",
+                "width": Int(width),
+                "height": Int(height),
+            ])
             return NSImage(size: NSSize(width: width, height: height))
         }
 
@@ -855,7 +910,13 @@ struct ExportService {
         if let image = renderer.uiImage {
             return image
         }
-        AppLogger.export.warning("ImageRenderer produced no image for \(label, privacy: .public)")
+        CrashReportingService.report(.renderProducedBlankImage, extra: [
+            "label": reportableRenderLabel(label),
+            "stage": "imageRenderer",
+            "width": Int(width),
+            "height": Int(height),
+            "scale": safeScale,
+        ])
         return NSImage(size: NSSize(width: width, height: height))
         #endif
     }

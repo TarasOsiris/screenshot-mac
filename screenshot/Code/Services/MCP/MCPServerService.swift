@@ -195,6 +195,8 @@ final class MCPServerService {
 
         self.listener = listener
         status = .running(port: port)
+        // Agent-driven edits look identical to the user's in the breadcrumb trail otherwise.
+        CrashReportingService.setTag("true", for: "mcp")
         AppLogger.mcp.log("MCP server running on 127.0.0.1:\(self.port)")
     }
 
@@ -210,6 +212,7 @@ final class MCPServerService {
         server = nil
         if !keepStatus {
             status = .stopped
+            CrashReportingService.setTag(nil, for: "mcp")
         }
         if hadServer {
             AppLogger.mcp.log("Stopped (port released)")

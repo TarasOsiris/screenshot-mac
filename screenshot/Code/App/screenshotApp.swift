@@ -6,7 +6,7 @@ struct ScreenshotBroApp: App {
     #if os(macOS)
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     #endif
-    @State private var appState = AppState()
+    @State private var appState = ScreenshotBroApp.makeAppState()
     @State private var storeService = StoreService()
     #if os(iOS)
     @State private var appNavigationRouter = AppNavigationRouter()
@@ -44,8 +44,16 @@ struct ScreenshotBroApp: App {
         }
     }
 
-    init() {
+    /// Stored-property initializers run before `init()`, and `AppState.init` performs the first
+    /// project load — so Sentry has to start here, or a decode failure on that load (the silent
+    /// data-loss path we most want reported) happens while the SDK is still inert.
+    private static func makeAppState() -> AppState {
         CrashReportingService.start()
+        CrashReportingService.breadcrumb(.app, "App launched")
+        return AppState()
+    }
+
+    init() {
         OnboardingPersistence.prepareForLaunch()
     }
 
@@ -585,6 +593,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         guard !flag else { return false }
+        CrashReportingService.breadcrumb(.app, "Reopened from Dock")
         AppWindowManager.shared.showMainWindow()
         return true
     }

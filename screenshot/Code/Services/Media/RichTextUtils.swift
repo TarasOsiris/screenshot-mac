@@ -22,21 +22,32 @@ enum RichTextUtils {
     /// during the background catalog build/merge in `PersistenceService`.
     nonisolated static func encode(_ attributedString: NSAttributedString) -> String? {
         let range = NSRange(location: 0, length: attributedString.length)
-        guard let rtfData = try? attributedString.data(
-            from: range,
-            documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
-        ) else { return nil }
-        return rtfData.base64EncodedString()
+        do {
+            let rtfData = try attributedString.data(
+                from: range,
+                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+            )
+            return rtfData.base64EncodedString()
+        } catch {
+            // Silently drops the shape's per-run formatting on save.
+            CrashReportingService.report(.richTextEncodeFailed, error: error, extra: ["length": attributedString.length])
+            return nil
+        }
     }
 
     /// Decode a Base64-encoded RTF string back to an NSAttributedString.
     nonisolated static func decode(_ base64RTF: String) -> NSAttributedString? {
         guard let data = Data(base64Encoded: base64RTF) else { return nil }
-        return try? NSAttributedString(
-            data: data,
-            options: [.documentType: NSAttributedString.DocumentType.rtf],
-            documentAttributes: nil
-        )
+        do {
+            return try NSAttributedString(
+                data: data,
+                options: [.documentType: NSAttributedString.DocumentType.rtf],
+                documentAttributes: nil
+            )
+        } catch {
+            CrashReportingService.report(.richTextDecodeFailed, error: error, extra: ["bytes": data.count])
+            return nil
+        }
     }
 
     /// Build a display-ready NSAttributedString from a shape's text properties.

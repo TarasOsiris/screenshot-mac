@@ -111,7 +111,13 @@ extension AppState {
         let fm = FileManager.default
 
         if !fm.fileExists(atPath: destURL.path) {
-            guard (try? fm.copyItem(at: url, to: destURL)) != nil else { return nil }
+            do {
+                try fm.copyItem(at: url, to: destURL)
+            } catch {
+                // The import silently no-ops and the project renders in a fallback face.
+                CrashReportingService.report(.customFontCopyFailed, error: error, extra: ["extension": url.pathExtension])
+                return nil
+            }
         }
         if customFonts[fileName] == nil {
             if let preParsed {

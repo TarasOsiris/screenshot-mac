@@ -15,6 +15,8 @@ final class MCPToolExecutor {
     }
 
     func call(name: String, arguments: [String: Value]?) async -> CallTool.Result {
+        // Argument *keys* only — the values carry project text the user wrote.
+        CrashReportingService.breadcrumb(.mcp, "Tool \(name)", data: ["args": (arguments?.keys.sorted() ?? [])])
         do {
             guard let tool = MCPToolName(rawValue: name) else {
                 throw MCPToolError.unknownTool(name)
@@ -23,6 +25,7 @@ final class MCPToolExecutor {
             return try await dispatch(tool, args)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+            CrashReportingService.report(.mcpToolFailed, error: error, extra: ["tool": name], level: .warning)
             return CallTool.Result(content: [.text("Error: \(message)")], isError: true)
         }
     }

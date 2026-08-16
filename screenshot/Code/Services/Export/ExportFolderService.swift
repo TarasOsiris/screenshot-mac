@@ -32,23 +32,35 @@ enum ExportFolderService {
     }
 
     static func saveBookmark(for url: URL) -> (bookmark: Data, path: String)? {
-        guard let data = try? url.bookmarkData(
-            options: bookmarkCreateOptions,
-            includingResourceValuesForKeys: nil,
-            relativeTo: nil
-        ) else { return nil }
-        return (data, url.path)
+        do {
+            let data = try url.bookmarkData(
+                options: bookmarkCreateOptions,
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+            )
+            return (data, url.path)
+        } catch {
+            // The user's export folder is silently forgotten and re-prompted for.
+            CrashReportingService.report(.exportFolderBookmarkFailed, error: error, extra: ["stage": "create"])
+            return nil
+        }
     }
 
     static func resolveBookmark(_ data: Data) -> (url: URL, refreshedBookmark: Data?)? {
         guard !data.isEmpty else { return nil }
         var isStale = false
-        guard let url = try? URL(
-            resolvingBookmarkData: data,
-            options: bookmarkResolveOptions,
-            relativeTo: nil,
-            bookmarkDataIsStale: &isStale
-        ) else { return nil }
+        let url: URL
+        do {
+            url = try URL(
+                resolvingBookmarkData: data,
+                options: bookmarkResolveOptions,
+                relativeTo: nil,
+                bookmarkDataIsStale: &isStale
+            )
+        } catch {
+            CrashReportingService.report(.exportFolderBookmarkFailed, error: error, extra: ["stage": "resolve"])
+            return nil
+        }
         let refreshed: Data? = isStale ? (try? url.bookmarkData(
             options: bookmarkCreateOptions,
             includingResourceValuesForKeys: nil,

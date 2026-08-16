@@ -273,7 +273,12 @@ final class GooglePlayUploadService {
             return didSendForReview
         } catch {
             // Abandon the half-finished edit so it doesn't linger in the Play Console.
-            try? await api.deleteEdit(packageName: packageName, editId: edit.id)
+            do {
+                try await api.deleteEdit(packageName: packageName, editId: edit.id)
+            } catch let abandonError {
+                // The abandon failed, so a dangling edit is now stuck in the user's real console.
+                CrashReportingService.report(.googlePlayEditAbandonFailed, error: abandonError)
+            }
             throw error
         }
     }
@@ -326,11 +331,15 @@ final class GooglePlayUploadService {
         language: GPUploadLanguage?,
         work: () async throws -> T
     ) async throws -> T {
+        // `operation` is a fixed English description; the target's row label is user content
+        // and must never leave the device.
+        CrashReportingService.breadcrumb(.upload, "Play: \(operation)")
         do {
             return try await work()
         } catch let error as CancellationError {
             throw error
         } catch {
+            CrashReportingService.breadcrumb(.upload, "Play failed: \(operation)", level: .warning)
             let lang = language ?? GPUploadLanguage(projectCode: "", playCode: "", label: "—")
             throw GooglePlayUploadError.requestFailed(GPUploadFailureContext(
                 operation: operation,

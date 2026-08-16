@@ -28,10 +28,12 @@ final class AppWindowManager {
     }
 
     func raiseHelpWindow() {
+        CrashReportingService.breadcrumb(.app, "Opened Help window")
         raiseWindow(helpWindow)
     }
 
     func raiseSettingsWindow() {
+        CrashReportingService.breadcrumb(.app, "Opened Settings window")
         raiseWindow(settingsWindow)
     }
 
