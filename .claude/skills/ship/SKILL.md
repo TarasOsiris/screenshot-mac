@@ -35,6 +35,36 @@ If no version argument, keep `MARKETING_VERSION` unchanged and only bump the bui
 `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` are shared by both platforms in
 `project.pbxproj`, so one bump covers whichever platforms are selected.
 
+### Step 2b: Verify the marketing version against App Store Connect FIRST
+
+**Do this before archiving.** `MARKETING_VERSION` is baked into the archive, so discovering
+a closed train at upload time (Step 7) costs a full re-archive of every selected platform.
+Ask App Store Connect up front instead — it's one command per platform:
+
+```bash
+asc versions list --app 6760177675 --platform MAC_OS --limit 5
+asc versions list --app 6760177675 --platform IOS --limit 5
+```
+
+(`6760177675` is Screenshot Bro's App Store Connect app id. `asc` authenticates on its own —
+see `asc doctor` if it errors.) Read `attributes.versionString` and `attributes.appStoreState`
+of the newest entry for **each selected platform** — the two platforms have independent
+version trains, but share one `MARKETING_VERSION` in `project.pbxproj`, so the chosen version
+must be free on *all* of them:
+
+- Newest version **equals** the intended `MARKETING_VERSION` and is in an editable state
+  (`PREPARE_FOR_SUBMISSION`, `DEVELOPER_REJECTED`, `REJECTED`, `METADATA_REJECTED`) →
+  the train is open. Keep the version; only the build number bumps.
+- Newest version **equals** the intended `MARKETING_VERSION` and is `READY_FOR_SALE` (or any
+  other released state) → **the train is closed**. Bump `MARKETING_VERSION` to the next free
+  value above it (e.g. `4.0` released → ship `4.1`) without prompting.
+- Newest version is **lower** than the intended `MARKETING_VERSION` → nothing to do.
+
+This is the same rejection Step 7 would otherwise return as error `90186`
+("train version … is closed for new build submissions") / `90062`
+(`CFBundleShortVersionString` must be higher). Step 7 keeps its recovery path as a fallback,
+but with this check it should rarely fire.
+
 ## Step 3: Update versions in project.pbxproj
 
 Use the Edit tool to update ALL occurrences of both `MARKETING_VERSION` and
@@ -110,6 +140,11 @@ build submissions" / `CFBundleShortVersionString` must be higher), auto-bump
 `MARKETING_VERSION` to the next free version without prompting, re-archive the affected
 platform(s) (the version is embedded in the archive), and re-upload. iOS and macOS track
 build numbers per-platform, so the same build number can be used across platforms.
+
+Step 2b should have caught this already — if it fires here, the pre-check missed a case, so
+say so in the Step 9 report. Re-archiving both platforms is the expensive path this exists to
+avoid. Note the re-archived binaries have new dSYM UUIDs, so **re-run Step 6** for every
+platform you re-archived before re-uploading.
 
 ## Step 8: Commit, tag, and push
 
