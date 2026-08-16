@@ -40,7 +40,7 @@ struct UploadToAppStoreConnectView: View {
     /// The version whose metadata the editing screen is currently showing (the active tab).
     @State var metadataVersionId: String?
 
-    @State var destinationPlans: [DestinationPlan] = []
+    @State var destinationPlans: [ASCDestinationPlan] = []
     @State var isPreflightExpanded = true
     @State var expandedRowPlanIds: Set<String> = []   // absent = collapsed (default)
     @State var uploadProgress: UploadProgress?
@@ -164,49 +164,8 @@ struct UploadToAppStoreConnectView: View {
         }
     }
 
-    nonisolated struct RowPlan: Identifiable {
-        let id: UUID
-        var rowLabel: String
-        var rowSize: CGSize
-        var templateCount: Int
-        var isEnabled: Bool
-        var detectedDisplayType: ASCDisplayType?
-        var selectedDisplayType: ASCDisplayType?
-        var localeTargets: [LocaleTarget]
-        var inferredStorePlatform: StorePlatform?
-    }
 
-    nonisolated struct DestinationPlan: Identifiable {
-        let id: String
-        var version: ASCAppStoreVersion
-        var localizations: [ASCAppStoreVersionLocalization]
-        var rowPlans: [RowPlan]
 
-        var title: String {
-            let versionText = String(localized: "Version \(version.attributes.versionString)")
-            if let platform = version.attributes.displayPlatform {
-                return "\(platform) · \(versionText)"
-            }
-            return versionText
-        }
-
-        var subtitle: String {
-            version.attributes.displayState
-        }
-    }
-
-    nonisolated struct LocaleTarget: Identifiable {
-        let id = UUID()
-        var appLocaleCode: String
-        var appLocaleLabel: String
-        var selectedASCLocalizationIds: Set<String>
-        var candidates: [ASCAppStoreVersionLocalization]
-        var isEnabled: Bool
-
-        var selectedCandidates: [ASCAppStoreVersionLocalization] {
-            candidates.filter { selectedASCLocalizationIds.contains($0.id) }
-        }
-    }
 
         struct UploadPlanEntry: Identifiable {
             let id: String

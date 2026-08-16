@@ -109,7 +109,7 @@ final class AppStoreConnectAuthService {
 
         let headerJSON = try JSONSerialization.data(withJSONObject: header, options: [.sortedKeys])
         let claimsJSON = try JSONSerialization.data(withJSONObject: claims, options: [.sortedKeys])
-        let signingInput = Self.base64URL(headerJSON) + "." + Self.base64URL(claimsJSON)
+        let signingInput = headerJSON.base64URLEncodedString + "." + claimsJSON.base64URLEncodedString
 
         let signature: P256.Signing.ECDSASignature
         do {
@@ -119,19 +119,12 @@ final class AppStoreConnectAuthService {
             throw AppStoreConnectAuthError.signingFailed
         }
 
-        let token = signingInput + "." + Self.base64URL(signature.rawRepresentation)
+        let token = signingInput + "." + signature.rawRepresentation.base64URLEncodedString
         cachedToken = CachedToken(
             token: token,
             expiresAt: Date(timeIntervalSince1970: TimeInterval(exp)),
             snapshot: snapshot
         )
         return token
-    }
-
-    private static func base64URL(_ data: Data) -> String {
-        data.base64EncodedString()
-            .replacing("+", with: "-")
-            .replacing("/", with: "_")
-            .replacing("=", with: "")
     }
 }

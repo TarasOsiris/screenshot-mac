@@ -107,6 +107,62 @@ extension Color {
     }
 }
 
+/// The CSS numeric weight (100…900) stored on text shapes, bucketed once. The canvas, the
+/// properties bar, and RTF round-tripping all read the same buckets so they cannot disagree
+/// about where `bold` starts.
+nonisolated enum CSSFontWeight {
+    case thin, light, regular, medium, semibold, bold, heavy
+
+    init(css: Int) {
+        switch css {
+        case ...299: self = .thin
+        case 300...399: self = .light
+        case 400...499: self = .regular
+        case 500...599: self = .medium
+        case 600...699: self = .semibold
+        case 700...799: self = .bold
+        default: self = .heavy
+        }
+    }
+
+    var font: Font.Weight {
+        switch self {
+        case .thin: .thin
+        case .light: .light
+        case .regular: .regular
+        case .medium: .medium
+        case .semibold: .semibold
+        case .bold: .bold
+        case .heavy: .heavy
+        }
+    }
+
+    var platform: NSFont.Weight {
+        switch self {
+        case .thin: .thin
+        case .light: .light
+        case .regular: .regular
+        case .medium: .medium
+        case .semibold: .semibold
+        case .bold: .bold
+        case .heavy: .heavy
+        }
+    }
+
+    /// NSFontManager's 0…15 scale (5 ≈ regular, 9 ≈ bold).
+    var manager: Int {
+        switch self {
+        case .thin: 3
+        case .light: 4
+        case .regular: 5
+        case .medium: 6
+        case .semibold: 8
+        case .bold: 9
+        case .heavy: 11
+        }
+    }
+}
+
 #if os(iOS)
 extension UIFont.Weight {
     /// Map an AppKit NSFontManager weight (0…15, 5 ≈ regular, 9 ≈ bold) to a UIFont.Weight.

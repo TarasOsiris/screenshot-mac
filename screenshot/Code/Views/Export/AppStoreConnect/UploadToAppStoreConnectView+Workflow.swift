@@ -380,11 +380,11 @@ extension UploadToAppStoreConnectView {
         }
     }
 
-    func buildDestinationPlans(preserving existingPlans: [DestinationPlan] = []) -> [DestinationPlan] {
+    func buildDestinationPlans(preserving existingPlans: [ASCDestinationPlan] = []) -> [ASCDestinationPlan] {
         selectedVersions.map { version in
             let versionLocalizations = localizationsByVersionId[version.id] ?? []
             let existingDestination = existingPlans.first(where: { $0.id == version.id })
-            return DestinationPlan(
+            return ASCDestinationPlan(
                 id: version.id,
                 version: version,
                 localizations: versionLocalizations,
@@ -400,8 +400,8 @@ extension UploadToAppStoreConnectView {
     func buildRowPlans(
         for version: ASCAppStoreVersion,
         localizations: [ASCAppStoreVersionLocalization],
-        preserving existingPlans: [RowPlan] = []
-    ) -> [RowPlan] {
+        preserving existingPlans: [ASCRowPlan] = []
+    ) -> [ASCRowPlan] {
         let platform = version.attributes.ascPlatform
         let demoFallbackDisplayType = credentials.isDemoMode
             ? ASCDisplayType.userSelectableCases(forPlatform: platform).first
@@ -410,7 +410,7 @@ extension UploadToAppStoreConnectView {
         return state.rows.filter { !$0.excludeFromAppStoreConnect }.map { row in
             let detected = ASCDisplayType.detect(width: row.templateWidth, height: row.templateHeight)
             let existingPlan = existingPlans.first(where: { $0.id == row.id })
-            let targets = state.localeState.locales.map { locale -> LocaleTarget in
+            let targets = state.localeState.locales.map { locale -> ASCLocaleTarget in
                 let matches = assignment[locale.code] ?? []
                 let candidateIds = Set(matches.map(\.id))
                 let existingTarget = existingPlan?.localeTargets.first(where: { $0.appLocaleCode == locale.code })
@@ -419,7 +419,7 @@ extension UploadToAppStoreConnectView {
                 // than leaving an enabled locale with nothing selected, which hard-blocks upload.
                 let preserved = existingTarget.map { $0.selectedASCLocalizationIds.intersection(candidateIds) }
                 let selectedIds = (preserved?.isEmpty == false) ? preserved! : candidateIds
-                return LocaleTarget(
+                return ASCLocaleTarget(
                     appLocaleCode: locale.code,
                     appLocaleLabel: locale.flagLabel,
                     selectedASCLocalizationIds: selectedIds,
@@ -430,7 +430,7 @@ extension UploadToAppStoreConnectView {
             let compatiblePreserved = existingPlan?.selectedDisplayType.flatMap { $0.accepts(platform: platform) ? $0 : nil }
             let detectedCompatible = (detected?.accepts(platform: platform) ?? false) ? detected : nil
             let detectedIncompatible = detected != nil && detectedCompatible == nil
-            return RowPlan(
+            return ASCRowPlan(
                 id: row.id,
                 rowLabel: row.label,
                 rowSize: row.templateSize,

@@ -1,11 +1,9 @@
-import SwiftUI
+import Foundation
 
 /// Severity of a pre-flight upload validation issue, shared by the App Store Connect and
 /// Google Play upload validators.
 nonisolated enum UploadIssueSeverity {
     case error, warning
-
-    var tint: Color { self == .error ? .red : .orange }
 }
 
 /// A single pre-flight validation finding for a store upload.

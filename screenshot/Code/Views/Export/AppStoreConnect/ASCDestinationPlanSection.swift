@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ASCDestinationPlanSection: View {
-    @Binding var destination: UploadToAppStoreConnectView.DestinationPlan
+    @Binding var destination: ASCDestinationPlan
     @Binding var expandedRowPlanIds: Set<String>
     @Binding var displayTypeDetailsPlanId: String?
 
@@ -45,7 +45,7 @@ struct ASCDestinationPlanSection: View {
         }
     }
 
-    private func rowPlanCard(plan: Binding<UploadToAppStoreConnectView.RowPlan>) -> some View {
+    private func rowPlanCard(plan: Binding<ASCRowPlan>) -> some View {
         let detailsId = rowPlanKey(rowId: plan.wrappedValue.id)
         let expanded = expandedRowPlanIds.contains(detailsId)
         let availableDisplayTypes = ASCDisplayType.userSelectableCases(

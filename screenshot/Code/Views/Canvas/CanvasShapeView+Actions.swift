@@ -325,15 +325,7 @@ private enum CanvasShapeFontResolver {
     }
 
     static func fontWeight(_ weight: Int) -> Font.Weight {
-        switch weight {
-        case ...299: .thin
-        case 300...399: .light
-        case 400...499: .regular
-        case 500...599: .medium
-        case 600...699: .semibold
-        case 700...799: .bold
-        default: .heavy
-        }
+        CSSFontWeight(css: weight).font
     }
 
     private static func customFontName(for shape: CanvasShapeModel, availableFontFamilies: Set<String>) -> String? {

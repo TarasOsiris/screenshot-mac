@@ -80,7 +80,7 @@ struct GooglePlayAuthServiceTests {
     // MARK: - Tests
 
     @Test func base64URLHasNoPaddingOrUnsafeChars() {
-        let encoded = GooglePlayAuthService.base64URL(Data([0xFB, 0xFF, 0xFE]))
+        let encoded = Data([0xFB, 0xFF, 0xFE]).base64URLEncodedString
         #expect(!encoded.contains("="))
         #expect(!encoded.contains("+"))
         #expect(!encoded.contains("/"))

@@ -103,7 +103,6 @@ nonisolated enum DeviceFrameCatalogDefinitions {
     private static let iphone16USDZModel = DeviceFrameModelSpec(
         resourceName: "Iphone_17_pro",
         resourceExtension: "usdz",
-        resourceSubdirectory: "DeviceModels",
         screenMaterialName: "Screen_BG",
         disabledNodeNames: [],
         screenRenderingMode: .replaceMaterial,
@@ -118,7 +117,6 @@ nonisolated enum DeviceFrameCatalogDefinitions {
     private static let iphone17ProMaxUSDZModel = DeviceFrameModelSpec(
         resourceName: "iphone_17_pro_max",
         resourceExtension: "usdz",
-        resourceSubdirectory: "DeviceModels",
         screenMaterialName: "Display",
         disabledNodeNames: [],
         screenRenderingMode: .overlayPlane,

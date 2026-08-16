@@ -5,3 +5,4 @@ skills-lock.json
 *.xcuserstate
 xcuserdata/
 .DS_Store
+.claude/scheduled_tasks.lock

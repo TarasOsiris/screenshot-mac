@@ -72,7 +72,6 @@ nonisolated struct DeviceFrameImageSpec {
 nonisolated struct DeviceFrameModelSpec: Equatable {
     let resourceName: String
     let resourceExtension: String
-    let resourceSubdirectory: String?
     let screenMaterialName: String?
     let disabledNodeNames: Set<String>
     let screenRenderingMode: DeviceFrameScreenRenderingMode

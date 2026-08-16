@@ -55,7 +55,7 @@ struct AppStoreConnectUploadValidatorTests {
             id: "localization-en",
             attributes: .init(locale: "en-US")
         )
-        let localeTarget = UploadToAppStoreConnectView.LocaleTarget(
+        let localeTarget = ASCLocaleTarget(
             appLocaleCode: "en",
             appLocaleLabel: "English",
             selectedASCLocalizationIds: [localization.id],
@@ -71,7 +71,7 @@ struct AppStoreConnectUploadValidatorTests {
             )
         )
         let plans = [
-            UploadToAppStoreConnectView.RowPlan(
+            ASCRowPlan(
                 id: UUID(),
                 rowLabel: "iPad 13-inch",
                 rowSize: CGSize(width: 2064, height: 2752),
@@ -81,7 +81,7 @@ struct AppStoreConnectUploadValidatorTests {
                 selectedDisplayType: .ipadPro129M4,
                 localeTargets: [localeTarget]
             ),
-            UploadToAppStoreConnectView.RowPlan(
+            ASCRowPlan(
                 id: UUID(),
                 rowLabel: "iPad 12.9-inch",
                 rowSize: CGSize(width: 2048, height: 2732),
@@ -106,7 +106,7 @@ struct AppStoreConnectUploadValidatorTests {
             ASCAppStoreVersionLocalization(id: "localization-\(locale)", attributes: .init(locale: locale))
         }
         let localeTargets = localizations.map { localization in
-            UploadToAppStoreConnectView.LocaleTarget(
+            ASCLocaleTarget(
                 appLocaleCode: localization.attributes.locale,
                 appLocaleLabel: localization.attributes.locale,
                 selectedASCLocalizationIds: [localization.id],
@@ -122,8 +122,8 @@ struct AppStoreConnectUploadValidatorTests {
                 platform: "IOS"
             )
         )
-        func plan(_ label: String) -> UploadToAppStoreConnectView.RowPlan {
-            UploadToAppStoreConnectView.RowPlan(
+        func plan(_ label: String) -> ASCRowPlan {
+            ASCRowPlan(
                 id: UUID(),
                 rowLabel: label,
                 rowSize: CGSize(width: 2064, height: 2752),
@@ -146,7 +146,7 @@ struct AppStoreConnectUploadValidatorTests {
             id: "localization-en",
             attributes: .init(locale: "en-US")
         )
-        let localeTarget = UploadToAppStoreConnectView.LocaleTarget(
+        let localeTarget = ASCLocaleTarget(
             appLocaleCode: "en",
             appLocaleLabel: "English",
             selectedASCLocalizationIds: [localization.id],
@@ -162,7 +162,7 @@ struct AppStoreConnectUploadValidatorTests {
             )
         )
         let plans = [
-            UploadToAppStoreConnectView.RowPlan(
+            ASCRowPlan(
                 id: UUID(),
                 rowLabel: "iPhone row on a macOS version",
                 rowSize: CGSize(width: 1290, height: 2796),
@@ -197,7 +197,7 @@ struct AppStoreConnectUploadValidatorTests {
             id: "localization-en",
             attributes: .init(locale: "en-US")
         )
-        let localeTarget = UploadToAppStoreConnectView.LocaleTarget(
+        let localeTarget = ASCLocaleTarget(
             appLocaleCode: "en",
             appLocaleLabel: "English",
             selectedASCLocalizationIds: [localization.id],
@@ -213,7 +213,7 @@ struct AppStoreConnectUploadValidatorTests {
             )
         )
         let plans = [
-            UploadToAppStoreConnectView.RowPlan(
+            ASCRowPlan(
                 id: UUID(),
                 rowLabel: "iPad",
                 rowSize: CGSize(width: 2064, height: 2752),
@@ -249,7 +249,7 @@ struct AppStoreConnectUploadValidatorTests {
         let locs = ["en-US", "en-GB"].map {
             ASCAppStoreVersionLocalization(id: "loc-\($0)", attributes: .init(locale: $0))
         }
-        let localeTarget = UploadToAppStoreConnectView.LocaleTarget(
+        let localeTarget = ASCLocaleTarget(
             appLocaleCode: "en",
             appLocaleLabel: "English",
             selectedASCLocalizationIds: Set(locs.map(\.id)),
@@ -260,8 +260,8 @@ struct AppStoreConnectUploadValidatorTests {
             id: "version-1",
             attributes: .init(versionString: "1.0", appStoreState: "PREPARE_FOR_SUBMISSION", platform: "IOS")
         )
-        func plan(_ label: String) -> UploadToAppStoreConnectView.RowPlan {
-            UploadToAppStoreConnectView.RowPlan(
+        func plan(_ label: String) -> ASCRowPlan {
+            ASCRowPlan(
                 id: UUID(),
                 rowLabel: label,
                 rowSize: CGSize(width: 2064, height: 2752),
@@ -279,7 +279,7 @@ struct AppStoreConnectUploadValidatorTests {
     @Test func sameRowsDoNotCollideAcrossDifferentVersions() {
         let iosLocalization = ASCAppStoreVersionLocalization(id: "ios-loc-en", attributes: .init(locale: "en-US"))
         let macLocalization = ASCAppStoreVersionLocalization(id: "mac-loc-en", attributes: .init(locale: "en-US"))
-        let iosDestination = UploadToAppStoreConnectView.DestinationPlan(
+        let iosDestination = ASCDestinationPlan(
             id: "ios-version",
             version: ASCAppStoreVersion(
                 id: "ios-version",
@@ -295,7 +295,7 @@ struct AppStoreConnectUploadValidatorTests {
                 )
             ]
         )
-        let macDestination = UploadToAppStoreConnectView.DestinationPlan(
+        let macDestination = ASCDestinationPlan(
             id: "mac-version",
             version: ASCAppStoreVersion(
                 id: "mac-version",
@@ -320,7 +320,7 @@ struct AppStoreConnectUploadValidatorTests {
 
     @Test func multiVersionValidationScopesPlatformMismatchesToDestinations() {
         let localization = ASCAppStoreVersionLocalization(id: "loc-en", attributes: .init(locale: "en-US"))
-        let iosDestination = UploadToAppStoreConnectView.DestinationPlan(
+        let iosDestination = ASCDestinationPlan(
             id: "ios-version",
             version: ASCAppStoreVersion(
                 id: "ios-version",
@@ -336,7 +336,7 @@ struct AppStoreConnectUploadValidatorTests {
                 )
             ]
         )
-        let macDestination = UploadToAppStoreConnectView.DestinationPlan(
+        let macDestination = ASCDestinationPlan(
             id: "mac-version",
             version: ASCAppStoreVersion(
                 id: "mac-version",
@@ -409,8 +409,8 @@ struct AppStoreConnectUploadValidatorTests {
         displayType: ASCDisplayType,
         localization: ASCAppStoreVersionLocalization,
         templateCount: Int = ASCUploadLimits.recommendedScreenshotsPerSet
-    ) -> UploadToAppStoreConnectView.RowPlan {
-        UploadToAppStoreConnectView.RowPlan(
+    ) -> ASCRowPlan {
+        ASCRowPlan(
             id: UUID(),
             rowLabel: label,
             rowSize: size,
@@ -419,7 +419,7 @@ struct AppStoreConnectUploadValidatorTests {
             detectedDisplayType: displayType,
             selectedDisplayType: displayType,
             localeTargets: [
-                UploadToAppStoreConnectView.LocaleTarget(
+                ASCLocaleTarget(
                     appLocaleCode: "en",
                     appLocaleLabel: "English",
                     selectedASCLocalizationIds: [localization.id],

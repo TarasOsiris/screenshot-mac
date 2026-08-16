@@ -86,11 +86,11 @@ final class GooglePlayAuthService {
 
         let headerJSON = try JSONSerialization.data(withJSONObject: header, options: [.sortedKeys])
         let claimsJSON = try JSONSerialization.data(withJSONObject: claims, options: [.sortedKeys])
-        let signingInput = base64URL(headerJSON) + "." + base64URL(claimsJSON)
+        let signingInput = headerJSON.base64URLEncodedString + "." + claimsJSON.base64URLEncodedString
 
         let key = try rsaPrivateKey(fromPEM: account.privateKeyPEM)
         let signature = try sign(Data(signingInput.utf8), with: key)
-        return signingInput + "." + base64URL(signature)
+        return signingInput + "." + signature.base64URLEncodedString
     }
 
     private func requestAccessToken(assertion: String, tokenURI: String) async throws -> (token: String, expiresIn: Int) {
@@ -179,13 +179,6 @@ final class GooglePlayAuthService {
         guard parser.skipElement() else { return nil }            // version INTEGER
         guard parser.skipElement() else { return nil }            // algorithm SEQUENCE
         return parser.readOctetString()                            // privateKey OCTET STRING
-    }
-
-    nonisolated static func base64URL(_ data: Data) -> String {
-        data.base64EncodedString()
-            .replacing("+", with: "-")
-            .replacing("/", with: "_")
-            .replacing("=", with: "")
     }
 }
 

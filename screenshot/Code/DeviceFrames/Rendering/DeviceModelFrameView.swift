@@ -546,16 +546,15 @@ struct DeviceModelFrameView: View {
     }
 
     private static func clonedBaseScene(for modelSpec: DeviceFrameModelSpec) -> SCNScene? {
-        let cacheKey = "\(modelSpec.resourceSubdirectory ?? "")/\(modelSpec.resourceName).\(modelSpec.resourceExtension)" as NSString
+        let cacheKey = "\(modelSpec.resourceName).\(modelSpec.resourceExtension)" as NSString
         let baseScene: SCNScene
         if let cached = modelSceneCache.object(forKey: cacheKey) {
             baseScene = cached
         } else {
             guard let url = Bundle.main.url(
                 forResource: modelSpec.resourceName,
-                withExtension: modelSpec.resourceExtension,
-                subdirectory: modelSpec.resourceSubdirectory
-            ) ?? Bundle.main.url(forResource: modelSpec.resourceName, withExtension: modelSpec.resourceExtension) else {
+                withExtension: modelSpec.resourceExtension
+            ) else {
                 return nil
             }
             guard let loadedScene = try? SCNScene(url: url, options: nil) else {

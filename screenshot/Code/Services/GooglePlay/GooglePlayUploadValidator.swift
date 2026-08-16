@@ -1,12 +1,11 @@
 import Foundation
-import SwiftUI
 
 nonisolated enum GooglePlayUploadValidator {
     /// Pre-flight checks that need no rendering or network. In demo mode the package name is
     /// irrelevant (no traffic) and per-row issues are softened to warnings so the flow stays walkable.
     static func validate(
         packageName: String,
-        plans: [UploadToGooglePlayView.GPRowPlan],
+        plans: [GPRowPlan],
         isDemoMode: Bool
     ) -> [UploadIssue] {
         var issues: [UploadIssue] = []

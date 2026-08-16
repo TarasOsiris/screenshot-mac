@@ -5,8 +5,8 @@ import CoreGraphics
 @testable import Screenshot_Bro
 
 struct GooglePlayUploadValidatorTests {
-    private typealias Plan = UploadToGooglePlayView.GPRowPlan
-    private typealias Target = UploadToGooglePlayView.GPLocaleTarget
+    private typealias Plan = GPRowPlan
+    private typealias Target = GPLocaleTarget
 
     private func locale(_ play: String, enabled: Bool = true) -> Target {
         Target(appLocaleCode: play, appLocaleLabel: play, playLanguageCode: play, isEnabled: enabled)

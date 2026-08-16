@@ -1,5 +1,4 @@
 import Foundation
-import SwiftUI
 
 // Apple's specs allow 1–10 assets per display type; three is a marketing convention, not a rule.
 enum ASCUploadLimits {
@@ -9,7 +8,7 @@ enum ASCUploadLimits {
 }
 
 enum ASCUploadValidator {
-    static func validate(destinations: [UploadToAppStoreConnectView.DestinationPlan]) -> [UploadIssue] {
+    static func validate(destinations: [ASCDestinationPlan]) -> [UploadIssue] {
         if destinations.isEmpty {
             return [
                 UploadIssue(
@@ -28,7 +27,7 @@ enum ASCUploadValidator {
     /// Runs all pre-flight checks that don't require rendering or network calls.
     static func validate(
         version: ASCAppStoreVersion,
-        plans: [UploadToAppStoreConnectView.RowPlan]
+        plans: [ASCRowPlan]
     ) -> [UploadIssue] {
         var issues: [UploadIssue] = []
 

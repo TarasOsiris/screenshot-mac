@@ -389,15 +389,7 @@ enum RichTextUtils {
     }
 
     private static func fontManagerWeight(for cssWeight: Int) -> Int {
-        switch cssWeight {
-        case ...299: 3
-        case 300...399: 4
-        case 400...499: 5
-        case 500...599: 6
-        case 600...699: 8
-        case 700...799: 9
-        default: 11
-        }
+        CSSFontWeight(css: cssWeight).manager
     }
 
     private static func nsFontWeight(for managerWeight: Int) -> NSFont.Weight {

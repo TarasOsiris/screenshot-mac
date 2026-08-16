@@ -111,10 +111,7 @@ final class MCPServerService {
 
     private static func makeToken() -> String {
         let bytes = (0..<32).map { _ in UInt8.random(in: .min ... .max) }
-        return Data(bytes).base64EncodedString()
-            .replacingOccurrences(of: "+", with: "-")
-            .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: "=", with: "")
+        return Data(bytes).base64URLEncodedString
     }
 
     /// Stored (not computed from UserDefaults) so @Observable tracks it — the Settings toggle

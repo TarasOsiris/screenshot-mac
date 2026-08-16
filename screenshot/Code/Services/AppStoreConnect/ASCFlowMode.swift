@@ -1,4 +1,4 @@
-import SwiftUI
+import Foundation
 
 /// Which job the App Store Connect wizard is doing. `.screenshots` runs every step
 /// (app → versions → metadata → plan → upload); `.metadata` stops after saving metadata,

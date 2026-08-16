@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ASCUploadRowPlanCard: View {
-    @Binding var plan: UploadToAppStoreConnectView.RowPlan
+    @Binding var plan: ASCRowPlan
     let detailsId: String
     let expanded: Bool
     let availableDisplayTypes: [ASCDisplayType]
@@ -59,7 +59,7 @@ struct ASCUploadRowPlanCard: View {
 }
 
 private struct ASCDisplayTypePicker: View {
-    @Binding var plan: UploadToAppStoreConnectView.RowPlan
+    @Binding var plan: ASCRowPlan
     let detailsId: String
     let availableDisplayTypes: [ASCDisplayType]
     @Binding var displayTypeDetailsPlanId: String?
@@ -177,7 +177,7 @@ private struct ASCDisplayTypePicker: View {
 }
 
 private struct ASCDisplayTypeDetailsPopover: View {
-    let plan: UploadToAppStoreConnectView.RowPlan
+    let plan: ASCRowPlan
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -219,7 +219,7 @@ private struct ASCDisplayTypeDetailsPopover: View {
 }
 
 private struct ASCLocaleTargetRow: View {
-    @Binding var target: UploadToAppStoreConnectView.LocaleTarget
+    @Binding var target: ASCLocaleTarget
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
