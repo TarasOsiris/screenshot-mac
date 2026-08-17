@@ -1,4 +1,5 @@
 import CoreGraphics
+import SwiftUI
 import Testing
 @testable import Screenshot_Bro
 
@@ -75,6 +76,34 @@ struct DeviceFrameCatalogTests {
         #expect(landscape?.isLandscape == true)
         #expect(landscape?.spec.frameWidth == 960)
         #expect(landscape?.spec.frameHeight == 600)
+        // The watch art was drawn for a clockwise turn; the iPhone/iPad art was not.
+        #expect(landscape?.landscapeRotationDegrees == 90)
+    }
+
+    /// The image-backed phone/tablet groups ship no landscape PNG — landscape reuses the portrait
+    /// asset turned counter-clockwise, which is the direction that art was rendered in.
+    @Test(arguments: [
+        "iphone17-black", "iphone17pro-silver", "iphone17promax-deepblue",
+        "iphoneair-skyblue", "ipadpro11-silver", "ipadpro13-spacegray",
+    ])
+    func landscapeFramesReusePortraitArtRotatedCounterClockwise(colorSlug: String) throws {
+        let portrait = try #require(DeviceFrameCatalog.frame(for: "\(colorSlug)-portrait"))
+        let landscape = try #require(DeviceFrameCatalog.variant(forFrameId: portrait.id, isLandscape: true))
+
+        #expect(landscape.landscapeRotationDegrees == 270)
+        #expect(landscape.imageName == portrait.imageName)
+        #expect(landscape.spec.frameWidth == portrait.spec.frameHeight)
+        #expect(landscape.spec.frameHeight == portrait.spec.frameWidth)
+        #expect(portrait.landscapeRotationDegrees == nil)
+    }
+
+    /// Every frame that claims a rotation must resolve to a real asset, and every frame that does
+    /// not must ship its own — this is what catches a deleted imageset or a stale asset slug.
+    @Test func everyImageBackedFrameResolvesItsAsset() {
+        for frame in DeviceFrameCatalog.allFrames {
+            guard let imageName = frame.imageName else { continue }
+            #expect(NSImage(named: imageName) != nil, "missing asset \(imageName) for \(frame.id)")
+        }
     }
 
     @Test func iphone17ProMax3DFrameUsesBundledUSDZModel() throws {

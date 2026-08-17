@@ -62,10 +62,10 @@ struct DeviceFrameImageView: View {
                     .resizable()
                     .interpolation(.high)
 
-                if frame.isLandscapeRotation {
+                if let rotationDegrees = frame.landscapeRotationDegrees {
                     baseImage
                         .frame(width: height, height: width)
-                        .rotationEffect(.degrees(90))
+                        .rotationEffect(.degrees(rotationDegrees))
                         .frame(width: width, height: height)
                 } else {
                     baseImage

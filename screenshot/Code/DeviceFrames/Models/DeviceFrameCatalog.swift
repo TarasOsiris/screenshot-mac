@@ -125,8 +125,8 @@ nonisolated enum DeviceFrameCatalog {
             let frames = orientations.map { isLandscape in
                 let orientation = isLandscape ? "landscape" : "portrait"
                 let frameId = "\(entry.groupId)-\(slug)-\(orientation)"
-                let usesRotation = isLandscape && entry.landscapeFromRotation
-                let assetSlug = usesRotation ? "\(entry.groupId)-\(slug)-portrait" : frameId
+                let rotationDegrees = isLandscape ? entry.landscapeRotationDegrees : nil
+                let assetSlug = rotationDegrees == nil ? frameId : "\(entry.groupId)-\(slug)-portrait"
                 return DeviceFrame(
                     id: frameId,
                     modelName: entry.modelName,
@@ -137,7 +137,7 @@ nonisolated enum DeviceFrameCatalog {
                     spec: isLandscape ? landscapeSpec : entry.baseSpec,
                     modelSpec: entry.modelSpec,
                     iconOverride: entry.iconOverride,
-                    isLandscapeRotation: usesRotation
+                    landscapeRotationDegrees: rotationDegrees
                 )
             }
 

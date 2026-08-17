@@ -139,6 +139,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             baseSpec: iphone17Spec,
             modelSpec: nil,
             landscapeOnly: false,
+            landscapeRotationDegrees: 270,
             suggestedSizePreset: "1206x2622"
         ),
         DeviceFrameCatalogEntry(
@@ -150,6 +151,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             baseSpec: iphone17Spec,
             modelSpec: nil,
             landscapeOnly: false,
+            landscapeRotationDegrees: 270,
             suggestedSizePreset: "1206x2622"
         ),
         DeviceFrameCatalogEntry(
@@ -161,6 +163,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             baseSpec: iphone17ProMaxSpec,
             modelSpec: nil,
             landscapeOnly: false,
+            landscapeRotationDegrees: 270,
             suggestedSizePreset: "1320x2868"
         ),
         DeviceFrameCatalogEntry(
@@ -172,6 +175,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             baseSpec: iphoneAirSpec,
             modelSpec: nil,
             landscapeOnly: false,
+            landscapeRotationDegrees: 270,
             suggestedSizePreset: "1260x2736"
         ),
         DeviceFrameCatalogEntry(
@@ -205,6 +209,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             baseSpec: ipadPro11Spec,
             modelSpec: nil,
             landscapeOnly: false,
+            landscapeRotationDegrees: 270,
             suggestedSizePreset: "1668x2420"
         ),
         DeviceFrameCatalogEntry(
@@ -216,6 +221,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             baseSpec: ipadPro13Spec,
             modelSpec: nil,
             landscapeOnly: false,
+            landscapeRotationDegrees: 270,
             suggestedSizePreset: "2064x2752"
         ),
         DeviceFrameCatalogEntry(
@@ -274,7 +280,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             baseSpec: appleWatchUltra3Spec,
             modelSpec: nil,
             landscapeOnly: false,
-            landscapeFromRotation: true,
+            landscapeRotationDegrees: 90,
             iconOverride: "applewatch",
             suggestedSizePreset: "410x502"
         ),
