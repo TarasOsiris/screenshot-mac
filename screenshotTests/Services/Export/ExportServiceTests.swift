@@ -236,6 +236,28 @@ struct ExportServiceTests {
         #expect(ExportFileNaming.exportRowFileNameComponent(for: row) == "Home _ Screen 1")
     }
 
+    /// The App Store Connect and Google Play uploads name files through this same helper, so two
+    /// locales of one row must not produce the same name, and the export suffix must survive.
+    @Test func screenshotFileNameSeparatesLocalesAndKeepsSuffix() {
+        var row = makeTestRow()
+        row.label = "Onboarding"
+        #expect(ExportFileNaming.screenshotFileName(row: row, localeCode: "en", index: 0) == "01_Onboarding_en.png")
+        #expect(ExportFileNaming.screenshotFileName(row: row, localeCode: "de", index: 0) == "01_Onboarding_de.png")
+        #expect(ExportFileNaming.screenshotFileName(row: row, localeCode: "en", index: 1, customSuffix: "v2")
+                == "02_Onboarding_en_v2.png")
+    }
+
+    @Test func preferredCustomSuffixReadsTheExportSetting() {
+        let defaults = UserDefaults.standard
+        let previous = defaults.string(forKey: "exportCustomSuffix")
+        defer {
+            if let previous { defaults.set(previous, forKey: "exportCustomSuffix") }
+            else { defaults.removeObject(forKey: "exportCustomSuffix") }
+        }
+        defaults.set("promo", forKey: "exportCustomSuffix")
+        #expect(ExportFileNaming.preferredCustomSuffix == "promo")
+    }
+
     // MARK: - Oversized shapes must not shift layout
 
     /// When a shape extends beyond the template boundary, the rendered image must still

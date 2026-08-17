@@ -319,7 +319,12 @@ final class GooglePlayUploadService {
                 )
             }
             // Match the on-disk export name (e.g. 01_Onboarding_en.png) using the project locale code.
-            let fileName = ExportFileNaming.screenshotFileName(row: row, localeCode: language.projectCode, index: templateIndex)
+            let fileName = ExportFileNaming.screenshotFileName(
+                row: row,
+                localeCode: language.projectCode,
+                index: templateIndex,
+                customSuffix: ExportFileNaming.preferredCustomSuffix
+            )
             screenshots.append(RenderedScreenshot(templateIndex: templateIndex, fileName: fileName, data: data))
         }
         return screenshots

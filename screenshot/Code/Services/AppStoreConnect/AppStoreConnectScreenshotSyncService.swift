@@ -737,7 +737,12 @@ final class AppStoreConnectScreenshotSyncService {
                     index: index
                 )
             }
-            let fileName = Self.safeFileName(String(format: "%02d-%@.png", index + 1, target.rowLabel))
+            let fileName = ExportFileNaming.screenshotFileName(
+                row: row,
+                localeCode: localization.localeCode,
+                index: index,
+                customSuffix: ExportFileNaming.preferredCustomSuffix
+            )
             let url = directory.appendingPathComponent(fileName)
             let stored = try await Self.store(data, at: url, previewMaxDimension: 420)
             assets.append(ASCScreenshotLocalAsset(
