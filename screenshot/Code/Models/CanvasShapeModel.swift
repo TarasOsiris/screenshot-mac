@@ -432,25 +432,6 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         fillStyle ?? .color
     }
 
-    @ViewBuilder
-    func fillView(image: NSImage? = nil, modelSize: CGSize? = nil) -> some View {
-        switch resolvedFillStyle {
-        case .color:
-            Rectangle().fill(color)
-        case .gradient:
-            (fillGradientConfig ?? GradientConfig()).gradientFill
-        case .image:
-            if let image, let config = fillImageConfig {
-                ZStack {
-                    Rectangle().fill(color)
-                    BackgroundImageView(image: image, config: config, modelSize: modelSize)
-                }
-            } else {
-                Rectangle().fill(color)
-            }
-        }
-    }
-
     /// Axis-aligned bounding box accounting for rotation.
     nonisolated var aabb: (minX: CGFloat, minY: CGFloat, maxX: CGFloat, maxY: CGFloat) {
         let cx = x + width / 2
