@@ -16,49 +16,15 @@ final class AppState {
     var localeState: LocaleState = .default
     var selectedRowId: UUID?
     var selectedShapeIds: Set<UUID> = []
-    var isEditingText = false {
-        didSet {
-            if !isEditingText {
-                richTextSelectionState = nil
-                richTextFormatBarAnchor = nil
-                richTextFormatController = nil
-                // The inline commit registration is cleared by the editing view's keyed
-                // teardown (onInlineTextEditChanged(nil)); clearing it unkeyed here would
-                // wipe a newer editor's registration during an editor-to-editor handoff.
-            }
-        }
-    }
-    var richTextSelectionState: RichTextSelectionState?
-    var richTextFormatBarAnchor: CGPoint?
-    @ObservationIgnored var richTextFormatController: RichTextFormatController?
-    /// Commits the editing `CanvasShapeView`'s in-progress inline text under the *current*
-    /// locale; registered while editing, flushed by `commitAllPendingEdits` before locale switches.
-    @ObservationIgnored private(set) var commitActiveInlineTextEdit: (() -> Void)?
-    @ObservationIgnored private(set) var endActiveInlineTextEdit: (() -> Void)?
-    @ObservationIgnored private var inlineTextEditShapeId: UUID?
+    /// The canvas's in-progress inline text edit. See InlineTextEditSession.
+    let textEdit = InlineTextEditSession()
 
-    /// Register the active inline text editor's commit closure, keyed by shape so a stale
-    /// teardown from a previously-editing shape can't clear a newer editor's registration.
-    func registerInlineTextCommit(for shapeId: UUID, endEditing: (() -> Void)? = nil, _ commit: @escaping () -> Void) {
-        inlineTextEditShapeId = shapeId
-        commitActiveInlineTextEdit = commit
-        endActiveInlineTextEdit = endEditing
-    }
-
-    /// Clear the registered inline commit. With a `shapeId`, only clears if it still owns the
-    /// registration (ignores a late clear from a shape that's already been superseded).
-    func clearInlineTextCommit(for shapeId: UUID? = nil) {
-        if let shapeId, inlineTextEditShapeId != shapeId { return }
-        inlineTextEditShapeId = nil
-        commitActiveInlineTextEdit = nil
-        endActiveInlineTextEdit = nil
-    }
     /// Editor zoom. Not document state — see ZoomController.
     let zoom = ZoomController()
     /// Rows currently shown in preview mode. Session-only — not persisted.
     private(set) var previewingRows: Set<UUID> = []
 
-    /// Flip the row's preview-mode state. Also drops `isEditingText` when
+    /// Flip the row's preview-mode state. Also drops `textEdit.isActive` when
     /// entering preview so a stale text-editor focus doesn't survive into the
     /// non-interactive preview.
     func togglePreview(for rowId: UUID) {
@@ -66,7 +32,7 @@ final class AppState {
             previewingRows.remove(rowId)
         } else {
             previewingRows.insert(rowId)
-            isEditingText = false
+            textEdit.isActive = false
         }
     }
 
@@ -91,7 +57,7 @@ final class AppState {
         guard isViewMode != on else { return }
         isViewMode = on
         if on {
-            isEditingText = false
+            textEdit.isActive = false
             deselectAll()
         }
     }
@@ -325,7 +291,7 @@ final class AppState {
                responder is NSTextView {
                 return event
             }
-            guard self.hasSelection, !self.isEditingText else { return event }
+            guard self.hasSelection, !self.textEdit.isActive else { return event }
             let shift = event.modifierFlags.contains(.shift)
             let step: CGFloat = shift ? 10 : 1
             switch event.keyCode {

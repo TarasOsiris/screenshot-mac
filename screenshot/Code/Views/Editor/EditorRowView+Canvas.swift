@@ -382,7 +382,7 @@ extension EditorRowView {
                         },
                         onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
                         onEditingTextChanged: { editing in
-                            if state.isEditingText != editing { state.isEditingText = editing }
+                            if state.textEdit.isActive != editing { state.textEdit.isActive = editing }
                             if editing {
                                 if textEditingShapeId != shape.id { textEditingShapeId = shape.id }
                             } else if textEditingShapeId == shape.id {
@@ -402,7 +402,7 @@ extension EditorRowView {
                                 // Capture the editing locale now so a flush after the active
                                 // locale changes still commits to the locale being edited.
                                 let localeCode = state.localeState.activeLocaleCode
-                                state.registerInlineTextCommit(for: shapeId, endEditing: endEditing) {
+                                state.textEdit.registerInlineTextCommit(for: shapeId, endEditing: endEditing) {
                                     let value = liveText()
                                     state.commitInlineText(
                                         shapeId: shapeId,
@@ -412,15 +412,15 @@ extension EditorRowView {
                                     )
                                 }
                             } else {
-                                state.clearInlineTextCommit(for: shapeId)
+                                state.textEdit.clearInlineTextCommit(for: shapeId)
                             }
                         },
                         onFormatBarStateChanged: { selState, controller in
-                            state.richTextSelectionState = selState
-                            state.richTextFormatController = controller
+                            state.textEdit.richTextSelectionState = selState
+                            state.textEdit.richTextFormatController = controller
                         },
                         onFormatBarAnchorChanged: { anchor in
-                            state.richTextFormatBarAnchor = anchor
+                            state.textEdit.richTextFormatBarAnchor = anchor
                         },
                         onMatchDeviceSizes: shape.type == .device ? {
                             let matchingIds = Set(row.activeShapes.filter { other in

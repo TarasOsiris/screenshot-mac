@@ -169,14 +169,9 @@ extension AppState {
     /// when a different debounced interaction begins, so steps register in chronological
     /// order. Each coalescer's `finish()` is a no-op when its own path has nothing captured.
     func commitAllPendingEdits() {
-        // Flush the canvas's in-progress inline text edit first, then tell the still-mounted
-        // editor to leave local edit mode so it can't recommit that draft after a locale switch.
-        // Clear handlers before invoking to avoid re-entry via commitInlineText's withUndo.
-        let inlineFlush = commitActiveInlineTextEdit
-        let inlineEnd = endActiveInlineTextEdit
-        clearInlineTextCommit()
-        inlineFlush?()
-        inlineEnd?()
+        // Inline text first: the still-mounted editor must leave local edit mode before the
+        // coalesced edits commit, or it can recommit its draft after a locale switch.
+        textEdit.flushActiveEditor()
         edits.commitAll()
     }
 
@@ -199,7 +194,7 @@ extension AppState {
 
     /// Drops every debounced edit without registering an undo step (project switch / reset).
     func cancelPendingDebounceTasks() {
-        clearInlineTextCommit()
+        textEdit.clearInlineTextCommit()
         edits.cancelAll()
         // The zoom throttle used to live in `edits` and be reset by cancelAll(). Drop, don't
         // flush: the pending value belongs to a document that is going away.

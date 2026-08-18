@@ -27,7 +27,7 @@ struct ContentView: View {
     var floatingBottomChromeMargin: CGFloat {
         var margin: CGFloat = 0
         if state.hasSelection { margin += 72 }
-        if state.isEditingText { margin += RichTextFormatBarMetrics.height + 16 }
+        if state.textEdit.isActive { margin += RichTextFormatBarMetrics.height + 16 }
         return margin
     }
     /// Always-reserved scroll room so canvas content can clear the floating
@@ -158,8 +158,8 @@ struct ContentView: View {
                 // controller publishes.
                 .overlay(alignment: .bottom) {
                     VStack(spacing: 8) {
-                        if state.isEditingText, state.richTextSelectionState != nil,
-                           let controller = state.richTextFormatController {
+                        if state.textEdit.isActive, state.textEdit.richTextSelectionState != nil,
+                           let controller = state.textEdit.richTextFormatController {
                             RichTextDockedBar(controller: controller)
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
@@ -197,14 +197,14 @@ struct ContentView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: state.hasSelection)
         #if os(iOS)
-        .animation(.easeInOut(duration: 0.2), value: state.isEditingText)
+        .animation(.easeInOut(duration: 0.2), value: state.textEdit.isActive)
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             // Keyboard avoidance shrinks the canvas ScrollView; scroll the row being edited into
             // the now-smaller visible area so the text isn't hidden behind the keyboard. Re-read
             // the selected row inside the delay so switching shapes mid-delay scrolls the right row.
-            guard state.isEditingText else { return }
+            guard state.textEdit.isActive else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                guard state.isEditingText, let rowId = state.selectedRowId else { return }
+                guard state.textEdit.isActive, let rowId = state.selectedRowId else { return }
                 state.requestCanvasFocus(on: rowId, animated: true)
             }
         }
@@ -220,10 +220,10 @@ struct ContentView: View {
         #endif
         #if os(macOS)
         .overlay {
-            if state.isEditingText,
-               let selectionState = state.richTextSelectionState,
-               let anchor = state.richTextFormatBarAnchor,
-               let controller = state.richTextFormatController {
+            if state.textEdit.isActive,
+               let selectionState = state.textEdit.richTextSelectionState,
+               let anchor = state.textEdit.richTextFormatBarAnchor,
+               let controller = state.textEdit.richTextFormatController {
                 GeometryReader { proxy in
                     let localPoint = proxy.frame(in: .global).origin
                     let barHalfW = RichTextFormatBarMetrics.width / 2

@@ -1403,8 +1403,8 @@ struct AppStateTests {
         )
         let shape = try #require(state.rows.first?.shapes.first(where: { $0.type == .text }))
 
-        state.isEditingText = true
-        state.registerInlineTextCommit(for: shape.id) {
+        state.textEdit.isActive = true
+        state.textEdit.registerInlineTextCommit(for: shape.id) {
             var updated = shape
             updated.text = "Edited before switch"
             state.updateShape(updated)

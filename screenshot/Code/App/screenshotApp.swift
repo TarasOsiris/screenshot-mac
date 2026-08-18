@@ -72,7 +72,7 @@ struct ScreenshotBroApp: App {
     // responder chain rather than to the session manager. `isEditingText` is observed, so the
     // command's enablement re-evaluates synchronously the moment editing begins.
     private var inlineEditorUndoManager: UndoManager? {
-        appState.isEditingText ? appState.richTextFormatController?.undoManager : nil
+        appState.textEdit.isActive ? appState.textEdit.richTextFormatController?.undoManager : nil
     }
 
     private var textEditorHasFocus: Bool {
@@ -82,7 +82,7 @@ struct ScreenshotBroApp: App {
     // While editing text the command is always available (its manager owns undo); otherwise a
     // focused field owns it, falling back to the document's own undo availability.
     private func commandDisabled(documentActionAvailable: Bool) -> Bool {
-        if appState.isEditingText { return false }
+        if appState.textEdit.isActive { return false }
         return focusedTextView != nil ? false : !documentActionAvailable
     }
 
@@ -102,7 +102,7 @@ struct ScreenshotBroApp: App {
         textViewAction: (UndoManager) -> Void,
         documentAction: () -> Void
     ) {
-        if appState.isEditingText {
+        if appState.textEdit.isActive {
             (inlineEditorUndoManager ?? focusedTextView?.undoManager).map(textViewAction)
         } else if let textView = focusedTextView {
             textView.undoManager.map(textViewAction)
@@ -256,7 +256,7 @@ struct ScreenshotBroApp: App {
                         }
                     }
                     .keyboardShortcut(.delete, modifiers: [])
-                    .disabled(!appState.hasSelection || appState.isEditingText)
+                    .disabled(!appState.hasSelection || appState.textEdit.isActive)
 
                     Button("Deselect") {
                         if appState.hasSelection {
@@ -272,7 +272,7 @@ struct ScreenshotBroApp: App {
                         appState.toggleLockOnSelection()
                     }
                     .keyboardShortcut("l", modifiers: .command)
-                    .disabled(!appState.hasSelection || appState.isEditingText)
+                    .disabled(!appState.hasSelection || appState.textEdit.isActive)
                 }
 
                 Divider()
@@ -310,7 +310,7 @@ struct ScreenshotBroApp: App {
 
                     Button("Focus on Selection") { appState.focusOnSelection() }
                     .keyboardShortcut("f", modifiers: [])
-                    .disabled(!appState.hasSelection || appState.isEditingText)
+                    .disabled(!appState.hasSelection || appState.textEdit.isActive)
                 }
             }
 

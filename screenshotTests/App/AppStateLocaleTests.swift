@@ -63,8 +63,8 @@ struct AppStateLocaleTests {
         // Mimic the inline editor: it captures the locale-resolved shape and, on commit,
         // writes the typed text back through updateShape under whatever locale is active.
         let resolved = LocaleService.resolveShape(baseShape, localeState: state.localeState)
-        state.isEditingText = true
-        state.registerInlineTextCommit(for: shapeId) {
+        state.textEdit.isActive = true
+        state.textEdit.registerInlineTextCommit(for: shapeId) {
             var updated = resolved
             updated.text = "Hallo"
             updated.richText = nil
@@ -92,15 +92,15 @@ struct AppStateLocaleTests {
         var committed: UUID?
         var ended: UUID?
 
-        state.registerInlineTextCommit(for: shapeA, endEditing: { ended = shapeA }) { committed = shapeA }
-        state.registerInlineTextCommit(for: shapeB, endEditing: { ended = shapeB }) { committed = shapeB }
-        state.clearInlineTextCommit(for: shapeA) // stale teardown from the shape we left
+        state.textEdit.registerInlineTextCommit(for: shapeA, endEditing: { ended = shapeA }) { committed = shapeA }
+        state.textEdit.registerInlineTextCommit(for: shapeB, endEditing: { ended = shapeB }) { committed = shapeB }
+        state.textEdit.clearInlineTextCommit(for: shapeA) // stale teardown from the shape we left
 
-        #expect(state.commitActiveInlineTextEdit != nil)
+        #expect(state.textEdit.commitActiveInlineTextEdit != nil)
         state.commitAllPendingEdits()
         #expect(committed == shapeB)
         #expect(ended == shapeB)
-        #expect(state.commitActiveInlineTextEdit == nil)
+        #expect(state.textEdit.commitActiveInlineTextEdit == nil)
     }
 
     @Test func forcedPendingEditFlushEndsActiveInlineEditor() {
@@ -110,10 +110,10 @@ struct AppStateLocaleTests {
         var didCommit = false
         var didEnd = false
 
-        state.isEditingText = true
-        state.registerInlineTextCommit(for: shapeId, endEditing: {
+        state.textEdit.isActive = true
+        state.textEdit.registerInlineTextCommit(for: shapeId, endEditing: {
             didEnd = true
-            state.isEditingText = false
+            state.textEdit.isActive = false
         }) {
             didCommit = true
         }
@@ -122,8 +122,8 @@ struct AppStateLocaleTests {
 
         #expect(didCommit)
         #expect(didEnd)
-        #expect(state.isEditingText == false)
-        #expect(state.commitActiveInlineTextEdit == nil)
+        #expect(state.textEdit.isActive == false)
+        #expect(state.textEdit.commitActiveInlineTextEdit == nil)
     }
 
     @Test func synchronousSaveFlushCommitsActiveInlineTextEdit() throws {
@@ -139,8 +139,8 @@ struct AppStateLocaleTests {
         let shape = try #require(state.rows.first?.shapes.first(where: { $0.type == .text }))
         let projectId = try #require(state.activeProjectId)
 
-        state.isEditingText = true
-        state.registerInlineTextCommit(for: shape.id) {
+        state.textEdit.isActive = true
+        state.textEdit.registerInlineTextCommit(for: shape.id) {
             var updated = shape
             updated.text = "Edited before quit"
             state.updateShape(updated)
@@ -169,8 +169,8 @@ struct AppStateLocaleTests {
         let shape = try #require(state.rows.first?.shapes.first(where: { $0.type == .text }))
         var didCommit = false
 
-        state.isEditingText = true
-        state.registerInlineTextCommit(for: shape.id) {
+        state.textEdit.isActive = true
+        state.textEdit.registerInlineTextCommit(for: shape.id) {
             didCommit = true
             var updated = shape
             updated.text = "Still typing"
@@ -182,7 +182,7 @@ struct AppStateLocaleTests {
         let liveShape = try #require(state.rows.first?.shapes.first(where: { $0.id == shape.id }))
         #expect(liveShape.text == shape.text)
         #expect(didCommit == false)
-        #expect(state.commitActiveInlineTextEdit != nil)
+        #expect(state.textEdit.commitActiveInlineTextEdit != nil)
     }
 
     /// commitInlineText applies only the text onto the *live* base shape, so a concurrent edit
@@ -250,15 +250,15 @@ struct AppStateLocaleTests {
         var committed: UUID?
         var ended: UUID?
 
-        state.isEditingText = true
-        state.registerInlineTextCommit(for: shapeA, endEditing: { ended = shapeA }) { committed = shapeA }
-        state.registerInlineTextCommit(for: shapeB, endEditing: { ended = shapeB }) { committed = shapeB }
+        state.textEdit.isActive = true
+        state.textEdit.registerInlineTextCommit(for: shapeA, endEditing: { ended = shapeA }) { committed = shapeA }
+        state.textEdit.registerInlineTextCommit(for: shapeB, endEditing: { ended = shapeB }) { committed = shapeB }
 
         // Shape A tears down: shared flag flips false, then a keyed clear for A only.
-        state.isEditingText = false
-        state.clearInlineTextCommit(for: shapeA)
+        state.textEdit.isActive = false
+        state.textEdit.clearInlineTextCommit(for: shapeA)
 
-        #expect(state.commitActiveInlineTextEdit != nil)
+        #expect(state.textEdit.commitActiveInlineTextEdit != nil)
         state.commitAllPendingEdits()
         #expect(committed == shapeB)
         #expect(ended == shapeB)

@@ -48,8 +48,8 @@ extension AppState {
             visibleCanvasModelCenter = nil
             return
         }
-        if isEditingText {
-            isEditingText = false
+        if textEdit.isActive {
+            textEdit.isActive = false
         }
         if selectedShapeIds.contains(shapeId) {
             selectedShapeIds.remove(shapeId)
@@ -68,7 +68,7 @@ extension AppState {
         finishContinuousEditIfNeeded()
         selectedShapeIds = []
         selectedRowId = nil
-        isEditingText = false
+        textEdit.isActive = false
     }
 
     /// Request the canvas ScrollView to scroll a row to center (drives the `ScrollViewReader`
@@ -96,13 +96,13 @@ extension AppState {
         if !selectedShapeIds.isEmpty {
             guard let rowIdx = selectedRowIndex else {
                 selectedShapeIds = []
-                isEditingText = false
+                textEdit.isActive = false
                 return
             }
             let existingIds = Set(rows[rowIdx].shapes.map(\.id))
             selectedShapeIds = selectedShapeIds.intersection(existingIds)
             if selectedShapeIds.isEmpty {
-                isEditingText = false
+                textEdit.isActive = false
             }
         }
     }
