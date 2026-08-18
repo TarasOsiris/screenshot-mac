@@ -27,6 +27,33 @@ extension ShapePropertiesSingleSelectionBar {
         editingFontSize = "\(Int(clamped))"
     }
 
+    /// Applies each keystroke as a coalesced-undo edit so the canvas tracks the field live.
+    func applyFontSizeContinuously(fallbackShapeId: UUID) {
+        let target = state.selectedShapeId ?? fallbackShapeId
+        guard let value = Int(editingFontSize), let i = idx(for: target) else { return }
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        let newSize = clampedFontSize(value)
+        // A no-op size (e.g. the field reprogrammed to the current value during an edit→commit
+        // transition) must not run syncShapeStyle(.fontSize) — that flattens mixed per-run
+        // rich-text sizes to one. Mirrors commitFontSize's guard.
+        guard resolved.fontSize != newSize else { return }
+        resolved.fontSize = newSize
+        RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
+        state.updateShapeContinuous(resolved)
+    }
+
+    func applyLineHeightContinuously(fallbackShapeId: UUID) {
+        let target = state.selectedShapeId ?? fallbackShapeId
+        guard let value = Int(editingLineHeight), let i = idx(for: target) else { return }
+        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        let clamped = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
+        guard resolved.lineHeightMultiple != clamped || resolved.lineSpacing != nil else { return }
+        resolved.lineHeightMultiple = clamped
+        resolved.lineSpacing = nil
+        RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
+        state.updateShapeContinuous(resolved)
+    }
+
     func currentOpacityString(for shapeId: UUID) -> String {
         guard let i = idx(for: shapeId) else { return "100" }
         return "\(Int((state.rows[i.row].shapes[i.shape].opacity * 100).rounded()))"

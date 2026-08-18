@@ -176,10 +176,13 @@ final class AppState {
         [shapeEditCoalescer, rowEditCoalescer, nudgeCoalescer, baseTextCoalescer, translationCoalescer]
     }
 
-    // ~30fps apply throttles for the two continuous (slider/drag) paths: the coalescers above own
+    // ~30fps apply throttles for the continuous (slider/drag/pinch) paths: the coalescers above own
     // the single debounced undo step; these own how often the model is actually written mid-burst.
     @ObservationIgnored let shapeEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
     @ObservationIgnored let rowEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
+    /// `zoomLevel` is read by every visible row's body, so an unthrottled pinch invalidated the
+    /// whole editor once per gesture tick.
+    @ObservationIgnored let zoomThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
 
     @ObservationIgnored var nudgeActionName: String = "Move Shape"
     @ObservationIgnored var continuousRowEditActionName: String = "Edit Background"

@@ -19,6 +19,20 @@ extension AppState {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
     }
 
+    /// Pinch/scroll-wheel zoom. Writes at most ~30fps: `zoomLevel` is observed by every visible
+    /// row, so a raw per-tick write re-evaluates the whole editor. Call `endContinuousZoom()` when
+    /// the gesture finishes so the final value is never dropped.
+    func setZoomLevelContinuous(_ level: CGFloat) {
+        zoomThrottle.submit { [weak self] in
+            self?.setZoomLevel(level, animated: false)
+        }
+    }
+
+    func endContinuousZoom() {
+        zoomThrottle.flush()
+        zoomThrottle.reset()
+    }
+
     func zoomIn() {
         setZoomLevel(zoomLevel + ZoomConstants.step)
     }

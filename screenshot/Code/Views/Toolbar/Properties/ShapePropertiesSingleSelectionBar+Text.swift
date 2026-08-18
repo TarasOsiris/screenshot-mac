@@ -190,46 +190,19 @@ extension ShapePropertiesSingleSelectionBar {
     @ViewBuilder
     private func fontSizeField(shape: CanvasShapeModel, shapeId: UUID) -> some View {
         HStack(spacing: 0) {
-            TextField("", text: $editingFontSize, onEditingChanged: { editing in
-                if editing {
-                    isFontSizeFieldActive = true
-                } else {
-                    commitFontSize(to: state.selectedShapeId ?? shapeId)
-                }
-            })
-            .focused($focusedField, equals: .fontSize)
-            .frame(width: propertiesFontFieldWidth)
-            .textFieldStyle(.roundedBorder)
-            .multilineTextAlignment(.center)
-            .integerKeyboard()
-            .onAppear {
-                editingFontSize = currentFontSizeString(for: shapeId)
-            }
-            .onChange(of: shapeId) { oldId, newId in
-                // Flush to the shape we were editing before rebinding — see the
-                // opacity field; the captured shapeId goes stale otherwise.
-                if isFontSizeFieldActive { commitFontSize(to: oldId) }
-                editingFontSize = currentFontSizeString(for: newId)
-            }
-            .onChange(of: shape.fontSize) {
-                guard !isFontSizeFieldActive else { return }
-                editingFontSize = currentFontSizeString(for: shapeId)
-            }
-            .onChange(of: editingFontSize) {
-                guard isFontSizeFieldActive else { return }
-                let target = state.selectedShapeId ?? shapeId
-                if let value = Int(editingFontSize), let i = idx(for: target) {
-                    var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                    let newSize = clampedFontSize(value)
-                    // A no-op size (e.g. the field reprogrammed to the current value during an
-                    // edit→commit transition) must not run syncShapeStyle(.fontSize) — that flattens
-                    // mixed per-run rich-text sizes to one. Mirrors commitFontSize's guard.
-                    guard resolved.fontSize != newSize else { return }
-                    resolved.fontSize = newSize
-                    RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
-                    state.updateShapeContinuous(resolved)
-                }
-            }
+            ShapePropertyField(
+                shapeId: shapeId,
+                field: .fontSize,
+                text: $editingFontSize,
+                isActive: $isFontSizeFieldActive,
+                focus: $focusedField,
+                width: propertiesFontFieldWidth,
+                modelValue: shape.fontSize.map(Double.init),
+                current: { currentFontSizeString(for: $0) },
+                commit: { commitFontSize(to: $0) },
+                liveApply: { applyFontSizeContinuously(fallbackShapeId: shapeId) },
+                liveSelection: { state.selectedShapeId }
+            )
 
             presetChevronMenu {
                 ForEach(Self.fontSizePresets, id: \.self) { size in
@@ -287,41 +260,19 @@ extension ShapePropertiesSingleSelectionBar {
     @ViewBuilder
     private func lineSpacingField(shape: CanvasShapeModel, shapeId: UUID) -> some View {
         HStack(spacing: 0) {
-            TextField("", text: $editingLineHeight, onEditingChanged: { editing in
-                if editing {
-                    isLineHeightFieldActive = true
-                } else {
-                    commitLineHeight(to: state.selectedShapeId ?? shapeId)
-                }
-            })
-            .focused($focusedField, equals: .lineHeight)
-            .frame(width: propertiesFontFieldWidth)
-            .textFieldStyle(.roundedBorder)
-            .multilineTextAlignment(.center)
-            .integerKeyboard()
-            .onAppear {
-                editingLineHeight = currentLineHeightString(for: shapeId)
-            }
-            .onChange(of: shapeId) { oldId, newId in
-                // Flush to the shape we were editing before rebinding (see opacity).
-                if isLineHeightFieldActive { commitLineHeight(to: oldId) }
-                editingLineHeight = currentLineHeightString(for: newId)
-            }
-            .onChange(of: shape.lineHeightMultiple) {
-                guard !isLineHeightFieldActive else { return }
-                editingLineHeight = currentLineHeightString(for: shapeId)
-            }
-            .onChange(of: editingLineHeight) {
-                guard isLineHeightFieldActive else { return }
-                let target = state.selectedShapeId ?? shapeId
-                if let value = Int(editingLineHeight), let i = idx(for: target) {
-                    var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
-                    resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
-                    resolved.lineSpacing = nil
-                    RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)
-                    state.updateShapeContinuous(resolved)
-                }
-            }
+            ShapePropertyField(
+                shapeId: shapeId,
+                field: .lineHeight,
+                text: $editingLineHeight,
+                isActive: $isLineHeightFieldActive,
+                focus: $focusedField,
+                width: propertiesFontFieldWidth,
+                modelValue: shape.lineHeightMultiple.map(Double.init),
+                current: { currentLineHeightString(for: $0) },
+                commit: { commitLineHeight(to: $0) },
+                liveApply: { applyLineHeightContinuously(fallbackShapeId: shapeId) },
+                liveSelection: { state.selectedShapeId }
+            )
 
             presetChevronMenu {
                 ForEach(Self.lineHeightPresets, id: \.self) { preset in

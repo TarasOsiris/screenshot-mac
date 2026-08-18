@@ -69,7 +69,7 @@ struct ContentView: View {
     // macOS: trackpad pinch. iOS: view-mode two-finger pinch.
     @State var gestureZoomStartLevel: CGFloat?
     @State var editorViewportHeight: CGFloat = 0
-    @State var scrollWheelMonitor: Any?
+    @State var scrollWheelZoom = PlatformScrollWheelZoom()
     @State var showingASCUploadSheet = false
     @State var showingASCMetadataSheet = false
     @State var showingGooglePlayUploadSheet = false
@@ -128,39 +128,8 @@ struct ContentView: View {
                     }
                 }
                 .id(state.activeProjectId)
-                #if os(macOS)
-                // Trackpad pinch-to-zoom (macOS only — iPad uses the toolbar zoom).
-                .simultaneousGesture(
-                    MagnificationGesture()
-                        .onChanged { value in
-                            let startLevel = gestureZoomStartLevel ?? state.zoomLevel
-                            if gestureZoomStartLevel == nil {
-                                gestureZoomStartLevel = startLevel
-                            }
-                            state.setZoomLevel(startLevel * value, animated: false)
-                        }
-                        .onEnded { _ in
-                            gestureZoomStartLevel = nil
-                        }
-                )
-                #else
-                // iPad two-finger pinch-to-zoom, view mode only — the guard keeps
-                // edit-mode one-finger shape gestures untouched.
-                .simultaneousGesture(
-                    MagnificationGesture()
-                        .onChanged { value in
-                            guard state.isViewMode else { return }
-                            let startLevel = gestureZoomStartLevel ?? state.zoomLevel
-                            if gestureZoomStartLevel == nil {
-                                gestureZoomStartLevel = startLevel
-                            }
-                            state.setZoomLevel(startLevel * value, animated: false)
-                        }
-                        .onEnded { _ in
-                            gestureZoomStartLevel = nil
-                        }
-                )
-                #endif
+                // macOS: trackpad pinch. iPad: two-finger pinch in view mode only.
+                .canvasPinchZoom(state: state, startLevel: $gestureZoomStartLevel)
                 .onChange(of: state.canvasFocus.rowRequestNonce) { _, _ in
                     guard let rowId = state.canvasFocus.rowId else { return }
                     if state.canvasFocus.animated {
@@ -545,24 +514,10 @@ struct ContentView: View {
                 state.selectRow(firstRow.id)
             }
             #endif
-            #if os(macOS)
-            scrollWheelMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
-                guard event.modifierFlags.contains(.command) else { return event }
-                let delta = event.hasPreciseScrollingDeltas
-                    ? event.scrollingDeltaY * 0.005
-                    : event.scrollingDeltaY * 0.05
-                state.setZoomLevel(state.zoomLevel + delta, animated: false)
-                return nil
-            }
-            #endif
+            scrollWheelZoom.install(state: state)
         }
         .onDisappear {
-            #if os(macOS)
-            if let monitor = scrollWheelMonitor {
-                NSEvent.removeMonitor(monitor)
-                scrollWheelMonitor = nil
-            }
-            #endif
+            scrollWheelZoom.remove()
         }
     }
 

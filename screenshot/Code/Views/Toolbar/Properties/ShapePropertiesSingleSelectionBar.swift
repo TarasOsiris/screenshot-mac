@@ -191,40 +191,19 @@ struct ShapePropertiesSingleSelectionBar: View {
                         ShapePropertiesSection {
                             ShapePropertiesControlGroup("Opacity") {
                                 HStack(spacing: 0) {
-                                    TextField("", text: $editingOpacity, onEditingChanged: { editing in
-                                        if editing {
-                                            isOpacityFieldActive = true
-                                        } else {
-                                            // Commit to the LIVE selection, not the captured shapeId:
-                                            // SwiftUI keeps stale closures on a focused field after
-                                            // selection changes. Fall back to the captured id only
-                                            // when selection is no longer a single shape.
-                                            commitOpacity(to: state.selectedShapeId ?? shapeId)
-                                        }
-                                    })
-                                    .focused($focusedField, equals: .opacity)
-                                    .frame(width: propertiesOpacityFieldWidth)
-                                    .textFieldStyle(.roundedBorder)
-                                    .multilineTextAlignment(.center)
-                                    .integerKeyboard()
-                                    .onAppear {
-                                        editingOpacity = currentOpacityString(for: shapeId)
-                                    }
-                                    .onChange(of: shapeId) { oldId, newId in
-                                        // Flush any uncommitted value to the shape we WERE
-                                        // editing — oldId from onChange is reliable (unlike a
-                                        // captured shapeId) — then rebind to the new selection.
-                                        if isOpacityFieldActive { commitOpacity(to: oldId) }
-                                        editingOpacity = currentOpacityString(for: newId)
-                                        focusedField = nil
-                                    }
-                                    .onChange(of: shape.opacity) {
-                                        guard !isOpacityFieldActive else { return }
-                                        editingOpacity = currentOpacityString(for: shapeId)
-                                    }
-                                    .onSubmit {
-                                        commitOpacity(to: state.selectedShapeId ?? shapeId)
-                                    }
+                                    ShapePropertyField(
+                                        shapeId: shapeId,
+                                        field: .opacity,
+                                        text: $editingOpacity,
+                                        isActive: $isOpacityFieldActive,
+                                        focus: $focusedField,
+                                        width: propertiesOpacityFieldWidth,
+                                        clearsFocusOnSelectionChange: true,
+                                        modelValue: shape.opacity,
+                                        current: { currentOpacityString(for: $0) },
+                                        commit: { commitOpacity(to: $0) },
+                                        liveSelection: { state.selectedShapeId }
+                                    )
 
                                     Text("%")
                                         .font(.system(size: UIMetrics.FontSize.numericBadge))
@@ -239,36 +218,20 @@ struct ShapePropertiesSingleSelectionBar: View {
                                     .frame(width: UIMetrics.SliderWidth.standard)
 
                                 HStack(spacing: 0) {
-                                    TextField("", text: $editingRotation, onEditingChanged: { editing in
-                                        if editing {
-                                            isRotationFieldActive = true
-                                        } else {
-                                            commitRotation(to: state.selectedShapeId ?? shapeId)
-                                        }
-                                    })
-                                    .focused($focusedField, equals: .rotation)
-                                    .frame(width: propertiesNumericFieldWidth)
-                                    .textFieldStyle(.roundedBorder)
-                                    .multilineTextAlignment(.center)
-                                    .signedNumberKeyboard()
-                                    .onAppear {
-                                        editingRotation = currentRotationString(for: shapeId)
-                                    }
-                                    .onChange(of: shapeId) { oldId, newId in
-                                        // Flush to the shape we were editing (reliable oldId),
-                                        // then rebind to the new selection.
-                                        if isRotationFieldActive { commitRotation(to: oldId) }
-                                        editingRotation = currentRotationString(for: newId)
-                                        focusedField = nil
-                                    }
-                                    .onChange(of: shape.rotation) {
-                                        guard !isRotationFieldActive else { return }
-                                        let next = currentRotationString(for: shapeId)
-                                        if editingRotation != next { editingRotation = next }
-                                    }
-                                    .onSubmit {
-                                        commitRotation(to: state.selectedShapeId ?? shapeId)
-                                    }
+                                    ShapePropertyField(
+                                        shapeId: shapeId,
+                                        field: .rotation,
+                                        text: $editingRotation,
+                                        isActive: $isRotationFieldActive,
+                                        focus: $focusedField,
+                                        width: propertiesNumericFieldWidth,
+                                        keyboard: .signed,
+                                        clearsFocusOnSelectionChange: true,
+                                        modelValue: shape.rotation,
+                                        current: { currentRotationString(for: $0) },
+                                        commit: { commitRotation(to: $0) },
+                                        liveSelection: { state.selectedShapeId }
+                                    )
 
                                     Text("°")
                                         .font(.system(size: UIMetrics.FontSize.numericBadge))
