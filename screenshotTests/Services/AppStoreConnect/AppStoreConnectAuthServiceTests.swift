@@ -2,13 +2,15 @@ import CryptoKit
 @testable import Screenshot_Bro
 import Testing
 
-@Suite(.serialized)
+// Each test builds its own credential store over an isolated UserDefaults suite and an in-memory
+// secret store. Previously these ran against AppStoreConnectCredentialsStore.shared, which meant
+// writing a real ES256 private key into the developer's login Keychain and restoring it via a
+// hand-rolled snapshot — one missed `defer` away from leaving it behind. Nothing here is
+// process-global any more, so the suite needs no `.serialized`.
 struct AppStoreConnectAuthServiceTests {
-    @Test func credentialsRequireValidIssuerAndKeyId() throws {
-        let credentials = AppStoreConnectCredentialsStore.shared
-        let snapshot = CredentialsSnapshot.capture(from: credentials)
-        defer { snapshot.restore(into: credentials) }
 
+    @Test func credentialsRequireValidIssuerAndKeyId() throws {
+        let credentials = AppStoreConnectCredentialsStore.isolatedForTesting()
         credentials.isDemoMode = false
         credentials.issuerId = "not-a-uuid"
         credentials.keyId = "short"
@@ -18,10 +20,7 @@ struct AppStoreConnectAuthServiceTests {
     }
 
     @Test func authServiceReportsMissingPrivateKey() {
-        let credentials = AppStoreConnectCredentialsStore.shared
-        let snapshot = CredentialsSnapshot.capture(from: credentials)
-        defer { snapshot.restore(into: credentials) }
-
+        let credentials = AppStoreConnectCredentialsStore.isolatedForTesting()
         credentials.issuerId = "57246542-96fe-1a63-e053-0824d011072a"
         credentials.keyId = "ABC123DE45"
         credentials.deletePrivateKey()
@@ -34,10 +33,7 @@ struct AppStoreConnectAuthServiceTests {
     }
 
     @Test func demoModeReportsConfiguredEvenWithoutCredentials() {
-        let credentials = AppStoreConnectCredentialsStore.shared
-        let snapshot = CredentialsSnapshot.capture(from: credentials)
-        defer { snapshot.restore(into: credentials) }
-
+        let credentials = AppStoreConnectCredentialsStore.isolatedForTesting()
         credentials.issuerId = ""
         credentials.keyId = ""
         credentials.deletePrivateKey()
@@ -47,10 +43,7 @@ struct AppStoreConnectAuthServiceTests {
     }
 
     @Test func authServiceRejectsInvalidIssuerBeforeSigning() throws {
-        let credentials = AppStoreConnectCredentialsStore.shared
-        let snapshot = CredentialsSnapshot.capture(from: credentials)
-        defer { snapshot.restore(into: credentials) }
-
+        let credentials = AppStoreConnectCredentialsStore.isolatedForTesting()
         credentials.issuerId = "bad-issuer"
         credentials.keyId = "ABC123DE45"
         try credentials.savePrivateKey(P256.Signing.PrivateKey().pemRepresentation)
@@ -59,33 +52,6 @@ struct AppStoreConnectAuthServiceTests {
 
         #expect(throws: AppStoreConnectAuthError.invalidIssuerId) {
             _ = try auth.token()
-        }
-    }
-}
-
-private struct CredentialsSnapshot {
-    let issuerId: String
-    let keyId: String
-    let isDemoMode: Bool
-    let privateKeyPEM: String?
-
-    static func capture(from credentials: AppStoreConnectCredentialsStore) -> CredentialsSnapshot {
-        CredentialsSnapshot(
-            issuerId: credentials.issuerId,
-            keyId: credentials.keyId,
-            isDemoMode: credentials.isDemoMode,
-            privateKeyPEM: credentials.privateKeyPEM()
-        )
-    }
-
-    func restore(into credentials: AppStoreConnectCredentialsStore) {
-        credentials.issuerId = issuerId
-        credentials.keyId = keyId
-        credentials.isDemoMode = isDemoMode
-        if let privateKeyPEM {
-            try? credentials.savePrivateKey(privateKeyPEM)
-        } else {
-            credentials.deletePrivateKey()
         }
     }
 }

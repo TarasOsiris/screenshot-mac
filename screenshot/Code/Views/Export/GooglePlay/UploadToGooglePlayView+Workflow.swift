@@ -122,18 +122,10 @@ extension UploadToGooglePlayView {
     }
 
     func uploadFailureSummary(for error: Error) -> String {
-        if let uploadError = error as? GooglePlayUploadError {
-            return uploadError.summaryDescription
-        }
-        return String(localized: "Upload failed: \(error.localizedDescription)")
+        StoreUploadFailureText.summary(for: error)
     }
 
     func buildErrorDetails(for error: Error) -> String {
-        var details: [String] = [error.localizedDescription]
-        details.append("Package: \(packageName)")
-        if let uploadError = error as? GooglePlayUploadError {
-            details.append("Technical details:\n\(uploadError.technicalDescription)")
-        }
-        return details.joined(separator: "\n\n")
+        StoreUploadFailureText.details(for: error, context: ["Package: \(packageName)"])
     }
 }

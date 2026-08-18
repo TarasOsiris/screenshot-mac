@@ -8,7 +8,7 @@ enum AppStoreConnectVersionMetadata {
     /// edit returns 409 ("Attribute 'whatsNew' cannot be edited at this time"); retry without it
     /// so the remaining metadata still saves.
     static func patchLocalization(
-        _ api: AppStoreConnectAPIService,
+        _ api: some ASCUploadAPI,
         id: String,
         changes: [String: AnyEncodable]
     ) async throws {

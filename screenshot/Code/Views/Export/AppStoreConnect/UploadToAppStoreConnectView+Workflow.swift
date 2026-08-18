@@ -560,27 +560,21 @@ extension UploadToAppStoreConnectView {
     }
 
     func uploadFailureSummary(for error: Error) -> String {
-        if let uploadError = error as? AppStoreConnectUploadError {
-            return uploadError.summaryDescription
-        }
-        return String(localized: "Upload failed: \(error.localizedDescription)")
+        StoreUploadFailureText.summary(for: error)
     }
 
     func buildErrorDetails(for error: Error) -> String {
-        var details: [String] = [error.localizedDescription]
+        var context: [String] = []
         if let app = selectedApp {
-            details.append("App: \(app.attributes.name) (\(app.attributes.bundleId))")
+            context.append("App: \(app.attributes.name) (\(app.attributes.bundleId))")
         }
         if !selectedVersions.isEmpty {
             let versionDetails = selectedVersions.map { version in
                 let platform = version.attributes.displayPlatform.map { "\($0) " } ?? ""
                 return "\(platform)\(version.attributes.versionString) · \(version.attributes.displayState)"
             }.joined(separator: "\n")
-            details.append("Versions:\n\(versionDetails)")
+            context.append("Versions:\n\(versionDetails)")
         }
-        if let uploadError = error as? AppStoreConnectUploadError {
-            details.append("Technical details:\n\(uploadError.technicalDescription)")
-        }
-        return details.joined(separator: "\n\n")
+        return StoreUploadFailureText.details(for: error, context: context)
     }
 }

@@ -2,7 +2,7 @@ import Foundation
 
 /// Shared request models retained for the screenshot planner. The former delete-and-recreate
 /// uploader intentionally no longer exists; all screenshot writes go through the sync service.
-enum AppStoreConnectUploadError: Error, LocalizedError {
+enum AppStoreConnectUploadError: StoreUploadErrorDescribing, LocalizedError {
     case renderFailed(rowLabel: String, displayTypeLabel: String, localeLabel: String, index: Int)
     case noRowsSelected
     case requestFailed(ASCUploadFailureContext)

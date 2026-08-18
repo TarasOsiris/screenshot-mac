@@ -5,7 +5,7 @@ import AppKit
 import UIKit
 #endif
 
-enum GooglePlayUploadError: Error, LocalizedError {
+enum GooglePlayUploadError: StoreUploadErrorDescribing, LocalizedError {
     case renderFailed(rowLabel: String, imageTypeLabel: String, languageLabel: String, index: Int)
     case unreadableImages(rowLabel: String, languageLabel: String, fileNames: [String])
     case noRowsSelected
@@ -196,7 +196,7 @@ final class GooglePlayUploadService {
         targets: [GPUploadTarget],
         sendForReview: Bool,
         rows: [ScreenshotRow],
-        source: some RowRenderSource,
+        source: any RowRenderSource,
         progress: @escaping (UploadProgress) -> Void
     ) async throws -> Bool {
         guard !targets.isEmpty else { throw GooglePlayUploadError.noRowsSelected }
