@@ -152,7 +152,6 @@ final class AppState {
     /// Serializes off-main iCloud reloads so overlapping remote changes don't race on the
     /// tombstone merge / own-write bookkeeping.
     @ObservationIgnored var reloadTask: Task<Void, Never>?
-    var isLoadingImages = false
     var isOpeningProject = false
     var isFanOutTranslating = false
     /// False until the first `load()` completes. Lets the UI show a loading state instead of

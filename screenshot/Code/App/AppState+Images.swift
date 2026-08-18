@@ -187,7 +187,6 @@ extension AppState {
 
     func loadScreenshotImages() {
         guard let activeId = activeProjectId else {
-            isLoadingImages = false
             finishProjectOpening()
             return
         }
@@ -206,12 +205,9 @@ extension AppState {
 
         let toLoad = needed.filter { screenshotImages[$0] == nil }
         guard !toLoad.isEmpty else {
-            isLoadingImages = false
             finishProjectOpening()
             return
         }
-
-        isLoadingImages = true
 
         // Load downsampled images on a background thread, then update on main.
         // Full-resolution images are loaded from disk on-demand in export paths.
@@ -232,7 +228,6 @@ extension AppState {
             await MainActor.run {
                 guard let self, self.activeProjectId == activeId else { return }
                 self.screenshotImages.merge(loaded) { _, new in new }
-                self.isLoadingImages = false
                 self.finishProjectOpening()
             }
         }

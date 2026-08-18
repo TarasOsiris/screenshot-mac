@@ -241,7 +241,6 @@ extension AppState {
         cancelPendingDebounceTasks()
         imageLoadTask?.cancel()
         imageLoadTask = nil
-        isLoadingImages = false
         unregisterCustomFonts()
         screenshotImages = [:]
     }

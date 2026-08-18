@@ -77,17 +77,8 @@ struct FontPicker: View {
 
     #if os(macOS)
     private func pickCustomFont() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.font]
-        panel.allowsMultipleSelection = true
-        // Allow picking a folder so all variants (Bold, Italic, BoldItalic, ...) get
-        // imported in one gesture. Sandbox grants access to the chosen folder's contents.
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = true
-        panel.message = String(localized: "Pick a font file or a folder containing all variants")
-        guard panel.runModal() == .OK else { return }
         var lastImportedSelection: ImportedCustomFontSelection?
-        for url in panel.urls {
+        for url in FilePicker.pickFontFilesOrFolder() {
             if let imported = onImportFont?(url) {
                 lastImportedSelection = imported
             }

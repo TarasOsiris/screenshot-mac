@@ -56,18 +56,10 @@ struct ShapePropertiesSingleSelectionBar: View {
         return shapeIndex > 0
     }
 
+    /// macOS only: iPad routes image selection through `ImageSourceMenu` via `onImageSelected`.
     func pickAndReplaceImage(for shapeId: UUID) {
-        #if os(macOS)
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.image]
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        guard let image = NSImage.fromSecurityScopedURL(url) else { return }
+        guard let image = FilePicker.pickImage() else { return }
         state.saveImage(image, for: shapeId)
-        #endif
-        // iPad routes image selection through ImageSourceMenu (Photo Library / Camera / Files)
-        // via `onImageSelected`, so this NSOpenPanel path is macOS-only.
     }
 
     func idx(for shapeId: UUID) -> (row: Int, shape: Int)? {

@@ -177,20 +177,10 @@ struct SvgPasteDialog: View {
     }
 
     private func importFile() {
-        #if os(macOS)
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "svg") ?? .xml]
-        panel.allowsMultipleSelection = false
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        let didAccess = url.startAccessingSecurityScopedResource()
-        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        if let content = try? String(contentsOf: url, encoding: .utf8) {
-            svgText = content
-            errorMessage = nil
-            updatePreview()
-        }
-        #endif
-        // iPad: SVG file import via fileImporter is deferred; paste still works.
+        guard let content = FilePicker.pickSvgText() else { return }
+        svgText = content
+        errorMessage = nil
+        updatePreview()
     }
 
 }
