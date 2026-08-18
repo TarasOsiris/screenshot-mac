@@ -6,8 +6,8 @@ import UIKit
 import Foundation
 import UniformTypeIdentifiers
 
-/// The `NSOpenPanel` calls the view layer used to make inline. Views own presentation, not file
-/// access, and each of these sites carried its own copy of the same "iOS import is deferred to a
+/// The `NSOpenPanel` calls that three views used to make inline. Views own presentation, not
+/// file access, and each site carried its own copy of the same "iOS import is deferred to a
 /// follow-up" comment — so when that branch is written it now has one home instead of three.
 ///
 /// `SvgHelper.pickImageOrSvg()` is the same pattern in this layer and stays where it is; it

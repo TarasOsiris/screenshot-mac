@@ -7,7 +7,6 @@ import SwiftUI
 // What lives here is what both shells present identically. Layout that is genuinely per-platform
 // (the sidebar, the MCP automation pane, the backup button) stays in the two views.
 
-
 /// Drives the iCloud toggle: the migration is long-running and reports progress, so both screens
 /// need the same four pieces of state and the same enable/disable task.
 @MainActor

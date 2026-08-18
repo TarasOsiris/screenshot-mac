@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct FontPicker: View {
     @Binding var selection: String

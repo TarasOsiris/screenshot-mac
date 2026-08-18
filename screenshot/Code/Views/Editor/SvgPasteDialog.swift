@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct SvgPasteDialog: View {
     private static let title: LocalizedStringKey = "Add SVG"
