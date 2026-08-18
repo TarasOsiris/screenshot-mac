@@ -84,13 +84,11 @@ final class GooglePlayAuthService {
             "exp": iat + 3600
         ]
 
-        let headerJSON = try JSONSerialization.data(withJSONObject: header, options: [.sortedKeys])
-        let claimsJSON = try JSONSerialization.data(withJSONObject: claims, options: [.sortedKeys])
-        let signingInput = headerJSON.base64URLEncodedString + "." + claimsJSON.base64URLEncodedString
+        let signingInput = try JWT.signingInput(header: header, claims: claims)
 
         let key = try rsaPrivateKey(fromPEM: account.privateKeyPEM)
         let signature = try sign(Data(signingInput.utf8), with: key)
-        return signingInput + "." + signature.base64URLEncodedString
+        return JWT.token(signingInput: signingInput, signature: signature)
     }
 
     private func requestAccessToken(assertion: String, tokenURI: String) async throws -> (token: String, expiresIn: Int) {

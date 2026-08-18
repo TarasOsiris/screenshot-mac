@@ -220,3 +220,34 @@ struct StoreHTTPClientTests {
         }
     }
 }
+
+struct JWTTests {
+    /// Sorted keys keep the encoded payload deterministic — a signature is only reproducible
+    /// if the bytes that were signed are.
+    @Test func signingInputIsDeterministicRegardlessOfKeyOrder() throws {
+        let a = try JWT.signingInput(
+            header: ["alg": "ES256", "kid": "K1", "typ": "JWT"],
+            claims: ["iss": "I", "iat": 1, "exp": 2, "aud": "x"]
+        )
+        let b = try JWT.signingInput(
+            header: ["typ": "JWT", "kid": "K1", "alg": "ES256"],
+            claims: ["aud": "x", "exp": 2, "iat": 1, "iss": "I"]
+        )
+        #expect(a == b)
+    }
+
+    @Test func signingInputIsTwoBase64URLSegments() throws {
+        let input = try JWT.signingInput(header: ["alg": "RS256"], claims: ["iss": "a@b.com"])
+        let parts = input.split(separator: ".")
+        #expect(parts.count == 2)
+        // base64url uses -/_ and drops padding.
+        #expect(!input.contains("+") && !input.contains("/") && !input.contains("="))
+    }
+
+    @Test func tokenAppendsTheSignatureAsAThirdSegment() throws {
+        let input = try JWT.signingInput(header: ["alg": "ES256"], claims: ["iss": "I"])
+        let token = JWT.token(signingInput: input, signature: Data([0xDE, 0xAD, 0xBE, 0xEF]))
+        #expect(token.hasPrefix(input + "."))
+        #expect(token.split(separator: ".").count == 3)
+    }
+}

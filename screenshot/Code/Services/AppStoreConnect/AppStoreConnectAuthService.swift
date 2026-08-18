@@ -107,9 +107,7 @@ final class AppStoreConnectAuthService {
             "aud": "appstoreconnect-v1"
         ]
 
-        let headerJSON = try JSONSerialization.data(withJSONObject: header, options: [.sortedKeys])
-        let claimsJSON = try JSONSerialization.data(withJSONObject: claims, options: [.sortedKeys])
-        let signingInput = headerJSON.base64URLEncodedString + "." + claimsJSON.base64URLEncodedString
+        let signingInput = try JWT.signingInput(header: header, claims: claims)
 
         let signature: P256.Signing.ECDSASignature
         do {
@@ -119,7 +117,7 @@ final class AppStoreConnectAuthService {
             throw AppStoreConnectAuthError.signingFailed
         }
 
-        let token = signingInput + "." + signature.rawRepresentation.base64URLEncodedString
+        let token = JWT.token(signingInput: signingInput, signature: signature.rawRepresentation)
         cachedToken = CachedToken(
             token: token,
             expiresAt: Date(timeIntervalSince1970: TimeInterval(exp)),
