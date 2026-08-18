@@ -208,29 +208,24 @@ final class GooglePlayUploadService {
 
                 // Backgrounds are locale-independent, so the (blur-only) precomposed row strip is
                 // built once and shared across every language — same as `ExportService.exportAll`.
-                var rowBackground: NSImage?
+                var context: RowRenderContext?
 
-                for (languageIndex, language) in target.languages.enumerated() {
+                for language in target.languages {
                     try Task.checkCancellation()
                     let planLabel = "\(target.rowLabel) · \(language.label) · \(target.imageType.label)"
-                    let fileNames = appState.referencedImageFileNames(forRow: row, localeCode: language.projectCode)
-                    let rowImages = appState.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
-                    if languageIndex == 0 {
-                        rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
-                            row: row,
-                            screenshotImages: rowImages,
-                            displayScale: 1.0,
-                            labelPrefix: "play upload row"
-                        )
-                    }
-                    let rendered = try await renderScreenshots(
+                    let rowContext = RowRenderContext.load(
                         row: row,
-                        rowImages: rowImages,
-                        rowBackground: rowBackground,
+                        localeCode: language.projectCode,
+                        from: appState,
+                        label: "play upload row",
+                        cache: &imageCache,
+                        reusing: context
+                    )
+                    context = rowContext
+                    let rendered = try await renderScreenshots(
+                        context: rowContext,
                         target: target,
                         language: language,
-                        localeState: appState.localeState,
-                        fontFamilies: fontFamilies,
                         emit: emit
                     )
 
@@ -284,13 +279,9 @@ final class GooglePlayUploadService {
     }
 
     private func renderScreenshots(
-        row: ScreenshotRow,
-        rowImages: [String: NSImage],
-        rowBackground: NSImage?,
+        context: RowRenderContext,
         target: GPUploadTarget,
         language: GPUploadLanguage,
-        localeState: LocaleState,
-        fontFamilies: Set<String>,
         emit: (String) -> Void
     ) async throws -> [RenderedScreenshot] {
         var screenshots: [RenderedScreenshot] = []
@@ -299,15 +290,7 @@ final class GooglePlayUploadService {
         for templateIndex in 0..<target.templateCount {
             try Task.checkCancellation()
             emit("Rendering \(target.rowLabel) · \(language.label) · \(templateIndex + 1)/\(target.templateCount)")
-            let image = ExportService.renderSingleTemplateImage(
-                index: templateIndex,
-                row: row,
-                screenshotImages: rowImages,
-                localeCode: language.projectCode,
-                localeState: localeState,
-                availableFontFamilies: fontFamilies,
-                preRenderedRowBackground: rowBackground
-            )
+            let image = context.templateImage(at: templateIndex)
             // The SwiftUI render must stay on the main actor; the encode must not, or the upload UI
             // freezes. Play rejects an alpha channel, so encode opaque.
             guard let data = await ExportImageEncoder.opaquePNGDataOffMain(from: image) else {
@@ -320,7 +303,7 @@ final class GooglePlayUploadService {
             }
             // Match the on-disk export name (e.g. 01_Onboarding_en.png) using the project locale code.
             let fileName = ExportFileNaming.screenshotFileName(
-                row: row,
+                row: context.row,
                 localeCode: language.projectCode,
                 index: templateIndex,
                 customSuffix: ExportFileNaming.preferredCustomSuffix

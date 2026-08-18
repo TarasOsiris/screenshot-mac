@@ -114,23 +114,17 @@ extension EditorRowView {
             #endif
 
             do {
-                let localeCode = state.localeState.activeLocaleCode
-                let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-                let rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
+                var cache: [String: NSImage] = [:]
+                let context = RowRenderContext.load(
                     row: row,
-                    screenshotImages: images,
-                    displayScale: 1.0,
-                    labelPrefix: "row export"
+                    localeCode: state.localeState.activeLocaleCode,
+                    from: state,
+                    label: "row export",
+                    cache: &cache
                 )
 
                 try await withThrowingTaskGroup(of: Void.self) { group in
-                    for index in row.templates.indices {
-                        let image = ExportService.renderSingleTemplateImage(
-                            index: index, row: row, screenshotImages: images,
-                            localeCode: localeCode, localeState: state.localeState,
-                            availableFontFamilies: state.availableFontFamilySet,
-                            preRenderedRowBackground: rowBackground
-                        )
+                    try await context.forEachTemplate { index, image in
                         let padded = String(format: "%02d", index + 1)
                         let fileURL = folder.appendingPathComponent("\(padded)_screenshot.png")
                         group.addTask {
@@ -139,9 +133,6 @@ extension EditorRowView {
                             }
                             try data.write(to: fileURL)
                         }
-                        // `addTask` doesn't suspend — without this the row's renders run as one
-                        // uninterrupted main-actor job (SCREENSHOT-BRO-3's app-hang shape).
-                        await Task.yield()
                     }
                     try await group.waitForAll()
                 }

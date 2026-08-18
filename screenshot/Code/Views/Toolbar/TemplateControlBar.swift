@@ -381,22 +381,17 @@ struct TemplateControlBar: View {
         renderError = nil
         Task {
             defer { isPreviewing = false }
-            let images = onLoadFullResImages?() ?? screenshotImages
-            let rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
+            let context = RowRenderContext(
                 row: row,
-                screenshotImages: images,
-                displayScale: 1.0,
-                labelPrefix: "preview row"
+                images: onLoadFullResImages?() ?? screenshotImages,
+                localeCode: localeState.activeLocaleCode,
+                localeState: localeState,
+                availableFontFamilies: state.availableFontFamilySet,
+                label: "preview row"
             )
-            let fontFamilies = state.availableFontFamilySet
             var urls: [URL] = []
-            for i in row.templates.indices {
-                let image = ExportService.renderSingleTemplateImage(
-                    index: i, row: row, screenshotImages: images,
-                    localeCode: localeState.activeLocaleCode, localeState: localeState,
-                    availableFontFamilies: fontFamilies,
-                    preRenderedRowBackground: rowBackground
-                )
+            for i in context.templateIndices {
+                let image = context.templateImage(at: i)
                 let tempURL = FileManager.default.temporaryDirectory
                     .appendingPathComponent("screenshot-\(i + 1)-\(localeState.activeLocaleCode).png")
                 do {

@@ -200,11 +200,11 @@ final class AppStoreConnectScreenshotSyncService {
             for target in targets {
                 guard let row = appState.rows.first(where: { $0.id == target.rowId }) else { continue }
 
-                // Backgrounds are locale-independent, so the (blur-only) precomposed row strip is
-                // built once and shared across every localization — same as `ExportService.exportAll`.
-                var rowBackground: NSImage?
+                // Backgrounds are locale-independent, so the context (and its blur-only
+                // precomposed strip) is built once and reused across every localization.
+                var context: RowRenderContext?
 
-                for (localizationIndex, localization) in target.localizations.enumerated() {
+                for localization in target.localizations {
                     try Task.checkCancellation()
                     let diffId = Self.diffSetId(target: target, localization: localization)
                     guard targetsBySetId[diffId] == nil else {
@@ -213,34 +213,28 @@ final class AppStoreConnectScreenshotSyncService {
                         )
                     }
                     progress("Rendering \(target.rowLabel) · \(localization.label)")
-                    let imageNames = appState.referencedImageFileNames(forRow: row, localeCode: localization.localeCode)
-                    let rowImages = appState.loadFullResolutionImages(fileNames: imageNames, cache: &imageCache)
+                    let rowContext = RowRenderContext.load(
+                        row: row,
+                        localeCode: localization.localeCode,
+                        from: appState,
+                        label: "asc sync row",
+                        cache: &imageCache,
+                        reusing: context
+                    )
+                    context = rowContext
                     // Rendering degrades silently to a hole, so refuse to ship a screenshot
                     // whose image the model references but disk can't produce.
-                    let unreadable = imageNames.subtracting(rowImages.keys).sorted()
-                    if !unreadable.isEmpty {
+                    if !rowContext.missingImageFileNames.isEmpty {
                         throw ASCScreenshotSyncError.unreadableImages(
                             rowLabel: target.rowLabel,
                             localeLabel: localization.label,
-                            fileNames: unreadable
-                        )
-                    }
-                    if localizationIndex == 0 {
-                        rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
-                            row: row,
-                            screenshotImages: rowImages,
-                            displayScale: 1.0,
-                            labelPrefix: "asc sync row"
+                            fileNames: rowContext.missingImageFileNames
                         )
                     }
                     let localAssets = try await renderAssets(
-                        row: row,
+                        context: rowContext,
                         target: target,
                         localization: localization,
-                        rowImages: rowImages,
-                        rowBackground: rowBackground,
-                        localeState: appState.localeState,
-                        fontFamilies: fontFamilies,
                         directory: directory.appendingPathComponent(Self.safeFileName(diffId), isDirectory: true)
                     )
                     progress("Comparing \(target.rowLabel) · \(localization.label)")
@@ -706,13 +700,9 @@ final class AppStoreConnectScreenshotSyncService {
     }
 
     private func renderAssets(
-        row: ScreenshotRow,
+        context: RowRenderContext,
         target: ASCUploadTarget,
         localization: ASCUploadLocalization,
-        rowImages: [String: NSImage],
-        rowBackground: NSImage?,
-        localeState: LocaleState,
-        fontFamilies: Set<String>,
         directory: URL
     ) async throws -> [ASCScreenshotLocalAsset] {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -720,15 +710,7 @@ final class AppStoreConnectScreenshotSyncService {
         for index in 0..<target.templateCount {
             try Task.checkCancellation()
             // Rendering needs the main actor (ImageRenderer); everything after it does not.
-            let image = ExportService.renderSingleTemplateImage(
-                index: index,
-                row: row,
-                screenshotImages: rowImages,
-                localeCode: localization.localeCode,
-                localeState: localeState,
-                availableFontFamilies: fontFamilies,
-                preRenderedRowBackground: rowBackground
-            )
+            let image = context.templateImage(at: index)
             guard let data = await ExportImageEncoder.opaquePNGDataOffMain(from: image) else {
                 throw AppStoreConnectUploadError.renderFailed(
                     rowLabel: target.rowLabel,
@@ -738,7 +720,7 @@ final class AppStoreConnectScreenshotSyncService {
                 )
             }
             let fileName = ExportFileNaming.screenshotFileName(
-                row: row,
+                row: context.row,
                 localeCode: localization.localeCode,
                 index: index,
                 customSuffix: ExportFileNaming.preferredCustomSuffix

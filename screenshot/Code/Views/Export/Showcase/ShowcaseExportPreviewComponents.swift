@@ -257,27 +257,20 @@ struct ShowcaseRowPreview: View {
     }
 
     func renderTemplates(renderScale: CGFloat) async {
-        let rowImages = loadImages()
-        let rowBackground = ExportService.precomposedRowBackgroundIfNeeded(
+        let context = RowRenderContext(
             row: row,
-            screenshotImages: rowImages,
+            images: loadImages(),
+            localeCode: localeCode,
+            localeState: localeState,
+            availableFontFamilies: availableFontFamilies ?? PlatformFonts.familyNameSet,
             displayScale: renderScale,
-            labelPrefix: "showcase preview"
+            label: "showcase preview"
         )
         var rendered: [NSImage] = []
-        for i in 0..<row.templates.count {
+        for index in context.templateIndices {
             guard !Task.isCancelled else { return }
             await Task.yield()
-            rendered.append(ExportService.renderSingleTemplateImage(
-                index: i,
-                row: row,
-                screenshotImages: rowImages,
-                localeCode: localeCode,
-                localeState: localeState,
-                availableFontFamilies: availableFontFamilies,
-                displayScale: renderScale,
-                preRenderedRowBackground: rowBackground
-            ))
+            rendered.append(context.templateImage(at: index))
         }
         guard !Task.isCancelled else { return }
         templateImages = rendered

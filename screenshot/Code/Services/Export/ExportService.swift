@@ -125,34 +125,30 @@ struct ExportService {
                     "pixels": Int(row.templateWidth * row.templateHeight),
                 ])
 
-                var rowBackground: NSImage?
-                for (groupIndex, group) in localeGroups.enumerated() {
+                var context: RowRenderContext?
+                for group in localeGroups {
                     let renderCode = group[0].code
                     let images = imageProvider(row, renderCode)
-                    if groupIndex == 0 {
-                        rowBackground = precomposedRowBackgroundIfNeeded(
+                    // The first group builds the context (and the precomposed background when the
+                    // row is blurred); later locales reuse it against their own images.
+                    let rowContext = context?.withLocale(renderCode, images: images)
+                        ?? RowRenderContext(
                             row: row,
-                            screenshotImages: images,
-                            displayScale: 1.0,
-                            labelPrefix: "export row"
+                            images: images,
+                            localeCode: renderCode,
+                            localeState: localeState,
+                            availableFontFamilies: availableFontFamilies ?? PlatformFonts.familyNameSet,
+                            label: "export row"
                         )
-                    }
+                    context = rowContext
 
                     // Encode all templates of this group concurrently, then await
                     // before the next group to bound memory usage.
                     try await withThrowingTaskGroup(of: Int.self) { taskGroup in
-                        for index in row.templates.indices {
+                        for index in rowContext.templateIndices {
                             try Task.checkCancellation()
 
-                            let image = renderSingleTemplateImage(
-                                index: index,
-                                row: row,
-                                screenshotImages: images,
-                                localeCode: renderCode,
-                                localeState: localeState,
-                                availableFontFamilies: availableFontFamilies,
-                                preRenderedRowBackground: rowBackground
-                            )
+                            let image = rowContext.templateImage(at: index)
                             let fileURLs: [URL] = group.map { locale in
                                 let filename = ExportFileNaming.screenshotFileName(row: row, localeCode: locale.code, index: index, customSuffix: customSuffix, format: format)
                                 return destFolder(for: locale.code).appendingPathComponent(filename)
