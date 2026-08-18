@@ -399,7 +399,7 @@ private struct ProjectContextMenuPreview: View {
 
 private struct ProjectCard: View {
     let project: Project
-    @State private var snapshot: Image?
+    @State private var snapshot: NSImage?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -441,7 +441,7 @@ private struct ProjectCard: View {
             .aspectRatio(4.0 / 3.0, contentMode: .fit)
             .overlay {
                 if let snapshot {
-                    snapshot
+                    Image(nsImage: snapshot)
                         .resizable()
                         .scaledToFill()
                 } else {

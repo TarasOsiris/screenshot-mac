@@ -1,5 +1,4 @@
 import OSLog
-import SwiftUI
 @preconcurrency import Translation
 
 extension Optional where Wrapped == TranslationSession.Configuration {
@@ -392,30 +391,5 @@ enum TranslationLanguageIssue: Identifiable, Equatable {
     var offersSettings: Bool {
         if case .notDownloaded = self { return true }
         return false
-    }
-}
-
-extension View {
-    func translationLanguageIssueAlert(item: Binding<TranslationLanguageIssue?>) -> some View {
-        let isPresented = Binding(
-            get: { item.wrappedValue != nil },
-            set: { if !$0 { item.wrappedValue = nil } }
-        )
-        return alert(
-            item.wrappedValue?.title ?? "",
-            isPresented: isPresented,
-            presenting: item.wrappedValue
-        ) { issue in
-            #if os(macOS)
-            if issue.offersSettings, let url = URL(string: "x-apple.systempreferences:com.apple.SystemPreferences.TranslationSettings") {
-                Button("Open Translation Settings") {
-                    NSWorkspace.shared.open(url)
-                }
-            }
-            #endif
-            Button("OK", role: .cancel) {}
-        } message: { issue in
-            Text(issue.message)
-        }
     }
 }

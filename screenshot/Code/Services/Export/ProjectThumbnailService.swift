@@ -1,5 +1,10 @@
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 import CoreText
-import SwiftUI
+import Foundation
 
 /// Bounds how many thumbnails build concurrently. Without this, scrolling a grid of N cards
 /// fans out N detached IO tasks — each potentially blocking on an undownloaded iCloud file —
@@ -61,16 +66,18 @@ enum ProjectThumbnailService {
 
     private nonisolated static let targetDisplaySize = CGSize(width: 900, height: 675)
     private nonisolated static let diskCacheVersion = Data([2])
-    private static var cache: [Key: Image] = [:]
+    private static var cache: [Key: NSImage] = [:]
 
-    static func thumbnail(for project: Project) async -> Image? {
+    /// Returns a bitmap, not a SwiftUI `Image`: a service that vends a view type drags `Views/`
+    /// into `Services/`. Callers wrap it at the render site.
+    static func thumbnail(for project: Project) async -> NSImage? {
         let key = Key(id: project.id, modifiedAt: project.modifiedAt)
         if let cached = cache[key] { return cached }
 
         // Disk cache: a previously-rendered PNG that's at least as new as the project.
         if let nsImage = await Task.detached(priority: .utility, operation: { diskCachedImage(for: project) }).value {
             if Task.isCancelled { return nil }
-            return store(Image(nsImage: nsImage), for: key)
+            return store(nsImage, for: key)
         }
 
         await ThumbnailConcurrencyGate.shared.acquire()
@@ -97,11 +104,11 @@ enum ProjectThumbnailService {
             writeDiskCache(full, to: url, versionURL: versionURL, modifiedAt: modifiedAt)
         }.value
 
-        return store(Image(nsImage: full), for: key)
+        return store(full, for: key)
     }
 
     @discardableResult
-    private static func store(_ image: Image, for key: Key) -> Image {
+    private static func store(_ image: NSImage, for key: Key) -> NSImage {
         // Drop any older snapshot for this project so the cache doesn't grow per edit.
         cache = cache.filter { $0.key.id != key.id }
         cache[key] = image
