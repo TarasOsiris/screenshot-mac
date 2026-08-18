@@ -8,7 +8,11 @@ enum ASCUploadLimits {
 }
 
 enum AppStoreConnectUploadValidator {
-    static func validate(destinations: [ASCDestinationPlan]) -> [UploadIssue] {
+    /// In demo mode the upload is simulated, so per-row App Store rules (size match, screenshot
+    /// count, duplicate target, locale matching) become advisory warnings instead of hard blockers
+    /// — the wizard must run end-to-end for any project. Structural issues (no rows / no enabled
+    /// rows / version not editable) keep their original severity.
+    static func validate(destinations: [ASCDestinationPlan], isDemoMode: Bool) -> [UploadIssue] {
         if destinations.isEmpty {
             return [
                 UploadIssue(
@@ -21,6 +25,7 @@ enum AppStoreConnectUploadValidator {
         return destinations.flatMap { destination in
             validate(version: destination.version, plans: destination.rowPlans)
                 .map { $0.scoped(to: destination.title) }
+                .map { isDemoMode && $0.demoDowngradable ? $0.with(severity: .warning) : $0 }
         }
     }
 

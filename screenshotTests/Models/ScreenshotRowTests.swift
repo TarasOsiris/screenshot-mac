@@ -206,6 +206,29 @@ struct ScreenshotRowTests {
         #expect(row.isSpanningBackground == false, "Disabled when flag is off")
     }
 
+    // MARK: - Blur gate
+
+    /// This predicate is what routes a row's editor preview through the export renderer. When it
+    /// only looked at `backgroundBlur`, a blurred per-template override drew with SwiftUI `.blur`
+    /// in the editor and CIGaussianBlur in export — two different kernels, no parity.
+    @Test func hasBlurredBackgroundCoversTemplateOverrides() {
+        var row = ScreenshotRow(templates: [ScreenshotTemplate(), ScreenshotTemplate()])
+        #expect(row.hasBlurredBackground == false, "Nothing blurred")
+
+        row.backgroundBlur = 12
+        #expect(row.hasBlurredBackground == true, "Row blur")
+
+        row.backgroundBlur = 0
+        row.templates[1].backgroundBlur = 12
+        #expect(row.hasBlurredBackground == false, "Blur on a template that isn't overriding is inert")
+
+        row.templates[1].overrideBackground = true
+        #expect(row.hasBlurredBackground == true, "Enabled override with blur")
+
+        row.templates[1].backgroundBlur = 0
+        #expect(row.hasBlurredBackground == false, "Override without blur")
+    }
+
     // MARK: - Codable round-trip
 
     @Test func codableRoundTrip() throws {

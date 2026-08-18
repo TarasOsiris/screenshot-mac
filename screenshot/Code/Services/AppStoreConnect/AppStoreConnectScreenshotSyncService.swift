@@ -171,10 +171,12 @@ final class AppStoreConnectScreenshotSyncService {
     func buildPlan(
         appId: String,
         targets: [ASCUploadTarget],
-        appState: AppState,
+        rows: [ScreenshotRow],
+        source: some RowRenderSource,
+        document: DocumentStamp?,
         progress: @escaping (String) -> Void = { _ in }
     ) async throws -> ASCScreenshotSyncPlan {
-        guard let projectId = appState.activeProjectId else {
+        guard let document else {
             throw ASCScreenshotSyncError.invalidPlan(String(localized: "Open a project before reviewing screenshots."))
         }
         guard !targets.isEmpty else { throw ASCScreenshotSyncError.noSetsSelected }
@@ -190,7 +192,6 @@ final class AppStoreConnectScreenshotSyncService {
         var targetsBySetId: [String: ASCUploadTarget] = [:]
         var localizationsBySetId: [String: ASCUploadLocalization] = [:]
         var imageCache: [String: NSImage] = [:]
-        let fontFamilies = appState.availableFontFamilySet
         CrashReportingService.breadcrumb(.upload, "ASC plan build started", data: [
             "targets": targets.count,
             "localizations": targets.reduce(0) { $0 + $1.localizations.count },
@@ -198,7 +199,7 @@ final class AppStoreConnectScreenshotSyncService {
 
         do {
             for target in targets {
-                guard let row = appState.rows.first(where: { $0.id == target.rowId }) else { continue }
+                guard let row = rows.first(where: { $0.id == target.rowId }) else { continue }
 
                 // Backgrounds are locale-independent, so the context (and its blur-only
                 // precomposed strip) is built once and reused across every localization.
@@ -216,7 +217,7 @@ final class AppStoreConnectScreenshotSyncService {
                     let rowContext = RowRenderContext.load(
                         row: row,
                         localeCode: localization.localeCode,
-                        from: appState,
+                        from: source,
                         label: "asc sync row",
                         cache: &imageCache,
                         reusing: context
@@ -277,8 +278,8 @@ final class AppStoreConnectScreenshotSyncService {
             id: planId,
             createdAt: now,
             expiresAt: now.addingTimeInterval(Self.planLifetime),
-            projectId: projectId,
-            projectModifiedAt: Self.projectModifiedStamp(appState),
+            projectId: document.projectId,
+            projectModifiedAt: document.modifiedAt,
             appId: appId,
             sets: diffs,
             issues: [],
@@ -295,11 +296,11 @@ final class AppStoreConnectScreenshotSyncService {
     func apply(
         planId: String,
         setIds: Set<String>,
-        appState: AppState,
+        document: DocumentStamp?,
         progress: @escaping (UploadProgress) -> Void = { _ in }
     ) async throws -> ASCScreenshotSyncResult {
         guard !setIds.isEmpty else { throw ASCScreenshotSyncError.noSetsSelected }
-        let cached = try validCachedPlan(id: planId, appState: appState)
+        let cached = try validCachedPlan(id: planId, document: document)
         let selected = cached.plan.sets.filter { setIds.contains($0.id) }
         guard selected.count == setIds.count, selected.allSatisfy({ $0.isChanged && $0.canApply }) else {
             throw ASCScreenshotSyncError.invalidPlan(String(localized: "One or more selected screenshot sets cannot be applied."))
@@ -332,7 +333,7 @@ final class AppStoreConnectScreenshotSyncService {
 
         // Revalidation suspends; perform the project/expiry guard once more immediately before
         // the first App Store mutation.
-        _ = try validCachedPlan(id: planId, appState: appState)
+        _ = try validCachedPlan(id: planId, document: document)
 
         var results: [ASCScreenshotSetSyncResult] = []
         var activeSet: ASCScreenshotSetDiff?
@@ -860,23 +861,18 @@ final class AppStoreConnectScreenshotSyncService {
         return actual
     }
 
-    private func validCachedPlan(id: String, appState: AppState) throws -> CachedPlan {
+    private func validCachedPlan(id: String, document: DocumentStamp?) throws -> CachedPlan {
         guard let cached = cache[id] else { throw ASCScreenshotSyncError.planNotFound }
         guard cached.plan.expiresAt > Date() else {
             discardPlan(id)
             throw ASCScreenshotSyncError.planExpired
         }
-        guard appState.activeProjectId == cached.plan.projectId,
-              Self.projectModifiedStamp(appState) == cached.plan.projectModifiedAt else {
+        guard let document,
+              document.projectId == cached.plan.projectId,
+              document.modifiedAt == cached.plan.projectModifiedAt else {
             throw ASCScreenshotSyncError.staleProject
         }
         return cached
-    }
-
-    /// Both the build and the pre-write guard must derive this the same way, or a project with
-    /// no recorded modification date can never satisfy the guard it was stamped with.
-    private static func projectModifiedStamp(_ appState: AppState) -> Date? {
-        appState.activeProjectDataModifiedAt ?? appState.activeProject?.modifiedAt
     }
 
     /// A 409 here nearly always means the app version doesn't support that device family (iPad

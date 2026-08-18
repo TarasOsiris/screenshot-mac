@@ -44,11 +44,12 @@ struct ExportFolderBookmark {
     var hasDestination: Bool { !bookmarkData.isEmpty }
 
     /// Resolves the stored bookmark, refreshing it when the OS hands back a renewed one and
-    /// clearing it when it no longer resolves (folder deleted, permission revoked).
+    /// clearing it when it no longer resolves (folder deleted, permission revoked). Both keys go
+    /// together — a lingering display path would advertise a destination that can't be exported to.
     func resolve() -> URL? {
         let stored = bookmarkData
         guard let result = ExportFolderService.resolveBookmark(stored) else {
-            if !stored.isEmpty { defaults.removeObject(forKey: Self.bookmarkKey) }
+            if !stored.isEmpty { clear() }
             return nil
         }
         if let refreshed = result.refreshedBookmark {

@@ -195,14 +195,14 @@ final class GooglePlayUploadService {
         packageName: String,
         targets: [GPUploadTarget],
         sendForReview: Bool,
-        appState: AppState,
+        rows: [ScreenshotRow],
+        source: some RowRenderSource,
         progress: @escaping (UploadProgress) -> Void
     ) async throws -> Bool {
         guard !targets.isEmpty else { throw GooglePlayUploadError.noRowsSelected }
 
         let totalSteps = targets.reduce(0) { $0 + ($1.templateCount * $1.languages.count) }
         var completedSteps = 0
-        let fontFamilies = appState.availableFontFamilySet
         var imageCache: [String: NSImage] = [:]
 
         func emit(_ label: String) {
@@ -216,7 +216,7 @@ final class GooglePlayUploadService {
 
         do {
             for target in targets {
-                guard let row = appState.rows.first(where: { $0.id == target.rowId }) else { continue }
+                guard let row = rows.first(where: { $0.id == target.rowId }) else { continue }
 
                 // Backgrounds are locale-independent, so the (blur-only) precomposed row strip is
                 // built once and shared across every language — same as `ExportService.exportAll`.
@@ -228,7 +228,7 @@ final class GooglePlayUploadService {
                     let rowContext = RowRenderContext.load(
                         row: row,
                         localeCode: language.projectCode,
-                        from: appState,
+                        from: source,
                         label: "play upload row",
                         cache: &imageCache,
                         reusing: context

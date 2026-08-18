@@ -10,6 +10,13 @@ import Foundation
 /// The locale targets stay separate types — Apple's carries a user choice over a fetched list of
 /// localizations, Play's is a pure function of the project locale code — so they are the second
 /// parameter rather than being forced into a shared shape.
+/// Which document version an upload plan was built from. A cached plan is only still valid while
+/// both halves match, so services can hold this instead of reaching into `AppState` for it.
+nonisolated struct DocumentStamp: Equatable {
+    let projectId: UUID
+    let modifiedAt: Date?
+}
+
 nonisolated struct StoreRowPlan<AssetType, LocaleTarget: Identifiable>: Identifiable {
     let id: UUID
     var rowLabel: String

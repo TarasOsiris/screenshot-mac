@@ -646,6 +646,11 @@ struct ExportServiceTests {
             bgColor: Self.testGreen
         )
 
+        // `renderEditorBitmap` goes through the rasterized background renderer, which the editor
+        // only uses when this predicate is true. Without the check this test compares two
+        // export-side renderers and stays green while the editor draws a SwiftUI `.blur` instead.
+        #expect(row.hasBlurredBackground, "Editor must route this row through the rasterized path")
+
         let exportBitmap = try renderTemplateBitmap(index: 1, row: row)
         let editorBitmap = try renderEditorBitmap(index: 1, row: row)
 

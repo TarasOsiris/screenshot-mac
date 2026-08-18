@@ -478,7 +478,7 @@ extension UploadToAppStoreConnectView {
         isBusy = true
         defer { isBusy = false; uploadTask = nil }
         advance(to: .reviewingChanges)
-        await screenshotSync.build(appId: appId, targets: targets, appState: state)
+        await screenshotSync.build(appId: appId, targets: targets, rows: state.rows, source: state, document: state.documentStamp)
         if screenshotSync.plan == nil {
             errorMessage = screenshotSync.errorMessage
         }
@@ -488,7 +488,7 @@ extension UploadToAppStoreConnectView {
         guard let appId = selectedApp?.id else { return }
         isBusy = true
         defer { isBusy = false; uploadTask = nil }
-        await screenshotSync.build(appId: appId, targets: buildUploadTargets(), appState: state)
+        await screenshotSync.build(appId: appId, targets: buildUploadTargets(), rows: state.rows, source: state, document: state.documentStamp)
         errorMessage = screenshotSync.errorMessage
     }
 
@@ -515,7 +515,7 @@ extension UploadToAppStoreConnectView {
         uploadProgress = UploadProgress(totalSteps: 1, completedSteps: 0, currentLabel: "Preparing safe screenshot sync…")
         advance(to: .uploading)
         isBusy = true
-        await screenshotSync.build(appId: appId, targets: targets, appState: state)
+        await screenshotSync.build(appId: appId, targets: targets, rows: state.rows, source: state, document: state.documentStamp)
         isBusy = false
 
         guard let plan = screenshotSync.plan else {
@@ -570,7 +570,7 @@ extension UploadToAppStoreConnectView {
         isBusy = true
         defer { isBusy = false; uploadTask = nil }
 
-        await screenshotSync.apply(appState: state, progress: { p in self.uploadProgress = p })
+        await screenshotSync.apply(document: state.documentStamp, progress: { p in self.uploadProgress = p })
         if screenshotSync.result?.succeeded == true {
             finishScreenshotSync(using: selectedSets)
         } else {

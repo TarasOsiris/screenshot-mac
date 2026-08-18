@@ -235,7 +235,9 @@ extension MCPToolExecutor {
         let plan = try await AppStoreConnectScreenshotSyncService.shared.buildPlan(
             appId: appId,
             targets: targets,
-            appState: state
+            rows: state.rows,
+            source: state,
+            document: state.documentStamp
         )
         let result = ASCScreenshotPreviewResult(
             planId: plan.id,
@@ -281,7 +283,7 @@ extension MCPToolExecutor {
         let result = try await AppStoreConnectScreenshotSyncService.shared.apply(
             planId: planId,
             setIds: Set(ids),
-            appState: state
+            document: state.documentStamp
         )
         return try MCPResultEncoding.result(ASCScreenshotApplyResult(
             planId: result.planId,

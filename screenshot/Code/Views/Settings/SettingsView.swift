@@ -27,8 +27,8 @@ struct SettingsView: View {
     @AppStorage("exportFormat") private var exportFormat = "png"
     @AppStorage("exportCustomSuffix") private var exportCustomSuffix = ""
     @AppStorage("openExportFolderOnSuccess") private var openExportFolderOnSuccess = true
-    @AppStorage("lastExportFolderBookmark") private var lastExportFolderBookmark = Data()
-    @AppStorage("lastExportFolderPath") private var lastExportFolderPath = ""
+    /// Observation only — `ExportFolderBookmark` owns every read and write of the bookmark pair.
+    @AppStorage(ExportFolderBookmark.pathKey) private var lastExportFolderPath = ""
     @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
     @AppStorage("defaultZoomLevel") private var defaultZoomLevel = 1.0
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
@@ -353,10 +353,8 @@ struct SettingsView: View {
                                 .foregroundStyle(.tertiary)
                         }
                         Button("Choose…") {
-                            guard let url = ExportFolderService.chooseFolder(),
-                                  let result = ExportFolderService.saveBookmark(for: url) else { return }
-                            lastExportFolderBookmark = result.bookmark
-                            lastExportFolderPath = result.path
+                            guard let url = ExportFolderService.chooseFolder() else { return }
+                            ExportFolderBookmark().save(url)
                         }
                     }
                 }
@@ -393,8 +391,7 @@ struct SettingsView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Button {
-                lastExportFolderBookmark = Data()
-                lastExportFolderPath = ""
+                ExportFolderBookmark().clear()
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(.secondary)

@@ -218,6 +218,16 @@ final class AppState {
         visibleProjects.first { $0.id == activeProjectId }
     }
 
+    /// nil when no project is open. `activeProjectDataModifiedAt` wins because it tracks the last
+    /// write of the row data itself; the project record's own timestamp is the fallback.
+    var documentStamp: DocumentStamp? {
+        guard let activeProjectId else { return nil }
+        return DocumentStamp(
+            projectId: activeProjectId,
+            modifiedAt: activeProjectDataModifiedAt ?? activeProject?.modifiedAt
+        )
+    }
+
     var visibleProjects: [Project] {
         projects.filter { !$0.isDeleted }
     }

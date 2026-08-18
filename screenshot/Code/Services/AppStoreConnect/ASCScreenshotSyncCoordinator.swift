@@ -59,7 +59,7 @@ final class ASCScreenshotSyncCoordinator {
         return parts.joined(separator: " ")
     }
 
-    func build(appId: String, targets: [ASCUploadTarget], appState: AppState) async {
+    func build(appId: String, targets: [ASCUploadTarget], rows: [ScreenshotRow], source: some RowRenderSource, document: DocumentStamp?) async {
         phase = .loading
         errorMessage = nil
         result = nil
@@ -71,7 +71,9 @@ final class ASCScreenshotSyncCoordinator {
             let plan = try await service.buildPlan(
                 appId: appId,
                 targets: targets,
-                appState: appState,
+                rows: rows,
+                source: source,
+                document: document,
                 progress: { [weak self] label in self?.progressLabel = label }
             )
             // The build may have finished after the user dismissed the review; adopting it here
@@ -94,7 +96,7 @@ final class ASCScreenshotSyncCoordinator {
         }
     }
 
-    func apply(appState: AppState, progress: @escaping (UploadProgress) -> Void) async {
+    func apply(document: DocumentStamp?, progress: @escaping (UploadProgress) -> Void) async {
         guard let plan else { return }
         if isExpired {
             phase = .stale
@@ -107,7 +109,7 @@ final class ASCScreenshotSyncCoordinator {
             let result = try await service.apply(
                 planId: plan.id,
                 setIds: selectedSetIds,
-                appState: appState,
+                document: document,
                 progress: progress
             )
             self.result = result

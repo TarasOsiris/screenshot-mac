@@ -88,7 +88,8 @@ extension UploadToGooglePlayView {
                     packageName: pkg,
                     targets: targets,
                     sendForReview: sendForReview,
-                    appState: state,
+                    rows: state.rows,
+                    source: state,
                     progress: { p in self.uploadProgress = p }
                 )
                 let summary = UploadSummary(

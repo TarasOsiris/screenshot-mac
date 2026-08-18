@@ -48,8 +48,9 @@ struct ContentView: View {
     @AppStorage("exportCustomSuffix") var exportCustomSuffix = ""
     @AppStorage("openExportFolderOnSuccess") var openExportFolderOnSuccess = true
     @AppStorage("confirmBeforeDeleting") var confirmBeforeDeleting = true
-    @AppStorage("lastExportFolderBookmark") var lastExportFolderBookmark = Data()
-    @AppStorage("lastExportFolderPath") var lastExportFolderPath = ""
+    /// Observation only — `ExportFolderBookmark` owns every read and write of the bookmark pair.
+    /// Reading the path here is what re-renders the export button when Settings clears it.
+    @AppStorage(ExportFolderBookmark.pathKey) var lastExportFolderPath = ""
     @AppStorage("projectSortOrder") var projectSortOrder = "creation"
     @AppStorage("reviewExportCount") var reviewExportCount = 0
     @AppStorage("reviewLastPromptedVersion") var reviewLastPromptedVersion = ""

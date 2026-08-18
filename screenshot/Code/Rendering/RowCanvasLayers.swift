@@ -113,7 +113,7 @@ struct EditorRasterizedBackgroundView: View {
         // reuse it for the cache comparison and the `.task` id/body.
         let key = renderKey
         return Group {
-            if row.backgroundBlur > 0, let cachedImage, renderedKey == key {
+            if row.hasBlurredBackground, let cachedImage, renderedKey == key {
                 Image(nsImage: cachedImage)
                     .resizable()
                     .interpolation(.high)
@@ -128,7 +128,7 @@ struct EditorRasterizedBackgroundView: View {
             }
         }
         .task(id: key) {
-            guard row.backgroundBlur > 0 else {
+            guard row.hasBlurredBackground else {
                 cachedImage = nil
                 renderedKey = nil
                 return

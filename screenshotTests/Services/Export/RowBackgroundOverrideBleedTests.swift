@@ -1,15 +1,18 @@
 import CoreGraphics
 @testable import Screenshot_Bro
 import SwiftUI
-import XCTest
+import Testing
 
 /// Regression: a row background must not bleed through around templates whose
 /// override background fully covers them. Stacking the row fill under an opaque
 /// override produced a light hairline ring at every template edge (visible at
 /// fractional display scales, e.g. iPad pinch zoom).
-nonisolated final class RowBackgroundOverrideBleedTests: XCTestCase {
-    @MainActor
-    func testOpaqueOverrideHidesRowBackgroundAtTileEdges() throws {
+@MainActor
+struct RowBackgroundOverrideBleedTests {
+
+    // One test over both zooms rather than `@Test(arguments:)`: `makeTestState` mutates the
+    // process-global SCREENSHOT_DATA_DIR, so parallel cases would race over the same root.
+    @Test func opaqueOverrideHidesRowBackgroundAtTileEdges() throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }
 
@@ -27,10 +30,9 @@ nonisolated final class RowBackgroundOverrideBleedTests: XCTestCase {
         for zoom in [1.0, 1.13] as [CGFloat] {
             let renderer = ImageRenderer(content: RowPreviewView(state: state, row: state.rows[0], zoom: zoom))
             renderer.scale = 2
-            guard let image = renderer.nsImage, let tiff = image.tiffRepresentation,
-                  let rep = NSBitmapImageRep(data: tiff) else {
-                XCTFail("render failed"); return
-            }
+            let image = try #require(renderer.nsImage, "render failed")
+            let tiff = try #require(image.tiffRepresentation)
+            let rep = try #require(NSBitmapImageRep(data: tiff))
 
             var seamPixels = 0
             for y in 0..<rep.pixelsHigh {
@@ -41,7 +43,7 @@ nonisolated final class RowBackgroundOverrideBleedTests: XCTestCase {
                     }
                 }
             }
-            XCTAssertEqual(seamPixels, 0, "row background bleeds through at zoom \(zoom)")
+            #expect(seamPixels == 0, "row background bleeds through at zoom \(zoom)")
         }
     }
 }

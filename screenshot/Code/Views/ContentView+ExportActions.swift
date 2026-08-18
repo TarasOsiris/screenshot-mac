@@ -25,7 +25,7 @@ extension View {
 
 extension ContentView {
     var hasLastExportDestination: Bool {
-        !lastExportFolderBookmark.isEmpty
+        !lastExportFolderPath.isEmpty
     }
 
     var lastExportFolderName: String {
@@ -324,8 +324,7 @@ extension ContentView {
         let didAccess = url.startAccessingSecurityScopedResource()
         guard didAccess else {
             // Permission lost — clear stale bookmark and ask user to pick again
-            lastExportFolderBookmark = Data()
-            lastExportFolderPath = ""
+            ExportFolderBookmark().clear()
             exportScreenshotsAs()
             return
         }

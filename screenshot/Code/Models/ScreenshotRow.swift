@@ -162,6 +162,13 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         spanBackgroundAcrossRow && backgroundStyle != .color
     }
 
+    /// True when anything in the background is blurred — the row itself or an enabled per-template
+    /// override. The editor blurs with SwiftUI `.blur` and export with CIGaussianBlur, so these rows
+    /// must preview through the export renderer instead of drawing the blur live.
+    var hasBlurredBackground: Bool {
+        backgroundBlur > 0 || templates.contains { $0.overrideBackground && $0.backgroundBlur > 0 }
+    }
+
     func displayScale(zoom: CGFloat = 1.0) -> CGFloat {
         let maxDisplayHeight: CGFloat = 500
         return min(1, maxDisplayHeight / templateHeight) * zoom

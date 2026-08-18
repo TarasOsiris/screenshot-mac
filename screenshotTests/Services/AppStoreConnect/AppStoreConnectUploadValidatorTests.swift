@@ -276,6 +276,41 @@ struct AppStoreConnectUploadValidatorTests {
         #expect(issues.contains { $0.scope == "B" && $0.message.contains("same App Store screenshot set") })
     }
 
+    /// Demo mode simulates the upload, so per-row rules must not block the wizard. This used to be
+    /// applied in the upload view, where no test could reach it — Google Play has always done it in
+    /// its validator.
+    @Test func demoModeDowngradesPerRowErrorsButKeepsStructuralOnes() {
+        let localization = ASCAppStoreVersionLocalization(id: "loc-en", attributes: .init(locale: "en-US"))
+        let destination = ASCDestinationPlan(
+            id: "ios-version",
+            version: ASCAppStoreVersion(
+                id: "ios-version",
+                // Not editable: a structural issue, so it must stay an error even in demo mode.
+                attributes: .init(versionString: "1.0", appStoreState: "READY_FOR_SALE", platform: "IOS")
+            ),
+            localizations: [localization],
+            rowPlans: [
+                plan(
+                    label: "Mac row",
+                    size: CGSize(width: 2880, height: 1800),
+                    displayType: .desktop,
+                    localization: localization
+                )
+            ]
+        )
+
+        let live = AppStoreConnectUploadValidator.validate(destinations: [destination], isDemoMode: false)
+        let demo = AppStoreConnectUploadValidator.validate(destinations: [destination], isDemoMode: true)
+
+        #expect(live.contains { $0.demoDowngradable && $0.severity == .error },
+                "the platform mismatch is a hard error for a real upload")
+        #expect(!demo.contains { $0.demoDowngradable && $0.severity == .error },
+                "every downgradable issue softens to a warning in demo mode")
+        #expect(demo.contains { !$0.demoDowngradable && $0.severity == .error },
+                "a non-editable version still blocks the demo wizard")
+        #expect(live.count == demo.count, "downgrading changes severity, never the issue set")
+    }
+
     @Test func sameRowsDoNotCollideAcrossDifferentVersions() {
         let iosLocalization = ASCAppStoreVersionLocalization(id: "ios-loc-en", attributes: .init(locale: "en-US"))
         let macLocalization = ASCAppStoreVersionLocalization(id: "mac-loc-en", attributes: .init(locale: "en-US"))
@@ -312,7 +347,7 @@ struct AppStoreConnectUploadValidatorTests {
             ]
         )
 
-        let issues = AppStoreConnectUploadValidator.validate(destinations: [iosDestination, macDestination])
+        let issues = AppStoreConnectUploadValidator.validate(destinations: [iosDestination, macDestination], isDemoMode: false)
 
         #expect(!issues.contains { $0.message.contains("same App Store screenshot set") })
         #expect(!issues.contains { $0.severity == .error })
@@ -353,7 +388,7 @@ struct AppStoreConnectUploadValidatorTests {
             ]
         )
 
-        let issues = AppStoreConnectUploadValidator.validate(destinations: [iosDestination, macDestination])
+        let issues = AppStoreConnectUploadValidator.validate(destinations: [iosDestination, macDestination], isDemoMode: false)
 
         #expect(issues.contains { issue in
             issue.scope?.contains("iOS") == true &&
