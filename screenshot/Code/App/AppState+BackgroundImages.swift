@@ -128,7 +128,7 @@ extension AppState {
             return nil
         }
 
-        return Self.editorThumbnail(for: image)
+        return ImageDownsampler.editorThumbnail(for: image)
     }
 
 }

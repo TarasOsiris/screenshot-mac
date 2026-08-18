@@ -221,7 +221,7 @@ enum ProjectThumbnailService {
             // Read through PersistenceService so iCloud-backed resources are coordinated and
             // download-kicked off the main actor before CGImageSource decodes the thumbnail.
             guard let data = PersistenceService.readData(from: url) else { continue }
-            if let image = AppState.downsampledImage(from: data, maxDimension: maxDimension)
+            if let image = ImageDownsampler.downsampledImage(from: data, maxDimension: maxDimension)
                 ?? NSImage(data: data) {
                 images[name] = image
             }

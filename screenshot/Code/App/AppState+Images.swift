@@ -11,12 +11,6 @@ enum ImageResourceIO {
 
 extension AppState {
 
-    /// Maximum pixel dimension for images stored in `screenshotImages` (editor display).
-    /// Full-resolution images are loaded from disk on-demand for export.
-    /// 1200px is enough for editor display at 2x zoom on retina, while
-    /// reducing memory ~10x vs full App Store screenshot resolution.
-    static let editorImageMaxDimension: CGFloat = 1200
-
     // MARK: - Screenshot Images
 
     func saveImage(_ image: NSImage, for shapeId: UUID) {
@@ -211,14 +205,14 @@ extension AppState {
 
         // Load downsampled images on a background thread, then update on main.
         // Full-resolution images are loaded from disk on-demand in export paths.
-        let maxDim = Self.editorImageMaxDimension
+        let maxDim = ImageDownsampler.editorImageMaxDimension
         imageLoadTask = Task.detached { [weak self] in
             var loaded: [String: NSImage] = [:]
             for fileName in toLoad {
                 if Task.isCancelled { return }
                 let url = resourcesURL.appendingPathComponent(fileName)
                 autoreleasepool {
-                    if let image = Self.downsampledImage(at: url, maxDimension: maxDim)
+                    if let image = ImageDownsampler.downsampledImage(at: url, maxDimension: maxDim)
                         ?? NSImage(contentsOf: url) {
                         loaded[fileName] = image
                     }
