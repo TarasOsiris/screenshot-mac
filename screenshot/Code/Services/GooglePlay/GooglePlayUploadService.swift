@@ -7,6 +7,7 @@ import UIKit
 
 enum GooglePlayUploadError: Error, LocalizedError {
     case renderFailed(rowLabel: String, imageTypeLabel: String, languageLabel: String, index: Int)
+    case unreadableImages(rowLabel: String, languageLabel: String, fileNames: [String])
     case noRowsSelected
     case requestFailed(GPUploadFailureContext)
 
@@ -14,6 +15,8 @@ enum GooglePlayUploadError: Error, LocalizedError {
         switch self {
         case .renderFailed(let label, let imageTypeLabel, let languageLabel, let index):
             return String(localized: "Could not render screenshot \(index + 1) for \(label) (\(imageTypeLabel)) in \(languageLabel). Check that this row previews correctly in the editor, then try the upload again.")
+        case .unreadableImages(let label, let languageLabel, let fileNames):
+            return String(localized: "Could not read \(fileNames.count) image(s) used by \(label) in \(languageLabel). Re-import the missing screenshots before uploading, or the upload would publish them as blank areas.")
         case .noRowsSelected:
             return String(localized: "No rows selected for upload.")
         case .requestFailed(let context):
@@ -25,6 +28,8 @@ enum GooglePlayUploadError: Error, LocalizedError {
         switch self {
         case .renderFailed(let label, _, let languageLabel, let index):
             return String(localized: "Could not render \(label) · \(languageLabel) · screenshot \(index + 1).")
+        case .unreadableImages(let label, let languageLabel, _):
+            return String(localized: "Missing images for \(label) · \(languageLabel).")
         case .noRowsSelected:
             return String(localized: "No rows selected for upload.")
         case .requestFailed(let context):
@@ -41,6 +46,13 @@ enum GooglePlayUploadError: Error, LocalizedError {
                 "Image type: \(imageTypeLabel)",
                 "Language: \(languageLabel)",
                 "Screenshot index: \(index + 1)"
+            ].joined(separator: "\n")
+        case .unreadableImages(let label, let languageLabel, let fileNames):
+            return [
+                "Failure: unreadable images",
+                "Row: \(label)",
+                "Language: \(languageLabel)",
+                "Files: \(fileNames.joined(separator: ", "))"
             ].joined(separator: "\n")
         case .noRowsSelected:
             return "Failure: no rows selected"
@@ -222,6 +234,15 @@ final class GooglePlayUploadService {
                         reusing: context
                     )
                     context = rowContext
+                    // App Store Connect already refuses this; Play used to publish the screenshot
+                    // with the missing image rendered as a hole.
+                    if !rowContext.missingImageFileNames.isEmpty {
+                        throw GooglePlayUploadError.unreadableImages(
+                            rowLabel: target.rowLabel,
+                            languageLabel: language.label,
+                            fileNames: rowContext.missingImageFileNames
+                        )
+                    }
                     let rendered = try await renderScreenshots(
                         context: rowContext,
                         target: target,
