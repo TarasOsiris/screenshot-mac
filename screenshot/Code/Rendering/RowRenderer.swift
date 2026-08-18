@@ -96,24 +96,13 @@ extension ExportService {
             labelPrefix: "row"
         )
 
-        let shapesView = RowCanvasShapeLayerView(
+        let shapesView = PresentationShapeLayerView(
             row: row,
             shapes: resolvedShapes,
+            images: screenshotImages,
             displayScale: displayScale,
-            shapeContent: { shape, clipRect in
-                CanvasShapeView(
-                    shape: shape,
-                    displayScale: displayScale,
-                    isSelected: false,
-                    screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
-                    screenshotImageIdentity: shape.displayImageFileName,
-                    fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
-                    defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-                    clipBounds: clipRect,
-                    showsEditorHelpers: false,
-                    availableFontFamilies: fontFamilies
-                )
-            }
+            defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+            availableFontFamilies: fontFamilies
         )
         let shapesImage = renderViewToImage(
             shapesView,
@@ -335,24 +324,13 @@ extension ExportService {
             templateHeight: templateHeight
         )
 
-        let shapesView = RowCanvasShapeLayerView(
+        let shapesView = PresentationShapeLayerView(
             row: singleTemplateRow,
             shapes: shiftedShapes,
+            images: screenshotImages,
             displayScale: displayScale,
-            shapeContent: { shape, clipRect in
-                CanvasShapeView(
-                    shape: shape,
-                    displayScale: displayScale,
-                    isSelected: false,
-                    screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
-                    screenshotImageIdentity: shape.displayImageFileName,
-                    fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
-                    defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-                    clipBounds: clipRect,
-                    showsEditorHelpers: false,
-                    availableFontFamilies: fontFamilies
-                )
-            }
+            defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+            availableFontFamilies: fontFamilies
         )
         let shapesImage = renderViewToImage(
             shapesView,

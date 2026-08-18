@@ -1622,23 +1622,17 @@ struct ExportServiceTests {
             labelPrefix: "test editor"
         )
 
-        let shapesView = RowCanvasShapeLayerView(
+        // Same layer the editor and export both build; only `showsEditorHelpers` differs,
+        // which is this helper's whole point.
+        let shapesView = PresentationShapeLayerView(
             row: row,
             shapes: row.activeShapes,
-            displayScale: displayScale
-        ) { shape, clipRect in
-            CanvasShapeView(
-                shape: shape,
-                displayScale: displayScale,
-                isSelected: false,
-                screenshotImage: shape.displayImageFileName.flatMap { screenshotImages[$0] },
-                fillImage: shape.fillImageConfig?.fileName.flatMap { screenshotImages[$0] },
-                defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-                clipBounds: clipRect,
-                showsEditorHelpers: true,
-                availableFontFamilies: Set(NSFontManager.shared.availableFontFamilies)
-            )
-        }
+            images: screenshotImages,
+            displayScale: displayScale,
+            defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+            availableFontFamilies: Set(NSFontManager.shared.availableFontFamilies),
+            showsEditorHelpers: true
+        )
 
         let shapesImage = ExportService.renderViewToImage(
             shapesView,

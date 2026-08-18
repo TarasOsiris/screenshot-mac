@@ -90,35 +90,18 @@ struct RowPreviewView: View {
             )
             .offset(x: offsetX)
 
-            RowCanvasShapeLayerView(
+            PresentationShapeLayerView(
                 row: row,
                 shapes: visible,
-                displayScale: displayScale
-            ) { shape, clipRect in
-                previewShape(shape, clipRect: clipRect)
-            }
+                images: state.screenshotImages,
+                displayScale: displayScale,
+                defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                availableFontFamilies: state.availableFontFamilySet,
+                allowSynchronousSvgRender: false
+            )
             .offset(x: offsetX)
         }
         .frame(width: displayTemplateWidth, height: displayTemplateHeight, alignment: .topLeading)
         .clipShape(RoundedRectangle(cornerRadius: tileCornerRadius, style: .continuous))
-    }
-
-    @ViewBuilder
-    private func previewShape(_ shape: CanvasShapeModel, clipRect: CGRect?) -> some View {
-        CanvasShapeView(
-            shape: shape,
-            displayScale: displayScale,
-            zoom: 1.0,
-            isSelected: false,
-            screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
-            screenshotImageIdentity: shape.displayImageFileName,
-            fillImage: shape.fillImageConfig?.fileName.flatMap { state.screenshotImages[$0] },
-            defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-            deviceModelRenderingMode: .snapshot,
-            clipBounds: clipRect,
-            showsEditorHelpers: false,
-            allowSynchronousSvgRender: false,
-            availableFontFamilies: state.availableFontFamilySet
-        )
     }
 }
