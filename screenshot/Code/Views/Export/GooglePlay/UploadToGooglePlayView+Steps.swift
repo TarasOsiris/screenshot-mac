@@ -190,14 +190,14 @@ extension UploadToGooglePlayView {
         HStack(spacing: 10) {
             Text("Upload as")
                 .foregroundStyle(.secondary)
-            Picker("Upload as", selection: plan.selectedImageType) {
+            Picker("Upload as", selection: plan.selectedAssetType) {
                 ForEach(GPImageType.userSelectableCases) { type in
                     Text(type.label).tag(type)
                 }
             }
             .labelsHidden()
             .frame(maxWidth: 220)
-            if plan.wrappedValue.selectedImageType == plan.wrappedValue.detectedImageType {
+            if plan.wrappedValue.selectedAssetType == plan.wrappedValue.detectedAssetType {
                 Text("(detected)")
                     .font(.caption)
                     .foregroundStyle(.secondary)

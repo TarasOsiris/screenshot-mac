@@ -37,8 +37,8 @@ extension UploadToGooglePlayView {
                 rowSize: row.templateSize,
                 templateCount: row.templates.count,
                 isEnabled: existingPlan?.isEnabled ?? (row.inferredStorePlatform != .apple),
-                detectedImageType: detected,
-                selectedImageType: existingPlan?.selectedImageType ?? detected,
+                detectedAssetType: detected,
+                selectedAssetType: existingPlan?.selectedAssetType ?? detected,
                 localeTargets: targets,
                 inferredStorePlatform: row.inferredStorePlatform
             )
@@ -56,7 +56,7 @@ extension UploadToGooglePlayView {
                 rowId: plan.id,
                 rowLabel: plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel,
                 rowSize: plan.rowSize,
-                imageType: plan.selectedImageType,
+                imageType: plan.selectedAssetType,
                 languages: languages,
                 templateCount: plan.templateCount
             )

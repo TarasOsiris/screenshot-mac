@@ -25,8 +25,8 @@ struct GooglePlayUploadValidatorTests {
             rowSize: size,
             templateCount: count,
             isEnabled: enabled,
-            detectedImageType: type,
-            selectedImageType: type,
+            detectedAssetType: type,
+            selectedAssetType: type,
             localeTargets: locales.isEmpty ? [locale("en-US")] : locales
         )
     }

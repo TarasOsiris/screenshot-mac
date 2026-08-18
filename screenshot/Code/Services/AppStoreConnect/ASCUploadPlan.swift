@@ -3,17 +3,7 @@ import Foundation
 // Plan types describing what the App Store Connect upload will do. They live in the service
 // layer so the validators and their tests do not depend on the SwiftUI upload view.
 
-nonisolated struct ASCRowPlan: Identifiable {
-    let id: UUID
-    var rowLabel: String
-    var rowSize: CGSize
-    var templateCount: Int
-    var isEnabled: Bool
-    var detectedDisplayType: ASCDisplayType?
-    var selectedDisplayType: ASCDisplayType?
-    var localeTargets: [ASCLocaleTarget]
-    var inferredStorePlatform: StorePlatform?
-}
+typealias ASCRowPlan = StoreRowPlan<ASCDisplayType?, ASCLocaleTarget>
 
 nonisolated struct ASCDestinationPlan: Identifiable {
     let id: String

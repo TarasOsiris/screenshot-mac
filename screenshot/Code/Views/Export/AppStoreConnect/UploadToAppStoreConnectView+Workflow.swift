@@ -427,7 +427,7 @@ extension UploadToAppStoreConnectView {
                     isEnabled: matches.isEmpty ? false : (existingTarget?.isEnabled ?? true)
                 )
             }
-            let compatiblePreserved = existingPlan?.selectedDisplayType.flatMap { $0.accepts(platform: platform) ? $0 : nil }
+            let compatiblePreserved = existingPlan?.selectedAssetType.flatMap { $0.accepts(platform: platform) ? $0 : nil }
             let detectedCompatible = (detected?.accepts(platform: platform) ?? false) ? detected : nil
             let detectedIncompatible = detected != nil && detectedCompatible == nil
             return ASCRowPlan(
@@ -436,8 +436,8 @@ extension UploadToAppStoreConnectView {
                 rowSize: row.templateSize,
                 templateCount: row.templates.count,
                 isEnabled: existingPlan?.isEnabled ?? (row.inferredStorePlatform != .android && !detectedIncompatible),
-                detectedDisplayType: detected,
-                selectedDisplayType: compatiblePreserved ?? detectedCompatible ?? demoFallbackDisplayType,
+                detectedAssetType: detected,
+                selectedAssetType: compatiblePreserved ?? detectedCompatible ?? demoFallbackDisplayType,
                 localeTargets: targets,
                 inferredStorePlatform: row.inferredStorePlatform
             )
@@ -606,7 +606,7 @@ extension UploadToAppStoreConnectView {
     func buildUploadTargets() -> [ASCUploadTarget] {
         destinationPlans.flatMap { destination -> [ASCUploadTarget] in
             destination.rowPlans.compactMap { plan -> ASCUploadTarget? in
-                guard plan.isEnabled, let displayType = plan.selectedDisplayType else { return nil }
+                guard plan.isEnabled, let displayType = plan.selectedAssetType else { return nil }
                 guard let row = state.rows.first(where: { $0.id == plan.id }),
                       !row.excludeFromAppStoreConnect else { return nil }
                 let localizations = plan.localeTargets.flatMap { target -> [ASCUploadLocalization] in

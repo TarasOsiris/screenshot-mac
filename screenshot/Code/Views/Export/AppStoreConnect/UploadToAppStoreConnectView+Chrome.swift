@@ -241,8 +241,8 @@ extension UploadToAppStoreConnectView {
                 guard plan.isEnabled else { return [] }
                 let rowLabel = plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel
                 let sourceSizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
-                let displayTypeLabel = plan.selectedDisplayType?.label ?? String(localized: "No display type selected")
-                let displayTypeRawValue = plan.selectedDisplayType?.appStoreConnectValue ?? "none"
+                let displayTypeLabel = plan.selectedAssetType?.label ?? String(localized: "No display type selected")
+                let displayTypeRawValue = plan.selectedAssetType?.appStoreConnectValue ?? "none"
 
                 return plan.localeTargets.flatMap { target -> [UploadPlanEntry] in
                     func entry(idSuffix: String, appStoreLocaleCode: String?, isSelected: Bool, skipReason: String?) -> UploadPlanEntry {
@@ -266,7 +266,7 @@ extension UploadToAppStoreConnectView {
                     }
 
                     let selectedCandidates = target.selectedCandidates
-                    if target.isEnabled, plan.selectedDisplayType != nil, !selectedCandidates.isEmpty {
+                    if target.isEnabled, plan.selectedAssetType != nil, !selectedCandidates.isEmpty {
                         // One entry per App Store destination this locale fans out to.
                         return selectedCandidates.map { candidate in
                             entry(idSuffix: "-\(candidate.id)", appStoreLocaleCode: candidate.attributes.locale, isSelected: true, skipReason: nil)
@@ -278,7 +278,7 @@ extension UploadToAppStoreConnectView {
                         skipReason = String(localized: "No matching App Store locale")
                     } else if !target.isEnabled {
                         skipReason = String(localized: "Unchecked")
-                    } else if plan.selectedDisplayType == nil {
+                    } else if plan.selectedAssetType == nil {
                         skipReason = String(localized: "No display type selected")
                     } else {
                         skipReason = String(localized: "No App Store locale selected")

@@ -63,7 +63,7 @@ enum ASCUploadValidator {
             let rowName = plan.rowLabel.isEmpty ? "Row" : plan.rowLabel
             let sizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
 
-            guard let displayType = plan.selectedDisplayType else {
+            guard let displayType = plan.selectedAssetType else {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,

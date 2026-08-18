@@ -95,13 +95,13 @@ private struct ASCDisplayTypePicker: View {
 
     @ViewBuilder
     private var detectedDisplayTypeAction: some View {
-        if let detected = plan.detectedDisplayType, detected == plan.selectedDisplayType, availableDisplayTypes.contains(detected) {
+        if let detected = plan.detectedAssetType, detected == plan.selectedAssetType, availableDisplayTypes.contains(detected) {
             Label("Auto-detected", systemImage: "checkmark.circle")
                 .foregroundStyle(.green)
                 .font(.caption)
-        } else if let detected = plan.detectedDisplayType, availableDisplayTypes.contains(detected) {
+        } else if let detected = plan.detectedAssetType, availableDisplayTypes.contains(detected) {
             Button {
-                plan.selectedDisplayType = detected
+                plan.selectedAssetType = detected
             } label: {
                 Label("Use detected (\(detected.label))", systemImage: "wand.and.stars")
             }
@@ -138,19 +138,19 @@ private struct ASCDisplayTypePicker: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 72, alignment: .leading)
             Menu {
-                Button("Select…") { plan.selectedDisplayType = nil }
+                Button("Select…") { plan.selectedAssetType = nil }
                 ForEach(displayTypeGroups, id: \.0) { title, items in
                     if !items.isEmpty {
                         Section(title) {
                             ForEach(items) { type in
-                                Button(type.label) { plan.selectedDisplayType = type }
+                                Button(type.label) { plan.selectedAssetType = type }
                             }
                         }
                     }
                 }
             } label: {
                 HStack {
-                    Text(plan.selectedDisplayType?.label ?? "Select…")
+                    Text(plan.selectedAssetType?.label ?? "Select…")
                         .lineLimit(1)
                     Spacer()
                     #if os(iOS)
@@ -166,7 +166,7 @@ private struct ASCDisplayTypePicker: View {
             #else
             .buttonStyle(.bordered)
             #endif
-            if let selected = plan.selectedDisplayType {
+            if let selected = plan.selectedAssetType {
                 Text(selected.appStoreConnectValue)
                     .font(.caption2.monospaced())
                     .foregroundStyle(.secondary)
@@ -187,9 +187,9 @@ private struct ASCDisplayTypeDetailsPopover: View {
                 Text(verbatim: "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))")
             }
             LabeledContent("Auto-detected") {
-                Text(plan.detectedDisplayType?.label ?? "No exact match")
+                Text(plan.detectedAssetType?.label ?? "No exact match")
             }
-            if let selected = plan.selectedDisplayType {
+            if let selected = plan.selectedAssetType {
                 LabeledContent("Upload target") {
                     Text(selected.label)
                 }

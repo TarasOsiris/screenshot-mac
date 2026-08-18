@@ -89,13 +89,13 @@ nonisolated enum GooglePlayUploadValidator {
 
             var reportedCollisionPartners: Set<String> = []
             for locale in enabledLocales {
-                let key = "\(locale.playLanguageCode)|\(plan.selectedImageType.apiValue)"
+                let key = "\(locale.playLanguageCode)|\(plan.selectedAssetType.apiValue)"
                 if let partner = seenTargets[key] {
                     if reportedCollisionPartners.insert(partner).inserted {
                         perRow.append(UploadIssue(
                             severity: .error,
                             scope: rowName,
-                            message: "This row uploads \(plan.selectedImageType.label) for \(locale.playLanguageCode) to the same place as \(partner).",
+                            message: "This row uploads \(plan.selectedAssetType.label) for \(locale.playLanguageCode) to the same place as \(partner).",
                             hint: "Disable one of these rows or pick a different image type."
                         ))
                     }

@@ -77,8 +77,8 @@ struct AppStoreConnectUploadValidatorTests {
                 rowSize: CGSize(width: 2064, height: 2752),
                 templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
-                detectedDisplayType: .ipadPro129M4,
-                selectedDisplayType: .ipadPro129M4,
+                detectedAssetType: .ipadPro129M4,
+                selectedAssetType: .ipadPro129M4,
                 localeTargets: [localeTarget]
             ),
             ASCRowPlan(
@@ -87,8 +87,8 @@ struct AppStoreConnectUploadValidatorTests {
                 rowSize: CGSize(width: 2048, height: 2732),
                 templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
-                detectedDisplayType: .ipadPro3Gen129,
-                selectedDisplayType: .ipadPro3Gen129,
+                detectedAssetType: .ipadPro3Gen129,
+                selectedAssetType: .ipadPro3Gen129,
                 localeTargets: [localeTarget]
             )
         ]
@@ -129,8 +129,8 @@ struct AppStoreConnectUploadValidatorTests {
                 rowSize: CGSize(width: 2064, height: 2752),
                 templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
-                detectedDisplayType: .ipadPro129M4,
-                selectedDisplayType: .ipadPro129M4,
+                detectedAssetType: .ipadPro129M4,
+                selectedAssetType: .ipadPro129M4,
                 localeTargets: localeTargets
             )
         }
@@ -168,8 +168,8 @@ struct AppStoreConnectUploadValidatorTests {
                 rowSize: CGSize(width: 1290, height: 2796),
                 templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
-                detectedDisplayType: .iphone67,
-                selectedDisplayType: .iphone67,
+                detectedAssetType: .iphone67,
+                selectedAssetType: .iphone67,
                 localeTargets: [localeTarget]
             )
         ]
@@ -219,8 +219,8 @@ struct AppStoreConnectUploadValidatorTests {
                 rowSize: CGSize(width: 2064, height: 2752),
                 templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
-                detectedDisplayType: .ipadPro129M4,
-                selectedDisplayType: .ipadPro129M4,
+                detectedAssetType: .ipadPro129M4,
+                selectedAssetType: .ipadPro129M4,
                 localeTargets: [localeTarget]
             )
         ]
@@ -267,8 +267,8 @@ struct AppStoreConnectUploadValidatorTests {
                 rowSize: CGSize(width: 2064, height: 2752),
                 templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
                 isEnabled: true,
-                detectedDisplayType: .ipadPro129M4,
-                selectedDisplayType: .ipadPro129M4,
+                detectedAssetType: .ipadPro129M4,
+                selectedAssetType: .ipadPro129M4,
                 localeTargets: [localeTarget]
             )
         }
@@ -416,8 +416,8 @@ struct AppStoreConnectUploadValidatorTests {
             rowSize: size,
             templateCount: templateCount,
             isEnabled: true,
-            detectedDisplayType: displayType,
-            selectedDisplayType: displayType,
+            detectedAssetType: displayType,
+            selectedAssetType: displayType,
             localeTargets: [
                 ASCLocaleTarget(
                     appLocaleCode: "en",
