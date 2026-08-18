@@ -8,7 +8,7 @@ import CoreImage
 
 // Offscreen rasterization primitives: turn a SwiftUI view into pixels, blur, crop and
 // composite them. No knowledge of rows, templates or locales — that lives in RowRenderer.
-extension ExportService {
+extension RowRenderer {
     nonisolated static func drawImage(
         _ image: NSImage,
         into background: NSImage,

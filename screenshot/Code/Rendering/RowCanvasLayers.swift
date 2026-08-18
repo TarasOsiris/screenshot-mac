@@ -137,7 +137,7 @@ struct EditorRasterizedBackgroundView: View {
             guard !Task.isCancelled else { return }
             // Blur the background at model resolution, then downscale for the editor.
             // This avoids edge artifacts from blurring an already downsampled tile/image raster.
-            let image = ExportService.renderComposedBackgroundImage(
+            let image = RowRenderer.renderComposedBackgroundImage(
                 row: row,
                 screenshotImages: screenshotImages,
                 displayScale: renderScale,

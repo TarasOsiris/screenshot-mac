@@ -192,14 +192,14 @@ enum DebugTemplateService {
 
         let previewSize = NSSize(width: scaledWidth, height: previewHeight)
 
-        let rowImage = ExportService.renderRowImage(
+        let rowImage = RowRenderer.renderRowImage(
             row: row,
             screenshotImages: screenshotImages,
             localeState: localeState
         )
 
         // NSBitmapImageRep ensures 1x pixel output (lockFocus produces 2x on Retina)
-        guard let bitmap = ExportService.bitmapRep(width: scaledWidth, height: previewHeight) else { return false }
+        guard let bitmap = RowRenderer.bitmapRep(width: scaledWidth, height: previewHeight) else { return false }
 
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)

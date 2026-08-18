@@ -163,7 +163,7 @@ struct ExportAllTests {
 
         for (index, url) in export.fileURLs.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }).enumerated() {
             let exported = try Data(contentsOf: url)
-            let direct = try #require(ExportService.renderTemplateData(index: index, row: row, format: .png))
+            let direct = try #require(RowRenderer.renderTemplateData(index: index, row: row, format: .png))
             #expect(exported == direct, "template \(index) diverges from renderTemplateData")
         }
     }

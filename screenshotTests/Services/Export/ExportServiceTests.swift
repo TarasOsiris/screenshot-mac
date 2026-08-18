@@ -76,7 +76,7 @@ struct ExportServiceTests {
 
     @Test func renderTemplateDataProducesPNG() throws {
         let row = makeTestRow(width: 200, height: 400)
-        let pngData = try #require(ExportService.renderTemplateData(index: 0, row: row, format: .png))
+        let pngData = try #require(RowRenderer.renderTemplateData(index: 0, row: row, format: .png))
         #expect(!pngData.isEmpty)
 
         let decoded = try #require(NSBitmapImageRep(data: pngData))
@@ -87,7 +87,7 @@ struct ExportServiceTests {
 
     @Test func renderTemplateDataPNG() throws {
         let row = makeTestRow(width: 100, height: 200)
-        let data = try #require(ExportService.renderTemplateData(
+        let data = try #require(RowRenderer.renderTemplateData(
             index: 0, row: row, format: .png
         ))
         let decoded = try #require(NSBitmapImageRep(data: data))
@@ -96,7 +96,7 @@ struct ExportServiceTests {
 
     @Test func renderTemplateDataJPEG() throws {
         let row = makeTestRow(width: 100, height: 200)
-        let data = try #require(ExportService.renderTemplateData(
+        let data = try #require(RowRenderer.renderTemplateData(
             index: 0, row: row, format: .jpeg
         ))
         #expect(!data.isEmpty)
@@ -141,10 +141,10 @@ struct ExportServiceTests {
         shape.fontName = "Courier New"
         row.shapes = [shape]
 
-        let named = try #require(ExportService.renderTemplateData(
+        let named = try #require(RowRenderer.renderTemplateData(
             index: 0, row: row, format: .png, availableFontFamilies: ["Courier New"]
         ))
-        let unavailable = try #require(ExportService.renderTemplateData(
+        let unavailable = try #require(RowRenderer.renderTemplateData(
             index: 0, row: row, format: .png, availableFontFamilies: []
         ))
         #expect(named != unavailable, "renderTemplateData must forward availableFontFamilies")
@@ -315,7 +315,7 @@ struct ExportServiceTests {
 
     // MARK: - Export / editor parity
     //
-    // These tests verify that ExportService.renderTemplateImage produces pixel-accurate
+    // These tests verify that RowRenderer.renderTemplateImage produces pixel-accurate
     // output matching what the editor canvas shows. Each test creates a row with known
     // geometry, renders via the export path, and samples specific pixels.
     //
@@ -1589,7 +1589,7 @@ struct ExportServiceTests {
         row: ScreenshotRow,
         screenshotImages: [String: NSImage] = [:]
     ) throws -> NSBitmapImageRep {
-        let image = ExportService.renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
+        let image = RowRenderer.renderTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
         let pngData = try #require(ExportService.opaquePNGData(from: image))
         return try #require(NSBitmapImageRep(data: pngData))
     }
@@ -1599,7 +1599,7 @@ struct ExportServiceTests {
         row: ScreenshotRow,
         screenshotImages: [String: NSImage] = [:]
     ) throws -> NSBitmapImageRep {
-        let image = ExportService.renderSingleTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
+        let image = RowRenderer.renderSingleTemplateImage(index: index, row: row, screenshotImages: screenshotImages)
         let pngData = try #require(ExportService.opaquePNGData(from: image))
         return try #require(NSBitmapImageRep(data: pngData))
     }
@@ -1612,7 +1612,7 @@ struct ExportServiceTests {
     ) throws -> NSBitmapImageRep {
         let tLeft = CGFloat(index) * row.templateWidth * displayScale
         let totalWidth = row.templateWidth * displayScale * CGFloat(row.templates.count)
-        let composedBackground = ExportService.renderComposedBackgroundImage(
+        let composedBackground = RowRenderer.renderComposedBackgroundImage(
             row: row,
             screenshotImages: screenshotImages,
             displayScale: displayScale,
@@ -1631,13 +1631,13 @@ struct ExportServiceTests {
             showsEditorHelpers: true
         )
 
-        let shapesImage = ExportService.renderViewToImage(
+        let shapesImage = RowRenderer.renderViewToImage(
             shapesView,
             width: totalWidth,
             height: row.templateHeight * displayScale,
             label: "test editor shapes"
         )
-        let image = ExportService.flattenImage(
+        let image = RowRenderer.flattenImage(
             shapesImage,
             over: composedBackground,
             width: totalWidth,

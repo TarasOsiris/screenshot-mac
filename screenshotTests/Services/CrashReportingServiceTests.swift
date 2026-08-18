@@ -65,16 +65,16 @@ struct CrashReportingServiceTests {
     // MARK: - Render-label sanitizing
 
     @Test func renderLabelElidesTheQuotedRowLabel() {
-        #expect(ExportService.reportableRenderLabel("showcase row 'Onboarding Flow'") == "showcase row '…'")
+        #expect(RowRenderer.reportableRenderLabel("showcase row 'Onboarding Flow'") == "showcase row '…'")
         #expect(
-            ExportService.reportableRenderLabel("export row override background 'My Row' [2]")
+            RowRenderer.reportableRenderLabel("export row override background 'My Row' [2]")
                 == "export row override background '…' [2]"
         )
     }
 
     @Test func renderLabelLeavesUnquotedLabelsUntouched() {
-        #expect(ExportService.reportableRenderLabel("single template shapes [0]") == "single template shapes [0]")
-        #expect(ExportService.reportableRenderLabel("English") == "English")
+        #expect(RowRenderer.reportableRenderLabel("single template shapes [0]") == "single template shapes [0]")
+        #expect(RowRenderer.reportableRenderLabel("English") == "English")
     }
 
     // MARK: - Breadcrumb de-duplication

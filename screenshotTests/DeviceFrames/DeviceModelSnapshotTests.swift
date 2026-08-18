@@ -85,10 +85,10 @@ struct DeviceModelSnapshotTests {
         var emptyRow = row
         emptyRow.shapes = []
 
-        let withDevice = try bitmap(of: ExportService.renderSingleTemplateImage(
+        let withDevice = try bitmap(of: RowRenderer.renderSingleTemplateImage(
             index: 0, row: row, screenshotImages: images
         ))
-        let withoutDevice = try bitmap(of: ExportService.renderSingleTemplateImage(
+        let withoutDevice = try bitmap(of: RowRenderer.renderSingleTemplateImage(
             index: 0, row: emptyRow, screenshotImages: images
         ))
 

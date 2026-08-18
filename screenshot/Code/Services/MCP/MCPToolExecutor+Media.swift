@@ -64,7 +64,7 @@ extension MCPToolExecutor {
                 throw MCPToolError.invalidArgument("template_index", "row has \(row.templates.count) columns")
             }
             let scale = min(1, maxDimension / max(row.templateWidth, row.templateHeight))
-            image = ExportService.renderSingleTemplateImage(
+            image = RowRenderer.renderSingleTemplateImage(
                 index: templateIndex,
                 row: row,
                 screenshotImages: images,
@@ -76,7 +76,7 @@ extension MCPToolExecutor {
         } else {
             let totalWidth = row.templateWidth * CGFloat(row.templates.count)
             let scale = min(1, maxDimension / max(totalWidth, row.templateHeight))
-            image = ExportService.renderRowImage(
+            image = RowRenderer.renderRowImage(
                 row: row,
                 screenshotImages: images,
                 localeCode: localeCode,

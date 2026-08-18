@@ -157,7 +157,7 @@ extension EditorRowView {
         let localeCode = state.localeState.activeLocaleCode
         if let message = ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
             let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-            return ExportService.renderRowImage(
+            return RowRenderer.renderRowImage(
                 row: row, screenshotImages: images,
                 localeCode: localeCode, localeState: state.localeState,
                 availableFontFamilies: state.availableFontFamilySet

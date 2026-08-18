@@ -51,7 +51,7 @@ struct RowRenderContext {
         self.displayScale = displayScale
         self.label = label
         self.missingImageFileNames = missingImageFileNames
-        self.precomposedRowBackground = ExportService.precomposedRowBackgroundIfNeeded(
+        self.precomposedRowBackground = RowRenderer.precomposedRowBackgroundIfNeeded(
             row: row,
             screenshotImages: images,
             displayScale: displayScale,
@@ -94,7 +94,7 @@ struct RowRenderContext {
     var templateIndices: Range<Int> { row.templates.indices }
 
     func templateImage(at index: Int) -> NSImage {
-        ExportService.renderSingleTemplateImage(
+        RowRenderer.renderSingleTemplateImage(
             index: index,
             row: row,
             screenshotImages: images,
@@ -107,11 +107,11 @@ struct RowRenderContext {
     }
 
     func templateData(at index: Int, format: ExportImageFormat) -> Data? {
-        ExportService.encodeImage(templateImage(at: index), format: format)
+        ExportImageEncoder.encode(templateImage(at: index), format: format)
     }
 
     func rowImage() -> NSImage {
-        ExportService.renderRowImage(
+        RowRenderer.renderRowImage(
             row: row,
             screenshotImages: images,
             localeCode: localeCode,
@@ -122,7 +122,7 @@ struct RowRenderContext {
     }
 
     func showcaseImage(config: ShowcaseExportConfig) -> NSImage {
-        ExportService.renderShowcaseRowImage(
+        RowRenderer.renderShowcaseRowImage(
             row: row,
             screenshotImages: images,
             localeCode: localeCode,

@@ -369,7 +369,7 @@ struct TemplateControlBar: View {
 
     private func renderExportPNG() -> Data? {
         let images = onLoadFullResImages?() ?? screenshotImages
-        return ExportService.renderTemplateData(
+        return RowRenderer.renderTemplateData(
             index: index, row: row, format: .png, screenshotImages: images,
             localeCode: localeState.activeLocaleCode, localeState: localeState,
             availableFontFamilies: state.availableFontFamilySet

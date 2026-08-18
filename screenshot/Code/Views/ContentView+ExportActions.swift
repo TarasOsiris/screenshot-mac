@@ -198,7 +198,7 @@ extension ContentView {
             if let message = ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
                 var images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
                 images.merge(seedCache, uniquingKeysWith: { _, new in new })
-                return ExportService.renderShowcaseRowImage(
+                return RowRenderer.renderShowcaseRowImage(
                     row: row, screenshotImages: images,
                     localeCode: localeCode, localeState: state.localeState,
                     availableFontFamilies: state.availableFontFamilySet, config: config

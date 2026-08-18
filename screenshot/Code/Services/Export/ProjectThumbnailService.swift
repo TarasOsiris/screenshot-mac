@@ -165,7 +165,7 @@ enum ProjectThumbnailService {
         }
 
         return CustomFontRegistry.withTemporaryFonts(fonts, instances: instances) {
-            ExportService.renderRowImage(
+            RowRenderer.renderRowImage(
                 row: inputs.row,
                 screenshotImages: inputs.images,
                 localeCode: inputs.localeCode,

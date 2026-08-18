@@ -7,7 +7,14 @@ import UIKit
 
 // Renders a row, a single template, or a showcase sheet to an image. Builds the same SwiftUI
 // tree the editor draws (see Rendering/RowCanvasLayers) so export and preview cannot diverge.
-extension ExportService {
+//
+// Its own namespace rather than `extension ExportService`: these renderers are what
+// `Services/Export` calls, so hanging them off that type made Rendering/ and Services/Export
+// mutually dependent and left neither directory readable on its own. `ViewRasterizer` extends
+// this same enum so the two files keep calling each other unqualified.
+enum RowRenderer {}
+
+extension RowRenderer {
     // MARK: - Showcase rendering (gallery layout with spacing & rounded corners)
 
     @MainActor
@@ -202,7 +209,7 @@ extension ExportService {
             localeCode: localeCode, localeState: localeState,
             availableFontFamilies: availableFontFamilies
         )
-        return encodeImage(image, format: format)
+        return ExportImageEncoder.encode(image, format: format)
     }
 
     @MainActor
