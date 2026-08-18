@@ -2,13 +2,13 @@ import SwiftUI
 
 extension UploadToGooglePlayView {
 
-    // MARK: - Package step
+    // MARK: - Package model.step
 
     @ViewBuilder
     var packageStep: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if !credentials.isConfigured {
+                if !model.credentials.isConfigured {
                     notConfiguredCallout
                 }
 
@@ -18,7 +18,7 @@ extension UploadToGooglePlayView {
                     Text("The application ID of the app on Google Play, e.g. com.example.myapp.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
-                    TextField("com.example.myapp", text: $packageName)
+                    TextField("com.example.myapp", text: $model.packageName)
                         .textFieldStyle(.roundedBorder)
                         #if os(iOS)
                         .textInputAutocapitalization(.never)
@@ -28,13 +28,13 @@ extension UploadToGooglePlayView {
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Toggle(isOn: $sendForReview) {
+                    Toggle(isOn: $model.sendForReview) {
                         Text("Send changes to review")
                             .fontWeight(.medium)
                     }
                     .toggleStyle(.switch)
                     .controlSize(.small)
-                    if sendForReview {
+                    if model.sendForReview {
                         Label(
                             "Screenshots will be submitted to Google Play review when uploaded.",
                             systemImage: "exclamationmark.triangle.fill"
@@ -73,18 +73,18 @@ extension UploadToGooglePlayView {
         .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
     }
 
-    // MARK: - Plan step
+    // MARK: - Plan model.step
 
     @ViewBuilder
     var planStep: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 preflightPanel
-                if rowPlans.isEmpty {
+                if model.rowPlans.isEmpty {
                     Text("This project has no rows to upload.")
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach($rowPlans) { $plan in
+                    ForEach($model.rowPlans) { $plan in
                         rowPlanCard($plan)
                     }
                 }
@@ -96,7 +96,7 @@ extension UploadToGooglePlayView {
 
     @ViewBuilder
     private var preflightPanel: some View {
-        let issues = validationIssues
+        let issues = model.validationIssues
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 let total = plannedScreenshotCount
@@ -206,34 +206,34 @@ extension UploadToGooglePlayView {
     }
 
     var plannedScreenshotCount: Int {
-        rowPlans.reduce(0) { acc, plan in
+        model.rowPlans.reduce(0) { acc, plan in
             guard plan.isEnabled else { return acc }
             let langs = plan.localeTargets.filter(\.isEnabled).count
             return acc + plan.templateCount * langs
         }
     }
 
-    // MARK: - Uploading step
+    // MARK: - Uploading model.step
 
     @ViewBuilder
     var uploadingStep: some View {
         VStack(spacing: 16) {
             Spacer()
-            UploadProgressView(progress: uploadProgress)
+            UploadProgressView(progress: model.uploadProgress)
             Spacer()
         }
         .frame(maxWidth: .infinity)
         .padding(20)
     }
 
-    // MARK: - Done step
+    // MARK: - Done model.step
 
     @ViewBuilder
     var doneStep: some View {
         VStack(spacing: 14) {
             Spacer()
             UploadCompleteHeader(title: "Upload complete")
-            if let summary = uploadSummary {
+            if let summary = model.uploadSummary {
                 Text("\(summary.totalScreenshots) \(summary.totalScreenshots == 1 ? "screenshot" : "screenshots") across \(summary.languageCount) \(summary.languageCount == 1 ? "language" : "languages")")
                     .foregroundStyle(.secondary)
                 if summary.sentForReview {
@@ -256,7 +256,7 @@ extension UploadToGooglePlayView {
     }
 
     private func playConsoleURL(packageName: String) -> URL? {
-        guard !packageName.isEmpty else { return nil }
+        guard !model.packageName.isEmpty else { return nil }
         return URL(string: "https://play.google.com/console/")
     }
 }

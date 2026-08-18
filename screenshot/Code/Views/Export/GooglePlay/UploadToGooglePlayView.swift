@@ -13,34 +13,20 @@ struct UploadToGooglePlayView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) var state
 
-    @State var step: GPUploadStep = .enteringPackage
-    @State var packageName: String = ""
-    /// When off (default), the edit is committed with `changesNotSentForReview=true` so changes
-    /// stage as a draft. On, they are submitted to Google Play review on commit.
-    @State var sendForReview: Bool = false
-    @State var rowPlans: [GPRowPlan] = []
+    /// Steps, package name, plan, progress and errors all live here. See GPUploadFlowModel.
+    @State var model = GPUploadFlowModel()
+
+    // View-local presentation state only.
     @State var collapsedRowPlanIds: Set<UUID> = []   // absent = expanded (default)
-    @State var uploadProgress: UploadProgress?
-    @State var uploadTask: Task<Void, Never>?
-    @State var uploadSummary: GPUploadSummary?
-
-    @State var errorMessage: String?
-    @State var errorDetailsText: String?
     @State var presentedErrorDetails: UploadFailureDetail?
-    @State var isBusy = false
-    @State var credentials = GooglePlayCredentialsStore.shared
-
-    var validationIssues: [UploadIssue] {
-        GooglePlayUploadValidator.validate(
-            packageName: packageName,
-            plans: rowPlans,
-            isDemoMode: credentials.isDemoMode
-        )
-    }
 
     var body: some View {
         shell
-            .task { prefillPackageName() }
+            .task {
+                model.bind(document: state)
+                model.prefillPackageName()
+            }
+            .onDisappear { model.tearDown() }
             .sheet(item: $presentedErrorDetails) { details in
                 UploadFailureDetailsSheet(details: details.message)
             }
@@ -50,7 +36,7 @@ struct UploadToGooglePlayView: View {
     private var shell: some View {
         VStack(spacing: 0) {
             header
-            if credentials.isDemoMode {
+            if model.credentials.isDemoMode {
                 demoModeBanner
             }
             Divider()
@@ -79,7 +65,7 @@ struct UploadToGooglePlayView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if isBusy {
+            if model.isBusy {
                 ProgressView().controlSize(.small)
             }
         }
@@ -88,7 +74,7 @@ struct UploadToGooglePlayView: View {
     }
 
     private var stepSubtitle: String {
-        switch step {
+        switch model.step {
         case .enteringPackage: return String(localized: "Enter the app's package name")
         case .configuringPlan: return String(localized: "Choose what to upload")
         case .uploading: return String(localized: "Uploading screenshots…")
@@ -104,7 +90,7 @@ struct UploadToGooglePlayView: View {
 
     @ViewBuilder
     private var content: some View {
-        switch step {
+        switch model.step {
         case .enteringPackage: packageStep
         case .configuringPlan: planStep
         case .uploading: uploadingStep
@@ -116,12 +102,12 @@ struct UploadToGooglePlayView: View {
 
     private var footer: some View {
         HStack(spacing: 12) {
-            if step == .configuringPlan {
-                Button("Back") { step = .enteringPackage }
-                    .disabled(isBusy)
+            if model.step == .configuringPlan {
+                Button("Back") { model.goBack() }
+                    .disabled(model.isBusy)
             }
 
-            if let errorMessage {
+            if let errorMessage = model.errorMessage {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.red)
@@ -129,9 +115,9 @@ struct UploadToGooglePlayView: View {
                         .font(.callout)
                         .foregroundStyle(.red)
                         .lineLimit(2)
-                    if errorDetailsText != nil {
+                    if model.errorDetailsText != nil {
                         Button("Details") {
-                            presentedErrorDetails = UploadFailureDetail(message: errorDetailsText ?? errorMessage)
+                            presentedErrorDetails = UploadFailureDetail(message: model.errorDetailsText ?? errorMessage)
                         }
                         .buttonStyle(.borderless)
                     }
@@ -148,22 +134,22 @@ struct UploadToGooglePlayView: View {
 
     @ViewBuilder
     private var footerPrimaryActions: some View {
-        switch step {
+        switch model.step {
         case .enteringPackage:
             Button("Cancel") { dismiss() }
-            Button("Continue") { continueToPlan() }
+            Button("Continue") { model.continueToPlan() }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
                 .disabled(!canContinueFromPackage)
         case .configuringPlan:
             Button("Cancel") { dismiss() }
-            Button("Upload to Google Play") { Task { await startUpload() } }
+            Button("Upload to Google Play") { Task { await model.startUpload() } }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
-                .disabled(isBusy || validationIssues.hasErrors)
+                .disabled(model.isBusy || model.validationIssues.hasErrors)
         case .uploading:
             Button("Cancel Upload", role: .destructive) {
-                uploadTask?.cancel()
+                model.uploadTask?.cancel()
             }
         case .done:
             Button("Close") { dismiss() }
@@ -173,10 +159,10 @@ struct UploadToGooglePlayView: View {
     }
 
     private var canContinueFromPackage: Bool {
-        if credentials.isDemoMode { return true }
-        guard credentials.isConfigured else { return false }
+        if model.credentials.isDemoMode { return true }
+        guard model.credentials.isConfigured else { return false }
         return GooglePlayUploadValidator.isValidPackageName(
-            packageName.trimmingCharacters(in: .whitespacesAndNewlines)
+            model.packageName.trimmingCharacters(in: .whitespacesAndNewlines)
         )
     }
 }

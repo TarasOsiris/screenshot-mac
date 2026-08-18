@@ -1,17 +1,70 @@
-import SwiftUI
+import Foundation
+import Observation
 
-extension UploadToGooglePlayView {
+/// The Google Play upload wizard's state machine.
+///
+/// A separate model from `ASCUploadFlowModel`, not a generic shared with it. The sharable part
+/// was the data layer and that is already extracted — `StoreRowPlan`, `StoreUploadChecks`,
+/// `StoreUploadFailureText`. What remains differs structurally: four steps against seven, a
+/// two-level plan tree against three, no pre-upload network calls, and one `upload()` against a
+/// build/diff/review/apply coordinator.
+@MainActor
+@Observable
+final class GPUploadFlowModel {
+
+    private(set) var step: GPUploadStep = .enteringPackage
+
+    var packageName: String = ""
+    /// When off (default), the edit is committed with `changesNotSentForReview=true` so changes
+    /// stage as a draft. On, they are submitted to Google Play review on commit.
+    var sendForReview: Bool = false
+    var rowPlans: [GPRowPlan] = []
+
+    var uploadProgress: UploadProgress?
+    var uploadSummary: GPUploadSummary?
+    var errorMessage: String?
+    var errorDetailsText: String?
+    var isBusy = false
+
+    let credentials: GooglePlayCredentialsStore
+
+    @ObservationIgnored private let uploader: any GPUploadPerforming
+    @ObservationIgnored private(set) weak var document: (any GPUploadDocument)?
+    @ObservationIgnored var uploadTask: Task<Void, Never>?
+
+    init(
+        uploader: any GPUploadPerforming = GooglePlayUploadService.shared,
+        credentials: GooglePlayCredentialsStore = .shared
+    ) {
+        self.uploader = uploader
+        self.credentials = credentials
+    }
+
+    func bind(document: any GPUploadDocument) {
+        self.document = document
+    }
+
+    var rows: [ScreenshotRow] { document?.rows ?? [] }
+    var localeState: LocaleState { document?.localeState ?? .default }
+
+    var validationIssues: [UploadIssue] {
+        GooglePlayUploadValidator.validate(
+            packageName: packageName,
+            plans: rowPlans,
+            isDemoMode: credentials.isDemoMode
+        )
+    }
 
     func prefillPackageName() {
-        if packageName.isEmpty, let saved = state.activeProject?.googlePlayPackageName {
+        if packageName.isEmpty, let saved = document?.savedGooglePlayPackageName {
             packageName = saved
         }
     }
 
     func continueToPlan() {
         packageName = packageName.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !credentials.isDemoMode, let projectId = state.activeProject?.id {
-            state.setGooglePlayPackageName(packageName.isEmpty ? nil : packageName, forProject: projectId)
+        if !credentials.isDemoMode {
+            document?.rememberGooglePlayPackageName(packageName.isEmpty ? nil : packageName)
         }
         rowPlans = buildRowPlans(preserving: rowPlans)
         errorMessage = nil
@@ -19,10 +72,10 @@ extension UploadToGooglePlayView {
     }
 
     func buildRowPlans(preserving existingPlans: [GPRowPlan] = []) -> [GPRowPlan] {
-        state.rows.map { row in
+        rows.map { row in
             let detected = GPImageType.detect(width: row.templateWidth, height: row.templateHeight)
             let existingPlan = existingPlans.first(where: { $0.id == row.id })
-            let targets = state.localeState.locales.map { locale -> GPLocaleTarget in
+            let targets = localeState.locales.map { locale -> GPLocaleTarget in
                 let existingTarget = existingPlan?.localeTargets.first(where: { $0.appLocaleCode == locale.code })
                 return GPLocaleTarget(
                     appLocaleCode: locale.code,
@@ -76,6 +129,8 @@ extension UploadToGooglePlayView {
             return
         }
 
+        guard let document else { return }
+
         let pkg = packageName.trimmingCharacters(in: .whitespacesAndNewlines)
         uploadProgress = nil
         step = .uploading
@@ -84,12 +139,12 @@ extension UploadToGooglePlayView {
 
         let task = Task {
             do {
-                let didSendForReview = try await GooglePlayUploadService.shared.upload(
+                let didSendForReview = try await uploader.upload(
                     packageName: pkg,
                     targets: targets,
                     sendForReview: sendForReview,
-                    rows: state.rows,
-                    source: state,
+                    rows: rows,
+                    source: document,
                     progress: { p in self.uploadProgress = p }
                 )
                 let summary = GPUploadSummary(
@@ -110,22 +165,31 @@ extension UploadToGooglePlayView {
                 errorMessage = String(localized: "Upload cancelled. The draft edit was discarded.")
                 step = .configuringPlan
             } catch {
-                let summary = uploadFailureSummary(for: error)
+                let summary = StoreUploadFailureText.summary(for: error)
                 errorMessage = summary
-                errorDetailsText = buildErrorDetails(for: error)
+                errorDetailsText = StoreUploadFailureText.details(for: error, context: ["Package: \(packageName)"])
                 step = .configuringPlan
                 NotificationService.notify(title: String(localized: "Upload failed"), body: summary)
             }
         }
+        // Assigned before the await: the footer's Cancel button needs the task reachable while
+        // the upload is in flight.
         uploadTask = task
         await task.value
     }
 
-    func uploadFailureSummary(for error: Error) -> String {
-        StoreUploadFailureText.summary(for: error)
+    /// The plan screen's Back button. Only one step back exists in this flow.
+    func goBack() {
+        step = .enteringPackage
     }
 
-    func buildErrorDetails(for error: Error) -> String {
-        StoreUploadFailureText.details(for: error, context: ["Package: \(packageName)"])
+    func cancelUpload() {
+        uploadTask?.cancel()
+    }
+
+    /// The view's `.onDisappear`.
+    func tearDown() {
+        uploadTask?.cancel()
+        uploadTask = nil
     }
 }

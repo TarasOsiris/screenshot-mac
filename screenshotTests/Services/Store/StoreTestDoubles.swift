@@ -91,3 +91,73 @@ final class StubASCDocument: ASCUploadDocument {
 
     func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
 }
+
+/// A `GPUploadDocument` with no `AppState` behind it.
+@MainActor
+final class StubGPDocument: GPUploadDocument {
+    var rows: [ScreenshotRow]
+    var activeProjectName: String
+    var localeState: LocaleState
+    var availableFontFamilySet: Set<String> = []
+    var documentStamp: DocumentStamp?
+    var savedGooglePlayPackageName: String?
+    /// Every value the flow asked to persist, so a test can assert demo mode never writes one.
+    private(set) var rememberedPackageNames: [String?] = []
+
+    init(
+        rows: [ScreenshotRow] = [],
+        projectName: String = "Fixture",
+        localeState: LocaleState = .default,
+        savedGooglePlayPackageName: String? = nil
+    ) {
+        self.rows = rows
+        self.activeProjectName = projectName
+        self.localeState = localeState
+        self.savedGooglePlayPackageName = savedGooglePlayPackageName
+    }
+
+    func rememberGooglePlayPackageName(_ packageName: String?) {
+        rememberedPackageNames.append(packageName)
+        savedGooglePlayPackageName = packageName
+    }
+
+    func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
+
+    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
+}
+
+/// A scriptable stand-in for `GooglePlayUploadService`.
+@MainActor
+final class FakeGPUploader: GPUploadPerforming {
+    enum Outcome {
+        case success(sentForReview: Bool)
+        case cancelled
+        case failure(any Error)
+    }
+
+    var outcome: Outcome = .success(sentForReview: false)
+    private(set) var callCount = 0
+    private(set) var lastPackageName: String?
+    private(set) var lastTargets: [GPUploadTarget] = []
+    private(set) var lastSendForReview: Bool?
+
+    @discardableResult
+    func upload(
+        packageName: String,
+        targets: [GPUploadTarget],
+        sendForReview: Bool,
+        rows: [ScreenshotRow],
+        source: any RowRenderSource,
+        progress: @escaping (UploadProgress) -> Void
+    ) async throws -> Bool {
+        callCount += 1
+        lastPackageName = packageName
+        lastTargets = targets
+        lastSendForReview = sendForReview
+        switch outcome {
+        case .success(let sent): return sent
+        case .cancelled: throw CancellationError()
+        case .failure(let error): throw error
+        }
+    }
+}

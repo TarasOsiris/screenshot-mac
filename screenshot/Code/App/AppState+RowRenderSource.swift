@@ -19,3 +19,12 @@ extension AppState: ASCUploadDocument {
         setASCAppId(appId, forProject: projectId)
     }
 }
+
+extension AppState: GPUploadDocument {
+    var savedGooglePlayPackageName: String? { activeProject?.googlePlayPackageName }
+
+    func rememberGooglePlayPackageName(_ packageName: String?) {
+        guard let projectId = activeProject?.id else { return }
+        setGooglePlayPackageName(packageName, forProject: projectId)
+    }
+}
