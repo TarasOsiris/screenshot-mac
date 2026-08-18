@@ -181,7 +181,7 @@ struct ShowcaseRowPreview: View {
     let loadImages: () -> [String: NSImage]
     let localeCode: String?
     let localeState: LocaleState
-    let availableFontFamilies: Set<String>?
+    let availableFontFamilies: Set<String>
 
     @State var templateImages: [NSImage] = []
 

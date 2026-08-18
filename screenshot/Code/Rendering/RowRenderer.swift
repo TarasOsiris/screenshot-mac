@@ -8,8 +8,6 @@ import UIKit
 // Renders a row, a single template, or a showcase sheet to an image. Builds the same SwiftUI
 // tree the editor draws (see Rendering/RowCanvasLayers) so export and preview cannot diverge.
 extension ExportService {
-    // Filename & folder-name construction moved to `ExportFileNaming`.
-
     // MARK: - Showcase rendering (gallery layout with spacing & rounded corners)
 
     @MainActor
@@ -18,7 +16,7 @@ extension ExportService {
         screenshotImages: [String: NSImage] = [:],
         localeCode: String? = nil,
         localeState: LocaleState = .default,
-        availableFontFamilies: Set<String>? = nil,
+        availableFontFamilies: Set<String> = PlatformFonts.familyNameSet,
         config: ShowcaseExportConfig = .init()
     ) -> NSImage {
         let count = row.templates.count
@@ -76,7 +74,7 @@ extension ExportService {
         screenshotImages: [String: NSImage] = [:],
         localeCode: String? = nil,
         localeState: LocaleState = .default,
-        availableFontFamilies: Set<String>? = nil,
+        availableFontFamilies: Set<String> = PlatformFonts.familyNameSet,
         displayScale: CGFloat = 1.0
     ) -> NSImage {
         let count = row.templates.count
@@ -84,11 +82,9 @@ extension ExportService {
             return NSImage(size: NSSize(width: 1, height: 1))
         }
 
-        let totalWidth = row.templateWidth * CGFloat(count)
-        let renderWidth = totalWidth * displayScale
+        let renderWidth = row.templateWidth * CGFloat(count) * displayScale
         let renderHeight = row.templateHeight * displayScale
         let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
-        let fontFamilies = availableFontFamilies ?? PlatformFonts.familyNameSet
         let composedBackground = renderComposedBackgroundImage(
             row: row,
             screenshotImages: screenshotImages,
@@ -102,7 +98,7 @@ extension ExportService {
             images: screenshotImages,
             displayScale: displayScale,
             defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-            availableFontFamilies: fontFamilies
+            availableFontFamilies: availableFontFamilies
         )
         let shapesImage = renderViewToImage(
             shapesView,
@@ -129,7 +125,7 @@ extension ExportService {
     ) -> NSImage {
         let totalWidth = row.templateWidth * displayScale * CGFloat(row.templates.count)
         let totalHeight = row.templateHeight * displayScale
-        let baseBackgroundImage = renderViewToImage(
+        let backgroundImage = renderBlurredViewToImage(
             RowCanvasBaseBackgroundView(
                 row: row,
                 screenshotImages: screenshotImages,
@@ -137,20 +133,9 @@ extension ExportService {
             ),
             width: totalWidth,
             height: totalHeight,
+            radius: row.backgroundBlur * displayScale,
             label: "\(labelPrefix) base background '\(row.label)'"
         )
-        let backgroundImage: NSImage
-        if row.backgroundBlur > 0 {
-            let blurred = applyGaussianBlur(to: baseBackgroundImage, radius: row.backgroundBlur * displayScale)
-            backgroundImage = flattenImage(
-                blurred,
-                over: baseBackgroundImage,
-                width: totalWidth,
-                height: totalHeight
-            )
-        } else {
-            backgroundImage = baseBackgroundImage
-        }
 
         return renderOverrideBackgroundImage(
             row: row,
@@ -169,70 +154,40 @@ extension ExportService {
         labelPrefix: String,
         over backgroundImage: NSImage
     ) -> NSImage {
-        let totalWidth = row.templateWidth * displayScale * CGFloat(row.templates.count)
-        let totalHeight = row.templateHeight * displayScale
-
         guard row.templates.contains(where: \.overrideBackground) else {
             return backgroundImage
         }
 
-        var composited = backgroundImage
         let templateWidth = row.templateWidth * displayScale
         let templateHeight = row.templateHeight * displayScale
+        let totalWidth = templateWidth * CGFloat(row.templates.count)
         let templateModelSize = row.templateSize
+        var composited = backgroundImage
 
         for (index, template) in row.templates.enumerated() where template.overrideBackground {
-            let baseOverride = renderViewToImage(
+            let overrideImage = renderBlurredViewToImage(
                 template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: templateModelSize)
                     .frame(width: templateWidth, height: templateHeight),
                 width: templateWidth,
                 height: templateHeight,
+                radius: template.backgroundBlur * displayScale,
                 label: "\(labelPrefix) override background '\(row.label)' [\(index)]"
             )
-
-            let overrideImage: NSImage
-            if template.backgroundBlur > 0 {
-                let blurred = applyGaussianBlur(to: baseOverride, radius: template.backgroundBlur * displayScale)
-                overrideImage = flattenImage(
-                    blurred,
-                    over: baseOverride,
-                    width: templateWidth,
-                    height: templateHeight
-                )
-            } else {
-                overrideImage = baseOverride
-            }
 
             composited = drawImage(
                 overrideImage,
                 into: composited,
                 at: CGPoint(x: CGFloat(index) * templateWidth, y: 0),
-                canvasSize: NSSize(width: totalWidth, height: totalHeight)
+                canvasSize: NSSize(width: totalWidth, height: templateHeight)
             )
         }
 
         return composited
     }
 
+    /// Per-template render (not the full-row strip) so wide rows export at full resolution
+    /// instead of being downscaled to fit the GPU texture limit.
     @MainActor
-    static func renderTemplatePNG(
-        index: Int,
-        row: ScreenshotRow,
-        screenshotImages: [String: NSImage] = [:],
-        localeState: LocaleState = .default,
-        availableFontFamilies: Set<String>? = nil
-    ) -> Data? {
-        // Per-template render (not the full-row strip) so wide rows export at full resolution
-        // instead of being downscaled to fit the GPU texture limit.
-        let image = renderSingleTemplateImage(
-            index: index, row: row, screenshotImages: screenshotImages,
-            localeCode: localeState.activeLocaleCode, localeState: localeState,
-            availableFontFamilies: availableFontFamilies
-        )
-        return opaquePNGData(from: image)
-    }
-
-@MainActor
     static func renderTemplateData(
         index: Int,
         row: ScreenshotRow,
@@ -240,7 +195,7 @@ extension ExportService {
         screenshotImages: [String: NSImage] = [:],
         localeCode: String? = nil,
         localeState: LocaleState = .default,
-        availableFontFamilies: Set<String>? = nil
+        availableFontFamilies: Set<String> = PlatformFonts.familyNameSet
     ) -> Data? {
         let image = renderSingleTemplateImage(
             index: index, row: row, screenshotImages: screenshotImages,
@@ -257,7 +212,7 @@ extension ExportService {
         screenshotImages: [String: NSImage] = [:],
         localeCode: String? = nil,
         localeState: LocaleState = .default,
-        availableFontFamilies: Set<String>? = nil
+        availableFontFamilies: Set<String> = PlatformFonts.familyNameSet
     ) -> NSImage {
         let rowImage = renderRowImage(
             row: row,
@@ -282,7 +237,7 @@ extension ExportService {
         screenshotImages: [String: NSImage] = [:],
         localeCode: String? = nil,
         localeState: LocaleState = .default,
-        availableFontFamilies: Set<String>? = nil,
+        availableFontFamilies: Set<String> = PlatformFonts.familyNameSet,
         displayScale: CGFloat = 1.0,
         preRenderedRowBackground: NSImage? = nil
     ) -> NSImage {
@@ -291,7 +246,6 @@ extension ExportService {
         let pxWidth = templateWidth * displayScale
         let pxHeight = templateHeight * displayScale
         let resolvedShapes = resolvedExportShapes(row: row, localeCode: localeCode, localeState: localeState)
-        let fontFamilies = availableFontFamilies ?? PlatformFonts.familyNameSet
         let backgroundImage = renderTemplateBackgroundImage(
             index: index,
             row: row,
@@ -330,7 +284,7 @@ extension ExportService {
             images: screenshotImages,
             displayScale: displayScale,
             defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-            availableFontFamilies: fontFamilies
+            availableFontFamilies: availableFontFamilies
         )
         let shapesImage = renderViewToImage(
             shapesView,
@@ -426,22 +380,14 @@ extension ExportService {
         let template = row.templates[index]
         guard template.overrideBackground else { return base }
 
-        let overrideView = template
-            .resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: row.templateSize)
-            .frame(width: pxWidth, height: pxHeight)
-        let overrideLabel = "\(labelPrefix) override background '\(row.label)' [\(index)]"
-        let overrideImage: NSImage
-        if template.backgroundBlur > 0 {
-            overrideImage = renderBlurredViewToImage(
-                overrideView,
-                width: pxWidth,
-                height: pxHeight,
-                radius: template.backgroundBlur * displayScale,
-                label: overrideLabel
-            )
-        } else {
-            overrideImage = renderViewToImage(overrideView, width: pxWidth, height: pxHeight, label: overrideLabel)
-        }
+        let overrideImage = renderBlurredViewToImage(
+            template.resolvedBackgroundView(screenshotImages: screenshotImages, modelSize: row.templateSize)
+                .frame(width: pxWidth, height: pxHeight),
+            width: pxWidth,
+            height: pxHeight,
+            radius: template.backgroundBlur * displayScale,
+            label: "\(labelPrefix) override background '\(row.label)' [\(index)]"
+        )
         return flattenImage(overrideImage, over: base, width: pxWidth, height: pxHeight)
     }
 

@@ -3,7 +3,6 @@ import AppKit
 #else
 import UIKit
 #endif
-import OSLog
 import UniformTypeIdentifiers
 
 enum ExportImageFormat: String {
@@ -32,7 +31,7 @@ struct ExportService {
         localeState: LocaleState = .default,
         localeFilter: String? = nil,
         customSuffix: String = "",
-        availableFontFamilies: Set<String>? = nil,
+        availableFontFamilies: Set<String> = PlatformFonts.familyNameSet,
         onProgress: (@MainActor (Int) -> Void)? = nil
     ) async throws -> (folderURL: URL, fileURLs: [URL]) {
         let rootName = ExportFileNaming.sanitizedRootFolderName(projectName)

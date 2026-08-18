@@ -369,8 +369,9 @@ struct TemplateControlBar: View {
 
     private func renderExportPNG() -> Data? {
         let images = onLoadFullResImages?() ?? screenshotImages
-        return ExportService.renderTemplatePNG(
-            index: index, row: row, screenshotImages: images, localeState: localeState,
+        return ExportService.renderTemplateData(
+            index: index, row: row, format: .png, screenshotImages: images,
+            localeCode: localeState.activeLocaleCode, localeState: localeState,
             availableFontFamilies: state.availableFontFamilySet
         )
     }

@@ -15,21 +15,26 @@ extension ExportService {
         at origin: CGPoint,
         canvasSize: NSSize
     ) -> NSImage {
+        composite(image, over: background, in: NSRect(origin: origin, size: image.size), canvasSize: canvasSize)
+    }
+
+    /// Draws `background` filling `canvasSize`, then `image` into `rect` on top.
+    private nonisolated static func composite(
+        _ image: NSImage,
+        over background: NSImage,
+        in rect: NSRect,
+        canvasSize: NSSize
+    ) -> NSImage {
+        let canvasRect = NSRect(origin: .zero, size: canvasSize)
         #if os(macOS)
         guard let bitmapRep = bitmapRep(width: canvasSize.width, height: canvasSize.height) else {
             return background
         }
-        let rect = NSRect(origin: .zero, size: canvasSize)
         let previousContext = NSGraphicsContext.current
         defer { NSGraphicsContext.current = previousContext }
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
-        background.draw(in: rect)
-        image.draw(
-            in: NSRect(origin: origin, size: image.size),
-            from: NSRect(origin: .zero, size: image.size),
-            operation: .sourceOver,
-            fraction: 1
-        )
+        background.draw(in: canvasRect)
+        image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
         NSGraphicsContext.current?.flushGraphics()
 
         let output = NSImage(size: canvasSize)
@@ -37,8 +42,8 @@ extension ExportService {
         return output
         #else
         return offscreenImage(size: canvasSize) {
-            background.draw(in: CGRect(origin: .zero, size: canvasSize))
-            image.draw(in: CGRect(origin: origin, size: image.size))
+            background.draw(in: canvasRect)
+            image.draw(in: rect)
         }
         #endif
     }
@@ -47,7 +52,7 @@ extension ExportService {
 
     /// Applies CIGaussianBlur and crops the result back to the original image bounds.
     /// Uses CIAffineClamp to extend edge pixels so the blur kernel doesn't sample transparent pixels.
-    static func applyGaussianBlur(to image: NSImage, radius: Double) -> NSImage {
+    private static func applyGaussianBlur(to image: NSImage, radius: Double) -> NSImage {
         guard radius > 0,
               let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return image }
 
@@ -98,6 +103,7 @@ extension ExportService {
     @MainActor
     static func renderBlurredViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, radius: Double, label: String) -> NSImage {
         let rendered = renderViewToImage(view, width: width, height: height, label: label)
+        guard radius > 0 else { return rendered }
         let blurred = applyGaussianBlur(to: rendered, radius: radius)
         return flattenImage(blurred, over: rendered, width: width, height: height)
     }
@@ -192,31 +198,11 @@ extension ExportService {
         #endif
     }
 
-    /// Composites the blurred image over the original rendered background to remove edge alpha fringes.
-    @MainActor
-    static func flattenImage(_ image: NSImage, over background: NSImage, width: CGFloat, height: CGFloat) -> NSImage {
-        #if os(macOS)
-        guard let bitmapRep = bitmapRep(width: width, height: height) else {
-            return background
-        }
-        let rect = NSRect(x: 0, y: 0, width: width, height: height)
-        let previousContext = NSGraphicsContext.current
-        defer { NSGraphicsContext.current = previousContext }
-        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
-        background.draw(in: rect)
-        image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
-        NSGraphicsContext.current?.flushGraphics()
-
-        let flattened = NSImage(size: NSSize(width: width, height: height))
-        flattened.addRepresentation(bitmapRep)
-        return flattened
-        #else
-        let rect = CGRect(x: 0, y: 0, width: width, height: height)
-        return offscreenImage(size: CGSize(width: width, height: height)) {
-            background.draw(in: rect)
-            image.draw(in: rect)
-        }
-        #endif
+    /// Draws `image` over `background` at full size — flattens shapes onto their background, and
+    /// backs a blurred layer with its unblurred original so edge alpha fringes don't show through.
+    nonisolated static func flattenImage(_ image: NSImage, over background: NSImage, width: CGFloat, height: CGFloat) -> NSImage {
+        let size = NSSize(width: width, height: height)
+        return composite(image, over: background, in: NSRect(origin: .zero, size: size), canvasSize: size)
     }
 
     #if os(macOS)

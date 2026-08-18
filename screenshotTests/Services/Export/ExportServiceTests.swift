@@ -74,9 +74,9 @@ struct ExportServiceTests {
 
     // MARK: - Template rendering
 
-    @Test func renderTemplatePNGProducesData() throws {
+    @Test func renderTemplateDataProducesPNG() throws {
         let row = makeTestRow(width: 200, height: 400)
-        let pngData = try #require(ExportService.renderTemplatePNG(index: 0, row: row))
+        let pngData = try #require(ExportService.renderTemplateData(index: 0, row: row, format: .png))
         #expect(!pngData.isEmpty)
 
         let decoded = try #require(NSBitmapImageRep(data: pngData))
@@ -141,21 +141,13 @@ struct ExportServiceTests {
         shape.fontName = "Courier New"
         row.shapes = [shape]
 
-        let named = try #require(ExportService.renderTemplatePNG(
-            index: 0, row: row, availableFontFamilies: ["Courier New"]
-        ))
-        let unavailable = try #require(ExportService.renderTemplatePNG(
-            index: 0, row: row, availableFontFamilies: []
-        ))
-        #expect(named != unavailable, "renderTemplatePNG must forward availableFontFamilies")
-
-        let dataNamed = try #require(ExportService.renderTemplateData(
+        let named = try #require(ExportService.renderTemplateData(
             index: 0, row: row, format: .png, availableFontFamilies: ["Courier New"]
         ))
-        let dataUnavailable = try #require(ExportService.renderTemplateData(
+        let unavailable = try #require(ExportService.renderTemplateData(
             index: 0, row: row, format: .png, availableFontFamilies: []
         ))
-        #expect(dataNamed != dataUnavailable, "renderTemplateData must forward availableFontFamilies")
+        #expect(named != unavailable, "renderTemplateData must forward availableFontFamilies")
     }
 
     @Test func renderTemplateDrawsTextBackground() throws {

@@ -22,7 +22,7 @@ struct ShowcaseExportSheet: View {
     let loadImages: (ScreenshotRow) -> [String: NSImage]
     let localeCode: String?
     let localeState: LocaleState
-    let availableFontFamilies: Set<String>?
+    let availableFontFamilies: Set<String>
     var onExport: (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>, ExportDestination) -> Void
 
     #if os(macOS)
@@ -41,7 +41,7 @@ struct ShowcaseExportSheet: View {
         loadImages: @escaping (ScreenshotRow) -> [String: NSImage],
         localeCode: String?,
         localeState: LocaleState,
-        availableFontFamilies: Set<String>?,
+        availableFontFamilies: Set<String>,
         onExport: @escaping (ShowcaseExportConfig, NSImage?, Set<UUID>, Set<UUID>, ExportDestination) -> Void
     ) {
         self.candidateRows = candidateRows
@@ -302,7 +302,7 @@ private struct ShowcasePreviewColumn: View {
     let loadImages: (ScreenshotRow) -> [String: NSImage]
     let localeCode: String?
     let localeState: LocaleState
-    let availableFontFamilies: Set<String>?
+    let availableFontFamilies: Set<String>
 
     var body: some View {
         if rows.isEmpty {
