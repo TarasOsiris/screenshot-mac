@@ -22,7 +22,7 @@ struct CanvasShapeInteractions {
     var onFormatBarAnchorChanged: ((CGPoint?) -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
     var onMatchSelectedDeviceSizes: (() -> Void)?
-    var onCenterShape: ((AppState.CenterAxis) -> Void)?
+    var onCenterShape: ((CenterAxis) -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
     var onTranslateAllLocales: (() -> Void)?
@@ -39,9 +39,9 @@ struct CanvasShapeInteractions {
     var onPasteTextStyle: (() -> Void)?
     var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
     var onDeleteSelected: (() -> Void)?
-    var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
-    var onMatchGeometryToThis: ((AppState.GeometryMatchMode) -> Void)?
-    var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
+    var onAlignSelected: ((ShapeAlignment) -> Void)?
+    var onMatchGeometryToThis: ((GeometryMatchMode) -> Void)?
+    var onDuplicateToTemplates: ((DuplicateDirection) -> Void)?
     var onToggleLock: (() -> Void)?
     var lockToggleWillUnlock = false
 }

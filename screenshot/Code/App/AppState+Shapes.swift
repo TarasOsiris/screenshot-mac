@@ -130,9 +130,6 @@ extension AppState {
         }
     }
 
-    enum CenterAxis {
-        case vertically, horizontally, both
-    }
 
     func centerAllDevices(in rowId: UUID, axis: CenterAxis) {
         guard let idx = rowIndex(for: rowId) else { return }
@@ -272,9 +269,6 @@ extension AppState {
         return copy.id
     }
 
-    enum DuplicateDirection {
-        case all, left, right
-    }
 
     func duplicateShapesToTemplates(_ shapeIds: Set<UUID>, direction: DuplicateDirection = .all) {
         guard let rowIdx = selectedRowIndex else { return }
@@ -504,10 +498,6 @@ extension AppState {
 
     // MARK: - Align Selected Shapes
 
-    enum ShapeAlignment: Equatable {
-        case left, centerH, right, top, centerV, bottom
-        case distributeH, distributeV
-    }
 
     func alignSelectedShapes(_ alignment: ShapeAlignment) {
         guard let rowIdx = selectedRowIndex, selectedShapeIds.count >= 2 else { return }
@@ -554,7 +544,6 @@ extension AppState {
 
     // MARK: - Match Geometry to Source
 
-    enum GeometryMatchMode { case position, size, both }
 
     /// Pushes the source shape's geometry onto the other selected shapes. Position is
     /// template-relative: each target keeps its own column but adopts the source's offset

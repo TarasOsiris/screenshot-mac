@@ -331,12 +331,6 @@ final class AppState {
     }
 
     // macOS virtual key codes
-    static let kVKLeftArrow: UInt16 = 0x7B
-    static let kVKRightArrow: UInt16 = 0x7C
-    static let kVKDownArrow: UInt16 = 0x7D
-    static let kVKUpArrow: UInt16 = 0x7E
-    static let kVKDelete: UInt16 = 0x33
-    static let kVKForwardDelete: UInt16 = 0x75
 
     private func installArrowKeyMonitor() {
         // Arrow-key nudge and Delete use a global NSEvent monitor (macOS only) so they work
@@ -353,11 +347,11 @@ final class AppState {
             let shift = event.modifierFlags.contains(.shift)
             let step: CGFloat = shift ? 10 : 1
             switch event.keyCode {
-            case Self.kVKLeftArrow:  self.nudgeSelectedShapes(dx: -step, dy: 0); return nil
-            case Self.kVKRightArrow: self.nudgeSelectedShapes(dx: step, dy: 0); return nil
-            case Self.kVKUpArrow:    self.nudgeSelectedShapes(dx: 0, dy: -step); return nil
-            case Self.kVKDownArrow:  self.nudgeSelectedShapes(dx: 0, dy: step); return nil
-            case Self.kVKDelete, Self.kVKForwardDelete: self.deleteSelectedShape(); return nil
+            case PlatformKeyCode.LeftArrow:  self.nudgeSelectedShapes(dx: -step, dy: 0); return nil
+            case PlatformKeyCode.RightArrow: self.nudgeSelectedShapes(dx: step, dy: 0); return nil
+            case PlatformKeyCode.UpArrow:    self.nudgeSelectedShapes(dx: 0, dy: -step); return nil
+            case PlatformKeyCode.DownArrow:  self.nudgeSelectedShapes(dx: 0, dy: step); return nil
+            case PlatformKeyCode.Delete, PlatformKeyCode.ForwardDelete: self.deleteSelectedShape(); return nil
             default: return event
             }
         }

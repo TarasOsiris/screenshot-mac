@@ -64,9 +64,9 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
             else { return event }
             let idx = panel.currentPreviewItemIndex
             switch event.keyCode {
-            case AppState.kVKLeftArrow where idx <= 0:
+            case PlatformKeyCode.LeftArrow where idx <= 0:
                 return nil
-            case AppState.kVKRightArrow where idx >= QuickLookCoordinator.shared.previewURLs.count - 1:
+            case PlatformKeyCode.RightArrow where idx >= QuickLookCoordinator.shared.previewURLs.count - 1:
                 return nil
             default:
                 return event

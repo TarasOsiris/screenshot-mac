@@ -10,7 +10,7 @@ struct CanvasShapeContextMenuContent: View {
     var onCaptureSimulator: (() -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
     var onMatchSelectedDeviceSizes: (() -> Void)?
-    var onCenterShape: ((AppState.CenterAxis) -> Void)?
+    var onCenterShape: ((CenterAxis) -> Void)?
     var onTranslate: (() -> Void)?
     var translateLocaleName: String?
     var onTranslateAllLocales: (() -> Void)?
@@ -26,9 +26,9 @@ struct CanvasShapeContextMenuContent: View {
     var onPasteTextStyle: (() -> Void)?
     let applyUpdate: (@escaping (inout CanvasShapeModel) -> Void) -> Void
     let deleteAction: () -> Void
-    var onAlignSelected: ((AppState.ShapeAlignment) -> Void)?
-    var onMatchGeometryToThis: ((AppState.GeometryMatchMode) -> Void)?
-    var onDuplicateToTemplates: ((AppState.DuplicateDirection) -> Void)?
+    var onAlignSelected: ((ShapeAlignment) -> Void)?
+    var onMatchGeometryToThis: ((GeometryMatchMode) -> Void)?
+    var onDuplicateToTemplates: ((DuplicateDirection) -> Void)?
     var onToggleLock: (() -> Void)?
     /// True when invoking `onToggleLock` would unlock (rather than lock) the active
     /// selection. Lets the menu label and icon match the action that will happen.
