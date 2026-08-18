@@ -40,6 +40,25 @@ final class AppStoreConnectAPIService {
         self.session = session
         self.credentials = credentials
         self.demoData = demoData
+        self.http = StoreHTTPClient(
+            baseURL: Self.baseURL,
+            session: session,
+            bearerToken: { [auth] in try auth.token() },
+            errorMessage: Self.extractErrorMessage
+        )
+    }
+
+    private var http: StoreHTTPClient!
+
+    /// Maps transport failures onto this service's own error type, so every localized string
+    /// stays exactly where it is.
+    private static func mapped(_ error: StoreHTTPError) -> AppStoreConnectAPIError {
+        switch error {
+        case .invalidURL: .invalidURL
+        case .nonHTTPResponse: .httpError(status: -1, message: "Non-HTTP response")
+        case .status(let status, let message): .httpError(status: status, message: message ?? "HTTP \(status)")
+        case .transport(let underlying): .transport(underlying)
+        }
     }
 
     private var isDemoMode: Bool { credentials.isDemoMode }
@@ -433,49 +452,21 @@ final class AppStoreConnectAPIService {
         path: String,
         body: Body?
     ) async throws -> Data {
-        guard let url = URL(string: Self.baseURL + path) else {
-            throw AppStoreConnectAPIError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = method
-        if method == "GET" {
-            // Screenshot relationship reads are used to validate writes made moments earlier.
-            // A cached pre-mutation response can otherwise look like a failed order update.
-            request.cachePolicy = .reloadIgnoringLocalCacheData
-            request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
-        }
-        let token = try auth.token()
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        if let body {
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try Self.encoder.encode(body)
-        }
-
-        let data: Data
-        let response: URLResponse
         do {
-            (data, response) = try await session.data(for: request)
-        } catch {
-            throw AppStoreConnectAPIError.transport(error)
-        }
-
-        guard let http = response as? HTTPURLResponse else {
-            throw AppStoreConnectAPIError.httpError(status: -1, message: "Non-HTTP response")
-        }
-
-        guard (200..<300).contains(http.statusCode) else {
-            throw AppStoreConnectAPIError.httpError(
-                status: http.statusCode,
-                message: Self.extractErrorMessage(from: data) ?? "HTTP \(http.statusCode)"
+            return try await http.data(
+                method: method,
+                path: path,
+                body: try body.map { try Self.encoder.encode($0) },
+                // Screenshot relationship reads verify writes made moments earlier; a cached
+                // pre-mutation response would look like a failed order update.
+                bypassCache: method == "GET"
             )
+        } catch let error as StoreHTTPError {
+            throw Self.mapped(error)
         }
-
-        return data
     }
 
-    private static func extractErrorMessage(from data: Data) -> String? {
+    nonisolated private static func extractErrorMessage(from data: Data) -> String? {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let errors = json["errors"] as? [[String: Any]] else {
             return nil

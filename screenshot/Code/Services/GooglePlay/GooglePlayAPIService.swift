@@ -42,6 +42,25 @@ final class GooglePlayAPIService {
         self.session = session
         self.credentials = credentials
         self.demoData = demoData
+        self.http = StoreHTTPClient(
+            baseURL: Self.baseURL,
+            session: session,
+            bearerToken: { [auth] in try await auth.token() },
+            errorMessage: Self.extractErrorMessage
+        )
+    }
+
+    private var http: StoreHTTPClient!
+
+    /// Maps transport failures onto this service's own error type, so every localized string
+    /// stays exactly where it is.
+    private static func mapped(_ error: StoreHTTPError) -> GooglePlayAPIError {
+        switch error {
+        case .invalidURL: .invalidURL
+        case .nonHTTPResponse: .httpError(status: -1, message: "Non-HTTP response")
+        case .status(let status, let message): .httpError(status: status, message: message ?? "HTTP \(status)")
+        case .transport(let underlying): .transport(underlying)
+        }
     }
 
     private var isDemoMode: Bool { credentials.isDemoMode }
@@ -133,43 +152,23 @@ final class GooglePlayAPIService {
     }
 
     private func rawRequest(method: String, path: String, body: Data?, contentType: String?, fileName: String? = nil) async throws -> Data {
-        guard let url = URL(string: Self.baseURL + path) else {
-            throw GooglePlayAPIError.invalidURL
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = method
-        let token = try await auth.token()
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        if let body {
-            request.setValue(contentType ?? "application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = body
-        }
-        // Suggests the display name for the uploaded media. Google's upload backend reads the
-        // filename from Content-Disposition; without it every image shows as "image".
-        if let fileName {
-            request.setValue("attachment; filename=\"\(fileName)\"", forHTTPHeaderField: "Content-Disposition")
-        }
-
-        let data: Data
-        let response: URLResponse
+        // Google's upload backend reads the display name from Content-Disposition; without it
+        // every uploaded image shows as "image".
+        let headers = fileName.map { ["Content-Disposition": "attachment; filename=\"\($0)\""] } ?? [:]
         do {
-            (data, response) = try await session.data(for: request)
-        } catch {
-            throw GooglePlayAPIError.transport(error)
-        }
-        guard let http = response as? HTTPURLResponse else {
-            throw GooglePlayAPIError.httpError(status: -1, message: "Non-HTTP response")
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw GooglePlayAPIError.httpError(
-                status: http.statusCode,
-                message: Self.extractErrorMessage(from: data) ?? "HTTP \(http.statusCode)"
+            return try await http.data(
+                method: method,
+                path: path,
+                body: body,
+                contentType: contentType,
+                extraHeaders: headers
             )
+        } catch let error as StoreHTTPError {
+            throw Self.mapped(error)
         }
-        return data
     }
 
-    private static func extractErrorMessage(from data: Data) -> String? {
+    nonisolated private static func extractErrorMessage(from data: Data) -> String? {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let error = json["error"] as? [String: Any] else {
             return nil
