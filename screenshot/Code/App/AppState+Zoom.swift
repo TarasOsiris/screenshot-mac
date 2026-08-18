@@ -13,7 +13,7 @@ extension AppState {
         }
         zoomPersistTask?.cancel()
         let task = DispatchWorkItem {
-            UserDefaults.standard.set(clamped, forKey: "lastZoomLevel")
+            UserDefaults.standard.set(clamped, forKey: AppSettingsKeys.lastZoomLevel)
         }
         zoomPersistTask = task
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
@@ -42,16 +42,16 @@ extension AppState {
     }
 
     func resetZoom() {
-        let defaultLevel = UserDefaults.standard.double(forKey: "defaultZoomLevel")
-        setZoomLevel(defaultLevel > 0 ? defaultLevel : 1.0)
+        let defaultLevel = UserDefaults.standard.double(forKey: AppSettingsKeys.defaultZoomLevel)
+        setZoomLevel(defaultLevel > 0 ? defaultLevel : AppSettingsKeys.Default.defaultZoomLevel)
         zoomPersistTask?.cancel()
-        UserDefaults.standard.removeObject(forKey: "lastZoomLevel")
+        UserDefaults.standard.removeObject(forKey: AppSettingsKeys.lastZoomLevel)
     }
 
     func flushPendingZoomPersist() {
         guard zoomPersistTask != nil else { return }
         zoomPersistTask?.cancel()
         zoomPersistTask = nil
-        UserDefaults.standard.set(zoomLevel, forKey: "lastZoomLevel")
+        UserDefaults.standard.set(zoomLevel, forKey: AppSettingsKeys.lastZoomLevel)
     }
 }

@@ -270,12 +270,12 @@ struct ExportServiceTests {
 
     @Test func preferredCustomSuffixReadsTheExportSetting() {
         let defaults = UserDefaults.standard
-        let previous = defaults.string(forKey: "exportCustomSuffix")
+        let previous = defaults.string(forKey: AppSettingsKeys.exportCustomSuffix)
         defer {
-            if let previous { defaults.set(previous, forKey: "exportCustomSuffix") }
-            else { defaults.removeObject(forKey: "exportCustomSuffix") }
+            if let previous { defaults.set(previous, forKey: AppSettingsKeys.exportCustomSuffix) }
+            else { defaults.removeObject(forKey: AppSettingsKeys.exportCustomSuffix) }
         }
-        defaults.set("promo", forKey: "exportCustomSuffix")
+        defaults.set("promo", forKey: AppSettingsKeys.exportCustomSuffix)
         #expect(ExportFileNaming.preferredCustomSuffix == "promo")
     }
 

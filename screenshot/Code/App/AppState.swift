@@ -226,11 +226,11 @@ final class AppState {
     init() {
         coach.app = self
 
-        let lastZoom = UserDefaults.standard.double(forKey: "lastZoomLevel")
+        let lastZoom = UserDefaults.standard.double(forKey: AppSettingsKeys.lastZoomLevel)
         if lastZoom > 0 {
             zoomLevel = lastZoom
         } else {
-            let defaultZoom = UserDefaults.standard.double(forKey: "defaultZoomLevel")
+            let defaultZoom = UserDefaults.standard.double(forKey: AppSettingsKeys.defaultZoomLevel)
             if defaultZoom > 0 { zoomLevel = defaultZoom }
         }
 
@@ -371,18 +371,18 @@ final class AppState {
         defaultDeviceCategory: DeviceCategory?,
         defaultDeviceFrameId: String?
     ) -> ScreenshotRow {
-        let defaultSize = UserDefaults.standard.string(forKey: "defaultScreenshotSize") ?? "1242x2688"
+        let defaultSize = UserDefaults.standard.string(forKey: AppSettingsKeys.defaultScreenshotSize) ?? AppSettingsKeys.Default.defaultScreenshotSize
         let parsedSize = parseSizeString(defaultSize)
         let w: CGFloat = width ?? parsedSize?.width ?? 1242
         let h: CGFloat = height ?? parsedSize?.height ?? 2688
-        let storedTemplateCount = UserDefaults.standard.integer(forKey: "defaultTemplateCount")
-        let resolvedTemplateCount = templateCount ?? (storedTemplateCount > 0 ? storedTemplateCount : 3)
+        let storedTemplateCount = UserDefaults.standard.integer(forKey: AppSettingsKeys.defaultTemplateCount)
+        let resolvedTemplateCount = templateCount ?? (storedTemplateCount > 0 ? storedTemplateCount : AppSettingsKeys.Default.defaultTemplateCount)
         let templates = (0..<resolvedTemplateCount).map { index in
             ScreenshotTemplate(backgroundColor: Self.templateColors[index % Self.templateColors.count])
         }
-        let deviceCategoryRaw = UserDefaults.standard.string(forKey: "defaultDeviceCategory") ?? "iphone"
+        let deviceCategoryRaw = UserDefaults.standard.string(forKey: AppSettingsKeys.defaultDeviceCategory) ?? AppSettingsKeys.Default.defaultDeviceCategory
         let resolvedDeviceCategory = defaultDeviceCategory ?? DeviceCategory(rawValue: deviceCategoryRaw)
-        let storedDeviceFrameId = UserDefaults.standard.string(forKey: "defaultDeviceFrameId").flatMap { $0.isEmpty ? nil : $0 }
+        let storedDeviceFrameId = UserDefaults.standard.string(forKey: AppSettingsKeys.defaultDeviceFrameId).flatMap { $0.isEmpty ? nil : $0 }
         let resolvedDeviceFrame = defaultDeviceFrameId ?? storedDeviceFrameId
         let resolvedFrame = resolvedDeviceFrame.flatMap { DeviceFrameCatalog.frame(for: $0) }
 

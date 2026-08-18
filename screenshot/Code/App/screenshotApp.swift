@@ -11,7 +11,7 @@ struct ScreenshotBroApp: App {
     #if os(iOS)
     @State private var appNavigationRouter = AppNavigationRouter()
     #endif
-    @AppStorage("appearance") private var appearance = "auto"
+    @AppStorage(AppSettingsKeys.appearance) private var appearance = AppSettingsKeys.Default.appearance
     #if os(iOS)
     @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
     /// Drives dismissal of the iPhone welcome cover. The cover's isPresented binding is get-only,

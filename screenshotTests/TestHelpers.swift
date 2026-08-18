@@ -62,15 +62,15 @@ private struct SavedDefaultValue {
 }
 
 nonisolated(unsafe) private let deterministicDefaultValues: [String: Any] = [
-    "defaultScreenshotSize": "1242x2688",
-    "defaultTemplateCount": 3,
-    "defaultDeviceCategory": DeviceCategory.iphone.rawValue,
-    "defaultDeviceFrameId": "",
+    AppSettingsKeys.defaultScreenshotSize: "1242x2688",
+    AppSettingsKeys.defaultTemplateCount: 3,
+    AppSettingsKeys.defaultDeviceCategory: DeviceCategory.iphone.rawValue,
+    AppSettingsKeys.defaultDeviceFrameId: "",
 ]
 
 private let deterministicRemovedDefaultKeys = [
-    "lastZoomLevel",
-    "defaultZoomLevel",
+    AppSettingsKeys.lastZoomLevel,
+    AppSettingsKeys.defaultZoomLevel,
 ]
 
 @MainActor private var savedDefaultsByTestDirectory: [String: [SavedDefaultValue]] = [:]

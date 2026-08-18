@@ -15,7 +15,7 @@ struct EditorRowView: View {
     let isFirst: Bool
     let isLast: Bool
     let requestShowcaseExport: (ScreenshotRow) -> Void
-    @AppStorage("confirmBeforeDeleting") var confirmBeforeDeleting = true
+    @AppStorage(AppSettingsKeys.confirmBeforeDeleting) var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
     @State var isDeletingRow = false
     @State var isResettingRow = false
     @State var isSvgDialogPresented = false

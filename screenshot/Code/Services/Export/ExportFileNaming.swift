@@ -63,7 +63,7 @@ enum ExportFileNaming {
     /// The user's Settings ▸ Export filename suffix. The upload services run outside SwiftUI and have no
     /// `@AppStorage` to read, so they take it from the key that setting is bound to.
     static var preferredCustomSuffix: String {
-        UserDefaults.standard.string(forKey: "exportCustomSuffix") ?? ""
+        UserDefaults.standard.string(forKey: AppSettingsKeys.exportCustomSuffix) ?? ""
     }
 
     static func exportFolderName(for row: ScreenshotRow) -> String {

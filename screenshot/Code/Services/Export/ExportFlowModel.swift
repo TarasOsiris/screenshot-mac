@@ -51,13 +51,13 @@ final class ExportFlowModel {
     // MARK: - Settings
 
     private var format: ExportImageFormat {
-        ExportImageFormat(rawValue: (defaults.string(forKey: "exportFormat") ?? "png").lowercased()) ?? .png
+        ExportImageFormat(rawValue: (defaults.string(forKey: AppSettingsKeys.exportFormat) ?? AppSettingsKeys.Default.exportFormat).lowercased()) ?? .png
     }
 
-    private var customSuffix: String { defaults.string(forKey: "exportCustomSuffix") ?? "" }
+    private var customSuffix: String { defaults.string(forKey: AppSettingsKeys.exportCustomSuffix) ?? "" }
 
     private var revealAfterExport: Bool {
-        defaults.object(forKey: "openExportFolderOnSuccess") as? Bool ?? true
+        defaults.object(forKey: AppSettingsKeys.openExportFolderOnSuccess) as? Bool ?? AppSettingsKeys.Default.openExportFolderOnSuccess
     }
 
     var bookmark: ExportFolderBookmark { ExportFolderBookmark(defaults: defaults) }

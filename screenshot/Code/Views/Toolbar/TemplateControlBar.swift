@@ -33,7 +33,7 @@ struct TemplateControlBar: View {
     var onInsertAfter: () -> Void = {}
     var onDelete: () -> Void
     var onLoadFullResImages: (() -> [String: NSImage])?
-    @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
+    @AppStorage(AppSettingsKeys.confirmBeforeDeleting) private var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
     @State private var isDeletingTemplate = false
     @State private var showBackgroundPopover = false
     @State private var renderError: String?

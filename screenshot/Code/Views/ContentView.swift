@@ -44,14 +44,14 @@ struct ContentView: View {
     #endif
     @Environment(\.undoManager) var undoManager
     @Environment(\.requestReview) var requestReview
-    @AppStorage("exportFormat") var exportFormat = "png"
-    @AppStorage("exportCustomSuffix") var exportCustomSuffix = ""
-    @AppStorage("openExportFolderOnSuccess") var openExportFolderOnSuccess = true
-    @AppStorage("confirmBeforeDeleting") var confirmBeforeDeleting = true
+    @AppStorage(AppSettingsKeys.exportFormat) var exportFormat = AppSettingsKeys.Default.exportFormat
+    @AppStorage(AppSettingsKeys.exportCustomSuffix) var exportCustomSuffix = ""
+    @AppStorage(AppSettingsKeys.openExportFolderOnSuccess) var openExportFolderOnSuccess = AppSettingsKeys.Default.openExportFolderOnSuccess
+    @AppStorage(AppSettingsKeys.confirmBeforeDeleting) var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
     /// Observation only — `ExportFolderBookmark` owns every read and write of the bookmark pair.
     /// Reading the path here is what re-renders the export button when Settings clears it.
     @AppStorage(ExportFolderBookmark.pathKey) var lastExportFolderPath = ""
-    @AppStorage("projectSortOrder") var projectSortOrder = "creation"
+    @AppStorage(AppSettingsKeys.projectSortOrder) var projectSortOrder = AppSettingsKeys.Default.projectSortOrder
     @AppStorage("reviewExportCount") var reviewExportCount = 0
     @AppStorage("reviewLastPromptedVersion") var reviewLastPromptedVersion = ""
     @AppStorage("reviewFirstExportDate") var reviewFirstExportDate: Double = 0

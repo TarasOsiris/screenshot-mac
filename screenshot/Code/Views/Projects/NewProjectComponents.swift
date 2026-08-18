@@ -361,14 +361,14 @@ struct BlankProjectRowDraft: Identifiable, Equatable {
     var deviceFrameId: String?
 
     init(category: DeviceCategory? = .iphone) {
-        let storedCount = UserDefaults.standard.integer(forKey: "defaultTemplateCount")
-        self.templateCount = storedCount > 0 ? storedCount : 3
+        let storedCount = UserDefaults.standard.integer(forKey: AppSettingsKeys.defaultTemplateCount)
+        self.templateCount = storedCount > 0 ? storedCount : AppSettingsKeys.Default.defaultTemplateCount
         self.deviceCategory = category
         if let category {
             self.sizePreset = category.suggestedSizePreset
             self.deviceFrameId = DeviceFrameCatalog.firstPortraitFrameId(for: category)
         } else {
-            self.sizePreset = UserDefaults.standard.string(forKey: "defaultScreenshotSize") ?? "1242x2688"
+            self.sizePreset = UserDefaults.standard.string(forKey: AppSettingsKeys.defaultScreenshotSize) ?? AppSettingsKeys.Default.defaultScreenshotSize
             self.deviceFrameId = nil
         }
     }

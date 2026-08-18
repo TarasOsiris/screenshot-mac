@@ -29,23 +29,23 @@ struct AppStateTests {
 
     @Test func initialRowKeepsGenericDefaultWhenNoFrameIsStored() throws {
         let defaults = UserDefaults.standard
-        let previousCategory = defaults.object(forKey: "defaultDeviceCategory")
-        let previousFrameId = defaults.object(forKey: "defaultDeviceFrameId")
+        let previousCategory = defaults.object(forKey: AppSettingsKeys.defaultDeviceCategory)
+        let previousFrameId = defaults.object(forKey: AppSettingsKeys.defaultDeviceFrameId)
         defer {
             if let previousCategory {
-                defaults.set(previousCategory, forKey: "defaultDeviceCategory")
+                defaults.set(previousCategory, forKey: AppSettingsKeys.defaultDeviceCategory)
             } else {
-                defaults.removeObject(forKey: "defaultDeviceCategory")
+                defaults.removeObject(forKey: AppSettingsKeys.defaultDeviceCategory)
             }
             if let previousFrameId {
-                defaults.set(previousFrameId, forKey: "defaultDeviceFrameId")
+                defaults.set(previousFrameId, forKey: AppSettingsKeys.defaultDeviceFrameId)
             } else {
-                defaults.removeObject(forKey: "defaultDeviceFrameId")
+                defaults.removeObject(forKey: AppSettingsKeys.defaultDeviceFrameId)
             }
         }
 
-        defaults.set(DeviceCategory.iphone.rawValue, forKey: "defaultDeviceCategory")
-        defaults.set("", forKey: "defaultDeviceFrameId")
+        defaults.set(DeviceCategory.iphone.rawValue, forKey: AppSettingsKeys.defaultDeviceCategory)
+        defaults.set("", forKey: AppSettingsKeys.defaultDeviceFrameId)
 
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }

@@ -7,35 +7,6 @@ import SwiftUI
 // What lives here is what both shells present identically. Layout that is genuinely per-platform
 // (the sidebar, the MCP automation pane, the backup button) stays in the two views.
 
-/// Every preference key with its default, declared once. Both settings screens plus ContentView
-/// used to re-declare the same `@AppStorage` keys with hand-copied defaults, so a changed default
-/// silently disagreed with itself depending on which screen wrote it first.
-enum AppSettingsKeys {
-    static let appearance = "appearance"
-    static let appLanguageOverride = "appLanguageOverride"
-    static let defaultScreenshotSize = "defaultScreenshotSize"
-    static let exportFormat = "exportFormat"
-    static let exportCustomSuffix = "exportCustomSuffix"
-    static let openExportFolderOnSuccess = "openExportFolderOnSuccess"
-    static let defaultTemplateCount = "defaultTemplateCount"
-    static let defaultZoomLevel = "defaultZoomLevel"
-    static let confirmBeforeDeleting = "confirmBeforeDeleting"
-    static let defaultDeviceCategory = "defaultDeviceCategory"
-    static let defaultDeviceFrameId = "defaultDeviceFrameId"
-    static let projectSortOrder = "projectSortOrder"
-
-    enum Default {
-        static let appearance = "auto"
-        static let defaultScreenshotSize = "1242x2688"
-        static let exportFormat = "png"
-        static let defaultTemplateCount = 3
-        static let defaultZoomLevel = 1.0
-        static let confirmBeforeDeleting = true
-        static let openExportFolderOnSuccess = true
-        static let defaultDeviceCategory = "iphone"
-        static let projectSortOrder = "creation"
-    }
-}
 
 /// Drives the iCloud toggle: the migration is long-running and reports progress, so both screens
 /// need the same four pieces of state and the same enable/disable task.
