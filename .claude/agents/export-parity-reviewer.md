@@ -27,7 +27,7 @@ For every visual change touching backgrounds, shapes, gradients, or layout:
 - Does `ExportService.renderTemplateImage` exercise the same code path as the editor canvas? If a new view is rendered in `RowCanvasSceneView` / `EditorRowView` but not in `ExportService`, flag it.
 - Confirm export `ZStack` uses `alignment: .topLeading` (CanvasShapeView uses `.position()` relative to parent origin).
 - Confirm any new background view inside `resolvedBackgroundView` has an explicit `.frame(width:height:)` — `GeometryReader` alone is greedy and breaks layout.
-- Flag any use of absolute-value SwiftUI APIs (e.g. `RadialGradient.endRadius`, hard-coded point sizes) that derive their value from `modelSize`. Per CLAUDE.md: `modelSize ≠ rendered frame size` in the editor. Such APIs must read frame size via `GeometryReader`, or be replaced with scale-independent APIs (`UnitPoint`, angle-based, `LinearGradient` start/end).
+- Flag any use of absolute-value SwiftUI APIs (e.g. `RadialGradient.endRadius`, hard-coded point sizes) that derive their value from `modelSize`. Per CLAUDE.md: `modelSize ≠ rendered frame size` in the editor. Such APIs must read the rendered frame from a `Canvas` draw closure (its `size` is available synchronously), or be replaced with scale-independent APIs (`UnitPoint`, angle-based, `LinearGradient` start/end). Never `GeometryReader` — its size-dependent child isn't reliably resolved before an offscreen snapshot captures, so it renders blank intermittently in export.
 
 ### 2. Coordinate space (model vs display)
 - Any new logic that affects visual output (tile counts, shape filtering, sizing) must derive from model-space values, never display-space.
