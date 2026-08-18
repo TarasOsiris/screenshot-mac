@@ -53,7 +53,8 @@ final class AppState {
         commitActiveInlineTextEdit = nil
         endActiveInlineTextEdit = nil
     }
-    var zoomLevel: CGFloat = 1.0
+    /// Editor zoom. Not document state — see ZoomController.
+    let zoom = ZoomController()
     /// Rows currently shown in preview mode. Session-only — not persisted.
     private(set) var previewingRows: Set<UUID> = []
 
@@ -166,7 +167,6 @@ final class AppState {
     @ObservationIgnored let edits = EditCoalescingCoordinator()
 
     @ObservationIgnored nonisolated(unsafe) var arrowKeyMonitor: Any?
-    @ObservationIgnored var zoomPersistTask: DispatchWorkItem?
 
     /// The shape targeted by an in-flight continuous edit (nil when idle).
     var continuousEditShapeId: UUID? { edits.shapeEdit.activeId }
@@ -225,13 +225,7 @@ final class AppState {
     init() {
         coach.app = self
 
-        let lastZoom = UserDefaults.standard.double(forKey: AppSettingsKeys.lastZoomLevel)
-        if lastZoom > 0 {
-            zoomLevel = lastZoom
-        } else {
-            let defaultZoom = UserDefaults.standard.double(forKey: AppSettingsKeys.defaultZoomLevel)
-            if defaultZoom > 0 { zoomLevel = defaultZoom }
-        }
+        zoom.restorePersistedLevel()
 
         // Tag before the first load, not after: a decode failure during `load()` is the one
         // report where "was this an iCloud read?" decides whether it's a sync bug or disk rot.
@@ -297,7 +291,7 @@ final class AppState {
         CrashReportingService.breadcrumb(.persistence, "Flushing pending saves", data: ["rows": rows.count])
         commitAllPendingEdits()
         flushPendingSaveTask()
-        flushPendingZoomPersist()
+        zoom.flushPendingPersist()
     }
 
     /// If a debounced save is queued, cancel it and run `saveAll()` immediately.

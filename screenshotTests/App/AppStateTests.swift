@@ -1195,26 +1195,36 @@ struct AppStateTests {
 
     // MARK: - Zoom
 
+    // These used to reimplement the clamp in the test body and assert on their own arithmetic.
+    // ZoomController.level is now private(set), so they exercise the real methods instead.
+
     @Test func zoomInAndOut() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
-        state.zoomLevel = 1.0
-        state.zoomLevel = min(ZoomConstants.max, state.zoomLevel + ZoomConstants.step)
-        #expect(state.zoomLevel == 1.25)
-        state.zoomLevel = max(ZoomConstants.min, state.zoomLevel - ZoomConstants.step)
-        #expect(state.zoomLevel == 1.0)
+        state.zoom.set(1.0, animated: false)
+        state.zoom.zoomIn()
+        #expect(state.zoom.level == 1.0 + ZoomConstants.step)
+        state.zoom.zoomOut()
+        #expect(state.zoom.level == 1.0)
     }
 
     @Test func zoomClampsToRange() {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
-        state.zoomLevel = ZoomConstants.max
-        state.zoomLevel = min(ZoomConstants.max, state.zoomLevel + ZoomConstants.step)
-        #expect(state.zoomLevel == ZoomConstants.max, "Cannot exceed max")
 
-        state.zoomLevel = ZoomConstants.min
-        state.zoomLevel = max(ZoomConstants.min, state.zoomLevel - ZoomConstants.step)
-        #expect(state.zoomLevel == ZoomConstants.min, "Cannot go below min")
+        state.zoom.set(ZoomConstants.max, animated: false)
+        state.zoom.zoomIn()
+        #expect(state.zoom.level == ZoomConstants.max, "Cannot exceed max")
+
+        state.zoom.set(ZoomConstants.min, animated: false)
+        state.zoom.zoomOut()
+        #expect(state.zoom.level == ZoomConstants.min, "Cannot go below min")
+
+        // Out-of-range values are clamped rather than rejected.
+        state.zoom.set(99, animated: false)
+        #expect(state.zoom.level == ZoomConstants.max)
+        state.zoom.set(-5, animated: false)
+        #expect(state.zoom.level == ZoomConstants.min)
     }
 
     @Test func saveImageDoesNotMutateStateWhenWriteFails() throws {

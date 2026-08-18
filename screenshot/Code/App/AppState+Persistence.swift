@@ -263,7 +263,7 @@ extension AppState {
             "image_resources": screenshotImages.count,
             "device_categories": deviceCategories.sorted(),
             "max_row_pixels": Int(maxRowPixels),
-            "zoom": zoomLevel,
+            "zoom": zoom.level,
         ])
     }
 

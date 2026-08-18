@@ -126,6 +126,7 @@ struct ScreenshotBroApp: App {
             AppRootView()
                 .environment(appState)
                 .environment(appState.iCloudStatus)
+                .environment(appState.zoom)
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
                 .background(WindowSceneBridge(role: .main))
@@ -169,6 +170,7 @@ struct ScreenshotBroApp: App {
             NewProjectWindowView()
                 .environment(appState)
                 .environment(appState.iCloudStatus)
+                .environment(appState.zoom)
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
         }
@@ -297,13 +299,13 @@ struct ScreenshotBroApp: App {
 
             CommandGroup(before: .toolbar) {
                 Section {
-                    Button("Zoom In") { appState.zoomIn() }
+                    Button("Zoom In") { appState.zoom.zoomIn() }
                     .keyboardShortcut("+", modifiers: .command)
 
-                    Button("Zoom Out") { appState.zoomOut() }
+                    Button("Zoom Out") { appState.zoom.zoomOut() }
                     .keyboardShortcut("-", modifiers: .command)
 
-                    Button("Actual Size") { appState.resetZoom() }
+                    Button("Actual Size") { appState.zoom.reset() }
                     .keyboardShortcut("0", modifiers: .command)
 
                     Button("Focus on Selection") { appState.focusOnSelection() }
@@ -455,6 +457,7 @@ struct ScreenshotBroApp: App {
                 .environment(storeService)
                 .environment(appState)
                 .environment(appState.iCloudStatus)
+                .environment(appState.zoom)
                 .environment(mcpServer)
                 .preferredColorScheme(preferredColorScheme)
         }
@@ -465,6 +468,7 @@ struct ScreenshotBroApp: App {
             iPadRootView(launchWelcomeActive: launchWelcomePresented)
                 .environment(appState)
                 .environment(appState.iCloudStatus)
+                .environment(appState.zoom)
                 .environment(storeService)
                 .environment(appNavigationRouter)
                 .preferredColorScheme(preferredColorScheme)

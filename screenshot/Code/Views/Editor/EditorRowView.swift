@@ -49,7 +49,7 @@ struct EditorRowView: View {
     /// The only undeletable row is the sole row — i.e. both first and last.
     var canDelete: Bool { !(isFirst && isLast) }
 
-    var zoom: CGFloat { state.zoomLevel }
+    var zoom: CGFloat { state.zoom.level }
     let canvasHorizontalPadding: CGFloat = 16
 
     var isPreviewMode: Bool { state.previewingRows.contains(row.id) }

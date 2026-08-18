@@ -24,9 +24,6 @@ final class EditCoalescingCoordinator {
     // the single debounced undo step; these own how often the model is actually written mid-burst.
     let shapeEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
     let rowEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
-    /// `zoomLevel` is read by every visible row's body, so an unthrottled pinch invalidated the
-    /// whole editor once per gesture tick.
-    let zoomThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
 
     /// Undo action names for the in-flight burst, set when it begins.
     var nudgeActionName: String = "Move Shape"
@@ -53,7 +50,6 @@ final class EditCoalescingCoordinator {
         for coalescer in all { coalescer.cancel() }
         shapeEditThrottle.reset()
         rowEditThrottle.reset()
-        zoomThrottle.reset()
         continuousRowEditWorkingRow = nil
     }
 }

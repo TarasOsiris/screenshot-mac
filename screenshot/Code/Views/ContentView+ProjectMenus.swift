@@ -315,31 +315,31 @@ extension ContentView {
             .disabled(state.rows.isEmpty)
 
             Button("Actual Size", systemImage: "magnifyingglass") {
-                state.resetZoom()
+                state.zoom.reset()
             }
-            .disabled(abs(state.zoomLevel - 1.0) < 0.001)
+            .disabled(abs(state.zoom.level - 1.0) < 0.001)
 
             Divider()
 
             Button("Zoom Out", systemImage: "minus.magnifyingglass") {
-                state.zoomOut()
+                state.zoom.zoomOut()
             }
-            .disabled(state.zoomLevel <= ZoomConstants.min)
+            .disabled(state.zoom.level <= ZoomConstants.min)
 
             Button("Zoom In", systemImage: "plus.magnifyingglass") {
-                state.zoomIn()
+                state.zoom.zoomIn()
             }
-            .disabled(state.zoomLevel >= ZoomConstants.max)
+            .disabled(state.zoom.level >= ZoomConstants.max)
 
             Divider()
 
             Section("Presets") {
                 ForEach(presets, id: \.self) { preset in
                     Button {
-                        state.setZoomLevel(preset)
+                        state.zoom.set(preset)
                     } label: {
                         let title = "\(Int((preset * 100).rounded()))%"
-                        if abs(state.zoomLevel - preset) < 0.001 {
+                        if abs(state.zoom.level - preset) < 0.001 {
                             Label(title, systemImage: "checkmark")
                         } else {
                             Text(title)
@@ -349,7 +349,7 @@ extension ContentView {
             }
         } label: {
             Label {
-                Text("\(Int((state.zoomLevel * 100).rounded()))%")
+                Text("\(Int((state.zoom.level * 100).rounded()))%")
                     .monospacedDigit()
             } icon: {
                 Image(systemName: "magnifyingglass")

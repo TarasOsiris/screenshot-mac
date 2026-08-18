@@ -65,7 +65,7 @@ extension ContentView {
         guard let row = currentExportRow, editorViewportHeight > 0 else { return }
         let baseHeight = row.displayHeight(zoom: 1.0)
         guard baseHeight > 0 else { return }
-        state.setZoomLevel(editorViewportHeight / baseHeight)
+        state.zoom.set(editorViewportHeight / baseHeight)
     }
 
     func exportScreenshots(localeFilter: String? = nil) {
