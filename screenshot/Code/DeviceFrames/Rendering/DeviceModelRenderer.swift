@@ -15,7 +15,6 @@ typealias SCNFloat = CGFloat
 typealias SCNFloat = Float
 #endif
 
-
 /// SceneKit rendering for 3D device frames: builds and caches the scene, renders a snapshot, and
 /// caches the resulting image.
 ///

@@ -103,6 +103,7 @@ extension AppState {
         }
     }
 
+    // swiftlint:disable:next inherited_executor_async - the body is a Task.detached, which offloads.
     private nonisolated static func backgroundRemovedImage(at url: URL) async throws -> NSImage {
         try await Task.detached(priority: .userInitiated) {
             try BackgroundRemovalService.removeBackground(at: url)
@@ -420,6 +421,5 @@ extension AppState {
 
         return best?.index
     }
-
 
 }

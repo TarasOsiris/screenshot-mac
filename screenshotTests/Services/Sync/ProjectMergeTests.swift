@@ -175,6 +175,7 @@ struct ProjectMergeTests {
     }
 }
 
+@Suite(.serialized)
 @MainActor
 struct AppStateDeleteTests {
     private func makeState() -> (AppState, URL) { makeTestState() }

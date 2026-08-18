@@ -7,6 +7,7 @@ import Testing
 /// override background fully covers them. Stacking the row fill under an opaque
 /// override produced a light hairline ring at every template edge (visible at
 /// fractional display scales, e.g. iPad pinch zoom).
+@Suite(.serialized)
 @MainActor
 struct RowBackgroundOverrideBleedTests {
 

@@ -4,6 +4,7 @@
 # NOTE: `only_rules` cannot be combined with `disabled_rules`/`opt_in_rules` — SwiftLint
 # discards the whole config and silently falls back to its defaults if you try.
 only_rules:
+  - custom_rules
   - force_cast
   - force_try
   - force_unwrapping
@@ -24,6 +25,20 @@ only_rules:
   - trailing_newline
   - control_statement
   - opening_brace
+
+# This target builds with SWIFT_APPROACHABLE_CONCURRENCY, under which a bare `nonisolated async
+# func` inherits the *caller's* executor: called from @MainActor code it runs on the main thread,
+# and with no suspension point in its body the `await` doesn't even yield. That shipped as a
+# multi-second app hang in 4.0 (108) (Sentry SCREENSHOT-BRO-2/-3). `@concurrent` is what actually
+# offloads. Legitimate exceptions exist — a body that is itself a `Task.detached`, or a function
+# that must touch a non-Sendable value on the caller's actor before delegating — so this is an
+# error you silence per-site with a reason, not a rule you argue with in review.
+custom_rules:
+  inherited_executor_async:
+    name: "Inherited Executor"
+    regex: '^\s*(?:@discardableResult\s+)?(?:public |internal |private |fileprivate )?nonisolated\s+(?:static\s+)?func\s+\w+[^\n]*\basync\b'
+    message: "A bare `nonisolated async func` inherits the caller's executor and does not offload. Use @concurrent, or silence this with a reason."
+    severity: error
 
 included:
   - screenshot/Code

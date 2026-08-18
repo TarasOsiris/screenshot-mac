@@ -3,6 +3,7 @@ import Foundation
 import Testing
 
 /// Covers the off-main debounced autosave path (`saveAllAsync` + save queue).
+@Suite(.serialized)
 @MainActor
 struct AutosaveAsyncTests {
 

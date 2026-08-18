@@ -224,7 +224,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then exit 0; fi\nSWIFTLINT=$(command -v swiftlint || echo /opt/homebrew/bin/swiftlint)\nif [ -x \"$SWIFTLINT\" ]; then\n  \"$SWIFTLINT\" lint --quiet\nelse\n  echo \"note: SwiftLint not installed - skipping lint (brew install swiftlint)\"\nfi\n";
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then exit 0; fi\nSWIFTLINT=$(command -v swiftlint || echo /opt/homebrew/bin/swiftlint)\nif [ ! -x \"$SWIFTLINT\" ]; then\n  echo \"note: SwiftLint not installed - skipping lint (brew install swiftlint)\"\n  exit 0\nfi\n# App sources only. The suite's ~300 force-unwrap warnings are legitimate in tests but would\n# drown the app's handful here. `included:` in .swiftlint.yml wins over a path argument, so\n# filter the output rather than the input; ./tools/lint.sh and the pre-commit hook cover tests.\nOUT=$(\"$SWIFTLINT\" lint --quiet 2>&1 | grep -v '/screenshotTests/' || true)\n[ -n \"$OUT\" ] && echo \"$OUT\"\nif echo \"$OUT\" | grep -q ' error: '; then exit 1; fi\nexit 0\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

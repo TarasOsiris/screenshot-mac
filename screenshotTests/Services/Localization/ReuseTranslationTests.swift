@@ -2,6 +2,7 @@ import Foundation
 @testable import Screenshot_Bro
 import Testing
 
+@Suite(.serialized)
 @MainActor
 struct ReuseTranslationTests {
 

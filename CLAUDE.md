@@ -28,7 +28,7 @@ Run unit tests (always kill the running app first to avoid Xcode crash/hang — 
 killall screenshot 2>/dev/null; xcodebuild -scheme screenshot -destination 'platform=macOS' test
 ```
 
-Tests in `screenshotTests/` cover `AppState` (operations, locale, deletion), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, `ProjectMerge` (iCloud merge), `DeviceFrameCatalog`, `TemplateService`, `SvgHelper`, `RichTextUtils`, the App Store Connect auth/display-type/upload-validator services, and the MCP server (HTTP parser, tool executor, JSON-RPC round trip). No linter configured.
+Tests in `screenshotTests/` cover `AppState` (operations, locale, deletion), `ExportService` rendering, `CanvasShapeModel`, `ScreenshotRow`, `AlignmentService`, `LocaleService`, `ProjectMerge` (iCloud merge), `DeviceFrameCatalog`, `TemplateService`, `SvgHelper`, `RichTextUtils`, the App Store Connect auth/display-type/upload-validator/app-matcher services, `ExportFlowModel`, `ReviewPromptPolicy`, and the MCP server (HTTP parser, tool executor, JSON-RPC round trip). See the Linting section below for SwiftLint.
 
 Because the code is multiplatform, also compile the iOS branches after touching anything platform-conditional (`#if os` / `Platform/` shims) — a clean macOS build does not prove the iOS branch builds:
 ```
@@ -47,6 +47,7 @@ Custom Claude Code skills live in `.claude/skills/`:
 - `ship` — bump build/marketing version, build, upload dSYMs to Sentry, and upload to App Store Connect.
 - `import-svg-template` / `project-to-template` — create bundled templates from SVGs or existing projects.
 - `add-localized-string` — add user-facing strings and propagate translations via the Python scripts (see below). **Never hand-edit `Localizable.xcstrings`** — a PreToolUse hook blocks it; it is generated. Gotcha: the catalog is committed in Xcode's serialization (`"k" : "v"`, space before the colon) but `translate_catalog.py` / `translate_popular_languages.py` rewrite the entire file in `json.dumps` style (`"k": "v"`), and `xcodebuild` does **not** renormalize it — so running the scripts wholesale yields a ~35k-line cosmetic diff (and opportunistically fills unrelated missing translations). To add one string's translations cleanly, generate them with the scripts, then inject just that key into the catalog in the existing Xcode format instead of committing the reflowed file.
+- `update-app-store-descriptions` — translate and apply App Store descriptions across locales via MCP.
 - `swiftui-patterns` / `swiftui-pro` — macOS SwiftUI reference + review.
 
 Reviewer/build agents in `.claude/agents/`: `export-parity-reviewer` (visual/export parity, coordinate space, Codable persistence, enum switch coverage), `xcode-build-validator` (runs xcodebuild, reports result). `/gwip` (stage+commit WIP+push) is a global command.
@@ -56,10 +57,20 @@ order, redundancy, file/type length above current worst-case). `screenshotTests/
 relaxes the length rules — long test suites are fine. It runs as a **Debug-only build phase** on
 the app target, so violations surface as Xcode warnings; Release skips it so archives stay clean
 and fast. That is why `ENABLE_USER_SCRIPT_SANDBOXING = NO`: the script sandbox otherwise denies
-SwiftLint read access to the source tree and to `.swiftlint.yml` itself. Also runnable by hand via
-`./tools/lint.sh`, plus an optional pre-commit hook (`./tools/install-hooks.sh`) that lints only
-staged files and blocks on errors, not warnings. Baseline: 0 errors, ~320 warnings (mostly
-`force_unwrapping`, largely in tests) — keep errors at zero; the build phase surfaces the rest.
+SwiftLint read access to the source tree and to `.swiftlint.yml` itself. The build phase filters
+`/screenshotTests/` out of its *output* (a path argument doesn't work — `included:` in the config
+wins), so the app's handful of warnings aren't drowned by the suite's ~300. Also runnable by hand
+via `./tools/lint.sh`, which covers both, plus an optional pre-commit hook
+(`./tools/install-hooks.sh`) that lints only staged files and blocks on errors, not warnings.
+Baseline: **0 errors**, ~16 app warnings + ~300 test warnings (nearly all `force_unwrapping`) —
+keep errors at zero.
+
+The one custom rule, `inherited_executor_async`, is an **error**: it catches a bare
+`nonisolated async func`, which under this target's `SWIFT_APPROACHABLE_CONCURRENCY` inherits the
+caller's executor instead of offloading — the shape that shipped as a multi-second hang in
+4.0 (108). Two legitimate exceptions exist (a body that is itself a `Task.detached`; a function
+that must read a non-Sendable value on the caller's actor before delegating to an `@concurrent`
+overload) and both carry `// swiftlint:disable:next inherited_executor_async` with the reason.
 
 `.codex/` mirrors the hooks and agent definitions for the cloud (Codex) harness; `AGENTS.md` is the agent registry. `tools/` holds Python utilities: `gen_template.py` (SVG→template), `translate_catalog.py` + `translate_popular_languages.py` (localization), and `project-schema.json` (JSON Schema for `project.json`).
 
@@ -88,13 +99,13 @@ After implementing a fix, verify it covers ALL variants: image-based frames, cli
 ## Architecture
 
 **Source layout:** All Swift source lives under `screenshot/Code/`:
-- `App/` — `AppState` (split across `AppState+*` extensions), app entry, window management, and the cross-cutting controllers (`AppInfo`, `AppNavigationRouter`, `CanvasFocusController`, `ContinuousEditCoalescing`, `OnboardingCoachController`).
+- `App/` — `AppState` (split across `AppState+*` extensions), app entry, window management, and the cross-cutting controllers (`AppInfo`, `AppNavigationRouter`, `CanvasFocusController`, `ContinuousEditCoalescing`, `EditCoalescingCoordinator`, `OnboardingCoachController`).
 - `Models/` — data model structs/enums, grouped into `Device/`, `Locale/`, `Store/` plus the top-level canvas/project types. **No view construction lives here** — no `@ViewBuilder`, no `some View`; those belong in `Rendering/`. (Models may still name `Color`/`NSFont` for stored styling.)
 - `Services/` — business logic, orchestration and I/O. **No rasterization here** — `Services/Export/ExportService` owns `exportAll`, folder/panel/share plumbing and encoder passthroughs, and no longer imports SwiftUI; the renderers it calls live in `Rendering/`. Feature suites live in subfolders: `AppStoreConnect/`, `GooglePlay/`, `Export/`, `Localization/` (incl. `TranslationService`, formerly `Extensions/TranslationExtension.swift`), `MCP/`, `Media/`, and `Sync/`; cross-cutting services remain at the root, along with the store-agnostic `StoreHTTPClient`, `StoreRowPlan`, `StoreUploadChecks` and `JWT`.
 - `Rendering/` — the SwiftUI drawing layer the editor **and** the export renderer both use, so parity is structural rather than remembered: `RowCanvasLayers` (`RowCanvasBaseBackgroundView` / `RowCanvasOverrideBackgroundView` / `RowCanvasBackgroundView` / `RowCanvasShapeLayerView`, plus `EditorRasterizedBackgroundView`), `PresentationShapeLayer` (`CanvasShapeView.presentation` + `PresentationShapeLayerView` — the one non-editor shape-layer factory), `RowRenderContext` (the shared render preamble), `BackgroundRendering` (the `BackgroundFillable` renderer + `BackgroundImageView` / `BackgroundBlurView`), `GradientRendering` (`GradientConfig`'s SwiftUI gradients), `ShapeFillRendering` (`CanvasShapeModel.fillView`), `ShowcaseRowView`, plus `RowRenderer` (row / single-template / showcase renders, `precomposedRowBackgroundIfNeeded`, background compositing) and `ViewRasterizer` (`renderViewToImage`, blur, crop, flatten, bitmap helpers). The last two are `extension ExportService`, so call sites are unchanged. The invariant that holds is one-directional: nothing in `Models/` may depend on `Rendering/`. `Rendering/` itself sits above `Models/`/`Platform/` *and* reaches sideways into `Views/Canvas/CanvasShapeView` plus the `LocaleService`/`CrashReportingService`/`ExportImageEncoder` façades — so don't treat it as a leaf layer.
 - `Platform/` — cross-platform shims that let macOS-first code (`NSImage`/`NSColor`/`NSFont`…) compile on iOS. Also home to `CSSFontWeight`, the single bucket table mapping the stored CSS weight to `Font.Weight` / `NSFont.Weight` / NSFontManager's 0…15 scale.
 - `DeviceFrames/` — `Models/`, `Rendering/`, `UI/` for device-frame rendering (2D PNG specs + SceneKit 3D models).
-- `Views/` — `Canvas/` (with `Canvas/Text/` for the inline-text/rich-text subsystem), `Editor/`, `Export/`, `Help/`, `Inspector/`, `Onboarding/`, `Projects/`, `Settings/`, `Store/`, `Toolbar/` (with `Toolbar/Properties/`, `Toolbar/Popovers/` and `Toolbar/Locale/`), plus the top-level shell views (`AppRootView`, `ContentView*`, `ActionButton`, `UIMetrics`, `ContextMenuPreviewModifier`, `DebugProjectManagerView`). Export UI is grouped by destination under `Export/AppStoreConnect/`, `Export/GooglePlay/`, `Export/Showcase/`, and `Export/Shared/`.
+- `Views/` — `Canvas/` (with `Canvas/Text/` for the inline-text/rich-text subsystem), `Editor/`, `Export/`, `Help/`, `Inspector/`, `Onboarding/`, `Projects/`, `Settings/`, `Store/`, `Toolbar/` (with `Toolbar/Properties/`, `Toolbar/Popovers/` and `Toolbar/Locale/`), plus the top-level shell views (`ContentView*`, `ActionButton`, `UIMetrics`, `ContextMenuPreviewModifier`, `DebugProjectManagerView`; `AppRootView` itself lives in `App/`). Export UI is grouped by destination under `Export/AppStoreConnect/`, `Export/GooglePlay/`, `Export/Showcase/`, and `Export/Shared/`.
 - `Extensions/` — genuine extensions only (`Binding`, `Bundle`, `Data`, `GridItem`, `String`, `CodableColor`). Domain logic that merely *lived* here belongs in `Services/`.
 
 Views own presentation only: plan/domain types the services validate (`ASCRowPlan`, `ASCDestinationPlan`, `ASCLocaleTarget`, `GPRowPlan`, `GPLocaleTarget`, `ASCFlowMode`, `ASCScreenshotSyncCoordinator`) live under `Services/`, so the validators and their tests do not depend on the upload views.
@@ -140,12 +151,12 @@ Bundled resources in `screenshot/`: `Templates.bundle` (35+ starter themes), `Sv
 - `CustomFont` — metadata for user-imported font files. `AlignmentGuide` — snap guide line model.
 
 **Services:**
-- Root: `PersistenceService` (project JSON/resources), `AlignmentService`, `StoreService`, `TemplateService`, `SimulatorCaptureService`, `NotificationService`, `DebugTemplateService`, `QuickLookCoordinator`, `KeychainService`, `AppLogger`, `CrashReportingService`.
-- `Export/` — `ExportService`, `ExportImageEncoder`, `ExportFolderService`, `ProjectThumbnailService`. Renders templates/showcases/thumbnails to PNG/JPEG via SwiftUI `ImageRenderer` and handles final image encoding.
+- Root: `PersistenceService` (project JSON/resources), `AlignmentService`, `StoreService`, `TemplateService`, `SimulatorCaptureService`, `NotificationService`, `DebugTemplateService`, `QuickLookCoordinator`, `BackupService` (macOS zip backup), `KeychainService`, `AppLogger`, `CrashReportingService`.
+- `Export/` — `ExportService`, `ExportImageEncoder`, `ExportFolderService`, `ProjectThumbnailService`, plus the flow layer: `ExportFlowModel` (the editor's export state machine — progress, cancellation, temp-folder lifetime, iPad destination routing; behind the `ExportDocument` protocol so it tests without an `AppState`), `ExportCoordinator`/`ExportFolderBookmark`, and `ReviewPromptPolicy`. Renders templates/showcases/thumbnails to PNG/JPEG via SwiftUI `ImageRenderer` and handles final image encoding.
 - `Localization/` — `LocaleService`, `TranslationCatalogService`, `LocalizationPromptService`. Resolves locale overrides and translation prompt/catalog logic.
-- `Media/` — `SvgHelper`, `SvgPresetCatalog`, `RichTextUtils`, `BackgroundRemovalService`. Handles SVG presets/rendering, rich text RTF persistence, and Vision background removal.
+- `Media/` — `SvgHelper`, `SvgPresetCatalog`, `RichTextUtils`, `BackgroundRemovalService`, `ScreenshotDeviceDetector` (imported-screenshot size → device category, and which catalog frame to wrap it in). Handles SVG presets/rendering, rich text RTF persistence, and Vision background removal.
 - `Sync/` — `ICloudSyncService`, `ICloudMonitor`. Handles iCloud Drive sync, file coordination, metadata progress, and conflict merge.
-- `AppStoreConnect/` — auth, credentials, API, upload, validation, icon fetching, display type mapping, and demo data for App Store Connect.
+- `AppStoreConnect/` — auth, credentials, API (client + `AppStoreConnectDTOs`), upload, validation, icon fetching, display type mapping, `AppStoreConnectAppMatcher` (project name → store app), `AppStoreConnectVersionMetadata` (the whatsNew 409 retry), and demo data.
 - `GooglePlay/` — auth, credentials, API, upload, validation, image type/language matching, and demo data for Google Play.
 
 **View hierarchy** (under `Views/`):

@@ -43,6 +43,9 @@ enum ExportImageEncoder {
 
     /// Opaque PNG encode for callers that render on the main actor: the bitmap is pulled here (on
     /// the caller's actor, since `NSImage` isn't Sendable) and the CPU work runs off-actor.
+    // Must run on the caller's actor to read the non-Sendable NSImage; the @concurrent overload
+    // below is what offloads.
+    // swiftlint:disable:next inherited_executor_async
     nonisolated static func opaquePNGDataOffMain(from image: NSImage) async -> Data? {
         guard let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             reportEncodeFailure("cgImage")

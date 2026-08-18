@@ -100,7 +100,7 @@ func makeTestState() -> (AppState, URL) {
 }
 
 /// A freshly initialized state with no projects — the real first-launch condition.
-/// Why the suites that use this are `@Suite(.serialized)`:
+/// Why every suite that calls this is `@Suite(.serialized)`:
 ///
 /// `SCREENSHOT_DATA_DIR` is a process-global env var and `UserDefaults.standard` is a
 /// process-global store, so two tests running concurrently would clobber each other's data
@@ -113,6 +113,12 @@ func makeTestState() -> (AppState, URL) {
 /// considered and rejected: the whole suite runs in about 20 seconds, so the change buys a few
 /// seconds of wall clock in exchange for a wide edit to the one subsystem where a mistake costs
 /// users their projects. Don't remove `.serialized` without doing that injection first.
+///
+/// Know what `.serialized` does and doesn't buy: it serializes tests **within** a suite, not
+/// suites against each other. Two different suites that both call this can still overlap. That
+/// hasn't bitten in practice (each holds the env var only briefly, and the XCTest backstop catches
+/// a late save), but it is the reason the residual `batchImport` flakiness is a real hazard rather
+/// than a mystery. Injection is the fix; the trait is the mitigation.
 @MainActor
 func makeEmptyTestState() -> (AppState, URL) {
     let tempDir = makeTemporaryDataDirectory()
