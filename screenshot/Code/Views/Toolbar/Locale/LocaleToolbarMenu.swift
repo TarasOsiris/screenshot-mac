@@ -111,7 +111,7 @@ struct LocaleBar: View {
         .overlay(alignment: .bottom) {
             Divider()
         }
-        .coachPopover(step: .locale, state: state, arrowEdge: .top)
+        .coachPopover(step: .locale, coach: state.coach, arrowEdge: .top)
         #else
         // iPad: invisible presenter; the globe toolbar button drives all locale actions.
         Color.clear.frame(height: 0)

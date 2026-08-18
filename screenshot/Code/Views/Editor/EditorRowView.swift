@@ -177,7 +177,12 @@ struct EditorRowView: View {
         .contextMenuWithPreview {
             rowMenuContent
         } preview: {
-            RowContextMenuPreview(state: state, row: row)
+            RowContextMenuPreview(
+                row: row,
+                localeState: state.localeState,
+                screenshotImages: state.screenshotImages,
+                availableFontFamilies: state.availableFontFamilySet
+            )
         }
         .alert("Delete Row", isPresented: $isDeletingRow) {
             Button("Delete", role: .destructive) {

@@ -28,7 +28,13 @@ struct RowBackgroundOverrideBleedTests {
         state.rows[0] = row
 
         for zoom in [1.0, 1.13] as [CGFloat] {
-            let renderer = ImageRenderer(content: RowPreviewView(state: state, row: state.rows[0], zoom: zoom))
+            let renderer = ImageRenderer(content: RowPreviewView(
+                row: state.rows[0],
+                zoom: zoom,
+                localeState: state.localeState,
+                screenshotImages: state.screenshotImages,
+                availableFontFamilies: state.availableFontFamilySet
+            ))
             renderer.scale = 2
             let image = try #require(renderer.nsImage, "render failed")
             let tiff = try #require(image.tiffRepresentation)

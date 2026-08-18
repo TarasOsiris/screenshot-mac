@@ -328,7 +328,7 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .help("Unlock all projects, rows, and templates")
-                    .coachPopover(step: .pro, state: state, arrowEdge: .top)
+                    .coachPopover(step: .pro, coach: state.coach, arrowEdge: .top)
                 }
             }
 
@@ -352,7 +352,7 @@ struct ContentView: View {
                 if !store.isProUnlocked {
                     ToolbarItem(id: "iPadBuyPro", placement: .principal) {
                         iPadBuyProButton
-                            .coachPopover(step: .pro, state: state, arrowEdge: .top)
+                            .coachPopover(step: .pro, coach: state.coach, arrowEdge: .top)
                     }
                 }
 

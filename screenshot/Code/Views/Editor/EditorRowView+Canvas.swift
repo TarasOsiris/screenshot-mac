@@ -21,7 +21,13 @@ extension EditorRowView {
                     if !modeReady {
                         modeLoadingPlaceholder
                     } else if isPreviewMode {
-                        RowPreviewView(state: state, row: row, zoom: zoom)
+                        RowPreviewView(
+                            row: row,
+                            zoom: zoom,
+                            localeState: state.localeState,
+                            screenshotImages: state.screenshotImages,
+                            availableFontFamilies: state.availableFontFamilySet
+                        )
                     } else {
                         HStack(alignment: .top, spacing: 0) {
                             // Unified canvas with per-template scroll anchors. Rendered at
@@ -532,7 +538,7 @@ extension EditorRowView {
                 .frame(width: dw, height: dh)
                 .coachPopover(
                     step: .canvas,
-                    state: state,
+                    coach: state.coach,
                     isActive: isFirst && !isPreviewMode,
                     arrowEdge: .top,
                     attachmentAnchor: .point(.center)

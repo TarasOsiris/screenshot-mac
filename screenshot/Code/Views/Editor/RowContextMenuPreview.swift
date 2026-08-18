@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct RowContextMenuPreview: View {
-    let state: AppState
     let row: ScreenshotRow
+    let localeState: LocaleState
+    let screenshotImages: [String: NSImage]
+    let availableFontFamilies: Set<String>
     @Environment(\.displayScale) var screenScale
 
     let maxPreviewWidth: CGFloat = 360
@@ -28,7 +30,7 @@ struct RowContextMenuPreview: View {
         // re-render incorrectly (smaller, inner-screen only); a pre-rasterized image —
         // produced by a controlled `ImageRenderer` pass — renders devices correctly and
         // isn't re-evaluated during the lift. Falls back to the live view if rendering fails.
-        let renderer = ImageRenderer(content: RowPreviewView(state: state, row: row, zoom: previewZoom))
+        let renderer = ImageRenderer(content: preview)
         renderer.scale = max(1, screenScale)
         #if os(macOS)
         let baked = renderer.nsImage
@@ -43,9 +45,19 @@ struct RowContextMenuPreview: View {
                     .interpolation(.high)
                     .frame(width: baseWidth * previewZoom, height: baseHeight * previewZoom)
             } else {
-                RowPreviewView(state: state, row: row, zoom: previewZoom)
+                preview
             }
         }
         .contextMenuPreviewCard()
+    }
+
+    private var preview: RowPreviewView {
+        RowPreviewView(
+            row: row,
+            zoom: previewZoom,
+            localeState: localeState,
+            screenshotImages: screenshotImages,
+            availableFontFamilies: availableFontFamilies
+        )
     }
 }

@@ -110,7 +110,6 @@ struct IPadSettingsView: View {
         }
     }
 
-
     // MARK: - Defaults
 
     private var defaultsSection: some View {
@@ -226,7 +225,6 @@ struct IPadSettingsView: View {
         }
     }
 
-
     // MARK: - Purchase
 
     @ViewBuilder
@@ -276,10 +274,6 @@ struct IPadSettingsView: View {
             FreeTierSections(store: store)
         }
     }
-
-
-
-
 
     // MARK: - Legal & Attributions
 

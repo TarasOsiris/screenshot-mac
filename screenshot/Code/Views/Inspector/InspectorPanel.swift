@@ -48,10 +48,10 @@ struct InspectorPanel: View {
                     }
                     .formStyle(.grouped)
                     #if os(macOS)
-                    .coachPopover(step: .inspector, state: state, arrowEdge: .trailing)
+                    .coachPopover(step: .inspector, coach: state.coach, arrowEdge: .trailing)
                     #else
                     // Popovers attached to a Form don't anchor reliably on iPadOS.
-                    .coachPopoverAnchor(step: .inspector, state: state, arrowEdge: .trailing)
+                    .coachPopoverAnchor(step: .inspector, coach: state.coach, arrowEdge: .trailing)
                     #endif
                 }
             }

@@ -12,7 +12,7 @@ extension ContentView {
         ) {
             exportMenuContent
         }
-        .coachPopover(step: .export, state: state, arrowEdge: .top)
+        .coachPopover(step: .export, coach: state.coach, arrowEdge: .top)
     }
 
     #if os(iOS)
@@ -60,7 +60,7 @@ extension ContentView {
         .iPadToolbarProminentStyle()
         .controlSize(.regular)
         .disabled(isDisabled)
-        .coachPopoverAnchor(step: .export, state: state)
+        .coachPopoverAnchor(step: .export, coach: state.coach)
     }
 
     @ViewBuilder

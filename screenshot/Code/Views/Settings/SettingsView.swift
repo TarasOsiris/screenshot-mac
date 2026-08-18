@@ -273,10 +273,6 @@ struct SettingsView: View {
         .formStyle(.grouped)
     }
 
-
-
-
-
     private var exportSettings: some View {
         Form {
             Section {
@@ -530,7 +526,6 @@ struct SettingsView: View {
         .formStyle(.grouped)
     }
 
-
     @ViewBuilder
     private var purchaseStatusSection: some View {
         if let configurationIssue = store.configurationIssue {
@@ -554,7 +549,6 @@ struct SettingsView: View {
             }
         }
     }
-
 
     private var attributionsSettings: some View {
         Form {
@@ -581,7 +575,6 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
     }
-
 
     @MainActor
     private func createBackup() {

@@ -5,9 +5,13 @@ import SwiftUI
 /// The view reuses the editor's background + shape layers so what you see here
 /// is the same SwiftUI render as the editor (just sliced and clipped).
 struct RowPreviewView: View {
-    let state: AppState
     let row: ScreenshotRow
     let zoom: CGFloat
+    // The three slices of the document this needs, rather than the whole `AppState`: it renders
+    // in an offscreen `ImageRenderer` pass and in tests, neither of which should need a document.
+    let localeState: LocaleState
+    let screenshotImages: [String: NSImage]
+    let availableFontFamilies: Set<String>
 
     // Zoom is folded into the render scale (no `.scaleEffect`) — scaling an
     // already-clipped tile magnifies the antialiased clip edge, bleeding content
@@ -25,7 +29,7 @@ struct RowPreviewView: View {
     var body: some View {
         let resolvedShapes = LocaleService.resolveShapes(
             row.activeShapes,
-            localeState: state.localeState
+            localeState: localeState
         )
         let visiblePerTemplate = visibleShapesByTemplate(resolvedShapes)
 
@@ -79,7 +83,7 @@ struct RowPreviewView: View {
             // `EditorRasterizedBackgroundView`'s blur cache + render task.
             RowCanvasBackgroundView(
                 row: row,
-                screenshotImages: state.screenshotImages,
+                screenshotImages: screenshotImages,
                 displayScale: displayScale,
                 blurRadius: row.backgroundBlur * displayScale
             )
@@ -93,10 +97,10 @@ struct RowPreviewView: View {
             PresentationShapeLayerView(
                 row: row,
                 shapes: visible,
-                images: state.screenshotImages,
+                images: screenshotImages,
                 displayScale: displayScale,
                 defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-                availableFontFamilies: state.availableFontFamilySet,
+                availableFontFamilies: availableFontFamilies,
                 allowSynchronousSvgRender: false
             )
             .offset(x: offsetX)

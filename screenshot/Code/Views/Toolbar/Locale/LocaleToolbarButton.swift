@@ -68,7 +68,7 @@ struct LocaleToolbarButton: View {
             localeLabel
         }
         .help("Language options")
-        .coachPopoverAnchor(step: .locale, state: state)
+        .coachPopoverAnchor(step: .locale, coach: state.coach)
     }
 
     @ViewBuilder

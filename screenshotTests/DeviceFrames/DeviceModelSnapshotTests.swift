@@ -21,7 +21,7 @@ struct DeviceModelSnapshotTests {
     @Test func coldSnapshotRendersVisiblePixels() throws {
         let frame = try modelFrame()
         let image = try #require(
-            DeviceModelFrameView.snapshotDeviceModel(
+            DeviceModelRenderer.snapshotDeviceModel(
                 frame: frame,
                 width: 330,
                 height: 717,
@@ -40,7 +40,7 @@ struct DeviceModelSnapshotTests {
     @Test func rotatedSnapshotRendersVisiblePixels() throws {
         let frame = try modelFrame()
         let image = try #require(
-            DeviceModelFrameView.snapshotDeviceModel(
+            DeviceModelRenderer.snapshotDeviceModel(
                 frame: frame,
                 width: 330,
                 height: 717,
@@ -129,8 +129,8 @@ struct DeviceModelSnapshotTests {
 
     // MARK: - Helpers
 
-    private func key(frame: DeviceFrame, image: NSImage?, identity: String?) -> DeviceModelFrameView.SnapshotKey {
-        DeviceModelFrameView.snapshotKey(
+    private func key(frame: DeviceFrame, image: NSImage?, identity: String?) -> DeviceModelRenderer.SnapshotKey {
+        DeviceModelRenderer.snapshotKey(
             frame: frame,
             width: 330,
             height: 717,

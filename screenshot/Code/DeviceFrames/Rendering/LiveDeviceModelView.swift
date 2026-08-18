@@ -71,7 +71,7 @@ struct LiveDeviceModelView {
            let cameraNode = coordinator.cameraNode {
             // Geometry/materials unchanged — only re-fit if the viewport changed.
             if coordinator.lastViewport != viewport {
-                DeviceModelFrameView.refitDeviceModelScene(
+                DeviceModelRenderer.refitDeviceModelScene(
                     existingScene,
                     cameraNode: cameraNode,
                     viewportSize: viewport
@@ -82,7 +82,7 @@ struct LiveDeviceModelView {
             return
         }
 
-        guard let (scene, cameraNode) = DeviceModelFrameView.makeDeviceModelScene(
+        guard let (scene, cameraNode) = DeviceModelRenderer.makeDeviceModelScene(
             frame: frame,
             viewportSize: viewport,
             screenshotImage: screenshotImage,
