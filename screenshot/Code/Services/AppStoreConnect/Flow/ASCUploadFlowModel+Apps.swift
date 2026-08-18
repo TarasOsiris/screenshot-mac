@@ -67,7 +67,7 @@ extension ASCUploadFlowModel {
             }
             selectedVersionIds = defaultSelectedVersionIds(from: versions)
             localizationsByVersionId = [:]
-            destinationPlans = []
+            updateDestinationPlans([])
             advance(to: .pickingVersion)
         } catch {
             errorMessage = error.localizedDescription

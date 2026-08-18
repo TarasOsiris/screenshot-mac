@@ -21,7 +21,7 @@ extension ASCUploadFlowModel {
         defer { isBusy = false }
         do {
             try await loadSelectedVersionLocalizations()
-            destinationPlans = buildDestinationPlans(preserving: destinationPlans)
+            updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
             advance(to: .configuringPlan)
         } catch {
             errorMessage = String(localized: "Could not load App Store data: \(error.localizedDescription)")
@@ -36,7 +36,7 @@ extension ASCUploadFlowModel {
         defer { isBusy = false }
         do {
             try await loadSelectedVersionLocalizations()
-            destinationPlans = buildDestinationPlans(preserving: destinationPlans)
+            updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
         } catch {
             errorMessage = String(localized: "Could not refresh locales: \(error.localizedDescription)")
         }

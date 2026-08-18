@@ -438,7 +438,7 @@ extension UploadToAppStoreConnectView {
 
                 issuesPanel
 
-                ForEach($model.destinationPlans) { $destination in
+                ForEach(model.destinationPlansBinding) { $destination in
                     ASCDestinationPlanSection(
                         destination: $destination,
                         expandedRowPlanIds: $expandedRowPlanIds,
@@ -451,23 +451,15 @@ extension UploadToAppStoreConnectView {
     }
 
     var uploadSummaryPanel: some View {
-        let allEntries = uploadPlanEntries
-        let entries = allEntries.filter(\.isSelected)
-        let skipped = allEntries.filter { !$0.isSelected }
-        let rows = rowGroups(from: entries)
-        let versionCount = Set(entries.map(\.destinationId)).count
-        let localeCount = Set(entries.map { "\($0.destinationId)|\($0.appStoreLocaleCode ?? $0.projectLocaleCode)" }).count
-        let screenshotCount = entries.reduce(0) { $0 + $1.screenshotCount }
-        let issues = model.validationIssues
-
+        let plan = model.planEntries
         return ASCUploadSummaryPanel(
-            entries: entries,
-            skipped: skipped,
-            rowGroups: rows,
-            versionCount: versionCount,
-            localeCount: localeCount,
-            screenshotCount: screenshotCount,
-            issues: issues,
+            entries: plan.selected,
+            skipped: plan.skipped,
+            rowGroups: plan.rowGroups,
+            versionCount: plan.versionCount,
+            localeCount: plan.localeCount,
+            screenshotCount: plan.screenshotCount,
+            issues: model.validationIssues,
             isExpanded: $isPreflightExpanded,
             isBusy: model.isBusy,
             onRefresh: refreshAppStoreData

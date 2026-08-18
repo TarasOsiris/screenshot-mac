@@ -114,7 +114,7 @@ extension ASCUploadFlowModel {
             let summary = try await saveMetadataChanges()
             switch mode {
             case .screenshots:
-                destinationPlans = buildDestinationPlans(preserving: destinationPlans)
+                updateDestinationPlans(buildDestinationPlans(preserving: destinationPlans))
                 advance(to: .configuringPlan)
             case .metadata:
                 metadataSummary = summary

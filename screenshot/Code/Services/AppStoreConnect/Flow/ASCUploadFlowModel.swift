@@ -32,7 +32,10 @@ final class ASCUploadFlowModel {
     /// The version whose metadata the editing screen is currently showing (the active tab).
     var metadataVersionId: String?
 
-    var destinationPlans: [ASCDestinationPlan] = []
+    /// `private(set)` with a single writer so `planEntries` cannot go stale: every write, including
+    /// the view's `ForEach` binding, goes through `updateDestinationPlans`.
+    private(set) var destinationPlans: [ASCDestinationPlan] = []
+    private(set) var planEntries: ASCUploadPlanEntries = .empty
 
     var uploadProgress: UploadProgress?
     var uploadSummary: ASCUploadSummary?
@@ -102,6 +105,13 @@ final class ASCUploadFlowModel {
     /// The selected version whose metadata the editing screen is showing (the active tab).
     var activeMetadataVersion: ASCAppStoreVersion? {
         selectedVersions.first { $0.id == metadataVersionId } ?? selectedVersions.first
+    }
+
+    // MARK: - Plan
+
+    func updateDestinationPlans(_ plans: [ASCDestinationPlan]) {
+        destinationPlans = plans
+        planEntries = ASCUploadPlanEntries(destinations: plans)
     }
 
     // MARK: - Navigation
