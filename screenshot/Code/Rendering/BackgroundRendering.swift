@@ -3,6 +3,28 @@ import SwiftUI
 // Rendering for `BackgroundFillable`. Kept out of `Models/` so the persisted background
 // shape and the editor↔export renderer are not read as one thing.
 
+// Rasterizing the stored SVG is rendering, not model state — it lives here so `Models/` needs
+// no `SvgHelper` (and therefore no `Services/`) dependency. Both callers are in this file.
+// `nonisolated` is load-bearing: `BackgroundImageConfig` is a `nonisolated struct`, so this method
+// was nonisolated before the move. Unannotated it would inherit the target's default MainActor
+// isolation — which still compiles at both call sites and would narrow it silently.
+nonisolated private extension BackgroundImageConfig {
+    /// Render SVG content to an NSImage. Returns nil if no svgContent.
+    func renderSvgImage(modelSize: CGSize?) -> NSImage? {
+        guard let svgContent else { return nil }
+        if fillMode == .tile {
+            return SvgHelper.renderImage(from: svgContent, useColor: false, color: .white)
+        }
+        let refDim = max(modelSize?.width ?? 1200, modelSize?.height ?? 1200)
+        let naturalSize = SvgHelper.parseViewBoxSize(svgContent) ?? CGSize(width: 100, height: 100)
+        let scale = refDim / max(naturalSize.width, naturalSize.height, 1)
+        let targetSize = CGSize(width: ceil(naturalSize.width * scale),
+                                height: ceil(naturalSize.height * scale))
+        return SvgHelper.renderImage(from: svgContent, useColor: false, color: .white,
+                                      targetSize: targetSize)
+    }
+}
+
 extension BackgroundFillable {
     @ViewBuilder
     func backgroundFillView(image: NSImage? = nil, modelSize: CGSize? = nil) -> some View {

@@ -28,21 +28,6 @@ nonisolated struct BackgroundImageConfig: Codable, Equatable {
     /// Whether this config has any image source (raster file or SVG content).
     var hasImage: Bool { fileName != nil || svgContent != nil }
 
-    /// Render SVG content to an NSImage. Returns nil if no svgContent.
-    func renderSvgImage(modelSize: CGSize?) -> NSImage? {
-        guard let svgContent else { return nil }
-        if fillMode == .tile {
-            return SvgHelper.renderImage(from: svgContent, useColor: false, color: .white)
-        }
-        let refDim = max(modelSize?.width ?? 1200, modelSize?.height ?? 1200)
-        let naturalSize = SvgHelper.parseViewBoxSize(svgContent) ?? CGSize(width: 100, height: 100)
-        let scale = refDim / max(naturalSize.width, naturalSize.height, 1)
-        let targetSize = CGSize(width: ceil(naturalSize.width * scale),
-                                height: ceil(naturalSize.height * scale))
-        return SvgHelper.renderImage(from: svgContent, useColor: false, color: .white,
-                                      targetSize: targetSize)
-    }
-
     enum CodingKeys: String, CodingKey {
         case fileName = "f", svgContent = "sc", fillMode = "fm", opacity = "a"
         case legacyTileSpacing = "ts", legacyTileOffset = "to", legacyTileScale = "tsc"
