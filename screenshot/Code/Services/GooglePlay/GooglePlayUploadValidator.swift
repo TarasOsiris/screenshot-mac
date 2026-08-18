@@ -27,30 +27,18 @@ nonisolated enum GooglePlayUploadValidator {
             }
         }
 
-        if plans.isEmpty {
-            issues.append(UploadIssue(
-                severity: .error,
-                message: "This project has no rows to upload.",
-                hint: "Add a row in the editor before running the upload."
-            ))
-            return issues
-        }
-
         let enabledPlans = plans.filter { $0.isEnabled }
-        if enabledPlans.isEmpty {
-            issues.append(UploadIssue(
-                severity: .error,
-                message: "Enable at least one row to upload."
-            ))
+        if let blocking = StoreUploadChecks.emptyPlansIssue(planCount: plans.count, enabledCount: enabledPlans.count) {
+            issues.append(blocking)
             return issues
         }
 
         var perRow: [UploadIssue] = []
-        var seenTargets: [String: String] = [:]
+        var claims: [UploadTargetClaim] = []
 
         for plan in enabledPlans {
-            let rowName = plan.rowLabel.isEmpty ? "Row" : plan.rowLabel
-            let sizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
+            let rowName = StoreUploadChecks.rowName(plan.rowLabel)
+            let sizeLabel = StoreUploadChecks.sizeLabel(plan.rowSize)
 
             if !GPImageType.accepts(width: plan.rowSize.width, height: plan.rowSize.height) {
                 perRow.append(UploadIssue(
@@ -87,23 +75,22 @@ nonisolated enum GooglePlayUploadValidator {
                 ))
             }
 
-            var reportedCollisionPartners: Set<String> = []
             for locale in enabledLocales {
-                let key = "\(locale.playLanguageCode)|\(plan.selectedAssetType.apiValue)"
-                if let partner = seenTargets[key] {
-                    if reportedCollisionPartners.insert(partner).inserted {
-                        perRow.append(UploadIssue(
-                            severity: .error,
-                            scope: rowName,
-                            message: "This row uploads \(plan.selectedAssetType.label) for \(locale.playLanguageCode) to the same place as \(partner).",
-                            hint: "Disable one of these rows or pick a different image type."
-                        ))
-                    }
-                } else {
-                    seenTargets[key] = rowName
-                }
+                claims.append(UploadTargetClaim(
+                    rowName: rowName,
+                    key: "\(locale.playLanguageCode)|\(plan.selectedAssetType.apiValue)"
+                ))
             }
         }
+
+        perRow.append(contentsOf: StoreUploadChecks.collisionIssues(claims) { rowName, partner in
+            UploadIssue(
+                severity: .error,
+                scope: rowName,
+                message: "This row uploads to the same Play listing slot as \(partner).",
+                hint: "Disable one of these rows or pick a different image type."
+            )
+        })
 
         issues.append(contentsOf: isDemoMode ? perRow.map { $0.with(severity: .warning) } : perRow)
         return issues

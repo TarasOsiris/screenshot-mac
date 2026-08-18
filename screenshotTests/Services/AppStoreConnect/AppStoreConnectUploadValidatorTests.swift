@@ -34,7 +34,7 @@ struct AppStoreConnectUploadValidatorTests {
             attributes: .init(versionString: "1.0", appStoreState: "IN_REVIEW", platform: "IOS")
         )
 
-        let issues = ASCUploadValidator.validate(
+        let issues = AppStoreConnectUploadValidator.validate(
             version: version,
             plans: [
                 plan(
@@ -93,7 +93,7 @@ struct AppStoreConnectUploadValidatorTests {
             )
         ]
 
-        let issues = ASCUploadValidator.validate(version: version, plans: plans)
+        let issues = AppStoreConnectUploadValidator.validate(version: version, plans: plans)
 
         #expect(issues.contains { issue in
             issue.scope == "iPad 12.9-inch" &&
@@ -134,7 +134,7 @@ struct AppStoreConnectUploadValidatorTests {
                 localeTargets: localeTargets
             )
         }
-        let issues = ASCUploadValidator.validate(version: version, plans: [plan("iPad 13"), plan("iPad 13 copy")])
+        let issues = AppStoreConnectUploadValidator.validate(version: version, plans: [plan("iPad 13"), plan("iPad 13 copy")])
 
         let collisionErrors = issues.filter { $0.message.contains("same App Store screenshot set") }
         #expect(collisionErrors.count == 1)
@@ -174,7 +174,7 @@ struct AppStoreConnectUploadValidatorTests {
             )
         ]
 
-        let issues = ASCUploadValidator.validate(version: macVersion, plans: plans)
+        let issues = AppStoreConnectUploadValidator.validate(version: macVersion, plans: plans)
         #expect(issues.contains { $0.severity == .error && $0.message.contains("can't be uploaded") })
     }
 
@@ -187,7 +187,7 @@ struct AppStoreConnectUploadValidatorTests {
                 platform: "IOS"
             )
         )
-        let issues = ASCUploadValidator.validate(version: version, plans: [])
+        let issues = AppStoreConnectUploadValidator.validate(version: version, plans: [])
         #expect(issues.contains { $0.message.contains("no rows to upload") })
         #expect(!issues.contains { $0.message.contains("Enable at least one row") })
     }
@@ -224,7 +224,7 @@ struct AppStoreConnectUploadValidatorTests {
                 localeTargets: [localeTarget]
             )
         ]
-        let issues = ASCUploadValidator.validate(version: version, plans: plans)
+        let issues = AppStoreConnectUploadValidator.validate(version: version, plans: plans)
         #expect(!issues.contains { $0.severity == .warning })
     }
 
@@ -272,7 +272,7 @@ struct AppStoreConnectUploadValidatorTests {
                 localeTargets: [localeTarget]
             )
         }
-        let issues = ASCUploadValidator.validate(version: version, plans: [plan("A"), plan("B")])
+        let issues = AppStoreConnectUploadValidator.validate(version: version, plans: [plan("A"), plan("B")])
         #expect(issues.contains { $0.scope == "B" && $0.message.contains("same App Store screenshot set") })
     }
 
@@ -312,7 +312,7 @@ struct AppStoreConnectUploadValidatorTests {
             ]
         )
 
-        let issues = ASCUploadValidator.validate(destinations: [iosDestination, macDestination])
+        let issues = AppStoreConnectUploadValidator.validate(destinations: [iosDestination, macDestination])
 
         #expect(!issues.contains { $0.message.contains("same App Store screenshot set") })
         #expect(!issues.contains { $0.severity == .error })
@@ -353,7 +353,7 @@ struct AppStoreConnectUploadValidatorTests {
             ]
         )
 
-        let issues = ASCUploadValidator.validate(destinations: [iosDestination, macDestination])
+        let issues = AppStoreConnectUploadValidator.validate(destinations: [iosDestination, macDestination])
 
         #expect(issues.contains { issue in
             issue.scope?.contains("iOS") == true &&
@@ -375,7 +375,7 @@ struct AppStoreConnectUploadValidatorTests {
             attributes: .init(versionString: "1.0", appStoreState: "PREPARE_FOR_SUBMISSION", platform: "IOS")
         )
         func issues(templateCount: Int) -> [UploadIssue] {
-            ASCUploadValidator.validate(
+            AppStoreConnectUploadValidator.validate(
                 version: version,
                 plans: [
                     plan(

@@ -7,7 +7,7 @@ enum ASCUploadLimits {
     static let maxScreenshotsPerSet = 10
 }
 
-enum ASCUploadValidator {
+enum AppStoreConnectUploadValidator {
     static func validate(destinations: [ASCDestinationPlan]) -> [UploadIssue] {
         if destinations.isEmpty {
             return [
@@ -39,29 +39,17 @@ enum ASCUploadValidator {
             ))
         }
 
-        if plans.isEmpty {
-            issues.append(UploadIssue(
-                severity: .error,
-                message: "This project has no rows to upload.",
-                hint: "Add a row in the editor before running the upload."
-            ))
-            return issues
-        }
-
         let enabledPlans = plans.filter { $0.isEnabled }
-        if enabledPlans.isEmpty {
-            issues.append(UploadIssue(
-                severity: .error,
-                message: "Enable at least one row to upload."
-            ))
+        if let blocking = StoreUploadChecks.emptyPlansIssue(planCount: plans.count, enabledCount: enabledPlans.count) {
+            issues.append(blocking)
             return issues
         }
 
-        var seenAppStoreConnectTargets: [String: String] = [:]
+        var claims: [UploadTargetClaim] = []
 
         for plan in enabledPlans {
-            let rowName = plan.rowLabel.isEmpty ? "Row" : plan.rowLabel
-            let sizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
+            let rowName = StoreUploadChecks.rowName(plan.rowLabel)
+            let sizeLabel = StoreUploadChecks.sizeLabel(plan.rowSize)
 
             guard let displayType = plan.selectedAssetType else {
                 issues.append(UploadIssue(
@@ -138,24 +126,12 @@ enum ASCUploadValidator {
                 ))
             }
 
-            var reportedCollisionPartners: Set<String> = []
             for localeTarget in plan.localeTargets where localeTarget.isEnabled {
                 for localizationId in localeTarget.selectedASCLocalizationIds {
-                    let uploadTargetKey = "\(localizationId)|\(displayType.appStoreConnectValue)"
-                    if let existingRowName = seenAppStoreConnectTargets[uploadTargetKey] {
-                        // One error per colliding partner row, not per shared locale.
-                        if reportedCollisionPartners.insert(existingRowName).inserted {
-                            issues.append(UploadIssue(
-                                severity: .error,
-                                scope: rowName,
-                                message: "This row uploads to the same App Store screenshot set as \(existingRowName).",
-                                hint: "Disable one of these rows or choose a different display type before uploading.",
-                                demoDowngradable: true
-                            ))
-                        }
-                    } else {
-                        seenAppStoreConnectTargets[uploadTargetKey] = rowName
-                    }
+                    claims.append(UploadTargetClaim(
+                        rowName: rowName,
+                        key: "\(localizationId)|\(displayType.appStoreConnectValue)"
+                    ))
                 }
             }
 
@@ -181,6 +157,16 @@ enum ASCUploadValidator {
                 ))
             }
         }
+
+        issues.append(contentsOf: StoreUploadChecks.collisionIssues(claims) { rowName, partner in
+            UploadIssue(
+                severity: .error,
+                scope: rowName,
+                message: "This row uploads to the same App Store screenshot set as \(partner).",
+                hint: "Disable one of these rows or choose a different display type before uploading.",
+                demoDowngradable: true
+            )
+        })
 
         return issues
     }
