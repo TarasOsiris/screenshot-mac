@@ -425,10 +425,20 @@ struct ExportService {
     }
 
     @MainActor
-    static func renderTemplatePNG(index: Int, row: ScreenshotRow, screenshotImages: [String: NSImage] = [:], localeState: LocaleState = .default) -> Data? {
+    static func renderTemplatePNG(
+        index: Int,
+        row: ScreenshotRow,
+        screenshotImages: [String: NSImage] = [:],
+        localeState: LocaleState = .default,
+        availableFontFamilies: Set<String>? = nil
+    ) -> Data? {
         // Per-template render (not the full-row strip) so wide rows export at full resolution
         // instead of being downscaled to fit the GPU texture limit.
-        let image = renderSingleTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeState.activeLocaleCode, localeState: localeState)
+        let image = renderSingleTemplateImage(
+            index: index, row: row, screenshotImages: screenshotImages,
+            localeCode: localeState.activeLocaleCode, localeState: localeState,
+            availableFontFamilies: availableFontFamilies
+        )
         return opaquePNGData(from: image)
     }
 
@@ -439,9 +449,14 @@ struct ExportService {
         format: ExportImageFormat,
         screenshotImages: [String: NSImage] = [:],
         localeCode: String? = nil,
-        localeState: LocaleState = .default
+        localeState: LocaleState = .default,
+        availableFontFamilies: Set<String>? = nil
     ) -> Data? {
-        let image = renderSingleTemplateImage(index: index, row: row, screenshotImages: screenshotImages, localeCode: localeCode, localeState: localeState)
+        let image = renderSingleTemplateImage(
+            index: index, row: row, screenshotImages: screenshotImages,
+            localeCode: localeCode, localeState: localeState,
+            availableFontFamilies: availableFontFamilies
+        )
         return encodeImage(image, format: format)
     }
 

@@ -128,6 +128,7 @@ extension EditorRowView {
                         let image = ExportService.renderSingleTemplateImage(
                             index: index, row: row, screenshotImages: images,
                             localeCode: localeCode, localeState: state.localeState,
+                            availableFontFamilies: state.availableFontFamilySet,
                             preRenderedRowBackground: rowBackground
                         )
                         let padded = String(format: "%02d", index + 1)
@@ -167,7 +168,8 @@ extension EditorRowView {
             let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
             return ExportService.renderRowImage(
                 row: row, screenshotImages: images,
-                localeCode: localeCode, localeState: state.localeState
+                localeCode: localeCode, localeState: state.localeState,
+                availableFontFamilies: state.availableFontFamilySet
             )
         }) {
             exportError = String(localized: "Could not export row image: \(message)")

@@ -369,7 +369,10 @@ struct TemplateControlBar: View {
 
     private func renderExportPNG() -> Data? {
         let images = onLoadFullResImages?() ?? screenshotImages
-        return ExportService.renderTemplatePNG(index: index, row: row, screenshotImages: images, localeState: localeState)
+        return ExportService.renderTemplatePNG(
+            index: index, row: row, screenshotImages: images, localeState: localeState,
+            availableFontFamilies: state.availableFontFamilySet
+        )
     }
 
     private func previewScreenshot() {
@@ -385,7 +388,7 @@ struct TemplateControlBar: View {
                 displayScale: 1.0,
                 labelPrefix: "preview row"
             )
-            let fontFamilies = PlatformFonts.familyNameSet
+            let fontFamilies = state.availableFontFamilySet
             var urls: [URL] = []
             for i in row.templates.indices {
                 let image = ExportService.renderSingleTemplateImage(

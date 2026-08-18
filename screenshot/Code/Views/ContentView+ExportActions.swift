@@ -103,7 +103,10 @@ extension ContentView {
 
     func exportRowImages() {
         exportRowLevel(folderName: "rows") { row, images, locale, localeState in
-            ExportService.renderRowImage(row: row, screenshotImages: images, localeCode: locale, localeState: localeState)
+            ExportService.renderRowImage(
+                row: row, screenshotImages: images, localeCode: locale, localeState: localeState,
+                availableFontFamilies: state.availableFontFamilySet
+            )
         }
     }
 
@@ -186,7 +189,10 @@ extension ContentView {
                 .compactMap { $0.filtering(excluding: excludedTemplateIds) }
             guard !rowsToExport.isEmpty else { return }
             exportRowLevel(folderName: "showcase", rows: rowsToExport, imageCache: seedCache) { row, images, locale, localeState in
-                ExportService.renderShowcaseRowImage(row: row, screenshotImages: images, localeCode: locale, localeState: localeState, config: config)
+                ExportService.renderShowcaseRowImage(
+                    row: row, screenshotImages: images, localeCode: locale, localeState: localeState,
+                    availableFontFamilies: state.availableFontFamilySet, config: config
+                )
             }
         case .singleRow:
             guard let rowId = selectedRowIds.first,
@@ -199,7 +205,7 @@ extension ContentView {
                 return ExportService.renderShowcaseRowImage(
                     row: row, screenshotImages: images,
                     localeCode: localeCode, localeState: state.localeState,
-                    config: config
+                    availableFontFamilies: state.availableFontFamilySet, config: config
                 )
             }) {
                 exportError = String(localized: "Could not export row image: \(message)")
@@ -454,7 +460,8 @@ extension ContentView {
                 let fileURLs = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache) { row, images, locale, localeState in
                     ExportService.renderShowcaseRowImage(
                         row: row, screenshotImages: images,
-                        localeCode: locale, localeState: localeState, config: config
+                        localeCode: locale, localeState: localeState,
+                        availableFontFamilies: state.availableFontFamilySet, config: config
                     )
                 }
                 route(destination: destination, fileURLs: fileURLs, folderURL: destDir, cleanup: baseURL)

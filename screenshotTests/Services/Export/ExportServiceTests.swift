@@ -129,6 +129,35 @@ struct ExportServiceTests {
         #expect(foundDark, "Rich-text shape should render visible glyphs in export")
     }
 
+    /// `availableFontFamilies` must reach the renderer. A shape whose `fontName` is a real
+    /// installed family only renders in that face when the set contains it — several export
+    /// call sites used to drop the argument, silently exporting custom fonts in the system face.
+    @Test func renderForwardsAvailableFontFamilies() throws {
+        var row = makeTestRow(width: 200, height: 200, bgColor: .white)
+        var shape = CanvasShapeModel(
+            type: .text, x: 0, y: 0, width: 200, height: 200,
+            color: .black, text: "MMM", fontSize: 60
+        )
+        shape.fontName = "Courier New"
+        row.shapes = [shape]
+
+        let named = try #require(ExportService.renderTemplatePNG(
+            index: 0, row: row, availableFontFamilies: ["Courier New"]
+        ))
+        let unavailable = try #require(ExportService.renderTemplatePNG(
+            index: 0, row: row, availableFontFamilies: []
+        ))
+        #expect(named != unavailable, "renderTemplatePNG must forward availableFontFamilies")
+
+        let dataNamed = try #require(ExportService.renderTemplateData(
+            index: 0, row: row, format: .png, availableFontFamilies: ["Courier New"]
+        ))
+        let dataUnavailable = try #require(ExportService.renderTemplateData(
+            index: 0, row: row, format: .png, availableFontFamilies: []
+        ))
+        #expect(dataNamed != dataUnavailable, "renderTemplateData must forward availableFontFamilies")
+    }
+
     @Test func renderTemplateDrawsTextBackground() throws {
         var row = makeTestRow(width: 200, height: 200, bgColor: Self.testBlue)
         var shape = CanvasShapeModel(
