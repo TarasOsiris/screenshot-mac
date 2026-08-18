@@ -1,11 +1,60 @@
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 import CoreText
-import SwiftUI
+import Observation
 
-extension AppState {
+/// User-imported font files: importing, registering with CoreText, and reclaiming files whose
+/// family nothing references any more.
+///
+/// Its only tie to the document is the set of families the project's shapes actually use, and
+/// that is passed in — `AppState` still owns the walk. The active project id is passed per call
+/// rather than mirrored here, because a mirrored copy goes stale in the middle of a project
+/// switch, which is exactly when these paths run.
+@Observable
+@MainActor
+final class CustomFontLibrary {
+    nonisolated static let fontExtensions: Set<String> = ["ttf", "otf", "ttc"]
+
+    /// fileName → CustomFont.
+    private(set) var customFonts: [String: CustomFont] = [:]
+
+    /// Families referenced at any point this session. A font the user has imported but not yet
+    /// applied must survive the next autosave, so cleanup only removes families that were once
+    /// in use — see `cleanupUnreferenced`.
+    @ObservationIgnored private var everReferencedFontFamilies: Set<String> = []
+
+    /// System families plus every registered custom family. A `RowRenderSource` requirement, so
+    /// `AppState` forwards it.
+    @ObservationIgnored private(set) var availableFamilySet: Set<String> = PlatformFonts.familyNameSet
+
+    @ObservationIgnored private var lastFontCleanupAt: Date = .distantPast
+
+    /// Takes the project id because instances are read back off the font files in that project's
+    /// resources directory.
+    func refreshAvailableFamilies(projectId: UUID?) {
+        // Process-registered fonts (via CTFontManager) don't appear in the system family
+        // list, so add both family and display names.
+        PlatformFonts.invalidateFamilyNameCache()
+        var families = PlatformFonts.familyNameSet
+        let resourcesURL = projectId.map { PersistenceService.resourcesDir($0) }
+        var instances: [CustomFont] = []
+        for font in customFonts.values {
+            families.insert(font.familyName)
+            families.insert(font.displayName)
+            if let resourcesURL {
+                instances.append(contentsOf: CustomFont.allInstances(at: resourcesURL.appendingPathComponent(font.fileName)))
+            }
+        }
+        availableFamilySet = families
+        CustomFontRegistry.update(with: customFonts, instances: instances)
+    }
+
     // MARK: - Custom Fonts
 
-    func loadCustomFonts() {
-        guard let activeId = activeProjectId else { return }
+    func loadCustomFonts(projectId activeId: UUID) {
         let resourcesURL = PersistenceService.resourcesDir(activeId)
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
@@ -19,14 +68,14 @@ extension AppState {
                 changed = true
             }
         }
-        if changed { refreshAvailableFontFamilies() }
+        if changed { refreshAvailableFamilies(projectId: activeId) }
     }
 
-    func unregisterCustomFonts() {
-        guard let activeId = activeProjectId else {
+    func unregisterCustomFonts(projectId activeId: UUID?) {
+        guard let activeId else {
             customFonts.removeAll()
             everReferencedFontFamilies.removeAll()
-            refreshAvailableFontFamilies()
+            refreshAvailableFamilies(projectId: activeId)
             return
         }
         let resourcesURL = PersistenceService.resourcesDir(activeId)
@@ -36,14 +85,13 @@ extension AppState {
         }
         customFonts.removeAll()
         everReferencedFontFamilies.removeAll()
-        refreshAvailableFontFamilies()
+        refreshAvailableFamilies(projectId: activeId)
     }
 
     /// Imports a single font file or every font in a folder, opportunistically pulling in
     /// sibling family files when the sandbox allows parent-directory access.
     @discardableResult
-    func importCustomFont(from url: URL) -> ImportedCustomFontSelection? {
-        guard let activeId = activeProjectId else { return nil }
+    func importCustomFont(from url: URL, projectId activeId: UUID) -> ImportedCustomFontSelection? {
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
 
@@ -60,7 +108,7 @@ extension AppState {
             importFamilySiblings(of: url, familyName: primary.familyName, activeId: activeId)
         }
 
-        refreshAvailableFontFamilies()
+        refreshAvailableFamilies(projectId: activeId)
         if let firstImportedFont, !isDirectory {
             return firstImportedFont.selectionResult()
         }
@@ -68,9 +116,9 @@ extension AppState {
         return CustomFontRegistry.preferredSelection(for: family, in: customFonts)
     }
 
-    func removeCustomFont(_ fileName: String) {
-        removeCustomFontFile(fileName)
-        refreshAvailableFontFamilies()
+    func removeCustomFont(_ fileName: String, projectId activeId: UUID) {
+        removeCustomFontFile(fileName, projectId: activeId)
+        refreshAvailableFamilies(projectId: activeId)
     }
 
     // MARK: - Private import helpers
@@ -104,7 +152,7 @@ extension AppState {
 
     /// Copies the file into the project's resources dir and registers it. Pass `preParsed`
     /// to skip a redundant CT descriptor read when metadata is already known. Caller is
-    /// responsible for invoking `refreshAvailableFontFamilies()` once after a batch.
+    /// responsible for invoking `refreshAvailableFamilies(projectId:)` once after a batch.
     private func importFontFile(at url: URL, activeId: UUID, preParsed: CustomFont? = nil) -> CustomFont? {
         let fileName = url.lastPathComponent
         let destURL = PersistenceService.resourcesDir(activeId).appendingPathComponent(fileName)
@@ -131,9 +179,8 @@ extension AppState {
     }
 
     /// Per-file removal without refreshing the global font set. Call
-    /// `refreshAvailableFontFamilies()` once after a batch of removals.
-    private func removeCustomFontFile(_ fileName: String) {
-        guard let activeId = activeProjectId else { return }
+    /// `refreshAvailableFamilies(projectId:)` once after a batch of removals.
+    private func removeCustomFontFile(_ fileName: String, projectId activeId: UUID) {
         let resourcesURL = PersistenceService.resourcesDir(activeId)
         let url = resourcesURL.appendingPathComponent(fileName)
         CTFontManagerUnregisterFontsForURL(url as CFURL, .process, nil)
@@ -143,61 +190,47 @@ extension AppState {
 
     // MARK: - Reference tracking & cleanup
 
-    /// Family names referenced by any shape (base or locale override). A `shape.fontName`
-    /// like "Tinos" or "Playfair Display Italic" is resolved to its underlying family so
-    /// that all variants of that family stay alive together.
-    func allReferencedFontFamilies() -> Set<String> {
-        var result = Set<String>()
-        for row in rows {
-            for shape in row.shapes {
-                if let name = shape.fontName, !name.isEmpty {
-                    result.insert(CustomFontRegistry.resolve(name).family)
-                }
-            }
-        }
-        for shapeOverrides in localeState.overrides.values {
-            for override in shapeOverrides.values {
-                if let name = override.fontName, !name.isEmpty {
-                    result.insert(CustomFontRegistry.resolve(name).family)
-                }
-            }
-        }
-        return result
-    }
-
     /// Removes any custom font file whose family is no longer referenced by any shape,
     /// but only if that family has previously been referenced. Without this guard, a
     /// family the user just imported (and not yet applied) would be deleted by the next
     /// debounced save.
-    func cleanupUnreferencedFonts() {
+    func cleanupUnreferenced(referenced: @autoclosure () -> Set<String>, projectId activeId: UUID) {
         guard !customFonts.isEmpty else { return }
-        let referenced = allReferencedFontFamilies()
+        let referenced = referenced()
         everReferencedFontFamilies.formUnion(referenced)
         let toRemove = customFonts.filter { _, font in
             !referenced.contains(font.familyName) && everReferencedFontFamilies.contains(font.familyName)
         }
         guard !toRemove.isEmpty else { return }
         for fileName in toRemove.keys {
-            removeCustomFontFile(fileName)
+            removeCustomFontFile(fileName, projectId: activeId)
         }
-        refreshAvailableFontFamilies()
+        refreshAvailableFamilies(projectId: activeId)
     }
 
     /// Autosave-path variant: reclaiming unused font files only needs to happen
     /// eventually, so the full-document walk is throttled instead of running on
     /// every 0.3 s save tick. Quit (`saveAll`) and project switch still run the
     /// unthrottled cleanup.
-    func cleanupUnreferencedFontsThrottled() {
+    func cleanupUnreferencedThrottled(referenced: @autoclosure () -> Set<String>, projectId activeId: UUID) {
         guard !customFonts.isEmpty else { return }
         guard Date().timeIntervalSince(lastFontCleanupAt) > 30 else { return }
         lastFontCleanupAt = Date()
-        cleanupUnreferencedFonts()
+        cleanupUnreferenced(referenced: referenced(), projectId: activeId)
     }
 
     /// Rebuilds the in-session reference tracker from the loaded project so subsequent
     /// cleanup only removes fonts that were once used in this project.
-    func seedReferencedFontFamiliesFromLoadedProject() {
-        everReferencedFontFamilies = allReferencedFontFamilies()
+    /// Install a font record and its reference history directly, without an import. Only the
+    /// tests use this — production always arrives via `importCustomFont`, which also copies the
+    /// file and registers it with CoreText.
+    func seedForTesting(customFonts: [String: CustomFont], everReferenced: Set<String>) {
+        self.customFonts = customFonts
+        everReferencedFontFamilies = everReferenced
+    }
+
+    func seedReferenced(_ families: Set<String>) {
+        everReferencedFontFamilies = families
     }
 
     private func registerFont(at url: URL) -> CustomFont? {
@@ -209,5 +242,4 @@ extension AppState {
     private func parseFontMetadata(at url: URL) -> CustomFont? {
         CustomFont.parseMetadata(at: url)
     }
-
 }

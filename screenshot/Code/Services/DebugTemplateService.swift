@@ -269,7 +269,7 @@ enum DebugTemplateService {
 
         guard let files = try? fm.contentsOfDirectory(at: templateResources, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return }
 
-        for file in files where AppState.fontExtensions.contains(file.pathExtension.lowercased()) {
+        for file in files where CustomFontLibrary.fontExtensions.contains(file.pathExtension.lowercased()) {
             let keys = fontIdentityKeys(for: file)
             if !keys.isEmpty && !usedFontFamilies.isDisjoint(with: keys) {
                 let sharedDest = sharedFontsURL.appendingPathComponent(file.lastPathComponent)

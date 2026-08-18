@@ -241,7 +241,7 @@ enum ProjectThumbnailService {
             return []
         }
 
-        let fontURLs = files.filter { AppState.fontExtensions.contains($0.pathExtension.lowercased()) }
+        let fontURLs = files.filter { CustomFontLibrary.fontExtensions.contains($0.pathExtension.lowercased()) }
         for url in fontURLs {
             guard PersistenceService.readData(from: url) != nil else { return nil }
         }

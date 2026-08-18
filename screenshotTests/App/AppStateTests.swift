@@ -1258,15 +1258,17 @@ struct AppStateTests {
         let fontURL = resourcesDir.appendingPathComponent("Unused.ttf")
         try Data("font".utf8).write(to: fontURL)
 
-        state.customFonts["Unused.ttf"] = CustomFont(
-            fileName: "Unused.ttf",
-            familyName: "Unused Family",
-            styleName: nil,
-            postScriptName: nil,
-            isBold: false,
-            isItalic: false
+        state.fonts.seedForTesting(
+            customFonts: ["Unused.ttf": CustomFont(
+                fileName: "Unused.ttf",
+                familyName: "Unused Family",
+                styleName: nil,
+                postScriptName: nil,
+                isBold: false,
+                isItalic: false
+            )],
+            everReferenced: ["Unused Family"]
         )
-        state.everReferencedFontFamilies = ["Unused Family"]
 
         let fm = FileManager.default
         try fm.setAttributes([.posixPermissions: 0o555], ofItemAtPath: tempDir.path)

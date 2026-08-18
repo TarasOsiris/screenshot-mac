@@ -15,7 +15,7 @@ extension AppState {
     /// Image files in `files` that aren't referenced by the model and aren't fonts.
     private nonisolated static func orphanedResourceURLs(in files: [URL], referenced: Set<String>) -> [URL] {
         files.filter { url in
-            !fontExtensions.contains(url.pathExtension.lowercased())
+            !CustomFontLibrary.fontExtensions.contains(url.pathExtension.lowercased())
                 && !referenced.contains(url.lastPathComponent)
         }
     }

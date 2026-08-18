@@ -8,7 +8,6 @@ import UIKit
 final class AppState {
     static let maxProjectNameLength = 100
     static let templateColors: [Color] = [.blue, .purple, .orange, .green, .pink, .teal]
-    nonisolated static let fontExtensions: Set<String> = ["ttf", "otf", "ttc"]
 
     var projects: [Project] = []
     var activeProjectId: UUID?
@@ -33,34 +32,18 @@ final class AppState {
     /// Interactive onboarding-tour runtime state + flow (see `OnboardingCoachController`).
     let coach = OnboardingCoachController()
     var screenshotImages: [String: NSImage] = [:]
-    var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
-    /// Family names referenced by any shape at some point in the current session. A font
-    /// is only eligible for in-session cleanup once its family enters this set — otherwise
-    /// a freshly imported font (or auto-imported sibling variant) would be deleted by the
-    /// next debounced save before the user has a chance to apply it.
-    @ObservationIgnored var everReferencedFontFamilies: Set<String> = []
-    /// Includes both system family names and custom font display names so render-time
-    /// `.contains(name)` checks succeed for style-qualified variants like
-    /// "Playfair Display Italic".
-    @ObservationIgnored private(set) var availableFontFamilySet: Set<String> = PlatformFonts.familyNameSet
+    /// User-imported fonts. See CustomFontLibrary.
+    let fonts = CustomFontLibrary()
+
+    /// `RowRenderSource` conformance — the renderers ask the document, and it forwards.
+    var availableFontFamilySet: Set<String> { fonts.availableFamilySet }
+
+    var customFonts: [String: CustomFont] { fonts.customFonts }
 
     func refreshAvailableFontFamilies() {
-        // Process-registered fonts (via CTFontManager) don't appear in the system family
-        // list, so add both family and display names.
-        PlatformFonts.invalidateFamilyNameCache()
-        var families = PlatformFonts.familyNameSet
-        let resourcesURL = activeProjectId.map { PersistenceService.resourcesDir($0) }
-        var instances: [CustomFont] = []
-        for font in customFonts.values {
-            families.insert(font.familyName)
-            families.insert(font.displayName)
-            if let resourcesURL {
-                instances.append(contentsOf: CustomFont.allInstances(at: resourcesURL.appendingPathComponent(font.fileName)))
-            }
-        }
-        availableFontFamilySet = families
-        CustomFontRegistry.update(with: customFonts, instances: instances)
+        fonts.refreshAvailableFamilies(projectId: activeProjectId)
     }
+
     var undoManager: UndoManager?
     var saveError: String?
     /// Canvas "scroll into view" request signals (see `CanvasFocusController`).
@@ -74,8 +57,7 @@ final class AppState {
     @ObservationIgnored var lastSeenCatalogModified: Date?
 
     @ObservationIgnored var saveTask: DispatchWorkItem?
-    /// Last time the autosave completion ran the full-document font-reference walk.
-    @ObservationIgnored var lastFontCleanupAt: Date = .distantPast
+
     @ObservationIgnored var imageLoadTask: Task<Void, Never>?
     @ObservationIgnored var projectOpenTask: Task<Void, Never>?
     /// Serializes off-main iCloud reloads so overlapping remote changes don't race on the
