@@ -6,16 +6,6 @@ import UIKit
 import StoreKit
 import SwiftUI
 
-private enum ExportRenderError: LocalizedError {
-    case encodingFailed(rowIndex: Int)
-    nonisolated var errorDescription: String? {
-        switch self {
-        case .encodingFailed(let index):
-            return String(localized: "Failed to render row \(index + 1)")
-        }
-    }
-}
-
 extension View {
     /// Presents the shared "Export Failed" alert bound to `message`. Applied at the editor root and
     /// again inside the iPad showcase full-screen cover: an alert on the covered editor can't
@@ -102,11 +92,8 @@ extension ContentView {
     }
 
     func exportRowImages() {
-        exportRowLevel(folderName: "rows") { row, images, locale, localeState in
-            ExportService.renderRowImage(
-                row: row, screenshotImages: images, localeCode: locale, localeState: localeState,
-                availableFontFamilies: state.availableFontFamilySet
-            )
+        exportRowLevel(folderName: "rows") { context in
+            context.rowImage()
         }
     }
 
@@ -188,11 +175,8 @@ extension ContentView {
                 .filter { selectedRowIds.contains($0.id) }
                 .compactMap { $0.filtering(excluding: excludedTemplateIds) }
             guard !rowsToExport.isEmpty else { return }
-            exportRowLevel(folderName: "showcase", rows: rowsToExport, imageCache: seedCache) { row, images, locale, localeState in
-                ExportService.renderShowcaseRowImage(
-                    row: row, screenshotImages: images, localeCode: locale, localeState: localeState,
-                    availableFontFamilies: state.availableFontFamilySet, config: config
-                )
+            exportRowLevel(folderName: "showcase", rows: rowsToExport, imageCache: seedCache) { context in
+                context.showcaseImage(config: config)
             }
         case .singleRow:
             guard let rowId = selectedRowIds.first,
@@ -220,37 +204,23 @@ extension ContentView {
         _ rows: [ScreenshotRow],
         into destDir: URL,
         imageCache: inout [String: NSImage],
-        render: @MainActor (ScreenshotRow, [String: NSImage], String?, LocaleState) -> NSImage
+        render: @MainActor (RowRenderContext) -> NSImage
     ) async throws -> [URL] {
-        let localeCode = state.localeState.activeLocaleCode
-        var fileURLs: [URL] = []
-        for (index, row) in rows.enumerated() {
-            try Task.checkCancellation()
-            let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
-            let rowImages = state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
-            let image = render(row, rowImages, localeCode, state.localeState)
-            // Showcase rows are the largest images the app produces, and the PNG deflate is where
-            // SCREENSHOT-BRO-2 hung — it must not run on the main actor. Same bytes as
-            // `encodeImage(_:format: .png)`, which also flattens onto opaque white.
-            guard let data = await ExportImageEncoder.opaquePNGDataOffMain(from: image) else {
-                throw ExportRenderError.encodingFailed(rowIndex: index)
-            }
-            let paddedIndex = String(format: "%02d", index + 1)
-            let fileName = row.label.isEmpty ? "\(paddedIndex).png" : "\(paddedIndex)_\(row.label).png"
-            let url = destDir.appendingPathComponent(fileName)
-            try data.write(to: url)
-            fileURLs.append(url)
-            exportProgress = index + 1
-            await Task.yield()
-        }
-        return fileURLs
+        try await ExportCoordinator.renderRows(
+            rows,
+            into: destDir,
+            source: state,
+            imageCache: &imageCache,
+            onProgress: { exportProgress = $0 },
+            render: render
+        )
     }
 
     func exportRowLevel(
         folderName: String,
         rows: [ScreenshotRow]? = nil,
         imageCache seedCache: [String: NSImage] = [:],
-        render: @MainActor @escaping (ScreenshotRow, [String: NSImage], String?, LocaleState) -> NSImage
+        render: @MainActor @escaping (RowRenderContext) -> NSImage
     ) {
         let rowsToExport = rows ?? state.rows
         guard !rowsToExport.isEmpty else { return }
@@ -457,12 +427,8 @@ extension ContentView {
                 let destDir = ExportFileNaming.uniqueFolder(named: "showcase", in: baseURL)
                 try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
                 var imageCache: [String: NSImage] = seedCache
-                let fileURLs = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache) { row, images, locale, localeState in
-                    ExportService.renderShowcaseRowImage(
-                        row: row, screenshotImages: images,
-                        localeCode: locale, localeState: localeState,
-                        availableFontFamilies: state.availableFontFamilySet, config: config
-                    )
+                let fileURLs = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache) { context in
+                    context.showcaseImage(config: config)
                 }
                 route(destination: destination, fileURLs: fileURLs, folderURL: destDir, cleanup: baseURL)
             } catch is CancellationError {
@@ -564,25 +530,13 @@ extension ContentView {
     #endif
 
     func lastExportFolderURL() -> URL? {
-        guard let result = ExportFolderService.resolveBookmark(lastExportFolderBookmark) else {
-            if !lastExportFolderBookmark.isEmpty {
-                lastExportFolderBookmark = Data()
-            }
-            return nil
-        }
-        if let refreshed = result.refreshedBookmark {
-            lastExportFolderBookmark = refreshed
-        }
-        return result.url
+        ExportFolderBookmark().resolve()
     }
 
     func saveLastExportFolder(_ url: URL) {
-        guard let result = ExportFolderService.saveBookmark(for: url) else {
+        if !ExportFolderBookmark().save(url) {
             exportError = String(localized: "Failed to remember export folder")
-            return
         }
-        lastExportFolderBookmark = result.bookmark
-        lastExportFolderPath = result.path
     }
 
     func openLastExportFolder() {
@@ -593,15 +547,6 @@ extension ContentView {
 }
 
 #if os(iOS)
-/// Rendered iPad export output, held while the destination action sheet (Photos / Files / Share)
-/// is on screen so the user can choose where it goes.
-struct PendingExport: Identifiable {
-    let id = UUID()
-    let fileURLs: [URL]
-    let folderURL: URL
-    let cleanupBaseURL: URL
-}
-
 extension ContentView {
     var pendingExportTitle: String {
         guard let count = pendingExport?.fileURLs.count else { return "" }
