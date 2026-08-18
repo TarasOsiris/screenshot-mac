@@ -18,7 +18,7 @@ extension UploadToAppStoreConnectView {
         let screenshotNoun = screenshotCount == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
         let setNoun = setCount == 1 ? String(localized: "set") : String(localized: "sets")
         let localeNoun = localeCount == 1 ? String(localized: "locale") : String(localized: "locales")
-        let versionNoun = versionCount == 1 ? String(localized: "version") : String(localized: "model.versions")
+        let versionNoun = versionCount == 1 ? String(localized: "version") : String(localized: "versions")
         return String(localized: "\(screenshotCount) \(screenshotNoun) will be safely synced across \(setCount) \(setNoun), \(localeCount) \(localeNoun), and \(versionCount) \(versionNoun). Exact checksum matches will be preserved.")
     }
 
@@ -42,7 +42,7 @@ extension UploadToAppStoreConnectView {
     }
 
     var demoModeBanner: some View {
-        DemoModeBanner(message: "Sample model.apps and a simulated screenshot sync. Nothing is sent to App Store Connect.")
+        DemoModeBanner(message: "Sample apps and a simulated screenshot sync. Nothing is sent to App Store Connect.")
     }
 
     var footer: some View {

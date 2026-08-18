@@ -269,7 +269,7 @@ extension UploadToAppStoreConnectView {
     @ViewBuilder
     func appInfoSection(index: Int) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("App Info (shared across model.versions)")
+            Text("App Info (shared across versions)")
                 .font(.subheadline)
                 .fontWeight(.semibold)
             metadataField(
@@ -427,7 +427,7 @@ extension UploadToAppStoreConnectView {
                         app: app,
                         subtitle: model.selectedVersions.count == 1
                             ? (model.selectedVersion.map { "Version \($0.attributes.versionString) · \($0.attributes.displayState)" } ?? "")
-                            : "\(model.selectedVersions.count) selected model.versions"
+                            : "\(model.selectedVersions.count) selected versions"
                     )
                 }
 
@@ -552,7 +552,7 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     func appStoreConnectLink(appId: String?, appName: String) -> some View {
-        if let appId, let url = URL(string: "https://appstoreconnect.apple.com/model.apps/\(appId)/appstore") {
+        if let appId, let url = URL(string: "https://appstoreconnect.apple.com/apps/\(appId)/appstore") {
             Link(destination: url) {
                 Label("Open \(appName) in App Store Connect", systemImage: "arrow.up.right.square")
             }
