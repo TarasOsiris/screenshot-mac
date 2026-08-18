@@ -87,18 +87,15 @@ struct UploadToAppStoreConnectView: View {
 
     #if os(macOS)
     private var macBody: some View {
-        VStack(spacing: 0) {
+        UploadWizardShell(showsBanner: model.credentials.isDemoMode) {
             header
-            if model.credentials.isDemoMode {
-                demoModeBanner
-            }
-            Divider()
+        } banner: {
+            demoModeBanner
+        } content: {
             content
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            Divider()
+        } footer: {
             footer
         }
-        .frame(width: 860, height: 680)
     }
     #endif
 }
