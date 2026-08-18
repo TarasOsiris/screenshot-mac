@@ -151,9 +151,8 @@ struct ASCUploadPlanEntriesTests {
 
         #expect(plan.selected.count == 4)
         #expect(plan.versionCount == 2)
-        // Locale groups are per (destination, store locale), not per locale.
+        // Locale count is per (destination, store locale), not per locale.
         #expect(plan.localeCount == 4)
-        #expect(plan.localeGroups.count == 4)
         // One row group per (destination, row).
         #expect(plan.rowGroups.count == 4)
         #expect(plan.screenshotCount == 8)

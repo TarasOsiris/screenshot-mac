@@ -4,6 +4,12 @@ import SwiftUI
 enum StoreConnectionTestResult {
     case success(String)
     case failure(String)
+
+    /// Both panes derived this identically from an optional result, so it lives here.
+    var passed: Bool {
+        if case .success = self { return true }
+        return false
+    }
 }
 
 /// The tinted result row shown under the Test Connection button.

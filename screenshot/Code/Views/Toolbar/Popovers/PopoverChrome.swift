@@ -15,7 +15,7 @@ struct PopoverSectionHeader: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 10, weight: .semibold))
+            .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold))
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
             .tracking(0.5)
@@ -40,7 +40,7 @@ struct PopoverHeader: View {
 
             if let badge {
                 Text(badge)
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.system(size: UIMetrics.FontSize.hint, weight: .semibold))
                     .foregroundStyle(.orange)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 2)
@@ -55,7 +55,7 @@ struct PopoverHeader: View {
                     Image(systemName: "arrow.counterclockwise")
                     Text(resetLabel)
                 }
-                .font(.system(size: 11))
+                .font(.system(size: UIMetrics.FontSize.body))
             }
             .buttonStyle(.borderless)
             .disabled(isResetDisabled)

@@ -177,7 +177,7 @@ extension ASCUploadFlowModel {
                     versionId: destination.id,
                     versionLabel: destination.title,
                     rowId: plan.id,
-                    rowLabel: plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel,
+                    rowLabel: plan.displayLabel,
                     rowSize: plan.rowSize,
                     displayType: displayType,
                     localizations: localizations,
@@ -185,24 +185,5 @@ extension ASCUploadFlowModel {
                 )
             }
         }
-    }
-
-    func uploadFailureSummary(for error: Error) -> String {
-        StoreUploadFailureText.summary(for: error)
-    }
-
-    func buildErrorDetails(for error: Error) -> String {
-        var context: [String] = []
-        if let app = selectedApp {
-            context.append("App: \(app.attributes.name) (\(app.attributes.bundleId))")
-        }
-        if !selectedVersions.isEmpty {
-            let versionDetails = selectedVersions.map { version in
-                let platform = version.attributes.displayPlatform.map { "\($0) " } ?? ""
-                return "\(platform)\(version.attributes.versionString) · \(version.attributes.displayState)"
-            }.joined(separator: "\n")
-            context.append("Versions:\n\(versionDetails)")
-        }
-        return StoreUploadFailureText.details(for: error, context: context)
     }
 }

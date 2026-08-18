@@ -122,7 +122,7 @@ struct GooglePlaySettingsView: View {
     private var status: StoreCredentialsStatus {
         .resolve(
             isDemoMode: credentials.isDemoMode,
-            connectionTestPassed: connectionTestPassed,
+            connectionTestPassed: testResult?.passed == true,
             hasCredentials: credentials.hasServiceAccount
         )
     }
@@ -138,11 +138,6 @@ struct GooglePlaySettingsView: View {
         case .finishSetup:
             return String(localized: "Import the service account JSON key below, then test the connection.")
         }
-    }
-
-    private var connectionTestPassed: Bool {
-        if case .success = testResult { return true }
-        return false
     }
 
     private var canTestConnection: Bool {

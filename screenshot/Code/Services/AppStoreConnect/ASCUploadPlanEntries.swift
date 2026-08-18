@@ -8,13 +8,15 @@ import Foundation
 /// aggregates inline. Building it once, when the plan changes, is what `ASCUploadFlowModel`'s
 /// `updateDestinationPlans` is for.
 struct ASCUploadPlanEntries {
-    let all: [ASCUploadPlanEntry]
+    /// Every entry, selected first. Derived rather than stored — the fan-out is
+    /// destinations × rows × locales, and nothing reads it per body pass.
+    var all: [ASCUploadPlanEntry] { selected + skipped }
+
     let selected: [ASCUploadPlanEntry]
     let skipped: [ASCUploadPlanEntry]
     /// Grouped by source row, so the constant row/display-type details render once instead of
     /// repeating under every locale.
     let rowGroups: [ASCUploadRowGroup]
-    let localeGroups: [ASCUploadLocaleGroup]
     let versionCount: Int
     let localeCount: Int
     let screenshotCount: Int
@@ -24,11 +26,9 @@ struct ASCUploadPlanEntries {
     init(destinations: [ASCDestinationPlan]) {
         let all = Self.entries(from: destinations)
         let selected = all.filter(\.isSelected)
-        self.all = all
         self.selected = selected
         self.skipped = all.filter { !$0.isSelected }
         self.rowGroups = Self.rowGroups(from: selected)
-        self.localeGroups = Self.localeGroups(from: selected)
         self.versionCount = Set(selected.map(\.destinationId)).count
         self.localeCount = Set(selected.map { "\($0.destinationId)|\($0.appStoreLocaleCode ?? $0.projectLocaleCode)" }).count
         self.screenshotCount = selected.reduce(0) { $0 + $1.screenshotCount }
@@ -38,8 +38,8 @@ struct ASCUploadPlanEntries {
             destinations.flatMap { destination -> [ASCUploadPlanEntry] in
                 destination.rowPlans.flatMap { plan -> [ASCUploadPlanEntry] in
                     guard plan.isEnabled else { return [] }
-                    let rowLabel = plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel
-                    let sourceSizeLabel = "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))"
+                    let rowLabel = plan.displayLabel
+                    let sourceSizeLabel = plan.sizeLabel
                     let displayTypeLabel = plan.selectedAssetType?.label ?? String(localized: "No display type selected")
                     let displayTypeRawValue = plan.selectedAssetType?.appStoreConnectValue ?? "none"
 
@@ -86,19 +86,6 @@ struct ASCUploadPlanEntries {
                     }
                 }
             }
-    }
-
-    /// Group already-filtered entries by App Store (or project) locale. Takes the entries as a
-    /// parameter so callers that already computed `uploadPlanEntries` don't recompute it.
-    private static func localeGroups(from entries: [ASCUploadPlanEntry]) -> [ASCUploadLocaleGroup] {
-        let grouped = Dictionary(grouping: entries) { entry in
-            "\(entry.destinationId)|\(entry.appStoreLocaleCode ?? entry.projectLocaleCode)"
-        }
-        return grouped.keys.sorted().map { code in
-            let groupEntries = grouped[code] ?? []
-            let label = groupEntries.first.map { "\($0.destinationLabel) · \($0.projectLocaleLabel) -> \($0.appStoreLocaleCode ?? $0.projectLocaleCode)" } ?? code
-            return ASCUploadLocaleGroup(id: code, label: label, entries: groupEntries)
-        }
     }
 
     /// Group entries by source row, preserving the row order in which they were generated, so the

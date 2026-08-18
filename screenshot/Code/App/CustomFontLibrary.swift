@@ -32,6 +32,13 @@ final class CustomFontLibrary {
 
     @ObservationIgnored private var lastFontCleanupAt: Date = .distantPast
 
+    /// Both parameters default to empty; a test that needs a font record without a parseable
+    /// font file on disk constructs its own library rather than mutating a shared one.
+    init(customFonts: [String: CustomFont] = [:], everReferenced: Set<String> = []) {
+        self.customFonts = customFonts
+        everReferencedFontFamilies = everReferenced
+    }
+
     /// Takes the project id because instances are read back off the font files in that project's
     /// resources directory.
     func refreshAvailableFamilies(projectId: UUID?) {
@@ -114,11 +121,6 @@ final class CustomFontLibrary {
         }
         guard let family = firstFamily else { return nil }
         return CustomFontRegistry.preferredSelection(for: family, in: customFonts)
-    }
-
-    func removeCustomFont(_ fileName: String, projectId activeId: UUID) {
-        removeCustomFontFile(fileName, projectId: activeId)
-        refreshAvailableFamilies(projectId: activeId)
     }
 
     // MARK: - Private import helpers
@@ -221,14 +223,6 @@ final class CustomFontLibrary {
 
     /// Rebuilds the in-session reference tracker from the loaded project so subsequent
     /// cleanup only removes fonts that were once used in this project.
-    /// Install a font record and its reference history directly, without an import. Only the
-    /// tests use this — production always arrives via `importCustomFont`, which also copies the
-    /// file and registers it with CoreText.
-    func seedForTesting(customFonts: [String: CustomFont], everReferenced: Set<String>) {
-        self.customFonts = customFonts
-        everReferencedFontFamilies = everReferenced
-    }
-
     func seedReferenced(_ families: Set<String>) {
         everReferencedFontFamilies = families
     }

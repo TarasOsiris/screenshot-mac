@@ -79,8 +79,8 @@ private let deterministicRemovedDefaultKeys = [
 /// tests assume. (The app no longer auto-creates a project on first launch; use
 /// `makeEmptyTestState()` to exercise that.)
 @MainActor
-func makeTestState() -> (AppState, URL) {
-    let (state, tempDir) = makeEmptyTestState()
+func makeTestState(fonts: CustomFontLibrary = CustomFontLibrary()) -> (AppState, URL) {
+    let (state, tempDir) = makeEmptyTestState(fonts: fonts)
     if state.visibleProjects.isEmpty {
         state.createProject(name: "My App")
         var row = state.makeDefaultRow(
@@ -120,11 +120,11 @@ func makeTestState() -> (AppState, URL) {
 /// a late save), but it is the reason the residual `batchImport` flakiness is a real hazard rather
 /// than a mystery. Injection is the fix; the trait is the mitigation.
 @MainActor
-func makeEmptyTestState() -> (AppState, URL) {
+func makeEmptyTestState(fonts: CustomFontLibrary = CustomFontLibrary()) -> (AppState, URL) {
     let tempDir = makeTemporaryDataDirectory()
     setenv("SCREENSHOT_DATA_DIR", tempDir.path, 1)
     normalizeUserDefaultsForTest(directory: tempDir)
-    let state = AppState()
+    let state = AppState(fonts: fonts)
     return (state, tempDir)
 }
 

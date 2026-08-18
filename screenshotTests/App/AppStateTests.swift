@@ -7,7 +7,7 @@ import Testing
 @MainActor
 struct AppStateTests {
 
-    private func makeState() -> (AppState, URL) { makeTestState() }
+    private func makeState(fonts: CustomFontLibrary = CustomFontLibrary()) -> (AppState, URL) { makeTestState(fonts: fonts) }
     private func cleanup(_ tempDir: URL) { cleanupTestState(tempDir) }
     private func bundledFontURL(_ fileName: String) -> URL {
         URL(fileURLWithPath: #filePath)
@@ -1249,16 +1249,9 @@ struct AppStateTests {
     }
 
     @Test func saveAllDoesNotDeleteUnreferencedFontsWhenIndexSaveFails() throws {
-        let (state, tempDir) = makeState()
-        defer { cleanup(tempDir) }
-
-        let projectId = try #require(state.activeProjectId)
-        let resourcesDir = PersistenceService.resourcesDir(projectId)
-        let projectDir = PersistenceService.projectDirectoryURL(projectId)
-        let fontURL = resourcesDir.appendingPathComponent("Unused.ttf")
-        try Data("font".utf8).write(to: fontURL)
-
-        state.fonts.seedForTesting(
+        // A font record without a parseable file on disk, so the library is constructed with it
+        // rather than mutated after the fact.
+        let (state, tempDir) = makeState(fonts: CustomFontLibrary(
             customFonts: ["Unused.ttf": CustomFont(
                 fileName: "Unused.ttf",
                 familyName: "Unused Family",
@@ -1268,7 +1261,14 @@ struct AppStateTests {
                 isItalic: false
             )],
             everReferenced: ["Unused Family"]
-        )
+        ))
+        defer { cleanup(tempDir) }
+
+        let projectId = try #require(state.activeProjectId)
+        let resourcesDir = PersistenceService.resourcesDir(projectId)
+        let projectDir = PersistenceService.projectDirectoryURL(projectId)
+        let fontURL = resourcesDir.appendingPathComponent("Unused.ttf")
+        try Data("font".utf8).write(to: fontURL)
 
         let fm = FileManager.default
         try fm.setAttributes([.posixPermissions: 0o555], ofItemAtPath: tempDir.path)

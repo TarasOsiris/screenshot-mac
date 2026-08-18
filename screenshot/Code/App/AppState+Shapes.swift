@@ -68,12 +68,6 @@ extension AppState {
         }
     }
 
-    // Debounce delays shared by the continuous-edit / nudge / text-edit coalescers.
-    static let continuousEditInterval: CFAbsoluteTime = 1.0 / 30
-    static let continuousUndoDebounceDelay: TimeInterval = 0.5
-    static let nudgeUndoDebounceDelay: TimeInterval = 0.4
-    static let textEditUndoDebounceDelay: TimeInterval = 0.5
-
     /// Update shape without registering undo on every call — undo is captured once at the start
     /// and finalized after changes stop (debounced via `edits.shapeEdit`). Application of the
     /// value is throttled to ~30fps (`edits.shapeEditThrottle`) to avoid expensive re-renders per tick.

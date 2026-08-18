@@ -90,7 +90,4 @@ extension ASCUploadFlowModel {
         return Set(defaultVersions.map(\.id))
     }
 
-    func movePastVersionSelection() async {
-        await moveToMetadata()
-    }
 }

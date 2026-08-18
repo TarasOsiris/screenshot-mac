@@ -16,12 +16,12 @@ final class AppState {
     var selectedRowId: UUID?
     var selectedShapeIds: Set<UUID> = []
     /// The canvas's in-progress inline text edit. See InlineTextEditSession.
-    let textEdit = InlineTextEditSession()
+    let textEdit: InlineTextEditSession
 
     /// Editor zoom. Not document state — see ZoomController.
     let zoom = ZoomController()
     /// Preview mode and the iPad view mode. Session-only — see EditorViewModeController.
-    let viewMode = EditorViewModeController()
+    let viewMode: EditorViewModeController
 
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
@@ -33,16 +33,12 @@ final class AppState {
     let coach = OnboardingCoachController()
     var screenshotImages: [String: NSImage] = [:]
     /// User-imported fonts. See CustomFontLibrary.
-    let fonts = CustomFontLibrary()
+    let fonts: CustomFontLibrary
 
     /// `RowRenderSource` conformance — the renderers ask the document, and it forwards.
     var availableFontFamilySet: Set<String> { fonts.availableFamilySet }
 
     var customFonts: [String: CustomFont] { fonts.customFonts }
-
-    func refreshAvailableFontFamilies() {
-        fonts.refreshAvailableFamilies(projectId: activeProjectId)
-    }
 
     var undoManager: UndoManager?
     var saveError: String?
@@ -132,9 +128,12 @@ final class AppState {
         rows.firstIndex { $0.id == rowId }
     }
 
-    init() {
+    init(fonts: CustomFontLibrary = CustomFontLibrary()) {
+        let textEdit = InlineTextEditSession()
+        self.fonts = fonts
+        self.textEdit = textEdit
+        self.viewMode = EditorViewModeController(textEdit: textEdit)
         coach.app = self
-        viewMode.endTextEditing = { [weak self] in self?.textEdit.isActive = false }
         viewMode.deselectAll = { [weak self] in self?.deselectAll() }
 
         zoom.restorePersistedLevel()

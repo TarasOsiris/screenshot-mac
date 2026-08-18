@@ -51,9 +51,15 @@ struct UploadToAppStoreConnectView: View {
             .task {
                 model.bind(document: state)
                 #if os(iOS)
-                model.navigationDidAdvance = { path.append($0) }
-                model.navigationWillRetreat = {
-                    if path.last == .uploading || path.last == .done { path.removeLast() }
+                // Capture the projected Binding, not `path` directly: `path` is @State, so
+                // touching it in an escaping closure captures the whole view struct — including
+                // `_model` — and the model stores these closures. That is a cycle, and it leaks
+                // an entire wizard's fetched apps, drafts and plan per iPad presentation.
+                model.navigationDidAdvance = { [path = $path] in path.wrappedValue.append($0) }
+                model.navigationWillRetreat = { [path = $path] in
+                    if path.wrappedValue.last == .uploading || path.wrappedValue.last == .done {
+                        path.wrappedValue.removeLast()
+                    }
                 }
                 #endif
                 await model.loadAppsIfNeeded()
@@ -87,10 +93,10 @@ struct UploadToAppStoreConnectView: View {
 
     #if os(macOS)
     private var macBody: some View {
-        UploadWizardShell(showsBanner: model.credentials.isDemoMode) {
+        UploadWizardShell {
             header
         } banner: {
-            demoModeBanner
+            if model.credentials.isDemoMode { demoModeBanner }
         } content: {
             content
         } footer: {

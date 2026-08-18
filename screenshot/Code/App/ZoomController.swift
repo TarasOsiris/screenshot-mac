@@ -23,12 +23,19 @@ final class ZoomController {
 
     /// Pinch/scroll-wheel zoom writes at most ~30fps: an unthrottled gesture re-evaluates every
     /// visible row once per tick.
-    @ObservationIgnored private let throttle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
+    @ObservationIgnored private let throttle = ContinuousApplyThrottle(interval: EditCoalescingTiming.continuousApplyInterval)
     @ObservationIgnored private var persistTask: DispatchWorkItem?
+    /// Injected on the type, not per method: a half-injected seam lets a test control where the
+    /// level is read from but not where it's written to.
+    @ObservationIgnored private let defaults: UserDefaults
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
 
     /// Restores the level the editor was left at, else the user's configured default. Called from
     /// `AppState.init` before the first `load()`, where it has always run.
-    func restorePersistedLevel(defaults: UserDefaults = .standard) {
+    func restorePersistedLevel() {
         let last = defaults.double(forKey: AppSettingsKeys.lastZoomLevel)
         if last > 0 {
             level = last
@@ -49,8 +56,8 @@ final class ZoomController {
             level = clamped
         }
         persistTask?.cancel()
-        let task = DispatchWorkItem {
-            UserDefaults.standard.set(clamped, forKey: AppSettingsKeys.lastZoomLevel)
+        let task = DispatchWorkItem { [defaults] in
+            defaults.set(clamped, forKey: AppSettingsKeys.lastZoomLevel)
         }
         persistTask = task
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
@@ -79,10 +86,10 @@ final class ZoomController {
     func zoomOut() { set(level - ZoomConstants.step) }
 
     func reset() {
-        let configured = UserDefaults.standard.double(forKey: AppSettingsKeys.defaultZoomLevel)
+        let configured = defaults.double(forKey: AppSettingsKeys.defaultZoomLevel)
         set(configured > 0 ? configured : AppSettingsKeys.Default.defaultZoomLevel)
         persistTask?.cancel()
-        UserDefaults.standard.removeObject(forKey: AppSettingsKeys.lastZoomLevel)
+        defaults.removeObject(forKey: AppSettingsKeys.lastZoomLevel)
     }
 
     /// Quit path: write the pending level synchronously rather than losing it with the run loop.
@@ -90,6 +97,6 @@ final class ZoomController {
         guard persistTask != nil else { return }
         persistTask?.cancel()
         persistTask = nil
-        UserDefaults.standard.set(level, forKey: AppSettingsKeys.lastZoomLevel)
+        defaults.set(level, forKey: AppSettingsKeys.lastZoomLevel)
     }
 }

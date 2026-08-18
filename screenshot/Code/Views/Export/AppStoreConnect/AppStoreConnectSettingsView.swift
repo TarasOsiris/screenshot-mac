@@ -157,7 +157,7 @@ struct AppStoreConnectSettingsView: View {
     private var status: StoreCredentialsStatus {
         .resolve(
             isDemoMode: credentials.isDemoMode,
-            connectionTestPassed: connectionTestPassed,
+            connectionTestPassed: testResult?.passed == true,
             hasCredentials: credentials.isConfigured
         )
     }
@@ -188,17 +188,12 @@ struct AppStoreConnectSettingsView: View {
         )
     }
 
-    private var connectionTestPassed: Bool {
-        if case .success = testResult { return true }
-        return false
-    }
-
     private var canTestConnection: Bool {
         credentials.isConfigured && !isTesting
     }
 
     private var setupSummary: String {
-        let checks = [isIssuerIdValid, isKeyIdValid, credentials.hasPrivateKey, connectionTestPassed]
+        let checks = [isIssuerIdValid, isKeyIdValid, credentials.hasPrivateKey, testResult?.passed == true]
         let complete = checks.filter { $0 }.count
         return String(localized: "\(complete) of \(checks.count) complete")
     }

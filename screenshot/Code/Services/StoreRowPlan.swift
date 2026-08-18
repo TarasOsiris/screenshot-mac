@@ -27,4 +27,15 @@ nonisolated struct StoreRowPlan<AssetType, LocaleTarget: Identifiable>: Identifi
     var selectedAssetType: AssetType
     var localeTargets: [LocaleTarget]
     var inferredStorePlatform: StorePlatform?
+
+    /// Rows may be unlabelled; every plan row and upload message still needs something to call
+    /// them. Distinct from `StoreUploadChecks.rowName`, which the validators use and which is
+    /// deliberately unlocalized.
+    var displayLabel: String {
+        rowLabel.isEmpty ? String(localized: "Row") : rowLabel
+    }
+
+    var sizeLabel: String {
+        "\(Int(rowSize.width))×\(Int(rowSize.height))"
+    }
 }

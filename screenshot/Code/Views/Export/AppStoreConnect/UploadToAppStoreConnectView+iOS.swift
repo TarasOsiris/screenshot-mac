@@ -75,16 +75,16 @@ extension UploadToAppStoreConnectView {
             }
         }
         ToolbarItem(placement: .confirmationAction) {
-            iosPrimaryButton(for: stepValue)
+            iosPrimaryButton()
         }
     }
 
-    /// Reuses the shared `forwardPrimary(for:)` (same titles/actions/enabled rules as the macOS
+    /// Reuses the shared `forwardPrimary` (same titles/actions/enabled rules as the macOS
     /// footer); the terminal uploading/done screen consults the live `step` to switch
     /// Cancel Upload ↔ Close.
     @ViewBuilder
-    private func iosPrimaryButton(for stepValue: ASCUploadStep) -> some View {
-        if let primary = forwardPrimary(for: stepValue) {
+    private func iosPrimaryButton() -> some View {
+        if let primary = forwardPrimary {
             Button(primary.titleKey, action: primary.action)
                 .disabled(!primary.isEnabled)
         } else if model.step == .done {

@@ -22,14 +22,6 @@ struct ASCUploadPlanEntry: Identifiable {
     var screenshotCount: Int { isSelected ? templateCount : 0 }
 }
 
-struct ASCUploadLocaleGroup: Identifiable {
-    let id: String
-    let label: String
-    let entries: [ASCUploadPlanEntry]
-
-    var screenshotCount: Int { entries.reduce(0) { $0 + $1.screenshotCount } }
-}
-
 /// One per source row: the row/display-type details are constant across locales, so they're
 /// shown once in the group header and the varying locale destinations are listed beneath.
 struct ASCUploadRowGroup: Identifiable {

@@ -8,13 +8,9 @@ import SwiftUI
 // `Services/` declares no `some View`.
 extension View {
     func translationLanguageIssueAlert(item: Binding<TranslationLanguageIssue?>) -> some View {
-        let isPresented = Binding(
-            get: { item.wrappedValue != nil },
-            set: { if !$0 { item.wrappedValue = nil } }
-        )
         return alert(
             item.wrappedValue?.title ?? "",
-            isPresented: isPresented,
+            isPresented: item.isPresent(),
             presenting: item.wrappedValue
         ) { issue in
             #if os(macOS)

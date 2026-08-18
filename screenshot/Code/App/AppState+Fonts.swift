@@ -39,11 +39,6 @@ extension AppState {
         return fonts.importCustomFont(from: url, projectId: activeProjectId)
     }
 
-    func removeCustomFont(_ fileName: String) {
-        guard let activeProjectId else { return }
-        fonts.removeCustomFont(fileName, projectId: activeProjectId)
-    }
-
     /// Quit and project-switch path: reclaim now.
     func cleanupUnreferencedFonts() {
         guard let activeProjectId else { return }

@@ -34,10 +34,10 @@ struct UploadToGooglePlayView: View {
 
     @ViewBuilder
     private var shell: some View {
-        UploadWizardShell(showsBanner: model.credentials.isDemoMode) {
+        UploadWizardShell {
             header
         } banner: {
-            demoModeBanner
+            if model.credentials.isDemoMode { demoModeBanner }
         } content: {
             content
         } footer: {

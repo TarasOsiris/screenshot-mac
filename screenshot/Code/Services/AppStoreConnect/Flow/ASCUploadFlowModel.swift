@@ -177,5 +177,8 @@ final class ASCUploadFlowModel {
         uploadTask?.cancel()
         uploadTask = nil
         screenshotSync.discard()
+        // Belt and braces against the capture hazard documented where these are assigned.
+        navigationDidAdvance = { _ in }
+        navigationWillRetreat = {}
     }
 }

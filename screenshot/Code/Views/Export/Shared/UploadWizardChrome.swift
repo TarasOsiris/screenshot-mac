@@ -156,7 +156,6 @@ struct UploadCompleteHeader: View {
 /// all. Unifying those would take a style enum plus roughly eight parameters to stay
 /// pixel-identical — a parameter bag that reads worse than the two originals.
 struct UploadWizardShell<Header: View, Banner: View, Content: View, Footer: View>: View {
-    var showsBanner: Bool
     @ViewBuilder var header: () -> Header
     @ViewBuilder var banner: () -> Banner
     @ViewBuilder var content: () -> Content
@@ -165,9 +164,7 @@ struct UploadWizardShell<Header: View, Banner: View, Content: View, Footer: View
     var body: some View {
         VStack(spacing: 0) {
             header()
-            if showsBanner {
-                banner()
-            }
+            banner()
             Divider()
             content()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

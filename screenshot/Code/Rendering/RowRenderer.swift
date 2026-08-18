@@ -12,9 +12,7 @@ import UIKit
 // `Services/Export` calls, so hanging them off that type made Rendering/ and Services/Export
 // mutually dependent and left neither directory readable on its own. `ViewRasterizer` extends
 // this same enum so the two files keep calling each other unqualified.
-enum RowRenderer {}
-
-extension RowRenderer {
+enum RowRenderer {
     // MARK: - Showcase rendering (gallery layout with spacing & rounded corners)
 
     @MainActor

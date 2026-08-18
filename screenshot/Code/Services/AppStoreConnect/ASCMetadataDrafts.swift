@@ -14,14 +14,9 @@ struct ASCVersionLocaleDraft: Identifiable {
     var supportUrl: String
     var original: ASCAppStoreVersionLocalization.Attributes
 
-    var isChanged: Bool {
-        description != (original.description ?? "")
-            || keywords != (original.keywords ?? "")
-            || promotionalText != (original.promotionalText ?? "")
-            || whatsNew != (original.whatsNew ?? "")
-            || marketingUrl != (original.marketingUrl ?? "")
-            || supportUrl != (original.supportUrl ?? "")
-    }
+    /// Derived from `changedAttributes()` so the field list lives in exactly one place —
+    /// adding a field to one and not the other is otherwise silent.
+    var isChanged: Bool { !changedAttributes().isEmpty }
 
     func changedAttributes() -> [String: AnyEncodable] {
         var changes: [String: AnyEncodable] = [:]
@@ -55,11 +50,7 @@ struct ASCAppInfoLocaleDraft: Identifiable {
     var privacyPolicyUrl: String
     var original: ASCAppInfoLocalization.Attributes
 
-    var isChanged: Bool {
-        name != (original.name ?? "")
-            || subtitle != (original.subtitle ?? "")
-            || privacyPolicyUrl != (original.privacyPolicyUrl ?? "")
-    }
+    var isChanged: Bool { !changedAttributes().isEmpty }
 
     func changedAttributes() -> [String: AnyEncodable] {
         var changes: [String: AnyEncodable] = [:]

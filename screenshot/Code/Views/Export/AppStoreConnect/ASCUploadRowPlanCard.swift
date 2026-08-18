@@ -38,7 +38,7 @@ struct ASCUploadRowPlanCard: View {
                 DisclosureChevronButton(expanded: expanded, action: onToggleExpanded)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel)
+                Text(plan.displayLabel)
                     .fontWeight(.medium)
                 Text("\(String(Int(plan.rowSize.width)))×\(String(Int(plan.rowSize.height))) · \(plan.templateCount) screenshot\(plan.templateCount == 1 ? "" : "s")")
                     .font(.caption)
@@ -85,7 +85,7 @@ private struct ASCDisplayTypePicker: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(width: 72, alignment: .leading)
-            Text(verbatim: "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))")
+            Text(verbatim: plan.sizeLabel)
                 .font(.caption)
             detectedDisplayTypeAction
             Spacer()
@@ -184,7 +184,7 @@ private struct ASCDisplayTypeDetailsPopover: View {
             Text("Display Type")
                 .font(.headline)
             LabeledContent("Source size") {
-                Text(verbatim: "\(Int(plan.rowSize.width))×\(Int(plan.rowSize.height))")
+                Text(verbatim: plan.sizeLabel)
             }
             LabeledContent("Auto-detected") {
                 Text(plan.detectedAssetType?.label ?? "No exact match")

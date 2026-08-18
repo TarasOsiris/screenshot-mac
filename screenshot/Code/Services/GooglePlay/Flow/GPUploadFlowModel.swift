@@ -107,7 +107,7 @@ final class GPUploadFlowModel {
             guard !languages.isEmpty else { return nil }
             return GPUploadTarget(
                 rowId: plan.id,
-                rowLabel: plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel,
+                rowLabel: plan.displayLabel,
                 rowSize: plan.rowSize,
                 imageType: plan.selectedAssetType,
                 languages: languages,

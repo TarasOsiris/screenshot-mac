@@ -451,14 +451,8 @@ extension UploadToAppStoreConnectView {
     }
 
     var uploadSummaryPanel: some View {
-        let plan = model.planEntries
-        return ASCUploadSummaryPanel(
-            entries: plan.selected,
-            skipped: plan.skipped,
-            rowGroups: plan.rowGroups,
-            versionCount: plan.versionCount,
-            localeCount: plan.localeCount,
-            screenshotCount: plan.screenshotCount,
+        ASCUploadSummaryPanel(
+            plan: model.planEntries,
             issues: model.validationIssues,
             isExpanded: $isPreflightExpanded,
             isBusy: model.isBusy,

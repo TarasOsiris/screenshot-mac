@@ -12,18 +12,18 @@ import Foundation
 /// written mid-burst. This is the registry that holds them.
 @MainActor
 final class EditCoalescingCoordinator {
-    let shapeEdit = DebouncedUndoCoalescer(debounceDelay: AppState.continuousUndoDebounceDelay)
-    let rowEdit = DebouncedUndoCoalescer(debounceDelay: AppState.continuousUndoDebounceDelay)
-    let nudge = DebouncedUndoCoalescer(debounceDelay: AppState.nudgeUndoDebounceDelay)
-    let baseText = DebouncedUndoCoalescer(debounceDelay: AppState.textEditUndoDebounceDelay)
-    let translation = DebouncedUndoCoalescer(debounceDelay: AppState.textEditUndoDebounceDelay)
+    let shapeEdit = DebouncedUndoCoalescer(debounceDelay: EditCoalescingTiming.continuousUndoDebounce)
+    let rowEdit = DebouncedUndoCoalescer(debounceDelay: EditCoalescingTiming.continuousUndoDebounce)
+    let nudge = DebouncedUndoCoalescer(debounceDelay: EditCoalescingTiming.nudgeUndoDebounce)
+    let baseText = DebouncedUndoCoalescer(debounceDelay: EditCoalescingTiming.textEditUndoDebounce)
+    let translation = DebouncedUndoCoalescer(debounceDelay: EditCoalescingTiming.textEditUndoDebounce)
 
     var all: [DebouncedUndoCoalescer] { [shapeEdit, rowEdit, nudge, baseText, translation] }
 
     // ~30fps apply throttles for the continuous (slider/drag/pinch) paths: the coalescers above own
     // the single debounced undo step; these own how often the model is actually written mid-burst.
-    let shapeEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
-    let rowEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
+    let shapeEditThrottle = ContinuousApplyThrottle(interval: EditCoalescingTiming.continuousApplyInterval)
+    let rowEditThrottle = ContinuousApplyThrottle(interval: EditCoalescingTiming.continuousApplyInterval)
 
     /// Undo action names for the in-flight burst, set when it begins.
     var nudgeActionName: String = "Move Shape"

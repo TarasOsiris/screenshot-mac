@@ -1,5 +1,17 @@
 import Foundation
 
+/// Debounce delays and apply intervals shared by the continuous-edit / nudge / text-edit
+/// coalescers. They live beside the coalescers rather than on `AppState`, so a controller
+/// extracted *because* it isn't document state doesn't have to name the document to build a
+/// throttle.
+nonisolated enum EditCoalescingTiming {
+    /// How often a continuous gesture is allowed to write through (~30fps).
+    static let continuousApplyInterval: CFAbsoluteTime = 1.0 / 30
+    static let continuousUndoDebounce: TimeInterval = 0.5
+    static let nudgeUndoDebounce: TimeInterval = 0.4
+    static let textEditUndoDebounce: TimeInterval = 0.5
+}
+
 /// Coalesces a burst of rapid edits (slider drags, key-repeat nudges, keystrokes) into a single
 /// undo step. The finish action — which registers that one undo step from a base captured at the
 /// start of the burst — is supplied on the first edit and runs exactly once, when the burst

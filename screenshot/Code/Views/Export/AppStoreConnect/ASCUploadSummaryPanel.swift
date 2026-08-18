@@ -1,12 +1,9 @@
 import SwiftUI
 
 struct ASCUploadSummaryPanel: View {
-    let entries: [ASCUploadPlanEntry]
-    let skipped: [ASCUploadPlanEntry]
-    let rowGroups: [ASCUploadRowGroup]
-    let versionCount: Int
-    let localeCount: Int
-    let screenshotCount: Int
+    /// The whole memo, not six fields off it: splatting them apart re-opened the drift the
+    /// single build was meant to close.
+    let plan: ASCUploadPlanEntries
     let issues: [UploadIssue]
     @Binding var isExpanded: Bool
     let isBusy: Bool
@@ -45,21 +42,21 @@ struct ASCUploadSummaryPanel: View {
 
     private var metrics: some View {
         HStack(spacing: 10) {
-            ASCSummaryMetric(value: "\(entries.count)", label: "sets")
-            ASCSummaryMetric(value: "\(versionCount)", label: "versions")
-            ASCSummaryMetric(value: "\(screenshotCount)", label: "screenshots")
-            ASCSummaryMetric(value: "\(localeCount)", label: "locales")
+            ASCSummaryMetric(value: "\(plan.selected.count)", label: "sets")
+            ASCSummaryMetric(value: "\(plan.versionCount)", label: "versions")
+            ASCSummaryMetric(value: "\(plan.screenshotCount)", label: "screenshots")
+            ASCSummaryMetric(value: "\(plan.localeCount)", label: "locales")
         }
     }
 
     @ViewBuilder
     private var selectedUploads: some View {
-        if !rowGroups.isEmpty {
+        if !plan.rowGroups.isEmpty {
             VStack(alignment: .leading, spacing: 5) {
                 Text("Selected uploads")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                ForEach(rowGroups) { group in
+                ForEach(plan.rowGroups) { group in
                     ASCRowPlanGroupRow(group: group)
                 }
             }
@@ -68,14 +65,14 @@ struct ASCUploadSummaryPanel: View {
 
     @ViewBuilder
     private var skippedItems: some View {
-        if !skipped.isEmpty {
-            DisclosureGroup("Skipped items (\(skipped.count))") {
+        if !plan.skipped.isEmpty {
+            DisclosureGroup("Skipped items (\(plan.skipped.count))") {
                 VStack(alignment: .leading, spacing: 6) {
-                    ForEach(skipped.prefix(12)) { entry in
+                    ForEach(plan.skipped.prefix(12)) { entry in
                         ASCSkippedPlanEntryRow(entry: entry)
                     }
-                    if skipped.count > 12 {
-                        Text("\(skipped.count - 12) more skipped item\(skipped.count - 12 == 1 ? "" : "s")")
+                    if plan.skipped.count > 12 {
+                        Text("\(plan.skipped.count - 12) more skipped item\(plan.skipped.count - 12 == 1 ? "" : "s")")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }

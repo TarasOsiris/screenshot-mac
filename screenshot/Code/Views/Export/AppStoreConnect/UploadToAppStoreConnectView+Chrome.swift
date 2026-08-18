@@ -113,13 +113,15 @@ extension UploadToAppStoreConnectView {
         let isEnabled: Bool
     }
 
-    func forwardPrimary(for step: ASCUploadStep) -> ForwardPrimary? {
+    /// The forward button for the *current* step. Deliberately not parameterised: it
+    /// always reflects `model.step`.
+    var forwardPrimary: ForwardPrimary? {
         switch model.step {
         case .pickingApp:
             ForwardPrimary(titleKey: "Next", action: { Task { await model.moveToVersion() } },
                            isEnabled: model.selectedApp != nil && !model.isBusy)
         case .pickingVersion:
-            ForwardPrimary(titleKey: "Next", action: { Task { await model.movePastVersionSelection() } },
+            ForwardPrimary(titleKey: "Next", action: { Task { await model.moveToMetadata() } },
                            isEnabled: canAdvanceFromVersion && !model.isBusy)
         case .editingMetadata:
             ForwardPrimary(titleKey: metadataPrimaryTitle,
@@ -138,7 +140,7 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     var primaryButton: some View {
-        if let primary = forwardPrimary(for: model.step) {
+        if let primary = forwardPrimary {
             Button(primary.titleKey, action: primary.action)
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
