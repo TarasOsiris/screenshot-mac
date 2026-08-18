@@ -224,7 +224,7 @@ extension AppState {
                 // No visible projects left — drop to the empty "Create Project" state.
                 deselectAll()
                 rows = []
-                reconcilePreviewingRows(against: [])
+                viewMode.reconcilePreviewingRows(against: [])
                 localeState = .default
                 activeProjectId = nil
                 activeProjectDataModifiedAt = nil

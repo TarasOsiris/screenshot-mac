@@ -300,7 +300,7 @@ extension EditorRowView {
                     defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                     deviceModelRenderingMode: .snapshot,
                     clipBounds: clipRect,
-                    showsEditorHelpers: !state.isViewMode,
+                    showsEditorHelpers: !state.viewMode.isViewMode,
                     allowSynchronousSvgRender: false,
                     dragSession: dragSession,
                     availableFontFamilies: state.availableFontFamilySet,
@@ -310,8 +310,8 @@ extension EditorRowView {
                         // with the button tap, so a tap on the FAB can still reach a shape here.
                         // Guard so any leaked tap can't select; `setViewMode` deselects regardless
                         // of gesture order, leaving the canvas untouched.
-                        onSelect: { guard !state.isViewMode else { return }; state.selectShape(shape.id, in: row.id) },
-                        onShiftSelect: { guard !state.isViewMode else { return }; state.toggleShapeSelection(shape.id, in: row.id) },
+                        onSelect: { guard !state.viewMode.isViewMode else { return }; state.selectShape(shape.id, in: row.id) },
+                        onShiftSelect: { guard !state.viewMode.isViewMode else { return }; state.toggleShapeSelection(shape.id, in: row.id) },
                         onUpdate: { state.updateShape($0) },
                         onDelete: { state.deleteShape(shape.id) },
                         onScreenshotDrop: { image in
@@ -557,7 +557,7 @@ extension EditorRowView {
         .clipped()
         .contentShape(Rectangle())
         .onTapGesture {
-            guard !state.isViewMode else { return }
+            guard !state.viewMode.isViewMode else { return }
             tapSelectRow()
         }
         .onContinuousHover { phase in

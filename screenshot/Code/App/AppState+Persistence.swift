@@ -210,7 +210,7 @@ extension AppState {
         activeProjectDataModifiedAt = data.modifiedAt
         lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(projectId)
         // Drop any preview-mode entries that don't refer to a row in the new data.
-        reconcilePreviewingRows(against: Set(rows.map(\.id)))
+        viewMode.reconcilePreviewingRows(against: Set(rows.map(\.id)))
         selectRow(rows.first?.id)
         if deferCleanup {
             cleanupOrphanedResourceFilesAsync(for: projectId)

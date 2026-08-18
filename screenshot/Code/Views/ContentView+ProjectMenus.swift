@@ -240,25 +240,25 @@ extension ContentView {
     var editorModeFloatingButton: some View {
         Button {
             withAnimation(.easeInOut(duration: 0.2)) {
-                state.setViewMode(!state.isViewMode)
+                state.viewMode.setViewMode(!state.viewMode.isViewMode)
             }
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: state.isViewMode ? "hand.draw" : "pencil")
+                Image(systemName: state.viewMode.isViewMode ? "hand.draw" : "pencil")
                     .contentTransition(.symbolEffect(.replace))
-                Text(state.isViewMode ? "View" : "Edit")
+                Text(state.viewMode.isViewMode ? "View" : "Edit")
             }
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(state.isViewMode ? Color.white : Color.accentColor)
+            .foregroundStyle(state.viewMode.isViewMode ? Color.white : Color.accentColor)
             .padding(.horizontal, UIMetrics.ProminentCapsule.horizontalPadding)
             .frame(height: 44)
-            .editorModeFloatingButtonBackground(active: state.isViewMode)
+            .editorModeFloatingButtonBackground(active: state.viewMode.isViewMode)
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.selection, trigger: state.isViewMode)
-        .help(state.isViewMode ? String(localized: "Switch to Edit mode") : String(localized: "Switch to View mode (pan & zoom only)"))
-        .accessibilityLabel(state.isViewMode ? Text("Switch to Edit mode") : Text("Switch to View mode"))
+        .sensoryFeedback(.selection, trigger: state.viewMode.isViewMode)
+        .help(state.viewMode.isViewMode ? String(localized: "Switch to Edit mode") : String(localized: "Switch to View mode (pan & zoom only)"))
+        .accessibilityLabel(state.viewMode.isViewMode ? Text("Switch to Edit mode") : Text("Switch to View mode"))
     }
 
     // The principal (title) toolbar slot strips button styles, so the Liquid Glass

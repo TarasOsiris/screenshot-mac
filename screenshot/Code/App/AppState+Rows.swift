@@ -80,7 +80,7 @@ extension AppState {
             }
 
             let wasSelectedRow = selectedRowId == id
-            exitPreview(for: id)
+            viewMode.exitPreview(for: id)
             rows.remove(at: idx)
             cleanupOrphanedTranslationOverrides()
             if wasSelectedRow {

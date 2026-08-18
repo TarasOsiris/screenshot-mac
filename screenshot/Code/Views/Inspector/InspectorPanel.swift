@@ -28,7 +28,7 @@ struct InspectorPanel: View {
             VStack(spacing: 0) {
                 rowTitleHeader(row: row)
                 Divider()
-                if state.previewingRows.contains(rowId) {
+                if state.viewMode.previewingRows.contains(rowId) {
                     previewModePanel(rowId: rowId)
                 } else {
                     Form {
@@ -101,7 +101,7 @@ struct InspectorPanel: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Button {
-                state.exitPreview(for: rowId)
+                state.viewMode.exitPreview(for: rowId)
             } label: {
                 Label("Exit Preview Mode", systemImage: "pencil")
             }

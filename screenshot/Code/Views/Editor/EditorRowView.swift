@@ -52,7 +52,7 @@ struct EditorRowView: View {
     var zoom: CGFloat { state.zoom.level }
     let canvasHorizontalPadding: CGFloat = 16
 
-    var isPreviewMode: Bool { state.previewingRows.contains(row.id) }
+    var isPreviewMode: Bool { state.viewMode.previewingRows.contains(row.id) }
 
     @ViewBuilder
     private var selectionRule: some View {
@@ -116,7 +116,7 @@ struct EditorRowView: View {
                 onTogglePreview: {
                     modeReady = false
                     let wasPreview = isPreviewMode
-                    state.togglePreview(for: row.id)
+                    state.viewMode.togglePreview(for: row.id)
                     if !wasPreview {
                         textEditingShapeId = nil
                         dragSession.reset()

@@ -46,7 +46,7 @@ extension View {
             MagnificationGesture()
                 .onChanged { value in
                     #if os(iOS)
-                    guard state.isViewMode else { return }
+                    guard state.viewMode.isViewMode else { return }
                     #endif
                     let base = startLevel.wrappedValue ?? state.zoom.level
                     if startLevel.wrappedValue == nil {
