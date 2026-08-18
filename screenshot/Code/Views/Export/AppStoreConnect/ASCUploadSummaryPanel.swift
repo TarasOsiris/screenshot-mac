@@ -28,7 +28,7 @@ struct ASCUploadSummaryPanel: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
-            ASCDisclosureChevronButton(expanded: isExpanded) {
+            DisclosureChevronButton(expanded: isExpanded) {
                 isExpanded.toggle()
             } label: {
                 Text("Preflight")

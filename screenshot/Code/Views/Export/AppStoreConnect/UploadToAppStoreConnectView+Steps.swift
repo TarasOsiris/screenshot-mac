@@ -484,7 +484,7 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     var issuesPanel: some View {
-        ASCIssuesPanel(issues: validationIssues)
+        UploadIssuesPanel(issues: validationIssues)
     }
 
     private func refreshAppStoreData() {

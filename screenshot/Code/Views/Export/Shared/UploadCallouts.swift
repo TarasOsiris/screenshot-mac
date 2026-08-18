@@ -1,14 +1,18 @@
 import SwiftUI
 
-struct ASCIssuesPanel: View {
+// Shared upload chrome. Both store wizards render the same [UploadIssue], and before these
+// were shared they rendered it differently — App Store Connect in a tinted callout with
+// "scope · message", Google Play in a grey box with "scope: message" and a different symbol.
+
+struct UploadIssuesPanel: View {
     let issues: [UploadIssue]
 
     var body: some View {
         if !issues.isEmpty {
-            ASCCalloutBox(tint: issues.hasErrors ? .red : .orange) {
+            CalloutBox(tint: issues.hasErrors ? .red : .orange) {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(issues) { issue in
-                        ASCIssueRow(issue: issue)
+                        UploadIssueRow(issue: issue)
                     }
                 }
             }
@@ -16,7 +20,7 @@ struct ASCIssuesPanel: View {
     }
 }
 
-private struct ASCIssueRow: View {
+private struct UploadIssueRow: View {
     let issue: UploadIssue
 
     var body: some View {
@@ -47,7 +51,7 @@ private struct ASCIssueRow: View {
     }
 }
 
-struct ASCCalloutBox<Content: View>: View {
+struct CalloutBox<Content: View>: View {
     let tint: Color
     @ViewBuilder var content: () -> Content
 
@@ -63,7 +67,7 @@ struct ASCCalloutBox<Content: View>: View {
     }
 }
 
-struct ASCDisclosureChevronButton<Label: View>: View {
+struct DisclosureChevronButton<Label: View>: View {
     let expanded: Bool
     let action: () -> Void
     @ViewBuilder var label: () -> Label

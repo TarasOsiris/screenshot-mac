@@ -8,15 +8,10 @@ struct AppStoreConnectSettingsView: View {
 
     @State private var credentials = AppStoreConnectCredentialsStore.shared
     @State private var isTesting = false
-    @State private var testResult: TestResult?
+    @State private var testResult: StoreConnectionTestResult?
     @State private var fileImporterPresented = false
     @State private var importError: String?
     @State private var showClearConfirmation = false
-
-    private enum TestResult {
-        case success(String)
-        case failure(String)
-    }
 
     var body: some View {
         Form {
@@ -151,7 +146,7 @@ struct AppStoreConnectSettingsView: View {
             #endif
 
             if let testResult {
-                connectionFeedbackRow(result: testResult)
+                StoreConnectionFeedbackRow(result: testResult)
             }
 
             if credentials.isConfigured || credentials.hasPrivateKey {
@@ -437,28 +432,6 @@ struct AppStoreConnectSettingsView: View {
     }
 
     @ViewBuilder
-    private func connectionFeedbackRow(result: TestResult) -> some View {
-        switch result {
-        case .success(let message):
-            Label(message, systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-                .font(.caption)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        case .failure(let message):
-            Label(message, systemImage: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
-                .font(.caption)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        }
-    }
 
     private func connectionFailureMessage(for error: Error) -> String {
         if let apiError = error as? AppStoreConnectAPIError {

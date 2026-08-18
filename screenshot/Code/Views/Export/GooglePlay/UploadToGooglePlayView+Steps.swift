@@ -114,25 +114,9 @@ extension UploadToGooglePlayView {
                 }
             }
 
-            if !issues.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(issues) { issue in
-                        HStack(alignment: .top, spacing: 6) {
-                            Image(systemName: issue.severity == .error ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
-                                .foregroundStyle(issue.severity.tint)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(issue.scope.map { "\($0): \(issue.message)" } ?? issue.message)
-                                if let hint = issue.hint {
-                                    Text(hint)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                        .font(.callout)
-                    }
-                }
-            }
+            // Shared with the App Store Connect wizard so the same issue reads the same way
+            // in both; the summary header above stays Play-specific.
+            UploadIssuesPanel(issues: issues)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)

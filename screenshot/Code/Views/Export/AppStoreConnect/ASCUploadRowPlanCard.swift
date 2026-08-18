@@ -35,7 +35,7 @@ struct ASCUploadRowPlanCard: View {
     private var header: some View {
         HStack(spacing: 6) {
             if plan.isEnabled {
-                ASCDisclosureChevronButton(expanded: expanded, action: onToggleExpanded)
+                DisclosureChevronButton(expanded: expanded, action: onToggleExpanded)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel)
