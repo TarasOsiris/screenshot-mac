@@ -51,7 +51,7 @@ struct ASCFlowModeTests {
     /// Metadata edits don't involve rows, so the default selection is every editable version —
     /// no display-type compatibility pass (which would need the project's rows).
     @Test func metadataModePreselectsEveryEditableVersion() {
-        let flow = UploadToAppStoreConnectView(mode: .metadata)
+        let flow = ASCUploadFlowModel(mode: .metadata)
         let versions = [
             version("PREPARE_FOR_SUBMISSION"),
             version("IN_REVIEW"),

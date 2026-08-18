@@ -5,15 +5,15 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     var content: some View {
-        stepContent(for: step)
+        stepContent(for: model.step)
     }
 
     @ViewBuilder
     func stepContent(for step: ASCUploadStep) -> some View {
-        if !credentials.isConfigured {
+        if !model.credentials.isConfigured {
             missingCredentialsView
         } else {
-            switch step {
+            switch model.step {
             case .pickingApp: pickAppView
             case .pickingVersion: pickVersionView
             case .editingMetadata: editMetadataView
@@ -52,36 +52,36 @@ extension UploadToAppStoreConnectView {
 
     var pickAppView: some View {
         ASCAppSelectionStepView(
-            mode: mode,
-            appsWithVersions: appsWithVersions,
-            selectedApp: $selectedApp,
+            mode: model.mode,
+            appsWithVersions: model.appsWithVersions,
+            selectedApp: $model.selectedApp,
             hideNonUploadable: $hideNonUploadable
         )
     }
 
     var pickVersionView: some View {
         ASCVersionSelectionStepView(
-            mode: mode,
-            selectedApp: selectedApp,
-            versions: versions,
-            selectedVersionIds: $selectedVersionIds
+            mode: model.mode,
+            selectedApp: model.selectedApp,
+            versions: model.versions,
+            selectedVersionIds: $model.selectedVersionIds
         )
     }
 
     var editMetadataView: some View {
         VStack(spacing: 0) {
-            if selectedVersions.count > 1 {
+            if model.selectedVersions.count > 1 {
                 metadataVersionTabs
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
             }
-            if let app = selectedApp, let version = activeMetadataVersion {
+            if let app = model.selectedApp, let version = model.activeMetadataVersion {
                 ASCAppHeaderView(
                     app: app,
                     subtitle: "Version \(version.attributes.versionString) · \(version.attributes.displayState)"
                 )
                 .padding(.horizontal, 16)
-                .padding(.top, selectedVersions.count > 1 ? 8 : 12)
+                .padding(.top, model.selectedVersions.count > 1 ? 8 : 12)
                 .padding(.bottom, 8)
             }
 
@@ -107,17 +107,17 @@ extension UploadToAppStoreConnectView {
     /// One tab per selected version (shown when 2+ versions are selected), so per-version
     /// metadata (release notes, copyright, …) can be edited without leaving the screen.
     var metadataVersionTabs: some View {
-        Picker("Version", selection: $metadataVersionId) {
-            ForEach(selectedVersions) { version in
+        Picker("Version", selection: $model.metadataVersionId) {
+            ForEach(model.selectedVersions) { version in
                 Text(metadataTabLabel(version)).tag(version.id as String?)
             }
         }
         .pickerStyle(.segmented)
         .labelsHidden()
-        .onChange(of: metadataVersionId) { _, _ in
-            let codes = metadataLocaleCodes
-            if !(selectedMetadataLocale.map(codes.contains) ?? false) {
-                selectedMetadataLocale = codes.first
+        .onChange(of: model.metadataVersionId) { _, _ in
+            let codes = model.metadataLocaleCodes
+            if !(model.selectedMetadataLocale.map(codes.contains) ?? false) {
+                model.selectedMetadataLocale = codes.first
             }
         }
     }
@@ -134,9 +134,9 @@ extension UploadToAppStoreConnectView {
     /// row (and the current selection) shows a change-dot mirroring the sidebar's indicators.
     var metadataLocalePicker: some View {
         Menu {
-            ForEach(metadataLocaleCodes, id: \.self) { code in
+            ForEach(model.metadataLocaleCodes, id: \.self) { code in
                 Button {
-                    selectedMetadataLocale = code
+                    model.selectedMetadataLocale = code
                 } label: {
                     if localeHasChanges(code) {
                         Label(code, systemImage: "pencil.circle.fill")
@@ -149,9 +149,9 @@ extension UploadToAppStoreConnectView {
             HStack(spacing: 6) {
                 Image(systemName: "globe")
                     .foregroundStyle(.secondary)
-                Text(selectedMetadataLocale ?? metadataLocaleCodes.first ?? "")
+                Text(model.selectedMetadataLocale ?? model.metadataLocaleCodes.first ?? "")
                     .fontWeight(.medium)
-                if let selected = selectedMetadataLocale, localeHasChanges(selected) {
+                if let selected = model.selectedMetadataLocale, localeHasChanges(selected) {
                     Image(systemName: "circle.fill")
                         .font(.system(size: 6))
                         .foregroundStyle(.blue)
@@ -173,8 +173,8 @@ extension UploadToAppStoreConnectView {
     #if os(macOS)
     var metadataLocaleSidebar: some View {
         List(selection: Binding(
-            get: { selectedMetadataLocale },
-            set: { selectedMetadataLocale = $0 }
+            get: { model.selectedMetadataLocale },
+            set: { model.selectedMetadataLocale = $0 }
         )) {
             Section("Version") {
                 HStack {
@@ -190,7 +190,7 @@ extension UploadToAppStoreConnectView {
                 }
             }
             Section("Locales") {
-                ForEach(metadataLocaleCodes, id: \.self) { code in
+                ForEach(model.metadataLocaleCodes, id: \.self) { code in
                     HStack {
                         Text(code)
                         Spacer()
@@ -209,14 +209,14 @@ extension UploadToAppStoreConnectView {
     #endif
 
     func localeHasChanges(_ code: String) -> Bool {
-        if versionDrafts.contains(where: { $0.versionId == metadataVersionId && $0.locale == code && $0.isChanged }) { return true }
-        if appInfoDrafts.contains(where: { $0.locale == code && $0.isChanged }) { return true }
+        if model.versionDrafts.contains(where: { $0.versionId == model.metadataVersionId && $0.locale == code && $0.isChanged }) { return true }
+        if model.appInfoDrafts.contains(where: { $0.locale == code && $0.isChanged }) { return true }
         return false
     }
 
     var activeVersionCopyrightChanged: Bool {
-        let id = metadataVersionId ?? ""
-        return (copyrightByVersion[id] ?? "") != (originalCopyrightByVersion[id] ?? "")
+        let id = model.metadataVersionId ?? ""
+        return (model.copyrightByVersion[id] ?? "") != (model.originalCopyrightByVersion[id] ?? "")
     }
 
     @ViewBuilder
@@ -224,15 +224,15 @@ extension UploadToAppStoreConnectView {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 versionCopyrightField
-                if let code = selectedMetadataLocale {
-                    if let idx = appInfoDrafts.firstIndex(where: { $0.locale == code }) {
+                if let code = model.selectedMetadataLocale {
+                    if let idx = model.appInfoDrafts.firstIndex(where: { $0.locale == code }) {
                         appInfoSection(index: idx)
                     }
-                    if let idx = versionDrafts.firstIndex(where: { $0.versionId == metadataVersionId && $0.locale == code }) {
+                    if let idx = model.versionDrafts.firstIndex(where: { $0.versionId == model.metadataVersionId && $0.locale == code }) {
                         versionLocaleSection(index: idx)
                     }
-                    if !versionDrafts.contains(where: { $0.versionId == metadataVersionId && $0.locale == code }),
-                       !appInfoDrafts.contains(where: { $0.locale == code }) {
+                    if !model.versionDrafts.contains(where: { $0.versionId == model.metadataVersionId && $0.locale == code }),
+                       !model.appInfoDrafts.contains(where: { $0.locale == code }) {
                         Text("No editable metadata for this locale.")
                             .foregroundStyle(.secondary)
                             .font(.caption)
@@ -253,8 +253,8 @@ extension UploadToAppStoreConnectView {
                 .font(.subheadline)
                 .fontWeight(.semibold)
             TextField("© 2025 Your Company", text: Binding(
-                get: { copyrightByVersion[metadataVersionId ?? ""] ?? "" },
-                set: { copyrightByVersion[metadataVersionId ?? ""] = $0 }
+                get: { model.copyrightByVersion[model.metadataVersionId ?? ""] ?? "" },
+                set: { model.copyrightByVersion[model.metadataVersionId ?? ""] = $0 }
             ))
                 .textFieldStyle(.roundedBorder)
                 .submitLabel(.done)
@@ -269,22 +269,22 @@ extension UploadToAppStoreConnectView {
     @ViewBuilder
     func appInfoSection(index: Int) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("App Info (shared across versions)")
+            Text("App Info (shared across model.versions)")
                 .font(.subheadline)
                 .fontWeight(.semibold)
             metadataField(
                 label: "App Name",
-                text: $appInfoDrafts[index].name,
+                text: $model.appInfoDrafts[index].name,
                 limit: 30
             )
             metadataField(
                 label: "Subtitle",
-                text: $appInfoDrafts[index].subtitle,
+                text: $model.appInfoDrafts[index].subtitle,
                 limit: 30
             )
             metadataField(
                 label: "Privacy Policy URL",
-                text: $appInfoDrafts[index].privacyPolicyUrl,
+                text: $model.appInfoDrafts[index].privacyPolicyUrl,
                 limit: nil,
                 isURL: true
             )
@@ -301,7 +301,7 @@ extension UploadToAppStoreConnectView {
                 .fontWeight(.semibold)
             metadataField(
                 label: "What's New",
-                text: $versionDrafts[index].whatsNew,
+                text: $model.versionDrafts[index].whatsNew,
                 limit: 4000,
                 multiline: true,
                 minHeight: 80
@@ -315,32 +315,32 @@ extension UploadToAppStoreConnectView {
             }
             metadataField(
                 label: "Promotional Text",
-                text: $versionDrafts[index].promotionalText,
+                text: $model.versionDrafts[index].promotionalText,
                 limit: 170,
                 multiline: true,
                 minHeight: 44
             )
             metadataField(
                 label: "Description",
-                text: $versionDrafts[index].description,
+                text: $model.versionDrafts[index].description,
                 limit: 4000,
                 multiline: true,
                 minHeight: 140
             )
             metadataField(
                 label: "Keywords (comma-separated)",
-                text: $versionDrafts[index].keywords,
+                text: $model.versionDrafts[index].keywords,
                 limit: 100
             )
             metadataField(
                 label: "Support URL",
-                text: $versionDrafts[index].supportUrl,
+                text: $model.versionDrafts[index].supportUrl,
                 limit: nil,
                 isURL: true
             )
             metadataField(
                 label: "Marketing URL",
-                text: $versionDrafts[index].marketingUrl,
+                text: $model.versionDrafts[index].marketingUrl,
                 limit: nil,
                 isURL: true
             )
@@ -350,21 +350,21 @@ extension UploadToAppStoreConnectView {
     }
 
     func canCopyWhatsNewToOtherLocales(from index: Int) -> Bool {
-        guard versionDrafts.indices.contains(index) else { return false }
-        let draft = versionDrafts[index]
+        guard model.versionDrafts.indices.contains(index) else { return false }
+        let draft = model.versionDrafts[index]
         guard draft.locale.lowercased().hasPrefix("en") else { return false }
         guard !draft.whatsNew.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-        return versionDrafts.contains { $0.versionId == draft.versionId && $0.locale != draft.locale }
+        return model.versionDrafts.contains { $0.versionId == draft.versionId && $0.locale != draft.locale }
     }
 
     func copyWhatsNewToOtherLocales(from index: Int) {
-        guard versionDrafts.indices.contains(index) else { return }
-        let source = versionDrafts[index].whatsNew
-        let sourceLocale = versionDrafts[index].locale
-        let sourceVersionId = versionDrafts[index].versionId
-        for i in versionDrafts.indices
-        where versionDrafts[i].versionId == sourceVersionId && versionDrafts[i].locale != sourceLocale {
-            versionDrafts[i].whatsNew = source
+        guard model.versionDrafts.indices.contains(index) else { return }
+        let source = model.versionDrafts[index].whatsNew
+        let sourceLocale = model.versionDrafts[index].locale
+        let sourceVersionId = model.versionDrafts[index].versionId
+        for i in model.versionDrafts.indices
+        where model.versionDrafts[i].versionId == sourceVersionId && model.versionDrafts[i].locale != sourceLocale {
+            model.versionDrafts[i].whatsNew = source
         }
     }
 
@@ -422,12 +422,12 @@ extension UploadToAppStoreConnectView {
     var configurePlanView: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
-                if let app = selectedApp {
+                if let app = model.selectedApp {
                     ASCAppHeaderView(
                         app: app,
-                        subtitle: selectedVersions.count == 1
-                            ? (selectedVersion.map { "Version \($0.attributes.versionString) · \($0.attributes.displayState)" } ?? "")
-                            : "\(selectedVersions.count) selected versions"
+                        subtitle: model.selectedVersions.count == 1
+                            ? (model.selectedVersion.map { "Version \($0.attributes.versionString) · \($0.attributes.displayState)" } ?? "")
+                            : "\(model.selectedVersions.count) selected model.versions"
                     )
                 }
 
@@ -438,7 +438,7 @@ extension UploadToAppStoreConnectView {
 
                 issuesPanel
 
-                ForEach($destinationPlans) { $destination in
+                ForEach($model.destinationPlans) { $destination in
                     ASCDestinationPlanSection(
                         destination: $destination,
                         expandedRowPlanIds: $expandedRowPlanIds,
@@ -458,7 +458,7 @@ extension UploadToAppStoreConnectView {
         let versionCount = Set(entries.map(\.destinationId)).count
         let localeCount = Set(entries.map { "\($0.destinationId)|\($0.appStoreLocaleCode ?? $0.projectLocaleCode)" }).count
         let screenshotCount = entries.reduce(0) { $0 + $1.screenshotCount }
-        let issues = validationIssues
+        let issues = model.validationIssues
 
         return ASCUploadSummaryPanel(
             entries: entries,
@@ -469,31 +469,31 @@ extension UploadToAppStoreConnectView {
             screenshotCount: screenshotCount,
             issues: issues,
             isExpanded: $isPreflightExpanded,
-            isBusy: isBusy,
+            isBusy: model.isBusy,
             onRefresh: refreshAppStoreData
         )
     }
 
     var reviewChangesView: some View {
         ASCScreenshotReviewChangesView(
-            coordinator: screenshotSync,
-            refresh: { startScreenshotReviewRefresh() }
+            coordinator: model.screenshotSync,
+            refresh: { model.startScreenshotReviewRefresh() }
         )
     }
 
     @ViewBuilder
     var issuesPanel: some View {
-        UploadIssuesPanel(issues: validationIssues)
+        UploadIssuesPanel(issues: model.validationIssues)
     }
 
     private func refreshAppStoreData() {
-        Task { await refreshLocalizations() }
+        Task { await model.refreshLocalizations() }
     }
 
     @ViewBuilder
     var uploadProgressView: some View {
         Group {
-            if step == .done {
+            if model.step == .done {
                 doneView
             } else {
                 inProgressView
@@ -504,12 +504,12 @@ extension UploadToAppStoreConnectView {
     }
 
     var inProgressView: some View {
-        UploadProgressView(progress: uploadProgress)
+        UploadProgressView(progress: model.uploadProgress)
     }
 
     @ViewBuilder
     var doneView: some View {
-        if mode == .metadata {
+        if model.mode == .metadata {
             metadataSavedView
         } else {
             uploadDoneView
@@ -520,7 +520,7 @@ extension UploadToAppStoreConnectView {
     var uploadDoneView: some View {
         VStack(spacing: 14) {
             UploadCompleteHeader(title: "Screenshot sync complete")
-            if let summary = uploadSummary {
+            if let summary = model.uploadSummary {
                 Text("\(summary.totalScreenshots) screenshot\(summary.totalScreenshots == 1 ? "" : "s") synced across \(summary.localizationCount) locale\(summary.localizationCount == 1 ? "" : "s") and \(summary.versionCount) version\(summary.versionCount == 1 ? "" : "s").")
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -534,7 +534,7 @@ extension UploadToAppStoreConnectView {
     var metadataSavedView: some View {
         VStack(spacing: 14) {
             UploadCompleteHeader(title: "Metadata updated")
-            if let summary = metadataSummary {
+            if let summary = model.metadataSummary {
                 if summary.fieldCount == 0 {
                     Text("No changes to save.")
                         .font(.callout)
@@ -552,7 +552,7 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     func appStoreConnectLink(appId: String?, appName: String) -> some View {
-        if let appId, let url = URL(string: "https://appstoreconnect.apple.com/apps/\(appId)/appstore") {
+        if let appId, let url = URL(string: "https://appstoreconnect.apple.com/model.apps/\(appId)/appstore") {
             Link(destination: url) {
                 Label("Open \(appName) in App Store Connect", systemImage: "arrow.up.right.square")
             }

@@ -3,7 +3,7 @@ import SwiftUI
 extension UploadToAppStoreConnectView {
     var confirmationMessage: String {
         if isConfirmingReviewedSync {
-            screenshotSync.confirmationSummary
+            model.screenshotSync.confirmationSummary
         } else {
             directUploadConfirmationMessage
         }
@@ -18,37 +18,37 @@ extension UploadToAppStoreConnectView {
         let screenshotNoun = screenshotCount == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
         let setNoun = setCount == 1 ? String(localized: "set") : String(localized: "sets")
         let localeNoun = localeCount == 1 ? String(localized: "locale") : String(localized: "locales")
-        let versionNoun = versionCount == 1 ? String(localized: "version") : String(localized: "versions")
+        let versionNoun = versionCount == 1 ? String(localized: "version") : String(localized: "model.versions")
         return String(localized: "\(screenshotCount) \(screenshotNoun) will be safely synced across \(setCount) \(setNoun), \(localeCount) \(localeNoun), and \(versionCount) \(versionNoun). Exact checksum matches will be preserved.")
     }
 
     // MARK: - Header / footer
 
     var flowTitle: LocalizedStringKey {
-        mode == .metadata ? "Update App Store Metadata" : "Sync App Store Screenshots"
+        model.mode == .metadata ? "Update App Store Metadata" : "Sync App Store Screenshots"
     }
 
     var header: some View {
         HStack {
-            Image(systemName: mode == .metadata ? "text.badge.checkmark" : "arrow.up.circle.fill")
+            Image(systemName: model.mode == .metadata ? "text.badge.checkmark" : "arrow.up.circle.fill")
                 .foregroundStyle(.blue)
             Text(flowTitle)
                 .font(.headline)
             Spacer()
-            if isBusy { ProgressView().controlSize(.small) }
+            if model.isBusy { ProgressView().controlSize(.small) }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
 
     var demoModeBanner: some View {
-        DemoModeBanner(message: "Sample apps and a simulated screenshot sync. Nothing is sent to App Store Connect.")
+        DemoModeBanner(message: "Sample model.apps and a simulated screenshot sync. Nothing is sent to App Store Connect.")
     }
 
     var footer: some View {
         HStack(alignment: .top, spacing: 6) {
             backButton
-            if let errorMessage {
+            if let errorMessage = model.errorMessage {
                 Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
                     .font(.caption)
@@ -70,20 +70,20 @@ extension UploadToAppStoreConnectView {
     /// Show the full failure text, preferring the detailed report and falling back to the
     /// short banner message. Shared by the macOS footer and the iPad error banner.
     func presentErrorDetails(fallback message: String) {
-        presentedErrorDetails = UploadFailureDetail(message: errorDetailsText ?? message)
+        presentedErrorDetails = UploadFailureDetail(message: model.errorDetailsText ?? message)
     }
 
     @ViewBuilder
     var backButton: some View {
-        switch step {
+        switch model.step {
         case .pickingVersion, .editingMetadata, .configuringPlan, .reviewingChanges:
             Button {
-                goBack()
+                model.goBack()
             } label: {
                 Label("Back", systemImage: "chevron.left")
                     .labelStyle(.titleAndIcon)
             }
-            .disabled(isBusy)
+            .disabled(model.isBusy)
         default:
             EmptyView()
         }
@@ -91,7 +91,7 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     var dismissButton: some View {
-        switch step {
+        switch model.step {
         case .uploading:
             Button("Cancel Sync", role: .cancel) { cancelUpload() }
         case .done:
@@ -100,7 +100,7 @@ extension UploadToAppStoreConnectView {
         default:
             Button("Cancel", role: .cancel) { dismiss() }
                 .keyboardShortcut(.cancelAction)
-                .disabled(screenshotSync.phase == .applying)
+                .disabled(model.screenshotSync.phase == .applying)
         }
     }
 
@@ -114,23 +114,23 @@ extension UploadToAppStoreConnectView {
     }
 
     func forwardPrimary(for step: ASCUploadStep) -> ForwardPrimary? {
-        switch step {
+        switch model.step {
         case .pickingApp:
-            ForwardPrimary(titleKey: "Next", action: { Task { await moveToVersion() } },
-                           isEnabled: selectedApp != nil && !isBusy)
+            ForwardPrimary(titleKey: "Next", action: { Task { await model.moveToVersion() } },
+                           isEnabled: model.selectedApp != nil && !model.isBusy)
         case .pickingVersion:
-            ForwardPrimary(titleKey: "Next", action: { Task { await movePastVersionSelection() } },
-                           isEnabled: canAdvanceFromVersion && !isBusy)
+            ForwardPrimary(titleKey: "Next", action: { Task { await model.movePastVersionSelection() } },
+                           isEnabled: canAdvanceFromVersion && !model.isBusy)
         case .editingMetadata:
             ForwardPrimary(titleKey: metadataPrimaryTitle,
-                           action: { Task { await saveMetadataAndContinue() } },
-                           isEnabled: !isBusy)
+                           action: { Task { await model.saveMetadataAndContinue() } },
+                           isEnabled: !model.isBusy)
         case .configuringPlan:
             ForwardPrimary(titleKey: "Upload", action: { requestDirectUpload() },
-                           isEnabled: canStartUpload && !isBusy)
+                           isEnabled: model.canStartUpload && !model.isBusy)
         case .reviewingChanges:
             ForwardPrimary(titleKey: "Sync Selected Sets", action: { requestReviewedSync() },
-                           isEnabled: screenshotSync.canApply && !isBusy)
+                           isEnabled: model.screenshotSync.canApply && !model.isBusy)
         case .uploading, .done:
             nil
         }
@@ -138,7 +138,7 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     var primaryButton: some View {
-        if let primary = forwardPrimary(for: step) {
+        if let primary = forwardPrimary(for: model.step) {
             Button(primary.titleKey, action: primary.action)
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
@@ -148,9 +148,9 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     var reviewChangesButton: some View {
-        if step == .configuringPlan {
-            Button("Review Changes", action: startScreenshotReviewBuild)
-                .disabled(!canStartUpload || isBusy)
+        if model.step == .configuringPlan {
+            Button("Review Changes", action: model.startScreenshotReviewBuild)
+                .disabled(!model.canStartUpload || model.isBusy)
         }
     }
 
@@ -165,7 +165,7 @@ extension UploadToAppStoreConnectView {
     }
 
     var metadataPrimaryTitle: LocalizedStringKey {
-        switch (mode, hasMetadataChanges) {
+        switch (model.mode, hasMetadataChanges) {
         case (.metadata, true): "Save"
         case (.metadata, false): "Done"
         case (.screenshots, true): "Save & Continue"
@@ -174,50 +174,22 @@ extension UploadToAppStoreConnectView {
     }
 
     var hasMetadataChanges: Bool {
-        if copyrightByVersion.contains(where: { $0.value != (originalCopyrightByVersion[$0.key] ?? "") }) { return true }
-        if versionDrafts.contains(where: \.isChanged) { return true }
-        if appInfoDrafts.contains(where: \.isChanged) { return true }
+        if model.copyrightByVersion.contains(where: { $0.value != (model.originalCopyrightByVersion[$0.key] ?? "") }) { return true }
+        if model.versionDrafts.contains(where: \.isChanged) { return true }
+        if model.appInfoDrafts.contains(where: \.isChanged) { return true }
         return false
     }
 
     var canAdvanceFromVersion: Bool {
-        !selectedVersions.isEmpty && selectedVersions.allSatisfy { $0.isSelectable(for: mode) }
-    }
-
-    func goBack() {
-        errorMessage = nil
-        errorDetailsText = nil
-        switch step {
-        case .pickingVersion:
-            step = .pickingApp
-        case .editingMetadata:
-            step = .pickingVersion
-        case .configuringPlan:
-            step = .editingMetadata
-        case .reviewingChanges:
-            screenshotSync.discard()
-            step = .configuringPlan
-        default: break
-        }
+        !model.selectedVersions.isEmpty && model.selectedVersions.allSatisfy { $0.isSelectable(for: model.mode) }
     }
 
     func cancelUpload() {
-        uploadTask?.cancel()
-    }
-
-    var validationIssues: [UploadIssue] {
-        AppStoreConnectUploadValidator.validate(
-            destinations: destinationPlans,
-            isDemoMode: credentials.isDemoMode
-        )
-    }
-
-    var canStartUpload: Bool {
-        !validationIssues.hasErrors
+        model.uploadTask?.cancel()
     }
 
     var uploadPlanEntries: [ASCUploadPlanEntry] {
-        destinationPlans.flatMap { destination -> [ASCUploadPlanEntry] in
+        model.destinationPlans.flatMap { destination -> [ASCUploadPlanEntry] in
             destination.rowPlans.flatMap { plan -> [ASCUploadPlanEntry] in
                 guard plan.isEnabled else { return [] }
                 let rowLabel = plan.rowLabel.isEmpty ? String(localized: "Row") : plan.rowLabel

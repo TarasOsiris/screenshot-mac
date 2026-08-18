@@ -10,23 +10,7 @@ extension UploadToAppStoreConnectView {
                 .navigationDestination(for: ASCUploadStep.self) { stepScreen($0) }
         }
         .onChange(of: path) { oldPath, newPath in
-            // Keep `step` authoritative as the system Back button pops the stack — forward
-            // moves go through `advance(to:)`, but Back is driven by SwiftUI alone.
-            step = newPath.last ?? .pickingApp
-            // A user-initiated Back clears a stale error banner (matching macOS `goBack()`).
-            // An upload error/cancel retreat pops the `.uploading`/`.done` screen *after*
-            // setting `errorMessage`, so keep that one — the plan screen explains why it stopped.
-            if newPath.count < oldPath.count,
-               oldPath.last != .uploading, oldPath.last != .done {
-                if oldPath.last == .reviewingChanges, screenshotSync.phase == .loading {
-                    uploadTask?.cancel()
-                }
-                errorMessage = nil
-                errorDetailsText = nil
-                if oldPath.last == .reviewingChanges {
-                    screenshotSync.discard()
-                }
-            }
+            model.handlePathChange(from: oldPath, to: newPath)
         }
     }
 
@@ -35,7 +19,7 @@ extension UploadToAppStoreConnectView {
     @ViewBuilder
     private func stepScreen(_ stepValue: ASCUploadStep) -> some View {
         VStack(spacing: 0) {
-            if credentials.isDemoMode {
+            if model.credentials.isDemoMode {
                 demoModeBanner
             }
             iosErrorBanner
@@ -45,7 +29,7 @@ extension UploadToAppStoreConnectView {
         .navigationTitle(flowTitle)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(
-            stepValue == .uploading || stepValue == .done || screenshotSync.phase == .applying
+            stepValue == .uploading || stepValue == .done || model.screenshotSync.phase == .applying
         )
         .interactiveDismissDisabled(stepValue == .uploading)
         .toolbar { iosToolbar(for: stepValue) }
@@ -53,7 +37,7 @@ extension UploadToAppStoreConnectView {
 
     @ViewBuilder
     private var iosErrorBanner: some View {
-        if let errorMessage {
+        if let errorMessage = model.errorMessage {
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
@@ -80,7 +64,7 @@ extension UploadToAppStoreConnectView {
                 Button("Cancel", role: .cancel) { dismiss() }
             }
         }
-        if isBusy {
+        if model.isBusy {
             ToolbarItem(placement: .topBarTrailing) {
                 ProgressView().controlSize(.small)
             }
@@ -103,7 +87,7 @@ extension UploadToAppStoreConnectView {
         if let primary = forwardPrimary(for: stepValue) {
             Button(primary.titleKey, action: primary.action)
                 .disabled(!primary.isEnabled)
-        } else if step == .done {
+        } else if model.step == .done {
             Button("Close") { dismiss() }
         } else {
             Button("Cancel Sync", role: .cancel) { cancelUpload() }
