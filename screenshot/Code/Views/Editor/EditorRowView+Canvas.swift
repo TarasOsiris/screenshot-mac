@@ -14,9 +14,6 @@ extension EditorRowView {
                 let dh = row.displayHeight(zoom: zoom)
                 let ds = row.displayScale(zoom: zoom)
 
-                let resolved = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
-                let rowSelectedShapeIds = state.selectedRowId == row.id ? state.selectedShapeIds : []
-
                 VStack(alignment: .leading, spacing: 0) {
                     if !modeReady {
                         modeLoadingPlaceholder
@@ -29,6 +26,12 @@ extension EditorRowView {
                             availableFontFamilies: state.availableFontFamilySet
                         )
                     } else {
+                        // Sunk into this branch: preview mode doesn't use either, and
+                        // RowPreviewView resolves the row's shapes itself — so hoisting these
+                        // above the branch resolved every shape twice while previewing.
+                        let resolved = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
+                        let rowSelectedShapeIds = state.selectedRowId == row.id ? state.selectedShapeIds : []
+
                         HStack(alignment: .top, spacing: 0) {
                             // Unified canvas with per-template scroll anchors. Rendered at
                             // full scale (no `.scaleEffect`) so shape layout frames match

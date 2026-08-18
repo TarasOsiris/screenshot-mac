@@ -31,8 +31,8 @@ struct HelpView: View {
     @ViewBuilder
     private var detailContent: some View {
         switch selection {
+        // The only bespoke page: its rows are key caps, not prose blocks.
         case .shortcuts: ShortcutsHelp()
-        case .support: SupportHelp()
         default: HelpEntryView(entry: selection.entry)
         }
     }
@@ -283,9 +283,33 @@ extension HelpSection {
         case .settings: settingsEntry
         case .proFeatures: proFeaturesEntry
         case .tips: tipsEntry
-        case .shortcuts, .support:
-            HelpEntry(title: title, subtitle: nil, blocks: [])
+        case .support: supportEntry
+        // Rendered by ShortcutsHelp, which doesn't go through HelpEntry.
+        case .shortcuts: HelpEntry(title: title, subtitle: nil, blocks: [])
         }
+    }
+
+    private var supportEntry: HelpEntry {
+        let supportEmail = "leskiv.taras@gmail.com"
+        return HelpEntry(
+            title: "Support & Feedback",
+            subtitle: "We read every message.",
+            blocks: [
+                .heading("Get in touch"),
+                .bullet("Email: \(supportEmail)"),
+                .bullet("Website: [screenshotbro.app](https://screenshotbro.app)"),
+                .heading("When reporting a bug"),
+                .paragraph("To help us reproduce, please include:"),
+                .bullet("macOS version (Apple menu ▸ About This Mac)."),
+                .bullet("Screenshot Bro version (Apple menu ▸ About Screenshot Bro)."),
+                .bullet("Steps to reproduce, ideally with a screen recording."),
+                .bullet("If the issue affects a project, use **Settings ▸ General ▸ Storage ▸ Create Backup…** and attach the resulting backup so we can reproduce on the exact data."),
+                .heading("Legal"),
+                .bullet("[Privacy Policy](https://screenshotbro.app/privacy)"),
+                .bullet("[Terms of Service](https://screenshotbro.app/terms)"),
+                .tip("Loved the app? An App Store review helps tremendously and keeps Screenshot Bro independent."),
+            ]
+        )
     }
 
     private var welcomeEntry: HelpEntry {
@@ -826,33 +850,6 @@ private struct ShortcutsHelp: View {
                     }
                 }
             }
-        }
-    }
-}
-
-private struct SupportHelp: View {
-    private let supportEmail = "leskiv.taras@gmail.com"
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HelpHeader("Support & Feedback", subtitle: "We read every message.")
-
-            HelpHeading("Get in touch")
-            HelpBullet("Email: \(supportEmail)")
-            HelpBullet("Website: [screenshotbro.app](https://screenshotbro.app)")
-
-            HelpHeading("When reporting a bug")
-            HelpParagraph("To help us reproduce, please include:")
-            HelpBullet("macOS version (Apple menu ▸ About This Mac).")
-            HelpBullet("Screenshot Bro version (Apple menu ▸ About Screenshot Bro).")
-            HelpBullet("Steps to reproduce, ideally with a screen recording.")
-            HelpBullet("If the issue affects a project, use **Settings ▸ General ▸ Storage ▸ Create Backup…** and attach the resulting backup so we can reproduce on the exact data.")
-
-            HelpHeading("Legal")
-            HelpBullet("[Privacy Policy](https://screenshotbro.app/privacy)")
-            HelpBullet("[Terms of Service](https://screenshotbro.app/terms)")
-
-            HelpTip("Loved the app? An App Store review helps tremendously and keeps Screenshot Bro independent.")
         }
     }
 }

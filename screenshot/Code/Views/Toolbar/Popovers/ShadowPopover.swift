@@ -23,9 +23,7 @@ struct ShadowPopover: View {
                 detailSection
             }
         }
-        .padding(14)
-        .frame(width: 320)
-        .font(.system(size: UIMetrics.FontSize.body))
+        .popoverColumn()
         #else
         Form {
             Section {
@@ -48,30 +46,19 @@ struct ShadowPopover: View {
         #endif
     }
 
-    @ViewBuilder
     private var header: some View {
-        HStack(spacing: 8) {
-            Text("Shadow")
-                .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
-
-            Spacer()
-
-            Button(action: reset) {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.counterclockwise")
-                    Text("Reset")
-                }
-                .font(.system(size: 11))
-            }
-            .buttonStyle(.borderless)
-            .disabled(shadow.isEmpty)
-            .help("Remove the shadow")
-        }
+        PopoverHeader(
+            title: "Shadow",
+            resetLabel: "Reset",
+            resetHelp: "Remove the shadow",
+            isResetDisabled: shadow.isEmpty,
+            onReset: reset
+        )
     }
 
     @ViewBuilder
     private var presetSection: some View {
-        sectionHeader("Preset")
+        PopoverSectionHeader("Preset")
         HStack(spacing: 6) {
             ForEach(ShadowConfig.Preset.allCases) { preset in
                 presetButton(preset)
@@ -116,7 +103,7 @@ struct ShadowPopover: View {
 
     @ViewBuilder
     private var detailSection: some View {
-        sectionHeader("Adjust")
+        PopoverSectionHeader("Adjust")
 
         HStack {
             Text("Color")
@@ -157,15 +144,6 @@ struct ShadowPopover: View {
             range: ShadowConfig.opacityRange,
             displayValue: "\(Int((shadow.resolvedOpacity * 100).rounded()))%"
         )
-    }
-
-    @ViewBuilder
-    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
-        Text(title)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.secondary)
-            .textCase(.uppercase)
-            .tracking(0.5)
     }
 
     private func intLabel(_ value: CGFloat) -> String { "\(Int(value.rounded()))" }

@@ -19,9 +19,7 @@ struct Device3DAppearancePopover: View {
             Divider()
             lightingSection
         }
-        .padding(14)
-        .frame(width: 320)
-        .font(.system(size: UIMetrics.FontSize.body))
+        .popoverColumn()
         #else
         Form {
             Section("Rotation") {
@@ -48,38 +46,21 @@ struct Device3DAppearancePopover: View {
         #endif
     }
 
-    @ViewBuilder
     private var header: some View {
-        HStack(spacing: 8) {
-            Text("3D Device")
-                .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
-
-            Text("Beta")
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.orange)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(.orange.opacity(0.15), in: .capsule)
-                .help("3D device rendering is an experimental feature")
-
-            Spacer()
-
-            Button(action: resetAll) {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.counterclockwise")
-                    Text("Reset all")
-                }
-                .font(.system(size: 11))
-            }
-            .buttonStyle(.borderless)
-            .disabled(!hasAnyOverride)
-            .help("Reset rotation, material, and lighting to defaults")
-        }
+        PopoverHeader(
+            title: "3D Device",
+            badge: "Beta",
+            badgeHelp: "3D device rendering is an experimental feature",
+            resetLabel: "Reset all",
+            resetHelp: "Reset rotation, material, and lighting to defaults",
+            isResetDisabled: !hasAnyOverride,
+            onReset: resetAll
+        )
     }
 
     @ViewBuilder
     private var rotationSection: some View {
-        sectionHeader("Rotation")
+        PopoverSectionHeader("Rotation")
         rotationSliders
     }
 
@@ -101,7 +82,7 @@ struct Device3DAppearancePopover: View {
 
     @ViewBuilder
     private var materialSection: some View {
-        sectionHeader("Material")
+        PopoverSectionHeader("Material")
 
         HStack {
             Text("Finish")
@@ -119,7 +100,7 @@ struct Device3DAppearancePopover: View {
 
     @ViewBuilder
     private var lightingSection: some View {
-        sectionHeader("Lighting")
+        PopoverSectionHeader("Lighting")
         lightingSliders
     }
 
@@ -143,15 +124,6 @@ struct Device3DAppearancePopover: View {
             range: DeviceLighting.rimIntensityRange,
             displayValue: intLabel(lighting.resolvedRimIntensity)
         )
-    }
-
-    @ViewBuilder
-    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
-        Text(title)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.secondary)
-            .textCase(.uppercase)
-            .tracking(0.5)
     }
 
     private func intLabel(_ value: Double) -> String { "\(Int(value.rounded()))" }

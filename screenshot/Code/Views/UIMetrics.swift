@@ -89,6 +89,10 @@ enum UIMetrics {
     /// Dark-mode-safe overlay opacities. Apply on top of `Color.primary` / `Color.secondary` rather than `.white` / `.black`
     /// so the visual weight stays consistent across light and dark appearances.
     enum Opacity {
+        /// Dimming behind a modal panel. Deliberately used on `Color.black`, not `Color.primary`:
+        /// a scrim darkens in both appearances, and `.primary` would invert it to white in dark
+        /// mode. This is the exception to the "no `.black` over arbitrary content" rule.
+        static let scrim: Double = 0.3
         /// Background fill of a properties section (use on `Color.primary`).
         static let sectionFill: Double = 0.05
         /// Border of a properties section (use on `.separator`).

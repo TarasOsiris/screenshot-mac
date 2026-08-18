@@ -7,8 +7,7 @@ struct ExportProgressOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
+            ModalScrim()
             VStack(spacing: 12) {
                 Text("Exporting Screenshots...")
                     .font(.headline)

@@ -7,6 +7,15 @@ enum NewProjectCreationMode: Hashable {
 
 private let maxBlankProjectRows = 8
 
+private extension Array where Element == BlankProjectRowDraft {
+    /// Appends a row unless the blank-project cap is reached. Shared by the macOS configurator
+    /// and the iPad section, which had this written out twice.
+    mutating func appendBlankRow() {
+        guard count < maxBlankProjectRows else { return }
+        append(BlankProjectRowDraft())
+    }
+}
+
 struct NewProjectModePicker: View {
     @Binding var selectedMode: NewProjectCreationMode
 
@@ -239,17 +248,12 @@ struct BlankProjectSection: View {
                 EditButton()
                     .textCase(nil)
             }
-            Button(action: addRow) {
+            Button(action: { rowDrafts.appendBlankRow() }) {
                 Image(systemName: "plus")
             }
             .disabled(rowDrafts.count >= maxBlankProjectRows)
             .accessibilityLabel("Add Row")
         }
-    }
-
-    private func addRow() {
-        guard rowDrafts.count < maxBlankProjectRows else { return }
-        rowDrafts.append(BlankProjectRowDraft())
     }
 }
 #endif
@@ -276,7 +280,7 @@ struct BlankProjectConfigurator: View {
 
             Spacer()
 
-            Button(action: addRow) {
+            Button(action: { rowDrafts.appendBlankRow() }) {
                 Image(systemName: "plus")
                     .font(.system(size: 12, weight: .semibold))
                     .frame(width: 28, height: 28)
@@ -290,11 +294,6 @@ struct BlankProjectConfigurator: View {
             .compactControlSize()
             .disabled(rowDrafts.count >= maxBlankProjectRows)
         }
-    }
-
-    private func addRow() {
-        guard rowDrafts.count < maxBlankProjectRows else { return }
-        rowDrafts.append(BlankProjectRowDraft())
     }
 }
 
