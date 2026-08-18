@@ -701,50 +701,18 @@ struct SettingsView: View {
 
     @MainActor
     private func createBackup() {
-        let panel = NSSavePanel()
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        panel.nameFieldStringValue = "screenshot-backup-\(formatter.string(from: Date())).zip"
-        panel.allowedContentTypes = [.zip]
-        guard panel.runModal() == .OK, let destURL = panel.url else { return }
+        guard let destURL = BackupService.chooseDestination() else { return }
 
         isBackingUp = true
         backupResult = nil
-
-        let sourceURL = PersistenceService.rootURL
         Task {
             do {
-                let tempZip = FileManager.default.temporaryDirectory
-                    .appendingPathComponent(UUID().uuidString + ".zip")
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/usr/bin/zip")
-                process.arguments = ["-r", tempZip.path, "."]
-                process.currentDirectoryURL = sourceURL
-                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                    process.terminationHandler = { _ in continuation.resume() }
-                    do {
-                        try process.run()
-                    } catch {
-                        process.terminationHandler = nil
-                        continuation.resume(throwing: error)
-                    }
-                }
-                guard process.terminationStatus == 0 else {
-                    try? FileManager.default.removeItem(at: tempZip)
-                    isBackingUp = false
-                    backupResult = .failure(String(localized: "Backup failed (zip exited with status \(process.terminationStatus))."))
-                    return
-                }
-                if FileManager.default.fileExists(atPath: destURL.path) {
-                    try FileManager.default.removeItem(at: destURL)
-                }
-                try FileManager.default.moveItem(at: tempZip, to: destURL)
-                isBackingUp = false
+                try await BackupService.createBackup(to: destURL)
                 backupResult = BackupResult.success
             } catch {
-                isBackingUp = false
                 backupResult = .failure(error.localizedDescription)
             }
+            isBackingUp = false
         }
     }
 

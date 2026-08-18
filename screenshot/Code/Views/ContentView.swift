@@ -60,13 +60,7 @@ struct ContentView: View {
     #if os(iOS)
     @State private var inspectorSheetDetent: PresentationDetent = .large
     #endif
-    @State var isExporting = false
-    @State var exportSuccess = false
-    @State var exportSuccessTimer: DispatchWorkItem?
-    @State var exportError: String?
-    @State var exportProgress = 0
-    @State var exportTotal = 0
-    @State var exportTask: Task<Void, Never>?
+    @State var exportFlow = ExportFlowModel()
     @State var isDeletingProject = false
     @State var isResettingProject = false
     @State var resetTemplate: ProjectTemplate?
@@ -81,9 +75,6 @@ struct ContentView: View {
     @State var showingGooglePlayUploadSheet = false
     @State var showcasePresentation: ShowcasePresentation?
     @State var projectNamePrompt: ProjectNamePrompt?
-    #if os(iOS)
-    @State var pendingExport: PendingExport?
-    #endif
 
     var body: some View {
         contentModals(coreContent)
@@ -294,11 +285,11 @@ struct ContentView: View {
             }
         }
         .overlay {
-            if isExporting {
+            if exportFlow.isExporting {
                 ExportProgressOverlay(
-                    progress: exportProgress,
-                    total: exportTotal,
-                    onCancel: { exportTask?.cancel() }
+                    progress: exportFlow.progress,
+                    total: exportFlow.total,
+                    onCancel: { exportFlow.cancel() }
                 )
             }
         }
@@ -307,7 +298,7 @@ struct ContentView: View {
             // phase (hides the teardown→reload flash). On iPad the cold first open is owned by
             // `ProjectOpenGate`, which paints this same spinner before ContentView is built.
             // Image downsampling streams in behind the live UI so row controls stay visible.
-            if !isExporting && state.isOpeningProject {
+            if !exportFlow.isExporting && state.isOpeningProject {
                 ProjectLoadingOverlay(message: "Opening Project…")
             }
         }
@@ -461,9 +452,9 @@ struct ContentView: View {
     /// Sheets, alerts, covers, and window lifecycle attached to the editor shell.
     private func contentModals(_ base: some View) -> some View {
         base
-        .exportFailedAlert($exportError)
+        .exportFailedAlert($exportFlow.errorMessage)
         #if os(iOS)
-        .sheet(item: $pendingExport, onDismiss: { discardPendingExport() }) { _ in
+        .sheet(item: $exportFlow.pendingExport, onDismiss: { discardPendingExport() }) { _ in
             ExportDestinationSheet(title: pendingExportTitle) { destination in
                 runPendingExport(to: destination)
             }
@@ -537,7 +528,7 @@ struct ContentView: View {
         // full-screen screen with a native nav bar rather than a fitted sheet.
         .fullScreenCover(item: $showcasePresentation) { presentation in
             showcaseExportScreen(for: presentation)
-                .exportFailedAlert($exportError)
+                .exportFailedAlert($exportFlow.errorMessage)
         }
         #endif
         .middleMousePan()
@@ -545,6 +536,8 @@ struct ContentView: View {
             projectTemplates = await TemplateService.availableTemplatesAsync()
         }
         .onAppear {
+            // `requestReview` is an environment value, so only a view can hand it over.
+            exportFlow.requestReview = { requestReview() }
             state.undoManager = undoManager
             undoManager?.levelsOfUndo = 50
             #if os(iOS)

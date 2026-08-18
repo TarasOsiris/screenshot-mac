@@ -6,6 +6,7 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
     static let shared = QuickLookCoordinator()
 
     private var previewURLs: [URL] = []
+    private var ownedTemporaryFolder: URL?
     private var edgeKeyMonitor: Any?
     private var panelCloseObserver: NSObjectProtocol?
 
@@ -13,8 +14,16 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
         preview(imagesAt: [url], startingAt: 0)
     }
 
-    func preview(imagesAt urls: [URL], startingAt index: Int) {
-        guard !urls.isEmpty, let panel = QLPreviewPanel.shared() else { return }
+    /// `temporaryFolder` transfers ownership of a folder the caller rendered into: it is removed
+    /// when the panel closes or the next preview starts. Without it, every preview left its PNGs
+    /// in the temp directory for the rest of the session.
+    func preview(imagesAt urls: [URL], startingAt index: Int, temporaryFolder: URL? = nil) {
+        guard !urls.isEmpty, let panel = QLPreviewPanel.shared() else {
+            if let temporaryFolder { try? FileManager.default.removeItem(at: temporaryFolder) }
+            return
+        }
+        purgeOwnedTemporaryFolder()
+        ownedTemporaryFolder = temporaryFolder
         previewURLs = urls
         let clampedIndex = max(0, min(index, urls.count - 1))
 
@@ -83,6 +92,13 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
             NotificationCenter.default.removeObserver(observer)
             panelCloseObserver = nil
         }
+        purgeOwnedTemporaryFolder()
+    }
+
+    private func purgeOwnedTemporaryFolder() {
+        guard let folder = ownedTemporaryFolder else { return }
+        ownedTemporaryFolder = nil
+        try? FileManager.default.removeItem(at: folder)
     }
 }
 #else
@@ -91,23 +107,42 @@ import UIKit
 
 /// iOS has no QLPreviewPanel (the macOS floating panel); the equivalent system image viewer
 /// is `QLPreviewController`, presented modally over the editor.
-final class QuickLookCoordinator: NSObject, QLPreviewControllerDataSource {
+final class QuickLookCoordinator: NSObject, QLPreviewControllerDataSource, QLPreviewControllerDelegate {
     static let shared = QuickLookCoordinator()
 
     private var previewURLs: [URL] = []
+    private var ownedTemporaryFolder: URL?
 
     func preview(imageAt url: URL) {
         preview(imagesAt: [url], startingAt: 0)
     }
 
-    func preview(imagesAt urls: [URL], startingAt index: Int) {
-        guard !urls.isEmpty, let presenter = Self.topViewController() else { return }
+    /// `temporaryFolder` transfers ownership of a folder the caller rendered into: it is removed
+    /// when the preview is dismissed or the next one starts.
+    func preview(imagesAt urls: [URL], startingAt index: Int, temporaryFolder: URL? = nil) {
+        guard !urls.isEmpty, let presenter = Self.topViewController() else {
+            if let temporaryFolder { try? FileManager.default.removeItem(at: temporaryFolder) }
+            return
+        }
+        purgeOwnedTemporaryFolder()
+        ownedTemporaryFolder = temporaryFolder
         previewURLs = urls
 
         let controller = QLPreviewController()
         controller.dataSource = self
+        controller.delegate = self
         controller.currentPreviewItemIndex = max(0, min(index, urls.count - 1))
         presenter.present(controller, animated: true)
+    }
+
+    func previewControllerDidDismiss(_ controller: QLPreviewController) {
+        purgeOwnedTemporaryFolder()
+    }
+
+    private func purgeOwnedTemporaryFolder() {
+        guard let folder = ownedTemporaryFolder else { return }
+        ownedTemporaryFolder = nil
+        try? FileManager.default.removeItem(at: folder)
     }
 
     func numberOfPreviewItems(in controller: QLPreviewController) -> Int {

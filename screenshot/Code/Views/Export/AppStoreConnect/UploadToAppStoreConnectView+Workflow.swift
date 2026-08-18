@@ -24,56 +24,10 @@ extension UploadToAppStoreConnectView {
            let projectName = state.activeProject?.name {
             let selectable = appsWithVersions.filter { $0.hasSelectableVersion(for: mode) }.map(\.app)
             let pool = selectable.isEmpty ? apps : selectable
-            if let match = Self.closestAppByName(projectName: projectName, in: pool) {
+            if let match = AppStoreConnectAppMatcher.closestApp(projectName: projectName, in: pool) {
                 selectedApp = match
             }
         }
-    }
-
-    static let nameMatchThreshold: Double = 0.6
-    static let nameMatchContainmentBonus: Double = 0.2
-
-    static func closestAppByName(projectName: String, in apps: [ASCApp]) -> ASCApp? {
-        let targetString = normalizedName(projectName)
-        let target = Array(targetString)
-        guard !target.isEmpty else { return nil }
-
-        var bestApp: ASCApp?
-        var bestScore = -Double.infinity
-        for app in apps {
-            let candidateString = normalizedName(app.attributes.name)
-            let candidate = Array(candidateString)
-            guard !candidate.isEmpty else { continue }
-            let distance = levenshtein(candidate, target)
-            let similarity = 1.0 - Double(distance) / Double(max(candidate.count, target.count))
-            let isContained = candidateString.contains(targetString) || targetString.contains(candidateString)
-            let score = similarity + (isContained ? nameMatchContainmentBonus : 0)
-            if score > bestScore {
-                bestScore = score
-                bestApp = app
-            }
-        }
-        return bestScore >= nameMatchThreshold ? bestApp : nil
-    }
-
-    static func normalizedName(_ s: String) -> String {
-        String(s.lowercased().unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }.map(Character.init))
-    }
-
-    static func levenshtein(_ a: [Character], _ b: [Character]) -> Int {
-        if a.isEmpty { return b.count }
-        if b.isEmpty { return a.count }
-        var prev = Array(0...b.count)
-        var curr = [Int](repeating: 0, count: b.count + 1)
-        for i in 1...a.count {
-            curr[0] = i
-            for j in 1...b.count {
-                let cost = a[i - 1] == b[j - 1] ? 0 : 1
-                curr[j] = min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost)
-            }
-            swap(&prev, &curr)
-        }
-        return prev[b.count]
     }
 
     /// Reseeds the demo catalog with the active project's locales and row sizes so the
@@ -240,30 +194,6 @@ extension UploadToAppStoreConnectView {
             ?? codes.first { $0.lowercased().hasPrefix(base + "-") }
     }
 
-    /// Patch a version localization, gracefully dropping "What's New" when App Store Connect
-    /// rejects it. The first version of a brand-new app has no release notes, so a `whatsNew`
-    /// edit returns 409 ("Attribute 'whatsNew' cannot be edited at this time"); retry without it
-    /// so the remaining metadata still saves.
-    static func patchVersionLocalization(
-        _ api: AppStoreConnectAPIService,
-        id: String,
-        changes: [String: AnyEncodable]
-    ) async throws {
-        do {
-            try await api.updateVersionLocalization(id: id, attributes: changes)
-        } catch let error as AppStoreConnectAPIError {
-            guard case let .httpError(status, message) = error,
-                  status == 409,
-                  message.contains("whatsNew"),
-                  changes["whatsNew"] != nil
-            else { throw error }
-            var retry = changes
-            retry.removeValue(forKey: "whatsNew")
-            guard !retry.isEmpty else { return }
-            try await api.updateVersionLocalization(id: id, attributes: retry)
-        }
-    }
-
     func saveMetadataAndContinue() async {
         guard !selectedVersions.isEmpty else { return }
         isBusy = true
@@ -306,7 +236,7 @@ extension UploadToAppStoreConnectView {
                 let changes = draft.changedAttributes()
                 guard !changes.isEmpty else { continue }
                 group.addTask {
-                    try await Self.patchVersionLocalization(api, id: draft.id, changes: changes)
+                    try await AppStoreConnectVersionMetadata.patchLocalization(api, id: draft.id, changes: changes)
                 }
             }
             for draft in appInfoSnapshot {

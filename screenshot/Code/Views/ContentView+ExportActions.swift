@@ -3,7 +3,6 @@ import AppKit
 #else
 import UIKit
 #endif
-import StoreKit
 import SwiftUI
 
 extension View {
@@ -23,6 +22,9 @@ extension View {
     }
 }
 
+// The export *flow* — progress, cancellation, destination routing, temp-folder lifetime — lives in
+// `ExportFlowModel`. What stays here is the part that is genuinely view work: choosing a folder
+// through a panel, deciding which rows the current selection means, and building the showcase sheet.
 extension ContentView {
     var hasLastExportDestination: Bool {
         !lastExportFolderPath.isEmpty
@@ -33,8 +35,8 @@ extension ContentView {
     }
 
     var exportButtonText: LocalizedStringKey {
-        if isExporting { return "Exporting..." }
-        if exportSuccess { return "Exported" }
+        if exportFlow.isExporting { return "Exporting..." }
+        if exportFlow.exportSuccess { return "Exported" }
         return hasLastExportDestination ? "Export" : "Export..."
     }
 
@@ -67,8 +69,8 @@ extension ContentView {
     }
 
     func exportScreenshots(localeFilter: String? = nil) {
-        if let savedURL = lastExportFolderURL() {
-            exportScreenshots(to: savedURL, localeFilter: localeFilter)
+        if let savedURL = exportFlow.bookmark.resolve() {
+            exportFlow.exportAll(document: state, to: savedURL, localeFilter: localeFilter)
         } else {
             exportScreenshotsAs(localeFilter: localeFilter)
         }
@@ -76,18 +78,20 @@ extension ContentView {
 
     func exportScreenshotsAs(localeFilter: String? = nil) {
         guard let url = resolvedExportBaseURL() else { return }
-        saveLastExportFolder(url)
-        exportScreenshots(to: url, localeFilter: localeFilter)
+        if !exportFlow.bookmark.save(url) {
+            exportFlow.errorMessage = String(localized: "Failed to remember export folder")
+        }
+        exportFlow.exportAll(document: state, to: url, localeFilter: localeFilter)
     }
 
     /// Resolves a destination folder for export. On iPad, folder export is deferred, so this
     /// reports a clear message and returns nil (rather than silently doing nothing).
     func resolvedExportBaseURL() -> URL? {
         #if os(iOS)
-        exportError = ExportService.exportUnavailableMessage
+        exportFlow.errorMessage = ExportService.exportUnavailableMessage
         return nil
         #else
-        return chooseExportDestination()
+        return ExportFolderService.chooseFolder()
         #endif
     }
 
@@ -153,6 +157,22 @@ extension ContentView {
         )
     }
 
+    /// A showcase background chosen in the sheet but not yet saved to the project lives only in
+    /// memory, so it has to be seeded into the render cache under its transient key.
+    func showcaseSeedCache(config: ShowcaseExportConfig, backgroundImage: NSImage?) -> [String: NSImage] {
+        guard let backgroundImage,
+              config.backgroundStyle == .image,
+              config.backgroundImageConfig.fileName == ShowcaseExportConfig.transientBackgroundKey
+        else { return [:] }
+        return [ShowcaseExportConfig.transientBackgroundKey: backgroundImage]
+    }
+
+    func showcaseRows(selectedRowIds: Set<UUID>, excludedTemplateIds: Set<UUID>) -> [ScreenshotRow] {
+        state.rows
+            .filter { selectedRowIds.contains($0.id) }
+            .compactMap { $0.filtering(excluding: excludedTemplateIds) }
+    }
+
     func runShowcaseExport(
         presentation: ShowcasePresentation,
         config: ShowcaseExportConfig,
@@ -161,19 +181,11 @@ extension ContentView {
         excludedTemplateIds: Set<UUID>
     ) {
         guard !selectedRowIds.isEmpty else { return }
-
-        var seedCache: [String: NSImage] = [:]
-        if let backgroundImage,
-           config.backgroundStyle == .image,
-           config.backgroundImageConfig.fileName == ShowcaseExportConfig.transientBackgroundKey {
-            seedCache[ShowcaseExportConfig.transientBackgroundKey] = backgroundImage
-        }
+        let seedCache = showcaseSeedCache(config: config, backgroundImage: backgroundImage)
 
         switch presentation.mode {
         case .allRows:
-            let rowsToExport = state.rows
-                .filter { selectedRowIds.contains($0.id) }
-                .compactMap { $0.filtering(excluding: excludedTemplateIds) }
+            let rowsToExport = showcaseRows(selectedRowIds: selectedRowIds, excludedTemplateIds: excludedTemplateIds)
             guard !rowsToExport.isEmpty else { return }
             exportRowLevel(folderName: "showcase", rows: rowsToExport, imageCache: seedCache) { context in
                 context.showcaseImage(config: config)
@@ -192,197 +204,67 @@ extension ContentView {
                     availableFontFamilies: state.availableFontFamilySet, config: config
                 )
             }) {
-                exportError = String(localized: "Could not export row image: \(message)")
+                exportFlow.errorMessage = String(localized: "Could not export row image: \(message)")
             }
         }
     }
 
-    /// Renders each row to a zero-padded PNG in `destDir`, updating `exportProgress`, and returns
-    /// the written file URLs in order. Throws `CancellationError` or `ExportRenderError`. Shared by
-    /// `exportRowLevel` and the iPad showcase export so numbering/naming stay in one place.
-    func renderRows(
-        _ rows: [ScreenshotRow],
-        into destDir: URL,
-        imageCache: inout [String: NSImage],
-        render: @MainActor (RowRenderContext) -> NSImage
-    ) async throws -> [URL] {
-        try await ExportCoordinator.renderRows(
-            rows,
-            into: destDir,
-            source: state,
-            imageCache: &imageCache,
-            onProgress: { exportProgress = $0 },
-            render: render
-        )
-    }
-
+    /// Picks the destination folder — a temp one on iPad, where the destination is chosen after the
+    /// render — and hands the rest to the flow model.
     func exportRowLevel(
         folderName: String,
         rows: [ScreenshotRow]? = nil,
         imageCache seedCache: [String: NSImage] = [:],
         render: @MainActor @escaping (RowRenderContext) -> NSImage
     ) {
-        let rowsToExport = rows ?? state.rows
-        guard !rowsToExport.isEmpty else { return }
         #if os(iOS)
-        let baseURL: URL
-        do {
-            baseURL = try ExportService.makeTempExportFolder()
-        } catch {
-            exportError = error.localizedDescription
-            return
-        }
+        guard let baseURL = tempExportFolder() else { return }
+        let delivery = ExportFlowModel.Delivery.stageDestination
         #else
         guard let baseURL = resolvedExportBaseURL() else { return }
+        let delivery = ExportFlowModel.Delivery.revealInPlace
         #endif
 
-        exportSuccessTimer?.cancel()
-        isExporting = true
-        exportSuccess = false
-        exportError = nil
-        exportProgress = 0
-        exportTotal = rowsToExport.count
+        exportFlow.exportRows(
+            document: state,
+            into: baseURL,
+            folderName: folderName,
+            rows: rows,
+            seedCache: seedCache,
+            delivery: delivery,
+            render: render
+        )
+    }
 
-        exportTask = Task {
-            defer {
-                isExporting = false
-                exportTask = nil
-            }
-            do {
-                let destDir = ExportFileNaming.uniqueFolder(named: folderName, in: baseURL)
-                try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
-                var imageCache: [String: NSImage] = seedCache
-                let fileURLs = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache, render: render)
-
-                #if os(iOS)
-                presentExportDestinations(fileURLs: fileURLs, folderURL: destDir, cleanup: baseURL)
-                #else
-                _ = fileURLs
-                if openExportFolderOnSuccess {
-                    PlatformReveal.inFileViewer([destDir])
-                }
-                showExportSuccess()
-                #endif
-            } catch is CancellationError {
-                // User cancelled
-            } catch {
-                exportError = error.localizedDescription
-                NotificationService.notify(title: String(localized: "Export failed"), body: error.localizedDescription)
-            }
+    /// Reports the failure and returns nil, so callers can `guard let` instead of repeating the
+    /// do/catch at every temp-folder site.
+    func tempExportFolder() -> URL? {
+        do {
+            return try ExportService.makeTempExportFolder()
+        } catch {
+            exportFlow.errorMessage = error.localizedDescription
+            return nil
         }
     }
 
-    func showExportSuccess() {
-        exportSuccessTimer?.cancel()
-        exportSuccess = true
-        let timer = DispatchWorkItem { exportSuccess = false }
-        exportSuccessTimer = timer
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timer)
+    func openLastExportFolder() {
+        guard let url = exportFlow.bookmark.resolve() else { return }
+        PlatformReveal.inFileViewer([url])
+    }
+}
 
-        let count = exportTotal
-        let noun = count == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
-        let projectName = state.activeProject?.name ?? ""
-        let body = projectName.isEmpty
-            ? String(localized: "\(count) \(noun) exported")
-            : String(localized: "\(count) \(noun) exported · \(projectName)")
-        NotificationService.notify(title: String(localized: "Export complete"), body: body)
-
-        maybeRequestReview()
+#if os(iOS)
+extension ContentView {
+    var pendingExportTitle: String {
+        guard let count = exportFlow.pendingExport?.fileURLs.count else { return "" }
+        return count == 1
+            ? String(localized: "Export 1 screenshot to…")
+            : String(localized: "Export \(count) screenshots to…")
     }
 
-    static let reviewMinExportCount = 3
-    static let reviewMinDaysSinceFirstExport: TimeInterval = 14 * 86400
-    static let reviewMinDaysBetweenPrompts: TimeInterval = 120 * 86400
-
-    func maybeRequestReview() {
-        let currentVersion = Bundle.main.shortVersion
-        guard !currentVersion.isEmpty, currentVersion != reviewLastPromptedVersion else { return }
-
-        let now = Date().timeIntervalSinceReferenceDate
-        if reviewFirstExportDate == 0 {
-            reviewFirstExportDate = now
-        }
-        reviewExportCount += 1
-
-        guard reviewExportCount >= Self.reviewMinExportCount,
-              now - reviewFirstExportDate >= Self.reviewMinDaysSinceFirstExport,
-              now - reviewLastPromptDate >= Self.reviewMinDaysBetweenPrompts
-        else { return }
-
-        reviewLastPromptedVersion = currentVersion
-        reviewLastPromptDate = now
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            requestReview()
-        }
-    }
-
-    func chooseExportDestination() -> URL? {
-        ExportFolderService.chooseFolder()
-    }
-
-    func exportScreenshots(to url: URL, localeFilter: String? = nil) {
-        let didAccess = url.startAccessingSecurityScopedResource()
-        guard didAccess else {
-            // Permission lost — clear stale bookmark and ask user to pick again
-            ExportFolderBookmark().clear()
-            exportScreenshotsAs()
-            return
-        }
-
-        exportSuccessTimer?.cancel()
-        isExporting = true
-        exportSuccess = false
-        exportError = nil
-        exportProgress = 0
-
-        let localeCount = localeFilter == nil ? max(1, state.localeState.locales.count) : 1
-        exportTotal = localeCount * state.rows.reduce(0) { $0 + $1.templates.count }
-
-        exportTask = Task {
-            defer {
-                url.stopAccessingSecurityScopedResource()
-                isExporting = false
-                exportTask = nil
-            }
-            do {
-                let projectName = state.activeProject?.name ?? ""
-                let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
-                var imageCache: [String: NSImage] = [:]
-                let export = try await ExportService.exportAll(
-                    rows: state.rows,
-                    projectName: projectName,
-                    to: url,
-                    format: format,
-                    imageProvider: { [state] row, localeCode in
-                        let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
-                        return state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
-                    },
-                    localeState: state.localeState,
-                    localeFilter: localeFilter,
-                    customSuffix: exportCustomSuffix,
-                    availableFontFamilies: state.availableFontFamilySet,
-                    onProgress: { completed in
-                        exportProgress = completed
-                    }
-                )
-                showExportSuccess()
-                if openExportFolderOnSuccess {
-                    PlatformReveal.inFileViewer([export.folderURL])
-                }
-            } catch is CancellationError {
-                // User cancelled — no error to show
-            } catch {
-                exportError = error.localizedDescription
-                NotificationService.notify(title: String(localized: "Export failed"), body: error.localizedDescription)
-            }
-        }
-    }
-
-    #if os(iOS)
     /// iPad showcase export: renders the selected rows to PNGs in a temp folder, then routes them
-    /// to the chosen destination (Photos / Files / Share). The showcase sheet stays open so the
-    /// user can export again to another destination; temp files are cleaned up once the
-    /// destination flow finishes.
+    /// straight to the chosen destination. The showcase sheet stays open so the user can export
+    /// again elsewhere, which is why this routes immediately instead of staging a sheet.
     func runShowcaseExportIPad(
         config: ShowcaseExportConfig,
         backgroundImage: NSImage?,
@@ -390,182 +272,30 @@ extension ContentView {
         excludedTemplateIds: Set<UUID>,
         destination: ExportDestination
     ) {
-        let rowsToExport = state.rows
-            .filter { selectedRowIds.contains($0.id) }
-            .compactMap { $0.filtering(excluding: excludedTemplateIds) }
-        guard !rowsToExport.isEmpty else { return }
+        let rowsToExport = showcaseRows(selectedRowIds: selectedRowIds, excludedTemplateIds: excludedTemplateIds)
+        guard !rowsToExport.isEmpty, let baseURL = tempExportFolder() else { return }
 
-        var seedCache: [String: NSImage] = [:]
-        if let backgroundImage,
-           config.backgroundStyle == .image,
-           config.backgroundImageConfig.fileName == ShowcaseExportConfig.transientBackgroundKey {
-            seedCache[ShowcaseExportConfig.transientBackgroundKey] = backgroundImage
-        }
-
-        let baseURL: URL
-        do {
-            baseURL = try ExportService.makeTempExportFolder()
-        } catch {
-            exportError = error.localizedDescription
-            return
-        }
-
-        exportSuccessTimer?.cancel()
-        isExporting = true
-        exportSuccess = false
-        exportError = nil
-        exportProgress = 0
-        exportTotal = rowsToExport.count
-
-        exportTask = Task {
-            defer {
-                isExporting = false
-                exportTask = nil
-            }
-            do {
-                let destDir = ExportFileNaming.uniqueFolder(named: "showcase", in: baseURL)
-                try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
-                var imageCache: [String: NSImage] = seedCache
-                let fileURLs = try await renderRows(rowsToExport, into: destDir, imageCache: &imageCache) { context in
-                    context.showcaseImage(config: config)
-                }
-                route(destination: destination, fileURLs: fileURLs, folderURL: destDir, cleanup: baseURL)
-            } catch is CancellationError {
-                try? FileManager.default.removeItem(at: baseURL)
-            } catch {
-                try? FileManager.default.removeItem(at: baseURL)
-                exportError = error.localizedDescription
-                NotificationService.notify(title: String(localized: "Export failed"), body: error.localizedDescription)
-            }
-        }
+        exportFlow.exportRows(
+            document: state,
+            into: baseURL,
+            folderName: "showcase",
+            rows: rowsToExport,
+            seedCache: showcaseSeedCache(config: config, backgroundImage: backgroundImage),
+            delivery: .route(destination),
+            render: { context in context.showcaseImage(config: config) }
+        )
     }
 
-    /// Hands rendered files to the chosen destination and cleans up the temp folder once the flow
-    /// completes (or is cancelled). Photos/Share receive the individual image files; Files receives
-    /// the whole folder so multi-locale / multi-row subfolder structure is preserved on disk.
-    func route(destination: ExportDestination, fileURLs: [URL], folderURL: URL, cleanup baseURL: URL) {
-        let finish: (Bool) -> Void = { completed in
-            try? FileManager.default.removeItem(at: baseURL)
-            if completed { showExportSuccess() }
-        }
-        switch destination {
-        case .share:
-            PlatformShare.present(urls: fileURLs, completion: finish)
-        case .files:
-            PlatformDocumentExport.present(urls: [folderURL], completion: finish)
-        case .photos:
-            PlatformPhotoLibrary.save(fileURLs: fileURLs) { success, error in
-                try? FileManager.default.removeItem(at: baseURL)
-                if let error {
-                    exportError = error.localizedDescription
-                } else if success {
-                    showExportSuccess()
-                }
-            }
-        }
-    }
-
-    /// Stashes rendered output so the editor's destination action sheet can present. The user then
-    /// picks Photos / Files / Share; routing and temp-folder cleanup happen from there.
-    func presentExportDestinations(fileURLs: [URL], folderURL: URL, cleanup baseURL: URL) {
-        guard !fileURLs.isEmpty else {
-            try? FileManager.default.removeItem(at: baseURL)
-            return
-        }
-        pendingExport = PendingExport(fileURLs: fileURLs, folderURL: folderURL, cleanupBaseURL: baseURL)
-    }
-
-    /// iPad export: renders to a temp folder via the shared `exportAll` path, then presents the
-    /// destination action sheet (Save to Photos / Save to Files / Share) since there's no Finder.
     func exportScreenshotsForIPad(localeFilter: String? = nil) {
-        guard !state.rows.isEmpty else { return }
-
-        exportSuccessTimer?.cancel()
-        isExporting = true
-        exportSuccess = false
-        exportError = nil
-        exportProgress = 0
-
-        let localeCount = localeFilter == nil ? max(1, state.localeState.locales.count) : 1
-        exportTotal = localeCount * state.rows.reduce(0) { $0 + $1.templates.count }
-
-        exportTask = Task {
-            defer {
-                isExporting = false
-                exportTask = nil
-            }
-            do {
-                let projectName = state.activeProject?.name ?? ""
-                let format = ExportImageFormat(rawValue: exportFormat.lowercased()) ?? .png
-                let tempBase = try ExportService.makeTempExportFolder()
-
-                var imageCache: [String: NSImage] = [:]
-                let export = try await ExportService.exportAll(
-                    rows: state.rows,
-                    projectName: projectName,
-                    to: tempBase,
-                    format: format,
-                    imageProvider: { [state] row, localeCode in
-                        let fileNames = state.referencedImageFileNames(forRow: row, localeCode: localeCode)
-                        return state.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
-                    },
-                    localeState: state.localeState,
-                    localeFilter: localeFilter,
-                    customSuffix: exportCustomSuffix,
-                    availableFontFamilies: state.availableFontFamilySet,
-                    onProgress: { completed in
-                        exportProgress = completed
-                    }
-                )
-                presentExportDestinations(fileURLs: export.fileURLs, folderURL: export.folderURL, cleanup: tempBase)
-            } catch is CancellationError {
-                // User cancelled — no error to show
-            } catch {
-                exportError = error.localizedDescription
-                NotificationService.notify(title: String(localized: "Export failed"), body: error.localizedDescription)
-            }
-        }
-    }
-    #endif
-
-    func lastExportFolderURL() -> URL? {
-        ExportFolderBookmark().resolve()
-    }
-
-    func saveLastExportFolder(_ url: URL) {
-        if !ExportFolderBookmark().save(url) {
-            exportError = String(localized: "Failed to remember export folder")
-        }
-    }
-
-    func openLastExportFolder() {
-        guard let url = lastExportFolderURL() else { return }
-        PlatformReveal.inFileViewer([url])
-    }
-
-}
-
-#if os(iOS)
-extension ContentView {
-    var pendingExportTitle: String {
-        guard let count = pendingExport?.fileURLs.count else { return "" }
-        return count == 1
-            ? String(localized: "Export 1 screenshot to…")
-            : String(localized: "Export \(count) screenshots to…")
+        exportFlow.exportAllToTempFolder(document: state, localeFilter: localeFilter)
     }
 
     func runPendingExport(to destination: ExportDestination) {
-        guard let pending = pendingExport else { return }
-        pendingExport = nil
-        route(destination: destination, fileURLs: pending.fileURLs, folderURL: pending.folderURL, cleanup: pending.cleanupBaseURL)
+        exportFlow.route(destination, projectName: state.activeProjectName)
     }
 
-    /// Dismissal without a chosen destination (Cancel / tap-outside): discard the rendered temp files.
-    /// A destination tap clears `pendingExport` first, so this no-ops in that case.
     func discardPendingExport() {
-        guard let pending = pendingExport else { return }
-        try? FileManager.default.removeItem(at: pending.cleanupBaseURL)
-        pendingExport = nil
+        exportFlow.discardPendingExport()
     }
 }
 #endif

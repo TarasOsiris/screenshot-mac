@@ -3,11 +3,11 @@ import SwiftUI
 extension ContentView {
     var exportControlGroup: some View {
         ContentExportControl(
-            isExporting: isExporting,
-            exportSuccess: exportSuccess,
+            isExporting: exportFlow.isExporting,
+            exportSuccess: exportFlow.exportSuccess,
             buttonText: exportButtonText,
             helpText: exportHelpText,
-            isDisabled: isExporting || state.rows.isEmpty,
+            isDisabled: exportFlow.isExporting || state.rows.isEmpty,
             onExport: { exportScreenshots() }
         ) {
             exportMenuContent
@@ -18,7 +18,7 @@ extension ContentView {
     #if os(iOS)
     @ViewBuilder
     var iPadExportControl: some View {
-        let isDisabled = isExporting || state.rows.isEmpty
+        let isDisabled = exportFlow.isExporting || state.rows.isEmpty
         Menu {
             Button("Export All Screenshots", systemImage: "square.and.arrow.up") {
                 exportScreenshotsForIPad()
@@ -65,18 +65,19 @@ extension ContentView {
 
     @ViewBuilder
     var iPadExportLabel: some View {
-        if isExporting {
+        if exportFlow.isExporting {
             HStack(spacing: 6) {
                 ProgressView().controlSize(.small)
                 Text("Exporting…")
             }
         } else {
+            let done = exportFlow.exportSuccess
             // square.and.arrow.up renders high (reserves space for the up-arrow); nudge the glyph down to align it.
             Label {
-                Text(exportSuccess ? "Exported" : "Export")
+                Text(done ? "Exported" : "Export")
             } icon: {
-                Image(systemName: exportSuccess ? "checkmark.circle.fill" : "square.and.arrow.up")
-                    .offset(y: exportSuccess ? 0 : -2)
+                Image(systemName: done ? "checkmark.circle.fill" : "square.and.arrow.up")
+                    .offset(y: done ? 0 : -2)
             }
         }
     }

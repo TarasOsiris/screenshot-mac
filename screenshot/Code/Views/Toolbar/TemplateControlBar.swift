@@ -390,24 +390,34 @@ struct TemplateControlBar: View {
                 availableFontFamilies: state.availableFontFamilySet,
                 label: "preview row"
             )
+            // A folder per preview, handed to QuickLook to delete on dismiss. Writing into the
+            // bare temp directory left every preview's PNGs behind for the whole session.
+            let folder: URL
+            do {
+                folder = try ExportService.makeTempExportFolder()
+            } catch {
+                renderError = String(localized: "Could not write preview file: \(error.localizedDescription)")
+                return
+            }
             var urls: [URL] = []
             for i in context.templateIndices {
                 let image = context.templateImage(at: i)
-                let tempURL = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("screenshot-\(i + 1)-\(localeState.activeLocaleCode).png")
+                let tempURL = folder.appendingPathComponent("screenshot-\(i + 1)-\(localeState.activeLocaleCode).png")
                 do {
                     guard let pngData = await ExportImageEncoder.opaquePNGDataOffMain(from: image) else {
+                        try? FileManager.default.removeItem(at: folder)
                         renderError = String(localized: "Could not render screenshot for preview.")
                         return
                     }
                     try pngData.write(to: tempURL)
                     urls.append(tempURL)
                 } catch {
+                    try? FileManager.default.removeItem(at: folder)
                     renderError = String(localized: "Could not write preview file: \(error.localizedDescription)")
                     return
                 }
             }
-            QuickLookCoordinator.shared.preview(imagesAt: urls, startingAt: index)
+            QuickLookCoordinator.shared.preview(imagesAt: urls, startingAt: index, temporaryFolder: folder)
         }
     }
 
