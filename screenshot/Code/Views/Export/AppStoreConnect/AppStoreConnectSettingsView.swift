@@ -26,30 +26,13 @@ struct AppStoreConnectSettingsView: View {
             allowsMultipleSelection: false,
             onCompletion: handleImport
         )
-        #if os(macOS)
-        .confirmationDialog(
-            "Clear App Store Connect credentials?",
+        .storeCredentialsRemovalConfirmation(
+            title: "Clear App Store Connect credentials?",
+            message: "This removes the Issuer ID, Key ID, and imported private key from this Mac.",
+            confirmLabel: "Clear Credentials",
             isPresented: $showClearConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Clear Credentials", role: .destructive) {
-                clearCredentials()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This removes the Issuer ID, Key ID, and imported private key from this Mac.")
-        }
-        #else
-        // iPad: a centered alert, not an action-sheet popover anchored to the button.
-        .alert("Clear App Store Connect credentials?", isPresented: $showClearConfirmation) {
-            Button("Clear Credentials", role: .destructive) {
-                clearCredentials()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This removes the Issuer ID, Key ID, and imported private key from this Mac.")
-        }
-        #endif
+            onRemove: clearCredentials
+        )
         .onAppear { credentials.refreshPrivateKeyPresence() }
         .onChange(of: credentials.issuerId) { _, _ in resetConnectionState() }
         .onChange(of: credentials.keyId) { _, _ in resetConnectionState() }
@@ -111,59 +94,16 @@ struct AppStoreConnectSettingsView: View {
                     .font(.caption)
             }
 
-            // macOS: compact right-aligned buttons. iOS: full-width form-row actions with
-            // standard (≥44pt) tap targets.
-            #if os(macOS)
-            HStack {
-                Spacer()
-                Button {
-                    Task { await runTest() }
-                } label: {
-                    HStack(spacing: 6) {
-                        if isTesting {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                        Text(isTesting ? "Testing…" : "Test Connection")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .disabled(!canTestConnection)
+            StoreConnectionTestButton(isTesting: isTesting, isEnabled: canTestConnection) {
+                await runTest()
             }
-            #else
-            Button {
-                Task { await runTest() }
-            } label: {
-                HStack(spacing: 6) {
-                    if isTesting { ProgressView().controlSize(.small) }
-                    Text(isTesting ? "Testing…" : "Test Connection")
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(!canTestConnection)
-            #endif
 
             if let testResult {
                 StoreConnectionFeedbackRow(result: testResult)
             }
 
             if credentials.isConfigured || credentials.hasPrivateKey {
-                #if os(macOS)
-                HStack {
-                    Spacer()
-                    Button("Clear Credentials…", role: .destructive) {
-                        showClearConfirmation = true
-                    }
-                    .controlSize(.small)
-                }
-                #else
-                Button("Clear Credentials…", role: .destructive) {
-                    showClearConfirmation = true
-                }
-                .frame(maxWidth: .infinity)
-                #endif
+                StoreRemoveCredentialsButton(label: "Clear Credentials…", isConfirming: $showClearConfirmation)
             }
         } header: {
             Text("API Key")
@@ -203,26 +143,7 @@ struct AppStoreConnectSettingsView: View {
     }
 
     private var statusHeader: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: statusSymbolName)
-                .foregroundStyle(statusSymbolColor)
-                .font(.title3)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(statusTitle)
-                    .font(.headline)
-                Text(statusMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer()
-            Text(setupSummary)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(.quaternary, in: Capsule())
-        }
+        StoreCredentialsStatusHeader(status: status, message: statusMessage, progressSummary: setupSummary)
     }
 
     private var helpSection: some View {
@@ -233,18 +154,16 @@ struct AppStoreConnectSettingsView: View {
         }
     }
 
-    private enum StatusState {
-        case demoMode, connected, readyToTest, finishSetup
-    }
-
-    private var statusState: StatusState {
-        if credentials.isDemoMode { return .demoMode }
-        if connectionTestPassed { return .connected }
-        return credentials.isConfigured ? .readyToTest : .finishSetup
+    private var status: StoreCredentialsStatus {
+        .resolve(
+            isDemoMode: credentials.isDemoMode,
+            connectionTestPassed: connectionTestPassed,
+            hasCredentials: credentials.isConfigured
+        )
     }
 
     private var statusMessage: String {
-        switch statusState {
+        switch status {
         case .demoMode:
             return String(localized: "Demo mode is on. The upload wizard runs against built-in sample data and never contacts App Store Connect.")
         case .connected:
@@ -257,38 +176,16 @@ struct AppStoreConnectSettingsView: View {
     }
 
     private var demoModeSection: some View {
-        Section {
-            Toggle(isOn: Binding(
+        StoreDemoModeSection(
+            isDemoMode: Binding(
                 get: { credentials.isDemoMode },
-                set: { newValue in
-                    credentials.isDemoMode = newValue
-                    testResult = nil
-                }
-            )) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Enable demo mode")
-                        .fontWeight(.medium)
-                    Text("Browse a sample app, version, locales, and run a simulated upload — no API key required and no traffic is sent to App Store Connect.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .toggleStyle(.switch)
-
-            if credentials.isDemoMode {
-                Label("Demo mode is active. Real API key fields above are ignored until you turn demo mode off.",
-                      systemImage: "info.circle.fill")
-                    .foregroundStyle(.blue)
-                    .font(.caption)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        } header: {
-            Text("App Review Demo Mode")
-        } footer: {
-            Text("Use demo mode to walk through the App Store Connect upload feature without an API key — for example during App Review.")
-                .foregroundStyle(.secondary)
-        }
+                set: { credentials.isDemoMode = $0; testResult = nil }
+            ),
+            sectionTitle: "App Review Demo Mode",
+            toggleDescription: "Browse a sample app, version, locales, and run a simulated upload — no API key required and no traffic is sent to App Store Connect.",
+            activeNote: "Demo mode is active. Real API key fields above are ignored until you turn demo mode off.",
+            footer: "Use demo mode to walk through the App Store Connect upload feature without an API key — for example during App Review."
+        )
     }
 
     private var connectionTestPassed: Bool {
@@ -298,33 +195,6 @@ struct AppStoreConnectSettingsView: View {
 
     private var canTestConnection: Bool {
         credentials.isConfigured && !isTesting
-    }
-
-    private var statusTitle: String {
-        switch statusState {
-        case .demoMode: return String(localized: "Demo mode")
-        case .connected: return String(localized: "Connected")
-        case .readyToTest: return String(localized: "Ready to test")
-        case .finishSetup: return String(localized: "Finish setup")
-        }
-    }
-
-    private var statusSymbolName: String {
-        switch statusState {
-        case .demoMode: return "theatermasks.fill"
-        case .connected: return "checkmark.seal.fill"
-        case .readyToTest: return "bolt.horizontal.circle.fill"
-        case .finishSetup: return "key.horizontal"
-        }
-    }
-
-    private var statusSymbolColor: Color {
-        switch statusState {
-        case .demoMode: return .blue
-        case .connected: return .green
-        case .readyToTest: return .orange
-        case .finishSetup: return .secondary
-        }
     }
 
     private var setupSummary: String {

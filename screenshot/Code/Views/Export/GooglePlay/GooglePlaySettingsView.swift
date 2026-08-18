@@ -25,25 +25,13 @@ struct GooglePlaySettingsView: View {
             allowsMultipleSelection: false,
             onCompletion: handleImport
         )
-        #if os(macOS)
-        .confirmationDialog(
-            "Remove Google Play credentials?",
+        .storeCredentialsRemovalConfirmation(
+            title: "Remove Google Play credentials?",
+            message: "This removes the imported service account key from this device.",
+            confirmLabel: "Remove",
             isPresented: $showClearConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Remove", role: .destructive) { clearCredentials() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This removes the imported service account key from this Mac.")
-        }
-        #else
-        .alert("Remove Google Play credentials?", isPresented: $showClearConfirmation) {
-            Button("Remove", role: .destructive) { clearCredentials() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This removes the imported service account key from this device.")
-        }
-        #endif
+            onRemove: clearCredentials
+        )
     }
 
     private var credentialsSection: some View {
@@ -83,50 +71,16 @@ struct GooglePlaySettingsView: View {
                     .font(.caption)
             }
 
-            #if os(macOS)
-            HStack {
-                Spacer()
-                Button {
-                    Task { await runTest() }
-                } label: {
-                    HStack(spacing: 6) {
-                        if isTesting { ProgressView().controlSize(.small) }
-                        Text(isTesting ? "Testing…" : "Test Connection")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .disabled(!canTestConnection)
+            StoreConnectionTestButton(isTesting: isTesting, isEnabled: canTestConnection) {
+                await runTest()
             }
-            #else
-            Button {
-                Task { await runTest() }
-            } label: {
-                HStack(spacing: 6) {
-                    if isTesting { ProgressView().controlSize(.small) }
-                    Text(isTesting ? "Testing…" : "Test Connection")
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(!canTestConnection)
-            #endif
 
             if let testResult {
                 StoreConnectionFeedbackRow(result: testResult)
             }
 
             if credentials.hasServiceAccount {
-                #if os(macOS)
-                HStack {
-                    Spacer()
-                    Button("Remove Credentials…", role: .destructive) { showClearConfirmation = true }
-                        .controlSize(.small)
-                }
-                #else
-                Button("Remove Credentials…", role: .destructive) { showClearConfirmation = true }
-                    .frame(maxWidth: .infinity)
-                #endif
+                StoreRemoveCredentialsButton(label: "Remove Credentials…", isConfirming: $showClearConfirmation)
             }
         } header: {
             Text("Service Account")
@@ -140,20 +94,7 @@ struct GooglePlaySettingsView: View {
     }
 
     private var statusHeader: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: statusSymbolName)
-                .foregroundStyle(statusSymbolColor)
-                .font(.title3)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(statusTitle)
-                    .font(.headline)
-                Text(statusMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer()
-        }
+        StoreCredentialsStatusHeader(status: status, message: statusMessage)
     }
 
     private var helpSection: some View {
@@ -164,84 +105,38 @@ struct GooglePlaySettingsView: View {
     }
 
     private var demoModeSection: some View {
-        Section {
-            Toggle(isOn: Binding(
+        StoreDemoModeSection(
+            isDemoMode: Binding(
                 get: { credentials.isDemoMode },
                 set: { credentials.isDemoMode = $0; testResult = nil }
-            )) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Enable demo mode")
-                        .fontWeight(.medium)
-                    Text("Run a simulated upload — no service account required and no traffic is sent to Google Play.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .toggleStyle(.switch)
-
-            if credentials.isDemoMode {
-                Label("Demo mode is active. The service account above is ignored until you turn demo mode off.",
-                      systemImage: "info.circle.fill")
-                    .foregroundStyle(.blue)
-                    .font(.caption)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        } header: {
-            Text("Demo Mode")
-        } footer: {
-            Text("Use demo mode to walk through the Google Play upload feature without a service account.")
-                .foregroundStyle(.secondary)
-        }
+            ),
+            sectionTitle: "Demo Mode",
+            toggleDescription: "Run a simulated upload — no service account required and no traffic is sent to Google Play.",
+            activeNote: "Demo mode is active. The service account above is ignored until you turn demo mode off.",
+            footer: "Use demo mode to walk through the Google Play upload feature without a service account."
+        )
     }
 
     // MARK: - Status
 
-    private enum StatusState { case demoMode, connected, ready, finishSetup }
-
-    private var statusState: StatusState {
-        if credentials.isDemoMode { return .demoMode }
-        if connectionTestPassed { return .connected }
-        return credentials.hasServiceAccount ? .ready : .finishSetup
-    }
-
-    private var statusTitle: String {
-        switch statusState {
-        case .demoMode: return String(localized: "Demo mode")
-        case .connected: return String(localized: "Connected")
-        case .ready: return String(localized: "Ready to test")
-        case .finishSetup: return String(localized: "Finish setup")
-        }
+    private var status: StoreCredentialsStatus {
+        .resolve(
+            isDemoMode: credentials.isDemoMode,
+            connectionTestPassed: connectionTestPassed,
+            hasCredentials: credentials.hasServiceAccount
+        )
     }
 
     private var statusMessage: String {
-        switch statusState {
+        switch status {
         case .demoMode:
             return String(localized: "Demo mode is on. The upload wizard never contacts Google Play.")
         case .connected:
             return String(localized: "The service account is connected and ready for screenshot uploads.")
-        case .ready:
+        case .readyToTest:
             return String(localized: "Run the connection test once before uploading screenshots.")
         case .finishSetup:
             return String(localized: "Import the service account JSON key below, then test the connection.")
-        }
-    }
-
-    private var statusSymbolName: String {
-        switch statusState {
-        case .demoMode: return "theatermasks.fill"
-        case .connected: return "checkmark.seal.fill"
-        case .ready: return "bolt.horizontal.circle.fill"
-        case .finishSetup: return "key.horizontal"
-        }
-    }
-
-    private var statusSymbolColor: Color {
-        switch statusState {
-        case .demoMode: return .blue
-        case .connected: return .green
-        case .ready: return .orange
-        case .finishSetup: return .secondary
         }
     }
 
