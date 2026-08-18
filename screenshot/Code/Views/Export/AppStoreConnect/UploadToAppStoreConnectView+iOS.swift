@@ -7,7 +7,7 @@ extension UploadToAppStoreConnectView {
     var iosBody: some View {
         NavigationStack(path: $path) {
             stepScreen(.pickingApp)
-                .navigationDestination(for: Step.self) { stepScreen($0) }
+                .navigationDestination(for: ASCUploadStep.self) { stepScreen($0) }
         }
         .onChange(of: path) { oldPath, newPath in
             // Keep `step` authoritative as the system Back button pops the stack — forward
@@ -33,7 +33,7 @@ extension UploadToAppStoreConnectView {
     /// One pushed screen: optional demo banner + error banner above the step content, with a
     /// per-step nav-bar toolbar. The uploading/done screen hides Back and flips on `step`.
     @ViewBuilder
-    private func stepScreen(_ stepValue: Step) -> some View {
+    private func stepScreen(_ stepValue: ASCUploadStep) -> some View {
         VStack(spacing: 0) {
             if credentials.isDemoMode {
                 demoModeBanner
@@ -73,7 +73,7 @@ extension UploadToAppStoreConnectView {
     }
 
     @ToolbarContentBuilder
-    private func iosToolbar(for stepValue: Step) -> some ToolbarContent {
+    private func iosToolbar(for stepValue: ASCUploadStep) -> some ToolbarContent {
         // Cancel lives on the root only; deeper screens use the system Back button.
         if stepValue == .pickingApp {
             ToolbarItem(placement: .cancellationAction) {
@@ -99,7 +99,7 @@ extension UploadToAppStoreConnectView {
     /// footer); the terminal uploading/done screen consults the live `step` to switch
     /// Cancel Upload ↔ Close.
     @ViewBuilder
-    private func iosPrimaryButton(for stepValue: Step) -> some View {
+    private func iosPrimaryButton(for stepValue: ASCUploadStep) -> some View {
         if let primary = forwardPrimary(for: stepValue) {
             Button(primary.titleKey, action: primary.action)
                 .disabled(!primary.isEnabled)

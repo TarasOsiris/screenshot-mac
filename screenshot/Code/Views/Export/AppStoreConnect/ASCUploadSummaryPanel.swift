@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct ASCUploadSummaryPanel: View {
-    let entries: [UploadToAppStoreConnectView.UploadPlanEntry]
-    let skipped: [UploadToAppStoreConnectView.UploadPlanEntry]
-    let rowGroups: [UploadToAppStoreConnectView.UploadRowGroup]
+    let entries: [ASCUploadPlanEntry]
+    let skipped: [ASCUploadPlanEntry]
+    let rowGroups: [ASCUploadRowGroup]
     let versionCount: Int
     let localeCount: Int
     let screenshotCount: Int
@@ -107,7 +107,7 @@ private struct ASCSummaryMetric: View {
 }
 
 private struct ASCRowPlanGroupRow: View {
-    let group: UploadToAppStoreConnectView.UploadRowGroup
+    let group: ASCUploadRowGroup
 
     private static let visibleLocaleLimit = 12
 
@@ -173,7 +173,7 @@ private struct ASCRowPlanGroupRow: View {
 }
 
 private struct ASCSkippedPlanEntryRow: View {
-    let entry: UploadToAppStoreConnectView.UploadPlanEntry
+    let entry: ASCUploadPlanEntry
 
     var body: some View {
         HStack(alignment: .top, spacing: 6) {

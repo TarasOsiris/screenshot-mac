@@ -13,7 +13,7 @@ struct UploadToGooglePlayView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) var state
 
-    @State var step: Step = .enteringPackage
+    @State var step: GPUploadStep = .enteringPackage
     @State var packageName: String = ""
     /// When off (default), the edit is committed with `changesNotSentForReview=true` so changes
     /// stage as a draft. On, they are submitted to Google Play review on commit.
@@ -22,28 +22,13 @@ struct UploadToGooglePlayView: View {
     @State var collapsedRowPlanIds: Set<UUID> = []   // absent = expanded (default)
     @State var uploadProgress: UploadProgress?
     @State var uploadTask: Task<Void, Never>?
-    @State var uploadSummary: UploadSummary?
+    @State var uploadSummary: GPUploadSummary?
 
     @State var errorMessage: String?
     @State var errorDetailsText: String?
     @State var presentedErrorDetails: UploadFailureDetail?
     @State var isBusy = false
     @State var credentials = GooglePlayCredentialsStore.shared
-
-    struct UploadSummary {
-        let totalScreenshots: Int
-        let languageCount: Int
-        let packageName: String
-        /// What actually happened on commit (the draft flag may be rejected → sent to review).
-        let sentForReview: Bool
-    }
-
-    enum Step: Hashable {
-        case enteringPackage
-        case configuringPlan
-        case uploading
-        case done
-    }
 
     var validationIssues: [UploadIssue] {
         GooglePlayUploadValidator.validate(

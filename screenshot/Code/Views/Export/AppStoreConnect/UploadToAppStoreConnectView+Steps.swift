@@ -9,7 +9,7 @@ extension UploadToAppStoreConnectView {
     }
 
     @ViewBuilder
-    func stepContent(for step: Step) -> some View {
+    func stepContent(for step: ASCUploadStep) -> some View {
         if !credentials.isConfigured {
             missingCredentialsView
         } else {

@@ -15,12 +15,12 @@ struct UploadToAppStoreConnectView: View {
     @Environment(AppNavigationRouter.self) var router
     #endif
 
-    @State var step: Step = .pickingApp
+    @State var step: ASCUploadStep = .pickingApp
     #if os(iOS)
     // iPad presents the wizard as a NavigationStack push-per-step flow; `path` holds the
     // pushed steps (root `.pickingApp` is implicit). `step` is kept in sync for the
     // terminal uploading/done screen, which flips its content on `step` rather than a push.
-    @State var path: [Step] = []
+    @State var path: [ASCUploadStep] = []
     #endif
     @State var appsWithVersions: [ASCAppWithVersions] = []
     @State var selectedApp: ASCApp?
@@ -31,8 +31,8 @@ struct UploadToAppStoreConnectView: View {
 
     @State var localizationsByVersionId: [String: [ASCAppStoreVersionLocalization]] = [:]
 
-    @State var versionDrafts: [VersionLocaleDraft] = []
-    @State var appInfoDrafts: [AppInfoLocaleDraft] = []
+    @State var versionDrafts: [ASCVersionLocaleDraft] = []
+    @State var appInfoDrafts: [ASCAppInfoLocaleDraft] = []
     @State var copyrightByVersion: [String: String] = [:]
     @State var originalCopyrightByVersion: [String: String] = [:]
     @State var selectedMetadataLocale: String?
@@ -44,8 +44,8 @@ struct UploadToAppStoreConnectView: View {
     @State var expandedRowPlanIds: Set<String> = []   // absent = collapsed (default)
     @State var uploadProgress: UploadProgress?
     @State var uploadTask: Task<Void, Never>?
-    @State var uploadSummary: UploadSummary?
-    @State var metadataSummary: MetadataSaveSummary?
+    @State var uploadSummary: ASCUploadSummary?
+    @State var metadataSummary: ASCMetadataSaveSummary?
     @State var screenshotSync = ASCScreenshotSyncCoordinator()
 
     @State var errorMessage: String?
@@ -57,155 +57,6 @@ struct UploadToAppStoreConnectView: View {
     @State var isConfirmingUpload = false
     @State var isConfirmingReviewedSync = false
     @State var credentials = AppStoreConnectCredentialsStore.shared
-
-    nonisolated struct UploadSummary {
-        let appId: String?
-        let appName: String
-        let totalScreenshots: Int
-        let localizationCount: Int
-        let versionCount: Int
-    }
-
-    nonisolated struct MetadataSaveSummary {
-        let appId: String?
-        let appName: String
-        let versionCount: Int
-        let localeCount: Int
-        let fieldCount: Int
-    }
-
-    nonisolated enum Step: Hashable {
-        case pickingApp
-        case pickingVersion
-        case editingMetadata
-        case configuringPlan
-        case reviewingChanges
-        case uploading
-        case done
-    }
-
-    struct VersionLocaleDraft: Identifiable {
-        let id: String
-        let versionId: String
-        let locale: String
-        var description: String
-        var keywords: String
-        var promotionalText: String
-        var whatsNew: String
-        var marketingUrl: String
-        var supportUrl: String
-        var original: ASCAppStoreVersionLocalization.Attributes
-
-        var isChanged: Bool {
-            description != (original.description ?? "")
-                || keywords != (original.keywords ?? "")
-                || promotionalText != (original.promotionalText ?? "")
-                || whatsNew != (original.whatsNew ?? "")
-                || marketingUrl != (original.marketingUrl ?? "")
-                || supportUrl != (original.supportUrl ?? "")
-        }
-
-        func changedAttributes() -> [String: AnyEncodable] {
-            var changes: [String: AnyEncodable] = [:]
-            if description != (original.description ?? "") { changes["description"] = AnyEncodable(description) }
-            if keywords != (original.keywords ?? "") { changes["keywords"] = AnyEncodable(keywords) }
-            if promotionalText != (original.promotionalText ?? "") { changes["promotionalText"] = AnyEncodable(promotionalText) }
-            if whatsNew != (original.whatsNew ?? "") { changes["whatsNew"] = AnyEncodable(whatsNew) }
-            if marketingUrl != (original.marketingUrl ?? "") { changes["marketingUrl"] = AnyEncodable(marketingUrl) }
-            if supportUrl != (original.supportUrl ?? "") { changes["supportUrl"] = AnyEncodable(supportUrl) }
-            return changes
-        }
-
-        mutating func markSaved() {
-            original = ASCAppStoreVersionLocalization.Attributes(
-                locale: locale,
-                description: description,
-                keywords: keywords,
-                promotionalText: promotionalText,
-                whatsNew: whatsNew,
-                marketingUrl: marketingUrl,
-                supportUrl: supportUrl
-            )
-        }
-    }
-
-    struct AppInfoLocaleDraft: Identifiable {
-        let id: String
-        let locale: String
-        var name: String
-        var subtitle: String
-        var privacyPolicyUrl: String
-        var original: ASCAppInfoLocalization.Attributes
-
-        var isChanged: Bool {
-            name != (original.name ?? "")
-                || subtitle != (original.subtitle ?? "")
-                || privacyPolicyUrl != (original.privacyPolicyUrl ?? "")
-        }
-
-        func changedAttributes() -> [String: AnyEncodable] {
-            var changes: [String: AnyEncodable] = [:]
-            if name != (original.name ?? "") { changes["name"] = AnyEncodable(name) }
-            if subtitle != (original.subtitle ?? "") { changes["subtitle"] = AnyEncodable(subtitle) }
-            if privacyPolicyUrl != (original.privacyPolicyUrl ?? "") { changes["privacyPolicyUrl"] = AnyEncodable(privacyPolicyUrl) }
-            return changes
-        }
-
-        mutating func markSaved() {
-            original = ASCAppInfoLocalization.Attributes(
-                locale: locale,
-                name: name,
-                subtitle: subtitle,
-                privacyPolicyUrl: privacyPolicyUrl,
-                privacyPolicyText: original.privacyPolicyText,
-                privacyChoicesUrl: original.privacyChoicesUrl
-            )
-        }
-    }
-
-        struct UploadPlanEntry: Identifiable {
-            let id: String
-            let destinationId: String
-            let destinationLabel: String
-            let destinationPlatform: ASCPlatform?
-            let rowPlanId: UUID
-            let rowLabel: String
-            let sourceSizeLabel: String
-        let displayTypeLabel: String
-        let displayTypeRawValue: String
-        let projectLocaleLabel: String
-        let projectLocaleCode: String
-        let appStoreLocaleCode: String?
-        let templateCount: Int
-        let isSelected: Bool
-        let skipReason: String?
-
-        var screenshotCount: Int { isSelected ? templateCount : 0 }
-    }
-
-    struct UploadLocaleGroup: Identifiable {
-        let id: String
-        let label: String
-        let entries: [UploadPlanEntry]
-
-        var screenshotCount: Int { entries.reduce(0) { $0 + $1.screenshotCount } }
-    }
-
-    /// One per source row: the row/display-type details are constant across locales, so they're
-    /// shown once in the group header and the varying locale destinations are listed beneath.
-        struct UploadRowGroup: Identifiable {
-            let id: String
-            let destinationLabel: String
-            let destinationPlatform: ASCPlatform?
-            let rowLabel: String
-            let sourceSizeLabel: String
-            let displayTypeLabel: String
-        let displayTypeRawValue: String
-        let templateCount: Int
-        let entries: [UploadPlanEntry]
-
-        var screenshotCount: Int { entries.reduce(0) { $0 + $1.screenshotCount } }
-    }
 
     var apps: [ASCApp] { appsWithVersions.map(\.app) }
 
@@ -285,7 +136,7 @@ struct UploadToAppStoreConnectView: View {
     // MARK: - Navigation (shared)
 
     /// Move forward one step. macOS swaps the single-screen state; iPad pushes onto the stack.
-    func advance(to next: Step) {
+    func advance(to next: ASCUploadStep) {
         step = next
         #if os(iOS)
         path.append(next)
@@ -293,7 +144,7 @@ struct UploadToAppStoreConnectView: View {
     }
 
     /// Return to the originating plan/review after a sync error or cancellation.
-    func retreatAfterScreenshotSync(to destination: Step) {
+    func retreatAfterScreenshotSync(to destination: ASCUploadStep) {
         step = destination
         #if os(iOS)
         if path.last == .uploading || path.last == .done {

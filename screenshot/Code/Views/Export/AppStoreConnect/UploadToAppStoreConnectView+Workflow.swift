@@ -123,7 +123,7 @@ extension UploadToAppStoreConnectView {
     static let defaultWhatsNew = "New features and bug fixes"
 
     func buildMetadataDrafts(appInfoLocalizations: [ASCAppInfoLocalization]) {
-        var allVersionDrafts: [VersionLocaleDraft] = []
+        var allVersionDrafts: [ASCVersionLocaleDraft] = []
         var copyrights: [String: String] = [:]
         for version in selectedVersions {
             let sorted = (localizationsByVersionId[version.id] ?? [])
@@ -136,7 +136,7 @@ extension UploadToAppStoreConnectView {
             allVersionDrafts += sorted.map { loc in
                 let existing = loc.attributes.whatsNew?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 let whatsNew = existing.isEmpty ? englishWhatsNew : existing
-                return VersionLocaleDraft(
+                return ASCVersionLocaleDraft(
                     id: loc.id,
                     versionId: version.id,
                     locale: loc.attributes.locale,
@@ -157,7 +157,7 @@ extension UploadToAppStoreConnectView {
         appInfoDrafts = appInfoLocalizations
             .sorted { $0.attributes.locale < $1.attributes.locale }
             .map { loc in
-                AppInfoLocaleDraft(
+                ASCAppInfoLocaleDraft(
                     id: loc.id,
                     locale: loc.attributes.locale,
                     name: loc.attributes.name ?? "",
@@ -217,7 +217,7 @@ extension UploadToAppStoreConnectView {
 
     /// Patches every changed draft (copyright, version localizations, app-info localizations) in
     /// parallel, then re-baselines the drafts so the change dots clear. Returns what was written.
-    func saveMetadataChanges() async throws -> MetadataSaveSummary {
+    func saveMetadataChanges() async throws -> ASCMetadataSaveSummary {
         let changedCopyrights = copyrightByVersion.filter { $0.value != (originalCopyrightByVersion[$0.key] ?? "") }
         let versionSnapshot = versionDrafts
         let appInfoSnapshot = appInfoDrafts
@@ -267,7 +267,7 @@ extension UploadToAppStoreConnectView {
         let fieldCount = changedVersionDrafts.reduce(0) { $0 + $1.changedAttributes().count }
             + changedAppInfoDrafts.reduce(0) { $0 + $1.changedAttributes().count }
             + changedCopyrights.count
-        return MetadataSaveSummary(
+        return ASCMetadataSaveSummary(
             appId: selectedApp?.id,
             appName: selectedApp?.attributes.name ?? "",
             versionCount: versionIds.count,
@@ -481,7 +481,7 @@ extension UploadToAppStoreConnectView {
     }
 
     func applyPreparedScreenshotSync(
-        returnOnFailure: Step,
+        returnOnFailure: ASCUploadStep,
         advanceToUploading: Bool = true
     ) async {
         errorMessage = nil
@@ -515,7 +515,7 @@ extension UploadToAppStoreConnectView {
     }
 
     func finishScreenshotSync(using sets: [ASCScreenshotSetDiff]) {
-        let summary = UploadSummary(
+        let summary = ASCUploadSummary(
             appId: selectedApp?.id,
             appName: selectedApp?.attributes.name ?? "",
             totalScreenshots: sets.reduce(0) { $0 + $1.proposedAssets.count },

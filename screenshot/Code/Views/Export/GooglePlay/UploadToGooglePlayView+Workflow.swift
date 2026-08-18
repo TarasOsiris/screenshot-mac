@@ -92,7 +92,7 @@ extension UploadToGooglePlayView {
                     source: state,
                     progress: { p in self.uploadProgress = p }
                 )
-                let summary = UploadSummary(
+                let summary = GPUploadSummary(
                     totalScreenshots: targets.reduce(0) { $0 + $1.templateCount * $1.languages.count },
                     languageCount: Set(targets.flatMap { $0.languages.map(\.playCode) }).count,
                     packageName: pkg,
