@@ -8,7 +8,7 @@ import SwiftUI
 /// Wizard for uploading screenshots to a Google Play store listing. Mirrors the App Store
 /// Connect upload, but the Play flow is simpler: the user supplies a package name (no
 /// app/version/metadata steps), picks an image type + languages per row, then the edit is
-/// staged as a draft (`changesNotSentForReview`). DEBUG-only.
+/// staged as a draft (`changesNotSentForReview`).
 struct UploadToGooglePlayView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) var state

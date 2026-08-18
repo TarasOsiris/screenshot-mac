@@ -1,4 +1,3 @@
-#if DEBUG
 import Testing
 import CoreGraphics
 @testable import Screenshot_Bro
@@ -27,4 +26,3 @@ struct GooglePlayImageTypeTests {
         #expect(GPImageType.detect(width: 1200, height: 1600) == .sevenInchScreenshots)
     }
 }
-#endif

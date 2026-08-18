@@ -1,4 +1,3 @@
-#if DEBUG
 import Testing
 import Foundation
 import CoreGraphics
@@ -94,4 +93,3 @@ struct GooglePlayUploadValidatorTests {
         #expect(issues.contains { $0.severity == .warning })
     }
 }
-#endif

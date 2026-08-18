@@ -1,4 +1,3 @@
-#if DEBUG
 import Testing
 import Foundation
 import Security
@@ -150,4 +149,3 @@ struct GooglePlayAuthServiceTests {
         #expect(verified)
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if DEBUG
 import Testing
 @testable import Screenshot_Bro
 
@@ -24,4 +23,3 @@ struct GooglePlayLanguageMatcherTests {
         #expect(GooglePlayLanguageMatcher.playLanguageCode(forProjectCode: "xx") == "xx")
     }
 }
-#endif
