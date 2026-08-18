@@ -118,7 +118,7 @@ struct LocaleBanner: View {
                 await runBannerTranslation(session)
             }
             .translationLanguageIssueAlert(item: $languageIssue)
-            .onChange(of: state.pendingTranslateShapeId) { _, newValue in
+            .onChange(of: state.localeMenu.pendingTranslateShapeId) { _, newValue in
                 handlePendingTranslateShapeId(newValue)
             }
         }
@@ -270,7 +270,7 @@ struct LocaleBanner: View {
 
     private func handlePendingTranslateShapeId(_ shapeId: UUID?) {
         guard let shapeId else { return }
-        state.pendingTranslateShapeId = nil
+        state.localeMenu.pendingTranslateShapeId = nil
         startTranslation(onlyUntranslated: false, shapeIds: [shapeId])
     }
 }

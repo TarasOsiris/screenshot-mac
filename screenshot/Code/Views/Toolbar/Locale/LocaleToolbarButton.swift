@@ -30,26 +30,26 @@ struct LocaleToolbarButton: View {
                 if !ids.isEmpty {
                     Divider()
                     Button("Translate Selected to All Languages", systemImage: "character.bubble") {
-                        state.pendingFanOutTranslateShapeIds = ids
+                        state.localeMenu.pendingFanOutTranslateShapeIds = ids
                     }
-                    .disabled(state.isFanOutTranslating)
+                    .disabled(state.localeMenu.isFanOutTranslating)
                 }
             }
 
             if !localeState.isBaseLocale {
                 Divider()
                 Button("Auto-Translate Missing Text", systemImage: "character.bubble") {
-                    state.pendingLocaleMenuRequest = .autoTranslateMissing
+                    state.localeMenu.pendingMenuRequest = .autoTranslateMissing
                 }
                 .disabled(progress.total == 0 || progress.translated >= progress.total)
 
                 Button("Re-Translate All Text...", systemImage: "arrow.triangle.2.circlepath") {
-                    state.pendingLocaleMenuRequest = .reTranslateAll
+                    state.localeMenu.pendingMenuRequest = .reTranslateAll
                 }
                 .disabled(progress.total == 0)
 
                 Button("Revert to Base Language...", systemImage: "arrow.uturn.backward", role: .destructive) {
-                    state.pendingLocaleMenuRequest = .revertToBase
+                    state.localeMenu.pendingMenuRequest = .revertToBase
                 }
                 .disabled(!localeState.activeLocaleHasOverrides)
             }
@@ -57,12 +57,12 @@ struct LocaleToolbarButton: View {
             Divider()
             if localeState.locales.count > 1 {
                 Button("Edit Translation Table...", systemImage: "tablecells") {
-                    state.pendingLocaleMenuRequest = .editTranslations
+                    state.localeMenu.pendingMenuRequest = .editTranslations
                 }
                 .disabled(progress.total == 0)
             }
             Button("Manage Languages...", systemImage: "globe") {
-                state.pendingLocaleMenuRequest = .manageLocales
+                state.localeMenu.pendingMenuRequest = .manageLocales
             }
         } label: {
             localeLabel

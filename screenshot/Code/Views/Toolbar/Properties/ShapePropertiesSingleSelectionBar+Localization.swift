@@ -57,10 +57,10 @@ extension ShapePropertiesSingleSelectionBar {
             // base locale — firing it while editing a translation would overwrite that in-progress work.
             if state.localeState.isBaseLocale {
                 Button {
-                    state.pendingFanOutTranslateShapeIds = [shapeId]
+                    state.localeMenu.pendingFanOutTranslateShapeIds = [shapeId]
                 } label: {
                     HStack(spacing: 6) {
-                        if state.isFanOutTranslating {
+                        if state.localeMenu.isFanOutTranslating {
                             ProgressView().controlSize(.small)
                             Text("Translating…")
                         } else {
@@ -71,7 +71,7 @@ extension ShapePropertiesSingleSelectionBar {
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
-                .disabled(state.isFanOutTranslating || !hasBaseText)
+                .disabled(state.localeMenu.isFanOutTranslating || !hasBaseText)
             }
 
             Divider()
@@ -103,12 +103,12 @@ extension ShapePropertiesSingleSelectionBar {
             HStack {
                 Button("Edit Translation Table...") {
                     isTextLocalizationPopoverPresented = false
-                    state.pendingLocaleMenuRequest = .editTranslations
+                    state.localeMenu.pendingMenuRequest = .editTranslations
                 }
                 Spacer()
                 Button("Manage Languages...") {
                     isTextLocalizationPopoverPresented = false
-                    state.pendingLocaleMenuRequest = .manageLocales
+                    state.localeMenu.pendingMenuRequest = .manageLocales
                 }
             }
         }
@@ -200,10 +200,10 @@ private struct TextLocalizationSheetContent: View {
             Section {
                 if state.localeState.isBaseLocale {
                     Button {
-                        state.pendingFanOutTranslateShapeIds = [shapeId]
+                        state.localeMenu.pendingFanOutTranslateShapeIds = [shapeId]
                     } label: {
                         HStack(spacing: 8) {
-                            if state.isFanOutTranslating {
+                            if state.localeMenu.isFanOutTranslating {
                                 ProgressView().controlSize(.small)
                                 Text("Translating…")
                             } else {
@@ -212,7 +212,7 @@ private struct TextLocalizationSheetContent: View {
                             }
                         }
                     }
-                    .disabled(state.isFanOutTranslating || !hasBaseText)
+                    .disabled(state.localeMenu.isFanOutTranslating || !hasBaseText)
                 }
             } header: {
                 VStack(alignment: .leading, spacing: 2) {
@@ -272,7 +272,7 @@ private struct TextLocalizationSheetContent: View {
         }
         .listStyle(.insetGrouped)
         .onDisappear {
-            if let followUp { state.pendingLocaleMenuRequest = followUp }
+            if let followUp { state.localeMenu.pendingMenuRequest = followUp }
         }
     }
 

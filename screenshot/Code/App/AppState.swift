@@ -28,9 +28,8 @@ final class AppState {
     @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
     @ObservationIgnored var justAddedShapeId: UUID?
     @ObservationIgnored var templateMoveContinuation: TemplateMoveContinuation?
-    var pendingTranslateShapeId: UUID?
-    var pendingFanOutTranslateShapeIds: Set<UUID>?
-    var pendingLocaleMenuRequest: LocaleMenuRequest?
+    /// View-to-view signals for the locale menu. See LocaleMenuCoordinator.
+    let localeMenu = LocaleMenuCoordinator()
     /// Interactive onboarding-tour runtime state + flow (see `OnboardingCoachController`).
     let coach = OnboardingCoachController()
     var screenshotImages: [String: NSImage] = [:]
@@ -83,7 +82,6 @@ final class AppState {
     /// tombstone merge / own-write bookkeeping.
     @ObservationIgnored var reloadTask: Task<Void, Never>?
     var isOpeningProject = false
-    var isFanOutTranslating = false
     /// False until the first `load()` completes. Lets the UI show a loading state instead of
     /// the empty "no projects" screen while an iCloud-deferred load is still pending.
     var hasCompletedInitialLoad = false

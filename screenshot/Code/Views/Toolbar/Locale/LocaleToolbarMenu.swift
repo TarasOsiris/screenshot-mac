@@ -64,10 +64,10 @@ struct LocaleBar: View {
                 await runFanOutTranslation(session)
             }
             .translationLanguageIssueAlert(item: $languageIssue)
-            .onChange(of: state.pendingLocaleMenuRequest) { _, newValue in
+            .onChange(of: state.localeMenu.pendingMenuRequest) { _, newValue in
                 handleLocaleMenuRequest(newValue)
             }
-            .onChange(of: state.pendingFanOutTranslateShapeIds) { _, newValue in
+            .onChange(of: state.localeMenu.pendingFanOutTranslateShapeIds) { _, newValue in
                 startFanOutTranslation(shapeIds: newValue)
             }
     }
@@ -80,7 +80,7 @@ struct LocaleBar: View {
         FlowLayout(horizontalSpacing: 4, verticalSpacing: 4) {
             localeActionsMenu
 
-            if state.isFanOutTranslating {
+            if state.localeMenu.isFanOutTranslating {
                 HStack(spacing: 4) {
                     ProgressView().controlSize(.small)
                     Text("Translating…")
@@ -136,7 +136,7 @@ struct LocaleBar: View {
             let ids = state.selectedTranslatableTextShapeIds
             if !ids.isEmpty {
                 Button {
-                    state.pendingFanOutTranslateShapeIds = ids
+                    state.localeMenu.pendingFanOutTranslateShapeIds = ids
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "character.bubble")
@@ -153,8 +153,8 @@ struct LocaleBar: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .disabled(state.isFanOutTranslating)
-                .opacity(state.isFanOutTranslating ? UIMetrics.Opacity.disabled : 1)
+                .disabled(state.localeMenu.isFanOutTranslating)
+                .opacity(state.localeMenu.isFanOutTranslating ? UIMetrics.Opacity.disabled : 1)
                 .help("Translate \(ids.count == 1 ? "this text" : "the \(ids.count) selected texts") into all \(count) other language\(count == 1 ? "" : "s")")
             }
         }
@@ -261,12 +261,12 @@ struct LocaleBar: View {
     private func finishFanOutTranslation() {
         fanOutPendingTargets.removeAll()
         fanOutShapeIds.removeAll()
-        state.isFanOutTranslating = false
+        state.localeMenu.isFanOutTranslating = false
     }
 
     private func handleLocaleMenuRequest(_ request: LocaleMenuRequest?) {
         guard let request else { return }
-        state.pendingLocaleMenuRequest = nil
+        state.localeMenu.pendingMenuRequest = nil
         switch request {
         case .manageLocales: isManagingLocales = true
         case .editTranslations: isTranslationOverview = true
@@ -278,14 +278,14 @@ struct LocaleBar: View {
 
     private func startFanOutTranslation(shapeIds: Set<UUID>?) {
         guard let shapeIds, !shapeIds.isEmpty else { return }
-        state.pendingFanOutTranslateShapeIds = nil
-        guard !state.isFanOutTranslating else { return }
+        state.localeMenu.pendingFanOutTranslateShapeIds = nil
+        guard !state.localeMenu.isFanOutTranslating else { return }
         let base = state.localeState.baseLocaleCode
         let targets = state.localeState.locales.map(\.code).filter { $0 != base }
         guard !targets.isEmpty else { return }
         fanOutShapeIds = shapeIds
         fanOutPendingTargets = targets
-        state.isFanOutTranslating = true
+        state.localeMenu.isFanOutTranslating = true
         fanOutConfig.refresh(source: base, target: targets[0])
     }
 }

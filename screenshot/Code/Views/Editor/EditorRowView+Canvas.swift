@@ -452,7 +452,7 @@ extension EditorRowView {
                             }
                         },
                         onTranslate: (shape.type == .text && isNonBaseLocale) ? {
-                            state.pendingTranslateShapeId = shape.id
+                            state.localeMenu.pendingTranslateShapeId = shape.id
                         } : nil,
                         translateLocaleName: currentLocaleName,
                         onTranslateAllLocales: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
@@ -464,12 +464,12 @@ extension EditorRowView {
                                         .map(\.id)
                                 )
                                 guard !translatableIds.isEmpty else { return }
-                                state.pendingFanOutTranslateShapeIds = translatableIds
+                                state.localeMenu.pendingFanOutTranslateShapeIds = translatableIds
                             } else {
-                                state.pendingFanOutTranslateShapeIds = [shape.id]
+                                state.localeMenu.pendingFanOutTranslateShapeIds = [shape.id]
                             }
                         } : nil,
-                        translateAllLocalesDisabled: state.isFanOutTranslating,
+                        translateAllLocalesDisabled: state.localeMenu.isFanOutTranslating,
                         onResetAllTranslations: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
                             state.resetAllTranslations(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
                         } : nil,

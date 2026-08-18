@@ -353,7 +353,7 @@ struct ScreenshotBroApp: App {
                 let translationProgress = appState.translationProgress()
 
                 Button("Auto-Translate Missing Text") {
-                    appState.pendingLocaleMenuRequest = .autoTranslateMissing
+                    appState.localeMenu.pendingMenuRequest = .autoTranslateMissing
                 }
                 .disabled(
                     appState.localeState.isBaseLocale ||
@@ -362,24 +362,24 @@ struct ScreenshotBroApp: App {
                 )
 
                 Button("Re-Translate All Text...") {
-                    appState.pendingLocaleMenuRequest = .reTranslateAll
+                    appState.localeMenu.pendingMenuRequest = .reTranslateAll
                 }
                 .disabled(appState.localeState.isBaseLocale || translationProgress.total == 0)
 
                 Button("Revert to Base Language...") {
-                    appState.pendingLocaleMenuRequest = .revertToBase
+                    appState.localeMenu.pendingMenuRequest = .revertToBase
                 }
                 .disabled(!appState.localeState.activeLocaleHasOverrides)
 
                 Divider()
 
                 Button("Edit Translations...") {
-                    appState.pendingLocaleMenuRequest = .editTranslations
+                    appState.localeMenu.pendingMenuRequest = .editTranslations
                 }
                 .disabled(appState.localeState.locales.count < 2 || translationProgress.total == 0)
 
                 Button("Manage Languages...") {
-                    appState.pendingLocaleMenuRequest = .manageLocales
+                    appState.localeMenu.pendingMenuRequest = .manageLocales
                 }
             }
 
