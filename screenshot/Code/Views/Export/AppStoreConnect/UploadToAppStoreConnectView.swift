@@ -51,7 +51,7 @@ struct UploadToAppStoreConnectView: View {
     @State var errorMessage: String?
     /// Full error text (summary + API response + context). When nil, the Details button falls back to `errorMessage`.
     @State var errorDetailsText: String?
-    @State var presentedErrorDetails: ASCUploadFailureDetailItem?
+    @State var presentedErrorDetails: UploadFailureDetail?
     @State var displayTypeDetailsPlanId: String?
     @State var isBusy = false
     @State var isConfirmingUpload = false
@@ -240,7 +240,7 @@ struct UploadToAppStoreConnectView: View {
                 screenshotSync.discard()
             }
             .sheet(item: $presentedErrorDetails) { details in
-                ASCUploadFailureDetailsSheet(details: details.message)
+                UploadFailureDetailsSheet(details: details.message)
             }
             .confirmationDialog(
                 isConfirmingReviewedSync

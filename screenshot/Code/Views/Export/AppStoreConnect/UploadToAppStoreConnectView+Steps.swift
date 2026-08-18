@@ -504,19 +504,7 @@ extension UploadToAppStoreConnectView {
     }
 
     var inProgressView: some View {
-        VStack(spacing: 16) {
-            if let progress = uploadProgress {
-                ProgressView(value: Double(progress.completedSteps), total: Double(max(progress.totalSteps, 1)))
-                Text(progress.currentLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("\(progress.completedSteps) / \(progress.totalSteps)")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            } else {
-                ProgressView()
-            }
-        }
+        UploadProgressView(progress: uploadProgress)
     }
 
     @ViewBuilder
@@ -531,12 +519,7 @@ extension UploadToAppStoreConnectView {
     @ViewBuilder
     var uploadDoneView: some View {
         VStack(spacing: 14) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(.green)
-            Text("Screenshot sync complete")
-                .font(.title3)
-                .fontWeight(.semibold)
+            UploadCompleteHeader(title: "Screenshot sync complete")
             if let summary = uploadSummary {
                 Text("\(summary.totalScreenshots) screenshot\(summary.totalScreenshots == 1 ? "" : "s") synced across \(summary.localizationCount) locale\(summary.localizationCount == 1 ? "" : "s") and \(summary.versionCount) version\(summary.versionCount == 1 ? "" : "s").")
                     .font(.callout)
@@ -550,12 +533,7 @@ extension UploadToAppStoreConnectView {
     @ViewBuilder
     var metadataSavedView: some View {
         VStack(spacing: 14) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(.green)
-            Text("Metadata updated")
-                .font(.title3)
-                .fontWeight(.semibold)
+            UploadCompleteHeader(title: "Metadata updated")
             if let summary = metadataSummary {
                 if summary.fieldCount == 0 {
                     Text("No changes to save.")

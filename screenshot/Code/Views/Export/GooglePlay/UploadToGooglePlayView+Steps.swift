@@ -103,15 +103,7 @@ extension UploadToGooglePlayView {
                 Text("\(total) \(total == 1 ? "screenshot" : "screenshots") to upload")
                     .font(.headline)
                 Spacer()
-                if issues.hasErrors {
-                    Label("Fix required", systemImage: "xmark.octagon.fill")
-                        .foregroundStyle(.red)
-                        .font(.callout)
-                } else {
-                    Label("Ready", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .font(.callout)
-                }
+                PreflightStatusLabel(hasErrors: issues.hasErrors, font: .callout)
             }
 
             // Shared with the App Store Connect wizard so the same issue reads the same way
@@ -227,22 +219,7 @@ extension UploadToGooglePlayView {
     var uploadingStep: some View {
         VStack(spacing: 16) {
             Spacer()
-            if let progress = uploadProgress, progress.totalSteps > 0 {
-                ProgressView(value: Double(progress.completedSteps), total: Double(progress.totalSteps))
-                    .frame(maxWidth: 360)
-                Text("\(progress.completedSteps) / \(progress.totalSteps)")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                Text(progress.currentLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            } else {
-                ProgressView()
-                Text("Preparing…")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
+            UploadProgressView(progress: uploadProgress)
             Spacer()
         }
         .frame(maxWidth: .infinity)
@@ -255,11 +232,7 @@ extension UploadToGooglePlayView {
     var doneStep: some View {
         VStack(spacing: 14) {
             Spacer()
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.green)
-            Text("Upload complete")
-                .font(.title3.weight(.semibold))
+            UploadCompleteHeader(title: "Upload complete")
             if let summary = uploadSummary {
                 Text("\(summary.totalScreenshots) \(summary.totalScreenshots == 1 ? "screenshot" : "screenshots") across \(summary.languageCount) \(summary.languageCount == 1 ? "language" : "languages")")
                     .foregroundStyle(.secondary)

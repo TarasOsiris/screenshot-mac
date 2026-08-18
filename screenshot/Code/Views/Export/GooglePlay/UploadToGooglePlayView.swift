@@ -26,7 +26,7 @@ struct UploadToGooglePlayView: View {
 
     @State var errorMessage: String?
     @State var errorDetailsText: String?
-    @State var presentedErrorDetails: GPUploadFailureDetailItem?
+    @State var presentedErrorDetails: UploadFailureDetail?
     @State var isBusy = false
     @State var credentials = GooglePlayCredentialsStore.shared
 
@@ -57,7 +57,7 @@ struct UploadToGooglePlayView: View {
         shell
             .task { prefillPackageName() }
             .sheet(item: $presentedErrorDetails) { details in
-                GPUploadFailureDetailsSheet(details: details.message)
+                UploadFailureDetailsSheet(details: details.message)
             }
     }
 
@@ -112,15 +112,7 @@ struct UploadToGooglePlayView: View {
     }
 
     private var demoModeBanner: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "theatermasks.fill")
-            Text("Demo mode — no screenshots are sent to Google Play.")
-                .font(.callout)
-            Spacer()
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
-        .background(Color.blue.opacity(0.12))
+        DemoModeBanner(message: "A simulated upload against sample data. Nothing is sent to Google Play.")
     }
 
     // MARK: - Content
@@ -154,7 +146,7 @@ struct UploadToGooglePlayView: View {
                         .lineLimit(2)
                     if errorDetailsText != nil {
                         Button("Details") {
-                            presentedErrorDetails = GPUploadFailureDetailItem(message: errorDetailsText ?? errorMessage)
+                            presentedErrorDetails = UploadFailureDetail(message: errorDetailsText ?? errorMessage)
                         }
                         .buttonStyle(.borderless)
                     }
@@ -201,35 +193,5 @@ struct UploadToGooglePlayView: View {
         return GooglePlayUploadValidator.isValidPackageName(
             packageName.trimmingCharacters(in: .whitespacesAndNewlines)
         )
-    }
-}
-
-struct GPUploadFailureDetailItem: Identifiable {
-    let id = UUID()
-    let message: String
-}
-
-struct GPUploadFailureDetailsSheet: View {
-    let details: String
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Upload error details")
-                .font(.headline)
-            ScrollView {
-                Text(details)
-                    .font(.system(.callout, design: .monospaced))
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            HStack {
-                Spacer()
-                Button("Close") { dismiss() }
-                    .keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(20)
-        .frame(width: 520, height: 420)
     }
 }

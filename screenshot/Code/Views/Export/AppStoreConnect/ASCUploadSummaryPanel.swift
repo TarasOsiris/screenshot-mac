@@ -36,15 +36,7 @@ struct ASCUploadSummaryPanel: View {
                     .fontWeight(.semibold)
             }
             Spacer()
-            if issues.hasErrors {
-                Label("Fix required", systemImage: "xmark.circle.fill")
-                    .foregroundStyle(.red)
-                    .font(.caption)
-            } else {
-                Label("Ready", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .font(.caption)
-            }
+            PreflightStatusLabel(hasErrors: issues.hasErrors, font: .caption)
             Button("Refresh App Store data", action: onRefresh)
                 .font(.caption)
                 .disabled(isBusy)

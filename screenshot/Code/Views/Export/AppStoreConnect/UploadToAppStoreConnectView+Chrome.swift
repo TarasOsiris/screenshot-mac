@@ -42,22 +42,7 @@ extension UploadToAppStoreConnectView {
     }
 
     var demoModeBanner: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "theatermasks.fill")
-                .foregroundStyle(.white)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Demo Mode")
-                    .font(.caption.bold())
-                    .foregroundStyle(.white)
-                Text("Sample apps and a simulated screenshot sync. Nothing is sent to App Store Connect.")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.9))
-            }
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(Color.blue)
+        DemoModeBanner(message: "Sample apps and a simulated screenshot sync. Nothing is sent to App Store Connect.")
     }
 
     var footer: some View {
@@ -85,7 +70,7 @@ extension UploadToAppStoreConnectView {
     /// Show the full failure text, preferring the detailed report and falling back to the
     /// short banner message. Shared by the macOS footer and the iPad error banner.
     func presentErrorDetails(fallback message: String) {
-        presentedErrorDetails = ASCUploadFailureDetailItem(message: errorDetailsText ?? message)
+        presentedErrorDetails = UploadFailureDetail(message: errorDetailsText ?? message)
     }
 
     @ViewBuilder
