@@ -1,14 +1,17 @@
 #!/bin/sh
-# Runs SwiftLint if it is installed. Absent SwiftLint is not an error: the project builds
-# without it, and this script is wired into the app target's build phases.
+# Runs SwiftLint over the app and test sources (paths come from .swiftlint.yml).
+#
+# This is not an Xcode build phase: the project sets ENABLE_USER_SCRIPT_SANDBOXING = YES, and
+# the script sandbox denies SwiftLint read access to the source tree and even to
+# .swiftlint.yml. Wiring it into the build would mean turning that setting off project-wide,
+# so lint runs here and from the pre-commit hook instead (see tools/install-hooks.sh).
 set -e
 
-if command -v swiftlint >/dev/null 2>&1; then
-    exec swiftlint lint --quiet "$@"
+SWIFTLINT=$(command -v swiftlint || echo /opt/homebrew/bin/swiftlint)
+if [ ! -x "$SWIFTLINT" ]; then
+    echo "note: SwiftLint not installed — skipping lint. Install with: brew install swiftlint"
+    exit 0
 fi
 
-if [ -x /opt/homebrew/bin/swiftlint ]; then
-    exec /opt/homebrew/bin/swiftlint lint --quiet "$@"
-fi
-
-echo "note: SwiftLint not installed — skipping lint. Install with: brew install swiftlint"
+cd "$(dirname "$0")/.."
+exec "$SWIFTLINT" lint --quiet "$@"

@@ -1,6 +1,6 @@
 #if os(iOS)
-import SwiftUI
 import PhotosUI
+import SwiftUI
 import UniformTypeIdentifiers
 
 /// iPad image-source dropdown: lets the user pull an image from the photo library, the camera,

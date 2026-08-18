@@ -362,7 +362,6 @@ final class AppState {
     // extension can't declare, and is internal so that file can read it.
     @ObservationIgnored var isInUndoTransaction = false
 
-
     func makeDefaultRow(id: UUID = UUID(), label: String? = nil, width: CGFloat? = nil, height: CGFloat? = nil) -> ScreenshotRow {
         makeDefaultRow(
             id: id,

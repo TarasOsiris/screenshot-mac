@@ -1,7 +1,7 @@
-import Testing
 import AppKit
-import SwiftUI
 @testable import Screenshot_Bro
+import SwiftUI
+import Testing
 
 @Suite(.serialized)
 @MainActor

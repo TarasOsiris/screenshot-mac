@@ -18,7 +18,7 @@ enum ZoomConstants {
 struct ZoomControls: View {
     @Environment(AppState.self) private var state
     @State private var isPopoverPresented = false
-    var onFit: (() -> Void)? = nil
+    var onFit: (() -> Void)?
     var fitHelpText: LocalizedStringKey = "Fit canvas to the window"
 
     var body: some View {

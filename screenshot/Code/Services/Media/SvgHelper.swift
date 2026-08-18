@@ -1,8 +1,8 @@
 #if os(macOS)
 import AppKit
 #else
-import UIKit
 import SwiftDraw
+import UIKit
 #endif
 import SwiftUI
 import UniformTypeIdentifiers

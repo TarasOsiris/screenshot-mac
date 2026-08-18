@@ -1,7 +1,7 @@
 import AppKit
+@testable import Screenshot_Bro
 import SwiftUI
 import Testing
-@testable import Screenshot_Bro
 
 /// Regression cover for the 3D (USDZ) device frames. A cold SceneKit renderer used to hand back a
 /// fully transparent snapshot, which shipped App Store screenshots with the device missing.

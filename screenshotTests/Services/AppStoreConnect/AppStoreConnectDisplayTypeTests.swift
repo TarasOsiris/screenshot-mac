@@ -1,6 +1,6 @@
 import CoreGraphics
-import Testing
 @testable import Screenshot_Bro
+import Testing
 
 struct AppStoreConnectDisplayTypeTests {
     @Test func desktopAcceptsLandscapeOnly() {

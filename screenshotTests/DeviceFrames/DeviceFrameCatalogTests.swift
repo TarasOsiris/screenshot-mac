@@ -1,7 +1,7 @@
 import CoreGraphics
+@testable import Screenshot_Bro
 import SwiftUI
 import Testing
-@testable import Screenshot_Bro
 
 struct DeviceFrameCatalogTests {
 

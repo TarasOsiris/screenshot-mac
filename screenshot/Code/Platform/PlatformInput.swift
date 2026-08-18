@@ -1,10 +1,10 @@
-import SwiftUI
 import OSLog
+import SwiftUI
 #if os(macOS)
 import AppKit
 #else
-import UIKit
 import Photos
+import UIKit
 #endif
 
 /// Synchronous keyboard-modifier state. macOS reads the live NSEvent flags; iPad has no

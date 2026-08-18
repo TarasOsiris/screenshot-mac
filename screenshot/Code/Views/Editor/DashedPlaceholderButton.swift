@@ -4,7 +4,7 @@ import SwiftUI
 /// `isPressed` so touch gets real press feedback (iPad has no hover), with hover
 /// kept as a pointer-only enhancement on macOS / trackpad.
 struct DashedPlaceholderButtonStyle: ButtonStyle {
-    var width: CGFloat? = nil
+    var width: CGFloat?
     var height: CGFloat
 
     func makeBody(configuration: Configuration) -> some View {

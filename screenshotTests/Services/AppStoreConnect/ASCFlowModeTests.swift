@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Screenshot_Bro
+import Testing
 
 struct ASCFlowModeTests {
     private func version(_ state: String) -> ASCAppStoreVersion {

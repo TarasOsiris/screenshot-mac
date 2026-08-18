@@ -152,7 +152,7 @@ enum SimulatorCaptureService {
     }
 
     static func captureBooted() async throws -> CaptureResult {
-        async let identifierTask: String? = (try? await bootedDeviceTypeIdentifier()) ?? nil
+        async let identifierTask: String? = (try? await bootedDeviceTypeIdentifier())
 
         let imageData: Data
         do {

@@ -3,7 +3,6 @@ import SwiftUI
 import UIKit
 #endif
 
-
 struct RasterizedDisplayTextView: View {
     var text: String
     var font: NSFont
@@ -11,10 +10,10 @@ struct RasterizedDisplayTextView: View {
     var alignment: NSTextAlignment
     var verticalAlignment: TextVerticalAlign
     var uppercase: Bool = false
-    var letterSpacing: CGFloat? = nil
-    var lineHeightMultiple: CGFloat? = nil
-    var legacyLineSpacing: CGFloat? = nil
-    var richTextData: String? = nil
+    var letterSpacing: CGFloat?
+    var lineHeightMultiple: CGFloat?
+    var legacyLineSpacing: CGFloat?
+    var richTextData: String?
 
     var body: some View {
         GeometryReader { proxy in

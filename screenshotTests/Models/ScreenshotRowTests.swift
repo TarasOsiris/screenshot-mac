@@ -1,7 +1,7 @@
-import Testing
 import Foundation
-import SwiftUI
 @testable import Screenshot_Bro
+import SwiftUI
+import Testing
 
 struct ScreenshotRowTests {
 
@@ -185,7 +185,7 @@ struct ScreenshotRowTests {
         // Shape center = 1000, owned by template 1 (floor(1000/1000) = 1)
         let t0Shapes = row.visibleShapes(forTemplateAt: 0)
         let t1Shapes = row.visibleShapes(forTemplateAt: 1)
-        #expect(t0Shapes.count == 0, "Clipped shape only visible in owning template")
+        #expect(t0Shapes.isEmpty, "Clipped shape only visible in owning template")
         #expect(t1Shapes.count == 1)
     }
 

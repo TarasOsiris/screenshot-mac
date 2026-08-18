@@ -1,7 +1,7 @@
 import CoreGraphics
-import XCTest
-import SwiftUI
 @testable import Screenshot_Bro
+import SwiftUI
+import XCTest
 
 /// Regression: a row background must not bleed through around templates whose
 /// override background fully covers them. Stacking the row fill under an opaque

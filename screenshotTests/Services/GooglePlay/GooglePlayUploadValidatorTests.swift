@@ -1,7 +1,7 @@
-import Testing
-import Foundation
 import CoreGraphics
+import Foundation
 @testable import Screenshot_Bro
+import Testing
 
 struct GooglePlayUploadValidatorTests {
     private typealias Plan = GPRowPlan
@@ -91,5 +91,23 @@ struct GooglePlayUploadValidatorTests {
         )
         #expect(!issues.hasErrors)
         #expect(issues.contains { $0.severity == .warning })
+    }
+}
+
+struct GooglePlayPackageNameTests {
+    @Test func acceptsReverseDNSNames() {
+        #expect(GooglePlayUploadValidator.isValidPackageName("com.example.myapp"))
+        #expect(GooglePlayUploadValidator.isValidPackageName("com.example.my_app2"))
+        #expect(GooglePlayUploadValidator.isValidPackageName("a.b"))
+    }
+
+    @Test func rejectsMalformedNames() {
+        #expect(!GooglePlayUploadValidator.isValidPackageName(""))
+        #expect(!GooglePlayUploadValidator.isValidPackageName("noseparator"))
+        #expect(!GooglePlayUploadValidator.isValidPackageName("com..example"))
+        #expect(!GooglePlayUploadValidator.isValidPackageName("com.example."))
+        #expect(!GooglePlayUploadValidator.isValidPackageName("1com.example"), "segments must start with a letter")
+        #expect(!GooglePlayUploadValidator.isValidPackageName("com.exa-mple"), "hyphens aren't allowed")
+        #expect(!GooglePlayUploadValidator.isValidPackageName("com.éxample"), "non-ASCII letters aren't allowed")
     }
 }

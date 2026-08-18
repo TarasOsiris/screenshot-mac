@@ -1,6 +1,6 @@
 #if os(iOS)
-import UIKit
 import SwiftUI
+import UIKit
 
 // The slice of NSImage's API the codebase calls, mapped onto UIImage. Heavy AppKit drawing
 // (lockFocus, NSGraphicsContext compositing) is NOT shimmed here — those call sites are

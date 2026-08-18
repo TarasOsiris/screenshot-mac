@@ -1,5 +1,5 @@
-import Foundation
 import CoreGraphics
+import Foundation
 
 /// In-memory mock data for App Store Connect demo mode. The catalog is **derived
 /// from the active project** so the upload wizard always finds a matching App Store

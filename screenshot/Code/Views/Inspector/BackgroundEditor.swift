@@ -512,4 +512,3 @@ struct BackgroundImageEditor: View {
         return false
     }
 }
-

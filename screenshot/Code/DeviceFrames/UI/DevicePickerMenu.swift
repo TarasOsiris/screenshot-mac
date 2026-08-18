@@ -14,10 +14,10 @@ struct DevicePickerMenu: View {
     let frameId: String?
     var allowsNoDevice: Bool = true
     var presentation: DevicePickerPresentation = .form
-    var bodyColor: Binding<Color>? = nil
+    var bodyColor: Binding<Color>?
     var bodyColorLabel: String = String(localized: "Color")
     var canResetBodyColor: Bool = false
-    var onResetBodyColor: (() -> Void)? = nil
+    var onResetBodyColor: (() -> Void)?
     var onSelectNone: () -> Void = {}
     let onSelectCategory: (DeviceCategory) -> Void
     let onSelectFrame: (DeviceFrame) -> Void

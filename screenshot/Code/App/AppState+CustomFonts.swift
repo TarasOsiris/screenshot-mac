@@ -1,5 +1,5 @@
-import SwiftUI
 import CoreText
+import SwiftUI
 
 extension AppState {
     // MARK: - Custom Fonts

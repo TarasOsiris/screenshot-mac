@@ -15,9 +15,9 @@ struct DeviceFrameView: View {
     let bodyColor: Color
     let width: CGFloat
     let height: CGFloat
-    var screenshotImage: NSImage? = nil
-    var screenshotImageIdentity: String? = nil
-    var deviceFrameId: String? = nil
+    var screenshotImage: NSImage?
+    var screenshotImageIdentity: String?
+    var deviceFrameId: String?
     var devicePitch: Double = 0
     var deviceYaw: Double = 0
     var bodyMaterial: DeviceBodyMaterial = DeviceBodyMaterial()

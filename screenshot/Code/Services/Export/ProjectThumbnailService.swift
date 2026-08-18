@@ -1,5 +1,5 @@
-import SwiftUI
 import CoreText
+import SwiftUI
 
 /// Bounds how many thumbnails build concurrently. Without this, scrolling a grid of N cards
 /// fans out N detached IO tasks — each potentially blocking on an undownloaded iCloud file —

@@ -1,6 +1,6 @@
-import Testing
 import AppKit
 @testable import Screenshot_Bro
+import Testing
 
 @Suite(.serialized)
 @MainActor

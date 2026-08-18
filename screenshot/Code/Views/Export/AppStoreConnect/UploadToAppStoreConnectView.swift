@@ -5,7 +5,6 @@ import UIKit
 #endif
 import SwiftUI
 
-
 struct UploadToAppStoreConnectView: View {
     /// Declared first so the memberwise initializer reads `UploadToAppStoreConnectView(mode:)`.
     var mode: ASCFlowMode = .screenshots
@@ -163,9 +162,6 @@ struct UploadToAppStoreConnectView: View {
             )
         }
     }
-
-
-
 
         struct UploadPlanEntry: Identifiable {
             let id: String

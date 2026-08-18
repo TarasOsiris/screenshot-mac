@@ -1,7 +1,7 @@
-import CoreGraphics
-import Testing
 import AppKit
+import CoreGraphics
 @testable import Screenshot_Bro
+import Testing
 
 @Suite(.serialized)
 @MainActor

@@ -1,7 +1,7 @@
 import CoreGraphics
-import Testing
 import Foundation
 @testable import Screenshot_Bro
+import Testing
 
 struct AlignmentServiceTests {
 

@@ -8,10 +8,10 @@ struct LiveDisplayTextView: NSViewRepresentable {
     var alignment: NSTextAlignment
     var verticalAlignment: TextVerticalAlign
     var uppercase: Bool = false
-    var letterSpacing: CGFloat? = nil
-    var lineHeightMultiple: CGFloat? = nil
-    var legacyLineSpacing: CGFloat? = nil
-    var richTextData: String? = nil
+    var letterSpacing: CGFloat?
+    var lineHeightMultiple: CGFloat?
+    var legacyLineSpacing: CGFloat?
+    var richTextData: String?
 
     func makeNSView(context: Context) -> TextLayoutNSView {
         let view = TextLayoutNSView(frame: .zero)

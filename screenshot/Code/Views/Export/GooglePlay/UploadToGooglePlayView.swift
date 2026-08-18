@@ -45,8 +45,6 @@ struct UploadToGooglePlayView: View {
         case done
     }
 
-
-
     var validationIssues: [UploadIssue] {
         GooglePlayUploadValidator.validate(
             packageName: packageName,

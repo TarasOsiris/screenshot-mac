@@ -6,8 +6,8 @@ import SwiftUI
 struct DeviceMenuContent: View {
     let onSelectCategory: (DeviceCategory) -> Void
     let onSelectFrame: (DeviceFrame) -> Void
-    var selectedCategory: DeviceCategory? = nil
-    var selectedFrameId: String? = nil
+    var selectedCategory: DeviceCategory?
+    var selectedFrameId: String?
     var usePreferredFrameButtons: Bool = false
 
     private var selectedGroupId: String? {

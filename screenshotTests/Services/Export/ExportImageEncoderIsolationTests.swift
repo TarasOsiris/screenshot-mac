@@ -1,7 +1,7 @@
 import AppKit
+@testable import Screenshot_Bro
 import SwiftUI
 import Testing
-@testable import Screenshot_Bro
 
 /// The upload paths render on the main actor and hand the CPU-bound follow-up work (PNG encode,
 /// checksum) to `@concurrent` helpers. That handoff only actually leaves the main actor because of

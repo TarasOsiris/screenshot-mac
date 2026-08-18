@@ -630,12 +630,12 @@ private struct StepInfo {
     let title: LocalizedStringKey
     let description: LocalizedStringKey
     let icon: String
-    var hint: LocalizedStringKey? = nil
-    var shortcutGlyph: String? = nil
+    var hint: LocalizedStringKey?
+    var shortcutGlyph: String?
     // Used by the iPad/iOS flow when the desktop copy references mouse/keyboard or chrome
     // (drag-drop, the right inspector, ⌘E) that doesn't exist there.
-    var iosDescription: LocalizedStringKey? = nil
-    var illustration: StepIllustration? = nil
+    var iosDescription: LocalizedStringKey?
+    var illustration: StepIllustration?
     let color: Color
 }
 

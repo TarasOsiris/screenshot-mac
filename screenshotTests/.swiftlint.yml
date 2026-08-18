@@ -1,0 +1,11 @@
+# Inherits the root config. Test suites are legitimately long — AppStateTests alone holds ~90
+# cases and ExportServiceTests ~80 — so the length rules, which exist to stop app code growing
+# unwieldy, are relaxed here rather than encouraging arbitrary file splits.
+file_length:
+  warning: 2500
+  error: 4000
+  ignore_comment_only_lines: true
+
+type_body_length:
+  warning: 2000
+  error: 3500

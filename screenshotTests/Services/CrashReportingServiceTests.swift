@@ -1,5 +1,5 @@
-import Testing
 @testable import Screenshot_Bro
+import Testing
 
 @Suite(.serialized)
 struct CrashReportingServiceTests {

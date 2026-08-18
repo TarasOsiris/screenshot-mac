@@ -1,6 +1,6 @@
-import Testing
 import AppKit
 @testable import Screenshot_Bro
+import Testing
 
 // NOTE: an end-to-end render test (makeTestState → await thumbnail → assert PNG cached)
 // passes in isolation but is intentionally omitted here: its ~1s render holds the

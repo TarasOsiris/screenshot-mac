@@ -1,7 +1,7 @@
 import Foundation
 import MCP
-import Testing
 @testable import Screenshot_Bro
+import Testing
 
 /// Regression: NWListener.cancel() releases its socket asynchronously, so stop() must wait for
 /// the release — otherwise an immediate restart on the same port fails with EADDRINUSE (the

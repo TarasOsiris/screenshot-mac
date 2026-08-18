@@ -1,8 +1,8 @@
 import AppKit
 import Foundation
 import MCP
-import Testing
 @testable import Screenshot_Bro
+import Testing
 
 @Suite(.serialized)
 @MainActor

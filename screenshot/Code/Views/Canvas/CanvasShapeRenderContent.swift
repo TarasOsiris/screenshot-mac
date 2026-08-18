@@ -24,9 +24,9 @@ struct CanvasShapeRenderContent: View {
     let onRequestImagePicker: () -> Void
     let onHandleDrop: ([NSItemProvider]) -> Bool
     let onCommitTextEdit: () -> Void
-    var onRichTextChange: ((String?, String) -> Void)? = nil
-    var onSelectionChange: (([NSAttributedString.Key: Any]?, NSRange?) -> Void)? = nil
-    var formatController: RichTextFormatController? = nil
+    var onRichTextChange: ((String?, String) -> Void)?
+    var onSelectionChange: (([NSAttributedString.Key: Any]?, NSRange?) -> Void)?
+    var formatController: RichTextFormatController?
     let resolveNSFont: (CGFloat, NSFont.Weight, Bool) -> NSFont
     let fontWeightResolver: (Int) -> Font.Weight
     let renderSvgImage: (String, Bool, Color, CGSize?) -> NSImage?

@@ -1,7 +1,7 @@
-import Testing
 import AppKit
-import SwiftUI
 @testable import Screenshot_Bro
+import SwiftUI
+import Testing
 
 /// Covers the locale-dedupe export path: rows untouched by a locale render once
 /// and the encoded bytes are shared across that locale group's folders.

@@ -1,5 +1,5 @@
-import Foundation
 import CoreGraphics
+import Foundation
 
 /// Google Play store-listing image types the app uploads screenshots to.
 /// Unlike App Store Connect's exact-pixel display types, Play accepts any size within

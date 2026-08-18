@@ -1,7 +1,7 @@
-import Testing
 import Foundation
-import Security
 @testable import Screenshot_Bro
+import Security
+import Testing
 
 struct GooglePlayAuthServiceTests {
 

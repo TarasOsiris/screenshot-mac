@@ -1,8 +1,8 @@
-import CoreGraphics
-import Testing
 import AppKit
-import SwiftUI
+import CoreGraphics
 @testable import Screenshot_Bro
+import SwiftUI
+import Testing
 
 @MainActor
 struct ExportServiceTests {
@@ -12,7 +12,7 @@ struct ExportServiceTests {
     @Test func opaquePNGProducesValidData() throws {
         let image = makeTestImage(width: 200, height: 400)
         let pngData = try #require(ExportService.opaquePNGData(from: image))
-        #expect(pngData.count > 0)
+        #expect(!pngData.isEmpty)
 
         let decoded = try #require(NSBitmapImageRep(data: pngData))
         #expect(decoded.pixelsWide == 200)
@@ -54,7 +54,7 @@ struct ExportServiceTests {
     @Test func opaqueJPEGProducesValidData() throws {
         let image = makeTestImage(width: 200, height: 400)
         let jpegData = try #require(ExportService.opaqueJPEGData(from: image))
-        #expect(jpegData.count > 0)
+        #expect(!jpegData.isEmpty)
 
         let decoded = try #require(NSBitmapImageRep(data: jpegData))
         #expect(decoded.pixelsWide == 200)
@@ -77,7 +77,7 @@ struct ExportServiceTests {
     @Test func renderTemplatePNGProducesData() throws {
         let row = makeTestRow(width: 200, height: 400)
         let pngData = try #require(ExportService.renderTemplatePNG(index: 0, row: row))
-        #expect(pngData.count > 0)
+        #expect(!pngData.isEmpty)
 
         let decoded = try #require(NSBitmapImageRep(data: pngData))
         #expect(decoded.pixelsWide == 200)
@@ -99,7 +99,7 @@ struct ExportServiceTests {
         let data = try #require(ExportService.renderTemplateData(
             index: 0, row: row, format: .jpeg
         ))
-        #expect(data.count > 0)
+        #expect(!data.isEmpty)
     }
 
     /// A text shape persisted as rich text (Base64-RTF) must render through the export path —

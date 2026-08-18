@@ -1,8 +1,8 @@
-import CoreGraphics
-import Testing
 import AppKit
-import SwiftUI
+import CoreGraphics
 @testable import Screenshot_Bro
+import SwiftUI
+import Testing
 
 @Suite(.serialized)
 struct RichTextUtilsTests {

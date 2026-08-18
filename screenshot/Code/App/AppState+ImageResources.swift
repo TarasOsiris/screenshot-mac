@@ -1,6 +1,6 @@
-import SwiftUI
 import ImageIO
 import os
+import SwiftUI
 
 extension AppState {
     // MARK: - Image Helpers

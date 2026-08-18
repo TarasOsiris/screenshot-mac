@@ -1,6 +1,6 @@
+import CryptoKit
 import SwiftUI
 import UniformTypeIdentifiers
-import CryptoKit
 
 struct AppStoreConnectSettingsView: View {
     private static let apiKeysURL = URL(string: "https://appstoreconnect.apple.com/access/integrations/api")!

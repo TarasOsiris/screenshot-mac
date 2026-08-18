@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
-import Testing
 @testable import Screenshot_Bro
+import Testing
 
 struct AppStoreConnectUploadValidatorTests {
     @Test func screenshotUploadabilityExcludesReviewLockedVersions() {

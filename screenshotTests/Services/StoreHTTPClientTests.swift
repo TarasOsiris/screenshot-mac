@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Screenshot_Bro
+import Testing
 
 /// Intercepts every request so the transport can be exercised without a network.
 nonisolated private final class StubURLProtocol: URLProtocol, @unchecked Sendable {

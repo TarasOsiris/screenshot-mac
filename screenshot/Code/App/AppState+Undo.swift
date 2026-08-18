@@ -6,7 +6,6 @@ import SwiftUI
 extension AppState {
     // MARK: - Undo
 
-
     /// Wraps a document mutation so undo is captured automatically: snapshots the whole
     /// document before `body`, restores it on undo (re-registering redo), and schedules the
     /// save. A `body` that changes nothing registers no undo step. Nested `withUndo` calls

@@ -163,7 +163,7 @@ actor MCPHTTPListener {
                 return
             }
 
-            var body: Data? = nil
+            var body: Data?
             if head.method == "POST" {
                 guard let length = head.contentLength else {
                     await sendSimpleResponse(connection, status: 411, close: true)

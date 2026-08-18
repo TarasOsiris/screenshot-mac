@@ -1,7 +1,7 @@
 import Foundation
 import MCP
-import Testing
 @testable import Screenshot_Bro
+import Testing
 
 /// Drives the SDK server through the stateless HTTP transport exactly as MCPServerService wires
 /// it — validation pipeline, JSON-RPC decode, handler bridging — everything except the socket.

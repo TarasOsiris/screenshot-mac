@@ -1,5 +1,5 @@
-import Foundation
 import CryptoKit
+import Foundation
 import OSLog
 
 enum AppStoreConnectAuthError: Error, LocalizedError {

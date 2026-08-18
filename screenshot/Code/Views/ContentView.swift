@@ -7,7 +7,6 @@ import StoreKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-
 struct ContentView: View {
     enum ShowcaseExportMode {
         case allRows

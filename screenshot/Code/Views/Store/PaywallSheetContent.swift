@@ -1,5 +1,5 @@
-import SwiftUI
 import RevenueCatUI
+import SwiftUI
 
 struct PaywallSheetContent: View {
     @Bindable var store: StoreService

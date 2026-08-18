@@ -59,7 +59,6 @@ extension UploadToAppStoreConnectView {
         )
     }
 
-
     var pickVersionView: some View {
         ASCVersionSelectionStepView(
             mode: mode,

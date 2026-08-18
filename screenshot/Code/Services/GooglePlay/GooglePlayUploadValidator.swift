@@ -100,14 +100,13 @@ nonisolated enum GooglePlayUploadValidator {
     static func isValidPackageName(_ name: String) -> Bool {
         let segments = name.split(separator: ".", omittingEmptySubsequences: false)
         guard segments.count >= 2 else { return false }
-        return segments.allSatisfy { segment in
-            let s = String(segment)
-            let range = NSRange(s.startIndex..<s.endIndex, in: s)
-            return packageSegmentRegex.firstMatch(in: s, range: range) != nil
-        }
+        return segments.allSatisfy(isValidSegment)
     }
 
-    // Compiled once — `validate` runs on every SwiftUI render, so don't recompile per call.
-    private static let packageSegmentRegex = try! NSRegularExpression(pattern: "^[a-zA-Z][a-zA-Z0-9_]*$")
+    /// `^[a-zA-Z][a-zA-Z0-9_]*$`, spelled out rather than compiled: `validate` runs on every
+    /// SwiftUI render, and this avoids both the regex and a force-try on a literal pattern.
+    private static func isValidSegment(_ segment: Substring) -> Bool {
+        guard let first = segment.first, first.isASCII, first.isLetter else { return false }
+        return segment.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_") }
+    }
 }
-

@@ -3,8 +3,8 @@ import UniformTypeIdentifiers
 
 struct FontPicker: View {
     @Binding var selection: String
-    var fontWeight: Binding<Int>? = nil
-    var italic: Binding<Bool>? = nil
+    var fontWeight: Binding<Int>?
+    var italic: Binding<Bool>?
     var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
     var onApplyImportedSelection: ((ImportedCustomFontSelection) -> Void)?
     var onImportFont: ((URL) -> ImportedCustomFontSelection?)?

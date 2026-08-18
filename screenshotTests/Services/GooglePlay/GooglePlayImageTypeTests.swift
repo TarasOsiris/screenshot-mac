@@ -1,6 +1,6 @@
-import Testing
 import CoreGraphics
 @testable import Screenshot_Bro
+import Testing
 
 struct GooglePlayImageTypeTests {
     @Test func acceptsWithinEdgeBounds() {

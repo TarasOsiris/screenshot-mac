@@ -1,6 +1,6 @@
+import ImageIO
 import SwiftUI
 import UniformTypeIdentifiers
-import ImageIO
 
 enum ImageResourceIO {
     static let defaultWriteData: (Data, URL) throws -> Void = { data, url in

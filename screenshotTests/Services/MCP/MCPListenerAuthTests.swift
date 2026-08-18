@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Screenshot_Bro
+import Testing
 
 /// The bearer-token gate that MCPHTTPListener applies before forwarding a request to the SDK
 /// transport. Exercises the real header parser so case handling and the `Bearer ` prefix match

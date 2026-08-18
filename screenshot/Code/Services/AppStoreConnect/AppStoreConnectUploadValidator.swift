@@ -171,4 +171,3 @@ enum AppStoreConnectUploadValidator {
         return issues
     }
 }
-

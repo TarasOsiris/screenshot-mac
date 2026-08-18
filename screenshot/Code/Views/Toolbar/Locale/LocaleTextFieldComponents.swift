@@ -130,9 +130,9 @@ func reuseTranslationMenuContent(
 struct MultilineCellEditor: View {
     let placeholder: String
     @Binding var text: String
-    var help: String? = nil
+    var help: String?
     var autofocus: Bool = false
-    var onEditingEnded: (() -> Void)? = nil
+    var onEditingEnded: (() -> Void)?
 
     // Local buffer: binding TextEditor straight to AppState-backed state recomputes
     // the body on every keystroke and re-feeds the value, resetting the caret to the
@@ -248,7 +248,7 @@ private struct CellEditorHeight: ViewModifier {
 struct MatrixCellPreview: View {
     let text: String
     let placeholder: String
-    var help: String? = nil
+    var help: String?
 
     var body: some View {
         let isEmpty = text.isEmpty

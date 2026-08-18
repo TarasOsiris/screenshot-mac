@@ -25,14 +25,14 @@ struct TemplateControlBar: View {
     var onSave: () -> Void
     var onPickBackgroundImage: (() -> Void)?
     var onRemoveBackgroundImage: (() -> Void)?
-    var onDropBackgroundImage: ((NSImage) -> Void)? = nil
-    var onDropBackgroundSvg: ((String) -> Void)? = nil
+    var onDropBackgroundImage: ((NSImage) -> Void)?
+    var onDropBackgroundSvg: ((String) -> Void)?
     var onDuplicate: () -> Void = {}
     var onDuplicateToEnd: () -> Void = {}
     var onInsertBefore: () -> Void = {}
     var onInsertAfter: () -> Void = {}
     var onDelete: () -> Void
-    var onLoadFullResImages: (() -> [String: NSImage])? = nil
+    var onLoadFullResImages: (() -> [String: NSImage])?
     @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
     @State private var isDeletingTemplate = false
     @State private var showBackgroundPopover = false

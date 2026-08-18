@@ -1,7 +1,7 @@
-import Testing
-import Foundation
 import AppKit
+import Foundation
 @testable import Screenshot_Bro
+import Testing
 
 @Suite(.serialized)
 struct TranslationCatalogTests {

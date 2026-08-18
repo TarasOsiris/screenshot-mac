@@ -1,11 +1,8 @@
 # Opt-in only. This codebase predates any linter, so an "all rules on" config would produce
 # thousands of findings and be switched off within a day. These are rules that either encode
 # something CLAUDE.md already states in prose, or have a small enough baseline to fix as you go.
-disabled_rules:
-  - trailing_whitespace
-  - line_length
-  - todo
-
+# NOTE: `only_rules` cannot be combined with `disabled_rules`/`opt_in_rules` — SwiftLint
+# discards the whole config and silently falls back to its defaults if you try.
 only_rules:
   - force_cast
   - force_try
@@ -13,7 +10,7 @@ only_rules:
   - implicitly_unwrapped_optional
   - empty_count
   - unused_import
-  - redundant_optional_initialization
+  - implicit_optional_initialization
   - redundant_nil_coalescing
   - toggle_bool
   - sorted_imports
@@ -24,7 +21,6 @@ only_rules:
   - closing_brace
   - colon
   - comma
-  - trailing_comma
   - trailing_newline
   - control_statement
   - opening_brace
@@ -47,5 +43,3 @@ type_body_length:
 force_unwrapping:
   severity: warning
 
-trailing_comma:
-  mandatory_comma: false

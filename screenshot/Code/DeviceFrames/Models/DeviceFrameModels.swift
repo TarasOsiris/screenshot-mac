@@ -96,8 +96,8 @@ nonisolated struct DeviceFrameCatalogEntry {
     /// When set, the landscape frame reuses the portrait PNG rotated by this many degrees
     /// instead of shipping a second asset. Direction is per-device: the shipped iPhone/iPad
     /// landscape art was rendered counter-clockwise (270°), the Apple Watch clockwise (90°).
-    var landscapeRotationDegrees: Double? = nil
-    var iconOverride: String? = nil
+    var landscapeRotationDegrees: Double?
+    var iconOverride: String?
     let suggestedSizePreset: String?
 }
 
@@ -114,7 +114,7 @@ nonisolated struct DeviceFrame: Identifiable, Equatable {
     let iconOverride: String?
     /// When set, `imageName` is the portrait PNG and the renderer must rotate it by this many
     /// degrees. `spec` already reflects the post-rotation (landscape) dimensions.
-    var landscapeRotationDegrees: Double? = nil
+    var landscapeRotationDegrees: Double?
 
     var orientationLabel: String { isLandscape ? "Landscape" : "Portrait" }
     var isModelBacked: Bool { modelSpec != nil }
