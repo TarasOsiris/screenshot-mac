@@ -75,33 +75,33 @@ extension AppState {
     static let textEditUndoDebounceDelay: TimeInterval = 0.5
 
     /// Update shape without registering undo on every call — undo is captured once at the start
-    /// and finalized after changes stop (debounced via `shapeEditCoalescer`). Application of the
-    /// value is throttled to ~30fps (`shapeEditThrottle`) to avoid expensive re-renders per tick.
+    /// and finalized after changes stop (debounced via `edits.shapeEdit`). Application of the
+    /// value is throttled to ~30fps (`edits.shapeEditThrottle`) to avoid expensive re-renders per tick.
     func updateShapeContinuous(_ shape: CanvasShapeModel) {
-        if let activeShapeId = shapeEditCoalescer.activeId, activeShapeId != shape.id {
+        if let activeShapeId = edits.shapeEdit.activeId, activeShapeId != shape.id {
             finishContinuousEditIfNeeded()
         }
 
-        if !shapeEditCoalescer.isActive {
+        if !edits.shapeEdit.isActive {
             commitAllPendingEdits()
             guard let location = shapeLocation(for: shape.id) else { return }
             let baseRow = rows[location.rowIndex]
             let baseLocaleState = localeState
-            shapeEditCoalescer.begin(id: shape.id) { [weak self] in
+            edits.shapeEdit.begin(id: shape.id) { [weak self] in
                 guard let self else { return }
-                self.shapeEditThrottle.flush()
+                self.edits.shapeEditThrottle.flush()
                 self.registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: baseLocaleState)
-                self.shapeEditThrottle.reset()
+                self.edits.shapeEditThrottle.reset()
             }
         }
 
-        shapeEditThrottle.submit { [weak self] in self?.applyContinuousEdit(shape) }
-        shapeEditCoalescer.arm()
+        edits.shapeEditThrottle.submit { [weak self] in self?.applyContinuousEdit(shape) }
+        edits.shapeEdit.arm()
     }
 
     /// Commits a pending continuous shape edit as one undo step. No-op when none is captured.
     func finishContinuousEditIfNeeded() {
-        shapeEditCoalescer.finish()
+        edits.shapeEdit.finish()
     }
 
     func applyContinuousEdit(_ shape: CanvasShapeModel) {
@@ -362,15 +362,15 @@ extension AppState {
         // Capture undo state only at the start of a nudge sequence — and only when
         // we know at least one shape will actually move, so a fully-locked nudge
         // doesn't poison the baseline for a later, unrelated nudge.
-        if !nudgeCoalescer.isActive {
+        if !edits.nudge.isActive {
             commitAllPendingEdits()
             let baseRow = rows[rowIdx]
-            nudgeCoalescer.begin(id: rows[rowIdx].id) { [weak self] in
+            edits.nudge.begin(id: rows[rowIdx].id) { [weak self] in
                 guard let self else { return }
-                self.registerUndoForRowWithBase(self.nudgeActionName, baseRow: baseRow)
+                self.registerUndoForRowWithBase(self.edits.nudgeActionName, baseRow: baseRow)
             }
         }
-        nudgeActionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
+        edits.nudgeActionName = ids.count > 1 ? "Move Shapes" : "Move Shape"
 
         for i in rows[rowIdx].shapes.indices {
             if ids.contains(rows[rowIdx].shapes[i].id) && !rows[rowIdx].shapes[i].resolvedIsLocked {
@@ -379,12 +379,12 @@ extension AppState {
             }
         }
         scheduleSave()
-        nudgeCoalescer.arm()
+        edits.nudge.arm()
     }
 
     /// Commits a pending arrow-key nudge as one undo step. No-op when no nudge is captured.
     func finishNudgeIfNeeded() {
-        nudgeCoalescer.finish()
+        edits.nudge.finish()
     }
 
     // MARK: - Option+Drag Duplicate

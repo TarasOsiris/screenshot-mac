@@ -186,13 +186,13 @@ struct AppStateTests {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
         let rowId = state.rows[0].id
-        state.rowEditThrottle.markRecentApply()
+        state.edits.rowEditThrottle.markRecentApply()
 
         var firstConfig = state.rows[0].gradientConfig
         firstConfig.centerX = 0.25
         state.updateRowContinuous(rowId) { $0.gradientConfig = firstConfig }
 
-        var secondConfig = try #require(state.continuousRowEditWorkingRow).gradientConfig
+        var secondConfig = try #require(state.edits.continuousRowEditWorkingRow).gradientConfig
         secondConfig.centerY = 0.75
         state.updateRowContinuous(rowId) { $0.gradientConfig = secondConfig }
 
@@ -1335,7 +1335,7 @@ struct AppStateTests {
         let updated = try #require(state.rows.first?.shapes.first(where: { $0.id == shape.id }))
         #expect(updated.borderRadius == 120)
         #expect(updated.opacity == 0.35)
-        #expect(!state.shapeEditThrottle.hasPending)
+        #expect(!state.edits.shapeEditThrottle.hasPending)
         #expect(state.continuousEditShapeId == nil)
     }
 
@@ -1364,7 +1364,7 @@ struct AppStateTests {
         let updatedRect = try #require(state.rows[0].shapes.first(where: { $0.id == rect.id }))
         #expect(updatedRect.borderRadius == 90)
         #expect(state.selectedShapeId == text.id)
-        #expect(!state.shapeEditThrottle.hasPending)
+        #expect(!state.edits.shapeEditThrottle.hasPending)
         #expect(state.continuousEditShapeId == nil)
     }
 

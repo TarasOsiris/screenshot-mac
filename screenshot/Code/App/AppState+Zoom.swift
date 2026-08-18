@@ -23,14 +23,14 @@ extension AppState {
     /// row, so a raw per-tick write re-evaluates the whole editor. Call `endContinuousZoom()` when
     /// the gesture finishes so the final value is never dropped.
     func setZoomLevelContinuous(_ level: CGFloat) {
-        zoomThrottle.submit { [weak self] in
+        edits.zoomThrottle.submit { [weak self] in
             self?.setZoomLevel(level, animated: false)
         }
     }
 
     func endContinuousZoom() {
-        zoomThrottle.flush()
-        zoomThrottle.reset()
+        edits.zoomThrottle.flush()
+        edits.zoomThrottle.reset()
     }
 
     func zoomIn() {

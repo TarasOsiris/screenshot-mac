@@ -455,7 +455,7 @@ struct InspectorPanel: View {
     private func continuousRowBinding<T>(_ rowId: UUID, keyPath: WritableKeyPath<ScreenshotRow, T>, default defaultValue: T, actionName: String = "Edit Background") -> Binding<T> {
         Binding(
             get: {
-                if state.continuousRowEditId == rowId, let row = state.continuousRowEditWorkingRow {
+                if state.continuousRowEditId == rowId, let row = state.edits.continuousRowEditWorkingRow {
                     return row[keyPath: keyPath]
                 }
                 guard let idx = state.rowIndex(for: rowId) else { return defaultValue }

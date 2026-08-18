@@ -2,7 +2,7 @@ import SwiftUI
 
 // The undo/persistence contract: withUndo snapshots rows + localeState as one document,
 // registers a step only if they actually changed, and schedules the save. Nested calls join
-// the outer transaction via isInUndoTransaction, so a wrapped helper never makes a second step.
+// the outer transaction via edits.isInUndoTransaction, so a wrapped helper never makes a second step.
 extension AppState {
     // MARK: - Undo
 
@@ -12,9 +12,9 @@ extension AppState {
     /// join the outer transaction so a wrapped helper doesn't create a second step.
     func withUndo(_ actionName: String, _ body: () -> Void) {
         commitAllPendingEdits()
-        if isInUndoTransaction { body(); return }
-        isInUndoTransaction = true
-        defer { isInUndoTransaction = false }
+        if edits.isInUndoTransaction { body(); return }
+        edits.isInUndoTransaction = true
+        defer { edits.isInUndoTransaction = false }
 
         let baseRows = rows
         let baseLocaleState = localeState
@@ -27,15 +27,15 @@ extension AppState {
 
     /// Row-scoped `withUndo` for mutations confined to one row (plus `localeState` and
     /// selection): the no-op check compares a single row instead of the whole document,
-    /// and the undo step retains one row. Shares `isInUndoTransaction`, so nesting with
+    /// and the undo step retains one row. Shares `edits.isInUndoTransaction`, so nesting with
     /// `withUndo` (either direction) joins the outer transaction. The row must exist
     /// before and after `body` — ops that add/remove/reorder rows, or that touch other
     /// rows (e.g. shared-base-text fan-out), stay on `withUndo`.
     func withRowUndo(_ actionName: String, rowId: UUID, _ body: () -> Void) {
         commitAllPendingEdits()
-        if isInUndoTransaction { body(); return }
-        isInUndoTransaction = true
-        defer { isInUndoTransaction = false }
+        if edits.isInUndoTransaction { body(); return }
+        edits.isInUndoTransaction = true
+        defer { edits.isInUndoTransaction = false }
 
         guard let idx = rowIndex(for: rowId) else { return }
         let baseRow = rows[idx]
@@ -140,7 +140,7 @@ extension AppState {
     }
 
     var canUndoDocumentAction: Bool {
-        hasPendingUndoableEdit || (undoManager?.canUndo ?? false)
+        edits.hasPendingEdit || (undoManager?.canUndo ?? false)
     }
 
     // A pending edit (continuous burst or debounced nudge/text) is the user's most recent
@@ -148,7 +148,7 @@ extension AppState {
     // step, which clears the redo stack. So redo is unavailable while one is pending — the
     // inverse of canUndoDocumentAction.
     var canRedoDocumentAction: Bool {
-        !hasPendingUndoableEdit && (undoManager?.canRedo ?? false)
+        !edits.hasPendingEdit && (undoManager?.canRedo ?? false)
     }
 
     func undoDocumentAction() {
@@ -164,13 +164,6 @@ extension AppState {
         undoManager?.redo()
     }
 
-    /// True while any continuous burst or debounced (nudge/base-text/translation) edit is
-    /// captured but not yet registered as an undo step. At most one coalescer is ever active,
-    /// since starting any burst first commits all others.
-    private var hasPendingUndoableEdit: Bool {
-        undoCoalescers.contains { $0.isActive }
-    }
-
     /// Commits every pending continuous/debounced edit, registering each as its own undo
     /// step. Called at undo-stack boundaries (discrete `withUndo` actions, undo, redo) and
     /// when a different debounced interaction begins, so steps register in chronological
@@ -184,7 +177,7 @@ extension AppState {
         clearInlineTextCommit()
         inlineFlush?()
         inlineEnd?()
-        for coalescer in undoCoalescers { coalescer.finish() }
+        edits.commitAll()
     }
 
     // MARK: - Helpers
@@ -207,9 +200,6 @@ extension AppState {
     /// Drops every debounced edit without registering an undo step (project switch / reset).
     func cancelPendingDebounceTasks() {
         clearInlineTextCommit()
-        for coalescer in undoCoalescers { coalescer.cancel() }
-        shapeEditThrottle.reset()
-        rowEditThrottle.reset()
-        continuousRowEditWorkingRow = nil
+        edits.cancelAll()
     }
 }

@@ -75,7 +75,7 @@ struct TemplateControlBar: View {
         Binding(
             get: {
                 if state.continuousRowEditId == row.id,
-                   let workingRow = state.continuousRowEditWorkingRow,
+                   let workingRow = state.edits.continuousRowEditWorkingRow,
                    index < workingRow.templates.count {
                     return workingRow.templates[index][keyPath: keyPath]
                 }

@@ -162,41 +162,17 @@ final class AppState {
     /// `ICloudMonitor` isn't `@Observable`. Drives the "Downloading from iCloud…" UI.
     var iCloudSyncStatus: SyncStatus = .idle
 
-    // MARK: - Debounced edit coalescing
-    // Each debounced interaction (continuous shape/row edits, arrow-key nudge, base-text and
-    // translation typing) captures its undo base once and commits a single undo step when the
-    // burst settles. Because starting any burst first runs `commitAllPendingEdits`, at most one
-    // coalescer is ever active. See `ContinuousEditCoalescing.swift`.
-    @ObservationIgnored let shapeEditCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.continuousUndoDebounceDelay)
-    @ObservationIgnored let rowEditCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.continuousUndoDebounceDelay)
-    @ObservationIgnored let nudgeCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.nudgeUndoDebounceDelay)
-    @ObservationIgnored let baseTextCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.textEditUndoDebounceDelay)
-    @ObservationIgnored let translationCoalescer = DebouncedUndoCoalescer(debounceDelay: AppState.textEditUndoDebounceDelay)
-    @ObservationIgnored var undoCoalescers: [DebouncedUndoCoalescer] {
-        [shapeEditCoalescer, rowEditCoalescer, nudgeCoalescer, baseTextCoalescer, translationCoalescer]
-    }
-
-    // ~30fps apply throttles for the continuous (slider/drag/pinch) paths: the coalescers above own
-    // the single debounced undo step; these own how often the model is actually written mid-burst.
-    @ObservationIgnored let shapeEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
-    @ObservationIgnored let rowEditThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
-    /// `zoomLevel` is read by every visible row's body, so an unthrottled pinch invalidated the
-    /// whole editor once per gesture tick.
-    @ObservationIgnored let zoomThrottle = ContinuousApplyThrottle(interval: AppState.continuousEditInterval)
-
-    @ObservationIgnored var nudgeActionName: String = "Move Shape"
-    @ObservationIgnored var continuousRowEditActionName: String = "Edit Background"
-    /// The row being composed by an in-flight continuous row edit — read by the inspector and
-    /// template control bar so the UI reflects the drag before the throttled write reaches `rows`.
-    @ObservationIgnored var continuousRowEditWorkingRow: ScreenshotRow?
+    /// Every debounced/throttled editing burst: continuous shape/row edits, arrow-key nudge,
+    /// base-text and translation typing. See `EditCoalescingCoordinator`.
+    @ObservationIgnored let edits = EditCoalescingCoordinator()
 
     @ObservationIgnored nonisolated(unsafe) var arrowKeyMonitor: Any?
     @ObservationIgnored var zoomPersistTask: DispatchWorkItem?
 
     /// The shape targeted by an in-flight continuous edit (nil when idle).
-    var continuousEditShapeId: UUID? { shapeEditCoalescer.activeId }
+    var continuousEditShapeId: UUID? { edits.shapeEdit.activeId }
     /// The row targeted by an in-flight continuous row edit (nil when idle).
-    var continuousRowEditId: UUID? { rowEditCoalescer.activeId }
+    var continuousRowEditId: UUID? { edits.rowEdit.activeId }
 
     /// Single-selection convenience: returns the sole selected shape ID, or nil.
     var selectedShapeId: UUID? {
@@ -373,7 +349,6 @@ final class AppState {
 
     // Undo/redo lives in AppState+Undo.swift; this flag is a stored property, which an
     // extension can't declare, and is internal so that file can read it.
-    @ObservationIgnored var isInUndoTransaction = false
 
     func makeDefaultRow(id: UUID = UUID(), label: String? = nil, width: CGFloat? = nil, height: CGFloat? = nil) -> ScreenshotRow {
         makeDefaultRow(
