@@ -95,7 +95,8 @@ final class AppState {
     /// base-text and translation typing. See `EditCoalescingCoordinator`.
     @ObservationIgnored let edits = EditCoalescingCoordinator()
 
-    @ObservationIgnored nonisolated(unsafe) var arrowKeyMonitor: Any?
+    /// Arrow-key nudge / Delete. See CanvasKeyCommandMonitor.
+    @ObservationIgnored let keyCommands = CanvasKeyCommandMonitor()
 
     /// The shape targeted by an in-flight continuous edit (nil when idle).
     var continuousEditShapeId: UUID? { edits.shapeEdit.activeId }
@@ -237,38 +238,17 @@ final class AppState {
         saveAll()
     }
 
-    deinit {
-        #if os(macOS)
-        if let monitor = arrowKeyMonitor { NSEvent.removeMonitor(monitor) }
-        #endif
-    }
-
     // macOS virtual key codes
 
+    /// Every handler captures `self` weakly: `keyCommands` is owned by this object, so a strong
+    /// capture is a cycle nothing breaks.
     private func installArrowKeyMonitor() {
-        // Arrow-key nudge and Delete use a global NSEvent monitor (macOS only) so they work
-        // reliably without a focused first responder, while still passing through to text fields.
-        // On iPad, these are deferred to on-screen controls.
-        #if os(macOS)
-        arrowKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self else { return event }
-            if let responder = NSApp.keyWindow?.firstResponder,
-               responder is NSTextView {
-                return event
-            }
-            guard self.hasSelection, !self.textEdit.isActive else { return event }
-            let shift = event.modifierFlags.contains(.shift)
-            let step: CGFloat = shift ? 10 : 1
-            switch event.keyCode {
-            case PlatformKeyCode.LeftArrow:  self.nudgeSelectedShapes(dx: -step, dy: 0); return nil
-            case PlatformKeyCode.RightArrow: self.nudgeSelectedShapes(dx: step, dy: 0); return nil
-            case PlatformKeyCode.UpArrow:    self.nudgeSelectedShapes(dx: 0, dy: -step); return nil
-            case PlatformKeyCode.DownArrow:  self.nudgeSelectedShapes(dx: 0, dy: step); return nil
-            case PlatformKeyCode.Delete, PlatformKeyCode.ForwardDelete: self.deleteSelectedShape(); return nil
-            default: return event
-            }
-        }
-        #endif
+        keyCommands.install(.init(
+            hasSelection: { [weak self] in self?.hasSelection ?? false },
+            isEditingText: { [weak self] in self?.textEdit.isActive ?? false },
+            nudge: { [weak self] dx, dy in self?.nudgeSelectedShapes(dx: dx, dy: dy) },
+            delete: { [weak self] in self?.deleteSelectedShape() }
+        ))
     }
 
     // Undo/redo lives in AppState+Undo.swift; this flag is a stored property, which an
