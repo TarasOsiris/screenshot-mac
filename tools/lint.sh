@@ -1,10 +1,13 @@
 #!/bin/sh
 # Runs SwiftLint over the app and test sources (paths come from .swiftlint.yml).
 #
-# This is not an Xcode build phase: the project sets ENABLE_USER_SCRIPT_SANDBOXING = YES, and
-# the script sandbox denies SwiftLint read access to the source tree and even to
-# .swiftlint.yml. Wiring it into the build would mean turning that setting off project-wide,
-# so lint runs here and from the pre-commit hook instead (see tools/install-hooks.sh).
+# The same check runs as a Debug-only Xcode build phase; this is the by-hand entry point, also
+# used by the pre-commit hook (see tools/install-hooks.sh).
+#
+# Needs a full Xcode, not the Command Line Tools: SwiftLint loads sourcekitdInProc from the
+# active developer dir and dies with "Loading sourcekitdInProc.framework failed" without it.
+# Either `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` or prefix with
+# DEVELOPER_DIR=. Xcode sets it for the build phase, so only CLI runs hit this.
 set -e
 
 SWIFTLINT=$(command -v swiftlint || echo /opt/homebrew/bin/swiftlint)
