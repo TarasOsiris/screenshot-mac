@@ -20,6 +20,7 @@ struct SettingsView: View {
 
     @Environment(StoreService.self) private var store
     @Environment(AppState.self) private var appState
+    @Environment(ICloudSyncStatusModel.self) private var iCloudStatus
     @Environment(MCPServerService.self) private var mcpServer
     @AppStorage(AppSettingsKeys.appearance) private var appearance = AppSettingsKeys.Default.appearance
     @AppStorage(AppSettingsKeys.appLanguageOverride) private var languageOverride = ""
@@ -200,7 +201,7 @@ struct SettingsView: View {
                         HStack {
                             Text("Status")
                             Spacer()
-                            ICloudStatusLabel(syncStatus: appState.iCloudSyncStatus)
+                            ICloudStatusLabel(syncStatus: iCloudStatus.status)
                         }
                     }
 

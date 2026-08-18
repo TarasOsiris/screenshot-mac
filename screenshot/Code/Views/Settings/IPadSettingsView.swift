@@ -7,7 +7,7 @@ import SwiftUI
 /// pushed detail screen.
 struct IPadSettingsView: View {
     @Environment(StoreService.self) private var store
-    @Environment(AppState.self) private var state
+    @Environment(ICloudSyncStatusModel.self) private var iCloudStatus
     @AppStorage(AppSettingsKeys.appearance) private var appearance = AppSettingsKeys.Default.appearance
     @AppStorage(AppSettingsKeys.appLanguageOverride) private var languageOverride = ""
     @AppStorage(AppSettingsKeys.defaultScreenshotSize) private var defaultScreenshotSize = AppSettingsKeys.Default.defaultScreenshotSize
@@ -210,7 +210,7 @@ struct IPadSettingsView: View {
                     HStack {
                         Text("Status")
                         Spacer()
-                        ICloudStatusLabel(syncStatus: state.iCloudSyncStatus)
+                        ICloudStatusLabel(syncStatus: iCloudStatus.status)
                     }
                 }
 

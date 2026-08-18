@@ -81,7 +81,7 @@ extension AppState {
             self.reloadFromDisk()
         }
         monitor.onSyncStatusChange = { [weak self] status in
-            self?.iCloudSyncStatus = status
+            self?.iCloudStatus.status = status
         }
         monitor.startMonitoring(url: url)
         iCloudMonitor = monitor
@@ -90,7 +90,7 @@ extension AppState {
     func stopICloudMonitoring() {
         iCloudMonitor?.stopMonitoring()
         iCloudMonitor = nil
-        iCloudSyncStatus = .idle
+        iCloudStatus.status = .idle
     }
 
     func reloadFromDisk() {

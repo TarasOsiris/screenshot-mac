@@ -249,7 +249,7 @@ struct ProjectsView: View {
             // A spinner whenever iCloud sync is in progress (upload or download), so the
             // Projects screen always signals ongoing sync without a modal/blocking banner.
             // Kept on the trailing side so it isn't glued to the leading "Upgrade to Pro" button.
-            if state.iCloudSyncStatus.isActive {
+            if state.iCloudStatus.status.isActive {
                 ToolbarItem(placement: .topBarTrailing) {
                     ProgressView()
                         .controlSize(.small)

@@ -125,6 +125,7 @@ struct ScreenshotBroApp: App {
         Window("Screenshot Bro", id: AppRootView.windowID) {
             AppRootView()
                 .environment(appState)
+                .environment(appState.iCloudStatus)
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
                 .background(WindowSceneBridge(role: .main))
@@ -167,6 +168,7 @@ struct ScreenshotBroApp: App {
         Window("New Project", id: NewProjectWindowView.windowID) {
             NewProjectWindowView()
                 .environment(appState)
+                .environment(appState.iCloudStatus)
                 .environment(storeService)
                 .preferredColorScheme(preferredColorScheme)
         }
@@ -452,6 +454,7 @@ struct ScreenshotBroApp: App {
             SettingsView()
                 .environment(storeService)
                 .environment(appState)
+                .environment(appState.iCloudStatus)
                 .environment(mcpServer)
                 .preferredColorScheme(preferredColorScheme)
         }
@@ -461,6 +464,7 @@ struct ScreenshotBroApp: App {
         WindowGroup {
             iPadRootView(launchWelcomeActive: launchWelcomePresented)
                 .environment(appState)
+                .environment(appState.iCloudStatus)
                 .environment(storeService)
                 .environment(appNavigationRouter)
                 .preferredColorScheme(preferredColorScheme)

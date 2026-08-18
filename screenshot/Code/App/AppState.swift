@@ -157,9 +157,9 @@ final class AppState {
     /// False until the first `load()` completes. Lets the UI show a loading state instead of
     /// the empty "no projects" screen while an iCloud-deferred load is still pending.
     var hasCompletedInitialLoad = false
-    /// Mirror of the iCloud monitor's upload/download progress, bridged here because
-    /// `ICloudMonitor` isn't `@Observable`. Drives the "Downloading from iCloud…" UI.
-    var iCloudSyncStatus: SyncStatus = .idle
+    /// Mirror of the iCloud monitor's upload/download progress. Drives the "Downloading from
+    /// iCloud…" UI; injected into the environment so views needing only this don't take AppState.
+    let iCloudStatus = ICloudSyncStatusModel()
 
     /// Every debounced/throttled editing burst: continuous shape/row edits, arrow-key nudge,
     /// base-text and translation typing. See `EditCoalescingCoordinator`.
