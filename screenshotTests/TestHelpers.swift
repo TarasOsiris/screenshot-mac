@@ -100,6 +100,19 @@ func makeTestState() -> (AppState, URL) {
 }
 
 /// A freshly initialized state with no projects — the real first-launch condition.
+/// Why the suites that use this are `@Suite(.serialized)`:
+///
+/// `SCREENSHOT_DATA_DIR` is a process-global env var and `UserDefaults.standard` is a
+/// process-global store, so two tests running concurrently would clobber each other's data
+/// directory — and a debounced save landing after a test unsets the var would write into the
+/// user's real (iCloud) project store. `PersistenceService.isRunningUnderXCTest` is the backstop
+/// for that, not a licence to parallelise.
+///
+/// Making these parallel-safe means injecting the data root *and* a UserDefaults suite through
+/// `PersistenceService`, which is a static namespace with ~126 call sites. That has been
+/// considered and rejected: the whole suite runs in about 20 seconds, so the change buys a few
+/// seconds of wall clock in exchange for a wide edit to the one subsystem where a mistake costs
+/// users their projects. Don't remove `.serialized` without doing that injection first.
 @MainActor
 func makeEmptyTestState() -> (AppState, URL) {
     let tempDir = makeTemporaryDataDirectory()
