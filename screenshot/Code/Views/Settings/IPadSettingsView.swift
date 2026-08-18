@@ -8,26 +8,21 @@ import SwiftUI
 struct IPadSettingsView: View {
     @Environment(StoreService.self) private var store
     @Environment(AppState.self) private var state
-    @AppStorage("appearance") private var appearance = "auto"
-    @AppStorage("appLanguageOverride") private var languageOverride = ""
-    @AppStorage("defaultScreenshotSize") private var defaultScreenshotSize = "1242x2688"
-    @AppStorage("exportFormat") private var exportFormat = "png"
-    @AppStorage("exportCustomSuffix") private var exportCustomSuffix = ""
-    @AppStorage("defaultTemplateCount") private var defaultTemplateCount = 3
-    @AppStorage("defaultZoomLevel") private var defaultZoomLevel = 1.0
-    @AppStorage("confirmBeforeDeleting") private var confirmBeforeDeleting = true
-    @AppStorage("defaultDeviceCategory") private var defaultDeviceCategoryRaw = "iphone"
-    @AppStorage("defaultDeviceFrameId") private var defaultDeviceFrameId = ""
-    @AppStorage("projectSortOrder") private var projectSortOrder = "creation"
+    @AppStorage(AppSettingsKeys.appearance) private var appearance = AppSettingsKeys.Default.appearance
+    @AppStorage(AppSettingsKeys.appLanguageOverride) private var languageOverride = ""
+    @AppStorage(AppSettingsKeys.defaultScreenshotSize) private var defaultScreenshotSize = AppSettingsKeys.Default.defaultScreenshotSize
+    @AppStorage(AppSettingsKeys.exportFormat) private var exportFormat = AppSettingsKeys.Default.exportFormat
+    @AppStorage(AppSettingsKeys.exportCustomSuffix) private var exportCustomSuffix = ""
+    @AppStorage(AppSettingsKeys.defaultTemplateCount) private var defaultTemplateCount = AppSettingsKeys.Default.defaultTemplateCount
+    @AppStorage(AppSettingsKeys.defaultZoomLevel) private var defaultZoomLevel = AppSettingsKeys.Default.defaultZoomLevel
+    @AppStorage(AppSettingsKeys.confirmBeforeDeleting) private var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
+    @AppStorage(AppSettingsKeys.defaultDeviceCategory) private var defaultDeviceCategoryRaw = AppSettingsKeys.Default.defaultDeviceCategory
+    @AppStorage(AppSettingsKeys.defaultDeviceFrameId) private var defaultDeviceFrameId = ""
+    @AppStorage(AppSettingsKeys.projectSortOrder) private var projectSortOrder = AppSettingsKeys.Default.projectSortOrder
 
-    @State private var showLanguageRestartAlert = false
-
-    @State private var iCloudEnabled = ICloudSyncService.shared.isEnabled
-    @State private var iCloudAvailable = ICloudSyncService.shared.isAvailable
+    @State private var iCloud = ICloudSettingsModel()
     @State private var showEnableConfirmation = false
     @State private var showDisableConfirmation = false
-    @State private var iCloudMigrationProgress: Double?
-    @State private var iCloudError: String?
 
     var body: some View {
         Form {
@@ -56,13 +51,13 @@ struct IPadSettingsView: View {
         // Attached to the Form (not the iCloud Section): presentation modifiers on a Section
         // inside a Form render a phantom full-height empty block.
         .alert("Enable iCloud Sync", isPresented: $showEnableConfirmation) {
-            Button("Enable iCloud Sync") { toggleICloud(enable: true) }
+            Button("Enable iCloud Sync") { iCloud.toggle(enable: true) }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("All projects will be copied to iCloud. Initial sync may take time for large projects.")
         }
         .confirmationDialog("Disable iCloud Sync", isPresented: $showDisableConfirmation, titleVisibility: .visible) {
-            Button("Disable iCloud Sync", role: .destructive) { toggleICloud(enable: false) }
+            Button("Disable iCloud Sync", role: .destructive) { iCloud.toggle(enable: false) }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Projects will be kept locally. Other devices will no longer see updates.")
@@ -70,8 +65,7 @@ struct IPadSettingsView: View {
     }
 
     private func refreshICloudState() {
-        iCloudAvailable = ICloudSyncService.shared.isAvailable
-        iCloudEnabled = ICloudSyncService.shared.isEnabled
+        iCloud.refresh()
     }
 
     // MARK: - Pro upsell
@@ -112,28 +106,10 @@ struct IPadSettingsView: View {
                 Text("Light").tag("light")
                 Text("Dark").tag("dark")
             }
-            languagePicker
+            AppLanguagePicker(languageOverride: $languageOverride)
         }
     }
 
-    @ViewBuilder
-    private var languagePicker: some View {
-        Picker("Language", selection: $languageOverride) {
-            Text("System").tag("")
-            ForEach(AppLanguageOptions.available, id: \.self) { code in
-                Text(AppLanguageOptions.displayName(for: code)).tag(code)
-            }
-        }
-        .onChange(of: languageOverride) { _, newValue in
-            AppLanguageOptions.apply(newValue)
-            showLanguageRestartAlert = true
-        }
-        .alert("Restart to change language", isPresented: $showLanguageRestartAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("Quit and reopen Screenshot Bro to switch the interface language.")
-        }
-    }
 
     // MARK: - Defaults
 
@@ -206,20 +182,20 @@ struct IPadSettingsView: View {
     @ViewBuilder
     private var iCloudSection: some View {
         Section("iCloud Sync") {
-            if !iCloudAvailable {
+            if !iCloud.isAvailable {
                 Label("iCloud is not available. Sign in to iCloud in Settings.",
                       systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.secondary)
             } else {
                 Toggle("Sync with iCloud", isOn: Binding(
-                    get: { iCloudEnabled },
+                    get: { iCloud.isEnabled },
                     set: { newValue in
                         if newValue { showEnableConfirmation = true } else { showDisableConfirmation = true }
                     }
                 ))
-                .disabled(iCloudMigrationProgress != nil)
+                .disabled(iCloud.isMigrating)
 
-                if let progress = iCloudMigrationProgress {
+                if let progress = iCloud.migrationProgress {
                     HStack(spacing: 8) {
                         ProgressView(value: progress)
                         Text("\(Int(progress * 100))%")
@@ -228,18 +204,18 @@ struct IPadSettingsView: View {
                     }
                 }
 
-                if iCloudEnabled {
+                if iCloud.isEnabled {
                     // Plain HStack rather than LabeledContent: LabeledContent gives its trailing
                     // content a flexible frame, which made this (conditional Label) row balloon
                     // to a huge height.
                     HStack {
                         Text("Status")
                         Spacer()
-                        iCloudStatusLabel
+                        ICloudStatusLabel(syncStatus: state.iCloudSyncStatus)
                     }
                 }
 
-                if let error = iCloudError {
+                if let error = iCloud.errorMessage {
                     Text(error).foregroundStyle(.red).font(.caption)
                 }
 
@@ -250,25 +226,6 @@ struct IPadSettingsView: View {
         }
     }
 
-    @ViewBuilder
-    private var iCloudStatusLabel: some View {
-        if !ICloudSyncService.shared.isUsingICloud {
-            Label("Connecting...", systemImage: "arrow.triangle.2.circlepath")
-                .foregroundStyle(.secondary)
-        } else {
-            switch state.iCloudSyncStatus {
-            case .downloading(let p):
-                Label("Downloading \(Int(p * 100))%", systemImage: "arrow.down.circle")
-                    .foregroundStyle(.secondary)
-            case .uploading(let p):
-                Label("Uploading \(Int(p * 100))%", systemImage: "arrow.up.circle")
-                    .foregroundStyle(.secondary)
-            case .idle:
-                Label("Syncing via iCloud", systemImage: "checkmark.icloud")
-                    .foregroundStyle(.green)
-            }
-        }
-    }
 
     // MARK: - Purchase
 
@@ -290,7 +247,7 @@ struct IPadSettingsView: View {
             }
 
             if let tier = store.proTier {
-                planDetailRows(for: tier)
+                PlanDetailRows(tier: tier)
             }
 
             if let appUserID = store.appUserID {
@@ -311,64 +268,18 @@ struct IPadSettingsView: View {
 
         if store.isProUnlocked {
             Section("Included") {
-                proFeatureRow("Unlimited projects")
-                proFeatureRow("Unlimited rows per project")
-                proFeatureRow("Unlimited screenshots per row")
+                ProFeatureRow(text: "Unlimited projects")
+                ProFeatureRow(text: "Unlimited rows per project")
+                ProFeatureRow(text: "Unlimited screenshots per row")
             }
         } else {
-            freeTierSections
+            FreeTierSections(store: store)
         }
     }
 
-    @ViewBuilder
-    private func planDetailRows(for tier: StoreService.ProTier) -> some View {
-        switch tier {
-        case .lifetime:
-            LabeledContent("Purchase type") {
-                Text("One-time purchase").foregroundStyle(.secondary)
-            }
-        case .subscription(_, let expirationDate, let willRenew):
-            LabeledContent(willRenew ? "Renews" : "Expires") {
-                Text(expirationDate, format: .dateTime.year().month().day())
-                    .foregroundStyle(.secondary)
-            }
-            Link("Manage Subscription", destination: StoreService.manageSubscriptionsURL)
-        }
-    }
 
-    @ViewBuilder
-    private var freeTierSections: some View {
-        Section("Compare Plans") {
-            comparisonRow(title: "Projects", freeValue: "1", proValue: String(localized: "Unlimited"))
-            comparisonRow(title: "Rows per project", freeValue: "\(StoreService.freeMaxRows)", proValue: String(localized: "Unlimited"))
-            comparisonRow(title: "Screenshots per row", freeValue: "\(StoreService.freeMaxTemplatesPerRow)", proValue: String(localized: "Unlimited"))
-        }
 
-        Section("Upgrade") {
-            Button("Unlock Screenshot Bro Pro") {
-                store.presentPaywall(for: .general)
-            }
-            Button("Restore Purchase") {
-                Task { await store.restore() }
-            }
-        }
-    }
 
-    private func proFeatureRow(_ text: LocalizedStringKey) -> some View {
-        Label(text, systemImage: "checkmark")
-            // Span the row separator full-width instead of letting iOS indent it past the
-            // checkmark icon, which left ragged half-width lines between the feature rows.
-            .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
-    }
-
-    private func comparisonRow(title: LocalizedStringKey, freeValue: String, proValue: String) -> some View {
-        HStack(spacing: 16) {
-            Text(title)
-            Spacer()
-            Text("Free: \(freeValue)").foregroundStyle(.secondary).monospacedDigit()
-            Text("Pro: \(proValue)").fontWeight(.semibold).monospacedDigit()
-        }
-    }
 
     // MARK: - Legal & Attributions
 
@@ -406,24 +317,5 @@ struct IPadSettingsView: View {
 
     // MARK: - iCloud toggle
 
-    private func toggleICloud(enable: Bool) {
-        let sync = ICloudSyncService.shared
-        iCloudMigrationProgress = 0
-        iCloudError = nil
-
-        Task {
-            do {
-                let operation = enable ? sync.enable : sync.disable
-                try await operation { progress in
-                    Task { @MainActor in iCloudMigrationProgress = progress }
-                }
-                iCloudEnabled = enable
-                iCloudMigrationProgress = nil
-            } catch {
-                iCloudError = error.localizedDescription
-                iCloudMigrationProgress = nil
-            }
-        }
-    }
 }
 #endif
