@@ -53,12 +53,13 @@ Reviewer/build agents in `.claude/agents/`: `export-parity-reviewer` (visual/exp
 
 **Linting:** `.swiftlint.yml` is an opt-in `only_rules` set (force unwraps/casts/tries, import
 order, redundancy, file/type length above current worst-case). `screenshotTests/.swiftlint.yml`
-relaxes the length rules — long test suites are fine. Run it with `./tools/lint.sh`, and install
-the pre-commit hook once per clone with `./tools/install-hooks.sh` (it lints only staged files and
-blocks on errors, not warnings). It is deliberately **not** an Xcode build phase: the project sets
-`ENABLE_USER_SCRIPT_SANDBOXING = YES`, and the script sandbox denies SwiftLint read access to the
-source tree — wiring it in would mean turning that off project-wide. Current baseline: 0 errors,
-~320 warnings (mostly `force_unwrapping`, largely in tests).
+relaxes the length rules — long test suites are fine. It runs as a **Debug-only build phase** on
+the app target, so violations surface as Xcode warnings; Release skips it so archives stay clean
+and fast. That is why `ENABLE_USER_SCRIPT_SANDBOXING = NO`: the script sandbox otherwise denies
+SwiftLint read access to the source tree and to `.swiftlint.yml` itself. Also runnable by hand via
+`./tools/lint.sh`, plus an optional pre-commit hook (`./tools/install-hooks.sh`) that lints only
+staged files and blocks on errors, not warnings. Baseline: 0 errors, ~320 warnings (mostly
+`force_unwrapping`, largely in tests) — keep errors at zero; the build phase surfaces the rest.
 
 `.codex/` mirrors the hooks and agent definitions for the cloud (Codex) harness; `AGENTS.md` is the agent registry. `tools/` holds Python utilities: `gen_template.py` (SVG→template), `translate_catalog.py` + `translate_popular_languages.py` (localization), and `project-schema.json` (JSON Schema for `project.json`).
 
