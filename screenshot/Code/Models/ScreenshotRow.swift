@@ -134,9 +134,11 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         try c.encode(defaultDeviceBodyColorData, forKey: .defaultDeviceBodyColorData)
         try c.encode(defaultDeviceCategory, forKey: .defaultDeviceCategory)
         if backgroundStyle != .color { try c.encode(backgroundStyle, forKey: .backgroundStyle) }
-        if backgroundStyle == .gradient { try c.encode(gradientConfig, forKey: .gradientConfig) }
+        // Configs persist even when their style is inactive: switching to Color and saving
+        // must not lose a tuned gradient or orphan a background image file.
+        if !gradientConfig.isVisuallyDefault { try c.encode(gradientConfig, forKey: .gradientConfig) }
         if spanBackgroundAcrossRow { try c.encode(true, forKey: .spanBackgroundAcrossRow) }
-        if backgroundStyle == .image { try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig) }
+        if backgroundImageConfig != BackgroundImageConfig() { try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig) }
         if backgroundBlur != 0 { try c.encode(backgroundBlur, forKey: .backgroundBlur) }
         try c.encodeIfPresent(defaultDeviceFrameId, forKey: .defaultDeviceFrameId)
         if !hiddenShapeTypes.isEmpty { try c.encode(hiddenShapeTypes, forKey: .hiddenShapeTypes) }

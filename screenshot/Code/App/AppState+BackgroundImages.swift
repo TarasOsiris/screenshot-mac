@@ -128,7 +128,9 @@ extension AppState {
             return nil
         }
 
-        return ImageDownsampler.editorThumbnail(for: image)
+        // Downsample from the PNG bytes already in hand — `editorThumbnail(for:)` would
+        // re-serialize the image through an uncompressed TIFF on the main actor.
+        return ImageDownsampler.downsampledImage(from: pngData, maxDimension: ImageDownsampler.editorImageMaxDimension) ?? image
     }
 
 }

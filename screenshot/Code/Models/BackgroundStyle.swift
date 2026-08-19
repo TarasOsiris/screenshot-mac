@@ -130,6 +130,19 @@ nonisolated struct GradientColorStop: Codable, Equatable, Identifiable, Comparab
     }
 }
 
+extension GradientConfig {
+    /// True when rendering would match a freshly created default config. Stop ids are random
+    /// per instance, so plain `==` against `GradientConfig()` can never say so — this is the
+    /// predicate the encoders use to skip persisting an untouched config.
+    var isVisuallyDefault: Bool {
+        let d = GradientConfig()
+        return angle == d.angle && gradientType == d.gradientType
+            && centerX == d.centerX && centerY == d.centerY
+            && stops.map(\.colorData) == d.stops.map(\.colorData)
+            && stops.map(\.location) == d.stops.map(\.location)
+    }
+}
+
 nonisolated enum GradientType: String, Codable, CaseIterable {
     case linear
     case radial

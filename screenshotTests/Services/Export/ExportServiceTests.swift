@@ -1109,6 +1109,34 @@ struct ExportServiceTests {
                 "rectangle shadow should darken below the shape, not above: above=\(aboveBright) below=\(belowBright)")
     }
 
+    /// The built-in ambient shadows (showcase tiles, abstract device bodies) go through
+    /// `flipCompensatedShadow`, which must keep the halo below the shape in offscreen
+    /// renders the same way `ShadowModifier` does for the configurable shadows.
+    @Test func flipCompensatedShadowFallsBelowInOffscreenRender() throws {
+        let size: CGFloat = 300
+        let view = ZStack(alignment: .topLeading) {
+            Color.white
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.blue)
+                .frame(width: 100, height: 100)
+                .flipCompensatedShadow(color: .black.opacity(0.6), radius: 12, y: 20)
+                .position(x: 150, y: 150)
+        }
+        .frame(width: size, height: size)
+
+        let image = RowRenderer.renderViewToImage(view, width: size, height: size, label: "flip-compensated shadow")
+        let pngData = try #require(ExportService.opaquePNGData(from: image))
+        let bmp = try #require(NSBitmapImageRep(data: pngData))
+
+        // Shape spans y 100–200; sample the background 20px above and below it.
+        let above = try pixelColor(bmp, at: (150, 80))
+        let below = try pixelColor(bmp, at: (150, 220))
+        let aboveBright = (above.r + above.g + above.b) / 3
+        let belowBright = (below.r + below.g + below.b) / 3
+        #expect(belowBright < aboveBright - 0.02,
+                "ambient shadow should darken below the shape offscreen, not above: above=\(aboveBright) below=\(belowBright)")
+    }
+
     /// Same as above but for a real image-based (bezel PNG) frame with a screenshot —
     /// the multi-sub-layer case that actually triggered the editor↔preview mismatch.
     /// Sensitive to the `.compositingGroup()` fix.

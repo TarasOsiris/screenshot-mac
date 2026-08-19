@@ -154,8 +154,8 @@ struct CustomFontControlState: Equatable {
 
 /// Process-wide lookup so rendering code can resolve a `shape.fontName` (which may be a
 /// custom font's display name) back to family + traits without having to thread the full
-/// custom-font dictionary through every call site. AppState keeps this in sync via
-/// `refreshAvailableFontFamilies()`.
+/// custom-font dictionary through every call site. `CustomFontLibrary` keeps this in sync via
+/// `refreshAvailableFamilies(projectId:)`.
 enum CustomFontRegistry {
     struct ResolvedFont: Equatable {
         let family: String

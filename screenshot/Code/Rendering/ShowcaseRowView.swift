@@ -38,6 +38,6 @@ struct ShowcaseRowView<Background: View>: View {
             .resizable()
             .frame(width: templateWidth * scale, height: templateHeight * scale)
             .clipShape(RoundedRectangle(cornerRadius: layout.cornerRadius * scale, style: .continuous))
-            .shadow(color: .black.opacity(0.25), radius: layout.shadowRadius * scale, x: 0, y: layout.shadowY * scale)
+            .flipCompensatedShadow(color: .black.opacity(0.25), radius: layout.shadowRadius * scale, y: layout.shadowY * scale)
     }
 }

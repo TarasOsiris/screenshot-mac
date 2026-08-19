@@ -175,7 +175,9 @@ final class AppState {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor [weak self] in
+                // Must run before the observer returns — a Task deferred to a later runloop
+                // turn may never be scheduled before process teardown, losing the last edit.
+                MainActor.assumeIsolated {
                     self?.flushPendingSavesSynchronously()
                 }
             }

@@ -597,9 +597,11 @@ struct SettingsView: View {
 }
 
 #Preview {
+    let state = AppState()
     SettingsView()
         .environment(StoreService())
-        .environment(AppState())
+        .environment(state)
+        .environment(state.iCloudStatus)
         .environment(MCPServerService())
 }
 #endif

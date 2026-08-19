@@ -540,7 +540,10 @@ struct ContentView: View {
 }
 
 #Preview {
+    let state = AppState()
     ContentView()
-        .environment(AppState())
+        .environment(state)
+        .environment(state.zoom)
+        .environment(state.iCloudStatus)
         .environment(StoreService())
 }

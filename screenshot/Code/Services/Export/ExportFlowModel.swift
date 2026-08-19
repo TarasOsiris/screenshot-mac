@@ -66,7 +66,9 @@ final class ExportFlowModel {
 
     func cancel() { task?.cancel() }
 
-    /// Resets progress and takes ownership of the run. Returns false when one is already in flight.
+    /// Resets progress and takes ownership of the run. There is no re-entrancy guard — the
+    /// toolbar disables on `isExporting`, but a second overlapping run would clobber this one's
+    /// progress and task handle.
     private func beginRun(total: Int) {
         successTimer?.cancel()
         isExporting = true
@@ -189,7 +191,7 @@ final class ExportFlowModel {
         into baseURL: URL,
         folderName: String,
         rows: [ScreenshotRow]? = nil,
-        seedCache: [String: NSImage] = [:],
+        seedImages: [String: NSImage] = [:],
         delivery: Delivery,
         render: @MainActor @escaping (RowRenderContext) -> NSImage
     ) {
@@ -200,12 +202,13 @@ final class ExportFlowModel {
         run(cleanup: delivery.ownsTempFolder ? baseURL : nil) {
             let destDir = ExportFileNaming.uniqueFolder(named: folderName, in: baseURL)
             try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
-            var imageCache = seedCache
+            var imageCache: [String: NSImage] = [:]
             let fileURLs = try await ExportCoordinator.renderRows(
                 rowsToExport,
                 into: destDir,
                 source: document,
                 imageCache: &imageCache,
+                seedImages: seedImages,
                 onProgress: { [weak self] in self?.progress = $0 },
                 render: render
             )

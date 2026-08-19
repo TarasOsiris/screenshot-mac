@@ -261,6 +261,41 @@ struct ScreenshotRowTests {
         #expect(decoded.excludeFromAppStoreConnect == true)
     }
 
+    @Test func inactiveBackgroundConfigsSurviveRoundTrip() throws {
+        var row = ScreenshotRow(templates: [ScreenshotTemplate()])
+        row.gradientConfig = GradientConfig(angle: 42, gradientType: .radial)
+        row.backgroundImageConfig = BackgroundImageConfig(fileName: "bg-1.png", fillMode: .tile)
+        row.backgroundStyle = .color
+
+        let data = try JSONEncoder().encode(row)
+        let decoded = try JSONDecoder().decode(ScreenshotRow.self, from: data)
+
+        #expect(decoded.backgroundStyle == .color)
+        // Colors quantize to 8-bit on round-trip, so compare the lossless fields.
+        #expect(decoded.gradientConfig.angle == 42, "Gradient tuned while another style is active must survive save")
+        #expect(decoded.gradientConfig.gradientType == .radial)
+        #expect(decoded.backgroundImageConfig.fileName == "bg-1.png", "Image reference must survive save or the file gets orphan-cleaned")
+        #expect(decoded.backgroundImageConfig.fillMode == .tile)
+    }
+
+    @Test func templateConfigsSurviveRoundTripWithOverrideOff() throws {
+        var template = ScreenshotTemplate()
+        template.overrideBackground = false
+        template.backgroundStyle = .gradient
+        template.gradientConfig = GradientConfig(angle: 271)
+        template.backgroundImageConfig = BackgroundImageConfig(fileName: "bg-2.png")
+        template.backgroundBlur = 12
+
+        let data = try JSONEncoder().encode(template)
+        let decoded = try JSONDecoder().decode(ScreenshotTemplate.self, from: data)
+
+        #expect(decoded.overrideBackground == false)
+        #expect(decoded.backgroundStyle == .gradient)
+        #expect(decoded.gradientConfig.angle == 271)
+        #expect(decoded.backgroundImageConfig.fileName == "bg-2.png")
+        #expect(decoded.backgroundBlur == 12)
+    }
+
     @Test func excludeFromAppStoreConnectDefaultsFalse() {
         let row = ScreenshotRow()
         #expect(row.excludeFromAppStoreConnect == false)

@@ -102,6 +102,7 @@ struct CanvasShapeRenderContent: View {
                 )
             } else {
                 RasterizedDisplayTextView(
+                    size: CGSize(width: effectiveW, height: effectiveH),
                     text: displayText,
                     font: nsFont,
                     color: nsColor,
@@ -426,5 +427,25 @@ struct ShadowModifier: ViewModifier {
         let t = 2 * rotationDegrees * .pi / 180
         let c = cos(t), s = sin(t)
         return (x: ox * c - oy * s, y: -(ox * s + oy * c))
+    }
+}
+
+/// A fixed non-rotated `.shadow(y:)` with the same offscreen-flip compensation as
+/// `ShadowModifier` — for the built-in ambient shadows (showcase tiles, abstract device
+/// bodies), which would otherwise point up in exports and down in the editor.
+private struct FlipCompensatedShadow: ViewModifier {
+    let color: Color
+    let radius: CGFloat
+    let y: CGFloat
+    @Environment(\.isExportRendering) private var isExportRendering
+
+    func body(content: Content) -> some View {
+        content.shadow(color: color, radius: radius, x: 0, y: isExportRendering ? -y : y)
+    }
+}
+
+extension View {
+    func flipCompensatedShadow(color: Color, radius: CGFloat, y: CGFloat) -> some View {
+        modifier(FlipCompensatedShadow(color: color, radius: radius, y: y))
     }
 }

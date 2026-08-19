@@ -187,7 +187,7 @@ extension ContentView {
         case .allRows:
             let rowsToExport = showcaseRows(selectedRowIds: selectedRowIds, excludedTemplateIds: excludedTemplateIds)
             guard !rowsToExport.isEmpty else { return }
-            exportRowLevel(folderName: "showcase", rows: rowsToExport, imageCache: seedCache) { context in
+            exportRowLevel(folderName: "showcase", rows: rowsToExport, seedImages: seedCache) { context in
                 context.showcaseImage(config: config)
             }
         case .singleRow:
@@ -196,13 +196,16 @@ extension ContentView {
                   let row = baseRow.filtering(excluding: excludedTemplateIds) else { return }
             let localeCode = state.localeState.activeLocaleCode
             if let message = ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
-                var images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-                images.merge(seedCache, uniquingKeysWith: { _, new in new })
-                return RowRenderer.renderShowcaseRowImage(
-                    row: row, screenshotImages: images,
-                    localeCode: localeCode, localeState: state.localeState,
-                    availableFontFamilies: state.availableFontFamilySet, config: config
+                var cache: [String: NSImage] = [:]
+                let context = RowRenderContext.load(
+                    row: row,
+                    localeCode: localeCode,
+                    from: state,
+                    label: "showcase row export",
+                    cache: &cache,
+                    seedImages: seedCache
                 )
+                return context.showcaseImage(config: config)
             }) {
                 exportFlow.errorMessage = String(localized: "Could not export row image: \(message)")
             }
@@ -214,7 +217,7 @@ extension ContentView {
     func exportRowLevel(
         folderName: String,
         rows: [ScreenshotRow]? = nil,
-        imageCache seedCache: [String: NSImage] = [:],
+        seedImages: [String: NSImage] = [:],
         render: @MainActor @escaping (RowRenderContext) -> NSImage
     ) {
         #if os(iOS)
@@ -230,7 +233,7 @@ extension ContentView {
             into: baseURL,
             folderName: folderName,
             rows: rows,
-            seedCache: seedCache,
+            seedImages: seedImages,
             delivery: delivery,
             render: render
         )
@@ -280,7 +283,7 @@ extension ContentView {
             into: baseURL,
             folderName: "showcase",
             rows: rowsToExport,
-            seedCache: showcaseSeedCache(config: config, backgroundImage: backgroundImage),
+            seedImages: showcaseSeedCache(config: config, backgroundImage: backgroundImage),
             delivery: .route(destination),
             render: { context in context.showcaseImage(config: config) }
         )

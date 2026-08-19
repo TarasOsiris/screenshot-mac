@@ -222,7 +222,7 @@ struct ProgrammaticDeviceFrameView: View {
                 )
                 .fill(bodyColor)
                 .frame(width: bodyW, height: baseH)
-                .shadow(color: .black.opacity(0.2), radius: 2 * s, y: 1 * s)
+                .flipCompensatedShadow(color: .black.opacity(0.2), radius: 2 * s, y: 1 * s)
 
                 Rectangle()
                     .fill(.black.opacity(0.15))
@@ -338,7 +338,7 @@ struct ProgrammaticDeviceFrameView: View {
             bodyShape
                 .fill(bodyColor)
                 .frame(width: bodyW, height: bodyH)
-                .shadow(color: .black.opacity(0.25), radius: 4 * s, y: 2 * s)
+                .flipCompensatedShadow(color: .black.opacity(0.25), radius: 4 * s, y: 2 * s)
 
             midShape
                 .fill(innerRimColor)
@@ -447,7 +447,7 @@ struct ProgrammaticDeviceFrameView: View {
             bodyShape
                 .fill(bodyColor)
                 .frame(width: bodyW, height: bodyH)
-                .shadow(color: .black.opacity(0.25), radius: 4 * s, y: 2 * s)
+                .flipCompensatedShadow(color: .black.opacity(0.25), radius: 4 * s, y: 2 * s)
 
             bodyShape
                 .strokeBorder(

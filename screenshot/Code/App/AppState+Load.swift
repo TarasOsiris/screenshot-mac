@@ -207,6 +207,11 @@ extension AppState {
     /// `deferCleanup` runs the orphaned-resource scan off-main (project-open path) so the
     /// switch doesn't block the push animation; iCloud reload keeps it synchronous.
     func applyProjectData(_ data: ProjectData, for projectId: UUID, deferCleanup: Bool = false) {
+        // The document is replaced wholesale (iCloud/local reload included): a pending debounced
+        // edit would flush a stale row over the new data, and any undo step captured against the
+        // old rows would restore the pre-reload document — and save it back over the sync.
+        cancelPendingDebounceTasks()
+        undoManager?.removeAllActions()
         rows = data.rows
         localeState = data.localeState ?? .default
         activeProjectDataModifiedAt = data.modifiedAt

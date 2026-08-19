@@ -147,6 +147,8 @@ extension RowRenderContext {
     /// The image-loading preamble, once. Resolves `row`'s resources for `localeCode` through
     /// `source` (sharing `cache` across rows and locales) and builds the context; pass the
     /// previous context as `reusing` to keep its precomposed background when the row is the same.
+    /// `seedImages` carries in-memory-only resources (the showcase sheet's transient background)
+    /// that disk loading can never produce — the cache is read-through, not a seed.
     static func load(
         row: ScreenshotRow,
         localeCode: String,
@@ -154,10 +156,12 @@ extension RowRenderContext {
         displayScale: CGFloat = 1.0,
         label: String,
         cache: inout [String: NSImage],
+        seedImages: [String: NSImage] = [:],
         reusing previous: RowRenderContext? = nil
     ) -> RowRenderContext {
         let fileNames = source.referencedImageFileNames(forRow: row, localeCode: localeCode)
-        let images = source.loadFullResolutionImages(fileNames: fileNames, cache: &cache)
+        var images = source.loadFullResolutionImages(fileNames: fileNames, cache: &cache)
+        images.merge(seedImages) { _, seed in seed }
         let missing = fileNames.subtracting(images.keys).sorted()
 
         if let previous, previous.row.id == row.id {

@@ -88,6 +88,7 @@ enum ExportCoordinator {
         into destDir: URL,
         source: some RowRenderSource,
         imageCache: inout [String: NSImage],
+        seedImages: [String: NSImage] = [:],
         onProgress: ((Int) -> Void)? = nil,
         render: @MainActor (RowRenderContext) -> NSImage
     ) async throws -> [URL] {
@@ -100,7 +101,8 @@ enum ExportCoordinator {
                 localeCode: localeCode,
                 from: source,
                 label: "row export",
-                cache: &imageCache
+                cache: &imageCache,
+                seedImages: seedImages
             )
             guard let data = await ExportImageEncoder.opaquePNGDataOffMain(from: render(context)) else {
                 throw ExportRenderError.encodingFailed(rowIndex: index)

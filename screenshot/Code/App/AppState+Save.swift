@@ -122,9 +122,6 @@ extension AppState {
         let index = makeIndexSnapshotForSave()
 
         let projectSnapshot = activeProjectSnapshotForSave()
-        if let snapshot = projectSnapshot {
-            activeProjectDataModifiedAt = snapshot.data.modifiedAt
-        }
 
         let monitor = iCloudMonitor
         var ownWriteURLs = [PersistenceService.indexURL]
@@ -157,6 +154,10 @@ extension AppState {
                 }
                 if let snapshot = projectSnapshot, projectError == nil,
                    self.activeProjectId == snapshot.id {
+                    // Stamped only after the write lands (like saveCurrentProject) — an eagerly
+                    // stamped failed save would make reloadICloudFromDisk refuse genuinely
+                    // newer remote data forever.
+                    self.activeProjectDataModifiedAt = snapshot.data.modifiedAt
                     self.lastSeenCatalogModified = catalogModified
                 }
                 if indexError == nil && projectError == nil {

@@ -371,12 +371,13 @@ struct ShapePropertiesSingleSelectionBar: View {
             .sheet(isPresented: $isReplacingSvg) {
                 SvgPasteDialog(isPresented: $isReplacingSvg) { svgContent, _, useColor, color in
                     guard let i = idx(for: shapeId) else { return }
-                    state.rows[i.row].shapes[i.shape].svgContent = svgContent
-                    if useColor {
-                        state.rows[i.row].shapes[i.shape].svgUseColor = true
-                        state.rows[i.row].shapes[i.shape].color = color
+                    state.withRowUndo("Replace SVG", rowId: state.rows[i.row].id) {
+                        state.rows[i.row].shapes[i.shape].svgContent = svgContent
+                        if useColor {
+                            state.rows[i.row].shapes[i.shape].svgUseColor = true
+                            state.rows[i.row].shapes[i.shape].color = color
+                        }
                     }
-                    state.scheduleSave()
                 }
             }
         }

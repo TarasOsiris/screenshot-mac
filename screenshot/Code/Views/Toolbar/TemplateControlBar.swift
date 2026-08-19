@@ -274,11 +274,12 @@ struct TemplateControlBar: View {
     }
 
     private var blurSlider: some View {
-        PopoverSliderRow(
+        let blur = continuousTemplateBinding(\.backgroundBlur)
+        return PopoverSliderRow(
             label: "Blur",
-            value: $template.backgroundBlur.onSet { onSave() },
+            value: blur,
             range: 0...100,
-            displayValue: "\(Int(template.backgroundBlur))"
+            displayValue: "\(Int(blur.wrappedValue))"
         )
     }
 
@@ -347,7 +348,7 @@ struct TemplateControlBar: View {
     private var backgroundEditorContent: some View {
         BackgroundEditor(
             backgroundStyle: $template.backgroundStyle,
-            bgColor: $template.bgColor,
+            bgColor: continuousTemplateBinding(\.bgColor),
             gradientConfig: continuousTemplateBinding(\.gradientConfig),
             backgroundImageConfig: continuousTemplateBinding(\.backgroundImageConfig),
             backgroundImage: backgroundPreviewImage,

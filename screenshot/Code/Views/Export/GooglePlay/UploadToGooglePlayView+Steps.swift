@@ -2,7 +2,7 @@ import SwiftUI
 
 extension UploadToGooglePlayView {
 
-    // MARK: - Package model.step
+    // MARK: - Package step
 
     @ViewBuilder
     var packageStep: some View {
@@ -73,7 +73,7 @@ extension UploadToGooglePlayView {
         .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
     }
 
-    // MARK: - Plan model.step
+    // MARK: - Plan step
 
     @ViewBuilder
     var planStep: some View {
@@ -213,7 +213,7 @@ extension UploadToGooglePlayView {
         }
     }
 
-    // MARK: - Uploading model.step
+    // MARK: - Uploading step
 
     @ViewBuilder
     var uploadingStep: some View {
@@ -226,7 +226,7 @@ extension UploadToGooglePlayView {
         .padding(20)
     }
 
-    // MARK: - Done model.step
+    // MARK: - Done step
 
     @ViewBuilder
     var doneStep: some View {
@@ -256,7 +256,7 @@ extension UploadToGooglePlayView {
     }
 
     private func playConsoleURL(packageName: String) -> URL? {
-        guard !model.packageName.isEmpty else { return nil }
+        guard !packageName.isEmpty else { return nil }
         return URL(string: "https://play.google.com/console/")
     }
 }

@@ -41,13 +41,13 @@ struct ScreenshotTemplate: Identifiable, Codable, Equatable, BackgroundFillable 
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
         try c.encode(backgroundColor, forKey: .backgroundColor)
-        if overrideBackground {
-            try c.encode(true, forKey: .overrideBackground)
-            if backgroundStyle != .color { try c.encode(backgroundStyle, forKey: .backgroundStyle) }
-            if backgroundStyle == .gradient { try c.encode(gradientConfig, forKey: .gradientConfig) }
-            if backgroundStyle == .image { try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig) }
-            if backgroundBlur != 0 { try c.encode(backgroundBlur, forKey: .backgroundBlur) }
-        }
+        // Everything persists even with the override off (or the style inactive): toggling
+        // the override and saving must not lose the tuned config or orphan an image file.
+        if overrideBackground { try c.encode(true, forKey: .overrideBackground) }
+        if backgroundStyle != .color { try c.encode(backgroundStyle, forKey: .backgroundStyle) }
+        if !gradientConfig.isVisuallyDefault { try c.encode(gradientConfig, forKey: .gradientConfig) }
+        if backgroundImageConfig != BackgroundImageConfig() { try c.encode(backgroundImageConfig, forKey: .backgroundImageConfig) }
+        if backgroundBlur != 0 { try c.encode(backgroundBlur, forKey: .backgroundBlur) }
     }
 
     var bgColor: Color {

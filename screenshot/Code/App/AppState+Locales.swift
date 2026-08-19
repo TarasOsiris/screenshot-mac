@@ -169,8 +169,12 @@ extension AppState {
     }
 
     func resetLocaleOverride(shapeId: UUID) {
+        // The override may carry a per-locale screenshot; dropping it wholesale must
+        // release that file like resetLocaleImageOverride does.
+        let oldFile = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)?.overrideImageFileName
         withUndo("Reset Override") {
             LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
+            if let oldFile { cleanupUnreferencedImage(oldFile) }
         }
     }
 

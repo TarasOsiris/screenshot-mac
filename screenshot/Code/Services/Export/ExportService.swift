@@ -136,7 +136,7 @@ struct ExportService {
                             images: images,
                             localeCode: renderCode,
                             localeState: localeState,
-                            availableFontFamilies: availableFontFamilies ?? PlatformFonts.familyNameSet,
+                            availableFontFamilies: availableFontFamilies,
                             label: "export row"
                         )
                     context = rowContext

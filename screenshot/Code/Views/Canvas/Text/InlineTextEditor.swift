@@ -4,6 +4,11 @@ import UIKit
 #endif
 
 struct RasterizedDisplayTextView: View {
+    /// Pass the enclosing frame explicitly on the export/snapshot path — a GeometryReader's
+    /// size-dependent child isn't reliably resolved before an offscreen capture, which leaves
+    /// text blank intermittently (same gotcha as `BackgroundRendering`). nil (the live iOS
+    /// canvas) falls back to reading the on-screen frame.
+    var size: CGSize?
     var text: String
     var font: NSFont
     var color: NSColor
@@ -16,27 +21,36 @@ struct RasterizedDisplayTextView: View {
     var richTextData: String?
 
     var body: some View {
-        GeometryReader { proxy in
-            if let image = TextLayoutStyle.renderImage(
-                size: proxy.size,
-                text: text,
-                font: font,
-                color: color,
-                alignment: alignment,
-                verticalAlignment: verticalAlignment,
-                uppercase: uppercase,
-                letterSpacing: letterSpacing,
-                lineHeightMultiple: lineHeightMultiple,
-                legacyLineSpacing: legacyLineSpacing,
-                richTextData: richTextData
-            ) {
-                Image(nsImage: image)
-                    .resizable()
-                    .interpolation(.high)
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-            } else {
-                Color.clear
+        if let size {
+            textImage(size: size)
+        } else {
+            GeometryReader { proxy in
+                textImage(size: proxy.size)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func textImage(size: CGSize) -> some View {
+        if let image = TextLayoutStyle.renderImage(
+            size: size,
+            text: text,
+            font: font,
+            color: color,
+            alignment: alignment,
+            verticalAlignment: verticalAlignment,
+            uppercase: uppercase,
+            letterSpacing: letterSpacing,
+            lineHeightMultiple: lineHeightMultiple,
+            legacyLineSpacing: legacyLineSpacing,
+            richTextData: richTextData
+        ) {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: size.width, height: size.height)
+        } else {
+            Color.clear
         }
     }
 }
