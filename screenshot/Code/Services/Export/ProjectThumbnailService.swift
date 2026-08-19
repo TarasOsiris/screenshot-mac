@@ -142,6 +142,10 @@ enum ProjectThumbnailService {
     }
 
     private static func render(_ inputs: RenderInputs) -> NSImage {
+        // Read before registering the project's fonts: registration invalidates the shared cache,
+        // so taking it afterwards re-enumerates the system families for every thumbnail.
+        let systemFamilies = PlatformFonts.familyNameSet
+
         var registeredURLs: [URL] = []
         for url in inputs.fontURLs where CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil) {
             registeredURLs.append(url)
@@ -158,7 +162,7 @@ enum ProjectThumbnailService {
             }
         )
         let instances = inputs.fontURLs.flatMap(CustomFont.allInstances(at:))
-        var availableFontFamilies = Set(PlatformFonts.systemFamilyNames)
+        var availableFontFamilies = systemFamilies
         for font in fonts.values {
             availableFontFamilies.insert(font.familyName)
             availableFontFamilies.insert(font.displayName)

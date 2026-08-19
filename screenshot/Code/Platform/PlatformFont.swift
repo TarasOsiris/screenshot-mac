@@ -7,12 +7,14 @@ import AppKit
 import UIKit
 #endif
 
-/// Cross-platform access to the system's installed font families. macOS uses NSFontManager;
+/// Cross-platform access to the system's installed font families. macOS uses Core Text;
 /// iOS uses UIFont. Custom (process-registered) fonts are layered on by AppState.
 enum PlatformFonts {
     static var systemFamilyNames: [String] {
         #if os(macOS)
-        return NSFontManager.shared.availableFontFamilies
+        // Same families as `NSFontManager.availableFontFamilies`, but that one builds a descriptor
+        // per family on the way out: ~150ms warm, ~600ms against a cold font cache, versus ~20ms.
+        return (CTFontManagerCopyAvailableFontFamilyNames() as? [String]) ?? []
         #else
         return UIFont.familyNames
         #endif

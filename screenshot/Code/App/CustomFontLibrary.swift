@@ -26,9 +26,23 @@ final class CustomFontLibrary {
     /// in use — see `cleanupUnreferenced`.
     @ObservationIgnored private var everReferencedFontFamilies: Set<String> = []
 
+    @ObservationIgnored private var cachedAvailableFamilySet: Set<String>?
+
     /// System families plus every registered custom family. A `RowRenderSource` requirement, so
     /// `AppState` forwards it.
-    @ObservationIgnored private(set) var availableFamilySet: Set<String> = PlatformFonts.familyNameSet
+    ///
+    /// Resolved on first read, never in `init`: `AppState` is constructed before the first frame
+    /// and nothing on that path reads this — only the canvas, the font picker and the renderers
+    /// do — so the system font enumeration has no business blocking launch.
+    private(set) var availableFamilySet: Set<String> {
+        get {
+            if let cachedAvailableFamilySet { return cachedAvailableFamilySet }
+            let set = systemAndCustomFamilies()
+            cachedAvailableFamilySet = set
+            return set
+        }
+        set { cachedAvailableFamilySet = newValue }
+    }
 
     @ObservationIgnored private var lastFontCleanupAt: Date = .distantPast
 
@@ -42,21 +56,27 @@ final class CustomFontLibrary {
     /// Takes the project id because instances are read back off the font files in that project's
     /// resources directory.
     func refreshAvailableFamilies(projectId: UUID?) {
-        // Process-registered fonts (via CTFontManager) don't appear in the system family
-        // list, so add both family and display names.
         PlatformFonts.invalidateFamilyNameCache()
-        var families = PlatformFonts.familyNameSet
         let resourcesURL = projectId.map { PersistenceService.resourcesDir($0) }
         var instances: [CustomFont] = []
-        for font in customFonts.values {
-            families.insert(font.familyName)
-            families.insert(font.displayName)
-            if let resourcesURL {
+        if let resourcesURL {
+            for font in customFonts.values {
                 instances.append(contentsOf: CustomFont.allInstances(at: resourcesURL.appendingPathComponent(font.fileName)))
             }
         }
-        availableFamilySet = families
+        availableFamilySet = systemAndCustomFamilies()
         CustomFontRegistry.update(with: customFonts, instances: instances)
+    }
+
+    /// Process-registered fonts (via CTFontManager) don't appear in the system family list, so
+    /// add both family and display names.
+    private func systemAndCustomFamilies() -> Set<String> {
+        var families = PlatformFonts.familyNameSet
+        for font in customFonts.values {
+            families.insert(font.familyName)
+            families.insert(font.displayName)
+        }
+        return families
     }
 
     // MARK: - Custom Fonts
