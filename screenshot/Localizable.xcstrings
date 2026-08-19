@@ -5854,6 +5854,9 @@
         }
       }
     },
+    "A simulated upload against sample data. Nothing is sent to Google Play." : {
+
+    },
     "A typical workflow" : {
       "localizations" : {
         "de" : {
@@ -15422,6 +15425,16 @@
     "Could not prepare the screenshot sync." : {
 
     },
+    "Could not read %lld image(s) used by %@ in %@. Re-import the missing screenshots before uploading, or the upload would publish them as blank areas." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not read %1$lld image(s) used by %2$@ in %3$@. Re-import the missing screenshots before uploading, or the upload would publish them as blank areas."
+          }
+        }
+      }
+    },
     "Could not read the captured screenshot." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -18180,9 +18193,6 @@
           }
         }
       }
-    },
-    "Demo mode — no screenshots are sent to Google Play." : {
-
     },
     "Demo mode is active. Real API key fields above are ignored until you turn demo mode off." : {
       "localizations" : {
@@ -30749,6 +30759,9 @@
         }
       }
     },
+    "Lost access to the export folder. Choose it again." : {
+
+    },
     "Loved the app? An App Store review helps tremendously and keeps Screenshot Bro independent." : {
       "localizations" : {
         "de" : {
@@ -31486,6 +31499,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "元数据已更新"
+          }
+        }
+      }
+    },
+    "Missing images for %@ · %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Missing images for %1$@ · %2$@."
           }
         }
       }
@@ -50829,9 +50852,6 @@
     "This removes the imported service account key from this device." : {
 
     },
-    "This removes the imported service account key from this Mac." : {
-
-    },
     "This removes the Issuer ID, Key ID, and imported private key from this Mac." : {
       "localizations" : {
         "de" : {
@@ -53508,9 +53528,6 @@
           }
         }
       }
-    },
-    "Upload error details" : {
-
     },
     "Upload failed" : {
       "localizations" : {

@@ -650,6 +650,54 @@ struct AppStateTests {
         #expect(state.selectedShapeId == shape.id)
     }
 
+    // MARK: - Background image references
+
+    /// A background image config outlives its style so toggling back doesn't lose it. Retention
+    /// must still see the reference (or cleanup deletes the file), but the render path must not:
+    /// counting it would let a file nothing draws report itself as a missing resource and abort
+    /// an App Store Connect / Google Play upload.
+    @Test func inactiveBackgroundImageCountsForRetentionButNotForRendering() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = try #require(state.rows.first?.id)
+        let localeCode = state.localeState.activeLocaleCode
+
+        state.saveBackgroundImage(makeSolidImage(.systemBlue, width: 100, height: 100), for: rowId)
+        let fileName = try #require(state.rows.first?.backgroundImageConfig.fileName)
+        state.rows[0].backgroundStyle = .image
+        #expect(state.referencedImageFileNames(forRow: state.rows[0], localeCode: localeCode).contains(fileName))
+
+        state.rows[0].backgroundStyle = .color
+        #expect(state.rows.first?.backgroundImageConfig.fileName == fileName, "The config is kept for toggling back")
+        #expect(
+            !state.referencedImageFileNames(forRow: state.rows[0], localeCode: localeCode).contains(fileName),
+            "An inactive background image is not a render resource"
+        )
+        #expect(
+            state.allReferencedImageFileNames().contains(fileName),
+            "…but retention still sees it, so cleanup must not delete the file"
+        )
+    }
+
+    /// The same rule for a per-template override: it only paints while the override is on.
+    @Test func templateBackgroundImageIsInactiveWhileOverrideIsOff() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let rowId = try #require(state.rows.first?.id)
+        let localeCode = state.localeState.activeLocaleCode
+
+        state.saveBackgroundImage(makeSolidImage(.systemBlue, width: 100, height: 100), for: rowId, templateIndex: 0)
+        let fileName = try #require(state.rows.first?.templates.first?.backgroundImageConfig.fileName)
+
+        state.rows[0].templates[0].backgroundStyle = .image
+        state.rows[0].templates[0].overrideBackground = true
+        #expect(state.referencedImageFileNames(forRow: state.rows[0], localeCode: localeCode).contains(fileName))
+
+        state.rows[0].templates[0].overrideBackground = false
+        #expect(!state.referencedImageFileNames(forRow: state.rows[0], localeCode: localeCode).contains(fileName))
+        #expect(state.allReferencedImageFileNames().contains(fileName))
+    }
+
     // MARK: - Template operations
 
     @Test func addTemplateIncreasesCount() {

@@ -99,6 +99,9 @@ extension AppState {
         if needsGroup { undoManager.beginUndoGrouping() }
         body()
         if needsGroup { undoManager.endUndoGrouping() }
+        // Every push consumes a slot in the bounded stack; the orphaned-image sweep measures
+        // reachability in these units.
+        undoStepGeneration += 1
     }
 
     /// Full-snapshot undo with a pre-captured base — used by the debounced translation-edit

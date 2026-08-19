@@ -149,7 +149,7 @@ extension EditorRowView {
         HStack(spacing: 0) {
             ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
                 TemplateControlBar(
-                    template: safeTemplateBinding(rowId: row.id, templateIndex: index),
+                    template: template,
                     row: row,
                     index: index,
                     zoom: zoom,

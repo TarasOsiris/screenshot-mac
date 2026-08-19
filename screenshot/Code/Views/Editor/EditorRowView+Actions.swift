@@ -43,27 +43,6 @@ extension EditorRowView {
         state.addImageShape(image: image, centerX: modelX, centerY: modelY)
     }
 
-    static let placeholderTemplate = ScreenshotTemplate()
-
-    func safeTemplateBinding(rowId: UUID, templateIndex: Int) -> Binding<ScreenshotTemplate> {
-        Binding(
-            get: {
-                guard let ri = state.rows.firstIndex(where: { $0.id == rowId }),
-                      templateIndex < state.rows[ri].templates.count else {
-                    return Self.placeholderTemplate
-                }
-                return state.rows[ri].templates[templateIndex]
-            },
-            set: { newValue in
-                guard let ri = state.rows.firstIndex(where: { $0.id == rowId }),
-                      templateIndex < state.rows[ri].templates.count else { return }
-                state.withUndo("Edit Template") {
-                    state.rows[ri].templates[templateIndex] = newValue
-                }
-            }
-        )
-    }
-
     // MARK: - Add Element helpers
 
     func addShapeFromMenu(_ type: ShapeType) {

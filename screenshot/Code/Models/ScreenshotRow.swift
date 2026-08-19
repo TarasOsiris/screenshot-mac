@@ -164,6 +164,15 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         spanBackgroundAcrossRow && backgroundStyle != .color
     }
 
+    /// The background image this row references. `backgroundImageConfig` outlives its style —
+    /// switching to Color keeps the tuned config so toggling back doesn't lose it — so renderers
+    /// and upload checks must pass `activeOnly: true`, or a file nothing draws counts as a missing
+    /// resource and blocks the upload. Retention (orphan cleanup) wants the ungated reference.
+    nonisolated func backgroundImageFileName(activeOnly: Bool) -> String? {
+        guard !activeOnly || backgroundStyle == .image else { return nil }
+        return backgroundImageConfig.fileName
+    }
+
     /// True when anything in the background is blurred — the row itself or an enabled per-template
     /// override. The editor blurs with SwiftUI `.blur` and export with CIGaussianBlur, so these rows
     /// must preview through the export renderer instead of drawing the blur live.

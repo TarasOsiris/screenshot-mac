@@ -93,6 +93,70 @@ struct WithUndoTests {
         #expect(state.screenshotImages[secondFile] != nil)
     }
 
+    /// The replaced file has to outlive the undo step that can restore its reference — but not
+    /// the whole session. Once that step falls off the bounded stack, the sweep reaps it.
+    @Test func orphanedImageSurvivesUndoReachThenIsReaped() throws {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        um.levelsOfUndo = 2
+        let shapeId = try #require(state.rows.first?.shapes.first { $0.type == .device }?.id)
+        let projectId = try #require(state.activeProjectId)
+        let resourcesDir = PersistenceService.resourcesDir(projectId)
+
+        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId)
+        let firstFile = try #require(state.rows.first?.shapes.first { $0.id == shapeId }?.displayImageFileName)
+        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId)
+        let firstURL = resourcesDir.appendingPathComponent(firstFile)
+
+        state.sweepUnreachableOrphanedImages()
+        #expect(FileManager.default.fileExists(atPath: firstURL.path), "Undo can still restore the reference")
+
+        // Push enough steps to evict the replacement from the two-deep stack.
+        state.selectRow(state.rows.first!.id)
+        for _ in 0..<4 {
+            state.addShape(CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 10, height: 10))
+        }
+        state.sweepUnreachableOrphanedImages()
+        #expect(!FileManager.default.fileExists(atPath: firstURL.path), "Reaped once no undo step can reach it")
+        #expect(state.screenshotImages[firstFile] == nil, "…and evicted from the in-memory cache")
+    }
+
+    /// Undoing back onto a parked file makes it live again, so the sweep must forget it rather
+    /// than delete it out from under the restored shape.
+    @Test func undoingBackOntoAnOrphanedImageSparesIt() throws {
+        let (state, tempDir, um) = makeUndoState()
+        defer { cleanup(tempDir) }
+        let shapeId = try #require(state.rows.first?.shapes.first { $0.type == .device }?.id)
+        let projectId = try #require(state.activeProjectId)
+        let resourcesDir = PersistenceService.resourcesDir(projectId)
+
+        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId)
+        let firstFile = try #require(state.rows.first?.shapes.first { $0.id == shapeId }?.displayImageFileName)
+        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId)
+
+        um.undo()
+        state.sweepUnreachableOrphanedImages()
+        #expect(state.rows.first?.shapes.first { $0.id == shapeId }?.displayImageFileName == firstFile)
+        #expect(FileManager.default.fileExists(atPath: resourcesDir.appendingPathComponent(firstFile).path))
+        #expect(state.screenshotImages[firstFile] != nil)
+    }
+
+    /// Without an UndoManager (headless/tests) nothing can restore the reference, so the old
+    /// behaviour of deleting on the spot must be preserved.
+    @Test func orphanedImageIsDeletedImmediatelyWithoutUndoManager() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanup(tempDir) }
+        let shapeId = try #require(state.rows.first?.shapes.first { $0.type == .device }?.id)
+        let projectId = try #require(state.activeProjectId)
+        let resourcesDir = PersistenceService.resourcesDir(projectId)
+
+        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId)
+        let firstFile = try #require(state.rows.first?.shapes.first { $0.id == shapeId }?.displayImageFileName)
+        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId)
+
+        #expect(!FileManager.default.fileExists(atPath: resourcesDir.appendingPathComponent(firstFile).path))
+    }
+
     @Test func continuousEditCollapsesToOneUndoStep() {
         let (state, tempDir, um) = makeUndoState()
         defer { cleanup(tempDir) }

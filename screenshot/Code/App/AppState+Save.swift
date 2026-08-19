@@ -119,6 +119,7 @@ extension AppState {
     /// synchronous fallback, so quit can't lose an in-flight write.
     func saveAllAsync() {
         updateCrashDocumentContext()
+        sweepUnreachableOrphanedImages()
         let index = makeIndexSnapshotForSave()
 
         let projectSnapshot = activeProjectSnapshotForSave()
@@ -128,6 +129,8 @@ extension AppState {
         if let snapshot = projectSnapshot {
             ownWriteURLs.append(PersistenceService.projectDataURL(snapshot.id))
             ownWriteURLs.append(PersistenceService.translationCatalogURL(snapshot.id))
+            inFlightSaveModifiedAt = max(inFlightSaveModifiedAt ?? .distantPast, snapshot.data.modifiedAt)
+            inFlightSaveCount += 1
         }
         monitor?.recordOwnWrite(ownWriteURLs)
 
@@ -144,6 +147,10 @@ extension AppState {
             }
             DispatchQueue.main.async {
                 guard let self else { return }
+                if projectSnapshot != nil {
+                    self.inFlightSaveCount -= 1
+                    if self.inFlightSaveCount == 0 { self.inFlightSaveModifiedAt = nil }
+                }
                 // On the main actor to match saveAll's thread for the unlocked snapshot.
                 monitor?.snapshotAfterWrite()
                 if let indexError {

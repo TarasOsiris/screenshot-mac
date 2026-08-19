@@ -55,6 +55,13 @@ struct ScreenshotTemplate: Identifiable, Codable, Equatable, BackgroundFillable 
         set { backgroundColor = CodableColor(newValue) }
     }
 
+    /// See `ScreenshotRow.backgroundImageFileName(activeOnly:)` — a per-template override only
+    /// paints when the override itself is on.
+    nonisolated func backgroundImageFileName(activeOnly: Bool) -> String? {
+        guard !activeOnly || (overrideBackground && backgroundStyle == .image) else { return nil }
+        return backgroundImageConfig.fileName
+    }
+
     func duplicated() -> ScreenshotTemplate {
         var copy = ScreenshotTemplate(id: UUID(), backgroundColor: bgColor)
         copy.overrideBackground = overrideBackground

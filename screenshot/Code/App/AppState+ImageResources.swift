@@ -21,6 +21,9 @@ extension AppState {
     }
 
     func cleanupOrphanedResourceFiles(for projectId: UUID) {
+        // Callers clear the undo stack first, so nothing parked can be restored any more and
+        // this directory scan subsumes the parking lot.
+        deferredOrphanedImages.removeAll()
         let resourcesURL = PersistenceService.resourcesDir(projectId)
         guard let files = try? FileManager.default.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
         for fileURL in Self.orphanedResourceURLs(in: files, referenced: allReferencedImageFileNames()) {
@@ -36,6 +39,7 @@ extension AppState {
     /// `removeItem`, not `removeImageFile`); on open that dict was just cleared and is
     /// repopulated by `loadScreenshotImages`.
     func cleanupOrphanedResourceFilesAsync(for projectId: UUID) {
+        deferredOrphanedImages.removeAll()
         let resourcesURL = PersistenceService.resourcesDir(projectId)
         Task.detached(priority: .utility) { [weak self] in
             guard let files = try? FileManager.default.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
@@ -53,27 +57,62 @@ extension AppState {
         }
     }
 
-    /// Deleting immediately would break undo: a registered step can restore the model's
-    /// reference (and these cleanups run inside undoable mutations), but nothing re-creates
-    /// the file — ⌘Z would bring the shape back empty. While an UndoManager exists the orphan
-    /// stays on disk and in the cache, and is reaped by `cleanupOrphanedResourceFiles` on the
-    /// next project open/switch/reload — all of which clear the undo stack first.
-    private var canDeleteImageFilesImmediately: Bool { undoManager == nil }
+    /// Undo depth assumed when the UndoManager reports unlimited (`levelsOfUndo == 0`).
+    /// The app sets 50 in `ContentView`; never reaping at all is what leaked in the first place.
+    private static let assumedUndoDepth = 50
 
-    func cleanupUnreferencedImage(_ fileName: String?) {
-        guard canDeleteImageFilesImmediately else { return }
-        guard let fileName, !isImageFileReferenced(fileName) else { return }
-        removeImageFile(fileName)
+    /// The generation past which an undo step has been pushed off the end of the stack, so
+    /// nothing on it can restore a reference recorded at or before it. nil with no UndoManager.
+    /// These cleanups run *inside* the mutation, so a file parked at generation P is restored by
+    /// the step pushed at P+1, which survives until `depth` further pushes evict it.
+    private var undoReachHorizon: Int? {
+        guard let undoManager else { return nil }
+        let depth = undoManager.levelsOfUndo > 0 ? undoManager.levelsOfUndo : Self.assumedUndoDepth
+        return undoStepGeneration - depth - 1
     }
 
-    /// Batch cleanup: collects all referenced filenames once, then removes any candidate that is unreferenced.
+    func cleanupUnreferencedImage(_ fileName: String?) {
+        guard let fileName, !isImageFileReferenced(fileName) else { return }
+        retireImageFile(fileName)
+    }
+
+    /// Batch cleanup: collects all referenced filenames once, then retires any candidate that is unreferenced.
     func cleanupUnreferencedImages(_ fileNames: [String?]) {
-        guard canDeleteImageFilesImmediately else { return }
         let candidates = Set(fileNames.compactMap { $0 })
         guard !candidates.isEmpty else { return }
         let referenced = allReferencedImageFileNames()
         for fileName in candidates where !referenced.contains(fileName) {
+            retireImageFile(fileName)
+        }
+    }
+
+    /// Deleting on the spot would break undo: a registered step restores the model's reference
+    /// (and these cleanups run inside undoable mutations), but nothing re-creates the file — ⌘Z
+    /// would bring the shape back empty. So while an UndoManager exists the orphan is parked
+    /// and swept once it falls off the end of the undo stack, rather than surviving the whole
+    /// session waiting for a project switch.
+    private func retireImageFile(_ fileName: String) {
+        guard undoManager != nil else {
             removeImageFile(fileName)
+            return
+        }
+        deferredOrphanedImages[fileName] = undoStepGeneration
+    }
+
+    /// Deletes parked orphans no undo step can reach any more, and forgets any whose reference
+    /// came back (an undo restored it). Runs on the debounced save tick.
+    func sweepUnreachableOrphanedImages() {
+        guard !deferredOrphanedImages.isEmpty else { return }
+        let referenced = allReferencedImageFileNames()
+        for (fileName, generation) in deferredOrphanedImages {
+            if referenced.contains(fileName) {
+                deferredOrphanedImages[fileName] = nil
+            } else if let horizon = undoReachHorizon, generation > horizon {
+                continue
+            } else {
+                removeImageFile(fileName)
+                deferredOrphanedImages[fileName] = nil
+            }
         }
     }
 
@@ -212,15 +251,18 @@ extension AppState {
     // MARK: - Referenced Image Filenames
 
     /// Collect referenced image filenames for the given rows and locale overrides.
+    /// `activeBackgroundsOnly` drops background images whose style is switched off — see
+    /// `ScreenshotRow.backgroundImageFileName(activeOnly:)`.
     private func referencedImageFileNames(
         rows targetRows: [ScreenshotRow],
-        localeOverrides: [String: [String: ShapeLocaleOverride]]
+        localeOverrides: [String: [String: ShapeLocaleOverride]],
+        activeBackgroundsOnly: Bool = false
     ) -> Set<String> {
         var result = Set<String>()
         for row in targetRows {
-            if let f = row.backgroundImageConfig.fileName { result.insert(f) }
+            if let f = row.backgroundImageFileName(activeOnly: activeBackgroundsOnly) { result.insert(f) }
             for template in row.templates {
-                if let f = template.backgroundImageConfig.fileName { result.insert(f) }
+                if let f = template.backgroundImageFileName(activeOnly: activeBackgroundsOnly) { result.insert(f) }
             }
             for shape in row.shapes {
                 for f in shape.allImageFileNames { result.insert(f) }
@@ -246,10 +288,12 @@ extension AppState {
         referencedImageFileNames(rows: rows, localeOverrides: localeState.overrides)
     }
 
-    /// Image filenames for a specific row and locale (for per-row export).
+    /// Image filenames for a specific row and locale (for per-row export). Render path, so
+    /// inactive background configs are excluded: they draw nothing, and counting them would
+    /// let a stale reference report itself as a missing resource and abort an upload.
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> {
         let localeOverrides = localeState.overrides[localeCode].map { [localeCode: $0] } ?? [:]
-        return referencedImageFileNames(rows: [row], localeOverrides: localeOverrides)
+        return referencedImageFileNames(rows: [row], localeOverrides: localeOverrides, activeBackgroundsOnly: true)
     }
 
     /// Loads full-resolution images for a single row and locale from disk.

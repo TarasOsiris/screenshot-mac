@@ -142,8 +142,8 @@ enum ProjectThumbnailService {
     }
 
     private static func render(_ inputs: RenderInputs) -> NSImage {
-        // Read before registering the project's fonts: registration invalidates the shared cache,
-        // so taking it afterwards re-enumerates the system families for every thumbnail.
+        // The cached set, not `Set(PlatformFonts.systemFamilyNames)`: enumerating the installed
+        // families per thumbnail is what made a batch of them slow.
         let systemFamilies = PlatformFonts.familyNameSet
 
         var registeredURLs: [URL] = []
@@ -202,9 +202,9 @@ enum ProjectThumbnailService {
 
     nonisolated private static func referencedFileNames(row: ScreenshotRow, localeState: LocaleState, localeCode: String) -> Set<String> {
         var result = Set<String>()
-        if let f = row.backgroundImageConfig.fileName { result.insert(f) }
+        if let f = row.backgroundImageFileName(activeOnly: true) { result.insert(f) }
         for template in row.templates {
-            if let f = template.backgroundImageConfig.fileName { result.insert(f) }
+            if let f = template.backgroundImageFileName(activeOnly: true) { result.insert(f) }
         }
         for shape in row.shapes {
             for f in shape.allImageFileNames { result.insert(f) }

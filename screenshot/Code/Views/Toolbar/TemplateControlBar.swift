@@ -12,7 +12,9 @@ struct TemplateControlBar: View {
     private static let exportTitle: LocalizedStringKey = "Share…"
     #endif
     @Environment(AppState.self) private var state
-    @Binding var template: ScreenshotTemplate
+    /// Read-only on purpose: every write goes through `continuousTemplateBinding`, so there is
+    /// no second path that could land in `state.rows` behind the in-flight working row.
+    let template: ScreenshotTemplate
     let row: ScreenshotRow
     let index: Int
     let zoom: CGFloat
@@ -60,27 +62,34 @@ struct TemplateControlBar: View {
     private var showsFullGroup: Bool { density == .full }
     private var showsPrimaryButtons: Bool { density != .minimal }
     private var backgroundPreviewImage: NSImage? {
-        template.backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
+        liveTemplate.backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
     }
     private var isImageBackgroundMissing: Bool {
-        template.overrideBackground &&
-        template.backgroundStyle == .image &&
+        liveTemplate.overrideBackground &&
+        liveTemplate.backgroundStyle == .image &&
         backgroundPreviewImage == nil
+    }
+
+    /// The template as the popover's controls see it: an in-flight continuous edit lives in the
+    /// working row until the throttle writes it back, so reading `template` directly here would
+    /// show (and re-submit) a value the user has already changed.
+    private var liveTemplate: ScreenshotTemplate {
+        if state.continuousRowEditId == row.id,
+           let workingRow = state.edits.continuousRowEditWorkingRow,
+           index < workingRow.templates.count {
+            return workingRow.templates[index]
+        }
+        return template
     }
 
     /// Routes per-template background writes through `updateRowContinuous` so a drag
     /// burst (gradient stops/angle/center, image sliders) collapses into a single
-    /// undo entry instead of one full-row snapshot per tick.
+    /// undo entry instead of one full-row snapshot per tick. Every control in the popover
+    /// must use this: a direct `$template` write lands in `state.rows` while the working row
+    /// still holds the old value, and the next throttle tick writes that stale row back over it.
     private func continuousTemplateBinding<T>(_ keyPath: WritableKeyPath<ScreenshotTemplate, T>) -> Binding<T> {
         Binding(
-            get: {
-                if state.continuousRowEditId == row.id,
-                   let workingRow = state.edits.continuousRowEditWorkingRow,
-                   index < workingRow.templates.count {
-                    return workingRow.templates[index][keyPath: keyPath]
-                }
-                return template[keyPath: keyPath]
-            },
+            get: { liveTemplate[keyPath: keyPath] },
             set: { newValue in
                 let templateIndex = index
                 state.updateRowContinuous(row.id, actionName: "Edit Template") { r in
@@ -100,7 +109,7 @@ struct TemplateControlBar: View {
         if isImageBackgroundMissing {
             return AnyShapeStyle(Color.orange)
         }
-        return template.overrideBackground
+        return liveTemplate.overrideBackground
             ? AnyShapeStyle(.primary)
             : AnyShapeStyle(.secondary)
     }
@@ -134,9 +143,9 @@ struct TemplateControlBar: View {
                     showBackgroundPopover = true
                 } label: {
                     HStack(spacing: 3) {
-                        if template.overrideBackground {
+                        if liveTemplate.overrideBackground {
                             let swatch = UIMetrics.ColorSwatch.overrideIndicator
-                            if template.backgroundStyle == .image {
+                            if liveTemplate.backgroundStyle == .image {
                                 if let image = backgroundPreviewImage {
                                     Image(nsImage: image)
                                         .resizable()
@@ -153,7 +162,7 @@ struct TemplateControlBar: View {
                                         .frame(width: swatch, height: swatch)
                                 }
                             } else {
-                                template.backgroundFillView()
+                                liveTemplate.backgroundFillView()
                                     .frame(width: swatch, height: swatch)
                                     .clipShape(RoundedRectangle(cornerRadius: 2))
                                     .overlay {
@@ -302,16 +311,16 @@ struct TemplateControlBar: View {
 
             Toggle(
                 "Override background",
-                isOn: $template.overrideBackground.onSet { onSave() }
+                isOn: continuousTemplateBinding(\.overrideBackground)
             )
             .toggleStyle(.switch)
             .controlSize(.small)
             .font(.system(size: UIMetrics.FontSize.body))
 
-            if template.overrideBackground {
+            if liveTemplate.overrideBackground {
                 backgroundEditorContent
 
-                if template.backgroundStyle != .color {
+                if liveTemplate.backgroundStyle != .color {
                     blurSlider
                 }
             }
@@ -329,14 +338,14 @@ struct TemplateControlBar: View {
             Section {
                 Toggle(
                     "Override background",
-                    isOn: $template.overrideBackground.onSet { onSave() }
+                    isOn: continuousTemplateBinding(\.overrideBackground)
                 )
             }
-            if template.overrideBackground {
+            if liveTemplate.overrideBackground {
                 Section {
                     backgroundEditorContent
                 }
-                if template.backgroundStyle != .color {
+                if liveTemplate.backgroundStyle != .color {
                     Section { blurSlider }
                 }
             }
@@ -347,7 +356,7 @@ struct TemplateControlBar: View {
     @ViewBuilder
     private var backgroundEditorContent: some View {
         BackgroundEditor(
-            backgroundStyle: $template.backgroundStyle,
+            backgroundStyle: continuousTemplateBinding(\.backgroundStyle),
             bgColor: continuousTemplateBinding(\.bgColor),
             gradientConfig: continuousTemplateBinding(\.gradientConfig),
             backgroundImageConfig: continuousTemplateBinding(\.backgroundImageConfig),
