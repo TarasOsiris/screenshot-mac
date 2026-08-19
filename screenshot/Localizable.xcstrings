@@ -5855,7 +5855,50 @@
       }
     },
     "A simulated upload against sample data. Nothing is sent to Google Play." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein simulierter Upload anhand von Beispieldaten. Es wird nichts an Google Play gesendet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un envío simulado con datos de ejemplo. No se envía nada a Google Play."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un envoi simulé sur des données d'exemple. Rien n'est envoyé à Google Play."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サンプルデータを使ったアップロードのシミュレーションです。Google Play には何も送信されません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "샘플 데이터에 대한 시뮬레이션된 업로드입니다. Google Play에는 아무 것도 전송되지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um upload simulado com dados de exemplo. Nada é enviado ao Google Play."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "针对示例数据的模拟上传。没有任何内容发送至 Google Play。"
+          }
+        }
+      }
     },
     "A typical workflow" : {
       "localizations" : {
@@ -15427,10 +15470,52 @@
     },
     "Could not read %lld image(s) used by %@ in %@. Re-import the missing screenshots before uploading, or the upload would publish them as blank areas." : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Bilder, die von %2$@ in %3$@ verwendet werden, konnten nicht gelesen werden. Importieren Sie die fehlenden Screenshots vor dem Hochladen erneut, da sie sonst beim Hochladen als leere Bereiche veröffentlicht werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Could not read %1$lld image(s) used by %2$@ in %3$@. Re-import the missing screenshots before uploading, or the upload would publish them as blank areas."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron leer %1$lld imagen(es) usadas por %2$@ en %3$@. Vuelve a importar las capturas que faltan antes de enviarlas, o el envío las publicaría como áreas en blanco."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de lire %1$lld image(s) utilisée(s) par %2$@ dans %3$@. Réimportez les captures d'écran manquantes avant l'envoi, sinon elles seraient publiées sous forme de zones vides."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%3$@ の %2$@ によって使用されている %1$lld イメージを読み取れませんでした。アップロードする前に欠落しているスクリーンショットを再インポートしなければ、アップロード時に空白の領域として公開されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%3$@의 %2$@에서 사용하는 %1$lld 이미지를 읽을 수 없습니다. 업로드하기 전에 누락된 스크린샷을 다시 가져오세요. 그렇지 않으면 업로드 시 해당 스크린샷이 빈 영역으로 게시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler %1$lld imagens usadas por %2$@ em %3$@. Importe novamente as capturas de tela ausentes antes do upload, ou o upload as publicará como áreas em branco."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取 %3$@ 中 %2$@ 使用的 %1$lld 图像。在上传之前重新导入丢失的屏幕截图，否则上传会将它们发布为空白区域。"
           }
         }
       }
@@ -30760,7 +30845,50 @@
       }
     },
     "Lost access to the export folder. Choose it again." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zugriff auf den Exportordner verloren. Wählen Sie ihn erneut aus."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se perdió el acceso a la carpeta de exportación. Vuelve a elegirla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès perdu au dossier d'exportation. Choisissez-le à nouveau."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エクスポート フォルダーにアクセスできなくなりました。もう一度選択してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내보내기 폴더에 대한 액세스가 손실되었습니다. 다시 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perdeu o acesso à pasta de exportação. Escolha novamente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已失去对导出文件夹的访问权限。请重新选择。"
+          }
+        }
+      }
     },
     "Loved the app? An App Store review helps tremendously and keeps Screenshot Bro independent." : {
       "localizations" : {
@@ -31505,10 +31633,52 @@
     },
     "Missing images for %@ · %@." : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehlende Bilder für %1$@ · %2$@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Missing images for %1$@ · %2$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faltan imágenes para %1$@ · %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Images manquantes pour %1$@ · %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@ の画像がありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@에 대한 이미지가 누락되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imagens ausentes para %1$@ · %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@ 缺少图像。"
           }
         }
       }
