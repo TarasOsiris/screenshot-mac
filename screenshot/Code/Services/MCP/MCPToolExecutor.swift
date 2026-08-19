@@ -25,7 +25,11 @@ final class MCPToolExecutor {
             return try await dispatch(tool, args)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-            CrashReportingService.report(.mcpToolFailed, error: error, extra: ["tool": name], level: .warning)
+            if let toolError = error as? MCPToolError, toolError.isClientError {
+                CrashReportingService.breadcrumb(.mcp, "Tool \(name) rejected the request", level: .warning)
+            } else {
+                CrashReportingService.report(.mcpToolFailed, error: error, extra: ["tool": name], level: .warning)
+            }
             return CallTool.Result(content: [.text("Error: \(message)")], isError: true)
         }
     }

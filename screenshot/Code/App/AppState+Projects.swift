@@ -51,13 +51,17 @@ extension AppState {
         let trimmed = name.map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength)) } ?? ""
         let baseName = trimmed.isEmpty ? template.name : trimmed
         let project = Project(name: uniqueProjectName(baseName))
-        PersistenceService.copyProjectFromURL(template.url, to: project.id)
+        let copied = PersistenceService.copyProjectFromURL(template.url, to: project.id)
 
         // Verify the template data can be loaded before committing
-        guard PersistenceService.loadProject(project.id) != nil else {
+        guard copied, PersistenceService.loadProject(project.id) != nil else {
             PersistenceService.deleteProject(project.id)
-            // A bundled template that won't load is entirely our bug — the id is ours, not user content.
-            CrashReportingService.report(.bundledTemplateLoadFailed, extra: ["template": template.id])
+            // A bundled template that copies but won't load is entirely our bug — the id is ours,
+            // not user content. A failed copy already reported itself with the underlying error;
+            // raising this second, error-less issue would just split one cause across two.
+            if copied {
+                CrashReportingService.report(.bundledTemplateLoadFailed, extra: ["template": template.id])
+            }
             saveError = String(localized: "Failed to create project from template \"\(template.name)\". The template data could not be loaded.")
             return
         }

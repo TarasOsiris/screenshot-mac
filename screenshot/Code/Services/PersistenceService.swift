@@ -261,12 +261,14 @@ nonisolated struct PersistenceService {
         }
     }
 
-    static func copyProject(from sourceId: UUID, to destId: UUID) {
+    @discardableResult
+    static func copyProject(from sourceId: UUID, to destId: UUID) -> Bool {
         copyDirectory(from: projectDir(sourceId), to: projectDir(destId))
     }
 
-    static func copyProjectFromURL(_ sourceURL: URL, to destId: UUID) {
-        copyDirectory(from: sourceURL, to: projectDir(destId))
+    @discardableResult
+    static func copyProjectFromURL(_ sourceURL: URL, to destId: UUID) -> Bool {
+        guard copyDirectory(from: sourceURL, to: projectDir(destId)) else { return false }
         TemplateService.stripTemplateArtifacts(in: projectDir(destId))
         copySharedFontsIfNeeded(to: destId)
         // Update modifiedAt so iCloud sync treats this as a fresh project
@@ -274,6 +276,7 @@ nonisolated struct PersistenceService {
             data.modifiedAt = Date()
             try? saveProject(destId, data: data)
         }
+        return true
     }
 
     private static func copySharedFontsIfNeeded(to projectId: UUID) {
@@ -306,14 +309,20 @@ nonisolated struct PersistenceService {
         try? FileManager.default.removeItem(at: projectDir(id, at: root))
     }
 
-    private static func copyDirectory(from src: URL, to dst: URL) {
+    private static func copyDirectory(from src: URL, to dst: URL) -> Bool {
         let fm = FileManager.default
         try? fm.removeItem(at: dst)
         do {
+            // copyItem does not create intermediates, and a missing projects/ makes it fail with
+            // an ENOENT that names the *source* — which reads as a broken template, not a
+            // missing destination.
+            try fm.createDirectory(at: dst.deletingLastPathComponent(), withIntermediateDirectories: true)
             try fm.copyItem(at: src, to: dst)
+            return true
         } catch {
             // Silently yields an empty duplicated / template-instantiated project.
             CrashReportingService.report(.projectDirectoryCopyFailed, error: error)
+            return false
         }
     }
 

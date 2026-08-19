@@ -24,6 +24,15 @@ enum MCPToolError: Error, LocalizedError {
             message
         }
     }
+
+    /// A malformed or stale request from the client — the agent's mistake, not ours, so it stays
+    /// breadcrumb-only rather than opening a Sentry issue.
+    var isClientError: Bool {
+        switch self {
+        case .unknownTool, .missingArgument, .invalidArgument, .notFound: true
+        case .failed: false
+        }
+    }
 }
 
 /// Typed access to a tool call's `arguments` dictionary.
