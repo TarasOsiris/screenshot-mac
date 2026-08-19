@@ -140,6 +140,1566 @@
         }
       }
     },
+    "**Check the set, not just the screenshot.** The pencil/eye switch in a row header shows the templates as a store-style carousel, which is how buyers will actually see them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Überprüfen Sie das Set, nicht nur den Screenshot.** Der Bleistift-/Augenschalter in der Kopfzeile einer Zeile zeigt die Vorlagen als Karussell im Ladenstil an, sodass Käufer sie tatsächlich sehen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Vérifiez l'ensemble, pas seulement la capture d'écran.** Le commutateur crayon/œil dans l'en-tête d'une rangée affiche les modèles sous la forme d'un carrousel de style magasin, c'est ainsi que les acheteurs les verront réellement."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**スクリーンショットだけでなく、セットを確認してください。** 行ヘッダーの鉛筆/目のスイッチには、店舗スタイルのカルーセルとしてテンプレートが表示されます。これは、購入者が実際にテンプレートを表示する方法です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**스크린샷만 확인하지 말고 세트를 확인하세요.** 행 머리글의 연필/눈 스위치는 템플릿을 매장 스타일 캐러셀로 표시하므로 구매자가 실제로 템플릿을 볼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Verifique o conjunto, não apenas a captura de tela.** O botão lápis/olho no cabeçalho de uma linha mostra os modelos como um carrossel estilo loja, que é como os compradores realmente os verão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**检查设置，而不仅仅是屏幕截图。**行标题中的铅笔/眼睛开关将模板显示为商店风格的轮播，这就是买家实际看到它们的方式。"
+          }
+        }
+      }
+    },
+    "Edit and preview" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bearbeiten und Vorschau"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier et prévisualiser"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集とプレビュー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집 및 미리보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar e visualizar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑和预览"
+          }
+        }
+      }
+    },
+    "**Add Screenshot** and **Add Element** — add a template column or a shape without leaving the header." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Screenshot hinzufügen** und **Element hinzufügen** – fügen Sie eine Vorlagenspalte oder eine Form hinzu, ohne die Kopfzeile zu verlassen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ajouter une capture d'écran** et **Ajouter un élément** : ajoutez une colonne de modèle ou une forme sans quitter l'en-tête."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**スクリーンショットの追加** および **要素の追加** — ヘッダーを残さずにテンプレート列または図形を追加します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**스크린샷 추가** 및 **요소 추가** — 헤더를 벗어나지 않고 템플릿 열이나 모양을 추가합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Adicionar captura de tela** e **Adicionar elemento** — adicione uma coluna de modelo ou uma forma sem sair do cabeçalho."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**添加屏幕截图**和**添加元素** — 添加模板列或形状，而不保留标题。"
+          }
+        }
+      }
+    },
+    "**Duplicate Row**, **Add New Row Above / Below**, **Move Row Up / Down**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Zeile duplizieren**, **Neue Zeile oben/unten hinzufügen**, **Zeile nach oben/unten verschieben**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Dupliquer la ligne**, **Ajouter une nouvelle ligne au-dessus/en dessous**, **Déplacer la ligne vers le haut/vers le bas**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**行を複製**、**上/下に新しい行を追加**、**行を上/下に移動**。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**행 복제**, **위/아래에 새 행 추가**, **행 위/아래로 이동**."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Linha duplicada**, **Adicionar nova linha acima/abaixo**, **Mover linha para cima/para baixo**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**重复行**，**在上方/下方添加新行**，**向上/向下移动行**。"
+          }
+        }
+      }
+    },
+    "**Export Row** — Screenshots, Continuous, or Showcase, for this row alone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Zeile exportieren** – Screenshots, kontinuierlich oder Showcase, nur für diese Zeile."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Exporter la ligne** : captures d'écran, continue ou vitrine, pour cette ligne uniquement."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**行のエクスポート** — この行のみのスクリーンショット、連続、またはショーケース。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**행 내보내기** — 이 행에만 대한 스크린샷, 연속 또는 쇼케이스입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Exportar linha** — Capturas de tela, Contínuas ou Showcase, apenas para esta linha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**导出行** — 仅针对该行的屏幕截图、连续或展示。"
+          }
+        }
+      }
+    },
+    "**Devices** — show or hide all frames, **Center All** of them, **Change All To** another model in one step, or **Reset All Images** to clear their screenshots." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Geräte** – alle Frames ein- oder ausblenden, **alle zentrieren**, **Alle in einem Schritt in ein anderes Modell ändern** oder **Alle Bilder zurücksetzen**, um deren Screenshots zu löschen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Appareils** : affichez ou masquez tous les cadres, **Centrez-les**, **Changez tout en** un autre modèle en une seule étape ou **Réinitialisez toutes les images** pour effacer leurs captures d'écran."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**デバイス** - すべてのフレームを表示または非表示にし、**すべてを中央に**、ワンステップで**すべてを別のモデルに変更**、または**すべての画像をリセット**してスクリーンショットをクリアします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**장치** — 모든 프레임을 표시하거나 숨기거나, **모두 중앙에**, **모두 다른 모델로 변경**, **모든 이미지 재설정**을 통해 스크린샷을 지울 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Dispositivos** — mostre ou oculte todos os quadros, **Centre todos** deles, **Altere todos para** outro modelo em uma única etapa ou **Redefinir todas as imagens** para limpar suas capturas de tela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**设备** — 显示或隐藏所有框架、**将所有框架居中**、**全部更改为**一步中的另一型号，或 **重置所有图像** 以清除其屏幕截图。"
+          }
+        }
+      }
+    },
+    "**Delete all** removes every shape of one type. **Reset Row** empties the row; **Delete Row** removes it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Alle löschen** entfernt alle Formen eines Typs. **Zeile zurücksetzen** leert die Zeile; **Zeile löschen** entfernt sie."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Supprimer tout** supprime toutes les formes d'un type. **Réinitialiser la ligne** vide la ligne ; **Supprimer la ligne** le supprime."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**すべて削除** は、1 つのタイプのすべての図形を削除します。 **行をリセット** は行を空にします。 **行の削除** は行を削除します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**모두 삭제**는 한 가지 유형의 모든 도형을 제거합니다. **행 재설정**은 행을 비웁니다. **행 삭제**는 행을 제거합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Excluir tudo** remove todas as formas de um tipo. **Redefinir linha** esvazia a linha; **Excluir linha** remove-a."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**全部删除**删除一种类型的所有形状。 **重置行**清空该行； **删除行** 将其删除。"
+          }
+        }
+      }
+    },
+    "**Copy Text Style** / **Paste Text Style** (right-click) carry a text shape's whole look onto another one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Textstil kopieren** / **Textstil einfügen** (Rechtsklick) überträgt das gesamte Erscheinungsbild einer Textform auf eine andere."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Copier le style de texte** / **Coller le style de texte** (clic droit) permet de transférer l'apparence complète d'une forme de texte sur une autre."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**テキスト スタイルのコピー** / **テキスト スタイルの貼り付け** (右クリック) は、テキスト図形全体の外観を別の図形に引き継ぎます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**텍스트 스타일 복사** / **텍스트 스타일 붙여넣기**(오른쪽 클릭)는 텍스트 모양의 전체 모양을 다른 모양으로 가져옵니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Copiar estilo de texto** / **Colar estilo de texto** (clique com o botão direito) transfere a aparência completa de uma forma de texto para outra."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**复制文本样式** / **粘贴文本样式**（右键单击）将文本形状的整体外观转移到另一个文本形状上。"
+          }
+        }
+      }
+    },
+    "Color, opacity, rotation (in degrees, editable as text), border radius, outline (color + width), and **Clip to Frame** (clips anything that overflows the template)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbe, Deckkraft, Drehung (in Grad, als Text bearbeitbar), Rahmenradius, Umriss (Farbe + Breite) und **Auf Rahmen zuschneiden** (schneidet alles ab, was über die Vorlage hinausragt)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur, opacité, rotation (en degrés, modifiable sous forme de texte), rayon de bordure, contour (couleur + largeur) et **Clip to Frame** (coupe tout ce qui dépasse du modèle)."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "色、不透明度、回転 (度単位、テキストとして編集可能)、境界線の半径、アウトライン (色 + 幅)、および **フレームにクリップ** (テンプレートからはみ出たものをクリップ)。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "색상, 불투명도, 회전(도 단위, 텍스트로 편집 가능), 테두리 반경, 윤곽선(색상 + 너비), **프레임에 맞게 자르기**(템플릿을 벗어나는 모든 항목 자르기)."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cor, opacidade, rotação (em graus, editável como texto), raio da borda, contorno (cor + largura) e **Cortar no quadro** (recorta qualquer coisa que ultrapasse o modelo)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "颜色、不透明度、旋转（以度为单位，可作为文本编辑）、边框半径、轮廓（颜色 + 宽度）和**剪辑到框架**（剪辑溢出模板的任何内容）。"
+          }
+        }
+      }
+    },
+    "**Drop shadow** — enable it in the properties bar and pick **Soft**, **Medium**, or **Strong**, or set color, radius, offset, and opacity by hand. It works on a multi-shape selection too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Schlagschatten** – aktivieren Sie es in der Eigenschaftenleiste und wählen Sie **Weich**, **Mittel** oder **Stark** aus oder legen Sie Farbe, Radius, Versatz und Deckkraft manuell fest. Es funktioniert auch bei einer Auswahl mehrerer Formen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ombre portée** : activez-la dans la barre de propriétés et choisissez **Doux**, **Moyen** ou **Fort**, ou définissez la couleur, le rayon, le décalage et l'opacité à la main. Cela fonctionne également sur une sélection multi-formes."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ドロップ シャドウ** - プロパティ バーで有効にし、**ソフト**、**中**、または**強**を選択するか、色、半径、オフセット、不透明度を手動で設定します。複数のシェイプを選択した場合にも機能します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**그림자** — 속성 표시줄에서 활성화하고 **부드러움**, **중간** 또는 **강함**을 선택하거나 색상, 반경, 오프셋 및 불투명도를 직접 설정하세요. 다중 모양 선택에서도 작동합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Sombra projetada** — habilite-o na barra de propriedades e escolha **Suave**, **Médio** ou **Forte**, ou defina cor, raio, deslocamento e opacidade manualmente. Também funciona em uma seleção de várias formas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**阴影** — 在属性栏中启用它并选择**软**、**中**或**强**，或手动设置颜色、半径、偏移和不透明度。它也适用于多形状选择。"
+          }
+        }
+      }
+    },
+    "**Lock** (**⌘L**) freezes a shape: clicks and drags pass straight through it. A locked shape's only right-click item is **Unlock**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Sperren** (**⌘L**) friert eine Form ein: Klicken und Ziehen werden direkt durch sie hindurch ausgeführt. Das einzige Rechtsklick-Element einer gesperrten Form ist **Entsperren**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Lock** (**⌘L**) fige une forme : les clics et les glissements la traversent directement. Le seul élément cliqué avec le bouton droit d'une forme verrouillée est **Déverrouiller**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ロック** (**⌘L**) は形状を固定します。クリックとドラッグは形状を直接通過します。ロックされた図形の唯一の右クリック項目は ​​[**ロック解除**] です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**잠금**(**⌘L**)은 모양을 고정합니다. 클릭하고 드래그하면 모양이 바로 통과됩니다. 잠긴 셰이프의 유일한 마우스 오른쪽 버튼 클릭 항목은 **잠금 해제**입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Lock** (**⌘L**) congela uma forma: cliques e arrastamentos passam diretamente por ela. O único item de clique com o botão direito de uma forma bloqueada é **Desbloquear**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**锁定** (**⌘L**) 冻结形状：单击和拖动直接穿过它。锁定形状的唯一右键单击项目是**解锁**。"
+          }
+        }
+      }
+    },
+    "3D device models (Beta)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D-Gerätemodelle (Beta)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèles d'appareils 3D (bêta)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D デバイス モデル (ベータ版)"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D 장치 모델(베타)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelos de dispositivos 3D (Beta)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D 设备模型（测试版）"
+          }
+        }
+      }
+    },
+    "**Match Size to Other Devices** (right-click) resizes the row's other devices of the same category to match this one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Größe an andere Geräte anpassen** (Rechtsklick) passt die Größe der anderen Geräte derselben Kategorie in der Zeile an dieses an."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Faire correspondre la taille aux autres appareils** (clic droit) redimensionne les autres appareils de la ligne de la même catégorie pour correspondre à celui-ci."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**他のデバイスにサイズを合わせる** (右クリック) は、このデバイスに一致するように、同じカテゴリの行の他のデバイスのサイズを変更します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**다른 장치에 크기 일치**(마우스 오른쪽 버튼 클릭)는 이 장치와 일치하도록 행의 동일한 범주에 있는 다른 장치의 크기를 조정합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Corresponder tamanho a outros dispositivos** (clique com o botão direito) redimensiona os outros dispositivos da mesma categoria da linha para corresponder a este."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**将大小与其他设备匹配**（右键单击）调整该行中同一类别的其他设备的大小以匹配该设备。"
+          }
+        }
+      }
+    },
+    "Models marked **(3D)** — iPhone 17 and iPhone 17 Pro Max — are rendered from real geometry rather than a flat bezel image." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit **(3D)** gekennzeichnete Modelle – iPhone 17 und iPhone 17 Pro Max – werden aus echter Geometrie und nicht aus einem Bild mit flachem Rahmen gerendert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les modèles marqués **(3D)** — iPhone 17 et iPhone 17 Pro Max — sont rendus à partir d'une géométrie réelle plutôt que d'une image à cadre plat."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**(3D)** とマークされたモデル — iPhone 17 および iPhone 17 Pro Max — は、フラット ベゼル イメージではなく実際のジオメトリからレンダリングされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**(3D)**로 표시된 모델 - iPhone 17 및 iPhone 17 Pro Max - 플랫 베젤 이미지가 아닌 실제 형상에서 렌더링됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os modelos marcados como **(3D)** — iPhone 17 e iPhone 17 Pro Max — são renderizados a partir de geometria real em vez de uma imagem de moldura plana."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标记为 **(3D)** 的模型 - iPhone 17 和 iPhone 17 Pro Max - 是根据真实几何体而不是平面边框图像渲染的。"
+          }
+        }
+      }
+    },
+    "Align, distribute, match" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausrichten, verteilen, anpassen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aligner, distribuer, faire correspondre"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整列、分散、一致"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "정렬, 배포, 일치"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alinhe, distribua, combine"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对齐、分布、匹配"
+          }
+        }
+      }
+    },
+    "**Match to This** copies the shape you right-clicked — its **Position**, its **Size**, or both — onto the rest of the selection." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Anpassen** kopiert die Form, auf die Sie mit der rechten Maustaste geklickt haben – ihre **Position**, ihre **Größe** oder beides – auf den Rest der Auswahl."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Match to This** copie la forme sur laquelle vous avez cliqué avec le bouton droit (sa **Position**, sa **Taille** ou les deux) sur le reste de la sélection."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**[これに一致]** は、右クリックした形状 (**位置**、**サイズ**、またはその両方) を選択範囲の残りの部分にコピーします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**일치 항목**은 마우스 오른쪽 버튼을 클릭한 도형(**위치**, **크기** 또는 둘 다)을 나머지 선택 항목에 복사합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Corresponder a isto** copia a forma em que você clicou com o botão direito — sua **Posição**, seu **Tamanho** ou ambos — para o restante da seleção."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**与此匹配**将您右键单击的形状（其**位置**、其**大小**或两者）复制到其余选区上。"
+          }
+        }
+      }
+    },
+    "**Center** places a shape vertically, horizontally, or at the exact center of its screenshot." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Mitte** platziert eine Form vertikal, horizontal oder genau in der Mitte ihres Screenshots."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Centre** place une forme verticalement, horizontalement ou exactement au centre de sa capture d'écran."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**中央** は、図形を垂直方向、水平方向、またはスクリーンショットの正確な中心に配置します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**가운데** 도형을 수직, 수평 또는 스크린샷의 정확한 중앙에 배치합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Centro** coloca uma forma verticalmente, horizontalmente ou exatamente no centro da captura de tela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**居中** 将形状垂直、水平放置或放置在其屏幕截图的正中心。"
+          }
+        }
+      }
+    },
+    "**Duplicate ▸ To All Screenshots on the Left / Right / All** copies a shape into the other templates in the row at the same relative spot — the quickest way to repeat a logo or a footer." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Duplizieren ▸ Auf alle Screenshots links/rechts/alle** kopiert eine Form in die anderen Vorlagen in der Zeile an derselben relativen Stelle – die schnellste Möglichkeit, ein Logo oder eine Fußzeile zu wiederholen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Dupliquer ▸ Vers toutes les captures d'écran à gauche/droite/tout** copie une forme dans les autres modèles de la ligne au même endroit relatif — le moyen le plus rapide de répéter un logo ou un pied de page."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**複製 ▸ 左/右/すべてのスクリーンショットに** は、行内の他のテンプレートの同じ相対位置に図形をコピーします。これは、ロゴまたはフッターを繰り返す最も簡単な方法です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**복제 ▸ 왼쪽/오른쪽/모두의 모든 스크린샷에** 도형을 동일한 상대 위치에 있는 행의 다른 템플릿에 복사합니다. 이는 로고나 바닥글을 반복하는 가장 빠른 방법입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Duplicar ▸ Para todas as capturas de tela à esquerda/direita/Todas** copia uma forma nos outros modelos da linha no mesmo local relativo — a maneira mais rápida de repetir um logotipo ou rodapé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**复制 ▸ 到左侧/右侧/全部的所有屏幕截图** 将形状复制到同一相对位置的行中的其他模板中 - 这是重复徽标或页脚的最快方法。"
+          }
+        }
+      }
+    },
+    "Locking" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sperren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verrouillage"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロック"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "잠금"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloqueio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁定"
+          }
+        }
+      }
+    },
+    "**⌘L** locks or unlocks the selection. Locked shapes can't be dragged, resized, or deleted, and clicks fall through to whatever is behind them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** sperrt oder entsperrt die Auswahl. Gesperrte Formen können nicht gezogen, in der Größe geändert oder gelöscht werden, und Klicks wirken sich auf alles aus, was sich dahinter befindet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** verrouille ou déverrouille la sélection. Les formes verrouillées ne peuvent pas être glissées, redimensionnées ou supprimées, et les clics se répercutent sur ce qui se trouve derrière elles."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** は選択をロックまたはロック解除します。ロックされた図形はドラッグ、サイズ変更、削除ができず、クリックするとその背後にあるものに影響が及びます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L**은 선택 항목을 잠그거나 잠금 해제합니다. 잠긴 도형은 끌거나 크기를 조정하거나 삭제할 수 없으며 클릭하면 뒤에 있는 모든 항목이 클릭됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** bloqueia ou desbloqueia a seleção. As formas bloqueadas não podem ser arrastadas, redimensionadas ou excluídas, e os cliques passam para o que quer que esteja por trás delas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** 锁定或解锁选择。锁定的形状无法拖动、调整大小或删除，并且单击会传递到其后面的任何内容。"
+          }
+        }
+      }
+    },
+    "**Continuous** — the whole row as one wide image, templates side by side." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Kontinuierlich** – die gesamte Zeile als ein breites Bild, Vorlagen nebeneinander."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Continu** : la ligne entière sous la forme d'une seule image large, les modèles côte à côte."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**連続** — 行全体を 1 つの幅の広い画像として、テンプレートを並べて表示します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**연속** — 전체 행이 하나의 넓은 이미지로, 템플릿이 나란히 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Contínuo** — toda a linha como uma imagem ampla, modelos lado a lado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**连续** — 整行作为一个宽图像，模板并排。"
+          }
+        }
+      }
+    },
+    "All three are in the export menu (for every row) and in a row's **Export Row** menu (for that row alone)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle drei befinden sich im Exportmenü (für jede Zeile) und im Menü **Zeile exportieren** einer Zeile (nur für diese Zeile)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les trois se trouvent dans le menu d'exportation (pour chaque ligne) et dans le menu **Exporter la ligne** d'une ligne (pour cette ligne uniquement)."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 つはすべて、エクスポート メニュー (行ごと) と、行の **Export Row** メニュー (その行のみ) にあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "세 가지 모두 내보내기 메뉴(모든 행에 대해)와 행의 **행 내보내기** 메뉴(해당 행에만 해당)에 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os três estão no menu de exportação (para cada linha) e no menu **Exportar linha** de uma linha (somente para essa linha)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有三个都位于导出菜单（针对每一行）和一行的 **导出行** 菜单（仅针对该行）中。"
+          }
+        }
+      }
+    },
+    "Only what you see. Shape types switched off in the inspector's **Visibility** section are left out of the exported image too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur das, was Sie sehen. Im Abschnitt **Sichtbarkeit** des Inspektors deaktivierte Formtypen werden auch im exportierten Bild weggelassen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seulement ce que vous voyez. Les types de formes désactivés dans la section **Visibilité** de l'inspecteur sont également exclus de l'image exportée."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目に見えるものだけ。インスペクターの**表示**セクションでオフにされた形状タイプも、エクスポートされた画像から除外されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "당신이 보는 것만. 검사기의 **가시성** 섹션에서 꺼진 모양 유형도 내보낸 이미지에서 제외됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Somente o que você vê. Os tipos de formas desativados na seção **Visibilidade** do inspetor também são deixados de fora da imagem exportada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有你所看到的。在检查器的 **可见性** 部分中关闭的形状类型也会被排除在导出的图像之外。"
+          }
+        }
+      }
+    },
+    "A showcase arranges a row's screenshots side by side on a styled background and renders them as a single image — for a product page, a launch post, a README, or an ad. It doesn't replace store screenshots; it's the picture you post *about* them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Showcase ordnet die Screenshots einer Reihe nebeneinander auf einem gestalteten Hintergrund an und stellt sie als einzelnes Bild dar – für eine Produktseite, einen Startbeitrag, eine README-Datei oder eine Anzeige. Es ersetzt keine Store-Screenshots; Es ist das Bild, das du *über* sie postest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une vitrine organise les captures d'écran d'une ligne côte à côte sur un arrière-plan stylisé et les restitue sous la forme d'une seule image — pour une page de produit, une publication de lancement, un README ou une publicité. Il ne remplace pas les captures d'écran du magasin ; c'est la photo que vous publiez *à propos* d'eux."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ショーケースは、スタイル付きの背景上に行のスクリーンショットを並べて配置し、製品ページ、ローンチ投稿、README、または広告用の 1 つの画像としてレンダリングします。ストアのスクリーンショットに代わるものではありません。それはあなたが彼らについて投稿した写真です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "쇼케이스는 스타일이 지정된 배경에 행의 스크린샷을 나란히 배열하고 제품 페이지, 출시 게시물, README 또는 광고를 위한 단일 이미지로 렌더링합니다. 매장 스크린샷을 대체하지 않습니다. 그것은 당신이 그들에 대해 *게시한 사진입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma vitrine organiza as capturas de tela de uma linha lado a lado em um fundo estilizado e as renderiza como uma única imagem - para uma página de produto, uma postagem de lançamento, um README ou um anúncio. Não substitui as capturas de tela da loja; é a foto que você posta *sobre* eles."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "展示柜将一行的屏幕截图并排排列在样式化的背景上，并将它们呈现为单个图像 - 用于产品页面、发布帖子、自述文件或广告。它不会取代商店屏幕截图；这是您发布*关于*他们的照片。"
+          }
+        }
+      }
+    },
+    "Opening it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffne es"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'ouvrir"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開ける"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그것을 열다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrindo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开它"
+          }
+        }
+      }
+    },
+    "Export menu ▸ **Export Rows ▸ Showcase** for the whole project, or a row menu ▸ **Export Row ▸ Showcase** for one row." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menü „Exportieren“ ▸ **Zeilen exportieren ▸ Showcase** für das gesamte Projekt oder ein Zeilenmenü ▸ **Zeilen exportieren ▸ Showcase** für eine Zeile."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu Exporter ▸ **Exporter les lignes ▸ Afficher** pour l'ensemble du projet, ou un menu de ligne ▸ **Exporter la ligne ▸ Afficher** pour une ligne."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロジェクト全体の場合は [エクスポート] メニュー ▸ **[行のエクスポート] ▸ [ショーケース]**、1 行の場合は行メニュー ▸ **[行のエクスポート] ▸ [ショーケース]**。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내보내기 메뉴 ▸ **행 내보내기 ▸ 쇼케이스** 전체 프로젝트 또는 행 메뉴 ▸ **행 내보내기 ▸ 쇼케이스** 한 행에 대해."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu Exportar ▸ **Exportar linhas ▸ Mostrar** para todo o projeto ou um menu de linha ▸ **Exportar linha ▸ Mostrar** para uma linha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整个项目的导出菜单 ▸ **导出行 ▸ 展示**，或一行的行菜单 ▸ **导出行 ▸ 展示**。"
+          }
+        }
+      }
+    },
+    "**Aspect ratio** presets: **Social** (1.91:1), **Square**, **Portrait** (4:5), **Story** (9:16), **YouTube** (16:9), and **Pinterest** (2:3)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Voreinstellungen für das Seitenverhältnis**: **Sozial** (1,91:1), **Quadrat**, **Porträt** (4:5), **Story** (9:16), **YouTube** (16:9) und **Pinterest** (2:3)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préréglages **Rapport d'aspect** : **Social** (1,91:1), **Carré**, **Portrait** (4:5), **Histoire** (9:16), **YouTube** (16:9) et **Pinterest** (2:3)."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**アスペクト比** プリセット: **ソーシャル** (1.91:1)、**スクエア**、**ポートレート** (4:5)、**ストーリー** (9:16)、**YouTube** (16:9)、**Pinterest** (2:3)。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**종횡비** 사전 설정: **소셜**(1.91:1), **정사각형**, **세로**(4:5), **스토리**(9:16), **YouTube**(16:9) 및 **Pinterest**(2:3)."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Proporção** predefinições: **Social** (1,91:1), **Quadrado**, **Retrato** (4:5), **História** (9:16), **YouTube** (16:9) e **Pinterest** (2:3)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**长宽比**预设：**社交** (1.91:1)、**方形**、**肖像** (4:5)、**故事** (9:16)、**YouTube** (16:9) 和 **Pinterest** (2:3)。"
+          }
+        }
+      }
+    },
+    "**Output size**: Original, X-Large (4000 px), Large (2400 px), Medium (1600 px), or Small (1200 px) on the longest edge." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ausgabegröße**: Original, X-Large (4000 Pixel), Groß (2400 Pixel), Mittel (1600 Pixel) oder Klein (1200 Pixel) an der längsten Kante."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Taille de sortie** : Original, X-Large (4 000 px), Large (2 400 px), Medium (1 600 px) ou Small (1 200 px) sur le bord le plus long."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**出力サイズ**: 最長辺がオリジナル、特大 (4000 ピクセル)、大 (2400 ピクセル)、中 (1600 ピクセル)、または小 (1200 ピクセル)。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**출력 크기**: 가장 긴 가장자리의 원본, 초대형(4000px), 대형(2400px), 중간(1600px) 또는 소형(1200px)."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Tamanho de saída**: Original, Extragrande (4.000 px), Grande (2.400 px), Médio (1.600 px) ou Pequeno (1.200 px) na borda mais longa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**输出尺寸**：最长边上的原始尺寸、超大尺寸（4000 像素）、大尺寸（2400 像素）、中尺寸（1600 像素）或小尺寸（1200 像素）。"
+          }
+        }
+      }
+    },
+    "Export the same row twice — once as **Story** for a 9:16 post and once as **Social** for the link preview. The layout adapts to each aspect ratio instead of being cropped." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportieren Sie dieselbe Zeile zweimal – einmal als **Story** für einen 9:16-Beitrag und einmal als **Social** für die Linkvorschau. Das Layout passt sich jedem Seitenverhältnis an, anstatt es zu beschneiden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportez la même ligne deux fois : une fois en tant que **Story** pour une publication de 9h16 et une fois en tant que **Social** pour l'aperçu du lien. La mise en page s'adapte à chaque rapport hauteur/largeur au lieu d'être recadrée."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同じ行を 2 回エクスポートします。1 回目は 9:16 投稿の **ストーリー** として、もう 1 回はリンク プレビューの **ソーシャル** としてエクスポートします。レイアウトは切り取られるのではなく、各アスペクト比に適応します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동일한 행을 두 번 내보냅니다. 한 번은 9시 16분 게시물의 경우 **스토리**로, 한 번은 링크 미리보기의 **소셜**로 내보냅니다. 레이아웃은 잘리는 대신 각 종횡비에 맞게 조정됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporte a mesma linha duas vezes: uma vez como **Story** para uma postagem às 9:16 e uma vez como **Social** para a visualização do link. O layout se adapta a cada proporção em vez de ser cortado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将同一行导出两次 - 一次作为 9:16 帖子的 **故事**，一次作为链接预览的 **社交**。布局会适应每个宽高比，而不是被裁剪。"
+          }
+        }
+      }
+    },
+    "Editing store metadata" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shop-Metadaten bearbeiten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modification des métadonnées du magasin"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ストアメタデータの編集"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "매장 메타데이터 편집"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editando metadados da loja"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑商店元数据"
+          }
+        }
+      }
+    },
+    "**App Info** (shared across versions): **App Name**, **Subtitle**, **Privacy Policy URL**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**App-Informationen** (versionsübergreifend): **App-Name**, **Untertitel**, **Datenschutzerklärungs-URL**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Informations sur l'application** (partagées entre les versions) : **Nom de l'application**, **Sous-titre**, **URL de la politique de confidentialité**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**アプリ情報** (バージョン間で共有): **アプリ名**、**サブタイトル**、**プライバシー ポリシーの URL**。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**앱 정보**(버전 간 공유): **앱 이름**, **부제**, **개인정보 보호정책 URL**."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Informações do aplicativo** (compartilhadas entre versões): **Nome do aplicativo**, **Legenda**, **URL da Política de Privacidade**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**应用程序信息**（跨版本共享）：**应用程序名称**、**副标题**、**隐私政策 URL**。"
+          }
+        }
+      }
+    },
+    "**Copy to all locales** fills every other language's *What's New* from the one you just wrote — useful before you translate it properly." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**In alle Gebietsschemata kopieren** füllt die *Neuigkeiten* aller anderen Sprachen aus der Sprache, die Sie gerade geschrieben haben – nützlich, bevor Sie sie richtig übersetzen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Copier dans toutes les langues** remplit les *Quoi de neuf* de toutes les autres langues à partir de celle que vous venez d'écrire — utile avant de le traduire correctement."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**すべてのロケールにコピー** は、作成したばかりの言語から他のすべての言語の *新機能* を埋め込みます。適切に翻訳する前に役立ちます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**모든 로케일로 복사**는 방금 작성한 언어에서 다른 모든 언어의 *새로운 기능*을 채웁니다. 제대로 번역하기 전에 유용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Copiar para todas as localidades** preenche as *Novidades* de todos os outros idiomas daquele que você acabou de escrever - útil antes de traduzi-lo corretamente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**复制到所有语言环境** 填充您刚刚编写的语言中的所有其他语言的“新增内容” - 在正确翻译之前非常有用。"
+          }
+        }
+      }
+    },
+    "Enter your app's **package name** (for example `com.example.myapp`), then review which screenshots go to which language before confirming." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geben Sie den **Paketnamen** Ihrer App ein (zum Beispiel „com.example.myapp“) und überprüfen Sie dann, welche Screenshots zu welcher Sprache gehören, bevor Sie bestätigen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez le **nom du package** de votre application (par exemple « com.example.myapp »), puis vérifiez quelles captures d'écran sont dans quelle langue avant de confirmer."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリの **パッケージ名** (例: `com.example.myapp`) を入力し、確認する前にどのスクリーンショットがどの言語で表示されるかを確認してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱의 **패키지 이름**(예: `com.example.myapp`)을 입력한 다음 확인하기 전에 어떤 스크린샷이 어떤 언어로 이동하는지 검토하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insira o **nome do pacote** do seu aplicativo (por exemplo `com.example.myapp`) e revise quais capturas de tela vão para qual idioma antes de confirmar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入您的应用程序的**包名称**（例如“com.example.myapp”），然后在确认之前查看哪些屏幕截图适用于哪种语言。"
+          }
+        }
+      }
+    },
+    "If the server won't start, something else is usually holding its port — quit that program, then switch the server off and on again. Turning it off releases the port immediately." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn der Server nicht startet, blockiert normalerweise etwas anderes den Port. Beenden Sie das Programm und schalten Sie den Server aus und wieder ein. Durch Ausschalten wird der Port sofort freigegeben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si le serveur ne démarre pas, quelque chose d'autre retient généralement son port : quittez ce programme, puis éteignez et rallumez le serveur. Le désactiver libère le port immédiatement."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバーが起動しない場合は、通常、他の何かがそのポートを保持しているため、そのプログラムを終了し、サーバーの電源をオフにしてから再度オンにします。これをオフにすると、ポートがすぐに解放されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서버가 시작되지 않으면 일반적으로 다른 것이 포트를 잡고 있는 것입니다. 해당 프로그램을 종료한 다음 서버를 껐다가 다시 켜십시오. 끄면 포트가 즉시 해제됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se o servidor não iniciar, geralmente alguma outra coisa está bloqueando sua porta – feche o programa e desligue o servidor e ligue-o novamente. Desligá-lo libera a porta imediatamente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果服务器无法启动，通常是其他程序占用了其端口 - 退出该程序，然后关闭服务器并再次打开。将其关闭会立即释放端口。"
+          }
+        }
+      }
+    },
+    "API key (Issuer ID, Key ID, `.p8` file), **Test Connection**, and **Demo mode**. See the App Store Connect topic." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API-Taste (Issuer ID, Key ID, „.p8“-Datei), **Testverbindung** und **Demo-Modus**. Siehe das Thema App Store Connect."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé API (Issuer ID, Key ID, fichier `.p8`), **Test de connexion** et **Mode démo**. Consultez la rubrique App Store Connect."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API キー (Issuer ID、Key ID、`.p8` ファイル)、**接続テスト**、**デモ モード**。 App Store Connect トピックを参照してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API 키(Issuer ID, Key ID, `.p8` 파일), **연결 테스트** 및 **데모 모드**. App Store Connect 항목을 참조하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave API (arquivo Issuer ID, Key ID, `.p8`), **Conexão de teste** e **Modo de demonstração**. Consulte o tópico App Store Connect."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API 密钥（Issuer ID、Key ID、`.p8` 文件）、**测试连接**和**演示模式**。请参阅 App Store Connect 主题。"
+          }
+        }
+      }
+    },
+    "**Lock the background art.** **⌘L** on a full-bleed image stops you grabbing it every time you click near the canvas edge." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Hintergrundbild sperren.** **⌘L** bei einem vollrandigen Bild verhindert, dass Sie es jedes Mal greifen, wenn Sie in die Nähe des Leinwandrandes klicken."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Verrouillez l'illustration d'arrière-plan.** **⌘L** sur une image à fond perdu vous empêche de la saisir à chaque fois que vous cliquez près du bord de la toile."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**背景アートをロックします。** フルブリード画像上で **⌘L** を使用すると、キャンバスの端付近をクリックするたびに画像を掴むことができなくなります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**배경 아트를 잠급니다.** 풀 블리드 이미지의 **⌘L**을 사용하면 캔버스 가장자리 근처를 클릭할 때마다 이미지를 잡을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Bloqueie a arte de fundo.** **⌘L** em uma imagem sem margens impede que você a agarre sempre que clicar perto da borda da tela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**锁定背景艺术。** 全出血图像上的 **⌘L** 会阻止您每次在画布边缘附近单击时抓取它。"
+          }
+        }
+      }
+    },
+    "⌘⌥I" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘⌥Ich"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘⌥Je"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘⌥私"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘⌥나는"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘⌥EU"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘⌥我"
+          }
+        }
+      }
+    },
+    "App" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Application"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicativo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用程序"
+          }
+        }
+      }
+    },
+    "⌘," : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘,"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘,"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘,"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘,"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘,"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘,"
+          }
+        }
+      }
+    },
     ".p8 key imported" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -190,6 +1750,86 @@
     "(detected)" : {
 
     },
+    "Preview drops every handle, guide, and divider and lays the templates out as separate rounded tiles with a gap — the way a store listing shows them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Vorschau werden alle Griffe, Hilfslinien und Trennelemente entfernt und die Vorlagen als separate abgerundete Kacheln mit einer Lücke angeordnet – so, wie sie in einem Store-Eintrag angezeigt werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'aperçu supprime chaque poignée, guide et séparateur et présente les modèles sous forme de vignettes arrondies séparées avec un espace, comme les montre une fiche Play Store."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレビューでは、すべてのハンドル、ガイド、ディバイダーが削除され、ストアの掲載情報に表示されるのと同じように、ギャップのある個別の丸いタイルとしてテンプレートがレイアウトされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리보기에서는 모든 핸들, 안내선 및 구분선을 삭제하고 스토어 목록에 표시되는 방식과 같이 간격이 있는 별도의 둥근 타일로 템플릿을 배치합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A visualização elimina todas as alças, guias e divisórias e apresenta os modelos como blocos arredondados separados com uma lacuna - da mesma forma que uma listagem de loja os mostra."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览会放下每个手柄、参考线和分隔线，并将模板布置为带有间隙的单独圆形图块 - 就像商店列表显示它们的方式一样。"
+          }
+        }
+      }
+    },
+    "Pick the app and a version, then choose which rows go to which display type and locale." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie die App und eine Version aus und wählen Sie dann aus, welche Zeilen zu welchem Anzeigetyp und Gebietsschema gehören."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez l'application et une version, puis choisissez quelles lignes correspondent à quel type d'affichage et à quels paramètres régionaux."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリとバージョンを選択し、どの行をどの表示タイプとロケールに割り当てるかを選択します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱과 버전을 선택한 다음 어떤 행이 어떤 디스플레이 유형과 로케일로 이동할지 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha o aplicativo e uma versão e, em seguida, escolha quais linhas vão para qual tipo de exibição e localidade."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择应用程序和版本，然后选择哪些行适用于哪种显示类型和区域设置。"
+          }
+        }
+      }
+    },
     "[Privacy Policy](https://screenshotbro.app/privacy)" : {
       "localizations" : {
         "de" : {
@@ -226,6 +1866,726 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "[隐私政策](https://screenshotbro.app/privacy)"
+          }
+        }
+      }
+    },
+    "**Rich text**: while editing, select part of the text and use the format bar for bold, italic, underline, strikethrough, a different size, or a different color — per run, inside one shape. **Clear formatting** returns the selection to the shape's base style." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Rich-Text**: Wählen Sie beim Bearbeiten einen Teil des Textes aus und verwenden Sie die Formatierungsleiste für Fett, Kursiv, Unterstrichen, Durchgestrichen, eine andere Größe oder eine andere Farbe – pro Lauf, innerhalb einer Form. **Formatierung löschen** setzt die Auswahl auf den Basisstil der Form zurück."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Texte enrichi** : lors de l'édition, sélectionnez une partie du texte et utilisez la barre de format pour le gras, l'italique, le souligné, le barré, une taille différente ou une couleur différente, par passage, à l'intérieur d'une forme. **Mise en forme claire** renvoie la sélection au style de base de la forme."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**リッチ テキスト**: 編集中にテキストの一部を選択し、書式バーを使用して太字、斜体、下線、取り消し線、別のサイズ、別の色を 1 つの図形内で実行ごとに設定できます。 **書式設定をクリア**すると、選択範囲が図形の基本スタイルに戻ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**서식 있는 텍스트**: 편집하는 동안 텍스트의 일부를 선택하고 형식 막대를 사용하여 굵게, 기울임꼴, 밑줄, 취소선, 다른 크기 또는 다른 색상을 실행별로, 하나의 도형 내에서 표시합니다. **서식 지우기**는 선택 항목을 도형의 기본 스타일로 되돌립니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Rich text**: durante a edição, selecione parte do texto e use a barra de formatação para negrito, itálico, sublinhado, tachado, um tamanho diferente ou uma cor diferente — por execução, dentro de uma forma. **Limpar formatação** retorna a seleção ao estilo base da forma."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**富文本**：编辑时，选择部分文本，然后使用格式栏设置粗体、斜体、下划线、删除线、不同的大小或不同的颜色 - 每次运行，在一个形状内。 **清除格式**将选择返回到形状的基本样式。"
+          }
+        }
+      }
+    },
+    "**Remove Background** (right-click) cuts the subject out of the image on your Mac — nothing is uploaded anywhere." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Hintergrund entfernen** (Rechtsklick) schneidet das Motiv aus dem Bild auf Ihrem Mac aus – es wird nirgendwo etwas hochgeladen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Supprimer l'arrière-plan** (clic droit) supprime le sujet de l'image sur votre Mac — rien n'est téléchargé nulle part."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**背景を削除** (右クリック) すると、Mac 上の画像から被写体が切り取られます。どこにも何もアップロードされません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**배경 제거**(마우스 오른쪽 버튼 클릭)는 Mac의 이미지에서 주제를 잘라냅니다. 어디에도 아무것도 업로드되지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Remover plano de fundo** (clique com o botão direito) corta o assunto da imagem em seu Mac — nada é carregado em lugar nenhum."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**删除背景**（右键单击）将主题从 Mac 上的图像中删除 - 任何地方都不会上传任何内容。"
+          }
+        }
+      }
+    },
+    "**Restore Original Aspect Ratio** (right-click) undoes stretching by fitting the height to the current width." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ursprüngliches Seitenverhältnis wiederherstellen** (Rechtsklick) macht die Streckung rückgängig, indem die Höhe an die aktuelle Breite angepasst wird."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Restaurer le rapport hauteur/largeur d'origine** (clic droit) annule l'étirement en ajustant la hauteur à la largeur actuelle."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**元のアスペクト比を復元** (右クリック) は、高さを現在の幅に合わせてストレッチを元に戻します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**원래 종횡비 복원**(마우스 오른쪽 버튼 클릭)은 높이를 현재 너비에 맞춰 늘이기를 취소합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Restaurar proporção original** (clique com o botão direito) desfaz o alongamento ajustando a altura à largura atual."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**恢复原始纵横比**（右键单击）通过使高度适合当前宽度来取消拉伸。"
+          }
+        }
+      }
+    },
+    "**Reset all** returns rotation, material, and lighting to their defaults." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Alles zurücksetzen** setzt Drehung, Material und Beleuchtung auf ihre Standardwerte zurück."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Réinitialiser tout** rétablit la rotation, le matériau et l'éclairage à leurs valeurs par défaut."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**すべてリセット** は、回転、マテリアル、ライティングをデフォルトに戻します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**모두 재설정**은 회전, 재질, 조명을 기본값으로 되돌립니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Redefinir tudo** retorna rotação, material e iluminação aos seus padrões."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**全部重置**将旋转、材质和光照恢复为其默认值。"
+          }
+        }
+      }
+    },
+    "Right-click a multi-shape selection ▸ **Align Selected** for left / center / right, top / middle / bottom, plus **Distribute Horizontally** and **Distribute Vertically**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicken Sie mit der rechten Maustaste auf eine Auswahl mit mehreren Formen. ▸ **Auswahl ausrichten** für links/mitte/rechts, oben/mitte/unten sowie **Horizontal verteilen** und **Vertikal verteilen**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez avec le bouton droit sur une sélection multi-formes ▸ **Aligner la sélection** pour gauche/centre/droite, haut/milieu/bas, plus **Distribuer horizontalement** et **Distribuer verticalement**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複数の形状の選択項目を右クリックし、**選択項目の整列**を左/中央/右、上/中央/下に設定し、さらに**水平方向に配置**および**垂直方向に配置**を選択します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "여러 모양 선택 항목을 마우스 오른쪽 버튼으로 클릭합니다. ▸ 왼쪽/가운데/오른쪽, 위쪽/가운데/아래에 대한 **선택 항목 정렬**과 **수평 분포** 및 **수직 분포**."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique com o botão direito em uma seleção de múltiplas formas ▸ **Alinhar selecionado** para esquerda/centro/direita, superior/meio/inferior, além de **Distribuir horizontalmente** e **Distribuir verticalmente**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右键单击多形状选区 ▸ **左/中/右、上/中/下对齐选定对象**，加上**水平分布**和**垂直分布**。"
+          }
+        }
+      }
+    },
+    "Right-click a locked shape and choose **Unlock** to get it back." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicken Sie mit der rechten Maustaste auf eine gesperrte Form und wählen Sie **Entsperren**, um sie wiederherzustellen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez avec le bouton droit sur une forme verrouillée et choisissez **Déverrouiller** pour la récupérer."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロックされた形状を右クリックし、[**ロック解除**] を選択して形状を元に戻します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "잠긴 도형을 마우스 오른쪽 버튼으로 클릭하고 **잠금 해제**를 선택하여 다시 가져옵니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique com o botão direito em uma forma bloqueada e escolha **Desbloquear** para recuperá-la."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右键单击锁定的形状并选择“**解锁**”将其恢复。"
+          }
+        }
+      }
+    },
+    "**Reuse Translation** (right-click a text shape) links it to another string, so both share one base text and one set of translations. A headline repeated across templates is then translated once." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Übersetzung wiederverwenden** (Rechtsklick auf eine Textform) verknüpft sie mit einer anderen Zeichenfolge, sodass beide einen Basistext und einen Satz Übersetzungen gemeinsam nutzen. Eine vorlagenübergreifend wiederholte Überschrift wird dann einmal übersetzt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Réutiliser la traduction** (cliquez avec le bouton droit sur une forme de texte) la lie à une autre chaîne, de sorte que les deux partagent un texte de base et un ensemble de traductions. Un titre répété dans les modèles est ensuite traduit une fois."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**翻訳の再利用** (テキスト図形を右クリック) は、それを別の文字列にリンクするため、両方が 1 つのベース テキストと 1 セットの翻訳を共有します。テンプレート間で繰り返される見出しは 1 回翻訳されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**번역 재사용**(텍스트 모양을 마우스 오른쪽 버튼으로 클릭)은 이를 다른 문자열에 연결하므로 둘 다 하나의 기본 텍스트와 하나의 번역 세트를 공유합니다. 템플릿 전체에서 반복되는 헤드라인은 한 번 번역됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Reutilizar tradução** (clique com o botão direito em uma forma de texto) vincula-a a outra string, para que ambos compartilhem um texto base e um conjunto de traduções. Um título repetido nos modelos é então traduzido uma vez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**重用翻译**（右键单击文本形状）将其链接到另一个字符串，因此两者共享一个基本文本和一组翻译。然后，跨模板重复的标题将被翻译一次。"
+          }
+        }
+      }
+    },
+    "Right-click ▸ **Localization** translates just that shape into the current language or into all of them, or resets its translations." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechtsklick ▸ **Lokalisierung** übersetzt nur diese Form in die aktuelle Sprache oder in alle Sprachen oder setzt ihre Übersetzungen zurück."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez avec le bouton droit ▸ **Localisation** traduit uniquement cette forme dans la langue actuelle ou dans toutes, ou réinitialise ses traductions."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右クリック ▸ **ローカリゼーション** では、その図形だけを現在の言語またはすべての言語に翻訳するか、翻訳をリセットします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마우스 오른쪽 버튼 클릭 ▸ **현지화**는 해당 모양만 현재 언어 또는 모든 언어로 번역하거나 번역을 재설정합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique com o botão direito ▸ **Localização** traduz apenas aquela forma para o idioma atual ou para todos eles, ou redefine suas traduções."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右键单击 ▸ **本地化** 仅将该形状翻译为当前语言或全部语言，或重置其翻译。"
+          }
+        }
+      }
+    },
+    "**Screenshots** — one image per template. This is what the stores want." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Screenshots** – ein Bild pro Vorlage. Das wollen die Geschäfte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Captures d'écran** — une image par modèle. C'est ce que veulent les magasins."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**スクリーンショット** — テンプレートごとに 1 つの画像。これがお店側が望んでいることです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**스크린샷** — 템플릿당 이미지 1개. 이것이 매장이 원하는 것입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Capturas de tela** — uma imagem por modelo. É isso que as lojas querem."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**屏幕截图** — 每个模板一张图像。这正是商店想要的。"
+          }
+        }
+      }
+    },
+    "**Showcase** — a marketing composition of the row on a styled background. See **Showcase Export**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Showcase** – eine Marketingkomposition der Reihe auf einem gestalteten Hintergrund. Siehe **Showcase-Export**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Showcase** : une composition marketing de la ligne sur un arrière-plan stylisé. Voir **Exportation Showcase**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ショーケース** — スタイル付きの背景上の行のマーケティング構成。 **ショーケースのエクスポート**を参照してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**쇼케이스** — 스타일이 지정된 배경에 행의 마케팅 구성입니다. **쇼케이스 내보내기**를 참조하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Mostruário** — uma composição de marketing da linha em um fundo estilizado. Consulte **Exportação de demonstração**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**展示** — 风格化背景上行的营销组合。请参阅**展示导出**。"
+          }
+        }
+      }
+    },
+    "Template borders, alignment guides, and selection handles are editor-only and never exported." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorlagenränder, Ausrichtungshilfen und Auswahlpunkte sind nur für den Editor verfügbar und werden nie exportiert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les bordures de modèle, les guides d'alignement et les poignées de sélection sont réservés à l'éditeur et ne sont jamais exportés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テンプレートの境界線、配置ガイド、および選択ハンドルは編集専用であり、エクスポートされることはありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "템플릿 테두리, 정렬 안내선 및 선택 핸들은 편집기 전용이며 내보내지지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As bordas do modelo, as guias de alinhamento e as alças de seleção são apenas para editor e nunca são exportadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模板边框、对齐参考线和选择手柄仅供编辑器使用，从不导出。"
+          }
+        }
+      }
+    },
+    "Shape and size" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Form und Größe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forme et taille"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "形状とサイズ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모양과 크기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forma e tamanho"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "形状和尺寸"
+          }
+        }
+      }
+    },
+    "**Spacing**, **Padding**, and **Corner radius** are percentages of the canvas, so a layout keeps its proportions at every output size." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Abstand**, **Padding** und **Eckenradius** sind Prozentsätze der Leinwand, sodass ein Layout seine Proportionen bei jeder Ausgabegröße behält."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Espacement**, **Padding** et **Rayon de coin** sont des pourcentages du canevas, de sorte qu'une mise en page conserve ses proportions à chaque taille de sortie."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**間隔**、**パディング**、**コーナー半径**はキャンバスのパーセンテージであるため、レイアウトはどの出力サイズでも比率を維持します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**간격**, **패딩** 및 **모서리 반경**은 캔버스의 백분율이므로 레이아웃은 모든 출력 크기에서 해당 비율을 유지합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Espaçamento**, **Preenchimento** e **Raio do canto** são porcentagens da tela, portanto, um layout mantém suas proporções em todos os tamanhos de saída."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**间距**、**填充**和**角半径**是画布的百分比，因此布局在每个输出尺寸下都保持其比例。"
+          }
+        }
+      }
+    },
+    "**Review Changes** lists, per locale and display type, exactly what will be added, what will be replaced, and what stays untouched. Nothing is sent to Apple until you confirm there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Änderungen überprüfen** listet pro Gebietsschema und Anzeigetyp genau auf, was hinzugefügt wird, was ersetzt wird und was unberührt bleibt. Es wird nichts an Apple gesendet, bis Sie es dort bestätigen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Review Changes** répertorie, par paramètres régionaux et types d'affichage, exactement ce qui sera ajouté, ce qui sera remplacé et ce qui restera intact. Rien n'est envoyé à Apple jusqu'à ce que vous le confirmiez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**変更の確認** には、ロケールおよび表示タイプごとに、何が追加されるか、何が置き換えられるか、何が変更されないのかが正確にリストされます。 Apple で確認するまでは何も送信されません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**변경사항 검토**에는 로케일 및 디스플레이 유형별로 추가될 항목, 교체될 항목, 그대로 유지되는 항목이 정확하게 나열되어 있습니다. 귀하가 확인할 때까지 Apple로 아무 것도 전송되지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Analise as listas de alterações**, por localidade e tipo de exibição, exatamente o que será adicionado, o que será substituído e o que permanecerá intacto. Nada é enviado para a Apple até que você confirme lá."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**查看更改** 根据区域设置和显示类型列出了将添加的内容、将替换的内容以及保持不变的内容。在您确认之前，不会向 Apple 发送任何信息。"
+          }
+        }
+      }
+    },
+    "**Settings ▸ App Store Connect ▸ Demo mode** walks the whole flow against sample data — no API key needed, and nothing is ever sent to Apple." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Einstellungen ▸ App Store Connect ▸ Demomodus** führt den gesamten Ablauf anhand von Beispieldaten durch – es ist kein API-Schlüssel erforderlich und es wird nie etwas an Apple gesendet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Paramètres ▸ App Store Connect ▸ Mode démo** parcourt l'ensemble du flux par rapport à des exemples de données : aucune clé API n'est nécessaire et rien n'est jamais envoyé à Apple."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**設定 ▸ App Store Connect ▸ デモ モード** では、サンプル データに対してフロー全体が実行されます。API キーは必要なく、Apple には何も送信されません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**설정 ▸ App Store Connect ▸ 데모 모드**는 샘플 데이터에 대해 전체 흐름을 안내합니다. API 키가 필요하지 않으며 Apple로 아무 것도 전송되지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Configurações ▸ App Store Connect ▸ Modo de demonstração** percorre todo o fluxo em relação aos dados de amostra — nenhuma chave API é necessária e nada é enviado para a Apple."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**设置 ▸ App Store Connect ▸ 演示模式** 根据示例数据遍历整个流程 — 无需 API 键，也不会向 Apple 发送任何内容。"
+          }
+        }
+      }
+    },
+    "Read and rewrite your **App Store Connect descriptions**, and preview then apply a **screenshot sync** to a version." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesen Sie Ihre **App Store Connect-Beschreibungen** und schreiben Sie sie neu. Sehen Sie sich eine Vorschau an und wenden Sie dann eine **Screenshot-Synchronisierung** auf eine Version an."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisez et réécrivez vos **App Store Connect descriptions**, puis prévisualisez puis appliquez une **synchronisation de capture d'écran** à une version."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**App Store Connect の説明**を読んで書き換え、プレビューしてから**スクリーンショットの同期**をバージョンに適用します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**App Store Connect 설명**을 읽고 다시 작성한 다음 미리 본 다음 **스크린샷 동기화**를 버전에 적용하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leia e reescreva suas **App Store Connect descrições**, visualize e aplique uma **sincronização de captura de tela** a uma versão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "阅读并重写您的 **App Store Connect 描述**，然后进行预览，然后将 **屏幕截图同步** 应用于某个版本。"
+          }
+        }
+      }
+    },
+    "**Repeat a shape across the row.** Right-click ▸ **Duplicate ▸ To All Screenshots** drops a logo or footer onto every template at the same spot." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Eine Form in der gesamten Zeile wiederholen.** Rechtsklick ▸ **Duplizieren ▸ Zu allen Screenshots** fügt ein Logo oder eine Fußzeile auf jeder Vorlage an derselben Stelle ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Répétez une forme sur la ligne.** Cliquez avec le bouton droit ▸ **Dupliquer ▸ Vers toutes les captures d'écran** dépose un logo ou un pied de page sur chaque modèle au même endroit."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**行全体で図形を繰り返します。** 右クリック ▸ **複製 ▸ すべてのスクリーンショット** をクリックすると、すべてのテンプレートの同じ場所にロゴまたはフッターがドロップされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**행 전체에 걸쳐 모양을 반복합니다.** 마우스 오른쪽 버튼을 클릭하고 ▸ **복제 ▸ 모든 스크린샷에** 로고나 바닥글을 모든 템플릿의 동일한 위치에 놓습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Repita uma forma na linha.** Clique com o botão direito ▸ **Duplicar ▸ Para todas as capturas de tela** coloca um logotipo ou rodapé em cada modelo no mesmo local."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**在行中重复形状。** 右键单击 ▸ **复制 ▸ 到所有屏幕截图** 将徽标或页脚拖放到每个模板的同一位置。"
+          }
+        }
+      }
+    },
+    "Show or hide the inspector" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Inspektor ein- oder ausblenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher ou masquer l'inspecteur"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インスペクターを表示または非表示にする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검사기 표시 또는 숨기기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar ou ocultar o inspetor"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示或隐藏检查器"
           }
         }
       }
@@ -346,6 +2706,886 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "**⌘]** / **⌘[** 在语言之间向前/向后循环。"
+          }
+        }
+      }
+    },
+    "The **pencil / eye** switch in a row header lays the row out as a store-style carousel with no editing chrome — the fastest check that a set reads well together." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der **Bleistift/Auge**-Schalter in der Kopfzeile einer Zeile legt die Zeile als Karussell im Ladenstil ohne Bearbeitungschrom an – die schnellste Überprüfung, ob ein Satz gut zusammenpasst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le commutateur **crayon/œil** dans l'en-tête d'une ligne présente la ligne comme un carrousel de style magasin sans chrome d'édition - la vérification la plus rapide qu'un ensemble se lit bien ensemble."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行ヘッダーの **鉛筆/目** スイッチは、編集クロムなしでストア スタイルのカルーセルとして行をレイアウトします。これは、セットがうまく読み込まれているかどうかを最速でチェックするためのものです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "행 머리글의 **연필/눈** 스위치는 행을 편집 크롬 없이 매장 스타일 캐러셀로 배치합니다. 이는 세트가 함께 잘 읽혀지는 가장 빠른 검사입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A opção **lápis / olho** em um cabeçalho de linha apresenta a linha como um carrossel estilo loja, sem cromo de edição – a verificação mais rápida de que um conjunto pode ser lido bem em conjunto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行标题中的 **铅笔/眼睛** 开关将行布局为商店风格的轮播，没有编辑镶边 - 这是一组可以很好地一起阅读的最快检查。"
+          }
+        }
+      }
+    },
+    "**Visibility** — hide a whole shape type (all text, all devices, all SVGs…) in this row. Hidden types are left out of the **export** too, not just the editor. **Borders** draws the divider lines between templates and is editor-only." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Sichtbarkeit** – einen ganzen Formtyp (alle Texte, alle Geräte, alle SVGs…) in dieser Zeile ausblenden. Verborgene Typen bleiben auch beim **Export** außen vor, nicht nur beim Editor. **Rahmen** zeichnet die Trennlinien zwischen Vorlagen und ist nur für den Editor verfügbar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Visibilité** : masquez un type de forme entier (tout le texte, tous les appareils, tous les SVGs…) dans cette ligne. Les types masqués sont également exclus de **l'exportation**, pas seulement de l'éditeur. **Borders** dessine les lignes de séparation entre les modèles et est réservé à l'éditeur."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**可視性** — この行の図形タイプ全体 (すべてのテキスト、すべてのデバイス、すべての SVG] を非表示にします。非表示のタイプは、エディターだけでなく**エクスポート**からも除外されます。 **境界線** はテンプレート間に境界線を描画し、エディターのみで使用できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**가시성** — 이 행에서 전체 도형 유형(모든 텍스트, 모든 장치, 모든 SVG…)을 숨깁니다. 숨겨진 유형은 편집기뿐만 아니라 **내보내기**에서도 제외됩니다. **테두리**는 템플릿 사이에 구분선을 그리며 편집자 전용입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Visibilidade** — oculta um tipo de forma inteiro (todo o texto, todos os dispositivos, todos os SVGs…) nesta linha. Os tipos ocultos também são deixados de fora da **exportação**, não apenas do editor. **Bordas** desenha as linhas divisórias entre os modelos e é apenas para editor."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**可见性** — 隐藏此行中的整个形状类型（所有文本、所有设备、所有 SVG...）。隐藏类型也被排除在**导出**之外，而不仅仅是编辑器。 **边框** 在模板之间绘制分隔线，并且仅供编辑器使用。"
+          }
+        }
+      }
+    },
+    "The **pencil / eye** switch in the row header flips the row between editing and preview." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Schalter **Bleistift/Auge** im Zeilenkopf schaltet die Zeile zwischen Bearbeitung und Vorschau um."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le commutateur **crayon/œil** dans l'en-tête de la ligne fait basculer la ligne entre l'édition et l'aperçu."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行ヘッダーの **鉛筆/目** スイッチは、編集とプレビューの間で行を反転します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "행 헤더의 **연필/눈 모양** 스위치는 편집과 미리보기 사이에서 행을 전환합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A opção **lápis/olho** no cabeçalho da linha inverte a linha entre edição e visualização."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行标题中的 **铅笔/眼睛** 开关可在编辑和预览之间翻转行。"
+          }
+        }
+      }
+    },
+    "The row menu" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Zeilenmenü"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le menu des lignes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行メニュー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "행 메뉴"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O menu da linha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行菜单"
+          }
+        }
+      }
+    },
+    "The **⋯ menu** offers per-template actions: **Quick Look**, **Save as PNG…**, move left / right, **Add Screenshot Before / After**, duplicate, and delete." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das **⋯-Menü** bietet Aktionen pro Vorlage: **Quick Look**, **Speichern als PNG…**, nach links/rechts verschieben, **Screenshot davor/nachher hinzufügen**, duplizieren und löschen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le menu **⋯** propose des actions par modèle : **Quick Look**, **Enregistrer sous PNG…**, déplacer vers la gauche/droite, **Ajouter une capture d'écran avant/après**, dupliquer et supprimer."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⋯ メニュー** には、テンプレートごとのアクションがあります: **Quick Look**、**PNG] として保存…**、左/右に移動、**前後にスクリーンショットを追加**、複製、削除。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⋯ 메뉴**는 템플릿별 작업을 제공합니다: **Quick Look**, **PNG로 저장...**, 왼쪽/오른쪽으로 이동, **전/후 스크린샷 추가**, 복제 및 삭제."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O menu **⋯** oferece ações por modelo: **Quick Look**, **Salvar como PNG…**, mover para a esquerda/direita, **Adicionar captura de tela antes/depois**, duplicar e excluir."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⋯菜单**提供每个模板的操作：**Quick Look**、**另存为PNG…**、向左/向右移动、**在之前/之后添加屏幕截图**、复制和删除。"
+          }
+        }
+      }
+    },
+    "The properties bar shows font, weight, size, color, horizontal and vertical alignment, line height, and letter spacing." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Eigenschaftenleiste werden Schriftart, Stärke, Größe, Farbe, horizontale und vertikale Ausrichtung, Zeilenhöhe und Buchstabenabstand angezeigt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La barre de propriétés affiche la police, l'épaisseur, la taille, la couleur, l'alignement horizontal et vertical, la hauteur des lignes et l'espacement des lettres."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロパティ バーには、フォント、太さ、サイズ、色、水平方向と垂直方向の配置、行の高さ、文字間隔が表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "속성 표시줄에는 글꼴, 두께, 크기, 색상, 가로 및 세로 정렬, 줄 높이, 문자 간격이 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A barra de propriedades mostra fonte, espessura, tamanho, cor, alinhamento horizontal e vertical, altura da linha e espaçamento entre letras."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "属性栏显示字体、粗细、大小、颜色、水平和垂直对齐方式、行高和字母间距。"
+          }
+        }
+      }
+    },
+    "**Text background** turns a headline into a badge: pick **Solid**, **Pill**, **Outline**, or **Highlight**, then tune color, padding, corner radius, opacity, and an outline." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Texthintergrund** verwandelt eine Überschrift in ein Abzeichen: Wählen Sie **Vollton**, **Pill**, **Umriss** oder **Hervorhebung** und passen Sie dann Farbe, Polsterung, Eckenradius, Deckkraft und einen Umriss an."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**L'arrière-plan du texte** transforme un titre en badge : sélectionnez **Solide**, **Pilule**, **Contour** ou **Surbrillance**, puis réglez la couleur, le remplissage, le rayon des coins, l'opacité et un contour."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**テキストの背景**は見出しをバッジに変えます。**ソリッド**、**ピル**、**アウトライン**、または**ハイライト**を選択し、色、パディング、角の半径、不透明度、アウトラインを調整します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**텍스트 배경**은 헤드라인을 배지로 바꿉니다. **단색**, **알약**, **윤곽선** 또는 **강조표시**를 선택한 다음 색상, 패딩, 모서리 반경, 불투명도 및 윤곽선을 조정합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Fundo de texto** transforma um título em um emblema: escolha **Sólido**, **Comprimido**, **Contorno** ou **Realce** e ajuste a cor, o preenchimento, o raio do canto, a opacidade e um contorno."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**文本背景**将标题变成徽章：选择**实心**、**药丸**、**轮廓**或**突出显示**，然后调整颜色、填充、圆角半径、不透明度和轮廓。"
+          }
+        }
+      }
+    },
+    "Their **Appearance** popover in the properties bar adds **Pitch** and **Yaw** rotation, a **Matte** or **Glossy** finish, and **Ambient** / **Key** / **Rim** lighting." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihr **Aussehen**-Popover in der Eigenschaftenleiste fügt **Pitch**- und **Yaw**-Rotation, ein **Matt**- oder **Glänzend**-Finish und **Ambient**/**Key**/**Rim**-Beleuchtung hinzu."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leur popover **Apparence** dans la barre de propriétés ajoute une rotation **Pitch** et **Yaw**, une finition **Matte** ou **Brillant** et un éclairage **Ambient** / **Key** / **Rim**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロパティ バーの **外観** ポップオーバーにより、**ピッチ** および **ヨー** 回転、**マット** または **光沢** 仕上げ、**アンビエント** / **キー** / **リム** ライティングが追加されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "속성 표시줄의 **모양** 팝오버에는 **피치** 및 **요** 회전, **무광택** 또는 **광택** 마감, **주변** / **키** / **림** 조명이 추가됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu popover **Appearance** na barra de propriedades adiciona rotação **Pitch** e **Yaw**, um acabamento **Matte** ou **Glossy** e iluminação **Ambient** / **Key** / **Rim**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "属性栏中的**外观**弹出窗口添加了**俯仰**和**偏航**旋转、**哑光**或**光泽**表面处理以及**环境**/**键**/**边缘**照明。"
+          }
+        }
+      }
+    },
+    "Use the export menu for **Export All Screenshots to Folder…**, row exports, per-language exports, and direct upload to **App Store Connect** or **Google Play**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwenden Sie das Exportmenü für **Alle Screenshots in Ordner exportieren…**, Zeilenexporte, Exporte pro Sprache und direktes Hochladen nach **App Store Connect** oder **Google Play**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez le menu d'exportation pour **Exporter toutes les captures d'écran vers un dossier…**, les exportations de lignes, les exportations par langue et le téléchargement direct vers **App Store Connect** ou **Google Play**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**すべてのスクリーンショットをフォルダーにエクスポート…**、行エクスポート、言語ごとのエクスポート、**App Store Connect** または **Google Play** への直接アップロードのエクスポート メニューを使用します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**모든 스크린샷을 폴더로 내보내기…**, 행 내보내기, 언어별 내보내기 및 **App Store Connect** 또는 **Google Play**에 직접 업로드하려면 내보내기 메뉴를 사용하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use o menu de exportação para **Exportar todas as capturas de tela para a pasta…**, exportações de linha, exportações por idioma e upload direto para **App Store Connect** ou **Google Play**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用导出菜单进行**将所有屏幕截图导出到文件夹…**、行导出、按语言导出以及直接上传到 **App Store Connect** 或 **Google Play**。"
+          }
+        }
+      }
+    },
+    "Three ways to render a row" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drei Möglichkeiten zum Rendern einer Zeile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trois façons de rendre une ligne"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行をレンダリングする 3 つの方法"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "행을 렌더링하는 세 가지 방법"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Três maneiras de renderizar uma linha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "渲染行的三种方法"
+          }
+        }
+      }
+    },
+    "What actually gets exported" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was tatsächlich exportiert wird"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui est réellement exporté"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "実際にエクスポートされるもの"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실제로 내보내지는 것"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que realmente é exportado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "实际导出的内容"
+          }
+        }
+      }
+    },
+    "Use the **Quick Look** button in the template control bar to preview fully rendered screenshots without going through the export flow." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwenden Sie die Schaltfläche **Quick Look** in der Vorlagensteuerleiste, um eine Vorschau vollständig gerenderter Screenshots anzuzeigen, ohne den Exportvorgang durchlaufen zu müssen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez le bouton **Quick Look** dans la barre de contrôle du modèle pour prévisualiser les captures d'écran entièrement rendues sans passer par le flux d'exportation."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テンプレート コントロール バーの **Quick Look** ボタンを使用すると、エクスポート フローを経由せずに完全にレンダリングされたスクリーンショットをプレビューできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내보내기 흐름을 거치지 않고 완전히 렌더링된 스크린샷을 미리 보려면 템플릿 제어 막대에 있는 **Quick Look** 버튼을 사용하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use o botão **Quick Look** na barra de controle do modelo para visualizar capturas de tela totalmente renderizadas sem passar pelo fluxo de exportação."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用模板控制栏中的 **Quick Look** 按钮预览完全渲染的屏幕截图，而无需执行导出流程。"
+          }
+        }
+      }
+    },
+    "Turn a row of screenshots into one marketing image." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwandeln Sie eine Reihe von Screenshots in ein Marketingbild."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transformez une rangée de captures d’écran en une seule image marketing."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一連のスクリーンショットを 1 つのマーケティング画像に変換します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일련의 스크린샷을 하나의 마케팅 이미지로 바꿔보세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transforme uma série de capturas de tela em uma imagem de marketing."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将一排屏幕截图变成一个营销图像。"
+          }
+        }
+      }
+    },
+    "The sheet previews the result live as you change settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Blatt zeigt eine Live-Vorschau des Ergebnisses an, während Sie die Einstellungen ändern."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La feuille prévisualise le résultat en direct lorsque vous modifiez les paramètres."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定を変更すると、シートで結果がライブでプレビューされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정을 변경하면 시트에서 결과를 실시간으로 미리 볼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A planilha visualiza o resultado ao vivo conforme você altera as configurações."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当您更改设置时，工作表会实时预览结果。"
+          }
+        }
+      }
+    },
+    "The same editor as a row background: color, gradient, or image, with every fill mode. See **Backgrounds**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Derselbe Editor wie ein Zeilenhintergrund: Farbe, Farbverlauf oder Bild, mit jedem Füllmodus. Siehe **Hintergründe**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le même éditeur qu'un arrière-plan de ligne : couleur, dégradé ou image, avec chaque mode de remplissage. Voir **Arrière-plans**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行の背景と同じエディター: カラー、グラデーション、またはイメージ、すべての塗りつぶしモード。 **背景**を参照してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "행 배경과 동일한 편집기: 모든 채우기 모드에서 색상, 그라데이션 또는 이미지. **배경**을 참조하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O mesmo editor de fundo de linha: cor, gradiente ou imagem, com todos os modos de preenchimento. Consulte **Planos de fundo**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与行背景相同的编辑器：颜色、渐变或图像，具有每种填充模式。请参阅**背景**。"
+          }
+        }
+      }
+    },
+    "Uploading screenshots" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshots hochladen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement de captures d'écran"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショットのアップロード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷 업로드 중"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviando capturas de tela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上传截图"
+          }
+        }
+      }
+    },
+    "The same wizard edits the version's text, locale by locale, with a live character counter against Apple's limits." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Derselbe Assistent bearbeitet den Text der Version, Gebietsschema für Gebietsschema, mit einem Live-Zeichenzähler entsprechend den Apple-Grenzwerten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le même assistant édite le texte de la version, locale par locale, avec un compteur de caractères en direct par rapport aux limites d'Apple."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同じウィザードは、Apple の制限に対抗するライブ文字カウンターを使用して、ロケールごとにバージョンのテキストを編集します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동일한 마법사가 Apple의 한계에 맞춰 라이브 문자 카운터를 사용하여 버전의 텍스트를 로케일별로 편집합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O mesmo assistente edita o texto da versão, localidade por localidade, com um contador de caracteres ativo de acordo com os limites da Apple."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同一个向导可以按区域设置编辑版本的文本，并使用针对 Apple 限制的实时字符计数器。"
+          }
+        }
+      }
+    },
+    "**This Version**: **What's New**, **Promotional Text**, **Description**, **Keywords**, **Support URL**, and the **Copyright** line." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Diese Version**: **Neuigkeiten**, **Werbetext**, **Beschreibung**, **Schlüsselwörter**, **Support-URL** und die Zeile **Copyright**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Cette version** : **Quoi de neuf**, **Texte promotionnel**, **Description**, **Mots clés**, **URL de support** et ligne **Copyright**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**このバージョン**: **新機能**、**プロモーション テキスト**、**説明**、**キーワード**、**サポート URL**、**著作権** の行。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**이 버전**: **새로운 기능**, **홍보 문구**, **설명**, **키워드**, **지원 URL** 및 **저작권** 줄."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Esta versão**: **Novidades**, **Texto promocional**, **Descrição**, **Palavras-chave**, **URL de suporte** e a linha **Direitos autorais**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**此版本**：**新增功能**、**促销文字**、**说明**、**关键字**、**支持 URL** 和 **版权** 行。"
+          }
+        }
+      }
+    },
+    "While demo mode is on, the real API key above it is ignored." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Während der Demo-Modus aktiviert ist, wird die echte API-Taste darüber ignoriert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsque le mode démo est activé, la vraie clé API au-dessus est ignorée."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デモ モードがオンの間、その上の実際の API キーは無視されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "데모 모드가 켜져 있는 동안에는 그 위의 실제 API 키가 무시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enquanto o modo de demonstração está ativado, a chave API real acima dele é ignorada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当演示模式打开时，其上方的实际 API 键将被忽略。"
+          }
+        }
+      }
+    },
+    "The upload is staged as a Play **edit** and committed when you confirm. Google Play accepts at most 8 screenshots per type." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Upload wird als Play-**Bearbeitung** bereitgestellt und bei Bestätigung übernommen. Google Play akzeptiert höchstens 8 Screenshots pro Typ."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le téléchargement est effectué en tant que Play **modification** et validé lorsque vous confirmez. Google Play accepte au maximum 8 captures d'écran par type."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロードは Play **編集**としてステージングされ、確認時にコミットされます。 Google Play は、タイプごとに最大 8 枚のスクリーンショットを受け入れます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업로드는 Play **수정**으로 준비되고 확인하면 커밋됩니다. Google Play 유형당 최대 8개의 스크린샷을 허용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O upload é realizado como uma Play **edit** e confirmado quando você confirma. Google Play aceita no máximo 8 capturas de tela por tipo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上传将作为播放**编辑**进行，并在您确认后提交。 Google Play 每种类型最多接受 8 个屏幕截图。"
+          }
+        }
+      }
+    },
+    "**Version** — the build you're running. Worth quoting in a bug report." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Version** – der Build, den Sie ausführen. Es lohnt sich, in einem Fehlerbericht zu zitieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Version** : la version que vous exécutez. Cela vaut la peine d'être cité dans un rapport de bug."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**バージョン** — 実行しているビルド。バグレポートで引用する価値があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**버전** — 실행 중인 빌드입니다. 버그 보고서에 인용할 가치가 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Versão** — a versão que você está executando. Vale a pena citar em um relatório de bug."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**版本** — 您正在运行的版本。值得在错误报告中引用。"
+          }
+        }
+      }
+    },
+    "**Translate a repeated headline once.** Right-click a text shape ▸ **Reuse Translation** links it to another string so they share one translation." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Übersetzen Sie eine wiederholte Überschrift einmal.** Klicken Sie mit der rechten Maustaste auf eine Textform. ▸ **Übersetzung wiederverwenden** verknüpft sie mit einer anderen Zeichenfolge, sodass sie eine gemeinsame Übersetzung haben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Traduisez une fois un titre répété.** Cliquez avec le bouton droit sur une forme de texte ▸ **Réutiliser la traduction** le lie à une autre chaîne afin qu'ils partagent une traduction."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**繰り返される見出しを一度翻訳します。** テキスト図形を右クリックします。 ▸ **翻訳を再利用**すると、別の文字列にリンクされ、1 つの翻訳が共有されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**반복되는 헤드라인을 한 번 번역합니다.** 텍스트 모양을 마우스 오른쪽 버튼으로 클릭합니다. ▸ **번역 재사용**은 하나의 번역을 공유하도록 다른 문자열에 연결합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Traduza um título repetido uma vez.** Clique com o botão direito em uma forma de texto ▸ **Reutilizar tradução** vincula-o a outra string para que eles compartilhem uma tradução."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**将重复的标题翻译一次。** 右键单击文本形状 ▸ **重复使用翻译** 将其链接到另一个字符串，以便它们共享一个翻译。"
           }
         }
       }
@@ -8729,46 +11969,6 @@
         }
       }
     },
-    "API key, Issuer ID, Key ID. See the App Store Connect topic." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "API Schlüssel, Issuer ID, Key ID. Siehe das Thema App Store Connect."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touche API, Issuer ID, Key ID. Consultez la rubrique App Store Connect."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "API キー、Issuer ID、Key ID。 App Store Connect トピックを参照してください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "API 키, Issuer ID, Key ID. App Store Connect 항목을 참조하세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "API chave, Issuer ID, Key ID. Consulte o tópico App Store Connect."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "API 键、Issuer ID、Key ID。请参阅 App Store Connect 主题。"
-          }
-        }
-      }
-    },
     "App Info (shared across versions)" : {
       "localizations" : {
         "de" : {
@@ -13918,46 +17118,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "颜色、渐变或图像 - 在行或模板级别。"
-          }
-        }
-      }
-    },
-    "Color, opacity, rotation (in degrees, editable as text), border radius, outline (color + width), and a clip toggle (clips overflow to the shape)." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Farbe, Deckkraft, Drehung (in Grad, als Text bearbeitbar), Rahmenradius, Umriss (Farbe + Breite) und ein Clip-Schalter (Clips überlaufen in die Form)."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couleur, opacité, rotation (en degrés, modifiable sous forme de texte), rayon de bordure, contour (couleur + largeur) et bascule de clip (les clips débordent sur la forme)."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "色、不透明度、回転 (度単位、テキストとして編集可能)、境界線の半径、アウトライン (色 + 幅)、およびクリップの切り替え (形状へのクリップのオーバーフロー)。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "색상, 불투명도, 회전(도 단위, 텍스트로 편집 가능), 테두리 반경, 윤곽선(색상 + 너비) 및 클립 토글(클립이 모양으로 오버플로됨)."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cor, opacidade, rotação (em graus, editável como texto), raio da borda, contorno (cor + largura) e alternância de clipe (os clipes transbordam para a forma)."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "颜色、不透明度、旋转（以度为单位，可作为文本编辑）、边框半径、轮廓（颜色 + 宽度）和剪辑切换（剪辑溢出到形状）。"
           }
         }
       }
@@ -27459,9 +30619,6 @@
     "If the issue affects a project, use **Settings ▸ General ▸ Storage ▸ Create Backup…** and attach the resulting backup so we can reproduce on the exact data." : {
 
     },
-    "If the server can't start because the port is already in use, change the port and reconnect. Turning the server off releases the port immediately." : {
-
-    },
     "If this is your first time, an interactive tour walks you through the editor when your first project opens. Pick a new project from a template any time via **File ▸ New Project**." : {
       "localizations" : {
         "de" : {
@@ -36389,9 +39546,6 @@
     "Pick from the built-in language presets, or define a custom code." : {
 
     },
-    "Pick the app and an editable version, review metadata, then confirm the upload plan." : {
-
-    },
     "Pick the app and version. Screenshot Bro maps each row to the right device family automatically." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -36432,9 +39586,6 @@
           }
         }
       }
-    },
-    "Pick the app, then review which screenshots go to which language before confirming. The upload is staged as a Play **edit** and committed when you confirm." : {
-
     },
     "Pick up right where you left off — add as many rows as you need." : {
       "localizations" : {
@@ -50107,9 +53258,6 @@
         }
       }
     },
-    "The **⋯ menu** offers per-template actions like Quick Look, Save as PNG, move, duplicate, and delete." : {
-
-    },
     "The **Status** row shows whether the server is running and on which port." : {
 
     },
@@ -50432,46 +53580,6 @@
     },
     "The Projects screen shows sync progress while iCloud is uploading or downloading." : {
 
-    },
-    "The properties bar shows font, weight, size, color, alignment, line height, and letter spacing." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In der Eigenschaftenleiste werden Schriftart, Stärke, Größe, Farbe, Ausrichtung, Zeilenhöhe und Buchstabenabstand angezeigt."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La barre de propriétés affiche la police, l'épaisseur, la taille, la couleur, l'alignement, la hauteur des lignes et l'espacement des lettres."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プロパティ バーには、フォント、太さ、サイズ、色、配置、行の高さ、文字間隔が表示されます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "속성 표시줄에는 글꼴, 두께, 크기, 색상, 정렬, 줄 높이 및 문자 간격이 표시됩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A barra de propriedades mostra fonte, espessura, tamanho, cor, alinhamento, altura da linha e espaçamento entre letras."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "属性栏显示字体、粗细、大小、颜色、对齐方式、行高和字母间距。"
-          }
-        }
-      }
     },
     "The required languages are not downloaded on your Mac.\n\nTo download them, go to:\nSystem Settings → General → Language & Region → Translation Languages\n\nThen download the languages you need and try again." : {
       "extractionState" : "stale",
@@ -54433,9 +57541,6 @@
         }
       }
     },
-    "Use the **Quick Look** button in the template control bar to preview rendered screenshots without going through the full export flow." : {
-
-    },
     "Use the **Shapes** dropdown in the inspector to add a Rectangle, Circle, or Star." : {
       "localizations" : {
         "de" : {
@@ -54517,9 +57622,6 @@
       }
     },
     "Use the desktop Mac or iPad app for the best experience." : {
-
-    },
-    "Use the export menu for **Export All Screenshots to Folder…**, row exports, showcase exports, per-language exports, and direct upload to **App Store Connect** or **Google Play**." : {
 
     },
     "Use the inspector on the right to set the background, default device frame, and screenshot size." : {
@@ -56120,46 +59222,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "偏航"
-          }
-        }
-      }
-    },
-    "You can preview which screenshots will be uploaded for which locale before confirming." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sie können vor der Bestätigung eine Vorschau anzeigen, welche Screenshots für welches Gebietsschema hochgeladen werden."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous pouvez prévisualiser quelles captures d'écran seront téléchargées pour quels paramètres régionaux avant de confirmer."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "確認する前に、どのロケールに対してどのスクリーンショットがアップロードされるかをプレビューできます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "확인하기 전에 어떤 로케일에 대해 어떤 스크린샷이 업로드될지 미리 볼 수 있습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Você pode visualizar quais capturas de tela serão carregadas para qual localidade antes de confirmar."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在确认之前，您可以预览将为哪个区域设置上传哪些屏幕截图。"
           }
         }
       }
