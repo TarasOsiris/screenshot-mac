@@ -90,7 +90,7 @@ enum ExportCoordinator {
         imageCache: inout [String: NSImage],
         seedImages: [String: NSImage] = [:],
         onProgress: ((Int) -> Void)? = nil,
-        render: @MainActor (RowRenderContext) -> NSImage
+        render: @MainActor (RowRenderContext) async -> NSImage
     ) async throws -> [URL] {
         let localeCode = source.localeState.activeLocaleCode
         var fileURLs: [URL] = []

@@ -121,8 +121,8 @@ struct RowRenderContext {
         )
     }
 
-    func showcaseImage(config: ShowcaseExportConfig) -> NSImage {
-        RowRenderer.renderShowcaseRowImage(
+    func showcaseImage(config: ShowcaseExportConfig) async -> NSImage {
+        await RowRenderer.renderShowcaseRowImage(
             row: row,
             screenshotImages: images,
             localeCode: localeCode,

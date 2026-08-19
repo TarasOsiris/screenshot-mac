@@ -53,13 +53,22 @@ extension AppState {
         }
     }
 
+    /// Deleting immediately would break undo: a registered step can restore the model's
+    /// reference (and these cleanups run inside undoable mutations), but nothing re-creates
+    /// the file — ⌘Z would bring the shape back empty. While an UndoManager exists the orphan
+    /// stays on disk and in the cache, and is reaped by `cleanupOrphanedResourceFiles` on the
+    /// next project open/switch/reload — all of which clear the undo stack first.
+    private var canDeleteImageFilesImmediately: Bool { undoManager == nil }
+
     func cleanupUnreferencedImage(_ fileName: String?) {
+        guard canDeleteImageFilesImmediately else { return }
         guard let fileName, !isImageFileReferenced(fileName) else { return }
         removeImageFile(fileName)
     }
 
     /// Batch cleanup: collects all referenced filenames once, then removes any candidate that is unreferenced.
     func cleanupUnreferencedImages(_ fileNames: [String?]) {
+        guard canDeleteImageFilesImmediately else { return }
         let candidates = Set(fileNames.compactMap { $0 })
         guard !candidates.isEmpty else { return }
         let referenced = allReferencedImageFileNames()

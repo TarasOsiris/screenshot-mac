@@ -368,13 +368,16 @@ struct TemplateControlBar: View {
         }
     }
 
-    private func renderExportPNG() -> Data? {
+    /// Renders on the main actor, encodes off it — the deflate of a full-resolution
+    /// template used to block the main thread for the whole save.
+    private func renderExportPNG() async -> Data? {
         let images = onLoadFullResImages?() ?? screenshotImages
-        return RowRenderer.renderTemplateData(
-            index: index, row: row, format: .png, screenshotImages: images,
+        let image = RowRenderer.renderSingleTemplateImage(
+            index: index, row: row, screenshotImages: images,
             localeCode: localeState.activeLocaleCode, localeState: localeState,
             availableFontFamilies: state.availableFontFamilySet
         )
+        return await ExportImageEncoder.opaquePNGDataOffMain(from: image)
     }
 
     private func previewScreenshot() {
@@ -423,11 +426,13 @@ struct TemplateControlBar: View {
     }
 
     private func downloadScreenshot() {
-        if let message = ExportService.savePNGDataViaPanel(
-            defaultName: "screenshot-\(index + 1)",
-            data: renderExportPNG
-        ) {
-            renderError = message
+        Task {
+            if let message = await ExportService.savePNGDataViaPanel(
+                defaultName: "screenshot-\(index + 1)",
+                data: renderExportPNG
+            ) {
+                renderError = message
+            }
         }
     }
 }

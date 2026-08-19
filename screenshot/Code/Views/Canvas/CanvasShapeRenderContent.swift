@@ -422,25 +422,41 @@ struct ShadowModifier: ViewModifier {
 
     /// Live: the offset as-authored. Export: `R(-θ)·F·R(θ)·(ox,oy)`, which after the
     /// offscreen global vertical flip reproduces the live offset at any rotation.
+    /// macOS-only: the flip is an `NSHostingView.cacheDisplay` artifact — iOS exports render
+    /// through `ImageRenderer`, which does not flip (verified by pixel probe on the simulator),
+    /// so compensating there would point every shadow the wrong way.
     private func compensatedOffset(ox: CGFloat, oy: CGFloat) -> (x: CGFloat, y: CGFloat) {
+        #if os(macOS)
         guard isExportRendering else { return (ox, oy) }
         let t = 2 * rotationDegrees * .pi / 180
         let c = cos(t), s = sin(t)
         return (x: ox * c - oy * s, y: -(ox * s + oy * c))
+        #else
+        return (ox, oy)
+        #endif
     }
 }
 
 /// A fixed non-rotated `.shadow(y:)` with the same offscreen-flip compensation as
 /// `ShadowModifier` — for the built-in ambient shadows (showcase tiles, abstract device
 /// bodies), which would otherwise point up in exports and down in the editor.
+/// macOS-only for the same reason as `compensatedOffset`.
 private struct FlipCompensatedShadow: ViewModifier {
     let color: Color
     let radius: CGFloat
     let y: CGFloat
     @Environment(\.isExportRendering) private var isExportRendering
 
+    private var compensatedY: CGFloat {
+        #if os(macOS)
+        return isExportRendering ? -y : y
+        #else
+        return y
+        #endif
+    }
+
     func body(content: Content) -> some View {
-        content.shadow(color: color, radius: radius, x: 0, y: isExportRendering ? -y : y)
+        content.shadow(color: color, radius: radius, x: 0, y: compensatedY)
     }
 }
 

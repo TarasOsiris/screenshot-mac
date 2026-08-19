@@ -155,15 +155,17 @@ extension EditorRowView {
             return
         }
         let localeCode = state.localeState.activeLocaleCode
-        if let message = ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
-            let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-            return RowRenderer.renderRowImage(
-                row: row, screenshotImages: images,
-                localeCode: localeCode, localeState: state.localeState,
-                availableFontFamilies: state.availableFontFamilySet
-            )
-        }) {
-            exportError = String(localized: "Could not export row image: \(message)")
+        Task {
+            if let message = await ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
+                let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
+                return RowRenderer.renderRowImage(
+                    row: row, screenshotImages: images,
+                    localeCode: localeCode, localeState: state.localeState,
+                    availableFontFamilies: state.availableFontFamilySet
+                )
+            }) {
+                exportError = String(localized: "Could not export row image: \(message)")
+            }
         }
     }
 }

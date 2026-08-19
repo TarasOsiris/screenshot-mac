@@ -188,26 +188,28 @@ extension ContentView {
             let rowsToExport = showcaseRows(selectedRowIds: selectedRowIds, excludedTemplateIds: excludedTemplateIds)
             guard !rowsToExport.isEmpty else { return }
             exportRowLevel(folderName: "showcase", rows: rowsToExport, seedImages: seedCache) { context in
-                context.showcaseImage(config: config)
+                await context.showcaseImage(config: config)
             }
         case .singleRow:
             guard let rowId = selectedRowIds.first,
                   let baseRow = state.rows.first(where: { $0.id == rowId }),
                   let row = baseRow.filtering(excluding: excludedTemplateIds) else { return }
             let localeCode = state.localeState.activeLocaleCode
-            if let message = ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
-                var cache: [String: NSImage] = [:]
-                let context = RowRenderContext.load(
-                    row: row,
-                    localeCode: localeCode,
-                    from: state,
-                    label: "showcase row export",
-                    cache: &cache,
-                    seedImages: seedCache
-                )
-                return context.showcaseImage(config: config)
-            }) {
-                exportFlow.errorMessage = String(localized: "Could not export row image: \(message)")
+            Task {
+                if let message = await ExportService.saveRowImageViaPanel(defaultName: row.label, render: {
+                    var cache: [String: NSImage] = [:]
+                    let context = RowRenderContext.load(
+                        row: row,
+                        localeCode: localeCode,
+                        from: state,
+                        label: "showcase row export",
+                        cache: &cache,
+                        seedImages: seedCache
+                    )
+                    return await context.showcaseImage(config: config)
+                }) {
+                    exportFlow.errorMessage = String(localized: "Could not export row image: \(message)")
+                }
             }
         }
     }
@@ -218,7 +220,7 @@ extension ContentView {
         folderName: String,
         rows: [ScreenshotRow]? = nil,
         seedImages: [String: NSImage] = [:],
-        render: @MainActor @escaping (RowRenderContext) -> NSImage
+        render: @MainActor @escaping (RowRenderContext) async -> NSImage
     ) {
         #if os(iOS)
         guard let baseURL = tempExportFolder() else { return }
@@ -285,7 +287,7 @@ extension ContentView {
             rows: rowsToExport,
             seedImages: showcaseSeedCache(config: config, backgroundImage: backgroundImage),
             delivery: .route(destination),
-            render: { context in context.showcaseImage(config: config) }
+            render: { context in await context.showcaseImage(config: config) }
         )
     }
 

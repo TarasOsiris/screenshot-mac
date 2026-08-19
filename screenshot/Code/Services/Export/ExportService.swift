@@ -220,9 +220,11 @@ struct ExportService {
 
     /// Saves a single PNG. macOS uses a save panel; iPad writes to a temp file and presents the
     /// system share sheet (Save to Files / AirDrop), since there's no Finder or save panel.
-    /// Returns an error message on failure, nil on success or user cancellation.
+    /// Returns an error message on failure, nil on success or user cancellation. Async so the
+    /// `data` closure can render on the main actor but encode off it — these are the largest
+    /// bitmaps the app produces, and the deflate used to block the main thread.
     @MainActor
-    static func savePNGDataViaPanel(defaultName: String, data: () -> Data?) -> String? {
+    static func savePNGDataViaPanel(defaultName: String, data: @MainActor () async -> Data?) async -> String? {
         let safeName = defaultName.isEmpty ? "image" : ExportFileNaming.sanitizedFileName(defaultName)
         #if os(macOS)
         let panel = NSSavePanel()
@@ -232,7 +234,7 @@ struct ExportService {
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
 
-        guard let pngData = data() else {
+        guard let pngData = await data() else {
             return ExportError.renderFailed.localizedDescription
         }
         do {
@@ -242,7 +244,7 @@ struct ExportService {
             return error.localizedDescription
         }
         #else
-        guard let pngData = data() else {
+        guard let pngData = await data() else {
             return ExportError.renderFailed.localizedDescription
         }
         do {
@@ -260,9 +262,9 @@ struct ExportService {
     }
 
     @MainActor
-    static func saveRowImageViaPanel(defaultName: String, render: () -> NSImage) -> String? {
-        savePNGDataViaPanel(defaultName: defaultName.isEmpty ? "row" : defaultName) {
-            encodeImage(render(), format: .png)
+    static func saveRowImageViaPanel(defaultName: String, render: @MainActor () async -> NSImage) async -> String? {
+        await savePNGDataViaPanel(defaultName: defaultName.isEmpty ? "row" : defaultName) {
+            await ExportImageEncoder.opaquePNGDataOffMain(from: render())
         }
     }
 

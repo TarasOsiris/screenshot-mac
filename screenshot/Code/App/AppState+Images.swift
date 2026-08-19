@@ -153,7 +153,7 @@ extension AppState {
             let previousOverrideFile = override.overrideImageFileName
             override.overrideImageFileName = fileName
             LocaleService.setShapeOverride(&localeState, shapeId: shape.id, override: override)
-            if let oldFile = previousOverrideFile, oldFile != fileName, undoManager == nil {
+            if let oldFile = previousOverrideFile, oldFile != fileName {
                 cleanupUnreferencedImage(oldFile)
             }
         } else {
@@ -167,7 +167,7 @@ extension AppState {
 
             rows[location.rowIndex].shapes[location.shapeIndex] = shape
 
-            if let oldFile = previousFile, oldFile != fileName, undoManager == nil {
+            if let oldFile = previousFile, oldFile != fileName {
                 cleanupUnreferencedImage(oldFile)
             }
         }

@@ -193,7 +193,7 @@ final class ExportFlowModel {
         rows: [ScreenshotRow]? = nil,
         seedImages: [String: NSImage] = [:],
         delivery: Delivery,
-        render: @MainActor @escaping (RowRenderContext) -> NSImage
+        render: @MainActor @escaping (RowRenderContext) async -> NSImage
     ) {
         let rowsToExport = rows ?? document.rows
         guard !rowsToExport.isEmpty else { return }

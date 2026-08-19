@@ -23,7 +23,7 @@ enum RowRenderer {
         localeState: LocaleState = .default,
         availableFontFamilies: Set<String> = PlatformFonts.familyNameSet,
         config: ShowcaseExportConfig = .init()
-    ) -> NSImage {
+    ) async -> NSImage {
         let count = row.templates.count
         guard count > 0 else {
             return NSImage(size: NSSize(width: 1, height: 1))
@@ -48,6 +48,9 @@ enum RowRenderer {
                 availableFontFamilies: availableFontFamilies,
                 preRenderedRowBackground: rowBackground
             ))
+            // Same per-iteration yield as RowRenderContext.forEachTemplate — without it a long
+            // row renders as one uninterrupted main-actor job (the SCREENSHOT-BRO-2/-3 shape).
+            await Task.yield()
         }
 
         let totalSize = CGSize(width: layout.totalWidth, height: layout.totalHeight)
