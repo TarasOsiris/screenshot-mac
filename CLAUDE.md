@@ -241,3 +241,9 @@ Bundled resources in `screenshot/`: `Templates.bundle` (35+ starter themes), `Sv
 - Properties bar sections must use `ShapePropertiesSection` — and the parent HStack of sections must use `ShapePropertiesSectionLayout.horizontalPadding` / `.verticalPadding` so sections align flush with the bar edges.
 - Toggles in compact toolbars use `.toggleStyle(.switch).controlSize(.small)`. The exception is the inspector's Visibility section, which uses `.toggleStyle(.checkbox)` because switches would break the 2-column LazyVGrid layout — keep that as is.
 - `ActionButton` (default `frameSize: 22`, `iconSize: 11`) is the canonical small icon button. Match its size when adding adjacent menu/buttons that aren't `ActionButton` (e.g., the ellipsis menu in `TemplateControlBar`).
+
+**Keep the Help window in sync (`Views/Help/HelpView.swift`):**
+- The in-app Help is hand-written prose, so it drifts silently — nothing fails a build when a feature ships undocumented or a described control is removed. When a user-visible feature lands (a menu item, a properties-bar control, an export destination, a settings toggle, a shortcut), update the matching `HelpSection` entry in the same change.
+- Document only what ships: `#if DEBUG` affordances (e.g. **Capture from iOS Simulator**) stay out.
+- New Help strings are `LocalizedStringKey`s like any other. Follow the `add-localized-string` flow, and inject just the new keys into `Localizable.xcstrings` in Xcode's format rather than committing the scripts' whole-file reflow. Prune keys your rewrite orphaned.
+- `HelpView.swift` is `#if os(macOS)` — iPad has no Help window, so don't assume a Help edit covers both platforms.
