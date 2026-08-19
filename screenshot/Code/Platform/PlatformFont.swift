@@ -10,7 +10,9 @@ import UIKit
 /// Cross-platform access to the system's installed font families. macOS uses Core Text;
 /// iOS uses UIFont. Custom (process-registered) fonts are layered on by AppState.
 enum PlatformFonts {
-    static var systemFamilyNames: [String] {
+    /// `nonisolated` so a font load can enumerate off the main thread: both calls below are
+    /// thread-safe reads, and against a cold font cache this takes hundreds of milliseconds.
+    nonisolated static var systemFamilyNames: [String] {
         #if os(macOS)
         // Same families as `NSFontManager.availableFontFamilies`, but that one builds a descriptor
         // per family on the way out: ~150ms warm, ~600ms against a cold font cache, versus ~20ms.
@@ -43,8 +45,12 @@ enum PlatformFonts {
         return set
     }
 
-    static func invalidateFamilyNameCache() {
-        cachedFamilyNameSet = nil
+    /// Replaces the cache after a registration changes the process font set. Takes the value
+    /// rather than clearing, so a caller that already enumerated off the main thread doesn't
+    /// leave the next main-actor reader to redo it.
+    static func primeFamilyNameCache(_ families: Set<String>) {
+        _ = fontChangeObserver
+        cachedFamilyNameSet = families
     }
 }
 

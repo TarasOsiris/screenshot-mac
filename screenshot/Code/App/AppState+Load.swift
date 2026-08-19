@@ -172,9 +172,7 @@ extension AppState {
 
         guard let activeId = activeProjectId else { return }
 
-        let diskData = await Task.detached(priority: .userInitiated) {
-            PersistenceService.loadProject(activeId)
-        }.value
+        let diskData = await AppState.loadProjectAfterQueuedWrites(activeId)
         if Task.isCancelled { return }
         // The blocking iCloud read above can outlive a project switch — applying the old
         // project's rows now would let the next save write them into the new project's file.
@@ -183,12 +181,14 @@ extension AppState {
         if let localModified = knownProjectDataModifiedAt {
             // Only reload if the on-disk version is newer than our in-memory version.
             if let diskData, diskData.modifiedAt > localModified {
-                loadCustomFonts()
+                await loadCustomFontsAsync()
+                guard !Task.isCancelled, activeProjectId == activeId else { return }
                 applyProjectData(diskData, for: activeId)
                 loadScreenshotImages()
             }
         } else {
-            loadCustomFonts()
+            await loadCustomFontsAsync()
+            guard !Task.isCancelled, activeProjectId == activeId else { return }
             loadRowsForProject(activeId, preloaded: diskData)
             loadScreenshotImages()
         }

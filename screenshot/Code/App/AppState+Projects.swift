@@ -81,23 +81,14 @@ extension AppState {
             return
         }
 
-        #if os(macOS)
-        // Synchronous write-before-read: the detached write below can lose a race with a
-        // quick switch-back (stale read of the old project) and is dropped on immediate
-        // quit. macOS has no push animation to keep smooth, so save inline.
-        saveCurrentProject()
-        switchToProject(id)
-        saveIndex()
-        #else
-        // Snapshot + write the OLD project off-main while activeProjectId still points at
-        // it (and before switchToProject sets projectOpenTask), then switch. switchToProject
-        // sets the opening flag. saveIndexAsync runs AFTER the switch so the index persists
-        // the NEW activeProjectId (matching the old synchronous order). Keeps the disk
-        // encode/write off the runloop turn that animates the iPad push.
+        // Write the OLD project while activeProjectId still points at it, then switch, then
+        // persist the index so it records the NEW activeProjectId. Both writes are file-
+        // coordinated under iCloud, where they block for seconds, so neither may run on the
+        // click's runloop turn — `loadProjectAfterQueuedWrites` is what keeps the switch's
+        // read behind them.
         saveCurrentProjectAsync()
         switchToProject(id)
         saveIndexAsync()
-        #endif
     }
 
     func switchToProject(_ id: UUID) {
@@ -107,18 +98,21 @@ extension AppState {
         beginProjectOpening()
         teardownActiveProject()
         activeProjectId = id
+        openProject(id) { await AppState.loadProjectAfterQueuedWrites(id) }
+    }
+
+    /// The second half of every project transition: read the project off the main thread — so
+    /// the loading spinner keeps animating and a large project.json doesn't freeze the project
+    /// list — then apply it here if the transition is still current.
+    private func openProject(_ id: UUID, loading load: @escaping @Sendable () async -> ProjectData?) {
         projectOpenTask = Task { @MainActor [weak self] in
-            // Decode off the main thread so the loading spinner keeps animating and
-            // the project list (iPad) doesn't freeze while a large project.json is read.
-            let data = await Task.detached(priority: .userInitiated) {
-                PersistenceService.loadProject(id)
-            }.value
+            let data = await load()
             guard let self, !Task.isCancelled, self.activeProjectId == id else { return }
             // Let the push + spinner paint a frame before the heavy `rows = …` rebuild,
             // so the loader animates instead of freezing mid-transition.
             await Task.yield()
             guard !Task.isCancelled, self.activeProjectId == id else { return }
-            self.loadProjectContents(for: id, preloaded: data)
+            await self.loadProjectContents(for: id, preloaded: data)
             self.projectOpenTask = nil
         }
     }
@@ -205,13 +199,11 @@ extension AppState {
         guard id == activeProjectId else { return }
         CrashReportingService.breadcrumb(.project, "Reset project from template", data: ["template": template.id])
         undoManager?.removeAllActions()
+        projectOpenTask?.cancel()
         beginProjectOpening()
         teardownActiveProject()
 
-        PersistenceService.copyProjectFromURL(template.url, to: id)
-
-        // Reload from disk (font registration before row load, matching switchToProject order)
-        loadProjectContents(for: id, preloaded: PersistenceService.loadProject(id))
+        openProject(id) { await AppState.replaceProjectAfterQueuedWrites(id, withProjectAt: template.url) }
     }
 
     func deleteProject(_ id: UUID) {
@@ -257,9 +249,9 @@ extension AppState {
         isOpeningProject = false
     }
 
-    private func loadProjectContents(for id: UUID, preloaded: ProjectData?) {
+    private func loadProjectContents(for id: UUID, preloaded: ProjectData?) async {
+        await loadCustomFontsAsync()
         guard activeProjectId == id else { return }
-        loadCustomFonts()
         loadRowsForProject(id, preloaded: preloaded)
         // The chrome (locale bar, row headers) and canvas only need the project
         // *structure* — rows + localeState — which is now applied. Reveal the UI

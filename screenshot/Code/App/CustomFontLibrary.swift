@@ -37,7 +37,7 @@ final class CustomFontLibrary {
     private(set) var availableFamilySet: Set<String> {
         get {
             if let cachedAvailableFamilySet { return cachedAvailableFamilySet }
-            let set = systemAndCustomFamilies()
+            let set = customFamilies(addedTo: PlatformFonts.familyNameSet)
             cachedAvailableFamilySet = set
             return set
         }
@@ -53,25 +53,22 @@ final class CustomFontLibrary {
         everReferencedFontFamilies = everReferenced
     }
 
-    /// Takes the project id because instances are read back off the font files in that project's
-    /// resources directory.
-    func refreshAvailableFamilies(projectId: UUID?) {
-        PlatformFonts.invalidateFamilyNameCache()
-        let resourcesURL = projectId.map { PersistenceService.resourcesDir($0) }
-        var instances: [CustomFont] = []
-        if let resourcesURL {
-            for font in customFonts.values {
-                instances.append(contentsOf: CustomFont.allInstances(at: resourcesURL.appendingPathComponent(font.fileName)))
-            }
-        }
-        availableFamilySet = systemAndCustomFamilies()
-        CustomFontRegistry.update(with: customFonts, instances: instances)
+    /// The one place the font tables are made current. `scan` supplies the file reads a load
+    /// already did off the main actor; without one they happen here, which is why this takes
+    /// the project id — instances are read back off the font files in its resources directory.
+    func refreshAvailableFamilies(projectId: UUID?, from scan: CustomFontScan? = nil) {
+        // Registration changes the process font set, so replace the shared cache instead of
+        // clearing it — the next reader is usually the canvas or a renderer, on the main actor.
+        let systemFamilies = scan?.systemFamilies ?? Set(PlatformFonts.systemFamilyNames)
+        PlatformFonts.primeFamilyNameCache(systemFamilies)
+        availableFamilySet = customFamilies(addedTo: systemFamilies)
+        CustomFontRegistry.update(with: customFonts, instances: scan?.instances ?? readInstances(projectId: projectId))
     }
 
     /// Process-registered fonts (via CTFontManager) don't appear in the system family list, so
     /// add both family and display names.
-    private func systemAndCustomFamilies() -> Set<String> {
-        var families = PlatformFonts.familyNameSet
+    private func customFamilies(addedTo systemFamilies: Set<String>) -> Set<String> {
+        var families = systemFamilies
         for font in customFonts.values {
             families.insert(font.familyName)
             families.insert(font.displayName)
@@ -79,23 +76,41 @@ final class CustomFontLibrary {
         return families
     }
 
+    private func readInstances(projectId: UUID?) -> [CustomFont] {
+        guard let projectId else { return [] }
+        let resourcesURL = PersistenceService.resourcesDir(projectId)
+        return customFonts.values.flatMap {
+            CustomFont.allInstances(at: resourcesURL.appendingPathComponent($0.fileName))
+        }
+    }
+
     // MARK: - Custom Fonts
 
     func loadCustomFonts(projectId activeId: UUID) {
-        let resourcesURL = PersistenceService.resourcesDir(activeId)
-        let fm = FileManager.default
-        guard let files = try? fm.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
+        let scan = CustomFontScan.run(
+            resourcesURL: PersistenceService.resourcesDir(activeId),
+            existing: Set(customFonts.keys)
+        )
+        guard !scan.newFonts.isEmpty else { return }
+        customFonts.merge(scan.newFonts) { current, _ in current }
+        refreshAvailableFamilies(projectId: activeId, from: scan)
+    }
 
-        var changed = false
-        for file in files where Self.fontExtensions.contains(file.pathExtension.lowercased()) {
-            let fileName = file.lastPathComponent
-            guard customFonts[fileName] == nil else { continue }
-            if let font = registerFont(at: file) {
-                customFonts[fileName] = font
-                changed = true
-            }
-        }
-        if changed { refreshAvailableFamilies(projectId: activeId) }
+    /// Off-main sibling of `loadCustomFonts`. Registering a font mmaps the file, and in an
+    /// iCloud project those bytes may still be in the cloud — that page-in blocked the main
+    /// thread for seconds on reload and on project switch.
+    func loadCustomFontsAsync(projectId activeId: UUID) async {
+        let resourcesURL = PersistenceService.resourcesDir(activeId)
+        let known = Set(customFonts.keys)
+        let scan = await Task.detached(priority: .userInitiated) {
+            CustomFontScan.run(resourcesURL: resourcesURL, existing: known)
+        }.value
+
+        guard !scan.newFonts.isEmpty else { return }
+        // An import that landed while the scan ran isn't in its reads, so those are unusable.
+        let importLanded = Set(customFonts.keys) != known
+        customFonts.merge(scan.newFonts) { current, _ in current }
+        refreshAvailableFamilies(projectId: activeId, from: importLanded ? nil : scan)
     }
 
     func unregisterCustomFonts(projectId activeId: UUID?) {
@@ -167,7 +182,7 @@ final class CustomFontLibrary {
         for sibling in siblings where Self.fontExtensions.contains(sibling.pathExtension.lowercased()) {
             guard sibling != url else { continue }
             guard customFonts[sibling.lastPathComponent] == nil else { continue }
-            guard let metadata = parseFontMetadata(at: sibling), metadata.familyName == familyName else { continue }
+            guard let metadata = CustomFont.parseMetadata(at: sibling), metadata.familyName == familyName else { continue }
             _ = importFontFile(at: sibling, activeId: activeId, preParsed: metadata)
         }
     }
@@ -190,12 +205,8 @@ final class CustomFontLibrary {
             }
         }
         if customFonts[fileName] == nil {
-            if let preParsed {
-                _ = CTFontManagerRegisterFontsForURL(destURL as CFURL, .process, nil)
-                customFonts[fileName] = preParsed
-            } else if let font = registerFont(at: destURL) {
-                customFonts[fileName] = font
-            }
+            let instances = Self.register(at: destURL)
+            customFonts[fileName] = preParsed ?? instances.first
         }
         return customFonts[fileName]
     }
@@ -247,13 +258,46 @@ final class CustomFontLibrary {
         everReferencedFontFamilies = families
     }
 
-    private func registerFont(at url: URL) -> CustomFont? {
+    /// Registers a font file with the process and returns every named instance it exposes, the
+    /// first being its primary face. Downloads first: registration mmaps the file, which stalls
+    /// on an iCloud file whose bytes haven't materialized.
+    nonisolated static func register(at url: URL) -> [CustomFont] {
+        try? FileManager.default.startDownloadingUbiquitousItem(at: url)
         // May fail if already registered — that's OK
         _ = CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
-        return CustomFont.parseMetadata(at: url)
+        return CustomFont.allInstances(at: url)
     }
+}
 
-    private func parseFontMetadata(at url: URL) -> CustomFont? {
-        CustomFont.parseMetadata(at: url)
+/// Everything a font load does that touches the file system or CoreText, gathered so it can
+/// run off the main actor: the directory listing, registration, and the descriptor reads —
+/// all of which mmap files that an iCloud project may not have materialized yet.
+nonisolated struct CustomFontScan: Sendable {
+    /// Files registered by this scan (keyed by file name); already-known files are skipped.
+    var newFonts: [String: CustomFont] = [:]
+    /// Every named instance across all registered files, for `CustomFontRegistry`.
+    var instances: [CustomFont] = []
+    var systemFamilies: Set<String> = []
+
+    static func run(resourcesURL: URL, existing: Set<String>) -> CustomFontScan {
+        let files = (try? FileManager.default.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil))?
+            .filter { CustomFontLibrary.fontExtensions.contains($0.pathExtension.lowercased()) } ?? []
+        // Nothing new means nothing to apply, so don't pay for the reads below.
+        guard files.contains(where: { !existing.contains($0.lastPathComponent) }) else { return CustomFontScan() }
+
+        var scan = CustomFontScan()
+        for file in files {
+            let fileName = file.lastPathComponent
+            guard !existing.contains(fileName) else {
+                scan.instances.append(contentsOf: CustomFont.allInstances(at: file))
+                continue
+            }
+            let instances = CustomFontLibrary.register(at: file)
+            guard let font = instances.first else { continue }
+            scan.newFonts[fileName] = font
+            scan.instances.append(contentsOf: instances)
+        }
+        scan.systemFamilies = Set(PlatformFonts.systemFamilyNames)
+        return scan
     }
 }

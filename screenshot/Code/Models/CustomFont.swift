@@ -8,7 +8,7 @@ import Foundation
 
 /// Metadata for a user-imported font file. One family can have multiple files (Regular,
 /// Italic, Bold, …); each is shown as its own picker entry.
-struct CustomFont: Hashable {
+nonisolated struct CustomFont: Hashable {
     let fileName: String
     let familyName: String
     let styleName: String?

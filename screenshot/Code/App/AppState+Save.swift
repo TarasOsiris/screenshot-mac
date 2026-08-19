@@ -60,6 +60,32 @@ extension AppState {
     /// domains. `flushPendingSaveTask` drains it synchronously on quit.
     static let saveQueue = DispatchQueue(label: "xyz.tleskiv.screenshot.project-save", qos: .utility)
 
+    /// Runs `work` off-main, behind every write already on the save queue. Project reads need
+    /// that ordering — switching away and straight back would otherwise open the project as it
+    /// stood before the switch — and it is what lets the project-switch save run off-main at all
+    /// (a coordinated iCloud write blocks for seconds). No write can slip in between:
+    /// `activeProjectSnapshotForSave` declines while a project open is in flight. Only the
+    /// barrier occupies the queue, so quit's `saveQueue.sync` never waits on the work itself.
+    private static func afterQueuedWrites<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            saveQueue.async { continuation.resume() }
+        }
+        return await Task.detached(priority: .userInitiated, operation: work).value
+    }
+
+    static func loadProjectAfterQueuedWrites(_ id: UUID) async -> ProjectData? {
+        await afterQueuedWrites { PersistenceService.loadProject(id) }
+    }
+
+    /// Installs a project's files from `url` before reading it — a queued save would otherwise
+    /// land on top of what was just installed.
+    static func replaceProjectAfterQueuedWrites(_ id: UUID, withProjectAt url: URL) async -> ProjectData? {
+        await afterQueuedWrites {
+            PersistenceService.copyProjectFromURL(url, to: id)
+            return PersistenceService.loadProject(id)
+        }
+    }
+
     func scheduleSave() {
         saveTask?.cancel()
         let task = DispatchWorkItem { [weak self] in

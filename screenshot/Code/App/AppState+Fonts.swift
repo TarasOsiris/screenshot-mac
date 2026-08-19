@@ -30,6 +30,12 @@ extension AppState {
         fonts.loadCustomFonts(projectId: activeProjectId)
     }
 
+    /// See `CustomFontLibrary.loadCustomFontsAsync` for why the load paths use this one.
+    func loadCustomFontsAsync() async {
+        guard let activeProjectId else { return }
+        await fonts.loadCustomFontsAsync(projectId: activeProjectId)
+    }
+
     func unregisterCustomFonts() {
         fonts.unregisterCustomFonts(projectId: activeProjectId)
     }

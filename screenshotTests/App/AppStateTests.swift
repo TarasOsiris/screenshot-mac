@@ -1354,6 +1354,25 @@ struct AppStateTests {
         #expect(state.customFonts.keys.contains(sourceFontURL.lastPathComponent))
     }
 
+    /// The load paths that can face undownloaded iCloud font files use the off-main scan;
+    /// it must register and resolve the same fonts the synchronous one does.
+    @Test func offMainFontLoadRegistersTheSameFonts() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let sourceFontURL = bundledFontURL("Raleway-VariableFont_wght.ttf")
+        let selection = try #require(state.importCustomFont(from: sourceFontURL))
+        state.unregisterCustomFonts()
+        #expect(state.customFonts.isEmpty)
+
+        await state.loadCustomFontsAsync()
+
+        #expect(state.customFonts.keys.contains(sourceFontURL.lastPathComponent))
+        #expect(state.availableFontFamilySet.contains(selection.fontName))
+        // Populated from the scan's instance list rather than a second read on the main actor.
+        #expect(CustomFontRegistry.postScriptName(forFamily: "Raleway", managerWeight: 9, italic: false) != nil)
+    }
+
     // MARK: - Nudge
 
     @Test func nudgeSelectedShapeMovesPosition() {

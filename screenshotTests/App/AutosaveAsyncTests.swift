@@ -1,5 +1,6 @@
 import Foundation
 @testable import Screenshot_Bro
+import Synchronization
 import Testing
 
 /// Covers the off-main debounced autosave path (`saveAllAsync` + save queue).
@@ -62,6 +63,25 @@ struct AutosaveAsyncTests {
 
         let saved = try #require(PersistenceService.loadProject(projectId))
         #expect(saved.rows.first?.shapes.count == expectedShapeCount)
+    }
+
+    /// Project switching writes the outgoing project off-main, so a project read must be
+    /// served only after the writes already queued — switching away and straight back would
+    /// otherwise open the project as it stood before the switch.
+    @Test func projectReadIsServedAfterQueuedWrites() async throws {
+        let (_, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+
+        let queuedWriteFinished = Mutex(false)
+        AppState.saveQueue.async {
+            // Long enough that an unordered read would be served first.
+            Thread.sleep(forTimeInterval: 0.1)
+            queuedWriteFinished.withLock { $0 = true }
+        }
+
+        _ = await AppState.loadProjectAfterQueuedWrites(UUID())
+
+        #expect(queuedWriteFinished.withLock { $0 })
     }
 
     /// An edit schedules a debounced save; flushing before the debounce fires
