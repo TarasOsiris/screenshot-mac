@@ -36,6 +36,8 @@ nonisolated enum CrashReportingService {
         case projectDirectoryCopyFailed
         case directoryCreateFailed
         case iCloudCoordinatedReadFailed
+        case iCloudMergeSourceUnreadable
+        case iCloudConflictDiscardedVersions
         case imageResourceCopyFailed
         case customFontCopyFailed
         case renderProducedBlankImage
@@ -89,6 +91,8 @@ nonisolated enum CrashReportingService {
                 return scrubbed(event)
             }
 
+            options.beforeBreadcrumb = { crumb in filteredBreadcrumb(crumb) }
+
             // Deliberately left off, and must stay off: the privacy policy promises reports carry
             // no project content and no stream of usage events.
             // options.enableLogs / options.attachScreenshot / options.attachViewHierarchy
@@ -106,6 +110,11 @@ nonisolated enum CrashReportingService {
             options.environment = "production"
             #endif
         }
+
+        // Before anything else can capture: an event without this is an event nobody can trace
+        // back to the person who emailed about it.
+        setUser(id: DiagnosticsIdentity.installId)
+        setTag(DiagnosticsIdentity.firstVersion, for: "first_version")
 
         if SentrySDK.crashedLastRun {
             setTag("true", for: "crashed_last_run")
@@ -154,7 +163,20 @@ nonisolated enum CrashReportingService {
         level: Level = .info
     ) {
         guard isReportingEnabled else { return }
-        guard shouldEmitBreadcrumb(category: category, message: message) else { return }
+
+        // `addBreadcrumb` takes the SDK's own locks — never call it while holding ours, which
+        // `recordBreadcrumbRun` has already released by the time it returns.
+        switch recordBreadcrumbRun(category: category, message: message) {
+        case .coalesce:
+            return
+        case .checkpoint(let count):
+            addRunSummary(category: category, message: message, count: count, level: level)
+            return
+        case .summarizeThenEmit(let previousCategory, let previousMessage, let count):
+            addRunSummary(category: previousCategory, message: previousMessage, count: count, level: .info)
+        case .emit:
+            break
+        }
 
         let crumb = Breadcrumb(level: level.sentryLevel, category: category.rawValue)
         crumb.message = message
@@ -162,10 +184,35 @@ nonisolated enum CrashReportingService {
         SentrySDK.addBreadcrumb(crumb)
     }
 
+    private static func addRunSummary(category: Category, message: String, count: Int, level: Level) {
+        let crumb = Breadcrumb(level: level.sentryLevel, category: category.rawValue)
+        crumb.message = "\(message) ×\(count)"
+        crumb.setData(value: count, key: "count")
+        SentrySDK.addBreadcrumb(crumb)
+    }
+
     // MARK: - Capture
 
     /// Reports a failure we're responsible for. Logs it too, so the console trail and Sentry
     /// can't drift apart. Expected user/network failures must not come through here.
+    /// Failures a full disk explains. Attached in `report` rather than at each call site — reports
+    /// are rare, so one `stat` is free, and no caller has to remember.
+    private static let storageBoundFailures: Set<Failure> = [
+        .projectSaveFailed, .projectIndexSaveFailed, .projectDirectoryCopyFailed,
+        .directoryCreateFailed, .imageResourceCopyFailed, .customFontCopyFailed,
+        .imageEncodeFailed, .iCloudCoordinatedReadFailed, .iCloudMergeSourceUnreadable,
+    ]
+
+    /// `volumeAvailableCapacityForImportantUsage` counts purgeable space, so it is the number that
+    /// explains a save failing on a Mac whose Finder claims 40 GB free.
+    private static var freeDiskMB: Int? {
+        let values = try? PersistenceService.rootURL.resourceValues(
+            forKeys: [.volumeAvailableCapacityForImportantUsageKey]
+        )
+        guard let bytes = values?.volumeAvailableCapacityForImportantUsage else { return nil }
+        return Int(bytes / 1_000_000)
+    }
+
     static func report(
         _ failure: Failure,
         error: Error? = nil,
@@ -173,6 +220,9 @@ nonisolated enum CrashReportingService {
         level: Level = .error
     ) {
         var payload = extra
+        if storageBoundFailures.contains(failure), let freeDiskMB {
+            payload["free_disk_mb"] = freeDiskMB
+        }
         if let error {
             let nsError = error as NSError
             payload["error_type"] = String(describing: type(of: error))
@@ -184,11 +234,38 @@ nonisolated enum CrashReportingService {
         log(failure, payload: payload, level: level)
         guard isReportingEnabled else { return }
 
+        // Close the open run first, or the trail attached to this event ends mid-run with a
+        // stale count.
+        if let run = flushBreadcrumbRun() {
+            addRunSummary(category: run.category, message: run.message, count: run.count, level: .info)
+        }
+
         SentrySDK.capture(message: failure.rawValue) { scope in
             scope.setLevel(level.sentryLevel)
             scope.setFingerprint([failure.rawValue])
             scope.setTag(value: failure.rawValue, key: "failure")
             payload.forEach { scope.setExtra(value: $0.value, key: $0.key) }
+        }
+    }
+
+    // MARK: - Automatic breadcrumb filtering
+
+    /// The SDK's UIKit swizzling (on by default, iPad only) emits a `touch` crumb per control
+    /// interaction carrying the tapped button's *title* and accessibility identifier, plus a
+    /// `ui.lifecycle` crumb per view controller — the stream of usage events, and the user-facing
+    /// text, that the privacy policy rules out. Network crumbs earn their keep for upload bugs,
+    /// minus the query and fragment, which are where the store APIs put ids and tokens.
+    private static func filteredBreadcrumb(_ crumb: Breadcrumb) -> Breadcrumb? {
+        switch crumb.category {
+        case "touch", "ui.lifecycle":
+            return nil
+        case "http":
+            // `setData(value: nil, key:)` removes the key; the `data` setter is deprecated.
+            crumb.setData(value: nil, key: "http.query")
+            crumb.setData(value: nil, key: "http.fragment")
+            return crumb
+        default:
+            return crumb
         }
     }
 
@@ -229,25 +306,76 @@ nonisolated enum CrashReportingService {
         return event
     }
 
-    // MARK: - Breadcrumb de-duplication
+    // MARK: - Breadcrumb run coalescing
+
+    /// What to do with a crumb, given what preceded it. Pure, so the policy is testable without
+    /// touching the SDK.
+    enum RunDecision: Equatable {
+        /// First of a run — emit as-is.
+        case emit
+        /// Still inside a run; nothing to emit.
+        case coalesce
+        /// Still inside a long run, at a checkpoint — emit a progress summary.
+        case checkpoint(count: Int)
+        /// The run ended. Emit a summary for the finished run, then the new crumb.
+        case summarizeThenEmit(category: Category, message: String, count: Int)
+    }
+
+    /// Emitted at these run lengths so a crash *during* a long run still shows roughly how long it
+    /// had been going — the end-of-run summary never gets written in that case.
+    private static let runCheckpoints: Set<Int> = [10, 100, 1_000]
 
     private static let breadcrumbLock = NSLock()
-    private nonisolated(unsafe) static var lastBreadcrumbKey: String?
+    private nonisolated(unsafe) static var runKey: String?
+    private nonisolated(unsafe) static var runCategory: Category?
+    private nonisolated(unsafe) static var runMessage: String?
+    private nonisolated(unsafe) static var runCount = 0
 
     /// A run of identical crumbs (`Move Shape` on every drag commit) would evict the rest of the
-    /// trail, so only the first of a run is kept.
-    static func shouldEmitBreadcrumb(category: Category, message: String) -> Bool {
+    /// trail, so only the first of a run is emitted live — but the count is carried and reported
+    /// when the run ends, which is what tells forty drags apart from one.
+    static func recordBreadcrumbRun(category: Category, message: String) -> RunDecision {
         let key = "\(category.rawValue)|\(message)"
         breadcrumbLock.lock()
         defer { breadcrumbLock.unlock() }
-        guard lastBreadcrumbKey != key else { return false }
-        lastBreadcrumbKey = key
-        return true
+
+        if runKey == key {
+            runCount += 1
+            return runCheckpoints.contains(runCount) ? .checkpoint(count: runCount) : .coalesce
+        }
+
+        let finished = (runCategory, runMessage, runCount)
+        runKey = key
+        runCategory = category
+        runMessage = message
+        runCount = 1
+
+        if let category = finished.0, let previous = finished.1, finished.2 > 1 {
+            return .summarizeThenEmit(category: category, message: previous, count: finished.2)
+        }
+        return .emit
+    }
+
+    /// Closes the open run so a report's trail ends with an accurate count. Returns the summary to
+    /// emit, if the run was long enough to have one.
+    static func flushBreadcrumbRun() -> (category: Category, message: String, count: Int)? {
+        breadcrumbLock.lock()
+        defer { breadcrumbLock.unlock() }
+        let finished = (runCategory, runMessage, runCount)
+        runKey = nil
+        runCategory = nil
+        runMessage = nil
+        runCount = 0
+        guard let category = finished.0, let message = finished.1, finished.2 > 1 else { return nil }
+        return (category, message, finished.2)
     }
 
     static func resetBreadcrumbDeduplication() {
         breadcrumbLock.lock()
-        lastBreadcrumbKey = nil
+        runKey = nil
+        runCategory = nil
+        runMessage = nil
+        runCount = 0
         breadcrumbLock.unlock()
     }
 
@@ -270,7 +398,7 @@ nonisolated enum CrashReportingService {
              .directoryCreateFailed, .imageResourceCopyFailed, .customFontCopyFailed,
              .bundledTemplateLoadFailed, .undoScopeViolation:
             AppLogger.persistence
-        case .iCloudCoordinatedReadFailed:
+        case .iCloudCoordinatedReadFailed, .iCloudMergeSourceUnreadable, .iCloudConflictDiscardedVersions:
             AppLogger.sync
         case .renderProducedBlankImage, .imageEncodeFailed, .exportFolderBookmarkFailed:
             AppLogger.export

@@ -342,10 +342,63 @@ nonisolated struct PersistenceService {
         projectsDir(at: root).appendingPathComponent(id.uuidString, isDirectory: true)
     }
 
-    static func loadIndex(at root: URL) -> ProjectIndex? {
+    /// Distinguishing these two is what stops a migration from merging against an empty set:
+    /// an index that is merely unreadable must not look like a first run.
+    enum IndexLoadResult {
+        case absent
+        case loaded(ProjectIndex)
+        case unreadable
+    }
+
+    /// The migration counterpart of `loadIndex()`. It can't just delegate, because `readData`
+    /// picks coordination from the global `isUsingICloud`, which still describes the *old* mode
+    /// while a switch is in flight — so the root being read decides instead.
+    static func loadIndex(at root: URL) -> IndexLoadResult {
         let url = indexURL(at: root)
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? decoder.decode(ProjectIndex.self, from: data)
+        let data: Data?
+
+        if isICloudRoot(root) {
+            data = ICloudSyncService.shared.coordinatedRead(from: url)
+        } else {
+            do {
+                data = try Data(contentsOf: url)
+            } catch {
+                guard indexExists(at: url) else { return .absent }
+                CrashReportingService.report(.projectReadFailed, error: error, extra: ["file": url.lastPathComponent])
+                return .unreadable
+            }
+        }
+
+        guard let data else {
+            return indexExists(at: url) ? .unreadable : .absent
+        }
+
+        do {
+            return .loaded(try decoder.decode(ProjectIndex.self, from: data))
+        } catch {
+            CrashReportingService.report(.projectDecodeFailed, error: error, extra: [
+                "file": url.lastPathComponent,
+                "type": String(describing: ProjectIndex.self),
+                "bytes": data.count,
+            ])
+            return .unreadable
+        }
+    }
+
+    private static func isICloudRoot(_ root: URL) -> Bool {
+        guard let dataURL = ICloudSyncService.shared.iCloudDataURL else { return false }
+        return root.standardizedFileURL == dataURL.standardizedFileURL
+    }
+
+    /// A ubiquitous file whose bytes haven't materialized has nothing at its own path — only a
+    /// sibling `.name.icloud` placeholder. Reading that as "absent" is exactly what let a merge
+    /// run against zero projects, so it counts as present.
+    private static func indexExists(at url: URL) -> Bool {
+        let fm = FileManager.default
+        if fm.fileExists(atPath: url.path) { return true }
+        let placeholder = url.deletingLastPathComponent()
+            .appendingPathComponent(".\(url.lastPathComponent).icloud")
+        return fm.fileExists(atPath: placeholder.path)
     }
 
     static func saveIndex(_ index: ProjectIndex, at root: URL) throws {
@@ -355,9 +408,8 @@ nonisolated struct PersistenceService {
     }
 
     static func ensureDirectories(at root: URL) {
-        let fm = FileManager.default
-        try? fm.createDirectory(at: root, withIntermediateDirectories: true)
-        try? fm.createDirectory(at: projectsDir(at: root), withIntermediateDirectories: true)
+        createDirectory(at: root, label: "migrationRoot")
+        createDirectory(at: projectsDir(at: root), label: "migrationProjects")
     }
 
     /// Safely replace a project directory at destination with source.

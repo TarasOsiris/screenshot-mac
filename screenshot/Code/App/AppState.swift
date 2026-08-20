@@ -48,6 +48,12 @@ final class AppState {
     /// mapped to the generation at which that happened. See `sweepUnreachableOrphanedImages()`.
     @ObservationIgnored var deferredOrphanedImages: [String: Int] = [:]
     var saveError: String?
+    /// Overrides the `saveError` alert's default "Save Failed" title; cleared on dismiss so a
+    /// later save failure can't inherit it.
+    var saveErrorTitle: String?
+    /// A project whose file exists but wouldn't load. Saving is refused for it, because the
+    /// document in memory is the empty fallback and writing that back destroys the real data.
+    @ObservationIgnored var degradedLoadProjectId: UUID?
     /// Canvas "scroll into view" request signals (see `CanvasFocusController`).
     let canvasFocus = CanvasFocusController()
     @ObservationIgnored var iCloudMonitor: ICloudMonitor?

@@ -188,7 +188,9 @@ final class StoreService {
         Purchases.shared.attribution.enableAdServicesAttributionTokenCollection()
         #endif
         configurationIssue = nil
-        CrashReportingService.setUser(id: appUserID)
+        // A tag, not the user id: `DiagnosticsIdentity.installId` owns identity from launch, and
+        // reassigning it here would split one install across two `user.id` values per run.
+        CrashReportingService.setTag(appUserID, for: "rc_user_id")
 
         let d = CustomerInfoDelegate { [weak self] info in
             self?.updateEntitlement(from: info)

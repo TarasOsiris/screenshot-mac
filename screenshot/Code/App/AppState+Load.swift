@@ -225,6 +225,9 @@ extension AppState {
             cleanupOrphanedResourceFiles(for: projectId)
         }
         seedReferencedFontFamiliesFromLoadedProject()
+        // Otherwise a crash between opening a project and the first save tick carries no document
+        // context at all — and "opened a project, then it crashed" is the common report shape.
+        updateCrashDocumentContext()
     }
 
     /// Re-merge the active project's `translations.xcstrings` when it was edited outside the app
@@ -246,12 +249,18 @@ extension AppState {
 
     func loadRowsForProject(_ id: UUID, preloaded: ProjectData? = nil) {
         if let data = preloaded ?? PersistenceService.loadProject(id) {
+            if degradedLoadProjectId == id { degradedLoadProjectId = nil }
             applyProjectData(data, for: id, deferCleanup: true)
         } else {
-            // The project file exists but wouldn't load: the user sees an empty project and the
-            // next autosave overwrites their real data. Report it before that happens.
+            // The project file exists but wouldn't load. Refusing to save is what stops the next
+            // autosave writing this empty fallback over the real data; the alert says why.
             if PersistenceService.projectDataExists(id) {
                 CrashReportingService.report(.projectLoadFellBackToEmpty, extra: ["project": id.uuidString])
+                degradedLoadProjectId = id
+                saveErrorTitle = String(localized: "Project Couldn't Be Opened")
+                saveError = String(localized: "This project is shown empty and saving is paused so the original file isn't overwritten. Reopening the app may fix it — otherwise restore from a backup.")
+            } else {
+                degradedLoadProjectId = nil
             }
             rows = [makeDefaultRow()]
             localeState = .default

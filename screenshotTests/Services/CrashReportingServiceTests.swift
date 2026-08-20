@@ -77,26 +77,67 @@ struct CrashReportingServiceTests {
         #expect(RowRenderer.reportableRenderLabel("English") == "English")
     }
 
-    // MARK: - Breadcrumb de-duplication
+    // MARK: - Breadcrumb run coalescing
 
     @Test func consecutiveIdenticalBreadcrumbsCollapse() {
         CrashReportingService.resetBreadcrumbDeduplication()
-        #expect(CrashReportingService.shouldEmitBreadcrumb(category: .edit, message: "Move Shape"))
-        #expect(!CrashReportingService.shouldEmitBreadcrumb(category: .edit, message: "Move Shape"))
-        #expect(!CrashReportingService.shouldEmitBreadcrumb(category: .edit, message: "Move Shape"))
+        #expect(CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Move Shape") == .emit)
+        #expect(CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Move Shape") == .coalesce)
+        #expect(CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Move Shape") == .coalesce)
     }
 
-    @Test func differentBreadcrumbEndsTheRun() {
+    @Test func differentBreadcrumbEndsTheRunAndSummarizesIt() {
         CrashReportingService.resetBreadcrumbDeduplication()
-        #expect(CrashReportingService.shouldEmitBreadcrumb(category: .edit, message: "Move Shape"))
-        #expect(CrashReportingService.shouldEmitBreadcrumb(category: .edit, message: "Delete Shape"))
+        _ = CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Move Shape")
+        _ = CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Move Shape")
+        _ = CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Move Shape")
+
+        // The count is what distinguishes three drags from one — the old behaviour dropped it.
+        #expect(
+            CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Delete Shape")
+                == .summarizeThenEmit(category: .edit, message: "Move Shape", count: 3)
+        )
         // The first message is emittable again once something else interrupted the run.
-        #expect(CrashReportingService.shouldEmitBreadcrumb(category: .edit, message: "Move Shape"))
+        #expect(CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Move Shape") == .emit)
+    }
+
+    @Test func runOfOneNeedsNoSummary() {
+        CrashReportingService.resetBreadcrumbDeduplication()
+        _ = CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Move Shape")
+        #expect(CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Delete Shape") == .emit)
+    }
+
+    @Test func longRunEmitsCheckpoints() {
+        CrashReportingService.resetBreadcrumbDeduplication()
+        var checkpoints: [Int] = []
+        for _ in 0..<120 {
+            if case .checkpoint(let count) = CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Move Shape") {
+                checkpoints.append(count)
+            }
+        }
+        // A crash mid-run never writes the end-of-run summary, so the checkpoints are the only
+        // evidence the run was long.
+        #expect(checkpoints == [10, 100])
     }
 
     @Test func sameMessageInDifferentCategoriesBothEmit() {
         CrashReportingService.resetBreadcrumbDeduplication()
-        #expect(CrashReportingService.shouldEmitBreadcrumb(category: .edit, message: "Reset"))
-        #expect(CrashReportingService.shouldEmitBreadcrumb(category: .project, message: "Reset"))
+        #expect(CrashReportingService.recordBreadcrumbRun(category: .edit, message: "Reset") == .emit)
+        #expect(CrashReportingService.recordBreadcrumbRun(category: .project, message: "Reset") == .emit)
+    }
+
+    @Test func flushClosesTheRunAndReportsItsCount() {
+        CrashReportingService.resetBreadcrumbDeduplication()
+        _ = CrashReportingService.recordBreadcrumbRun(category: .sync, message: "Remote change ignored")
+        _ = CrashReportingService.recordBreadcrumbRun(category: .sync, message: "Remote change ignored")
+
+        let flushed = CrashReportingService.flushBreadcrumbRun()
+        #expect(flushed?.category == .sync)
+        #expect(flushed?.message == "Remote change ignored")
+        #expect(flushed?.count == 2)
+
+        // Flushing resets, so the next crumb starts a fresh run.
+        #expect(CrashReportingService.flushBreadcrumbRun() == nil)
+        #expect(CrashReportingService.recordBreadcrumbRun(category: .sync, message: "Remote change ignored") == .emit)
     }
 }

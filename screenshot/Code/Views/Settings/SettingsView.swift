@@ -38,6 +38,7 @@ struct SettingsView: View {
     @AppStorage(AppSettingsKeys.projectSortOrder) private var projectSortOrder = AppSettingsKeys.Default.projectSortOrder
 
     @State private var selection: SettingsSection? = .general
+    @State private var copiedDiagnostics = false
     @State private var iCloud = ICloudSettingsModel()
     @State private var showEnableConfirmation = false
     @State private var showDisableConfirmation = false
@@ -269,6 +270,17 @@ struct SettingsView: View {
                     Text("\(Bundle.main.shortVersion) (\(Bundle.main.buildNumber))")
                         .foregroundStyle(.secondary)
                 }
+                LabeledContent("Diagnostics") {
+                    Button(copiedDiagnostics ? "Copied" : "Copy Diagnostics") {
+                        PlatformPasteboard.copyString(
+                            DiagnosticsSnapshot.text(state: appState, store: store)
+                        )
+                        copiedDiagnostics = true
+                    }
+                }
+            } footer: {
+                Text("Paste this into a support email so we can match your report to the crash reports we received. It contains version and setup details only — no project content.")
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

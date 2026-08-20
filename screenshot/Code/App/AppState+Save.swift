@@ -12,7 +12,7 @@ extension AppState {
     /// Shape of the open document, attached to every crash/hang report so a render or export
     /// failure says how much it was chewing on. Counts and enum names only — never project,
     /// row, locale, or text content. Runs on the debounced save tick, not the edit hot path.
-    private func updateCrashDocumentContext() {
+    func updateCrashDocumentContext() {
         var templates = 0
         var shapes = 0
         var deviceCategories: Set<String> = []
@@ -43,6 +43,11 @@ extension AppState {
 
     /// Shows the alert *and* reports the failure. Sentry gets the `Error`, never the localized
     /// message — that would fragment one issue across 30 languages.
+    func dismissSaveError() {
+        saveError = nil
+        saveErrorTitle = nil
+    }
+
     func reportProjectSaveFailure(_ error: Error) {
         CrashReportingService.report(.projectSaveFailed, error: error)
         saveError = String(localized: "Failed to save project: \(error.localizedDescription)")
@@ -134,6 +139,7 @@ extension AppState {
     /// rows. Shared by every sync/async project save.
     private func activeProjectSnapshotForSave() -> (id: UUID, data: ProjectData)? {
         guard let activeId = activeProjectId, projectOpenTask == nil else { return nil }
+        guard activeId != degradedLoadProjectId else { return nil }
         return (activeId, ProjectData(rows: rows, localeState: localeState))
     }
 

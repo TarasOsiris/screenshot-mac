@@ -25,6 +25,9 @@ nonisolated enum AppSettingsKeys {
     /// The zoom the editor was left at, restored on launch. Distinct from
     /// `defaultZoomLevel`, which is the user's configured starting point.
     static let lastZoomLevel = "lastZoomLevel"
+    /// See `DiagnosticsIdentity` — the id a support email carries so its Sentry events are findable.
+    static let installId = "installId"
+    static let installFirstVersion = "installFirstVersion"
 
     nonisolated enum Default {
         static let appearance = "auto"

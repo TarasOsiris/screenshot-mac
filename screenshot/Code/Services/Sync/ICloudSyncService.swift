@@ -190,9 +190,28 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
             conflict.isResolved = true
         }
         try? NSFileVersion.removeOtherVersionsOfItem(at: url)
+
+        // Last-writer-wins is deliberate, but it discards a peer's edits — warn rather than
+        // error, and never name the project (the file name is a UUID or the index).
+        CrashReportingService.report(.iCloudConflictDiscardedVersions, extra: [
+            "versions": conflicts.count,
+            "role": url.lastPathComponent == PersistenceService.indexURL.lastPathComponent ? "index" : "projectData",
+        ], level: .warning)
     }
 
     // MARK: - Private
+
+    private func requireIndex(at root: URL, side: String) throws -> ProjectIndex? {
+        switch PersistenceService.loadIndex(at: root) {
+        case .absent:
+            return nil
+        case .loaded(let index):
+            return index
+        case .unreadable:
+            CrashReportingService.report(.iCloudMergeSourceUnreadable, extra: ["side": side])
+            throw ICloudSyncError.indexUnreadable
+        }
+    }
 
     /// Merge projects from source into destination. Union by UUID, last-writer-wins
     /// for projects in both. Project data directories are copied for the winning version.
@@ -203,13 +222,21 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
     ) throws {
         PersistenceService.ensureDirectories(at: destination)
 
-        let sourceIndex = PersistenceService.loadIndex(at: source)
-        let destIndex = PersistenceService.loadIndex(at: destination)
+        // An index we merely failed to read must not merge as "no projects" — that writes a
+        // merged index missing everything that side held. Absent stays the legitimate empty case.
+        let sourceIndex = try requireIndex(at: source, side: "source")
+        let destIndex = try requireIndex(at: destination, side: "destination")
 
         let sourceProjects = sourceIndex?.projects ?? []
         let destProjects = destIndex?.projects ?? []
 
         let merged = destProjects.merged(with: sourceProjects)
+
+        CrashReportingService.breadcrumb(.sync, "Merging projects", data: [
+            "source": sourceProjects.count,
+            "destination": destProjects.count,
+            "merged": merged.count,
+        ])
 
         guard !merged.isEmpty else {
             progressHandler(1.0)
@@ -261,11 +288,14 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
 
 enum ICloudSyncError: LocalizedError {
     case containerUnavailable
+    case indexUnreadable
 
     var errorDescription: String? {
         switch self {
         case .containerUnavailable:
             return String(localized: "iCloud container is not available. Make sure you're signed into iCloud.")
+        case .indexUnreadable:
+            return String(localized: "Your project list couldn't be read, so syncing was stopped to avoid losing projects. Check your internet connection and try again.")
         }
     }
 }

@@ -86,11 +86,11 @@ struct ContentView: View {
             LocaleBar(state: state)
 
             LocaleBanner(state: state)
-                .alert("Save Failed", isPresented: .init(
+                .alert(state.saveErrorTitle ?? String(localized: "Save Failed"), isPresented: .init(
                     get: { state.saveError != nil },
-                    set: { if !$0 { state.saveError = nil } }
+                    set: { if !$0 { state.dismissSaveError() } }
                 )) {
-                    Button("OK") { state.saveError = nil }
+                    Button("OK") { state.dismissSaveError() }
                 } message: {
                     Text(state.saveError ?? "")
                 }
