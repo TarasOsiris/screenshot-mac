@@ -13,7 +13,12 @@ final class ASCScreenshotSyncCoordinator {
     }
 
     var phase: Phase = .idle
-    var plan: ASCScreenshotSyncPlan?
+    var plan: ASCScreenshotSyncPlan? {
+        didSet { outline = ASCScreenshotReviewOutline(sets: plan?.sets ?? []) }
+    }
+    /// The plan grouped for the review screen. Regrouped with the plan rather than computed on
+    /// demand: the review body reads it several times per pass over up to 250 sets.
+    private(set) var outline: ASCScreenshotReviewOutline = .empty
     var selectedSetIds: Set<String> = []
     var progressLabel = ""
     var result: ASCScreenshotSyncResult?
@@ -41,20 +46,19 @@ final class ASCScreenshotSyncCoordinator {
         return plan.expiresAt <= Date()
     }
 
+    var selectionTotals: ASCScreenshotSelectionTotals {
+        ASCScreenshotSelectionTotals(sets: selectedSets)
+    }
+
     var confirmationSummary: String {
-        let sets = selectedSets
-        let uploads = sets.reduce(0) { $0 + $1.uploadCount }
-        let removals = sets.reduce(0) { $0 + $1.removalCount }
-        let moves = sets.reduce(0) { $0 + $1.moveCount }
-        let preserved = sets.reduce(0) { $0 + $1.unchangedCount }
-        let capacity = sets.reduce(0) { $0 + $1.capacityFirstDeletionCount }
+        let totals = selectionTotals
         var parts = [
-            String(localized: "\(sets.count) screenshot sets included."),
-            String(localized: "\(uploads) uploads, \(removals) removals, and \(moves) moves."),
-            String(localized: "\(preserved) unchanged screenshots will keep their App Store asset IDs.")
+            String(localized: "\(totals.setCount) screenshot sets included."),
+            String(localized: "\(totals.uploads) uploads, \(totals.removals) removals, and \(totals.moves) moves."),
+            String(localized: "\(totals.preserved) unchanged screenshots will keep their App Store asset IDs.")
         ]
-        if capacity > 0 {
-            parts.append(String(localized: "\(capacity) screenshots must be removed first to stay within Apple's 10-screenshot limit."))
+        if totals.capacityFirstDeletions > 0 {
+            parts.append(String(localized: "\(totals.capacityFirstDeletions) screenshots must be removed first to stay within Apple's 10-screenshot limit."))
         }
         return parts.joined(separator: " ")
     }
@@ -85,7 +89,7 @@ final class ASCScreenshotSyncCoordinator {
                 return
             }
             self.plan = plan
-            selectedSetIds = Set(plan.sets.filter { $0.isChanged && $0.canApply }.map(\.id))
+            selectAllChanged()
             phase = .ready
         } catch is CancellationError {
             wasCancelled = true
@@ -138,6 +142,20 @@ final class ASCScreenshotSyncCoordinator {
         guard set.isChanged, set.canApply else { return }
         if included { selectedSetIds.insert(set.id) }
         else { selectedSetIds.remove(set.id) }
+    }
+
+    /// Bulk selection stays a set of *leaf* set ids — `apply` rejects any id that isn't one of
+    /// `plan.sets`, so these filter through the same predicate `toggle(_:included:)` enforces.
+    func selectAllChanged() {
+        selectedSetIds = Set(changedApplicableSets.map(\.id))
+    }
+
+    func deselectAll() {
+        selectedSetIds = []
+    }
+
+    var changedApplicableSets: [ASCScreenshotSetDiff] {
+        plan?.sets.filter { $0.isChanged && $0.canApply } ?? []
     }
 
     func discard() {

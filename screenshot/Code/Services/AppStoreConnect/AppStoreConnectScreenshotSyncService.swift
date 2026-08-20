@@ -52,6 +52,9 @@ struct ASCScreenshotSetDiff: Identifiable, Sendable {
     let id: String
     let versionId: String
     let versionLabel: String
+    let rowId: UUID
+    /// User-written row name — safe in the UI, must never reach a breadcrumb.
+    let rowLabel: String
     let localizationId: String
     let localeCode: String
     let localeLabel: String
@@ -552,6 +555,8 @@ final class AppStoreConnectScreenshotSyncService {
             id: id,
             versionId: target.versionId,
             versionLabel: target.versionLabel,
+            rowId: target.rowId,
+            rowLabel: target.rowLabel,
             localizationId: localization.id,
             localeCode: localization.localeCode,
             localeLabel: localization.label,

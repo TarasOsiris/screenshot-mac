@@ -118,6 +118,50 @@ struct AppStoreConnectScreenshotSyncTests {
         #expect(coordinator.canApply)
     }
 
+    @Test func coordinatorBulkSelectionOnlyTakesChangedApplicableSets() {
+        let changed = makeDiff(local: ["new"], remote: ["old"])
+        let unchanged = makeDiff(local: ["same"], remote: ["same"], id: "unchanged-set")
+        let blocked = makeDiff(local: ["new"], remote: ["old"], id: "blocked-set", issues: ["No display type"])
+        let coordinator = ASCScreenshotSyncCoordinator()
+        coordinator.plan = makePlan(sets: [changed, unchanged, blocked])
+        coordinator.phase = .ready
+
+        coordinator.selectAllChanged()
+        #expect(coordinator.selectedSetIds == Set([changed.id]))
+
+        coordinator.deselectAll()
+        #expect(coordinator.selectedSetIds.isEmpty)
+        #expect(!coordinator.canApply)
+    }
+
+    @Test func coordinatorSelectionTotalsMatchTheIncludedSets() {
+        let changed = makeDiff(local: ["a", "new"], remote: ["a", "old"])
+        let coordinator = ASCScreenshotSyncCoordinator()
+        coordinator.plan = makePlan(sets: [changed])
+        coordinator.phase = .ready
+        coordinator.selectAllChanged()
+
+        let totals = coordinator.selectionTotals
+        #expect(totals.setCount == 1)
+        #expect(totals.uploads == 1)
+        #expect(totals.removals == 1)
+        #expect(totals.preserved == 1)
+    }
+
+    @Test func coordinatorDiscardClearsTheReviewOutline() {
+        let changed = makeDiff(local: ["new"], remote: ["old"])
+        let coordinator = ASCScreenshotSyncCoordinator()
+        coordinator.plan = makePlan(sets: [changed])
+        coordinator.phase = .ready
+        coordinator.selectAllChanged()
+
+        coordinator.discard()
+
+        #expect(coordinator.outline.versions.isEmpty)
+        #expect(coordinator.selectedSetIds.isEmpty)
+        #expect(coordinator.plan == nil)
+    }
+
     @Test func coordinatorRejectsExpiredReview() {
         let changed = makeDiff(local: ["new"], remote: ["old"])
         let coordinator = ASCScreenshotSyncCoordinator()
@@ -222,10 +266,25 @@ struct AppStoreConnectScreenshotSyncTests {
         ))
     }
 
+    private func makePlan(sets: [ASCScreenshotSetDiff]) -> ASCScreenshotSyncPlan {
+        ASCScreenshotSyncPlan(
+            id: "plan",
+            createdAt: Date(),
+            expiresAt: Date().addingTimeInterval(60),
+            projectId: UUID(),
+            projectModifiedAt: Date(),
+            appId: "app",
+            sets: sets,
+            issues: [],
+            directory: URL(fileURLWithPath: "/tmp/plan")
+        )
+    }
+
     private func makeDiff(
         local checksums: [String],
         remote remoteChecksums: [String],
         id: String = "set",
+        issues: [String] = [],
         warnings: [String] = []
     ) -> ASCScreenshotSetDiff {
         let local = checksums.enumerated().map { index, checksum in
@@ -270,6 +329,7 @@ struct AppStoreConnectScreenshotSyncTests {
             localAssets: local,
             remoteSetId: "remote-set",
             remoteAssets: remote,
+            issues: issues,
             warnings: warnings
         )
     }

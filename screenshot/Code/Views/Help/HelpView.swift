@@ -691,6 +691,7 @@ extension HelpSection {
                 .bullet("Click **Upload to App Store Connect…** from the export menu. Screenshot Bro renders the selected screenshots directly from the project."),
                 .bullet("Pick the app and a version, then choose which rows go to which display type and locale."),
                 .bullet("**Review Changes** lists, per locale and display type, exactly what will be added, what will be replaced, and what stays untouched. Nothing is sent to Apple until you confirm there."),
+                .bullet("Sets are grouped by version and device — open a locale to compare the current App Store screenshots with the proposed ones. Locales that already match are hidden behind **Show unchanged**, and **Select All Changed** / **Deselect All** set what gets synced."),
                 .heading("Editing store metadata"),
                 .bullet("The same wizard edits the version's text, locale by locale, with a live character counter against Apple's limits."),
                 .bullet("**App Info** (shared across versions): **App Name**, **Subtitle**, **Privacy Policy URL**."),

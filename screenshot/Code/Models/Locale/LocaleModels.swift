@@ -14,7 +14,7 @@ nonisolated struct LocaleDefinition: Codable, Identifiable, Equatable {
         self.label = label
     }
 
-    var flag: String { Self.flagIndex[code] ?? "" }
+    var flag: String { Self.flag(forCode: code) }
 
     var flagLabel: String { flag.isEmpty ? label : "\(flag) \(label)" }
 
@@ -56,6 +56,34 @@ nonisolated struct LocaleDefinition: Codable, Identifiable, Equatable {
         index["pt"] = "🇧🇷"
         return index
     }()
+}
+
+nonisolated extension LocaleDefinition {
+    /// Flag for an arbitrary BCP-47 code. App Store Connect hands back region-qualified codes
+    /// (`de-DE`, `es-MX`) the catalog doesn't list, so fall back to the region then the language.
+    static func flag(forCode code: String) -> String {
+        if let known = flagIndex[code] { return known }
+        let subtags = code.split { $0 == "-" || $0 == "_" }
+        if let region = subtags.dropFirst().first(where: { $0.count == 2 }),
+           let derived = regionalIndicatorFlag(String(region)) {
+            return derived
+        }
+        if let language = subtags.first, let known = flagIndex[String(language).lowercased()] { return known }
+        return ""
+    }
+
+    /// Language name for an arbitrary BCP-47 code, in the user's language.
+    static func displayName(forCode code: String) -> String {
+        Locale.current.localizedString(forIdentifier: code)
+            ?? catalog.first { $0.code == code }?.label
+            ?? code
+    }
+
+    private static func regionalIndicatorFlag(_ region: String) -> String? {
+        let scalars = region.uppercased().unicodeScalars
+        guard scalars.allSatisfy({ (65...90).contains($0.value) }) else { return nil }
+        return String(String.UnicodeScalarView(scalars.compactMap { UnicodeScalar($0.value + 127_397) }))
+    }
 }
 
 nonisolated struct ShapeLocaleOverride: Codable, Equatable {
