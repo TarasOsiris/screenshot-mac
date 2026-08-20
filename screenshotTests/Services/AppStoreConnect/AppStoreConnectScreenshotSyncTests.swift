@@ -334,3 +334,83 @@ struct AppStoreConnectScreenshotSyncTests {
         )
     }
 }
+
+/// The sweep that makes retrying a non-idempotent reserve safe: after a 5xx the reservation may
+/// or may not exist server-side, and a duplicate left behind makes `verify` reject the final
+/// order. It must delete exactly what the failed attempt could have created — nothing else.
+struct ASCOrphanedReservationTests {
+
+    private func screenshot(_ id: String, fileName: String, state: String?) -> ASCAppScreenshot {
+        ASCAppScreenshot(
+            id: id,
+            attributes: ASCAppScreenshot.Attributes(
+                fileName: fileName,
+                assetDeliveryState: state.map { ASCAssetDeliveryState(state: $0, errors: nil, warnings: nil) }
+            )
+        )
+    }
+
+    @Test func sweepsAnIncompleteReservationForTheSameFileName() {
+        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+            in: [screenshot("orphan", fileName: "01.png", state: "UPLOAD_COMPLETE")],
+            fileName: "01.png",
+            protectedRemoteIds: []
+        )
+        #expect(ids == ["orphan"])
+    }
+
+    /// A delivered screenshot is real content, not a leftover — deleting it would destroy the
+    /// user's existing App Store listing.
+    @Test func neverSweepsACompletedScreenshot() {
+        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+            in: [screenshot("live", fileName: "01.png", state: "COMPLETE")],
+            fileName: "01.png",
+            protectedRemoteIds: []
+        )
+        #expect(ids.isEmpty)
+    }
+
+    @Test func completeStateIsMatchedCaseInsensitively() {
+        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+            in: [screenshot("live", fileName: "01.png", state: "complete")],
+            fileName: "01.png",
+            protectedRemoteIds: []
+        )
+        #expect(ids.isEmpty)
+    }
+
+    /// Anything the plan is keeping or has already uploaded this run is off limits, even if
+    /// App Store Connect has not finished delivering it yet.
+    @Test func neverSweepsAProtectedId() {
+        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+            in: [screenshot("kept", fileName: "01.png", state: nil)],
+            fileName: "01.png",
+            protectedRemoteIds: ["kept"]
+        )
+        #expect(ids.isEmpty)
+    }
+
+    @Test func ignoresOtherFileNames() {
+        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+            in: [screenshot("other", fileName: "02.png", state: nil)],
+            fileName: "01.png",
+            protectedRemoteIds: []
+        )
+        #expect(ids.isEmpty)
+    }
+
+    @Test func picksOnlyTheOrphansOutOfAMixedSet() {
+        let ids = AppStoreConnectScreenshotSyncService.orphanedReservationIds(
+            in: [
+                screenshot("live", fileName: "01.png", state: "COMPLETE"),
+                screenshot("kept", fileName: "01.png", state: nil),
+                screenshot("orphan-a", fileName: "01.png", state: nil),
+                screenshot("orphan-b", fileName: "01.png", state: "UPLOAD_COMPLETE"),
+                screenshot("elsewhere", fileName: "02.png", state: nil),
+            ],
+            fileName: "01.png",
+            protectedRemoteIds: ["kept"]
+        )
+        #expect(ids == ["orphan-a", "orphan-b"])
+    }
+}

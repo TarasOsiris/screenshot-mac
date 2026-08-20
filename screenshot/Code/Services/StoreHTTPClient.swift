@@ -23,18 +23,35 @@ nonisolated struct StoreHTTPClient {
     let bearerToken: () async throws -> String
     /// Pulls a human-readable message out of this store's error-body shape.
     let errorMessage: @Sendable (Data) -> String?
+    let retryPolicy: StoreRetryPolicy
 
     init(
         baseURL: String,
         session: URLSession,
         bearerToken: @escaping () async throws -> String,
-        errorMessage: @escaping @Sendable (Data) -> String?
+        errorMessage: @escaping @Sendable (Data) -> String?,
+        retryPolicy: StoreRetryPolicy = StoreRetryPolicy()
     ) {
         self.baseURL = baseURL
         self.session = session
         self.bearerToken = bearerToken
         self.errorMessage = errorMessage
+        self.retryPolicy = retryPolicy
     }
+
+    /// `.shared` cannot be configured, so a wedged upload hangs for its default seven-day
+    /// resource timeout. One session for both stores, shared rather than minted per caller so
+    /// they pool connections instead of each holding their own.
+    ///
+    /// Deliberately not `waitsForConnectivity`: the retry loop above already absorbs a blip,
+    /// with backoff and a bounded budget, whereas waiting parks the upload for the resource
+    /// timeout with nothing on screen and then reports a timeout instead of "you are offline".
+    static let sharedSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 60
+        config.timeoutIntervalForResource = 120
+        return URLSession(configuration: config)
+    }()
 
     /// `bypassCache` is for reads used to verify a write made moments earlier: a cached
     /// pre-mutation response otherwise looks like the write silently failed.
@@ -44,12 +61,56 @@ nonisolated struct StoreHTTPClient {
         body: Data? = nil,
         contentType: String? = nil,
         extraHeaders: [String: String] = [:],
-        bypassCache: Bool = false
+        bypassCache: Bool = false,
+        retryPolicy overridePolicy: StoreRetryPolicy? = nil
     ) async throws -> Data {
         guard let url = URL(string: baseURL + path) else {
             throw StoreHTTPError.invalidURL
         }
 
+        let retryPolicy = overridePolicy ?? self.retryPolicy
+        return try await retryPolicy.attempting {
+            do {
+                // The token is minted per attempt on purpose: a retry that straddles an expiry
+                // must not resend the stale bearer.
+                let (data, response) = try await perform(
+                    url: url,
+                    method: method,
+                    body: body,
+                    contentType: contentType,
+                    extraHeaders: extraHeaders,
+                    bypassCache: bypassCache
+                )
+                guard (200..<300).contains(response.statusCode) else {
+                    let failure = StoreHTTPError.status(response.statusCode, message: errorMessage(data))
+                    guard retryPolicy.allowsRetry(status: response.statusCode, method: method) else {
+                        throw failure
+                    }
+                    throw StoreRetryPolicy.Retryable(
+                        underlying: failure,
+                        retryAfter: response.value(forHTTPHeaderField: "Retry-After")
+                    )
+                }
+                return data
+            } catch let StoreHTTPError.transport(underlying) {
+                guard retryPolicy.allowsRetry(transportError: underlying, method: method) else {
+                    throw StoreHTTPError.transport(underlying)
+                }
+                throw StoreRetryPolicy.Retryable(underlying: StoreHTTPError.transport(underlying))
+            }
+            // A bearer that cannot be minted and a non-HTTP response both propagate untouched:
+            // repeating either would fail identically.
+        }
+    }
+
+    private func perform(
+        url: URL,
+        method: String,
+        body: Data?,
+        contentType: String?,
+        extraHeaders: [String: String],
+        bypassCache: Bool
+    ) async throws -> (Data, HTTPURLResponse) {
         var request = URLRequest(url: url)
         request.httpMethod = method
         if bypassCache {
@@ -76,9 +137,6 @@ nonisolated struct StoreHTTPClient {
         guard let http = response as? HTTPURLResponse else {
             throw StoreHTTPError.nonHTTPResponse
         }
-        guard (200..<300).contains(http.statusCode) else {
-            throw StoreHTTPError.status(http.statusCode, message: errorMessage(data))
-        }
-        return data
+        return (data, http)
     }
 }

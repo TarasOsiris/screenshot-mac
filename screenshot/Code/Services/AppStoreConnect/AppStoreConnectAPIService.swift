@@ -6,6 +6,16 @@ enum AppStoreConnectAPIError: Error, LocalizedError {
     case decodingFailed(Error)
     case transport(Error)
 
+    var httpStatus: Int? {
+        if case let .httpError(status, _) = self { return status }
+        return nil
+    }
+
+    var transportError: Error? {
+        if case let .transport(underlying) = self { return underlying }
+        return nil
+    }
+
     var errorDescription: String? {
         switch self {
         case .invalidURL:
@@ -32,10 +42,14 @@ final class AppStoreConnectAPIService {
     private let credentials: AppStoreConnectCredentialsStore
     private let demoData: AppStoreConnectDemoData
 
+    let retryPolicy: StoreRetryPolicy
+
     init(auth: AppStoreConnectAuthService = .shared,
-         session: URLSession = .shared,
+         session: URLSession = StoreHTTPClient.sharedSession,
          credentials: AppStoreConnectCredentialsStore = .shared,
-         demoData: AppStoreConnectDemoData = .shared) {
+         demoData: AppStoreConnectDemoData = .shared,
+         retryPolicy: StoreRetryPolicy = StoreRetryPolicy()) {
+        self.retryPolicy = retryPolicy
         self.auth = auth
         self.session = session
         self.credentials = credentials
@@ -44,7 +58,8 @@ final class AppStoreConnectAPIService {
             baseURL: Self.baseURL,
             session: session,
             bearerToken: { [auth] in try auth.token() },
-            errorMessage: Self.extractErrorMessage
+            errorMessage: Self.extractErrorMessage,
+            retryPolicy: retryPolicy
         )
     }
 
@@ -232,22 +247,28 @@ final class AppStoreConnectAPIService {
 
     // MARK: - Screenshots (reserve / upload / commit)
 
-    func listScreenshots(setId: String, limit: Int = 50) async throws -> [ASCAppScreenshot] {
+    func listScreenshots(
+        setId: String,
+        limit: Int = 50,
+        retryPolicy: StoreRetryPolicy? = nil
+    ) async throws -> [ASCAppScreenshot] {
         if isDemoMode { await demoDelay(); return [] }
         let fields = "fileSize,fileName,sourceFileChecksum,imageAsset,assetToken,assetType,assetDeliveryState"
         let path = "/v1/appScreenshotSets/\(setId)/appScreenshots?limit=\(limit)&fields%5BappScreenshots%5D=\(fields)"
-        let response: ASCListResponse<ASCAppScreenshot> = try await get(path)
+        let response: ASCListResponse<ASCAppScreenshot> = try await get(path, retryPolicy: retryPolicy)
         return response.data
     }
 
-    func screenshot(id: String) async throws -> ASCAppScreenshot {
+    /// `retryPolicy` is `.singleAttempt` at the delivery/verify poll loops, which retry already.
+    func screenshot(id: String, retryPolicy: StoreRetryPolicy? = nil) async throws -> ASCAppScreenshot {
         if isDemoMode {
             await demoDelay()
             throw AppStoreConnectAPIError.httpError(status: 404, message: "Demo screenshot not found")
         }
         let fields = "fileSize,fileName,sourceFileChecksum,imageAsset,assetToken,assetType,assetDeliveryState"
         let response: ASCSingleResponse<ASCAppScreenshot> = try await get(
-            "/v1/appScreenshots/\(id)?fields%5BappScreenshots%5D=\(fields)"
+            "/v1/appScreenshots/\(id)?fields%5BappScreenshots%5D=\(fields)",
+            retryPolicy: retryPolicy
         )
         return response.data
     }
@@ -365,33 +386,51 @@ final class AppStoreConnectAPIService {
         return response.data
     }
 
+    /// Chunk PUTs go straight to Apple's upload host rather than through `StoreHTTPClient`,
+    /// which exists for bearer-authenticated JSON against a store's base URL and shares none of
+    /// this. `repeatable` regardless of the verb Apple names: the operation pins the byte range,
+    /// so a repeat overwrites the same bytes with the same content.
     func uploadChunk(operation: ASCUploadOperation, from fileData: Data) async throws {
         guard let url = URL(string: operation.url) else {
             throw AppStoreConnectAPIError.invalidURL
         }
+
+        let lower = operation.offset
+        let upper = min(operation.offset + operation.length, fileData.count)
         var request = URLRequest(url: url)
         request.httpMethod = operation.method
         for header in operation.requestHeaders {
             request.setValue(header.value, forHTTPHeaderField: header.name)
         }
-
-        let lower = operation.offset
-        let upper = min(operation.offset + operation.length, fileData.count)
         // Slicing a multi-MB buffer is pure CPU — run it off the main actor.
         request.httpBody = await Self.slice(of: fileData, from: lower, to: upper)
 
-        let response: URLResponse
-        do {
-            (_, response) = try await session.data(for: request)
-        } catch {
-            throw AppStoreConnectAPIError.transport(error)
-        }
+        try await retryPolicy.attempting {
+            let http: HTTPURLResponse
+            do {
+                let (_, response) = try await session.data(for: request)
+                guard let received = response as? HTTPURLResponse else {
+                    throw AppStoreConnectAPIError.httpError(status: -1, message: "Non-HTTP response")
+                }
+                http = received
+            } catch let error as AppStoreConnectAPIError {
+                throw error
+            } catch {
+                guard retryPolicy.allowsRetry(transportError: error, repeatable: true) else {
+                    throw AppStoreConnectAPIError.transport(error)
+                }
+                throw StoreRetryPolicy.Retryable(underlying: AppStoreConnectAPIError.transport(error))
+            }
 
-        guard let http = response as? HTTPURLResponse else {
-            throw AppStoreConnectAPIError.httpError(status: -1, message: "Non-HTTP response")
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw AppStoreConnectAPIError.httpError(status: http.statusCode, message: "Upload chunk failed")
+            if (200..<300).contains(http.statusCode) { return }
+            let failure = AppStoreConnectAPIError.httpError(
+                status: http.statusCode, message: "Upload chunk failed"
+            )
+            guard retryPolicy.allowsRetry(status: http.statusCode, repeatable: true) else { throw failure }
+            throw StoreRetryPolicy.Retryable(
+                underlying: failure,
+                retryAfter: http.value(forHTTPHeaderField: "Retry-After")
+            )
         }
     }
 
@@ -418,8 +457,8 @@ final class AppStoreConnectAPIService {
 
     // MARK: - HTTP helpers
 
-    func get<T: Decodable>(_ path: String) async throws -> T {
-        try await request(method: "GET", path: path, body: Optional<Data>.none)
+    func get<T: Decodable>(_ path: String, retryPolicy: StoreRetryPolicy? = nil) async throws -> T {
+        try await request(method: "GET", path: path, body: Optional<Data>.none, retryPolicy: retryPolicy)
     }
 
     func post<Body: Encodable, T: Decodable>(_ path: String, body: Body) async throws -> T {
@@ -437,9 +476,10 @@ final class AppStoreConnectAPIService {
     private func request<Body: Encodable, T: Decodable>(
         method: String,
         path: String,
-        body: Body?
+        body: Body?,
+        retryPolicy: StoreRetryPolicy? = nil
     ) async throws -> T {
-        let data = try await rawRequest(method: method, path: path, body: body)
+        let data = try await rawRequest(method: method, path: path, body: body, retryPolicy: retryPolicy)
         do {
             return try Self.decoder.decode(T.self, from: data)
         } catch {
@@ -450,7 +490,8 @@ final class AppStoreConnectAPIService {
     private func rawRequest<Body: Encodable>(
         method: String,
         path: String,
-        body: Body?
+        body: Body?,
+        retryPolicy: StoreRetryPolicy? = nil
     ) async throws -> Data {
         do {
             return try await http.data(
@@ -459,7 +500,8 @@ final class AppStoreConnectAPIService {
                 body: try body.map { try Self.encoder.encode($0) },
                 // Screenshot relationship reads verify writes made moments earlier; a cached
                 // pre-mutation response would look like a failed order update.
-                bypassCache: method == "GET"
+                bypassCache: method == "GET",
+                retryPolicy: retryPolicy
             )
         } catch let error as StoreHTTPError {
             throw Self.mapped(error)

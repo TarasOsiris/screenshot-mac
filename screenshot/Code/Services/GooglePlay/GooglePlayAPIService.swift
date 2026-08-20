@@ -35,7 +35,7 @@ final class GooglePlayAPIService {
     private let demoData: GooglePlayDemoData
 
     init(auth: GooglePlayAuthService = .shared,
-         session: URLSession = .shared,
+         session: URLSession = StoreHTTPClient.sharedSession,
          credentials: GooglePlayCredentialsStore = .shared,
          demoData: GooglePlayDemoData = .shared) {
         self.auth = auth

@@ -44,7 +44,7 @@ final class GooglePlayAuthService {
     private let credentials: GooglePlayCredentialsStore
     private let session: URLSession
 
-    init(credentials: GooglePlayCredentialsStore = .shared, session: URLSession = .shared) {
+    init(credentials: GooglePlayCredentialsStore = .shared, session: URLSession = StoreHTTPClient.sharedSession) {
         self.credentials = credentials
         self.session = session
     }

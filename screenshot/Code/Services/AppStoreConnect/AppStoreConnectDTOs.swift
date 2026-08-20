@@ -298,6 +298,9 @@ nonisolated struct ASCAssetDeliveryState: Decodable, Sendable {
     let state: String?
     let errors: [ASCAssetDeliveryError]?
     let warnings: [ASCAssetDeliveryError]?
+
+    var isComplete: Bool { state?.uppercased() == "COMPLETE" }
+    var isFailed: Bool { state?.uppercased() == "FAILED" }
 }
 
 nonisolated struct ASCAssetDeliveryError: Decodable, Sendable {

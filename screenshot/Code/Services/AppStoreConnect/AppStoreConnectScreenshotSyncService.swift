@@ -391,6 +391,9 @@ final class AppStoreConnectScreenshotSyncService {
                 }
 
                 var finalIdsByLocalIndex: [Int: String] = [:]
+                // Everything the plan is keeping, so a reserve retry's cleanup can tell the
+                // reservation it just orphaned apart from a screenshot that belongs here.
+                let plannedRemoteIds = Set(diff.items.compactMap(\.remoteId))
                 for item in diff.proposedAssets {
                     guard let local = item.localAsset, let proposedIndex = item.proposedIndex else { continue }
                     if let remoteId = item.remoteId {
@@ -403,7 +406,8 @@ final class AppStoreConnectScreenshotSyncService {
                             data: data,
                             fileName: local.fileName,
                             setId: setId,
-                            checksum: local.checksum
+                            checksum: local.checksum,
+                            protectedRemoteIds: plannedRemoteIds.union(finalIdsByLocalIndex.values)
                         )
                         finalIdsByLocalIndex[proposedIndex] = uploadedId
                         completed += 1
@@ -751,9 +755,15 @@ final class AppStoreConnectScreenshotSyncService {
         data: Data,
         fileName: String,
         setId: String,
-        checksum: String
+        checksum: String,
+        protectedRemoteIds: Set<String>
     ) async throws -> String {
-        let reserved = try await api.reserveScreenshot(setId: setId, fileName: fileName, fileSize: data.count)
+        let reserved = try await reserve(
+            setId: setId,
+            fileName: fileName,
+            fileSize: data.count,
+            protectedRemoteIds: protectedRemoteIds
+        )
         do {
             for operation in reserved.attributes.uploadOperations ?? [] {
                 try Task.checkCancellation()
@@ -766,15 +776,92 @@ final class AppStoreConnectScreenshotSyncService {
             // An unstructured Task doesn't inherit cancellation, so this cleanup still runs when
             // the failure *is* cancellation — otherwise the reservation is orphaned in the set.
             let reservedId = reserved.id
-            Task {
-                do {
-                    try await api.deleteScreenshot(id: reservedId)
-                } catch let cleanupError {
-                    // The reservation is now orphaned in the user's real App Store Connect set.
-                    CrashReportingService.report(.appStoreOrphanCleanupFailed, error: cleanupError)
-                }
-            }
+            Task { await deleteReservation(reservedId) }
             throw error
+        }
+    }
+
+    /// Reserving is the one upload step that is neither idempotent nor repeatable by itself,
+    /// so its retry lives here rather than in the transport: a 5xx can still have created the
+    /// reservation, and a duplicate left in the set makes `verify` reject the final order for
+    /// its full 30 seconds. Sweeping between attempts is what makes the retry safe — which is
+    /// also why the transport must not retry this POST underneath us.
+    private func reserve(
+        setId: String,
+        fileName: String,
+        fileSize: Int,
+        protectedRemoteIds: Set<String>
+    ) async throws -> ASCAppScreenshot {
+        let policy = api.retryPolicy
+        return try await policy.attempting {
+            do {
+                return try await api.reserveScreenshot(setId: setId, fileName: fileName, fileSize: fileSize)
+            } catch {
+                guard Self.isTransient(error, policy: policy) else { throw error }
+                let apiError = error as? AppStoreConnectAPIError
+                CrashReportingService.breadcrumb(
+                    .upload,
+                    "ASC reserve retry",
+                    data: apiError?.httpStatus.map { ["status": $0] },
+                    level: .warning
+                )
+                // A request that never reached Apple cannot have left a reservation behind.
+                if StoreRetryPolicy.reachedServer(apiError?.transportError ?? error) {
+                    await sweepOrphanedReservations(
+                        setId: setId,
+                        fileName: fileName,
+                        protectedRemoteIds: protectedRemoteIds
+                    )
+                }
+                throw StoreRetryPolicy.Retryable(underlying: error)
+            }
+        }
+    }
+
+    /// Deletes only what this reserve attempt could have left behind: same file name, not yet
+    /// delivered, and not one of the screenshots the plan is keeping.
+    private func sweepOrphanedReservations(
+        setId: String,
+        fileName: String,
+        protectedRemoteIds: Set<String>
+    ) async {
+        guard let existing = try? await api.listScreenshots(setId: setId) else { return }
+        for id in Self.orphanedReservationIds(
+            in: existing,
+            fileName: fileName,
+            protectedRemoteIds: protectedRemoteIds
+        ) {
+            await deleteReservation(id)
+        }
+    }
+
+    /// Failing to remove a reservation leaves it in the user's real App Store Connect set.
+    private func deleteReservation(_ id: String) async {
+        do {
+            try await api.deleteScreenshot(id: id)
+        } catch {
+            CrashReportingService.report(.appStoreOrphanCleanupFailed, error: error)
+        }
+    }
+
+    static func orphanedReservationIds(
+        in screenshots: [ASCAppScreenshot],
+        fileName: String,
+        protectedRemoteIds: Set<String>
+    ) -> [String] {
+        screenshots.filter { shot in
+            shot.attributes.fileName == fileName
+                && !protectedRemoteIds.contains(shot.id)
+                && shot.attributes.assetDeliveryState?.isComplete != true
+        }.map(\.id)
+    }
+
+    /// The reserve POST is repeatable only because `sweepOrphanedReservations` runs first.
+    private static func isTransient(_ error: Error, policy: StoreRetryPolicy) -> Bool {
+        switch error as? AppStoreConnectAPIError {
+        case .httpError(let status, _): policy.allowsRetry(status: status, repeatable: true)
+        case .transport(let underlying): policy.allowsRetry(transportError: underlying, repeatable: true)
+        case .invalidURL, .decodingFailed, .none: false
         }
     }
 
@@ -782,9 +869,9 @@ final class AppStoreConnectScreenshotSyncService {
         if AppStoreConnectCredentialsStore.shared.isDemoMode { return }
         for _ in 0..<30 {
             try Task.checkCancellation()
-            let screenshot = try await api.screenshot(id: screenshotId)
-            let state = screenshot.attributes.assetDeliveryState?.state?.uppercased()
-            if state == "COMPLETE" {
+            let screenshot = try await api.screenshot(id: screenshotId, retryPolicy: .singleAttempt)
+            let delivery = screenshot.attributes.assetDeliveryState
+            if delivery?.isComplete == true {
                 if let checksum = screenshot.attributes.sourceFileChecksum,
                    checksum.caseInsensitiveCompare(expectedChecksum) != .orderedSame {
                     throw ASCScreenshotSyncError.invalidPlan(
@@ -793,7 +880,7 @@ final class AppStoreConnectScreenshotSyncService {
                 }
                 return
             }
-            if state == "FAILED" {
+            if delivery?.isFailed == true {
                 let details = screenshot.attributes.assetDeliveryState?.errors?
                     .compactMap { $0.message ?? $0.code }
                     .joined(separator: ", ")
@@ -849,8 +936,9 @@ final class AppStoreConnectScreenshotSyncService {
             && actual.map { $0.checksum.lowercased() } == expectedChecksums.map { $0.lowercased() }
     }
 
+    /// Only called from `verify`'s poll loop, which owns the retry budget.
     private func orderedRemoteChecksums(setId: String) async throws -> [(id: String, checksum: String)] {
-        let screenshots = try await api.listScreenshots(setId: setId)
+        let screenshots = try await api.listScreenshots(setId: setId, retryPolicy: .singleAttempt)
         let order = try await api.listScreenshotOrder(setId: setId)
         let byId = Dictionary(uniqueKeysWithValues: screenshots.map { ($0.id, $0) })
         var actual: [(id: String, checksum: String)] = []
