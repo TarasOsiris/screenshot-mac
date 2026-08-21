@@ -244,7 +244,8 @@ struct ExportService {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "\(safeName).png"
         panel.allowedContentTypes = [.png]
-        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
+        guard response == .OK, let url = panel.url else { return nil }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
 

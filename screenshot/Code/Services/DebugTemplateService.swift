@@ -40,7 +40,8 @@ enum DebugTemplateService {
         panel.directoryURL = sourceTemplatesBundleURL.deletingLastPathComponent()
         panel.prompt = "Select"
 
-        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
+        guard response == .OK, let url = panel.url else { return nil }
 
         if let bookmark = try? url.bookmarkData(options: [.withSecurityScope], includingResourceValuesForKeys: nil, relativeTo: nil) {
             UserDefaults.standard.set(bookmark, forKey: bookmarkKey)

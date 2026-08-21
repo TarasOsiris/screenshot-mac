@@ -155,6 +155,28 @@ nonisolated enum CrashReportingService {
         }
     }
 
+    // MARK: - App hangs
+
+    /// Runs `body` with app-hang reporting suppressed, for the one case the watchdog cannot tell
+    /// from a freeze: a modal AppKit panel. `NSSavePanel`/`NSOpenPanel.runModal` spins its own run
+    /// loop until the user picks a file, so any browse longer than `appHangTimeoutInterval` is
+    /// reported as our hang (SCREENSHOT-BRO-Q). Wrap every `runModal` call site, not the async
+    /// work around it — real hangs on either side must still be reported.
+    @MainActor
+    static func withAppHangTrackingPaused<T>(_ body: () throws -> T) rethrows -> T {
+        guard isReportingEnabled else { return try body() }
+        // The SDK's own switch is a plain flag, so nesting two panels would resume too early.
+        appHangPauseDepth += 1
+        if appHangPauseDepth == 1 { SentrySDK.pauseAppHangTracking() }
+        defer {
+            appHangPauseDepth -= 1
+            if appHangPauseDepth == 0 { SentrySDK.resumeAppHangTracking() }
+        }
+        return try body()
+    }
+
+    @MainActor private static var appHangPauseDepth = 0
+
     // MARK: - Breadcrumbs
 
     static func breadcrumb(

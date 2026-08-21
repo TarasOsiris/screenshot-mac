@@ -29,7 +29,8 @@ nonisolated enum SvgHelper {
         panel.allowedContentTypes = [.image, .svg]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
+        guard response == .OK, let url = panel.url else { return nil }
 
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }

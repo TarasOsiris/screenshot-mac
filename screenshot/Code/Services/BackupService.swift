@@ -29,7 +29,7 @@ enum BackupService {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = suggestedFileName(for: now)
         panel.allowedContentTypes = [.zip]
-        guard panel.runModal() == .OK else { return nil }
+        guard CrashReportingService.withAppHangTrackingPaused({ panel.runModal() }) == .OK else { return nil }
         return panel.url
     }
 

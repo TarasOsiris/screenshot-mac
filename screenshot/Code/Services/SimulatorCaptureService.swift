@@ -130,7 +130,7 @@ enum SimulatorCaptureService {
             panel.allowedContentTypes = [scriptType]
         }
 
-        let response = panel.runModal()
+        let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
         guard response == .OK, let url = panel.url else {
             return .failure(.helperInstallCancelled)
         }

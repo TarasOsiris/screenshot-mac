@@ -25,7 +25,7 @@ enum FilePicker {
         panel.canChooseDirectories = true
         panel.canChooseFiles = true
         panel.message = String(localized: "Pick a font file or a folder containing all variants")
-        guard panel.runModal() == .OK else { return [] }
+        guard CrashReportingService.withAppHangTrackingPaused({ panel.runModal() }) == .OK else { return [] }
         return panel.urls
         #else
         // iOS: custom-font import via fileImporter is deferred to a follow-up.
@@ -40,7 +40,8 @@ enum FilePicker {
         panel.allowedContentTypes = [.image]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
+        guard response == .OK, let url = panel.url else { return nil }
         return NSImage.fromSecurityScopedURL(url)
         #else
         // iPad routes image selection through ImageSourceMenu (Photo Library / Camera / Files).
@@ -54,7 +55,8 @@ enum FilePicker {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [UTType(filenameExtension: "svg") ?? .xml]
         panel.allowsMultipleSelection = false
-        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
+        guard response == .OK, let url = panel.url else { return nil }
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
         return try? String(contentsOf: url, encoding: .utf8)

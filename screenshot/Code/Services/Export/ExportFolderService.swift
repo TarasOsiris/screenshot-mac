@@ -23,7 +23,7 @@ enum ExportFolderService {
         panel.allowsMultipleSelection = false
         panel.prompt = String(localized: "Select")
         panel.message = String(localized: "Choose a folder for exported screenshots")
-        guard panel.runModal() == .OK else { return nil }
+        guard CrashReportingService.withAppHangTrackingPaused({ panel.runModal() }) == .OK else { return nil }
         return panel.url
         #else
         // iPad: folder selection via UIDocumentPicker is deferred to a follow-up.
