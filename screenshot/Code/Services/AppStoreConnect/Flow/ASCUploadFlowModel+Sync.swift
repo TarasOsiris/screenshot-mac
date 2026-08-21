@@ -138,6 +138,7 @@ extension ASCUploadFlowModel {
             errorMessage = message
             errorDetailsText = message
             retreatAfterScreenshotSync(to: returnOnFailure)
+            AnalyticsService.capture(.storeUploadFailed, [.store: "asc", .cancelled: screenshotSync.wasCancelled])
             NotificationService.notify(title: String(localized: "Screenshot sync stopped"), body: message)
         }
     }
@@ -151,6 +152,11 @@ extension ASCUploadFlowModel {
             versionCount: Set(sets.map(\.versionId)).count
         )
         uploadSummary = summary
+        AnalyticsService.capture(.storeUploadFinished, [
+            .store: "asc",
+            .imageCount: summary.totalScreenshots,
+            .localeCount: summary.localizationCount,
+        ])
         completeTerminalStep(.done)
         let shotNoun = summary.totalScreenshots == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
         let locNoun = summary.localizationCount == 1 ? String(localized: "locale") : String(localized: "locales")

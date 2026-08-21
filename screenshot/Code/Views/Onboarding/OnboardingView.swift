@@ -574,6 +574,7 @@ struct OnboardingView: View {
     private func complete() {
         if persistCompletion {
             onboardingCompleted = true
+            AnalyticsService.capture(.onboardingCompleted, [.source: "welcome"])
         }
         #if os(iOS)
         // A purchase made inside onboarding already showed its own success state, so drop any

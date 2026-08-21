@@ -133,7 +133,7 @@ struct ExportFlowModelTests {
     @Test func showingSuccessSetsTheTransientFlag() {
         let model = ExportFlowModel(defaults: makeDefaults("success"))
         #expect(!model.exportSuccess)
-        model.showSuccess(projectName: "Fixture")
+        model.showSuccess(projectName: "Fixture", destination: "folder")
         #expect(model.exportSuccess)
     }
 }

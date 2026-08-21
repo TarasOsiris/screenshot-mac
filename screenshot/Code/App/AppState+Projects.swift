@@ -42,6 +42,7 @@ extension AppState {
         localeState = .default
         selectRow(rows.first?.id)
         CrashReportingService.breadcrumb(.project, "Created blank project", data: ["rows": rows.count])
+        AnalyticsService.capture(.projectCreated, [.source: "blank", .rowCount: rows.count])
         saveAll()
     }
 
@@ -67,6 +68,7 @@ extension AppState {
         }
 
         CrashReportingService.breadcrumb(.project, "Created project from template", data: ["template": template.id])
+        AnalyticsService.capture(.projectCreated, [.source: "template", .templateId: template.id])
         projects.append(project)
         switchToProject(project.id)
         saveIndex()
@@ -177,6 +179,7 @@ extension AppState {
         let chosenName = trimmed.isEmpty ? source.name + " Copy" : trimmed
         let newProject = Project(name: uniqueProjectName(chosenName))
         CrashReportingService.breadcrumb(.project, "Duplicating project", data: ["rows": rows.count])
+        AnalyticsService.capture(.projectCreated, [.source: "duplicate", .rowCount: rows.count])
         PersistenceService.copyProject(from: id, to: newProject.id)
         projects.append(newProject)
 
@@ -198,6 +201,7 @@ extension AppState {
     func resetProjectFromTemplate(_ id: UUID, template: ProjectTemplate) {
         guard id == activeProjectId else { return }
         CrashReportingService.breadcrumb(.project, "Reset project from template", data: ["template": template.id])
+        AnalyticsService.capture(.templateApplied, [.templateId: template.id])
         undoManager?.removeAllActions()
         projectOpenTask?.cancel()
         beginProjectOpening()
@@ -210,6 +214,7 @@ extension AppState {
         guard let idx = projects.firstIndex(where: { $0.id == id }) else { return }
         projects[idx].markDeleted()
         CrashReportingService.breadcrumb(.project, "Deleted project", data: ["was_active": activeProjectId == id])
+        AnalyticsService.capture(.projectDeleted, [.wasActive: activeProjectId == id])
 
         if activeProjectId == id {
             teardownActiveProject()

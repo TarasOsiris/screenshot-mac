@@ -50,6 +50,8 @@ struct ScreenshotBroApp: App {
     private static func makeAppState() -> AppState {
         CrashReportingService.start()
         CrashReportingService.breadcrumb(.app, "App launched")
+        AnalyticsService.start()
+        AnalyticsService.capture(.appLaunched)
         return AppState()
     }
 

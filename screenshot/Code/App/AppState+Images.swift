@@ -341,6 +341,10 @@ extension AppState {
                 importImage(image, intoTemplateAt: templateIndex, rowIndex: idx, activeId: activeId)
             }
         }
+        AnalyticsService.capture(.screenshotsImported, [
+            .count: images.count,
+            .detectedDevice: rows[idx].defaultDeviceCategory?.rawValue ?? "none",
+        ])
         return images.count
     }
 

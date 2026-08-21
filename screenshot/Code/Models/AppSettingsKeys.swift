@@ -28,6 +28,9 @@ nonisolated enum AppSettingsKeys {
     /// See `DiagnosticsIdentity` — the id a support email carries so its Sentry events are findable.
     static let installId = "installId"
     static let installFirstVersion = "installFirstVersion"
+    /// The RevenueCat id already aliased into PostHog. `alias` is an irreversible merge and bills
+    /// an event per call, so it fires once per install — see `AnalyticsService.linkStoreUser`.
+    static let analyticsAliasedStoreUserId = "analyticsAliasedStoreUserId"
 
     nonisolated enum Default {
         static let appearance = "auto"

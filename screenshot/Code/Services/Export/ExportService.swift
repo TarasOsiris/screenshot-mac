@@ -62,6 +62,12 @@ struct ExportService {
             "templates": rows.reduce(0) { $0 + $1.templates.count },
             "format": format.rawValue,
         ])
+        AnalyticsService.capture(.exportStarted, [
+            .rowCount: rows.count,
+            .localeCount: localesToExport.count,
+            .templateCount: rows.reduce(0) { $0 + $1.templates.count },
+            .format: format.rawValue,
+        ])
 
         do {
             var localeFolders: [String: URL] = [:]
@@ -190,6 +196,10 @@ struct ExportService {
                 "elapsed_ms": Int(Date().timeIntervalSince(startedAt) * 1000),
                 "cancelled": error is CancellationError,
             ], level: .warning)
+            AnalyticsService.capture(.exportFailed, [
+                .written: completed,
+                .cancelled: error is CancellationError,
+            ])
             try? FileManager.default.removeItem(at: rootFolder)
             throw error
         }
@@ -197,6 +207,10 @@ struct ExportService {
         CrashReportingService.breadcrumb(.export, "Export finished", data: [
             "files": writtenFileURLs.count,
             "elapsed_ms": Int(Date().timeIntervalSince(startedAt) * 1000),
+        ])
+        AnalyticsService.capture(.exportFinished, [
+            .imageCount: writtenFileURLs.count,
+            .durationMs: Int(Date().timeIntervalSince(startedAt) * 1000),
         ])
         return (rootFolder, writtenFileURLs)
     }

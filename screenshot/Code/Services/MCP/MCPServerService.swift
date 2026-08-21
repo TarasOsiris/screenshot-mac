@@ -129,6 +129,8 @@ final class MCPServerService {
         isEnabled = enabled
         UserDefaults.standard.set(enabled, forKey: Self.enabledDefaultsKey)
         AppLogger.mcp.log("Toggled \(enabled ? "on" : "off", privacy: .public)")
+        AnalyticsService.capture(.mcpServerToggled, [.enabled: enabled])
+        AnalyticsService.setProfile([.mcpEnabled: enabled])
         enqueue(enabled ? .starting : .stopping) {
             if enabled {
                 await self.start(state: state)

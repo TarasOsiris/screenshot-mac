@@ -169,6 +169,7 @@ final class AppState {
         // Tag before the first load, not after: a decode failure during `load()` is the one
         // report where "was this an iCloud read?" decides whether it's a sync bug or disk rot.
         CrashReportingService.setTag(PersistenceService.isUsingICloud ? "icloud" : "local", for: "storage")
+        AnalyticsService.setProfile([.storage: PersistenceService.isUsingICloud ? "icloud" : "local"])
 
         // If iCloud is enabled (and we're not in test mode), defer loading until
         // the container is resolved — setupICloudIfNeeded will call load() after.
@@ -236,6 +237,8 @@ final class AppState {
         commitAllPendingEdits()
         flushPendingSaveTask()
         zoom.flushPendingPersist()
+        // Quit is the one point the queued batch would otherwise be lost with the process.
+        AnalyticsService.flush()
     }
 
     /// If a debounced save is queued, cancel it and run `saveAll()` immediately.

@@ -86,7 +86,7 @@ func translateShapes(
 }
 
 /// Outcome of a session-driven translation run, so callers can show the right guidance.
-enum TranslationRunResult: Equatable {
+enum TranslationRunResult: String, Equatable {
     case completed
     /// The pair is downloadable but not installed (the inline download was declined or failed).
     case languagesNotDownloaded
@@ -138,6 +138,7 @@ nonisolated func translateShapes(
         source: sourceCode,
         target: targetLocaleCode
     ) {
+        AnalyticsService.capture(.translationRun, [.result: blocked.rawValue, .shapeCount: 0])
         return blocked
     }
 
@@ -151,6 +152,7 @@ nonisolated func translateShapes(
         }
     }
 
+    var translated = 0
     for item in items {
         if let shapeFilter, !shapeFilter(item.shapeId) { continue }
         if onlyUntranslated && item.isTranslated { continue }
@@ -170,9 +172,18 @@ nonisolated func translateShapes(
             }
         } catch {
             AppLogger.translation.error("Translation failed for shape \(item.shapeId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            AnalyticsService.capture(.translationRun, [
+                .result: TranslationRunResult.languagesNotDownloaded.rawValue,
+                .shapeCount: translated,
+            ])
             return .languagesNotDownloaded
         }
+        translated += 1
     }
+    AnalyticsService.capture(.translationRun, [
+        .result: TranslationRunResult.completed.rawValue,
+        .shapeCount: translated,
+    ])
     return .completed
 }
 

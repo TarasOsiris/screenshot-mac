@@ -22,6 +22,7 @@ extension AppState {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 CrashReportingService.setTag("icloud", for: "storage")
+                AnalyticsService.setProfile([.storage: "icloud"])
                 CrashReportingService.breadcrumb(.sync, "iCloud sync enabled")
                 self.saveTask?.cancel()
                 if let url {
@@ -38,6 +39,7 @@ extension AppState {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 CrashReportingService.setTag("local", for: "storage")
+                AnalyticsService.setProfile([.storage: "local"])
                 CrashReportingService.breadcrumb(.sync, "iCloud sync disabled")
                 self.saveTask?.cancel()
                 self.stopICloudMonitoring()

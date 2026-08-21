@@ -26,6 +26,11 @@ final class OnboardingCoachController {
     /// tour doesn't consume the real `onboardingCompleted` flag.
     func start(persistOnEnd: Bool = true) {
         persistsOnEnd = persistOnEnd
+        // The debug re-runs pass `persistOnEnd: false`; counting them would inflate the funnel
+        // with our own walkthroughs.
+        if persistOnEnd {
+            AnalyticsService.capture(.onboardingStarted)
+        }
         ensureRowSelected()
         setStep(.canvas)
     }
@@ -56,7 +61,7 @@ final class OnboardingCoachController {
         transitionTask = nil
         preparingStep = nil
         guard step != nil || hadPendingTransition else { return }
-        end()
+        end(abandoned: true)
     }
     #endif
 
@@ -88,9 +93,14 @@ final class OnboardingCoachController {
 
     /// Ends the coach tour and persists onboarding completion (unless the tour
     /// was started with `persistOnEnd: false`).
-    func end() {
+    func end(abandoned: Bool = false) {
+        let reachedStep = step.map(String.init(describing:)) ?? "none"
         setStep(nil)
         guard persistsOnEnd else { return }
+        AnalyticsService.capture(
+            abandoned ? .onboardingSkipped : .onboardingCompleted,
+            [.source: "coach", .lastStep: reachedStep]
+        )
         let defaults = UserDefaults.standard
         let key = OnboardingPersistence.completedKey
         if !defaults.bool(forKey: key) {

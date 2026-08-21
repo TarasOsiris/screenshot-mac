@@ -11,4 +11,5 @@ nonisolated enum AppLogger {
     static let sync = Logger(subsystem: subsystem, category: "Sync")
     static let upload = Logger(subsystem: subsystem, category: "Upload")
     static let media = Logger(subsystem: subsystem, category: "Media")
+    static let analytics = Logger(subsystem: subsystem, category: "Analytics")
 }

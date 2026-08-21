@@ -9,7 +9,9 @@ import RevenueCat
 @MainActor
 @Observable
 final class StoreService {
-    enum PaywallContext {
+    /// Raw values are analytics event property values (`paywall_shown.trigger`), not user-facing
+    /// text — renaming one renames the dimension in PostHog.
+    enum PaywallContext: String {
         case general
         case projectLimit
         case rowLimit
@@ -19,6 +21,15 @@ final class StoreService {
     enum ProTier: Equatable {
         case lifetime
         case subscription(productId: String, expirationDate: Date, willRenew: Bool)
+
+        /// Coarse enough to carry no product id, which is what analytics needs — `displayName`
+        /// is localized, so it would fragment one dimension across 30 languages.
+        var analyticsName: String {
+            switch self {
+            case .lifetime: "lifetime"
+            case .subscription: "subscription"
+            }
+        }
 
         var displayName: String {
             switch self {
@@ -124,10 +135,12 @@ final class StoreService {
         paywallContext = context
         clearPurchaseStatus()
         showPaywall = true
+        AnalyticsService.capture(.paywallShown, [.trigger: context.rawValue])
     }
 
     func dismissPaywall() {
         showPaywall = false
+        AnalyticsService.capture(.paywallDismissed, [.trigger: paywallContext.rawValue])
     }
 
     /// Call from the paywall sheet's `onDismiss`: shows the post-purchase celebration only
@@ -191,6 +204,7 @@ final class StoreService {
         // A tag, not the user id: `DiagnosticsIdentity.installId` owns identity from launch, and
         // reassigning it here would split one install across two `user.id` values per run.
         CrashReportingService.setTag(appUserID, for: "rc_user_id")
+        AnalyticsService.linkStoreUser(appUserID)
 
         let d = CustomerInfoDelegate { [weak self] info in
             self?.updateEntitlement(from: info)
@@ -272,6 +286,7 @@ final class StoreService {
         if isProUnlocked != entitled {
             isProUnlocked = entitled
             CrashReportingService.setTag(entitled ? "true" : "false", for: "pro")
+            AnalyticsService.setProfile([.pro: entitled])
         }
         if proTier != newTier {
             proTier = newTier
@@ -295,13 +310,19 @@ final class StoreService {
         if isProUnlocked {
             pendingCelebrationContext = triggeringContext
             showPaywall = false
+            AnalyticsService.capture(.purchaseCompleted, [
+                .trigger: triggeringContext.rawValue,
+                .tier: proTier?.analyticsName ?? "unknown",
+            ])
         } else {
+            AnalyticsService.capture(.purchaseFailed, [.result: "entitlementNotGranted"])
             setPurchaseStatus(String(localized: "Purchase completed, but RevenueCat did not grant access. Check the entitlement or product mapping in RevenueCat."), isError: true)
         }
     }
 
     func handleRestoreCompleted(_ customerInfo: CustomerInfo) {
         updateEntitlement(from: customerInfo)
+        AnalyticsService.capture(.purchaseRestored, [.ok: isProUnlocked])
         if isProUnlocked {
             setPurchaseStatus(String(localized: "Your Screenshot Bro Pro purchase was restored."))
             showPaywall = false
@@ -311,6 +332,8 @@ final class StoreService {
     }
 
     func handlePurchaseFailure(_ error: Error) {
+        let isCancellation = (error as NSError).code == ErrorCode.purchaseCancelledError.rawValue
+        AnalyticsService.capture(.purchaseFailed, [.userCancelled: isCancellation])
         setPurchaseStatus(String(localized: "Purchase failed: \(error.localizedDescription)"), isError: true)
     }
 

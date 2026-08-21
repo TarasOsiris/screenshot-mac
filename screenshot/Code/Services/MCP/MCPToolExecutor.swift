@@ -22,7 +22,9 @@ final class MCPToolExecutor {
                 throw MCPToolError.unknownTool(name)
             }
             let args = MCPArguments(arguments)
-            return try await dispatch(tool, args)
+            let result = try await dispatch(tool, args)
+            AnalyticsService.capture(.mcpToolCalled, [.tool: tool.rawValue, .ok: true])
+            return result
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             if let toolError = error as? MCPToolError, toolError.isClientError {
@@ -30,6 +32,11 @@ final class MCPToolExecutor {
             } else {
                 CrashReportingService.report(.mcpToolFailed, error: error, extra: ["tool": name], level: .warning)
             }
+            // `name` is client-supplied; only a name that matched our catalog is safe to send.
+            AnalyticsService.capture(.mcpToolCalled, [
+                .tool: MCPToolName(rawValue: name)?.rawValue ?? "unknown",
+                .ok: false,
+            ])
             return CallTool.Result(content: [.text("Error: \(message)")], isError: true)
         }
     }

@@ -8,8 +8,9 @@ import Foundation
 /// emitted SDK-id events before that point and RevenueCat-id events after — one install, two
 /// `user.id` values, and "users affected" counted twice.
 nonisolated enum DiagnosticsIdentity {
-    /// Stable per-install random UUID. Not derived from the device or the user, and never joined
-    /// to anything — it exists only to match an emailed report to the events we already received.
+    /// Stable per-install random UUID. Not derived from the device or the user — it exists to match
+    /// an emailed report to the events we already received. Sentry's `user.id` and PostHog's
+    /// `distinct_id` are both this value, so one install reads as one person in both.
     static let installId: String = {
         let defaults = UserDefaults.standard
         if let existing = defaults.string(forKey: AppSettingsKeys.installId), !existing.isEmpty {

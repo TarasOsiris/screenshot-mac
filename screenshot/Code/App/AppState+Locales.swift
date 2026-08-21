@@ -290,6 +290,8 @@ extension AppState {
             LocaleService.addLocale(&localeState, locale: locale)
             localeState.activeLocaleCode = locale.code
         }
+        // Count, not code: which languages a user targets says what they are building.
+        AnalyticsService.capture(.localeAdded, [.localeCount: localeState.locales.count])
     }
 
     func removeLocale(_ code: String) {

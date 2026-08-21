@@ -23,6 +23,9 @@ struct AppSettingsKeysTests {
         #expect(AppSettingsKeys.defaultDeviceFrameId == "defaultDeviceFrameId")
         #expect(AppSettingsKeys.projectSortOrder == "projectSortOrder")
         #expect(AppSettingsKeys.lastZoomLevel == "lastZoomLevel")
+        #expect(AppSettingsKeys.installId == "installId")
+        #expect(AppSettingsKeys.installFirstVersion == "installFirstVersion")
+        #expect(AppSettingsKeys.analyticsAliasedStoreUserId == "analyticsAliasedStoreUserId")
     }
 
     @Test func defaultsAreStable() {

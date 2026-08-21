@@ -47,6 +47,7 @@ nonisolated enum CrashReportingService {
         case richTextDecodeFailed
         case bundledTemplateLoadFailed
         case storeConfigurationInvalid
+        case analyticsConfigurationInvalid
         case appStoreOrphanCleanupFailed
         case googlePlayEditAbandonFailed
         case undoScopeViolation
@@ -406,6 +407,8 @@ nonisolated enum CrashReportingService {
             AppLogger.media
         case .storeConfigurationInvalid:
             AppLogger.store
+        case .analyticsConfigurationInvalid:
+            AppLogger.analytics
         case .appStoreOrphanCleanupFailed, .googlePlayEditAbandonFailed:
             AppLogger.upload
         case .mcpToolFailed:

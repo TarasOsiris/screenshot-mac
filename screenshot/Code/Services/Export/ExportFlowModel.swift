@@ -99,7 +99,10 @@ final class ExportFlowModel {
         }
     }
 
-    func showSuccess(projectName: String) {
+    /// `destination` is the only thing the render layer never learns — `ExportService` knows what
+    /// was rendered, this is the one place that knows where it went.
+    func showSuccess(projectName: String, destination: String) {
+        AnalyticsService.capture(.exportRouted, [.destination: destination])
         successTimer?.cancel()
         exportSuccess = true
         let timer = DispatchWorkItem { [weak self] in self?.exportSuccess = false }
@@ -134,7 +137,7 @@ final class ExportFlowModel {
         run {
             defer { url.stopAccessingSecurityScopedResource() }
             let export = try await self.renderAll(document: document, to: url, localeFilter: localeFilter)
-            self.showSuccess(projectName: document.activeProjectName)
+            self.showSuccess(projectName: document.activeProjectName, destination: "folder")
             if self.revealAfterExport {
                 PlatformReveal.inFileViewer([export.folderURL])
             }
@@ -218,7 +221,7 @@ final class ExportFlowModel {
                 if self.revealAfterExport {
                     PlatformReveal.inFileViewer([destDir])
                 }
-                self.showSuccess(projectName: document.activeProjectName)
+                self.showSuccess(projectName: document.activeProjectName, destination: "folder")
             case .stageDestination:
                 self.stage(staged)
             #if os(iOS)
@@ -269,6 +272,7 @@ final class ExportFlowModel {
         guard let pending = pendingExport else { return }
         try? FileManager.default.removeItem(at: pending.cleanupBaseURL)
         pendingExport = nil
+        AnalyticsService.capture(.exportAbandoned)
     }
 
     #if os(iOS)
@@ -284,7 +288,7 @@ final class ExportFlowModel {
     private func routeStaged(_ pending: PendingExport, to destination: ExportDestination, projectName: String) {
         let finish: (Bool) -> Void = { [weak self] completed in
             try? FileManager.default.removeItem(at: pending.cleanupBaseURL)
-            if completed { self?.showSuccess(projectName: projectName) }
+            if completed { self?.showSuccess(projectName: projectName, destination: destination.rawValue) }
         }
         switch destination {
         case .share:
@@ -297,7 +301,7 @@ final class ExportFlowModel {
                 if let error {
                     self?.errorMessage = error.localizedDescription
                 } else if success {
-                    self?.showSuccess(projectName: projectName)
+                    self?.showSuccess(projectName: projectName, destination: destination.rawValue)
                 }
             }
         }

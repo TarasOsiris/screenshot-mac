@@ -109,6 +109,7 @@
 				76SD00022F5A00000072F7A4 /* SwiftDraw */,
 				76MC00022F5A00000072F7A4 /* MCP */,
 				76SE00022F5A00000072F7A4 /* Sentry */,
+				76PH00022F5A00000072F7A4 /* PostHog */,
 			);
 			productName = screenshot;
 			productReference = 768DF30B2F596DAB0072F7A4 /* Screenshot Bro.app */;
@@ -177,6 +178,7 @@
 				76SD00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "SwiftDraw" */,
 				76MC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "swift-sdk" */,
 				76SE00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+				76PH00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 768DF30C2F596DAB0072F7A4 /* Products */;
@@ -413,6 +415,7 @@
 				);
 				MARKETING_VERSION = 4.3;
 				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
+				POSTHOG_API_KEY = phc_uFPDbVMPTYfFqBZgnbNkSPuRjGtCvPhHxbQUXxxYgwxQ;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=macosx*]" = NSApplication;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshot;
@@ -459,6 +462,7 @@
 				);
 				MARKETING_VERSION = 4.3;
 				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
+				POSTHOG_API_KEY = phc_uFPDbVMPTYfFqBZgnbNkSPuRjGtCvPhHxbQUXxxYgwxQ;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=macosx*]" = NSApplication;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshot;
@@ -562,6 +566,14 @@
 				minimumVersion = 0.12.1;
 			};
 		};
+		76PH00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.56.0;
+			};
+		};
 		76RC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
@@ -593,6 +605,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 76MC00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "swift-sdk" */;
 			productName = MCP;
+		};
+		76PH00022F5A00000072F7A4 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 76PH00012F5A00000072F7A4 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
 		};
 		76RC00022F5A00000072F7A4 /* RevenueCat */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -21,7 +21,8 @@ struct ShowcaseExportConfig: BackgroundFillable {
 
 /// Where a rendered export goes. iPad-only: macOS always writes to a chosen folder, so the
 /// macOS export path ignores this. Used by both showcase export and the regular export flows.
-enum ExportDestination {
+/// Raw values double as the `export_routed.destination` analytics dimension.
+enum ExportDestination: String {
     case photos
     case files
     case share
