@@ -396,7 +396,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = screenshot/screenshotDebug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 114;
+				CURRENT_PROJECT_VERSION = 115;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
@@ -413,7 +413,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.3;
+				MARKETING_VERSION = 4.4;
 				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				POSTHOG_API_KEY = phc_uFPDbVMPTYfFqBZgnbNkSPuRjGtCvPhHxbQUXxxYgwxQ;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
@@ -443,7 +443,7 @@
 				CODE_SIGN_ENTITLEMENTS = screenshot/screenshot.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 114;
+				CURRENT_PROJECT_VERSION = 115;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
@@ -460,7 +460,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.3;
+				MARKETING_VERSION = 4.4;
 				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				POSTHOG_API_KEY = phc_uFPDbVMPTYfFqBZgnbNkSPuRjGtCvPhHxbQUXxxYgwxQ;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
@@ -486,11 +486,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 114;
+				CURRENT_PROJECT_VERSION = 115;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 4.3;
+				MARKETING_VERSION = 4.4;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -508,11 +508,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 114;
+				CURRENT_PROJECT_VERSION = 115;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XW3GM347XY;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 4.3;
+				MARKETING_VERSION = 4.4;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshotTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
