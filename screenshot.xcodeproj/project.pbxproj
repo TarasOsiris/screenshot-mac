@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6BC99280303A026000B248A0 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 76PH00022F5A00000072F7A4 /* PostHog */; };
 		760E3F392F7298FE00034CDB /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 76RC00022F5A00000072F7A4 /* RevenueCat */; };
 		760E3F3A2F7298FE00034CDB /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 76RC00032F5A00000072F7A4 /* RevenueCatUI */; };
 		76MC00032F5A00000072F7A4 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 76MC00022F5A00000072F7A4 /* MCP */; };
@@ -47,6 +48,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6BC99280303A026000B248A0 /* PostHog in Frameworks */,
 				760E3F3A2F7298FE00034CDB /* RevenueCatUI in Frameworks */,
 				760E3F392F7298FE00034CDB /* RevenueCat in Frameworks */,
 				76SD00032F5A00000072F7A4 /* SwiftDraw in Frameworks */,
@@ -414,8 +416,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 4.4;
-				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				POSTHOG_API_KEY = phc_uFPDbVMPTYfFqBZgnbNkSPuRjGtCvPhHxbQUXxxYgwxQ;
+				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=macosx*]" = NSApplication;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshot;
@@ -461,8 +463,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 4.4;
-				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				POSTHOG_API_KEY = phc_uFPDbVMPTYfFqBZgnbNkSPuRjGtCvPhHxbQUXxxYgwxQ;
+				"PRINCIPAL_CLASS[sdk=iphoneos*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=iphonesimulator*]" = UIApplication;
 				"PRINCIPAL_CLASS[sdk=macosx*]" = NSApplication;
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tleskiv.screenshot;

@@ -36,7 +36,8 @@
       "Bash(GIT_EDITOR=true git rebase --continue)",
       "WebFetch(domain:support.google.com)",
       "WebFetch(domain:help.appscreens.com)",
-      "WebFetch(domain:screenhance.com)"
+      "WebFetch(domain:screenhance.com)",
+      "Bash(sentry-cli info *)"
     ]
   },
   "enabledMcpjsonServers": [
