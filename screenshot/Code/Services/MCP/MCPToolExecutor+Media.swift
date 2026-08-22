@@ -27,7 +27,9 @@ extension MCPToolExecutor {
             }
         }
         guard !images.isEmpty else {
-            throw MCPToolError.failed("No images could be loaded: \(failures.joined(separator: "; "))")
+            throw MCPToolError.unreadableFiles(
+                "No images could be loaded: \(failures.joined(separator: "; ")). \(MCPToolCatalog.screenshotStagingHint)"
+            )
         }
 
         let rowId = state.rows[rowIndex].id

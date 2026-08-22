@@ -455,6 +455,20 @@ struct MCPToolExecutorTests {
             "paths": .array([.string("/nonexistent/nope.png")]),
         ])
         #expect(missing.isError == true)
+        guard case .text(let message, _, _) = missing.content.first else {
+            Issue.record("expected text content")
+            return
+        }
+        // The agent gets the failing paths plus a staging dir that works under the sandbox.
+        #expect(message.contains("/nonexistent/nope.png"))
+        #expect(message.contains(FileManager.default.temporaryDirectory.path))
+    }
+
+    /// Unreadable paths are the agent's environment (usually a Release sandbox denial), not our
+    /// bug — and the message names the user's files, so it must never become a Sentry report.
+    @Test func unreadableFilesIsAClientError() {
+        #expect(MCPToolError.unreadableFiles("detail").isClientError)
+        #expect(!MCPToolError.failed("detail").isClientError)
     }
 
     @Test func renderPreviewReturnsDownscaledPNG() async throws {

@@ -8,6 +8,7 @@ enum MCPToolError: Error, LocalizedError {
     case missingArgument(String)
     case invalidArgument(String, String)
     case notFound(String)
+    case unreadableFiles(String)
     case failed(String)
 
     var errorDescription: String? {
@@ -20,16 +21,19 @@ enum MCPToolError: Error, LocalizedError {
             "Invalid argument '\(key)': \(why)"
         case .notFound(let what):
             "\(what) not found — call get_project for current ids"
+        case .unreadableFiles(let message):
+            message
         case .failed(let message):
             message
         }
     }
 
     /// A malformed or stale request from the client — the agent's mistake, not ours, so it stays
-    /// breadcrumb-only rather than opening a Sentry issue.
+    /// breadcrumb-only rather than opening a Sentry issue. `unreadableFiles` is here for privacy
+    /// too: its message names the user's files, which must never reach a report.
     var isClientError: Bool {
         switch self {
-        case .unknownTool, .missingArgument, .invalidArgument, .notFound: true
+        case .unknownTool, .missingArgument, .invalidArgument, .notFound, .unreadableFiles: true
         case .failed: false
         }
     }

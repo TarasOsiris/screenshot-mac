@@ -34,6 +34,14 @@ enum MCPToolName: String, CaseIterable {
 nonisolated enum MCPToolCatalog {
     static let deviceCategories = DeviceCategory.allCases.map(\.rawValue)
 
+    /// One authoritative phrasing for the tool description and the load-failure error — divergent
+    /// copies contradicted each other about whether "temp" is readable (system /tmp is not; the
+    /// app's own container temp is).
+    static let screenshotStagingHint = "The app is sandboxed: it can read its own container and "
+        + "user-granted folders, but not arbitrary paths (system /tmp and agent scratch dirs "
+        + "included). If a load fails, copy the images into the app's own temp folder "
+        + "\(FileManager.default.temporaryDirectory.path) and retry with those paths."
+
     private static let gradientSchema = MCPSchema.object([
         "type": MCPSchema.string("Gradient type", oneOf: ["linear", "radial", "angular"]),
         "angle": MCPSchema.number("Angle in degrees (default 135)"),
@@ -225,7 +233,7 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.importScreenshots.rawValue,
-            description: "Import screenshot images from file paths into a row's device frames. Images fill device-holding columns in order starting from the first, replacing any existing screenshots; extra images append new columns. A single column cannot be targeted — re-import the whole row's images in order.",
+            description: "Import screenshot images from file paths into a row's device frames. Images fill device-holding columns in order starting from the first, replacing any existing screenshots; extra images append new columns. A single column cannot be targeted — re-import the whole row's images in order. \(screenshotStagingHint)",
             inputSchema: MCPSchema.object([
                 "row_id": MCPSchema.string("Row UUID"),
                 "paths": MCPSchema.array(of: MCPSchema.string("Absolute file path"), "Image file paths in desired order"),
