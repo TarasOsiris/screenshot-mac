@@ -65,6 +65,7 @@ struct CanvasShapeView: View {
     @State var cachedSvgImage: NSImage?
     @State var svgCacheKey = ""
     @State var svgResizeDebounceTask: Task<Void, Never>?
+    @State var svgRenderTask: Task<Void, Never>?
     @State private var clipPathMemo = ClipPathMemo()
 
     private var displayPixelStep: CGFloat { 1 / max(screenScale, 1) }
@@ -179,7 +180,7 @@ struct CanvasShapeView: View {
             .onDisappear(perform: handleDisappear)
             .onChange(of: shape.svgContent) { updateSvgCache() }
             .onChange(of: shape.svgUseColor) { updateSvgCache() }
-            .onChange(of: shape.color) { updateSvgCache() }
+            .onChange(of: shape.color) { debounceSvgCacheUpdate() }
             .onChange(of: shape.width) { debounceSvgCacheUpdate() }
             .onChange(of: shape.height) { debounceSvgCacheUpdate() }
 

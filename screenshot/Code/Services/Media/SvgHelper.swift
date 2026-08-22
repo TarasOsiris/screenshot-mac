@@ -134,7 +134,16 @@ nonisolated enum SvgHelper {
         return svg
     }
 
-    static func renderImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
+    /// Renders into the raster cache off the main actor; read the result back with
+    /// `cachedRender`. `@concurrent` is load-bearing — see the concurrency note in CLAUDE.md.
+    /// `color` must be a static color: dynamic/catalog colors resolve `hexString` against the
+    /// current thread's appearance, which would key the insert differently than the read-back.
+    @concurrent static func renderImageOffMain(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize?) async {
+        _ = renderImage(from: svgContent, useColor: useColor, color: color, targetSize: targetSize)
+    }
+
+    static func renderImage(from svgContent: String, useColor: Bool, color: Color, targetSize requestedSize: CGSize? = nil) -> NSImage? {
+        let targetSize = clampedRasterSize(requestedSize)
         let key = rasterCacheKey(svgContent: svgContent, useColor: useColor, color: color, targetSize: targetSize)
         if let cached = rasterCache.object(forKey: key) {
             return cached
@@ -189,7 +198,24 @@ nonisolated enum SvgHelper {
     }
 
     static func cachedRender(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {
-        rasterCache.object(forKey: rasterCacheKey(svgContent: svgContent, useColor: useColor, color: color, targetSize: targetSize))
+        rasterCache.object(forKey: rasterCacheKey(
+            svgContent: svgContent, useColor: useColor, color: color,
+            targetSize: clampedRasterSize(targetSize)
+        ))
+    }
+
+    /// Caps rasters at ~64 MB of bitmap. An oversized target (huge spanning shape × zoom) used to
+    /// stall for seconds just zero-filling the bitmap (Sentry SCREENSHOT-BRO-R); past the cap the
+    /// vector simply draws upscaled.
+    private static let maxRasterPixels: CGFloat = 4096 * 4096
+
+    static func clampedRasterSize(_ size: CGSize?) -> CGSize? {
+        guard let size, size.width > 0, size.height > 0 else { return size }
+        let pixels = size.width * size.height
+        guard pixels > maxRasterPixels else { return size }
+        let scale = (maxRasterPixels / pixels).squareRoot()
+        return CGSize(width: max(1, (size.width * scale).rounded(.down)),
+                      height: max(1, (size.height * scale).rounded(.down)))
     }
 
     private static func rasterCacheKey(svgContent: String, useColor: Bool, color: Color, targetSize: CGSize?) -> NSString {

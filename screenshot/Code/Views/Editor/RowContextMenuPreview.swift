@@ -57,7 +57,8 @@ struct RowContextMenuPreview: View {
             zoom: previewZoom,
             localeState: localeState,
             screenshotImages: screenshotImages,
-            availableFontFamilies: availableFontFamilies
+            availableFontFamilies: availableFontFamilies,
+            allowSynchronousSvgRender: true
         )
     }
 }

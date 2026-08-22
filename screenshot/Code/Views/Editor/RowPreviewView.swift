@@ -12,6 +12,10 @@ struct RowPreviewView: View {
     let localeState: LocaleState
     let screenshotImages: [String: NSImage]
     let availableFontFamilies: Set<String>
+    /// False for live editor tiles (a body-time SVG render would stall the main thread); the
+    /// context-menu bake turns it on — one offscreen frame at preview scale is cheap, and an
+    /// async warm-up can't finish before `ImageRenderer` captures.
+    var allowSynchronousSvgRender = false
 
     // Zoom is folded into the render scale (no `.scaleEffect`) — scaling an
     // already-clipped tile magnifies the antialiased clip edge, bleeding content
@@ -101,7 +105,7 @@ struct RowPreviewView: View {
                 displayScale: displayScale,
                 defaultDeviceBodyColor: row.defaultDeviceBodyColor,
                 availableFontFamilies: availableFontFamilies,
-                allowSynchronousSvgRender: false
+                allowSynchronousSvgRender: allowSynchronousSvgRender
             )
             .offset(x: offsetX)
         }

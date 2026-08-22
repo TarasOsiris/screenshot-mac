@@ -230,8 +230,29 @@ extension CanvasShapeView {
         let key = "\(content.hashValue)-\(shape.svgUseColor ?? false)-\(shape.color.hexString)-\(w)x\(h)"
         guard key != svgCacheKey else { return }
         svgCacheKey = key
+        let useColor = shape.svgUseColor == true
+        let color = shape.color
         let targetSize = CGSize(width: effectiveW, height: effectiveH)
-        cachedSvgImage = Self.svgImage(from: content, useColor: shape.svgUseColor == true, color: shape.color, targetSize: targetSize)
+        if let cached = SvgHelper.cachedRender(from: content, useColor: useColor, color: color, targetSize: targetSize) {
+            cachedSvgImage = cached
+            return
+        }
+        // Rasterize off-main, showing the previous raster (scaled) until the new one lands — a
+        // synchronous render here hung the main thread for seconds (Sentry SCREENSHOT-BRO-R).
+        svgRenderTask?.cancel()
+        svgRenderTask = Task {
+            if !Task.isCancelled {
+                await SvgHelper.renderImageOffMain(from: content, useColor: useColor, color: color, targetSize: targetSize)
+            }
+            guard svgCacheKey == key else { return }
+            if let image = SvgHelper.cachedRender(from: content, useColor: useColor, color: color, targetSize: targetSize) {
+                cachedSvgImage = image
+            } else {
+                // Cancelled before rendering, or evicted before the read-back: keep the stale
+                // raster on screen and let the next trigger retry instead of wedging on the guard.
+                svgCacheKey = ""
+            }
+        }
     }
 
     nonisolated static func svgImage(from svgContent: String, useColor: Bool, color: Color, targetSize: CGSize? = nil) -> NSImage? {

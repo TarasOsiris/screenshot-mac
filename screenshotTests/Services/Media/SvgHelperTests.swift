@@ -55,4 +55,27 @@ struct SvgHelperTests {
         let out = SvgHelper.applyColor(color, to: svg)
         #expect(out.contains("<svg fill=\"\(color.hexString)\""))
     }
+
+    // MARK: - Raster size clamp (SCREENSHOT-BRO-R)
+
+    @Test func clampedRasterSizeLeavesNormalSizesAlone() {
+        let macExport = CGSize(width: 2880, height: 1800)
+        #expect(SvgHelper.clampedRasterSize(macExport) == macExport)
+        #expect(SvgHelper.clampedRasterSize(nil) == nil)
+        #expect(SvgHelper.clampedRasterSize(.zero) == .zero)
+    }
+
+    @Test func clampedRasterSizeCapsAreaPreservingAspect() throws {
+        let clamped = try #require(SvgHelper.clampedRasterSize(CGSize(width: 40_000, height: 10_000)))
+        #expect(clamped.width * clamped.height <= 4096 * 4096)
+        #expect(abs(clamped.width / clamped.height - 4.0) < 0.01)
+    }
+
+    @Test func oversizedRenderIsFoundByCachedRenderUnderTheRequestedSize() {
+        let svg = "<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><rect width='10' height='10' fill='#123456'/></svg>"
+        let huge = CGSize(width: 40_000, height: 40_000)
+        let rendered = SvgHelper.renderImage(from: svg, useColor: false, color: .white, targetSize: huge)
+        #expect(rendered != nil)
+        #expect(SvgHelper.cachedRender(from: svg, useColor: false, color: .white, targetSize: huge) != nil)
+    }
 }

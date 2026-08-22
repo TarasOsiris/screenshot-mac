@@ -49,6 +49,17 @@ struct ExportImageEncoderIsolationTests {
         }
     }
 
+    @Test func svgRenderOffMainSuspendsTheMainActorAndFillsTheCache() async throws {
+        // Unique content so a raster-cache hit from another test can't satisfy the check.
+        let svg = "<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'>"
+            + "<rect width='10' height='10' fill='#AB12CD'/><!-- isolation --></svg>"
+        let targetSize = CGSize(width: 64, height: 64)
+        await expectSuspendsMainActor {
+            await SvgHelper.renderImageOffMain(from: svg, useColor: false, color: .white, targetSize: targetSize)
+        }
+        #expect(SvgHelper.cachedRender(from: svg, useColor: false, color: .white, targetSize: targetSize) != nil)
+    }
+
     @Test func offMainEncodeMatchesSynchronousEncode() async throws {
         let image = makeTestImage(width: 120, height: 80)
         let sync = try #require(ExportService.opaquePNGData(from: image))
