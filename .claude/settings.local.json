@@ -37,7 +37,8 @@
       "WebFetch(domain:support.google.com)",
       "WebFetch(domain:help.appscreens.com)",
       "WebFetch(domain:screenhance.com)",
-      "Bash(sentry-cli info *)"
+      "Bash(sentry-cli info *)",
+      "mcp__plugin_sentry_sentry__execute_sentry_tool"
     ]
   },
   "enabledMcpjsonServers": [

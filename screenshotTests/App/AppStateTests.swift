@@ -240,7 +240,7 @@ struct AppStateTests {
         #expect(!state.rows.first!.shapes.contains { $0.id == shape.id })
     }
 
-    @Test func batchImportImagesReusesExistingDeviceShapes() throws {
+    @Test func batchImportImagesReusesExistingDeviceShapes() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
@@ -252,7 +252,7 @@ struct AppStateTests {
             makeTestImage(width: 1206, height: 2622)
         }
 
-        state.batchImportImages(images, into: rowId)
+        await state.batchImportImages(importSources(images), into: rowId)
 
         let row = state.rows[0]
         let devices = row.shapes.filter { $0.type == .device }
@@ -262,7 +262,7 @@ struct AppStateTests {
         #expect(row.shapes.filter { $0.type == .image }.isEmpty)
     }
 
-    @Test func batchImportImagesCreatesMissingDeviceUsingMostCommonRowFrame() throws {
+    @Test func batchImportImagesCreatesMissingDeviceUsingMostCommonRowFrame() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
@@ -290,7 +290,7 @@ struct AppStateTests {
             makeTestImage(width: 1206, height: 2622)
         ]
 
-        state.batchImportImages(images, into: row.id)
+        await state.batchImportImages(importSources(images), into: row.id)
 
         let updatedRow = state.rows[0]
         let devices = updatedRow.shapes.filter { $0.type == .device }
@@ -372,7 +372,7 @@ struct AppStateTests {
         #expect(shape.width <= row.templateWidth * 0.9)
     }
 
-    @Test func batchImportImagesSkipsTemplatesWithoutDevices() throws {
+    @Test func batchImportImagesSkipsTemplatesWithoutDevices() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
@@ -396,7 +396,7 @@ struct AppStateTests {
             makeTestImage(width: 1206, height: 2622)
         ]
 
-        state.batchImportImages(images, into: row.id)
+        await state.batchImportImages(importSources(images), into: row.id)
 
         let updatedRow = state.rows[0]
         #expect(updatedRow.templates.count == 3, "No new templates should be appended")
@@ -409,7 +409,116 @@ struct AppStateTests {
         #expect(deviceTemplateIndices == [0, 2])
     }
 
-    @Test func batchImportImagesAppendsTemplatesForOverflowImages() throws {
+    /// The PNG passthrough writes the source bytes verbatim instead of decoding and re-deflating.
+    /// Transparency has to survive that — Remove Background depends on alpha round-tripping.
+    @Test func batchImportPassthroughPreservesSourcePNGBytesAndAlpha() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let rowId = try #require(state.rows.first?.id)
+        let activeId = try #require(state.activeProjectId)
+
+        let transparent = makeTransparentTestImage(width: 1206, height: 2622)
+        let sourceData = try #require(ExportService.pngData(from: transparent))
+        let sourceURL = tempDir.appendingPathComponent("source-\(UUID().uuidString).png")
+        try sourceData.write(to: sourceURL)
+
+        _ = await state.batchImportImages(
+            [ImageImportSource(image: transparent, sourceURL: sourceURL)],
+            into: rowId
+        )
+
+        let device = try #require(state.rows[0].shapes.first { $0.type == .device })
+        let fileName = try #require(device.displayImageFileName)
+        let written = try Data(contentsOf: PersistenceService.resourcesDir(activeId)
+            .appendingPathComponent(fileName))
+
+        #expect(written == sourceData, "passthrough should copy the source bytes verbatim")
+        let rep = try #require(NSBitmapImageRep(data: written))
+        #expect(rep.hasAlpha)
+    }
+
+    /// Non-PNG sources (and drag-and-drop, which has no URL at all) fall back to the off-main
+    /// encode and must still land a valid, correctly sized resource.
+    @Test func batchImportWithoutSourceURLStillWritesResource() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let rowId = try #require(state.rows.first?.id)
+        let activeId = try #require(state.activeProjectId)
+
+        _ = await state.batchImportImages(
+            [ImageImportSource(image: makeTestImage(width: 1206, height: 2622))],
+            into: rowId
+        )
+
+        let device = try #require(state.rows[0].shapes.first { $0.type == .device })
+        let fileName = try #require(device.displayImageFileName)
+        let written = try Data(contentsOf: PersistenceService.resourcesDir(activeId)
+            .appendingPathComponent(fileName))
+        let rep = try #require(NSBitmapImageRep(data: written))
+        #expect(rep.pixelsWide == 1206)
+        #expect(rep.pixelsHigh == 2622)
+        #expect(state.screenshotImages[fileName] != nil, "editor thumbnail should be published")
+    }
+
+    /// The regression this whole path exists to prevent: a 20-image import used to run as one
+    /// uninterrupted main-actor job (1.5-3.1 s) and trip Sentry's 3 s app-hang watchdog
+    /// (SCREENSHOT-BRO-W). Counting how often a competing main-actor task gets a slot during the
+    /// import is what separates "moved off the main actor" from "still inline" — a `nonisolated`
+    /// helper without `@concurrent` would inherit this actor and starve the ticker completely.
+    @Test func batchImportLetsTheMainActorRunBetweenImages() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        let rowId = try #require(state.rows.first?.id)
+        let images = importSources((0..<20).map { _ in makeTestImage(width: 1206, height: 2622) })
+
+        let ticker = MainActorTicker()
+        let tickTask = Task { @MainActor in
+            while !Task.isCancelled {
+                ticker.ticks += 1
+                await Task.yield()
+            }
+        }
+
+        // Sampled immediately before the call: no suspension point separates them, so the delta is
+        // exactly the number of main-actor turns the import itself left available.
+        let ticksBefore = ticker.ticks
+        let imported = await state.batchImportImages(images, into: rowId)
+        let ticksDuring = ticker.ticks - ticksBefore
+        tickTask.cancel()
+
+        #expect(imported == 20)
+        #expect(ticksDuring >= 20,
+                "main actor ran only \(ticksDuring) times across a 20-image import — the encode/write is still inline")
+    }
+
+    /// The encode/write flush runs after the undo step commits, so the row it imported into can be
+    /// deleted out from under it. That must not crash, and the resources it already wrote must not
+    /// keep the deleted row alive in the document.
+    @Test func batchImportSurvivesRowDeletionDuringTheWriteFlush() async throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+
+        // `deleteRow` is a no-op on the last remaining row.
+        state.addRow()
+        let rowId = try #require(state.rows.first?.id)
+        #expect(state.rows.count > 1)
+
+        let images = (0..<3).map { _ in
+            ImageImportSource(image: makeTestImage(width: 1206, height: 2622))
+        }
+
+        async let imported = state.batchImportImages(images, into: rowId)
+        await Task.yield()
+        state.deleteRow(rowId)
+
+        #expect(await imported == 3)
+        #expect(!state.rows.contains { $0.id == rowId })
+    }
+
+    @Test func batchImportImagesAppendsTemplatesForOverflowImages() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
@@ -430,7 +539,7 @@ struct AppStateTests {
             makeTestImage(width: 1206, height: 2622)
         }
 
-        state.batchImportImages(images, into: row.id)
+        await state.batchImportImages(importSources(images), into: row.id)
 
         let updatedRow = state.rows[0]
         #expect(updatedRow.templates.count == initialTemplateCount + overflowCount,
@@ -506,7 +615,7 @@ struct AppStateTests {
         #expect(added.deviceCategory == .iphone)
     }
 
-    @Test func clearAllDeviceImagesRemovesScreenshotsFromEveryDevice() throws {
+    @Test func clearAllDeviceImagesRemovesScreenshotsFromEveryDevice() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
@@ -514,7 +623,7 @@ struct AppStateTests {
         let images = (0..<state.rows[0].templates.count).map { _ in
             makeTestImage(width: 1206, height: 2622)
         }
-        state.batchImportImages(images, into: rowId)
+        await state.batchImportImages(importSources(images), into: rowId)
 
         let devicesBefore = state.rows[0].shapes.filter { $0.type == .device }
         #expect(!devicesBefore.isEmpty)
@@ -528,7 +637,7 @@ struct AppStateTests {
                 "All device screenshots should be cleared")
     }
 
-    @Test func clearAllDeviceImagesLeavesNonDeviceImageShapesAlone() throws {
+    @Test func clearAllDeviceImagesLeavesNonDeviceImageShapesAlone() async throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
@@ -546,7 +655,7 @@ struct AppStateTests {
         let images = (0..<state.rows[0].templates.count).map { _ in
             makeTestImage(width: 1206, height: 2622)
         }
-        state.batchImportImages(images, into: rowId)
+        await state.batchImportImages(importSources(images), into: rowId)
 
         state.clearAllDeviceImages(in: rowId)
 

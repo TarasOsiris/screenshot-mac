@@ -16,6 +16,9 @@ nonisolated enum ImageDownsampler {
     /// reducing memory ~10x vs full App Store screenshot resolution.
     static let editorImageMaxDimension: CGFloat = 1200
 
+    /// CFDictionary isn't Sendable, so build it per call rather than caching a global.
+    private static var sourceOptions: CFDictionary { [kCGImageSourceShouldCache: false] as CFDictionary }
+
     /// Returns a downsampled thumbnail for editor display, falling back to the original image.
     static func editorThumbnail(for image: NSImage) -> NSImage {
         guard let tiffData = image.tiffRepresentation else { return image }
@@ -24,19 +27,31 @@ nonisolated enum ImageDownsampler {
 
     /// Efficiently loads a downsampled image from a file URL using CGImageSource.
     static func downsampledImage(at url: URL, maxDimension: CGFloat) -> NSImage? {
-        let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithURL(url as CFURL, sourceOptions) else { return nil }
         return downsampledImage(from: source, maxDimension: maxDimension)
     }
 
     /// Downsamples from in-memory image data using CGImageSource (avoids disk round-trip).
     static func downsampledImage(from data: Data, maxDimension: CGFloat) -> NSImage? {
-        let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else { return nil }
         return downsampledImage(from: source, maxDimension: maxDimension)
     }
 
+    /// Off-actor thumbnail read straight from the written file, so a bulk import never holds the
+    /// full-resolution bytes in memory just to make a thumbnail. Returns a `CGImage` rather than an
+    /// `NSImage` so nothing non-`Sendable` crosses; the caller wraps it back up on its own actor.
+    /// `@concurrent` is load-bearing — `nonisolated` alone would inherit the caller's executor.
+    @concurrent static func downsampledCGImageOffMain(at url: URL, maxDimension: CGFloat) async -> CGImage? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, sourceOptions) else { return nil }
+        return downsampledCGImage(from: source, maxDimension: maxDimension)
+    }
+
     private static func downsampledImage(from source: CGImageSource, maxDimension: CGFloat) -> NSImage? {
+        guard let cgImage = downsampledCGImage(from: source, maxDimension: maxDimension) else { return nil }
+        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+    }
+
+    private static func downsampledCGImage(from source: CGImageSource, maxDimension: CGFloat) -> CGImage? {
         let options = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceShouldCacheImmediately: true,
@@ -44,7 +59,6 @@ nonisolated enum ImageDownsampler {
             kCGImageSourceThumbnailMaxPixelSize: maxDimension
         ] as CFDictionary
 
-        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options) else { return nil }
-        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
     }
 }

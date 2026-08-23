@@ -96,12 +96,14 @@ extension EditorRowView {
         }
 
         group.notify(queue: .main) { [self] in
-            let images = loadedImages.sorted(by: { $0.0 < $1.0 }).map(\.1)
-            guard !images.isEmpty else { return }
+            let sources = loadedImages.sorted(by: { $0.0 < $1.0 }).map { ImageImportSource(image: $0.1) }
+            guard !sources.isEmpty else { return }
             let cap = store.isProUnlocked ? nil : StoreService.freeMaxTemplatesPerRow
-            let imported = state.batchImportImages(images, into: row.id, maxTemplatesPerRow: cap)
-            if imported < images.count {
-                store.presentPaywall(for: .templateLimit)
+            Task { @MainActor in
+                let imported = await state.batchImportImages(sources, into: row.id, maxTemplatesPerRow: cap)
+                if imported < sources.count {
+                    store.presentPaywall(for: .templateLimit)
+                }
             }
         }
     }

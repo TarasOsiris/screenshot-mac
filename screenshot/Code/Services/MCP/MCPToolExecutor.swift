@@ -59,7 +59,7 @@ final class MCPToolExecutor {
         case .addShape: try addShape(args)
         case .updateShape: try updateShape(args)
         case .deleteShape: try deleteShape(args)
-        case .importScreenshots: try importScreenshots(args)
+        case .importScreenshots: try await importScreenshots(args)
         case .addLocale: try addLocale(args)
         case .removeLocale: try removeLocale(args)
         case .setTranslation: try setTranslation(args)

@@ -12,28 +12,90 @@ import Testing
 @MainActor
 struct ExportImageEncoderIsolationTests {
 
-    @MainActor private final class Flag {
-        var didRun = false
-    }
-
-    /// Fails if `work` runs inline on the main actor: queued main-actor work (progress updates,
-    /// window dragging) only gets a slot if awaiting `work` actually suspends.
-    private func expectSuspendsMainActor(
-        _ work: () async throws -> Void,
-        sourceLocation: SourceLocation = #_sourceLocation
-    ) async rethrows {
-        let flag = Flag()
-        Task { @MainActor in flag.didRun = true }
-        #expect(flag.didRun == false, sourceLocation: sourceLocation)
-        try await work()
-        #expect(flag.didRun, sourceLocation: sourceLocation)
-    }
-
     @Test func opaquePNGEncodeSuspendsTheMainActor() async throws {
         let image = makeTestImage(width: 120, height: 80)
         await expectSuspendsMainActor {
             _ = await ExportImageEncoder.opaquePNGDataOffMain(from: image)
         }
+    }
+
+    @Test func alphaPreservingPNGEncodeSuspendsTheMainActor() async throws {
+        let image = makeTestImage(width: 120, height: 80)
+        let cgImage = try #require(image.cgImage(forProposedRect: nil, context: nil, hints: nil))
+        await expectSuspendsMainActor {
+            _ = await ExportImageEncoder.pngDataOffMain(fromCGImage: cgImage)
+        }
+    }
+
+    @Test func downsampleSuspendsTheMainActor() async throws {
+        let image = makeTestImage(width: 2400, height: 1600)
+        let data = try #require(ExportService.pngData(from: image))
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("downsample-\(UUID().uuidString).png")
+        try data.write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        await expectSuspendsMainActor {
+            _ = await ImageDownsampler.downsampledCGImageOffMain(
+                at: url,
+                maxDimension: ImageDownsampler.editorImageMaxDimension
+            )
+        }
+    }
+
+    /// The screenshot-import path swapped `ExportService.pngData` for the `@concurrent` sibling;
+    /// the persisted resource bytes must not change with it.
+    @Test func alphaPreservingOffMainEncodeMatchesSynchronousEncode() async throws {
+        let image = makeTestImage(width: 120, height: 80)
+        let cgImage = try #require(image.cgImage(forProposedRect: nil, context: nil, hints: nil))
+        let sync = try #require(ExportService.pngData(from: image))
+        let offMain = try #require(await ExportImageEncoder.pngDataOffMain(fromCGImage: cgImage))
+        #expect(sync == offMain)
+    }
+
+    /// The atomic write, not just the encode, has to leave the main actor: on an iCloud-backed
+    /// resources folder it is the slowest step of a screenshot import (SCREENSHOT-BRO-W).
+    @Test(arguments: [false, true]) func stagedImageWriteSuspendsTheMainActor(copyingSource: Bool) async throws {
+        let image = makeTestImage(width: 400, height: 300)
+        let dir = FileManager.default.temporaryDirectory
+        let destination = dir.appendingPathComponent("staged-dst-\(UUID().uuidString).png")
+        let source = dir.appendingPathComponent("staged-src-\(UUID().uuidString).png")
+        let sourceData = try #require(ExportService.pngData(from: image))
+        try sourceData.write(to: source)
+        defer {
+            try? FileManager.default.removeItem(at: source)
+            try? FileManager.default.removeItem(at: destination)
+        }
+
+        try await expectSuspendsMainActor {
+            if copyingSource {
+                try await StagedImageWriter.persist(copying: source, to: destination)
+            } else {
+                let cgImage = try #require(image.cgImage(forProposedRect: nil, context: nil, hints: nil))
+                try await StagedImageWriter.persist(encoding: cgImage, to: destination)
+            }
+        }
+        // An already-PNG source is copied verbatim; anything else is transcoded.
+        #expect(try Data(contentsOf: destination) == sourceData)
+    }
+
+    /// The staged path reports a failing write as `writeFailed` carrying the reason, so the user
+    /// sees the real cause rather than a generic `Error.localizedDescription`.
+    @Test func stagedImageWriteSurfacesTheWriteFailureReason() async throws {
+        struct DiskFull: LocalizedError { var errorDescription: String? { "Disk full" } }
+        let image = makeTestImage(width: 40, height: 30)
+        let cgImage = try #require(image.cgImage(forProposedRect: nil, context: nil, hints: nil))
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent("staged-fail-\(UUID().uuidString).png")
+
+        await #expect(throws: StagedImageWriteError.self) {
+            try await StagedImageWriter.persist(
+                encoding: cgImage,
+                to: destination,
+                write: { _, _ in throw DiskFull() }
+            )
+        }
+        #expect(!FileManager.default.fileExists(atPath: destination.path))
     }
 
     @Test func fileChecksumSuspendsTheMainActor() async throws {

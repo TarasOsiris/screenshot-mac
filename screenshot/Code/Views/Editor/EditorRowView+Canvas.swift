@@ -243,34 +243,22 @@ extension EditorRowView {
         let isNonBaseLocale = !state.localeState.isBaseLocale
         let currentLocaleName: String? = isNonBaseLocale ? state.localeState.activeLocaleLabel : nil
         let nonBaseLocaleCount = state.localeState.nonBaseLocaleCount
-        // Computed once per render — the per-shape closure below references it
-        // instead of recomputing the O(N) walk for every shape's `lockToggleWillUnlock`.
-        let selectionFullyLocked = selectedShapeIds.isEmpty ? false : state.isSelectionFullyLocked
-        let allSelectedSameType: Bool = selectedShapeIds.count > 1 && {
-            var firstType: ShapeType?
-            for shape in resolvedShapes where selectedShapeIds.contains(shape.id) {
-                if let ft = firstType {
-                    if shape.type != ft { return false }
-                } else {
-                    firstType = shape.type
-                }
-            }
-            return firstType != nil
-        }()
+        // One pass over this row's shapes for all four selection facts, so the per-shape closure
+        // below re-walks nothing. Deliberately derived from `resolvedShapes` rather than the
+        // equivalent `AppState` properties: those read `rows`, which would register
+        // `\AppState.rows` in every row's tracking scope and defeat this view's `.equatable()`
+        // (SCREENSHOT-BRO-W).
+        let selected = resolvedShapes.filter { selectedShapeIds.contains($0.id) }
+        let isMultiSelection = selectedShapeIds.count > 1
+        let selectionFullyLocked = CanvasShapeModel.areFullyLocked(selected, ids: selectedShapeIds)
+        let allSelectedSameType = isMultiSelection && selected.allSatisfy { $0.type == selected.first?.type }
         // Multi-selected text shapes — the reset-all-translations action below targets this set.
-        let selectedTextShapeIds: Set<UUID> = selectedShapeIds.count > 1
-            ? Set(resolvedShapes.filter { selectedShapeIds.contains($0.id) && $0.type == .text }.map(\.id))
+        let selectedTextShapeIds: Set<UUID> = isMultiSelection
+            ? Set(selected.lazy.filter { $0.type == .text }.map(\.id))
             : []
-        // Hoisted so the per-shape `onMatchSelectedDeviceSizes` below doesn't re-walk
-        // the shape list for every shape on every render.
-        let allSelectedAreDevices: Bool = selectedShapeIds.count > 1 && {
-            var deviceCount = 0
-            for shape in resolvedShapes where selectedShapeIds.contains(shape.id) {
-                guard shape.type == .device else { return false }
-                deviceCount += 1
-            }
-            return deviceCount == selectedShapeIds.count
-        }()
+        let allSelectedAreDevices = isMultiSelection
+            && selected.count == selectedShapeIds.count
+            && selected.allSatisfy { $0.type == .device }
         ZStack(alignment: .topLeading) {
             EditorRasterizedBackgroundView(
                 row: row,

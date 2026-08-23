@@ -1,7 +1,9 @@
 import AppKit
 import Foundation
+import Testing
 
-func makeTestImage(width: Int, height: Int) -> NSImage {
+/// Shared bitmap boilerplate behind the image factories below.
+private func makeBitmapImage(width: Int, height: Int, draw: (NSRect) -> Void) -> NSImage {
     let bitmap = NSBitmapImageRep(
         bitmapDataPlanes: nil,
         pixelsWide: width,
@@ -17,8 +19,7 @@ func makeTestImage(width: Int, height: Int) -> NSImage {
     let ctx = NSGraphicsContext(bitmapImageRep: bitmap)!
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = ctx
-    NSColor.systemBlue.setFill()
-    NSRect(x: 0, y: 0, width: width, height: height).fill()
+    draw(NSRect(x: 0, y: 0, width: width, height: height))
     ctx.flushGraphics()
     NSGraphicsContext.restoreGraphicsState()
 
@@ -27,31 +28,30 @@ func makeTestImage(width: Int, height: Int) -> NSImage {
     return image
 }
 
+func makeTestImage(width: Int, height: Int) -> NSImage {
+    makeBitmapImage(width: width, height: height) { rect in
+        NSColor.systemBlue.setFill()
+        rect.fill()
+    }
+}
+
+/// Half opaque, half fully transparent — so a re-encode that flattens alpha onto white is
+/// distinguishable from one that preserves it.
+func makeTransparentTestImage(width: Int, height: Int) -> NSImage {
+    makeBitmapImage(width: width, height: height) { rect in
+        NSColor.clear.setFill()
+        rect.fill()
+        NSColor.systemPink.setFill()
+        NSRect(x: 0, y: 0, width: rect.width, height: rect.height / 2).fill()
+    }
+}
+
 /// A solid-color image, for tests that need a known fill (e.g. a white screenshot).
 func makeSolidImage(_ color: NSColor, width: Int, height: Int) -> NSImage {
-    let bitmap = NSBitmapImageRep(
-        bitmapDataPlanes: nil,
-        pixelsWide: width,
-        pixelsHigh: height,
-        bitsPerSample: 8,
-        samplesPerPixel: 4,
-        hasAlpha: true,
-        isPlanar: false,
-        colorSpaceName: .deviceRGB,
-        bytesPerRow: width * 4,
-        bitsPerPixel: 32
-    )!
-    let ctx = NSGraphicsContext(bitmapImageRep: bitmap)!
-    NSGraphicsContext.saveGraphicsState()
-    NSGraphicsContext.current = ctx
-    color.setFill()
-    NSRect(x: 0, y: 0, width: width, height: height).fill()
-    ctx.flushGraphics()
-    NSGraphicsContext.restoreGraphicsState()
-
-    let image = NSImage(size: NSSize(width: width, height: height))
-    image.addRepresentation(bitmap)
-    return image
+    makeBitmapImage(width: width, height: height) { rect in
+        color.setFill()
+        rect.fill()
+    }
 }
 
 @testable import Screenshot_Bro
@@ -174,4 +174,31 @@ func makeTemporaryDataDirectory(label: String = "screenshot-tests") -> URL {
         .appendingPathComponent(UUID().uuidString, isDirectory: true)
     try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     return directory
+}
+
+/// Counts main-actor turns, for tests asserting that a long operation actually yields.
+@MainActor
+final class MainActorTicker {
+    var ticks = 0
+}
+
+/// Fails if `work` runs inline on the main actor: queued main-actor work (progress updates, window
+/// dragging) only gets a slot if awaiting `work` actually suspends. This target builds with
+/// `NonisolatedNonsendingByDefault`, under which a plain `nonisolated async` inherits the caller's
+/// actor and never yields — the shape that shipped as a multi-second hang in 4.0 (108).
+@MainActor
+func expectSuspendsMainActor(
+    _ work: () async throws -> Void,
+    sourceLocation: SourceLocation = #_sourceLocation
+) async rethrows {
+    let ticker = MainActorTicker()
+    Task { @MainActor in ticker.ticks += 1 }
+    #expect(ticker.ticks == 0, sourceLocation: sourceLocation)
+    try await work()
+    #expect(ticker.ticks > 0, sourceLocation: sourceLocation)
+}
+
+/// Wraps plain images as import sources, the common case in batch-import tests.
+func importSources(_ images: [NSImage]) -> [ImageImportSource] {
+    images.map { ImageImportSource(image: $0) }
 }

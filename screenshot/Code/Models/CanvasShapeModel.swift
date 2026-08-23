@@ -428,6 +428,20 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
 
     var resolvedIsLocked: Bool { isLocked ?? false }
 
+    /// True when `ids` matches at least one shape and every match is locked. Lives on the model so
+    /// the Edit menu, the properties bar and the row canvas all answer identically — the canvas
+    /// must derive this from its own shapes rather than an `AppState` property that reads `rows`
+    /// and would register `\AppState.rows` in every row's tracking scope (SCREENSHOT-BRO-W).
+    static func areFullyLocked(_ shapes: [CanvasShapeModel], ids: Set<UUID>) -> Bool {
+        guard !ids.isEmpty else { return false }
+        var anyMatch = false
+        for shape in shapes where ids.contains(shape.id) {
+            if !shape.resolvedIsLocked { return false }
+            anyMatch = true
+        }
+        return anyMatch
+    }
+
     var resolvedFillStyle: BackgroundStyle {
         fillStyle ?? .color
     }

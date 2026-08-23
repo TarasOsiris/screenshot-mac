@@ -29,7 +29,7 @@ enum ExportImageEncoder {
             reportEncodeFailure("cgImage")
             return nil
         }
-        return NSBitmapImageRep(cgImage: cgImage).representation(using: .png, properties: [:])
+        return pngData(fromCGImage: cgImage)
         #else
         return image.pngData()
         #endif
@@ -58,6 +58,19 @@ enum ExportImageEncoder {
     @concurrent nonisolated static func opaquePNGDataOffMain(fromCGImage source: CGImage) async -> Data? {
         guard let opaque = opaqueCGImage(fromSource: source) else { return nil }
         return encode(cgImage: opaque, as: .png)
+    }
+
+    /// Alpha-preserving PNG encode from a bitmap already in hand. Callers that are themselves
+    /// off-actor use this directly; `pngDataOffMain` is the wrapper for main-actor callers.
+    nonisolated static func pngData(fromCGImage source: CGImage) -> Data? {
+        encode(cgImage: source, as: .png)
+    }
+
+    /// Alpha-preserving counterpart to `opaquePNGDataOffMain`, for paths that must not flatten
+    /// transparency (screenshot import — Remove Background depends on alpha surviving a re-save).
+    /// `@concurrent` is load-bearing — see the concurrency note in CLAUDE.md.
+    @concurrent nonisolated static func pngDataOffMain(fromCGImage source: CGImage) async -> Data? {
+        pngData(fromCGImage: source)
     }
 
     /// Encode JPEG from an opaque bitmap so transparent pixels are composited consistently.

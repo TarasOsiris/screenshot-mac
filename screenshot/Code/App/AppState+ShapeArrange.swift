@@ -169,14 +169,8 @@ extension AppState {
 
     /// True when every selected shape is locked. False if there's no selection.
     var isSelectionFullyLocked: Bool {
-        guard let rowIdx = selectedRowIndex, !selectedShapeIds.isEmpty else { return false }
-        let ids = selectedShapeIds
-        var anyMatch = false
-        for shape in rows[rowIdx].shapes where ids.contains(shape.id) {
-            if !shape.resolvedIsLocked { return false }
-            anyMatch = true
-        }
-        return anyMatch
+        guard let rowIdx = selectedRowIndex else { return false }
+        return CanvasShapeModel.areFullyLocked(rows[rowIdx].shapes, ids: selectedShapeIds)
     }
 
     /// True when at least one selected shape is locked.

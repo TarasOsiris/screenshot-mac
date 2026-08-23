@@ -11,31 +11,33 @@ extension MCPToolExecutor {
         let row: MCPRowSnapshot
     }
 
-    func importScreenshots(_ args: MCPArguments) throws -> CallTool.Result {
+    func importScreenshots(_ args: MCPArguments) async throws -> CallTool.Result {
         let rowIndex = try requireRowIndex(args)
         guard let paths = args.stringArray("paths"), !paths.isEmpty else {
             throw MCPToolError.missingArgument("paths")
         }
 
-        var images: [NSImage] = []
+        var sources: [ImageImportSource] = []
         var failures: [String] = []
         for path in paths {
+            // The NSImage is still needed for size/device detection, but it reads header metadata
+            // only — the source URL lets the import copy already-PNG bytes instead of re-encoding.
             if let image = NSImage(contentsOfFile: path) {
-                images.append(image)
+                sources.append(ImageImportSource(image: image, sourceURL: URL(fileURLWithPath: path)))
             } else {
                 failures.append("Could not load \(path)")
             }
         }
-        guard !images.isEmpty else {
+        guard !sources.isEmpty else {
             throw MCPToolError.unreadableFiles(
                 "No images could be loaded: \(failures.joined(separator: "; ")). \(MCPToolCatalog.screenshotStagingHint)"
             )
         }
 
         let rowId = state.rows[rowIndex].id
-        let imported = state.batchImportImages(images, into: rowId, maxTemplatesPerRow: args.int("max_templates_per_row"))
-        if imported < images.count {
-            failures.append("\(images.count - imported) image(s) were not imported (column cap reached?)")
+        let imported = await state.batchImportImages(sources, into: rowId, maxTemplatesPerRow: args.int("max_templates_per_row"))
+        if imported < sources.count {
+            failures.append("\(sources.count - imported) image(s) were not imported (column cap reached?)")
         }
 
         return try MCPResultEncoding.result(ImportResult(
