@@ -251,7 +251,10 @@ extension EditorRowView {
         let selected = resolvedShapes.filter { selectedShapeIds.contains($0.id) }
         let isMultiSelection = selectedShapeIds.count > 1
         let selectionFullyLocked = CanvasShapeModel.areFullyLocked(selected, ids: selectedShapeIds)
-        let allSelectedSameType = isMultiSelection && selected.allSatisfy { $0.type == selected.first?.type }
+        // `!selected.isEmpty` matters: `allSatisfy` is vacuously true when the selection lives in
+        // another row, where every one of these must read false.
+        let allSelectedSameType = isMultiSelection && !selected.isEmpty
+            && selected.allSatisfy { $0.type == selected.first?.type }
         // Multi-selected text shapes — the reset-all-translations action below targets this set.
         let selectedTextShapeIds: Set<UUID> = isMultiSelection
             ? Set(selected.lazy.filter { $0.type == .text }.map(\.id))
