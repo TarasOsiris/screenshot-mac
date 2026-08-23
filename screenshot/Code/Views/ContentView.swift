@@ -42,7 +42,6 @@ struct ContentView: View {
     #if os(macOS)
     @Environment(\.openWindow) var openWindow
     #endif
-    @Environment(\.undoManager) var undoManager
     @Environment(\.requestReview) var requestReview
     @AppStorage(AppSettingsKeys.exportFormat) var exportFormat = AppSettingsKeys.Default.exportFormat
     @AppStorage(AppSettingsKeys.exportCustomSuffix) var exportCustomSuffix = ""
@@ -507,8 +506,6 @@ struct ContentView: View {
         .onAppear {
             // `requestReview` is an environment value, so only a view can hand it over.
             exportFlow.requestReview = { requestReview() }
-            state.undoManager = undoManager
-            undoManager?.levelsOfUndo = 50
             #if os(iOS)
             if state.selectedRowId == nil, let firstRow = state.rows.first {
                 state.selectRow(firstRow.id)

@@ -77,7 +77,9 @@ class RichTextFormatController: ObservableObject {
     }
 
     private func registerFormattingUndo(restoring prior: NSAttributedString, shouldEncode: Bool, on textView: NSTextView) {
-        guard let undoManager = self.undoManager ?? textView.undoManager else { return }
+        // No fallback to `textView.undoManager`: that resolves up the responder chain to the
+        // window's manager, and this step's target is a text view SwiftUI will free.
+        guard let undoManager else { return }
         undoManager.registerUndo(withTarget: textView) { [weak self] tv in
             guard let storage = tv.textStorage else { return }
             let redoPrior = NSAttributedString(attributedString: storage)

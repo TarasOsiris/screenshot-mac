@@ -38,6 +38,15 @@ struct RichTextFormatUndoTests {
         return (textView, delegate)
     }
 
+    /// Mirrors production: `InlineTextEditor` hands the controller the session manager in
+    /// `makeNSView`/`updateNSView`, and formatting undo registers nowhere else.
+    private func makeController(_ textView: NSTextView, session: UndoManager) -> RichTextFormatController {
+        let controller = RichTextFormatController()
+        controller.textView = textView
+        controller.undoManager = session
+        return controller
+    }
+
     private func isBold(_ textView: NSTextView, at index: Int) -> Bool {
         guard let font = textView.textStorage?.attribute(.font, at: index, effectiveRange: nil) as? NSFont
         else { return false }
@@ -46,8 +55,7 @@ struct RichTextFormatUndoTests {
 
     @Test func toggleBoldIsUndoableAndRedoable() {
         let (textView, delegate) = makeTextView("Hello")
-        let controller = RichTextFormatController()
-        controller.textView = textView
+        let controller = makeController(textView, session: delegate.manager)
         textView.setSelectedRange(NSRange(location: 0, length: 5))
 
         #expect(isBold(textView, at: 0) == false)
@@ -65,8 +73,7 @@ struct RichTextFormatUndoTests {
 
     @Test func undoingFirstFormattingRestoresPlainTextEncodingState() {
         let (textView, delegate) = makeTextView("Hello")
-        let controller = RichTextFormatController()
-        controller.textView = textView
+        let controller = makeController(textView, session: delegate.manager)
         textView.setSelectedRange(NSRange(location: 0, length: 5))
 
         #expect(controller.shouldEncodeRichText == false)
@@ -82,8 +89,7 @@ struct RichTextFormatUndoTests {
 
     @Test func clearFormattingIsUndoable() {
         let (textView, delegate) = makeTextView("Hello")
-        let controller = RichTextFormatController()
-        controller.textView = textView
+        let controller = makeController(textView, session: delegate.manager)
         textView.setSelectedRange(NSRange(location: 0, length: 5))
 
         delegate.grouped { controller.applyAction(.toggleBold) }
@@ -108,8 +114,7 @@ struct RichTextFormatUndoTests {
     /// one reverts the color.
     @Test func redundantSameColorDoesNotAddUndoStep() {
         let (textView, delegate) = makeTextView("Hello")
-        let controller = RichTextFormatController()
-        controller.textView = textView
+        let controller = makeController(textView, session: delegate.manager)
         textView.setSelectedRange(NSRange(location: 0, length: 5))
 
         func colorAt0() -> NSColor? {

@@ -95,7 +95,6 @@ extension AppState {
 
     func switchToProject(_ id: UUID) {
         CrashReportingService.breadcrumb(.project, "Switching project", data: ["projects": projects.count])
-        undoManager?.removeAllActions()
         projectOpenTask?.cancel()
         beginProjectOpening()
         teardownActiveProject()
@@ -190,7 +189,6 @@ extension AppState {
     func resetProject(_ id: UUID) {
         guard id == activeProjectId else { return }
         CrashReportingService.breadcrumb(.project, "Reset project")
-        undoManager?.removeAllActions()
         teardownActiveProject()
         rows = [makeDefaultRow()]
         localeState = .default
@@ -202,7 +200,6 @@ extension AppState {
         guard id == activeProjectId else { return }
         CrashReportingService.breadcrumb(.project, "Reset project from template", data: ["template": template.id])
         AnalyticsService.capture(.templateApplied, [.templateId: template.id])
-        undoManager?.removeAllActions()
         projectOpenTask?.cancel()
         beginProjectOpening()
         teardownActiveProject()
@@ -236,10 +233,13 @@ extension AppState {
         saveIndex()
     }
 
-    /// Cancels in-flight work, unregisters fonts, and clears images for the current project.
+    /// Cancels in-flight work, drops undo steps, unregisters fonts, and clears images for the
+    /// current project. Undo belongs here: a step captured against the outgoing document would
+    /// restore it over the incoming one, and deleting the last project has nothing to clear it.
     private func teardownActiveProject() {
         textEdit.isActive = false
         cancelPendingDebounceTasks()
+        undoManager?.removeAllActions()
         imageLoadTask?.cancel()
         imageLoadTask = nil
         unregisterCustomFonts()

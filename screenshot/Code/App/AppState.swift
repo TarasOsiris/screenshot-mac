@@ -40,7 +40,21 @@ final class AppState {
 
     var customFonts: [String: CustomFont] { fonts.customFonts }
 
-    var undoManager: UndoManager?
+    /// Undo stack depth, and the reach `AppState+ImageResources` reaps orphaned files against.
+    static let undoDepth = 50
+
+    /// The document's own stack, deliberately *not* the window's `@Environment(\.undoManager)`:
+    /// AppKit field editors register typing undo there against text views SwiftUI frees, and
+    /// `registerUndo(withTarget:)` does not retain its target — ⌘Z then crashed in `undoNestedGroup`.
+    @ObservationIgnored var undoManager: UndoManager? = {
+        let manager = UndoManager()
+        manager.levelsOfUndo = AppState.undoDepth
+        // `registeringUndoStep` opens the group around every registration, so run-loop grouping
+        // would only merge steps meant to stay separate (a flushed continuous edit and the
+        // discrete action that flushed it).
+        manager.groupsByEvent = false
+        return manager
+    }()
     /// Monotonic count of undo steps pushed, so `AppState+ImageResources` can tell when an
     /// orphaned image file has fallen off the end of the stack and is safe to delete.
     @ObservationIgnored var undoStepGeneration = 0

@@ -7,14 +7,10 @@ import Testing
 @MainActor
 struct WithUndoTests {
 
-    /// `withUndo` only records a step when an `UndoManager` is attached. `groupsByEvent = false`
-    /// makes each registration independently undoable without spinning a run loop.
+    /// Drives the document's own manager, so the suite exercises the shipped configuration.
     private func makeUndoState() -> (AppState, URL, UndoManager) {
         let (state, tempDir) = makeTestState()
-        let um = UndoManager()
-        um.groupsByEvent = false
-        state.undoManager = um
-        return (state, tempDir, um)
+        return (state, tempDir, state.undoManager!)
     }
     private func cleanup(_ tempDir: URL) { cleanupTestState(tempDir) }
 
@@ -141,11 +137,12 @@ struct WithUndoTests {
         #expect(state.screenshotImages[firstFile] != nil)
     }
 
-    /// Without an UndoManager (headless/tests) nothing can restore the reference, so the old
+    /// Without an UndoManager (headless) nothing can restore the reference, so the old
     /// behaviour of deleting on the spot must be preserved.
     @Test func orphanedImageIsDeletedImmediatelyWithoutUndoManager() throws {
         let (state, tempDir) = makeTestState()
         defer { cleanup(tempDir) }
+        state.undoManager = nil
         let shapeId = try #require(state.rows.first?.shapes.first { $0.type == .device }?.id)
         let projectId = try #require(state.activeProjectId)
         let resourcesDir = PersistenceService.resourcesDir(projectId)
@@ -526,5 +523,20 @@ struct WithUndoTests {
         um.undo()
         #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.opacity == 1.0, "One undo reverts the nested edit")
         #expect(!um.canUndo, "Nested withUndo must not register a second step")
+    }
+
+    /// Regression: the document used to borrow the window's `@Environment(\.undoManager)`, so
+    /// AppKit field editors pushed steps whose unretained NSTextView target SwiftUI later freed
+    /// and ⌘Z crashed in `undoNestedGroup`. It supplies its own, configured, with no view wiring.
+    @Test func documentOwnsItsUndoManagerWithoutExternalWiring() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanup(tempDir) }
+        let um = try #require(state.undoManager, "AppState must supply its own UndoManager")
+        #expect(um.levelsOfUndo == AppState.undoDepth)
+        #expect(!um.groupsByEvent, "registeringUndoStep owns the grouping")
+
+        state.selectRow(state.rows.first!.id)
+        state.addShape(CanvasShapeModel(type: .rectangle, x: 10, y: 10, width: 20, height: 20))
+        #expect(um.canUndo)
     }
 }

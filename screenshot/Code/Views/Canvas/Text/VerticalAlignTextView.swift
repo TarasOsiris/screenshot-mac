@@ -5,6 +5,13 @@ final class VerticalAlignTextView: UITextView {
     var verticalAlignment: TextVerticalAlign = .center
     var glyphPadding: CGFloat = 0
 
+    /// Typing and formatting undo stay on a stack this view owns, never the responder chain's.
+    /// `registerUndo(withTarget:)` doesn't retain its target, so a step registered against this
+    /// view on a longer-lived manager would outlive it and crash a later undo.
+    private let editingUndoManager = UndoManager()
+
+    override var undoManager: UndoManager? { editingUndoManager }
+
     override func layoutSubviews() {
         super.layoutSubviews()
         layoutManager.ensureLayout(for: textContainer)

@@ -918,9 +918,7 @@ struct AppStateTests {
     @Test func undoClearsMoveContinuation() throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
-        let undoManager = UndoManager()
-        undoManager.groupsByEvent = false
-        state.undoManager = undoManager
+        let undoManager = state.undoManager!
         let rowId = state.rows.first!.id
         let ids = state.rows.first!.templates.map(\.id)
 

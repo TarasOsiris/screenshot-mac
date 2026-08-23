@@ -88,12 +88,9 @@ extension AppState {
         }
     }
 
-    /// `registerUndo` requires an open undo group. With the default `groupsByEvent`, the
-    /// run loop opens one per event (and `undo()`/`redo()` open one while replaying), so a
-    /// group is normally already active. But when none is — `groupsByEvent = false` with no
-    /// run loop (unit tests), where macOS throws "must begin a group before registering undo" —
-    /// open one around the registration. No-op whenever a group is already active, so
-    /// production grouping is unchanged.
+    /// `groupsByEvent` is off on the document's manager, so nothing opens the group
+    /// `registerUndo` requires. No-op when one is already open — `undo()`/`redo()` open one
+    /// while replaying, which is how a re-registered inverse joins the right stack.
     private func registeringUndoStep(on undoManager: UndoManager, _ body: () -> Void) {
         let needsGroup = undoManager.groupingLevel == 0
         if needsGroup { undoManager.beginUndoGrouping() }

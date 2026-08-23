@@ -57,17 +57,14 @@ extension AppState {
         }
     }
 
-    /// Undo depth assumed when the UndoManager reports unlimited (`levelsOfUndo == 0`).
-    /// The app sets 50 in `ContentView`; never reaping at all is what leaked in the first place.
-    private static let assumedUndoDepth = 50
-
     /// The generation past which an undo step has been pushed off the end of the stack, so
     /// nothing on it can restore a reference recorded at or before it. nil with no UndoManager.
     /// These cleanups run *inside* the mutation, so a file parked at generation P is restored by
     /// the step pushed at P+1, which survives until `depth` further pushes evict it.
     private var undoReachHorizon: Int? {
         guard let undoManager else { return nil }
-        let depth = undoManager.levelsOfUndo > 0 ? undoManager.levelsOfUndo : Self.assumedUndoDepth
+        // An injected manager may report unlimited (0); never reaping at all is what leaked.
+        let depth = undoManager.levelsOfUndo > 0 ? undoManager.levelsOfUndo : AppState.undoDepth
         return undoStepGeneration - depth - 1
     }
 
