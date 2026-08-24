@@ -72,6 +72,10 @@ nonisolated enum AnalyticsService {
         case purchaseRestored = "purchase_restored"
 
         case mcpServerToggled = "mcp_server_toggled"
+        case mcpServerStarted = "mcp_server_started"
+        case mcpServerStartFailed = "mcp_server_start_failed"
+        case mcpSessionStarted = "mcp_session_started"
+        case mcpSessionFinished = "mcp_session_finished"
         case mcpToolCalled = "mcp_tool_called"
     }
 
@@ -112,6 +116,9 @@ nonisolated enum AnalyticsService {
         case productId = "product_id"
         case tier
         case tool
+        case mcpSessionId = "mcp_session_id"
+        case toolCallCount = "tool_call_count"
+        case distinctToolCount = "distinct_tool_count"
         case enabled
         case ok
         case userCancelled = "user_cancelled"
@@ -125,6 +132,7 @@ nonisolated enum AnalyticsService {
         .appVersion, .appBuild, .firstVersion, .platform, .storage, .storeUserId,
         .source, .step, .lastStep, .templateId, .detectedDevice, .result,
         .format, .destination, .store, .trigger, .productId, .tier, .tool,
+        .mcpSessionId,
     ]
 
     // MARK: - Lifecycle

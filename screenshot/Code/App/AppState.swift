@@ -251,6 +251,10 @@ final class AppState {
         commitAllPendingEdits()
         flushPendingSaveTask()
         zoom.flushPendingPersist()
+        #if os(macOS)
+        // Must precede the flush below, or the summary misses the batch it would have ridden out on.
+        MCPSessionTracker.shared.closeCurrentSession()
+        #endif
         // Quit is the one point the queued batch would otherwise be lost with the process.
         AnalyticsService.flush()
     }

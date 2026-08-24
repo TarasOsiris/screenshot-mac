@@ -25,6 +25,24 @@ struct MCPToolExecutorTests {
         #expect(Set(tools.map(\.name)) == Set(MCPToolName.allCases.map(\.rawValue)))
     }
 
+    /// Uses the injection seam rather than `.shared`, so the session model is exercised end to end
+    /// without one test leaking a session into the next.
+    @Test func toolCallsOpenAndShareOneSession() async {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let sessions = MCPSessionTracker()
+        let executor = MCPToolExecutor(state: state, sessions: sessions)
+
+        #expect(sessions.currentSessionId == nil)
+        _ = await executor.call(name: "list_projects", arguments: nil)
+        let opened = sessions.currentSessionId
+        #expect(opened != nil)
+
+        // Even a rejected call belongs to the session — it is still an agent talking to us.
+        _ = await executor.call(name: "not_a_tool", arguments: nil)
+        #expect(sessions.currentSessionId == opened)
+    }
+
     @Test func getProjectReturnsRowsAndShapes() async {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }

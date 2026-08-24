@@ -17,6 +17,15 @@ final class MCPServerService {
         case failed(String)
     }
 
+    /// Why a start was attempted. The persisted enable flag means `autostart` is by far the most
+    /// common path, and it emitted nothing at all before — so adoption looked like whoever had
+    /// toggled the switch since we started measuring.
+    enum StartReason: String {
+        case autostart
+        case settings
+        case tokenRotation = "token_rotation"
+    }
+
     static let enabledDefaultsKey = "mcpServerEnabled"
     static let portDefaultsKey = "mcpServerPort"
     static let defaultPort: UInt16 = 8722
@@ -96,7 +105,7 @@ final class MCPServerService {
             // Full stop (not keepStatus) — start() early-returns while status is still .running.
             enqueue(.restarting) {
                 await self.stop()
-                await self.start(state: state)
+                await self.start(state: state, reason: .tokenRotation)
             }
         }
         #endif
@@ -122,7 +131,7 @@ final class MCPServerService {
         guard !PersistenceService.isRunningUnderXCTest else { return }
         guard isEnabled else { return }
         AppLogger.mcp.log("Autostart: server enabled, starting")
-        enqueue(.starting) { await self.start(state: state) }
+        enqueue(.starting) { await self.start(state: state, reason: .autostart) }
     }
 
     func setEnabled(_ enabled: Bool, state: AppState) {
@@ -133,7 +142,7 @@ final class MCPServerService {
         AnalyticsService.setProfile([.mcpEnabled: enabled])
         enqueue(enabled ? .starting : .stopping) {
             if enabled {
-                await self.start(state: state)
+                await self.start(state: state, reason: .settings)
             } else {
                 await self.stop()
             }
@@ -154,7 +163,7 @@ final class MCPServerService {
         }
     }
 
-    func start(state: AppState) async {
+    func start(state: AppState, reason: StartReason) async {
         if case .running = status {
             AppLogger.mcp.log("Start requested but already running")
             return
@@ -189,6 +198,10 @@ final class MCPServerService {
             // Clear the persisted intent so autostart doesn't re-attempt this doomed start on every
             // launch; isEnabled stays true in memory so the failure remains visible this session.
             UserDefaults.standard.set(false, forKey: Self.enabledDefaultsKey)
+            AnalyticsService.capture(.mcpServerStartFailed, [.source: reason.rawValue])
+            // Without this the person property keeps claiming MCP is on, for every install that
+            // ever hit a bound port.
+            AnalyticsService.setProfile([.mcpEnabled: false])
             return
         }
 
@@ -196,6 +209,8 @@ final class MCPServerService {
         status = .running(port: port)
         // Agent-driven edits look identical to the user's in the breadcrumb trail otherwise.
         CrashReportingService.setTag("true", for: "mcp")
+        AnalyticsService.capture(.mcpServerStarted, [.source: reason.rawValue])
+        AnalyticsService.setProfile([.mcpEnabled: true])
         AppLogger.mcp.log("MCP server running on 127.0.0.1:\(self.port)")
     }
 
@@ -214,6 +229,7 @@ final class MCPServerService {
             CrashReportingService.setTag(nil, for: "mcp")
         }
         if hadServer {
+            MCPSessionTracker.shared.closeCurrentSession()
             AppLogger.mcp.log("Stopped (port released)")
         }
     }
@@ -224,8 +240,12 @@ final class MCPServerService {
         let instructions = "Controls the Screenshot Bro app: create App Store / Google Play screenshot projects, edit rows and shapes, import screenshots into device frames, translate texts, render previews, and export final images. Call get_project first to discover ids."
         let capabilities = Server.Capabilities(tools: .init(listChanged: false))
         let server = Server(name: name, version: version, instructions: instructions, capabilities: capabilities)
-        await server.withMethodHandler(ListTools.self) { @Sendable _ in
-            ListTools.Result(tools: MCPToolCatalog.tools)
+        // Discovery counts as session activity: a session that only ever lists tools is a client
+        // that connected and did nothing, which is a funnel step in its own right.
+        let sessions = executor.sessions
+        await server.withMethodHandler(ListTools.self) { @Sendable [sessions] _ in
+            sessions.note(.toolsListed)
+            return ListTools.Result(tools: MCPToolCatalog.tools)
         }
         await server.withMethodHandler(CallTool.self) { @Sendable [executor] params in
             await executor.call(name: params.name, arguments: params.arguments)
@@ -234,8 +254,9 @@ final class MCPServerService {
         // The SDK's default initialize handler (registered inside start()) accepts only one
         // handshake per Server instance, but every client of the stateless transport re-sends
         // initialize — replace it post-start with an idempotent one so reconnects succeed.
-        await server.withMethodHandler(Initialize.self) { @Sendable params in
-            Initialize.Result(
+        await server.withMethodHandler(Initialize.self) { @Sendable [sessions] params in
+            sessions.note(.handshake)
+            return Initialize.Result(
                 protocolVersion: Version.supported.contains(params.protocolVersion) ? params.protocolVersion : Version.latest,
                 capabilities: capabilities,
                 serverInfo: .init(name: name, version: version),

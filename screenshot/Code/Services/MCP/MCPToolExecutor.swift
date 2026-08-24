@@ -9,21 +9,26 @@ import SwiftUI
 @MainActor
 final class MCPToolExecutor {
     let state: AppState
+    let sessions: MCPSessionTracker
 
-    init(state: AppState) {
+    init(state: AppState, sessions: MCPSessionTracker = .shared) {
         self.state = state
+        self.sessions = sessions
     }
 
     func call(name: String, arguments: [String: Value]?) async -> CallTool.Result {
         // Argument *keys* only — the values carry project text the user wrote.
         CrashReportingService.breadcrumb(.mcp, "Tool \(name)", data: ["args": (arguments?.keys.sorted() ?? [])])
+        // `name` is client-supplied; only a name that matched our catalog is safe to send onward.
+        let tool = MCPToolName(rawValue: name)
+        let sessionId = sessions.note(.toolCall(tool))
         do {
-            guard let tool = MCPToolName(rawValue: name) else {
+            guard let tool else {
                 throw MCPToolError.unknownTool(name)
             }
             let args = MCPArguments(arguments)
             let result = try await dispatch(tool, args)
-            AnalyticsService.capture(.mcpToolCalled, [.tool: tool.rawValue, .ok: true])
+            AnalyticsService.capture(.mcpToolCalled, [.tool: tool.rawValue, .ok: true, .mcpSessionId: sessionId])
             return result
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? "\(error)"
@@ -32,10 +37,10 @@ final class MCPToolExecutor {
             } else {
                 CrashReportingService.report(.mcpToolFailed, error: error, extra: ["tool": name], level: .warning)
             }
-            // `name` is client-supplied; only a name that matched our catalog is safe to send.
             AnalyticsService.capture(.mcpToolCalled, [
-                .tool: MCPToolName(rawValue: name)?.rawValue ?? "unknown",
+                .tool: tool?.rawValue ?? "unknown",
                 .ok: false,
+                .mcpSessionId: sessionId,
             ])
             return CallTool.Result(content: [.text("Error: \(message)")], isError: true)
         }

@@ -69,6 +69,8 @@ struct AnalyticsServiceTests {
         #expect(AnalyticsService.allowsProperty(key: "destination", value: "photos"))
         #expect(AnalyticsService.allowsProperty(key: "template_id", value: "gradient-hero"))
         #expect(AnalyticsService.allowsProperty(key: "store", value: "asc"))
+        // Ours, not the user's: a random per-session UUID that joins MCP tool calls to a session.
+        #expect(AnalyticsService.allowsProperty(key: "mcp_session_id", value: UUID().uuidString))
     }
 
     /// The privacy claim in `privacy.tsx` is that no project, row, locale or user text ever leaves
@@ -82,6 +84,8 @@ struct AnalyticsServiceTests {
     @Test func countKeysCannotCarryStrings() {
         #expect(AnalyticsService.allowsProperty(key: "locale_count", value: "de") == false)
         #expect(AnalyticsService.allowsProperty(key: "row_count", value: "three") == false)
+        #expect(AnalyticsService.allowsProperty(key: "tool_call_count", value: "five") == false)
+        #expect(AnalyticsService.allowsProperty(key: "distinct_tool_count", value: "three") == false)
     }
 
     /// The SDK's own context (`$os_name`, `$device_model`, `$locale`) is device metadata, not
