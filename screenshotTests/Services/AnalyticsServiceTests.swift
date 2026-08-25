@@ -37,11 +37,26 @@ struct AnalyticsServiceTests {
         #expect(AnalyticsService.isActive == false)
     }
 
-    /// `linkStoreUser` must not have written its "already aliased" marker: the SDK never started,
-    /// so no alias was actually sent, and persisting one would suppress the real alias forever.
+    /// `linkStoreUser` must not write its "already aliased" marker while the SDK is inactive: no
+    /// alias was actually sent, and persisting one would suppress the real alias forever.
+    ///
+    /// Compares the marker across the call instead of asserting it is absent. The tests run in the
+    /// host app, so `UserDefaults.standard` is the shipping app's own domain — on any machine where
+    /// the real app has run, RevenueCat has already written a genuine id there, and asserting `nil`
+    /// fails on the developer's machine while passing on a clean CI one.
     @Test func linkStoreUserLeavesNoMarkerWhenInactive() {
-        #expect(UserDefaults.standard.string(forKey: AppSettingsKeys.analyticsAliasedStoreUserId) == nil)
+        let key = AppSettingsKeys.analyticsAliasedStoreUserId
+        let before = UserDefaults.standard.string(forKey: key)
+
+        AnalyticsService.linkStoreUser(Self.unwritableMarker)
+
+        #expect(UserDefaults.standard.string(forKey: key) == before)
+        #expect(UserDefaults.standard.string(forKey: key) != Self.unwritableMarker)
     }
+
+    /// Distinct enough that finding it in real UserDefaults means the guard in `linkStoreUser`
+    /// stopped holding.
+    private static let unwritableMarker = "test-marker-must-never-persist"
 
     // MARK: - Wire contract
 
