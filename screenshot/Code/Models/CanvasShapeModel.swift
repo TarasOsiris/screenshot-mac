@@ -3,6 +3,7 @@ import SwiftUI
 
 struct CanvasShapeModel: Identifiable, Codable, Equatable {
     nonisolated static let deviceMinSize: CGFloat = 200
+    nonisolated static let shapeMinSize: CGFloat = 20
     nonisolated static let defaultDeviceBodyColor = Color.black
     nonisolated static let defaultDevice3DBodyColor = Color(white: 0x91 / 255.0)
     nonisolated static let defaultPixel9BodyColor = Color(white: 0xA9 / 255.0)
@@ -660,6 +661,46 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
             x = cx - width / 2
         }
         y = oldCenterY - height / 2
+    }
+
+    /// Device frames must scale uniformly or the bezel distorts.
+    var locksAspectRatioOnResize: Bool {
+        type == .device && (deviceFrameId != nil || deviceCategory != .invisible)
+    }
+
+    var minResizeSize: CGFloat { type == .device ? Self.deviceMinSize : Self.shapeMinSize }
+
+    /// Uniform scale that reaches `target` on the driving axis without letting either dimension
+    /// fall under `minResizeSize` — the floor moves both sides together so the ratio survives it.
+    /// Both resize paths run through here: the handle drag and the properties bar's typed size.
+    func aspectLockedSize(target: CGFloat, drivenBy driving: CGFloat) -> CGSize {
+        let minScale = max(minResizeSize / max(width, 1), minResizeSize / max(height, 1))
+        let scale = max(minScale, target / max(driving, 1))
+        return CGSize(width: max(width, 1) * scale, height: max(height, 1) * scale)
+    }
+
+    /// Unlike a handle drag these pin the top-left, because `x`/`y` are their own fields in the
+    /// properties bar.
+    mutating func applyManualWidth(_ newWidth: CGFloat) {
+        guard locksAspectRatioOnResize else {
+            width = max(minResizeSize, newWidth)
+            return
+        }
+        applyAspectLocked(target: newWidth, drivenBy: width)
+    }
+
+    mutating func applyManualHeight(_ newHeight: CGFloat) {
+        guard locksAspectRatioOnResize else {
+            height = max(minResizeSize, newHeight)
+            return
+        }
+        applyAspectLocked(target: newHeight, drivenBy: height)
+    }
+
+    private mutating func applyAspectLocked(target: CGFloat, drivenBy driving: CGFloat) {
+        let size = aspectLockedSize(target: target, drivenBy: driving)
+        width = size.width
+        height = size.height
     }
 
     /// Shrinks the shape to `maxWidth` when it overflows, preserving aspect ratio and current center.

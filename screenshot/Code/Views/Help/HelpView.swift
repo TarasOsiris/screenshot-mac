@@ -453,6 +453,7 @@ extension HelpSection {
                 .bullet("SVGs render with a configurable color override and scale crisply at any export resolution."),
                 .bullet("During resize, rendering is debounced for performance — release the mouse to see the final crisp output."),
                 .heading("Common properties"),
+                .bullet("**X**, **Y**, **W**, and **H** at the head of the properties bar set position and size by hand. X is measured from the left edge of the template the shape sits in. Every device except an invisible frame keeps its proportions, so typing a width adjusts the height to match."),
                 .bullet("Color, opacity, rotation (in degrees, editable as text), border radius, outline (color + width), and **Clip to Frame** (clips anything that overflows the template)."),
                 .bullet("**Drop shadow** — enable it in the properties bar and pick **Soft**, **Medium**, or **Strong**, or set color, radius, offset, and opacity by hand. It works on a multi-shape selection too."),
                 .bullet("**Lock** (**⌘L**) freezes a shape: clicks and drags pass straight through it. A locked shape's only right-click item is **Unlock**."),

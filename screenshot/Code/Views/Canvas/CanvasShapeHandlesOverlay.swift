@@ -188,7 +188,7 @@ struct CanvasShapeHandlesOverlay: View {
                     let effectiveScale = displayScale * zoom
                     let tx = value.translation.width / effectiveScale
                     let ty = value.translation.height / effectiveScale
-                    let lockAspectRatio = PlatformModifiers.shiftDown || (shape.type == .device && (shape.deviceFrameId != nil || shape.deviceCategory != .invisible))
+                    let lockAspectRatio = PlatformModifiers.shiftDown || shape.locksAspectRatioOnResize
                     resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
                 }
                 .onEnded { _ in
@@ -206,7 +206,7 @@ struct CanvasShapeHandlesOverlay: View {
     }
 
     private func computeResize(edge: ResizeEdge, tx: CGFloat, ty: CGFloat, lockAspectRatio: Bool) -> ResizeState {
-        let minSize: CGFloat = shape.type == .device ? CanvasShapeModel.deviceMinSize : 20
+        let minSize = shape.minResizeSize
         let cosA = cos(rotationRadians)
         let sinA = sin(rotationRadians)
         let localTx = tx * cosA + ty * sinA
@@ -238,26 +238,22 @@ struct CanvasShapeHandlesOverlay: View {
         }
 
         if lockAspectRatio {
-            let baseW = max(shape.width, 1)
-            let baseH = max(shape.height, 1)
-            let minScale = max(minSize / baseW, minSize / baseH)
-
-            let widthScale = newW / baseW
-            let heightScale = newH / baseH
-
-            let scale: CGFloat
+            let drivesWidth: Bool
             switch edge {
             case .left, .right:
-                scale = max(minScale, widthScale)
+                drivesWidth = true
             case .top, .bottom:
-                scale = max(minScale, heightScale)
+                drivesWidth = false
             case .topLeft, .topRight, .bottomLeft, .bottomRight:
-                let useWidth = abs(widthScale - 1) >= abs(heightScale - 1)
-                scale = max(minScale, useWidth ? widthScale : heightScale)
+                let widthScale = newW / max(shape.width, 1)
+                let heightScale = newH / max(shape.height, 1)
+                drivesWidth = abs(widthScale - 1) >= abs(heightScale - 1)
             }
-
-            newW = baseW * scale
-            newH = baseH * scale
+            let locked = drivesWidth
+                ? shape.aspectLockedSize(target: newW, drivenBy: shape.width)
+                : shape.aspectLockedSize(target: newH, drivenBy: shape.height)
+            newW = locked.width
+            newH = locked.height
         }
 
         let anchor = edge.anchorPoint(width: shape.width, height: shape.height)

@@ -569,4 +569,90 @@ struct CanvasShapeModelTests {
             try JSONDecoder().decode(CodableColor.self, from: Data("\"FF8000\"".utf8))
         }
     }
+
+    // MARK: - Manual geometry entry (properties-bar W/H fields)
+
+    @Test func locksAspectRatioOnlyForFramedDevices() {
+        var device = CanvasShapeModel(type: .device, x: 0, y: 0, width: 600, height: 1200)
+        device.deviceCategory = .iphone
+        #expect(device.locksAspectRatioOnResize)
+
+        device.deviceCategory = .invisible
+        #expect(!device.locksAspectRatioOnResize, "Invisible frames have no bezel to distort")
+
+        device.deviceFrameId = "iphone17pro"
+        #expect(device.locksAspectRatioOnResize, "A real catalog frame locks even when the category is invisible")
+
+        for type in ShapeType.allCases where type != .device {
+            let shape = CanvasShapeModel(type: type, x: 0, y: 0, width: 100, height: 100)
+            #expect(!shape.locksAspectRatioOnResize, "\(type) should resize freely")
+        }
+    }
+
+    @Test func applyManualWidthLeavesOtherGeometryAlone() {
+        var shape = CanvasShapeModel(type: .rectangle, x: 100, y: 200, width: 300, height: 400)
+        shape.applyManualWidth(500)
+        #expect(shape.width == 500)
+        #expect(shape.height == 400, "An unlocked shape's height must not follow its width")
+        #expect(shape.x == 100, "Typed sizing pins the top-left; x/y are their own fields")
+        #expect(shape.y == 200)
+    }
+
+    @Test func applyManualHeightLeavesOtherGeometryAlone() {
+        var shape = CanvasShapeModel(type: .rectangle, x: 100, y: 200, width: 300, height: 400)
+        shape.applyManualHeight(50)
+        #expect(shape.height == 50)
+        #expect(shape.width == 300)
+        #expect(shape.x == 100)
+        #expect(shape.y == 200)
+    }
+
+    @Test func applyManualSizeClampsToMinimum() {
+        var rect = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 300, height: 400)
+        rect.applyManualWidth(-40)
+        #expect(rect.width == 20)
+        rect.applyManualHeight(3)
+        #expect(rect.height == 20)
+    }
+
+    @Test func applyManualWidthScalesFramedDeviceProportionally() {
+        var device = CanvasShapeModel(type: .device, x: 100, y: 50, width: 600, height: 1200)
+        device.deviceCategory = .iphone
+        device.applyManualWidth(300)
+
+        #expect(abs(device.width - 300) < 0.001)
+        #expect(abs(device.height - 600) < 0.001, "Halving the width must halve the height")
+        #expect(device.x == 100, "Top-left stays pinned")
+        #expect(device.y == 50)
+    }
+
+    @Test func applyManualHeightScalesFramedDeviceProportionally() {
+        var device = CanvasShapeModel(type: .device, x: 0, y: 0, width: 600, height: 1200)
+        device.deviceCategory = .iphone
+        device.applyManualHeight(2400)
+
+        #expect(abs(device.width - 1200) < 0.001)
+        #expect(abs(device.height - 2400) < 0.001)
+    }
+
+    /// The min floor must move both sides together, or clamping would silently squash the bezel.
+    @Test func lockedAspectClampKeepsRatioIntact() {
+        var device = CanvasShapeModel(type: .device, x: 0, y: 0, width: 600, height: 1200)
+        device.deviceCategory = .iphone
+        let ratio = device.width / device.height
+
+        device.applyManualWidth(10)
+
+        #expect(device.width >= CanvasShapeModel.deviceMinSize)
+        #expect(device.height >= CanvasShapeModel.deviceMinSize)
+        #expect(abs(device.width / device.height - ratio) < 0.001, "Clamping must not distort the frame")
+    }
+
+    @Test func invisibleDeviceResizesFreely() {
+        var device = CanvasShapeModel(type: .device, x: 0, y: 0, width: 600, height: 1200)
+        device.deviceCategory = .invisible
+        device.applyManualWidth(300)
+        #expect(device.width == 300)
+        #expect(device.height == 1200, "An invisible frame has no aspect to preserve")
+    }
 }

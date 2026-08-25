@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 #if os(macOS)
 let propertiesNumericFieldWidth: CGFloat = 44
+let propertiesGeometryFieldWidth: CGFloat = 52
 let propertiesOpacityFieldWidth: CGFloat = 40
 let propertiesFontFieldWidth: CGFloat = 48
 let propertiesTrackingValueWidth: CGFloat = 32
@@ -10,6 +11,7 @@ let propertiesSliderValueWidth: CGFloat = 28
 let propertiesStepperValueWidth: CGFloat = 20
 #else
 let propertiesNumericFieldWidth: CGFloat = 56
+let propertiesGeometryFieldWidth: CGFloat = 64
 let propertiesOpacityFieldWidth: CGFloat = 52
 let propertiesFontFieldWidth: CGFloat = 56
 let propertiesTrackingValueWidth: CGFloat = 40
@@ -38,8 +40,16 @@ struct ShapePropertiesSingleSelectionBar: View {
     @State var isOpacityFieldActive = false
     @State var editingRotation: String = ""
     @State var isRotationFieldActive = false
+    @State var editingX: String = ""
+    @State var isXFieldActive = false
+    @State var editingY: String = ""
+    @State var isYFieldActive = false
+    @State var editingWidth: String = ""
+    @State var isWidthFieldActive = false
+    @State var editingHeight: String = ""
+    @State var isHeightFieldActive = false
     @FocusState var focusedField: Field?
-    enum Field: Hashable { case opacity, fontSize, lineHeight, rotation }
+    enum Field: Hashable { case opacity, fontSize, lineHeight, rotation, x, y, width, height }
     static let lineHeightPresets: [Int] = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 175, 200]
 
     var rowIndex: Int? { state.selectedRowIndex }
@@ -101,7 +111,9 @@ struct ShapePropertiesSingleSelectionBar: View {
             HStack(spacing: 0) {
                 ScrollView(.horizontal) {
                     HStack(spacing: 8) {
-                        ShapePropertiesBadge(shape: shape)
+                        ShapePropertiesBadge(type: shape.type)
+
+                        geometrySection(shape: shape, shapeId: shapeId)
 
                         if shape.type == .device {
                             DeviceShapeControls(

@@ -20,7 +20,7 @@ enum ShapePropertiesSectionLayout {
 }
 
 extension View {
-    /// Accent capsule shared by the single-selection dimension badge and the multi-selection
+    /// Accent capsule shared by the single-selection type badge and the multi-selection
     /// count badge so both read identically.
     func propertiesBadgeCapsule() -> some View {
         padding(.horizontal, ShapePropertiesSectionLayout.badgeHorizontalPadding)
@@ -153,18 +153,12 @@ struct PopoverSliderField: View {
 }
 
 struct ShapePropertiesBadge: View {
-    let shape: CanvasShapeModel
+    let type: ShapeType
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: shape.type.icon)
-                .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .medium))
-            Text(verbatim: "\(Int(shape.width))×\(Int(shape.height))")
-                .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
-                .foregroundStyle(.secondary)
-                .transaction { $0.animation = nil }
-        }
-        .propertiesBadgeCapsule()
+        Image(systemName: type.icon)
+            .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .medium))
+            .propertiesBadgeCapsule()
     }
 }
 

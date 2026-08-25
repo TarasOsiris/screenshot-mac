@@ -4843,6 +4843,46 @@
     "**Watch** — Apple Watch Ultra 3 frame variants." : {
 
     },
+    "**X**, **Y**, **W**, and **H** at the head of the properties bar set position and size by hand. X is measured from the left edge of the template the shape sits in. Every device except an invisible frame keeps its proportions, so typing a width adjusts the height to match." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**X**, **Y**, **W** und **H** am Anfang der Eigenschaftenleiste legen Position und Größe von Hand fest. X wird ab dem linken Rand der Vorlage gemessen, in der die Form liegt. Jedes Gerät außer einem unsichtbaren Rahmen behält seine Proportionen: Geben Sie eine Breite ein, wird die Höhe passend angepasst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**X**, **Y**, **W** et **H** en tête de la barre de propriétés définissent la position et la taille à la main. X est mesuré depuis le bord gauche du modèle dans lequel se trouve la forme. Tout appareil, sauf avec un cadre invisible, conserve ses proportions : si vous saisissez une largeur, la hauteur s'ajuste en conséquence."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロパティ バーの先頭にある **X**、**Y**、**W**、**H** で位置とサイズを手入力できます。X は、シェイプが置かれているテンプレートの左端からの距離です。非表示フレーム以外のデバイスは縦横比を保つため、幅を入力すると高さも合わせて調整されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "속성 표시줄 맨 앞의 **X**, **Y**, **W**, **H**로 위치와 크기를 직접 입력합니다. X는 도형이 놓인 템플릿의 왼쪽 가장자리를 기준으로 측정됩니다. 보이지 않는 프레임을 제외한 모든 기기는 비율을 유지하므로 너비를 입력하면 높이도 함께 조정됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**X**, **Y**, **W** e **H** no início da barra de propriedades definem posição e tamanho manualmente. X é medido a partir da borda esquerda do modelo em que a forma está. Todo dispositivo, exceto com moldura invisível, mantém suas proporções, então digitar uma largura ajusta a altura correspondente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "属性栏最前面的 **X**、**Y**、**W**、**H** 可手动设置位置和尺寸。X 从形状所在模板的左边缘开始测量。除隐藏边框外，所有设备都会保持比例，因此输入宽度后高度会随之调整。"
+          }
+        }
+      }
+    },
     "#%lld" : {
 
     },

@@ -213,8 +213,17 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         hiddenShapeTypes.isEmpty ? shapes : shapes.filter { !hiddenShapeTypes.contains($0.type) }
     }
 
+    func templateOriginX(at index: Int) -> CGFloat {
+        CGFloat(index) * templateWidth
+    }
+
+    /// Left edge of the template a shape belongs to — the origin its properties-bar X is relative to.
+    func templateOriginX(for shape: CanvasShapeModel) -> CGFloat {
+        templateOriginX(at: owningTemplateIndex(for: shape))
+    }
+
     func templateCenterX(at index: Int) -> CGFloat {
-        CGFloat(index) * templateWidth + templateWidth / 2
+        templateOriginX(at: index) + templateWidth / 2
     }
 
     var svgMaxDimension: CGFloat {
@@ -229,7 +238,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
     }
 
     func visibleShapes(forTemplateAt index: Int) -> [CanvasShapeModel] {
-        let tLeft = CGFloat(index) * templateWidth
+        let tLeft = templateOriginX(at: index)
         let tRight = tLeft + templateWidth
         return activeShapes.filter { s in
             // Shapes clipped to their template only appear in the owning template
@@ -253,7 +262,7 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
     func spansMultipleTemplates(_ shape: CanvasShapeModel) -> Bool {
         if shape.clipToTemplate == true { return false }
         guard shape.width > 0 else { return false }
-        let tLeft = CGFloat(owningTemplateIndex(for: shape)) * templateWidth
+        let tLeft = templateOriginX(for: shape)
         let outside = max(0, tLeft - shape.x) + max(0, shape.x + shape.width - (tLeft + templateWidth))
         return outside / shape.width > Self.templateSpanThreshold
     }
