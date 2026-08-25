@@ -169,7 +169,7 @@ struct InspectorPanel: View {
     private func customSizeFields(rowId: UUID) -> some View {
         Grid(alignment: .leading, horizontalSpacing: 6, verticalSpacing: 4) {
             GridRow {
-                Text("W")
+                Text(verbatim: "W")
                     .frame(width: sizeFieldLabelWidth, alignment: .trailing)
                     .foregroundStyle(.secondary)
                 TextField("", text: $customWidth)
@@ -177,7 +177,7 @@ struct InspectorPanel: View {
                     .multilineTextAlignment(.trailing)
                     .integerKeyboard()
                     .onSubmit { applyCustomSize(rowId: rowId) }
-                Text("H")
+                Text(verbatim: "H")
                     .frame(width: sizeFieldLabelWidth, alignment: .trailing)
                     .foregroundStyle(.secondary)
                 TextField("", text: $customHeight)

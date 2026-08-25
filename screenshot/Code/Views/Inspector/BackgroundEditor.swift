@@ -436,15 +436,17 @@ struct BackgroundImageEditor: View {
         .opacity(hasImage ? 1 : UIMetrics.Opacity.disabled)
     }
 
+    /// `axis` is notation, not prose — the catalog's single-letter keys machine-translate to
+    /// words ("Y" → "Oui"), so it stays a plain String rendered verbatim.
     private func axisSlider(
-        _ axis: LocalizedStringKey,
+        _ axis: String,
         value: Binding<Double>,
         range: ClosedRange<Double>,
         formatLabel: (() -> String)?,
         valueWidth: CGFloat
     ) -> some View {
         HStack(spacing: 4) {
-            Text(axis)
+            Text(verbatim: axis)
                 .font(EditorFont.hint.weight(.medium))
                 .foregroundStyle(.secondary)
                 .frame(width: axisLabelWidth)
