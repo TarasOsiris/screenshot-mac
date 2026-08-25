@@ -531,6 +531,7 @@ extension HelpSection {
             blocks: [
                 .heading("Selection"),
                 .bullet("Click a shape to select it. **Shift-click** to add to or remove from the selection."),
+                .bullet("**Drag from empty canvas** to sweep a selection box over several shapes at once. Hold **⇧** as you start the drag to add them to the current selection. Locked shapes are skipped."),
                 .bullet("**⌘A** selects every shape in the active row."),
                 .bullet("**Esc** deselects shapes; press again to deselect the row."),
                 .bullet("Click empty canvas inside a row to select the row itself and reveal row-level inspector controls."),

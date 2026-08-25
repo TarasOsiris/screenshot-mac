@@ -101,6 +101,10 @@ enum UIMetrics {
         static let hairlineOverlay: Double = 0.15
         /// Dimming applied to disabled rows.
         static let disabled: Double = 0.45
+        /// Selection chrome for a locked shape — muted so it reads as "not yours to drag".
+        static let lockedChrome: Double = 0.7
+        /// Filled disc behind the lock badge on a locked shape's selection chrome.
+        static let lockedBadgeFill: Double = 0.85
         /// Filled background of an active accent badge.
         static let accentBadge: Double = 0.14
         /// Pressed state for accent buttons.

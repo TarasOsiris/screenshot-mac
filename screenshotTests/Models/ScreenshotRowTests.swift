@@ -91,6 +91,105 @@ struct ScreenshotRowTests {
         #expect(row.owningTemplateIndex(for: s2) == 0, "Clamped to first template")
     }
 
+    // MARK: - Marquee hit-testing
+
+    private func marqueeRow() -> ScreenshotRow {
+        ScreenshotRow(
+            templates: [ScreenshotTemplate(), ScreenshotTemplate()],
+            templateWidth: 1000,
+            templateHeight: 2000
+        )
+    }
+
+    @Test func marqueeSelectsFullyCoveredShape() {
+        let row = marqueeRow()
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        let hits = row.shapeIds(intersecting: CGRect(x: 0, y: 0, width: 400, height: 400), among: [shape])
+        #expect(hits == [shape.id])
+    }
+
+    @Test func marqueeMissesDisjointShape() {
+        let row = marqueeRow()
+        let shape = CanvasShapeModel(type: .rectangle, x: 800, y: 800, width: 50, height: 50)
+        let hits = row.shapeIds(intersecting: CGRect(x: 0, y: 0, width: 400, height: 400), among: [shape])
+        #expect(hits.isEmpty)
+    }
+
+    @Test func marqueeSelectsPartiallyOverlappedShape() {
+        let row = marqueeRow()
+        // Only the shape's top-left corner falls inside the band — Sketch semantics select it.
+        let shape = CanvasShapeModel(type: .rectangle, x: 380, y: 380, width: 200, height: 200)
+        let hits = row.shapeIds(intersecting: CGRect(x: 0, y: 0, width: 400, height: 400), among: [shape])
+        #expect(hits == [shape.id], "Intersection, not containment")
+    }
+
+    @Test func marqueeSelectsViaRotatedBounds() {
+        let row = marqueeRow()
+        // Unrotated this sits at x 300...340; rotated 45° its AABB widens well past 400.
+        let shape = CanvasShapeModel(type: .rectangle, x: 300, y: 100, width: 40, height: 400, rotation: 45)
+        let band = CGRect(x: 420, y: 280, width: 20, height: 20)
+        #expect(row.shapeIds(intersecting: band, among: [shape]) == [shape.id])
+
+        var unrotated = shape
+        unrotated.rotation = 0
+        #expect(row.shapeIds(intersecting: band, among: [unrotated]).isEmpty, "Same band misses it unrotated")
+    }
+
+    @Test func marqueeSkipsLockedShapes() {
+        let row = marqueeRow()
+        let free = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        var locked = CanvasShapeModel(type: .rectangle, x: 200, y: 100, width: 50, height: 50)
+        locked.isLocked = true
+        let hits = row.shapeIds(intersecting: CGRect(x: 0, y: 0, width: 400, height: 400), among: [free, locked])
+        #expect(hits == [free.id])
+    }
+
+    @Test func marqueeIgnoresClippedShapeOutsideItsColumn() {
+        let row = marqueeRow()
+        // Centered in the second column, but wide enough that its AABB reaches back into the
+        // first — where it isn't drawn, because it clips to its own template.
+        var clipped = CanvasShapeModel(type: .rectangle, x: 600, y: 100, width: 900, height: 100)
+        clipped.clipToTemplate = true
+        let bandOverFirstColumn = CGRect(x: 620, y: 120, width: 40, height: 40)
+        #expect(row.shapeIds(intersecting: bandOverFirstColumn, among: [clipped]).isEmpty)
+
+        let bandOverOwnColumn = CGRect(x: 1100, y: 120, width: 40, height: 40)
+        #expect(row.shapeIds(intersecting: bandOverOwnColumn, among: [clipped]) == [clipped.id])
+    }
+
+    @Test func marqueeSelectsWithZeroHeightBand() {
+        let row = marqueeRow()
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        // A perfectly horizontal sweep. CGRect.intersects would report false here.
+        let hits = row.shapeIds(intersecting: CGRect(x: 0, y: 120, width: 400, height: 0), among: [shape])
+        #expect(hits == [shape.id])
+    }
+
+    @Test func containsShapeDetectsPressOnAShape() {
+        let row = marqueeRow()
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        #expect(row.containsShape(at: CGPoint(x: 120, y: 120), among: [shape]))
+        #expect(!row.containsShape(at: CGPoint(x: 400, y: 400), among: [shape]))
+    }
+
+    @Test func containsShapeIncludesLockedShapes() {
+        let row = marqueeRow()
+        var locked = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        locked.isLocked = true
+        // Unlike the sweep, this must see locked shapes — a locked shape still swallows the press.
+        #expect(row.containsShape(at: CGPoint(x: 120, y: 120), among: [locked]))
+        #expect(row.shapeIds(intersecting: CGRect(x: 110, y: 110, width: 20, height: 20), among: [locked]).isEmpty)
+    }
+
+    @Test func containsShapeRespectsTemplateClipping() {
+        let row = marqueeRow()
+        var clipped = CanvasShapeModel(type: .rectangle, x: 600, y: 100, width: 900, height: 100)
+        clipped.clipToTemplate = true
+        // Owns column 1, so the part of its box reaching back into column 0 isn't on screen.
+        #expect(!row.containsShape(at: CGPoint(x: 650, y: 150), among: [clipped]))
+        #expect(row.containsShape(at: CGPoint(x: 1100, y: 150), among: [clipped]))
+    }
+
     // MARK: - Active shapes
 
     @Test func activeShapesFiltersDevicesWhenHidden() {

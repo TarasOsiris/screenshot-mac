@@ -58,6 +58,25 @@ extension AppState {
         }
     }
 
+    /// Bulk selection — the marquee's commit. Narrows `ids` to shapes that actually exist in the
+    /// row, so the `selection ⊆ row.shapes` invariant `normalizeSelection` enforces holds by
+    /// construction rather than by trusting the caller.
+    func selectShapes(_ ids: Set<UUID>, in rowId: UUID) {
+        finishContinuousEditIfNeeded()
+        guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }) else { return }
+        if textEdit.isActive {
+            textEdit.isActive = false
+        }
+        let present = ids.intersection(rows[rowIdx].shapes.lazy.map(\.id))
+        if selectedRowId != rowId {
+            selectedRowId = rowId
+            visibleCanvasModelCenter = nil
+        }
+        if selectedShapeIds != present {
+            selectedShapeIds = present
+        }
+    }
+
     func selectAllShapesInRow() {
         finishContinuousEditIfNeeded()
         guard let rowIdx = selectedRowIndex else { return }

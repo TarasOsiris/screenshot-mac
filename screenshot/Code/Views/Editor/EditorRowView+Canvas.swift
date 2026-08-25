@@ -76,6 +76,13 @@ extension EditorRowView {
                                     height: row.displayHeight(zoom: zoom),
                                     alignment: .topLeading
                                 )
+
+                                CanvasMarqueeLayer(dragSession: dragSession, displayScale: ds)
+                                    .frame(
+                                        width: row.totalDisplayWidth(zoom: zoom),
+                                        height: row.displayHeight(zoom: zoom),
+                                        alignment: .topLeading
+                                    )
                             }
 
                             AddTemplateButton(width: row.displayWidth(zoom: zoom), height: row.displayHeight(zoom: zoom)) {
@@ -547,10 +554,23 @@ extension EditorRowView {
         )
         .clipped()
         .contentShape(Rectangle())
-        .onTapGesture {
-            guard !state.viewMode.isViewMode else { return }
-            tapSelectRow()
-        }
+        // Owns both the empty-canvas click (select the row) and drag-to-select; see the modifier
+        // for why they must share one gesture.
+        .canvasBackgroundGesture(
+            row: row,
+            shapes: resolvedShapes,
+            displayScale: ds,
+            dragSession: dragSession,
+            existingSelection: selectedShapeIds,
+            isEnabled: !state.viewMode.isViewMode,
+            onSelect: { ids in
+                // A sweep is a fresh interaction, like the click it replaces: hand focus back from
+                // any field editor so Delete and the arrow keys reach the canvas.
+                resignFieldEditor()
+                state.selectShapes(ids, in: row.id)
+            },
+            onTapEmptyCanvas: { tapSelectRow() }
+        )
         .onContinuousHover { phase in
             switch phase {
             case .active(let location):

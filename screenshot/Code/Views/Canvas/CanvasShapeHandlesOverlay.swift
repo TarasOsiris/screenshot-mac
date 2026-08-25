@@ -4,59 +4,33 @@ struct CanvasShapeHandlesOverlay: View {
     let shape: CanvasShapeModel
     let displayScale: CGFloat
     let zoom: CGFloat
-    let displayX: CGFloat
-    let displayY: CGFloat
-    let displayW: CGFloat
-    let displayH: CGFloat
+    let displayRect: CGRect
     let currentRotation: Double
     let handleDiameter: CGFloat
     @Binding var rotationDelta: Double
     @Binding var resizeState: ResizeState?
     let onUpdate: (CanvasShapeModel) -> Void
 
+    /// Only `CanvasSelectionLayer` builds this, and only for a single selection — see the
+    /// rationale for handle-free multi-selection chrome there.
     var body: some View {
-        selectionOverlay
+        ShapeSelectionOutline(
+            isLocked: shape.resolvedIsLocked,
+            displayRect: displayRect,
+            rotation: currentRotation,
+            zoom: zoom
+        )
         if !shape.resolvedIsLocked {
             resizeHandles
-        } else {
-            lockedBadge
         }
     }
+
+    private var displayX: CGFloat { displayRect.minX }
+    private var displayY: CGFloat { displayRect.minY }
+    private var displayW: CGFloat { displayRect.width }
+    private var displayH: CGFloat { displayRect.height }
 
     private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
-
-    private var selectionOverlay: some View {
-        let locked = shape.resolvedIsLocked
-        return Rectangle()
-            .strokeBorder(
-                locked ? Color.gray.opacity(0.7) : Color.accentColor.opacity(1.0),
-                lineWidth: (locked ? 1.0 : 1.5) / zoom
-            )
-            .frame(width: displayW, height: displayH)
-            .rotationEffect(.degrees(currentRotation))
-            .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
-            .allowsHitTesting(false)
-    }
-
-    private var lockedBadge: some View {
-        let badgeSize: CGFloat = 14 / zoom
-        let inset: CGFloat = 4 / zoom
-        return ZStack(alignment: .topTrailing) {
-            Color.clear
-            Image(systemName: "lock.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(width: badgeSize, height: badgeSize)
-                .foregroundStyle(Color.white)
-                .padding(3 / zoom)
-                .background(Color.gray.opacity(0.85), in: Circle())
-                .padding(inset)
-        }
-        .frame(width: displayW, height: displayH)
-        .rotationEffect(.degrees(currentRotation))
-        .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
-        .allowsHitTesting(false)
-    }
 
     private var resizeHandles: some View {
         ZStack {

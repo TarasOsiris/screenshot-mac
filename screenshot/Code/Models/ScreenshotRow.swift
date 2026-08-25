@@ -250,6 +250,52 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         }
     }
 
+    /// Ids of the shapes a marquee `rect` (model space) touches. Sketch semantics: a shape the
+    /// band merely grazes is selected, and locked shapes are never swept up — group drag, nudge
+    /// and delete all skip them, so including them would report a count larger than what moves.
+    /// Takes the candidates explicitly — the caller passes its locale-resolved array, which is
+    /// not `self.shapes`.
+    func shapeIds(intersecting rect: CGRect, among candidates: [CanvasShapeModel]) -> Set<UUID> {
+        var ids: Set<UUID> = []
+        for shape in candidates where !shape.resolvedIsLocked {
+            guard let bounds = selectableBounds(of: shape) else { continue }
+            if Self.overlaps(rect, bounds) { ids.insert(shape.id) }
+        }
+        return ids
+    }
+
+    /// True when `point` (model space) lands on any shape — **locked ones included**, since a
+    /// locked shape still swallows the press. A marquee uses this to refuse to start on top of a
+    /// shape: the shape's own drag has a larger activation threshold, so without it a sweep would
+    /// win the gap between the two thresholds and rubber-band instead of touching the shape.
+    func containsShape(at point: CGPoint, among candidates: [CanvasShapeModel]) -> Bool {
+        let dot = CGRect(origin: point, size: .zero)
+        return candidates.contains { shape in
+            guard let bounds = selectableBounds(of: shape) else { return false }
+            return Self.overlaps(dot, bounds)
+        }
+    }
+
+    /// A shape's model-space bounds as the canvas presents them: rotation-aware, and cut down to
+    /// its own column when it clips there. Nil when clipping leaves nothing on screen.
+    private func selectableBounds(of shape: CanvasShapeModel) -> CGRect? {
+        let bb = shape.aabb
+        let bounds = CGRect(x: bb.minX, y: bb.minY, width: bb.maxX - bb.minX, height: bb.maxY - bb.minY)
+        guard shape.clipToTemplate == true else { return bounds }
+        let tLeft = templateOriginX(for: shape)
+        let clipped = bounds.intersection(
+            CGRect(x: tLeft, y: 0, width: templateWidth, height: templateHeight)
+        )
+        return clipped.isNull ? nil : clipped
+    }
+
+    /// Inclusive overlap. Not `CGRect.intersects`, which reports false whenever either rect is
+    /// empty — a perfectly horizontal or vertical sweep produces a zero-height/width band and
+    /// would then select nothing.
+    private static func overlaps(_ a: CGRect, _ b: CGRect) -> Bool {
+        a.minX <= b.maxX && b.minX <= a.maxX && a.minY <= b.maxY && b.minY <= a.maxY
+    }
+
     /// Fraction of a shape's width that must lie outside its owning column before the shape
     /// counts as deliberately spanning templates (rather than a tilted device or full-bleed
     /// image merely bleeding past the column edge).

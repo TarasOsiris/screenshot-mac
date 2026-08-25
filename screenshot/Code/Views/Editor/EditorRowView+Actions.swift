@@ -5,10 +5,17 @@ import SwiftUI
 
 extension EditorRowView {
     func tapSelectRow() {
+        resignFieldEditor()
+        state.selectRow(row.id)
+    }
+
+    /// Hands focus back from any SwiftUI `TextField`'s field editor so canvas key commands
+    /// (Delete, arrow-key nudge) reach the canvas. Called by the empty-canvas click and by the
+    /// marquee; clicking a shape does not currently reset the responder.
+    func resignFieldEditor() {
         #if os(macOS)
         NSApp.keyWindow?.makeFirstResponder(nil)
         #endif
-        state.selectRow(row.id)
     }
 
     /// Only the first row's canvas reports to the deferred-tour logic, since the
