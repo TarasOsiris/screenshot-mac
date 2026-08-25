@@ -30,8 +30,10 @@ struct AppRootView: View {
         Group {
             if state.activeProjectId != nil {
                 ContentView()
+                    .screenView(.editor)
             } else if state.hasCompletedInitialLoad {
                 NoProjectView(onCreate: createProject)
+                    .screenView(.noProject)
             } else {
                 // Initial load hasn't run yet (iCloud-deferred) — avoid flashing the empty
                 // "no projects" screen over projects that are about to load in.

@@ -29,9 +29,18 @@ struct NewProjectWindowView: View {
         creationMode == .blank ? "Create Blank Project" : "Create from Template"
     }
 
+    /// macOS presents this as its own window, with nothing underneath to return to; iPad presents
+    /// it as a full-screen cover over the Projects home, which needs restoring on dismiss.
+    #if os(macOS)
+    private let hostScreen: AnalyticsService.Screen? = nil
+    #else
+    private let hostScreen: AnalyticsService.Screen? = .projects
+    #endif
+
     var body: some View {
         platformContent
             .onAppear(perform: prepareInitialState)
+            .screenView(.newProject, restoring: hostScreen)
     }
 
     #if os(macOS)

@@ -91,6 +91,7 @@ struct LocaleBanner: View {
             .background(Color.localeWarning.opacity(0.15))
             .sheet(isPresented: $isTranslationOverviewPresented) {
                 TranslationOverviewSheet(state: state)
+                    .screenView(.translationOverview, restoring: .editor)
             }
             .confirmationDialog(
                 "Replace all \(label) text with new translations?",

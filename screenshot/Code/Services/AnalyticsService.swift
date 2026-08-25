@@ -79,6 +79,35 @@ nonisolated enum AnalyticsService {
         case mcpToolCalled = "mcp_tool_called"
     }
 
+    /// Raw value is the PostHog `$screen_name`. A screen is a **window or a full-surface modal** —
+    /// something you can meaningfully be "on". Never a popover, alert, confirmation dialog,
+    /// inspector, or inline panel: those are interactions, and instrumenting them would re-create
+    /// by hand the swizzled autocapture `start()` deliberately turns off.
+    ///
+    /// Adding a case is how you get a new screen, and the `CaseIterable` enum is the published
+    /// list — `privacy.tsx` §6 documents exactly these, so a new case means a policy edit.
+    enum Screen: String, CaseIterable {
+        case editor
+        case noProject = "no_project"
+        case newProject = "new_project"
+        case projects
+        case settings
+        case help
+
+        case onboarding
+        case paywall
+        case purchaseCelebration = "purchase_celebration"
+
+        case exportDestination = "export_destination"
+        case showcaseExport = "showcase_export"
+        case ascUpload = "asc_upload"
+        case ascMetadata = "asc_metadata"
+        case googlePlayUpload = "google_play_upload"
+
+        case manageLocales = "manage_locales"
+        case translationOverview = "translation_overview"
+    }
+
     /// Property keys are an enum, not `String`, so no call site *can* pass a project name, row
     /// label, locale label, file name or user-written text. That is the whole point of the type.
     enum Property: String {
@@ -225,6 +254,22 @@ nonisolated enum AnalyticsService {
     static func capture(_ event: Event, _ properties: [Property: Any] = [:]) {
         guard isEnabled, isActive else { return }
         PostHogSDK.shared.capture(event.rawValue, properties: wireProperties(properties))
+    }
+
+    /// Records a `$screen` view — the native equivalent of a pageview, and the only navigation
+    /// signal PostHog gets from a native app (`$pageview` is a web-SDK event and will never
+    /// appear here). Reported from the `.screenView(_:restoring:)` modifier, never inline.
+    ///
+    /// Manual `screen()` is unaffected by `captureScreenViews`/`enableSwizzling` staying `false`:
+    /// those govern only the swizzled `viewDidAppear` autocapture, which observes interactions.
+    ///
+    /// Side effect worth knowing: the SDK caches the name and stamps `$screen_name` onto every
+    /// *later* event, which is what gives `export_started` and friends a "where did this happen"
+    /// dimension for free — and why a modal must re-report its host screen when it closes, or the
+    /// stamp stays stuck on a sheet the user already dismissed.
+    static func screen(_ screen: Screen) {
+        guard isEnabled, isActive else { return }
+        PostHogSDK.shared.screen(screen.rawValue)
     }
 
     /// Person-level attributes that describe the install rather than a moment in it. Mirrors the

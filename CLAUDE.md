@@ -150,6 +150,27 @@ one install in two. It is an irreversible merge that bills an event, so it is gu
 - Every autocapture that observes interactions is off (`enableSwizzling`, `captureScreenViews`,
   `captureElementInteractions`, push, surveys, session replay). Only app lifecycle is on — it is the
   one integration that needs no swizzling, and it supplies the funnel's denominator.
+- **Screen views are the app's navigation signal, and they are reported by hand.** A native app
+  never emits `$pageview` — that is a web-SDK event, so the PostHog Web Analytics tab and any
+  built-in pageview insight will read zero forever. The equivalent is `$screen`, sent by
+  `AnalyticsService.screen(_:)` from the `.screenView(_:restoring:)` modifier
+  (`Views/ScreenViewReporter.swift`). `captureScreenViews` stays `false` regardless: that flag is
+  the *swizzled* `viewDidAppear` path, which reads view-controller titles; a manual `screen()` call
+  is unaffected by it and by `enableSwizzling`.
+- **What is a screen:** a window or a full-surface modal — the four macOS windows, the iPad tabs
+  and pushed editor, and the sheets/covers that take over the window (onboarding, paywall, the two
+  upload wizards, showcase export, manage locales, translation overview). Never a popover, alert,
+  confirmation dialog, inspector, or inline panel; instrumenting those would rebuild by hand the
+  interaction autocapture the bullet above turns off. `Screen` is `CaseIterable` and, like `Event`,
+  is the published list — a new case means a `privacy.tsx` §6 edit.
+- **`restoring:` is mandatory on a sheet or cover, and wrong on a pushed destination.** The SDK
+  caches the last screen name and stamps `$screen_name` onto every *later* event — that is the
+  point (an `export_started` says where it happened) — but a sheet covers its presenter without
+  removing it, so the host's `onAppear` never re-fires and the dismissed sheet would keep
+  mislabelling everything after it. A pushed destination really does remove the source view, which
+  re-reports itself on pop. The cost of `restoring:` is a second host `$screen` on dismiss, the
+  same shape a browser back navigation produces: count "installs that reached the editor" by
+  unique users, not event volume.
 
 **State management:** `AppState` (`@Observable`) is the document, split across extension files: `AppState+Images`, `+BackgroundImages`, `+ImageResources`, `+Locales`, `+Load`, `+Save`, `+Projects`, `+Rows`, `+Selection`, `+Shapes`, `+ShapeArrange`, `+Templates`, `+Fonts`, `+Undo` (the withUndo/withRowUndo contract), `+SimulatorCapture`.
 

@@ -426,6 +426,7 @@ struct ContentView: View {
             ExportDestinationSheet(title: pendingExportTitle) { destination in
                 runPendingExport(to: destination)
             }
+            .screenView(.exportDestination, restoring: .editor)
         }
         #endif
         .alert(resetTemplate != nil ? String(localized: "Reset Project from Template") : String(localized: "Reset Project"), isPresented: $isResettingProject) {
@@ -463,25 +464,30 @@ struct ContentView: View {
         .sheet(isPresented: paywallPresented,
                onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
             PaywallSheetContent(store: store)
+                .screenView(.paywall, restoring: .editor)
         }
         .sheet(isPresented: celebrationPresented) {
             PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
                 store.dismissPurchaseCelebration()
             }
+            .screenView(.purchaseCelebration, restoring: .editor)
         }
         #endif
         // Upload wizards: fitted sheet on macOS, native full-screen screen on iPad.
         .platformAdaptiveSheet(isPresented: $showingASCUploadSheet) {
             UploadToAppStoreConnectView()
                 .environment(state)
+                .screenView(.ascUpload, restoring: .editor)
         }
         .platformAdaptiveSheet(isPresented: $showingASCMetadataSheet) {
             UploadToAppStoreConnectView(mode: .metadata)
                 .environment(state)
+                .screenView(.ascMetadata, restoring: .editor)
         }
         .platformAdaptiveSheet(isPresented: $showingGooglePlayUploadSheet) {
             UploadToGooglePlayView()
                 .environment(state)
+                .screenView(.googlePlayUpload, restoring: .editor)
         }
         .sheet(item: $projectNamePrompt) { prompt in
             ProjectNameSheet(prompt: prompt)
@@ -490,6 +496,7 @@ struct ContentView: View {
         .sheet(item: $showcasePresentation) { presentation in
             showcaseExportScreen(for: presentation)
                 .presentationSizing(.page)
+                .screenView(.showcaseExport, restoring: .editor)
         }
         #else
         // iPad: showcase export is a desktop-grade split view — present it as its own
@@ -497,6 +504,7 @@ struct ContentView: View {
         .fullScreenCover(item: $showcasePresentation) { presentation in
             showcaseExportScreen(for: presentation)
                 .exportFailedAlert($exportFlow.errorMessage)
+                .screenView(.showcaseExport, restoring: .editor)
         }
         #endif
         .middleMousePan()

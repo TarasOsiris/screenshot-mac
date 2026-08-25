@@ -485,6 +485,7 @@ struct ScreenshotBroApp: App {
                     )
                     .environment(storeService)
                     .interactiveDismissDisabled()
+                    .screenView(.onboarding, restoring: .projects)
                 }
         }
         #endif

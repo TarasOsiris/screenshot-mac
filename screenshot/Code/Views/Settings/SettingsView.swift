@@ -100,6 +100,7 @@ struct SettingsView: View {
             maxHeight: .infinity
         )
         .background(WindowSceneBridge(role: .settings))
+        .screenView(.settings)
         .onAppear(perform: applyRequestedSection)
         .onChange(of: SettingsWindowNavigation.shared.requestedSection) { _, _ in
             applyRequestedSection()

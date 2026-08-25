@@ -66,6 +66,7 @@ struct OnboardingView: View {
             set: { if !$0 { store.dismissPaywall() } }
         )) {
             PaywallSheetContent(store: store)
+                .screenView(.paywall, restoring: .onboarding)
         }
     }
 

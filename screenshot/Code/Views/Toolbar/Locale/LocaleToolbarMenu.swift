@@ -31,9 +31,11 @@ struct LocaleBar: View {
         chipStrip
             .sheet(isPresented: $isManagingLocales) {
                 ManageLocalesSheet(state: state)
+                    .screenView(.manageLocales, restoring: .editor)
             }
             .sheet(isPresented: $isTranslationOverview) {
                 TranslationOverviewSheet(state: state)
+                    .screenView(.translationOverview, restoring: .editor)
             }
             .confirmationDialog(
                 "Replace all \(state.localeState.activeLocaleLabel) text with new translations?",

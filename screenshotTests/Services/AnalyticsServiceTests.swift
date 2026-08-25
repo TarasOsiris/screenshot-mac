@@ -30,6 +30,7 @@ struct AnalyticsServiceTests {
         AnalyticsService.start()
         AnalyticsService.capture(.appLaunched)
         AnalyticsService.capture(.exportFinished, [.imageCount: 3])
+        AnalyticsService.screen(.editor)
         AnalyticsService.setProfile([.pro: true])
         AnalyticsService.linkStoreUser("test-store-user")
         AnalyticsService.flush()
@@ -54,6 +55,29 @@ struct AnalyticsServiceTests {
     @Test func eventNamesAreSnakeCase() {
         for rawValue in AnalyticsService.Event.allCases.map(\.rawValue) {
             #expect(rawValue.allSatisfy { $0.isLowercase || $0 == "_" }, "\(rawValue) is not snake_case")
+        }
+    }
+
+    /// `$screen_name` is the wire name, so a collision silently merges two parts of the app into
+    /// one line on every screen-view chart.
+    @Test func screenNamesAreUniqueAndNonEmpty() {
+        let rawValues = AnalyticsService.Screen.allCases.map(\.rawValue)
+        #expect(rawValues.allSatisfy { !$0.isEmpty })
+        #expect(Set(rawValues).count == rawValues.count)
+    }
+
+    @Test func screenNamesAreSnakeCase() {
+        for rawValue in AnalyticsService.Screen.allCases.map(\.rawValue) {
+            #expect(rawValue.allSatisfy { $0.isLowercase || $0 == "_" }, "\(rawValue) is not snake_case")
+        }
+    }
+
+    /// Screen names are also event names in every sense that matters downstream — keeping the two
+    /// vocabularies disjoint means a PostHog filter is never ambiguous about which it matched.
+    @Test func screenNamesDoNotCollideWithEventNames() {
+        let events = Set(AnalyticsService.Event.allCases.map(\.rawValue))
+        for screen in AnalyticsService.Screen.allCases.map(\.rawValue) {
+            #expect(!events.contains(screen), "\(screen) is both a screen and an event")
         }
     }
 
@@ -93,5 +117,14 @@ struct AnalyticsServiceTests {
     @Test func sdkContextPropertiesPassThrough() {
         #expect(AnalyticsService.allowsProperty(key: "$os_name", value: "macOS"))
         #expect(AnalyticsService.allowsProperty(key: "$device_model", value: "Mac16,10"))
+    }
+
+    /// `$screen_name` carries a `Screen` raw value — ours, not the user's — and the SDK stamps it
+    /// onto later events too. If the scrubber ever stopped honouring the `$` prefix, screen views
+    /// would arrive nameless rather than fail loudly.
+    @Test func screenNamePropertyPassesThrough() {
+        for rawValue in AnalyticsService.Screen.allCases.map(\.rawValue) {
+            #expect(AnalyticsService.allowsProperty(key: "$screen_name", value: rawValue))
+        }
     }
 }

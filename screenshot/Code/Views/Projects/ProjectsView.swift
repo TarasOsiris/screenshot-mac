@@ -40,12 +40,21 @@ struct iPadRootView: View {
         .sheet(isPresented: paywallPresented,
                onDismiss: { store.presentPendingCelebrationIfNeeded() }) {
             PaywallSheetContent(store: store)
+                .screenView(.paywall, restoring: hostScreen)
         }
         .sheet(isPresented: celebrationPresented) {
             PostPurchaseCelebrationView(context: store.purchaseCelebrationContext ?? .general) {
                 store.dismissPurchaseCelebration()
             }
+            .screenView(.purchaseCelebration, restoring: hostScreen)
         }
+    }
+
+    /// What the root's sheets return to when dismissed. They present over whatever is showing, so
+    /// the screen to restore depends on the tab and on whether an editor is pushed.
+    private var hostScreen: AnalyticsService.Screen {
+        if router.selectedTab == .settings { return .settings }
+        return openedProjectId != nil ? .editor : .projects
     }
 
     private var paywallPresented: Binding<Bool> {
@@ -234,6 +243,7 @@ struct ProjectsView: View {
             }
         }
         .background(Color.platformWindowBackground)
+        .screenView(.projects)
         .navigationTitle("Projects")
         .toolbar {
             if !store.isProUnlocked {

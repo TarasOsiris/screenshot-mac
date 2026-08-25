@@ -43,6 +43,7 @@ struct IPadSettingsView: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
+        .screenView(.settings)
         // The Settings tab is long-lived inside the TabView, and ICloudSyncService isn't
         // @Observable — so re-read its state whenever the tab reappears or sync flips.
         .onAppear(perform: refreshICloudState)
