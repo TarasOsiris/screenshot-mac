@@ -31,8 +31,22 @@ struct OnboardingView: View {
                 .padding(26)
         }
         .frame(width: 760, height: 600)
+        .onAppear(perform: reportStarted)
     }
     #endif
+
+    /// `persistCompletion == false` is the debug re-run path — counting it would inflate the
+    /// funnel with our own walkthroughs, same rule as the coach tour.
+    private func reportStarted() {
+        guard persistCompletion else { return }
+        AnalyticsService.capture(.onboardingStarted, [.source: "welcome"])
+        #if os(iOS)
+        AnalyticsService.capture(
+            .onboardingStepViewed,
+            [.source: "welcome", .step: pageAnalyticsName(pageIndex)]
+        )
+        #endif
+    }
 
     #if os(iOS)
     // Index of the trailing Pro/paywall page (after the workflow step pages).
@@ -40,6 +54,10 @@ struct OnboardingView: View {
 
     // True only on an iPhone in landscape (iPad is always regular-height, macOS uses macOSContent).
     private var isLandscapePhone: Bool { verticalSizeClass == .compact }
+
+    private func pageAnalyticsName(_ index: Int) -> String {
+        index == proPageIndex ? "pro" : Self.stepData[index].analyticsName
+    }
 
     private var iOSContent: some View {
         ZStack {
@@ -50,6 +68,14 @@ struct OnboardingView: View {
             } else {
                 iOSPortraitContent
             }
+        }
+        .onAppear(perform: reportStarted)
+        .onChange(of: pageIndex) {
+            guard persistCompletion else { return }
+            AnalyticsService.capture(
+                .onboardingStepViewed,
+                [.source: "welcome", .step: pageAnalyticsName(pageIndex)]
+            )
         }
         .task {
             // The bundle scan runs off the main actor so the cover never hitches on first launch.
@@ -575,7 +601,14 @@ struct OnboardingView: View {
     private func complete() {
         if persistCompletion {
             onboardingCompleted = true
+            #if os(iOS)
+            AnalyticsService.capture(
+                .onboardingCompleted,
+                [.source: "welcome", .lastStep: pageAnalyticsName(pageIndex)]
+            )
+            #else
             AnalyticsService.capture(.onboardingCompleted, [.source: "welcome"])
+            #endif
         }
         #if os(iOS)
         // A purchase made inside onboarding already showed its own success state, so drop any
@@ -589,12 +622,14 @@ struct OnboardingView: View {
 
     private static let stepData: [StepInfo] = [
         StepInfo(
+            analyticsName: "templates",
             title: "Pick a template",
             description: "Start from a ready-made layout or a blank project. Templates come pre-sized for each store.",
             icon: "square.grid.2x2",
             color: .blue
         ),
         StepInfo(
+            analyticsName: "content",
             title: "Add your content",
             description: "Drop in screenshots, add text and shapes, pick a device frame. Drag to arrange.",
             icon: "plus.rectangle.on.rectangle",
@@ -604,6 +639,7 @@ struct OnboardingView: View {
             color: .purple
         ),
         StepInfo(
+            analyticsName: "style",
             title: "Style it",
             description: "Set backgrounds, colors, and gradients. Use the inspector on the right and properties bar at the bottom.",
             icon: "paintbrush",
@@ -612,6 +648,7 @@ struct OnboardingView: View {
             color: .orange
         ),
         StepInfo(
+            analyticsName: "export",
             title: "Export",
             description: "Export all screenshots at once as PNG or JPEG, ready to upload to App Store Connect or Google Play.",
             icon: "square.and.arrow.up",
@@ -629,6 +666,9 @@ private enum StepIllustration {
 }
 
 private struct StepInfo {
+    // Stable per-step vocabulary for the `step`/`last_step` analytics properties — never the
+    // localized title, which would put user-language text on the wire.
+    let analyticsName: String
     let title: LocalizedStringKey
     let description: LocalizedStringKey
     let icon: String

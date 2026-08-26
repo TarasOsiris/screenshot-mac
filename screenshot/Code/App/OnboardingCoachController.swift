@@ -29,7 +29,7 @@ final class OnboardingCoachController {
         // The debug re-runs pass `persistOnEnd: false`; counting them would inflate the funnel
         // with our own walkthroughs.
         if persistOnEnd {
-            AnalyticsService.capture(.onboardingStarted)
+            AnalyticsService.capture(.onboardingStarted, [.source: "coach"])
         }
         ensureRowSelected()
         setStep(.canvas)
@@ -109,6 +109,12 @@ final class OnboardingCoachController {
     }
 
     private func setStep(_ newStep: OnboardingCoachStep?) {
+        if let newStep, persistsOnEnd {
+            AnalyticsService.capture(
+                .onboardingStepViewed,
+                [.source: "coach", .step: String(describing: newStep)]
+            )
+        }
         #if os(iOS)
         transitionTask?.cancel()
         transitionTask = nil

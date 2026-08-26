@@ -46,6 +46,7 @@ nonisolated enum AnalyticsService {
         case appLaunched = "app_launched"
 
         case onboardingStarted = "onboarding_started"
+        case onboardingStepViewed = "onboarding_step_viewed"
         case onboardingCompleted = "onboarding_completed"
         case onboardingSkipped = "onboarding_skipped"
 
