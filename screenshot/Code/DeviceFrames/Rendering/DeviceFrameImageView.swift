@@ -10,6 +10,9 @@ struct DeviceFrameImageView: View {
     private static let frameImageCache: NSCache<NSString, NSImage> = {
         let cache = NSCache<NSString, NSImage>()
         cache.countLimit = 50
+        // A bezel costs its decoded bitmap, not its file size — the largest is ~22 MB, so
+        // countLimit alone would let 50 of them pin over a gigabyte.
+        cache.totalCostLimit = 256 * 1024 * 1024
         return cache
     }()
 
@@ -88,7 +91,18 @@ struct DeviceFrameImageView: View {
             AppLogger.export.warning("Device bezel asset missing: \(imageName, privacy: .public)")
             return nil
         }
-        frameImageCache.setObject(image, forKey: key)
+        frameImageCache.setObject(image, forKey: key, cost: decodedByteCost(of: image))
         return image
+    }
+
+    private static func decodedByteCost(of image: NSImage) -> Int {
+        #if os(macOS)
+        let pixels = image.representations.lazy
+            .map { $0.pixelsWide * $0.pixelsHigh }
+            .max() ?? Int(image.size.width * image.size.height)
+        #else
+        let pixels = Int(image.size.width * image.scale * image.size.height * image.scale)
+        #endif
+        return pixels * 4
     }
 }

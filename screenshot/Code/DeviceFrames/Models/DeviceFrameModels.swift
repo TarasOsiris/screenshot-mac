@@ -34,8 +34,14 @@ nonisolated enum DeviceFrameFamily: String, CaseIterable, Identifiable {
 }
 
 /// Describes the screen area within a device frame PNG image.
+///
+/// Everything here is consumed as a *fraction* (see below), so these are the resolution the insets
+/// were measured at — not the shipped PNG's pixel size, which `tools/optimize-device-frames.py`
+/// caps independently. Don't re-measure insets against the shipped art, and don't "correct" these
+/// to match it: `DeviceFrame.baseDimensions` divides them by 6 for the default insert size of a
+/// new device shape, so editing them resizes every newly inserted device.
 nonisolated struct DeviceFrameImageSpec {
-    /// Frame PNG dimensions.
+    /// Frame dimensions the insets below were measured against.
     let frameWidth: CGFloat
     let frameHeight: CGFloat
 

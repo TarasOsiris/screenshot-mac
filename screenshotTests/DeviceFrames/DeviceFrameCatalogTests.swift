@@ -106,6 +106,30 @@ struct DeviceFrameCatalogTests {
         }
     }
 
+    /// The bezel PNGs are resized independently of the catalog (`tools/optimize-device-frames.py`),
+    /// and `DeviceFrameImageView` stretches whatever it loads into the spec's box — so a frame
+    /// rescaled to a slightly different aspect ratio wouldn't fail to load, it would silently skew
+    /// the art away from the screen aperture on every canvas and every export.
+    @Test func everyFrameAssetMatchesItsDeclaredAspectRatio() throws {
+        for frame in DeviceFrameCatalog.allFrames {
+            guard let imageName = frame.imageName else { continue }
+            let image = try #require(NSImage(named: imageName), "missing asset \(imageName)")
+            #expect(image.size.width > 0 && image.size.height > 0)
+
+            // Rotated landscape frames reuse the portrait PNG, so the asset is the spec transposed.
+            let spec = frame.spec
+            let expected = frame.landscapeRotationDegrees == nil
+                ? spec.frameWidth / spec.frameHeight
+                : spec.frameHeight / spec.frameWidth
+
+            let actual = image.size.width / image.size.height
+            #expect(
+                abs(actual / expected - 1) < 0.005,
+                "\(imageName) is \(image.size.width)x\(image.size.height) (aspect \(actual)), spec expects \(expected)"
+            )
+        }
+    }
+
     @Test func iphone17ProMax3DFrameUsesBundledUSDZModel() throws {
         let frame = try #require(DeviceFrameCatalog.frame(for: "iphone17promaxmodel-default-portrait"))
 
