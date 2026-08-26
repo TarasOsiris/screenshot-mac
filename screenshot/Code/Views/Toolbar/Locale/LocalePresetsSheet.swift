@@ -238,9 +238,11 @@ private struct LocalePresetsSheet: View {
         let existing = Set(state.localeState.locales.map(\.code))
         let filtered = LocalePresets.all.filter { !existing.contains($0.code) }
         if searchText.isEmpty { return filtered }
-        let query = searchText.lowercased()
+        // Diacritic- and case-insensitive per the user's locale: "francais" must find "Français",
+        // and `lowercased()` folds Turkish dotted/dotless I wrongly for a tr-locale user.
         return filtered.filter {
-            $0.code.lowercased().contains(query) || $0.label.lowercased().contains(query)
+            $0.code.localizedStandardContains(searchText)
+                || $0.label.localizedStandardContains(searchText)
         }
     }
 

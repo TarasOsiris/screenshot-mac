@@ -48,6 +48,7 @@ struct LocaleBanner: View {
                         }
                         .buttonStyle(.borderless)
                         .focusable(false)
+                        .accessibilityLabel("Language Editing")
                         .popover(isPresented: $showLocaleHelp, arrowEdge: .bottom) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Language Editing")

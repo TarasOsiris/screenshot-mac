@@ -303,6 +303,7 @@ extension ShapePropertiesSingleSelectionBar {
         .menuStyle(.button)
         .menuIndicator(.hidden)
         .fixedSize()
+        .accessibilityLabel("Presets")
     }
 
     @ViewBuilder

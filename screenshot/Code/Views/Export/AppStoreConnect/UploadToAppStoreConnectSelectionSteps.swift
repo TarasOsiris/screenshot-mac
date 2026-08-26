@@ -18,7 +18,7 @@ struct ASCAppSelectionStepView: View {
     }
 
     private var hiddenAppCount: Int {
-        appsWithVersions.filter { !$0.hasSelectableVersion(for: mode) }.count
+        appsWithVersions.count { !$0.hasSelectableVersion(for: mode) }
     }
 
     var body: some View {
@@ -104,7 +104,7 @@ struct ASCVersionSelectionStepView: View {
     }
 
     private var readOnlyVersionCount: Int {
-        versions.filter { !$0.isSelectable(for: mode) }.count
+        versions.count { !$0.isSelectable(for: mode) }
     }
 
     private var visibleVersions: [ASCAppStoreVersion] {

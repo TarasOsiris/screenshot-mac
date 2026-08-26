@@ -307,6 +307,7 @@ struct TemplateControlBar: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.borderless)
+                .accessibilityLabel("Close")
             }
 
             Toggle(

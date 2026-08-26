@@ -1,8 +1,7 @@
 #if os(macOS)
-import Combine
 import SwiftUI
 
-class RichTextFormatController: ObservableObject {
+final class RichTextFormatController {
     private(set) var shouldEncodeRichText = false
     private(set) var hasPendingTypingAttributes = false
     var pendingClearFormatting = false

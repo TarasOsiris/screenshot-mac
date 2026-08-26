@@ -12,7 +12,7 @@ final class BarPanelHost {
         let id: UUID
         let title: LocalizedStringKey
         let scrollableContent: Bool
-        let content: () -> AnyView
+        let content: AnyView
         /// Clears the presenting trigger's `isPresented` flag.
         let dismiss: () -> Void
     }
@@ -63,7 +63,7 @@ struct BarPanelPresenter<PanelContent: View>: ViewModifier {
                 id: id,
                 title: title,
                 scrollableContent: scrollableContent,
-                content: { AnyView(panelContent()) },
+                content: AnyView(panelContent()),
                 dismiss: { isPresented = false }
             )
         )
@@ -114,12 +114,12 @@ struct BarDockedPanel: View {
     private var content: some View {
         if panel.scrollableContent {
             ScrollView {
-                panel.content().frame(maxWidth: .infinity)
+                panel.content.frame(maxWidth: .infinity)
             }
         } else {
             // Form/List content scrolls itself; hide its opaque grouped background so the
             // panel's glass shows through.
-            panel.content()
+            panel.content
                 .scrollContentBackground(.hidden)
         }
     }

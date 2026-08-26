@@ -190,6 +190,8 @@ struct BackgroundEditor: View {
                 .contentShape(RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip))
         }
         .buttonStyle(.plain)
+        // Degrees are notation, not prose — same rationale as the X/Y/W/H field labels.
+        .accessibilityLabel(Text(verbatim: "\(a)°"))
         .focusable(false)
         .help("\(a)°")
     }

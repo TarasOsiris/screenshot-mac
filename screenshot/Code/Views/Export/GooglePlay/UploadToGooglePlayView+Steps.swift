@@ -128,6 +128,7 @@ extension UploadToGooglePlayView {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(isCollapsed ? Text("Expand") : Text("Collapse"))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(plan.wrappedValue.rowLabel.isEmpty ? "Row" : plan.wrappedValue.rowLabel)

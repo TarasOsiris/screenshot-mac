@@ -1,15 +1,18 @@
 #if os(iOS)
-import Combine
 import SwiftUI
 import UIKit
 
-final class RichTextFormatController: ObservableObject {
-    private(set) var shouldEncodeRichText = false
-    private(set) var hasPendingTypingAttributes = false
-    var pendingClearFormatting = false
-    weak var textView: UITextView?
-    var renderScale: CGFloat = 1
-    @Published var selectionState = RichTextSelectionState()
+@Observable
+final class RichTextFormatController {
+    /// Only `selectionState` is observed — the docked format bar reads it to light up its
+    /// toggles. The rest is editor wiring; tracking it would invalidate every `CanvasShapeView`
+    /// that merely holds a controller.
+    @ObservationIgnored private(set) var shouldEncodeRichText = false
+    @ObservationIgnored private(set) var hasPendingTypingAttributes = false
+    @ObservationIgnored var pendingClearFormatting = false
+    @ObservationIgnored weak var textView: UITextView?
+    @ObservationIgnored var renderScale: CGFloat = 1
+    var selectionState = RichTextSelectionState()
 
     func beginRichTextSession() {
         guard !shouldEncodeRichText else { return }

@@ -18,12 +18,14 @@ struct PropertiesBarPopoverTrigger<Label: View, Content: View>: View {
             HStack(spacing: 6) {
                 Image(systemName: systemImage)
                     .font(.system(size: UIMetrics.ActionButton.iconSize))
+                    .accessibilityHidden(true)
                 label()
                     .font(.system(size: UIMetrics.FontSize.body))
                 if showsOverrideDot { OverrideDot() }
                 Image(systemName: "chevron.down")
                     .font(.system(size: UIMetrics.FontSize.hint, weight: .semibold))
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)

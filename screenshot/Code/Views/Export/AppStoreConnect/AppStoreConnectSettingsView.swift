@@ -194,7 +194,7 @@ struct AppStoreConnectSettingsView: View {
 
     private var setupSummary: String {
         let checks = [isIssuerIdValid, isKeyIdValid, credentials.hasPrivateKey, testResult?.passed == true]
-        let complete = checks.filter { $0 }.count
+        let complete = checks.count { $0 }
         return String(localized: "\(complete) of \(checks.count) complete")
     }
 

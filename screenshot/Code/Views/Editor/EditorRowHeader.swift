@@ -154,6 +154,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
+            .accessibilityLabel("More actions")
             .opacity(isSelected ? 1 : 0.65)
         }
     }

@@ -61,7 +61,7 @@ struct CanvasShapeView: View {
     @State var editingTextValue = ""
     @State var editingRichTextData: String?
     @State var selectionState: RichTextSelectionState?
-    @StateObject var formatController = RichTextFormatController()
+    @State var formatController = RichTextFormatController()
     @State var cachedSvgImage: NSImage?
     @State var svgCacheKey = ""
     @State var svgResizeDebounceTask: Task<Void, Never>?

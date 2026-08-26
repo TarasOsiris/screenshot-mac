@@ -121,6 +121,7 @@ private struct ASCDisplayTypePicker: View {
                 #endif
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Details")
         .popover(isPresented: Binding(
             get: { displayTypeDetailsPlanId == detailsId },
             set: { isPresented in

@@ -361,15 +361,8 @@ struct CanvasShapeRenderContent: View {
 /// True while a view is being rasterized offscreen (`RowRenderer.renderViewToImage`)
 /// rather than composited live on screen. Used to compensate for AppKit's flipped-view
 /// shadow handling. Defaults to false (live rendering).
-private struct ExportRenderingKey: EnvironmentKey {
-    static let defaultValue = false
-}
-
 extension EnvironmentValues {
-    var isExportRendering: Bool {
-        get { self[ExportRenderingKey.self] }
-        set { self[ExportRenderingKey.self] = newValue }
-    }
+    @Entry var isExportRendering = false
 }
 
 /// Applies a shape's configurable drop shadow.

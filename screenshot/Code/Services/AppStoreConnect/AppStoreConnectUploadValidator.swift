@@ -120,7 +120,7 @@ enum AppStoreConnectUploadValidator {
                 ))
             }
 
-            let activeLocaleCount = plan.localeTargets.filter { $0.isEnabled && !$0.selectedASCLocalizationIds.isEmpty }.count
+            let activeLocaleCount = plan.localeTargets.count { $0.isEnabled && !$0.selectedASCLocalizationIds.isEmpty }
             if activeLocaleCount == 0 {
                 issues.append(UploadIssue(
                     severity: .error,

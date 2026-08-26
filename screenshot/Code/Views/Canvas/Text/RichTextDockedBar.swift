@@ -6,7 +6,7 @@ import SwiftUI
 /// selection. It sits *above* the element properties bar (not in the keyboard's accessory area),
 /// with a transparent surround so the canvas shows through.
 struct RichTextDockedBar: View {
-    @ObservedObject var controller: RichTextFormatController
+    let controller: RichTextFormatController
 
     var body: some View {
         RichTextFormatBar(

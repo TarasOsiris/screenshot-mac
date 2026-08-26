@@ -345,6 +345,7 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
             .help("Clear export folder")
+            .accessibilityLabel("Clear export folder")
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
