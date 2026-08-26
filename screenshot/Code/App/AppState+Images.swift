@@ -209,9 +209,14 @@ extension AppState {
         return "\(shapeId.uuidString)\(localePart)-\(UUID().uuidString).png"
     }
 
+    /// How many decoded images to publish at a time. Every merge invalidates each canvas view
+    /// that reads `screenshotImages`, so this is not per-image; it's small enough that a large
+    /// project fills in visibly from the top instead of appearing all at once at the end.
+    private static let imagePublishBatchSize = 4
+
     func loadScreenshotImages() {
         guard let activeId = activeProjectId else {
-            finishProjectOpening()
+            projectOpen.finishImages()
             return
         }
         let resourcesURL = PersistenceService.resourcesDir(activeId)
@@ -229,32 +234,51 @@ extension AppState {
 
         let toLoad = needed.filter { screenshotImages[$0] == nil }
         guard !toLoad.isEmpty else {
-            finishProjectOpening()
+            projectOpen.finishImages()
             return
         }
+        projectOpen.beginImages(total: toLoad.count)
 
-        // Load downsampled images on a background thread, then update on main.
+        // Load downsampled images on a background thread, then publish in batches on main.
         // Full-resolution images are loaded from disk on-demand in export paths.
         let maxDim = ImageDownsampler.editorImageMaxDimension
+        let batchSize = Self.imagePublishBatchSize
         imageLoadTask = Task.detached { [weak self] in
-            var loaded: [String: NSImage] = [:]
+            var batch: [String: NSImage] = [:]
+            var completed = 0
+
             for fileName in toLoad {
                 if Task.isCancelled { return }
                 let url = resourcesURL.appendingPathComponent(fileName)
                 autoreleasepool {
                     if let image = ImageDownsampler.downsampledImage(at: url, maxDimension: maxDim)
                         ?? NSImage(contentsOf: url) {
-                        loaded[fileName] = image
+                        batch[fileName] = image
                     }
+                }
+                completed += 1
+                if batch.count >= batchSize || completed == toLoad.count {
+                    let published = batch
+                    batch = [:]
+                    await self?.publishLoadedImages(published, completed: completed, for: activeId)
                 }
             }
             guard !Task.isCancelled else { return }
-            await MainActor.run {
-                guard let self, self.activeProjectId == activeId else { return }
-                self.screenshotImages.merge(loaded) { _, new in new }
-                self.finishProjectOpening()
-            }
+            await self?.finishImageLoading(for: activeId)
         }
+    }
+
+    /// Both main-actor tails of the decode loop guard on the same thing: a switch may have landed
+    /// while we were decoding, and the incoming project must not inherit these images.
+    private func publishLoadedImages(_ images: [String: NSImage], completed: Int, for projectId: UUID) {
+        guard activeProjectId == projectId else { return }
+        screenshotImages.merge(images) { _, new in new }
+        projectOpen.advanceImages(to: completed)
+    }
+
+    private func finishImageLoading(for projectId: UUID) {
+        guard activeProjectId == projectId else { return }
+        projectOpen.finishImages()
     }
 
     func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat) {

@@ -116,17 +116,19 @@ extension AppState {
         }
     }
 
+    /// The index read stays synchronous — it's small, and `activeProjectId` has to be set before
+    /// the first frame or the window flashes the "no projects" screen. The active project's own
+    /// load goes through the same phased open a switch uses: at launch this runs inside
+    /// `AppState.init`, where a synchronous font registration + JSON decode + catalog merge froze
+    /// the app with nothing on screen to explain it.
     private func reloadLocalFromDisk() {
         if let index = PersistenceService.loadIndex() {
             projects = index.projects.purgingOldTombstones()
             selectActiveProjectAfterReload(preferred: index.activeProjectId)
         }
-        if let activeId = activeProjectId {
-            loadCustomFonts()
-            loadRowsForProject(activeId)
-            loadScreenshotImages()
-        }
         hasCompletedInitialLoad = true
+        guard let activeId = activeProjectId else { return }
+        openProject(activeId) { await AppState.loadProjectAfterQueuedWrites(activeId) }
     }
 
     /// iCloud reload: the blocking coordinated reads (index + active project) run off the main
@@ -174,14 +176,24 @@ extension AppState {
 
         guard let activeId = activeProjectId else { return }
 
+        // Raised before the read, not after: this is the one path where an undownloaded iCloud
+        // file really does block for seconds, so it is the path that most needs to say so.
+        let isFirstRead = knownProjectDataModifiedAt == nil
+        if isFirstRead {
+            beginProjectOpening(for: activeId)
+            projectOpen.advance(to: .reading)
+        }
+
         let diskData = await AppState.loadProjectAfterQueuedWrites(activeId)
         if Task.isCancelled { return }
         // The blocking iCloud read above can outlive a project switch — applying the old
         // project's rows now would let the next save write them into the new project's file.
         guard activeProjectId == activeId else { return }
 
-        if let localModified = knownProjectDataModifiedAt {
-            // Only reload if the on-disk version is newer than our in-memory version.
+        if !isFirstRead, let localModified = knownProjectDataModifiedAt {
+            // Only reload if the on-disk version is newer than our in-memory version. No overlay
+            // here: this is a background re-sync of a project already on screen, and the common
+            // case is that nothing changed.
             if let diskData, diskData.modifiedAt > localModified {
                 await loadCustomFontsAsync()
                 guard !Task.isCancelled, activeProjectId == activeId else { return }
@@ -189,10 +201,7 @@ extension AppState {
                 loadScreenshotImages()
             }
         } else {
-            await loadCustomFontsAsync()
-            guard !Task.isCancelled, activeProjectId == activeId else { return }
-            loadRowsForProject(activeId, preloaded: diskData)
-            loadScreenshotImages()
+            await loadProjectContents(for: activeId, preloaded: diskData)
         }
     }
 

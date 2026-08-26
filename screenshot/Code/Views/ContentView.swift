@@ -34,6 +34,16 @@ struct ContentView: View {
     /// editor-mode pill (44pt tall + 16pt inset + an 8pt gap).
     let editorModeFabClearance: CGFloat = 68
     #endif
+
+    /// Keeps the image-loading pill clear of the floating properties bar on iPad; on macOS that
+    /// bar is a sibling below the canvas, so the corner is already free.
+    var imageLoadingPillBottomPadding: CGFloat {
+        #if os(iOS)
+        return state.hasSelection ? floatingBottomChromeMargin + 12 : 12
+        #else
+        return 12
+        #endif
+    }
     #if os(iOS)
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     private var isInspectorCompact: Bool { horizontalSizeClass == .compact }
@@ -79,6 +89,40 @@ struct ContentView: View {
         contentModals(coreContent)
     }
 
+    /// Kept out of the tree until `.building`: `.id(state.activeProjectId)` on the ScrollView
+    /// rebuilds this whole subtree, and without the gate that rebuild re-realizes every row of
+    /// the *outgoing* project before the loading overlay can paint.
+    @ViewBuilder
+    private var editorRows: some View {
+        let firstRowId = state.rows.first?.id
+        let lastRowId = state.rows.last?.id
+        ForEach(state.rows) { row in
+            // `.equatable()` so an edit in one row doesn't re-run every visible row's body
+            // (see EditorRowView's Equatable).
+            EditorRowView(
+                state: state,
+                row: row,
+                isFirst: row.id == firstRowId,
+                isLast: row.id == lastRowId,
+                requestShowcaseExport: { presentShowcaseSheet(for: $0, mode: .singleRow) }
+            )
+                .equatable()
+                .id(row.id)
+            Divider()
+        }
+
+        AddRowButton {
+            store.requirePro(
+                allowed: store.canAddRow(currentCount: state.rows.count),
+                context: .rowLimit
+            ) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    state.addRow()
+                }
+            }
+        }
+    }
+
     /// The editor shell: canvas, inspector, toolbar, and canvas-level change handlers.
     private var coreContent: some View {
         VStack(spacing: 0) {
@@ -97,36 +141,17 @@ struct ContentView: View {
             ScrollViewReader { proxy in
                 ScrollView(.vertical) {
                     LazyVStack(spacing: 0) {
-                        let firstRowId = state.rows.first?.id
-                        let lastRowId = state.rows.last?.id
-                        ForEach(state.rows) { row in
-                            // `.equatable()` so an edit in one row doesn't re-run every
-                            // visible row's body (see EditorRowView's Equatable).
-                            EditorRowView(
-                                state: state,
-                                row: row,
-                                isFirst: row.id == firstRowId,
-                                isLast: row.id == lastRowId,
-                                requestShowcaseExport: { presentShowcaseSheet(for: $0, mode: .singleRow) }
-                            )
-                                .equatable()
-                                .id(row.id)
-                            Divider()
-                        }
-
-                        AddRowButton {
-                            store.requirePro(
-                                allowed: store.canAddRow(currentCount: state.rows.count),
-                                context: .rowLimit
-                            ) {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.addRow()
-                                }
-                            }
-                        }
+                        if state.projectOpen.showsEditorContent { editorRows }
                     }
                 }
                 .id(state.activeProjectId)
+                // Bottom-leading: top-trailing sits on the first row header's action buttons, and
+                // the bottom-right corner is the iPad view-mode FAB.
+                .overlay(alignment: .bottomLeading) {
+                    CanvasImageLoadingPill(progress: state.projectOpen)
+                        .padding(.leading, 12)
+                        .padding(.bottom, imageLoadingPillBottomPadding)
+                }
                 // macOS: trackpad pinch. iPad: two-finger pinch in view mode only.
                 .canvasPinchZoom(state: state, startLevel: $gestureZoomStartLevel)
                 .onChange(of: state.canvasFocus.rowRequestNonce) { _, _ in
@@ -266,8 +291,8 @@ struct ContentView: View {
             // phase (hides the teardown→reload flash). On iPad the cold first open is owned by
             // `ProjectOpenGate`, which paints this same spinner before ContentView is built.
             // Image downsampling streams in behind the live UI so row controls stay visible.
-            if !exportFlow.isExporting && state.isOpeningProject {
-                ProjectLoadingOverlay(message: "Opening Project…")
+            if !exportFlow.isExporting {
+                ProjectOpenOverlay(progress: state.projectOpen)
             }
         }
         #if os(macOS)

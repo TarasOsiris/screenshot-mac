@@ -75,13 +75,7 @@ extension AppState {
     }
 
     func selectProject(_ id: UUID) {
-        guard id != activeProjectId else {
-            // The switch is a no-op (already active), but a caller (the iPad open gate) may
-            // have optimistically set the opening flag — clear it so nothing waits forever
-            // for a switch that won't happen.
-            finishProjectOpening()
-            return
-        }
+        guard id != activeProjectId else { return }
 
         // Write the OLD project while activeProjectId still points at it, then switch, then
         // persist the index so it records the NEW activeProjectId. Both writes are file-
@@ -95,23 +89,28 @@ extension AppState {
 
     func switchToProject(_ id: UUID) {
         CrashReportingService.breadcrumb(.project, "Switching project", data: ["projects": projects.count])
-        projectOpenTask?.cancel()
-        beginProjectOpening()
+        // Teardown stays on this turn: deferring it past `activeProjectId = id` would resolve the
+        // outgoing project's font files against the incoming project's resources dir, leaking the
+        // registrations — and a superseded hop would skip it entirely. The editor content gate
+        // (`ProjectOpenProgress.showsEditorContent`) is what keeps this turn's frame cheap.
         teardownActiveProject()
         activeProjectId = id
         openProject(id) { await AppState.loadProjectAfterQueuedWrites(id) }
     }
 
-    /// The second half of every project transition: read the project off the main thread — so
-    /// the loading spinner keeps animating and a large project.json doesn't freeze the project
-    /// list — then apply it here if the transition is still current.
-    private func openProject(_ id: UUID, loading load: @escaping @Sendable () async -> ProjectData?) {
+    /// Every project transition runs through here: it supersedes any open already in flight,
+    /// raises the loading phase on the caller's turn (so the overlay paints before the read
+    /// stalls), then reads the project off the main thread — a large project.json must not
+    /// freeze the window — and applies it if the transition is still current.
+    func openProject(_ id: UUID, loading load: @escaping @Sendable () async -> ProjectData?) {
+        projectOpenTask?.cancel()
+        beginProjectOpening(for: id)
         projectOpenTask = Task { @MainActor [weak self] in
-            let data = await load()
             guard let self, !Task.isCancelled, self.activeProjectId == id else { return }
-            // Let the push + spinner paint a frame before the heavy `rows = …` rebuild,
-            // so the loader animates instead of freezing mid-transition.
-            await Task.yield()
+            self.projectOpen.advance(to: .reading)
+            // No paint hop needed here: every `load` suspends off the main actor immediately
+            // (the save-queue barrier), so the overlay commits while the read runs.
+            let data = await load()
             guard !Task.isCancelled, self.activeProjectId == id else { return }
             await self.loadProjectContents(for: id, preloaded: data)
             self.projectOpenTask = nil
@@ -200,11 +199,11 @@ extension AppState {
         guard id == activeProjectId else { return }
         CrashReportingService.breadcrumb(.project, "Reset project from template", data: ["template": template.id])
         AnalyticsService.capture(.templateApplied, [.templateId: template.id])
-        projectOpenTask?.cancel()
-        beginProjectOpening()
         teardownActiveProject()
 
-        openProject(id) { await AppState.replaceProjectAfterQueuedWrites(id, withProjectAt: template.url) }
+        // Hoisted so the open task doesn't retain the template's preview images for its lifetime.
+        let templateURL = template.url
+        openProject(id) { await AppState.replaceProjectAfterQueuedWrites(id, withProjectAt: templateURL) }
     }
 
     func deleteProject(_ id: UUID) {
@@ -246,15 +245,13 @@ extension AppState {
         screenshotImages = [:]
     }
 
-    func beginProjectOpening() {
-        isOpeningProject = true
+    func beginProjectOpening(for id: UUID) {
+        projectOpen.begin(projectName: projects.first { $0.id == id }?.name,
+                          isRemote: PersistenceService.isUsingICloud)
     }
 
-    func finishProjectOpening() {
-        isOpeningProject = false
-    }
-
-    private func loadProjectContents(for id: UUID, preloaded: ProjectData?) async {
+    func loadProjectContents(for id: UUID, preloaded: ProjectData?) async {
+        projectOpen.advance(to: .fonts)
         await loadCustomFontsAsync()
         guard activeProjectId == id else { return }
         loadRowsForProject(id, preloaded: preloaded)
@@ -263,8 +260,20 @@ extension AppState {
         // immediately so a project with many languages / large images doesn't keep
         // the whole window behind a loading overlay. Images stream in afterwards
         // (the canvas renders placeholders until each one is ready).
-        finishProjectOpening()
+        //
+        // `.building` opens the content gate one phase before the overlay drops: laying out the
+        // incoming project's rows is the longest main-thread stall of the switch, and the already
+        // committed spinner keeps animating on the render server through it.
+        projectOpen.advance(to: .building)
+        await ProjectOpenProgress.awaitPaint()
+        guard activeProjectId == id else { return }
+        projectOpen.finish()
         loadScreenshotImages()
+        CrashReportingService.breadcrumb(.project, "Opened project", data: [
+            "rows": rows.count,
+            "locales": localeState.locales.count,
+            "images": projectOpen.imagesTotal
+        ])
     }
 
     private func rowLabel(for configuration: BlankProjectRowConfiguration, rowIndex: Int) -> String? {

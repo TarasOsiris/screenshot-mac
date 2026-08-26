@@ -247,37 +247,58 @@ extension AppState {
 
     // MARK: - Referenced Image Filenames
 
-    /// Collect referenced image filenames for the given rows and locale overrides.
+    /// The one traversal: rows in order, then each row's templates and shapes, then the locale
+    /// overrides (keyed by translation key, not shape id, so they can't be interleaved).
     /// `activeBackgroundsOnly` drops background images whose style is switched off — see
     /// `ScreenshotRow.backgroundImageFileName(activeOnly:)`.
+    ///
+    /// Ordered rather than a `Set` because `loadScreenshotImages` decodes in batches and a large
+    /// project should fill in from the top row down; the `Set` callers just wrap the result. Two
+    /// walks would mean a new image-bearing property could be added to one and not the other.
+    private func orderedReferencedImageFileNames(
+        rows targetRows: [ScreenshotRow],
+        localeOverrides: [String: [String: ShapeLocaleOverride]],
+        activeBackgroundsOnly: Bool = false
+    ) -> [String] {
+        var seen = Set<String>()
+        var ordered: [String] = []
+        func append(_ fileName: String?) {
+            guard let fileName, seen.insert(fileName).inserted else { return }
+            ordered.append(fileName)
+        }
+        for row in targetRows {
+            append(row.backgroundImageFileName(activeOnly: activeBackgroundsOnly))
+            for template in row.templates {
+                append(template.backgroundImageFileName(activeOnly: activeBackgroundsOnly))
+            }
+            for shape in row.shapes {
+                for fileName in shape.allImageFileNames { append(fileName) }
+            }
+        }
+        for shapeOverrides in localeOverrides.values {
+            for override in shapeOverrides.values { append(override.overrideImageFileName) }
+        }
+        return ordered
+    }
+
     private func referencedImageFileNames(
         rows targetRows: [ScreenshotRow],
         localeOverrides: [String: [String: ShapeLocaleOverride]],
         activeBackgroundsOnly: Bool = false
     ) -> Set<String> {
-        var result = Set<String>()
-        for row in targetRows {
-            if let f = row.backgroundImageFileName(activeOnly: activeBackgroundsOnly) { result.insert(f) }
-            for template in row.templates {
-                if let f = template.backgroundImageFileName(activeOnly: activeBackgroundsOnly) { result.insert(f) }
-            }
-            for shape in row.shapes {
-                for f in shape.allImageFileNames { result.insert(f) }
-            }
-        }
-        for shapeOverrides in localeOverrides.values {
-            for override in shapeOverrides.values {
-                if let f = override.overrideImageFileName { result.insert(f) }
-            }
-        }
-        return result
+        Set(orderedReferencedImageFileNames(
+            rows: targetRows,
+            localeOverrides: localeOverrides,
+            activeBackgroundsOnly: activeBackgroundsOnly
+        ))
     }
 
-    /// Image filenames needed for the editor (base shapes + active locale overrides only).
-    func editorReferencedImageFileNames() -> Set<String> {
+    /// Image filenames needed for the editor (base shapes + active locale overrides only),
+    /// in document order.
+    func editorReferencedImageFileNames() -> [String] {
         let activeCode = localeState.activeLocaleCode
         let activeOverrides = localeState.overrides[activeCode].map { [activeCode: $0] } ?? [:]
-        return referencedImageFileNames(rows: rows, localeOverrides: activeOverrides)
+        return orderedReferencedImageFileNames(rows: rows, localeOverrides: activeOverrides)
     }
 
     /// Collect all referenced image filenames in a single pass (for batch cleanup).

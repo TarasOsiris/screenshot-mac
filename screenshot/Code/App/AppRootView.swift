@@ -30,8 +30,7 @@ struct AppRootView: View {
             } else {
                 // Initial load hasn't run yet (iCloud-deferred) — avoid flashing the empty
                 // "no projects" screen over projects that are about to load in.
-                ProgressView()
-                    .controlSize(.large)
+                ProjectLoadingOverlay(title: "Loading Projects…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.platformWindowBackground)
             }

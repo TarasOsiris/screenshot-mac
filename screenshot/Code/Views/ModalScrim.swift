@@ -8,3 +8,19 @@ struct ModalScrim: View {
             .ignoresSafeArea()
     }
 }
+
+/// The material card a centered modal panel sits on. Shared by the export-progress and
+/// project-loading overlays so both pick up Liquid Glass on iOS 26.
+struct OverlayCardChrome: ViewModifier {
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            content.glassEffect(.regular, in: .rect(cornerRadius: UIMetrics.CornerRadius.floating))
+        } else {
+            content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.floating))
+        }
+        #else
+        content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.floating))
+        #endif
+    }
+}

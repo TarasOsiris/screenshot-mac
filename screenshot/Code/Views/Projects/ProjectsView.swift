@@ -108,20 +108,11 @@ struct iPadRootView: View {
     }
 
     private func openProject(_ id: UUID) {
-        // Start the (off-main) load unless this is already the active/loaded project, then
-        // push the gate. The gate paints the spinner immediately and builds the heavy editor
-        // only once loading completes — so the cold first-open build never freezes a blank,
-        // feedback-less screen.
-        if id != state.activeProjectId {
-            // Flip the opening flag up-front so the gate shows the spinner before the load
-            // begins; switchToProject sets it again later (idempotent). selectProject runs off
-            // this runloop turn so the push animates before the load work starts.
-            state.beginProjectOpening()
-            Task { @MainActor in
-                await Task.yield()
-                state.selectProject(id)
-            }
-        }
+        // The gate paints the spinner immediately and builds the heavy editor only once loading
+        // completes — so the cold first-open build never freezes a blank, feedback-less screen.
+        // `selectProject` sets the opening phase synchronously (and no-ops when `id` is already
+        // active), so the gate is already showing on the frame the push starts.
+        state.selectProject(id)
         openedProjectId = id
     }
 }
@@ -153,7 +144,7 @@ private struct ProjectOpenGate: View {
                 // navigation push). Wait one frame so the cold first-time editor build lands
                 // after the push settles; the spinner keeps animating on the render server
                 // through the build's main-thread stall.
-                try? await Task.sleep(for: .milliseconds(50))
+                await ProjectOpenProgress.awaitPaint()
                 showEditor = true
             }
     }
@@ -167,7 +158,7 @@ private struct ProjectOpenGate: View {
         } else {
             ZStack {
                 Color.platformWindowBackground.ignoresSafeArea()
-                ProjectLoadingOverlay(message: "Opening Project…")
+                ProjectOpenOverlay(progress: state.projectOpen)
             }
         }
     }
@@ -198,14 +189,15 @@ struct ProjectsView: View {
 
     var body: some View {
         Group {
-            if state.visibleProjects.isEmpty {
-                // Not wrapped in a ScrollView: NoProjectView (or the loading state) fills and centers.
-                if !state.hasCompletedInitialLoad {
-                    ProjectLoadingOverlay(message: "Loading from iCloud…")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    emptyState
-                }
+            // Ahead of the `isEmpty` branch: a returning user's cached cards are on screen while
+            // the index is still being read, and that read is exactly the slow one under iCloud.
+            if !state.hasCompletedInitialLoad {
+                // Not wrapped in a ScrollView: the loading state fills and centers.
+                ProjectLoadingOverlay(title: "Loading Projects…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if state.visibleProjects.isEmpty {
+                // Not wrapped in a ScrollView: NoProjectView fills and centers.
+                emptyState
             } else {
                 ScrollView {
                     if !dismissedMacAppBanner {

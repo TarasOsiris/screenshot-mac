@@ -101,7 +101,11 @@ final class AppState {
     /// Serializes off-main iCloud reloads so overlapping remote changes don't race on the
     /// tombstone merge / own-write bookkeeping.
     @ObservationIgnored var reloadTask: Task<Void, Never>?
-    var isOpeningProject = false
+    /// Which step of a project open is running, and the text the loading overlay shows for it.
+    /// Views take this object directly rather than reading through `AppState`, so a phase or
+    /// image-count change invalidates the overlay instead of the whole editor shell.
+    let projectOpen = ProjectOpenProgress()
+    var isOpeningProject: Bool { projectOpen.isOpening }
     /// False until the first `load()` completes. Lets the UI show a loading state instead of
     /// the empty "no projects" screen while an iCloud-deferred load is still pending.
     var hasCompletedInitialLoad = false
