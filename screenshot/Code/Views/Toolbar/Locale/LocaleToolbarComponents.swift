@@ -14,7 +14,8 @@ struct LocaleFlagChip: View {
                         .font(.system(size: 13))
                 }
                 Text(locale.code.uppercased())
-                    .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold, design: .monospaced))
+                    .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
+                    .monospaced()
             }
             .foregroundStyle(isActive ? Color.white : Color.primary)
             .padding(.horizontal, 7)

@@ -164,6 +164,20 @@ extension ShapePropertiesSingleSelectionBar {
 
     /// Creates a Binding that always resolves the shape index by ID at access time.
     /// Reads the resolved (locale-aware) value; writes go through `updateShape` which handles locale splitting.
+    /// Turning an outline on writes colour *and* width together (and off clears both), so this
+    /// can't be expressed as a single key-path binding.
+    func outlineEnabledBinding(_ shape: CanvasShapeModel) -> Binding<Bool> {
+        Binding(
+            get: { (shape.outlineWidth ?? 0) > 0 },
+            set: { enabled in
+                var updated = shape
+                updated.outlineColor = enabled ? CanvasShapeModel.defaultOutlineColor : nil
+                updated.outlineWidth = enabled ? CanvasShapeModel.defaultOutlineWidth : nil
+                state.updateShape(updated)
+            }
+        )
+    }
+
     func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T>, continuous: Bool = false) -> Binding<T> where T: Sendable {
         Binding(
             get: {
@@ -276,5 +290,18 @@ extension ShapePropertiesSingleSelectionBar {
 
     func nsFontWeight(_ weight: Int) -> NSFont.Weight {
         CSSFontWeight(css: weight).platform
+    }
+}
+
+extension ShapePropertiesSingleSelectionBar {
+    func replaceSvg(for shapeId: UUID, content: String, useColor: Bool, color: Color) {
+        guard let i = idx(for: shapeId) else { return }
+        state.withRowUndo("Replace SVG", rowId: state.rows[i.row].id) {
+            state.rows[i.row].shapes[i.shape].svgContent = content
+            if useColor {
+                state.rows[i.row].shapes[i.shape].svgUseColor = true
+                state.rows[i.row].shapes[i.shape].color = color
+            }
+        }
     }
 }

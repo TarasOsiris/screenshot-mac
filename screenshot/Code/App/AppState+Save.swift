@@ -93,11 +93,7 @@ extension AppState {
 
     func scheduleSave() {
         saveTask?.cancel()
-        let task = DispatchWorkItem { [weak self] in
-            self?.saveAllAsync()
-        }
-        saveTask = task
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
+        saveTask = .delayed(0.3) { [weak self] in self?.saveAllAsync() }
     }
 
     /// Routine save path: never commits in-progress inline/continuous edits (that would create

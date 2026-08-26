@@ -169,7 +169,7 @@ private struct ASCDisplayTypePicker: View {
             #endif
             if let selected = plan.selectedAssetType {
                 Text(selected.appStoreConnectValue)
-                    .font(.caption2.monospaced())
+                    .font(.caption.monospaced())
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -234,7 +234,7 @@ private struct ASCLocaleTargetRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(target.appLocaleLabel)
                 Text("Project \(target.appLocaleCode)")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
             #if os(macOS)
@@ -260,7 +260,7 @@ private struct ASCLocaleTargetRow: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
                 Text("Add this locale in App Store Connect, then refresh locales.")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
         } else {
@@ -286,7 +286,7 @@ private struct ASCLocaleTargetRow: View {
         let selected = target.selectedCandidates.map(\.attributes.locale)
         if !selected.isEmpty {
             Text("-> \(selected.joined(separator: ", "))")
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
     }

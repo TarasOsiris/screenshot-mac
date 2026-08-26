@@ -29,6 +29,58 @@ extension EditorRowView {
         #endif
     }
 
+    // MARK: - Row mutations
+
+    /// Shared by the row header and the row context menu.
+    static let rowAnimation: Animation = .easeInOut(duration: 0.2)
+
+    func toggleCollapsed() {
+        withAnimation(Self.rowAnimation) { state.toggleRowCollapsed(for: row.id) }
+    }
+
+    func moveRowUp() {
+        withAnimation(Self.rowAnimation) { state.moveRowUp(row.id) }
+    }
+
+    func moveRowDown() {
+        withAnimation(Self.rowAnimation) { state.moveRowDown(row.id) }
+    }
+
+    func duplicateRow() {
+        store.requirePro(
+            allowed: store.canAddRow(currentCount: state.rows.count),
+            context: .rowLimit
+        ) {
+            withAnimation(Self.rowAnimation) { state.duplicateRow(row.id) }
+        }
+    }
+
+    func resetRow() {
+        if confirmBeforeDeleting {
+            isResettingRow = true
+        } else {
+            withAnimation(Self.rowAnimation) { state.resetRow(row.id) }
+        }
+    }
+
+    func deleteRow() {
+        if confirmBeforeDeleting {
+            isDeletingRow = true
+        } else {
+            withAnimation(Self.rowAnimation) { state.deleteRow(row.id) }
+        }
+    }
+
+    func togglePreviewMode() {
+        modeReady = false
+        let wasPreview = isPreviewMode
+        state.viewMode.togglePreview(for: row.id)
+        if !wasPreview {
+            textEditingShapeId = nil
+            dragSession.reset()
+        }
+    }
+
     func startLabelEdit() {
         editingLabelText = row.label
         isEditingLabel = true
@@ -69,13 +121,15 @@ extension EditorRowView {
             canMoveUp: canMoveUp,
             canMoveDown: canMoveDown,
             canDelete: canDelete,
-            confirmBeforeDeleting: confirmBeforeDeleting,
             isSvgDialogPresented: $isSvgDialogPresented,
-            isResettingRow: $isResettingRow,
-            isDeletingRow: $isDeletingRow,
             addShapeFromMenu: addShapeFromMenu,
             exportRowScreenshots: exportRowScreenshots,
-            exportRowImage: { exportRowImage(showcase: $0) }
+            exportRowImage: { exportRowImage(showcase: $0) },
+            duplicateRow: duplicateRow,
+            moveRowUp: moveRowUp,
+            moveRowDown: moveRowDown,
+            resetRow: resetRow,
+            deleteRow: deleteRow
         )
     }
 

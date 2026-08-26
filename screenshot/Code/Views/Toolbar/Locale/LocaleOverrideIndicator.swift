@@ -7,7 +7,7 @@ struct LocaleOverrideIndicator: View {
         HStack(spacing: 4) {
             OverrideDot()
             Text("Overridden")
-                .font(.system(size: UIMetrics.FontSize.inlineLabel))
+                .scaledFont(UIMetrics.FontSize.inlineLabel)
                 .foregroundStyle(Color.accentColor)
 
             ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset language override", frameSize: UIMetrics.IconButton.frameSize, action: onReset)

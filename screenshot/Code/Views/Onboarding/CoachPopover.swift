@@ -156,7 +156,7 @@ private struct CoachPopoverContent: View {
 
     private var message: some View {
         Text(step.message)
-            .font(.system(size: UIMetrics.FontSize.body))
+            .scaledFont(UIMetrics.FontSize.body)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
             .lineSpacing(2)

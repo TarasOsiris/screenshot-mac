@@ -23,7 +23,7 @@ nonisolated enum EditCoalescingTiming {
 @MainActor
 final class DebouncedUndoCoalescer {
     let debounceDelay: TimeInterval
-    private var finishTask: DispatchWorkItem?
+    private var finishTask: Task<Void, Never>?
     private var commit: (() -> Void)?
     /// Identity of the burst in progress (a shape or row id), so a differently-targeted edit can
     /// finish the previous burst first, and views can read the in-flight target. Nil when idle.
@@ -45,9 +45,7 @@ final class DebouncedUndoCoalescer {
     func arm() {
         guard commit != nil else { return }
         finishTask?.cancel()
-        let task = DispatchWorkItem { [weak self] in self?.finish() }
-        finishTask = task
-        DispatchQueue.main.asyncAfter(deadline: .now() + debounceDelay, execute: task)
+        finishTask = .delayed(debounceDelay) { [weak self] in self?.finish() }
     }
 
     /// Commit the burst as a single undo step now. No-op when idle. The commit closure is cleared
@@ -82,7 +80,7 @@ final class DebouncedUndoCoalescer {
 final class ContinuousApplyThrottle {
     let interval: CFAbsoluteTime
     private(set) var lastApply: CFAbsoluteTime = 0
-    private var flushTask: DispatchWorkItem?
+    private var flushTask: Task<Void, Never>?
     private var pendingApply: (() -> Void)?
 
     init(interval: CFAbsoluteTime) { self.interval = interval }
@@ -103,9 +101,7 @@ final class ContinuousApplyThrottle {
         } else {
             pendingApply = apply
             if flushTask == nil {
-                let task = DispatchWorkItem { [weak self] in self?.flush() }
-                flushTask = task
-                DispatchQueue.main.asyncAfter(deadline: .now() + (interval - (now - lastApply)), execute: task)
+                flushTask = .delayed(interval - (now - lastApply)) { [weak self] in self?.flush() }
             }
         }
     }

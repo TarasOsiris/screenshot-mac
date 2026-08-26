@@ -48,7 +48,7 @@ struct ASCScreenshotDiffThumbnail: View {
                     VStack(spacing: 6) {
                         Image(systemName: "photo.badge.exclamationmark")
                         Text("Preview unavailable")
-                            .font(.caption2)
+                            .font(.caption)
                     }
                     .foregroundStyle(.secondary)
                 }
@@ -63,7 +63,7 @@ struct ASCScreenshotDiffThumbnail: View {
                 Image(systemName: item.status.icon)
                 Text(item.status.label)
             }
-            .font(.caption2.bold())
+            .font(.caption.bold())
             .foregroundStyle(item.status.color)
         }
         .frame(width: 116)

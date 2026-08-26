@@ -24,11 +24,11 @@ struct ShapePropertiesSingleSelectionBar: View {
     static let fontSizeRange: ClosedRange<CGFloat> = 8...400
     static let fontSizePresets: [Int] = CanvasShapeModel.fontSizePresets
     @Bindable var state: AppState
-    @State var isReplacingSvg = false
+    @State private var isReplacingSvg = false
     #if os(macOS)
-    @State var isReplacingFillImage = false
+    @State private var isReplacingFillImage = false
     #endif
-    @State var isFillPopoverPresented = false
+    @State private var isFillPopoverPresented = false
     @State var isTextPopoverPresented = false
     @State var isTextLocalizationPopoverPresented = false
     @State var isTextBackgroundPopoverPresented = false
@@ -130,16 +130,9 @@ struct ShapePropertiesSingleSelectionBar: View {
                         if shape.type == .device
                             && shape.deviceCategory == .androidPhone
                             && shape.deviceFrameId == nil {
-                            let hideCamera = shapeBinding(shapeId, \.hideCameraCutout, default: false)
-                            ShapePropertiesSection {
-                                Toggle("Camera", isOn: Binding(
-                                    get: { !hideCamera.wrappedValue },
-                                    set: { hideCamera.wrappedValue = !$0 }
-                                ))
-                                .toggleStyle(.switch)
-                                .compactControlSize()
-                                .help("Show camera cutout on the abstract Android frame")
-                            }
+                            AndroidCameraCutoutSection(
+                                hideCameraCutout: shapeBinding(shapeId, \.hideCameraCutout, default: false)
+                            )
                         }
 
                         if shape.supportsDeviceModelRotation {
@@ -192,89 +185,42 @@ struct ShapePropertiesSingleSelectionBar: View {
                             }
                         }
 
-                        ShapePropertiesSection {
-                            ShapePropertiesControlGroup("Opacity") {
-                                HStack(spacing: 0) {
-                                    ShapePropertyField(
-                                        shapeId: shapeId,
-                                        field: .opacity,
-                                        text: $editingOpacity,
-                                        isActive: $isOpacityFieldActive,
-                                        focus: $focusedField,
-                                        width: propertiesOpacityFieldWidth,
-                                        clearsFocusOnSelectionChange: true,
-                                        modelValue: shape.opacity,
-                                        current: { currentOpacityString(for: $0) },
-                                        commit: { commitOpacity(to: $0) },
-                                        liveSelection: { state.selectedShapeId }
-                                    )
+                        ShapeOpacitySection(
+                            shapeId: shapeId,
+                            field: .opacity,
+                            opacity: shape.opacity,
+                            text: $editingOpacity,
+                            isActive: $isOpacityFieldActive,
+                            focus: $focusedField,
+                            current: { currentOpacityString(for: $0) },
+                            commit: { commitOpacity(to: $0) },
+                            liveSelection: { state.selectedShapeId }
+                        )
 
-                                    Text("%")
-                                        .font(.system(size: UIMetrics.FontSize.numericBadge))
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-
-                        ShapePropertiesSection {
-                            ShapePropertiesControlGroup("Rotation") {
-                                Slider(value: shapeBinding(shapeId, \.rotation, continuous: true), in: 0...360)
-                                    .frame(width: UIMetrics.SliderWidth.standard)
-
-                                HStack(spacing: 0) {
-                                    ShapePropertyField(
-                                        shapeId: shapeId,
-                                        field: .rotation,
-                                        text: $editingRotation,
-                                        isActive: $isRotationFieldActive,
-                                        focus: $focusedField,
-                                        width: propertiesNumericFieldWidth,
-                                        keyboard: .signed,
-                                        clearsFocusOnSelectionChange: true,
-                                        modelValue: shape.rotation,
-                                        current: { currentRotationString(for: $0) },
-                                        commit: { commitRotation(to: $0) },
-                                        liveSelection: { state.selectedShapeId }
-                                    )
-
-                                    Text("°")
-                                        .font(.system(size: UIMetrics.FontSize.numericBadge))
-                                        .foregroundStyle(.secondary)
-                                }
-
-                                if shape.rotation != 0 {
-                                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
-                                        resetRotation(shapeId: shapeId)
-                                    }
-                                }
-                            }
-                        }
+                        ShapeRotationSection(
+                            shapeId: shapeId,
+                            field: .rotation,
+                            slider: shapeBinding(shapeId, \.rotation, continuous: true),
+                            text: $editingRotation,
+                            isActive: $isRotationFieldActive,
+                            focus: $focusedField,
+                            current: { currentRotationString(for: $0) },
+                            commit: { commitRotation(to: $0) },
+                            liveSelection: { state.selectedShapeId },
+                            onReset: { resetRotation(shapeId: shapeId) }
+                        )
 
                         if shape.type == .rectangle || shape.type == .image || (shape.type == .device && shape.deviceCategory == .invisible) {
-                            ShapePropertiesSection {
-                                ShapePropertiesControlGroup("Radius") {
-                                    Slider(value: shapeBinding(shapeId, \.borderRadius, continuous: true), in: 0...500)
-                                        .frame(width: UIMetrics.SliderWidth.standard)
-
-                                    Text(verbatim: "\(Int(shape.borderRadius))")
-                                        .frame(width: propertiesSliderValueWidth, alignment: .trailing)
-                                }
-                            }
+                            ShapeCornerRadiusSection(
+                                value: shapeBinding(shapeId, \.borderRadius, continuous: true)
+                            )
                         }
 
                         if shape.type.supportsOutline || (shape.type == .device && shape.deviceCategory == .invisible) {
                             ShapePropertiesSection {
                                 ShapeOutlineControls(
                                     shape: shape,
-                                    hasOutline: Binding(
-                                        get: { (shape.outlineWidth ?? 0) > 0 },
-                                        set: { enabled in
-                                            var updated = shape
-                                            updated.outlineColor = enabled ? CanvasShapeModel.defaultOutlineColor : nil
-                                            updated.outlineWidth = enabled ? CanvasShapeModel.defaultOutlineWidth : nil
-                                            state.updateShape(updated)
-                                        }
-                                    ),
+                                    hasOutline: outlineEnabledBinding(shape),
                                     outlineColor: shapeBinding(shapeId, \.outlineColor, default: CanvasShapeModel.defaultOutlineColor),
                                     outlineWidth: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true)
                                 )
@@ -282,17 +228,9 @@ struct ShapePropertiesSingleSelectionBar: View {
                         }
 
                         if shape.type == .star {
-                            ShapePropertiesSection {
-                                ShapePropertiesControlGroup("Points") {
-                                    Stepper(
-                                        value: shapeBinding(shapeId, \.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
-                                        in: 3...20
-                                    ) {
-                                        Text(verbatim: "\(shape.starPointCount ?? CanvasShapeModel.defaultStarPointCount)")
-                                            .frame(width: propertiesStepperValueWidth, alignment: .trailing)
-                                    }
-                                }
-                            }
+                            ShapeStarPointsSection(
+                                pointCount: shapeBinding(shapeId, \.starPointCount, default: CanvasShapeModel.defaultStarPointCount)
+                            )
                         }
 
                         if shape.type == .image {
@@ -333,11 +271,9 @@ struct ShapePropertiesSingleSelectionBar: View {
                             }
                         }
 
-                        ShapePropertiesSection {
-                            Toggle("Clip to Frame", isOn: shapeBinding(shapeId, \.clipToTemplate, default: false))
-                                .toggleStyle(.switch)
-                                .compactControlSize()
-                        }
+                        ShapeClipToFrameSection(
+                            clipToTemplate: shapeBinding(shapeId, \.clipToTemplate, default: false)
+                        )
 
                         ShapeSelectionActionsSection(
                             canBringToFront: canBringToFront,
@@ -367,29 +303,20 @@ struct ShapePropertiesSingleSelectionBar: View {
                 .padding(.trailing, 8)
                 #endif
             }
-            .font(.system(size: UIMetrics.FontSize.body))
+            .scaledFont(UIMetrics.FontSize.body)
             .compactControlSize()
+            .denseBarTypography()
             .modifier(PropertiesBarChrome())
             // macOS-only: the fill swatch's "pick image" opens this file panel. iPad picks the
             // fill image through ImageSourceMenu inside BackgroundImageEditor (→ saveShapeFillImage).
             #if os(macOS)
-            .fileImporter(isPresented: $isReplacingFillImage, allowedContentTypes: [.image]) { result in
-                if case .success(let url) = result,
-                   let image = NSImage.fromSecurityScopedURL(url) {
-                    state.saveShapeFillImage(image, for: shapeId)
-                }
+            .imageSourcePicker(isPresented: $isReplacingFillImage) { image in
+                state.saveShapeFillImage(image, for: shapeId)
             }
             #endif
             .sheet(isPresented: $isReplacingSvg) {
                 SvgPasteDialog(isPresented: $isReplacingSvg) { svgContent, _, useColor, color in
-                    guard let i = idx(for: shapeId) else { return }
-                    state.withRowUndo("Replace SVG", rowId: state.rows[i.row].id) {
-                        state.rows[i.row].shapes[i.shape].svgContent = svgContent
-                        if useColor {
-                            state.rows[i.row].shapes[i.shape].svgUseColor = true
-                            state.rows[i.row].shapes[i.shape].color = color
-                        }
-                    }
+                    replaceSvg(for: shapeId, content: svgContent, useColor: useColor, color: color)
                 }
             }
         }

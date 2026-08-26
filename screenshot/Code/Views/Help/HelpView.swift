@@ -166,7 +166,7 @@ private struct HelpHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.system(size: UIMetrics.FontSize.displayTitle, weight: .bold))
+                .scaledFont(UIMetrics.FontSize.displayTitle, weight: .bold)
             if let subtitle {
                 Text(subtitle)
                     .font(.title3)
@@ -188,7 +188,7 @@ private struct HelpHeading: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: UIMetrics.FontSize.sectionHeading, weight: .semibold))
+            .scaledFont(UIMetrics.FontSize.sectionHeading, weight: .semibold)
             .padding(.top, topPadding)
     }
 }

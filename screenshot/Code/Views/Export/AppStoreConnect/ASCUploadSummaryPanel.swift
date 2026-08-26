@@ -73,7 +73,7 @@ struct ASCUploadSummaryPanel: View {
                     }
                     if plan.skipped.count > 12 {
                         Text("\(plan.skipped.count - 12) more skipped item\(plan.skipped.count - 12 == 1 ? "" : "s")")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -93,7 +93,7 @@ private struct ASCSummaryMetric: View {
             Text(value)
                 .font(.headline.monospacedDigit())
             Text(label)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .frame(minWidth: 78, alignment: .leading)
@@ -120,19 +120,19 @@ private struct ASCRowPlanGroupRow: View {
                 .fontWeight(.semibold)
                 Spacer()
                 Text("\(group.screenshotCount) screenshot\(group.screenshotCount == 1 ? "" : "s")")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Text("Source \(group.sourceSizeLabel) · \(group.templateCount) screenshot\(group.templateCount == 1 ? "" : "s") · \(group.displayTypeRawValue)")
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: 5) {
                 Image(systemName: "arrow.triangle.2.circlepath")
                     .foregroundStyle(.orange)
-                    .font(.caption2)
+                    .font(.caption)
                 Text(verbatim: compactLocaleSummary)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)

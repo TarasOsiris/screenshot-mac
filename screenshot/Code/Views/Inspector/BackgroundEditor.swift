@@ -275,7 +275,7 @@ struct BackgroundImageEditor: View {
                 .font(.system(size: 16))
                 .foregroundStyle(isDropTargeted ? Color.accentColor : Color.secondary)
             Text(isDropTargeted ? "Drop Image" : "Choose or Drop Image")
-                .font(.system(size: UIMetrics.FontSize.inlineLabel))
+                .scaledFont(UIMetrics.FontSize.inlineLabel)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -301,7 +301,7 @@ struct BackgroundImageEditor: View {
                     Button("Remove", role: .destructive) { onRemoveImage() }
                         .controlSize(.small)
                 }
-                .font(.system(size: UIMetrics.FontSize.inlineLabel))
+                .scaledFont(UIMetrics.FontSize.inlineLabel)
                 #else
                 HStack(spacing: 12) {
                     previewThumbnail(preview)
@@ -358,7 +358,7 @@ struct BackgroundImageEditor: View {
         #if os(macOS)
         if !hasImage {
             Text("Drop or paste an image to configure fill and opacity.")
-                .font(.system(size: UIMetrics.FontSize.hint))
+                .scaledFont(UIMetrics.FontSize.hint)
                 .foregroundStyle(.secondary)
         }
         #endif

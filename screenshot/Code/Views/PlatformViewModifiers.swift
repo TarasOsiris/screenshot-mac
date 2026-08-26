@@ -64,3 +64,33 @@ extension View {
         #endif
     }
 }
+
+/// Scales a `UIMetrics.FontSize` point value with the user's text size on iPad, relative to
+/// `.body`, so the tuned tier relationships survive. macOS deliberately keeps the exact point
+/// value: the desktop bars are pointer-dense by design and AppKit has no Dynamic Type.
+#if os(iOS)
+private struct ScaledSystemFont: ViewModifier {
+    @ScaledMetric private var size: CGFloat
+    private let weight: Font.Weight
+
+    init(size: CGFloat, weight: Font.Weight) {
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .body)
+        self.weight = weight
+    }
+
+    func body(content: Content) -> some View {
+        content.font(.system(size: size, weight: weight))
+    }
+}
+#endif
+
+extension View {
+    @ViewBuilder
+    func scaledFont(_ size: CGFloat, weight: Font.Weight = .regular) -> some View {
+        #if os(macOS)
+        font(.system(size: size, weight: weight))
+        #else
+        modifier(ScaledSystemFont(size: size, weight: weight))
+        #endif
+    }
+}

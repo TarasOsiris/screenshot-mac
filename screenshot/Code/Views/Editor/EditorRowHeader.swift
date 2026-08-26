@@ -62,17 +62,21 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     }
 
     private var chevron: some View {
-        Image(systemName: row.isCollapsed ? "chevron.right" : "chevron.down")
-            #if os(macOS)
-            .font(.system(size: 10, weight: .medium))
-            .frame(width: 12, height: 12)
-            #else
-            .font(.system(size: 15, weight: .medium))
-            .frame(width: 28, height: UIMetrics.ActionButton.frameSize)
-            #endif
-            .foregroundStyle(isSelected ? Color.accentColor : .secondary)
-            .contentShape(Rectangle())
-            .onTapGesture(perform: onToggleCollapsed)
+        Button(action: onToggleCollapsed) {
+            Image(systemName: row.isCollapsed ? "chevron.right" : "chevron.down")
+                #if os(macOS)
+                .font(.system(size: 10, weight: .medium))
+                .frame(width: 12, height: 12)
+                #else
+                .font(.system(size: 15, weight: .medium))
+                .frame(width: 28, height: UIMetrics.ActionButton.frameSize)
+                #endif
+                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .accessibilityLabel(row.isCollapsed ? Text("Expand") : Text("Collapse"))
     }
 
     @ViewBuilder

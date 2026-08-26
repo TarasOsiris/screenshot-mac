@@ -24,10 +24,10 @@ struct ShapePropertiesMultiSelectionBar: View {
                     HStack(spacing: 6) {
                         if let type = commonType {
                             Image(systemName: type.icon)
-                                .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
+                                .scaledFont(UIMetrics.FontSize.body, weight: .medium)
                         }
                         Text("\(count) shapes")
-                            .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
+                            .scaledFont(UIMetrics.FontSize.body, weight: .semibold)
                     }
                     .propertiesBadgeCapsule()
 
@@ -40,7 +40,7 @@ struct ShapePropertiesMultiSelectionBar: View {
                                 Slider(value: opacity, in: 0...1)
                                     .frame(width: UIMetrics.SliderWidth.standard)
                                 Text(verbatim: "\(Int((opacity.wrappedValue * 100).rounded()))%")
-                                    .font(.system(size: UIMetrics.FontSize.numericBadge))
+                                    .scaledFont(UIMetrics.FontSize.numericBadge)
                                     .foregroundStyle(.secondary)
                                     .monospacedDigit()
                                     .frame(width: propertiesOpacityFieldWidth, alignment: .trailing)
@@ -54,7 +54,7 @@ struct ShapePropertiesMultiSelectionBar: View {
                                     .frame(width: UIMetrics.SliderWidth.standard)
 
                                 Text(verbatim: "\(Int(rotation.wrappedValue.rounded()))°")
-                                    .font(.system(size: UIMetrics.FontSize.numericBadge))
+                                    .scaledFont(UIMetrics.FontSize.numericBadge)
                                     .foregroundStyle(.secondary)
                                     .monospacedDigit()
                                     .frame(width: propertiesNumericFieldWidth, alignment: .trailing)
@@ -69,11 +69,7 @@ struct ShapePropertiesMultiSelectionBar: View {
                             }
                         }
 
-                        ShapePropertiesSection {
-                            Toggle("Clip to Frame", isOn: multiShapeOptionalBinding(\.clipToTemplate, default: false))
-                                .toggleStyle(.switch)
-                                .compactControlSize()
-                        }
+                        ShapeClipToFrameSection(clipToTemplate: multiShapeOptionalBinding(\.clipToTemplate, default: false))
                     }
 
                     ShapeSelectionActionsSection(
@@ -97,8 +93,9 @@ struct ShapePropertiesMultiSelectionBar: View {
             }
             .padding(.trailing, 8)
         }
-        .font(.system(size: UIMetrics.FontSize.body))
+        .scaledFont(UIMetrics.FontSize.body)
         .compactControlSize()
+        .denseBarTypography()
         .modifier(PropertiesBarChrome())
     }
 
@@ -187,32 +184,13 @@ struct ShapePropertiesMultiSelectionBar: View {
         }
 
         if type == .rectangle || type == .image {
-            ShapePropertiesSection {
-                ShapePropertiesControlGroup("Radius") {
-                    let radius = multiShapeBinding(\.borderRadius)
-                    Slider(value: radius, in: 0...500)
-                        .frame(width: UIMetrics.SliderWidth.standard)
-                    Text(verbatim: "\(Int(radius.wrappedValue.rounded()))")
-                        .font(.system(size: UIMetrics.FontSize.numericBadge))
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                        .frame(width: propertiesSliderValueWidth, alignment: .trailing)
-                }
-            }
+            ShapeCornerRadiusSection(value: multiShapeBinding(\.borderRadius))
         }
 
         if type == .star {
-            ShapePropertiesSection {
-                ShapePropertiesControlGroup("Points") {
-                    Stepper(
-                        value: multiShapeOptionalBinding(\.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
-                        in: 3...20
-                    ) {
-                        Text(verbatim: "\(shapes.first?.starPointCount ?? CanvasShapeModel.defaultStarPointCount)")
-                            .frame(width: propertiesStepperValueWidth, alignment: .trailing)
-                    }
-                }
-            }
+            ShapeStarPointsSection(
+                pointCount: multiShapeOptionalBinding(\.starPointCount, default: CanvasShapeModel.defaultStarPointCount)
+            )
         }
 
         if type == .svg {

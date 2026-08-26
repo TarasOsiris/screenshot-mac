@@ -45,10 +45,10 @@ extension ShapePropertiesSingleSelectionBar {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(state.localeState.baseLocaleLabel)
-                    .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold))
+                    .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
                     .foregroundStyle(.secondary)
                 Text(hasBaseText ? baseText : String(localized: "Untitled text"))
-                    .font(.system(size: UIMetrics.FontSize.body))
+                    .scaledFont(UIMetrics.FontSize.body)
                     .foregroundStyle(hasBaseText ? Color.primary : Color.secondary)
                     .lineLimit(hasBaseText ? 2 : nil)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -78,7 +78,7 @@ extension ShapePropertiesSingleSelectionBar {
             Divider()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
+                LazyVStack(alignment: .leading, spacing: 10) {
                     ForEach(state.localeState.locales.dropFirst()) { locale in
                         localeTranslationRow(baseShape: baseShape, locale: locale)
                     }
@@ -113,7 +113,7 @@ extension ShapePropertiesSingleSelectionBar {
                 }
             }
         }
-        .font(.system(size: UIMetrics.FontSize.body))
+        .scaledFont(UIMetrics.FontSize.body)
         .controlSize(.small)
     }
 
@@ -126,7 +126,7 @@ extension ShapePropertiesSingleSelectionBar {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(locale.flagLabel)
-                    .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold))
+                    .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
                 Spacer()
                 if hasOverride {
                     ActionButton(icon: "arrow.uturn.backward", tooltip: "Reset language override", frameSize: 20) {
@@ -137,11 +137,11 @@ extension ShapePropertiesSingleSelectionBar {
 
             if let formatted {
                 Text(formatted.isEmpty ? String(localized: "Same as base language") : formatted)
-                    .font(.system(size: UIMetrics.FontSize.body))
+                    .scaledFont(UIMetrics.FontSize.body)
                     .foregroundStyle(formatted.isEmpty ? Color.secondary : Color.primary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Label("Formatted — edit on the canvas", systemImage: "paintbrush.pointed")
-                    .font(.system(size: UIMetrics.FontSize.hint))
+                    .scaledFont(UIMetrics.FontSize.hint)
                     .foregroundStyle(.secondary)
             } else {
                 // TextEditor-backed so Return inserts a newline (a vertical-axis TextField submits).
@@ -293,7 +293,7 @@ private struct TextLocalizationSheetContent: View {
                     .foregroundStyle(formatted.isEmpty ? Color.secondary : Color.primary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Label("Formatted — edit on the canvas", systemImage: "paintbrush.pointed")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
                 BufferedTranslationField(

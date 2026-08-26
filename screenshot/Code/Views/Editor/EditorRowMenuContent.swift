@@ -7,13 +7,15 @@ struct EditorRowMenuContent: View {
     let canMoveUp: Bool
     let canMoveDown: Bool
     let canDelete: Bool
-    let confirmBeforeDeleting: Bool
     @Binding var isSvgDialogPresented: Bool
-    @Binding var isResettingRow: Bool
-    @Binding var isDeletingRow: Bool
     let addShapeFromMenu: (ShapeType) -> Void
     let exportRowScreenshots: () -> Void
     let exportRowImage: (Bool) -> Void
+    let duplicateRow: () -> Void
+    let moveRowUp: () -> Void
+    let moveRowDown: () -> Void
+    let resetRow: () -> Void
+    let deleteRow: () -> Void
 
     var body: some View {
         addSection
@@ -59,14 +61,7 @@ struct EditorRowMenuContent: View {
 
     @ViewBuilder
     private var organizationSection: some View {
-        Button("Duplicate Row", systemImage: "plus.square.on.square") {
-            store.requirePro(
-                allowed: store.canAddRow(currentCount: state.rows.count),
-                context: .rowLimit
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
-            }
-        }
+        Button("Duplicate Row", systemImage: "plus.square.on.square", action: duplicateRow)
         Button("Add New Row Above", systemImage: "arrow.up.to.line.compact") {
             store.requirePro(
                 allowed: store.canAddRow(currentCount: state.rows.count),
@@ -83,14 +78,10 @@ struct EditorRowMenuContent: View {
                 withAnimation(.easeInOut(duration: 0.2)) { state.addRowBelow(row.id) }
             }
         }
-        Button("Move Row Up", systemImage: "arrow.up") {
-            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
-        }
-        .disabled(!canMoveUp)
-        Button("Move Row Down", systemImage: "arrow.down") {
-            withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
-        }
-        .disabled(!canMoveDown)
+        Button("Move Row Up", systemImage: "arrow.up", action: moveRowUp)
+            .disabled(!canMoveUp)
+        Button("Move Row Down", systemImage: "arrow.down", action: moveRowDown)
+            .disabled(!canMoveDown)
     }
 
     @ViewBuilder
@@ -183,20 +174,8 @@ struct EditorRowMenuContent: View {
         } label: {
             Label("Delete all", systemImage: "trash")
         }
-        Button("Reset Row", systemImage: "arrow.counterclockwise", role: .destructive) {
-            if confirmBeforeDeleting {
-                isResettingRow = true
-            } else {
-                withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
-            }
-        }
-        Button("Delete Row", systemImage: "trash", role: .destructive) {
-            if confirmBeforeDeleting {
-                isDeletingRow = true
-            } else {
-                withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
-            }
-        }
-        .disabled(!canDelete)
+        Button("Reset Row", systemImage: "arrow.counterclockwise", role: .destructive, action: resetRow)
+        Button("Delete Row", systemImage: "trash", role: .destructive, action: deleteRow)
+            .disabled(!canDelete)
     }
 }

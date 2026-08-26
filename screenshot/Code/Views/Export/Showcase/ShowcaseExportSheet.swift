@@ -432,7 +432,7 @@ struct ShowcaseRowsSection: View {
             Spacer()
             Button(allSelected ? "None" : "All", action: toggleAllRows)
                 .buttonStyle(.borderless)
-                .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold))
+                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
         }
     }
 
@@ -459,7 +459,7 @@ private struct ShowcaseScreenshotsSection: View {
                 Spacer()
                 Button(allIncluded ? "None" : "All", action: toggleAll)
                     .buttonStyle(.borderless)
-                    .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold))
+                    .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
             }
             ShowcaseTemplateChipStrip(templates: row.templates, excludedTemplateIds: $excludedTemplateIds)
         }
@@ -518,12 +518,12 @@ private struct ShowcaseRowToggle: View {
             Toggle(isOn: selectionBinding) {
                 HStack(spacing: 8) {
                     Text(row.displayLabel)
-                        .font(.system(size: UIMetrics.FontSize.menuRow))
+                        .scaledFont(UIMetrics.FontSize.menuRow)
                         .lineLimit(1)
                         .truncationMode(.tail)
                     Spacer(minLength: 8)
                     Text("\(includedCount)/\(row.templates.count)")
-                        .font(.system(size: UIMetrics.FontSize.inlineLabel))
+                        .scaledFont(UIMetrics.FontSize.inlineLabel)
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
@@ -553,7 +553,7 @@ private struct ShowcaseTemplateChip: View {
     var body: some View {
         Button(action: toggleIncluded) {
             Text("\(index + 1)")
-                .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .medium))
+                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .medium)
                 .monospacedDigit()
                 .frame(width: 20, height: 18)
                 .background(chipShape.fill(chipFill))
@@ -597,9 +597,9 @@ struct ShowcaseSectionTitle: View {
     var body: some View {
         HStack(spacing: 5) {
             Image(systemName: systemImage)
-                .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold))
+                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
             Text(text.uppercased())
-                .font(.system(size: UIMetrics.FontSize.inlineLabel, weight: .semibold))
+                .scaledFont(UIMetrics.FontSize.inlineLabel, weight: .semibold)
                 .tracking(0.6)
         }
         .foregroundStyle(.secondary)

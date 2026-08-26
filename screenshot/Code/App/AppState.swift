@@ -94,7 +94,7 @@ final class AppState {
     /// Reset on every project load via `applyProjectData`, so it always tracks the active project.
     @ObservationIgnored var lastSeenCatalogModified: Date?
 
-    @ObservationIgnored var saveTask: DispatchWorkItem?
+    @ObservationIgnored var saveTask: Task<Void, Never>?
 
     @ObservationIgnored var imageLoadTask: Task<Void, Never>?
     @ObservationIgnored var projectOpenTask: Task<Void, Never>?

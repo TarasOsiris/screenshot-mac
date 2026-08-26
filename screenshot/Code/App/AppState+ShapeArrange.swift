@@ -21,24 +21,24 @@ extension AppState {
 
             switch alignment {
             case .left:
-                let target = shapes.map(\.x).min()!
+                guard let target = shapes.map(\.x).min() else { return }
                 for i in indices { rows[rowIdx].shapes[i].x = target }
             case .centerH:
                 let centers = shapes.map { $0.x + $0.width / 2 }
                 let target = centers.reduce(0, +) / CGFloat(centers.count)
                 for i in indices { rows[rowIdx].shapes[i].x = target - rows[rowIdx].shapes[i].width / 2 }
             case .right:
-                let target = shapes.map { $0.x + $0.width }.max()!
+                guard let target = shapes.map({ $0.x + $0.width }).max() else { return }
                 for i in indices { rows[rowIdx].shapes[i].x = target - rows[rowIdx].shapes[i].width }
             case .top:
-                let target = shapes.map(\.y).min()!
+                guard let target = shapes.map(\.y).min() else { return }
                 for i in indices { rows[rowIdx].shapes[i].y = target }
             case .centerV:
                 let centers = shapes.map { $0.y + $0.height / 2 }
                 let target = centers.reduce(0, +) / CGFloat(centers.count)
                 for i in indices { rows[rowIdx].shapes[i].y = target - rows[rowIdx].shapes[i].height / 2 }
             case .bottom:
-                let target = shapes.map { $0.y + $0.height }.max()!
+                guard let target = shapes.map({ $0.y + $0.height }).max() else { return }
                 for i in indices { rows[rowIdx].shapes[i].y = target - rows[rowIdx].shapes[i].height }
             case .distributeH:
                 distributeShapes(indices: indices, rowIdx: rowIdx, posKey: \.x, sizeKey: \.width)
@@ -95,8 +95,9 @@ extension AppState {
 
     private func distributeShapes(indices: [Int], rowIdx: Int, posKey: WritableKeyPath<CanvasShapeModel, CGFloat>, sizeKey: KeyPath<CanvasShapeModel, CGFloat>) {
         let sorted = indices.sorted { rows[rowIdx].shapes[$0][keyPath: posKey] < rows[rowIdx].shapes[$1][keyPath: posKey] }
-        let first = rows[rowIdx].shapes[sorted.first!]
-        let last = rows[rowIdx].shapes[sorted.last!]
+        guard let firstIdx = sorted.first, let lastIdx = sorted.last else { return }
+        let first = rows[rowIdx].shapes[firstIdx]
+        let last = rows[rowIdx].shapes[lastIdx]
         let totalSpan = (last[keyPath: posKey] + last[keyPath: sizeKey]) - first[keyPath: posKey]
         let totalSize = sorted.map { rows[rowIdx].shapes[$0][keyPath: sizeKey] }.reduce(0, +)
         let gap = (totalSpan - totalSize) / CGFloat(sorted.count - 1)

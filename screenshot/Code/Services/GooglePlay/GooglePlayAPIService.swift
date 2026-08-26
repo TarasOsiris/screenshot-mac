@@ -32,6 +32,7 @@ final class GooglePlayAPIService {
     private let auth: GooglePlayAuthService
     private let session: URLSession
     private let credentials: GooglePlayCredentialsStore
+    private let http: StoreHTTPClient
     private let demoData: GooglePlayDemoData
 
     init(auth: GooglePlayAuthService = .shared,
@@ -49,8 +50,6 @@ final class GooglePlayAPIService {
             errorMessage: Self.extractErrorMessage
         )
     }
-
-    private var http: StoreHTTPClient!
 
     /// Maps transport failures onto this service's own error type, so every localized string
     /// stays exactly where it is.

@@ -38,7 +38,7 @@ struct ASCScreenshotReviewToolbar: View {
                 }
                 .disabled(isBusy)
                 Text("Expires \(expiresAt, style: .relative)")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.tertiary)
             }
         }

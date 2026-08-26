@@ -316,6 +316,8 @@ struct CanvasShapeRenderContent: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
+            .accessibilityLabel("Add Image")
+            .help("Add Image")
             .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
 
             if isDropTargeted {

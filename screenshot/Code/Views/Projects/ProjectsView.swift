@@ -66,12 +66,7 @@ struct iPadRootView: View {
                 set: { if !$0 { store.dismissPurchaseCelebration() } })
     }
 
-    private var openedBinding: Binding<Bool> {
-        Binding(
-            get: { openedProjectId != nil },
-            set: { if !$0 { openedProjectId = nil } }
-        )
-    }
+    private var openedBinding: Binding<Bool> { $openedProjectId.isPresent() }
 
     private func tabView(
         selectedTab: Binding<iPadRootTab>,
@@ -342,12 +337,7 @@ struct ProjectsView: View {
         }
     }
 
-    private var deletionBinding: Binding<Bool> {
-        Binding(
-            get: { projectPendingDeletion != nil },
-            set: { if !$0 { projectPendingDeletion = nil } }
-        )
-    }
+    private var deletionBinding: Binding<Bool> { $projectPendingDeletion.isPresent() }
 
     private func newProject() {
         store.requirePro(

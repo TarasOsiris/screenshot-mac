@@ -5,11 +5,13 @@ struct ScreenshotSizePicker: View {
     @Binding var selection: String
     var label: LocalizedStringKey = "Default screenshot size"
 
-    private var isCustomSize: Bool {
-        !displayCategories.contains { category in
-            category.sizes.contains { "\(Int($0.width))x\(Int($0.height))" == selection }
-        }
-    }
+    /// `displayCategories` is static, so build the tag set once rather than re-scanning every
+    /// category and re-interpolating every size on each body pass.
+    private static let presetTags: Set<String> = Set(
+        displayCategories.flatMap(\.sizes).map { "\(Int($0.width))x\(Int($0.height))" }
+    )
+
+    private var isCustomSize: Bool { !Self.presetTags.contains(selection) }
 
     var body: some View {
         Picker(label, selection: $selection) {

@@ -166,7 +166,7 @@ struct TranslationOverviewSheet: View {
                 .textCase(nil)
             if !item.rowLabel.isEmpty {
                 Text(item.rowLabel)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .textCase(nil)
             }
@@ -196,7 +196,7 @@ struct TranslationOverviewSheet: View {
                         .foregroundStyle(formatted.isEmpty ? Color.secondary : Color.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Label("Formatted — edit on the canvas", systemImage: "paintbrush.pointed")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
                     BufferedTranslationField(
@@ -343,6 +343,7 @@ struct TranslationOverviewSheet: View {
             } else {
                 MatrixCellPreview(text: shape.text ?? "", placeholder: "Base text")
                     .onTapGesture { editingCellId = cellId }
+                    .accessibilityAddTraits(.isButton)
             }
             Text(rowLabel)
                 .font(.system(size: 10))
@@ -425,6 +426,7 @@ private struct TranslationMatrixCell: View {
                     help: "Leave empty to use the base language text"
                 )
                 .onTapGesture { editingCellId = cellId }
+                .accessibilityAddTraits(.isButton)
             }
             if isHovered {
                 HStack(spacing: 8) {

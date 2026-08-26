@@ -1,5 +1,19 @@
 import SwiftUI
 
+extension View {
+    /// The properties bars are fixed-height horizontal strips of label+control chips; past the
+    /// first accessibility size the chips stop fitting. Every control here is also reachable from
+    /// the inspector, which scrolls vertically and takes the full Dynamic Type range.
+    @ViewBuilder
+    func denseBarTypography() -> some View {
+        #if os(macOS)
+        self
+        #else
+        dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        #endif
+    }
+}
+
 /// Layout constants shared by `ShapePropertiesSection` and the bars that host it.
 /// Use `.horizontalPadding` on the row container so sections align flush with the bar edges.
 enum ShapePropertiesSectionLayout {
@@ -157,7 +171,7 @@ struct ShapePropertiesBadge: View {
 
     var body: some View {
         Image(systemName: type.icon)
-            .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .medium))
+            .scaledFont(UIMetrics.FontSize.numericBadge, weight: .medium)
             .propertiesBadgeCapsule()
     }
 }

@@ -61,6 +61,8 @@ struct GradientStopEditor: View {
                             .onTapGesture {
                                 selectStop(stop.id)
                             }
+                            .accessibilityLabel(Text(verbatim: "\(Int((stop.location * 100).rounded()))%"))
+                            .accessibilityAddTraits(.isButton)
                     }
                 }
             }
@@ -78,7 +80,8 @@ struct GradientStopEditor: View {
                     .simultaneousGesture(TapGesture().onEnded { focusEditor() })
 
                     Text("\(selectedLocationPercent(for: selectedId))%")
-                        .font(.system(size: UIMetrics.FontSize.body).monospacedDigit())
+                        .scaledFont(UIMetrics.FontSize.body)
+                        .monospacedDigit()
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
@@ -99,7 +102,7 @@ struct GradientStopEditor: View {
                     }
                 } else {
                     Text("Click bar to add stops")
-                        .font(.system(size: UIMetrics.FontSize.inlineLabel))
+                        .scaledFont(UIMetrics.FontSize.inlineLabel)
                         .foregroundStyle(.tertiary)
                     Spacer()
                 }

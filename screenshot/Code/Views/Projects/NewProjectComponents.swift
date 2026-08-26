@@ -293,6 +293,7 @@ struct BlankProjectConfigurator: View {
             .buttonStyle(.plain)
             .compactControlSize()
             .disabled(rowDrafts.count >= maxBlankProjectRows)
+            .accessibilityLabel("Add Row")
         }
     }
 }

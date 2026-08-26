@@ -25,7 +25,7 @@ struct ASCPlatformBadge: View {
                 } icon: {
                     Image(systemName: descriptor.systemImageName)
                 }
-                .font(.caption2)
+                .font(.caption)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(Color.secondary.opacity(0.15), in: .capsule)

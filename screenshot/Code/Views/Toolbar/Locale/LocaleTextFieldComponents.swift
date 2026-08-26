@@ -31,15 +31,15 @@ struct DebouncedFieldCommit: ViewModifier {
     @Binding var committed: String
     var isFocused: Bool
     var delay: TimeInterval = 0.3
-    @State private var commitTask: DispatchWorkItem?
+    @State private var commitTask: Task<Void, Never>?
 
     func body(content: Content) -> some View {
         content
             .onChange(of: buffer) { _, newValue in
                 commitTask?.cancel()
-                let task = DispatchWorkItem { if newValue != committed { committed = newValue } }
-                commitTask = task
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: task)
+                commitTask = .delayed(delay) {
+                    if newValue != committed { committed = newValue }
+                }
             }
             .onChange(of: committed) { _, newValue in
                 // An external write (Translate, auto-translate, locale switch) supersedes any in-flight
@@ -224,21 +224,18 @@ private struct CellEditorHeight: ViewModifier {
 
     func body(content: Content) -> some View {
         ZStack(alignment: .topLeading) {
-            // Invisible mirror reports the text's natural height via `CellHeightKey`.
+            // Invisible mirror reports the text's natural height.
             Text(measuredText)
                 .font(.system(size: CellEditorStyle.fontSize))
                 .padding(.horizontal, CellEditorStyle.insetH)
                 .padding(.vertical, CellEditorStyle.insetV)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
-                .background(GeometryReader { proxy in
-                    Color.clear.preference(key: CellHeightKey.self, value: proxy.size.height)
-                })
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
                 .hidden()
 
             content
         }
         .frame(height: CellEditorStyle.clampHeight(contentHeight))
-        .onPreferenceChange(CellHeightKey.self) { contentHeight = $0 }
     }
 }
 
@@ -263,14 +260,6 @@ struct MatrixCellPreview: View {
             .cellEditorChrome()
             .contentShape(Rectangle())
             .modifier(OptionalHelp(help: help))
-    }
-}
-
-/// Intrinsic content height of a cell editor, used to size it to fit.
-private struct CellHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
     }
 }
 

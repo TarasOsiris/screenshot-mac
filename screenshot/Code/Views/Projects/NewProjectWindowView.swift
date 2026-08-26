@@ -40,6 +40,7 @@ struct NewProjectWindowView: View {
     var body: some View {
         platformContent
             .onAppear(perform: prepareInitialState)
+            .task { await loadTemplates() }
             .screenView(.newProject, restoring: hostScreen)
     }
 
@@ -173,13 +174,14 @@ struct NewProjectWindowView: View {
         return .adaptiveCards(minimum: 230, maximum: 320, spacing: templateGridSpacing, compact: compact)
     }
 
-    private func prepareInitialState() {
-        Task {
-            templates = await TemplateService.availableTemplatesAsync()
-            if selectedTemplateId == nil {
-                selectedTemplateId = templates.first?.id
-            }
+    private func loadTemplates() async {
+        templates = await TemplateService.availableTemplatesAsync()
+        if selectedTemplateId == nil {
+            selectedTemplateId = templates.first?.id
         }
+    }
+
+    private func prepareInitialState() {
         projectName = "Project \(state.visibleProjects.count + 1)"
         creationMode = .template
         rowDrafts = [

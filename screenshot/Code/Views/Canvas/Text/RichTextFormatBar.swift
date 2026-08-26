@@ -84,7 +84,8 @@ struct RichTextFormatBar: View {
                     }
                 } label: {
                     Text("\(Int(selectionState.fontSize.rounded()))")
-                        .font(.system(size: UIMetrics.FontSize.body, weight: .semibold).monospacedDigit())
+                        .scaledFont(UIMetrics.FontSize.body, weight: .semibold)
+                        .monospacedDigit()
                         .foregroundStyle(.primary)
                         .frame(width: RichTextFormatBarMetrics.fontSizeFieldWidth, height: RichTextFormatBarMetrics.controlSize.height)
                         .background(
@@ -139,7 +140,7 @@ struct RichTextFormatBar: View {
         Button(action: action) {
             Label(helpText, systemImage: systemName)
                 .labelStyle(.iconOnly)
-                .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .semibold))
+                .scaledFont(UIMetrics.FontSize.numericBadge, weight: .semibold)
                 .frame(width: RichTextFormatBarMetrics.controlSize.width, height: RichTextFormatBarMetrics.controlSize.height)
         }
         .buttonStyle(FormatBarButtonStyle(isActive: false))
@@ -150,7 +151,7 @@ struct RichTextFormatBar: View {
         Button(action: action) {
             Label(helpText, systemImage: systemName)
                 .labelStyle(.iconOnly)
-                .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
+                .scaledFont(UIMetrics.FontSize.body, weight: .semibold)
                 .frame(width: RichTextFormatBarMetrics.controlSize.width, height: RichTextFormatBarMetrics.controlSize.height)
         }
         .buttonStyle(FormatBarButtonStyle(isActive: isActive))

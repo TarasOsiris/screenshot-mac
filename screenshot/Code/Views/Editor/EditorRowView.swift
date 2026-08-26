@@ -76,52 +76,17 @@ struct EditorRowView: View {
                 isEditingLabel: $isEditingLabel,
                 editingLabelText: $editingLabelText,
                 isLabelFieldFocused: $isLabelFieldFocused,
-                onToggleCollapsed: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        state.toggleRowCollapsed(for: row.id)
-                    }
-                },
+                onToggleCollapsed: toggleCollapsed,
                 onStartLabelEdit: startLabelEdit,
                 onCommitLabelEdit: commitLabelEdit,
                 onCancelLabelEdit: cancelLabelEdit,
-                onMoveUp: {
-                    withAnimation(.easeInOut(duration: 0.2)) { state.moveRowUp(row.id) }
-                },
-                onMoveDown: {
-                    withAnimation(.easeInOut(duration: 0.2)) { state.moveRowDown(row.id) }
-                },
-                onDuplicate: {
-                    store.requirePro(
-                        allowed: store.canAddRow(currentCount: state.rows.count),
-                        context: .rowLimit
-                    ) {
-                        withAnimation(.easeInOut(duration: 0.2)) { state.duplicateRow(row.id) }
-                    }
-                },
-                onReset: {
-                    if confirmBeforeDeleting {
-                        isResettingRow = true
-                    } else {
-                        withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
-                    }
-                },
-                onDelete: {
-                    if confirmBeforeDeleting {
-                        isDeletingRow = true
-                    } else {
-                        withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
-                    }
-                },
+                onMoveUp: moveRowUp,
+                onMoveDown: moveRowDown,
+                onDuplicate: duplicateRow,
+                onReset: resetRow,
+                onDelete: deleteRow,
                 isPreviewMode: isPreviewMode,
-                onTogglePreview: {
-                    modeReady = false
-                    let wasPreview = isPreviewMode
-                    state.viewMode.togglePreview(for: row.id)
-                    if !wasPreview {
-                        textEditingShapeId = nil
-                        dragSession.reset()
-                    }
-                }
+                onTogglePreview: togglePreviewMode
             ) {
                 rowMenuContent
             }

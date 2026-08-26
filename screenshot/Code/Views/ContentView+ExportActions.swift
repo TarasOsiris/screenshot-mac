@@ -11,10 +11,7 @@ extension View {
     /// present over a full-screen cover, so the still-open showcase sheet needs its own.
     @ViewBuilder
     func exportFailedAlert(_ message: Binding<String?>) -> some View {
-        alert("Export Failed", isPresented: Binding(
-            get: { message.wrappedValue != nil },
-            set: { if !$0 { message.wrappedValue = nil } }
-        )) {
+        alert("Export Failed", isPresented: message.isPresent()) {
             Button("OK") { message.wrappedValue = nil }
         } message: {
             Text(message.wrappedValue ?? "")

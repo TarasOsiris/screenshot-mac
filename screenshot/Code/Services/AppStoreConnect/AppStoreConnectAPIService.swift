@@ -40,6 +40,7 @@ final class AppStoreConnectAPIService {
     private let auth: AppStoreConnectAuthService
     private let session: URLSession
     private let credentials: AppStoreConnectCredentialsStore
+    private let http: StoreHTTPClient
     private let demoData: AppStoreConnectDemoData
 
     let retryPolicy: StoreRetryPolicy
@@ -62,8 +63,6 @@ final class AppStoreConnectAPIService {
             retryPolicy: retryPolicy
         )
     }
-
-    private var http: StoreHTTPClient!
 
     /// Maps transport failures onto this service's own error type, so every localized string
     /// stays exactly where it is.

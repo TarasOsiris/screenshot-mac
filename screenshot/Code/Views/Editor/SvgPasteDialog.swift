@@ -204,13 +204,18 @@ private struct SvgPresetPicker: View {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 6) {
                         ForEach(presets) { preset in
-                            SvgPresetThumbnail(
-                                preset: preset,
-                                isSelected: preset.id == selectedId,
-                                size: Self.thumbSize,
-                                overrideColor: overrideColor
-                            )
-                            .onTapGesture { onPick(preset) }
+                            Button {
+                                onPick(preset)
+                            } label: {
+                                SvgPresetThumbnail(
+                                    preset: preset,
+                                    isSelected: preset.id == selectedId,
+                                    size: Self.thumbSize,
+                                    overrideColor: overrideColor
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(preset.displayName)
                         }
                     }
                     .padding(4)

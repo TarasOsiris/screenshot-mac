@@ -142,9 +142,9 @@ struct LocaleBar: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "character.bubble")
-                            .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
+                            .scaledFont(UIMetrics.FontSize.body, weight: .medium)
                         Text("Translate Selected to All Languages")
-                            .font(.system(size: UIMetrics.FontSize.body, weight: .medium))
+                            .scaledFont(UIMetrics.FontSize.body, weight: .medium)
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)

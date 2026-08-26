@@ -259,7 +259,7 @@ extension UploadToAppStoreConnectView {
                 .textFieldStyle(.roundedBorder)
                 .submitLabel(.done)
             Text("Applies to all locales for this version.")
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .padding(10)
@@ -385,7 +385,7 @@ extension UploadToAppStoreConnectView {
                 Spacer()
                 if let limit {
                     Text("\(text.wrappedValue.count)/\(limit)")
-                        .font(.caption2.monospacedDigit())
+                        .font(.caption.monospacedDigit())
                         .foregroundStyle(text.wrappedValue.count > limit ? .red : .secondary)
                 }
             }

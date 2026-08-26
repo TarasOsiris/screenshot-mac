@@ -40,7 +40,7 @@ extension ShapePropertiesSingleSelectionBar {
             // Axis labels are notation, not prose — every design tool shows X/Y/W/H untranslated,
             // and the catalog's single-letter keys machine-translate to words ("Y" → "Oui").
             Text(verbatim: axis.label)
-                .font(.system(size: UIMetrics.FontSize.hint))
+                .scaledFont(UIMetrics.FontSize.hint)
                 .foregroundStyle(.secondary)
 
             ShapePropertyField(

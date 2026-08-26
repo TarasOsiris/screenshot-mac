@@ -11,13 +11,6 @@ struct AppRootView: View {
     #endif
     @State private var purchaseStatusDialogMessage: String?
 
-    private var purchaseStatusAlertBinding: Binding<Bool> {
-        .init(
-            get: { purchaseStatusDialogMessage != nil },
-            set: { if !$0 { purchaseStatusDialogMessage = nil } }
-        )
-    }
-
     private func createProject() {
         // The macOS empty state opens the dedicated New Project window. (On iOS this branch
         // isn't reached — the Projects home owns the empty state — and there's no such scene.)
@@ -43,7 +36,7 @@ struct AppRootView: View {
                     .background(Color.platformWindowBackground)
             }
         }
-            .alert("Purchase Status", isPresented: purchaseStatusAlertBinding) {
+            .alert("Purchase Status", isPresented: $purchaseStatusDialogMessage.isPresent()) {
                 Button("OK") { purchaseStatusDialogMessage = nil }
             } message: {
                 Text(purchaseStatusDialogMessage ?? "")

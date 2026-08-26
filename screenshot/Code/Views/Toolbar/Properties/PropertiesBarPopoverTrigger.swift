@@ -20,10 +20,10 @@ struct PropertiesBarPopoverTrigger<Label: View, Content: View>: View {
                     .font(.system(size: UIMetrics.ActionButton.iconSize))
                     .accessibilityHidden(true)
                 label()
-                    .font(.system(size: UIMetrics.FontSize.body))
+                    .scaledFont(UIMetrics.FontSize.body)
                 if showsOverrideDot { OverrideDot() }
                 Image(systemName: "chevron.down")
-                    .font(.system(size: UIMetrics.FontSize.hint, weight: .semibold))
+                    .scaledFont(UIMetrics.FontSize.hint, weight: .semibold)
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             }

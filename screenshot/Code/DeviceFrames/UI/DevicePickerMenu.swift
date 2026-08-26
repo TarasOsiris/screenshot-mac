@@ -219,7 +219,7 @@ struct DevicePickerMenu: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.system(size: UIMetrics.FontSize.menuRow))
+                .scaledFont(UIMetrics.FontSize.menuRow)
                 .foregroundStyle(.secondary)
             content()
         }
@@ -481,12 +481,12 @@ private struct DeviceFrameColorChip: View {
         HStack(spacing: 8) {
             swatch(size: 18)
             Text(colorGroup.name)
-                .font(.system(size: UIMetrics.FontSize.menuRow, weight: isSelected ? .semibold : .regular))
+                .scaledFont(UIMetrics.FontSize.menuRow, weight: isSelected ? .semibold : .regular)
                 .lineLimit(1)
             Spacer(minLength: 0)
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: UIMetrics.FontSize.menuRow, weight: .semibold))
+                    .scaledFont(UIMetrics.FontSize.menuRow, weight: .semibold)
                     .foregroundStyle(Color.accentColor)
             }
         }

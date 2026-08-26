@@ -272,10 +272,7 @@ struct TemplateControlBar: View {
         } message: {
             Text("Are you sure you want to delete this screenshot?")
         }
-        .alert("Render Failed", isPresented: .init(
-            get: { renderError != nil },
-            set: { if !$0 { renderError = nil } }
-        )) {
+        .alert("Render Failed", isPresented: $renderError.isPresent()) {
             Button("OK") { renderError = nil }
         } message: {
             Text(renderError ?? "")
@@ -316,7 +313,7 @@ struct TemplateControlBar: View {
             )
             .toggleStyle(.switch)
             .controlSize(.small)
-            .font(.system(size: UIMetrics.FontSize.body))
+            .scaledFont(UIMetrics.FontSize.body)
 
             if liveTemplate.overrideBackground {
                 backgroundEditorContent

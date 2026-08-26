@@ -202,7 +202,7 @@ struct ContentView: View {
             // the now-smaller visible area so the text isn't hidden behind the keyboard. Re-read
             // the selected row inside the delay so switching shapes mid-delay scrolls the right row.
             guard state.textEdit.isActive else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            _ = Task.delayed(0.35) {
                 guard state.textEdit.isActive, let rowId = state.selectedRowId else { return }
                 state.requestCanvasFocus(on: rowId, animated: true)
             }

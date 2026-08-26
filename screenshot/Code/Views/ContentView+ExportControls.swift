@@ -181,12 +181,13 @@ struct ContentExportControl<MenuContent: View>: View {
                 menuContent
             } label: {
                 Label {
-                    Text("")
+                    Text("Export options")
                 } icon: {
                     Image(systemName: "chevron.down")
                         .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(.white)
                 }
+                .labelStyle(.iconOnly)
                 .frame(width: 16, height: 22)
                 .contentShape(Rectangle())
             }

@@ -24,7 +24,7 @@ final class ZoomController {
     /// Pinch/scroll-wheel zoom writes at most ~30fps: an unthrottled gesture re-evaluates every
     /// visible row once per tick.
     @ObservationIgnored private let throttle = ContinuousApplyThrottle(interval: EditCoalescingTiming.continuousApplyInterval)
-    @ObservationIgnored private var persistTask: DispatchWorkItem?
+    @ObservationIgnored private var persistTask: Task<Void, Never>?
     /// Injected on the type, not per method: a half-injected seam lets a test control where the
     /// level is read from but not where it's written to.
     @ObservationIgnored private let defaults: UserDefaults
@@ -56,11 +56,9 @@ final class ZoomController {
             level = clamped
         }
         persistTask?.cancel()
-        let task = DispatchWorkItem { [defaults] in
+        persistTask = .delayed(0.3) { [defaults] in
             defaults.set(clamped, forKey: AppSettingsKeys.lastZoomLevel)
         }
-        persistTask = task
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
     }
 
     /// Call `endContinuous()` when the gesture finishes so the final value is never dropped.

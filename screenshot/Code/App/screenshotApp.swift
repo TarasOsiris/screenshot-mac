@@ -155,10 +155,7 @@ struct ScreenshotBroApp: App {
                 .sheet(isPresented: $isDebugProjectManagerPresented) {
                     DebugProjectManagerView(state: appState)
                 }
-                .alert("Template Error", isPresented: Binding(
-                    get: { debugTemplateError != nil },
-                    set: { if !$0 { debugTemplateError = nil } }
-                )) {
+                .alert("Template Error", isPresented: $debugTemplateError.isPresent()) {
                     Button("OK") { debugTemplateError = nil }
                 } message: {
                     Text(debugTemplateError ?? "")

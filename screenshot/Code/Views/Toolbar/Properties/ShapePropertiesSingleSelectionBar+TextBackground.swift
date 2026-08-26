@@ -193,7 +193,7 @@ extension ShapePropertiesSingleSelectionBar {
                 }
             }
         }
-        .font(.system(size: UIMetrics.FontSize.body))
+        .scaledFont(UIMetrics.FontSize.body)
         .controlSize(.small)
     }
 }

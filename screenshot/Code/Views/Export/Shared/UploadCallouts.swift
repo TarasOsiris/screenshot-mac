@@ -34,7 +34,7 @@ private struct UploadIssueRow: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if let hint = issue.hint {
                     Text(hint)
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

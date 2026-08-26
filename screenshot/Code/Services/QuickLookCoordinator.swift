@@ -39,10 +39,12 @@ final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource, QLPreviewP
         installEdgeKeyMonitorIfNeeded()
     }
 
+    // swiftlint:disable:next implicitly_unwrapped_optional - QLPreviewPanelDataSource's ObjC signature.
     func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
         previewURLs.count
     }
 
+    // swiftlint:disable:next implicitly_unwrapped_optional - QLPreviewPanelDataSource's ObjC signature.
     func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> (any QLPreviewItem)! {
         guard index >= 0 && index < previewURLs.count else { return nil }
         return previewURLs[index] as NSURL

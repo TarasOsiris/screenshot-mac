@@ -24,7 +24,8 @@ struct ZoomControls: View {
                 isPopoverPresented.toggle()
             } label: {
                 Text(verbatim: "\(Int(zoom.level * 100))%")
-                    .font(.system(size: UIMetrics.FontSize.numericBadge, weight: .medium).monospacedDigit())
+                    .scaledFont(UIMetrics.FontSize.numericBadge, weight: .medium)
+                    .monospacedDigit()
                     .foregroundStyle(zoom.level == 1.0 ? .tertiary : .secondary)
                     .frame(minWidth: zoomLabelMinWidth)
                     .contentShape(Rectangle())
@@ -35,7 +36,7 @@ struct ZoomControls: View {
             .popover(isPresented: $isPopoverPresented, arrowEdge: .bottom) {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Zoom")
-                        .font(.system(size: UIMetrics.FontSize.menuRow, weight: .semibold))
+                        .scaledFont(UIMetrics.FontSize.menuRow, weight: .semibold)
 
                     #if os(macOS)
                     HStack(spacing: 6) { presetButtons }
@@ -69,7 +70,7 @@ struct ZoomControls: View {
                         }
                         .buttonStyle(.borderless)
                     }
-                    .font(.system(size: UIMetrics.FontSize.menuRow))
+                    .scaledFont(UIMetrics.FontSize.menuRow)
                 }
                 .padding(12)
                 .presentationCompactAdaptation(.popover)
@@ -99,7 +100,7 @@ struct ZoomControls: View {
         Button(action: action) {
             Label(label, systemImage: icon)
                 .labelStyle(.iconOnly)
-                .font(.system(size: UIMetrics.FontSize.body, weight: .semibold))
+                .scaledFont(UIMetrics.FontSize.body, weight: .semibold)
                 .frame(width: zoomButtonSize, height: zoomButtonSize)
                 .contentShape(Rectangle())
         }

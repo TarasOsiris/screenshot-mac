@@ -96,7 +96,7 @@ struct InspectorPanel: View {
             Text("Preview Mode")
                 .font(.headline)
             Text("This row is showing its templates as separate App Store-style tiles. Editing is disabled until you exit preview mode.")
-                .font(.system(size: UIMetrics.FontSize.body))
+                .scaledFont(UIMetrics.FontSize.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -187,7 +187,8 @@ struct InspectorPanel: View {
                     .onSubmit { applyCustomSize(rowId: rowId) }
             }
         }
-        .font(.system(size: UIMetrics.FontSize.body).monospacedDigit())
+        .scaledFont(UIMetrics.FontSize.body)
+        .monospacedDigit()
         .compactControlSize()
     }
 
@@ -256,7 +257,7 @@ struct InspectorPanel: View {
             if state.rows[rowIndex].backgroundStyle != .color {
                 HStack(spacing: 4) {
                     Text("Blur")
-                        .font(.system(size: UIMetrics.FontSize.body))
+                        .scaledFont(UIMetrics.FontSize.body)
                     Spacer()
                     Slider(
                         value: continuousRowBinding(rowId, keyPath: \.backgroundBlur, default: 0, actionName: "Background Blur"),
@@ -264,7 +265,8 @@ struct InspectorPanel: View {
                     )
                     .frame(width: 100)
                     Text("\(Int(state.rows[rowIndex].backgroundBlur))")
-                        .font(.system(size: UIMetrics.FontSize.numericBadge).monospacedDigit())
+                        .scaledFont(UIMetrics.FontSize.numericBadge)
+                        .monospacedDigit()
                         .foregroundStyle(.secondary)
                         .frame(width: blurValueWidth, alignment: .trailing)
                 }
@@ -273,7 +275,7 @@ struct InspectorPanel: View {
             if state.rows[rowIndex].backgroundStyle != .color {
                 let canSpanAcrossRow = state.rows[rowIndex].templates.count > 1
                 Toggle("Stretch across all screenshots", isOn: safeRowBinding(rowId, keyPath: \.spanBackgroundAcrossRow, default: false))
-                    .font(.system(size: UIMetrics.FontSize.body))
+                    .scaledFont(UIMetrics.FontSize.body)
                     .toggleStyle(.switch)
                     .compactControlSize()
                     .disabled(!canSpanAcrossRow)
@@ -281,7 +283,7 @@ struct InspectorPanel: View {
 
                 if !canSpanAcrossRow {
                     Text("Add at least two screenshots to stretch background across row.")
-                        .font(.system(size: UIMetrics.FontSize.body))
+                        .scaledFont(UIMetrics.FontSize.body)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -295,7 +297,7 @@ struct InspectorPanel: View {
         Section(isExpanded: $isDeviceExpanded) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Default device frame")
-                    .font(.system(size: UIMetrics.FontSize.body))
+                    .scaledFont(UIMetrics.FontSize.body)
                     .foregroundStyle(.secondary)
                 DevicePickerMenu(
                     category: defaultDeviceCategory(for: rowId),
@@ -371,14 +373,14 @@ struct InspectorPanel: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
-            .font(.system(size: UIMetrics.FontSize.body))
+            .scaledFont(UIMetrics.FontSize.body)
 
             // macOS packs checkbox toggles into two compact columns.
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 4) {
                 visibilityToggles(rowId: rowId)
             }
             .toggleStyle(.checkbox)
-            .font(.system(size: UIMetrics.FontSize.body))
+            .scaledFont(UIMetrics.FontSize.body)
             .controlSize(.small)
             #else
             // iPad needs comfortable touch targets — full-width buttons at regular size.
@@ -407,7 +409,7 @@ struct InspectorPanel: View {
         Section(isExpanded: $isOtherExpanded) {
             Toggle("Exclude when uploading to App Store Connect",
                    isOn: safeRowBinding(rowId, keyPath: \.excludeFromAppStoreConnect, default: false))
-                .font(.system(size: UIMetrics.FontSize.body))
+                .scaledFont(UIMetrics.FontSize.body)
                 .toggleStyle(.switch)
                 .compactControlSize()
         } header: {

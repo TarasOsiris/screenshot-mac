@@ -77,7 +77,7 @@ struct DemoModeBanner: View {
                     .font(.caption.bold())
                     .foregroundStyle(.white)
                 Text(message)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.white.opacity(0.9))
             }
             Spacer()

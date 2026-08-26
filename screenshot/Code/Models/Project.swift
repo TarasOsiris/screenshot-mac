@@ -77,11 +77,11 @@ nonisolated extension Array where Element == Project {
         var seen = Set<UUID>()
         var result: [Project] = []
         for project in self {
-            result.append(byId[project.id]!)
+            result.append(byId[project.id] ?? project)
             seen.insert(project.id)
         }
         for project in incoming where !seen.contains(project.id) {
-            result.append(byId[project.id]!)
+            result.append(byId[project.id] ?? project)
         }
         return result
     }

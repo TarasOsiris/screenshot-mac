@@ -35,7 +35,7 @@ extension ShapePropertiesSingleSelectionBar {
         if let shape = liveShape(shapeId) {
             #if os(macOS)
             textPopoverColumn(shape: shape, shapeId: shapeId)
-                .font(.system(size: UIMetrics.FontSize.body))
+                .scaledFont(UIMetrics.FontSize.body)
                 .controlSize(.small)
                 .padding(12)
                 .barPopoverContentWidth(280)
@@ -103,7 +103,7 @@ extension ShapePropertiesSingleSelectionBar {
             if shape.hasRichText {
                 Divider()
                 clearFormattingButton(shapeId: shapeId)
-                    .font(.system(size: UIMetrics.FontSize.body))
+                    .scaledFont(UIMetrics.FontSize.body)
             }
         }
     }
@@ -295,7 +295,7 @@ extension ShapePropertiesSingleSelectionBar {
             content()
         } label: {
             Image(systemName: "chevron.down")
-                .font(.system(size: UIMetrics.FontSize.hint))
+                .scaledFont(UIMetrics.FontSize.hint)
                 .foregroundStyle(.secondary)
                 .frame(width: UIMetrics.ChevronMenu.width, height: UIMetrics.ChevronMenu.height)
                 .contentShape(Rectangle())

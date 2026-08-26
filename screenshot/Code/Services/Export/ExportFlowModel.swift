@@ -34,7 +34,7 @@ final class ExportFlowModel {
     /// picks the folder up front).
     var pendingExport: PendingExport?
 
-    @ObservationIgnored private var successTimer: DispatchWorkItem?
+    @ObservationIgnored private var successTimer: Task<Void, Never>?
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let review: ReviewPromptPolicy
@@ -105,9 +105,7 @@ final class ExportFlowModel {
         AnalyticsService.capture(.exportRouted, [.destination: destination])
         successTimer?.cancel()
         exportSuccess = true
-        let timer = DispatchWorkItem { [weak self] in self?.exportSuccess = false }
-        successTimer = timer
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timer)
+        successTimer = .delayed(2) { [weak self] in self?.exportSuccess = false }
 
         let noun = total == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
         let body = projectName.isEmpty
@@ -116,7 +114,7 @@ final class ExportFlowModel {
         NotificationService.notify(title: String(localized: "Export complete"), body: body)
 
         if review.recordExportAndCheck() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [requestReview] in requestReview() }
+            _ = Task.delayed(2.5) { [requestReview] in requestReview() }
         }
     }
 
