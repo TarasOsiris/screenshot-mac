@@ -12,7 +12,7 @@ struct DeviceFrameImageView: View {
         cache.countLimit = 50
         // A bezel costs its decoded bitmap, not its file size — the largest is ~22 MB, so
         // countLimit alone would let 50 of them pin over a gigabyte.
-        cache.totalCostLimit = 256 * 1024 * 1024
+        cache.totalCostLimit = DeviceModelRenderer.decodedImageCacheByteLimit
         return cache
     }()
 
@@ -95,14 +95,12 @@ struct DeviceFrameImageView: View {
         return image
     }
 
+    /// `pixelsWide`/`pixelsHigh`/`representations` are shimmed onto `UIImage` (Platform/PlatformImageShims.swift),
+    /// so this reads decoded pixel dimensions identically on both platforms without an `#if os`.
     private static func decodedByteCost(of image: NSImage) -> Int {
-        #if os(macOS)
         let pixels = image.representations.lazy
             .map { $0.pixelsWide * $0.pixelsHigh }
             .max() ?? Int(image.size.width * image.size.height)
-        #else
-        let pixels = Int(image.size.width * image.scale * image.size.height * image.scale)
-        #endif
         return pixels * 4
     }
 }

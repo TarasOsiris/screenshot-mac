@@ -21,6 +21,9 @@ typealias SCNFloat = Float
 /// These were all static members of `DeviceModelFrameView`, which made one 973-line `View` struct
 /// also the scene builder, both caches and the cache-key model. None of it needs a view.
 enum DeviceModelRenderer {
+    /// Shared by every `NSCache` holding decoded device-frame bitmaps (snapshots here, bezel PNGs
+    /// in `DeviceFrameImageView`) — one bound on how much decoded-pixel memory those caches keep.
+    static let decodedImageCacheByteLimit = 256 * 1024 * 1024
     private static let modelSnapshotScale: CGFloat = 3
     private static let exportSnapshotPixelBudget: CGFloat = 4096
     /// Editor snapshots render at 3× their on-screen points for retina headroom.
@@ -35,7 +38,7 @@ enum DeviceModelRenderer {
     private static let snapshotImageCache: NSCache<NSString, NSImage> = {
         let cache = NSCache<NSString, NSImage>()
         cache.countLimit = 160
-        cache.totalCostLimit = 256 * 1024 * 1024
+        cache.totalCostLimit = decodedImageCacheByteLimit
         return cache
     }()
     private static let modelSceneCache: NSCache<NSString, SCNScene> = {

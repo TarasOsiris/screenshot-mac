@@ -162,10 +162,7 @@ struct NumericPercentField: View {
     func commit() {
         let cleaned = text.replacing("%", with: "")
             .trimmingCharacters(in: .whitespaces)
-        // Parse in the user's locale first (the field formats that way), then fall back to a
-        // dot separator so a value typed on a numeric keypad isn't silently discarded.
-        let localeParsed = try? Double(cleaned, format: .number)
-        if let parsed = localeParsed ?? Double(cleaned.replacing(",", with: ".")) {
+        if let parsed = cleaned.localeTolerantDouble() {
             let clamped = min(max(parsed, range.lowerBound), range.upperBound)
             let snapped = step > 0 ? (clamped / step).rounded() * step : clamped
             value = snapped

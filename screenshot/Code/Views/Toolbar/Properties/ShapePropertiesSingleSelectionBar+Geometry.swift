@@ -96,7 +96,7 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     private func parseGeometry(_ text: String) -> CGFloat? {
-        Double(text.replacing(",", with: ".")).map { CGFloat($0).rounded() }
+        text.localeTolerantDouble().map { CGFloat($0).rounded() }
     }
 
     /// `shape.x` is absolute across the row's whole template strip, so a shape on the third

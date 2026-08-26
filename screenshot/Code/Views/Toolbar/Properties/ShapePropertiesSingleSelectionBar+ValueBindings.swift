@@ -89,8 +89,7 @@ extension ShapePropertiesSingleSelectionBar {
     func commitRotation(to shapeId: UUID?) {
         isRotationFieldActive = false
         guard let shapeId, let i = idx(for: shapeId) else { return }
-        let trimmed = editingRotation.replacing(",", with: ".")
-        guard let value = Double(trimmed) else {
+        guard let value = editingRotation.localeTolerantDouble() else {
             editingRotation = currentRotationString(for: shapeId)
             return
         }

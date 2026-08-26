@@ -114,7 +114,7 @@ final class ExportFlowModel {
         NotificationService.notify(title: String(localized: "Export complete"), body: body)
 
         if review.recordExportAndCheck() {
-            _ = Task.delayed(2.5) { [requestReview] in requestReview() }
+            Task.delayed(2.5) { [requestReview] in requestReview() }
         }
     }
 
