@@ -177,6 +177,13 @@ enum UIMetrics {
         static let modal: CGFloat = 24
     }
 
+    /// The per-template control bar under each canvas column. `TemplateBarLayout` measures against
+    /// these, so they must be the same values the bar's `HStack` and padding use.
+    enum TemplateBar {
+        static let buttonSpacing: CGFloat = 6
+        static let horizontalPadding: CGFloat = 4
+    }
+
     /// The iPad properties-bar panel that replaces the modal sheet (see `BarDockedPanel`).
     /// Wide enough for the widest panel content (`ShapeFillSwatchButton`'s 300pt editor plus its
     /// padding); the height cap keeps the shape being edited visible above it.

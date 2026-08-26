@@ -1,4 +1,5 @@
-import SwiftUI
+import Foundation
+import Observation
 
 /// Moved here from `Views/Toolbar/ZoomControls.swift`: `AppState` reached into a toolbar view
 /// for these.
@@ -45,16 +46,12 @@ final class ZoomController {
         if configured > 0 { level = configured }
     }
 
-    func set(_ newLevel: CGFloat, animated: Bool = true) {
+    /// Deliberately not animated: zoom is folded into `displayScale`, so a level change re-lays-out
+    /// and re-rasterizes every visible row rather than driving a GPU transform.
+    func set(_ newLevel: CGFloat) {
         let clamped = min(ZoomConstants.max, max(ZoomConstants.min, newLevel))
         guard clamped != level else { return }
-        if animated {
-            withAnimation(.smooth(duration: 0.3)) {
-                level = clamped
-            }
-        } else {
-            level = clamped
-        }
+        level = clamped
         persistTask?.cancel()
         persistTask = .delayed(0.3) { [defaults] in
             defaults.set(clamped, forKey: AppSettingsKeys.lastZoomLevel)
@@ -64,7 +61,7 @@ final class ZoomController {
     /// Call `endContinuous()` when the gesture finishes so the final value is never dropped.
     func setContinuous(_ newLevel: CGFloat) {
         throttle.submit { [weak self] in
-            self?.set(newLevel, animated: false)
+            self?.set(newLevel)
         }
     }
 

@@ -43,24 +43,14 @@ struct TemplateControlBar: View {
 
     private var canDelete: Bool { row.templates.count > 1 }
 
-    // The bar is pinned to the (zoom-scaled) column width, so at low zoom it can get narrower
-    // than its buttons — especially with the larger iPad touch targets. Collapse adaptively:
-    // full → just preview/delete/menu → just the (complete) ellipsis menu.
-    private enum BarDensity { case full, compact, minimal }
-    private var density: BarDensity {
-        let buttonW = UIMetrics.ActionButton.frameSize
-        let spacing: CGFloat = 6
-        let available = row.displayWidth(zoom: zoom) - 8 // horizontal padding (4 each side)
-        func needed(_ count: Int) -> CGFloat {
-            CGFloat(count) * buttonW + CGFloat(max(0, count - 1)) * spacing
-        }
-        let trailing = (canDelete ? 1 : 0) + 1 // trash + ellipsis
-        if available >= needed(5 + trailing) { return .full }       // eye + download + left + right + bg
-        if available >= needed(1 + trailing) { return .compact }    // eye + trash + ellipsis
-        return .minimal                                             // ellipsis only
+    private var visibleButtons: Set<TemplateBarLayout.Button> {
+        TemplateBarLayout.visibleButtons(
+            availableWidth: row.displayWidth(zoom: zoom) - UIMetrics.TemplateBar.horizontalPadding * 2,
+            buttonWidth: UIMetrics.ActionButton.frameSize,
+            spacing: UIMetrics.TemplateBar.buttonSpacing,
+            canDelete: canDelete
+        )
     }
-    private var showsFullGroup: Bool { density == .full }
-    private var showsPrimaryButtons: Bool { density != .minimal }
     private var backgroundPreviewImage: NSImage? {
         liveTemplate.backgroundImageConfig.fileName.flatMap { screenshotImages[$0] }
     }
@@ -114,150 +104,168 @@ struct TemplateControlBar: View {
             : AnyShapeStyle(.secondary)
     }
 
-    var body: some View {
-        HStack(spacing: 6) {
-            if showsPrimaryButtons {
-                ActionButton(icon: "eye", tooltip: "Preview", disabled: isPreviewing) {
-                    previewScreenshot()
-                }
-                .opacity(isPreviewing ? 0 : 1)
-                .overlay {
-                    if isPreviewing {
-                        ProgressView()
-                            .controlSize(.small)
-                    }
-                }
+    private var previewButton: some View {
+        ActionButton(icon: "eye", tooltip: "Preview", disabled: isPreviewing) {
+            previewScreenshot()
+        }
+        .opacity(isPreviewing ? 0 : 1)
+        .overlay {
+            if isPreviewing {
+                ProgressView()
+                    .controlSize(.small)
             }
-            if showsFullGroup {
-                ActionButton(icon: Self.exportIcon, tooltip: Self.exportTitle) {
-                    downloadScreenshot()
-                }
-                ActionButton(icon: "chevron.left", tooltip: "Move left", disabled: !canMoveLeft) {
-                    onMoveLeft()
-                }
-                ActionButton(icon: "chevron.right", tooltip: "Move right", disabled: !canMoveRight) {
-                    onMoveRight()
-                }
+        }
+    }
 
-                Button {
-                    showBackgroundPopover = true
-                } label: {
-                    HStack(spacing: 3) {
-                        if liveTemplate.overrideBackground {
-                            let swatch = UIMetrics.ColorSwatch.overrideIndicator
-                            if liveTemplate.backgroundStyle == .image {
-                                if let image = backgroundPreviewImage {
-                                    Image(nsImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: swatch, height: swatch)
-                                        .clipShape(RoundedRectangle(cornerRadius: 2))
-                                        .overlay {
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .strokeBorder(.secondary.opacity(0.5), lineWidth: UIMetrics.BorderWidth.hairline)
-                                        }
-                                } else {
-                                    Image(systemName: "photo.badge.plus")
-                                        .font(.system(size: UIMetrics.ColorSwatch.overrideIndicatorIcon))
-                                        .frame(width: swatch, height: swatch)
+    private var backgroundOverrideButton: some View {
+        Button {
+            showBackgroundPopover = true
+        } label: {
+            HStack(spacing: 3) {
+                if liveTemplate.overrideBackground {
+                    let swatch = UIMetrics.ColorSwatch.overrideIndicator
+                    if liveTemplate.backgroundStyle == .image {
+                        if let image = backgroundPreviewImage {
+                            Image(nsImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: swatch, height: swatch)
+                                .clipShape(RoundedRectangle(cornerRadius: 2))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .strokeBorder(.secondary.opacity(0.5), lineWidth: UIMetrics.BorderWidth.hairline)
                                 }
-                            } else {
-                                liveTemplate.backgroundFillView()
-                                    .frame(width: swatch, height: swatch)
-                                    .clipShape(RoundedRectangle(cornerRadius: 2))
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 2)
-                                            .strokeBorder(.secondary.opacity(0.5), lineWidth: UIMetrics.BorderWidth.hairline)
-                                    }
-                            }
                         } else {
-                            Image(systemName: "paintbrush")
-                                .font(.system(size: UIMetrics.ActionButton.iconSize))
+                            Image(systemName: "photo.badge.plus")
+                                .font(.system(size: UIMetrics.ColorSwatch.overrideIndicatorIcon))
+                                .frame(width: swatch, height: swatch)
                         }
+                    } else {
+                        liveTemplate.backgroundFillView()
+                            .frame(width: swatch, height: swatch)
+                            .clipShape(RoundedRectangle(cornerRadius: 2))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 2)
+                                    .strokeBorder(.secondary.opacity(0.5), lineWidth: UIMetrics.BorderWidth.hairline)
+                            }
                     }
-                    .frame(width: UIMetrics.ActionButton.frameSize, height: UIMetrics.ActionButton.frameSize)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.borderless)
-                .focusable(false)
-                .foregroundStyle(backgroundButtonStyle)
-                .help(backgroundButtonHelp)
-                // `.sheet` rather than the docked `.panel`: the panel needs a `BarPanelHost`,
-                // which only `ShapePropertiesBar` provides.
-                .barPopover(
-                    isPresented: $showBackgroundPopover,
-                    title: Self.backgroundOverrideTitle,
-                    style: .sheet
-                ) {
-                    backgroundOverrideContent
+                } else {
+                    Image(systemName: "paintbrush")
+                        .font(.system(size: UIMetrics.ActionButton.iconSize))
                 }
             }
+            .frame(width: UIMetrics.ActionButton.frameSize, height: UIMetrics.ActionButton.frameSize)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .focusable(false)
+        .foregroundStyle(backgroundButtonStyle)
+        .help(backgroundButtonHelp)
+        // `.sheet` rather than the docked `.panel`: the panel needs a `BarPanelHost`,
+        // which only `ShapePropertiesBar` provides.
+        .barPopover(
+            isPresented: $showBackgroundPopover,
+            title: Self.backgroundOverrideTitle,
+            style: .sheet
+        ) {
+            backgroundOverrideContent
+        }
+    }
 
+    private var moreActionsMenu: some View {
+        Menu {
+            Button("Quick Look", systemImage: "eye") {
+                previewScreenshot()
+            }
+            .disabled(isPreviewing)
+            #if os(macOS)
+            Button("Save as PNG...", systemImage: "square.and.arrow.down") {
+                downloadScreenshot()
+            }
+            #else
+            Button(Self.exportTitle, systemImage: Self.exportIcon) {
+                downloadScreenshot()
+            }
+            #endif
+            Button("Move Left", systemImage: "chevron.left") {
+                onMoveLeft()
+            }
+            .disabled(!canMoveLeft)
+            Button("Move Right", systemImage: "chevron.right") {
+                onMoveRight()
+            }
+            .disabled(!canMoveRight)
+            Button("Add Screenshot Before", systemImage: "plus.rectangle.on.rectangle") {
+                onInsertBefore()
+            }
+            Button("Add Screenshot After", systemImage: "plus.rectangle.on.rectangle") {
+                onInsertAfter()
+            }
+            Menu("Duplicate Screenshot", systemImage: "plus.square.on.square") {
+                Button("Place After This One", systemImage: "plus.square.on.square") {
+                    onDuplicate()
+                }
+                Button("Place at End", systemImage: "arrow.right.to.line") {
+                    onDuplicateToEnd()
+                }
+            }
+            if canDelete {
+                Divider()
+                Button("Delete Screenshot", systemImage: "trash", role: .destructive) {
+                    confirmDeleteTemplate()
+                }
+            }
+        } label: {
+            Label("More actions", systemImage: "ellipsis.circle")
+                .labelStyle(.iconOnly)
+                .font(.system(size: UIMetrics.ActionButton.iconSize))
+                .frame(width: UIMetrics.ActionButton.frameSize, height: UIMetrics.ActionButton.frameSize)
+                .foregroundStyle(.secondary)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        #if !os(macOS)
+        .tint(.secondary)
+        #endif
+        .help("More actions")
+    }
+
+    @ViewBuilder
+    private func leadingButtons(_ visible: Set<TemplateBarLayout.Button>) -> some View {
+        if visible.contains(.preview) { previewButton }
+        if visible.contains(.download) {
+            ActionButton(icon: Self.exportIcon, tooltip: Self.exportTitle) {
+                downloadScreenshot()
+            }
+        }
+        if visible.contains(.moveLeft) {
+            ActionButton(icon: "chevron.left", tooltip: "Move left", disabled: !canMoveLeft) {
+                onMoveLeft()
+            }
+        }
+        if visible.contains(.moveRight) {
+            ActionButton(icon: "chevron.right", tooltip: "Move right", disabled: !canMoveRight) {
+                onMoveRight()
+            }
+        }
+        if visible.contains(.background) { backgroundOverrideButton }
+    }
+
+    var body: some View {
+        let visible = visibleButtons
+        return HStack(spacing: UIMetrics.TemplateBar.buttonSpacing) {
+            leadingButtons(visible)
             Spacer()
-            if canDelete && showsPrimaryButtons {
+            if visible.contains(.delete) {
                 ActionButton(icon: "trash", tooltip: "Delete Screenshot", isDestructive: true) {
                     confirmDeleteTemplate()
                 }
             }
-            Menu {
-                Button("Quick Look", systemImage: "eye") {
-                    previewScreenshot()
-                }
-                .disabled(isPreviewing)
-                #if os(macOS)
-                Button("Save as PNG...", systemImage: "square.and.arrow.down") {
-                    downloadScreenshot()
-                }
-                #else
-                Button(Self.exportTitle, systemImage: Self.exportIcon) {
-                    downloadScreenshot()
-                }
-                #endif
-                Button("Move Left", systemImage: "chevron.left") {
-                    onMoveLeft()
-                }
-                .disabled(!canMoveLeft)
-                Button("Move Right", systemImage: "chevron.right") {
-                    onMoveRight()
-                }
-                .disabled(!canMoveRight)
-                Button("Add Screenshot Before", systemImage: "plus.rectangle.on.rectangle") {
-                    onInsertBefore()
-                }
-                Button("Add Screenshot After", systemImage: "plus.rectangle.on.rectangle") {
-                    onInsertAfter()
-                }
-                Menu("Duplicate Screenshot", systemImage: "plus.square.on.square") {
-                    Button("Place After This One", systemImage: "plus.square.on.square") {
-                        onDuplicate()
-                    }
-                    Button("Place at End", systemImage: "arrow.right.to.line") {
-                        onDuplicateToEnd()
-                    }
-                }
-                if canDelete {
-                    Divider()
-                    Button("Delete Screenshot", systemImage: "trash", role: .destructive) {
-                        confirmDeleteTemplate()
-                    }
-                }
-            } label: {
-                Label("More actions", systemImage: "ellipsis.circle")
-                    .labelStyle(.iconOnly)
-                    .font(.system(size: UIMetrics.ActionButton.iconSize))
-                    .frame(width: UIMetrics.ActionButton.frameSize, height: UIMetrics.ActionButton.frameSize)
-                    .foregroundStyle(.secondary)
-                    .contentShape(Rectangle())
-            }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            #if !os(macOS)
-            .tint(.secondary)
-            #endif
-            .help("More actions")
+            if visible.contains(.more) { moreActionsMenu }
         }
         .controlSize(.small)
-        .padding(.horizontal, 4)
+        .padding(.horizontal, UIMetrics.TemplateBar.horizontalPadding)
         .frame(width: row.displayWidth(zoom: zoom))
         .overlay(alignment: .leading) {
             if index > 0 {
