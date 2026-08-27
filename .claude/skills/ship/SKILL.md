@@ -160,7 +160,48 @@ git push && git push --tags
 `git push --tags` is mandatory — local-only tags from prior ships should never be left
 behind.
 
-## Step 9: Report
+## Step 9: Associate the release with its commits in Sentry
+
+Run this **after** Step 8 has pushed. Sentry resolves the SHAs through the linked GitHub repo
+(`TarasOsiris/screenshot-mac`), so commits that only exist locally come back as "not found".
+
+```bash
+# Exactly the release string the SDK reports — see the naming rule below.
+RELEASE="xyz.tleskiv.screenshot@<MARKETING_VERSION>+<CURRENT_PROJECT_VERSION>"
+
+sentry-cli releases new -o nineva-studios -p screenshot-bro "$RELEASE" --finalize
+sentry-cli releases set-commits -o nineva-studios -p screenshot-bro "$RELEASE" --auto --ignore-missing
+```
+
+**The release name has to match what the SDK sends, character for character.**
+`CrashReportingService` never sets `options.releaseName`, so Sentry Cocoa derives it from the
+bundle as `<PRODUCT_BUNDLE_IDENTIFIER>@<MARKETING_VERSION>+<CURRENT_PROJECT_VERSION>` —
+`xyz.tleskiv.screenshot@4.7+120` for 4.7 (120). Get it wrong and you create a second, event-less
+release with the commits attached to nothing, while the real one stays bare. macOS and iOS share
+one bundle id, so **one release covers both platforms** — run this once per ship, not per platform.
+
+- `--auto` derives the repo from the git remote and the commit range from the previous release.
+  Because Step 8 tags and pushes immediately before this, `HEAD` *is* the shipped commit, so the
+  range comes out exact — but only if the **previous** release already carries commits. Against a
+  bare predecessor it silently degrades to `--initial-depth` (20 commits), which will over- or
+  under-report the range. If that happens, fix it after the fact with an explicit range built from
+  the ship tags, which exist for every release back to `v4.2-113`:
+  `--commit "TarasOsiris/screenshot-mac@$(git rev-parse v4.6-119)..$(git rev-parse v4.7-120)"`.
+- `--ignore-missing` is what keeps that degraded first run — or any run after a rebase or
+  force-push that orphaned the previous release's head commit — from failing outright.
+- `-o`/`-p` are mandatory, same as Step 6: the CLI's default project is `captions-bro`.
+- If either command fails, **report it as a warning and continue** — same rule as dSYMs. This is
+  reporting metadata, not the critical path, and it can be re-run later from the same commit.
+
+What this buys, none of which works on a release with no commits:
+- **Suspect commits** — a new issue names the commit that likely introduced it.
+- **Auto-resolution** — a commit whose message contains `Fixes SCREENSHOT-BRO-13` resolves that
+  issue in the release carrying the commit, with no manual API call. Worth using that trailer
+  whenever a commit closes a known Sentry issue.
+- Accurate regressions — "resolved in next release" gets a commit-accurate boundary instead of a
+  release-tag-accurate one.
+
+## Step 10: Report
 
 Print a summary:
 - Platform(s) shipped
@@ -168,3 +209,4 @@ Print a summary:
 - New version and build number
 - Upload status (per platform)
 - Sentry dSYM upload status (per platform)
+- Sentry release + commit association status (once, not per platform)
