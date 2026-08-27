@@ -200,10 +200,19 @@ extension CanvasShapeView {
 
     func handleDrop(_ providers: [NSItemProvider]) -> Bool {
         guard let provider = providers.first else { return false }
-        provider.loadObject(ofClass: NSImage.self) { image, _ in
-            if let image = image as? NSImage {
-                DispatchQueue.main.async {
+        // Explicitly @Sendable: NSItemProvider calls back off the main queue, and a bare
+        // closure literal would be inferred main-isolated under this target's default
+        // actor isolation.
+        let report = reportDropFailure
+        provider.loadObject(ofClass: NSImage.self) { @Sendable object, error in
+            // Resolve to Sendable values here: the existential and the error are not.
+            let image = object as? NSImage
+            let failure = image == nil ? DropFailure.image(error) : nil
+            Task { @MainActor in
+                if let image {
                     interactions.onScreenshotDrop?(image)
+                } else if let failure {
+                    report(failure)
                 }
             }
         }

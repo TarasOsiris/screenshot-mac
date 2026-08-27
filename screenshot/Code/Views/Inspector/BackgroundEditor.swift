@@ -237,6 +237,7 @@ struct BackgroundEditor: View {
 }
 
 struct BackgroundImageEditor: View {
+    @Environment(\.reportDropFailure) private var reportDropFailure
     @Binding var config: BackgroundImageConfig
     let image: NSImage?
     var onChanged: () -> Void
@@ -478,41 +479,49 @@ struct BackgroundImageEditor: View {
     private func handleImageDrop(_ providers: [NSItemProvider]) -> Bool {
         guard onDropImage != nil || onDropSvg != nil, let provider = providers.first else { return false }
 
-        if provider.hasItemConformingToTypeIdentifier(UTType.svg.identifier) {
-            provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { url, _ in
-                guard let url, let sanitized = SvgHelper.loadAndSanitize(from: url) else { return }
-                DispatchQueue.main.async { onDropSvg?(sanitized) }
-            }
-            return true
+        let candidates: [UTType] = [.svg, .image, .fileURL]
+        guard let type = candidates.first(where: { provider.hasItemConformingToTypeIdentifier($0.identifier) }) else {
+            return false
         }
+        // `.fileURL` is the catch-all branch, so it has to confirm the file really is an image;
+        // the other two identifiers already promise it.
+        let mustConfirmImageType = (type == .fileURL)
 
-        if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
-            provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
-                guard let url else { return }
-                if let sanitized = SvgHelper.loadAndSanitize(from: url) {
-                    DispatchQueue.main.async { onDropSvg?(sanitized) }
-                } else if let image = NSImage(contentsOf: url) {
-                    DispatchQueue.main.async { onDropImage?(image) }
+        // Explicitly @Sendable: NSItemProvider calls this off the main queue, and under this
+        // target's default-MainActor isolation a bare closure literal would be inferred
+        // main-isolated and run on the wrong executor. It only decodes and hops back.
+        let report = reportDropFailure
+        provider.loadFileRepresentation(forTypeIdentifier: type.identifier) { @Sendable url, error in
+            let decoded = url.flatMap { DroppedFile.decode(at: $0, confirmingImageType: mustConfirmImageType) }
+            let failure = decoded == nil ? DropFailure.imageOrSvg(error) : nil
+            Task { @MainActor in
+                switch decoded {
+                case .svg(let content):
+                    onDropSvg?(content)
+                case .image(let image):
+                    onDropImage?(image)
+                case nil:
+                    if let failure { report(failure) }
                 }
             }
-            return true
         }
+        return true
+    }
+}
 
-        if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-            provider.loadFileRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { url, _ in
-                guard let url else { return }
-                if let sanitized = SvgHelper.loadAndSanitize(from: url) {
-                    DispatchQueue.main.async { onDropSvg?(sanitized) }
-                } else if let typeId = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
-                          let type = UTType(typeId),
-                          type.conforms(to: .image),
-                          let image = NSImage(contentsOf: url) {
-                    DispatchQueue.main.async { onDropImage?(image) }
-                }
-            }
-            return true
+/// What a dropped file turned out to be. Decoded inside the item provider's completion
+/// handler because the temporary URL it hands over is deleted as soon as that returns.
+private enum DroppedFile {
+    case svg(String)
+    case image(NSImage)
+
+    nonisolated static func decode(at url: URL, confirmingImageType: Bool) -> DroppedFile? {
+        if let sanitized = SvgHelper.loadAndSanitize(from: url) { return .svg(sanitized) }
+        if confirmingImageType {
+            guard let typeId = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
+                  let type = UTType(typeId),
+                  type.conforms(to: .image) else { return nil }
         }
-
-        return false
+        return NSImage(contentsOf: url).map(DroppedFile.image)
     }
 }

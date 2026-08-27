@@ -76,21 +76,18 @@ enum PlatformPresenter {
         return candidate
     }
 
-    /// Retries `present` up to `attemptsLeft` times at 0.1s spacing until a presenter is ready.
+    /// Awaits a presenter, re-checking every 0.1s up to `retries` times (nil once the
+    /// window never settles). `ready()` returns nil while a sheet animates away, hence the
+    /// polling — UIKit offers no notification for "the top controller can present now".
     @MainActor
-    static func whenReady(attemptsLeft: Int = 20, present: @escaping (UIViewController) -> Void, onGiveUp: @escaping () -> Void) {
-        guard let presenter = ready() else {
-            guard attemptsLeft > 0 else {
-                AppLogger.export.warning("No presentable view controller for modal")
-                onGiveUp()
-                return
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                whenReady(attemptsLeft: attemptsLeft - 1, present: present, onGiveUp: onGiveUp)
-            }
-            return
+    static func waitForReady(retries: Int = 20) async -> UIViewController? {
+        for attempt in 0...retries {
+            if let presenter = ready() { return presenter }
+            guard attempt < retries else { break }
+            try? await Task.sleep(for: .milliseconds(100))
         }
-        present(presenter)
+        AppLogger.export.warning("No presentable view controller for modal")
+        return nil
     }
 
     /// Centers a popover over the presenter with no arrow — required for iPad action-style modals.
@@ -110,12 +107,27 @@ enum PlatformShare {
     @MainActor
     static func present(urls: [URL], completion: ((Bool) -> Void)? = nil) {
         guard !urls.isEmpty else { completion?(false); return }
-        PlatformPresenter.whenReady(present: { presenter in
-            let activity = UIActivityViewController(activityItems: urls, applicationActivities: nil)
-            activity.completionWithItemsHandler = { _, completed, _, _ in completion?(completed) }
-            PlatformPresenter.anchorPopover(activity, in: presenter)
-            presenter.present(activity, animated: true)
-        }, onGiveUp: { completion?(false) })
+        // Present inline when a presenter already exists — the usual case, since this runs from
+        // an explicit tap. Only an unsettled window pays for the await.
+        if let presenter = PlatformPresenter.ready() {
+            show(urls: urls, in: presenter, completion: completion)
+        } else {
+            Task {
+                guard let presenter = await PlatformPresenter.waitForReady() else {
+                    completion?(false)
+                    return
+                }
+                show(urls: urls, in: presenter, completion: completion)
+            }
+        }
+    }
+
+    @MainActor
+    private static func show(urls: [URL], in presenter: UIViewController, completion: ((Bool) -> Void)?) {
+        let activity = UIActivityViewController(activityItems: urls, applicationActivities: nil)
+        activity.completionWithItemsHandler = { _, completed, _, _ in completion?(completed) }
+        PlatformPresenter.anchorPopover(activity, in: presenter)
+        presenter.present(activity, animated: true)
     }
 }
 
@@ -128,17 +140,30 @@ enum PlatformDocumentExport {
     @MainActor
     static func present(urls: [URL], completion: ((Bool) -> Void)? = nil) {
         guard !urls.isEmpty else { completion?(false); return }
-        PlatformPresenter.whenReady(present: { presenter in
-            let picker = UIDocumentPickerViewController(forExporting: urls, asCopy: true)
-            let delegate = DocumentExportDelegate { completed in
-                retainedDelegate = nil
-                completion?(completed)
+        if let presenter = PlatformPresenter.ready() {
+            show(urls: urls, in: presenter, completion: completion)
+        } else {
+            Task {
+                guard let presenter = await PlatformPresenter.waitForReady() else {
+                    completion?(false)
+                    return
+                }
+                show(urls: urls, in: presenter, completion: completion)
             }
-            retainedDelegate = delegate
-            picker.delegate = delegate
-            PlatformPresenter.anchorPopover(picker, in: presenter)
-            presenter.present(picker, animated: true)
-        }, onGiveUp: { completion?(false) })
+        }
+    }
+
+    @MainActor
+    private static func show(urls: [URL], in presenter: UIViewController, completion: ((Bool) -> Void)?) {
+        let picker = UIDocumentPickerViewController(forExporting: urls, asCopy: true)
+        let delegate = DocumentExportDelegate { completed in
+            retainedDelegate = nil
+            completion?(completed)
+        }
+        retainedDelegate = delegate
+        picker.delegate = delegate
+        PlatformPresenter.anchorPopover(picker, in: presenter)
+        presenter.present(picker, animated: true)
     }
 }
 

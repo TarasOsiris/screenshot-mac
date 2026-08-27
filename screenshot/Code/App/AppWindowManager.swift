@@ -112,7 +112,8 @@ private struct WindowAccessorView: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 
     private func resolveWindow(for view: NSView) {
-        DispatchQueue.main.async {
+        // Deferred: the view has no window until after makeNSView returns.
+        Task { @MainActor in
             guard let window = view.window else { return }
             onResolve(window)
         }

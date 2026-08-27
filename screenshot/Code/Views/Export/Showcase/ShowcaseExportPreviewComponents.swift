@@ -6,33 +6,31 @@ import SwiftUI
 /// ratio, so each preset tile shows actual content shape rather than a generic box.
 struct ShowcasePresetThumbnail: View {
     let aspectRatio: CGFloat
+    /// The thumbnail sizes itself from this; `miniLayout` needs concrete points, so the
+    /// caller fixes the height rather than a GeometryReader reporting it back.
+    let height: CGFloat
     let sampleRow: ScreenshotRow?
     let config: ShowcaseExportConfig
     let selected: Bool
 
+    private var fittedSize: CGSize {
+        CGSize(width: height * aspectRatio, height: height)
+    }
+
     var body: some View {
-        GeometryReader { geo in
-            let maxW = geo.size.width
-            let maxH = geo.size.height
-            let (w, h): (CGFloat, CGFloat) = aspectRatio >= 1
-                ? (min(maxW, maxH * aspectRatio), min(maxW, maxH * aspectRatio) / aspectRatio)
-                : (min(maxH, maxW / aspectRatio) * aspectRatio, min(maxH, maxW / aspectRatio))
-
-            ZStack {
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(canvasFill)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 4, style: .continuous)
-                            .strokeBorder(borderColor, lineWidth: 1)
-                    }
-                    .frame(width: w, height: h)
-
-                if let sampleRow {
-                    miniLayout(in: CGSize(width: w, height: h), row: sampleRow)
+        ZStack {
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(canvasFill)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .strokeBorder(borderColor, lineWidth: 1)
                 }
+
+            if let sampleRow {
+                miniLayout(in: fittedSize, row: sampleRow)
             }
-            .frame(width: maxW, height: maxH)
         }
+        .frame(width: fittedSize.width, height: fittedSize.height)
     }
 
     var canvasFill: Color {

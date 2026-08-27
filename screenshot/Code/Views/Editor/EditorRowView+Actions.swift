@@ -57,7 +57,7 @@ extension EditorRowView {
 
     func resetRow() {
         if confirmBeforeDeleting {
-            isResettingRow = true
+            activeAlert = .resetRow
         } else {
             withAnimation(Self.rowAnimation) { state.resetRow(row.id) }
         }
@@ -65,7 +65,7 @@ extension EditorRowView {
 
     func deleteRow() {
         if confirmBeforeDeleting {
-            isDeletingRow = true
+            activeAlert = .deleteRow
         } else {
             withAnimation(Self.rowAnimation) { state.deleteRow(row.id) }
         }
@@ -140,7 +140,7 @@ extension EditorRowView {
         do {
             folder = try ExportService.makeTempExportFolder()
         } catch {
-            exportError = error.localizedDescription
+            activeAlert = .exportFailed(error.localizedDescription)
             return
         }
         #else
@@ -184,7 +184,7 @@ extension EditorRowView {
                 NSWorkspace.shared.activateFileViewerSelecting([folder])
                 #endif
             } catch {
-                exportError = String(localized: "Could not export row screenshots: \(error.localizedDescription)")
+                activeAlert = .exportFailed(String(localized: "Could not export row screenshots: \(error.localizedDescription)"))
             }
         }
     }
@@ -204,7 +204,7 @@ extension EditorRowView {
                     availableFontFamilies: state.availableFontFamilySet
                 )
             }) {
-                exportError = String(localized: "Could not export row image: \(message)")
+                activeAlert = .exportFailed(String(localized: "Could not export row image: \(message)"))
             }
         }
     }

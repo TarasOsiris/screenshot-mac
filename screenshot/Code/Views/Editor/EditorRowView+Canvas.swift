@@ -320,7 +320,7 @@ extension EditorRowView {
                         },
                         onRemoveBackground: shape.type == .image ? {
                             state.removeImageBackground(for: shape.id) { message in
-                                backgroundRemovalError = message
+                                activeAlert = .backgroundRemovalFailed(message)
                             }
                         } : nil,
                         onCaptureSimulator: simulatorCaptureAction(for: shape),

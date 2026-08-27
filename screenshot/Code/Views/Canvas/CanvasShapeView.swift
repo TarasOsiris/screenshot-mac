@@ -26,6 +26,7 @@ final class ClipPathMemo {
 }
 
 struct CanvasShapeView: View {
+    @Environment(\.reportDropFailure) var reportDropFailure
     @Environment(\.displayScale) private var screenScale
 
     let shape: CanvasShapeModel

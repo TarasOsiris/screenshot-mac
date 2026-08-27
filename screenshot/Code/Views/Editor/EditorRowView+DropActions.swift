@@ -8,10 +8,10 @@ extension EditorRowView {
         return {
             if SimulatorCaptureService.isHelperInstalled {
                 state.captureFromSimulator(intoShape: shape.id) { message in
-                    simulatorCaptureError = message
+                    activeAlert = .simulatorCaptureFailed(message)
                 }
             } else {
-                simulatorInstallPromptShapeId = shape.id
+                activeAlert = .simulatorInstallPrompt(shapeId: shape.id)
             }
         }
         #else
@@ -40,14 +40,25 @@ extension EditorRowView {
         for (i, provider) in svgProviders.enumerated() {
             let modelX = baseX + CGFloat(i) * 60
             let modelY = baseY + CGFloat(i) * 60
-            provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { url, _ in
+            // Explicitly @Sendable: NSItemProvider calls back off the main queue, and a bare
+            // closure literal would be inferred main-isolated under this target's default
+            // actor isolation. The URL dies with the callback, so parse here and hop after.
+            let report = reportDropFailure
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.svg.identifier) { @Sendable url, error in
                 guard let url = url,
-                      let content = try? String(contentsOf: url, encoding: .utf8) else { return }
+                      let content = try? String(contentsOf: url, encoding: .utf8) else {
+                    let failure = DropFailure.svg(error)
+                    Task { @MainActor in report(failure) }
+                    return
+                }
                 let sanitized = SvgHelper.sanitize(content)
                 guard let data = sanitized.data(using: .utf8),
-                      let image = NSImage(data: data) else { return }
+                      let image = NSImage(data: data) else {
+                    Task { @MainActor in report(.unrenderableSvg) }
+                    return
+                }
                 let size = SvgHelper.parseSize(sanitized, fallbackImage: image)
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     state.selectRow(row.id)
                     let maxDim = row.svgMaxDimension
                     let scaledSize = SvgHelper.scaledSize(size, maxDim: maxDim)

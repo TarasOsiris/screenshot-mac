@@ -87,6 +87,8 @@ struct ContentView: View {
 
     var body: some View {
         contentModals(coreContent)
+            // One reporter for every drop handler in the tree, and in the sheets it presents.
+            .environment(\.reportDropFailure, DropFailureReporter(state: state))
     }
 
     /// Kept out of the tree until `.building`: `.id(state.activeProjectId)` on the ScrollView

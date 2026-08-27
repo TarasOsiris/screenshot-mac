@@ -119,7 +119,8 @@ private struct ProjectNameTextField: NSViewRepresentable {
         textField.target = context.coordinator
         textField.action = #selector(Coordinator.submit)
 
-        DispatchQueue.main.async {
+        // Deferred: the field has no window until after makeNSView returns.
+        Task { @MainActor in
             textField.window?.makeFirstResponder(textField)
             textField.selectText(nil)
         }

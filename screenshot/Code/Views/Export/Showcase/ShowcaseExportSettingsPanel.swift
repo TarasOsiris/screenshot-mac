@@ -198,11 +198,11 @@ private struct ShowcaseAspectPresetTile: View {
             VStack(spacing: 6) {
                 ShowcasePresetThumbnail(
                     aspectRatio: CGFloat(preset.ratio),
+                    height: 36,
                     sampleRow: sampleRow,
                     config: config,
                     selected: isSelected
                 )
-                .frame(height: 36)
 
                 titleStack
             }

@@ -24,11 +24,12 @@ struct ShapePropertiesSingleSelectionBar: View {
     static let fontSizeRange: ClosedRange<CGFloat> = 8...400
     static let fontSizePresets: [Int] = CanvasShapeModel.fontSizePresets
     @Bindable var state: AppState
-    @State private var isReplacingSvg = false
+    // Not `private`: the +Sections extension file reads these.
+    @State var isReplacingSvg = false
     #if os(macOS)
-    @State private var isReplacingFillImage = false
+    @State var isReplacingFillImage = false
     #endif
-    @State private var isFillPopoverPresented = false
+    @State var isFillPopoverPresented = false
     @State var isTextPopoverPresented = false
     @State var isTextLocalizationPopoverPresented = false
     @State var isTextBackgroundPopoverPresented = false
@@ -115,75 +116,9 @@ struct ShapePropertiesSingleSelectionBar: View {
 
                         geometrySection(shape: shape, shapeId: shapeId)
 
-                        if shape.type == .device {
-                            DeviceShapeControls(
-                                shape: shape,
-                                showsLocaleImageReset: hasLocaleImageOverride(shapeId),
-                                onPickImage: { pickAndReplaceImage(for: shapeId) },
-                                onImageSelected: { state.saveImage($0, for: shapeId) },
-                                onResetLocaleImage: { state.resetLocaleImageOverride(shapeId: shapeId) }
-                            ) {
-                                devicePicker(shape: shape, shapeId: shapeId)
-                            }
-                        }
+                        deviceSections(shape: shape, shapeId: shapeId)
 
-                        if shape.type == .device
-                            && shape.deviceCategory == .androidPhone
-                            && shape.deviceFrameId == nil {
-                            AndroidCameraCutoutSection(
-                                hideCameraCutout: shapeBinding(shapeId, \.hideCameraCutout, default: false)
-                            )
-                        }
-
-                        if shape.supportsDeviceModelRotation {
-                            ShapeDeviceModelRotationControls(
-                                pitch: deviceModelRotationBinding(shapeId, \.devicePitch, defaultValue: \.resolvedDevicePitch),
-                                yaw: deviceModelRotationBinding(shapeId, \.deviceYaw, defaultValue: \.resolvedDeviceYaw),
-                                canReset: hasDeviceModelRotationOverride(shapeId),
-                                onReset: { resetDeviceModelRotation(shapeId) },
-                                bodyMaterial: optionalConfigBinding(shapeId, \.deviceBodyMaterial, fallback: DeviceBodyMaterial(), isEmpty: \.isEmpty),
-                                lighting: optionalConfigBinding(shapeId, \.deviceLighting, fallback: DeviceLighting(), isEmpty: \.isEmpty)
-                            )
-                        }
-
-                        ShapeShadowControls(
-                            shadow: optionalConfigBinding(shapeId, \.shadow, fallback: ShadowConfig(), isEmpty: \.isEmpty)
-                        )
-
-                        if shape.type.supportsFill {
-                            ShapePropertiesSection {
-                                ShapeFillSwatchButton(
-                                    shape: shape,
-                                    isPresented: $isFillPopoverPresented,
-                                    backgroundStyle: fillStyleBinding(shapeId),
-                                    bgColor: shapeBinding(shapeId, \.color),
-                                    gradientConfig: shapeBinding(shapeId, \.fillGradientConfig, default: GradientConfig(), continuous: true),
-                                    backgroundImageConfig: shapeBinding(shapeId, \.fillImageConfig, default: BackgroundImageConfig(), continuous: true),
-                                    backgroundImage: {
-                                        (idx(for: shapeId).flatMap { i in
-                                            state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
-                                        }).flatMap { state.screenshotImages[$0] }
-                                    },
-                                    onChanged: { state.scheduleSave() },
-                                    // macOS opens a file panel here; iPad picks via ImageSourceMenu
-                                    // inside BackgroundImageEditor (→ onDropImage → saveShapeFillImage).
-                                    onPickImage: {
-                                        #if os(macOS)
-                                        isReplacingFillImage = true
-                                        #endif
-                                    },
-                                    onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
-                                    onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
-                                )
-                            }
-                        } else if shape.type != .device && shape.type != .svg && shape.type != .image {
-                            ShapePropertiesSection {
-                                ColorPicker("Fill color", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
-                                    .labelsHidden()
-                                    .frame(width: UIMetrics.ColorSwatch.inline)
-                                    .help("Fill color")
-                            }
-                        }
+                        fillSection(shape: shape, shapeId: shapeId)
 
                         ShapeOpacitySection(
                             shapeId: shapeId,
@@ -210,46 +145,9 @@ struct ShapePropertiesSingleSelectionBar: View {
                             onReset: { resetRotation(shapeId: shapeId) }
                         )
 
-                        if shape.type == .rectangle || shape.type == .image || (shape.type == .device && shape.deviceCategory == .invisible) {
-                            ShapeCornerRadiusSection(
-                                value: shapeBinding(shapeId, \.borderRadius, continuous: true)
-                            )
-                        }
+                        shapeGeometrySections(shape: shape, shapeId: shapeId)
 
-                        if shape.type.supportsOutline || (shape.type == .device && shape.deviceCategory == .invisible) {
-                            ShapePropertiesSection {
-                                ShapeOutlineControls(
-                                    shape: shape,
-                                    hasOutline: outlineEnabledBinding(shape),
-                                    outlineColor: shapeBinding(shapeId, \.outlineColor, default: CanvasShapeModel.defaultOutlineColor),
-                                    outlineWidth: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true)
-                                )
-                            }
-                        }
-
-                        if shape.type == .star {
-                            ShapeStarPointsSection(
-                                pointCount: shapeBinding(shapeId, \.starPointCount, default: CanvasShapeModel.defaultStarPointCount)
-                            )
-                        }
-
-                        if shape.type == .image {
-                            ImageShapeControls(
-                                buttonTitle: shape.imageFileName != nil ? "Replace Image" : "Choose Image",
-                                showsLocaleImageReset: hasLocaleImageOverride(shapeId),
-                                onPickImage: { pickAndReplaceImage(for: shapeId) },
-                                onImageSelected: { state.saveImage($0, for: shapeId) },
-                                onResetLocaleImage: { state.resetLocaleImageOverride(shapeId: shapeId) }
-                            )
-                        }
-
-                        if shape.type == .svg {
-                            SVGShapeControls(
-                                usesCustomColor: shapeBinding(shapeId, \.svgUseColor, default: false),
-                                color: shapeBinding(shapeId, \.color),
-                                onReplace: { isReplacingSvg = true }
-                            )
-                        }
+                        mediaSections(shape: shape, shapeId: shapeId)
 
                         if !state.localeState.isBaseLocale && hasLocaleOverride {
                             LocaleOverrideIndicator {
@@ -257,19 +155,7 @@ struct ShapePropertiesSingleSelectionBar: View {
                             }
                         }
 
-                        if shape.type == .text {
-                            TextShapeControls {
-                                textPopoverButton(shape: shape, shapeId: shapeId)
-                            }
-                            ShapePropertiesSection {
-                                textBackgroundButton(shape: shape, shapeId: shapeId)
-                            }
-                            if state.localeState.nonBaseLocaleCount > 0 {
-                                ShapePropertiesSection {
-                                    textLocalizationButton(shape: shape, shapeId: shapeId)
-                                }
-                            }
-                        }
+                        textSections(shape: shape, shapeId: shapeId)
 
                         ShapeClipToFrameSection(
                             clipToTemplate: shapeBinding(shapeId, \.clipToTemplate, default: false)

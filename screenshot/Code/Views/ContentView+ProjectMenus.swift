@@ -212,7 +212,8 @@ extension ContentView {
 
             currentProjectSection
         } label: {
-            Image(systemName: "ellipsis.circle")
+            Label("Project actions", systemImage: "ellipsis.circle")
+                .labelStyle(.iconOnly)
                 .foregroundStyle(.secondary)
         }
         .menuStyle(.borderlessButton)

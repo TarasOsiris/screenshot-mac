@@ -190,9 +190,8 @@ struct NewProjectWindowView: View {
             BlankProjectRowDraft(category: .androidPhone),
         ]
         #if os(macOS)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            isNameFieldFocused = true
-        }
+        // The standalone window is still materializing on this pass; focus once it exists.
+        Task.delayed(0.1) { isNameFieldFocused = true }
         #endif
     }
 

@@ -48,6 +48,13 @@ extension AppState {
         saveErrorTitle = nil
     }
 
+    /// Shows a titled alert for a user-facing failure that is not a save — a rejected drop,
+    /// an unreadable dropped file. Expected user/input failures, so no Sentry event.
+    func presentFailure(title: String, message: String) {
+        saveErrorTitle = title
+        saveError = message
+    }
+
     func reportProjectSaveFailure(_ error: Error) {
         CrashReportingService.report(.projectSaveFailed, error: error)
         saveError = String(localized: "Failed to save project: \(error.localizedDescription)")

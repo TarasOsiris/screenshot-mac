@@ -1,10 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-final class ModelPointStore {
-    var value: CGPoint?
-}
-
 struct EditorRowView: View {
     @Bindable var state: AppState
     @Environment(StoreService.self) var store
@@ -16,8 +12,8 @@ struct EditorRowView: View {
     let isLast: Bool
     let requestShowcaseExport: (ScreenshotRow) -> Void
     @AppStorage(AppSettingsKeys.confirmBeforeDeleting) var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
-    @State var isDeletingRow = false
-    @State var isResettingRow = false
+    @Environment(\.reportDropFailure) var reportDropFailure
+    @State var activeAlert: RowAlert?
     @State var isSvgDialogPresented = false
     @State var contextMenuPointStore = ModelPointStore()
     @State var dragSession = CanvasDragSession()
@@ -29,12 +25,6 @@ struct EditorRowView: View {
     /// (many shapes, blur backgrounds). Starts true so the initial editor
     /// render on app open is instant.
     @State var modeReady = true
-    @State var exportError: String?
-    #if DEBUG
-    @State var simulatorCaptureError: String?
-    @State var simulatorInstallPromptShapeId: UUID?
-    #endif
-    @State var backgroundRemovalError: String?
     @State var textEditingShapeId: UUID?
     /// Drives the one-shot re-key of `horizontalScrollArea` (see its `.task`).
     @State var scrollAreaRealized = false
@@ -149,66 +139,15 @@ struct EditorRowView: View {
                 availableFontFamilies: state.availableFontFamilySet
             )
         }
-        .alert("Delete Row", isPresented: $isDeletingRow) {
-            Button("Delete", role: .destructive) {
-                withAnimation(.easeInOut(duration: 0.2)) { state.deleteRow(row.id) }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Are you sure you want to delete \"\(row.label)\"?")
+        .alert(
+            activeAlert?.title ?? "",
+            isPresented: $activeAlert.isPresent(),
+            presenting: activeAlert
+        ) { alert in
+            alertActions(for: alert)
+        } message: { alert in
+            alertMessage(for: alert)
         }
-        .alert("Reset Row", isPresented: $isResettingRow) {
-            Button("Reset", role: .destructive) {
-                withAnimation(.easeInOut(duration: 0.2)) { state.resetRow(row.id) }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This will remove all screenshots and shapes from \"\(row.label)\" and restore default settings.")
-        }
-        .alert("Export Failed", isPresented: $exportError.isPresent()) {
-            Button("OK") { exportError = nil }
-        } message: {
-            Text(exportError ?? "")
-        }
-        #if DEBUG
-        .alert("iOS Simulator Capture Failed", isPresented: $simulatorCaptureError.isPresent()) {
-            Button("OK") { simulatorCaptureError = nil }
-        } message: {
-            Text(simulatorCaptureError ?? "")
-        }
-        #endif
-        .alert("Remove Background Failed", isPresented: $backgroundRemovalError.isPresent()) {
-            Button("OK") { backgroundRemovalError = nil }
-        } message: {
-            Text(backgroundRemovalError ?? "")
-        }
-        #if DEBUG && os(macOS)
-        .alert("Enable iOS Simulator Capture", isPresented: $simulatorInstallPromptShapeId.isPresent()) {
-            Button("Install…") {
-                let pendingShapeId = simulatorInstallPromptShapeId
-                simulatorInstallPromptShapeId = nil
-                Task { @MainActor in
-                    switch SimulatorCaptureService.presentInstallPanel() {
-                    case .success:
-                        if let pendingShapeId {
-                            state.captureFromSimulator(intoShape: pendingShapeId) { message in
-                                simulatorCaptureError = message
-                            }
-                        }
-                    case .failure(let error):
-                        if let message = error.errorDescription {
-                            simulatorCaptureError = message
-                        }
-                    }
-                }
-            }
-            Button("Cancel", role: .cancel) {
-                simulatorInstallPromptShapeId = nil
-            }
-        } message: {
-            Text("Capturing from the iOS Simulator needs a one-time setup: a small script that asks the Simulator for a screenshot and does nothing else.\n\nBecause of macOS security, only you can install it. Click Install… to save the script — you'll only need to do this once.")
-        }
-        #endif
         .sheet(isPresented: $isSvgDialogPresented) {
             SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
                 let center = contextMenuPointStore.value ?? state.shapeCenter(for: row)

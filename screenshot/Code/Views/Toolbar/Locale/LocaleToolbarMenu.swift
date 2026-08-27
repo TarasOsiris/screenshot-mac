@@ -198,7 +198,8 @@ struct LocaleBar: View {
                 isManagingLocales = true
             }
         } label: {
-            Image(systemName: "ellipsis.circle")
+            Label("Language options", systemImage: "ellipsis.circle")
+                .labelStyle(.iconOnly)
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .frame(width: UIMetrics.IconButton.frameSize, height: UIMetrics.IconButton.frameSize)
