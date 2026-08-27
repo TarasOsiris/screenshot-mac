@@ -166,32 +166,41 @@ Run this **after** Step 8 has pushed. Sentry resolves the SHAs through the linke
 (`TarasOsiris/screenshot-mac`), so commits that only exist locally come back as "not found".
 
 ```bash
-# Exactly the release string the SDK reports — see the naming rule below.
 RELEASE="xyz.tleskiv.screenshot@<MARKETING_VERSION>+<CURRENT_PROJECT_VERSION>"
+PREV=$(git rev-parse "$(git describe --tags --abbrev=0 HEAD^)")   # previous ship tag
+CUR=$(git rev-parse HEAD)                                          # this ship's tagged commit
 
 sentry-cli releases new -o nineva-studios -p screenshot-bro "$RELEASE" --finalize
-sentry-cli releases set-commits -o nineva-studios -p screenshot-bro "$RELEASE" --auto --ignore-missing
+sentry-cli releases set-commits -o nineva-studios -p screenshot-bro "$RELEASE" \
+  --commit "TarasOsiris/screenshot-mac@$PREV..$CUR"
 ```
+
+**Use the explicit range, not `--auto`.** On its first real run (4.8 (121)) `--auto` sent a ref with
+only a head `commit` and **no `previousCommit`** — even though the previous release already carried
+commits — so Sentry had no range to fetch and attached nothing, while the CLI still printed a
+success table. The explicit form sends both ends and works. Step 8 has just created
+`v<MARKETING_VERSION>-<CURRENT_PROJECT_VERSION>`, so both SHAs are always available; there is
+nothing for `--auto` to discover that the tags don't already state.
 
 **The release name has to match what the SDK sends, character for character.**
 `CrashReportingService` never sets `options.releaseName`, so Sentry Cocoa derives it from the
 bundle as `<PRODUCT_BUNDLE_IDENTIFIER>@<MARKETING_VERSION>+<CURRENT_PROJECT_VERSION>` —
-`xyz.tleskiv.screenshot@4.7+120` for 4.7 (120). Get it wrong and you create a second, event-less
+`xyz.tleskiv.screenshot@4.8+121` for 4.8 (121). Get it wrong and you create a second, event-less
 release with the commits attached to nothing, while the real one stays bare. macOS and iOS share
 one bundle id, so **one release covers both platforms** — run this once per ship, not per platform.
 
-- `--auto` derives the repo from the git remote and the commit range from the previous release.
-  Because Step 8 tags and pushes immediately before this, `HEAD` *is* the shipped commit, so the
-  range comes out exact — but only if the **previous** release already carries commits. Against a
-  bare predecessor it silently degrades to `--initial-depth` (20 commits), which will over- or
-  under-report the range. If that happens, fix it after the fact with an explicit range built from
-  the ship tags, which exist for every release back to `v4.2-113`:
-  `--commit "TarasOsiris/screenshot-mac@$(git rev-parse v4.6-119)..$(git rev-parse v4.7-120)"`.
-- `--ignore-missing` is what keeps that degraded first run — or any run after a rebase or
-  force-push that orphaned the previous release's head commit — from failing outright.
+**Verification needs a wait — `commitCount: 0` right after the call is normal.** The PUT only
+records the refs; Sentry fetches the commits from GitHub in a background task (~15s for an 8-commit
+range). Poll rather than concluding it failed:
+
+```bash
+curl -s -H "Authorization: Bearer $SENTRY_TOKEN" \
+  "https://sentry.io/api/0/organizations/nineva-studios/releases/<url-encoded release>/commits/"
+```
+
 - `-o`/`-p` are mandatory, same as Step 6: the CLI's default project is `captions-bro`.
 - If either command fails, **report it as a warning and continue** — same rule as dSYMs. This is
-  reporting metadata, not the critical path, and it can be re-run later from the same commit.
+  reporting metadata, not the critical path, and it can be re-run later from the same tags.
 
 What this buys, none of which works on a release with no commits:
 - **Suspect commits** — a new issue names the commit that likely introduced it.
