@@ -26,6 +26,17 @@ struct CrashReportingServiceTests {
         #expect(CrashReportingService.isActive == false)
     }
 
+    /// Nesting is real now that the app also pauses for the whole time it sits in the background,
+    /// so a modal panel opened there is the second reason at once.
+    @MainActor
+    @Test func nestedAppHangPausesStayInertUnderTests() {
+        let value = CrashReportingService.withAppHangTrackingPaused {
+            CrashReportingService.withAppHangTrackingPaused { 42 }
+        }
+        #expect(value == 42)
+        #expect(CrashReportingService.isActive == false)
+    }
+
     // MARK: - Failure identifiers
 
     @Test func failureRawValuesAreUniqueAndNonEmpty() {

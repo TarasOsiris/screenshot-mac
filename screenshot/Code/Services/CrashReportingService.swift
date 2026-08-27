@@ -1,3 +1,6 @@
+#if os(macOS)
+import AppKit
+#endif
 import Foundation
 import OSLog
 import Sentry
@@ -121,6 +124,10 @@ nonisolated enum CrashReportingService {
             setTag("true", for: "crashed_last_run")
             breadcrumb(.app, "Previous run crashed", level: .warning)
         }
+
+        #if os(macOS)
+        observeActivationForAppHangTracking()
+        #endif
     }
 
     // MARK: - Scope
@@ -165,17 +172,64 @@ nonisolated enum CrashReportingService {
     @MainActor
     static func withAppHangTrackingPaused<T>(_ body: () throws -> T) rethrows -> T {
         guard isReportingEnabled else { return try body() }
-        // The SDK's own switch is a plain flag, so nesting two panels would resume too early.
-        appHangPauseDepth += 1
-        if appHangPauseDepth == 1 { SentrySDK.pauseAppHangTracking() }
-        defer {
-            appHangPauseDepth -= 1
-            if appHangPauseDepth == 0 { SentrySDK.resumeAppHangTracking() }
-        }
+        adjustAppHangPause(by: 1)
+        defer { adjustAppHangPause(by: -1) }
         return try body()
     }
 
+    /// The SDK's own switch is a plain flag, so two overlapping reasons to be paused — a second
+    /// modal panel, or a panel opened while the app is in the background — would resume each
+    /// other too early. Only the outermost transition touches the SDK.
+    @MainActor
+    private static func adjustAppHangPause(by delta: Int) {
+        let wasPaused = appHangPauseDepth > 0
+        appHangPauseDepth += delta
+        let isPaused = appHangPauseDepth > 0
+        guard wasPaused != isPaused else { return }
+        if isPaused {
+            SentrySDK.pauseAppHangTracking()
+        } else {
+            SentrySDK.resumeAppHangTracking()
+        }
+    }
+
     @MainActor private static var appHangPauseDepth = 0
+
+    #if os(macOS)
+    /// Sentry reports an app hang only while the app is frontmost — but that guard, and the
+    /// fully-blocking/non-fully-blocking split, are `#if os(iOS) || tvOS || visionOS` inside
+    /// `SentryHangTrackingIntegration.anrDetected`. On macOS every stalled main thread is reported,
+    /// so a backgrounded app that macOS has paged out files a "hang" nobody was there to see:
+    /// SCREENSHOT-BRO-13/-E are three of them, logged three days after the window was last touched,
+    /// with stacks that are pure AppKit/SwiftUI relayout and not one frame of ours.
+    /// Matching the iOS gate costs us hangs the user tabbed away from (a long export, say) — which
+    /// are also the ones we can neither reproduce nor attribute.
+    private static func observeActivationForAppHangTracking() {
+        // No initial read of `NSApp.isActive`: at launch the app is not active yet, and pausing
+        // here would blind us to a hang in the first project load, which is the one launch-time
+        // freeze worth reporting. `didBecomeActive` lands moments later either way.
+        for (name, isBackground) in [
+            (NSApplication.didResignActiveNotification, true),
+            (NSApplication.didBecomeActiveNotification, false),
+        ] {
+            // `queue: nil` runs the observer synchronously on the posting (main) thread, so
+            // tracking is already paused by the time the app is inactive. A queued block would
+            // leave the watchdog armed for the rest of the turn.
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { _ in
+                MainActor.assumeIsolated { setAppHangTrackingPausedForBackground(isBackground) }
+            }
+        }
+    }
+
+    @MainActor
+    private static func setAppHangTrackingPausedForBackground(_ paused: Bool) {
+        guard paused != isPausedForBackground else { return }
+        isPausedForBackground = paused
+        adjustAppHangPause(by: paused ? 1 : -1)
+    }
+
+    @MainActor private static var isPausedForBackground = false
+    #endif
 
     // MARK: - Breadcrumbs
 
