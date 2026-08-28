@@ -142,7 +142,7 @@ platform(s) (the version is embedded in the archive), and re-upload. iOS and mac
 build numbers per-platform, so the same build number can be used across platforms.
 
 Step 2b should have caught this already — if it fires here, the pre-check missed a case, so
-say so in the Step 9 report. Re-archiving both platforms is the expensive path this exists to
+say so in the Step 11 report. Re-archiving both platforms is the expensive path this exists to
 avoid. Note the re-archived binaries have new dSYM UUIDs, so **re-run Step 6** for every
 platform you re-archived before re-uploading.
 
@@ -210,7 +210,23 @@ What this buys, none of which works on a release with no commits:
 - Accurate regressions — "resolved in next release" gets a commit-accurate boundary instead of a
   release-tag-accurate one.
 
-## Step 10: Report
+## Step 10: Create the App Store version and submit for review
+
+Run the `submit` skill's flow (`.claude/skills/submit/SKILL.md`) for exactly the platforms this ship
+targeted, using the version and build number just uploaded — don't re-detect them.
+
+In short, per platform: create the `<MARKETING_VERSION>` version record with
+`--release-type AFTER_APPROVAL --copy-metadata-from <previous version> --exclude-fields whatsNew`,
+write "What's New" (drafted from `git log <prev tag>..<this tag>`, same English text in every locale)
+via `asc localizations update`, `asc versions attach-build`, gate on `asc validate`, then
+`asc review submit … --confirm`. Read the skill for the exact commands and the failure branches.
+
+**A failure here does not fail the ship.** The binary is already on App Store Connect, and `/submit`
+re-runs the whole flow idempotently — Step 2 reuses an existing editable version, Step 3 overwrites
+"What's New", Step 4 re-attaches. Report it loudly in Step 11 and say plainly that the build is
+uploaded but **not submitted**, then move on.
+
+## Step 11: Report
 
 Print a summary:
 - Platform(s) shipped
@@ -219,3 +235,6 @@ Print a summary:
 - Upload status (per platform)
 - Sentry dSYM upload status (per platform)
 - Sentry release + commit association status (once, not per platform)
+- App Store version record created or reused (per platform)
+- Review submission id and state (per platform) — or, if Step 10 failed, that the build is uploaded
+  but not submitted, and that `/submit` can finish it

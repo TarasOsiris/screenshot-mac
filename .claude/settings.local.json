@@ -38,6 +38,7 @@
       "WebFetch(domain:help.appscreens.com)",
       "WebFetch(domain:screenhance.com)",
       "Bash(sentry-cli info *)",
+      "Bash(asc:*)",
       "mcp__plugin_sentry_sentry__execute_sentry_tool"
     ]
   },
