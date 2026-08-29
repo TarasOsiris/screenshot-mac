@@ -12,6 +12,10 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+
+import xcstrings_format
+
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
 STRINGSDATA_GLOB = (
     "/Users/taras/Library/Developer/Xcode/DerivedData/"
@@ -721,7 +725,7 @@ def collect_extracted_keys() -> set[str]:
 
 
 def main():
-    data = json.loads(CATALOG.read_text())
+    data = xcstrings_format.load(CATALOG)
     strings = data["strings"]
 
     # Merge any keys that Xcode extracted but didn't land in the catalog.
@@ -767,7 +771,7 @@ def main():
             }
             repaired += 1
 
-    CATALOG.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+    xcstrings_format.write(CATALOG, data)
 
     print(f"Merged from stringsdata: {merged}")
     print(f"Added Spanish: {added}")

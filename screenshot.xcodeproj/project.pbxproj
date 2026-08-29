@@ -167,6 +167,7 @@
 				fr,
 				de,
 				es,
+				fa,
 				ja,
 				ko,
 				"pt-BR",

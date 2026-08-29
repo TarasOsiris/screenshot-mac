@@ -6,3 +6,4 @@ skills-lock.json
 xcuserdata/
 .DS_Store
 .claude/scheduled_tasks.lock
+__pycache__/

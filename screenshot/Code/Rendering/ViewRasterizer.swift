@@ -143,6 +143,7 @@ extension RowRenderer {
         let hostingView = NSHostingView(
             rootView: view
                 .environment(\.isExportRendering, true)
+                .environment(\.layoutDirection, .leftToRight)
                 .frame(width: CGFloat(pixelW), height: CGFloat(pixelH), alignment: .topLeading)
                 .clipped()
         )
@@ -179,6 +180,7 @@ extension RowRenderer {
         let renderer = ImageRenderer(content:
             view
                 .environment(\.isExportRendering, true)
+                .environment(\.layoutDirection, .leftToRight)
                 .frame(width: width, height: height, alignment: .topLeading)
                 .clipped()
         )

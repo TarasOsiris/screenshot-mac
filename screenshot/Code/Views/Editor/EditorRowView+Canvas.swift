@@ -96,6 +96,12 @@ extension EditorRowView {
                                 }
                             }
                         }
+                        // Canvas geometry is model-space and anchored `.topLeading`; under an RTL
+                        // UI language SwiftUI resolves that to the top-right and mirrors the row,
+                        // so one project would look different per UI language and diverge from
+                        // export. Pin the strip, matching `ViewRasterizer.renderViewToImage`;
+                        // chrome outside it still mirrors.
+                        .environment(\.layoutDirection, .leftToRight)
 
                         controlBarsRow
                             // Bars must not slide during a reorder: the move buttons have to stay

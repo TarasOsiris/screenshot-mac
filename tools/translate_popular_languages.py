@@ -9,24 +9,29 @@ high-impact set of languages:
   - Korean (`ko`)
   - Portuguese, Brazil (`pt-BR`)
   - Chinese, Simplified (`zh-Hans`)
+  - Persian (`fa`)
 
 Requirements:
   python3 -m pip install deep-translator
 
 Run from repo root:
-  python3 tools/translate_popular_languages.py
+  python3 tools/translate_popular_languages.py           # every target language
+  python3 tools/translate_popular_languages.py fa        # just one
 """
 
 from __future__ import annotations
 
-import json
 import math
 import re
 import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+
 from deep_translator import GoogleTranslator
+
+import xcstrings_format
 
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
 
@@ -37,6 +42,7 @@ TARGET_LANGUAGES = {
     "ko": "ko",
     "pt-BR": "pt",
     "zh-Hans": "zh-CN",
+    "fa": "fa",
 }
 
 KEEP_AS_IS = {
@@ -204,6 +210,7 @@ def translate_language(strings: dict[str, dict], xcstrings_language: str, servic
     translator = GoogleTranslator(source="en", target=service_language)
     pending: list[tuple[str, str, dict[str, str]]] = []
     translated_count = 0
+    skipped: list[str] = []
 
     for key, payload in strings.items():
         localizations = payload.setdefault("localizations", {})
@@ -229,9 +236,24 @@ def translate_language(strings: dict[str, dict], xcstrings_language: str, servic
         end = start + BATCH_SIZE
         chunk = pending[start:end]
         protected_batch = [item[1] for item in chunk]
-        translated_batch = translate_batch(translator, protected_batch)
+        try:
+            translated_batch = translate_batch(translator, protected_batch)
+        except Exception as error:
+            # One bad string must not discard a whole run's work: retry the batch
+            # one item at a time and leave anything still failing untranslated, so
+            # the next run picks it up.
+            print(f"[{xcstrings_language}] batch {batch_index} failed ({error}); retrying item by item", flush=True)
+            translated_batch = []
+            for protected in protected_batch:
+                try:
+                    translated_batch.append(translate_batch(translator, [protected])[0])
+                except Exception:
+                    translated_batch.append(None)
 
         for (key, _protected, replacements), translated in zip(chunk, translated_batch):
+            if translated is None:
+                skipped.append(key)
+                continue
             strings[key]["localizations"][xcstrings_language] = {
                 "stringUnit": {
                     "state": "translated",
@@ -245,21 +267,34 @@ def translate_language(strings: dict[str, dict], xcstrings_language: str, servic
             flush=True,
         )
 
+    if skipped:
+        print(f"[{xcstrings_language}] {len(skipped)} string(s) left untranslated: {skipped[:5]}", flush=True)
     return translated_count
 
 
 def main() -> int:
-    data = json.loads(CATALOG.read_text())
+    requested = sys.argv[1:]
+    unknown = [language for language in requested if language not in TARGET_LANGUAGES]
+    if unknown:
+        print(f"unknown language(s): {', '.join(unknown)}", file=sys.stderr)
+        print(f"known: {', '.join(TARGET_LANGUAGES)}", file=sys.stderr)
+        return 2
+    targets = {language: TARGET_LANGUAGES[language] for language in requested} or TARGET_LANGUAGES
+
+    data = xcstrings_format.load(CATALOG)
     strings = data["strings"]
 
     summary: list[tuple[str, int]] = []
-    for xcstrings_language, service_language in TARGET_LANGUAGES.items():
+    for xcstrings_language, service_language in targets.items():
         count = translate_language(strings, xcstrings_language, service_language)
         summary.append((xcstrings_language, count))
 
-    CATALOG.write_text(
-        json.dumps(data, indent=2, ensure_ascii=False) + "\n"
-    )
+    for payload in strings.values():
+        localizations = payload.get("localizations")
+        if localizations:
+            payload["localizations"] = {k: localizations[k] for k in sorted(localizations)}
+
+    xcstrings_format.write(CATALOG, data)
 
     for language, count in summary:
         print(f"{language}: added {count} entries")
