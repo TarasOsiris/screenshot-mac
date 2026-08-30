@@ -5,7 +5,7 @@ struct CanvasShapeInteractions {
     var onShiftSelect: (() -> Void)?
     var onUpdate: (CanvasShapeModel) -> Void = { _ in }
     var onDelete: () -> Void = {}
-    var onScreenshotDrop: ((NSImage) -> Void)?
+    var onScreenshotDrop: ((NSImage, ImageImportOrigin) -> Void)?
     var onClearImage: (() -> Void)?
     var onRemoveBackground: (() -> Void)?
     var onCaptureSimulator: (() -> Void)?

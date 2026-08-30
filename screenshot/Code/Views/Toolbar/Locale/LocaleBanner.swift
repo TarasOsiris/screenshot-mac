@@ -120,7 +120,9 @@ struct LocaleBanner: View {
             .translationTask(translationConfig) { session in
                 await runBannerTranslation(session)
             }
-            .translationLanguageIssueAlert(item: $languageIssue)
+            .translationLanguageIssueAlert(item: $languageIssue) {
+                startTranslation(onlyUntranslated: translateOnlyUntranslated)
+            }
             .onChange(of: state.localeMenu.pendingTranslateShapeId) { _, newValue in
                 handlePendingTranslateShapeId(newValue)
             }

@@ -411,7 +411,7 @@ extension AppState {
            let image = NSImage(pasteboard: NSPasteboard.general), image.isValid {
             let row = rows[rowIdx]
             let center = canvasMouseModelPosition ?? CGPoint(x: row.templateWidth / 2, y: row.templateHeight / 2)
-            addImageShape(image: image, centerX: center.x, centerY: center.y)
+            addImageShape(image: image, centerX: center.x, centerY: center.y, source: .paste)
             return
         }
         #endif

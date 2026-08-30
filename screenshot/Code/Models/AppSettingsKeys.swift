@@ -31,6 +31,9 @@ nonisolated enum AppSettingsKeys {
     /// The RevenueCat id already aliased into PostHog. `alias` is an irreversible merge and bills
     /// an event per call, so it fires once per install — see `AnalyticsService.linkStoreUser`.
     static let analyticsAliasedStoreUserId = "analyticsAliasedStoreUserId"
+    /// Marks this install as the developer's own so its events can be excluded from every
+    /// query. Off by default; nothing reads it but `AnalyticsService.applyInternalUserProfile`.
+    static let analyticsInternalUser = "analyticsInternalUser"
 
     nonisolated enum Default {
         static let appearance = "auto"

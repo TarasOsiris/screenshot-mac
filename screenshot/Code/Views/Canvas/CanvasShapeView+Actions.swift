@@ -210,7 +210,7 @@ extension CanvasShapeView {
             let failure = image == nil ? DropFailure.image(error) : nil
             Task { @MainActor in
                 if let image {
-                    interactions.onScreenshotDrop?(image)
+                    interactions.onScreenshotDrop?(image, .dropShape)
                 } else if let failure {
                     report(failure)
                 }

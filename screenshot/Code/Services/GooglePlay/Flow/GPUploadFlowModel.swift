@@ -168,13 +168,24 @@ final class GPUploadFlowModel {
                 )
             } catch is CancellationError {
                 errorMessage = String(localized: "Upload cancelled. The draft edit was discarded.")
-                AnalyticsService.capture(.storeUploadFailed, [.store: "play", .cancelled: true])
+                AnalyticsService.capture(.storeUploadFailed, [
+                    .store: "play",
+                    .cancelled: true,
+                    .result: StoreUploadFailureKind.cancelled.rawValue,
+                ])
                 step = .configuringPlan
             } catch {
                 let summary = StoreUploadFailureText.summary(for: error)
                 errorMessage = summary
                 errorDetailsText = StoreUploadFailureText.details(for: error, context: ["Package: \(packageName)"])
-                AnalyticsService.capture(.storeUploadFailed, [.store: "play", .cancelled: false])
+                let failure = StoreUploadFailureKind.classify(error)
+                var properties: [AnalyticsService.Property: Any] = [
+                    .store: "play",
+                    .cancelled: false,
+                    .result: failure.kind.rawValue,
+                ]
+                if let status = failure.httpStatus { properties[.httpStatus] = status }
+                AnalyticsService.capture(.storeUploadFailed, properties)
                 step = .configuringPlan
                 NotificationService.notify(title: String(localized: "Upload failed"), body: summary)
             }

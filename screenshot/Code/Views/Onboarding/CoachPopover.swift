@@ -54,7 +54,7 @@ private struct CoachPopoverModifier: ViewModifier {
             set: { newValue in
                 // Dismissal driven by the system (click-outside, etc.) ends the tour.
                 if !newValue, isStepActive {
-                    coach.end()
+                    coach.end(.dismissed)
                 }
             }
         )
@@ -94,7 +94,7 @@ private struct CoachPopoverContent: View {
 
     private var buyProButton: some View {
         Button {
-            coach.end()
+            coach.end(.pro)
             #if os(iOS)
             // Let the popover dismiss before the paywall sheet presents.
             Task { @MainActor in

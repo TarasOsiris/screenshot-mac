@@ -7,12 +7,22 @@ import SwiftUI
 // value (Services/Localization/TranslationService.swift); only its presentation lives here, so
 // `Services/` declares no `some View`.
 extension View {
-    func translationLanguageIssueAlert(item: Binding<TranslationLanguageIssue?>) -> some View {
+    /// `onRetry` re-runs the translation that produced the issue. It is the primary action for
+    /// every recoverable case: `prepareTranslation()` is what presents Apple's download sheet, so
+    /// retrying brings the sheet back — a user who dismissed it once had to restart the whole run
+    /// by hand before this existed.
+    func translationLanguageIssueAlert(
+        item: Binding<TranslationLanguageIssue?>,
+        onRetry: (() -> Void)? = nil
+    ) -> some View {
         return alert(
             item.wrappedValue?.title ?? "",
             isPresented: item.isPresent(),
             presenting: item.wrappedValue
         ) { issue in
+            if let onRetry, issue.offersRetry {
+                Button("Try Again") { onRetry() }
+            }
             #if os(macOS)
             if issue.offersSettings, let url = URL(string: "x-apple.systempreferences:com.apple.SystemPreferences.TranslationSettings") {
                 Button("Open Translation Settings") {

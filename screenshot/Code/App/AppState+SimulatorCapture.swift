@@ -12,7 +12,7 @@ extension AppState {
             do {
                 let result = try await SimulatorCaptureService.captureBooted()
                 guard shapeLocation(for: shapeId) != nil else { return }
-                saveImage(result.image, for: shapeId)
+                saveImage(result.image, for: shapeId, source: .simulator)
             } catch {
                 onError(error.localizedDescription)
             }

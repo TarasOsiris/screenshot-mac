@@ -61,7 +61,7 @@ final class OnboardingCoachController {
         transitionTask = nil
         preparingStep = nil
         guard step != nil || hadPendingTransition else { return }
-        end(abandoned: true)
+        end(.interrupted)
     }
     #endif
 
@@ -75,12 +75,12 @@ final class OnboardingCoachController {
     func advance() {
         guard let current = step else { return }
         guard let next = current.next else {
-            end()
+            end(.finished)
             return
         }
         // The Pro step anchors on the Get Pro button, which is gone once Pro is unlocked.
         if next == .pro, !proStepAvailable {
-            end()
+            end(.finished)
             return
         }
         // The inspector step anchors on row-scoped UI, which only renders
@@ -93,13 +93,15 @@ final class OnboardingCoachController {
 
     /// Ends the coach tour and persists onboarding completion (unless the tour
     /// was started with `persistOnEnd: false`).
-    func end(abandoned: Bool = false) {
+    /// The outcome is required, not defaulted: a default is exactly how click-outside came to be
+    /// recorded as a completion.
+    func end(_ outcome: OnboardingOutcome) {
         let reachedStep = step.map(String.init(describing:)) ?? "none"
         setStep(nil)
         guard persistsOnEnd else { return }
         AnalyticsService.capture(
-            abandoned ? .onboardingSkipped : .onboardingCompleted,
-            [.source: "coach", .lastStep: reachedStep]
+            outcome.analyticsEvent,
+            [.source: "coach", .lastStep: reachedStep, .result: outcome.rawValue]
         )
         let defaults = UserDefaults.standard
         let key = OnboardingPersistence.completedKey

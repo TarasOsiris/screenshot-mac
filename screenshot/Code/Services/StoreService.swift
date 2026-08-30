@@ -11,6 +11,19 @@ import RevenueCat
 final class StoreService {
     /// Raw values are analytics event property values (`paywall_shown.trigger`), not user-facing
     /// text — renaming one renames the dimension in PostHog.
+    /// Why a restore ended the way it did. `ok` alone could not tell "this Apple Account never
+    /// bought anything" (expected) from "it bought something our configured ids don't match"
+    /// (our bug) — and production showed 16 restores, 10 users, zero unlocks, with no way to
+    /// tell which.
+    enum RestoreResult: String {
+        case restored
+        case nothingToRestore
+        /// Has active entitlements or purchased products, none matching our configured ids.
+        case entitlementMismatch
+        case failed
+        case notConfigured
+    }
+
     enum PaywallContext: String {
         case general
         case projectLimit
@@ -263,7 +276,8 @@ final class StoreService {
         }
     }
 
-    private func updateEntitlement(from customerInfo: CustomerInfo) {
+    @discardableResult
+    private func updateEntitlement(from customerInfo: CustomerInfo) -> RestoreResult {
         let activeEntitlements = customerInfo.entitlements.active
         let configuredEntitlementId = Self.resolvedEntitlementID()
         let configuredProductId = Self.resolvedProductID()
@@ -293,6 +307,9 @@ final class StoreService {
         if proTier != newTier {
             proTier = newTier
         }
+        if entitled { return .restored }
+        let hasSomething = !activeEntitlements.isEmpty || !customerInfo.allPurchasedProductIdentifiers.isEmpty
+        return hasSomething ? .entitlementMismatch : .nothingToRestore
     }
 
     private static func tier(from entitlement: EntitlementInfo) -> ProTier {
@@ -323,8 +340,8 @@ final class StoreService {
     }
 
     func handleRestoreCompleted(_ customerInfo: CustomerInfo) {
-        updateEntitlement(from: customerInfo)
-        AnalyticsService.capture(.purchaseRestored, [.ok: isProUnlocked])
+        let result = updateEntitlement(from: customerInfo)
+        AnalyticsService.capture(.purchaseRestored, [.ok: isProUnlocked, .result: result.rawValue])
         if isProUnlocked {
             setPurchaseStatus(String(localized: "Your Screenshot Bro Pro purchase was restored."))
             showPaywall = false
@@ -340,6 +357,13 @@ final class StoreService {
     }
 
     func handleRestoreFailure(_ error: Error) {
+        AnalyticsService.capture(.purchaseRestored, [
+            .ok: false,
+            .result: RestoreResult.failed.rawValue,
+            // RevenueCat's own numeric code — its vocabulary, not the user's, and an Int, so it
+            // needs no allowlisting.
+            .httpStatus: (error as NSError).code,
+        ])
         setPurchaseStatus(String(localized: "Restore failed: \(error.localizedDescription)"), isError: true)
     }
 
@@ -350,13 +374,18 @@ final class StoreService {
 
         guard Purchases.isConfigured else {
             let message = configurationIssue ?? String(localized: "RevenueCat is not configured.")
+            AnalyticsService.capture(.purchaseRestored, [
+                .ok: false,
+                .result: RestoreResult.notConfigured.rawValue,
+            ])
             setPurchaseStatus(message, isError: true)
             return
         }
 
         do {
             let customerInfo = try await Purchases.shared.restorePurchases()
-            updateEntitlement(from: customerInfo)
+            let result = updateEntitlement(from: customerInfo)
+            AnalyticsService.capture(.purchaseRestored, [.ok: isProUnlocked, .result: result.rawValue])
             if isProUnlocked {
                 setPurchaseStatus(String(localized: "Your Screenshot Bro Pro purchase was restored."))
             } else {

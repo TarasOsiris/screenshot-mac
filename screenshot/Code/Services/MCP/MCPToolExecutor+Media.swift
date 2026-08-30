@@ -35,7 +35,7 @@ extension MCPToolExecutor {
         }
 
         let rowId = state.rows[rowIndex].id
-        let imported = await state.batchImportImages(sources, into: rowId, maxTemplatesPerRow: args.int("max_templates_per_row"))
+        let imported = await state.batchImportImages(sources, into: rowId, maxTemplatesPerRow: args.int("max_templates_per_row"), source: .mcp)
         if imported < sources.count {
             failures.append("\(sources.count - imported) image(s) were not imported (column cap reached?)")
         }

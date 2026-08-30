@@ -17,6 +17,29 @@ struct ImageImportSource {
     var sourceURL: URL?
 }
 
+/// How a screenshot reached the document, as the `source` dimension on `screenshots_imported`.
+/// Raw values are our own vocabulary, never user content. Getting an image in is the defining
+/// action of the app, and until 4.9 only the row-level batch drop reported it — so 859 exported
+/// images produced one import event.
+enum ImageImportOrigin: String, CaseIterable {
+    /// Multiple files dropped on a row, fanned out across its templates.
+    case dropRow = "drop_row"
+    /// A single image dropped on empty canvas, becoming a new image shape.
+    case dropCanvas = "drop_canvas"
+    /// A single image dropped onto an existing device or image shape.
+    case dropShape = "drop_shape"
+    /// Photos / Camera / Files on iOS, and the double-tap or context-menu picker.
+    case picker
+    /// The macOS open panel.
+    case panel
+    /// Pasted from the system pasteboard.
+    case paste
+    case mcp
+    /// DEBUG-only simulator capture. Analytics is off in DEBUG, so this never ships —
+    /// it exists so the path is labelled rather than silently inheriting the default.
+    case simulator
+}
+
 /// A resource the batch import has already pointed the document at but not yet written to disk.
 /// The write happens after the undo step commits, off the main actor — a 20-image import used to
 /// block the main thread for 1.5-3.1 s and trip the app-hang watchdog (SCREENSHOT-BRO-W).
@@ -29,13 +52,23 @@ extension AppState {
 
     // MARK: - Screenshot Images
 
-    func saveImage(_ image: NSImage, for shapeId: UUID) {
+    /// `source` defaults to `.picker` because that is what every menu- and panel-driven call site
+    /// is; only the drop and paste paths pass something else.
+    func saveImage(_ image: NSImage, for shapeId: UUID, source: ImageImportOrigin = .picker) {
         guard let activeId = activeProjectId,
               let location = shapeLocation(for: shapeId) else { return }
         guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
+        var saved = false
         withUndo("Assign Screenshot") {
-            _ = performSaveImage(image, for: shapeId, activeId: activeId, location: location)
+            saved = performSaveImage(image, for: shapeId, activeId: activeId, location: location)
         }
+        guard saved else { return }
+        let deviceCategory = rows[location.rowIndex].shapes[location.shapeIndex].deviceCategory
+        AnalyticsService.capture(.screenshotsImported, [
+            .count: 1,
+            .source: source.rawValue,
+            .detectedDevice: deviceCategory?.rawValue ?? "none",
+        ])
     }
 
     /// Clears the screenshot image from every (unlocked) device shape in the row, including locale overrides.
@@ -281,10 +314,11 @@ extension AppState {
         projectOpen.finishImages()
     }
 
-    func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat) {
+    func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat, source: ImageImportOrigin = .dropCanvas) {
         guard let rowIdx = selectedRowIndex,
               let activeId = activeProjectId else { return }
         let shape = makeImageShape(image: image, row: rows[rowIdx], centerX: centerX, centerY: centerY)
+        var saved = false
         withUndo("Add Image") {
             let shapeIndex = rows[rowIdx].shapes.count
             rows[rowIdx].shapes.append(shape)
@@ -299,8 +333,17 @@ extension AppState {
                 rows[rowIdx].shapes.removeAll { $0.id == shape.id }
                 selectedShapeIds = []
                 justAddedShapeId = nil
+            } else {
+                saved = true
             }
         }
+        guard saved else { return }
+        AnalyticsService.capture(.screenshotsImported, [
+            .count: 1,
+            .source: source.rawValue,
+            // `makeImageShape` already ran the detector; this is what it decided to build.
+            .detectedDevice: shape.deviceCategory?.rawValue ?? "none",
+        ])
     }
 
     /// Creates an image or device shape sized for the given row, without side effects.
@@ -361,7 +404,12 @@ extension AppState {
     /// thumbnail decode are staged and flushed off the main actor afterwards, so the row appears
     /// immediately and the screenshots fill in as they land (SCREENSHOT-BRO-W).
     @discardableResult
-    func batchImportImages(_ sources: [ImageImportSource], into rowId: UUID, maxTemplatesPerRow: Int? = nil) async -> Int {
+    func batchImportImages(
+        _ sources: [ImageImportSource],
+        into rowId: UUID,
+        maxTemplatesPerRow: Int? = nil,
+        source: ImageImportOrigin = .dropRow
+    ) async -> Int {
         guard let idx = rowIndex(for: rowId),
               let activeId = activeProjectId,
               !sources.isEmpty else { return 0 }
@@ -405,6 +453,7 @@ extension AppState {
         }
         AnalyticsService.capture(.screenshotsImported, [
             .count: sources.count,
+            .source: source.rawValue,
             .detectedDevice: rows[idx].defaultDeviceCategory?.rawValue ?? "none",
         ])
 

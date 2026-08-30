@@ -149,3 +149,30 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
         OnboardingCoachStep(rawValue: rawValue - 1)
     }
 }
+
+/// How an onboarding surface ended. Every surface emits exactly one terminal event, so
+/// `onboarding_started` reconciles against `completed + skipped`; the raw value rides along as
+/// `result` so the *reason* stays visible without splitting the funnel.
+///
+/// It exists because `end(abandoned: Bool = false)` defaulted to "completed", and the most common
+/// way a tour ended — clicking outside the popover — took that default. `onboarding_skipped` was
+/// declared for three releases and never once fired.
+enum OnboardingOutcome: String, CaseIterable {
+    /// Walked to the end of the flow.
+    case finished
+    /// Acted on the final step's Buy Pro CTA — the strongest completion signal there is.
+    case pro
+    /// Used an explicit Skip affordance.
+    case skipped
+    /// Click-outside or other system dismissal.
+    case dismissed
+    /// The surface left the screen mid-flow (iOS editor teardown).
+    case interrupted
+
+    var analyticsEvent: AnalyticsService.Event {
+        switch self {
+        case .finished, .pro: .onboardingCompleted
+        case .skipped, .dismissed, .interrupted: .onboardingSkipped
+        }
+    }
+}

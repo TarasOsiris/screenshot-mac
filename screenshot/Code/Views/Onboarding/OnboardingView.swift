@@ -12,6 +12,9 @@ struct OnboardingView: View {
     @Environment(StoreService.self) private var store
     @State private var pageIndex = 0
     @State private var templatePreviews: [NSImage] = []
+    /// Skip jumps *to* the Pro page rather than exiting, so by the time `complete()` runs
+    /// `pageIndex` claims the user reached the end. Remember where they actually bailed.
+    @State private var skippedFromPage: Int?
     #endif
 
     var body: some View {
@@ -255,6 +258,7 @@ struct OnboardingView: View {
 
     private func secondaryAction() {
         if pageIndex < proPageIndex {
+            skippedFromPage = pageIndex
             withAnimation { pageIndex = proPageIndex }
         } else {
             complete()
@@ -470,12 +474,22 @@ struct OnboardingView: View {
         if persistCompletion {
             onboardingCompleted = true
             #if os(iOS)
+            let outcome: OnboardingOutcome = skippedFromPage == nil ? .finished : .skipped
             AnalyticsService.capture(
-                .onboardingCompleted,
-                [.source: "welcome", .lastStep: pageAnalyticsName(pageIndex)]
+                outcome.analyticsEvent,
+                [
+                    .source: "welcome",
+                    // The last page they actually engaged with, which is where they bailed —
+                    // not `pro`, which Skip would otherwise report for everyone.
+                    .lastStep: pageAnalyticsName(skippedFromPage ?? pageIndex),
+                    .result: outcome.rawValue,
+                ]
             )
             #else
-            AnalyticsService.capture(.onboardingCompleted, [.source: "welcome"])
+            AnalyticsService.capture(
+                .onboardingCompleted,
+                [.source: "welcome", .result: OnboardingOutcome.finished.rawValue]
+            )
             #endif
         }
         #if os(iOS)

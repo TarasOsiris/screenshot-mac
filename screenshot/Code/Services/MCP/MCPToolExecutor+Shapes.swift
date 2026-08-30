@@ -26,7 +26,7 @@ extension MCPToolExecutor {
             guard let image = NSImage(contentsOfFile: path) else {
                 throw MCPToolError.invalidArgument("image_path", "could not load an image from \(path)")
             }
-            state.addImageShape(image: image, centerX: centerX, centerY: centerY)
+            state.addImageShape(image: image, centerX: centerX, centerY: centerY, source: .mcp)
 
         case .svg:
             let presetName = try args.requiredString("svg_preset")

@@ -65,7 +65,12 @@ struct LocaleBar: View {
             .translationTask(fanOutConfig) { session in
                 await runFanOutTranslation(session)
             }
-            .translationLanguageIssueAlert(item: $languageIssue)
+            .translationLanguageIssueAlert(item: $languageIssue) {
+                quickTranslationConfig.refresh(
+                    source: state.localeState.baseLocaleCode,
+                    target: quickTranslationTargetCode
+                )
+            }
             .onChange(of: state.localeMenu.pendingMenuRequest) { _, newValue in
                 handleLocaleMenuRequest(newValue)
             }

@@ -152,6 +152,12 @@ nonisolated enum AnalyticsService {
         case enabled
         case ok
         case userCancelled = "user_cancelled"
+        /// Deliberately numeric, and deliberately absent from `textualProperties`: an HTTP status
+        /// is safe to send, the API message that came with it is not.
+        case httpStatus = "http_status"
+        /// Person property. Marks the author's own installs so they can be filtered out of every
+        /// query — a `Bool`, so it never needs allowlisting.
+        case internalUser = "internal_user"
     }
 
     /// The only keys allowed to carry a `String`. Every one is our own vocabulary — an enum raw
@@ -167,7 +173,7 @@ nonisolated enum AnalyticsService {
 
     // MARK: - Lifecycle
 
-    static func start() {
+    @MainActor static func start() {
         guard isEnabled, !isActive else { return }
 
         guard let apiKey = resolvedAPIKey() else {
@@ -225,7 +231,7 @@ nonisolated enum AnalyticsService {
         PostHogSDK.shared.register(launchProperties())
     }
 
-    private static func launchProperties() -> [String: Any] {
+    @MainActor private static func launchProperties() -> [String: Any] {
         var properties: [String: Any] = [
             Property.appVersion.rawValue: Bundle.main.shortVersion,
             Property.appBuild.rawValue: Bundle.main.buildNumber,
@@ -234,11 +240,9 @@ nonisolated enum AnalyticsService {
             // explaining two different postures in the privacy policy.
             "$ip": "0.0.0.0",
         ]
-        #if os(macOS)
-        properties[Property.platform.rawValue] = "macos"
-        #else
-        properties[Property.platform.rawValue] = "ipados"
-        #endif
+        // iPhone and iPad ship from one target, so this must be the runtime idiom, not `#if os`.
+        // Until 4.8 every iOS install reported "ipados", which hid an entirely iPhone user base.
+        properties[Property.platform.rawValue] = PlatformDeviceClass.current.rawValue
         #if DEBUG
         properties[Property.isDebug.rawValue] = true
         #else
@@ -275,6 +279,14 @@ nonisolated enum AnalyticsService {
 
     /// Person-level attributes that describe the install rather than a moment in it. Mirrors the
     /// Sentry tags set at the same call sites, so the two never disagree about one install.
+    /// Publishes the internal-user flag as a person property. Person properties are per-person
+    /// in PostHog, so setting it once makes every past *and* future event by this install
+    /// filterable — which is the point: the author's own devices sat inside every metric.
+    static func applyInternalUserProfile() {
+        let isInternal = UserDefaults.standard.bool(forKey: AppSettingsKeys.analyticsInternalUser)
+        setProfile([.internalUser: isInternal])
+    }
+
     static func setProfile(_ properties: [Property: Any]) {
         guard isEnabled, isActive, !properties.isEmpty else { return }
         PostHogSDK.shared.setPersonProperties(userPropertiesToSet: wireProperties(properties))

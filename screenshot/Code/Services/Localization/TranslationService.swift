@@ -88,10 +88,24 @@ func translateShapes(
 /// Outcome of a session-driven translation run, so callers can show the right guidance.
 enum TranslationRunResult: String, Equatable {
     case completed
-    /// The pair is downloadable but not installed (the inline download was declined or failed).
+    /// The pair is downloadable but not installed: `prepareTranslation()` presented the system
+    /// download sheet and it did not end with the model installed — most often declined.
+    ///
+    /// Raw value kept from when this case meant "any failure whatsoever", so the new, narrower
+    /// meaning stays comparable against the data already collected under the old one.
     case languagesNotDownloaded
+    /// `prepareTranslation()` threw for a pair Apple reported as already installed — a network or
+    /// session fault, not something the user can fix by downloading anything.
+    case downloadFailed = "download_failed"
     /// Apple's on-device translator doesn't support this language pair at all.
     case unsupportedPair
+    /// The pair was ready and a specific shape's translation threw. Nothing to do with downloads —
+    /// this used to be reported as `languagesNotDownloaded`, which is why that bucket was useless.
+    case translationFailed = "translation_failed"
+
+    /// Whether re-running the same translation could plausibly succeed. `unsupportedPair` never
+    /// will; the rest are worth one retry, which is what the alert's Try Again offers.
+    var isRetryable: Bool { self != .completed && self != .unsupportedPair }
 }
 
 /// Confirms the on-device model for `source`→`target` is ready before translating, and
@@ -117,7 +131,10 @@ nonisolated func ensureTranslationAvailable(
         return nil
     } catch {
         AppLogger.translation.error("prepareTranslation failed for \(source, privacy: .public)->\(target, privacy: .public): \(error.localizedDescription, privacy: .public)")
-        return .languagesNotDownloaded
+        // Apple already told us whether the model was on disk. `.installed` failing is a session
+        // or network fault the user can't fix by downloading; anything else is the download step
+        // itself not completing. Collapsing the two is what made this bucket unreadable.
+        return status == .installed ? .downloadFailed : .languagesNotDownloaded
     }
 }
 
@@ -173,10 +190,10 @@ nonisolated func translateShapes(
         } catch {
             AppLogger.translation.error("Translation failed for shape \(item.shapeId, privacy: .public): \(error.localizedDescription, privacy: .public)")
             AnalyticsService.capture(.translationRun, [
-                .result: TranslationRunResult.languagesNotDownloaded.rawValue,
+                .result: TranslationRunResult.translationFailed.rawValue,
                 .shapeCount: translated,
             ])
-            return .languagesNotDownloaded
+            return .translationFailed
         }
         translated += 1
     }
@@ -365,11 +382,14 @@ private nonisolated extension String {
 enum TranslationLanguageIssue: Identifiable, Equatable {
     case notDownloaded(language: String)
     case unsupported(language: String)
+    /// The model was installed and the run still failed — a session or network fault.
+    case failed(language: String)
 
     var id: String {
         switch self {
         case .notDownloaded(let l): return "nd:\(l)"
         case .unsupported(let l): return "un:\(l)"
+        case .failed(let l): return "fa:\(l)"
         }
     }
 
@@ -379,6 +399,7 @@ enum TranslationLanguageIssue: Identifiable, Equatable {
         case .completed: return nil
         case .languagesNotDownloaded: self = .notDownloaded(language: language)
         case .unsupportedPair: self = .unsupported(language: language)
+        case .downloadFailed, .translationFailed: self = .failed(language: language)
         }
     }
 
@@ -386,15 +407,18 @@ enum TranslationLanguageIssue: Identifiable, Equatable {
         switch self {
         case .notDownloaded(let l): return "Download \(l) to Translate"
         case .unsupported(let l): return "\(l) Isn't Available for Translation"
+        case .failed(let l): return "Couldn't Translate into \(l)"
         }
     }
 
     var message: String {
         switch self {
         case .notDownloaded(let l):
-            return "\(l) needs to be downloaded before it can be used for on-device translation.\n\nOpen System Settings → General → Language & Region → Translation Languages, download \(l), then try again. Until then your text stays in the base language."
+            return "\(l) needs to be downloaded before it can be used for on-device translation.\n\nChoose Try Again to bring back the download prompt. Until then your text stays in the base language."
         case .unsupported(let l):
             return "Apple's on-device translator can't translate your base language into \(l).\n\nYou can still type \(l) text yourself in Edit Translations — leave a field empty to fall back to the base language."
+        case .failed(let l):
+            return "The translation into \(l) stopped partway.\n\nChoose Try Again to pick up where it left off — already-translated text is kept."
         }
     }
 
@@ -402,5 +426,13 @@ enum TranslationLanguageIssue: Identifiable, Equatable {
     var offersSettings: Bool {
         if case .notDownloaded = self { return true }
         return false
+    }
+
+    /// Whether re-running could plausibly succeed. Apple's own download sheet is what
+    /// `prepareTranslation()` presents, so a retry *is* the download affordance — routing the
+    /// user to System Settings instead was going around it.
+    var offersRetry: Bool {
+        if case .unsupported = self { return false }
+        return true
     }
 }

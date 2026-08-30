@@ -211,7 +211,7 @@ struct CanvasShapeView: View {
             Color.clear
                 .frame(width: displayW, height: displayH)
                 .imageSourcePicker(isPresented: $isPickerPresented) { image in
-                    interactions.onScreenshotDrop?(image)
+                    interactions.onScreenshotDrop?(image, .picker)
                 }
                 .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
                 .allowsHitTesting(false)

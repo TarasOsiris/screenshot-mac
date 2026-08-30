@@ -51,6 +51,7 @@ struct ScreenshotBroApp: App {
         CrashReportingService.start()
         CrashReportingService.breadcrumb(.app, "App launched")
         AnalyticsService.start()
+        AnalyticsService.applyInternalUserProfile()
         AnalyticsService.capture(.appLaunched)
         return AppState()
     }
@@ -391,6 +392,13 @@ struct ScreenshotBroApp: App {
 
                 Divider()
 
+                // Analytics is off in DEBUG, so this only matters on a Release build the
+                // developer runs themselves — flip it once and every event this install has
+                // ever sent becomes filterable in PostHog.
+                Toggle("Mark This Install as Internal", isOn: internalUserBinding)
+
+                Divider()
+
                 Button("Manage Projects...") {
                     isDebugProjectManagerPresented = true
                 }
@@ -487,6 +495,18 @@ struct ScreenshotBroApp: App {
         }
         #endif
     }
+
+    #if DEBUG
+    private var internalUserBinding: Binding<Bool> {
+        Binding(
+            get: { UserDefaults.standard.bool(forKey: AppSettingsKeys.analyticsInternalUser) },
+            set: {
+                UserDefaults.standard.set($0, forKey: AppSettingsKeys.analyticsInternalUser)
+                AnalyticsService.applyInternalUserProfile()
+            }
+        )
+    }
+    #endif
 
     #if DEBUG && os(macOS)
     private func withDebugBundleAccess<T>(_ body: (URL) throws -> T) rethrows -> T? {

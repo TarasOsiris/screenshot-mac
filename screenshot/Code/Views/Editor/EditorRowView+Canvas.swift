@@ -318,8 +318,8 @@ extension EditorRowView {
                         onShiftSelect: { guard !state.viewMode.isViewMode else { return }; state.toggleShapeSelection(shape.id, in: row.id) },
                         onUpdate: { state.updateShape($0) },
                         onDelete: { state.deleteShape(shape.id) },
-                        onScreenshotDrop: { image in
-                            state.saveImage(image, for: shape.id)
+                        onScreenshotDrop: { image, origin in
+                            state.saveImage(image, for: shape.id, source: origin)
                         },
                         onClearImage: {
                             state.clearImage(for: shape.id)

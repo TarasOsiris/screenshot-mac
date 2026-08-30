@@ -26,6 +26,10 @@ final class ASCScreenshotSyncCoordinator {
     /// Set when the last build ended because the user cancelled, so callers can retreat
     /// quietly instead of reporting a failure.
     private(set) var wasCancelled = false
+    /// The typed shape of the last failure, kept alongside the localized `errorMessage`.
+    /// `errorMessage` is user-facing text built from row and locale labels, so it can never be
+    /// transmitted — this is what `store_upload_failed` reports instead.
+    private(set) var failure: (kind: StoreUploadFailureKind, httpStatus: Int?)?
 
     private let service: AppStoreConnectScreenshotSyncService
 
@@ -109,6 +113,7 @@ final class ASCScreenshotSyncCoordinator {
         }
         phase = .applying
         errorMessage = nil
+        failure = nil
         do {
             let result = try await service.apply(
                 planId: plan.id,
@@ -122,6 +127,9 @@ final class ASCScreenshotSyncCoordinator {
             } else {
                 phase = .stale
                 errorMessage = result.sets.compactMap(\.error).first
+                // A per-set failure: the typed error was already stringified into the result,
+                // so the shape is all that survives.
+                failure = (.unknown, nil)
             }
         } catch let error as ASCScreenshotSyncError {
             if case .planExpired = error { phase = .stale }
@@ -129,12 +137,15 @@ final class ASCScreenshotSyncCoordinator {
             else if case .staleRemote = error { phase = .stale }
             else { phase = .ready }
             errorMessage = error.localizedDescription
+            failure = StoreUploadFailureKind.classify(error)
         } catch is CancellationError {
             phase = .ready
             errorMessage = String(localized: "Screenshot sync was cancelled. Changes already made in App Store Connect were not reverted.")
+            failure = (.cancelled, nil)
         } catch {
             phase = .ready
             errorMessage = error.localizedDescription
+            failure = StoreUploadFailureKind.classify(error)
         }
     }
 

@@ -17,6 +17,8 @@ struct TranslationOverviewSheet: View {
     @State private var cellTranslationQueue: [PendingCellTranslation] = []
     @State private var isProcessingCellTranslation = false
     @State private var languageIssue: TranslationLanguageIssue?
+    /// The cell a blocked run dropped, so Try Again can re-queue exactly that one.
+    @State private var lastBlockedCell: PendingCellTranslation?
     private let baseColumnWidth: CGFloat = 320
     private let translationColumnWidth: CGFloat = 260
     private let columnPadding: CGFloat = 12
@@ -38,6 +40,12 @@ struct TranslationOverviewSheet: View {
                     source: state.localeState.baseLocaleCode,
                     target: item.localeCode
                 ) {
+                    AnalyticsService.capture(.translationRun, [
+                        .result: blocked.rawValue,
+                        .source: "overview",
+                        .shapeCount: 0,
+                    ])
+                    lastBlockedCell = item
                     languageIssue = TranslationLanguageIssue(blocked, language: state.localeState.languageLabel(for: item.localeCode))
                     cellTranslationQueue.removeAll { $0.shapeId == item.shapeId && $0.localeCode == item.localeCode }
                     isProcessingCellTranslation = false
@@ -63,7 +71,11 @@ struct TranslationOverviewSheet: View {
                 isProcessingCellTranslation = false
                 processNextCellTranslationIfIdle()
             }
-            .translationLanguageIssueAlert(item: $languageIssue)
+            .translationLanguageIssueAlert(item: $languageIssue) {
+                guard let retry = lastBlockedCell else { return }
+                cellTranslationQueue.append(retry)
+                processNextCellTranslationIfIdle()
+            }
     }
 
     #if os(macOS)
