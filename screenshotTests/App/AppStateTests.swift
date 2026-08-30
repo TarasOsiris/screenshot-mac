@@ -252,7 +252,7 @@ struct AppStateTests {
             makeTestImage(width: 1206, height: 2622)
         }
 
-        await state.batchImportImages(importSources(images), into: rowId)
+        await state.batchImportImages(importSources(images), into: rowId, source: .dropRow)
 
         let row = state.rows[0]
         let devices = row.shapes.filter { $0.type == .device }
@@ -290,7 +290,7 @@ struct AppStateTests {
             makeTestImage(width: 1206, height: 2622)
         ]
 
-        await state.batchImportImages(importSources(images), into: row.id)
+        await state.batchImportImages(importSources(images), into: row.id, source: .dropRow)
 
         let updatedRow = state.rows[0]
         let devices = updatedRow.shapes.filter { $0.type == .device }
@@ -396,7 +396,7 @@ struct AppStateTests {
             makeTestImage(width: 1206, height: 2622)
         ]
 
-        await state.batchImportImages(importSources(images), into: row.id)
+        await state.batchImportImages(importSources(images), into: row.id, source: .dropRow)
 
         let updatedRow = state.rows[0]
         #expect(updatedRow.templates.count == 3, "No new templates should be appended")
@@ -425,7 +425,8 @@ struct AppStateTests {
 
         _ = await state.batchImportImages(
             [ImageImportSource(image: transparent, sourceURL: sourceURL)],
-            into: rowId
+            into: rowId,
+            source: .dropRow
         )
 
         let device = try #require(state.rows[0].shapes.first { $0.type == .device })
@@ -449,7 +450,8 @@ struct AppStateTests {
 
         _ = await state.batchImportImages(
             [ImageImportSource(image: makeTestImage(width: 1206, height: 2622))],
-            into: rowId
+            into: rowId,
+            source: .dropRow
         )
 
         let device = try #require(state.rows[0].shapes.first { $0.type == .device })
@@ -485,7 +487,7 @@ struct AppStateTests {
         // Sampled immediately before the call: no suspension point separates them, so the delta is
         // exactly the number of main-actor turns the import itself left available.
         let ticksBefore = ticker.ticks
-        let imported = await state.batchImportImages(images, into: rowId)
+        let imported = await state.batchImportImages(images, into: rowId, source: .dropRow)
         let ticksDuring = ticker.ticks - ticksBefore
         tickTask.cancel()
 
@@ -510,7 +512,7 @@ struct AppStateTests {
             ImageImportSource(image: makeTestImage(width: 1206, height: 2622))
         }
 
-        async let imported = state.batchImportImages(images, into: rowId)
+        async let imported = state.batchImportImages(images, into: rowId, source: .dropRow)
         await Task.yield()
         state.deleteRow(rowId)
 
@@ -539,7 +541,7 @@ struct AppStateTests {
             makeTestImage(width: 1206, height: 2622)
         }
 
-        await state.batchImportImages(importSources(images), into: row.id)
+        await state.batchImportImages(importSources(images), into: row.id, source: .dropRow)
 
         let updatedRow = state.rows[0]
         #expect(updatedRow.templates.count == initialTemplateCount + overflowCount,
@@ -570,7 +572,7 @@ struct AppStateTests {
         state.selectRow(row.id)
 
         let image = makeTestImage(width: 1080, height: 1920)
-        state.addImageShape(image: image, centerX: row.templateCenterX(at: 0), centerY: row.templateHeight / 2)
+        state.addImageShape(image: image, centerX: row.templateCenterX(at: 0), centerY: row.templateHeight / 2, source: .dropCanvas)
 
         let added = try #require(state.rows[0].shapes.last)
         #expect(added.type == .device)
@@ -589,7 +591,7 @@ struct AppStateTests {
         state.selectRow(row.id)
 
         let image = makeTestImage(width: 1800, height: 2400)
-        state.addImageShape(image: image, centerX: row.templateCenterX(at: 0), centerY: row.templateHeight / 2)
+        state.addImageShape(image: image, centerX: row.templateCenterX(at: 0), centerY: row.templateHeight / 2, source: .dropCanvas)
 
         let added = try #require(state.rows[0].shapes.last)
         #expect(added.type == .device)
@@ -609,7 +611,7 @@ struct AppStateTests {
         state.selectRow(row.id)
 
         let image = makeTestImage(width: 1080, height: 1920)
-        state.addImageShape(image: image, centerX: row.templateCenterX(at: 0), centerY: row.templateHeight / 2)
+        state.addImageShape(image: image, centerX: row.templateCenterX(at: 0), centerY: row.templateHeight / 2, source: .dropCanvas)
 
         let added = try #require(state.rows[0].shapes.last)
         #expect(added.deviceCategory == .iphone)
@@ -623,7 +625,7 @@ struct AppStateTests {
         let images = (0..<state.rows[0].templates.count).map { _ in
             makeTestImage(width: 1206, height: 2622)
         }
-        await state.batchImportImages(importSources(images), into: rowId)
+        await state.batchImportImages(importSources(images), into: rowId, source: .dropRow)
 
         let devicesBefore = state.rows[0].shapes.filter { $0.type == .device }
         #expect(!devicesBefore.isEmpty)
@@ -655,7 +657,7 @@ struct AppStateTests {
         let images = (0..<state.rows[0].templates.count).map { _ in
             makeTestImage(width: 1206, height: 2622)
         }
-        await state.batchImportImages(importSources(images), into: rowId)
+        await state.batchImportImages(importSources(images), into: rowId, source: .dropRow)
 
         state.clearAllDeviceImages(in: rowId)
 
@@ -1498,7 +1500,7 @@ struct AppStateTests {
         ImageResourceIO.writeData = { _, _ in throw writeError }
         defer { ImageResourceIO.writeData = ImageResourceIO.defaultWriteData }
 
-        state.saveImage(makeTestImage(width: 1200, height: 2600), for: shapeId)
+        state.saveImage(makeTestImage(width: 1200, height: 2600), for: shapeId, source: .picker)
 
         let shape = try #require(state.rows.first?.shapes.first(where: { $0.id == shapeId }))
         #expect(shape.displayImageFileName == nil)
@@ -1759,7 +1761,7 @@ struct AppStateTests {
         let imageShape = CanvasShapeModel.defaultImage(centerX: 500, centerY: 500)
         state.addShape(imageShape)
         let firstShapeId = imageShape.id
-        state.saveImage(makeTestImage(width: 1200, height: 2600), for: firstShapeId)
+        state.saveImage(makeTestImage(width: 1200, height: 2600), for: firstShapeId, source: .picker)
         state.saveAll()
         var peakImageTotal = 0
 
@@ -1836,13 +1838,13 @@ struct AppStateTests {
         for _ in 0..<2 {
             let shape = CanvasShapeModel.defaultImage(centerX: 500, centerY: 500)
             state.addShape(shape)
-            state.saveImage(makeTestImage(width: 400, height: 800), for: shape.id)
+            state.saveImage(makeTestImage(width: 400, height: 800), for: shape.id, source: .picker)
         }
         state.addRow()
         state.selectRow(state.rows.last?.id)
         let lateShape = CanvasShapeModel.defaultImage(centerX: 500, centerY: 500)
         state.addShape(lateShape)
-        state.saveImage(makeTestImage(width: 400, height: 800), for: lateShape.id)
+        state.saveImage(makeTestImage(width: 400, height: 800), for: lateShape.id, source: .picker)
 
         let ordered = state.editorReferencedImageFileNames()
         #expect(ordered.count == Set(ordered).count, "the walk must not repeat a file")
@@ -2077,7 +2079,7 @@ struct AppStateTests {
         locked.isLocked = true
         state.addShape(locked)
 
-        state.saveImage(makeTestImage(width: 100, height: 200), for: locked.id)
+        state.saveImage(makeTestImage(width: 100, height: 200), for: locked.id, source: .picker)
 
         let after = state.rows.first!.shapes.first { $0.id == locked.id }!
         #expect(after.screenshotFileName == nil, "Drag-and-drop image must not overwrite locked device")

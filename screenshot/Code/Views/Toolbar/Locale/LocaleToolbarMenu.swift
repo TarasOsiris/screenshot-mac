@@ -20,6 +20,10 @@ struct LocaleBar: View {
     @State private var showReplaceAllConfirmation = false
     @State private var showResetToBaseConfirmation = false
     @State private var languageIssue: TranslationLanguageIssue?
+    /// Which path raised `languageIssue`, so Try Again re-runs that one. Both paths share
+    /// the alert, and re-running the quick path after a fan-out failure would translate
+    /// into whatever language the last quick run used.
+    @State private var retryTargetCode: String?
     @State private var fanOutConfig: TranslationSession.Configuration?
     @State private var fanOutPendingTargets: [String] = []
     @State private var fanOutShapeIds: Set<UUID> = []
@@ -66,10 +70,9 @@ struct LocaleBar: View {
                 await runFanOutTranslation(session)
             }
             .translationLanguageIssueAlert(item: $languageIssue) {
-                quickTranslationConfig.refresh(
-                    source: state.localeState.baseLocaleCode,
-                    target: quickTranslationTargetCode
-                )
+                guard let target = retryTargetCode else { return }
+                quickTranslationTargetCode = target
+                quickTranslationConfig.refresh(source: state.localeState.baseLocaleCode, target: target)
             }
             .onChange(of: state.localeMenu.pendingMenuRequest) { _, newValue in
                 handleLocaleMenuRequest(newValue)
@@ -238,6 +241,7 @@ struct LocaleBar: View {
             targetLocaleCode: targetCode,
             onlyUntranslated: quickTranslateOnlyUntranslated
         )
+        retryTargetCode = targetCode
         languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: targetCode))
     }
 
@@ -254,6 +258,7 @@ struct LocaleBar: View {
 
         guard result == .completed else {
             finishFanOutTranslation()
+            retryTargetCode = target
             languageIssue = TranslationLanguageIssue(result, language: state.localeState.languageLabel(for: target))
             return
         }

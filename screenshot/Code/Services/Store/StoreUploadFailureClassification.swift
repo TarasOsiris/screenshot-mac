@@ -10,7 +10,7 @@ import Foundation
 /// Before this, `store_upload_failed` carried only `store` and `cancelled`, so five production
 /// failures across two stores could not be told apart at all.
 nonisolated enum StoreUploadFailureKind: String, CaseIterable {
-    /// The store answered with an HTTP error. Pair with `http_status`.
+    /// The store answered with an HTTP error. Pair with `error_code`.
     case httpError = "http_error"
     /// The request never reached the store (offline, DNS, TLS, timeout).
     case transport
@@ -27,56 +27,82 @@ nonisolated enum StoreUploadFailureKind: String, CaseIterable {
     /// The prepared plan no longer matches the project or the store (expired, stale, superseded).
     case stalePlan = "stale_plan"
     case cancelled
+    /// The store reported a failure whose shape we could not read. Should stay rare — a rising
+    /// count here means a case is missing above, not that uploads are mysteriously broken.
     case unknown
+}
+
+/// A classified upload failure, ready to report. A named type rather than a tuple because it is a
+/// stored property on `ASCScreenshotSyncCoordinator` and crosses into two flow models — and
+/// because it can carry the property assembly, which both stores otherwise duplicate.
+nonisolated struct StoreUploadFailure: Equatable {
+    let kind: StoreUploadFailureKind
+    let errorCode: Int?
+
+    static let unknown = StoreUploadFailure(kind: .unknown, errorCode: nil)
 
     /// The kind and, when the store gave us one, its HTTP status.
-    static func classify(_ error: Error) -> (kind: StoreUploadFailureKind, httpStatus: Int?) {
-        if error is CancellationError { return (.cancelled, nil) }
+    static func classify(_ error: Error) -> StoreUploadFailure {
+        if error is CancellationError { return StoreUploadFailure(kind: .cancelled, errorCode: nil) }
 
         switch error {
         case let error as GooglePlayUploadError:
             switch error {
-            case .renderFailed: return (.renderFailed, nil)
-            case .unreadableImages: return (.unreadableImages, nil)
-            case .noRowsSelected: return (.nothingSelected, nil)
-            case .requestFailed(let context):
-                let kind: StoreUploadFailureKind = context.httpStatus == nil ? .unknown : .httpError
-                return (kind, context.httpStatus)
+            case .renderFailed: return StoreUploadFailure(kind: .renderFailed, errorCode: nil)
+            case .unreadableImages: return StoreUploadFailure(kind: .unreadableImages, errorCode: nil)
+            case .noRowsSelected: return StoreUploadFailure(kind: .nothingSelected, errorCode: nil)
+            case .requestFailed(let context): return requestFailure(status: context.httpStatus)
             }
         case let error as AppStoreConnectUploadError:
             switch error {
-            case .renderFailed: return (.renderFailed, nil)
-            case .noRowsSelected: return (.nothingSelected, nil)
-            case .requestFailed(let context):
-                let kind: StoreUploadFailureKind = context.httpStatus == nil ? .unknown : .httpError
-                return (kind, context.httpStatus)
+            case .renderFailed: return StoreUploadFailure(kind: .renderFailed, errorCode: nil)
+            case .noRowsSelected: return StoreUploadFailure(kind: .nothingSelected, errorCode: nil)
+            case .requestFailed(let context): return requestFailure(status: context.httpStatus)
             }
         case let error as ASCScreenshotSyncError:
             switch error {
             case .planNotFound, .planExpired, .staleProject, .staleRemote, .invalidPlan:
-                return (.stalePlan, nil)
-            case .noSetsSelected: return (.nothingSelected, nil)
-            case .unreadableImages: return (.unreadableImages, nil)
+                return StoreUploadFailure(kind: .stalePlan, errorCode: nil)
+            case .noSetsSelected: return StoreUploadFailure(kind: .nothingSelected, errorCode: nil)
+            case .unreadableImages: return StoreUploadFailure(kind: .unreadableImages, errorCode: nil)
             }
         case let error as AppStoreConnectAPIError:
-            switch error {
-            case .httpError(let status, _): return (.httpError, status)
-            case .transport, .invalidURL: return (.transport, nil)
-            case .decodingFailed: return (.decodingFailed, nil)
-            }
+            return apiFailure(status: error.httpStatus, isDecoding: error.isDecodingFailure)
         case let error as GooglePlayAPIError:
-            switch error {
-            case .httpError(let status, _): return (.httpError, status)
-            case .transport, .invalidURL: return (.transport, nil)
-            case .decodingFailed: return (.decodingFailed, nil)
-            }
+            return apiFailure(status: error.httpStatus, isDecoding: error.isDecodingFailure)
         case is AppStoreConnectAuthError, is GooglePlayAuthError:
-            return (.auth, nil)
+            return StoreUploadFailure(kind: .auth, errorCode: nil)
         default:
             // URLSession's own offline/timeout errors, which never get wrapped when the failure
             // happens outside an API service.
-            if (error as NSError).domain == NSURLErrorDomain { return (.transport, nil) }
-            return (.unknown, nil)
+            if (error as NSError).domain == NSURLErrorDomain {
+                return StoreUploadFailure(kind: .transport, errorCode: (error as NSError).code)
+            }
+            return .unknown
         }
+    }
+
+    /// Both upload contexts null out `httpStatus` for every non-HTTP underlying error, so a nil
+    /// here means the transport never got an answer — not that the shape is unknown.
+    private static func requestFailure(status: Int?) -> StoreUploadFailure {
+        guard let status else { return StoreUploadFailure(kind: .transport, errorCode: nil) }
+        return StoreUploadFailure(kind: .httpError, errorCode: status)
+    }
+
+    private static func apiFailure(status: Int?, isDecoding: Bool) -> StoreUploadFailure {
+        if let status { return StoreUploadFailure(kind: .httpError, errorCode: status) }
+        return StoreUploadFailure(kind: isDecoding ? .decodingFailed : .transport, errorCode: nil)
+    }
+
+    /// The `store_upload_failed` payload. Lives here so the two flow models cannot drift on which
+    /// keys this event may carry — which is a privacy decision, not just a formatting one.
+    func report(store: String, cancelled: Bool) {
+        var properties: [AnalyticsService.Property: Any] = [
+            .store: store,
+            .cancelled: cancelled,
+            .result: kind.rawValue,
+        ]
+        if let errorCode { properties[.errorCode] = errorCode }
+        AnalyticsService.capture(.storeUploadFailed, properties)
     }
 }

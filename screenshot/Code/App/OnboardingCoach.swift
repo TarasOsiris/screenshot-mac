@@ -31,13 +31,7 @@ enum OnboardingPersistence {
 
     /// iPhone shows the full-screen launch welcome instead of the anchored coach tour
     /// (which needs a docked inspector iPhone doesn't have).
-    static let launchWelcomeSupportedOnDevice: Bool = {
-        #if os(iOS)
-        UIDevice.current.userInterfaceIdiom == .phone
-        #else
-        false
-        #endif
-    }()
+    static let launchWelcomeSupportedOnDevice: Bool = PlatformDeviceClass.current == .iphone
 
     static var isEditorCoachPending: Bool {
         UserDefaults.standard.bool(forKey: editorCoachPendingKey)
@@ -133,13 +127,7 @@ enum OnboardingCoachStep: Int, CaseIterable, Identifiable {
 
     /// The editor tour runs on macOS and iPad — iPhone's inspector is a
     /// full-screen sheet, so anchored coach marks don't translate there.
-    static var tourSupportedOnDevice: Bool {
-        #if os(iOS)
-        UIDevice.current.userInterfaceIdiom == .pad
-        #else
-        true
-        #endif
-    }
+    static var tourSupportedOnDevice: Bool { PlatformDeviceClass.current != .iphone }
 
     var next: OnboardingCoachStep? {
         OnboardingCoachStep(rawValue: rawValue + 1)
@@ -168,11 +156,4 @@ enum OnboardingOutcome: String, CaseIterable {
     case dismissed
     /// The surface left the screen mid-flow (iOS editor teardown).
     case interrupted
-
-    var analyticsEvent: AnalyticsService.Event {
-        switch self {
-        case .finished, .pro: .onboardingCompleted
-        case .skipped, .dismissed, .interrupted: .onboardingSkipped
-        }
-    }
 }

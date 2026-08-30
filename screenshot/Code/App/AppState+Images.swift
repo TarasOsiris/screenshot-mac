@@ -52,23 +52,18 @@ extension AppState {
 
     // MARK: - Screenshot Images
 
-    /// `source` defaults to `.picker` because that is what every menu- and panel-driven call site
-    /// is; only the drop and paste paths pass something else.
-    func saveImage(_ image: NSImage, for shapeId: UUID, source: ImageImportOrigin = .picker) {
+    /// `source` is required, not defaulted: a default is exactly how this event came to miss nine
+    /// of eleven import paths — a new one would compile clean and report a lie.
+    func saveImage(_ image: NSImage, for shapeId: UUID, source: ImageImportOrigin) {
         guard let activeId = activeProjectId,
               let location = shapeLocation(for: shapeId) else { return }
-        guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
-        var saved = false
-        withUndo("Assign Screenshot") {
-            saved = performSaveImage(image, for: shapeId, activeId: activeId, location: location)
+        let shape = rows[location.rowIndex].shapes[location.shapeIndex]
+        guard !shape.resolvedIsLocked else { return }
+        let saved = withUndo("Assign Screenshot") {
+            performSaveImage(image, for: shapeId, activeId: activeId, location: location)
         }
         guard saved else { return }
-        let deviceCategory = rows[location.rowIndex].shapes[location.shapeIndex].deviceCategory
-        AnalyticsService.capture(.screenshotsImported, [
-            .count: 1,
-            .source: source.rawValue,
-            .detectedDevice: deviceCategory?.rawValue ?? "none",
-        ])
+        captureImport(count: 1, source: source, device: shape.deviceCategory)
     }
 
     /// Clears the screenshot image from every (unlocked) device shape in the row, including locale overrides.
@@ -177,6 +172,9 @@ extension AppState {
     /// Saves image file and updates state without registering undo or scheduling save.
     /// Used by compound operations that manage their own undo (addImageShape, batchImportImages).
     @discardableResult
+    /// Deliberately emits no analytics: `removeImageBackground` re-saves an already-imported
+    /// image through here. Every *public* verb above must emit `screenshots_imported` itself
+    /// (via `captureImport`) or deliberately not.
     private func performSaveImage(_ image: NSImage, for shapeId: UUID,
                                   activeId: UUID? = nil, location: (rowIndex: Int, shapeIndex: Int)? = nil) -> Bool {
         guard let activeId = activeId ?? activeProjectId else { return false }
@@ -314,35 +312,40 @@ extension AppState {
         projectOpen.finishImages()
     }
 
-    func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat, source: ImageImportOrigin = .dropCanvas) {
+    func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat, source: ImageImportOrigin) {
         guard let rowIdx = selectedRowIndex,
               let activeId = activeProjectId else { return }
         let shape = makeImageShape(image: image, row: rows[rowIdx], centerX: centerX, centerY: centerY)
-        var saved = false
-        withUndo("Add Image") {
+        let saved = withUndo("Add Image") {
             let shapeIndex = rows[rowIdx].shapes.count
             rows[rowIdx].shapes.append(shape)
             selectShape(shape.id, in: rows[rowIdx].id)
             justAddedShapeId = shape.id
-            if !performSaveImage(
+            let saved = performSaveImage(
                 image,
                 for: shape.id,
                 activeId: activeId,
                 location: (rowIndex: rowIdx, shapeIndex: shapeIndex)
-            ) {
+            )
+            if !saved {
                 rows[rowIdx].shapes.removeAll { $0.id == shape.id }
                 selectedShapeIds = []
                 justAddedShapeId = nil
-            } else {
-                saved = true
             }
+            return saved
         }
         guard saved else { return }
+        // `makeImageShape` already ran the detector; this is what it decided to build.
+        captureImport(count: 1, source: source, device: shape.deviceCategory)
+    }
+
+    /// The one place that shapes the `screenshots_imported` payload, so the three import verbs
+    /// cannot drift on it.
+    private func captureImport(count: Int, source: ImageImportOrigin, device: DeviceCategory?) {
         AnalyticsService.capture(.screenshotsImported, [
-            .count: 1,
+            .count: count,
             .source: source.rawValue,
-            // `makeImageShape` already ran the detector; this is what it decided to build.
-            .detectedDevice: shape.deviceCategory?.rawValue ?? "none",
+            .detectedDevice: device?.rawValue ?? "none",
         ])
     }
 
@@ -408,7 +411,7 @@ extension AppState {
         _ sources: [ImageImportSource],
         into rowId: UUID,
         maxTemplatesPerRow: Int? = nil,
-        source: ImageImportOrigin = .dropRow
+        source: ImageImportOrigin
     ) async -> Int {
         guard let idx = rowIndex(for: rowId),
               let activeId = activeProjectId,
@@ -451,11 +454,7 @@ extension AppState {
                 replacedFiles.append(replaced)
             }
         }
-        AnalyticsService.capture(.screenshotsImported, [
-            .count: sources.count,
-            .source: source.rawValue,
-            .detectedDevice: rows[idx].defaultDeviceCategory?.rawValue ?? "none",
-        ])
+        captureImport(count: sources.count, source: source, device: rows[idx].defaultDeviceCategory)
 
         await flushStagedImageWrites(staged, activeId: activeId)
         // One document walk for the whole batch instead of one per replaced image.

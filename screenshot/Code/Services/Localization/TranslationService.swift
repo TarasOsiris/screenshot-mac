@@ -86,7 +86,7 @@ func translateShapes(
 }
 
 /// Outcome of a session-driven translation run, so callers can show the right guidance.
-enum TranslationRunResult: String, Equatable {
+enum TranslationRunResult: String, Equatable, CaseIterable {
     case completed
     /// The pair is downloadable but not installed: `prepareTranslation()` presented the system
     /// download sheet and it did not end with the model installed — most often declined.
@@ -96,16 +96,12 @@ enum TranslationRunResult: String, Equatable {
     case languagesNotDownloaded
     /// `prepareTranslation()` threw for a pair Apple reported as already installed — a network or
     /// session fault, not something the user can fix by downloading anything.
-    case downloadFailed = "download_failed"
+    case downloadFailed
     /// Apple's on-device translator doesn't support this language pair at all.
     case unsupportedPair
     /// The pair was ready and a specific shape's translation threw. Nothing to do with downloads —
     /// this used to be reported as `languagesNotDownloaded`, which is why that bucket was useless.
-    case translationFailed = "translation_failed"
-
-    /// Whether re-running the same translation could plausibly succeed. `unsupportedPair` never
-    /// will; the rest are worth one retry, which is what the alert's Try Again offers.
-    var isRetryable: Bool { self != .completed && self != .unsupportedPair }
+    case translationFailed
 }
 
 /// Confirms the on-device model for `source`→`target` is ready before translating, and

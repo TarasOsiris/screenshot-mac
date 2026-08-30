@@ -152,9 +152,10 @@ nonisolated enum AnalyticsService {
         case enabled
         case ok
         case userCancelled = "user_cancelled"
-        /// Deliberately numeric, and deliberately absent from `textualProperties`: an HTTP status
-        /// is safe to send, the API message that came with it is not.
-        case httpStatus = "http_status"
+        /// A numeric failure code — an HTTP status from a store API, or RevenueCat's `ErrorCode`.
+        /// Deliberately numeric, and deliberately absent from `textualProperties`: the code is safe
+        /// to send, the API message that came with it is not.
+        case errorCode = "error_code"
         /// Person property. Marks the author's own installs so they can be filtered out of every
         /// query — a `Bool`, so it never needs allowlisting.
         case internalUser = "internal_user"
@@ -279,17 +280,38 @@ nonisolated enum AnalyticsService {
 
     /// Person-level attributes that describe the install rather than a moment in it. Mirrors the
     /// Sentry tags set at the same call sites, so the two never disagree about one install.
-    /// Publishes the internal-user flag as a person property. Person properties are per-person
-    /// in PostHog, so setting it once makes every past *and* future event by this install
-    /// filterable — which is the point: the author's own devices sat inside every metric.
-    static func applyInternalUserProfile() {
-        let isInternal = UserDefaults.standard.bool(forKey: AppSettingsKeys.analyticsInternalUser)
-        setProfile([.internalUser: isInternal])
+    /// The one place that decides which terminal onboarding event an outcome is. Both surfaces
+    /// route through it, so `onboarding_started` always reconciles against `completed + skipped`
+    /// and neither surface can drift from the other's property set.
+    static func captureOnboardingEnd(_ outcome: OnboardingOutcome, source: String, lastStep: String?) {
+        let event: Event = switch outcome {
+        case .finished, .pro: .onboardingCompleted
+        case .skipped, .dismissed, .interrupted: .onboardingSkipped
+        }
+        var properties: [Property: Any] = [.source: source, .result: outcome.rawValue]
+        if let lastStep { properties[.lastStep] = lastStep }
+        capture(event, properties)
     }
 
     static func setProfile(_ properties: [Property: Any]) {
         guard isEnabled, isActive, !properties.isEmpty else { return }
         PostHogSDK.shared.setPersonProperties(userPropertiesToSet: wireProperties(properties))
+    }
+
+    /// Publishes the internal-user flag as a person property, so the author's own installs can be
+    /// filtered out of every query — person properties are retroactive, so one publish is enough.
+    ///
+    /// Guarded the same way `linkStoreUser` is: `setPersonProperties` sends a billed `$set` event
+    /// and its dedup cache is per-process, so an unguarded call at launch would cost one event per
+    /// launch, on every install, to restate a value that is `false` and never changes.
+    static func applyInternalUserProfile() {
+        guard isEnabled, isActive else { return }
+        let defaults = UserDefaults.standard
+        let isInternal = defaults.bool(forKey: AppSettingsKeys.analyticsInternalUser)
+        guard isInternal != defaults.bool(forKey: AppSettingsKeys.analyticsAppliedInternalUser)
+                || defaults.object(forKey: AppSettingsKeys.analyticsAppliedInternalUser) == nil else { return }
+        setProfile([.internalUser: isInternal])
+        defaults.set(isInternal, forKey: AppSettingsKeys.analyticsAppliedInternalUser)
     }
 
     /// Attaches the RevenueCat id as a *second* `distinct_id` on the same person, so purchase data

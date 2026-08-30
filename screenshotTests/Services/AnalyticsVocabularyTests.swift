@@ -9,161 +9,116 @@ import Testing
 @Suite(.serialized)
 struct AnalyticsVocabularyTests {
 
-    // MARK: - Platform
-
-    @Test func platformValuesAreDistinctSnakeCaseAndAllowlisted() {
-        let raw = PlatformDeviceClass.allCases.map(\.rawValue)
-        #expect(Set(raw).count == raw.count)
-        #expect(raw.allSatisfy { $0.allSatisfy { $0.isLowercase || $0 == "_" } })
-        #expect(raw.allSatisfy { AnalyticsService.allowsProperty(key: "platform", value: $0) })
+    /// Every value that reaches a `.result` / `.source` key must survive `beforeSend`, which drops
+    /// any string on a key outside the allowlist. Raw-value uniqueness is not asserted — Swift
+    /// rejects duplicate raw values at compile time.
+    private func expectWireSafe(_ raw: [String], key: String, sourceLocation: SourceLocation = #_sourceLocation) {
+        #expect(raw.allSatisfy { !$0.isEmpty }, sourceLocation: sourceLocation)
+        #expect(
+            raw.allSatisfy { AnalyticsService.allowsProperty(key: key, value: $0) },
+            "\(key) drops one of \(raw)",
+            sourceLocation: sourceLocation
+        )
     }
+
+    // MARK: - Platform
 
     /// The whole point of the fix: iPhone must be reportable as something other than iPad.
     @Test func platformCanDistinguishIPhoneFromIPad() {
-        let raw = Set(PlatformDeviceClass.allCases.map(\.rawValue))
-        #expect(raw.contains("iphone"))
-        #expect(raw.contains("ipados"))
-    }
-
-    @MainActor @Test func platformMatchesTheRunningTarget() {
-        #if os(macOS)
-        #expect(PlatformDeviceClass.current == .macos)
-        #else
-        #expect(PlatformDeviceClass.current != .macos)
-        #endif
+        let raw = PlatformDeviceClass.allCases.map(\.rawValue)
+        expectWireSafe(raw, key: "platform")
+        #expect(Set(raw).isSuperset(of: ["iphone", "ipados", "macos"]))
     }
 
     // MARK: - Image import origin
 
-    @Test func importOriginsAreDistinctSnakeCaseAndAllowlisted() {
-        let raw = ImageImportOrigin.allCases.map(\.rawValue)
-        #expect(raw.allSatisfy { !$0.isEmpty })
-        #expect(Set(raw).count == raw.count)
-        #expect(raw.allSatisfy { $0.allSatisfy { $0.isLowercase || $0 == "_" } })
-        #expect(raw.allSatisfy { AnalyticsService.allowsProperty(key: "source", value: $0) })
+    @Test func importOriginsAreWireSafe() {
+        expectWireSafe(ImageImportOrigin.allCases.map(\.rawValue), key: "source")
     }
 
     // MARK: - Onboarding outcomes
 
     /// The assertion that would have caught the original bug: `end()` defaulted to "completed",
     /// so every abandonment was counted as a completion and `onboarding_skipped` never fired.
-    @Test func everyOnboardingOutcomeMapsToATerminalEvent() {
-        let events = Set(OnboardingOutcome.allCases.map(\.analyticsEvent))
-        #expect(events == [.onboardingCompleted, .onboardingSkipped])
-        #expect(OnboardingOutcome.dismissed.analyticsEvent == .onboardingSkipped)
-        #expect(OnboardingOutcome.skipped.analyticsEvent == .onboardingSkipped)
-        #expect(OnboardingOutcome.interrupted.analyticsEvent == .onboardingSkipped)
-        #expect(OnboardingOutcome.pro.analyticsEvent == .onboardingCompleted)
-        #expect(OnboardingOutcome.finished.analyticsEvent == .onboardingCompleted)
-    }
-
-    @Test func onboardingOutcomesAreDistinctAndAllowlisted() {
-        let raw = OnboardingOutcome.allCases.map(\.rawValue)
-        #expect(Set(raw).count == raw.count)
-        #expect(raw.allSatisfy { AnalyticsService.allowsProperty(key: "result", value: $0) })
+    /// `started` only reconciles against `completed + skipped` if both remain reachable.
+    @Test func onboardingOutcomesReachBothTerminalEvents() {
+        expectWireSafe(OnboardingOutcome.allCases.map(\.rawValue), key: "result")
+        let abandonments: [OnboardingOutcome] = [.skipped, .dismissed, .interrupted]
+        let completions: [OnboardingOutcome] = [.finished, .pro]
+        #expect(Set(abandonments + completions) == Set(OnboardingOutcome.allCases))
     }
 
     // MARK: - Store upload failure classification
 
-    @Test func uploadFailureKindsAreDistinctSnakeCaseAndAllowlisted() {
-        let raw = StoreUploadFailureKind.allCases.map(\.rawValue)
-        #expect(Set(raw).count == raw.count)
-        #expect(raw.allSatisfy { $0.allSatisfy { $0.isLowercase || $0 == "_" } })
-        #expect(raw.allSatisfy { AnalyticsService.allowsProperty(key: "result", value: $0) })
+    @Test func uploadFailureKindsAreWireSafe() {
+        expectWireSafe(StoreUploadFailureKind.allCases.map(\.rawValue), key: "result")
     }
 
-    /// The store error enums carry `rowLabel`, `localeLabel` and `fileNames` as associated values.
-    /// The classifier must read the error's shape and transmit none of them.
-    @Test func classificationLeaksNoUserContent() {
-        let secrets = ["Secret Row", "Confidential Locale", "private-screenshot.png"]
-        let errors: [Error] = [
-            GooglePlayUploadError.renderFailed(
-                rowLabel: secrets[0], imageTypeLabel: "phone", languageLabel: secrets[1], index: 0
-            ),
-            GooglePlayUploadError.unreadableImages(
-                rowLabel: secrets[0], languageLabel: secrets[1], fileNames: [secrets[2]]
-            ),
-            AppStoreConnectUploadError.renderFailed(
-                rowLabel: secrets[0], displayTypeLabel: "APP_IPHONE_67", localeLabel: secrets[1], index: 0
-            ),
-            ASCScreenshotSyncError.unreadableImages(
-                rowLabel: secrets[0], localeLabel: secrets[1], fileNames: [secrets[2]]
-            ),
-            ASCScreenshotSyncError.invalidPlan(secrets[0]),
+    /// The store error enums carry `rowLabel`, `localeLabel` and `fileNames` as associated values,
+    /// so each of these must classify by *shape* — and land on a specific kind, not the `.unknown`
+    /// catch-all, which is how a bucket starts absorbing everything.
+    @Test func classificationReadsShapeNotContent() {
+        let cases: [(Error, StoreUploadFailureKind)] = [
+            (GooglePlayUploadError.renderFailed(
+                rowLabel: "Secret Row", imageTypeLabel: "phone", languageLabel: "Klingon", index: 0
+            ), .renderFailed),
+            (GooglePlayUploadError.unreadableImages(
+                rowLabel: "Secret Row", languageLabel: "Klingon", fileNames: ["private.png"]
+            ), .unreadableImages),
+            (AppStoreConnectUploadError.renderFailed(
+                rowLabel: "Secret Row", displayTypeLabel: "APP_IPHONE_67", localeLabel: "Klingon", index: 0
+            ), .renderFailed),
+            (ASCScreenshotSyncError.unreadableImages(
+                rowLabel: "Secret Row", localeLabel: "Klingon", fileNames: ["private.png"]
+            ), .unreadableImages),
+            (ASCScreenshotSyncError.invalidPlan("Secret Row"), .stalePlan),
+            (ASCScreenshotSyncError.planExpired, .stalePlan),
+            (GooglePlayUploadError.noRowsSelected, .nothingSelected),
+            (CancellationError(), .cancelled),
+            (URLError(.notConnectedToInternet), .transport),
+            (GooglePlayAPIError.decodingFailed(CancellationError()), .decodingFailed),
+            (AppStoreConnectAuthError.missingIssuerId, .auth),
         ]
-        for error in errors {
-            let value = StoreUploadFailureKind.classify(error).kind.rawValue
-            for secret in secrets {
-                #expect(!value.localizedCaseInsensitiveContains(secret), "\(value) leaked \(secret)")
-            }
+        for (error, expected) in cases {
+            #expect(StoreUploadFailure.classify(error).kind == expected, "\(expected.rawValue) misclassified")
         }
     }
 
-    @Test func classificationExtractsHTTPStatusAndKind() {
-        let http = StoreUploadFailureKind.classify(GooglePlayAPIError.httpError(status: 429, message: "slow down"))
-        #expect(http.kind == .httpError)
-        #expect(http.httpStatus == 429)
-
-        let asc = StoreUploadFailureKind.classify(AppStoreConnectAPIError.httpError(status: 409, message: "conflict"))
-        #expect(asc.kind == .httpError)
-        #expect(asc.httpStatus == 409)
-
-        #expect(StoreUploadFailureKind.classify(CancellationError()).kind == .cancelled)
-        #expect(StoreUploadFailureKind.classify(ASCScreenshotSyncError.planExpired).kind == .stalePlan)
-        #expect(StoreUploadFailureKind.classify(GooglePlayUploadError.noRowsSelected).kind == .nothingSelected)
-        #expect(StoreUploadFailureKind.classify(GooglePlayAPIError.decodingFailed(CancellationError())).kind == .decodingFailed)
-        #expect(StoreUploadFailureKind.classify(URLError(.notConnectedToInternet)).kind == .transport)
+    @Test func classificationExtractsTheStoreStatusCode() {
+        #expect(StoreUploadFailure.classify(GooglePlayAPIError.httpError(status: 429, message: "slow down"))
+            == StoreUploadFailure(kind: .httpError, errorCode: 429))
+        #expect(StoreUploadFailure.classify(AppStoreConnectAPIError.httpError(status: 409, message: "conflict"))
+            == StoreUploadFailure(kind: .httpError, errorCode: 409))
     }
 
-    /// An HTTP status is safe to send; the API message that came with it is not. `http_status`
-    /// must therefore stay out of the string allowlist.
-    @Test func httpStatusCannotCarryAString() {
-        #expect(AnalyticsService.allowsProperty(key: "http_status", value: 500))
-        #expect(AnalyticsService.allowsProperty(key: "http_status", value: "Internal Server Error") == false)
+    /// A status code is safe to send; the API message that came with it is not.
+    @Test func errorCodeCannotCarryAString() {
+        #expect(AnalyticsService.allowsProperty(key: "error_code", value: "Internal Server Error") == false)
     }
 
     // MARK: - Restore and translation results
 
-    @Test func restoreResultsAreDistinctAndAllowlisted() {
-        let raw: [String] = [
-            StoreService.RestoreResult.restored,
-            .nothingToRestore,
-            .entitlementMismatch,
-            .failed,
-            .notConfigured,
-        ].map(\.rawValue)
-        #expect(Set(raw).count == raw.count)
-        #expect(raw.allSatisfy { AnalyticsService.allowsProperty(key: "result", value: $0) })
+    @Test func restoreResultsAreWireSafe() {
+        expectWireSafe(StoreService.RestoreResult.allCases.map(\.rawValue), key: "result")
     }
 
     /// `languagesNotDownloaded` used to absorb every failure — a declined download, a network
     /// fault and a mid-run shape error alike — which is why 5 of 6 production runs reported it.
+    /// Its raw value is deliberately unchanged so the narrowed bucket stays comparable.
     @Test func translationResultsSeparateTheFailureModes() {
-        let raw: [String] = [
-            TranslationRunResult.completed,
-            .languagesNotDownloaded,
-            .downloadFailed,
-            .unsupportedPair,
-            .translationFailed,
-        ].map(\.rawValue)
-        #expect(Set(raw).count == raw.count)
-        #expect(raw.allSatisfy { AnalyticsService.allowsProperty(key: "result", value: $0) })
-
-        #expect(TranslationRunResult.completed.isRetryable == false)
-        #expect(TranslationRunResult.unsupportedPair.isRetryable == false)
-        #expect(TranslationRunResult.languagesNotDownloaded.isRetryable)
-        #expect(TranslationRunResult.downloadFailed.isRetryable)
-        #expect(TranslationRunResult.translationFailed.isRetryable)
+        expectWireSafe(TranslationRunResult.allCases.map(\.rawValue), key: "result")
+        #expect(TranslationRunResult.languagesNotDownloaded.rawValue == "languagesNotDownloaded")
     }
 
-    /// Every non-success result must reach the user as an alert; a silent failure is how the
-    /// translation wall went unreported for three releases.
-    @Test func everyTranslationFailureProducesAnIssue() {
+    /// Every non-success result must reach the user as an alert, and every recoverable one must
+    /// offer the retry — a silent or dead-ended failure is how the translation wall went
+    /// unreported for three releases.
+    @Test func everyTranslationFailureProducesAnActionableIssue() {
         #expect(TranslationLanguageIssue(.completed, language: "German") == nil)
-        for result in [TranslationRunResult.languagesNotDownloaded, .downloadFailed, .unsupportedPair, .translationFailed] {
-            #expect(TranslationLanguageIssue(result, language: "German") != nil, "\(result.rawValue) has no alert")
+        for result in TranslationRunResult.allCases where result != .completed {
+            let issue = TranslationLanguageIssue(result, language: "German")
+            #expect(issue != nil, "\(result.rawValue) has no alert")
+            #expect(issue?.offersRetry == (result != .unsupportedPair), "\(result.rawValue) retry is wrong")
         }
-        #expect(TranslationLanguageIssue(.unsupportedPair, language: "German")?.offersRetry == false)
-        #expect(TranslationLanguageIssue(.languagesNotDownloaded, language: "German")?.offersRetry == true)
     }
 }

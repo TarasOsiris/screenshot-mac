@@ -99,10 +99,7 @@ final class OnboardingCoachController {
         let reachedStep = step.map(String.init(describing:)) ?? "none"
         setStep(nil)
         guard persistsOnEnd else { return }
-        AnalyticsService.capture(
-            outcome.analyticsEvent,
-            [.source: "coach", .lastStep: reachedStep, .result: outcome.rawValue]
-        )
+        AnalyticsService.captureOnboardingEnd(outcome, source: "coach", lastStep: reachedStep)
         let defaults = UserDefaults.standard
         let key = OnboardingPersistence.completedKey
         if !defaults.bool(forKey: key) {

@@ -6,6 +6,17 @@ enum GooglePlayAPIError: Error, LocalizedError {
     case decodingFailed(Error)
     case transport(Error)
 
+    /// Mirrors `AppStoreConnectAPIError.httpStatus` so both stores read the same way.
+    var httpStatus: Int? {
+        if case let .httpError(status, _) = self { return status }
+        return nil
+    }
+
+    var isDecodingFailure: Bool {
+        if case .decodingFailed = self { return true }
+        return false
+    }
+
     var errorDescription: String? {
         switch self {
         case .invalidURL:

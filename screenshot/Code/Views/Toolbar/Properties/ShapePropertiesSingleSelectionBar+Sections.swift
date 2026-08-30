@@ -11,7 +11,7 @@ extension ShapePropertiesSingleSelectionBar {
                 shape: shape,
                 showsLocaleImageReset: hasLocaleImageOverride(shapeId),
                 onPickImage: { pickAndReplaceImage(for: shapeId) },
-                onImageSelected: { state.saveImage($0, for: shapeId) },
+                onImageSelected: { state.saveImage($0, for: shapeId, source: .picker) },
                 onResetLocaleImage: { state.resetLocaleImageOverride(shapeId: shapeId) }
             ) {
                 devicePicker(shape: shape, shapeId: shapeId)
@@ -109,7 +109,7 @@ extension ShapePropertiesSingleSelectionBar {
                 buttonTitle: shape.imageFileName != nil ? "Replace Image" : "Choose Image",
                 showsLocaleImageReset: hasLocaleImageOverride(shapeId),
                 onPickImage: { pickAndReplaceImage(for: shapeId) },
-                onImageSelected: { state.saveImage($0, for: shapeId) },
+                onImageSelected: { state.saveImage($0, for: shapeId, source: .picker) },
                 onResetLocaleImage: { state.resetLocaleImageOverride(shapeId: shapeId) }
             )
         }

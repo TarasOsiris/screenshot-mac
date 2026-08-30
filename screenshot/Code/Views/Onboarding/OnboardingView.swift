@@ -43,6 +43,13 @@ struct OnboardingView: View {
     // Index of the trailing Pro/paywall page (after the workflow step pages).
     private var proPageIndex: Int { Self.stepData.count }
 
+    /// Buying on the Pro page outranks how the user got there — otherwise someone who skipped
+    /// the tour and then purchased would be counted as an abandonment.
+    private var welcomeOutcome: OnboardingOutcome {
+        if store.isProUnlocked { return .pro }
+        return skippedFromPage == nil ? .finished : .skipped
+    }
+
     // True only on an iPhone in landscape (iPad is always regular-height, macOS uses macOSContent).
     private var isLandscapePhone: Bool { verticalSizeClass == .compact }
 
@@ -474,22 +481,15 @@ struct OnboardingView: View {
         if persistCompletion {
             onboardingCompleted = true
             #if os(iOS)
-            let outcome: OnboardingOutcome = skippedFromPage == nil ? .finished : .skipped
-            AnalyticsService.capture(
-                outcome.analyticsEvent,
-                [
-                    .source: "welcome",
-                    // The last page they actually engaged with, which is where they bailed —
-                    // not `pro`, which Skip would otherwise report for everyone.
-                    .lastStep: pageAnalyticsName(skippedFromPage ?? pageIndex),
-                    .result: outcome.rawValue,
-                ]
+            // `lastStep` is the last page they actually engaged with — for a skip that is where
+            // they bailed, not `pro`, which Skip would otherwise report for everyone.
+            AnalyticsService.captureOnboardingEnd(
+                welcomeOutcome,
+                source: "welcome",
+                lastStep: pageAnalyticsName(skippedFromPage ?? pageIndex)
             )
             #else
-            AnalyticsService.capture(
-                .onboardingCompleted,
-                [.source: "welcome", .result: OnboardingOutcome.finished.rawValue]
-            )
+            AnalyticsService.captureOnboardingEnd(.finished, source: "welcome", lastStep: nil)
             #endif
         }
         #if os(iOS)

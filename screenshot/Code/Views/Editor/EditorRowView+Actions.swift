@@ -97,9 +97,9 @@ extension EditorRowView {
         isEditingLabel = false
     }
 
-    func createImageShape(image: NSImage, modelX: CGFloat, modelY: CGFloat) {
+    func createImageShape(image: NSImage, modelX: CGFloat, modelY: CGFloat, source: ImageImportOrigin) {
         state.selectRow(row.id)
-        state.addImageShape(image: image, centerX: modelX, centerY: modelY)
+        state.addImageShape(image: image, centerX: modelX, centerY: modelY, source: source)
     }
 
     // MARK: - Add Element helpers

@@ -29,7 +29,7 @@ final class ASCScreenshotSyncCoordinator {
     /// The typed shape of the last failure, kept alongside the localized `errorMessage`.
     /// `errorMessage` is user-facing text built from row and locale labels, so it can never be
     /// transmitted — this is what `store_upload_failed` reports instead.
-    private(set) var failure: (kind: StoreUploadFailureKind, httpStatus: Int?)?
+    private(set) var failure: StoreUploadFailure?
 
     private let service: AppStoreConnectScreenshotSyncService
 
@@ -129,7 +129,7 @@ final class ASCScreenshotSyncCoordinator {
                 errorMessage = result.sets.compactMap(\.error).first
                 // A per-set failure: the typed error was already stringified into the result,
                 // so the shape is all that survives.
-                failure = (.unknown, nil)
+                failure = .unknown
             }
         } catch let error as ASCScreenshotSyncError {
             if case .planExpired = error { phase = .stale }
@@ -137,15 +137,15 @@ final class ASCScreenshotSyncCoordinator {
             else if case .staleRemote = error { phase = .stale }
             else { phase = .ready }
             errorMessage = error.localizedDescription
-            failure = StoreUploadFailureKind.classify(error)
+            failure = StoreUploadFailure.classify(error)
         } catch is CancellationError {
             phase = .ready
             errorMessage = String(localized: "Screenshot sync was cancelled. Changes already made in App Store Connect were not reverted.")
-            failure = (.cancelled, nil)
+            failure = StoreUploadFailure(kind: .cancelled, errorCode: nil)
         } catch {
             phase = .ready
             errorMessage = error.localizedDescription
-            failure = StoreUploadFailureKind.classify(error)
+            failure = StoreUploadFailure.classify(error)
         }
     }
 

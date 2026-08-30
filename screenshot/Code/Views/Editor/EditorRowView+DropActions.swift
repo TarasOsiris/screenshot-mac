@@ -81,7 +81,7 @@ extension EditorRowView {
             let modelY = baseY
             ItemProviderImageLoader.loadImage(from: provider) { image in
                 guard let image else { return }
-                self.createImageShape(image: image, modelX: modelX, modelY: modelY)
+                self.createImageShape(image: image, modelX: modelX, modelY: modelY, source: .dropCanvas)
             }
             handled = true
         }
@@ -111,7 +111,7 @@ extension EditorRowView {
             guard !sources.isEmpty else { return }
             let cap = store.isProUnlocked ? nil : StoreService.freeMaxTemplatesPerRow
             Task { @MainActor in
-                let imported = await state.batchImportImages(sources, into: row.id, maxTemplatesPerRow: cap)
+                let imported = await state.batchImportImages(sources, into: row.id, maxTemplatesPerRow: cap, source: .dropRow)
                 if imported < sources.count {
                     store.presentPaywall(for: .templateLimit)
                 }

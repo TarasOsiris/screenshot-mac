@@ -67,12 +67,12 @@ struct WithUndoTests {
         let projectId = try #require(state.activeProjectId)
         let resourcesDir = PersistenceService.resourcesDir(projectId)
 
-        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId)
+        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId, source: .picker)
         let firstFile = try #require(state.rows.first?.shapes.first { $0.id == shapeId }?.displayImageFileName)
         #expect(FileManager.default.fileExists(atPath: resourcesDir.appendingPathComponent(firstFile).path))
 
         um.removeAllActions()
-        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId)
+        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId, source: .picker)
         let secondFile = try #require(state.rows.first?.shapes.first { $0.id == shapeId }?.displayImageFileName)
 
         #expect(secondFile != firstFile, "Replacing image bytes should produce a model-visible resource reference")
@@ -99,9 +99,9 @@ struct WithUndoTests {
         let projectId = try #require(state.activeProjectId)
         let resourcesDir = PersistenceService.resourcesDir(projectId)
 
-        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId)
+        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId, source: .picker)
         let firstFile = try #require(state.rows.first?.shapes.first { $0.id == shapeId }?.displayImageFileName)
-        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId)
+        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId, source: .picker)
         let firstURL = resourcesDir.appendingPathComponent(firstFile)
 
         state.sweepUnreachableOrphanedImages()
@@ -126,9 +126,9 @@ struct WithUndoTests {
         let projectId = try #require(state.activeProjectId)
         let resourcesDir = PersistenceService.resourcesDir(projectId)
 
-        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId)
+        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId, source: .picker)
         let firstFile = try #require(state.rows.first?.shapes.first { $0.id == shapeId }?.displayImageFileName)
-        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId)
+        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId, source: .picker)
 
         um.undo()
         state.sweepUnreachableOrphanedImages()
@@ -147,9 +147,9 @@ struct WithUndoTests {
         let projectId = try #require(state.activeProjectId)
         let resourcesDir = PersistenceService.resourcesDir(projectId)
 
-        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId)
+        state.saveImage(makeSolidImage(.systemRed, width: 1206, height: 2622), for: shapeId, source: .picker)
         let firstFile = try #require(state.rows.first?.shapes.first { $0.id == shapeId }?.displayImageFileName)
-        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId)
+        state.saveImage(makeSolidImage(.systemGreen, width: 1206, height: 2622), for: shapeId, source: .picker)
 
         #expect(!FileManager.default.fileExists(atPath: resourcesDir.appendingPathComponent(firstFile).path))
     }

@@ -34,6 +34,10 @@ nonisolated enum AppSettingsKeys {
     /// Marks this install as the developer's own so its events can be excluded from every
     /// query. Off by default; nothing reads it but `AnalyticsService.applyInternalUserProfile`.
     static let analyticsInternalUser = "analyticsInternalUser"
+    /// The internal-user value already published to PostHog. `setPersonProperties` sends a
+    /// billed `$set` event and only dedups within a process, so without this the flag would
+    /// cost one event per launch forever — see `AnalyticsService.applyInternalUserProfile`.
+    static let analyticsAppliedInternalUser = "analyticsAppliedInternalUser"
 
     nonisolated enum Default {
         static let appearance = "auto"

@@ -11,6 +11,11 @@ enum AppStoreConnectAPIError: Error, LocalizedError {
         return nil
     }
 
+    var isDecodingFailure: Bool {
+        if case .decodingFailed = self { return true }
+        return false
+    }
+
     var transportError: Error? {
         if case let .transport(underlying) = self { return underlying }
         return nil

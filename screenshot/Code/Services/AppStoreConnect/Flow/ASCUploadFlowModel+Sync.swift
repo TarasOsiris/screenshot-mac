@@ -138,14 +138,7 @@ extension ASCUploadFlowModel {
             errorMessage = message
             errorDetailsText = message
             retreatAfterScreenshotSync(to: returnOnFailure)
-            let failure = screenshotSync.failure ?? (kind: StoreUploadFailureKind.unknown, httpStatus: nil)
-            var properties: [AnalyticsService.Property: Any] = [
-                .store: "asc",
-                .cancelled: screenshotSync.wasCancelled,
-                .result: failure.kind.rawValue,
-            ]
-            if let status = failure.httpStatus { properties[.httpStatus] = status }
-            AnalyticsService.capture(.storeUploadFailed, properties)
+            (screenshotSync.failure ?? .unknown).report(store: "asc", cancelled: screenshotSync.wasCancelled)
             NotificationService.notify(title: String(localized: "Screenshot sync stopped"), body: message)
         }
     }

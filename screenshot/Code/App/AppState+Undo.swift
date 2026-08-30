@@ -10,19 +10,21 @@ extension AppState {
     /// document before `body`, restores it on undo (re-registering redo), and schedules the
     /// save. A `body` that changes nothing registers no undo step. Nested `withUndo` calls
     /// join the outer transaction so a wrapped helper doesn't create a second step.
-    func withUndo(_ actionName: String, _ body: () -> Void) {
+    @discardableResult
+    func withUndo<T>(_ actionName: String, _ body: () -> T) -> T {
         commitAllPendingEdits()
-        if edits.isInUndoTransaction { body(); return }
+        if edits.isInUndoTransaction { return body() }
         edits.isInUndoTransaction = true
         defer { edits.isInUndoTransaction = false }
 
         let baseRows = rows
         let baseLocaleState = localeState
-        body()
-        guard rows != baseRows || localeState != baseLocaleState else { return }
+        let result = body()
+        guard rows != baseRows || localeState != baseLocaleState else { return result }
         CrashReportingService.breadcrumb(.edit, actionName, data: ["rows": rows.count])
         registerSnapshot(actionName, baseRows: baseRows, baseLocaleState: baseLocaleState)
         scheduleSave()
+        return result
     }
 
     /// Row-scoped `withUndo` for mutations confined to one row (plus `localeState` and

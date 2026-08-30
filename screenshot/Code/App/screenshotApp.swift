@@ -12,6 +12,9 @@ struct ScreenshotBroApp: App {
     @State private var appNavigationRouter = AppNavigationRouter()
     #endif
     @AppStorage(AppSettingsKeys.appearance) private var appearance = AppSettingsKeys.Default.appearance
+    #if DEBUG
+    @AppStorage(AppSettingsKeys.analyticsInternalUser) private var analyticsInternalUser = false
+    #endif
     #if os(iOS)
     @AppStorage(OnboardingPersistence.completedKey) private var onboardingCompleted = false
     /// Drives dismissal of the iPhone welcome cover. The cover's isPresented binding is get-only,
@@ -392,10 +395,10 @@ struct ScreenshotBroApp: App {
 
                 Divider()
 
-                // Analytics is off in DEBUG, so this only matters on a Release build the
-                // developer runs themselves — flip it once and every event this install has
-                // ever sent becomes filterable in PostHog.
-                Toggle("Mark This Install as Internal", isOn: internalUserBinding)
+                // Analytics is off in DEBUG, so this only bites on a Release build run from the
+                // same preferences container — i.e. macOS. An iOS internal install (separate
+                // container) is excluded by PostHog's own `$is_testflight` instead.
+                Toggle("Mark This Install as Internal", isOn: $analyticsInternalUser.onSet(AnalyticsService.applyInternalUserProfile))
 
                 Divider()
 
@@ -495,18 +498,6 @@ struct ScreenshotBroApp: App {
         }
         #endif
     }
-
-    #if DEBUG
-    private var internalUserBinding: Binding<Bool> {
-        Binding(
-            get: { UserDefaults.standard.bool(forKey: AppSettingsKeys.analyticsInternalUser) },
-            set: {
-                UserDefaults.standard.set($0, forKey: AppSettingsKeys.analyticsInternalUser)
-                AnalyticsService.applyInternalUserProfile()
-            }
-        )
-    }
-    #endif
 
     #if DEBUG && os(macOS)
     private func withDebugBundleAccess<T>(_ body: (URL) throws -> T) rethrows -> T? {

@@ -6,12 +6,12 @@ import UIKit
 ///
 /// iPadOS and iPhone ship from one target, so a compile-time `#if` cannot tell them apart — only
 /// the runtime idiom can. Before this existed, every iOS build reported itself as iPad.
-enum PlatformDeviceClass: String, CaseIterable {
+nonisolated enum PlatformDeviceClass: String, CaseIterable {
     case macos
     case ipados
     case iphone
 
-    static var current: PlatformDeviceClass {
+    @MainActor static var current: PlatformDeviceClass {
         #if os(macOS)
         .macos
         #else

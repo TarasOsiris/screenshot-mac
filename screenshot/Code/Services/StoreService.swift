@@ -15,7 +15,7 @@ final class StoreService {
     /// bought anything" (expected) from "it bought something our configured ids don't match"
     /// (our bug) — and production showed 16 restores, 10 users, zero unlocks, with no way to
     /// tell which.
-    enum RestoreResult: String {
+    enum RestoreResult: String, CaseIterable {
         case restored
         case nothingToRestore
         /// Has active entitlements or purchased products, none matching our configured ids.
@@ -325,7 +325,7 @@ final class StoreService {
 
     func handlePurchaseCompleted(_ customerInfo: CustomerInfo) {
         let triggeringContext = paywallContext
-        updateEntitlement(from: customerInfo)
+        let result = updateEntitlement(from: customerInfo)
         if isProUnlocked {
             pendingCelebrationContext = triggeringContext
             showPaywall = false
@@ -334,7 +334,7 @@ final class StoreService {
                 .tier: proTier?.analyticsName ?? "unknown",
             ])
         } else {
-            AnalyticsService.capture(.purchaseFailed, [.result: "entitlementNotGranted"])
+            AnalyticsService.capture(.purchaseFailed, [.result: result.rawValue])
             setPurchaseStatus(String(localized: "Purchase completed, but RevenueCat did not grant access. Check the entitlement or product mapping in RevenueCat."), isError: true)
         }
     }
@@ -362,7 +362,7 @@ final class StoreService {
             .result: RestoreResult.failed.rawValue,
             // RevenueCat's own numeric code — its vocabulary, not the user's, and an Int, so it
             // needs no allowlisting.
-            .httpStatus: (error as NSError).code,
+            .errorCode: (error as NSError).code,
         ])
         setPurchaseStatus(String(localized: "Restore failed: \(error.localizedDescription)"), isError: true)
     }

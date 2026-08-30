@@ -13,14 +13,14 @@ extension View {
     /// by hand before this existed.
     func translationLanguageIssueAlert(
         item: Binding<TranslationLanguageIssue?>,
-        onRetry: (() -> Void)? = nil
+        onRetry: @escaping () -> Void
     ) -> some View {
         return alert(
             item.wrappedValue?.title ?? "",
             isPresented: item.isPresent(),
             presenting: item.wrappedValue
         ) { issue in
-            if let onRetry, issue.offersRetry {
+            if issue.offersRetry {
                 Button("Try Again") { onRetry() }
             }
             #if os(macOS)
