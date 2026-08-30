@@ -36,6 +36,7 @@ nonisolated enum CrashReportingService {
         case projectLoadFellBackToEmpty
         case projectSaveFailed
         case projectIndexSaveFailed
+        case projectIndexRebuilt
         case projectDirectoryCopyFailed
         case directoryCreateFailed
         case iCloudCoordinatedReadFailed
@@ -471,9 +472,9 @@ nonisolated enum CrashReportingService {
     private static func logger(for failure: Failure) -> Logger {
         switch failure {
         case .projectDecodeFailed, .projectReadFailed, .projectLoadFellBackToEmpty,
-             .projectSaveFailed, .projectIndexSaveFailed, .projectDirectoryCopyFailed,
-             .directoryCreateFailed, .imageResourceCopyFailed, .customFontCopyFailed,
-             .bundledTemplateLoadFailed, .undoScopeViolation:
+             .projectSaveFailed, .projectIndexSaveFailed, .projectIndexRebuilt,
+             .projectDirectoryCopyFailed, .directoryCreateFailed, .imageResourceCopyFailed,
+             .customFontCopyFailed, .bundledTemplateLoadFailed, .undoScopeViolation:
             AppLogger.persistence
         case .iCloudCoordinatedReadFailed, .iCloudMergeSourceUnreadable, .iCloudConflictDiscardedVersions:
             AppLogger.sync

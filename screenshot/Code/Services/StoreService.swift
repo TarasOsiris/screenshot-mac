@@ -135,11 +135,13 @@ final class StoreService {
         paywallContext = context
         clearPurchaseStatus()
         showPaywall = true
+        CrashReportingService.breadcrumb(.store, "Paywall shown", data: ["trigger": context.rawValue])
         AnalyticsService.capture(.paywallShown, [.trigger: context.rawValue])
     }
 
     func dismissPaywall() {
         showPaywall = false
+        CrashReportingService.breadcrumb(.store, "Paywall dismissed")
         AnalyticsService.capture(.paywallDismissed, [.trigger: paywallContext.rawValue])
     }
 

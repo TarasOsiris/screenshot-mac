@@ -226,10 +226,90 @@ nonisolated struct PersistenceService {
     // MARK: - Project index
 
     static func loadIndex() -> ProjectIndex? {
-        load(ProjectIndex.self, from: indexURL)
+        guard case .loaded(let index) = loadIndex(at: rootURL) else { return nil }
+        return index
     }
 
+    /// The index is the one file whose loss makes every project invisible even though each
+    /// project's data is still sitting in `projects/<uuid>/` — without this, a missing
+    /// `projects.json` presents as "all your projects are gone" and the next save writes an empty
+    /// index over the top. Returns nil (callers keep their current list) when there is nothing to
+    /// recover; `wasRecovered` tells the caller to persist what it got back.
+    static func loadIndexOrRecover() -> (index: ProjectIndex, wasRecovered: Bool)? {
+        switch loadIndex(at: rootURL) {
+        case .loaded(let index):
+            return (index, false)
+        case .absent:
+            guard let rebuilt = rebuildIndexFromProjectDirs() else { return nil }
+            reportRebuild(rebuilt, reason: "absent")
+            return (rebuilt, true)
+        case .unreadable:
+            // Local only. An iCloud index that won't read may simply not have downloaded yet
+            // (offline, or the coordinated read failed), and rebuilding would push an index
+            // missing every project this device has never opened out to the other devices.
+            guard !isUsingICloud, let rebuilt = rebuildIndexFromProjectDirs() else { return nil }
+            preserveUnreadableIndex()
+            reportRebuild(rebuilt, reason: "unreadable")
+            return (rebuilt, true)
+        }
+    }
+
+    /// Best-effort scan of `projects/` for anything that still decodes. Junk entries are skipped
+    /// silently — the point is to salvage what is there, not to audit the folder.
+    static func rebuildIndexFromProjectDirs() -> ProjectIndex? {
+        let entries = (try? FileManager.default.contentsOfDirectory(
+            at: projectsDir,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        )) ?? []
+
+        var recovered: [Project] = []
+        for entry in entries {
+            guard let id = UUID(uuidString: entry.lastPathComponent),
+                  let data = recoverableProjectData(id) else { continue }
+            var project = Project(id: id, name: data.name ?? String(localized: "Recovered Project"))
+            project.modifiedAt = data.modifiedAt
+            recovered.append(project)
+        }
+
+        guard !recovered.isEmpty else { return nil }
+        recovered.sort { $0.modifiedAt > $1.modifiedAt }
+        return ProjectIndex(projects: recovered, activeProjectId: recovered.first?.id)
+    }
+
+    /// Quiet counterpart of `loadProject` for the recovery scan: no decode report, and no catalog
+    /// merge — the rebuild only needs `name` and `modifiedAt`.
+    private static func recoverableProjectData(_ id: UUID) -> ProjectData? {
+        guard let data = readData(from: projectDataURL(id)) else { return nil }
+        return try? decoder.decode(ProjectData.self, from: data)
+    }
+
+    /// Keeps the bytes we couldn't parse so a rebuild never destroys the only copy of the list.
+    private static func preserveUnreadableIndex() {
+        let backup = indexURL.appendingPathExtension("corrupt")
+        try? FileManager.default.removeItem(at: backup)
+        try? FileManager.default.moveItem(at: indexURL, to: backup)
+    }
+
+    private static func reportRebuild(_ index: ProjectIndex, reason: String) {
+        CrashReportingService.breadcrumb(
+            .persistence,
+            "Rebuilt project index",
+            data: ["projects": index.projects.count, "reason": reason],
+            level: .warning
+        )
+        CrashReportingService.report(
+            .projectIndexRebuilt,
+            extra: ["projects": index.projects.count, "reason": reason],
+            level: .warning
+        )
+    }
+
+    /// `ensureDirectories()` first, mirroring `saveProject`'s `ensureProjectDirs`: the root is
+    /// otherwise created only at launch, so a folder removed mid-session (external cleaner,
+    /// container reset, restore) made every later index write fail with ENOENT on the parent.
     static func saveIndex(_ index: ProjectIndex) throws {
+        ensureDirectories()
         try save(index, to: indexURL)
     }
 
@@ -402,6 +482,7 @@ nonisolated struct PersistenceService {
     }
 
     static func saveIndex(_ index: ProjectIndex, at root: URL) throws {
+        ensureDirectories(at: root)
         let url = indexURL(at: root)
         let data = try encoder.encode(index)
         try data.write(to: url, options: .atomic)

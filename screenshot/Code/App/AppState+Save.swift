@@ -143,7 +143,8 @@ extension AppState {
     private func activeProjectSnapshotForSave() -> (id: UUID, data: ProjectData)? {
         guard let activeId = activeProjectId, projectOpenTask == nil else { return nil }
         guard activeId != degradedLoadProjectId else { return nil }
-        return (activeId, ProjectData(rows: rows, localeState: localeState))
+        let name = projects.first { $0.id == activeId }?.name
+        return (activeId, ProjectData(rows: rows, localeState: localeState, name: name))
     }
 
     /// Debounced-autosave sibling of `saveAll()`: snapshots index + project on the

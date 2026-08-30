@@ -67,6 +67,11 @@ extension AppState {
             }
             startICloudMonitoring(at: dataURL)
 
+            // Re-tag: `AppState.init` tags `storage` before the container has resolved, so every
+            // cold launch reports `local` until this point regardless of the real mode.
+            CrashReportingService.setTag("icloud", for: "storage")
+            AnalyticsService.setProfile([.storage: "icloud"])
+
             PersistenceService.ensureDirectories()
             load()
         }
@@ -122,9 +127,12 @@ extension AppState {
     /// `AppState.init`, where a synchronous font registration + JSON decode + catalog merge froze
     /// the app with nothing on screen to explain it.
     private func reloadLocalFromDisk() {
-        if let index = PersistenceService.loadIndex() {
+        if let (index, wasRecovered) = PersistenceService.loadIndexOrRecover() {
             projects = index.projects.purgingOldTombstones()
             selectActiveProjectAfterReload(preferred: index.activeProjectId)
+            // Write the rebuild back now: the next launch must not have to recover again, and
+            // nothing else here schedules a save.
+            if wasRecovered { saveIndex() }
         }
         hasCompletedInitialLoad = true
         guard let activeId = activeProjectId else { return }
@@ -140,32 +148,37 @@ extension AppState {
         let indexURL = PersistenceService.indexURL
         let projectURLs = projects.map { PersistenceService.projectDataURL($0.id) }
 
-        let index = await Task.detached(priority: .userInitiated) { () -> ProjectIndex? in
+        let loadedIndex = await Task.detached(priority: .userInitiated) { () -> (index: ProjectIndex, wasRecovered: Bool)? in
             let sync = ICloudSyncService.shared
             sync.resolveConflicts(at: indexURL)
             // Resolve conflicts on all known projects, not just the active one, so switching
             // projects later doesn't hit stale conflicts.
             for url in projectURLs { sync.resolveConflicts(at: url) }
-            return PersistenceService.loadIndex()
+            return PersistenceService.loadIndexOrRecover()
         }.value
 
         if Task.isCancelled { return }
 
-        if let index {
+        if let (index, wasRecovered) = loadedIndex {
+            // A rebuilt index still has to be written even when it changes nothing in memory:
+            // it was reconstructed from the project directories and isn't on disk yet.
+            var needsWriteBack = wasRecovered
             if !projects.isEmpty {
-                // Tombstone-aware merge: union by UUID, LWW for alive pairs, delete-wins for conflicts.
+                // Tombstone-aware merge: union by UUID, LWW for alive pairs, delete-wins for
+                // conflicts. A rebuild goes through it too — the directories it was built from
+                // carry no tombstones, and this is what puts the in-memory ones back.
                 let mergedRaw = projects.merged(with: index.projects)
-                let changed = mergedRaw != projects
+                needsWriteBack = needsWriteBack || mergedRaw != projects
                 projects = mergedRaw.purgingOldTombstones()
-                // Persist merge result so tombstones propagate back. Keep recordOwnWrite →
-                // saveIndex → snapshotAfterWrite together (no await between them).
-                if changed {
-                    iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL])
-                    saveIndex()
-                    iCloudMonitor?.snapshotAfterWrite()
-                }
             } else {
                 projects = index.projects.purgingOldTombstones()
+            }
+            // Persist merge result so tombstones propagate back. Keep recordOwnWrite →
+            // saveIndex → snapshotAfterWrite together (no await between them).
+            if needsWriteBack {
+                iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL])
+                saveIndex()
+                iCloudMonitor?.snapshotAfterWrite()
             }
             selectActiveProjectAfterReload(preferred: index.activeProjectId)
         }

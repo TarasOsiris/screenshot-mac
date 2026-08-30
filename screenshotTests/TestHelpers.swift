@@ -128,6 +128,25 @@ func makeEmptyTestState(fonts: CustomFontLibrary = CustomFontLibrary()) -> (AppS
     return (state, tempDir)
 }
 
+/// `makeEmptyTestState` with a chance to lay files down first, for the paths that only run inside
+/// `AppState.init` (index load, and the rebuild that happens when it finds no index).
+@MainActor
+func makeTestStateSeedingDataDirectory(
+    fonts: CustomFontLibrary = CustomFontLibrary(),
+    seed: (URL) throws -> Void
+) rethrows -> (AppState, URL) {
+    let tempDir = makeTemporaryDataDirectory()
+    setenv("SCREENSHOT_DATA_DIR", tempDir.path, 1)
+    normalizeUserDefaultsForTest(directory: tempDir)
+    do {
+        try seed(tempDir)
+    } catch {
+        cleanupTestState(tempDir)
+        throw error
+    }
+    return (AppState(fonts: fonts), tempDir)
+}
+
 @MainActor
 func cleanupTestState(_ tempDir: URL) {
     unsetenv("SCREENSHOT_DATA_DIR")

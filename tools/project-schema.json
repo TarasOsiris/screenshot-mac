@@ -19,6 +19,10 @@
     "m": {
       "description": "modifiedAt — Swift Date (seconds since 2001-01-01 reference date).",
       "type": "number"
+    },
+    "n": {
+      "description": "name — the project's display name, mirrored from the projects.json index so a lost index can be rebuilt from the project directories. Absent in projects last saved before this field shipped.",
+      "type": "string"
     }
   },
   "$defs": {

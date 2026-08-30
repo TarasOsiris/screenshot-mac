@@ -115,15 +115,19 @@ nonisolated struct ProjectData: Codable {
     var rows: [ScreenshotRow]
     var localeState: LocaleState?
     var modifiedAt: Date
+    /// Mirrors the index entry (the source of truth) so a lost `projects.json` can be rebuilt with
+    /// real names. Only refreshed when the project is saved, so a rename while closed leaves it stale.
+    var name: String?
 
     enum CodingKeys: String, CodingKey {
-        case rows = "r", localeState = "ls", modifiedAt = "m"
+        case rows = "r", localeState = "ls", modifiedAt = "m", name = "n"
     }
 
-    init(rows: [ScreenshotRow], localeState: LocaleState? = nil) {
+    init(rows: [ScreenshotRow], localeState: LocaleState? = nil, name: String? = nil) {
         self.rows = rows
         self.localeState = localeState
         self.modifiedAt = Date()
+        self.name = name
     }
 
     init(from decoder: Decoder) throws {
@@ -131,5 +135,6 @@ nonisolated struct ProjectData: Codable {
         rows = try c.decode([ScreenshotRow].self, forKey: .rows)
         localeState = try c.decodeIfPresent(LocaleState.self, forKey: .localeState)
         modifiedAt = try c.decodeIfPresent(Date.self, forKey: .modifiedAt) ?? .distantPast
+        name = try c.decodeIfPresent(String.self, forKey: .name)
     }
 }
