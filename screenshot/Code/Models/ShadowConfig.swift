@@ -86,7 +86,12 @@ struct ShadowConfig: Codable, Equatable {
     }
 
     var resolvedColor: Color { colorData?.color ?? Self.defaultColor }
-    var resolvedRadius: CGFloat { radius ?? Self.defaultRadius }
+    /// Clamped: an out-of-range radius from a hand-edited project.json becomes a CPU Gaussian blur
+    /// that hangs the app, and it would also inflate `visualAABB` past every template boundary.
+    var resolvedRadius: CGFloat {
+        let value = Double(radius ?? Self.defaultRadius)
+        return CGFloat(min(max(value, Self.radiusRange.lowerBound), Self.radiusRange.upperBound))
+    }
     var resolvedOffsetX: CGFloat { offsetX ?? Self.defaultOffsetX }
     var resolvedOffsetY: CGFloat { offsetY ?? Self.defaultOffsetY }
     var resolvedOpacity: Double { opacity ?? Self.defaultOpacity }

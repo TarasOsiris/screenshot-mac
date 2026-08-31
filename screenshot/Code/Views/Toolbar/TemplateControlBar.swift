@@ -430,6 +430,7 @@ struct TemplateControlBar: View {
                     }
                     try pngData.write(to: tempURL)
                     urls.append(tempURL)
+                    await Task.yield()
                 } catch {
                     try? FileManager.default.removeItem(at: folder)
                     renderError = String(localized: "Could not write preview file: \(error.localizedDescription)")

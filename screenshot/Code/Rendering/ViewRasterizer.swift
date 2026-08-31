@@ -32,10 +32,14 @@ extension RowRenderer {
         }
         let previousContext = NSGraphicsContext.current
         defer { NSGraphicsContext.current = previousContext }
-        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
-        background.draw(in: canvasRect)
-        image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
-        NSGraphicsContext.current?.flushGraphics()
+        // Same reason as `renderViewToImage`: the graphics context and the CGImages `draw(in:)`
+        // spawns are autoreleased, and a flatten runs once per template.
+        autoreleasepool {
+            NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
+            background.draw(in: canvasRect)
+            image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
+            NSGraphicsContext.current?.flushGraphics()
+        }
 
         let output = NSImage(size: canvasSize)
         output.addRepresentation(bitmapRep)
@@ -70,9 +74,11 @@ extension RowRenderer {
         guard let output = blur.outputImage else { return image }
 
         let cropped = output.cropped(to: originalExtent)
-        guard let blurredCG = ciContext.createCGImage(cropped, from: originalExtent) else { return image }
-
-        return NSImage(cgImage: blurredCG, size: image.size)
+        // CoreImage's intermediates are autoreleased and a full-row blur allocates megabytes.
+        return autoreleasepool { () -> NSImage in
+            guard let blurredCG = ciContext.createCGImage(cropped, from: originalExtent) else { return image }
+            return NSImage(cgImage: blurredCG, size: image.size)
+        }
     }
 
     /// Crops a rendered row background back to a single template slot.
@@ -140,18 +146,6 @@ extension RowRenderer {
         let pixelW = Int(ceil(width))
         let pixelH = Int(ceil(height))
         let rect = NSRect(x: 0, y: 0, width: pixelW, height: pixelH)
-        let hostingView = NSHostingView(
-            rootView: view
-                .environment(\.isExportRendering, true)
-                .environment(\.layoutDirection, .leftToRight)
-                .frame(width: CGFloat(pixelW), height: CGFloat(pixelH), alignment: .topLeading)
-                .clipped()
-        )
-        hostingView.frame = rect
-        hostingView.wantsLayer = true
-        hostingView.layoutSubtreeIfNeeded()
-        hostingView.displayIfNeeded()
-
         guard let bitmapRep = bitmapRep(width: width, height: height) else {
             CrashReportingService.report(.renderProducedBlankImage, extra: [
                 "label": reportableRenderLabel(label),
@@ -162,7 +156,22 @@ extension RowRenderer {
             return NSImage(size: NSSize(width: width, height: height))
         }
 
-        hostingView.cacheDisplay(in: rect, to: bitmapRep)
+        // The hosting view and cacheDisplay's CoreGraphics temporaries are autoreleased, so
+        // without a pool they accumulate across an export loop until the run loop drains.
+        autoreleasepool {
+            let hostingView = NSHostingView(
+                rootView: view
+                    .environment(\.isExportRendering, true)
+                    .environment(\.layoutDirection, .leftToRight)
+                    .frame(width: CGFloat(pixelW), height: CGFloat(pixelH), alignment: .topLeading)
+                    .clipped()
+            )
+            hostingView.frame = rect
+            hostingView.wantsLayer = true
+            hostingView.layoutSubtreeIfNeeded()
+            hostingView.displayIfNeeded()
+            hostingView.cacheDisplay(in: rect, to: bitmapRep)
+        }
 
         let image = NSImage(size: NSSize(width: width, height: height))
         image.addRepresentation(bitmapRep)

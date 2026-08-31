@@ -330,6 +330,7 @@ final class GooglePlayUploadService {
                 customSuffix: ExportFileNaming.preferredCustomSuffix
             )
             screenshots.append(RenderedScreenshot(templateIndex: templateIndex, fileName: fileName, data: data))
+            await Task.yield()
         }
         return screenshots
     }

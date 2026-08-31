@@ -747,6 +747,7 @@ final class AppStoreConnectScreenshotSyncService {
                 height: Int(target.rowSize.height),
                 previewData: stored.preview
             ))
+            await Task.yield()
         }
         return assets
     }
