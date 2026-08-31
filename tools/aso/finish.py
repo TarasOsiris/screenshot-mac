@@ -17,17 +17,12 @@ import json, os, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import keywords as K, metadata as M
-from apply import asc, apply_subtitle, APP_ID
+from apply import asc, apply_subtitle, APP_ID, EDITABLE_VERSION_STATES
 
 NEW_LOCALES = ["en-GB", "pt-BR", "ru", "pl", "tr", "uk", "id", "vi", "th", "zh-Hant"]
 PRIVACY_URL = "https://screenshotbro.app/privacy"
 APP_NAME = "Screenshot Bro: Mockup Maker"
 
-
-# A version pulled back from review is DEVELOPER_REJECTED, not
-# PREPARE_FOR_SUBMISSION — both are editable and both need the new locales.
-EDITABLE_VERSION_STATES = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED",
-                           "REJECTED", "METADATA_REJECTED"}
 
 
 def editable_versions():

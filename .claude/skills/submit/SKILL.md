@@ -70,7 +70,9 @@ asc versions create --app 6760177675 --version "<MV>" --platform <P> \
 
 `AFTER_APPROVAL` means the version goes live the moment Apple approves it — no manual release step.
 `--copy-metadata-from` (the newest released version on that platform, e.g. `4.7`) carries
-description / keywords / promotionalText / marketingUrl / supportUrl across all 16 locales. App Store
+description / keywords / promotionalText / marketingUrl / supportUrl across the locales that version
+had. The 10 locales added in Aug 2026 (`en-GB pt-BR ru pl tr uk id vi th zh-Hant`) are younger than
+the releases you copy from, so they arrive absent or in English — the descriptions step below fixes that. App Store
 Connect itself carries screenshots, App Review details and copyright onto a new version — confirmed
 on the 4.7 → 4.8 run, where `asc validate` came back with zero findings on both platforms — but Step 5
 is the gate, so don't assume it. Fixes if it does flag them:
@@ -85,6 +87,22 @@ asc review details-create --version-id "<VID>" \
 # Copyright
 asc versions update --version-id "<VID>" --copyright "…"
 ```
+
+## Step 2b: Localized descriptions for the 10 added locales
+
+A version created through the API does not inherit localized copy the way the web UI does, so the
+descriptions for the added locales can silently be back on English. Per platform:
+
+```bash
+python3 tools/aso/descriptions.py                             # review all 20, measured not estimated
+python3 tools/aso/apply.py descriptions "<VID>" <P> --dry-run
+python3 tools/aso/apply.py descriptions "<VID>" <P>
+```
+
+It refuses on a version that is not editable, re-reviews every text against that version's own en-US
+row before writing, and verifies each write by read-back. A `SKIP (locale absent…)` line means the
+locale itself is missing from the version — run `tools/aso/finish.py` first. Descriptions are not
+indexed by Apple search, so this is conversion work: it must not delay the submission.
 
 ## Step 3: Write "What's New"
 
