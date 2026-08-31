@@ -118,6 +118,10 @@ struct ShapePropertiesSingleSelectionBar: View {
 
                         deviceSections(shape: shape, shapeId: shapeId)
 
+                        ShapeShadowControls(
+                            shadow: optionalConfigBinding(shapeId, \.shadow, fallback: ShadowConfig(), isEmpty: \.isEmpty)
+                        )
+
                         fillSection(shape: shape, shapeId: shapeId)
 
                         ShapeOpacitySection(
