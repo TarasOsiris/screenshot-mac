@@ -18,6 +18,7 @@ struct EditorRowsScrollView<Content: View>: View {
         ScrollView(.vertical) {
             LazyVStack(spacing: 0) { content }
                 .allowsHitTesting(!isScrolling)
+                .environment(\.editorIsScrolling, isScrolling)
         }
         .onScrollPhaseChange { _, phase in
             setScrolling(phase.movesContent)
@@ -53,5 +54,18 @@ private extension ScrollPhase {
         case .idle, .tracking, .animating: false
         @unknown default: false
         }
+    }
+}
+
+private struct EditorIsScrollingKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    /// True while the user is dragging or the list is decelerating. A row realized during that
+    /// window skips building its chrome — see `EditorRowView.showsChrome`.
+    var editorIsScrolling: Bool {
+        get { self[EditorIsScrollingKey.self] }
+        set { self[EditorIsScrollingKey.self] = newValue }
     }
 }

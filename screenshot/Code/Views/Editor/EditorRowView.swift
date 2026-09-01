@@ -20,11 +20,15 @@ struct EditorRowView: View {
     let requestShowcaseExport: (ScreenshotRow) -> Void
     @AppStorage(AppSettingsKeys.confirmBeforeDeleting) var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
     @Environment(\.reportDropFailure) var reportDropFailure
+    @Environment(\.editorIsScrolling) private var editorIsScrolling
     @State var activeAlert: RowAlert?
     @State var isSvgDialogPresented = false
     @State var contextMenuPointStore = ModelPointStore()
     /// The one template whose background popover is open, if any — see `TemplateControlBar`.
     @State var backgroundPopoverTemplateId: UUID?
+    /// Latched once this row has shown its chrome, so a scroll that starts later cannot take it
+    /// away again. Only a row realized *during* a scroll waits.
+    @State private var chromeReady = false
     @State var dragSession = CanvasDragSession()
     @State var isEditingLabel = false
     @State var editingLabelText = ""
@@ -86,7 +90,20 @@ struct EditorRowView: View {
         return Color.clear
             .frame(height: EditorRowLayout.rowHeight(row: row, zoom: zoom, isPreviewMode: isPreviewMode))
             .overlay(alignment: .topLeading) { rowContent }
+            // Latch on appearance too, not only on the scroll ending: a row realized while the
+            // list is idle shows chrome from its first body via `showsChrome`, and without this it
+            // would lose it again the moment the next scroll began.
+            .onAppear { if !editorIsScrolling { chromeReady = true } }
+            .onChange(of: editorIsScrolling) { if !editorIsScrolling { chromeReady = true } }
     }
+
+    /// The row header and the per-template control bars are ~15 controls and, with the bars, three
+    /// presentation hosts per template. Building them is a large part of the 100–230 ms freeze a
+    /// row costs to materialize, and none of it can be used while the list is moving — so a row
+    /// that appears mid-scroll renders canvas-only and fills the same space with `Color.clear`.
+    /// The reserved height must stay identical to `EditorRowLayout`'s, or chrome arriving would
+    /// shift the layout, which is the very thing this is meant to stop.
+    var showsChrome: Bool { chromeReady || !editorIsScrolling }
 
     /// The row's real content, rendered in an `.overlay` of the fixed-height shell above.
     ///
@@ -98,28 +115,34 @@ struct EditorRowView: View {
     @ViewBuilder
     private var rowContent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            EditorRowHeader(
-                row: row,
-                isSelected: isSelected,
-                canMoveUp: canMoveUp,
-                canMoveDown: canMoveDown,
-                canDelete: canDelete,
-                isEditingLabel: $isEditingLabel,
-                editingLabelText: $editingLabelText,
-                isLabelFieldFocused: $isLabelFieldFocused,
-                onToggleCollapsed: toggleCollapsed,
-                onStartLabelEdit: startLabelEdit,
-                onCommitLabelEdit: commitLabelEdit,
-                onCancelLabelEdit: cancelLabelEdit,
-                onMoveUp: moveRowUp,
-                onMoveDown: moveRowDown,
-                onDuplicate: duplicateRow,
-                onReset: resetRow,
-                onDelete: deleteRow,
-                isPreviewMode: isPreviewMode,
-                onTogglePreview: togglePreviewMode
-            ) {
-                rowMenuContent
+            Group {
+                if showsChrome {
+                    EditorRowHeader(
+                        row: row,
+                        isSelected: isSelected,
+                        canMoveUp: canMoveUp,
+                        canMoveDown: canMoveDown,
+                        canDelete: canDelete,
+                        isEditingLabel: $isEditingLabel,
+                        editingLabelText: $editingLabelText,
+                        isLabelFieldFocused: $isLabelFieldFocused,
+                        onToggleCollapsed: toggleCollapsed,
+                        onStartLabelEdit: startLabelEdit,
+                        onCommitLabelEdit: commitLabelEdit,
+                        onCancelLabelEdit: cancelLabelEdit,
+                        onMoveUp: moveRowUp,
+                        onMoveDown: moveRowDown,
+                        onDuplicate: duplicateRow,
+                        onReset: resetRow,
+                        onDelete: deleteRow,
+                        isPreviewMode: isPreviewMode,
+                        onTogglePreview: togglePreviewMode
+                    ) {
+                        rowMenuContent
+                    }
+                } else {
+                    Color.clear
+                }
             }
             .frame(height: EditorRowLayout.headerHeight)
             .background { selectionTint(UIMetrics.Opacity.accentRowHeader) }

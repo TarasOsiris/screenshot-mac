@@ -131,11 +131,23 @@ extension EditorRowView {
                         // chrome outside it still mirrors.
                         .environment(\.layoutDirection, .leftToRight)
 
-                        controlBarsRow
-                            // Bars must not slide during a reorder: the move buttons have to stay
-                            // under the cursor so rapid clicks keep landing on a button.
-                            .transaction { $0.animation = nil }
-                            .padding(.bottom, EditorRowLayout.controlBarsBottomInset)
+                        Group {
+                            if showsChrome {
+                                controlBarsRow
+                            } else {
+                                // Same footprint, none of the ~7 controls and 3 presentation hosts
+                                // per template. See `EditorRowView.showsChrome`.
+                                Color.clear
+                                    .frame(
+                                        width: row.displayWidth(zoom: zoom) * CGFloat(row.templates.count),
+                                        height: UIMetrics.TemplateBar.height
+                                    )
+                            }
+                        }
+                        // Bars must not slide during a reorder: the move buttons have to stay
+                        // under the cursor so rapid clicks keep landing on a button.
+                        .transaction { $0.animation = nil }
+                        .padding(.bottom, EditorRowLayout.controlBarsBottomInset)
                     }
                 }
                 // One `_PaddingLayout` layer, not three: each is a separate layout node that
