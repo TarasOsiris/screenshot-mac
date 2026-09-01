@@ -9,6 +9,7 @@ per locale, per platform. See `RESEARCH.md` for why these values.
 | `metadata.py` | subtitle (30) and promotional text (170) per locale, macOS and iOS variants |
 | `openings.py` | replacement first paragraph of the description |
 | `descriptions.py` | the 10 added locales' descriptions, macOS and iOS, plus the automated review |
+| `degoogle.py` | the per-locale deletions that took Google Play out of all 52 live descriptions |
 | `apply.py` | push to App Store Connect, verified by read-back |
 | `finish.py` | subtitle everywhere, then fill any locale left empty or stale on an editable version |
 
@@ -27,6 +28,7 @@ python3 tools/aso/apply.py subtitle                # app-level subtitle, every l
 python3 tools/aso/apply.py version <id> MAC_OS     # keywords + promo text
 python3 tools/aso/descriptions.py                  # review all 20 descriptions
 python3 tools/aso/apply.py descriptions <id> MAC_OS # write them (editable version only)
+python3 tools/aso/degoogle.py <id> --dry-run       # one-shot: strip Google Play from a version
 python3 tools/aso/finish.py --dry-run              # only if a locale is ever added again
 ```
 
@@ -48,8 +50,10 @@ zh-Hans, and the review fails it if simplified-only forms leak in.
 It checks length against the real 4000 ceiling, every verbatim atom, that the text differs
 from the live en-US source, that no macOS-only feature (MCP, Finder) appears in an iOS
 listing, that vi/tr diacritics and the Thai/Cyrillic/Han scripts survived the round trip,
-that Ukrainian carries no Russian-only letter, and that no locale mentions price or
-discounts. `apply.py descriptions` re-runs it per text and refuses to write a failing one.
+that Ukrainian carries no Russian-only letter, that no locale mentions price or
+discounts, and — since the second 2026-09-01 rejection — that no locale names Google Play
+in any script. `apply.py descriptions` re-runs it per text and refuses to write a failing
+one.
 
 ## Ordering matters
 
@@ -70,8 +74,17 @@ edit it during a review you must cancel that submission first
 
 `App Store & Play Screenshots` was rejected on 2026-09-01 under **5.2.5**
 (Apple's mark) and **2.3.10** (competitor platform) — see RESEARCH.md. Apple
-flagged only the subtitle; the description names both stores and was not
-flagged, because there the words describe functionality rather than promote it.
+flagged only the subtitle in that pass.
+
+The *second* rejection the same day came back for the **description**, again
+2.3.10: "Revise the app's description to remove Google Play references." So the
+earlier read — that naming the store in a description describes functionality
+rather than promotes it — did not survive contact with review. Every Google Play
+mention is now gone from all 52 descriptions (26 locales × 2 platforms) and from
+the keyword field, which had been spending 7 of its 100 characters on `google`.
+`degoogle.py` is the record of exactly which words left. `Android` and `Pixel`
+stay: they name device frames the app really draws, which is 2.3.10's own
+carve-out, and Apple named only Google Play.
 
 `metadata.check()` encodes that line and every writer calls it: no Apple mark
 and no competitor platform in any subtitle (Latin script or local), and no bare

@@ -34,7 +34,9 @@ def _reserved(locale):
     return lambda token: token.lower() in text
 
 # Proven English dev vocabulary — searched in every storefront we swept.
-CORE = ["store", "app", "generator", "device", "frames", "google", "connect",
+# `google` was here until the 2026-09-01 2.3.10 rejection took every Google Play
+# reference out of the listing; a keyword field is metadata Apple reads too.
+CORE = ["store", "app", "generator", "device", "frames", "connect",
         "preview", "template", "design"]
 
 # Locale -> extra tokens, highest value first. Trimmed to fit 100 chars.

@@ -134,11 +134,15 @@ real subtlety it gets right: Hebrew `צילום` is **not** contained in `ציל
 because the final mem `ם` is a different character from `מ` — so that token
 stays, correctly, in the field.
 
-Newly reachable queries: `app store screenshots`, `google play screenshots`,
-`app screenshot generator`, `app store connect`, `device frames`,
-`app screenshot design`, `screenshot template`, `android screenshots` — all
-still reachable after the rejection, since `store`, `app` and `google` moved
-into the keyword field rather than being dropped.
+Newly reachable queries: `app store screenshots`, `app screenshot generator`,
+`app store connect`, `device frames`, `app screenshot design`,
+`screenshot template`, `android screenshots` — reachable because `store` and
+`app` moved into the keyword field rather than being dropped.
+
+`google play screenshots` was on that list until the second 2026-09-01
+rejection (2.3.10) took every Google Play reference out of the listing. The 7
+characters `google` was holding went back to `marketing` / `listing` / `publish`,
+which `field()` had been dropping for want of budget.
 
 ## Deviation from the skill's reference
 
