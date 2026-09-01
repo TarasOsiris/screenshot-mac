@@ -239,13 +239,6 @@ struct CanvasShapeView: View {
         .frame(width: aabb.width, height: aabb.height)
         .contentShape(hitPath)
         .scaleEffect(addBumpScale)
-        // No custom preview: the canvas now renders at full scale (EditorRowView), so a shape's
-        // layout frame equals its on-screen size and iOS's default lift snapshots the existing
-        // on-screen pixels at the right size. A custom preview re-evaluates the view in an
-        // offscreen pass, which re-runs the device SceneKit snapshot and renders devices wrong.
-        .contextMenu {
-            shapeContextMenu
-        }
         .onContinuousHover { phase in
             switch phase {
             case .active(let location):

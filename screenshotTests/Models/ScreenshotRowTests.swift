@@ -190,6 +190,64 @@ struct ScreenshotRowTests {
         #expect(row.containsShape(at: CGPoint(x: 1100, y: 150), among: [clipped]))
     }
 
+    @Test func containsShapeMissesTheEmptyCornerOfARotatedShape() {
+        let row = marqueeRow()
+        var tilted = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 100, height: 100)
+        tilted.rotation = 45
+        // Inside the bounding box but outside the shape itself. The old box test said yes.
+        #expect(!row.containsShape(at: CGPoint(x: 105, y: 105), among: [tilted]))
+        #expect(row.containsShape(at: CGPoint(x: 150, y: 150), among: [tilted]))
+    }
+
+    @Test func marqueeSweepStillUsesTheBoundingBox() {
+        let row = marqueeRow()
+        var tilted = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 100, height: 100)
+        tilted.rotation = 45
+        // The sweep is deliberately box-based, so grazing the AABB still selects.
+        let graze = CGRect(x: 95, y: 95, width: 5, height: 5)
+        #expect(row.shapeIds(intersecting: graze, among: [tilted]) == [tilted.id])
+    }
+
+    // MARK: - Topmost hit
+
+    @Test func hitShapeReturnsTheFrontmostOfOverlappingShapes() {
+        let row = marqueeRow()
+        let back = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 100, height: 100)
+        let front = CanvasShapeModel(type: .rectangle, x: 120, y: 120, width: 100, height: 100)
+        // Draw order: last is frontmost, matching the canvas ZStack.
+        #expect(row.hitShape(at: CGPoint(x: 150, y: 150), among: [back, front])?.id == front.id)
+        #expect(row.hitShape(at: CGPoint(x: 105, y: 105), among: [back, front])?.id == back.id)
+    }
+
+    @Test func hitShapeIncludesLockedShapes() {
+        let row = marqueeRow()
+        var locked = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        locked.isLocked = true
+        #expect(row.hitShape(at: CGPoint(x: 120, y: 120), among: [locked])?.id == locked.id)
+    }
+
+    @Test func hitShapeIncludesFullyTransparentShapes() {
+        let row = marqueeRow()
+        var invisible = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        invisible.opacity = 0
+        #expect(row.hitShape(at: CGPoint(x: 120, y: 120), among: [invisible])?.id == invisible.id)
+    }
+
+    @Test func hitShapePredicateSkipsShapesItRejects() {
+        let row = marqueeRow()
+        let rect = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 100, height: 100)
+        let device = CanvasShapeModel(type: .device, x: 100, y: 100, width: 100, height: 100, deviceCategory: .iphone)
+        let point = CGPoint(x: 150, y: 150)
+        #expect(row.hitShape(at: point, among: [device, rect])?.id == rect.id)
+        #expect(row.hitShape(at: point, among: [device, rect]) { $0.type == .device }?.id == device.id)
+    }
+
+    @Test func hitShapeReturnsNilOnEmptyCanvas() {
+        let row = marqueeRow()
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        #expect(row.hitShape(at: CGPoint(x: 800, y: 800), among: [shape]) == nil)
+    }
+
     // MARK: - Active shapes
 
     @Test func activeShapesFiltersDevicesWhenHidden() {

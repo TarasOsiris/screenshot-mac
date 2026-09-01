@@ -264,16 +264,42 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
         return ids
     }
 
-    /// True when `point` (model space) lands on any shape — **locked ones included**, since a
-    /// locked shape still swallows the press. A marquee uses this to refuse to start on top of a
-    /// shape: the shape's own drag has a larger activation threshold, so without it a sweep would
-    /// win the gap between the two thresholds and rubber-band instead of touching the shape.
+    /// The topmost shape whose body contains `point` (model space) — **locked ones included**,
+    /// since a locked shape still swallows the press. `candidates` is in draw order, so the search
+    /// runs back to front and the frontmost shape wins, matching what the canvas ZStack shows.
+    ///
+    /// `predicate` narrows the search without a second pass: the drop router uses it to look only
+    /// for the shapes that accept an image.
+    func hitShape(
+        at point: CGPoint,
+        among candidates: [CanvasShapeModel],
+        where predicate: (CanvasShapeModel) -> Bool = { _ in true }
+    ) -> CanvasShapeModel? {
+        candidates.last { predicate($0) && contains($0, at: point) }
+    }
+
+    /// True when `point` (model space) lands on `shape`, respecting its rotation and — when it
+    /// clips to its column — that column's bounds.
+    ///
+    /// Unlike `selectableBounds`, this is the *precise* body rather than the bounding box, so a
+    /// press in the empty corner of a tilted shape misses it. Opacity is deliberately not
+    /// consulted: a fully transparent shape stays clickable, as it always has been.
+    func contains(_ shape: CanvasShapeModel, at point: CGPoint) -> Bool {
+        CanvasHitTesting.contains(
+            point: point,
+            rect: CGRect(x: shape.x, y: shape.y, width: shape.width, height: shape.height),
+            rotationDegrees: shape.rotation,
+            clip: shape.clipToTemplate == true
+                ? CGRect(x: templateOriginX(for: shape), y: 0, width: templateWidth, height: templateHeight)
+                : nil
+        )
+    }
+
+    /// True when `point` (model space) lands on any shape. A marquee uses this to refuse to start
+    /// on top of a shape: the shape's own drag has a larger activation threshold, so without it a
+    /// sweep would win the gap between the two thresholds and rubber-band instead of touching it.
     func containsShape(at point: CGPoint, among candidates: [CanvasShapeModel]) -> Bool {
-        let dot = CGRect(origin: point, size: .zero)
-        return candidates.contains { shape in
-            guard let bounds = selectableBounds(of: shape) else { return false }
-            return Self.overlaps(dot, bounds)
-        }
+        hitShape(at: point, among: candidates) != nil
     }
 
     /// A shape's model-space bounds as the canvas presents them: rotation-aware, and cut down to

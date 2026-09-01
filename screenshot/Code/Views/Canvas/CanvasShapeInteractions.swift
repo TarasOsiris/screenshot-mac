@@ -1,18 +1,21 @@
 import SwiftUI
 
+/// What a shape on the canvas can do to the document *while the pointer is on it* — selection,
+/// dragging, dropping, inline text editing.
+///
+/// The context menu is deliberately not here. Its actions used to ride along as ~25 more closures
+/// allocated for every shape on every row body evaluation, and the menu itself was materialized
+/// into `NSMenuItem`s per shape. Both now happen once per row, at menu-open time — see
+/// `EditorRowView.shapeContextMenu(for:facts:)`.
 struct CanvasShapeInteractions {
     var onSelect: () -> Void = {}
     var onShiftSelect: (() -> Void)?
     var onUpdate: (CanvasShapeModel) -> Void = { _ in }
-    var onDelete: () -> Void = {}
     var onScreenshotDrop: ((NSImage, ImageImportOrigin) -> Void)?
     /// Asks the row to raise its single image picker for this shape. The picker itself lives on the
     /// row: on macOS it is a `fileImporter`, i.e. a presentation host, and one per shape put a
     /// `MergePlatformItemsView` in the display list for every image and device on the canvas.
     var onRequestImagePicker: (() -> Void)?
-    var onClearImage: (() -> Void)?
-    var onRemoveBackground: (() -> Void)?
-    var onCaptureSimulator: (() -> Void)?
     var onDragSnap: ((CanvasShapeModel, CGSize) -> SnapResult)?
     var onDragEnd: (() -> Void)?
     var onOptionDragDuplicate: ((UUID) -> UUID?)?
@@ -24,28 +27,4 @@ struct CanvasShapeInteractions {
     var onInlineTextEditChanged: ((_ shapeId: UUID, _ liveText: (() -> (text: String, richText: String?))?, _ endEditing: (() -> Void)?) -> Void)?
     var onFormatBarStateChanged: ((RichTextSelectionState?, RichTextFormatController?) -> Void)?
     var onFormatBarAnchorChanged: ((CGPoint?) -> Void)?
-    var onMatchDeviceSizes: (() -> Void)?
-    var onMatchSelectedDeviceSizes: (() -> Void)?
-    var onCenterShape: ((CenterAxis) -> Void)?
-    var onTranslate: (() -> Void)?
-    var translateLocaleName: String?
-    var onTranslateAllLocales: (() -> Void)?
-    var translateAllLocalesDisabled = false
-    var onResetAllTranslations: (() -> Void)?
-    /// Closure, not a Bool: the answer needs an O(overrides) document walk, so
-    /// it's evaluated when the context menu opens rather than on every render.
-    var resetAllTranslationsDisabled: () -> Bool = { false }
-    var reuseTranslationTargets: (() -> [(key: String, label: String)])?
-    var onLinkTranslation: ((String) -> Void)?
-    var onUnlinkTranslation: (() -> Void)?
-    var nonBaseLocaleCount: Int = 0
-    var onCopyTextStyle: (() -> Void)?
-    var onPasteTextStyle: (() -> Void)?
-    var onUpdateSelected: ((@escaping (inout CanvasShapeModel) -> Void) -> Void)?
-    var onDeleteSelected: (() -> Void)?
-    var onAlignSelected: ((ShapeAlignment) -> Void)?
-    var onMatchGeometryToThis: ((GeometryMatchMode) -> Void)?
-    var onDuplicateToTemplates: ((DuplicateDirection) -> Void)?
-    var onToggleLock: (() -> Void)?
-    var lockToggleWillUnlock = false
 }

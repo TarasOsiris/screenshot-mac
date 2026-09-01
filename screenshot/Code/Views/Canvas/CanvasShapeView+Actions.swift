@@ -2,61 +2,6 @@ import Foundation
 import SwiftUI
 
 extension CanvasShapeView {
-    @ViewBuilder
-    var shapeContextMenu: some View {
-        CanvasShapeContextMenuContent(
-            shape: shape,
-            isMultiSelected: isMultiSelected,
-            screenshotImage: screenshotImage,
-            onRequestImagePicker: interactions.onRequestImagePicker,
-            onClearImage: interactions.onClearImage,
-            onRemoveBackground: interactions.onRemoveBackground,
-            onCaptureSimulator: interactions.onCaptureSimulator,
-            onMatchDeviceSizes: interactions.onMatchDeviceSizes,
-            onMatchSelectedDeviceSizes: interactions.onMatchSelectedDeviceSizes,
-            onCenterShape: interactions.onCenterShape,
-            onTranslate: interactions.onTranslate,
-            translateLocaleName: interactions.translateLocaleName,
-            onTranslateAllLocales: interactions.onTranslateAllLocales,
-            translateAllLocalesDisabled: interactions.translateAllLocalesDisabled,
-            onResetAllTranslations: interactions.onResetAllTranslations,
-            resetAllTranslationsDisabled: interactions.resetAllTranslationsDisabled,
-            reuseTranslationTargets: interactions.reuseTranslationTargets,
-            onLinkTranslation: interactions.onLinkTranslation,
-            onUnlinkTranslation: interactions.onUnlinkTranslation,
-            nonBaseLocaleCount: interactions.nonBaseLocaleCount,
-            onCopyTextStyle: interactions.onCopyTextStyle,
-            onPasteTextStyle: interactions.onPasteTextStyle,
-            applyUpdate: applyUpdate,
-            deleteAction: {
-                if let onDeleteSelected = interactions.onDeleteSelected {
-                    onDeleteSelected()
-                } else {
-                    interactions.onDelete()
-                }
-            },
-            onAlignSelected: interactions.onAlignSelected,
-            onMatchGeometryToThis: interactions.onMatchGeometryToThis,
-            onDuplicateToTemplates: interactions.onDuplicateToTemplates,
-            onToggleLock: interactions.onToggleLock,
-            lockToggleWillUnlock: interactions.lockToggleWillUnlock
-        )
-    }
-
-    private func applyUpdate(_ update: @escaping (inout CanvasShapeModel) -> Void) {
-        if let onUpdateSelected = interactions.onUpdateSelected {
-            onUpdateSelected(update)
-        } else {
-            var updated = shape
-            update(&updated)
-            interactions.onUpdate(updated)
-        }
-    }
-}
-
-// MARK: - Lifecycle and selection
-
-extension CanvasShapeView {
     func handleAppear() {
         updateSvgCache()
         guard let onDidAppearAfterAdd = interactions.onDidAppearAfterAdd else { return }

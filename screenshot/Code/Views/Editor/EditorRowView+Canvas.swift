@@ -310,28 +310,7 @@ extension EditorRowView {
         ds: CGFloat,
         resolvedShapes: [CanvasShapeModel]
     ) -> some View {
-        let isNonBaseLocale = !state.localeState.isBaseLocale
-        let currentLocaleName: String? = isNonBaseLocale ? state.localeState.activeLocaleLabel : nil
-        let nonBaseLocaleCount = state.localeState.nonBaseLocaleCount
-        // One pass over this row's shapes for all four selection facts, so the per-shape closure
-        // below re-walks nothing. Deliberately derived from `resolvedShapes` rather than the
-        // equivalent `AppState` properties: those read `rows`, which would register
-        // `\AppState.rows` in every row's tracking scope and defeat this view's `.equatable()`
-        // (SCREENSHOT-BRO-W).
-        let selected = resolvedShapes.filter { selectedShapeIds.contains($0.id) }
-        let isMultiSelection = selectedShapeIds.count > 1
-        let selectionFullyLocked = CanvasShapeModel.areFullyLocked(selected, ids: selectedShapeIds)
-        // `!selected.isEmpty` matters: `allSatisfy` is vacuously true when the selection lives in
-        // another row, where every one of these must read false.
-        let allSelectedSameType = isMultiSelection && !selected.isEmpty
-            && selected.allSatisfy { $0.type == selected.first?.type }
-        // Multi-selected text shapes — the reset-all-translations action below targets this set.
-        let selectedTextShapeIds: Set<UUID> = isMultiSelection
-            ? Set(selected.lazy.filter { $0.type == .text }.map(\.id))
-            : []
-        let allSelectedAreDevices = isMultiSelection
-            && selected.count == selectedShapeIds.count
-            && selected.allSatisfy { $0.type == .device }
+        let facts = selectionFacts(in: resolvedShapes)
         ZStack(alignment: .topLeading) {
             EditorRasterizedBackgroundView(
                 row: row,
@@ -377,7 +356,6 @@ extension EditorRowView {
                             onSelect: { guard !state.viewMode.isViewMode else { return }; state.selectShape(shape.id, in: row.id) },
                             onShiftSelect: { guard !state.viewMode.isViewMode else { return }; state.toggleShapeSelection(shape.id, in: row.id) },
                             onUpdate: { state.updateShape($0) },
-                            onDelete: { state.deleteShape(shape.id) },
                             onScreenshotDrop: { image, origin in
                                 state.saveImage(image, for: shape.id, source: origin)
                             },
@@ -385,15 +363,6 @@ extension EditorRowView {
                                 pickerTargetShapeId = shape.id
                                 isImagePickerPresented = true
                             },
-                            onClearImage: {
-                                state.clearImage(for: shape.id)
-                            },
-                            onRemoveBackground: shape.type == .image ? {
-                                state.removeImageBackground(for: shape.id) { message in
-                                    activeAlert = .backgroundRemovalFailed(message)
-                                }
-                            } : nil,
-                            onCaptureSimulator: simulatorCaptureAction(for: shape),
                             onDragSnap: { draggedShape, rawOffset in
                                 let targets: [AlignmentService.OtherShapeBounds]
                                 if let cached = dragSession.cachedSnapTargets {
@@ -489,106 +458,12 @@ extension EditorRowView {
                             },
                             onFormatBarAnchorChanged: { anchor in
                                 state.textEdit.richTextFormatBarAnchor = anchor
-                            },
-                            onMatchDeviceSizes: shape.type == .device ? {
-                                let matchingIds = Set(row.activeShapes.filter { other in
-                                    other.id != shape.id &&
-                                    other.type == .device &&
-                                    other.deviceCategory == shape.deviceCategory
-                                }.map(\.id))
-                                guard !matchingIds.isEmpty else { return }
-                                state.updateShapes(matchingIds, in: row.id) { other in
-                                    other.width = shape.width
-                                    other.height = shape.height
-                                }
-                            } : nil,
-                            onMatchSelectedDeviceSizes: (isMulti && shape.type == .device && allSelectedAreDevices) ? {
-                                let targetIds = selectedShapeIds.subtracting([shape.id])
-                                guard !targetIds.isEmpty else { return }
-                                state.updateShapes(targetIds,
-                                                   in: row.id,
-                                                   undoName: "Match Size to Selected Devices") { other in
-                                    other.width = shape.width
-                                    other.height = shape.height
-                                }
-                            } : nil,
-                            onCenterShape: { axis in
-                                let targets: Set<UUID> = (isMulti && selectedShapeIds.contains(shape.id))
-                                    ? selectedShapeIds : [shape.id]
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    state.centerShapes(targets, in: row.id, axis: axis)
-                                }
-                            },
-                            onTranslate: (shape.type == .text && isNonBaseLocale) ? {
-                                state.localeMenu.pendingTranslateShapeId = shape.id
-                            } : nil,
-                            translateLocaleName: currentLocaleName,
-                            onTranslateAllLocales: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
-                                let isMultiText = selectedShapeIds.count > 1 && selectedShapeIds.contains(shape.id)
-                                if isMultiText {
-                                    let translatableIds: Set<UUID> = Set(
-                                        row.activeShapes
-                                            .filter { selectedShapeIds.contains($0.id) && $0.hasTranslatableText }
-                                            .map(\.id)
-                                    )
-                                    guard !translatableIds.isEmpty else { return }
-                                    state.localeMenu.pendingFanOutTranslateShapeIds = translatableIds
-                                } else {
-                                    state.localeMenu.pendingFanOutTranslateShapeIds = [shape.id]
-                                }
-                            } : nil,
-                            translateAllLocalesDisabled: state.localeMenu.isFanOutTranslating,
-                            onResetAllTranslations: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
-                                state.resetAllTranslations(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
-                            } : nil,
-                            // Closure so the O(overrides) walk runs when the context menu opens,
-                            // not for every text shape on every render.
-                            resetAllTranslationsDisabled: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0)
-                                ? { !state.anyTranslationOrOverride(shapeIds: isMulti ? selectedTextShapeIds : [shape.id]) }
-                                : { false },
-                            reuseTranslationTargets: shape.type == .text ? {
-                                state.reusableTranslationTargets(excludingShapeId: shape.id)
-                                    .map { (key: $0.key, label: $0.baseText.singleLineMenuLabel()) }
-                            } : nil,
-                            onLinkTranslation: shape.type == .text ? { key in
-                                state.linkTranslation(shapeId: shape.id, toTargetKey: key)
-                            } : nil,
-                            onUnlinkTranslation: shape.type == .text ? {
-                                state.unlinkTranslation(shapeId: shape.id)
-                            } : nil,
-                            nonBaseLocaleCount: nonBaseLocaleCount,
-                            onCopyTextStyle: shape.type == .text ? {
-                                state.textStyleClipboard = shape.extractTextStyle()
-                            } : nil,
-                            onPasteTextStyle: shape.type == .text && state.textStyleClipboard != nil ? { [rowId = row.id] in
-                                guard let style = state.textStyleClipboard else { return }
-                                state.updateShapes([shape.id], in: rowId) { $0.applyTextStyle(style) }
-                            } : nil,
-                            onUpdateSelected: isMulti && allSelectedSameType ? { update in
-                                state.updateShapes(selectedShapeIds, in: row.id, update: update)
-                            } : nil,
-                            onDeleteSelected: isMulti ? {
-                                state.deleteSelectedShapes()
-                            } : nil,
-                            onAlignSelected: isMulti ? { alignment in
-                                state.alignSelectedShapes(alignment)
-                            } : nil,
-                            onMatchGeometryToThis: isMulti ? { [shapeId = shape.id] mode in
-                                state.matchShapeGeometry(toSource: shapeId, mode: mode)
-                            } : nil,
-                            onDuplicateToTemplates: row.templates.count > 1 ? { [shapeId = shape.id] direction in
-                                let ids = state.selectedShapeIds.isEmpty ? [shapeId] : state.selectedShapeIds
-                                state.duplicateShapesToTemplates(Set(ids), direction: direction)
-                            } : nil,
-                            onToggleLock: { [shapeId = shape.id] in
-                                if !state.selectedShapeIds.contains(shapeId) {
-                                    state.selectShape(shapeId, in: row.id)
-                                }
-                                state.toggleLockOnSelection()
-                            },
-                            lockToggleWillUnlock: isInSelection ? selectionFullyLocked : shape.resolvedIsLocked
+                            }
                         )
                     )
+                    .perShapeContextMenuOnTouchPlatforms {
+                        shapeContextMenu(for: shape, facts: facts)
+                    }
                 }
             }
 
@@ -627,6 +502,19 @@ extension EditorRowView {
         )
         .clipped()
         .contentShape(Rectangle())
+        // One menu for the whole canvas, resolving its target from the pointer. A `.contextMenu`
+        // per shape made SwiftUI build that shape's `NSMenuItem`s as part of every row body, which
+        // was over a tenth of a scrollbar-drag trace. Falls back to the row menu, which is what
+        // bubbling to `EditorRowView` used to give an empty-canvas right-click.
+        .canvasContextMenu {
+            if !state.viewMode.isViewMode,
+               let point = contextMenuPointStore.value,
+               let target = row.hitShape(at: point, among: resolvedShapes) {
+                shapeContextMenu(for: target, facts: facts)
+            } else {
+                rowMenuContent
+            }
+        }
         // Owns both the empty-canvas click (select the row) and drag-to-select; see the modifier
         // for why they must share one gesture.
         .canvasBackgroundGesture(
