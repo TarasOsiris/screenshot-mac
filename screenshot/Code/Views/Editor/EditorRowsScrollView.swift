@@ -12,13 +12,19 @@ struct EditorRowsScrollView<Content: View>: View {
     /// tracking areas and gesture responders, and while the list is moving AppKit re-derives them on
     /// each display cycle — `-[NSScrollView _updateTrackingAreasWithInvalidCursorRects:]` was one of
     /// the largest costs left in a scrollbar-drag trace. Nothing can be clicked mid-flight anyway.
-    @State private var isScrolling = false
+    ///
+    /// An object rather than a `@State` Bool published through an `EnvironmentKey`: the rows read
+    /// this too, and an environment *value* that changes invalidates every view declaring it —
+    /// which was all 13 realized rows re-running their bodies on every start and end of a scroll,
+    /// pinning the main thread during repeated trackpad flicks. The object's reference never
+    /// changes, and a row that has latched its chrome never reads the property.
+    @State private var scrollState = EditorScrollState()
 
     var body: some View {
         ScrollView(.vertical) {
             LazyVStack(spacing: 0) { content }
-                .allowsHitTesting(!isScrolling)
-                .environment(\.editorIsScrolling, isScrolling)
+                .allowsHitTesting(!scrollState.isScrolling)
+                .environment(scrollState)
         }
         .onScrollPhaseChange { _, phase in
             setScrolling(phase.movesContent)
@@ -28,10 +34,10 @@ struct EditorRowsScrollView<Content: View>: View {
     /// Restored without animation: re-enabling hit testing is a structural change to the responder
     /// tree, and any ambient animation reaching this subtree would otherwise drive it.
     private func setScrolling(_ scrolling: Bool) {
-        guard scrolling != isScrolling else { return }
+        guard scrolling != scrollState.isScrolling else { return }
         var transaction = Transaction()
         transaction.disablesAnimations = true
-        withTransaction(transaction) { isScrolling = scrolling }
+        withTransaction(transaction) { scrollState.isScrolling = scrolling }
     }
 }
 
@@ -57,15 +63,8 @@ private extension ScrollPhase {
     }
 }
 
-private struct EditorIsScrollingKey: EnvironmentKey {
-    static let defaultValue = false
-}
-
-extension EnvironmentValues {
-    /// True while the user is dragging or the list is decelerating. A row realized during that
-    /// window skips building its chrome — see `EditorRowView.showsChrome`.
-    var editorIsScrolling: Bool {
-        get { self[EditorIsScrollingKey.self] }
-        set { self[EditorIsScrollingKey.self] = newValue }
-    }
+/// Whether the editor's row list is being scrolled. See `EditorRowsScrollView.scrollState`.
+@Observable
+final class EditorScrollState {
+    var isScrolling = false
 }

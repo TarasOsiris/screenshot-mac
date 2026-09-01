@@ -20,11 +20,11 @@ struct EditorRowView: View {
     let requestShowcaseExport: (ScreenshotRow) -> Void
     @AppStorage(AppSettingsKeys.confirmBeforeDeleting) var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
     @Environment(\.reportDropFailure) var reportDropFailure
-    @Environment(\.editorIsScrolling) private var editorIsScrolling
+    @Environment(EditorScrollState.self) private var scrollState
     @State var activeAlert: RowAlert?
     @State var isSvgDialogPresented = false
     @State var contextMenuPointStore = ModelPointStore()
-    /// Latched once this row has shown its chrome, so a scroll that starts later cannot take it
+    /// Latched once this row has mounted its chrome, so a scroll that starts later cannot take it
     /// away again. Only a row realized *during* a scroll waits.
     @State private var chromeReady = false
     @State var dragSession = CanvasDragSession()
@@ -88,11 +88,6 @@ struct EditorRowView: View {
         return Color.clear
             .frame(height: EditorRowLayout.rowHeight(row: row, zoom: zoom, isPreviewMode: isPreviewMode))
             .overlay(alignment: .topLeading) { rowContent }
-            // Latch on appearance too, not only on the scroll ending: a row realized while the
-            // list is idle shows chrome from its first body via `showsChrome`, and without this it
-            // would lose it again the moment the next scroll began.
-            .onAppear { if !editorIsScrolling { chromeReady = true } }
-            .onChange(of: editorIsScrolling) { if !editorIsScrolling { chromeReady = true } }
     }
 
     /// The row header and the per-template control bars are ~15 controls and, with the bars, three
@@ -101,7 +96,12 @@ struct EditorRowView: View {
     /// that appears mid-scroll renders canvas-only and fills the same space with `Color.clear`.
     /// The reserved height must stay identical to `EditorRowLayout`'s, or chrome arriving would
     /// shift the layout, which is the very thing this is meant to stop.
-    var showsChrome: Bool { chromeReady || !editorIsScrolling }
+    ///
+    /// The `||` is load-bearing: `@Observable` tracking registers only what a body actually reads,
+    /// so once `chromeReady` is true the scroll flag is never read and this row stops re-running
+    /// on every start and end of a scroll. Reading it unconditionally re-ran every realized row
+    /// twice per trackpad flick.
+    var showsChrome: Bool { chromeReady || !scrollState.isScrolling }
 
     /// The row's real content, rendered in an `.overlay` of the fixed-height shell above.
     ///
@@ -138,6 +138,9 @@ struct EditorRowView: View {
                     ) {
                         rowMenuContent
                     }
+                    // The header is the chrome's first mount whether the row appeared idle or
+                    // waited for a scroll to end, so this is the one place the latch belongs.
+                    .onAppear { chromeReady = true }
                 } else {
                     Color.clear
                 }
