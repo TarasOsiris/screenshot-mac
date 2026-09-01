@@ -30,7 +30,6 @@ extension EditorRowView {
                         // RowPreviewView resolves the row's shapes itself — so hoisting these
                         // above the branch resolved every shape twice while previewing.
                         let resolved = LocaleService.resolveShapes(row.activeShapes, localeState: state.localeState)
-                        let rowSelectedShapeIds = state.selectedRowId == row.id ? state.selectedShapeIds : []
 
                         HStack(alignment: .top, spacing: 0) {
                             // Unified canvas with per-template scroll anchors. Rendered at
@@ -41,8 +40,7 @@ extension EditorRowView {
                                     dw: dw,
                                     dh: dh,
                                     ds: ds,
-                                    resolvedShapes: resolved,
-                                    selectedShapeIds: rowSelectedShapeIds
+                                    resolvedShapes: resolved
                                 )
                                     .frame(
                                         width: row.totalDisplayWidth(zoom: zoom),
@@ -65,7 +63,7 @@ extension EditorRowView {
                                 CanvasSelectionLayer(
                                     row: row,
                                     resolvedShapes: resolved,
-                                    selectedShapeIds: rowSelectedShapeIds,
+                                    selectedShapeIds: selectedShapeIds,
                                     visualScale: ds,
                                     dragSession: dragSession,
                                     textEditingShapeId: textEditingShapeId,
@@ -255,8 +253,7 @@ extension EditorRowView {
         dw: CGFloat,
         dh: CGFloat,
         ds: CGFloat,
-        resolvedShapes: [CanvasShapeModel],
-        selectedShapeIds: Set<UUID>
+        resolvedShapes: [CanvasShapeModel]
     ) -> some View {
         let isNonBaseLocale = !state.localeState.isBaseLocale
         let currentLocaleName: String? = isNonBaseLocale ? state.localeState.activeLocaleLabel : nil

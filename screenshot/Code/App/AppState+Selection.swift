@@ -33,8 +33,17 @@ extension AppState {
         finishContinuousEditIfNeeded()
         guard let rowIdx = rows.firstIndex(where: { $0.id == rowId }),
               rows[rowIdx].shapes.contains(where: { $0.id == shapeId }) else { return }
-        selectedRowId = rowId
-        selectedShapeIds = [shapeId]
+        // Guarded like the three siblings below: a same-value write still notifies every
+        // `@Observable` reader, and `selectedRowId` is read by the inspector, the properties bar
+        // and the command menus — so an unguarded write made a click in the already-selected row
+        // cost as much as one that actually moved rows.
+        if selectedRowId != rowId {
+            selectedRowId = rowId
+            visibleCanvasModelCenter = nil
+        }
+        if selectedShapeIds != [shapeId] {
+            selectedShapeIds = [shapeId]
+        }
     }
 
     func toggleShapeSelection(_ shapeId: UUID, in rowId: UUID) {

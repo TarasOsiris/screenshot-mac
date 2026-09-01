@@ -98,14 +98,23 @@ struct ContentView: View {
     private var editorRows: some View {
         let firstRowId = state.rows.first?.id
         let lastRowId = state.rows.last?.id
+        // Selection is read here, once, rather than in every row's body. Reading it per row put
+        // `\AppState.selectedRowId` in every row's tracking scope, so moving the selection to
+        // another row rebuilt every visible canvas; passed down as a value it goes through the
+        // `.equatable()` below, which lets all but the two affected rows keep their bodies.
+        let selectedRowId = state.selectedRowId
+        let selectedShapeIds = state.selectedShapeIds
         ForEach(state.rows) { row in
             // `.equatable()` so an edit in one row doesn't re-run every visible row's body
             // (see EditorRowView's Equatable).
+            let isSelected = row.id == selectedRowId
             EditorRowView(
                 state: state,
                 row: row,
                 isFirst: row.id == firstRowId,
                 isLast: row.id == lastRowId,
+                isSelected: isSelected,
+                selectedShapeIds: isSelected ? selectedShapeIds : [],
                 requestShowcaseExport: { presentShowcaseSheet(for: $0, mode: .singleRow) }
             )
                 .equatable()

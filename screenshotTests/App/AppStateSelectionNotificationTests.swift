@@ -1,0 +1,113 @@
+import AppKit
+@testable import Screenshot_Bro
+import Testing
+
+/// `selectedRowId` is read by the inspector, the properties bar and the macOS command menus, and
+/// until 4.10 it was read by *every* editor row's body too — so an unguarded same-value write cost
+/// as much as a real row change. `selectShape` must only write it when it actually changes.
+///
+/// This is pinned rather than left to review because `@Observable` notifies on same-value writes
+/// silently: nothing about the call site looks wrong, and the cost only shows up in a profile.
+@Suite(.serialized)
+@MainActor
+struct AppStateSelectionNotificationTests {
+
+    /// `withObservationTracking`'s `onChange` is `@Sendable`, so the flag it sets needs its own
+    /// lock rather than the test's main-actor isolation.
+    private nonisolated final class NotifiedFlag: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = false
+
+        func set() {
+            lock.lock()
+            value = true
+            lock.unlock()
+        }
+
+        var isSet: Bool {
+            lock.lock()
+            defer { lock.unlock() }
+            return value
+        }
+    }
+
+    /// True when `selectedRowId` was *notified*, whether or not its value changed — which is
+    /// exactly the property under test.
+    private func selectedRowIdDidNotify(_ state: AppState, during body: () -> Void) -> Bool {
+        let flag = NotifiedFlag()
+        withObservationTracking {
+            _ = state.selectedRowId
+        } onChange: {
+            flag.set()
+        }
+        body()
+        return flag.isSet
+    }
+
+    @Test func reselectingWithinTheSameRowDoesNotNotifySelectedRowId() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let row = try #require(state.rows.first)
+
+        state.addShape(CanvasShapeModel.defaultText(centerX: 100, centerY: 100))
+        state.addShape(CanvasShapeModel.defaultText(centerX: 300, centerY: 300))
+        let shapeIds = try #require(state.rows.first?.shapes.suffix(2).map(\.id))
+        try #require(shapeIds.count == 2)
+        state.selectShape(shapeIds[0], in: row.id)
+
+        let notified = selectedRowIdDidNotify(state) {
+            state.selectShape(shapeIds[1], in: row.id)
+        }
+
+        #expect(notified == false)
+        #expect(state.selectedShapeIds == [shapeIds[1]])
+    }
+
+    @Test func selectingOnAnotherRowNotifiesSelectedRowId() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let firstRow = try #require(state.rows.first)
+
+        state.addShape(CanvasShapeModel.defaultText(centerX: 100, centerY: 100))
+        let firstShapeId = try #require(state.rows.first?.shapes.last?.id)
+        state.selectShape(firstShapeId, in: firstRow.id)
+
+        // `addRow` selects the row it adds, so put the selection back on the first row — otherwise
+        // the tracked call below wouldn't be changing rows at all.
+        state.addRow()
+        let secondRow = try #require(state.rows.last)
+        try #require(secondRow.id != firstRow.id)
+        state.addShape(CanvasShapeModel.defaultText(centerX: 100, centerY: 100))
+        let secondShapeId = try #require(state.rows.last?.shapes.last?.id)
+        state.selectShape(firstShapeId, in: firstRow.id)
+        try #require(state.selectedRowId == firstRow.id)
+
+        let notified = selectedRowIdDidNotify(state) {
+            state.selectShape(secondShapeId, in: secondRow.id)
+        }
+
+        #expect(notified)
+        #expect(state.selectedRowId == secondRow.id)
+        #expect(state.selectedShapeIds == [secondShapeId])
+    }
+
+    /// `selectRow`, `toggleShapeSelection` and `selectShapes` all clear this on a row change;
+    /// `selectShape` used not to, so a shape added right after clicking into another row was
+    /// centred using the previous row's scroll position (`AppState+Shapes.shapeCenter`).
+    @Test func selectingOnAnotherRowClearsTheVisibleCanvasCenter() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let firstRow = try #require(state.rows.first)
+
+        state.addRow()
+        let secondRow = try #require(state.rows.last)
+        state.addShape(CanvasShapeModel.defaultText(centerX: 100, centerY: 100))
+        let shapeId = try #require(state.rows.last?.shapes.last?.id)
+
+        state.selectRow(firstRow.id)
+        state.visibleCanvasModelCenter = CGPoint(x: 999, y: 999)
+        state.selectShape(shapeId, in: secondRow.id)
+
+        #expect(state.visibleCanvasModelCenter == nil)
+    }
+}

@@ -10,6 +10,13 @@ struct EditorRowView: View {
     let row: ScreenshotRow
     let isFirst: Bool
     let isLast: Bool
+    /// Selection arrives as a value input rather than being read off `state`. Reading
+    /// `state.selectedRowId` in the body put it in *every* realized row's tracking scope, so moving
+    /// the selection to another row invalidated all of them — `.equatable()` can't intercept that,
+    /// because Observation marks the body dirty directly. Same reasoning as `isFirst`/`isLast`.
+    let isSelected: Bool
+    /// The shapes selected *in this row*; empty when the selection lives elsewhere.
+    let selectedShapeIds: Set<UUID>
     let requestShowcaseExport: (ScreenshotRow) -> Void
     @AppStorage(AppSettingsKeys.confirmBeforeDeleting) var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
     @Environment(\.reportDropFailure) var reportDropFailure
@@ -30,10 +37,6 @@ struct EditorRowView: View {
     @State var scrollAreaRealized = false
     @FocusState var isLabelFieldFocused: Bool
 
-    var isSelected: Bool {
-        state.selectedRowId == row.id
-    }
-
     var canMoveUp: Bool { !isFirst }
     var canMoveDown: Bool { !isLast }
     /// The only undeletable row is the sole row — i.e. both first and last.
@@ -44,15 +47,32 @@ struct EditorRowView: View {
 
     var isPreviewMode: Bool { state.viewMode.previewingRows.contains(row.id) }
 
-    @ViewBuilder
+    /// Always mounted, faded by opacity rather than inserted/removed. The fade has to be driven from
+    /// the chrome itself: an `.animation(value: isSelected)` on the row would put the whole canvas
+    /// — every `CanvasShapeView`, and the handle overlay being installed on one row and torn down on
+    /// the other — inside a 0.15s transaction, which is what `19e7ffe1` and `a0183ac5` removed
+    /// elsewhere. Interpolating opacity also beats animating a `Color.accentColor`/`.clear` swap,
+    /// which is an identity change SwiftUI can only cross-fade.
     private var selectionRule: some View {
-        if isSelected {
-            Rectangle()
-                .fill(Color.accentColor)
-                .frame(maxWidth: .infinity)
-                .frame(height: UIMetrics.BorderWidth.prominent)
-                .allowsHitTesting(false)
-        }
+        Rectangle()
+            .fill(Color.accentColor)
+            .frame(maxWidth: .infinity)
+            .frame(height: UIMetrics.BorderWidth.prominent)
+            .opacity(isSelected ? 1 : 0)
+            .allowsHitTesting(false)
+            .animation(Self.selectionFade, value: isSelected)
+    }
+
+    private static let selectionFade: Animation = .easeInOut(duration: 0.15)
+
+    private func selectionTint(_ base: Double) -> some View {
+        // `Rectangle().fill()` rather than a bare `Color`: on `Color`, `.opacity(_:)` resolves to
+        // `Color.opacity -> Color`, so it would animate a color *value* instead of the view's
+        // opacity — which is the thing this is trying to avoid.
+        Rectangle()
+            .fill(Color.accentColor.opacity(base))
+            .opacity(isSelected ? 1 : 0)
+            .animation(Self.selectionFade, value: isSelected)
     }
 
     var body: some View {
@@ -81,7 +101,11 @@ struct EditorRowView: View {
             ) {
                 rowMenuContent
             }
-            .background(isSelected ? Color.accentColor.opacity(UIMetrics.Opacity.accentRowHeader) : Color.clear)
+            .background { selectionTint(UIMetrics.Opacity.accentRowHeader) }
+            // Scoped to the header, which is pure chrome: it restores the fade its label, chevron
+            // and ellipsis had from the row-wide animation this replaced, without putting the
+            // canvas back inside an animated transaction.
+            .animation(Self.selectionFade, value: isSelected)
 
             if !row.isCollapsed {
                 horizontalScrollArea
@@ -132,10 +156,9 @@ struct EditorRowView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { tapSelectRow() }
-        .background(isSelected ? Color.accentColor.opacity(UIMetrics.Opacity.accentRowSelection) : Color.clear)
+        .background { selectionTint(UIMetrics.Opacity.accentRowSelection) }
         .overlay(alignment: .top) { selectionRule }
         .overlay(alignment: .bottom) { selectionRule }
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
         .contextMenuWithPreview {
             rowMenuContent
         } preview: {
@@ -180,5 +203,7 @@ extension EditorRowView: Equatable {
         lhs.row == rhs.row
             && lhs.isFirst == rhs.isFirst
             && lhs.isLast == rhs.isLast
+            && lhs.isSelected == rhs.isSelected
+            && lhs.selectedShapeIds == rhs.selectedShapeIds
     }
 }
