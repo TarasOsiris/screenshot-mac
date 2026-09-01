@@ -192,7 +192,10 @@ struct WithUndoTests {
         updated.fontSize = 96
         state.updateShapeContinuous(updated)
 
-        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontSize == 96)
+        // A burst composes in `liveShapeEdit` and lands in `rows` once, when it settles — so the
+        // document still reads 48 here, and the canvas is rendering the session's 96.
+        #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.fontSize == 48)
+        #expect(state.liveShapeEdit.liveShape(for: shape.id)?.fontSize == 96)
         #expect(!um.canUndo, "The debounced continuous edit has not registered yet")
         #expect(state.canUndoDocumentAction, "Document undo must be enabled while a continuous edit is pending")
 

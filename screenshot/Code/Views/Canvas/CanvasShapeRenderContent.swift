@@ -236,15 +236,36 @@ struct CanvasShapeRenderContent: View {
             hideCameraCutout: shape.hideCameraCutout ?? false
         )
 
-        if screenshotImage == nil && showsEditorHelpers {
-            imageDropPlaceholder { frame }
-        } else if showsEditorHelpers {
+        // `frame` keeps one structural position whether or not a screenshot is set — only the
+        // overlay's *content* varies. The `if screenshotImage == nil` branch this replaced re-keyed
+        // `DeviceModelFrameView` the moment a picked image arrived, discarding the `@State` raster
+        // its `canStandInFor` stand-in reads, so a pitched device snapped to the pose-less
+        // programmatic fallback and back. `showsEditorHelpers` is fixed per host (editor vs
+        // export/preview are separate trees), so branching on it is safe.
+        if showsEditorHelpers {
             frame
+                .frame(width: displayW, height: displayH)
+                .overlay { imageDropAffordances }
                 .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
                     onHandleDrop(providers)
                 }
         } else {
             frame
+        }
+    }
+
+    /// The "add image" button and drop highlight a device shows over its frame. Always installed as
+    /// an overlay so the frame beneath it is never re-keyed — see `deviceContent`.
+    @ViewBuilder
+    private var imageDropAffordances: some View {
+        let metrics = imagePlaceholderMetrics
+
+        if screenshotImage == nil {
+            imagePickerButton(metrics)
+        }
+
+        if isDropTargeted {
+            dropHighlight(cornerRadius: metrics.cornerRadius)
         }
     }
 
@@ -292,37 +313,52 @@ struct CanvasShapeRenderContent: View {
         #endif
     }
 
+    /// Icon, padding and corner radius scaled to the shape, shared by the image and device paths.
+    private var imagePlaceholderMetrics: (iconSize: CGFloat, padding: CGFloat, cornerRadius: CGFloat) {
+        let sizeRef = min(displayW, displayH)
+        return (
+            iconSize: min(28, max(14, sizeRef * 0.18)),
+            padding: min(12, max(4, sizeRef * 0.05)),
+            cornerRadius: min(8, max(4, sizeRef * 0.04))
+        )
+    }
+
+    private func imagePickerButton(_ metrics: (iconSize: CGFloat, padding: CGFloat, cornerRadius: CGFloat)) -> some View {
+        Button(action: onRequestImagePicker) {
+            Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
+                .font(.system(size: metrics.iconSize))
+                .foregroundStyle(.primary)
+                .padding(metrics.padding)
+                .background(
+                    .thinMaterial.opacity(isDropTargeted ? 0.9 : 1.0),
+                    in: RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
+                )
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .accessibilityLabel("Add Image")
+        .help("Add Image")
+        .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
+    }
+
+    @ViewBuilder
+    private func dropHighlight(cornerRadius: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(Color.accentColor.opacity(0.12))
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
+    }
+
     @ViewBuilder
     private func imageDropPlaceholder<Background: View>(@ViewBuilder background: () -> Background) -> some View {
-        let sizeRef = min(displayW, displayH)
-        let iconSize = min(28, max(14, sizeRef * 0.18))
-        let padding = min(12, max(4, sizeRef * 0.05))
-        let cornerRadius = min(8, max(4, sizeRef * 0.04))
+        let metrics = imagePlaceholderMetrics
 
         ZStack {
             background()
-
-            Button(action: onRequestImagePicker) {
-                Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
-                    .font(.system(size: iconSize))
-                    .foregroundStyle(.primary)
-                    .padding(padding)
-                    .background(
-                        .thinMaterial.opacity(isDropTargeted ? 0.9 : 1.0),
-                        in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    )
-            }
-            .buttonStyle(.plain)
-            .focusable(false)
-            .accessibilityLabel("Add Image")
-            .help("Add Image")
-            .animation(.easeInOut(duration: 0.12), value: isDropTargeted)
+            imagePickerButton(metrics)
 
             if isDropTargeted {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.12))
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
+                dropHighlight(cornerRadius: metrics.cornerRadius)
             }
         }
         .frame(width: displayW, height: displayH)

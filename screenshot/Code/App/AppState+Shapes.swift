@@ -69,8 +69,13 @@ extension AppState {
     }
 
     /// Update shape without registering undo on every call — undo is captured once at the start
-    /// and finalized after changes stop (debounced via `edits.shapeEdit`). Application of the
-    /// value is throttled to ~30fps (`edits.shapeEditThrottle`) to avoid expensive re-renders per tick.
+    /// and finalized after changes stop (debounced via `edits.shapeEdit`).
+    ///
+    /// The value does **not** reach `rows` per tick. It goes to `liveShapeEdit`, which only the
+    /// edited shape and the control being dragged observe; `rows` is written once when the burst
+    /// settles. Writing `rows` at the throttle's ~30fps re-ran the row builder, the whole edited
+    /// row, the properties bar and any open popover on every tick, which cost more main-thread
+    /// time than the drag had. The throttle stays, so the canvas re-renders at most ~30fps.
     func updateShapeContinuous(_ shape: CanvasShapeModel) {
         if let activeShapeId = edits.shapeEdit.activeId, activeShapeId != shape.id {
             finishContinuousEditIfNeeded()
@@ -84,12 +89,13 @@ extension AppState {
             edits.shapeEdit.begin(id: shape.id) { [weak self] in
                 guard let self else { return }
                 self.edits.shapeEditThrottle.flush()
+                self.commitLiveShapeEdit()
                 self.registerUndoForRowWithBase("Edit Shape", baseRow: baseRow, baseLocaleState: baseLocaleState)
                 self.edits.shapeEditThrottle.reset()
             }
         }
 
-        edits.shapeEditThrottle.submit { [weak self] in self?.applyContinuousEdit(shape) }
+        edits.shapeEditThrottle.submit { [weak self] in self?.liveShapeEdit.update(shape) }
         edits.shapeEdit.arm()
     }
 
@@ -98,12 +104,23 @@ extension AppState {
         edits.shapeEdit.finish()
     }
 
+    /// Writes the burst's final value into the document and clears the session. Called from the
+    /// coalescer's finish action, *before* the undo step is registered — the step is registered
+    /// against a base captured at the start of the burst, so it has to see the landed value.
+    func commitLiveShapeEdit() {
+        defer { liveShapeEdit.end() }
+        guard let shape = liveShapeEdit.shape else { return }
+        applyContinuousEdit(shape)
+    }
+
     func applyContinuousEdit(_ shape: CanvasShapeModel) {
         guard let location = shapeLocation(for: shape.id) else { return }
         let rowIdx = location.rowIndex
         let shapeIdx = location.shapeIndex
         let baseShape = rows[rowIdx].shapes[shapeIdx]
-        rows[rowIdx].shapes[shapeIdx] = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
+        let updated = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
+        guard updated != baseShape else { return }
+        rows[rowIdx].shapes[shapeIdx] = updated
         scheduleSave()
     }
 

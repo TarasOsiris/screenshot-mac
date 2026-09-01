@@ -80,7 +80,7 @@ extension ShapePropertiesSingleSelectionBar {
         // Enable/disable toggles both fields together against the live selection — same shape as the
         // outline toggle. Background is a base-shape (non-localized) style, so writes land on base.
         let isOn = Binding<Bool>(
-            get: { liveShape(shapeId)?.textBackgroundColorData != nil },
+            get: { editingShape(shapeId)?.textBackgroundColorData != nil },
             set: { enabled in
                 guard let i = idx(for: shapeId) else { return }
                 var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
@@ -99,7 +99,7 @@ extension ShapePropertiesSingleSelectionBar {
             set: { opacity.wrappedValue = Double($0) / 100 }
         )
         let hasOutline = Binding<Bool>(
-            get: { (liveShape(shapeId)?.textBackgroundOutlineWidth ?? 0) > 0 },
+            get: { (editingShape(shapeId)?.textBackgroundOutlineWidth ?? 0) > 0 },
             set: { enabled in
                 guard let i = idx(for: shapeId) else { return }
                 var updated = resolvedShape(at: i.row, shapeIdx: i.shape)

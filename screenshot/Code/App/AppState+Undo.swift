@@ -198,6 +198,8 @@ extension AppState {
     func cancelPendingDebounceTasks() {
         textEdit.clearInlineTextCommit()
         edits.cancelAll()
+        // Dropped, not committed: the in-flight value belongs to a document that is going away.
+        liveShapeEdit.end()
         // The zoom throttle used to live in `edits` and be reset by cancelAll(). Drop, don't
         // flush: the pending value belongs to a document that is going away.
         zoom.cancelContinuous()

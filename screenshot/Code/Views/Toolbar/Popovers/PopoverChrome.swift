@@ -30,7 +30,9 @@ struct PopoverHeader: View {
     var badgeHelp: LocalizedStringKey?
     let resetLabel: LocalizedStringKey
     let resetHelp: LocalizedStringKey
-    let isResetDisabled: Bool
+    /// A closure, not a `Bool`: callers derive it from the value a slider is dragging, and
+    /// evaluating it in the caller's body would re-run that whole popover on every tick.
+    let isResetDisabled: () -> Bool
     let onReset: () -> Void
 
     var body: some View {
@@ -58,7 +60,7 @@ struct PopoverHeader: View {
                 .scaledFont(UIMetrics.FontSize.body)
             }
             .buttonStyle(.borderless)
-            .disabled(isResetDisabled)
+            .disabled(isResetDisabled())
             .help(resetHelp)
         }
     }

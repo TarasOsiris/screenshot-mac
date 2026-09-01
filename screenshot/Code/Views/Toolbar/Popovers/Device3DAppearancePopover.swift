@@ -37,8 +37,9 @@ struct Device3DAppearancePopover: View {
                 lightingSliders
             }
             Section {
-                Button("Reset all", role: .destructive, action: resetAll)
-                    .disabled(!hasAnyOverride)
+                // Wrapped so the override check reads the bindings in its own body, not this one —
+                // see `rotationSliders`.
+                ResetAllButton(isDisabled: { !hasAnyOverride }, action: resetAll)
             } footer: {
                 Text("3D device rendering is an experimental feature")
             }
@@ -53,7 +54,7 @@ struct Device3DAppearancePopover: View {
             badgeHelp: "3D device rendering is an experimental feature",
             resetLabel: "Reset all",
             resetHelp: "Reset rotation, material, and lighting to defaults",
-            isResetDisabled: !hasAnyOverride,
+            isResetDisabled: { !hasAnyOverride },
             onReset: resetAll
         )
     }
@@ -64,21 +65,17 @@ struct Device3DAppearancePopover: View {
         rotationSliders
     }
 
+    /// Nothing here reads `pitch`, `yaw`, `material` or `lighting`. Each row formats its own
+    /// readout from its binding, so a 30 Hz drag re-evaluates that one row instead of this body —
+    /// which would otherwise drag the segmented `Picker` below through a full `updateNSView` and
+    /// AppKit layout on every tick.
     @ViewBuilder
     private var rotationSliders: some View {
-        PopoverSliderRow(
-            label: "Pitch",
-            value: $pitch,
-            range: -90...90,
-            displayValue: "\(Int(pitch.rounded()))°"
-        )
-        PopoverSliderRow(
-            label: "Yaw",
-            value: $yaw,
-            range: -90...90,
-            displayValue: "\(Int(yaw.rounded()))°"
-        )
+        PopoverSliderRow(label: "Pitch", value: $pitch, range: -90...90, format: Self.degrees)
+        PopoverSliderRow(label: "Yaw", value: $yaw, range: -90...90, format: Self.degrees)
     }
+
+    private static let degrees: (Double) -> String = { "\(Int($0.rounded()))°" }
 
     @ViewBuilder
     private var materialSection: some View {
@@ -106,27 +103,10 @@ struct Device3DAppearancePopover: View {
 
     @ViewBuilder
     private var lightingSliders: some View {
-        PopoverSliderRow(
-            label: "Ambient",
-            value: ambientBinding,
-            range: DeviceLighting.ambientIntensityRange,
-            displayValue: intLabel(lighting.resolvedAmbientIntensity)
-        )
-        PopoverSliderRow(
-            label: "Key",
-            value: keyBinding,
-            range: DeviceLighting.keyIntensityRange,
-            displayValue: intLabel(lighting.resolvedKeyIntensity)
-        )
-        PopoverSliderRow(
-            label: "Rim",
-            value: rimBinding,
-            range: DeviceLighting.rimIntensityRange,
-            displayValue: intLabel(lighting.resolvedRimIntensity)
-        )
+        PopoverSliderRow(label: "Ambient", value: ambientBinding, range: DeviceLighting.ambientIntensityRange)
+        PopoverSliderRow(label: "Key", value: keyBinding, range: DeviceLighting.keyIntensityRange)
+        PopoverSliderRow(label: "Rim", value: rimBinding, range: DeviceLighting.rimIntensityRange)
     }
-
-    private func intLabel(_ value: Double) -> String { "\(Int(value.rounded()))" }
 
     private var hasAnyOverride: Bool {
         canResetRotation || !material.isEmpty || !lighting.isEmpty
@@ -137,6 +117,18 @@ struct Device3DAppearancePopover: View {
         lighting = DeviceLighting()
         if canResetRotation { onResetRotation() }
     }
+
+    #if !os(macOS)
+    private struct ResetAllButton: View {
+        let isDisabled: () -> Bool
+        let action: () -> Void
+
+        var body: some View {
+            Button("Reset all", role: .destructive, action: action)
+                .disabled(isDisabled())
+        }
+    }
+    #endif
 
     private var finishBinding: Binding<DeviceBodyFinish> {
         Binding(get: { material.resolvedFinish }, set: { material.finish = $0 })

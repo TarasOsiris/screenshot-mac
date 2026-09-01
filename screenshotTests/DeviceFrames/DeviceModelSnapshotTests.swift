@@ -107,6 +107,31 @@ struct DeviceModelSnapshotTests {
         #expect(noImage.isCacheable, "An empty device frame is safely cacheable")
     }
 
+    // MARK: - Pose quantization
+
+    /// A rotation slider sweeps far finer than a pixel of silhouette. Without a rung, every mouse
+    /// position was a distinct key: one sweep evicted the whole snapshot cache and nothing ever
+    /// hit it on the way back.
+    @Test func poseAnglesWithinOneRungShareAKey() throws {
+        let frame = try modelFrame()
+        let step = DeviceModelRenderer.snapshotAngleStep
+        #expect(key(frame: frame, image: nil, identity: nil, pitch: -22) ==
+                key(frame: frame, image: nil, identity: nil, pitch: -22 + step / 4))
+    }
+
+    @Test func poseAnglesARungApartDoNotShareAKey() throws {
+        let frame = try modelFrame()
+        let step = DeviceModelRenderer.snapshotAngleStep
+        #expect(key(frame: frame, image: nil, identity: nil, pitch: -22) !=
+                key(frame: frame, image: nil, identity: nil, pitch: -22 - step))
+    }
+
+    /// The rung must stay small enough that a slider still feels continuous.
+    @Test func poseRungIsSubDegree() {
+        #expect(DeviceModelRenderer.snapshotAngleStep > 0)
+        #expect(DeviceModelRenderer.snapshotAngleStep <= 0.5)
+    }
+
     // MARK: - Helpers
 
     private func key(

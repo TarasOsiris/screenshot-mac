@@ -83,15 +83,13 @@ extension ShapePropertiesSingleSelectionBar {
     ) -> Binding<Double> {
         Binding(
             get: {
-                guard let i = idx(for: shapeId) else {
+                guard let shape = editingShape(shapeId) else {
                     return CanvasShapeModel.placeholder[keyPath: defaultValue]
                 }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
                 return shape[keyPath: keyPath] ?? shape[keyPath: defaultValue]
             },
             set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var resolved = editingShape(shapeId) else { return }
                 resolved[keyPath: keyPath] = newValue
                 state.updateShapeContinuous(resolved)
             }
@@ -118,13 +116,9 @@ extension ShapePropertiesSingleSelectionBar {
         isEmpty: @escaping (T) -> Bool
     ) -> Binding<T> {
         Binding(
-            get: {
-                guard let i = idx(for: shapeId) else { return fallback }
-                return state.rows[i.row].shapes[i.shape][keyPath: keyPath] ?? fallback
-            },
+            get: { editingShape(shapeId)?[keyPath: keyPath] ?? fallback },
             set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var resolved = editingShape(shapeId) else { return }
                 resolved[keyPath: keyPath] = isEmpty(newValue) ? nil : newValue
                 state.updateShapeContinuous(resolved)
             }

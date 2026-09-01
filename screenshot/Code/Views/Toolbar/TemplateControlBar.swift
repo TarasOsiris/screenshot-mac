@@ -288,12 +288,10 @@ struct TemplateControlBar: View {
     }
 
     private var blurSlider: some View {
-        let blur = continuousTemplateBinding(\.backgroundBlur)
-        return PopoverSliderRow(
+        PopoverSliderRow(
             label: "Blur",
-            value: blur,
-            range: 0...100,
-            displayValue: "\(Int(blur.wrappedValue))"
+            value: continuousTemplateBinding(\.backgroundBlur),
+            range: 0...100
         )
     }
 

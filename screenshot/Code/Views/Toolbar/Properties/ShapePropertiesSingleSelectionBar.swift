@@ -80,16 +80,37 @@ struct ShapePropertiesSingleSelectionBar: View {
         return (ri, si)
     }
 
-    /// The selected shape with locale overrides applied (for display).
-    func resolvedShape(at rowIndex: Int, shapeIdx: Int) -> CanvasShapeModel {
+    /// The document's value for the selected shape, with locale overrides applied — deliberately
+    /// blind to an in-flight slider drag.
+    ///
+    /// Only `body` may use this. Every control reads `resolvedShape`/`liveShape` instead, which see
+    /// the drag; reading *those* in `body` would put the ~30 Hz value in this bar's tracking scope
+    /// and rebuild all fifteen control sections on every tick, which is the cost
+    /// `LiveShapeEditSession` exists to remove.
+    func documentShape(at rowIndex: Int, shapeIdx: Int) -> CanvasShapeModel {
         let base = state.rows[rowIndex].shapes[shapeIdx]
         return LocaleService.resolveShape(base, localeState: state.localeState)
     }
 
-    /// Resolves a shape by id at call time. Popover content that the iPad docked panel keeps
-    /// across updates must read through this instead of capturing a shape value.
-    func liveShape(_ shapeId: UUID) -> CanvasShapeModel? {
-        idx(for: shapeId).map { resolvedShape(at: $0.row, shapeIdx: $0.shape) }
+    /// The selected shape as a control must see it: the value an in-flight continuous edit is
+    /// composing — which by design has not reached `rows` yet — else the document's, with locale
+    /// overrides applied.
+    ///
+    /// Reading the live value matters for writes as much as for display. A control that captured
+    /// the document's shape mid-burst and wrote it back would revert the drag that is still
+    /// settling. Observation attributes a read to whichever body is running when the getter fires,
+    /// so a `Binding` built in `body` but read inside a leaf only invalidates that leaf.
+    func resolvedShape(at rowIndex: Int, shapeIdx: Int) -> CanvasShapeModel {
+        let base = state.rows[rowIndex].shapes[shapeIdx]
+        if let live = state.liveShapeEdit.liveShape(for: base.id) { return live }
+        return LocaleService.resolveShape(base, localeState: state.localeState)
+    }
+
+    /// `resolvedShape` by id, resolved at call time. Popover content that the iPad docked panel
+    /// keeps across updates must read through this instead of capturing a shape value.
+    func editingShape(_ shapeId: UUID) -> CanvasShapeModel? {
+        if let live = state.liveShapeEdit.liveShape(for: shapeId) { return live }
+        return idx(for: shapeId).map { documentShape(at: $0.row, shapeIdx: $0.shape) }
     }
 
     /// Whether the selected shape has any locale override for the active locale.
@@ -106,7 +127,7 @@ struct ShapePropertiesSingleSelectionBar: View {
 
     var body: some View {
         if let rowIndex, let shapeIdx = shapeIndex {
-            let shape = resolvedShape(at: rowIndex, shapeIdx: shapeIdx)
+            let shape = documentShape(at: rowIndex, shapeIdx: shapeIdx)
             let shapeId = shape.id
 
             HStack(spacing: 0) {

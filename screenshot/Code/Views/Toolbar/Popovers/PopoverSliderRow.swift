@@ -3,11 +3,25 @@ import SwiftUI
 /// Label + slider + numeric readout row shared by the property popovers
 /// (`ShadowPopover`, `Device3DAppearancePopover`): dense column layout
 /// on macOS, touch-sized Form row on iPad.
+///
+/// The readout is derived here, from the binding, rather than handed down as a formatted string:
+/// a slider drag runs at ~30 Hz, and computing the string in the parent made the parent read the
+/// value — so every tick re-evaluated the whole popover, including its segmented `Picker`'s
+/// `updateNSView`. Formatting inside this row keeps the tick scoped to the row being dragged.
 struct PopoverSliderRow: View {
     let label: LocalizedStringKey
     @Binding var value: Double
     let range: ClosedRange<Double>
-    let displayValue: String
+    let format: (Double) -> String
+
+    /// Rounded whole number — what almost every caller wants.
+    init(label: LocalizedStringKey, value: Binding<Double>, range: ClosedRange<Double>,
+         format: @escaping (Double) -> String = { "\(Int($0.rounded()))" }) {
+        self.label = label
+        self._value = value
+        self.range = range
+        self.format = format
+    }
 
     var body: some View {
         HStack(spacing: 8) {
@@ -21,7 +35,7 @@ struct PopoverSliderRow: View {
             #endif
             Slider(value: $value, in: range)
                 .controlSize(.regular)
-            Text(displayValue)
+            Text(format(value))
                 #if os(macOS)
                 .frame(width: 44, alignment: .trailing)
                 #else

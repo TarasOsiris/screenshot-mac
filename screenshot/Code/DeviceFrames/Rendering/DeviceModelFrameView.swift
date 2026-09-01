@@ -193,10 +193,12 @@ struct DeviceModelFrameView: View {
             }
             return
         }
-        guard !Task.isCancelled else { return }
-
+        // Cached before the cancellation check, not after: a superseded render is still a correct
+        // raster for its key, and a rotation slider swings back across poses it just paid for.
         let image = NSImage(cgImage: rendered, size: request.pointSize)
         DeviceModelRenderer.storeSnapshot(image, for: key)
+
+        guard !Task.isCancelled else { return }
         renderedSnapshotKey = key
         renderedSnapshotImage = image
     }

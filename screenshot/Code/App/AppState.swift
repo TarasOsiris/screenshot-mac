@@ -123,6 +123,11 @@ final class AppState {
     /// Arrow-key nudge / Delete. See CanvasKeyCommandMonitor.
     @ObservationIgnored let keyCommands = CanvasKeyCommandMonitor()
 
+    /// The shape a continuous edit is composing, before it reaches `rows`. Observed — unlike
+    /// `edits` — because the canvas and the properties-bar controls render from it mid-drag.
+    /// See `LiveShapeEditSession`.
+    let liveShapeEdit = LiveShapeEditSession()
+
     /// The shape targeted by an in-flight continuous edit (nil when idle).
     var continuousEditShapeId: UUID? { edits.shapeEdit.activeId }
     /// The row targeted by an in-flight continuous row edit (nil when idle).

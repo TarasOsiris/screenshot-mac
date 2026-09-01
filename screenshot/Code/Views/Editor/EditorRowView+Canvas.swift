@@ -95,6 +95,7 @@ extension EditorRowView {
                                     selectedShapeIds: selectedShapeIds,
                                     visualScale: ds,
                                     dragSession: dragSession,
+                                    liveShapeEdit: state.liveShapeEdit,
                                     textEditingShapeId: textEditingShapeId,
                                     onUpdate: { state.updateShape($0) }
                                 )
@@ -342,249 +343,253 @@ extension EditorRowView {
                 row: row,
                 shapes: resolvedShapes,
                 displayScale: ds
-            ) { shape, clipRect in
-                let isInSelection = selectedShapeIds.contains(shape.id)
+            ) { baseShape, clipRect in
+                let isInSelection = selectedShapeIds.contains(baseShape.id)
                 let isMulti = isInSelection && selectedShapeIds.count > 1
 
-                CanvasShapeView(
-                    shape: shape,
-                    displayScale: ds,
-                    // Canvas now renders at full scale (no outer `.scaleEffect`), so `zoom`
-                    // is folded into `displayScale` here — pass 1.0 like the selection layer.
-                    zoom: 1.0,
-                    isSelected: isInSelection,
-                    isMultiSelected: isMulti,
-                    screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
-                    screenshotImageIdentity: shape.displayImageFileName,
-                    fillImage: shape.fillImageConfig?.fileName.flatMap { state.screenshotImages[$0] },
-                    defaultDeviceBodyColor: row.defaultDeviceBodyColor,
-                    deviceModelRenderingMode: .snapshot,
-                    clipBounds: clipRect,
-                    showsEditorHelpers: !state.viewMode.isViewMode,
-                    allowSynchronousSvgRender: false,
-                    dragSession: dragSession,
-                    availableFontFamilies: state.availableFontFamilySet,
-                    interactions: CanvasShapeInteractions(
-                        // View mode: shapes are inert. The FAB sits in an overlay above the
-                        // canvas, but the shape tap is a `.simultaneousGesture` that co-recognizes
-                        // with the button tap, so a tap on the FAB can still reach a shape here.
-                        // Guard so any leaked tap can't select; `setViewMode` deselects regardless
-                        // of gesture order, leaving the canvas untouched.
-                        onSelect: { guard !state.viewMode.isViewMode else { return }; state.selectShape(shape.id, in: row.id) },
-                        onShiftSelect: { guard !state.viewMode.isViewMode else { return }; state.toggleShapeSelection(shape.id, in: row.id) },
-                        onUpdate: { state.updateShape($0) },
-                        onDelete: { state.deleteShape(shape.id) },
-                        onScreenshotDrop: { image, origin in
-                            state.saveImage(image, for: shape.id, source: origin)
-                        },
-                        onRequestImagePicker: {
-                            pickerTargetShapeId = shape.id
-                            isImagePickerPresented = true
-                        },
-                        onClearImage: {
-                            state.clearImage(for: shape.id)
-                        },
-                        onRemoveBackground: shape.type == .image ? {
-                            state.removeImageBackground(for: shape.id) { message in
-                                activeAlert = .backgroundRemovalFailed(message)
-                            }
-                        } : nil,
-                        onCaptureSimulator: simulatorCaptureAction(for: shape),
-                        onDragSnap: { draggedShape, rawOffset in
-                            let targets: [AlignmentService.OtherShapeBounds]
-                            if let cached = dragSession.cachedSnapTargets {
-                                targets = cached
-                            } else if isInSelection {
-                                let filtered = AlignmentService.makeSnapTargets(
-                                    from: resolvedShapes.filter { !selectedShapeIds.contains($0.id) }
-                                )
-                                dragSession.cachedSnapTargets = filtered
-                                targets = filtered
-                            } else {
-                                let filtered = AlignmentService.makeSnapTargets(
-                                    from: resolvedShapes.filter { $0.id != draggedShape.id }
-                                )
-                                dragSession.cachedSnapTargets = filtered
-                                targets = filtered
-                            }
-                            let threshold = 4 / row.displayScale(zoom: zoom)
-                            let result = AlignmentService.computeSnap(
-                                draggedShape: draggedShape,
-                                dragOffset: rawOffset,
-                                otherShapeBounds: targets,
-                                templateWidth: row.templateWidth,
-                                templateHeight: row.templateHeight,
-                                templateCount: row.templates.count,
-                                snapThreshold: threshold
-                            )
-                            if dragSession.activeGuides != result.guides {
-                                dragSession.activeGuides = result.guides
-                            }
-                            return result
-                        },
-                        onDragEnd: {
-                            dragSession.endDrag()
-                        },
-                        onOptionDragDuplicate: { shapeId in
-                            if isMulti {
-                                state.duplicateShapesForOptionDrag()
-                                return nil
-                            }
-                            return state.duplicateShapeForOptionDrag(shapeId)
-                        },
-                        onDragProgress: { offset in
-                            // Same-value writes still notify @Observable observers, so only
-                            // touch draggingShapeId on the first tick of a drag.
-                            if dragSession.draggingShapeId != shape.id {
-                                dragSession.draggingShapeId = shape.id
-                            }
-                            dragSession.activeDragOffset = offset
-                        },
-                        onGroupDragEnd: { offset in
-                            state.applyGroupDrag(offset: offset)
-                            dragSession.endDrag()
-                        },
-                        onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
-                        onEditingTextChanged: { editing in
-                            if state.textEdit.isActive != editing { state.textEdit.isActive = editing }
-                            if editing {
-                                if textEditingShapeId != shape.id { textEditingShapeId = shape.id }
-                            } else if textEditingShapeId == shape.id {
-                                textEditingShapeId = nil
-                            }
-                        },
-                        onCommitInlineText: { text, richText in
-                            state.commitInlineText(
-                                shapeId: shape.id,
-                                text: text,
-                                richText: richText,
-                                forLocaleCode: state.localeState.activeLocaleCode
-                            )
-                        },
-                        onInlineTextEditChanged: { shapeId, liveText, endEditing in
-                            if let liveText {
-                                // Capture the editing locale now so a flush after the active
-                                // locale changes still commits to the locale being edited.
-                                let localeCode = state.localeState.activeLocaleCode
-                                state.textEdit.registerInlineTextCommit(for: shapeId, endEditing: endEditing) {
-                                    let value = liveText()
-                                    state.commitInlineText(
-                                        shapeId: shapeId,
-                                        text: value.text,
-                                        richText: value.richText,
-                                        forLocaleCode: localeCode
-                                    )
+                // Everything below reads the *live* shape, so a properties-bar slider drag
+                // re-evaluates this one shape rather than the whole row. See `LiveShapeContent`.
+                LiveShapeContent(baseShape: baseShape, session: state.liveShapeEdit) { shape in
+                    CanvasShapeView(
+                        shape: shape,
+                        displayScale: ds,
+                        // Canvas now renders at full scale (no outer `.scaleEffect`), so `zoom`
+                        // is folded into `displayScale` here — pass 1.0 like the selection layer.
+                        zoom: 1.0,
+                        isSelected: isInSelection,
+                        isMultiSelected: isMulti,
+                        screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
+                        screenshotImageIdentity: shape.displayImageFileName,
+                        fillImage: shape.fillImageConfig?.fileName.flatMap { state.screenshotImages[$0] },
+                        defaultDeviceBodyColor: row.defaultDeviceBodyColor,
+                        deviceModelRenderingMode: .snapshot,
+                        clipBounds: clipRect,
+                        showsEditorHelpers: !state.viewMode.isViewMode,
+                        allowSynchronousSvgRender: false,
+                        dragSession: dragSession,
+                        availableFontFamilies: state.availableFontFamilySet,
+                        interactions: CanvasShapeInteractions(
+                            // View mode: shapes are inert. The FAB sits in an overlay above the
+                            // canvas, but the shape tap is a `.simultaneousGesture` that co-recognizes
+                            // with the button tap, so a tap on the FAB can still reach a shape here.
+                            // Guard so any leaked tap can't select; `setViewMode` deselects regardless
+                            // of gesture order, leaving the canvas untouched.
+                            onSelect: { guard !state.viewMode.isViewMode else { return }; state.selectShape(shape.id, in: row.id) },
+                            onShiftSelect: { guard !state.viewMode.isViewMode else { return }; state.toggleShapeSelection(shape.id, in: row.id) },
+                            onUpdate: { state.updateShape($0) },
+                            onDelete: { state.deleteShape(shape.id) },
+                            onScreenshotDrop: { image, origin in
+                                state.saveImage(image, for: shape.id, source: origin)
+                            },
+                            onRequestImagePicker: {
+                                pickerTargetShapeId = shape.id
+                                isImagePickerPresented = true
+                            },
+                            onClearImage: {
+                                state.clearImage(for: shape.id)
+                            },
+                            onRemoveBackground: shape.type == .image ? {
+                                state.removeImageBackground(for: shape.id) { message in
+                                    activeAlert = .backgroundRemovalFailed(message)
                                 }
-                            } else {
-                                state.textEdit.clearInlineTextCommit(for: shapeId)
-                            }
-                        },
-                        onFormatBarStateChanged: { selState, controller in
-                            state.textEdit.richTextSelectionState = selState
-                            state.textEdit.richTextFormatController = controller
-                        },
-                        onFormatBarAnchorChanged: { anchor in
-                            state.textEdit.richTextFormatBarAnchor = anchor
-                        },
-                        onMatchDeviceSizes: shape.type == .device ? {
-                            let matchingIds = Set(row.activeShapes.filter { other in
-                                other.id != shape.id &&
-                                other.type == .device &&
-                                other.deviceCategory == shape.deviceCategory
-                            }.map(\.id))
-                            guard !matchingIds.isEmpty else { return }
-                            state.updateShapes(matchingIds, in: row.id) { other in
-                                other.width = shape.width
-                                other.height = shape.height
-                            }
-                        } : nil,
-                        onMatchSelectedDeviceSizes: (isMulti && shape.type == .device && allSelectedAreDevices) ? {
-                            let targetIds = selectedShapeIds.subtracting([shape.id])
-                            guard !targetIds.isEmpty else { return }
-                            state.updateShapes(targetIds,
-                                               in: row.id,
-                                               undoName: "Match Size to Selected Devices") { other in
-                                other.width = shape.width
-                                other.height = shape.height
-                            }
-                        } : nil,
-                        onCenterShape: { axis in
-                            let targets: Set<UUID> = (isMulti && selectedShapeIds.contains(shape.id))
-                                ? selectedShapeIds : [shape.id]
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                state.centerShapes(targets, in: row.id, axis: axis)
-                            }
-                        },
-                        onTranslate: (shape.type == .text && isNonBaseLocale) ? {
-                            state.localeMenu.pendingTranslateShapeId = shape.id
-                        } : nil,
-                        translateLocaleName: currentLocaleName,
-                        onTranslateAllLocales: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
-                            let isMultiText = selectedShapeIds.count > 1 && selectedShapeIds.contains(shape.id)
-                            if isMultiText {
-                                let translatableIds: Set<UUID> = Set(
-                                    row.activeShapes
-                                        .filter { selectedShapeIds.contains($0.id) && $0.hasTranslatableText }
-                                        .map(\.id)
+                            } : nil,
+                            onCaptureSimulator: simulatorCaptureAction(for: shape),
+                            onDragSnap: { draggedShape, rawOffset in
+                                let targets: [AlignmentService.OtherShapeBounds]
+                                if let cached = dragSession.cachedSnapTargets {
+                                    targets = cached
+                                } else if isInSelection {
+                                    let filtered = AlignmentService.makeSnapTargets(
+                                        from: resolvedShapes.filter { !selectedShapeIds.contains($0.id) }
+                                    )
+                                    dragSession.cachedSnapTargets = filtered
+                                    targets = filtered
+                                } else {
+                                    let filtered = AlignmentService.makeSnapTargets(
+                                        from: resolvedShapes.filter { $0.id != draggedShape.id }
+                                    )
+                                    dragSession.cachedSnapTargets = filtered
+                                    targets = filtered
+                                }
+                                let threshold = 4 / row.displayScale(zoom: zoom)
+                                let result = AlignmentService.computeSnap(
+                                    draggedShape: draggedShape,
+                                    dragOffset: rawOffset,
+                                    otherShapeBounds: targets,
+                                    templateWidth: row.templateWidth,
+                                    templateHeight: row.templateHeight,
+                                    templateCount: row.templates.count,
+                                    snapThreshold: threshold
                                 )
-                                guard !translatableIds.isEmpty else { return }
-                                state.localeMenu.pendingFanOutTranslateShapeIds = translatableIds
-                            } else {
-                                state.localeMenu.pendingFanOutTranslateShapeIds = [shape.id]
-                            }
-                        } : nil,
-                        translateAllLocalesDisabled: state.localeMenu.isFanOutTranslating,
-                        onResetAllTranslations: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
-                            state.resetAllTranslations(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
-                        } : nil,
-                        // Closure so the O(overrides) walk runs when the context menu opens,
-                        // not for every text shape on every render.
-                        resetAllTranslationsDisabled: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0)
-                            ? { !state.anyTranslationOrOverride(shapeIds: isMulti ? selectedTextShapeIds : [shape.id]) }
-                            : { false },
-                        reuseTranslationTargets: shape.type == .text ? {
-                            state.reusableTranslationTargets(excludingShapeId: shape.id)
-                                .map { (key: $0.key, label: $0.baseText.singleLineMenuLabel()) }
-                        } : nil,
-                        onLinkTranslation: shape.type == .text ? { key in
-                            state.linkTranslation(shapeId: shape.id, toTargetKey: key)
-                        } : nil,
-                        onUnlinkTranslation: shape.type == .text ? {
-                            state.unlinkTranslation(shapeId: shape.id)
-                        } : nil,
-                        nonBaseLocaleCount: nonBaseLocaleCount,
-                        onCopyTextStyle: shape.type == .text ? {
-                            state.textStyleClipboard = shape.extractTextStyle()
-                        } : nil,
-                        onPasteTextStyle: shape.type == .text && state.textStyleClipboard != nil ? { [rowId = row.id] in
-                            guard let style = state.textStyleClipboard else { return }
-                            state.updateShapes([shape.id], in: rowId) { $0.applyTextStyle(style) }
-                        } : nil,
-                        onUpdateSelected: isMulti && allSelectedSameType ? { update in
-                            state.updateShapes(selectedShapeIds, in: row.id, update: update)
-                        } : nil,
-                        onDeleteSelected: isMulti ? {
-                            state.deleteSelectedShapes()
-                        } : nil,
-                        onAlignSelected: isMulti ? { alignment in
-                            state.alignSelectedShapes(alignment)
-                        } : nil,
-                        onMatchGeometryToThis: isMulti ? { [shapeId = shape.id] mode in
-                            state.matchShapeGeometry(toSource: shapeId, mode: mode)
-                        } : nil,
-                        onDuplicateToTemplates: row.templates.count > 1 ? { [shapeId = shape.id] direction in
-                            let ids = state.selectedShapeIds.isEmpty ? [shapeId] : state.selectedShapeIds
-                            state.duplicateShapesToTemplates(Set(ids), direction: direction)
-                        } : nil,
-                        onToggleLock: { [shapeId = shape.id] in
-                            if !state.selectedShapeIds.contains(shapeId) {
-                                state.selectShape(shapeId, in: row.id)
-                            }
-                            state.toggleLockOnSelection()
-                        },
-                        lockToggleWillUnlock: isInSelection ? selectionFullyLocked : shape.resolvedIsLocked
+                                if dragSession.activeGuides != result.guides {
+                                    dragSession.activeGuides = result.guides
+                                }
+                                return result
+                            },
+                            onDragEnd: {
+                                dragSession.endDrag()
+                            },
+                            onOptionDragDuplicate: { shapeId in
+                                if isMulti {
+                                    state.duplicateShapesForOptionDrag()
+                                    return nil
+                                }
+                                return state.duplicateShapeForOptionDrag(shapeId)
+                            },
+                            onDragProgress: { offset in
+                                // Same-value writes still notify @Observable observers, so only
+                                // touch draggingShapeId on the first tick of a drag.
+                                if dragSession.draggingShapeId != shape.id {
+                                    dragSession.draggingShapeId = shape.id
+                                }
+                                dragSession.activeDragOffset = offset
+                            },
+                            onGroupDragEnd: { offset in
+                                state.applyGroupDrag(offset: offset)
+                                dragSession.endDrag()
+                            },
+                            onDidAppearAfterAdd: shape.id == state.justAddedShapeId ? { state.justAddedShapeId = nil } : nil,
+                            onEditingTextChanged: { editing in
+                                if state.textEdit.isActive != editing { state.textEdit.isActive = editing }
+                                if editing {
+                                    if textEditingShapeId != shape.id { textEditingShapeId = shape.id }
+                                } else if textEditingShapeId == shape.id {
+                                    textEditingShapeId = nil
+                                }
+                            },
+                            onCommitInlineText: { text, richText in
+                                state.commitInlineText(
+                                    shapeId: shape.id,
+                                    text: text,
+                                    richText: richText,
+                                    forLocaleCode: state.localeState.activeLocaleCode
+                                )
+                            },
+                            onInlineTextEditChanged: { shapeId, liveText, endEditing in
+                                if let liveText {
+                                    // Capture the editing locale now so a flush after the active
+                                    // locale changes still commits to the locale being edited.
+                                    let localeCode = state.localeState.activeLocaleCode
+                                    state.textEdit.registerInlineTextCommit(for: shapeId, endEditing: endEditing) {
+                                        let value = liveText()
+                                        state.commitInlineText(
+                                            shapeId: shapeId,
+                                            text: value.text,
+                                            richText: value.richText,
+                                            forLocaleCode: localeCode
+                                        )
+                                    }
+                                } else {
+                                    state.textEdit.clearInlineTextCommit(for: shapeId)
+                                }
+                            },
+                            onFormatBarStateChanged: { selState, controller in
+                                state.textEdit.richTextSelectionState = selState
+                                state.textEdit.richTextFormatController = controller
+                            },
+                            onFormatBarAnchorChanged: { anchor in
+                                state.textEdit.richTextFormatBarAnchor = anchor
+                            },
+                            onMatchDeviceSizes: shape.type == .device ? {
+                                let matchingIds = Set(row.activeShapes.filter { other in
+                                    other.id != shape.id &&
+                                    other.type == .device &&
+                                    other.deviceCategory == shape.deviceCategory
+                                }.map(\.id))
+                                guard !matchingIds.isEmpty else { return }
+                                state.updateShapes(matchingIds, in: row.id) { other in
+                                    other.width = shape.width
+                                    other.height = shape.height
+                                }
+                            } : nil,
+                            onMatchSelectedDeviceSizes: (isMulti && shape.type == .device && allSelectedAreDevices) ? {
+                                let targetIds = selectedShapeIds.subtracting([shape.id])
+                                guard !targetIds.isEmpty else { return }
+                                state.updateShapes(targetIds,
+                                                   in: row.id,
+                                                   undoName: "Match Size to Selected Devices") { other in
+                                    other.width = shape.width
+                                    other.height = shape.height
+                                }
+                            } : nil,
+                            onCenterShape: { axis in
+                                let targets: Set<UUID> = (isMulti && selectedShapeIds.contains(shape.id))
+                                    ? selectedShapeIds : [shape.id]
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    state.centerShapes(targets, in: row.id, axis: axis)
+                                }
+                            },
+                            onTranslate: (shape.type == .text && isNonBaseLocale) ? {
+                                state.localeMenu.pendingTranslateShapeId = shape.id
+                            } : nil,
+                            translateLocaleName: currentLocaleName,
+                            onTranslateAllLocales: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
+                                let isMultiText = selectedShapeIds.count > 1 && selectedShapeIds.contains(shape.id)
+                                if isMultiText {
+                                    let translatableIds: Set<UUID> = Set(
+                                        row.activeShapes
+                                            .filter { selectedShapeIds.contains($0.id) && $0.hasTranslatableText }
+                                            .map(\.id)
+                                    )
+                                    guard !translatableIds.isEmpty else { return }
+                                    state.localeMenu.pendingFanOutTranslateShapeIds = translatableIds
+                                } else {
+                                    state.localeMenu.pendingFanOutTranslateShapeIds = [shape.id]
+                                }
+                            } : nil,
+                            translateAllLocalesDisabled: state.localeMenu.isFanOutTranslating,
+                            onResetAllTranslations: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0) ? {
+                                state.resetAllTranslations(shapeIds: isMulti ? selectedTextShapeIds : [shape.id])
+                            } : nil,
+                            // Closure so the O(overrides) walk runs when the context menu opens,
+                            // not for every text shape on every render.
+                            resetAllTranslationsDisabled: (shape.type == .text && !isNonBaseLocale && nonBaseLocaleCount > 0)
+                                ? { !state.anyTranslationOrOverride(shapeIds: isMulti ? selectedTextShapeIds : [shape.id]) }
+                                : { false },
+                            reuseTranslationTargets: shape.type == .text ? {
+                                state.reusableTranslationTargets(excludingShapeId: shape.id)
+                                    .map { (key: $0.key, label: $0.baseText.singleLineMenuLabel()) }
+                            } : nil,
+                            onLinkTranslation: shape.type == .text ? { key in
+                                state.linkTranslation(shapeId: shape.id, toTargetKey: key)
+                            } : nil,
+                            onUnlinkTranslation: shape.type == .text ? {
+                                state.unlinkTranslation(shapeId: shape.id)
+                            } : nil,
+                            nonBaseLocaleCount: nonBaseLocaleCount,
+                            onCopyTextStyle: shape.type == .text ? {
+                                state.textStyleClipboard = shape.extractTextStyle()
+                            } : nil,
+                            onPasteTextStyle: shape.type == .text && state.textStyleClipboard != nil ? { [rowId = row.id] in
+                                guard let style = state.textStyleClipboard else { return }
+                                state.updateShapes([shape.id], in: rowId) { $0.applyTextStyle(style) }
+                            } : nil,
+                            onUpdateSelected: isMulti && allSelectedSameType ? { update in
+                                state.updateShapes(selectedShapeIds, in: row.id, update: update)
+                            } : nil,
+                            onDeleteSelected: isMulti ? {
+                                state.deleteSelectedShapes()
+                            } : nil,
+                            onAlignSelected: isMulti ? { alignment in
+                                state.alignSelectedShapes(alignment)
+                            } : nil,
+                            onMatchGeometryToThis: isMulti ? { [shapeId = shape.id] mode in
+                                state.matchShapeGeometry(toSource: shapeId, mode: mode)
+                            } : nil,
+                            onDuplicateToTemplates: row.templates.count > 1 ? { [shapeId = shape.id] direction in
+                                let ids = state.selectedShapeIds.isEmpty ? [shapeId] : state.selectedShapeIds
+                                state.duplicateShapesToTemplates(Set(ids), direction: direction)
+                            } : nil,
+                            onToggleLock: { [shapeId = shape.id] in
+                                if !state.selectedShapeIds.contains(shapeId) {
+                                    state.selectShape(shapeId, in: row.id)
+                                }
+                                state.toggleLockOnSelection()
+                            },
+                            lockToggleWillUnlock: isInSelection ? selectionFullyLocked : shape.resolvedIsLocked
+                        )
                     )
-                )
+                }
             }
 
             ActiveGuidesLayer(dragSession: dragSession, displayScale: ds)

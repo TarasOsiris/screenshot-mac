@@ -1,9 +1,12 @@
 import SwiftUI
 
 extension ShapePropertiesSingleSelectionBar {
+    // The `current…` readouts feed `ShapePropertyField`, which reprograms its text as the model
+    // moves — so for a continuously edited property they have to read the in-flight value, not
+    // `rows`. They are closures evaluated inside the field, so the session read stays in that leaf.
     func currentFontSizeString(for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId) else { return "\(Int(Self.defaultFontSize))" }
-        return "\(Int(resolvedShape(at: i.row, shapeIdx: i.shape).fontSize ?? Self.defaultFontSize))"
+        guard let shape = editingShape(shapeId) else { return "\(Int(Self.defaultFontSize))" }
+        return "\(Int(shape.fontSize ?? Self.defaultFontSize))"
     }
 
     func clampedFontSize(_ value: Int) -> CGFloat {
@@ -30,8 +33,7 @@ extension ShapePropertiesSingleSelectionBar {
     /// Applies each keystroke as a coalesced-undo edit so the canvas tracks the field live.
     func applyFontSizeContinuously(fallbackShapeId: UUID) {
         let target = state.selectedShapeId ?? fallbackShapeId
-        guard let value = Int(editingFontSize), let i = idx(for: target) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard let value = Int(editingFontSize), var resolved = editingShape(target) else { return }
         let newSize = clampedFontSize(value)
         // A no-op size (e.g. the field reprogrammed to the current value during an edit→commit
         // transition) must not run syncShapeStyle(.fontSize) — that flattens mixed per-run
@@ -44,8 +46,7 @@ extension ShapePropertiesSingleSelectionBar {
 
     func applyLineHeightContinuously(fallbackShapeId: UUID) {
         let target = state.selectedShapeId ?? fallbackShapeId
-        guard let value = Int(editingLineHeight), let i = idx(for: target) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard let value = Int(editingLineHeight), var resolved = editingShape(target) else { return }
         let clamped = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
         guard resolved.lineHeightMultiple != clamped || resolved.lineSpacing != nil else { return }
         resolved.lineHeightMultiple = clamped
@@ -55,8 +56,8 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     func currentOpacityString(for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId) else { return "100" }
-        return "\(Int((state.rows[i.row].shapes[i.shape].opacity * 100).rounded()))"
+        guard let shape = editingShape(shapeId) else { return "100" }
+        return "\(Int((shape.opacity * 100).rounded()))"
     }
 
     func commitOpacity(to shapeId: UUID?) {
@@ -77,8 +78,8 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     func currentRotationString(for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId) else { return "0" }
-        return formatRotation(state.rows[i.row].shapes[i.shape].rotation)
+        guard let shape = editingShape(shapeId) else { return "0" }
+        return formatRotation(shape.rotation)
     }
 
     func formatRotation(_ value: Double) -> String {
@@ -113,8 +114,7 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     func currentLineHeightString(for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId) else { return "\(Int(TextLayoutStyle.defaultLineHeightMultiple * 100))" }
-        let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard let shape = editingShape(shapeId) else { return "\(Int(TextLayoutStyle.defaultLineHeightMultiple * 100))" }
         let font = NSFont.systemFont(
             ofSize: shape.fontSize ?? Self.defaultFontSize,
             weight: nsFontWeight(shape.fontWeight ?? 400)
@@ -177,17 +177,19 @@ extension ShapePropertiesSingleSelectionBar {
         )
     }
 
+    /// Reads and writes through `editingShape`, not `rows`: a continuous burst only lands in the
+    /// document when it settles, so building a tick from `rows` would drop every earlier field of
+    /// the same burst — pitch, then yaw, in one visit to the 3D popover.
     func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T>, continuous: Bool = false) -> Binding<T> where T: Sendable {
         Binding(
             get: {
-                guard let i = idx(for: shapeId) else {
+                guard let shape = editingShape(shapeId) else {
                     return CanvasShapeModel.placeholder[keyPath: keyPath]
                 }
-                return resolvedShape(at: i.row, shapeIdx: i.shape)[keyPath: keyPath]
+                return shape[keyPath: keyPath]
             },
             set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var resolved = editingShape(shapeId) else { return }
                 resolved[keyPath: keyPath] = newValue
                 RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
                 if continuous {
@@ -203,12 +205,11 @@ extension ShapePropertiesSingleSelectionBar {
     func shapeBinding<T>(_ shapeId: UUID, _ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T, continuous: Bool = false) -> Binding<T> where T: Sendable {
         Binding(
             get: {
-                guard let i = idx(for: shapeId) else { return defaultValue }
-                return resolvedShape(at: i.row, shapeIdx: i.shape)[keyPath: keyPath] ?? defaultValue
+                guard let shape = editingShape(shapeId) else { return defaultValue }
+                return shape[keyPath: keyPath] ?? defaultValue
             },
             set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var resolved = editingShape(shapeId) else { return }
                 resolved[keyPath: keyPath] = newValue
                 RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: richTextStyleProperty(for: keyPath))
                 if continuous {

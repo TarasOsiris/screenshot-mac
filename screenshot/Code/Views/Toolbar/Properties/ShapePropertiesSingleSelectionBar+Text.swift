@@ -32,7 +32,7 @@ extension ShapePropertiesSingleSelectionBar {
     /// this closure across updates, so a shape captured at open time would go stale.
     @ViewBuilder
     func textPopoverContent(shapeId: UUID) -> some View {
-        if let shape = liveShape(shapeId) {
+        if let shape = editingShape(shapeId) {
             #if os(macOS)
             textPopoverColumn(shape: shape, shapeId: shapeId)
                 .scaledFont(UIMetrics.FontSize.body)

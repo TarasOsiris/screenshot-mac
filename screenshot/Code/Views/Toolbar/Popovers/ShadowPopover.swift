@@ -51,7 +51,7 @@ struct ShadowPopover: View {
             title: "Shadow",
             resetLabel: "Reset",
             resetHelp: "Remove the shadow",
-            isResetDisabled: shadow.isEmpty,
+            isResetDisabled: { shadow.isEmpty },
             onReset: reset
         )
     }
@@ -120,33 +120,16 @@ struct ShadowPopover: View {
     /// The four tuning sliders, shared by the macOS column and the iPad Form.
     @ViewBuilder
     private var detailSliders: some View {
-        PopoverSliderRow(
-            label: "Blur",
-            value: radiusBinding,
-            range: ShadowConfig.radiusRange,
-            displayValue: intLabel(shadow.resolvedRadius)
-        )
-        PopoverSliderRow(
-            label: "Offset X",
-            value: offsetXBinding,
-            range: ShadowConfig.offsetRange,
-            displayValue: intLabel(shadow.resolvedOffsetX)
-        )
-        PopoverSliderRow(
-            label: "Offset Y",
-            value: offsetYBinding,
-            range: ShadowConfig.offsetRange,
-            displayValue: intLabel(shadow.resolvedOffsetY)
-        )
+        PopoverSliderRow(label: "Blur", value: radiusBinding, range: ShadowConfig.radiusRange)
+        PopoverSliderRow(label: "Offset X", value: offsetXBinding, range: ShadowConfig.offsetRange)
+        PopoverSliderRow(label: "Offset Y", value: offsetYBinding, range: ShadowConfig.offsetRange)
         PopoverSliderRow(
             label: "Opacity",
             value: opacityBinding,
             range: ShadowConfig.opacityRange,
-            displayValue: "\(Int((shadow.resolvedOpacity * 100).rounded()))%"
+            format: { "\(Int(($0 * 100).rounded()))%" }
         )
     }
-
-    private func intLabel(_ value: CGFloat) -> String { "\(Int(value.rounded()))" }
 
     private func reset() {
         shadow = ShadowConfig()

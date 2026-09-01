@@ -21,6 +21,10 @@ struct CanvasSelectionLayer: View {
     /// Read inside `body` on purpose: per-tick drag/resize updates re-render
     /// just this overlay, not the row that owns it.
     let dragSession: CanvasDragSession
+    /// Read inside `body` for the same reason as `dragSession`: a properties-bar slider drag must
+    /// move the handles with the shape, and reading it here keeps that off the row's body.
+    /// Nil outside the editor.
+    let liveShapeEdit: LiveShapeEditSession?
     let textEditingShapeId: UUID?
     let onUpdate: (CanvasShapeModel) -> Void
 
@@ -40,7 +44,10 @@ struct CanvasSelectionLayer: View {
             ZStack(alignment: .topLeading) {
                 ForEach(resolvedShapes) { shape in
                     if ids.contains(shape.id), shape.id != textEditingShapeId {
-                        chrome(for: shape, showsHandles: showsHandles)
+                        chrome(
+                            for: liveShapeEdit?.liveShape(for: shape.id) ?? shape,
+                            showsHandles: showsHandles
+                        )
                     }
                 }
             }
