@@ -13,6 +13,18 @@ struct EditorRowHeaderLayoutTests {
 
     private var chrome: CGFloat { EditorRowHeaderLayout.fixedChromeWidth }
 
+    @Test func previewSegmentMetricsMatchThePlatformInteractionModel() {
+        #if os(macOS)
+        #expect(EditorRowHeaderLayout.previewSegmentSize == CGSize(width: 24, height: 16))
+        #expect(EditorRowHeaderLayout.previewToggleInset == 1)
+        #else
+        #expect(EditorRowHeaderLayout.previewSegmentSize == CGSize(width: 44, height: 44))
+        #expect(EditorRowHeaderLayout.previewToggleInset == 0)
+        #expect(EditorRowHeaderLayout.previewSegmentSize.width >= UIMetrics.ActionButton.minTouchTarget)
+        #expect(EditorRowHeaderLayout.previewSegmentSize.height >= UIMetrics.ActionButton.minTouchTarget)
+        #endif
+    }
+
     @Test func showsLabelsBeforeTheViewportHasBeenMeasured() {
         // Zero is "not measured yet" — showing the labels avoids a flash of the compact layout.
         #expect(EditorRowHeaderLayout.showsLabels(availableWidth: 0, labelsWidth: 9_999))

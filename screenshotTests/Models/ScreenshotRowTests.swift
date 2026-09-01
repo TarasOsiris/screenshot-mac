@@ -219,6 +219,35 @@ struct ScreenshotRowTests {
         #expect(row.hitShape(at: CGPoint(x: 105, y: 105), among: [back, front])?.id == back.id)
     }
 
+    @Test func hitShapeUsesTransientGeometryForTheMatchingCandidate() throws {
+        let row = marqueeRow()
+        let committed = CanvasShapeModel(
+            type: .rectangle,
+            x: 100,
+            y: 100,
+            width: 100,
+            height: 100
+        )
+        var transient = committed
+        transient.x = 500
+        transient.y = 400
+        transient.width = 200
+        transient.height = 150
+
+        let liveHit = try #require(row.hitShape(
+            at: CGPoint(x: 650, y: 500),
+            among: [committed],
+            replacingWith: transient
+        ))
+        #expect(liveHit.id == committed.id)
+        #expect(liveHit.x == transient.x)
+        #expect(row.hitShape(
+            at: CGPoint(x: 150, y: 150),
+            among: [committed],
+            replacingWith: transient
+        ) == nil)
+    }
+
     @Test func hitShapeIncludesLockedShapes() {
         let row = marqueeRow()
         var locked = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)

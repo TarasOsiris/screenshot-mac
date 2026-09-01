@@ -268,14 +268,25 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
     /// since a locked shape still swallows the press. `candidates` is in draw order, so the search
     /// runs back to front and the frontmost shape wins, matching what the canvas ZStack shows.
     ///
-    /// `predicate` narrows the search without a second pass — for a caller that wants the topmost
-    /// shape of a particular kind rather than the topmost shape.
+    /// `replacingWith` substitutes live geometry for the matching candidate without allocating a
+    /// replacement array. `predicate` narrows the search without a second pass — for a caller that
+    /// wants the topmost shape of a particular kind rather than the topmost shape.
     func hitShape(
         at point: CGPoint,
         among candidates: [CanvasShapeModel],
+        replacingWith transientShape: CanvasShapeModel? = nil,
         where predicate: (CanvasShapeModel) -> Bool = { _ in true }
     ) -> CanvasShapeModel? {
-        candidates.last { predicate($0) && contains($0, at: point) }
+        for candidate in candidates.reversed() {
+            let shape: CanvasShapeModel
+            if let transientShape, transientShape.id == candidate.id {
+                shape = transientShape
+            } else {
+                shape = candidate
+            }
+            if predicate(shape), contains(shape, at: point) { return shape }
+        }
+        return nil
     }
 
     /// True when `point` (model space) lands on `shape`, respecting its rotation and — when it

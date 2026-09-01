@@ -1671,6 +1671,39 @@ struct AppStateTests {
         #expect(state.activeProject?.name == "New Project")
     }
 
+    @Test func blankProjectCreationDismissesEditorPresentation() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.presentation.backgroundPopoverTemplateId = UUID()
+
+        state.createProject(name: "New Project")
+
+        #expect(state.presentation.backgroundPopoverTemplateId == nil)
+    }
+
+    @Test func projectSelectionDismissesEditorPresentation() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let originalProjectId = try #require(state.activeProjectId)
+        state.createProject(name: "Second")
+        state.presentation.backgroundPopoverTemplateId = UUID()
+
+        state.selectProject(originalProjectId)
+
+        #expect(state.presentation.backgroundPopoverTemplateId == nil)
+    }
+
+    @Test func projectDataReplacementDismissesEditorPresentation() throws {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let projectId = try #require(state.activeProjectId)
+        state.presentation.backgroundPopoverTemplateId = UUID()
+
+        state.applyProjectData(ProjectData(rows: state.rows), for: projectId)
+
+        #expect(state.presentation.backgroundPopoverTemplateId == nil)
+    }
+
     @Test func projectSwitchCommitsActiveInlineTextEditBeforeSavingOldProject() throws {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
@@ -2101,6 +2134,56 @@ struct AppStateTests {
 
         let after = state.rows.first!.shapes.first { $0.id == locked.id }!
         #expect(after.imageFileName == "test.png")
+    }
+
+    @Test func clearImageOnBaseLocaleClearsImage() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        var shape = CanvasShapeModel(type: .image, x: 0, y: 0, width: 100, height: 100)
+        shape.imageFileName = "base.png"
+        state.addShape(shape)
+
+        state.clearImage(for: shape.id)
+
+        let after = state.rows.first!.shapes.first { $0.id == shape.id }!
+        #expect(after.imageFileName == nil)
+    }
+
+    @Test func clearImageOnNonBaseLocaleWithoutOverrideClearsBaseImage() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        var shape = CanvasShapeModel(type: .image, x: 0, y: 0, width: 100, height: 100)
+        shape.imageFileName = "base.png"
+        state.addShape(shape)
+        state.addLocale(.init(code: "uk", label: "Ukrainian"))
+        state.setActiveLocale("uk")
+
+        state.clearImage(for: shape.id)
+
+        let after = state.rows.first!.shapes.first { $0.id == shape.id }!
+        #expect(after.imageFileName == nil, "With no per-locale override, Reset must clear the inherited base image")
+    }
+
+    @Test func clearImageOnNonBaseLocaleWithOverrideRemovesOnlyOverride() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        state.selectRow(state.rows.first!.id)
+        var shape = CanvasShapeModel(type: .image, x: 0, y: 0, width: 100, height: 100)
+        shape.imageFileName = "base.png"
+        state.addShape(shape)
+        state.addLocale(.init(code: "uk", label: "Ukrainian"))
+        state.setActiveLocale("uk")
+        var override = ShapeLocaleOverride()
+        override.overrideImageFileName = "uk.png"
+        LocaleService.setShapeOverride(&state.localeState, shapeId: shape.id, override: override)
+
+        state.clearImage(for: shape.id)
+
+        #expect(state.localeState.override(forCode: "uk", shapeId: shape.id)?.overrideImageFileName == nil)
+        let after = state.rows.first!.shapes.first { $0.id == shape.id }!
+        #expect(after.imageFileName == "base.png", "Removing the locale override must leave the base image alone")
     }
 
     @Test func centerAllDevicesSkipsLocked() {

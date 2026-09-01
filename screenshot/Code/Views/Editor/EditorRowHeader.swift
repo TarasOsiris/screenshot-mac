@@ -128,7 +128,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                 if !isPreviewMode { onTogglePreview() }
             }
         }
-        .padding(1)
+        .padding(EditorRowHeaderLayout.previewToggleInset)
         .background {
             RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
                 .fill(Color.primary.opacity(UIMetrics.Opacity.sectionFill))
@@ -149,11 +149,10 @@ struct EditorRowHeader<RowMenuContent: View>: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: UIMetrics.ActionButton.iconSize))
-                #if os(macOS)
-                .frame(width: 24, height: 16)
-                #else
-                .frame(width: 40, height: UIMetrics.ActionButton.frameSize - 8)
-                #endif
+                .frame(
+                    width: EditorRowHeaderLayout.previewSegmentSize.width,
+                    height: EditorRowHeaderLayout.previewSegmentSize.height
+                )
                 .foregroundStyle(isSelected ? Color.primary : Color.secondary)
                 .background {
                     if isSelected {

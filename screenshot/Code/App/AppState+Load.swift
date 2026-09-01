@@ -239,6 +239,7 @@ extension AppState {
         // The document is replaced wholesale (iCloud/local reload included): a pending debounced
         // edit would flush a stale row over the new data, and any undo step captured against the
         // old rows would restore the pre-reload document — and save it back over the sync.
+        presentation.dismissAll()
         cancelPendingDebounceTasks()
         undoManager?.removeAllActions()
         rows = data.rows

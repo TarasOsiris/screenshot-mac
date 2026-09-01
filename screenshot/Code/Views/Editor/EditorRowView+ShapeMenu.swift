@@ -37,10 +37,7 @@ extension EditorRowView {
             shape: shape,
             isMultiSelected: isMulti,
             screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
-            onRequestImagePicker: {
-                pickerTargetShapeId = shape.id
-                isImagePickerPresented = true
-            },
+            onRequestImagePicker: { requestImagePicker(for: shape.id) },
             onClearImage: {
                 state.clearImage(for: shape.id)
             },

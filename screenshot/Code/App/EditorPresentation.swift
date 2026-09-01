@@ -12,4 +12,9 @@ final class EditorPresentation {
     /// that within a row — the popovers are `interactiveDismissDisabled`, so nothing light-dismisses
     /// the one in the row you just left.
     var backgroundPopoverTemplateId: UUID?
+
+    func dismissAll() {
+        guard backgroundPopoverTemplateId != nil else { return }
+        backgroundPopoverTemplateId = nil
+    }
 }

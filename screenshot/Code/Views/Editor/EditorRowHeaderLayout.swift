@@ -8,6 +8,17 @@ import SwiftUI
 /// `SizeFittingLayoutComputer` / `ViewSizeCache` cost in a scroll trace. Same shape as
 /// `TemplateBarLayout`: arithmetic the caller can test, rather than a measured fit.
 enum EditorRowHeaderLayout {
+    #if os(macOS)
+    static let previewSegmentSize = CGSize(width: 24, height: 16)
+    static let previewToggleInset: CGFloat = 1
+    #else
+    static let previewSegmentSize = CGSize(
+        width: UIMetrics.ActionButton.frameSize,
+        height: UIMetrics.ActionButton.frameSize
+    )
+    static let previewToggleInset: CGFloat = 0
+    #endif
+
     /// Everything in the header that is not the two text runs: outer padding, the chevron, the
     /// preview toggle, the trailing controls, and the `HStack` gaps between them. Derived from the
     /// header's own metrics; being a few points out only nudges the breakpoint, and the margin
@@ -15,11 +26,10 @@ enum EditorRowHeaderLayout {
     static let fixedChromeWidth: CGFloat = {
         #if os(macOS)
         let chevron: CGFloat = 12
-        let previewToggle: CGFloat = 24 * 2 + 2
         #else
         let chevron: CGFloat = 28
-        let previewToggle: CGFloat = 40 * 2 + 2
         #endif
+        let previewToggle = previewSegmentSize.width * 2 + previewToggleInset * 2
         let button = UIMetrics.ActionButton.frameSize
         // Five action buttons at spacing 4, then the ellipsis menu.
         let trailing = button * 5 + 4 * 4 + 4 + button

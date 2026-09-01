@@ -372,10 +372,7 @@ extension EditorRowView {
                             onScreenshotDrop: { image, origin in
                                 state.saveImage(image, for: shape.id, source: origin)
                             },
-                            onRequestImagePicker: {
-                                pickerTargetShapeId = shape.id
-                                isImagePickerPresented = true
-                            },
+                            onRequestImagePicker: { requestImagePicker(for: shape.id) },
                             onDragSnap: { draggedShape, rawOffset in
                                 let targets: [AlignmentService.OtherShapeBounds]
                                 if let cached = dragSession.cachedSnapTargets {
@@ -478,6 +475,7 @@ extension EditorRowView {
             }
 
             CanvasHoverLayer(
+                row: row,
                 resolvedShapes: resolvedShapes,
                 selectedShapeIds: selectedShapeIds,
                 visualScale: ds,
@@ -488,7 +486,9 @@ extension EditorRowView {
             ActiveGuidesLayer(dragSession: dragSession, displayScale: ds)
                 .zIndex(100)
 
+            #if !os(macOS)
             imagePickerHost(anchor: imagePickerAnchor(in: resolvedShapes, displayScale: ds))
+            #endif
 
             if row.showBorders && row.templates.count > 1 {
                 CanvasTemplateSeparatorLines(
@@ -570,9 +570,19 @@ extension EditorRowView {
     func updateHover(at modelPoint: CGPoint, in resolvedShapes: [CanvasShapeModel]) {
         // View mode shows no editor helpers, which is what gated the outline when it lived on the
         // shape.
-        let hit = state.viewMode.isViewMode
-            ? nil
-            : row.hitShape(at: modelPoint, among: resolvedShapes)?.id
+        let hit: UUID?
+        if state.viewMode.isViewMode {
+            hit = nil
+        } else {
+            let transientShape = state.liveShapeEdit.shapeId.flatMap {
+                state.liveShapeEdit.liveShape(for: $0)
+            }
+            hit = row.hitShape(
+                at: modelPoint,
+                among: resolvedShapes,
+                replacingWith: transientShape
+            )?.id
+        }
         // Same-value writes still notify `@Observable` observers, and this runs on every mouse move.
         guard dragSession.hoveredShapeId != hit else { return }
         dragSession.hoveredShapeId = hit

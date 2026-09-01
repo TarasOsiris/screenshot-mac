@@ -10,6 +10,7 @@ import SwiftUI
 struct CanvasHoverLayer: View {
     @Environment(\.displayScale) private var screenScale
 
+    let row: ScreenshotRow
     let resolvedShapes: [CanvasShapeModel]
     let selectedShapeIds: Set<UUID>
     /// Model points × (base displayScale × zoom), matching `CanvasSelectionLayer`.
@@ -34,9 +35,51 @@ struct CanvasHoverLayer: View {
                 displayScale: visualScale,
                 screenScale: screenScale
             )
-            Rectangle()
-                .strokeBorder(Color.accentColor.opacity(0.5), lineWidth: 1)
-                .modifier(ShapeChromeFrame(displayRect: displayRect, rotation: shape.rotation))
+            let canvasBounds = Self.canvasBounds(in: row, visualScale: visualScale)
+            let outline = ZStack(alignment: .topLeading) {
+                Rectangle()
+                    .strokeBorder(Color.accentColor.opacity(0.5), lineWidth: 1)
+                    .modifier(ShapeChromeFrame(displayRect: displayRect, rotation: shape.rotation))
+            }
+            .frame(width: canvasBounds.width, height: canvasBounds.height, alignment: .topLeading)
+            .allowsHitTesting(false)
+
+            if shape.clipToTemplate == true {
+                let visibleBounds = Self.visibleBounds(for: shape, in: row, visualScale: visualScale)
+                outline.mask(alignment: .topLeading) {
+                    Rectangle()
+                        .frame(width: visibleBounds.width, height: visibleBounds.height)
+                        .offset(x: visibleBounds.minX, y: visibleBounds.minY)
+                }
+            } else {
+                outline
+            }
         }
+    }
+
+    /// Display-space bounds in which hover chrome is allowed to appear.
+    static func visibleBounds(
+        for shape: CanvasShapeModel,
+        in row: ScreenshotRow,
+        visualScale: CGFloat
+    ) -> CGRect {
+        guard shape.clipToTemplate == true else {
+            return canvasBounds(in: row, visualScale: visualScale)
+        }
+        return CGRect(
+            x: CGFloat(row.owningTemplateIndex(for: shape)) * row.templateWidth * visualScale,
+            y: 0,
+            width: row.templateWidth * visualScale,
+            height: row.templateHeight * visualScale
+        )
+    }
+
+    private static func canvasBounds(in row: ScreenshotRow, visualScale: CGFloat) -> CGRect {
+        CGRect(
+            x: 0,
+            y: 0,
+            width: row.templateWidth * CGFloat(row.templates.count) * visualScale,
+            height: row.templateHeight * visualScale
+        )
     }
 }

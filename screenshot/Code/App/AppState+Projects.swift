@@ -18,6 +18,7 @@ extension AppState {
 
     func createBlankProject(name: String, rowConfigurations: [BlankProjectRowConfiguration]) {
         saveCurrentProject()
+        presentation.dismissAll()
 
         let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
         let baseName = sanitized.isEmpty ? "Project" : sanitized
@@ -236,6 +237,7 @@ extension AppState {
     /// current project. Undo belongs here: a step captured against the outgoing document would
     /// restore it over the incoming one, and deleting the last project has nothing to clear it.
     private func teardownActiveProject() {
+        presentation.dismissAll()
         textEdit.isActive = false
         cancelPendingDebounceTasks()
         undoManager?.removeAllActions()

@@ -211,12 +211,29 @@ extension EditorRowView {
 }
 
 extension EditorRowView {
-    /// The row's one image picker, anchored in canvas space on the shape that asked for it.
+    /// On macOS this runs `NSOpenPanel` off the view tree like every other replace-image site;
+    /// flipping the row's picker `@State` instead invalidated the whole row body — every shape and
+    /// its menu host — inside NSMenu's teardown, which surfaced as reentrant-layout warnings and
+    /// AttributeGraph cycles. iPad keeps the anchored `imageSourcePicker` host below.
+    func requestImagePicker(for shapeId: UUID) {
+        #if os(macOS)
+        // Defer past the menu-teardown transaction before spinning the panel's modal runloop.
+        Task { @MainActor in
+            guard let image = FilePicker.pickImage() else { return }
+            state.saveImage(image, for: shapeId, source: .picker)
+        }
+        #else
+        pickerTargetShapeId = shapeId
+        isImagePickerPresented = true
+        #endif
+    }
+
+    /// The row's one image picker (iPad only — macOS goes through `requestImagePicker`),
+    /// anchored in canvas space on the shape that asked for it.
     ///
-    /// On macOS `imageSourcePicker` is a `fileImporter` and on iPad a `confirmationDialog`; either
-    /// way it is a presentation host, and hanging one off every `.image`/`.device` shape put a
-    /// platform item in the display list for each of them — `DisplayList.ViewUpdater` was the
-    /// largest remaining SwiftUI cost in a scrollbar-drag trace.
+    /// Hanging a presentation host off every `.image`/`.device` shape put a platform item in the
+    /// display list for each of them — `DisplayList.ViewUpdater` was the largest remaining SwiftUI
+    /// cost in a scrollbar-drag trace.
     ///
     /// Always mounted, never conditionally inserted: a presentation modifier that appears in the
     /// same update that sets its binding may not present. The anchor moves instead, which is what

@@ -153,18 +153,18 @@ extension AppState {
         guard !rows[location.rowIndex].shapes[location.shapeIndex].resolvedIsLocked else { return }
 
         withUndo("Clear Screenshot") {
-            if !localeState.isBaseLocale {
-                let existingOverride = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)
-                guard var override = existingOverride, override.overrideImageFileName != nil else { return }
-                let oldFile = override.overrideImageFileName
+            // On a non-base locale with no per-locale image, the shape shows the inherited base
+            // image — fall through and clear that, so Reset matches what the user sees.
+            if !localeState.isBaseLocale,
+               var override = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId),
+               let oldFile = override.overrideImageFileName {
                 override.overrideImageFileName = nil
                 LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override.isEmpty ? nil : override)
-                if let oldFile { cleanupUnreferencedImage(oldFile) }
+                cleanupUnreferencedImage(oldFile)
             } else {
-                let shape = rows[location.rowIndex].shapes[location.shapeIndex]
-                guard shape.displayImageFileName != nil else { return }
+                guard let oldFile = rows[location.rowIndex].shapes[location.shapeIndex].displayImageFileName else { return }
                 rows[location.rowIndex].shapes[location.shapeIndex].displayImageFileName = nil
-                if let oldFile = shape.displayImageFileName { cleanupUnreferencedImage(oldFile) }
+                cleanupUnreferencedImage(oldFile)
             }
         }
     }
