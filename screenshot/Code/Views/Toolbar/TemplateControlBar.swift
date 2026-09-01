@@ -266,7 +266,7 @@ struct TemplateControlBar: View {
         }
         .controlSize(.small)
         .padding(.horizontal, UIMetrics.TemplateBar.horizontalPadding)
-        .frame(width: row.displayWidth(zoom: zoom))
+        .frame(width: row.displayWidth(zoom: zoom), height: UIMetrics.TemplateBar.height)
         .overlay(alignment: .leading) {
             if index > 0 {
                 Rectangle()

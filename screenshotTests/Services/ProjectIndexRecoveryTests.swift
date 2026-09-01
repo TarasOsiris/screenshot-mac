@@ -196,4 +196,61 @@ struct ProjectIndexRecoveryTests {
         #expect(decoded.name == nil)
         #expect(decoded.rows.isEmpty)
     }
+
+    // MARK: - iCloud never rebuilds
+
+    /// The incident this guards: a launch where the iCloud index read as absent rebuilt the index
+    /// from `projects/`, which carries no names, renamed 51 projects to "Recovered Project" and
+    /// synced that over the real names on every device.
+    @Test func iCloudDoesNotRebuildAMissingIndex() throws {
+        try withTempDataDir { _ in
+            try writeProject(UUID(), name: nil)
+            try writeProject(UUID(), name: nil)
+            #expect(!FileManager.default.fileExists(atPath: PersistenceService.indexURL.path))
+
+            #expect(PersistenceService.loadIndexOrRecover(isUsingICloud: true) == nil,
+                    "A missing iCloud index must be treated as not-yet-downloaded, never rebuilt")
+        }
+    }
+
+    @Test func iCloudDoesNotRebuildAnUnreadableIndex() throws {
+        try withTempDataDir { _ in
+            try writeProject(UUID(), name: "Real Name")
+            try Data("not json".utf8).write(to: PersistenceService.indexURL, options: .atomic)
+
+            #expect(PersistenceService.loadIndexOrRecover(isUsingICloud: true) == nil)
+            #expect(FileManager.default.fileExists(atPath: PersistenceService.indexURL.path),
+                    "The unparseable bytes must be left alone for iCloud")
+        }
+    }
+
+    /// Local storage has no other copy to wait for, so rebuilding is still the right call there.
+    @Test func localStillRebuildsAMissingIndex() throws {
+        try withTempDataDir { _ in
+            let id = UUID()
+            try writeProject(id, name: "Real Name")
+
+            let recovered = try #require(PersistenceService.loadIndexOrRecover(isUsingICloud: false))
+            #expect(recovered.wasRecovered)
+            #expect(recovered.index.projects.map(\.name) == ["Real Name"])
+            #expect(recovered.index.projects.map(\.id) == [id])
+        }
+    }
+
+    /// A loaded index is returned whatever the storage mode — the guard must not swallow the
+    /// normal path.
+    @Test func aReadableIndexLoadsUnderBothStorageModes() throws {
+        try withTempDataDir { _ in
+            let id = UUID()
+            try PersistenceService.saveIndex(
+                ProjectIndex(projects: [Project(id: id, name: "Kept")], activeProjectId: id)
+            )
+
+            for usingICloud in [true, false] {
+                let loaded = try #require(PersistenceService.loadIndexOrRecover(isUsingICloud: usingICloud))
+                #expect(loaded.wasRecovered == false)
+                #expect(loaded.index.projects.map(\.name) == ["Kept"])
+            }
+        }
+    }
 }

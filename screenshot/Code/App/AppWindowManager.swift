@@ -17,6 +17,12 @@ final class AppWindowManager {
 
     func registerMainWindow(_ window: NSWindow) {
         mainWindow = window
+        // The canvas is a WYSIWYG preview of a DeviceRGB PNG, so the backing store is pinned to the
+        // space export writes in. Letting it follow a wide-gamut display made two things go wrong:
+        // CoreAnimation colour-matched every raster on the main thread inside its commit (~100ms in
+        // a scrollbar-drag trace), and the editor showed screenshots more saturated than any export
+        // can reproduce. WindowServer still matches the whole surface to the panel, on the GPU.
+        window.colorSpace = .sRGB
     }
 
     func registerHelpWindow(_ window: NSWindow) {

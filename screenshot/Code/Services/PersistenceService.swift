@@ -236,20 +236,38 @@ nonisolated struct PersistenceService {
     /// index over the top. Returns nil (callers keep their current list) when there is nothing to
     /// recover; `wasRecovered` tells the caller to persist what it got back.
     static func loadIndexOrRecover() -> (index: ProjectIndex, wasRecovered: Bool)? {
-        switch loadIndex(at: rootURL) {
+        loadIndexOrRecover(isUsingICloud: isUsingICloud)
+    }
+
+    /// `isUsingICloud` is injected so both branches are testable — the real flag needs a resolved
+    /// ubiquity container, which a test process never has.
+    static func loadIndexOrRecover(isUsingICloud: Bool) -> (index: ProjectIndex, wasRecovered: Bool)? {
+        let result = loadIndex(at: rootURL)
+        switch result {
         case .loaded(let index):
             return (index, false)
-        case .absent:
-            guard let rebuilt = rebuildIndexFromProjectDirs() else { return nil }
-            reportRebuild(rebuilt, reason: "absent")
-            return (rebuilt, true)
-        case .unreadable:
-            // Local only. An iCloud index that won't read may simply not have downloaded yet
-            // (offline, or the coordinated read failed), and rebuilding would push an index
-            // missing every project this device has never opened out to the other devices.
+        case .absent, .unreadable:
+            // Local only, and the reason is the same for both: an iCloud index may simply not be
+            // there *yet* — the container can still be materializing, the coordinated read can
+            // fail, the device can be offline — and a rebuild would push an index missing every
+            // project this device has never opened out to all the others.
+            //
+            // For `.absent` the damage is worse still. A rebuild has no names to work from: they
+            // live in the index, and `ProjectData.name` only mirrors them for projects saved since
+            // that mirror shipped. So a rebuilt index renames every project to "Recovered Project"
+            // — and then syncs that over the real names everywhere. That happened; it cost 51
+            // names. Coming back with nothing costs a launch, because `ICloudMonitor` re-runs this
+            // as soon as the real index lands.
             guard !isUsingICloud, let rebuilt = rebuildIndexFromProjectDirs() else { return nil }
-            preserveUnreadableIndex()
-            reportRebuild(rebuilt, reason: "unreadable")
+            let reason: String
+            if case .unreadable = result {
+                // Keeps the bytes we couldn't parse, so a rebuild never destroys the only copy.
+                preserveUnreadableIndex()
+                reason = "unreadable"
+            } else {
+                reason = "absent"
+            }
+            reportRebuild(rebuilt, reason: reason)
             return (rebuilt, true)
         }
     }

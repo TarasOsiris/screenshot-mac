@@ -61,6 +61,12 @@ nonisolated enum ImageDownsampler {
             kCGImageSourceThumbnailMaxPixelSize: maxDimension
         ] as CFDictionary
 
-        return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
+        guard let thumbnail = CGImageSourceCreateThumbnailAtIndex(source, 0, options) else { return nil }
+        // Editor-only: every caller of this feeds `AppState.screenshotImages`, a background editor
+        // thumbnail or a project card. Export reloads full resolution through
+        // `AppState.loadFullResolutionImages`, which is untouched. Doing the conversion here — where
+        // we are already off the main actor — is what stops CoreAnimation doing it at commit time
+        // for every P3 screenshot the user imported.
+        return EditorImagePresentation.displayReady(thumbnail) ?? thumbnail
     }
 }

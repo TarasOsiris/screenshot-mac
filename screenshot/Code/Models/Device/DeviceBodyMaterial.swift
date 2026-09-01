@@ -15,7 +15,7 @@ enum DeviceBodyFinish: String, Codable, CaseIterable, Identifiable {
 }
 
 /// Per-shape body-material configuration for 3D device frames.
-struct DeviceBodyMaterial: Codable, Equatable {
+nonisolated struct DeviceBodyMaterial: Codable, Equatable {
     static let defaultFinish: DeviceBodyFinish = .glossy
 
     var finish: DeviceBodyFinish?

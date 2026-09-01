@@ -225,21 +225,12 @@ extension EditorRowView {
     func imagePickerHost(anchor: CGRect) -> some View {
         Color.clear
             .frame(width: max(anchor.width, 1), height: max(anchor.height, 1))
-            .imageSourcePicker(isPresented: isPickerPresentedBinding) { image in
+            .imageSourcePicker(isPresented: $isImagePickerPresented) { image in
                 guard let shapeId = pickerTargetShapeId else { return }
                 state.saveImage(image, for: shapeId, source: .picker)
                 pickerTargetShapeId = nil
             }
             .position(x: anchor.midX, y: anchor.midY)
             .allowsHitTesting(false)
-    }
-
-    /// Presented exactly while a shape is targeted. Dismissal clears the target, cancellation
-    /// included — `imageSourcePicker` reports that only by setting this false.
-    private var isPickerPresentedBinding: Binding<Bool> {
-        Binding(
-            get: { pickerTargetShapeId != nil },
-            set: { if !$0 { pickerTargetShapeId = nil } }
-        )
     }
 }

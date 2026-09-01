@@ -35,13 +35,22 @@ struct EditorRowsScrollView<Content: View>: View {
 }
 
 private extension ScrollPhase {
-    /// `.tracking` is deliberately *not* movement: it is the phase where the pointer is down but the
-    /// content has not moved yet, so a press that turns out to be a click — not a scroll — has to
-    /// keep landing on the shape under it.
+    /// Only the two phases the *user* is driving.
+    ///
+    /// `.tracking` is deliberately not one of them: it is the phase where the pointer is down but
+    /// the content has not moved yet, so a press that turns out to be a click — not a scroll — has
+    /// to keep landing on the shape under it. `.decelerating` is, because trackpad momentum is
+    /// exactly when the tracking-area churn hurts, and swallowing a click there matches the
+    /// platform (a tap during deceleration stops the scroll rather than activating a control).
+    ///
+    /// `.animating` is excluded because it is a *programmatic* scroll — `ScrollViewReader.scrollTo`
+    /// for the canvas-focus jump, and on iPad the keyboard-avoidance scroll that runs while the
+    /// user is editing text. Treating it as movement made the whole row list inert for the duration
+    /// of each one.
     var movesContent: Bool {
         switch self {
-        case .interacting, .decelerating, .animating: true
-        case .idle, .tracking: false
+        case .interacting, .decelerating: true
+        case .idle, .tracking, .animating: false
         @unknown default: false
         }
     }

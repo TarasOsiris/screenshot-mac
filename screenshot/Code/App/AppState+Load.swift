@@ -251,6 +251,7 @@ extension AppState {
         // will never be asked for again. Gated inside the cache on the project actually changing —
         // the same project is re-applied on every iCloud reload, where its rows are still on screen.
         EditorBlurRasterCache.purgeIfProjectChanged(to: projectId)
+        prewarmDeviceModelScenes()
         selectRow(rows.first?.id)
         if deferCleanup {
             cleanupOrphanedResourceFilesAsync(for: projectId)
@@ -302,5 +303,22 @@ extension AppState {
             activeProjectDataModifiedAt = nil
             selectRow(rows.first?.id)
         }
+    }
+
+    /// Parses this document's USDZ models into the shared scene cache ahead of the first render.
+    /// `.utility` only orders this behind *pending* work on the queue actor — it cannot preempt a
+    /// render already running — so `prewarm` yields between specs to make the ordering real.
+    private func prewarmDeviceModelScenes() {
+        var specs: [DeviceFrameModelSpec] = []
+        for row in rows {
+            for shape in row.shapes where shape.type == .device {
+                guard let frameId = shape.deviceFrameId,
+                      let spec = DeviceFrameCatalog.frame(for: frameId)?.modelSpec,
+                      !specs.contains(spec) else { continue }
+                specs.append(spec)
+            }
+        }
+        guard !specs.isEmpty else { return }
+        Task(priority: .utility) { await DeviceModelSnapshotQueue.shared.prewarm(specs) }
     }
 }

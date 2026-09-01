@@ -40,6 +40,10 @@ struct DashedPlaceholderButtonStyle: ButtonStyle {
 }
 
 struct AddRowButton: View {
+    /// Placeholder height plus the vertical padding below. Stated because this is the editor
+    /// `LazyVStack`'s one trailing child, and measuring it descends into the placeholder style.
+    static let totalHeight: CGFloat = 48 + 12 + 12
+
     let action: () -> Void
 
     var body: some View {
@@ -47,6 +51,7 @@ struct AddRowButton: View {
             .buttonStyle(DashedPlaceholderButtonStyle(height: 48))
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+            .frame(height: Self.totalHeight)
             .help("Add new row")
             .accessibilityLabel("Add new row")
     }

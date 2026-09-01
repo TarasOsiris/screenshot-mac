@@ -85,7 +85,7 @@ struct LiveDeviceModelView {
         guard let (scene, cameraNode) = DeviceModelRenderer.makeDeviceModelScene(
             frame: frame,
             viewportSize: viewport,
-            screenshotImage: screenshotImage,
+            screenContents: DeviceModelRenderer.screenContents(from: screenshotImage),
             pitch: pitch,
             yaw: yaw,
             bodyMaterial: bodyMaterial,

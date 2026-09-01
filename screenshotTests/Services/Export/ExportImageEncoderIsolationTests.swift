@@ -168,4 +168,27 @@ struct ExportImageEncoderIsolationTests {
             _ = try await exportTask.value
         }
     }
+
+    /// The editor's device snapshots used to run inside a `.task` on a MainActor-isolated `async
+    /// func`, so the whole synchronous SceneKit pass executed as one uninterrupted main-actor job.
+    /// `DeviceModelSnapshotQueue` is an `actor`, not a `@concurrent` function — an actor's own
+    /// methods always hop to its executor, so this is what proves the hop actually happens.
+    @Test func deviceModelSnapshotSuspendsTheMainActor() async throws {
+        let frame = try #require(DeviceFrameCatalog.frame(for: "iphone17promaxmodel-default-portrait"))
+        let request = DeviceModelSnapshotRequest.make(
+            frame: frame,
+            width: 330,
+            height: 717,
+            isExport: false,
+            screenshotImage: nil,
+            pitch: 0,
+            yaw: 0,
+            bodyMaterial: DeviceBodyMaterial(),
+            lighting: DeviceLighting(),
+            bodyColor: .black
+        )
+        await expectSuspendsMainActor {
+            _ = await DeviceModelSnapshotQueue.shared.snapshot(request)
+        }
+    }
 }

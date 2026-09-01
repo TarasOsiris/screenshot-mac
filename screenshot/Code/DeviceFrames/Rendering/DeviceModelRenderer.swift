@@ -20,34 +20,83 @@ typealias SCNFloat = Float
 ///
 /// These were all static members of `DeviceModelFrameView`, which made one 973-line `View` struct
 /// also the scene builder, both caches and the cache-key model. None of it needs a view.
-enum DeviceModelRenderer {
+nonisolated enum DeviceModelRenderer {
     /// Shared by every `NSCache` holding decoded device-frame bitmaps (snapshots here, bezel PNGs
     /// in `DeviceFrameImageView`) — one bound on how much decoded-pixel memory those caches keep.
     static let decodedImageCacheByteLimit = 256 * 1024 * 1024
     private static let modelSnapshotScale: CGFloat = 3
     private static let exportSnapshotPixelBudget: CGFloat = 4096
-    /// Editor snapshots render at 3× their on-screen points for retina headroom.
-    /// Export shapes are already at full model resolution, so a blanket 3× would
-    /// rasterize ~9× the pixels actually needed on a large device — cap the
-    /// supersample budget instead. Small shapes keep the full 3×.
-    static func snapshotScale(width: CGFloat, height: CGFloat, isExport: Bool) -> CGFloat {
-        guard isExport else { return modelSnapshotScale }
-        return min(modelSnapshotScale, max(1, exportSnapshotPixelBudget / max(width, height, 1)))
+    /// Ceiling on an editor snapshot's long edge. A 450 pt device on a 2× display needs 900 px;
+    /// 1024 keeps headroom above retina without rasterizing the 1350 px a blanket 3× asks for.
+    static let editorSnapshotMaxEdge: CGFloat = 1024
+    /// Rung width for that long edge. The pixel box lands in `SnapshotKey.cacheKey`, and `width`
+    /// and `height` here already contain `displayScale(zoom:)` — so a continuous value would miss
+    /// the cache on every pinch tick and pay a full SceneKit render per device per frame.
+    /// Quantizing the *scale* would not help; the pixel box is what the key holds.
+    static let editorSnapshotEdgeStep: CGFloat = 128
+
+    /// The snapshot's pixel dimensions. The one place that answers this, so the editor and the
+    /// exporter cannot drift apart on it.
+    ///
+    /// Export is unchanged: 3× capped to a 4096 budget, because shapes are already at model
+    /// resolution there and a blanket 3× would rasterize ~9× the pixels needed. The editor caps
+    /// and quantizes instead — above ~341 pt on screen a device is pinned at 1024 px for every
+    /// zoom level, which turns zooming into a cache hit.
+    static func snapshotPixelSize(width: CGFloat, height: CGFloat, isExport: Bool) -> CGSize {
+        let safeWidth = max(1, width)
+        let safeHeight = max(1, height)
+        let longest = max(safeWidth, safeHeight)
+
+        if isExport {
+            let scale = min(modelSnapshotScale, max(1, exportSnapshotPixelBudget / longest))
+            return CGSize(
+                width: max(1, (safeWidth * scale).rounded(.up)),
+                height: max(1, (safeHeight * scale).rounded(.up))
+            )
+        }
+
+        let requested = min(longest * modelSnapshotScale, editorSnapshotMaxEdge)
+        let rungs = (requested / editorSnapshotEdgeStep).rounded(.up)
+        let quantizedLong = max(editorSnapshotEdgeStep, rungs * editorSnapshotEdgeStep)
+        // Derived from the shape's aspect ratio, which is zoom-independent, so the box stays put
+        // as the user zooms. Matching the aspect also keeps `fitModelToViewport` from stretching.
+        let shortEdge = max(1, (quantizedLong * (min(safeWidth, safeHeight) / longest)).rounded())
+        return safeWidth >= safeHeight
+            ? CGSize(width: quantizedLong, height: shortEdge)
+            : CGSize(width: shortEdge, height: quantizedLong)
     }
     private static let snapshotExposureOffset: CGFloat = -0.7
-    private static let snapshotImageCache: NSCache<NSString, NSImage> = {
+    nonisolated(unsafe) private static let snapshotImageCache: NSCache<NSString, NSImage> = {
         let cache = NSCache<NSString, NSImage>()
         cache.countLimit = 160
         cache.totalCostLimit = decodedImageCacheByteLimit
         return cache
     }()
-    private static let modelSceneCache: NSCache<NSString, SCNScene> = {
+    /// Also the cap on how many specs `DeviceModelSnapshotQueue.prewarm` will warm: warming more
+    /// than the cache holds evicts the early ones before anything asks for them.
+    static let modelSceneCacheLimit = 4
+    nonisolated(unsafe) private static let modelSceneCache: NSCache<NSString, SCNScene> = {
         let cache = NSCache<NSString, SCNScene>()
-        cache.countLimit = 4
+        cache.countLimit = modelSceneCacheLimit
+        return cache
+    }()
+
+    /// Guards the cached base scenes. `clonedBaseScene` is reachable from two executors at once —
+    /// `DeviceModelSnapshotQueue` (editor snapshots, prewarm) and the main actor (export's
+    /// `synchronousSnapshot`, `LiveDeviceModelView`) — and `NSCache` locking its own storage does
+    /// not make the `SCNScene` it hands back safe to read concurrently: `child.clone()` walks a
+    /// shared node graph whose bounding boxes SceneKit memoizes lazily, so a first touch from two
+    /// threads is a race. One lock rather than a cache per executor, which would double the parse
+    /// and still leave export and the queue sharing one.
+    nonisolated(unsafe) private static let sceneCacheLock = NSLock()
+    nonisolated(unsafe) private static let screenTextureCache: NSCache<NSString, CGImage> = {
+        let cache = NSCache<NSString, CGImage>()
+        cache.countLimit = 16
+        cache.totalCostLimit = decodedImageCacheByteLimit
         return cache
     }()
     /// One device across all snapshots keeps Metal's compiled-shader cache warm between renders.
-    private static let sharedMetalDevice: (any MTLDevice)? = MTLCreateSystemDefaultDevice()
+    nonisolated(unsafe) static let sharedMetalDevice: (any MTLDevice)? = MTLCreateSystemDefaultDevice()
 
     struct SnapshotKey: Hashable {
         let frameId: String
@@ -68,6 +117,30 @@ enum DeviceModelRenderer {
         /// A screenshot with no stable identity can't be told apart from any other, so it
         /// must re-render rather than risk serving a different shape's snapshot.
         var isCacheable: Bool { !hasScreenshot || screenshotIdentity != nil }
+
+        /// `frameId` carries the model, colourway and orientation, so a raster of the same one is the
+        /// same silhouette — every other field settles within a render or two, and the fallback the
+        /// view would show instead has no pose at all.
+        func canStandInFor(_ other: Self) -> Bool {
+            frameId == other.frameId
+        }
+
+        /// Only the raster resolution differs, which is the signature of a zoom step — the one change
+        /// worth making a render wait, because it re-keys every device in the row at once.
+        func matchesIgnoringPixelSize(_ other: Self) -> Bool {
+            frameId == other.frameId
+                && hasScreenshot == other.hasScreenshot
+                && screenshotIdentity == other.screenshotIdentity
+                && screenshotWidth == other.screenshotWidth
+                && screenshotHeight == other.screenshotHeight
+                && pitch == other.pitch
+                && yaw == other.yaw
+                && materialFinish == other.materialFinish
+                && ambient == other.ambient
+                && key == other.key
+                && rim == other.rim
+                && bodyColor == other.bodyColor
+        }
 
         var cacheKey: NSString {
             [
@@ -97,9 +170,7 @@ enum DeviceModelRenderer {
 
     static func snapshotKey(
         frame: DeviceFrame,
-        width: CGFloat,
-        height: CGFloat,
-        scale: CGFloat,
+        pixelSize: CGSize,
         screenshotImage: NSImage?,
         screenshotImageIdentity: String?,
         pitch: Double,
@@ -112,8 +183,8 @@ enum DeviceModelRenderer {
         let color = bodyColor.sRGBComponents
         return SnapshotKey(
             frameId: frame.id,
-            pixelWidth: max(1, Int((width * scale).rounded(.up))),
-            pixelHeight: max(1, Int((height * scale).rounded(.up))),
+            pixelWidth: max(1, Int(pixelSize.width.rounded(.up))),
+            pixelHeight: max(1, Int(pixelSize.height.rounded(.up))),
             hasScreenshot: screenshotImage != nil,
             screenshotIdentity: screenshotImage == nil ? nil : screenshotImageIdentity,
             screenshotWidth: max(0, Int(imageSize.width.rounded())),
@@ -132,40 +203,52 @@ enum DeviceModelRenderer {
         Int((value * 1_000).rounded())
     }
 
+    /// Renders one device model offscreen.
+    ///
+    /// `nonisolated` and **synchronous** on purpose, so it carries no executor semantics of its own:
+    /// the exporter calls it directly on the main actor inside a single rasterization pass, and the
+    /// editor calls it from `DeviceModelSnapshotQueue`, which really does leave the main thread.
+    /// One implementation, two callers, no way for them to drift.
+    ///
+    /// Returns a `CGImage` rather than an `NSImage` because the caller wraps it back up on its own
+    /// actor — `NSImage` is not `Sendable`, and the old code *mutated* the returned image's `size`
+    /// after producing it, which is exactly the shape Sendability exists to stop.
     static func snapshotDeviceModel(
-        frame: DeviceFrame,
-        width: CGFloat,
-        height: CGFloat,
-        scale: CGFloat,
-        screenshotImage: NSImage?,
-        pitch: Double,
-        yaw: Double,
-        bodyMaterial: DeviceBodyMaterial,
-        lighting: DeviceLighting,
-        bodyTintColor: NSColor? = nil
-    ) -> NSImage? {
-        let safeWidth = max(1, (width * scale).rounded(.up))
-        let safeHeight = max(1, (height * scale).rounded(.up))
-        let signpost = PerfSignpost.begin("DeviceModelRenderer.snapshot", pixels: Int(safeWidth * safeHeight))
+        _ request: DeviceModelSnapshotRequest,
+        using existingRenderer: SCNRenderer? = nil
+    ) -> CGImage? {
+        let viewportSize = request.pixelSize
+        let signpost = PerfSignpost.begin(
+            "DeviceModelRenderer.snapshot",
+            pixels: Int(viewportSize.width * viewportSize.height)
+        )
         defer { PerfSignpost.end("DeviceModelRenderer.snapshot", signpost) }
-        let viewportSize = CGSize(width: safeWidth, height: safeHeight)
+
         guard let (scene, cameraNode) = makeDeviceModelScene(
-            frame: frame,
+            frame: request.frame,
             viewportSize: viewportSize,
-            screenshotImage: screenshotImage,
-            pitch: pitch,
-            yaw: yaw,
-            bodyMaterial: bodyMaterial,
-            lighting: lighting,
-            bodyTintColor: bodyTintColor
+            screenContents: request.screenContents,
+            screenContentsIdentity: request.screenContentsIdentity,
+            pitch: request.pitch,
+            yaw: request.yaw,
+            bodyMaterial: request.bodyMaterial,
+            lighting: request.lighting,
+            bodyTintColor: request.bodyTint?.platformColor
         ) else {
-            AppLogger.export.warning("Device model scene unavailable for frame \(frame.id, privacy: .public)")
+            AppLogger.export.warning(
+                "Device model scene unavailable for frame \(request.frame.id, privacy: .public)"
+            )
             return nil
         }
 
-        let renderer = SCNRenderer(device: sharedMetalDevice, options: nil)
+        let renderer = existingRenderer ?? SCNRenderer(device: sharedMetalDevice, options: nil)
         renderer.scene = scene
         renderer.pointOfView = cameraNode
+        // A reused renderer would otherwise hold this scene alive until the next render.
+        defer {
+            renderer.scene = nil
+            renderer.pointOfView = nil
+        }
         if let camera = cameraNode.camera {
             camera.wantsExposureAdaptation = false
             camera.exposureOffset = .init(snapshotExposureOffset)
@@ -176,31 +259,33 @@ enum DeviceModelRenderer {
         renderer.prepare(scene, shouldAbortBlock: nil)
         PerfSignpost.end("DeviceModelRenderer.prepare", prepareSpan)
 
-        let snapshotSize = CGSize(width: safeWidth, height: safeHeight)
-        var image = renderer.snapshot(atTime: 0, with: snapshotSize, antialiasingMode: .multisampling4X)
+        guard var image = renderedCGImage(renderer, viewportSize: viewportSize) else { return nil }
         if isBlank(image) {
             // The retry doubles the cost of the whole snapshot and is otherwise invisible.
             PerfSignpost.event("DeviceModelRenderer.blankRetry")
-            image = renderer.snapshot(atTime: 0, with: snapshotSize, antialiasingMode: .multisampling4X)
-            guard !isBlank(image) else {
-                AppLogger.export.warning("Device model snapshot came back blank for frame \(frame.id, privacy: .public)")
+            guard let retry = renderedCGImage(renderer, viewportSize: viewportSize), !isBlank(retry) else {
+                AppLogger.export.warning(
+                    "Device model snapshot came back blank for frame \(request.frame.id, privacy: .public)"
+                )
                 return nil
             }
+            image = retry
         }
-        #if os(macOS)
-        image.size = NSSize(width: max(1, width), height: max(1, height))
-        #endif
         return image
+    }
+
+    private static func renderedCGImage(_ renderer: SCNRenderer, viewportSize: CGSize) -> CGImage? {
+        let image = renderer.snapshot(atTime: 0, with: viewportSize, antialiasingMode: .multisampling4X)
+        #if os(macOS)
+        return image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+        #else
+        return image.cgImage
+        #endif
     }
 
     /// True when every sampled pixel is fully transparent. A blank snapshot is indistinguishable
     /// from a valid one downstream, so it has to be caught here or the device vanishes silently.
-    private static func isBlank(_ image: NSImage) -> Bool {
-        #if os(macOS)
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return true }
-        #else
-        guard let cgImage = image.cgImage else { return true }
-        #endif
+    private static func isBlank(_ cgImage: CGImage) -> Bool {
         let sampleCount = 32
         let width = cgImage.width
         let height = cgImage.height
@@ -224,7 +309,8 @@ enum DeviceModelRenderer {
     static func makeDeviceModelScene(
         frame: DeviceFrame,
         viewportSize: CGSize,
-        screenshotImage: NSImage?,
+        screenContents: CGImage?,
+        screenContentsIdentity: String? = nil,
         pitch: Double,
         yaw: Double,
         bodyMaterial: DeviceBodyMaterial,
@@ -246,7 +332,12 @@ enum DeviceModelRenderer {
 
         removeDisabledModelNodes(in: contentNode, modelSpec: modelSpec)
         applyBodyMaterials(in: contentNode, modelSpec: modelSpec, tintColor: bodyTintColor, bodyMaterial: bodyMaterial)
-        applyScreenTexture(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
+        applyScreenTexture(
+            in: contentNode,
+            modelSpec: modelSpec,
+            screenContents: screenContents,
+            screenContentsIdentity: screenContentsIdentity
+        )
 
         let bounds = contentNode.boundingBox
         let sizeY = bounds.max.y - bounds.min.y
@@ -396,9 +487,17 @@ enum DeviceModelRenderer {
         presentationNode.position.y -= centerY
     }
 
+    /// Loads a model into the shared scene cache without rendering anything.
+    static func prewarmModelScene(for modelSpec: DeviceFrameModelSpec) {
+        _ = clonedBaseScene(for: modelSpec)
+    }
+
     private static func clonedBaseScene(for modelSpec: DeviceFrameModelSpec) -> SCNScene? {
         let span = PerfSignpost.begin("DeviceModelRenderer.loadScene")
         defer { PerfSignpost.end("DeviceModelRenderer.loadScene", span) }
+        // Held across the clone too, not just the cache lookup — the clone is the shared read.
+        sceneCacheLock.lock()
+        defer { sceneCacheLock.unlock() }
         let cacheKey = "\(modelSpec.resourceName).\(modelSpec.resourceExtension)" as NSString
         let baseScene: SCNScene
         if let cached = modelSceneCache.object(forKey: cacheKey) {
@@ -427,13 +526,15 @@ enum DeviceModelRenderer {
     private static func applyScreenTexture(
         in contentNode: SCNNode,
         modelSpec: DeviceFrameModelSpec,
-        screenshotImage: NSImage?
+        screenContents: CGImage?,
+        screenContentsIdentity: String?
     ) {
+        let prepared = preparedScreenContents(from: screenContents, identity: screenContentsIdentity)
         switch modelSpec.screenRenderingMode {
         case .replaceMaterial:
-            applyScreenReplacementMaterial(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
+            applyScreenReplacementMaterial(in: contentNode, modelSpec: modelSpec, screenContents: prepared)
         case .overlayPlane:
-            applyScreenOverlayPlane(in: contentNode, modelSpec: modelSpec, screenshotImage: screenshotImage)
+            applyScreenOverlayPlane(in: contentNode, modelSpec: modelSpec, screenContents: prepared)
         }
     }
 
@@ -518,7 +619,7 @@ enum DeviceModelRenderer {
     private static func applyScreenReplacementMaterial(
         in contentNode: SCNNode,
         modelSpec: DeviceFrameModelSpec,
-        screenshotImage: NSImage?
+        screenContents: Any
     ) {
         guard let screenNode = findScreenNode(in: contentNode, modelSpec: modelSpec),
               let geometry = screenNode.geometry?.copy() as? SCNGeometry else {
@@ -531,7 +632,6 @@ enum DeviceModelRenderer {
             offsetY: modelSpec.screenUVOffsetY
         )
 
-        let screenContents = preparedScreenContents(from: screenshotImage)
         let materials = remappedGeometry.materials.map { material -> SCNMaterial in
             guard material.name == modelSpec.screenMaterialName else {
                 return material.copy() as? SCNMaterial ?? SCNMaterial()
@@ -566,7 +666,7 @@ enum DeviceModelRenderer {
     private static func applyScreenOverlayPlane(
         in contentNode: SCNNode,
         modelSpec: DeviceFrameModelSpec,
-        screenshotImage: NSImage?
+        screenContents: Any
     ) {
         guard let screenNode = findScreenNode(in: contentNode, modelSpec: modelSpec) else {
             return
@@ -584,7 +684,6 @@ enum DeviceModelRenderer {
 
         let material = SCNMaterial()
         material.name = "ScreenOverlay"
-        let screenContents = preparedScreenContents(from: screenshotImage)
         for prop in [material.diffuse, material.ambient, material.emission] {
             prop.contents = screenContents
             prop.wrapS = .clamp
@@ -676,19 +775,70 @@ enum DeviceModelRenderer {
         return SCNMatrix4Mult(SCNMatrix4Mult(SCNMatrix4Mult(toOrigin, rotate), flipH), toCenter)
     }()
 
-    private static func preparedScreenContents(from image: NSImage?) -> Any {
-        guard let image else { return NSColor.white }
-        if let cgImage = normalizedScreenCGImage(from: image) {
-            return cgImage
-        }
-        return image
+    private static func preparedScreenContents(from contents: CGImage?, identity: String?) -> Any {
+        guard let contents else { return NSColor.white }
+        return normalizedScreenContents(contents, identity: identity) ?? contents
     }
 
-    private static func normalizedScreenCGImage(from image: NSImage) -> CGImage? {
-        guard let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            return nil
-        }
+    /// `normalizedScreenCGImage` redraws the whole screenshot, and a rotation drag asks for the same
+    /// one every tick. Editor-only by construction — `DeviceModelSnapshotRequest.make` withholds the
+    /// identity on export, whose raster differs from the editor's thumbnail in colour but not always
+    /// in size. The size still rides in the key so a second caller can't reintroduce that collision.
+    static func normalizedScreenContents(_ source: CGImage, identity: String?) -> CGImage? {
+        guard let identity else { return normalizedScreenCGImage(from: source) }
+        let cacheKey = "\(identity)|\(source.width)x\(source.height)" as NSString
+        if let cached = screenTextureCache.object(forKey: cacheKey) { return cached }
+        guard let normalized = normalizedScreenCGImage(from: source) else { return nil }
+        screenTextureCache.setObject(normalized, forKey: cacheKey, cost: normalized.width * normalized.height * 4)
+        return normalized
+    }
 
+    /// The caller's actor pulls the `CGImage` off the non-`Sendable` `NSImage`; this redraw — a
+    /// full-size `CGContext.draw` — is the half that runs on the render executor.
+    static func screenContents(from image: NSImage?) -> CGImage? {
+        guard let image else { return nil }
+        #if os(macOS)
+        if let direct = image.cgImage(forProposedRect: nil, context: nil, hints: nil) { return direct }
+        #else
+        if let direct = image.cgImage { return direct }
+        #endif
+        // An image with no bitmap representation (vector- or PDF-backed) used to be handed to
+        // SceneKit whole and rasterized there. It can't cross to the render executor, so rasterize
+        // it here instead — otherwise `preparedScreenContents` falls through to white and the
+        // device renders a blank screen, silently, in export as well as the editor.
+        return rasterizedScreenContents(from: image)
+    }
+
+    private static func rasterizedScreenContents(from image: NSImage) -> CGImage? {
+        let width = max(1, Int(image.size.width.rounded()))
+        let height = max(1, Int(image.size.height.rounded()))
+        guard let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        let rect = CGRect(x: 0, y: 0, width: width, height: height)
+        #if os(macOS)
+        let graphicsContext = NSGraphicsContext(cgContext: context, flipped: false)
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = graphicsContext
+        image.draw(in: rect)
+        NSGraphicsContext.restoreGraphicsState()
+        #else
+        UIGraphicsPushContext(context)
+        context.translateBy(x: 0, y: CGFloat(height))
+        context.scaleBy(x: 1, y: -1)
+        image.draw(in: rect)
+        UIGraphicsPopContext()
+        #endif
+        return context.makeImage()
+    }
+
+    private static func normalizedScreenCGImage(from source: CGImage) -> CGImage? {
         let width = source.width
         let height = source.height
         guard width > 0, height > 0 else { return nil }

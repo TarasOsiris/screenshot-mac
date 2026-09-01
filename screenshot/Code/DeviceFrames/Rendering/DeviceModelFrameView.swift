@@ -28,8 +28,22 @@ struct DeviceModelFrameView: View {
     @State private var renderedSnapshotKey: DeviceModelRenderer.SnapshotKey?
     @State private var renderedSnapshotImage: NSImage?
 
-    private var effectiveSnapshotScale: CGFloat {
-        DeviceModelRenderer.snapshotScale(width: width, height: height, isExport: isExportRendering)
+    private static let staleRenderDebounce: Duration = .milliseconds(80)
+
+    private var snapshotRequest: DeviceModelSnapshotRequest {
+        DeviceModelSnapshotRequest.make(
+            frame: frame,
+            width: width,
+            height: height,
+            isExport: isExportRendering,
+            screenshotImage: screenshotImage,
+            screenshotImageIdentity: screenshotImageIdentity,
+            pitch: pitch,
+            yaw: yaw,
+            bodyMaterial: bodyMaterial,
+            lighting: lighting,
+            bodyColor: bodyColor
+        )
     }
 
     var body: some View {
@@ -73,9 +87,11 @@ struct DeviceModelFrameView: View {
     private var currentSnapshotKey: DeviceModelRenderer.SnapshotKey {
         DeviceModelRenderer.snapshotKey(
             frame: frame,
-            width: width,
-            height: height,
-            scale: effectiveSnapshotScale,
+            pixelSize: DeviceModelRenderer.snapshotPixelSize(
+                width: width,
+                height: height,
+                isExport: isExportRendering
+            ),
             screenshotImage: screenshotImage,
             screenshotImageIdentity: screenshotImageIdentity,
             pitch: pitch,
@@ -124,27 +140,31 @@ struct DeviceModelFrameView: View {
         if renderedSnapshotKey == key, let renderedSnapshotImage {
             return renderedSnapshotImage
         }
-        return DeviceModelRenderer.cachedSnapshot(for: key)
+        if let cached = DeviceModelRenderer.cachedSnapshot(for: key) {
+            return cached
+        }
+        // Rendering is asynchronous now, so a key change would otherwise swap in the abstract
+        // fallback — which is drawn front-on, so a pitched device appears to snap flat and back.
+        // The previous raster is the same device one state behind; `.resizable()` below covers a
+        // density difference, and a render that actually fails clears it rather than pinning a pose.
+        if let renderedSnapshotImage, renderedSnapshotKey?.canStandInFor(key) == true {
+            return renderedSnapshotImage
+        }
+        return nil
     }
 
+    /// Export must stay synchronous: it is one `ImageRenderer`/`cacheDisplay` pass over a view that
+    /// never enters a hierarchy, so `.task` never fires and an `await` would bake the wireframe
+    /// fallback into the exported PNG.
     private func synchronousSnapshot(for key: DeviceModelRenderer.SnapshotKey) -> NSImage? {
         if let cached = DeviceModelRenderer.cachedSnapshot(for: key) {
             return cached
         }
-        guard let rendered = DeviceModelRenderer.snapshotDeviceModel(
-            frame: frame,
-            width: width,
-            height: height,
-            scale: effectiveSnapshotScale,
-            screenshotImage: screenshotImage,
-            pitch: pitch,
-            yaw: yaw,
-            bodyMaterial: bodyMaterial,
-            lighting: lighting,
-            bodyTintColor: NSColor(bodyColor)
-        ) else { return nil }
-        DeviceModelRenderer.storeSnapshot(rendered, for: key)
-        return rendered
+        let request = snapshotRequest
+        guard let rendered = DeviceModelRenderer.snapshotDeviceModel(request) else { return nil }
+        let image = NSImage(cgImage: rendered, size: request.pointSize)
+        DeviceModelRenderer.storeSnapshot(image, for: key)
+        return image
     }
 
     private func renderSnapshotIfNeeded(for key: DeviceModelRenderer.SnapshotKey) async {
@@ -154,22 +174,31 @@ struct DeviceModelFrameView: View {
             return
         }
 
-        guard let rendered = DeviceModelRenderer.snapshotDeviceModel(
-            frame: frame,
-            width: width,
-            height: height,
-            scale: effectiveSnapshotScale,
-            screenshotImage: screenshotImage,
-            pitch: pitch,
-            yaw: yaw,
-            bodyMaterial: bodyMaterial,
-            lighting: lighting,
-            bodyTintColor: NSColor(bodyColor)
-        ), !Task.isCancelled else { return }
+        // Only a zoom sweep waits: it re-keys every device in the row at once, so the queue would
+        // fill with rasters no one will see. A pose or content change moves one shape, and
+        // `.task(id:)` cancellation already drops whatever it superseded. Waiting on a pose starved
+        // the rotation sliders outright — they tick every ~33 ms, faster than this delay.
+        if renderedSnapshotImage != nil, renderedSnapshotKey?.matchesIgnoringPixelSize(key) == true {
+            try? await Task.sleep(for: Self.staleRenderDebounce)
+            guard !Task.isCancelled else { return }
+        }
 
-        DeviceModelRenderer.storeSnapshot(rendered, for: key)
+        let request = snapshotRequest
+        guard let rendered = await DeviceModelSnapshotQueue.shared.snapshot(request) else {
+            // A cancelled render is superseded by the next key. A real failure must drop the stale
+            // raster, or `canStandInFor` keeps presenting the previous pose as though it were live.
+            if !Task.isCancelled, renderedSnapshotKey != nil {
+                renderedSnapshotKey = nil
+                renderedSnapshotImage = nil
+            }
+            return
+        }
+        guard !Task.isCancelled else { return }
+
+        let image = NSImage(cgImage: rendered, size: request.pointSize)
+        DeviceModelRenderer.storeSnapshot(image, for: key)
         renderedSnapshotKey = key
-        renderedSnapshotImage = rendered
+        renderedSnapshotImage = image
     }
 
 }

@@ -35,7 +35,12 @@ struct EditorRowView: View {
     @State var textEditingShapeId: UUID?
     /// The shape whose image the row's single picker is currently choosing, if any. One presentation
     /// host per row instead of one per image/device shape — see `imagePickerHost`.
+    ///
+    /// Deliberately not the presentation flag as well: SwiftUI writes `false` into that binding while
+    /// tearing the picker down, and on iPad the confirmation dialog closes a whole photo-picker before
+    /// the image arrives — so a target read back through the binding is always nil by delivery time.
     @State var pickerTargetShapeId: UUID?
+    @State var isImagePickerPresented = false
     @FocusState var isLabelFieldFocused: Bool
 
     var canMoveUp: Bool { !isFirst }
