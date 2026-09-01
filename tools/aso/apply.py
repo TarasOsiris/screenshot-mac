@@ -64,7 +64,7 @@ def version_localizations(version_id):
 def versions():
     return [(v["id"], v["attributes"]["platform"], v["attributes"]["versionString"],
              v["attributes"]["appVersionState"])
-            for v in rows(asc("versions", "list", "--app", APP_ID))]
+            for v in rows(asc("versions", "list", "--app", APP_ID, "--paginate"))]
 
 
 def apply_subtitle(dry):
