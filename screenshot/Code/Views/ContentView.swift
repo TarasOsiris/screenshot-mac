@@ -202,7 +202,6 @@ struct ContentView: View {
                             ShapePropertiesBar(state: state)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 12)
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
                     }
                     .padding(.bottom, 8)
@@ -226,12 +225,12 @@ struct ContentView: View {
                 ShapePropertiesBar(state: state)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .layoutPriority(1)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
             #endif
         }
-        .animation(.easeInOut(duration: 0.2), value: state.hasSelection)
         #if os(iOS)
+        // Only the format bar animates. The properties bar shows and hides instantly, so it must
+        // not pick up an ambient animation from here either — it appears the moment you select.
         .animation(.easeInOut(duration: 0.2), value: state.textEdit.isActive)
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             // Keyboard avoidance shrinks the canvas ScrollView; scroll the row being edited into
