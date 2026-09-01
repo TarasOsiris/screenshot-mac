@@ -26,12 +26,14 @@ extension EditorRowView {
     /// point, and because the items are built with the body rather than on right-click, the menu
     /// showed whatever the point was at the previous body evaluation. Moving it back to the row
     /// needs a menu built *in response to* the click — an on-demand `NSMenu` on macOS.
-    @ViewBuilder
-    func shapeContextMenu(for shape: CanvasShapeModel, facts: CanvasSelectionFacts) -> some View {
+    func shapeContextMenu(
+        for shape: CanvasShapeModel,
+        facts: CanvasSelectionFacts
+    ) -> CanvasShapeContextMenuContent {
         let isInSelection = selectedShapeIds.contains(shape.id)
         let isMulti = isInSelection && facts.isMultiSelection
 
-        CanvasShapeContextMenuContent(
+        return CanvasShapeContextMenuContent(
             shape: shape,
             isMultiSelected: isMulti,
             screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },

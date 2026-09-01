@@ -17,7 +17,13 @@ nonisolated enum CanvasHitTesting {
         rotationDegrees: Double,
         clip: CGRect?
     ) -> Bool {
-        if let clip, !clip.contains(point) { return false }
+        // Inclusive on all four edges, like the body test below and like the bounding-box test this
+        // replaced. `CGRect.contains` is exclusive on maxX/maxY, which would drop a press exactly on
+        // a clipped shape's column edge.
+        if let clip,
+           point.x < clip.minX || point.x > clip.maxX || point.y < clip.minY || point.y > clip.maxY {
+            return false
+        }
 
         // `rect.width`/`.height` are standardized, so these are never negative.
         let halfWidth = rect.width / 2

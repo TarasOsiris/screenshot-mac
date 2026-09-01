@@ -58,6 +58,16 @@ struct CanvasHitTestingTests {
         #expect(CanvasHitTesting.contains(point: CGPoint(x: 1100, y: 150), rect: spanning, rotationDegrees: 0, clip: clip))
     }
 
+    @Test func clipIsInclusiveOnItsEdges() {
+        // The bounding-box path this replaced was inclusive on every edge, so a press exactly on a
+        // clipped shape's column boundary must still land on it.
+        let clip = CGRect(x: 1000, y: 0, width: 1000, height: 2000)
+        let spanning = CGRect(x: 600, y: 100, width: 1500, height: 100)
+        #expect(CanvasHitTesting.contains(point: CGPoint(x: 2000, y: 150), rect: spanning, rotationDegrees: 0, clip: clip))
+        #expect(CanvasHitTesting.contains(point: CGPoint(x: 1000, y: 150), rect: spanning, rotationDegrees: 0, clip: clip))
+        #expect(!CanvasHitTesting.contains(point: CGPoint(x: 2001, y: 150), rect: spanning, rotationDegrees: 0, clip: clip))
+    }
+
     // MARK: - Degenerate
 
     @Test func zeroSizedShapeIsHitOnlyAtItsPoint() {

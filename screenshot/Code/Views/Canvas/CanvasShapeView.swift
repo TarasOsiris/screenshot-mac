@@ -50,6 +50,11 @@ struct CanvasShapeView: View {
     /// aren't part of the interaction never observe per-tick session changes.
     var dragSession: CanvasDragSession?
     var availableFontFamilies: Set<String> = []
+    /// The shape's context menu, supplied by the row (which owns the actions). Attached *inside*
+    /// this view on purpose: the menu has to sit under the same `.offset`, clip branch and
+    /// `allowsHitTesting` as the shape, or it detaches from where the shape is drawn and a
+    /// clipped-out or view-mode shape still offers one. Nil on the export/preview paths.
+    var contextMenuContent: (() -> CanvasShapeContextMenuContent)?
     var interactions = CanvasShapeInteractions()
 
     @State var addBumpScale: CGFloat = 1.0
@@ -239,6 +244,11 @@ struct CanvasShapeView: View {
         .frame(width: aabb.width, height: aabb.height)
         .contentShape(hitPath)
         .scaleEffect(addBumpScale)
+        // No custom preview: the canvas renders at full scale, so a shape's layout frame equals its
+        // on-screen size and iOS's default lift snapshots the existing pixels at the right size. A
+        // custom preview re-evaluates the view in an offscreen pass, which re-runs the device
+        // SceneKit snapshot and renders devices wrong.
+        .shapeContextMenu(contextMenuContent)
         .onContinuousHover { phase in
             switch phase {
             case .active(let location):
@@ -382,5 +392,17 @@ struct CanvasShapeView: View {
 
     private func snapToDisplayPixel(_ value: CGFloat) -> CGFloat {
         (value / displayPixelStep).rounded() * displayPixelStep
+    }
+}
+
+private extension View {
+    /// Applies the menu only when there is one, so an export-path shape gets no empty menu.
+    @ViewBuilder
+    func shapeContextMenu(_ content: (() -> CanvasShapeContextMenuContent)?) -> some View {
+        if let content {
+            contextMenu { content() }
+        } else {
+            self
+        }
     }
 }

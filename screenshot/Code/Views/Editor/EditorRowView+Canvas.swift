@@ -233,7 +233,6 @@ extension EditorRowView {
                             template: template,
                             row: row,
                             index: index,
-                            backgroundPopoverTemplateId: $backgroundPopoverTemplateId,
                             zoom: zoom,
                             screenshotImages: state.screenshotImages,
                             localeState: state.localeState,
@@ -360,6 +359,7 @@ extension EditorRowView {
                         allowSynchronousSvgRender: false,
                         dragSession: dragSession,
                         availableFontFamilies: state.availableFontFamilySet,
+                        contextMenuContent: { shapeContextMenu(for: shape, facts: facts) },
                         interactions: CanvasShapeInteractions(
                             // View mode: shapes are inert. The FAB sits in an overlay above the
                             // canvas, but the shape tap is a `.simultaneousGesture` that co-recognizes
@@ -474,13 +474,6 @@ extension EditorRowView {
                             }
                         )
                     )
-                    // No custom preview: the canvas renders at full scale, so a shape's layout
-                    // frame equals its on-screen size and iOS's default lift snapshots the existing
-                    // pixels at the right size. A custom preview re-evaluates the view in an
-                    // offscreen pass, which re-runs the device SceneKit snapshot and renders wrong.
-                    .contextMenu {
-                        shapeContextMenu(for: shape, facts: facts)
-                    }
                 }
             }
 

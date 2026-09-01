@@ -17,9 +17,6 @@ struct TemplateControlBar: View {
     let template: ScreenshotTemplate
     let row: ScreenshotRow
     let index: Int
-    /// Which template's background popover is open, owned by the row so only one can be. A `@State`
-    /// Bool per bar let a click on one swatch open a second popover while another was still up.
-    @Binding var backgroundPopoverTemplateId: UUID?
     let zoom: CGFloat
     var screenshotImages: [String: NSImage] = [:]
     var localeState: LocaleState = .default
@@ -45,14 +42,14 @@ struct TemplateControlBar: View {
 
     private var showBackgroundPopover: Binding<Bool> {
         Binding(
-            get: { backgroundPopoverTemplateId == template.id },
+            get: { state.presentation.backgroundPopoverTemplateId == template.id },
             // Only this bar may clear the shared slot: when one popover replaces another, SwiftUI
             // can deliver the outgoing `false` after the incoming `true`, which would leave neither.
             set: { isOn in
                 if isOn {
-                    backgroundPopoverTemplateId = template.id
-                } else if backgroundPopoverTemplateId == template.id {
-                    backgroundPopoverTemplateId = nil
+                    state.presentation.backgroundPopoverTemplateId = template.id
+                } else if state.presentation.backgroundPopoverTemplateId == template.id {
+                    state.presentation.backgroundPopoverTemplateId = nil
                 }
             }
         )
@@ -136,7 +133,7 @@ struct TemplateControlBar: View {
 
     private var backgroundOverrideButton: some View {
         Button {
-            backgroundPopoverTemplateId = template.id
+            state.presentation.backgroundPopoverTemplateId = template.id
         } label: {
             HStack(spacing: 3) {
                 if liveTemplate.overrideBackground {
@@ -320,7 +317,7 @@ struct TemplateControlBar: View {
                     .font(.headline)
                 Spacer()
                 Button {
-                    backgroundPopoverTemplateId = nil
+                    state.presentation.backgroundPopoverTemplateId = nil
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
@@ -350,7 +347,7 @@ struct TemplateControlBar: View {
         // Otherwise the system color panel taking key focus dismisses the popover mid-edit;
         // `onExitCommand` puts Esc back.
         .interactiveDismissDisabled()
-        .onExitCommand { backgroundPopoverTemplateId = nil }
+        .onExitCommand { state.presentation.backgroundPopoverTemplateId = nil }
         #else
         // A Form keeps the sheet at full detent height, so toggling the override doesn't
         // resize/re-center the floating iPad sheet around its content.

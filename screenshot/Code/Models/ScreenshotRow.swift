@@ -268,8 +268,8 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
     /// since a locked shape still swallows the press. `candidates` is in draw order, so the search
     /// runs back to front and the frontmost shape wins, matching what the canvas ZStack shows.
     ///
-    /// `predicate` narrows the search without a second pass: the drop router uses it to look only
-    /// for the shapes that accept an image.
+    /// `predicate` narrows the search without a second pass — for a caller that wants the topmost
+    /// shape of a particular kind rather than the topmost shape.
     func hitShape(
         at point: CGPoint,
         among candidates: [CanvasShapeModel],

@@ -34,6 +34,8 @@ final class AppState {
     let localeMenu = LocaleMenuCoordinator()
     /// Interactive onboarding-tour runtime state + flow (see `OnboardingCoachController`).
     let coach = OnboardingCoachController()
+    /// Editor popovers that must be single across the editor. See EditorPresentation.
+    let presentation = EditorPresentation()
     var screenshotImages: [String: NSImage] = [:]
     /// User-imported fonts. See CustomFontLibrary.
     let fonts: CustomFontLibrary

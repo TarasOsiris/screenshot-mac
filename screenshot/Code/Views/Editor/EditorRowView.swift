@@ -24,8 +24,6 @@ struct EditorRowView: View {
     @State var activeAlert: RowAlert?
     @State var isSvgDialogPresented = false
     @State var contextMenuPointStore = ModelPointStore()
-    /// The one template whose background popover is open, if any — see `TemplateControlBar`.
-    @State var backgroundPopoverTemplateId: UUID?
     /// Latched once this row has shown its chrome, so a scroll that starts later cannot take it
     /// away again. Only a row realized *during* a scroll waits.
     @State private var chromeReady = false

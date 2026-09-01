@@ -34,6 +34,9 @@ struct ActionButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(EditorIconButtonStyle())
+        // Kept even though there is no NSButton left: this is SwiftUI focus, not AppKit's key-view
+        // loop, and ActionButton is used well beyond the editor's row list.
+        .focusable(false)
         .foregroundStyle(
             disabled
             ? AnyShapeStyle(.tertiary)
