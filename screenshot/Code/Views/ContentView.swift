@@ -78,6 +78,7 @@ struct ContentView: View {
     // macOS: trackpad pinch. iOS: view-mode two-finger pinch.
     @State var gestureZoomStartLevel: CGFloat?
     @State var editorViewportHeight: CGFloat = 0
+    @State var editorViewportWidth: CGFloat = 0
     @State var scrollWheelZoom = PlatformScrollWheelZoom()
     @State var showingASCUploadSheet = false
     @State var showingASCMetadataSheet = false
@@ -210,11 +211,13 @@ struct ContentView: View {
                         .padding(.bottom, state.hasSelection ? floatingBottomChromeMargin + 8 : 16)
                 }
                 #endif
-                .onGeometryChange(for: CGFloat.self) { proxy in
-                    proxy.size.height
+                .onGeometryChange(for: CGSize.self) { proxy in
+                    proxy.size
                 } action: { newValue in
-                    editorViewportHeight = newValue
+                    editorViewportHeight = newValue.height
+                    editorViewportWidth = newValue.width
                 }
+                .environment(\.editorViewportWidth, editorViewportWidth)
             }
 
             #if os(macOS)

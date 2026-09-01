@@ -22,21 +22,29 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     let onTogglePreview: () -> Void
     let rowMenuContent: () -> RowMenuContent
 
+    @Environment(\.editorViewportWidth) private var editorViewportWidth
+
+    private var showsLabels: Bool {
+        // Don't let the fit fallback hide the field mid-rename.
+        guard !isEditingLabel else { return true }
+        let label = EditorRowHeaderLayout.textWidth(
+            row.displayLabel,
+            size: 12,
+            weight: isSelected ? .semibold : .medium
+        )
+        let resolution = EditorRowHeaderLayout.textWidth(row.resolutionLabel, size: 10, weight: .regular)
+        return EditorRowHeaderLayout.showsLabels(
+            availableWidth: editorViewportWidth,
+            // The two runs sit either side of one 8pt gap.
+            labelsWidth: label + 8 + resolution
+        )
+    }
+
     var body: some View {
-        Group {
-            // Don't let the fit fallback hide the field mid-rename.
-            if isEditingLabel {
-                headerContent(showLabels: true)
-            } else {
-                ViewThatFits(in: .horizontal) {
-                    headerContent(showLabels: true)
-                    headerContent(showLabels: false)
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 4)
+        headerContent(showLabels: showsLabels)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 4)
     }
 
     @ViewBuilder
@@ -109,23 +117,58 @@ struct EditorRowHeader<RowMenuContent: View>: View {
         }
     }
 
+    /// Hand-drawn rather than a `Picker(.segmented)`, which is an `NSSegmentedControl`: one per row,
+    /// and instantiating them was ~10% of the one freeze left in a scroll trace.
     private var previewToggle: some View {
-        Picker("", selection: Binding(
-            get: { isPreviewMode },
-            set: { newValue in
-                if newValue != isPreviewMode { onTogglePreview() }
+        HStack(spacing: 0) {
+            previewSegment("pencil", isSelected: !isPreviewMode, label: "Switch to Edit") {
+                if isPreviewMode { onTogglePreview() }
             }
-        )) {
-            Image(systemName: "pencil").tag(false)
-            Image(systemName: "eye").tag(true)
+            previewSegment("eye", isSelected: isPreviewMode, label: "Switch to Preview") {
+                if !isPreviewMode { onTogglePreview() }
+            }
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        #if os(macOS)
-        .controlSize(.small)
-        #endif
+        .padding(1)
+        .background {
+            RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
+                .fill(Color.primary.opacity(UIMetrics.Opacity.sectionFill))
+                .overlay {
+                    RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip, style: .continuous)
+                        .strokeBorder(UIMetrics.Stroke.subtle)
+                }
+        }
         .fixedSize()
-        .help(isPreviewMode ? "Switch to Edit" : "Switch to Preview")
+    }
+
+    private func previewSegment(
+        _ icon: String,
+        isSelected: Bool,
+        label: LocalizedStringKey,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: UIMetrics.ActionButton.iconSize))
+                #if os(macOS)
+                .frame(width: 24, height: 16)
+                #else
+                .frame(width: 40, height: UIMetrics.ActionButton.frameSize - 8)
+                #endif
+                .foregroundStyle(isSelected ? Color.primary : Color.secondary)
+                .background {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip - 1, style: .continuous)
+                            .fill(Color.primary.opacity(UIMetrics.Opacity.hairlineOverlay))
+                    }
+                }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(EditorIconButtonStyle())
+        .focusable(false)
+        .accessibilityLabel(label)
+        // The `Picker` this replaced conveyed which mode was active; keep that for VoiceOver.
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .help(label)
     }
 
     private var trailingControls: some View {
