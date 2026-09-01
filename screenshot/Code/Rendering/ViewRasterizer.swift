@@ -59,6 +59,8 @@ extension RowRenderer {
     private static func applyGaussianBlur(to image: NSImage, radius: Double) -> NSImage {
         guard radius > 0,
               let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return image }
+        let span = PerfSignpost.begin("ViewRasterizer.gaussianBlur", "radius=\(radius)")
+        defer { PerfSignpost.end("ViewRasterizer.gaussianBlur", span) }
 
         let ciImage = CIImage(cgImage: cgImage)
         let originalExtent = ciImage.extent
@@ -214,6 +216,8 @@ extension RowRenderer {
     /// Draws `image` over `background` at full size — flattens shapes onto their background, and
     /// backs a blurred layer with its unblurred original so edge alpha fringes don't show through.
     nonisolated static func flattenImage(_ image: NSImage, over background: NSImage, width: CGFloat, height: CGFloat) -> NSImage {
+        let span = PerfSignpost.begin("ViewRasterizer.flatten", pixels: Int(width * height))
+        defer { PerfSignpost.end("ViewRasterizer.flatten", span) }
         let size = NSSize(width: width, height: height)
         return composite(image, over: background, in: NSRect(origin: .zero, size: size), canvasSize: size)
     }

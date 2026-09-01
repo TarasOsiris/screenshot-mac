@@ -52,6 +52,8 @@ nonisolated enum ImageDownsampler {
     }
 
     private static func downsampledCGImage(from source: CGImageSource, maxDimension: CGFloat) -> CGImage? {
+        let span = PerfSignpost.begin("ImageDownsampler.downsample", "max=\(Int(maxDimension))")
+        defer { PerfSignpost.end("ImageDownsampler.downsample", span) }
         let options = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceShouldCacheImmediately: true,

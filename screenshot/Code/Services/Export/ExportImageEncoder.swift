@@ -13,6 +13,8 @@ enum ExportImageEncoder {
     }
 
     nonisolated static func encode(_ image: NSImage, format: ExportImageFormat) -> Data? {
+        let span = PerfSignpost.begin("ExportImageEncoder.encode", "format=\(format.rawValue)")
+        defer { PerfSignpost.end("ExportImageEncoder.encode", span) }
         switch format {
         case .png:
             return opaquePNGData(from: image)

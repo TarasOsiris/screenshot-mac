@@ -154,11 +154,14 @@ extension AppState {
     /// every edit tick. `flushPendingSaveTask` drains the queue before its
     /// synchronous fallback, so quit can't lose an in-flight write.
     func saveAllAsync() {
+        // Split in two: only this half runs on the main actor, so only this half can hitch the UI.
+        let snapshotSpan = PerfSignpost.begin("AppState.saveSnapshot", "rows=\(rows.count)")
         updateCrashDocumentContext()
         sweepUnreachableOrphanedImages()
         let index = makeIndexSnapshotForSave()
 
         let projectSnapshot = activeProjectSnapshotForSave()
+        PerfSignpost.end("AppState.saveSnapshot", snapshotSpan)
 
         let monitor = iCloudMonitor
         var ownWriteURLs = [PersistenceService.indexURL]
@@ -171,6 +174,8 @@ extension AppState {
         monitor?.recordOwnWrite(ownWriteURLs)
 
         Self.saveQueue.async { [weak self] in
+            let writeSpan = PerfSignpost.begin("AppState.saveWrite", "project=\(projectSnapshot != nil)")
+            defer { PerfSignpost.end("AppState.saveWrite", writeSpan) }
             var indexError: Error?
             var projectError: Error?
             var catalogModified: Date?

@@ -56,6 +56,11 @@ struct ExportService {
         var writtenFileURLs: [URL] = []
 
         let startedAt = Date()
+        let exportSpan = PerfSignpost.begin(
+            "ExportService.exportAll",
+            "rows=\(rows.count) locales=\(localesToExport.count) format=\(format.rawValue)"
+        )
+        defer { PerfSignpost.end("ExportService.exportAll", exportSpan) }
         CrashReportingService.breadcrumb(.export, "Export started", data: [
             "rows": rows.count,
             "locales": localesToExport.count,

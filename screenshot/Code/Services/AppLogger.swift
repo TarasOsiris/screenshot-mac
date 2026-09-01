@@ -12,4 +12,7 @@ nonisolated enum AppLogger {
     static let upload = Logger(subsystem: subsystem, category: "Upload")
     static let media = Logger(subsystem: subsystem, category: "Media")
     static let analytics = Logger(subsystem: subsystem, category: "Analytics")
+
+    /// Duration lines from `PerfSignpost`, emitted only on a profiling run (`SCREENSHOT_PERF=1`).
+    static let perf = Logger(subsystem: subsystem, category: "Perf")
 }

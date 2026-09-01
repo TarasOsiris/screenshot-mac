@@ -26,6 +26,9 @@ nonisolated enum AnalyticsService {
     /// in the scheme still can't make a test run transmit.
     static let isEnabled: Bool = {
         guard !PersistenceService.isRunningUnderXCTest else { return false }
+        // A profiling run is a Release build, so without this it would transmit as a real install
+        // — and a session spent exporting the same project 40 times would skew every funnel.
+        guard !PerfSignpost.isProfilingRun else { return false }
         #if DEBUG
         return ProcessInfo.processInfo.environment[debugOptInEnvironmentName] == "1"
         #else

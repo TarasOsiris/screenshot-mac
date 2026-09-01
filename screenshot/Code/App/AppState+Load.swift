@@ -231,6 +231,11 @@ extension AppState {
     /// `deferCleanup` runs the orphaned-resource scan off-main (project-open path) so the
     /// switch doesn't block the push animation; iCloud reload keeps it synchronous.
     func applyProjectData(_ data: ProjectData, for projectId: UUID, deferCleanup: Bool = false) {
+        let span = PerfSignpost.begin(
+            "AppState.applyProjectData",
+            "rows=\(data.rows.count) shapes=\(data.rows.reduce(0) { $0 + $1.shapes.count })"
+        )
+        defer { PerfSignpost.end("AppState.applyProjectData", span) }
         // The document is replaced wholesale (iCloud/local reload included): a pending debounced
         // edit would flush a stale row over the new data, and any undo step captured against the
         // old rows would restore the pre-reload document — and save it back over the sync.
@@ -277,6 +282,8 @@ extension AppState {
     }
 
     func loadRowsForProject(_ id: UUID, preloaded: ProjectData? = nil) {
+        let span = PerfSignpost.begin("AppState.loadRowsForProject", "preloaded=\(preloaded != nil)")
+        defer { PerfSignpost.end("AppState.loadRowsForProject", span) }
         if let data = preloaded ?? PersistenceService.loadProject(id) {
             if degradedLoadProjectId == id { degradedLoadProjectId = nil }
             applyProjectData(data, for: id, deferCleanup: true)

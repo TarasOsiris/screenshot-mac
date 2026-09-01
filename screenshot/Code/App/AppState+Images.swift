@@ -417,6 +417,9 @@ extension AppState {
               let activeId = activeProjectId,
               !sources.isEmpty else { return 0 }
 
+        let span = PerfSignpost.begin("AppState.batchImportImages", "images=\(sources.count)")
+        defer { PerfSignpost.end("AppState.batchImportImages", span) }
+
         let templatesWithDevices = templatesContainingDevices(inRowAt: idx)
         // Templates an image can fill without creating a new one.
         let reusableCount = templatesWithDevices.isEmpty ? rows[idx].templates.count : templatesWithDevices.count

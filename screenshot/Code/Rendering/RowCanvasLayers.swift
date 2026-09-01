@@ -192,6 +192,7 @@ struct EditorRasterizedBackgroundView: View {
             // A row that just scrolled back in already has its raster in the shared cache; adopt it
             // rather than re-rendering, which is the whole point of the cache outliving the view.
             if let cached = EditorBlurRasterCache.raster(for: row.id, key: key) {
+                PerfSignpost.event("EditorBlurRaster.adopted")
                 raster = cached
                 renderedKey = key
                 return

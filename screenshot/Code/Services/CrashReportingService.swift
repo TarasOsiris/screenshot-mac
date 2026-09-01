@@ -112,7 +112,9 @@ nonisolated enum CrashReportingService {
             options.environment = "debug"
             options.debug = true
             #else
-            options.environment = "production"
+            // A profiling run is a real Release build, so its crashes are worth keeping — but it
+            // is not production and must not skew that environment's release health.
+            options.environment = PerfSignpost.isProfilingRun ? "instrumented" : "production"
             #endif
         }
 

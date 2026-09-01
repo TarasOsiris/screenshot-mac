@@ -35,6 +35,19 @@ Because the code is multiplatform, also compile the iOS branches after touching 
 xcodebuild -scheme screenshot -destination 'generic/platform=iOS Simulator' build
 ```
 
+**Profiling** uses the shared `screenshot Profiling` scheme: Run and Profile both build the
+**Release** configuration and set `SCREENSHOT_PERF=1`, which is what turns on the duration lines
+described under *Performance instrumentation* below. It attaches the StoreKit configuration file,
+so Pro can be "purchased" in the sandbox when a large test document exceeds the free caps, and it
+launches without the debugger so LLDB doesn't distort timings. A dedicated *build configuration*
+was tried and abandoned: Xcode only extracts SPM binary artifacts (Sentry's XCFramework) for Debug
+and Release, so a third configuration and Debug evict each other's copy from shared DerivedData and
+whichever built last is the only one that links.
+
+```
+xcodebuild -scheme "screenshot Profiling" -destination 'platform=macOS' build
+```
+
 **SourceKit per-file diagnostics are unreliable here** — it routinely reports phantom `Cannot find type … in scope` / `Cannot find 'UIMetrics' in scope` for symbols defined in sibling files. Trust the result of `xcodebuild`, not the editor diagnostics; only act on errors a full build actually reports.
 
 Shipping (via the `ship` skill) targets both platforms from the one `ExportOptions.plist` (`method: app-store-connect`): archive macOS with `-destination 'platform=macOS,arch=arm64'` and iOS with `-destination 'generic/platform=iOS'`, then `-exportArchive` with the plist's `destination` flipped from `export` to `upload` and reverted after. `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` appear 4× each in `project.pbxproj` (Debug/Release × app/tests) — bump all with `replace_all`. Uploading is only half a release: the `submit` skill then creates the App Store version record, writes "What's New", attaches the build and submits for review — `ship` runs it as its Step 10.
@@ -129,6 +142,36 @@ Bundled resources in `screenshot/`: `Templates.bundle` (35+ starter themes), `Sv
 - `report(_ failure:error:extra:level:)` — an event. **Only for failures that are our bug** (bad decode, blank render, failed encode/copy, a shipped template that won't load). Expected user/network failures — ASC/Play HTTP + auth, offline, `CancellationError`, missing files — stay breadcrumb-only, or the real bugs drown. Each `Failure` raw value is the issue title *and* the fingerprint, so adding a case is how you get a new issue; the enum is `CaseIterable` and a test pins uniqueness. `report` also writes the matching `AppLogger` line itself — don't log separately.
 - `setTag` / `setDocumentContext` — persistent scope. The `document` context (counts, device categories, `max_row_pixels`, zoom) refreshes in `AppState+Save.updateCrashDocumentContext()`, called both on the debounced save tick and from `applyProjectData` (without the latter, a crash between opening a project and the first save tick carries no document context at all); tags are `storage`, `pro`, `mcp`, `crashed_last_run`, `first_version`, `rc_user_id`. The `storage`/`pro`/`mcp`/`rc_user_id` sites also call `AnalyticsService.setProfile`/`linkStoreUser` — keep the pair together so the two tools never disagree about one install. `report` attaches `free_disk_mb` by itself for the storage-bound failures — don't pass it from call sites.
 - **Privacy is load-bearing, not a style preference.** `screenshot-bro-site/app/routes/privacy.tsx` §5 and §6 promise that neither crash reports nor analytics carry projects, screenshots, fonts, or user-written text. So: counts, enum raw values, booleans, durations, and *our* identifiers (bundled template ids, MCP tool names, argument keys) only — never row/project/locale labels, user file names, or text. `options.enableLogs`, `attachScreenshot`, and `attachViewHierarchy` must stay off for the same reason. `beforeSend` scrubs `/Users/<name>` → `/Users/~`; `RowRenderer.reportableRenderLabel` elides the quoted row label that render labels embed. When adding a payload, assume it will be read by someone who must not learn what the user is building.
+
+**Performance instrumentation (`PerfSignpost`) — how to instrument:** Sentry performance tracing
+is deliberately off (`tracesSampleRate = 0`, `enableAutoPerformanceTracing = false`), so
+`Code/Services/PerfSignpost.swift` is the *only* timing channel. It ships in Release, because
+Release is the build worth measuring.
+- `begin(_:_:)` / `end(_:_:)` bracket a span — always pair them with `defer` so an early return
+  still closes the interval. `begin(_:pixels:)` is the overload for a rasterize, where pixel count
+  is what predicts the cost. `measure(_:_:_:)` is the sync sugar; async call sites use
+  `begin`/`defer`/`end` directly, because an async wrapper would be a bare `nonisolated async func`
+  and inherit the caller's executor. `event(_:_:)` is for something with no natural end (a cache
+  adoption, a retry).
+- **Two consumers, one call.** Every span becomes an Instruments **Points of Interest** interval
+  *and*, when `SCREENSHOT_PERF=1` (the `screenshot Profiling` scheme sets it), a line on
+  `AppLogger.perf`:
+  `log stream --predicate 'subsystem == "xyz.tleskiv.screenshot" && category == "Perf"' --style compact`.
+  `SCREENSHOT_PERF_MIN_MS` sets a floor on the console line only.
+- **`isProfilingRun` gates logging, never capability.** It is an environment variable in a shipping
+  build, so anything keyed on it is reachable by anyone who can set one — no Pro unlock, no MCP auth
+  bypass. What it does gate: `AnalyticsService.isEnabled` returns false (a profiling session would
+  otherwise transmit as a real install and skew every funnel) and Sentry's `environment` becomes
+  `instrumented` rather than `production`.
+- Same privacy rule as every other payload — counts, enum raw values, and our own identifiers only.
+  `bodyEvaluated` passes the row's UUID prefix, never its label, and stays signpost-only even when
+  profiling because a console line per SwiftUI body evaluation would bury everything else.
+- Instrumented today: export (`ExportService.exportAll`, `ExportImageEncoder.encode`), rendering
+  (`RowRenderer` row/single-template/composed-background, `ViewRasterizer` render/blur/flatten),
+  save (`AppState.saveSnapshot` on the main actor vs `AppState.saveWrite` on the save queue, plus
+  the `.xcstrings` catalog build), load (`applyProjectData`, `loadRowsForProject`), image import
+  (`batchImportImages`, `ImageDownsampler`, `StagedImageWrite`), SVG rasterization, and the SceneKit
+  device path (scene load, `prepare`, and the otherwise-invisible blank-snapshot retry).
 
 **Product analytics (`AnalyticsService`) — how to instrument:** PostHog US Cloud, always-on in
 Release, **off in Debug and under XCTest** (`isEnabled`; `SCREENSHOT_ENABLE_ANALYTICS=1` opts a

@@ -86,6 +86,11 @@ enum RowRenderer {
         displayScale: CGFloat = 1.0
     ) -> NSImage {
         let count = row.templates.count
+        let span = PerfSignpost.begin(
+            "RowRenderer.renderRowImage",
+            "templates=\(count) shapes=\(row.shapes.count) scale=\(displayScale)"
+        )
+        defer { PerfSignpost.end("RowRenderer.renderRowImage", span) }
         guard count > 0 else {
             return NSImage(size: NSSize(width: 1, height: 1))
         }
@@ -133,6 +138,11 @@ enum RowRenderer {
     ) -> NSImage {
         let totalWidth = row.templateWidth * displayScale * CGFloat(row.templates.count)
         let totalHeight = row.templateHeight * displayScale
+        let span = PerfSignpost.begin(
+            "RowRenderer.composedBackground",
+            "pixels=\(Int(totalWidth * totalHeight)) blur=\(row.backgroundBlur)"
+        )
+        defer { PerfSignpost.end("RowRenderer.composedBackground", span) }
         let backgroundImage = renderBlurredViewToImage(
             RowCanvasBaseBackgroundView(
                 row: row,
@@ -222,6 +232,8 @@ enum RowRenderer {
         localeState: LocaleState = .default,
         availableFontFamilies: Set<String> = PlatformFonts.familyNameSet
     ) -> NSImage {
+        let span = PerfSignpost.begin("RowRenderer.renderTemplateImage", "index=\(index)")
+        defer { PerfSignpost.end("RowRenderer.renderTemplateImage", span) }
         let rowImage = renderRowImage(
             row: row,
             screenshotImages: screenshotImages,
@@ -249,6 +261,11 @@ enum RowRenderer {
         displayScale: CGFloat = 1.0,
         preRenderedRowBackground: NSImage? = nil
     ) -> NSImage {
+        let span = PerfSignpost.begin(
+            "RowRenderer.renderSingleTemplateImage",
+            "index=\(index) shapes=\(row.shapes.count) scale=\(displayScale)"
+        )
+        defer { PerfSignpost.end("RowRenderer.renderSingleTemplateImage", span) }
         let templateWidth = row.templateWidth
         let templateHeight = row.templateHeight
         let pxWidth = templateWidth * displayScale
@@ -317,6 +334,8 @@ enum RowRenderer {
         labelPrefix: String
     ) -> NSImage? {
         guard row.backgroundBlur > 0 else { return nil }
+        let span = PerfSignpost.begin("RowRenderer.precomposedRowBackground", "templates=\(row.templates.count)")
+        defer { PerfSignpost.end("RowRenderer.precomposedRowBackground", span) }
         return renderComposedBackgroundImage(
             row: row,
             screenshotImages: screenshotImages,

@@ -334,7 +334,12 @@ nonisolated struct PersistenceService {
         // cannot keep reintroducing deleted text.
         if let localeState = data.localeState,
            localeState.locales.count > 1 || !localeState.overrides.isEmpty || TranslationCatalogService.exists(projectId: id) {
+            let catalogSpan = PerfSignpost.begin(
+                "PersistenceService.buildCatalog",
+                "locales=\(localeState.locales.count) overrides=\(localeState.overrides.count)"
+            )
             let catalog = TranslationCatalog.build(rows: data.rows, localeState: localeState)
+            PerfSignpost.end("PersistenceService.buildCatalog", catalogSpan)
             try TranslationCatalogService.write(catalog, projectId: id)
         } else if TranslationCatalogService.exists(projectId: id) {
             try TranslationCatalogService.delete(projectId: id)

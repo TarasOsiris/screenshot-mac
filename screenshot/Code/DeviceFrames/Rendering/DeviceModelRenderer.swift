@@ -172,11 +172,15 @@ enum DeviceModelRenderer {
         }
         // Forces shader compilation and texture upload before the one-shot snapshot, which
         // otherwise has no frame to recover on if the scene isn't GPU-resident yet.
+        let prepareSpan = PerfSignpost.begin("DeviceModelRenderer.prepare")
         renderer.prepare(scene, shouldAbortBlock: nil)
+        PerfSignpost.end("DeviceModelRenderer.prepare", prepareSpan)
 
         let snapshotSize = CGSize(width: safeWidth, height: safeHeight)
         var image = renderer.snapshot(atTime: 0, with: snapshotSize, antialiasingMode: .multisampling4X)
         if isBlank(image) {
+            // The retry doubles the cost of the whole snapshot and is otherwise invisible.
+            PerfSignpost.event("DeviceModelRenderer.blankRetry")
             image = renderer.snapshot(atTime: 0, with: snapshotSize, antialiasingMode: .multisampling4X)
             guard !isBlank(image) else {
                 AppLogger.export.warning("Device model snapshot came back blank for frame \(frame.id, privacy: .public)")
@@ -393,6 +397,8 @@ enum DeviceModelRenderer {
     }
 
     private static func clonedBaseScene(for modelSpec: DeviceFrameModelSpec) -> SCNScene? {
+        let span = PerfSignpost.begin("DeviceModelRenderer.loadScene")
+        defer { PerfSignpost.end("DeviceModelRenderer.loadScene", span) }
         let cacheKey = "\(modelSpec.resourceName).\(modelSpec.resourceExtension)" as NSString
         let baseScene: SCNScene
         if let cached = modelSceneCache.object(forKey: cacheKey) {

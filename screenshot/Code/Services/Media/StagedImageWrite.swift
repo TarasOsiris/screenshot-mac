@@ -73,6 +73,8 @@ nonisolated enum StagedImageWriter {
     /// Already off-actor by the time either entry point calls this, so the synchronous encoder is
     /// the right one — routing through `pngDataOffMain` would only add a hop per image.
     private static func persistSync(encoding cgImage: CGImage, to destination: URL, write: WriteData) throws {
+        let span = PerfSignpost.begin("StagedImageWrite.persist", pixels: cgImage.width * cgImage.height)
+        defer { PerfSignpost.end("StagedImageWrite.persist", span) }
         guard let data = ExportImageEncoder.pngData(fromCGImage: cgImage) else {
             throw StagedImageWriteError.noImageData
         }
