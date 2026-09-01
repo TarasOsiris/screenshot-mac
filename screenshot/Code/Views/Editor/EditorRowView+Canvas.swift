@@ -221,6 +221,7 @@ extension EditorRowView {
                             template: template,
                             row: row,
                             index: index,
+                            backgroundPopoverTemplateId: $backgroundPopoverTemplateId,
                             zoom: zoom,
                             screenshotImages: state.screenshotImages,
                             localeState: state.localeState,
@@ -461,7 +462,11 @@ extension EditorRowView {
                             }
                         )
                     )
-                    .perShapeContextMenuOnTouchPlatforms {
+                    // No custom preview: the canvas renders at full scale, so a shape's layout
+                    // frame equals its on-screen size and iOS's default lift snapshots the existing
+                    // pixels at the right size. A custom preview re-evaluates the view in an
+                    // offscreen pass, which re-runs the device SceneKit snapshot and renders wrong.
+                    .contextMenu {
                         shapeContextMenu(for: shape, facts: facts)
                     }
                 }
@@ -502,19 +507,6 @@ extension EditorRowView {
         )
         .clipped()
         .contentShape(Rectangle())
-        // One menu for the whole canvas, resolving its target from the pointer. A `.contextMenu`
-        // per shape made SwiftUI build that shape's `NSMenuItem`s as part of every row body, which
-        // was over a tenth of a scrollbar-drag trace. Falls back to the row menu, which is what
-        // bubbling to `EditorRowView` used to give an empty-canvas right-click.
-        .canvasContextMenu {
-            if !state.viewMode.isViewMode,
-               let point = contextMenuPointStore.value,
-               let target = row.hitShape(at: point, among: resolvedShapes) {
-                shapeContextMenu(for: target, facts: facts)
-            } else {
-                rowMenuContent
-            }
-        }
         // Owns both the empty-canvas click (select the row) and drag-to-select; see the modifier
         // for why they must share one gesture.
         .canvasBackgroundGesture(

@@ -14,13 +14,18 @@ struct CanvasSelectionFacts {
 }
 
 extension EditorRowView {
-    /// The context menu for one shape, built by the row.
+    /// The context menu for one shape, assembled by the row.
     ///
-    /// It lives here rather than on `CanvasShapeView` because SwiftUI materializes a `.contextMenu`'s
-    /// items into `NSMenuItem`s as part of building the view — `PlatformItemListTransformModifier` and
-    /// friends were over a tenth of a scrollbar-drag trace with one menu per shape. One menu per row,
-    /// resolving its target by hit-testing the model, costs the same whether the row holds three
-    /// shapes or thirty.
+    /// The *actions* live here rather than on `CanvasShapeView` so they are not ~25 extra closures
+    /// on every shape's `CanvasShapeInteractions`. The menu itself is still attached per shape, and
+    /// that is not free: SwiftUI materializes a `.contextMenu`'s items into `NSMenuItem`s as part of
+    /// building the view, and `PlatformItemListTransformModifier` and friends were over a tenth of a
+    /// scrollbar-drag trace.
+    ///
+    /// One menu per row was tried and reverted. It has to resolve its target from the last hovered
+    /// point, and because the items are built with the body rather than on right-click, the menu
+    /// showed whatever the point was at the previous body evaluation. Moving it back to the row
+    /// needs a menu built *in response to* the click — an on-demand `NSMenu` on macOS.
     @ViewBuilder
     func shapeContextMenu(for shape: CanvasShapeModel, facts: CanvasSelectionFacts) -> some View {
         let isInSelection = selectedShapeIds.contains(shape.id)
@@ -179,31 +184,5 @@ extension EditorRowView {
                 && selected.count == selectedShapeIds.count
                 && selected.allSatisfy { $0.type == .device }
         )
-    }
-}
-
-extension View {
-    /// The canvas-wide context menu. macOS only: it resolves its target from the last hovered
-    /// point, which a touch platform never supplies.
-    @ViewBuilder
-    func canvasContextMenu<M: View>(@ViewBuilder _ items: @escaping () -> M) -> some View {
-        #if os(macOS)
-        contextMenu { items() }
-        #else
-        self
-        #endif
-    }
-
-    /// iPad keeps its context menu on the shape. `contextMenu(menuItems:preview:)` reports no
-    /// long-press location and there is no hover to seed one, so the row cannot tell which shape
-    /// was pressed. Every cost this move addresses is AppKit's, so macOS is the only platform that
-    /// needs it.
-    @ViewBuilder
-    func perShapeContextMenuOnTouchPlatforms<M: View>(@ViewBuilder _ items: @escaping () -> M) -> some View {
-        #if os(macOS)
-        self
-        #else
-        contextMenu { items() }
-        #endif
     }
 }

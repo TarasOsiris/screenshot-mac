@@ -17,6 +17,9 @@ struct TemplateControlBar: View {
     let template: ScreenshotTemplate
     let row: ScreenshotRow
     let index: Int
+    /// Which template's background popover is open, owned by the row so only one can be. A `@State`
+    /// Bool per bar let a click on one swatch open a second popover while another was still up.
+    @Binding var backgroundPopoverTemplateId: UUID?
     let zoom: CGFloat
     var screenshotImages: [String: NSImage] = [:]
     var localeState: LocaleState = .default
@@ -37,9 +40,23 @@ struct TemplateControlBar: View {
     var onLoadFullResImages: (() -> [String: NSImage])?
     @AppStorage(AppSettingsKeys.confirmBeforeDeleting) private var confirmBeforeDeleting = AppSettingsKeys.Default.confirmBeforeDeleting
     @State private var isDeletingTemplate = false
-    @State private var showBackgroundPopover = false
     @State private var renderError: String?
     @State private var isPreviewing = false
+
+    private var showBackgroundPopover: Binding<Bool> {
+        Binding(
+            get: { backgroundPopoverTemplateId == template.id },
+            // Only this bar may clear the shared slot: when one popover replaces another, SwiftUI
+            // can deliver the outgoing `false` after the incoming `true`, which would leave neither.
+            set: { isOn in
+                if isOn {
+                    backgroundPopoverTemplateId = template.id
+                } else if backgroundPopoverTemplateId == template.id {
+                    backgroundPopoverTemplateId = nil
+                }
+            }
+        )
+    }
 
     private var canDelete: Bool { row.templates.count > 1 }
 
@@ -119,7 +136,7 @@ struct TemplateControlBar: View {
 
     private var backgroundOverrideButton: some View {
         Button {
-            showBackgroundPopover = true
+            backgroundPopoverTemplateId = template.id
         } label: {
             HStack(spacing: 3) {
                 if liveTemplate.overrideBackground {
@@ -163,7 +180,7 @@ struct TemplateControlBar: View {
         // `.sheet` rather than the docked `.panel`: the panel needs a `BarPanelHost`,
         // which only `ShapePropertiesBar` provides.
         .barPopover(
-            isPresented: $showBackgroundPopover,
+            isPresented: showBackgroundPopover,
             title: Self.backgroundOverrideTitle,
             style: .sheet
         ) {
@@ -303,7 +320,7 @@ struct TemplateControlBar: View {
                     .font(.headline)
                 Spacer()
                 Button {
-                    showBackgroundPopover = false
+                    backgroundPopoverTemplateId = nil
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
@@ -333,7 +350,7 @@ struct TemplateControlBar: View {
         // Otherwise the system color panel taking key focus dismisses the popover mid-edit;
         // `onExitCommand` puts Esc back.
         .interactiveDismissDisabled()
-        .onExitCommand { showBackgroundPopover = false }
+        .onExitCommand { backgroundPopoverTemplateId = nil }
         #else
         // A Form keeps the sheet at full detent height, so toggling the override doesn't
         // resize/re-center the floating iPad sheet around its content.

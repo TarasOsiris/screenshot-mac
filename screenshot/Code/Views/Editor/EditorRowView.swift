@@ -23,6 +23,8 @@ struct EditorRowView: View {
     @State var activeAlert: RowAlert?
     @State var isSvgDialogPresented = false
     @State var contextMenuPointStore = ModelPointStore()
+    /// The one template whose background popover is open, if any — see `TemplateControlBar`.
+    @State var backgroundPopoverTemplateId: UUID?
     @State var dragSession = CanvasDragSession()
     @State var isEditingLabel = false
     @State var editingLabelText = ""
