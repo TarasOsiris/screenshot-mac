@@ -2,9 +2,9 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 extension EditorRowView {
-    @ViewBuilder
     var horizontalScrollArea: some View {
-        ScrollViewReader { hProxy in
+        PerfSignpost.bodyEvaluated("EditorRowView.canvas", row: row.id, count: row.templates.count)
+        return ScrollViewReader { hProxy in
             ScrollView(.horizontal) {
                 // Render the canvas at full (zoom-inclusive) scale instead of a visual-only
                 // `.scaleEffect(zoom)`. Each shape's layout frame then equals its on-screen
@@ -157,9 +157,13 @@ extension EditorRowView {
         }
     }
 
+    /// Lazy: each bar carries two alert hosts, a popover host and an AppKit `Menu`, and a wide row
+    /// can have twenty of them — all of which used to build the moment the row was realized.
+    /// Height is pinned so the row doesn't resize as bars scroll in; the eager canvas `HStack`
+    /// above still pins the scroll content's width.
     @ViewBuilder
     var controlBarsRow: some View {
-        HStack(spacing: 0) {
+        LazyHStack(spacing: 0) {
             ForEach(Array(row.templates.enumerated()), id: \.element.id) { index, template in
                 TemplateControlBar(
                     template: template,
@@ -243,6 +247,7 @@ extension EditorRowView {
                 )
             }
         }
+        .frame(height: UIMetrics.TemplateBar.height)
     }
 
     @ViewBuilder

@@ -148,6 +148,11 @@ nonisolated enum SvgHelper {
         if let cached = rasterCache.object(forKey: key) {
             return cached
         }
+        let signpost = PerfSignpost.begin(
+            "SvgHelper.render",
+            pixels: Int((targetSize?.width ?? 0) * (targetSize?.height ?? 0))
+        )
+        defer { PerfSignpost.end("SvgHelper.render", signpost) }
         let svg = useColor ? applyColor(color, to: svgContent) : svgContent
         guard let data = svg.data(using: .utf8) else { return nil }
         #if os(macOS)

@@ -146,6 +146,8 @@ enum DeviceModelRenderer {
     ) -> NSImage? {
         let safeWidth = max(1, (width * scale).rounded(.up))
         let safeHeight = max(1, (height * scale).rounded(.up))
+        let signpost = PerfSignpost.begin("DeviceModelRenderer.snapshot", pixels: Int(safeWidth * safeHeight))
+        defer { PerfSignpost.end("DeviceModelRenderer.snapshot", signpost) }
         let viewportSize = CGSize(width: safeWidth, height: safeHeight)
         guard let (scene, cameraNode) = makeDeviceModelScene(
             frame: frame,

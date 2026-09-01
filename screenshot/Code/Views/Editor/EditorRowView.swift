@@ -56,7 +56,8 @@ struct EditorRowView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        PerfSignpost.bodyEvaluated("EditorRowView.body", row: row.id, count: row.shapes.count)
+        return VStack(alignment: .leading, spacing: 0) {
             EditorRowHeader(
                 row: row,
                 isSelected: isSelected,
@@ -84,16 +85,22 @@ struct EditorRowView: View {
 
             if !row.isCollapsed {
                 horizontalScrollArea
-                    .id(scrollAreaRealized)
-                    // One-shot, fired the first time the scroll area appears (at launch, or
-                    // when an initially-collapsed row is expanded): re-key it once so the
-                    // inner horizontal ScrollView re-measures against the now-settled width.
-                    // A LazyVStack's first lazy pass can propose an unbounded width, leaving
-                    // the ScrollView sized to its content and unscrollable. Scoping this to
-                    // the scroll area (not the row) means an already-realized row that's
+                    .id(scrollAreaRealized || state.canvasScrollMeasurement.isMeasured(row.id))
+                    // One-shot, fired the first time this row's scroll area appears: re-key it
+                    // once so the inner horizontal ScrollView re-measures against the now-settled
+                    // width. A LazyVStack's first lazy pass can propose an unbounded width,
+                    // leaving the ScrollView sized to its content and unscrollable. Scoping this
+                    // to the scroll area (not the row) means an already-realized row that's
                     // collapsed/expanded mid-session keeps its id and doesn't rebuild.
+                    //
+                    // "Once" has to outlive the view: the LazyVStack drops the @State of rows it
+                    // recycles off-screen, so keeping the flag here alone made every scroll-in
+                    // build the whole canvas subtree, tear it down and rebuild it. The registry
+                    // is deliberately non-observable, so reading it here tracks nothing.
                     .task {
-                        if !scrollAreaRealized { scrollAreaRealized = true }
+                        guard !state.canvasScrollMeasurement.isMeasured(row.id) else { return }
+                        state.canvasScrollMeasurement.markMeasured(row.id)
+                        scrollAreaRealized = true
                     }
                     // Launch the deferred onboarding tour once the first canvas (the `.canvas`
                     // anchor lives inside it) is on screen — the pending flag is armed at first

@@ -182,6 +182,10 @@ enum UIMetrics {
     enum TemplateBar {
         static let buttonSpacing: CGFloat = 6
         static let horizontalPadding: CGFloat = 4
+        /// Every control in the bar is framed to `ActionButton.frameSize` (the ellipsis `Menu`
+        /// included), so this is the bar's real height. Pinned explicitly because the bars sit in
+        /// a `LazyHStack` — without it the row's height would follow whichever bars are realized.
+        static let height: CGFloat = ActionButton.frameSize
     }
 
     /// The iPad properties-bar panel that replaces the modal sheet (see `BarDockedPanel`).

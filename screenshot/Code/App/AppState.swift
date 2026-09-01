@@ -120,6 +120,11 @@ final class AppState {
     /// Arrow-key nudge / Delete. See CanvasKeyCommandMonitor.
     @ObservationIgnored let keyCommands = CanvasKeyCommandMonitor()
 
+    /// Rows whose horizontal scroll area has already been re-keyed once this session, so a row
+    /// recycled by the editor's LazyVStack doesn't rebuild its canvas twice. See
+    /// `CanvasScrollAreaMeasurement`.
+    @ObservationIgnored let canvasScrollMeasurement = CanvasScrollAreaMeasurement()
+
     /// The shape targeted by an in-flight continuous edit (nil when idle).
     var continuousEditShapeId: UUID? { edits.shapeEdit.activeId }
     /// The row targeted by an in-flight continuous row edit (nil when idle).

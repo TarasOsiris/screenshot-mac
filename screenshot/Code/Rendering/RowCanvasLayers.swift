@@ -5,7 +5,7 @@ import AppKit
 import UIKit
 #endif
 
-private struct EditorBlurBackgroundRenderKey: Equatable {
+struct EditorBlurBackgroundRenderKey: Equatable {
     let rowID: UUID
     let templateWidth: CGFloat
     let templateHeight: CGFloat
@@ -40,6 +40,53 @@ private struct EditorBlurBackgroundRenderKey: Equatable {
     }
 }
 
+/// One row's rasterized blur, held outside the view so it survives the editor's LazyVStack
+/// recycling the row off-screen and back. Class-boxed because the key is only `Equatable`, not
+/// `Hashable` — the cache is keyed by row id and the key rides along for the freshness check.
+final class EditorBlurRaster {
+    let key: EditorBlurBackgroundRenderKey
+    let image: NSImage
+
+    init(key: EditorBlurBackgroundRenderKey, image: NSImage) {
+        self.key = key
+        self.image = image
+    }
+}
+
+/// Rasterized row blurs, shared across row views so one survives the editor's LazyVStack recycling
+/// a row off-screen and back. Without it that row repainted the live `.blur` path and then re-ran a
+/// main-actor, model-resolution `ImageRenderer` + `CIGaussianBlur` — the shape `ViewRasterizer`
+/// already calls "an app-hang report waiting to happen". Bounded by bytes as well as count:
+/// `countLimit` alone can pin a lot of memory for wide rows.
+enum EditorBlurRasterCache {
+    private static let cache: NSCache<NSUUID, EditorBlurRaster> = {
+        let cache = NSCache<NSUUID, EditorBlurRaster>()
+        cache.countLimit = 24
+        cache.totalCostLimit = 256 * 1024 * 1024
+        return cache
+    }()
+
+    static func raster(for rowID: UUID, key: EditorBlurBackgroundRenderKey) -> NSImage? {
+        guard let entry = cache.object(forKey: rowID as NSUUID), entry.key == key else { return nil }
+        return entry.image
+    }
+
+    static func store(_ image: NSImage, for rowID: UUID, key: EditorBlurBackgroundRenderKey) {
+        let cost = Int(image.size.width * image.size.height) * 4
+        cache.setObject(EditorBlurRaster(key: key, image: image), forKey: rowID as NSUUID, cost: cost)
+    }
+
+    static func remove(_ rowID: UUID) {
+        cache.removeObject(forKey: rowID as NSUUID)
+    }
+
+    /// Called when a different project is applied — the outgoing project's rows will never be
+    /// asked for again, and their model-resolution rasters are the largest thing here.
+    static func purgeAll() {
+        cache.removeAllObjects()
+    }
+}
+
 struct EditorRasterizedBackgroundView: View {
     private static let exactRenderDebounce: Duration = .milliseconds(120)
 
@@ -47,7 +94,12 @@ struct EditorRasterizedBackgroundView: View {
     let screenshotImages: [String: NSImage]
     let displayScale: CGFloat
 
-    @State private var cachedImage: NSImage?
+    /// The raster this row is currently showing. A strong reference on purpose: the shared cache can
+    /// evict under memory pressure, and `.task(id:)` would not re-fire for an on-screen row whose
+    /// key hasn't changed — it would fall back to the live `.blur` path for good, which blurs an
+    /// already-downsampled raster and so stops matching export. The cache is what survives the
+    /// LazyVStack recycling the row; this is what survives eviction while it is on screen.
+    @State private var raster: NSImage?
     @State private var renderedKey: EditorBlurBackgroundRenderKey?
 
     private var displayTotalWidth: CGFloat {
@@ -112,9 +164,12 @@ struct EditorRasterizedBackgroundView: View {
         // Compute the (allocation-heavy) render key once per body evaluation and
         // reuse it for the cache comparison and the `.task` id/body.
         let key = renderKey
+        // Prefer the view's own raster, then the shared cache — a recycled row has lost the former
+        // but can still paint immediately from the latter.
+        let image = (renderedKey == key ? raster : nil) ?? EditorBlurRasterCache.raster(for: row.id, key: key)
         return Group {
-            if row.hasBlurredBackground, let cachedImage, renderedKey == key {
-                Image(nsImage: cachedImage)
+            if row.hasBlurredBackground, let image {
+                Image(nsImage: image)
                     .resizable()
                     .interpolation(.high)
                     .frame(width: displayTotalWidth, height: displayTemplateHeight)
@@ -129,8 +184,16 @@ struct EditorRasterizedBackgroundView: View {
         }
         .task(id: key) {
             guard row.hasBlurredBackground else {
-                cachedImage = nil
+                EditorBlurRasterCache.remove(row.id)
+                raster = nil
                 renderedKey = nil
+                return
+            }
+            // A row that just scrolled back in already has its raster in the shared cache; adopt it
+            // rather than re-rendering, which is the whole point of the cache outliving the view.
+            if let cached = EditorBlurRasterCache.raster(for: row.id, key: key) {
+                raster = cached
+                renderedKey = key
                 return
             }
             try? await Task.sleep(for: Self.exactRenderDebounce)
@@ -144,7 +207,8 @@ struct EditorRasterizedBackgroundView: View {
                 labelPrefix: "editor"
             )
             guard !Task.isCancelled else { return }
-            cachedImage = image
+            EditorBlurRasterCache.store(image, for: row.id, key: key)
+            raster = image
             renderedKey = key
         }
     }

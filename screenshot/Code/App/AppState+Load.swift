@@ -242,6 +242,11 @@ extension AppState {
         lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(projectId)
         // Drop any preview-mode entries that don't refer to a row in the new data.
         viewMode.reconcilePreviewingRows(against: Set(rows.map(\.id)))
+        // A different project's rows are new views that still need their one measuring relayout,
+        // and the outgoing ids/rasters would otherwise accumulate across every switch.
+        if canvasScrollMeasurement.reset(for: projectId) {
+            EditorBlurRasterCache.purgeAll()
+        }
         selectRow(rows.first?.id)
         if deferCleanup {
             cleanupOrphanedResourceFilesAsync(for: projectId)

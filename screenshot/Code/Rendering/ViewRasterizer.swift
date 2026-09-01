@@ -126,6 +126,8 @@ extension RowRenderer {
 
     @MainActor
     static func renderViewToImage<V: View>(_ view: V, width: CGFloat, height: CGFloat, label: String) -> NSImage {
+        let signpost = PerfSignpost.begin("ViewRasterizer.render", pixels: Int(width * height))
+        defer { PerfSignpost.end("ViewRasterizer.render", signpost) }
         let startedAt = Date()
         defer {
             let elapsed = Date().timeIntervalSince(startedAt)

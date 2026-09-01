@@ -207,14 +207,21 @@ struct CanvasShapeView: View {
         // Anchor the image-source picker popup at the device's visual center. Lives in a
         // `.background` (sharing this view's top-leading origin) rather than as a ZStack
         // sibling so its greedy `.position` doesn't expand the shape view to fill the canvas.
+        //
+        // Only the two shape types that can actually raise it: on macOS `imageSourcePicker` is a
+        // `fileImporter`, i.e. a presentation host per shape, and a row full of text or SVG shapes
+        // was paying for one each. Every site that sets `isPickerPresented` is already inside a
+        // `.device`/`.image` branch (double-tap, the context menu, the drop placeholder).
         .background(alignment: .topLeading) {
-            Color.clear
-                .frame(width: displayW, height: displayH)
-                .imageSourcePicker(isPresented: $isPickerPresented) { image in
-                    interactions.onScreenshotDrop?(image, .picker)
-                }
-                .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
-                .allowsHitTesting(false)
+            if shape.type == .image || shape.type == .device {
+                Color.clear
+                    .frame(width: displayW, height: displayH)
+                    .imageSourcePicker(isPresented: $isPickerPresented) { image in
+                        interactions.onScreenshotDrop?(image, .picker)
+                    }
+                    .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
+                    .allowsHitTesting(false)
+            }
         }
         .accessibilityHidden(!showsEditorHelpers)
     }
