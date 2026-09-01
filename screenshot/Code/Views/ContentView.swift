@@ -150,10 +150,8 @@ struct ContentView: View {
                 }
 
             ScrollViewReader { proxy in
-                ScrollView(.vertical) {
-                    LazyVStack(spacing: 0) {
-                        if state.projectOpen.showsEditorContent { editorRows }
-                    }
+                EditorRowsScrollView {
+                    if state.projectOpen.showsEditorContent { editorRows }
                 }
                 .id(state.activeProjectId)
                 // Bottom-leading: top-trailing sits on the first row header's action buttons, and

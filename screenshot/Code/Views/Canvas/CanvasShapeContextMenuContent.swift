@@ -4,7 +4,8 @@ struct CanvasShapeContextMenuContent: View {
     let shape: CanvasShapeModel
     var isMultiSelected: Bool = false
     var screenshotImage: NSImage?
-    @Binding var isPickerPresented: Bool
+    /// Raises the row's single image picker for this shape (see `CanvasShapeInteractions`).
+    var onRequestImagePicker: (() -> Void)?
     var onClearImage: (() -> Void)?
     var onRemoveBackground: (() -> Void)?
     var onCaptureSimulator: (() -> Void)?
@@ -49,7 +50,7 @@ struct CanvasShapeContextMenuContent: View {
             if shape.type == .device {
                 Menu {
                     Button("Replace Image...", systemImage: "photo") {
-                        isPickerPresented = true
+                        onRequestImagePicker?()
                     }
                     Button("Reset Image", systemImage: "arrow.counterclockwise") {
                         onClearImage?()
@@ -67,7 +68,7 @@ struct CanvasShapeContextMenuContent: View {
                 Divider()
             } else if shape.type == .image {
                 Button("Replace Image...", systemImage: "photo") {
-                    isPickerPresented = true
+                    onRequestImagePicker?()
                 }
                 Button("Reset Image", systemImage: "arrow.counterclockwise") {
                     onClearImage?()

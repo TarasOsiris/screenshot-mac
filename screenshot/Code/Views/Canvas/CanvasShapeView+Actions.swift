@@ -8,7 +8,7 @@ extension CanvasShapeView {
             shape: shape,
             isMultiSelected: isMultiSelected,
             screenshotImage: screenshotImage,
-            isPickerPresented: $isPickerPresented,
+            onRequestImagePicker: interactions.onRequestImagePicker,
             onClearImage: interactions.onClearImage,
             onRemoveBackground: interactions.onRemoveBackground,
             onCaptureSimulator: interactions.onCaptureSimulator,
@@ -110,7 +110,7 @@ extension CanvasShapeView {
         if shape.type == .text {
             beginTextEditing()
         } else if shape.type == .device || shape.type == .image {
-            isPickerPresented = true
+            interactions.onRequestImagePicker?()
         }
     }
 

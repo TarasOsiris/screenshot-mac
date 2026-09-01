@@ -1763,7 +1763,6 @@ struct AppStateTests {
         let firstShapeId = imageShape.id
         state.saveImage(makeTestImage(width: 1200, height: 2600), for: firstShapeId, source: .picker)
         state.saveAll()
-        var peakImageTotal = 0
 
         state.createProject(name: "Second")
         state.selectProject(originalProjectId)
@@ -1776,7 +1775,6 @@ struct AppStateTests {
         // (locale bar, row controls) appears promptly even for projects with many
         // languages / large images.
         for _ in 0..<50 {
-            peakImageTotal = max(peakImageTotal, state.projectOpen.imagesTotal)
             if !state.isOpeningProject { break }
             try await Task.sleep(for: .milliseconds(20))
         }
@@ -1784,12 +1782,10 @@ struct AppStateTests {
 
         // Images stream in afterwards, behind the already-visible UI, reporting a denominator.
         for _ in 0..<50 {
-            peakImageTotal = max(peakImageTotal, state.projectOpen.imagesTotal)
             if !state.screenshotImages.isEmpty { break }
             try await Task.sleep(for: .milliseconds(20))
         }
         #expect(!state.screenshotImages.isEmpty)
-        #expect(peakImageTotal >= 1, "the image phase should announce how many it will load")
 
         // ...and the indicator clears itself once they have all landed.
         for _ in 0..<50 {
@@ -1797,6 +1793,13 @@ struct AppStateTests {
             try await Task.sleep(for: .milliseconds(20))
         }
         #expect(!state.projectOpen.isLoadingImages)
+
+        // The phase announces how many it will load. Asserted where `beginImages` sets it —
+        // synchronously, before the decode task can hop back to main — because sampling it from
+        // the polling loops above is a race that a one-image project always loses.
+        state.screenshotImages.removeAll()
+        state.loadScreenshotImages()
+        #expect(state.projectOpen.imagesTotal >= 1)
     }
 
     /// The editor's rows are kept out of the view tree until `.building`, so nothing may reveal

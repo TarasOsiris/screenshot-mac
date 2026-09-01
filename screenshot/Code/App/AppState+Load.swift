@@ -247,11 +247,10 @@ extension AppState {
         lastSeenCatalogModified = PersistenceService.translationCatalogModifiedDate(projectId)
         // Drop any preview-mode entries that don't refer to a row in the new data.
         viewMode.reconcilePreviewingRows(against: Set(rows.map(\.id)))
-        // A different project's rows are new views that still need their one measuring relayout,
-        // and the outgoing ids/rasters would otherwise accumulate across every switch.
-        if canvasScrollMeasurement.reset(for: projectId) {
-            EditorBlurRasterCache.purgeAll()
-        }
+        // The outgoing project's model-resolution rasters are the largest thing the cache holds and
+        // will never be asked for again. Gated inside the cache on the project actually changing —
+        // the same project is re-applied on every iCloud reload, where its rows are still on screen.
+        EditorBlurRasterCache.purgeIfProjectChanged(to: projectId)
         selectRow(rows.first?.id)
         if deferCleanup {
             cleanupOrphanedResourceFilesAsync(for: projectId)

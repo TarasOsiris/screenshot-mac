@@ -57,7 +57,6 @@ struct CanvasShapeView: View {
     @State var isDragging = false
     @State private var isHovered = false
     @State var isDropTargeted = false
-    @State var isPickerPresented = false
     @State var isEditingText = false
     @State var editingTextValue = ""
     @State var editingRichTextData: String?
@@ -144,7 +143,15 @@ struct CanvasShapeView: View {
     }
 
     /// Path of the rotated rectangle within the AABB frame, for `.contentShape()`.
+    ///
+    /// Stays a `Path` even when the answer is a plain rectangle: `.contentShape(_:)` is generic
+    /// over the shape type, so returning a `Rectangle` in one branch and a `Path` in the other
+    /// would change the view's identity between edit and view mode — the tear-down this file is
+    /// otherwise careful to avoid.
     private func rotatedRectangleHitPath(in bounds: CGSize) -> Path {
+        guard abs(currentRotation.truncatingRemainder(dividingBy: 360)) > 1e-6 else {
+            return Path(CGRect(origin: .zero, size: bounds))
+        }
         let cx = bounds.width / 2
         let cy = bounds.height / 2
         let rad = currentRotation * .pi / 180
@@ -204,25 +211,10 @@ struct CanvasShapeView: View {
                 )
                 .allowsHitTesting(showsEditorHelpers)
         }
-        // Anchor the image-source picker popup at the device's visual center. Lives in a
-        // `.background` (sharing this view's top-leading origin) rather than as a ZStack
-        // sibling so its greedy `.position` doesn't expand the shape view to fill the canvas.
-        //
-        // Only the two shape types that can actually raise it: on macOS `imageSourcePicker` is a
-        // `fileImporter`, i.e. a presentation host per shape, and a row full of text or SVG shapes
-        // was paying for one each. Every site that sets `isPickerPresented` is already inside a
-        // `.device`/`.image` branch (double-tap, the context menu, the drop placeholder).
-        .background(alignment: .topLeading) {
-            if shape.type == .image || shape.type == .device {
-                Color.clear
-                    .frame(width: displayW, height: displayH)
-                    .imageSourcePicker(isPresented: $isPickerPresented) { image in
-                        interactions.onScreenshotDrop?(image, .picker)
-                    }
-                    .position(x: displayX + displayW / 2, y: displayY + displayH / 2)
-                    .allowsHitTesting(false)
-            }
-        }
+        // The image picker itself lives on the row, not here. On macOS it is a `fileImporter` —
+        // a presentation host — and one per image/device shape put a platform item in the display
+        // list for every one of them; `DisplayList.ViewUpdater` was the largest remaining SwiftUI
+        // cost in a scrollbar-drag trace. Shapes now just ask the row to raise its single picker.
         .accessibilityHidden(!showsEditorHelpers)
     }
 
@@ -365,7 +357,7 @@ struct CanvasShapeView: View {
             editingTextValue: $editingTextValue,
             editingRichTextData: $editingRichTextData,
             isDropTargeted: $isDropTargeted,
-            onRequestImagePicker: { isPickerPresented = true },
+            onRequestImagePicker: { interactions.onRequestImagePicker?() },
             onHandleDrop: handleDrop,
             onCommitTextEdit: commitTextEdit,
             onRichTextChange: { rtfData, plainText in

@@ -105,9 +105,9 @@ struct AppStateSelectionNotificationTests {
         let shapeId = try #require(state.rows.last?.shapes.last?.id)
 
         state.selectRow(firstRow.id)
-        state.visibleCanvasModelCenter = CGPoint(x: 999, y: 999)
+        state.visibleCanvasModelCenterX = 999
         state.selectShape(shapeId, in: secondRow.id)
 
-        #expect(state.visibleCanvasModelCenter == nil)
+        #expect(state.visibleCanvasModelCenterX == nil)
     }
 }

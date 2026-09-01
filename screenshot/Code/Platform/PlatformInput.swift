@@ -222,10 +222,10 @@ enum PlatformPhotoLibrary {
 /// match model space, which the export/crop math relies on). The `draw` block runs with the
 /// UIKit graphics context current, so `UIImage.draw(in:)` etc. work inside it.
 nonisolated enum PlatformImageRenderer {
-    static func image(size: CGSize, opaque: Bool = false, _ draw: () -> Void) -> UIImage {
+    static func image(size: CGSize, opaque: Bool = false, scale: CGFloat = 1, _ draw: () -> Void) -> UIImage {
         let format = UIGraphicsImageRendererFormat.preferred()
         format.opaque = opaque
-        format.scale = 1
+        format.scale = scale
         let safe = (size.width > 0 && size.height > 0) ? size : CGSize(width: 1, height: 1)
         return UIGraphicsImageRenderer(size: safe, format: format).image { _ in draw() }
     }

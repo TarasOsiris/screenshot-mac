@@ -19,6 +19,10 @@ struct RasterizedDisplayTextView: View {
     var lineHeightMultiple: CGFloat?
     var legacyLineSpacing: CGFloat?
     var richTextData: String?
+    /// Supersample factor for the raster. Export and preview leave it at the default, which
+    /// reproduces what the implicit rasterizer produced before; the editor passes its on-screen
+    /// scale so a zoomed-in row stays sharp.
+    var renderScale: CGFloat = TextLayoutStyle.defaultTextRenderScale
 
     var body: some View {
         if let size {
@@ -43,7 +47,8 @@ struct RasterizedDisplayTextView: View {
             letterSpacing: letterSpacing,
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
-            richTextData: richTextData
+            richTextData: richTextData,
+            renderScale: renderScale
         ) {
             Image(nsImage: image)
                 .resizable()

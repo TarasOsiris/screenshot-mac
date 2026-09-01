@@ -6,6 +6,10 @@ struct CanvasShapeInteractions {
     var onUpdate: (CanvasShapeModel) -> Void = { _ in }
     var onDelete: () -> Void = {}
     var onScreenshotDrop: ((NSImage, ImageImportOrigin) -> Void)?
+    /// Asks the row to raise its single image picker for this shape. The picker itself lives on the
+    /// row: on macOS it is a `fileImporter`, i.e. a presentation host, and one per shape put a
+    /// `MergePlatformItemsView` in the display list for every image and device on the canvas.
+    var onRequestImagePicker: (() -> Void)?
     var onClearImage: (() -> Void)?
     var onRemoveBackground: (() -> Void)?
     var onCaptureSimulator: (() -> Void)?

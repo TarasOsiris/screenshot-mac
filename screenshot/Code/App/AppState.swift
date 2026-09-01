@@ -24,7 +24,10 @@ final class AppState {
     let viewMode: EditorViewModeController
 
     @ObservationIgnored var canvasMouseModelPosition: CGPoint?
-    @ObservationIgnored var visibleCanvasModelCenter: CGPoint?
+    /// Model-space x of the centre of the selected row's *horizontal* canvas viewport, so a newly
+    /// added shape lands where the user is looking. A scalar rather than a point: the y was always
+    /// derived from the row, and only the x is ever read.
+    @ObservationIgnored var visibleCanvasModelCenterX: CGFloat?
     @ObservationIgnored var justAddedShapeId: UUID?
     @ObservationIgnored var templateMoveContinuation: TemplateMoveContinuation?
     /// View-to-view signals for the locale menu. See LocaleMenuCoordinator.
@@ -119,11 +122,6 @@ final class AppState {
 
     /// Arrow-key nudge / Delete. See CanvasKeyCommandMonitor.
     @ObservationIgnored let keyCommands = CanvasKeyCommandMonitor()
-
-    /// Rows whose horizontal scroll area has already been re-keyed once this session, so a row
-    /// recycled by the editor's LazyVStack doesn't rebuild its canvas twice. See
-    /// `CanvasScrollAreaMeasurement`.
-    @ObservationIgnored let canvasScrollMeasurement = CanvasScrollAreaMeasurement()
 
     /// The shape targeted by an in-flight continuous edit (nil when idle).
     var continuousEditShapeId: UUID? { edits.shapeEdit.activeId }

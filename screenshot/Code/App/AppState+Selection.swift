@@ -25,7 +25,7 @@ extension AppState {
         selectedRowId = id
         selectedShapeIds = []
         if rowChanged {
-            visibleCanvasModelCenter = nil
+            visibleCanvasModelCenterX = nil
         }
     }
 
@@ -39,7 +39,7 @@ extension AppState {
         // cost as much as one that actually moved rows.
         if selectedRowId != rowId {
             selectedRowId = rowId
-            visibleCanvasModelCenter = nil
+            visibleCanvasModelCenterX = nil
         }
         if selectedShapeIds != [shapeId] {
             selectedShapeIds = [shapeId]
@@ -54,7 +54,7 @@ extension AppState {
         if selectedRowId != rowId {
             selectedRowId = rowId
             selectedShapeIds = [shapeId]
-            visibleCanvasModelCenter = nil
+            visibleCanvasModelCenterX = nil
             return
         }
         if textEdit.isActive {
@@ -79,7 +79,7 @@ extension AppState {
         let present = ids.intersection(rows[rowIdx].shapes.lazy.map(\.id))
         if selectedRowId != rowId {
             selectedRowId = rowId
-            visibleCanvasModelCenter = nil
+            visibleCanvasModelCenterX = nil
         }
         if selectedShapeIds != present {
             selectedShapeIds = present

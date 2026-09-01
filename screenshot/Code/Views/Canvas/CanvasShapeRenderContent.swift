@@ -30,6 +30,7 @@ struct CanvasShapeRenderContent: View {
     let resolveNSFont: (CGFloat, NSFont.Weight, Bool) -> NSFont
     let fontWeightResolver: (Int) -> Font.Weight
     let renderSvgImage: (String, Bool, Color, CGSize?) -> NSImage?
+    @Environment(\.displayScale) private var screenScale
 
     var body: some View {
         shapeContent
@@ -86,40 +87,37 @@ struct CanvasShapeRenderContent: View {
         let uppercase = shape.uppercase ?? false
         let richText = showPlaceholder ? nil : shape.richText
 
-        return Group {
-            if showsEditorHelpers {
-                LiveDisplayTextView(
-                    text: displayText,
-                    font: nsFont,
-                    color: nsColor,
-                    alignment: align,
-                    verticalAlignment: verticalAlign,
-                    uppercase: uppercase,
-                    letterSpacing: shape.letterSpacing,
-                    lineHeightMultiple: shape.lineHeightMultiple,
-                    legacyLineSpacing: shape.lineSpacing,
-                    richTextData: richText
-                )
-            } else {
-                RasterizedDisplayTextView(
-                    size: CGSize(width: effectiveW, height: effectiveH),
-                    text: displayText,
-                    font: nsFont,
-                    color: nsColor,
-                    alignment: align,
-                    verticalAlignment: verticalAlign,
-                    uppercase: uppercase,
-                    letterSpacing: shape.letterSpacing,
-                    lineHeightMultiple: shape.lineHeightMultiple,
-                    legacyLineSpacing: shape.lineSpacing,
-                    richTextData: richText
-                )
-            }
-        }
+        // One raster for the editor, preview and export alike. The editor used to host a live
+        // `TextLayoutNSView` per text shape; those NSViews joined AppKit's `_layoutViewTree`, the
+        // constraint pass and every hit test, which a scroll trace showed costing ~18% of the main
+        // thread on a 111-shape project. The only live text view left is the one being edited.
+        return RasterizedDisplayTextView(
+            size: CGSize(width: effectiveW, height: effectiveH),
+            text: displayText,
+            font: nsFont,
+            color: nsColor,
+            alignment: align,
+            verticalAlignment: verticalAlign,
+            uppercase: uppercase,
+            letterSpacing: shape.letterSpacing,
+            lineHeightMultiple: shape.lineHeightMultiple,
+            legacyLineSpacing: shape.lineSpacing,
+            richTextData: richText,
+            renderScale: textRenderScale
+        )
         .frame(width: effectiveW, height: effectiveH)
         .background { textBackgroundLayer }
         .scaleEffect(displayScale, anchor: .topLeading)
         .frame(width: displayW, height: displayH, alignment: .topLeading)
+    }
+
+    /// Extra resolution for the editor only. Preview and export draw at model scale using the
+    /// historical platform default, so changing that factor would move exported bytes. The editor
+    /// instead scales the raster by `displayScale` — a downscale for a tall App Store template, but
+    /// an *upscale* on a short one at high zoom, which is what this covers.
+    private var textRenderScale: CGFloat {
+        guard showsEditorHelpers else { return TextLayoutStyle.defaultTextRenderScale }
+        return TextLayoutStyle.quantizedTextRenderScale(displayScale * max(screenScale, 1))
     }
 
     /// Rounded-rect plate behind a text shape's glyphs. Sized in model space (the `effectiveW/H`

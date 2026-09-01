@@ -1,10 +1,39 @@
 import SwiftUI
 import UniformTypeIdentifiers
+#if os(macOS)
+import AppKit
+#endif
 
 extension EditorRowView {
+    /// Forwarded from `EditorRowLayout`, which is where the row's geometry is stated and tested.
+    var scrollAreaHeight: CGFloat {
+        EditorRowLayout.scrollAreaHeight(row: row, zoom: zoom, isPreviewMode: isPreviewMode)
+    }
+
+    /// Display-space rect of the shape the picker is targeting, so iPad's dialog pops from it.
+    /// Falls back to a degenerate rect at the origin when nothing is targeted — the host is always
+    /// mounted, so it always needs somewhere to sit.
+    func imagePickerAnchor(in shapes: [CanvasShapeModel], displayScale: CGFloat) -> CGRect {
+        guard let id = pickerTargetShapeId, let shape = shapes.first(where: { $0.id == id }) else {
+            return CGRect(x: 0, y: 0, width: 1, height: 1)
+        }
+        return CGRect(
+            x: shape.x * displayScale,
+            y: shape.y * displayScale,
+            width: shape.width * displayScale,
+            height: shape.height * displayScale
+        )
+    }
+
     var horizontalScrollArea: some View {
         PerfSignpost.bodyEvaluated("EditorRowView.canvas", row: row.id, count: row.templates.count)
-        return ScrollViewReader { hProxy in
+        return Color.clear
+            .frame(height: scrollAreaHeight)
+            .overlay(alignment: .topLeading) { scrollAreaContent }
+    }
+
+    private var scrollAreaContent: some View {
+        ScrollViewReader { hProxy in
             ScrollView(.horizontal) {
                 // Render the canvas at full (zoom-inclusive) scale instead of a visual-only
                 // `.scaleEffect(zoom)`. Each shape's layout frame then equals its on-screen
@@ -105,12 +134,25 @@ extension EditorRowView {
                             // Bars must not slide during a reorder: the move buttons have to stay
                             // under the cursor so rapid clicks keep landing on a button.
                             .transaction { $0.animation = nil }
-                            .padding(.bottom, 8)
+                            .padding(.bottom, EditorRowLayout.controlBarsBottomInset)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-                .padding(.bottom, 12)
+                // One `_PaddingLayout` layer, not three: each is a separate layout node that
+                // re-measures its child on every sizing pass.
+                .padding(EditorRowLayout.scrollContentInsets)
+            }
+            // Observes *this* scroll view. It used to sit on the row's root, whose nearest
+            // enclosing scroll view is the editor's vertical one — so it reported that scroller's
+            // geometry, and every realized row recomputed a `CGRect` on every vertical scroll tick.
+            // A scalar is all the one consumer wants (`AppState.shapeCenter(for:)` reads the x).
+            .onScrollGeometryChange(for: CGFloat?.self) { geo in
+                guard isSelected else { return nil }
+                let midX = geo.visibleRect.midX
+                let canvasX = max(0, midX - EditorRowLayout.scrollContentInsets.leading)
+                return canvasX / row.displayScale(zoom: zoom)
+            } action: { _, centerX in
+                guard let centerX else { return }
+                state.visibleCanvasModelCenterX = centerX
             }
             .onChange(of: state.canvasFocus.shapeRequestNonce) { _, _ in
                 guard state.selectedRowId == row.id,
@@ -323,6 +365,7 @@ extension EditorRowView {
                         onScreenshotDrop: { image, origin in
                             state.saveImage(image, for: shape.id, source: origin)
                         },
+                        onRequestImagePicker: { pickerTargetShapeId = shape.id },
                         onClearImage: {
                             state.clearImage(for: shape.id)
                         },
@@ -531,6 +574,8 @@ extension EditorRowView {
 
             ActiveGuidesLayer(dragSession: dragSession, displayScale: ds)
                 .zIndex(100)
+
+            imagePickerHost(anchor: imagePickerAnchor(in: resolvedShapes, displayScale: ds))
 
             if row.showBorders && row.templates.count > 1 {
                 CanvasTemplateSeparatorLines(

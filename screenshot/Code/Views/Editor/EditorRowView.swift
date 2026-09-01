@@ -33,8 +33,9 @@ struct EditorRowView: View {
     /// render on app open is instant.
     @State var modeReady = true
     @State var textEditingShapeId: UUID?
-    /// Drives the one-shot re-key of `horizontalScrollArea` (see its `.task`).
-    @State var scrollAreaRealized = false
+    /// The shape whose image the row's single picker is currently choosing, if any. One presentation
+    /// host per row instead of one per image/device shape — see `imagePickerHost`.
+    @State var pickerTargetShapeId: UUID?
     @FocusState var isLabelFieldFocused: Bool
 
     var canMoveUp: Bool { !isFirst }
@@ -43,8 +44,6 @@ struct EditorRowView: View {
     var canDelete: Bool { !(isFirst && isLast) }
 
     var zoom: CGFloat { state.zoom.level }
-    let canvasHorizontalPadding: CGFloat = 16
-
     var isPreviewMode: Bool { state.viewMode.previewingRows.contains(row.id) }
 
     /// Always mounted, faded by opacity rather than inserted/removed. The fade has to be driven from
@@ -77,7 +76,21 @@ struct EditorRowView: View {
 
     var body: some View {
         PerfSignpost.bodyEvaluated("EditorRowView.body", row: row.id, count: row.shapes.count)
-        return VStack(alignment: .leading, spacing: 0) {
+        return Color.clear
+            .frame(height: EditorRowLayout.rowHeight(row: row, zoom: zoom, isPreviewMode: isPreviewMode))
+            .overlay(alignment: .topLeading) { rowContent }
+    }
+
+    /// The row's real content, rendered in an `.overlay` of the fixed-height shell above.
+    ///
+    /// Overlay content never participates in its parent's sizing, so the editor's `LazyVStack` gets
+    /// the row's height from `EditorRowLayout` without descending into the header, the horizontal
+    /// `ScrollView`, the padding chain or the control bars. That descent was the largest cost in a
+    /// scrollbar-drag trace. It also hands this subtree a *finite* width on its very first layout
+    /// pass, which is what makes the old one-shot re-key unnecessary.
+    @ViewBuilder
+    private var rowContent: some View {
+        VStack(alignment: .leading, spacing: 0) {
             EditorRowHeader(
                 row: row,
                 isSelected: isSelected,
@@ -101,6 +114,7 @@ struct EditorRowView: View {
             ) {
                 rowMenuContent
             }
+            .frame(height: EditorRowLayout.headerHeight)
             .background { selectionTint(UIMetrics.Opacity.accentRowHeader) }
             // Scoped to the header, which is pure chrome: it restores the fade its label, chevron
             // and ellipsis had from the row-wide animation this replaced, without putting the
@@ -108,24 +122,13 @@ struct EditorRowView: View {
             .animation(Self.selectionFade, value: isSelected)
 
             if !row.isCollapsed {
+                // No re-key here any more. It existed because a `LazyVStack`'s first lazy pass can
+                // propose an unbounded width, leaving the inner horizontal `ScrollView` sized to its
+                // content and unscrollable; the fix was to rebuild the subtree once against the
+                // settled width, which cost every row two full canvas builds on first realization.
+                // The shell above is `Color.clear`, so it takes the proposed width and hands this
+                // subtree a finite one immediately — there is nothing to correct.
                 horizontalScrollArea
-                    .id(scrollAreaRealized || state.canvasScrollMeasurement.isMeasured(row.id))
-                    // One-shot, fired the first time this row's scroll area appears: re-key it
-                    // once so the inner horizontal ScrollView re-measures against the now-settled
-                    // width. A LazyVStack's first lazy pass can propose an unbounded width,
-                    // leaving the ScrollView sized to its content and unscrollable. Scoping this
-                    // to the scroll area (not the row) means an already-realized row that's
-                    // collapsed/expanded mid-session keeps its id and doesn't rebuild.
-                    //
-                    // "Once" has to outlive the view: the LazyVStack drops the @State of rows it
-                    // recycles off-screen, so keeping the flag here alone made every scroll-in
-                    // build the whole canvas subtree, tear it down and rebuild it. The registry
-                    // is deliberately non-observable, so reading it here tracks nothing.
-                    .task {
-                        guard !state.canvasScrollMeasurement.isMeasured(row.id) else { return }
-                        state.canvasScrollMeasurement.markMeasured(row.id)
-                        scrollAreaRealized = true
-                    }
                     // Launch the deferred onboarding tour once the first canvas (the `.canvas`
                     // anchor lives inside it) is on screen — the pending flag is armed at first
                     // launch, before any project exists.
@@ -143,16 +146,6 @@ struct EditorRowView: View {
                     }
                     #endif
             }
-        }
-        .onScrollGeometryChange(for: CGRect.self) { geo in
-            geo.visibleRect
-        } action: { _, visibleRect in
-            guard isSelected else { return }
-            let canvasX = max(0, visibleRect.midX - canvasHorizontalPadding)
-            state.visibleCanvasModelCenter = CGPoint(
-                x: canvasX / row.displayScale(zoom: zoom),
-                y: row.templateHeight / 2
-            )
         }
         .contentShape(Rectangle())
         .onTapGesture { tapSelectRow() }

@@ -209,3 +209,37 @@ extension EditorRowView {
         }
     }
 }
+
+extension EditorRowView {
+    /// The row's one image picker, anchored in canvas space on the shape that asked for it.
+    ///
+    /// On macOS `imageSourcePicker` is a `fileImporter` and on iPad a `confirmationDialog`; either
+    /// way it is a presentation host, and hanging one off every `.image`/`.device` shape put a
+    /// platform item in the display list for each of them — `DisplayList.ViewUpdater` was the
+    /// largest remaining SwiftUI cost in a scrollbar-drag trace.
+    ///
+    /// Always mounted, never conditionally inserted: a presentation modifier that appears in the
+    /// same update that sets its binding may not present. The anchor moves instead, which is what
+    /// iPad's popover needs — a row-level host would point the dialog at the row, not the shape.
+    @ViewBuilder
+    func imagePickerHost(anchor: CGRect) -> some View {
+        Color.clear
+            .frame(width: max(anchor.width, 1), height: max(anchor.height, 1))
+            .imageSourcePicker(isPresented: isPickerPresentedBinding) { image in
+                guard let shapeId = pickerTargetShapeId else { return }
+                state.saveImage(image, for: shapeId, source: .picker)
+                pickerTargetShapeId = nil
+            }
+            .position(x: anchor.midX, y: anchor.midY)
+            .allowsHitTesting(false)
+    }
+
+    /// Presented exactly while a shape is targeted. Dismissal clears the target, cancellation
+    /// included — `imageSourcePicker` reports that only by setting this false.
+    private var isPickerPresentedBinding: Binding<Bool> {
+        Binding(
+            get: { pickerTargetShapeId != nil },
+            set: { if !$0 { pickerTargetShapeId = nil } }
+        )
+    }
+}

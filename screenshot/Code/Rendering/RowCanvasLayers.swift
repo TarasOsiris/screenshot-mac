@@ -82,7 +82,20 @@ enum EditorBlurRasterCache {
 
     /// Called when a different project is applied — the outgoing project's rows will never be
     /// asked for again, and their model-resolution rasters are the largest thing here.
+    ///
+    /// Gated on the id because the *same* project is re-applied on every iCloud reload, where the
+    /// row views are still alive and their rasters still correct; purging there would re-run a
+    /// main-actor, model-resolution `ImageRenderer` + `CIGaussianBlur` for every blurred row.
+    static func purgeIfProjectChanged(to projectId: UUID) {
+        guard loadedProjectId != projectId else { return }
+        loadedProjectId = projectId
+        cache.removeAllObjects()
+    }
+
+    private static var loadedProjectId: UUID?
+
     static func purgeAll() {
+        loadedProjectId = nil
         cache.removeAllObjects()
     }
 }
