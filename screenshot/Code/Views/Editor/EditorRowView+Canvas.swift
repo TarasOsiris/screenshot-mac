@@ -570,41 +570,36 @@ extension EditorRowView {
     func updateHover(at modelPoint: CGPoint, in resolvedShapes: [CanvasShapeModel]) {
         // View mode shows no editor helpers, which is what gated the outline when it lived on the
         // shape.
-        let hit: UUID?
-        if state.viewMode.isViewMode {
-            hit = nil
-        } else {
-            let transientShape = state.liveShapeEdit.shapeId.flatMap {
-                state.liveShapeEdit.liveShape(for: $0)
-            }
-            hit = row.hitShape(
-                at: modelPoint,
-                among: resolvedShapes,
-                replacingWith: transientShape
-            )?.id
-        }
+        let hit = state.viewMode.isViewMode
+            ? nil
+            : row.hitShape(at: modelPoint, among: resolvedShapes)?.id
+        let previous = dragSession.hoveredShapeId
         // Same-value writes still notify `@Observable` observers, and this runs on every mouse move.
-        guard dragSession.hoveredShapeId != hit else { return }
+        guard previous != hit else { return }
         dragSession.hoveredShapeId = hit
-        applyHoverCursor(for: hit, in: resolvedShapes)
+        applyHoverCursor(from: previous, to: hit, in: resolvedShapes)
     }
 
     func clearHover() {
-        guard dragSession.hoveredShapeId != nil else { return }
+        guard let previous = dragSession.hoveredShapeId else { return }
         dragSession.hoveredShapeId = nil
-        PlatformCursor.setArrow()
+        applyHoverCursor(from: previous, to: nil, in: [])
     }
 
-    /// Only ever called on a hover *transition*. Setting the cursor on every tick would fight the
-    /// resize and rotate cursors `CanvasShapeHandlesOverlay` pushes while the pointer is on a handle.
-    private func applyHoverCursor(for hoveredId: UUID?, in resolvedShapes: [CanvasShapeModel]) {
+    /// Only ever called on a hover *transition*, and only acts on one into or out of a **selected**
+    /// shape — the scope the per-shape hover had. The open hand advertises the drag you can start
+    /// on a shape that is already selected, not the selection you could make. Anything wider
+    /// stomps cursors other views push: the handles' resize and rotate cursors while the pointer
+    /// is over a handle, and the middle-mouse pan's hand.
+    private func applyHoverCursor(from previous: UUID?, to hoveredId: UUID?, in resolvedShapes: [CanvasShapeModel]) {
         guard !state.viewMode.isViewMode,
               dragSession.draggingShapeId == nil,
               dragSession.pendingResize.isEmpty,
               dragSession.pendingRotation.isEmpty else { return }
-        // The open hand only ever showed on a shape that is already selected — it advertises the
-        // drag you can start, not the selection you could make.
-        guard let hoveredId, selectedShapeIds.contains(hoveredId) else {
+        let leavingSelected = previous.map(selectedShapeIds.contains) ?? false
+        let enteringSelected = hoveredId.map(selectedShapeIds.contains) ?? false
+        guard leavingSelected || enteringSelected else { return }
+        guard let hoveredId, enteringSelected else {
             PlatformCursor.setArrow()
             return
         }
