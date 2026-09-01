@@ -324,8 +324,7 @@ struct CanvasShapeRenderContent: View {
                     in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 )
         }
-        .buttonStyle(.plain)
-        .focusable(false)
+        .buttonStyle(EditorIconButtonStyle())
         .accessibilityLabel("Add Image")
         .help("Add Image")
         .animation(.easeInOut(duration: 0.12), value: isDropTargeted)

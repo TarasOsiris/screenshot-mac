@@ -157,8 +157,7 @@ struct TemplateControlBar: View {
             .frame(width: UIMetrics.ActionButton.frameSize, height: UIMetrics.ActionButton.frameSize)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
-        .focusable(false)
+        .buttonStyle(EditorIconButtonStyle())
         .foregroundStyle(backgroundButtonStyle)
         .help(backgroundButtonHelp)
         // `.sheet` rather than the docked `.panel`: the panel needs a `BarPanelHost`,

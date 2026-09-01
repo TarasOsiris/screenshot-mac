@@ -74,8 +74,7 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                 .foregroundStyle(isSelected ? Color.accentColor : .secondary)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .focusable(false)
+        .buttonStyle(EditorIconButtonStyle())
         .accessibilityLabel(row.isCollapsed ? Text("Expand") : Text("Collapse"))
     }
 
