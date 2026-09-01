@@ -2,14 +2,19 @@
 """Keyword fields for Screenshot Bro, per locale per platform.
 
 Design (see tools/aso/RESEARCH.md):
-  NAME     "Screenshot Bro: Mockup Maker"  -> tokens: screenshot bro mockup maker
-  SUBTITLE "App Store & Play Screenshots"  -> tokens: app store play screenshots
+  NAME     "Screenshot Bro: Mockup Maker"    -> screenshot bro mockup maker
+  SUBTITLE "App Screenshots & Localization"  -> app screenshots localization
 Apple combines tokens across name+subtitle+keywords, so the keyword field must
-never repeat those eight words. Everything here is a token Apple can only get
-from the keyword field.
+never repeat those words. Everything here is a token Apple can only get from
+the keyword field.
+
+`store` and `app` head the list because the 2026-09-01 rejection took "App
+Store" out of the subtitle. Apple still forms "app store screenshots" by
+combining them with the name's `screenshot` — the query survives, at keyword
+weight instead of subtitle weight.
 """
 
-import os, re, sys
+import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import metadata as M
 
@@ -19,19 +24,22 @@ NAME = "Screenshot Bro: Mockup Maker"
 def _reserved(locale):
     """Words the name and this locale's subtitle already supply.
 
-    Derived, not hardcoded: the CJK subtitles carry "Google Play" while the
-    Latin one does not, so "google" is free budget in one and wasted in the
-    other. Recomputing from the real strings keeps that honest.
+    Substring, not word-split: Japanese, Chinese and Thai subtitles have no
+    spaces, so splitting them yields one useless token and every CJK keyword
+    looks free when it is not. Containment catches 画像 inside
+    アプリ画像の作成とローカライズ, and costs nothing on Latin scripts because
+    every token here is a whole word.
     """
-    text = f"{NAME} {M.SUBTITLE[locale]}"
-    parts = re.split(r"[\s·・&/|,:.\-]+", text)
-    return {w.lower() for w in parts if len(w) > 2}
+    text = f"{NAME} {M.SUBTITLE[locale]}".lower()
+    return lambda token: token.lower() in text
 
 # Proven English dev vocabulary — searched in every storefront we swept.
-CORE = ["generator", "device", "frames", "google", "connect", "preview",
-        "template", "design"]
+CORE = ["store", "app", "generator", "device", "frames", "google", "connect",
+        "preview", "template", "design"]
 
 # Locale -> extra tokens, highest value first. Trimmed to fit 100 chars.
+# Non-Latin locales lead with their own script: no other surface can supply
+# those tokens, and CORE's "store,app" would otherwise crowd them out.
 EXTRA = {
     "en-US":   ["localization", "aso", "editor", "android", "indie"],
     "en-GB":   ["localization", "aso", "editor", "android", "indie"],
@@ -50,31 +58,35 @@ EXTRA = {
     "tr":      ["localization", "aso", "editor", "android", "ekran", "şablon"],
     "id":      ["localization", "aso", "editor", "android", "tangkapan", "layar", "aplikasi"],
     "vi":      ["localization", "aso", "editor", "android", "ảnh", "màn hình", "ứng dụng"],
-    "ru":      ["localization", "aso", "editor", "android", "мокап", "генератор", "скриншот"],
-    "uk":      ["localization", "aso", "editor", "android", "мокап", "скриншот", "знімок"],
-    "th":      ["localization", "aso", "editor", "android", "ภาพหน้าจอ", "แอป"],
+    "ru":      ["мокап", "генератор", "скриншот", "localization", "aso", "editor", "android"],
+    "uk":      ["мокап", "скриншот", "знімок", "localization", "aso", "editor", "android"],
+    "th":      ["ภาพหน้าจอ", "แอป", "localization", "aso", "editor", "android"],
     "ja":      ["モックアップ", "ストア", "画像", "作成", "素材", "localization", "aso", "editor", "android"],
     "ko":      ["스크린샷", "앱스토어", "목업", "제작", "localization", "aso", "editor", "android"],
     "zh-Hans": ["应用截图", "上架", "生成器", "制作", "工具", "localization", "aso", "editor", "android"],
     "zh-Hant": ["應用截圖", "上架", "製作", "工具", "產生器", "localization", "aso", "editor", "android"],
-    "ar-SA":   ["localization", "aso", "editor", "android", "لقطة", "شاشة", "تطبيق", "متجر"],
-    "he":      ["localization", "aso", "editor", "android", "צילום", "מסך", "אפליקציה"],
+    "ar-SA":   ["لقطة", "شاشة", "تطبيق", "متجر", "localization", "aso", "editor", "android"],
+    "he":      ["צילום", "מסך", "אפליקציה", "localization", "aso", "editor", "android"],
 }
+
+# Packed last: real queries, but weaker than anything above. They exist to spend
+# the budget the shortened subtitle handed back rather than ship a 90/100 field.
+TAIL = ["marketing", "listing", "publish"]
 
 LIMIT = 100
 
 
 def field(locale, platform):
     """Build the keyword field, packing tokens until the 100-char budget runs out."""
-    tokens = CORE + EXTRA[locale]
+    tokens = CORE + EXTRA[locale] + TAIL
     if platform == "IOS":
         # "aso" autosuggests to ASOS the retailer on the iOS store — wrong intent,
         # unwinnable SERP. On the Mac store "aso" returns a genuine ASO-tool field.
         tokens = [t for t in tokens if t != "aso"]
-    reserved = _reserved(locale)
+    is_reserved = _reserved(locale)
     out, dropped = [], []
     for t in tokens:
-        if t.lower() in reserved:
+        if is_reserved(t):
             dropped.append(f"{t}(reserved)")
             continue
         candidate = ",".join(out + [t])

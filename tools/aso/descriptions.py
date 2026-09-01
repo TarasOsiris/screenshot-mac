@@ -851,14 +851,10 @@ def review(platform, locale, text, en_us=None):
 
 def _source_versions():
     """Newest version per platform, whatever state it is in — reads are never blocked."""
-    from apply import asc, APP_ID
-    code, d = asc("GET", f"/v1/apps/{APP_ID}/appStoreVersions?limit=40"
-                         "&fields[appStoreVersions]=versionString,platform,appVersionState")
-    assert code == 200, f"version list failed: {code} {d}"
+    from apply import versions
     newest = {}
-    for v in d["data"]:
-        a = v["attributes"]
-        newest.setdefault(a["platform"], (v["id"], a["versionString"], a["appVersionState"]))
+    for vid, platform, vstr, state in versions():
+        newest.setdefault(platform, (vid, vstr, state))
     return newest
 
 
@@ -866,15 +862,14 @@ def main(offline):
     if offline:
         sources = {"MAC_OS": (None, "offline", "-", None), "IOS": (None, "offline", "-", None)}
     else:
-        from apply import asc
+        from apply import version_localizations
         sources = {}
         for platform, (vid, vstr, state) in _source_versions().items():
-            code, d = asc("GET", f"/v1/appStoreVersions/{vid}"
-                                 f"/appStoreVersionLocalizations?limit=200")
-            en = next((x["attributes"]["description"] for x in d["data"]
+            rows = version_localizations(vid)
+            en = next((x["attributes"]["description"] for x in rows
                        if x["attributes"]["locale"] == "en-US"), None)
             live = {x["attributes"]["locale"]: (x["attributes"].get("description") or "")
-                    for x in d["data"]}
+                    for x in rows}
             sources[platform] = (vid, vstr, state, (en, live))
 
     failures = 0

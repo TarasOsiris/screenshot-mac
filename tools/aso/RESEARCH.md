@@ -67,9 +67,9 @@ Three exceptions carry real local dev vocabulary and are used:
 | ja | `モックアップ` | `ストアイメージ作成`, `モックアップジェネレーター`, `mockmaker`, `niceshots` |
 | ru / uk | `мокап` | `мокапы`, `генератор мокапов` |
 
-Consequence: the subtitle stays **English in every Latin-script locale**, and
-mixes local script with a Latin `App Store` / `Google Play` elsewhere — which is
-how developers write those names in Japanese, Korean, Chinese and Russian too.
+Consequence: the subtitle stays **English in every Latin-script locale**. Non-Latin
+locales get the local script — originally around a Latin `App Store` / `Google Play`,
+and after the 2026-09-01 rejection removed those, in local script throughout.
 
 ## Finding 4 — the category is winnable
 
@@ -78,24 +78,67 @@ apps; the leaders are tiny (StoreView 52 ratings, Picasso 45, Screenshot Studio
 13, Frame Screenshots 87). Low difficulty. Contrast the generic `screenshot`
 field, which is unwinnable and would not convert anyway.
 
+## 2026-09-01 — the subtitle was rejected
+
+`App Store & Play Screenshots` shipped, and Apple rejected iOS 4.9 on **two**
+guidelines at once:
+
+- **5.2.5 Intellectual Property** — "Terms for App Store in the app subtitle in
+  an inappropriate manner."
+- **2.3.10 Accurate Metadata** — "Revise the app's subtitle to remove Google
+  Play references."
+
+Both cite the **subtitle only**. The description was read and not flagged, even
+though it names both stores — because there it describes real functionality,
+which the rejection letter explicitly invites ("Reply … if the app's
+functionality and how it interacts with third-party platforms has been
+misunderstood"). The distinction Apple is drawing is *promotional headline* vs
+*factual description*, not the words themselves.
+
+What this costs, and what it does not: Apple combines tokens across
+name + subtitle + keywords, so moving `store` into the keyword field keeps the
+query `app store screenshots` **reachable** — it is the same combination, just
+assembled at keyword weight instead of subtitle weight. The reach survives; the
+ranking weight is what was lost.
+
+`metadata.check()` now fails the write if any locale's subtitle carries an Apple
+mark or the competitor platform, in Latin script or local. The guard exists
+because this was a *shipped* mistake, not a hypothetical one — and because the
+subtitle is app-level, one bad locale would have taken both platforms down.
+
 ## Assignment
 
 | surface | value | why |
 |---|---|---|
 | name (30) | `Screenshot Bro: Mockup Maker` *(unchanged)* | already #1 `mockup maker`, #3 `screenshot maker` — don't spend that |
-| subtitle (30) | `App Store & Play Screenshots` | supplies the missing `app` · `store` · `play` tokens |
-| keywords (100) | see `keywords.py` | only tokens Apple cannot get from name+subtitle |
+| subtitle (30) | `App Screenshots & Localization` | supplies `app` · `localization`; carries nothing Apple or Google owns |
+| keywords (100) | see `keywords.py` | only tokens Apple cannot get from name+subtitle — now led by `store`, `app` |
+
+Non-Latin locales take the local script (`应用截图制作与本地化`,
+`アプリ画像の作成とローカライズ`, `Скриншоты и локализация`, …) rather than the
+English string, because with the two Latin product names gone there is nothing
+left in the subtitle that had to stay Latin.
 
 Apple combines tokens across all three surfaces, so a word spent twice is
 budget burned. `_reserved()` in `keywords.py` derives the ban list from the
-real name and the real per-locale subtitle rather than a hardcoded list —
-that is what caught `google` being free budget in the Latin subtitle but
-already present in the CJK one, and `스크린샷` / `ภาพหน้าจอ` / `شاشة` / `מסך`
-being reserved in their own locales.
+real name and the real per-locale subtitle rather than a hardcoded list — that
+is what catches `스크린샷` / `ภาพหน้าจอ` / `شاشة` / `מסך` being reserved in
+their own locales while free in every other.
+
+It matches by **containment, not word-split**. Japanese, Chinese and Thai
+subtitles have no spaces, so splitting them yields one useless token and every
+CJK keyword looks free when it is not — `画像` and `作成` sit inside
+`アプリ画像の作成とローカライズ` with no boundary to split on. Containment is
+safe on Latin scripts because every token in the field is a whole word. One
+real subtlety it gets right: Hebrew `צילום` is **not** contained in `צילומי`,
+because the final mem `ם` is a different character from `מ` — so that token
+stays, correctly, in the field.
 
 Newly reachable queries: `app store screenshots`, `google play screenshots`,
 `app screenshot generator`, `app store connect`, `device frames`,
-`app screenshot design`, `screenshot template`, `android screenshots`.
+`app screenshot design`, `screenshot template`, `android screenshots` — all
+still reachable after the rejection, since `store`, `app` and `google` moved
+into the keyword field rather than being dropped.
 
 ## Deviation from the skill's reference
 

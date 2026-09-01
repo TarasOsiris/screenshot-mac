@@ -10,30 +10,34 @@ per locale, per platform. See `RESEARCH.md` for why these values.
 | `openings.py` | replacement first paragraph of the description |
 | `descriptions.py` | the 10 added locales' descriptions, macOS and iOS, plus the automated review |
 | `apply.py` | push to App Store Connect, verified by read-back |
-| `finish.py` | the deferred half — subtitle + the 10 added locales |
+| `finish.py` | subtitle everywhere, then fill any locale left empty or stale on an editable version |
 
-Credentials come from `~/.vibe-aso/config.json` via the vibe-aso plugin's
-`asc.rb`. Every write is read back and compared; a 2xx alone is not treated as
-success.
+Transport is the **`asc` CLI** (`asc auth status` — credentials live in the
+system keychain). It replaced the vibe-aso plugin's `asc.rb`, whose
+`~/.vibe-aso/config.json` no longer exists on this machine. Every write is read
+back and compared; a 2xx alone is not treated as success.
 
 ## Commands
 
 ```bash
+python3 tools/aso/metadata.py                      # every subtitle + the compliance check
 python3 tools/aso/keywords.py                      # print every field + what was dropped
-python3 tools/aso/apply.py check                   # preflight: no token spent twice
+python3 tools/aso/apply.py check                   # preflight: compliance + no token spent twice
+python3 tools/aso/apply.py subtitle                # app-level subtitle, every locale
 python3 tools/aso/apply.py version <id> MAC_OS     # keywords + promo text
-python3 tools/aso/finish.py --dry-run              # the deferred half
 python3 tools/aso/descriptions.py                  # review all 20 descriptions
 python3 tools/aso/apply.py descriptions <id> MAC_OS # write them (editable version only)
+python3 tools/aso/finish.py --dry-run              # only if a locale is ever added again
 ```
 
 ## Descriptions
 
 `descriptions.py` holds the macOS and iOS description for each of the 10 locales added in
-Aug 2026, which were created carrying the en-US text. They are **not** on 4.10 (macOS) /
-4.9 (iOS): `appStoreVersionLocalizations` are editable only while their version is, and
-both went to review before the copy existed. They ride the next release — `submit`
-Step 2b runs the writer once `/ship` has created the version record.
+Aug 2026, which were created carrying the en-US text. They **are** on 4.10 (macOS) and
+4.9 (iOS) as of 2026-09-01: cancelling the in-flight macOS submission to fix the rejected
+subtitle made both versions editable again, so the deferred half went in with it.
+`appStoreVersionLocalizations` are editable only while their version is — for any later
+release, `submit` Step 2b runs the writer once `/ship` has created the version record.
 
 en-GB is derived, not stored: `british()` spelling-passes that version's own live en-US
 row, so an English rewrite can never leave en-GB behind. zh-Hant is written in Taiwan
@@ -49,16 +53,30 @@ discounts. `apply.py descriptions` re-runs it per text and refuses to write a fa
 
 ## Ordering matters
 
-The keyword fields assume the subtitle is `App Store & Play Screenshots`.
-While the old subtitle is still live they duplicate `design` (and `aso` /
-`localization` in en-US), which wastes budget.
+The keyword fields are derived from the subtitle, so **apply the subtitle
+first**. `keywords.field()` bans whatever the name and that locale's subtitle
+already supply; run it against a stale subtitle and the fields duplicate tokens
+that are already spent.
 
-**Run `finish.py` before submitting a version.** `apply.py check` fails loudly
-while the two are out of sync — it is the guard for exactly this.
+`apply.py check` fails loudly while the two are out of sync, and `apply.py
+subtitle` refuses to run while the appInfo is `WAITING_FOR_REVIEW` /
+`IN_REVIEW` / `PENDING_DEVELOPER_RELEASE`: the name/subtitle record is shared
+app-wide, and editing it mid-review is a classic Metadata Rejected trigger. To
+edit it during a review you must cancel that submission first
+(`asc submit cancel --id <submission> --confirm`), which is what unblocked the
+2026-09-01 fix.
 
-`finish.py` refuses to run while a submission is `WAITING_FOR_REVIEW` or
-`IN_REVIEW`: the name/subtitle record is shared app-wide, and editing it
-mid-review is a classic Metadata Rejected trigger.
+## The subtitle is the surface Apple polices
+
+`App Store & Play Screenshots` was rejected on 2026-09-01 under **5.2.5**
+(Apple's mark) and **2.3.10** (competitor platform) — see RESEARCH.md. Apple
+flagged only the subtitle; the description names both stores and was not
+flagged, because there the words describe functionality rather than promote it.
+
+`metadata.check()` encodes that line and every writer calls it: no Apple mark
+and no competitor platform in any subtitle (Latin script or local), and no bare
+`App Store` in promotional text — `App Store Connect` is allowed there, since it
+is the real name of the service the app really uploads to.
 
 ## iOS
 
