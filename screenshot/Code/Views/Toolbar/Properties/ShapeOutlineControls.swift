@@ -1,7 +1,9 @@
 import SwiftUI
 
+/// Every value comes from a binding, never a captured `CanvasShapeModel`: the width slider is a
+/// continuous edit, so a shape captured in the properties bar's body would freeze the readout for
+/// the whole drag. See `ShapePropertiesSingleSelectionBar.documentShape`.
 struct ShapeOutlineControls: View {
-    let shape: CanvasShapeModel
     let hasOutline: Binding<Bool>
     let outlineColor: Binding<Color>
     let outlineWidth: Binding<CGFloat>
@@ -25,7 +27,7 @@ struct ShapeOutlineControls: View {
                 Slider(value: outlineWidth, in: 1...50)
                     .frame(width: UIMetrics.SliderWidth.standard)
 
-                Text(verbatim: "\(Int((shape.outlineWidth ?? CanvasShapeModel.defaultOutlineWidth).rounded()))")
+                Text(verbatim: "\(Int(outlineWidth.wrappedValue.rounded()))")
                     .frame(width: propertiesSliderValueWidth, alignment: .trailing)
             }
         }

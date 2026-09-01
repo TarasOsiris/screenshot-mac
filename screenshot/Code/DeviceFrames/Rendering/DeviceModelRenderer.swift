@@ -189,8 +189,8 @@ nonisolated enum DeviceModelRenderer {
             screenshotIdentity: screenshotImage == nil ? nil : screenshotImageIdentity,
             screenshotWidth: max(0, Int(imageSize.width.rounded())),
             screenshotHeight: max(0, Int(imageSize.height.rounded())),
-            pitch: quantizedAngle(pitch),
-            yaw: quantizedAngle(yaw),
+            pitch: quantized(pitch, step: snapshotAngleStep),
+            yaw: quantized(yaw, step: snapshotAngleStep),
             materialFinish: bodyMaterial.resolvedFinish.rawValue,
             ambient: quantized(lighting.resolvedAmbientIntensity),
             key: quantized(lighting.resolvedKeyIntensity),
@@ -199,19 +199,15 @@ nonisolated enum DeviceModelRenderer {
         )
     }
 
-    private static func quantized(_ value: Double) -> Int {
-        Int((value * 1_000).rounded())
+    private static func quantized(_ value: Double, step: Double = 0.001) -> Int {
+        Int((value / step).rounded())
     }
 
-    /// Pose angles get their own, much coarser rung. A rotation slider sweeps ~0.9°/pt, so a
-    /// 0.001° key made every mouse position a distinct cache entry: jitter never deduped and one
-    /// sweep evicted the whole 160-entry cache. A quarter of a degree is well under a pixel of
-    /// silhouette movement at the 1024 px editor cap.
+    /// Pose angles get a much coarser rung than the other key fields. A rotation slider sweeps
+    /// ~0.9°/pt, so the default made every mouse position a distinct cache entry: jitter never
+    /// deduped and one sweep evicted the whole 160-entry cache. A quarter of a degree is well under
+    /// a pixel of silhouette movement at the 1024 px editor cap.
     static let snapshotAngleStep: Double = 0.25
-
-    private static func quantizedAngle(_ degrees: Double) -> Int {
-        Int((degrees / snapshotAngleStep).rounded())
-    }
 
     /// Renders one device model offscreen.
     ///

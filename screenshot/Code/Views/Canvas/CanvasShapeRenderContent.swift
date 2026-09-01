@@ -155,20 +155,20 @@ struct CanvasShapeRenderContent: View {
     @ViewBuilder
     private var imageContent: some View {
         let clip = RoundedRectangle(cornerRadius: shape.borderRadius * displayScale)
-        if let screenshotImage {
-            Image(nsImage: screenshotImage)
-                .resizable()
-                .interpolation(.high)
-                .aspectRatio(contentMode: .fill)
-                .frame(width: displayW, height: displayH)
-                .clipShape(clip)
-                .overlay { imageOutline(clip) }
-        } else if showsEditorHelpers {
-            imageDropPlaceholder {
-                clip.fill(Color.gray.opacity(0.3))
-                    .overlay { imageOutline(clip) }
+        withImageDropAffordances(
+            ZStack {
+                if let screenshotImage {
+                    Image(nsImage: screenshotImage)
+                        .resizable()
+                        .interpolation(.high)
+                        .aspectRatio(contentMode: .fill)
+                        .clipShape(clip)
+                } else {
+                    clip.fill(Color.gray.opacity(0.3))
+                }
             }
-        }
+            .overlay { imageOutline(clip) }
+        )
     }
 
     /// Border drawn inside the image's rounded-rect bounds — same "band from the edge inward"
@@ -236,37 +236,7 @@ struct CanvasShapeRenderContent: View {
             hideCameraCutout: shape.hideCameraCutout ?? false
         )
 
-        // `frame` keeps one structural position whether or not a screenshot is set — only the
-        // overlay's *content* varies. The `if screenshotImage == nil` branch this replaced re-keyed
-        // `DeviceModelFrameView` the moment a picked image arrived, discarding the `@State` raster
-        // its `canStandInFor` stand-in reads, so a pitched device snapped to the pose-less
-        // programmatic fallback and back. `showsEditorHelpers` is fixed per host (editor vs
-        // export/preview are separate trees), so branching on it is safe.
-        if showsEditorHelpers {
-            frame
-                .frame(width: displayW, height: displayH)
-                .overlay { imageDropAffordances }
-                .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
-                    onHandleDrop(providers)
-                }
-        } else {
-            frame
-        }
-    }
-
-    /// The "add image" button and drop highlight a device shows over its frame. Always installed as
-    /// an overlay so the frame beneath it is never re-keyed — see `deviceContent`.
-    @ViewBuilder
-    private var imageDropAffordances: some View {
-        let metrics = imagePlaceholderMetrics
-
-        if screenshotImage == nil {
-            imagePickerButton(metrics)
-        }
-
-        if isDropTargeted {
-            dropHighlight(cornerRadius: metrics.cornerRadius)
-        }
+        withImageDropAffordances(frame)
     }
 
     @ViewBuilder
@@ -313,25 +283,45 @@ struct CanvasShapeRenderContent: View {
         #endif
     }
 
-    /// Icon, padding and corner radius scaled to the shape, shared by the image and device paths.
-    private var imagePlaceholderMetrics: (iconSize: CGFloat, padding: CGFloat, cornerRadius: CGFloat) {
+    /// Makes `base` an image drop target and puts the "add image" button and drop highlight over it.
+    ///
+    /// Everything editor-only is an overlay or a modifier, never a branch, so `base` holds one
+    /// structural position for the shape's whole lifetime. A branch here re-keys whatever `base`
+    /// renders — the hazard `CanvasShapeView` states one layer up: it cost a 3D device its cached
+    /// raster (and therefore its pose) the moment a picked image arrived, and `showsEditorHelpers`
+    /// would have done the same on every Edit↔Preview toggle, since that is a live toggle in one
+    /// tree, not a per-host constant.
+    private func withImageDropAffordances(_ base: some View) -> some View {
         let sizeRef = min(displayW, displayH)
-        return (
-            iconSize: min(28, max(14, sizeRef * 0.18)),
-            padding: min(12, max(4, sizeRef * 0.05)),
-            cornerRadius: min(8, max(4, sizeRef * 0.04))
-        )
+        let cornerRadius = min(8, max(4, sizeRef * 0.04))
+
+        return base
+            .frame(width: displayW, height: displayH)
+            .overlay {
+                if showsEditorHelpers, screenshotImage == nil {
+                    imagePickerButton(iconSize: min(28, max(14, sizeRef * 0.18)),
+                                      padding: min(12, max(4, sizeRef * 0.05)),
+                                      cornerRadius: cornerRadius)
+                }
+                if showsEditorHelpers, isDropTargeted {
+                    dropHighlight(cornerRadius: cornerRadius)
+                }
+            }
+            .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
+                guard showsEditorHelpers else { return false }
+                return onHandleDrop(providers)
+            }
     }
 
-    private func imagePickerButton(_ metrics: (iconSize: CGFloat, padding: CGFloat, cornerRadius: CGFloat)) -> some View {
+    private func imagePickerButton(iconSize: CGFloat, padding: CGFloat, cornerRadius: CGFloat) -> some View {
         Button(action: onRequestImagePicker) {
             Image(systemName: isDropTargeted ? "arrow.down.circle.fill" : "photo.badge.plus")
-                .font(.system(size: metrics.iconSize))
+                .font(.system(size: iconSize))
                 .foregroundStyle(.primary)
-                .padding(metrics.padding)
+                .padding(padding)
                 .background(
                     .thinMaterial.opacity(isDropTargeted ? 0.9 : 1.0),
-                    in: RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
+                    in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 )
         }
         .buttonStyle(.plain)
@@ -347,24 +337,6 @@ struct CanvasShapeRenderContent: View {
             .fill(Color.accentColor.opacity(0.12))
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .strokeBorder(Color.accentColor, lineWidth: max(2, 2 * displayScale))
-    }
-
-    @ViewBuilder
-    private func imageDropPlaceholder<Background: View>(@ViewBuilder background: () -> Background) -> some View {
-        let metrics = imagePlaceholderMetrics
-
-        ZStack {
-            background()
-            imagePickerButton(metrics)
-
-            if isDropTargeted {
-                dropHighlight(cornerRadius: metrics.cornerRadius)
-            }
-        }
-        .frame(width: displayW, height: displayH)
-        .onDrop(of: [.image], isTargeted: $isDropTargeted) { providers in
-            onHandleDrop(providers)
-        }
     }
 
     @ViewBuilder

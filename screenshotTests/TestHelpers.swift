@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import Observation
 import Testing
 
 /// Shared bitmap boilerplate behind the image factories below.
@@ -220,4 +221,26 @@ func expectSuspendsMainActor(
 /// Wraps plain images as import sources, the common case in batch-import tests.
 func importSources(_ images: [NSImage]) -> [ImageImportSource] {
     images.map { ImageImportSource(image: $0) }
+}
+
+/// True when reading `read` was *notified* during `body`, whether or not the value changed —
+/// `@Observable` notifies on same-value writes, so that distinction is usually the property
+/// under test.
+///
+/// The flag needs its own lock rather than the test's main-actor isolation: `withObservationTracking`'s
+/// `onChange` is `@Sendable` and carries no isolation promise.
+@MainActor
+func observationDidNotify<T>(_ read: @escaping () -> T, during body: () -> Void) -> Bool {
+    let flag = ObservationFlag()
+    withObservationTracking { _ = read() } onChange: { flag.set() }
+    body()
+    return flag.isSet
+}
+
+private nonisolated final class ObservationFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+
+    func set() { lock.lock(); value = true; lock.unlock() }
+    var isSet: Bool { lock.lock(); defer { lock.unlock() }; return value }
 }

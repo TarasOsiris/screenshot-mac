@@ -10,11 +10,16 @@ private final class StubDocument: ExportDocument {
     var activeProjectName: String
     var localeState: LocaleState = .default
     var availableFontFamilySet: Set<String> = []
+    /// Counted rather than ignored: every export entry point must land an in-flight continuous
+    /// edit before it reads `rows`, or it renders the value from before the drag.
+    private(set) var commitPendingEditsCount = 0
 
     init(rows: [ScreenshotRow], projectName: String = "Fixture") {
         self.rows = rows
         self.activeProjectName = projectName
     }
+
+    func commitPendingEdits() { commitPendingEditsCount += 1 }
 
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
 
@@ -67,6 +72,7 @@ struct ExportFlowModelTests {
 
         #expect(model.errorMessage == nil)
         #expect(model.total == 2)
+        #expect(document.commitPendingEditsCount == 1, "Export must land an in-flight edit before reading rows")
         let destDir = try #require(
             try FileManager.default.contentsOfDirectory(at: base, includingPropertiesForKeys: nil).first
         )

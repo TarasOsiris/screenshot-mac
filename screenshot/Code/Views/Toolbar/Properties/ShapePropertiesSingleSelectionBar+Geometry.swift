@@ -102,8 +102,7 @@ extension ShapePropertiesSingleSelectionBar {
     /// `shape.x` is absolute across the row's whole template strip, so a shape on the third
     /// template would read ~3700. Field values are relative to the template the shape sits in.
     func currentGeometryString(_ axis: GeometryAxis, for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId) else { return "0" }
-        let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard let i = idx(for: shapeId), let shape = editingShape(shapeId) else { return "0" }
         switch axis {
         case .x: return formatGeometry(shape.x - state.rows[i.row].templateOriginX(for: shape))
         case .y: return formatGeometry(shape.y)
@@ -120,11 +119,10 @@ extension ShapePropertiesSingleSelectionBar {
     /// holding the stale value would write it back on its own blur and undo this edit.
     func commitGeometry(_ axis: GeometryAxis, to shapeId: UUID?) {
         isFieldActive(axis).wrappedValue = false
-        guard let shapeId, let i = idx(for: shapeId) else { return }
+        guard let shapeId, let i = idx(for: shapeId), var resolved = editingShape(shapeId) else { return }
         defer { refreshGeometryFields(for: shapeId) }
         guard let value = parseGeometry(editingText(axis).wrappedValue) else { return }
 
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         let before = resolved
         apply(axis, value, to: &resolved, inRow: i.row)
         if resolved != before {

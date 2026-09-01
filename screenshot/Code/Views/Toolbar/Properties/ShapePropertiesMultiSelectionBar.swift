@@ -207,7 +207,10 @@ struct ShapePropertiesMultiSelectionBar: View {
             }
         }
 
-        ShapeShadowControls(shadow: multiShadowBinding())
+        ShapeShadowControls(
+            shadow: multiShadowBinding(),
+            showsOverrideDot: shapes.contains { $0.shadow?.isActive == true }
+        )
     }
 
     @ViewBuilder

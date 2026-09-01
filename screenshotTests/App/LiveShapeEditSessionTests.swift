@@ -1,9 +1,8 @@
 import CoreGraphics
-import Observation
 @testable import Screenshot_Bro
 import Testing
 
-@Suite(.serialized)
+/// Pure-value suite — no `makeTestState`, so no shared data directory and no `.serialized`.
 @MainActor
 struct LiveShapeEditSessionTests {
 
@@ -46,7 +45,6 @@ struct LiveShapeEditSessionTests {
         session.end()
         session.end()
         #expect(session.shapeId == nil)
-        #expect(session.shape == nil)
     }
 }
 
@@ -142,17 +140,15 @@ struct ContinuousShapeEditCommitTests {
         var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 50, height: 50)
         state.addShape(shape)
 
-        let notified = RowObservationFlag()
-        withObservationTracking { _ = state.rows } onChange: { notified.fire() }
-
         shape.rotation = 25
-        state.updateShapeContinuous(shape)
-        #expect(!notified.didFire, "A slider tick must not invalidate every reader of `rows`")
-
-        let onCommit = RowObservationFlag()
-        withObservationTracking { _ = state.rows } onChange: { onCommit.fire() }
-        state.finishContinuousEditIfNeeded()
-        #expect(onCommit.didFire, "The settled burst does reach the document")
+        #expect(
+            !observationDidNotify({ state.rows }, during: { state.updateShapeContinuous(shape) }),
+            "A slider tick must not invalidate every reader of `rows`"
+        )
+        #expect(
+            observationDidNotify({ state.rows }, during: { state.finishContinuousEditIfNeeded() }),
+            "The settled burst does reach the document"
+        )
     }
 
     /// Project switch and reset drop the burst rather than committing it — the document it belongs
@@ -173,12 +169,4 @@ struct ContinuousShapeEditCommitTests {
         #expect(state.liveShapeEdit.liveShape(for: shape.id) == nil)
         #expect(state.rows.first!.shapes.first { $0.id == shape.id }!.rotation == baseRotation)
     }
-}
-
-/// `withObservationTracking`'s `onChange` is `@Sendable`, so the flag it sets can't be a captured
-/// `var`. Observation fires it on the mutating thread — the main actor here — so a plain box is
-/// enough; the `nonisolated(unsafe)` is what lets the `@Sendable` closure reach it.
-private final class RowObservationFlag: @unchecked Sendable {
-    nonisolated(unsafe) private(set) var didFire = false
-    nonisolated func fire() { didFire = true }
 }

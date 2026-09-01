@@ -309,8 +309,7 @@ extension ShapePropertiesSingleSelectionBar {
     @ViewBuilder
     private func clearFormattingButton(shapeId: UUID) -> some View {
         Button("Clear Formatting") {
-            guard let i = idx(for: shapeId) else { return }
-            var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
+            guard var updated = editingShape(shapeId) else { return }
             updated.richText = nil
             state.updateShape(updated)
         }

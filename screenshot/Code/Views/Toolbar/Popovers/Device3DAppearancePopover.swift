@@ -37,9 +37,7 @@ struct Device3DAppearancePopover: View {
                 lightingSliders
             }
             Section {
-                // Wrapped so the override check reads the bindings in its own body, not this one —
-                // see `rotationSliders`.
-                ResetAllButton(isDisabled: { !hasAnyOverride }, action: resetAll)
+                PopoverResetButton(label: "Reset all", isDisabled: { !hasAnyOverride }, action: resetAll)
             } footer: {
                 Text("3D device rendering is an experimental feature")
             }
@@ -117,18 +115,6 @@ struct Device3DAppearancePopover: View {
         lighting = DeviceLighting()
         if canResetRotation { onResetRotation() }
     }
-
-    #if !os(macOS)
-    private struct ResetAllButton: View {
-        let isDisabled: () -> Bool
-        let action: () -> Void
-
-        var body: some View {
-            Button("Reset all", role: .destructive, action: action)
-                .disabled(isDisabled())
-        }
-    }
-    #endif
 
     private var finishBinding: Binding<DeviceBodyFinish> {
         Binding(get: { material.resolvedFinish }, set: { material.finish = $0 })

@@ -12,36 +12,10 @@ import Testing
 @MainActor
 struct AppStateSelectionNotificationTests {
 
-    /// `withObservationTracking`'s `onChange` is `@Sendable`, so the flag it sets needs its own
-    /// lock rather than the test's main-actor isolation.
-    private nonisolated final class NotifiedFlag: @unchecked Sendable {
-        private let lock = NSLock()
-        private var value = false
-
-        func set() {
-            lock.lock()
-            value = true
-            lock.unlock()
-        }
-
-        var isSet: Bool {
-            lock.lock()
-            defer { lock.unlock() }
-            return value
-        }
-    }
-
     /// True when `selectedRowId` was *notified*, whether or not its value changed — which is
     /// exactly the property under test.
     private func selectedRowIdDidNotify(_ state: AppState, during body: () -> Void) -> Bool {
-        let flag = NotifiedFlag()
-        withObservationTracking {
-            _ = state.selectedRowId
-        } onChange: {
-            flag.set()
-        }
-        body()
-        return flag.isSet
+        observationDidNotify({ state.selectedRowId }, during: body)
     }
 
     @Test func reselectingWithinTheSameRowDoesNotNotifySelectedRowId() throws {

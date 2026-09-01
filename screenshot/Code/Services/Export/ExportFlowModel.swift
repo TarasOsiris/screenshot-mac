@@ -13,6 +13,16 @@ import Observation
 protocol ExportDocument: RowRenderSource {
     var rows: [ScreenshotRow] { get }
     var activeProjectName: String { get }
+    /// Lands any edit still being composed off the document, so an export started inside a
+    /// continuous edit's debounce window renders what the user just did rather than the value from
+    /// before the drag. See `LiveShapeEditSession`.
+    func commitPendingEdits()
+}
+
+extension ExportDocument {
+    /// A document that composes nothing — every test fixture — has nothing to land. `AppState`
+    /// overrides this with the real flush.
+    func commitPendingEdits() {}
 }
 
 /// The editor's export flow: progress, cancellation, destination routing, temp-folder lifetime and
@@ -122,6 +132,7 @@ final class ExportFlowModel {
 
     /// Exports to the remembered folder, or reports that one must be chosen first.
     func exportAll(document: some ExportDocument, to url: URL, localeFilter: String? = nil) {
+        document.commitPendingEdits()
         guard url.startAccessingSecurityScopedResource() else {
             // Permission lost — forget the destination so the caller can ask again.
             bookmark.clear()
@@ -196,6 +207,7 @@ final class ExportFlowModel {
         delivery: Delivery,
         render: @MainActor @escaping (RowRenderContext) async -> NSImage
     ) {
+        document.commitPendingEdits()
         let rowsToExport = rows ?? document.rows
         guard !rowsToExport.isEmpty else { return }
         beginRun(total: rowsToExport.count)
@@ -238,6 +250,7 @@ final class ExportFlowModel {
 
     /// Renders to a temp folder, then presents the destination action sheet (no Finder on iPad).
     func exportAllToTempFolder(document: some ExportDocument, localeFilter: String? = nil) {
+        document.commitPendingEdits()
         guard !document.rows.isEmpty else { return }
 
         let localeCount = localeFilter == nil ? max(1, document.localeState.locales.count) : 1

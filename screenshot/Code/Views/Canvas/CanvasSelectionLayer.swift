@@ -23,8 +23,7 @@ struct CanvasSelectionLayer: View {
     let dragSession: CanvasDragSession
     /// Read inside `body` for the same reason as `dragSession`: a properties-bar slider drag must
     /// move the handles with the shape, and reading it here keeps that off the row's body.
-    /// Nil outside the editor.
-    let liveShapeEdit: LiveShapeEditSession?
+    let liveShapeEdit: LiveShapeEditSession
     let textEditingShapeId: UUID?
     let onUpdate: (CanvasShapeModel) -> Void
 
@@ -45,7 +44,7 @@ struct CanvasSelectionLayer: View {
                 ForEach(resolvedShapes) { shape in
                     if ids.contains(shape.id), shape.id != textEditingShapeId {
                         chrome(
-                            for: liveShapeEdit?.liveShape(for: shape.id) ?? shape,
+                            for: liveShapeEdit.liveShape(for: shape.id) ?? shape,
                             showsHandles: showsHandles
                         )
                     }

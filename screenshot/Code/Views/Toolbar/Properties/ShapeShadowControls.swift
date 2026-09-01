@@ -5,6 +5,9 @@ import SwiftUI
 /// `ShapeDeviceModelRotationControls`.
 struct ShapeShadowControls: View {
     let shadow: Binding<ShadowConfig>
+    /// Derived from the document rather than from `shadow`, for the reason spelled out in
+    /// `ShapeDeviceModelRotationControls.showsOverrideDot`.
+    let showsOverrideDot: Bool
 
     @State private var isPopoverPresented = false
 
@@ -13,7 +16,7 @@ struct ShapeShadowControls: View {
             PropertiesBarPopoverTrigger(
                 systemImage: "square.bottomhalf.filled",
                 isPresented: $isPopoverPresented,
-                showsOverrideDot: shadow.wrappedValue.isActive,
+                showsOverrideDot: showsOverrideDot,
                 help: "Drop shadow",
                 popoverTitle: "Shadow"
             ) {

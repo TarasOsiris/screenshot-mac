@@ -25,8 +25,7 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     func applyTextBackgroundPreset(_ preset: TextBackgroundPreset, shapeId: UUID) {
-        guard let i = idx(for: shapeId) else { return }
-        var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard var updated = editingShape(shapeId) else { return }
         updated.textBackgroundColor = preset.color
         updated.textBackgroundPadding = preset.padding
         updated.textBackgroundCornerRadius = preset.cornerRadius
@@ -82,8 +81,7 @@ extension ShapePropertiesSingleSelectionBar {
         let isOn = Binding<Bool>(
             get: { editingShape(shapeId)?.textBackgroundColorData != nil },
             set: { enabled in
-                guard let i = idx(for: shapeId) else { return }
-                var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var updated = editingShape(shapeId) else { return }
                 updated.textBackgroundColor = enabled ? CanvasShapeModel.defaultTextBackgroundColor : nil
                 updated.textBackgroundCornerRadius = enabled ? 0 : nil
                 updated.textBackgroundPadding = enabled ? 0 : nil
@@ -101,8 +99,7 @@ extension ShapePropertiesSingleSelectionBar {
         let hasOutline = Binding<Bool>(
             get: { (editingShape(shapeId)?.textBackgroundOutlineWidth ?? 0) > 0 },
             set: { enabled in
-                guard let i = idx(for: shapeId) else { return }
-                var updated = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var updated = editingShape(shapeId) else { return }
                 updated.textBackgroundOutlineColor = enabled ? CanvasShapeModel.defaultTextBackgroundOutlineColor : nil
                 updated.textBackgroundOutlineWidth = enabled ? CanvasShapeModel.defaultTextBackgroundOutlineWidth : nil
                 state.updateShape(updated)

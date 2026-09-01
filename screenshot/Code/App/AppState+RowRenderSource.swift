@@ -7,6 +7,8 @@ extension AppState: RowRenderSource {}
 
 extension AppState: ExportDocument {
     var activeProjectName: String { activeProject?.name ?? "" }
+
+    func commitPendingEdits() { commitAllPendingEdits() }
 }
 
 extension AppState: StoreUploadDocument {}

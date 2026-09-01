@@ -33,16 +33,14 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     func selectAbstractDevice(shapeId: UUID, category: DeviceCategory) {
-        guard let i = idx(for: shapeId) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard var resolved = editingShape(shapeId) else { return }
         let imageSize = resolved.displayImageFileName.flatMap { state.screenshotImages[$0] }?.size
         resolved.selectAbstractDevice(category, screenshotImageSize: imageSize)
         state.updateShape(resolved)
     }
 
     func selectRealFrame(shapeId: UUID, frame: DeviceFrame) {
-        guard let i = idx(for: shapeId) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard var resolved = editingShape(shapeId) else { return }
         resolved.selectRealFrame(frame)
         state.updateShape(resolved)
     }
@@ -50,13 +48,13 @@ extension ShapePropertiesSingleSelectionBar {
     func deviceBodyColorBinding(_ shapeId: UUID) -> Binding<Color> {
         Binding(
             get: {
-                guard let i = idx(for: shapeId) else { return CanvasShapeModel.defaultDeviceBodyColor }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard let i = idx(for: shapeId), let shape = editingShape(shapeId) else {
+                    return CanvasShapeModel.defaultDeviceBodyColor
+                }
                 return shape.deviceBodyColorData?.color ?? state.rows[i.row].defaultDeviceBodyColor
             },
             set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var resolved = editingShape(shapeId) else { return }
                 resolved.deviceBodyColorData = CodableColor(newValue)
                 state.updateShape(resolved)
             }
@@ -69,9 +67,7 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     func resetDeviceBodyColor(_ shapeId: UUID) {
-        guard let i = idx(for: shapeId) else { return }
-        guard state.rows[i.row].shapes[i.shape].type == .device else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard var resolved = editingShape(shapeId), resolved.type == .device else { return }
         resolved.deviceBodyColorData = nil
         state.updateShape(resolved)
     }
@@ -103,8 +99,7 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     func resetDeviceModelRotation(_ shapeId: UUID) {
-        guard let i = idx(for: shapeId) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard var resolved = editingShape(shapeId) else { return }
         resolved.resetDeviceModelRotation()
         state.updateShape(resolved)
     }
@@ -132,8 +127,7 @@ extension ShapePropertiesSingleSelectionBar {
                 return state.rows[i.row].shapes[i.shape].resolvedFillStyle
             },
             set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var resolved = editingShape(shapeId) else { return }
                 resolved.fillStyle = newValue == .color ? nil : newValue
                 if newValue == .gradient && resolved.fillGradientConfig == nil {
                     resolved.fillGradientConfig = GradientConfig()

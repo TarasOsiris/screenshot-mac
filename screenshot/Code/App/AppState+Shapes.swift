@@ -108,12 +108,11 @@ extension AppState {
     /// coalescer's finish action, *before* the undo step is registered — the step is registered
     /// against a base captured at the start of the burst, so it has to see the landed value.
     func commitLiveShapeEdit() {
-        defer { liveShapeEdit.end() }
-        guard let shape = liveShapeEdit.shape else { return }
+        guard let shape = liveShapeEdit.takeShape() else { return }
         applyContinuousEdit(shape)
     }
 
-    func applyContinuousEdit(_ shape: CanvasShapeModel) {
+    private func applyContinuousEdit(_ shape: CanvasShapeModel) {
         guard let location = shapeLocation(for: shape.id) else { return }
         let rowIdx = location.rowIndex
         let shapeIdx = location.shapeIndex

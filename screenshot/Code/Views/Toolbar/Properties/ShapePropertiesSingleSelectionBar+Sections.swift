@@ -33,7 +33,10 @@ extension ShapePropertiesSingleSelectionBar {
                 canReset: hasDeviceModelRotationOverride(shapeId),
                 onReset: { resetDeviceModelRotation(shapeId) },
                 bodyMaterial: optionalConfigBinding(shapeId, \.deviceBodyMaterial, fallback: DeviceBodyMaterial(), isEmpty: \.isEmpty),
-                lighting: optionalConfigBinding(shapeId, \.deviceLighting, fallback: DeviceLighting(), isEmpty: \.isEmpty)
+                lighting: optionalConfigBinding(shapeId, \.deviceLighting, fallback: DeviceLighting(), isEmpty: \.isEmpty),
+                showsOverrideDot: hasDeviceModelRotationOverride(shapeId)
+                    || shape.deviceBodyMaterial?.isEmpty == false
+                    || shape.deviceLighting?.isEmpty == false
             )
         }
     }
@@ -87,8 +90,7 @@ extension ShapePropertiesSingleSelectionBar {
         if shape.type.supportsOutline || (shape.type == .device && shape.deviceCategory == .invisible) {
             ShapePropertiesSection {
                 ShapeOutlineControls(
-                    shape: shape,
-                    hasOutline: outlineEnabledBinding(shape),
+                    hasOutline: outlineEnabledBinding(shapeId),
                     outlineColor: shapeBinding(shapeId, \.outlineColor, default: CanvasShapeModel.defaultOutlineColor),
                     outlineWidth: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true)
                 )

@@ -66,6 +66,21 @@ struct PopoverHeader: View {
     }
 }
 
+/// A reset button that reads its own disabled state, for the popovers whose `Form` layout can't use
+/// `PopoverHeader`. Same reasoning as `PopoverHeader.isResetDisabled`: `.disabled(_:)` evaluates
+/// eagerly, so a `Bool` computed in the presenting popover's body subscribes that body to whatever
+/// the value is derived from — typically the binding a slider is dragging at ~30 Hz.
+struct PopoverResetButton: View {
+    let label: LocalizedStringKey
+    let isDisabled: () -> Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(label, role: .destructive, action: action)
+            .disabled(isDisabled())
+    }
+}
+
 extension View {
     /// The dense desktop column a macOS bar popover presents its content in.
     func popoverColumn() -> some View {

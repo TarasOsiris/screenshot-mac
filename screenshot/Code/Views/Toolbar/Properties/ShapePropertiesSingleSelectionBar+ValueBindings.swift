@@ -15,13 +15,12 @@ extension ShapePropertiesSingleSelectionBar {
 
     func commitFontSize(to shapeId: UUID?) {
         isFontSizeFieldActive = false
-        guard let shapeId, let i = idx(for: shapeId) else { return }
+        guard let shapeId, var resolved = editingShape(shapeId) else { return }
         guard let value = Int(editingFontSize) else {
             editingFontSize = currentFontSizeString(for: shapeId)
             return
         }
         let clamped = clampedFontSize(value)
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         if resolved.fontSize != clamped {
             resolved.fontSize = clamped
             RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .fontSize)
@@ -62,13 +61,12 @@ extension ShapePropertiesSingleSelectionBar {
 
     func commitOpacity(to shapeId: UUID?) {
         isOpacityFieldActive = false
-        guard let shapeId, let i = idx(for: shapeId) else { return }
+        guard let shapeId, var resolved = editingShape(shapeId) else { return }
         guard let value = Int(editingOpacity) else {
             editingOpacity = currentOpacityString(for: shapeId)
             return
         }
         let clamped = min(max(value, 0), 100)
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         let newOpacity = Double(clamped) / 100.0
         if resolved.opacity != newOpacity {
             resolved.opacity = newOpacity
@@ -89,14 +87,13 @@ extension ShapePropertiesSingleSelectionBar {
 
     func commitRotation(to shapeId: UUID?) {
         isRotationFieldActive = false
-        guard let shapeId, let i = idx(for: shapeId) else { return }
+        guard let shapeId, var resolved = editingShape(shapeId) else { return }
         guard let value = editingRotation.localeTolerantDouble() else {
             editingRotation = currentRotationString(for: shapeId)
             return
         }
         var normalized = value.truncatingRemainder(dividingBy: 360)
         if normalized < 0 { normalized += 360 }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         if resolved.rotation != normalized {
             resolved.rotation = normalized
             state.updateShape(resolved)
@@ -105,8 +102,7 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     func resetRotation(shapeId: UUID) {
-        guard let i = idx(for: shapeId) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard var resolved = editingShape(shapeId) else { return }
         guard resolved.rotation != 0 else { return }
         resolved.rotation = 0
         state.updateShape(resolved)
@@ -129,13 +125,12 @@ extension ShapePropertiesSingleSelectionBar {
 
     func commitLineHeight(to shapeId: UUID?) {
         isLineHeightFieldActive = false
-        guard let shapeId, let i = idx(for: shapeId) else { return }
+        guard let shapeId, var resolved = editingShape(shapeId) else { return }
         guard let value = Int(editingLineHeight) else {
             editingLineHeight = currentLineHeightString(for: shapeId)
             return
         }
         let clamped = TextLayoutStyle.clampLineHeightMultiple(CGFloat(value) / 100.0)
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
         if resolved.lineHeightMultiple != clamped || resolved.lineSpacing != nil {
             resolved.lineHeightMultiple = clamped
             resolved.lineSpacing = nil
@@ -165,11 +160,11 @@ extension ShapePropertiesSingleSelectionBar {
     /// Reads the resolved (locale-aware) value; writes go through `updateShape` which handles locale splitting.
     /// Turning an outline on writes colour *and* width together (and off clears both), so this
     /// can't be expressed as a single key-path binding.
-    func outlineEnabledBinding(_ shape: CanvasShapeModel) -> Binding<Bool> {
+    func outlineEnabledBinding(_ shapeId: UUID) -> Binding<Bool> {
         Binding(
-            get: { (shape.outlineWidth ?? 0) > 0 },
+            get: { (editingShape(shapeId)?.outlineWidth ?? 0) > 0 },
             set: { enabled in
-                var updated = shape
+                guard var updated = editingShape(shapeId) else { return }
                 updated.outlineColor = enabled ? CanvasShapeModel.defaultOutlineColor : nil
                 updated.outlineWidth = enabled ? CanvasShapeModel.defaultOutlineWidth : nil
                 state.updateShape(updated)
@@ -224,13 +219,11 @@ extension ShapePropertiesSingleSelectionBar {
     func fontWeightBinding(_ shapeId: UUID) -> Binding<Int> {
         Binding(
             get: {
-                guard let i = idx(for: shapeId) else { return 400 }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard let shape = editingShape(shapeId) else { return 400 }
                 return CustomFontRegistry.controlState(for: shape)?.effectiveWeight ?? shape.fontWeight ?? 400
             },
             set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var resolved = editingShape(shapeId) else { return }
                 RichTextUtils.applyFontWeightUpdate(to: &resolved, weight: newValue)
                 state.updateShape(resolved)
             }
@@ -240,13 +233,11 @@ extension ShapePropertiesSingleSelectionBar {
     func italicBinding(_ shapeId: UUID) -> Binding<Bool> {
         Binding(
             get: {
-                guard let i = idx(for: shapeId) else { return false }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard let shape = editingShape(shapeId) else { return false }
                 return CustomFontRegistry.controlState(for: shape)?.effectiveItalic ?? shape.italic ?? false
             },
             set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var resolved = editingShape(shapeId) else { return }
                 RichTextUtils.applyItalicUpdate(to: &resolved, italic: newValue)
                 state.updateShape(resolved)
             }
@@ -254,8 +245,7 @@ extension ShapePropertiesSingleSelectionBar {
     }
 
     func applyImportedFontSelection(_ imported: ImportedCustomFontSelection, to shapeId: UUID) {
-        guard let i = idx(for: shapeId) else { return }
-        var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+        guard var resolved = editingShape(shapeId) else { return }
         RichTextUtils.applyImportedFontSelection(imported, to: &resolved, property: .fontName)
         state.updateShape(resolved)
     }
@@ -263,10 +253,9 @@ extension ShapePropertiesSingleSelectionBar {
     func lineHeightBinding(_ shapeId: UUID) -> Binding<CGFloat> {
         Binding(
             get: {
-                guard let i = idx(for: shapeId) else {
+                guard let shape = editingShape(shapeId) else {
                     return TextLayoutStyle.defaultLineHeightMultiple
                 }
-                let shape = resolvedShape(at: i.row, shapeIdx: i.shape)
                 let font = NSFont.systemFont(
                     ofSize: shape.fontSize ?? Self.defaultFontSize,
                     weight: nsFontWeight(shape.fontWeight ?? 400)
@@ -278,8 +267,7 @@ extension ShapePropertiesSingleSelectionBar {
                 )
             },
             set: { newValue in
-                guard let i = idx(for: shapeId) else { return }
-                var resolved = resolvedShape(at: i.row, shapeIdx: i.shape)
+                guard var resolved = editingShape(shapeId) else { return }
                 resolved.lineHeightMultiple = TextLayoutStyle.clampLineHeightMultiple(newValue)
                 resolved.lineSpacing = nil
                 RichTextUtils.syncShapeStyleIfNeeded(in: &resolved, property: .lineHeight)

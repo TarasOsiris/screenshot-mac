@@ -7,21 +7,13 @@ import SwiftUI
 /// The readout is derived here, from the binding, rather than handed down as a formatted string:
 /// a slider drag runs at ~30 Hz, and computing the string in the parent made the parent read the
 /// value — so every tick re-evaluated the whole popover, including its segmented `Picker`'s
-/// `updateNSView`. Formatting inside this row keeps the tick scoped to the row being dragged.
+/// `updateNSView` and AppKit layout. Formatting inside each row keeps the tick on the rows.
 struct PopoverSliderRow: View {
     let label: LocalizedStringKey
     @Binding var value: Double
     let range: ClosedRange<Double>
-    let format: (Double) -> String
-
     /// Rounded whole number — what almost every caller wants.
-    init(label: LocalizedStringKey, value: Binding<Double>, range: ClosedRange<Double>,
-         format: @escaping (Double) -> String = { "\(Int($0.rounded()))" }) {
-        self.label = label
-        self._value = value
-        self.range = range
-        self.format = format
-    }
+    var format: (Double) -> String = { "\(Int($0.rounded()))" }
 
     var body: some View {
         HStack(spacing: 8) {
