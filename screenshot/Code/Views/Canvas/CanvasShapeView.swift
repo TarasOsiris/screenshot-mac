@@ -60,7 +60,6 @@ struct CanvasShapeView: View {
     @State var addBumpScale: CGFloat = 1.0
     @State var dragOffset: CGSize = .zero
     @State var isDragging = false
-    @State private var isHovered = false
     @State var isDropTargeted = false
     @State var isEditingText = false
     @State var editingTextValue = ""
@@ -249,33 +248,7 @@ struct CanvasShapeView: View {
         // custom preview re-evaluates the view in an offscreen pass, which re-runs the device
         // SceneKit snapshot and renders devices wrong.
         .shapeContextMenu(contextMenuContent)
-        .onContinuousHover { phase in
-            switch phase {
-            case .active(let location):
-                let inside = hitPath.contains(location)
-                if inside != isHovered {
-                    isHovered = inside
-                    if showsEditorHelpers && isSelected && !isDragging {
-                        PlatformCursor.setHover(grabbable: inside && !shape.resolvedIsLocked)
-                    }
-                }
-            case .ended:
-                if isHovered {
-                    isHovered = false
-                    if showsEditorHelpers && isSelected && !isDragging {
-                        PlatformCursor.setArrow()
-                    }
-                }
-            @unknown default:
-                break
-            }
-        }
         .offset(x: offsetX, y: offsetY)
-        .overlay {
-            if !isSelected && isHovered && showsEditorHelpers {
-                hoverOverlay
-            }
-        }
 
         if let cb = clipBounds {
             let aabbRect = CGRect(x: offsetX, y: offsetY, width: aabb.width, height: aabb.height)
@@ -375,10 +348,6 @@ struct CanvasShapeView: View {
             fontWeightResolver: fontWeight,
             renderSvgImage: Self.svgImage
         )
-    }
-
-    private var hoverOverlay: some View {
-        borderOverlay(opacity: 0.5, lineWidth: 1)
     }
 
     private func borderOverlay(opacity: Double, lineWidth: CGFloat) -> some View {

@@ -477,6 +477,14 @@ extension EditorRowView {
                 }
             }
 
+            CanvasHoverLayer(
+                resolvedShapes: resolvedShapes,
+                selectedShapeIds: selectedShapeIds,
+                visualScale: ds,
+                dragSession: dragSession,
+                liveShapeEdit: state.liveShapeEdit
+            )
+
             ActiveGuidesLayer(dragSession: dragSession, displayScale: ds)
                 .zIndex(100)
 
@@ -540,8 +548,10 @@ extension EditorRowView {
                 // Keep right-click position up-to-date while hovering,
                 // so it reflects cursor position when context menu opens.
                 contextMenuPointStore.value = modelPoint
+                updateHover(at: modelPoint, in: resolvedShapes)
             case .ended:
                 state.canvasMouseModelPosition = nil
+                clearHover()
             @unknown default:
                 break
             }
@@ -549,5 +559,46 @@ extension EditorRowView {
         .onDrop(of: [.image, .svg, .fileURL], isTargeted: nil) { providers, location in
             handleCanvasDrop(providers, at: location, displayScale: ds)
         }
+    }
+}
+
+// MARK: - Hover
+
+extension EditorRowView {
+    /// Resolves the shape under the pointer for the whole row, replacing an `.onContinuousHover`
+    /// per shape.
+    func updateHover(at modelPoint: CGPoint, in resolvedShapes: [CanvasShapeModel]) {
+        // View mode shows no editor helpers, which is what gated the outline when it lived on the
+        // shape.
+        let hit = state.viewMode.isViewMode
+            ? nil
+            : row.hitShape(at: modelPoint, among: resolvedShapes)?.id
+        // Same-value writes still notify `@Observable` observers, and this runs on every mouse move.
+        guard dragSession.hoveredShapeId != hit else { return }
+        dragSession.hoveredShapeId = hit
+        applyHoverCursor(for: hit, in: resolvedShapes)
+    }
+
+    func clearHover() {
+        guard dragSession.hoveredShapeId != nil else { return }
+        dragSession.hoveredShapeId = nil
+        PlatformCursor.setArrow()
+    }
+
+    /// Only ever called on a hover *transition*. Setting the cursor on every tick would fight the
+    /// resize and rotate cursors `CanvasShapeHandlesOverlay` pushes while the pointer is on a handle.
+    private func applyHoverCursor(for hoveredId: UUID?, in resolvedShapes: [CanvasShapeModel]) {
+        guard !state.viewMode.isViewMode,
+              dragSession.draggingShapeId == nil,
+              dragSession.pendingResize.isEmpty,
+              dragSession.pendingRotation.isEmpty else { return }
+        // The open hand only ever showed on a shape that is already selected — it advertises the
+        // drag you can start, not the selection you could make.
+        guard let hoveredId, selectedShapeIds.contains(hoveredId) else {
+            PlatformCursor.setArrow()
+            return
+        }
+        let locked = resolvedShapes.first { $0.id == hoveredId }?.resolvedIsLocked ?? false
+        PlatformCursor.setHover(grabbable: !locked)
     }
 }

@@ -8,6 +8,10 @@ import SwiftUI
 final class CanvasDragSession {
     var activeDragOffset: CGSize = .zero
     var draggingShapeId: UUID?
+    /// The shape under the pointer, resolved once per row by hit-testing the model rather than by
+    /// giving every shape its own `.onContinuousHover`. Only `CanvasHoverLayer` reads it, so a
+    /// hover move re-renders one overlay instead of the row.
+    var hoveredShapeId: UUID?
     var pendingResize: [UUID: ResizeState] = [:]
     var pendingRotation: [UUID: Double] = [:]
     var activeGuides: [AlignmentGuide] = []
