@@ -35,7 +35,7 @@ extension EditorRowView {
     static let rowAnimation: Animation = .easeInOut(duration: 0.2)
 
     func toggleCollapsed() {
-        withAnimation(Self.rowAnimation) { state.toggleRowCollapsed(for: row.id) }
+        state.toggleRowCollapsed(for: row.id)
     }
 
     func moveRowUp() {
