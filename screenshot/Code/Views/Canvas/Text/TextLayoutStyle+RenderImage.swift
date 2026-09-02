@@ -48,7 +48,8 @@ extension TextLayoutStyle {
         lineHeightMultiple: CGFloat?,
         legacyLineSpacing: CGFloat?,
         richTextData: String? = nil,
-        renderScale: CGFloat = defaultTextRenderScale
+        renderScale: CGFloat = defaultTextRenderScale,
+        cachesResult: Bool = true
     ) -> NSImage? {
         guard size.width.isFinite, size.height.isFinite, size.width > 0, size.height > 0 else {
             return nil
@@ -69,6 +70,10 @@ extension TextLayoutStyle {
             lineHeightMultiple: lineHeightMultiple, legacyLineSpacing: legacyLineSpacing,
             richTextData: richTextData
         ) else { return nil }
+        // A continuous style edit (a tracking/size slider) puts a changing value in the key, so
+        // every tick is a guaranteed miss whose raster is dead on the next one. Storing them would
+        // evict the settled rasters of every other text shape on screen.
+        guard cachesResult else { return image }
         let pixelWidth = max(1, Int((size.width * scale).rounded(.up)))
         let pixelHeight = max(1, Int((size.height * scale).rounded(.up)))
         let cost = pixelWidth * pixelHeight * 4

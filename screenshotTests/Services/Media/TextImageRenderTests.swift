@@ -13,7 +13,12 @@ struct TextImageRenderTests {
     private static let size = CGSize(width: 240, height: 80)
     private static let font = NSFont.systemFont(ofSize: 32, weight: .bold)
 
-    private func render(scale: CGFloat? = nil, text: String = "Hello", color: NSColor = .black) -> NSImage? {
+    private func render(
+        scale: CGFloat? = nil,
+        text: String = "Hello",
+        color: NSColor = .black,
+        cachesResult: Bool = true
+    ) -> NSImage? {
         TextLayoutStyle.renderImage(
             size: Self.size,
             text: text,
@@ -26,7 +31,8 @@ struct TextImageRenderTests {
             lineHeightMultiple: nil,
             legacyLineSpacing: nil,
             richTextData: nil,
-            renderScale: scale ?? TextLayoutStyle.defaultTextRenderScale
+            renderScale: scale ?? TextLayoutStyle.defaultTextRenderScale,
+            cachesResult: cachesResult
         )
     }
 
@@ -145,6 +151,36 @@ struct TextImageRenderTests {
         )
         let rep = image?.representations.first as? NSBitmapImageRep
         #expect(rep?.pixelsWide == Int(Self.size.width * TextLayoutStyle.defaultTextRenderScale))
+    }
+
+    /// A live continuous edit (a tracking or size slider) puts a changing value in the key, so its
+    /// per-tick rasters can never be hit again — storing them would evict the settled entries of
+    /// every other text shape on screen. The pixels must be the ones the cached path produces.
+    @Test func uncachedRenderIsPixelIdenticalAndLeavesTheCacheUntouched() throws {
+        let text = "Live \(UUID().uuidString)"
+
+        let first = try #require(render(text: text, cachesResult: false))
+        let second = try #require(render(text: text, cachesResult: false))
+        #expect(first !== second, "an uncached render must not be stored for the next one to hit")
+
+        let settled = try #require(render(text: text))
+        #expect(settled !== second)
+        #expect(render(text: text) === settled, "the settled value is still cached")
+
+        // Skipping the cache must skip nothing else: the pixels are the ones export writes.
+        let uncachedRep = try #require(first.representations.first as? NSBitmapImageRep)
+        let cachedRep = try #require(settled.representations.first as? NSBitmapImageRep)
+        var maxDelta: CGFloat = 0
+        for y in stride(from: 0, to: cachedRep.pixelsHigh, by: 2) {
+            for x in stride(from: 0, to: cachedRep.pixelsWide, by: 2) {
+                guard let a = uncachedRep.colorAt(x: x, y: y), let b = cachedRep.colorAt(x: x, y: y) else { continue }
+                maxDelta = max(maxDelta, [
+                    abs(a.redComponent - b.redComponent), abs(a.greenComponent - b.greenComponent),
+                    abs(a.blueComponent - b.blueComponent), abs(a.alphaComponent - b.alphaComponent)
+                ].max() ?? 0)
+            }
+        }
+        #expect(maxDelta == 0)
     }
 
     @Test func cacheKeySeparatesEveryStyledInput() {

@@ -31,7 +31,9 @@ enum EditorRowLayout {
     /// stated too, or that setting clips the bottom of the control bars.
     static var horizontalScrollerHeight: CGFloat {
         #if os(macOS)
-        guard NSScroller.preferredScrollerStyle == .legacy else { return 0 }
+        // Through the monitor, not `NSScroller` directly: the style changes while the app runs, and
+        // a *stated* height only follows it if the read is observable from the body that states it.
+        guard ScrollerStyleMonitor.shared.style == .legacy else { return 0 }
         return NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy)
         #else
         return 0
@@ -59,3 +61,35 @@ enum EditorRowLayout {
     // with an intrinsic height and no children, so the stack already sizes it without descending
     // into anything — which is the only cost this type exists to remove.
 }
+
+#if os(macOS)
+/// `NSScroller.preferredScrollerStyle` as observable state.
+///
+/// With "Show scroll bars: Automatically", plugging in a mouse flips AppKit to legacy scrollers
+/// mid-session. A measured row would absorb that; a stated one cannot, so every realized row would
+/// keep a height that no longer matches its scroller and clip the control bars until some unrelated
+/// edit re-ran its body. Reading the style through this in `horizontalScrollerHeight` puts it in the
+/// tracking scope of `EditorRowView.body`, which is what states the height.
+@Observable @MainActor
+final class ScrollerStyleMonitor {
+    static let shared = ScrollerStyleMonitor()
+
+    private(set) var style = NSScroller.preferredScrollerStyle
+
+    private init() {
+        // `queue: nil` — the notification is posted on the main thread, and a queued block would
+        // land a frame later than the scrollers it describes.
+        NotificationCenter.default.addObserver(
+            forName: NSScroller.preferredScrollerStyleDidChangeNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                let current = NSScroller.preferredScrollerStyle
+                guard let self, self.style != current else { return }
+                self.style = current
+            }
+        }
+    }
+}
+#endif

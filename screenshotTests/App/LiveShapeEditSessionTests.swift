@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 @testable import Screenshot_Bro
 import Testing
 
@@ -149,6 +150,32 @@ struct ContinuousShapeEditCommitTests {
             observationDidNotify({ state.rows }, during: { state.finishContinuousEditIfNeeded() }),
             "The settled burst does reach the document"
         )
+    }
+
+    /// On a non-base locale the whole edit is routed into `localeState`, so the committed base shape
+    /// comes back unchanged — the settle must still schedule a save or the override never reaches
+    /// disk, and quit (which only flushes when a save is queued) drops it.
+    @Test func aBurstOnANonBaseLocaleSchedulesASave() throws {
+        let (state, tempDir) = makeTestState()
+        defer { state.saveTask?.cancel(); cleanupTestState(tempDir) }
+        state.selectRow(state.rows.first!.id)
+
+        var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 50, height: 50)
+        state.addShape(shape)
+        state.addLocale(.init(code: "de", label: "German"))
+        state.setActiveLocale("de")
+        state.saveTask?.cancel()
+        state.saveTask = nil
+
+        shape.x = 120
+        state.updateShapeContinuous(shape)
+        state.finishContinuousEditIfNeeded()
+
+        let base = try #require(state.rows.first?.shapes.first { $0.id == shape.id })
+        #expect(base.x == 0, "The base shape keeps its own geometry")
+        #expect(state.localeState.overrides["de"]?[shape.id.uuidString] != nil, "The edit lands as an override")
+        #expect(LocaleService.resolveShape(base, localeCode: "de", localeState: state.localeState).x == 120)
+        #expect(state.saveTask != nil, "An override-only edit is still a document change")
     }
 
     /// Project switch and reset drop the burst rather than committing it — the document it belongs

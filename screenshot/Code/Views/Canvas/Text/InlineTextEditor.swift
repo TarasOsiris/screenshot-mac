@@ -23,6 +23,9 @@ struct RasterizedDisplayTextView: View {
     /// reproduces what the implicit rasterizer produced before; the editor passes its on-screen
     /// scale so a zoomed-in row stays sharp.
     var renderScale: CGFloat = TextLayoutStyle.defaultTextRenderScale
+    /// False only while the shape is under a live continuous edit, whose per-tick rasters are
+    /// intermediates the shared cache would keep at the expense of every settled entry.
+    var cachesRaster = true
 
     var body: some View {
         if let size {
@@ -48,7 +51,8 @@ struct RasterizedDisplayTextView: View {
             lineHeightMultiple: lineHeightMultiple,
             legacyLineSpacing: legacyLineSpacing,
             richTextData: richTextData,
-            renderScale: renderScale
+            renderScale: renderScale,
+            cachesResult: cachesRaster
         ) {
             Image(nsImage: image)
                 .resizable()

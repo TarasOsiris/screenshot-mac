@@ -18,5 +18,13 @@ struct LiveShapeContent<Content: View>: View {
 
     var body: some View {
         content(session.liveShape(for: baseShape.id) ?? baseShape)
+            .environment(\.isLiveShapeEdit, session.shapeId == baseShape.id)
     }
+}
+
+/// True while the shape being rendered carries an in-flight continuous edit rather than a
+/// document value. Scoped to that one shape's subtree by `LiveShapeContent`, and never set on
+/// the export/preview path — where the value is settled by definition. Defaults to false.
+extension EnvironmentValues {
+    @Entry var isLiveShapeEdit = false
 }

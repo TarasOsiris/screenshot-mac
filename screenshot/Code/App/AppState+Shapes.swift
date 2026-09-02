@@ -117,9 +117,15 @@ extension AppState {
         let rowIdx = location.rowIndex
         let shapeIdx = location.shapeIndex
         let baseShape = rows[rowIdx].shapes[shapeIdx]
+        let baseLocaleState = localeState
         let updated = LocaleService.splitUpdate(base: baseShape, updated: shape, localeState: &localeState)
-        guard updated != baseShape else { return }
-        rows[rowIdx].shapes[shapeIdx] = updated
+        // On a non-base locale the whole edit lands in `localeState` and the base shape comes back
+        // unchanged, so the no-op test has to cover both or the override is never persisted.
+        let shapeChanged = updated != baseShape
+        guard shapeChanged || localeState != baseLocaleState else { return }
+        if shapeChanged {
+            rows[rowIdx].shapes[shapeIdx] = updated
+        }
         scheduleSave()
     }
 

@@ -168,15 +168,20 @@ enum ProjectThumbnailService {
             availableFontFamilies.insert(font.displayName)
         }
 
-        return CustomFontRegistry.withTemporaryFonts(fonts, instances: instances) {
-            RowRenderer.renderRowImage(
-                row: inputs.row,
-                screenshotImages: inputs.images,
-                localeCode: inputs.localeCode,
-                localeState: inputs.localeState,
-                availableFontFamilies: availableFontFamilies,
-                displayScale: thumbnailDisplayScale(for: inputs.row)
-            )
+        // A card is offscreen like an export but draws `inputs.images` — editor downsamples
+        // `EditorImagePresentation` already moved to sRGB. Saying so keeps a card's raster out of
+        // the caches whose entries become exported bytes (see `RasterRenderContext`).
+        return RasterRenderContext.$current.withValue(.displayRaster) {
+            CustomFontRegistry.withTemporaryFonts(fonts, instances: instances) {
+                RowRenderer.renderRowImage(
+                    row: inputs.row,
+                    screenshotImages: inputs.images,
+                    localeCode: inputs.localeCode,
+                    localeState: inputs.localeState,
+                    availableFontFamilies: availableFontFamilies,
+                    displayScale: thumbnailDisplayScale(for: inputs.row)
+                )
+            }
         }
     }
 

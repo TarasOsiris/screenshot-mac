@@ -1193,6 +1193,60 @@ struct ExportServiceTests {
         try expectDominant(plain, at: (126, 370), channel: .g, label: "plain image edge")
     }
 
+    /// An image whose aspect ratio differs from its shape's must be cropped to the shape, not
+    /// merely centered in it: `.aspectRatio(.fill)` resolves to the *overflowing* size, so a clip
+    /// applied before the shape-bounds frame crops nothing and the content spills over its
+    /// neighbours. The outline follows the same rect and would land on the overflow instead.
+    @Test func aspectFillImageStaysInsideShapeBoundsInExport() throws {
+        let tw: CGFloat = 500, th: CGFloat = 1000
+        var row = makeTestRow(width: tw, height: th, bgColor: .white)
+        var image = CanvasShapeModel(
+            type: .image, x: 150, y: 400, width: 200, height: 100,
+            color: .clear, imageFileName: "pic"
+        )
+        image.outlineColor = Self.testRed
+        image.outlineWidth = 10
+        row.shapes = [image]
+        // Square source in a 2:1 shape — `.fill` scales it to 200×200, so 50px would spill
+        // above and below the shape's 400..500 band.
+        let images = ["pic": makeSolidImage(.green, width: 400, height: 400)]
+
+        let bmp = try renderTemplateBitmap(index: 0, row: row, screenshotImages: images)
+
+        try expectNearWhite(bmp, at: (250, 375), label: "20px above the image shape")
+        try expectNearWhite(bmp, at: (250, 525), label: "20px below the image shape")
+        try expectDominant(bmp, at: (250, 450), channel: .g, label: "image shape interior")
+        try expectDominant(bmp, at: (250, 404), channel: .r, label: "outline band at the shape's top edge")
+    }
+
+    /// An image shape with no image assigned is an editor affordance only. Export and preview
+    /// must render nothing for it — not the gray plate the editor shows, and not its outline.
+    @Test func emptyImageShapeRendersNothingInExport() throws {
+        let tw: CGFloat = 400, th: CGFloat = 800
+        var row = makeTestRow(width: tw, height: th, bgColor: .white)
+        var image = CanvasShapeModel(
+            type: .image, x: 100, y: 200, width: 200, height: 300,
+            color: .clear
+        )
+        image.outlineColor = Self.testRed
+        image.outlineWidth = 10
+        row.shapes = [image]
+        let shapeRect = CGRect(x: 100, y: 200, width: 200, height: 300)
+
+        for (pathLabel, bmp) in [
+            ("renderTemplateImage", try renderTemplateBitmap(index: 0, row: row)),
+            ("renderSingleTemplateImage (Preview)", try renderSingleTemplateBitmap(index: 0, row: row)),
+        ] {
+            for point in [(150, 250), (200, 350), (250, 450), (105, 205), (295, 495)] {
+                try expectNearWhite(bmp, at: point, label: "\(pathLabel): empty image shape at \(point)")
+            }
+        }
+
+        // The editor still shows the placeholder — that asymmetry is the point.
+        let editor = try renderEditorBitmap(index: 0, row: row)
+        try expectHasNonWhitePixel(editor, region: shapeRect, label: "editor placeholder for an empty image shape")
+    }
+
     /// A ROTATED device's shadow must still fall below it in export, matching the editor.
     /// Guards the rotation-aware offscreen-flip compensation: a naive per-component
     /// Y-negation would push the shadow to the wrong side once the device is rotated.

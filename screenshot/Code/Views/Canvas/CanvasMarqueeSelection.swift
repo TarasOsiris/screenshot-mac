@@ -47,6 +47,7 @@ extension View {
         shapes: [CanvasShapeModel],
         displayScale: CGFloat,
         dragSession: CanvasDragSession,
+        liveShapeEdit: LiveShapeEditSession,
         existingSelection: Set<UUID>,
         isEnabled: Bool,
         onSelect: @escaping (Set<UUID>) -> Void,
@@ -59,6 +60,7 @@ extension View {
                 shapes: shapes,
                 displayScale: displayScale,
                 dragSession: dragSession,
+                liveShapeEdit: liveShapeEdit,
                 existingSelection: existingSelection,
                 isEnabled: isEnabled,
                 onSelect: onSelect,
@@ -80,6 +82,9 @@ private struct CanvasMarqueeSelectionModifier: ViewModifier {
     let shapes: [CanvasShapeModel]
     let displayScale: CGFloat
     let dragSession: CanvasDragSession
+    /// Only ever read from the gesture handlers, never from `body`: a properties-bar drag writes
+    /// here ~30 times a second, and keeping the row out of that is the whole point of the session.
+    let liveShapeEdit: LiveShapeEditSession
     /// Row-scoped selection as of the last body evaluation. Only read when the sweep begins, so
     /// it is the pre-drag selection that a shift-drag adds to.
     let existingSelection: Set<UUID>
@@ -116,7 +121,7 @@ private struct CanvasMarqueeSelectionModifier: ViewModifier {
         // A press that landed on a shape belongs to that shape; reporting it as an empty-canvas
         // click would deselect the very shape the user just clicked.
         let startedOnShape = base?.startedOnShape
-            ?? row.containsShape(at: modelPoint(value.startLocation), among: shapes)
+            ?? containsShape(at: modelPoint(value.startLocation))
         guard isEnabled, !startedOnShape, !Self.exceededSlop(value.translation) else { return }
         onTapEmptyCanvas()
     }
@@ -161,10 +166,18 @@ private struct CanvasMarqueeSelectionModifier: ViewModifier {
             // The same live-flags query `handleTap` uses for shift-click. Read once, so a shift
             // pressed mid-drag can't flip an in-progress sweep from replacing to adding.
             baseSelection: PlatformModifiers.shiftDown ? existingSelection : [],
-            startedOnShape: row.containsShape(at: origin, among: shapes)
+            startedOnShape: containsShape(at: origin)
         )
         dragSession.marqueeBase = base
         return base
+    }
+
+    /// The refuse-on-shape test, against the geometry the canvas is *showing*: a properties-bar
+    /// drag holds the shape's new size and rotation in the live session until the burst settles, so
+    /// testing the document's copy would let a press inside the visible shape rubber-band over it.
+    private func containsShape(at point: CGPoint) -> Bool {
+        let transientShape = liveShapeEdit.shapeId.flatMap { liveShapeEdit.liveShape(for: $0) }
+        return row.containsShape(at: point, among: shapes, replacingWith: transientShape)
     }
 
     /// Display point → model point, clamped to the canvas so a drag past its edge still

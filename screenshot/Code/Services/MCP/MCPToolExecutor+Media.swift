@@ -48,6 +48,8 @@ extension MCPToolExecutor {
     }
 
     func renderPreview(_ args: MCPArguments) throws -> CallTool.Result {
+        // The MCP tools bypass ExportFlowModel, so they have to land a composing edit themselves.
+        state.commitPendingEdits()
         let rowIndex = try requireRowIndex(args)
         let row = state.rows[rowIndex]
         guard !row.templates.isEmpty else {

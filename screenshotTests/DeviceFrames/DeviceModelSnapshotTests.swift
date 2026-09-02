@@ -132,18 +132,75 @@ struct DeviceModelSnapshotTests {
         #expect(DeviceModelRenderer.snapshotAngleStep <= 0.5)
     }
 
+    /// The coarse rung is a canvas affordance. At export a pose a fraction of a rung away is a
+    /// different picture — ~4 px of silhouette at the 4096 px budget — and must re-render.
+    @Test func exportPoseKeysKeepTheFineRung() throws {
+        let frame = try modelFrame()
+        let step = DeviceModelRenderer.snapshotAngleStep
+        let exported = key(frame: frame, image: nil, identity: nil, renderContext: .export, pitch: 10.0)
+        let nudged = key(frame: frame, image: nil, identity: nil, renderContext: .export, pitch: 10.0 + step / 2)
+
+        #expect(exported != nudged, "Two exported poses within a rung must not share a raster")
+        #expect(
+            key(frame: frame, image: nil, identity: nil, renderContext: .export, pitch: 10.0) == exported,
+            "The same pose must still hit its entry"
+        )
+    }
+
+    // MARK: - Render-context cache separation
+
+    /// The canvas and a project card both draw screenshots `EditorImagePresentation` already moved
+    /// to sRGB; export draws the untouched PNG. A card is the closer call of the two — it
+    /// rasterizes offscreen at export's own pixel budget, so every other key field agrees with a
+    /// real export's and the context is the only thing keeping a converted raster out of the
+    /// shipped bytes.
+    @Test func onlyExportRastersShareAnExportEntry() throws {
+        let frame = try modelFrame()
+        let image = makeTestImage(width: 900, height: 1950)
+        let pixelSize = DeviceModelRenderer.snapshotPixelSize(width: 330, height: 717, isExport: true)
+
+        let keys = [RasterRenderContext.canvas, .displayRaster, .export].map {
+            key(frame: frame, image: image, identity: "shot.png", renderContext: $0, pixelSize: pixelSize)
+        }
+
+        #expect(Set(keys).count == 3)
+        #expect(Set(keys.map(\.cacheKey)).count == 3, "One context's raster must never be served to another")
+        for lhs in keys {
+            for rhs in keys where lhs != rhs {
+                #expect(!lhs.matchesIgnoringPixelSize(rhs))
+            }
+        }
+    }
+
+    /// The card is the path the discriminator exists for, so pin it on its own: identical pose,
+    /// identical pixel box, different entry.
+    @Test func aProjectCardNeverSharesAnExportEntry() throws {
+        let frame = try modelFrame()
+        let image = makeTestImage(width: 900, height: 1950)
+        let pixelSize = DeviceModelRenderer.snapshotPixelSize(width: 330, height: 717, isExport: true)
+
+        let card = key(frame: frame, image: image, identity: "shot.png", renderContext: .displayRaster, pixelSize: pixelSize, pitch: 12)
+        let exported = key(frame: frame, image: image, identity: "shot.png", renderContext: .export, pixelSize: pixelSize, pitch: 12)
+
+        #expect(card.cacheKey != exported.cacheKey)
+        #expect(card.pixelWidth == exported.pixelWidth, "The collision this guards needs the boxes equal")
+        #expect(card.pitch == exported.pitch, "…and the poses equal")
+    }
+
     // MARK: - Helpers
 
     private func key(
         frame: DeviceFrame,
         image: NSImage?,
         identity: String?,
+        renderContext: RasterRenderContext = .canvas,
         pixelSize: CGSize = DeviceModelRenderer.snapshotPixelSize(width: 330, height: 717, isExport: false),
         pitch: Double = 0,
         bodyColor: Color = .black
     ) -> DeviceModelRenderer.SnapshotKey {
         DeviceModelRenderer.snapshotKey(
             frame: frame,
+            renderContext: renderContext,
             pixelSize: pixelSize,
             screenshotImage: image,
             screenshotImageIdentity: identity,

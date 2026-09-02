@@ -89,6 +89,13 @@ nonisolated enum DeviceModelRenderer {
     /// threads is a race. One lock rather than a cache per executor, which would double the parse
     /// and still leave export and the queue sharing one.
     nonisolated(unsafe) private static let sceneCacheLock = NSLock()
+
+    /// Guards the GPU pass itself, for the same two executors. `DeviceModelSnapshotQueue` serializes
+    /// only its own callers, and export renders straight from the main actor — so without this two
+    /// `SCNRenderer`s submit 4×-MSAA passes to one `MTLDevice` at once, which is where the blank
+    /// snapshots the retry below papers over come from. Taken after `makeDeviceModelScene` has
+    /// released `sceneCacheLock`, so the two never nest.
+    nonisolated(unsafe) private static let gpuRenderLock = NSLock()
     nonisolated(unsafe) private static let screenTextureCache: NSCache<NSString, CGImage> = {
         let cache = NSCache<NSString, CGImage>()
         cache.countLimit = 16
@@ -100,6 +107,13 @@ nonisolated enum DeviceModelRenderer {
 
     struct SnapshotKey: Hashable {
         let frameId: String
+        /// Only `.export` renders may share an entry with an export. The other two draw the
+        /// editor's screenshots — downsamples `EditorImagePresentation` already moved to sRGB —
+        /// and below ~1200 px one of those shares both its file name and its pixel size with the
+        /// untouched PNG export loads. A canvas raster collides when the 128 px rung lands on
+        /// `ceil(points × 3)`; a project card collides outright, since it rasterizes at the same
+        /// export pixel budget. Either would let a colour-converted texture define exported bytes.
+        let renderContext: RasterRenderContext
         let pixelWidth: Int
         let pixelHeight: Int
         let hasScreenshot: Bool
@@ -129,6 +143,7 @@ nonisolated enum DeviceModelRenderer {
         /// worth making a render wait, because it re-keys every device in the row at once.
         func matchesIgnoringPixelSize(_ other: Self) -> Bool {
             frameId == other.frameId
+                && renderContext == other.renderContext
                 && hasScreenshot == other.hasScreenshot
                 && screenshotIdentity == other.screenshotIdentity
                 && screenshotWidth == other.screenshotWidth
@@ -145,6 +160,7 @@ nonisolated enum DeviceModelRenderer {
         var cacheKey: NSString {
             [
                 frameId,
+                renderContext.rawValue,
                 "\(pixelWidth)x\(pixelHeight)",
                 screenshotIdentity ?? "no-image",
                 "\(screenshotWidth)x\(screenshotHeight)",
@@ -170,6 +186,7 @@ nonisolated enum DeviceModelRenderer {
 
     static func snapshotKey(
         frame: DeviceFrame,
+        renderContext: RasterRenderContext,
         pixelSize: CGSize,
         screenshotImage: NSImage?,
         screenshotImageIdentity: String?,
@@ -181,16 +198,18 @@ nonisolated enum DeviceModelRenderer {
     ) -> SnapshotKey {
         let imageSize = screenshotImage?.size ?? .zero
         let color = bodyColor.sRGBComponents
+        let angleStep = renderContext == .canvas ? snapshotAngleStep : snapshotFineStep
         return SnapshotKey(
             frameId: frame.id,
+            renderContext: renderContext,
             pixelWidth: max(1, Int(pixelSize.width.rounded(.up))),
             pixelHeight: max(1, Int(pixelSize.height.rounded(.up))),
             hasScreenshot: screenshotImage != nil,
             screenshotIdentity: screenshotImage == nil ? nil : screenshotImageIdentity,
             screenshotWidth: max(0, Int(imageSize.width.rounded())),
             screenshotHeight: max(0, Int(imageSize.height.rounded())),
-            pitch: quantized(pitch, step: snapshotAngleStep),
-            yaw: quantized(yaw, step: snapshotAngleStep),
+            pitch: quantized(pitch, step: angleStep),
+            yaw: quantized(yaw, step: angleStep),
             materialFinish: bodyMaterial.resolvedFinish.rawValue,
             ambient: quantized(lighting.resolvedAmbientIntensity),
             key: quantized(lighting.resolvedKeyIntensity),
@@ -199,14 +218,19 @@ nonisolated enum DeviceModelRenderer {
         )
     }
 
-    private static func quantized(_ value: Double, step: Double = 0.001) -> Int {
+    /// The rung every key field uses by default, and the one export's pose angles keep.
+    static let snapshotFineStep: Double = 0.001
+
+    private static func quantized(_ value: Double, step: Double = snapshotFineStep) -> Int {
         Int((value / step).rounded())
     }
 
-    /// Pose angles get a much coarser rung than the other key fields. A rotation slider sweeps
-    /// ~0.9°/pt, so the default made every mouse position a distinct cache entry: jitter never
-    /// deduped and one sweep evicted the whole 160-entry cache. A quarter of a degree is well under
-    /// a pixel of silhouette movement at the 1024 px editor cap.
+    /// Pose angles get a much coarser rung than the other key fields — **on the canvas only**. A
+    /// rotation slider sweeps ~0.9°/pt, so the fine step made every mouse position a distinct cache
+    /// entry: jitter never deduped and one sweep evicted the whole 160-entry cache. A quarter of a
+    /// degree is well under a pixel of silhouette movement at the 1024 px canvas cap, but it is
+    /// ~4 px at the 4096 px offscreen budget — and two deliberately different poses must never
+    /// export pixel-identical.
     static let snapshotAngleStep: Double = 0.25
 
     /// Renders one device model offscreen.
@@ -259,6 +283,9 @@ nonisolated enum DeviceModelRenderer {
             camera.wantsExposureAdaptation = false
             camera.exposureOffset = .init(snapshotExposureOffset)
         }
+        gpuRenderLock.lock()
+        defer { gpuRenderLock.unlock() }
+
         // Forces shader compilation and texture upload before the one-shot snapshot, which
         // otherwise has no frame to recover on if the scene isn't GPU-resident yet.
         let prepareSpan = PerfSignpost.begin("DeviceModelRenderer.prepare")

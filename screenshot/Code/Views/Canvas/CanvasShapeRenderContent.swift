@@ -31,6 +31,7 @@ struct CanvasShapeRenderContent: View {
     let fontWeightResolver: (Int) -> Font.Weight
     let renderSvgImage: (String, Bool, Color, CGSize?) -> NSImage?
     @Environment(\.displayScale) private var screenScale
+    @Environment(\.isLiveShapeEdit) private var isLiveShapeEdit
 
     var body: some View {
         shapeContent
@@ -103,7 +104,8 @@ struct CanvasShapeRenderContent: View {
             lineHeightMultiple: shape.lineHeightMultiple,
             legacyLineSpacing: shape.lineSpacing,
             richTextData: richText,
-            renderScale: textRenderScale
+            renderScale: textRenderScale,
+            cachesRaster: !isLiveShapeEdit
         )
         .frame(width: effectiveW, height: effectiveH)
         .background { textBackgroundLayer }
@@ -158,16 +160,24 @@ struct CanvasShapeRenderContent: View {
         withImageDropAffordances(
             ZStack {
                 if let screenshotImage {
+                    // Frame before clip: `.aspectRatio(.fill)` resolves to the *overflowing* size,
+                    // so clipping first crops nothing and the image spills past the shape's bounds
+                    // — in the editor and in every exported pixel — with the outline following it.
                     Image(nsImage: screenshotImage)
                         .resizable()
                         .interpolation(.high)
                         .aspectRatio(contentMode: .fill)
+                        .frame(width: displayW, height: displayH)
                         .clipShape(clip)
-                } else {
+                        .overlay { imageOutline(clip) }
+                } else if showsEditorHelpers {
+                    // Editor-only empty state: preview and export draw nothing for an image shape
+                    // with no image. Safe to branch on here — unlike `deviceContent`, neither arm
+                    // holds view state that re-keying would discard.
                     clip.fill(Color.gray.opacity(0.3))
+                        .overlay { imageOutline(clip) }
                 }
             }
-            .overlay { imageOutline(clip) }
         )
     }
 

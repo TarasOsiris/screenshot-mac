@@ -24,18 +24,22 @@ struct DeviceModelFrameView: View {
     let invisibleCornerRadius: CGFloat
     let invisibleOutlineWidth: CGFloat
     let invisibleOutlineColor: Color
-    @Environment(\.isExportRendering) private var isExportRendering
+    @Environment(\.rasterRenderContext) private var renderContext
     @State private var renderedSnapshotKey: DeviceModelRenderer.SnapshotKey?
     @State private var renderedSnapshotImage: NSImage?
 
     private static let staleRenderDebounce: Duration = .milliseconds(80)
+
+    /// Both offscreen contexts share the pixel budget and the withheld texture identity; only the
+    /// cache key tells them apart, so a project card can never define an export's bytes.
+    private var isOffscreen: Bool { renderContext != .canvas }
 
     private var snapshotRequest: DeviceModelSnapshotRequest {
         DeviceModelSnapshotRequest.make(
             frame: frame,
             width: width,
             height: height,
-            isExport: isExportRendering,
+            isExport: isOffscreen,
             screenshotImage: screenshotImage,
             screenshotImageIdentity: screenshotImageIdentity,
             pitch: pitch,
@@ -63,7 +67,7 @@ struct DeviceModelFrameView: View {
             )
             .frame(width: width, height: height)
         case .snapshot:
-            if isExportRendering {
+            if isOffscreen {
                 synchronousSnapshotView
             } else {
                 snapshotView
@@ -87,10 +91,11 @@ struct DeviceModelFrameView: View {
     private var currentSnapshotKey: DeviceModelRenderer.SnapshotKey {
         DeviceModelRenderer.snapshotKey(
             frame: frame,
+            renderContext: renderContext,
             pixelSize: DeviceModelRenderer.snapshotPixelSize(
                 width: width,
                 height: height,
-                isExport: isExportRendering
+                isExport: isOffscreen
             ),
             screenshotImage: screenshotImage,
             screenshotImageIdentity: screenshotImageIdentity,

@@ -10,6 +10,8 @@ extension MCPToolExecutor {
     }
 
     func exportProject(_ args: MCPArguments) async throws -> CallTool.Result {
+        // The MCP tools bypass ExportFlowModel, so they have to land a composing edit themselves.
+        state.commitPendingEdits()
         guard let project = state.activeProject else {
             throw MCPToolError.failed("No active project")
         }

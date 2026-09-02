@@ -309,8 +309,12 @@ struct ScreenshotRow: Identifiable, Codable, Equatable, BackgroundFillable {
     /// True when `point` (model space) lands on any shape. A marquee uses this to refuse to start
     /// on top of a shape: the shape's own drag has a larger activation threshold, so without it a
     /// sweep would win the gap between the two thresholds and rubber-band instead of touching it.
-    func containsShape(at point: CGPoint, among candidates: [CanvasShapeModel]) -> Bool {
-        hitShape(at: point, among: candidates) != nil
+    func containsShape(
+        at point: CGPoint,
+        among candidates: [CanvasShapeModel],
+        replacingWith transientShape: CanvasShapeModel? = nil
+    ) -> Bool {
+        hitShape(at: point, among: candidates, replacingWith: transientShape) != nil
     }
 
     /// A shape's model-space bounds as the canvas presents them: rotation-aware, and cut down to
