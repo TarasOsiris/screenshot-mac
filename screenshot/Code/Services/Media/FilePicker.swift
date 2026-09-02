@@ -33,18 +33,11 @@ enum FilePicker {
         #endif
     }
 
-    /// A single raster image, already read through the security-scoped URL. The panel runs on the
-    /// main actor; the file read deliberately does not — see `Data.fromSecurityScopedURLOffMain`.
+    /// A single raster image, already read through the security-scoped URL.
     static func pickImage() async -> NSImage? {
         #if os(macOS)
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.image]
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
-        guard response == .OK, let url = panel.url else { return nil }
-        guard let data = await Data.fromSecurityScopedURLOffMain(url) else { return nil }
-        return NSImage(data: data)
+        guard let url = pickFile(ofType: .image) else { return nil }
+        return await NSImage.fromSecurityScopedURLOffMain(url)
         #else
         // iPad routes image selection through ImageSourceMenu (Photo Library / Camera / Files).
         return nil
@@ -54,16 +47,23 @@ enum FilePicker {
     /// The raw text of a single `.svg` file. Not sanitized — callers run it through `SvgHelper`.
     static func pickSvgText() async -> String? {
         #if os(macOS)
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "svg") ?? .xml]
-        panel.allowsMultipleSelection = false
-        let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
-        guard response == .OK, let url = panel.url else { return nil }
-        guard let data = await Data.fromSecurityScopedURLOffMain(url) else { return nil }
+        guard let url = pickFile(ofType: UTType(filenameExtension: "svg") ?? .xml),
+              let data = await Data.fromSecurityScopedURLOffMain(url) else { return nil }
         return String(data: data, encoding: .utf8)
         #else
         // iPad: SVG file import via fileImporter is deferred; paste still works.
         return nil
         #endif
     }
+
+    #if os(macOS)
+    private static func pickFile(ofType contentType: UTType) -> URL? {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [contentType]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        guard CrashReportingService.withAppHangTrackingPaused({ panel.runModal() }) == .OK else { return nil }
+        return panel.url
+    }
+    #endif
 }

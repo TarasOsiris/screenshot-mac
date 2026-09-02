@@ -33,9 +33,8 @@ nonisolated enum SvgHelper {
         guard response == .OK, let url = panel.url else { return nil }
         guard let data = await Data.fromSecurityScopedURLOffMain(url) else { return nil }
 
-        if url.pathExtension.lowercased() == "svg",
-           let raw = String(data: data, encoding: .utf8) {
-            return .svg(sanitize(raw))
+        if url.pathExtension.lowercased() == "svg", let sanitized = sanitize(svgData: data) {
+            return .svg(sanitized)
         }
         guard let image = NSImage(data: data) else { return nil }
         return .image(image)
@@ -49,9 +48,12 @@ nonisolated enum SvgHelper {
     /// Returns nil for non-SVG files.
     static func loadAndSanitize(from url: URL) -> String? {
         guard url.pathExtension.lowercased() == "svg",
-              let data = try? Data(contentsOf: url),
-              let raw = String(data: data, encoding: .utf8) else { return nil }
-        return sanitize(raw)
+              let data = try? Data(contentsOf: url) else { return nil }
+        return sanitize(svgData: data)
+    }
+
+    static func sanitize(svgData: Data) -> String? {
+        String(data: svgData, encoding: .utf8).map(sanitize)
     }
 
     static func sanitize(_ svg: String) -> String {

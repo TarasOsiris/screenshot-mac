@@ -86,11 +86,18 @@ nonisolated struct CodableColor: Codable, Equatable {
 }
 
 nonisolated extension NSImage {
-    /// Load an image from a security-scoped URL (e.g., from file importers).
+    /// Load an image from a security-scoped URL (e.g., from file importers). Call only from off the
+    /// main actor — on it, use `fromSecurityScopedURLOffMain`.
     static func fromSecurityScopedURL(_ url: URL) -> NSImage? {
         let didAccess = url.startAccessingSecurityScopedResource()
         defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
         return NSImage(contentsOf: url)
+    }
+
+    /// The same, for main-actor callers: only the file read leaves the main actor.
+    @MainActor static func fromSecurityScopedURLOffMain(_ url: URL) async -> NSImage? {
+        guard let data = await Data.fromSecurityScopedURLOffMain(url) else { return nil }
+        return NSImage(data: data)
     }
 }
 
