@@ -259,10 +259,12 @@ struct ShowcaseExportSheet: View {
     // MARK: - Background image handling
 
     private func pickBackgroundImage() {
-        switch SvgHelper.pickImageOrSvg() {
-        case .svg(let svg): setBackgroundSvg(svg)
-        case .image(let image): setBackgroundImage(image)
-        case .none: break
+        Task { @MainActor in
+            switch await SvgHelper.pickImageOrSvg() {
+            case .svg(let svg): setBackgroundSvg(svg)
+            case .image(let image): setBackgroundImage(image)
+            case .none: break
+            }
         }
     }
 

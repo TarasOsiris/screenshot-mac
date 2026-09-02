@@ -219,7 +219,7 @@ extension EditorRowView {
         #if os(macOS)
         // Defer past the menu-teardown transaction before spinning the panel's modal runloop.
         Task { @MainActor in
-            guard let image = FilePicker.pickImage() else { return }
+            guard let image = await FilePicker.pickImage() else { return }
             state.saveImage(image, for: shapeId, source: .picker)
         }
         #else

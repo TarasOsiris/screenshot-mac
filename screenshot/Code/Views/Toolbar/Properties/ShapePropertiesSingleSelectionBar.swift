@@ -69,8 +69,10 @@ struct ShapePropertiesSingleSelectionBar: View {
 
     /// macOS only: iPad routes image selection through `ImageSourceMenu` via `onImageSelected`.
     func pickAndReplaceImage(for shapeId: UUID) {
-        guard let image = FilePicker.pickImage() else { return }
-        state.saveImage(image, for: shapeId, source: .panel)
+        Task { @MainActor in
+            guard let image = await FilePicker.pickImage() else { return }
+            state.saveImage(image, for: shapeId, source: .panel)
+        }
     }
 
     func idx(for shapeId: UUID) -> (row: Int, shape: Int)? {

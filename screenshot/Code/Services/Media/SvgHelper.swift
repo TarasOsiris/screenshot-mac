@@ -23,7 +23,7 @@ nonisolated enum SvgHelper {
     /// Prompts the user for an image or SVG file and returns the picked content.
     /// Returns nil if the user cancels or the file cannot be loaded.
     @MainActor
-    static func pickImageOrSvg() -> PickedBackground? {
+    static func pickImageOrSvg() async -> PickedBackground? {
         #if os(macOS)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image, .svg]
@@ -31,15 +31,13 @@ nonisolated enum SvgHelper {
         panel.canChooseDirectories = false
         let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
         guard response == .OK, let url = panel.url else { return nil }
-
-        let didAccess = url.startAccessingSecurityScopedResource()
-        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+        guard let data = await Data.fromSecurityScopedURLOffMain(url) else { return nil }
 
         if url.pathExtension.lowercased() == "svg",
-           let sanitized = loadAndSanitize(from: url) {
-            return .svg(sanitized)
+           let raw = String(data: data, encoding: .utf8) {
+            return .svg(sanitize(raw))
         }
-        guard let image = NSImage.fromSecurityScopedURL(url) else { return nil }
+        guard let image = NSImage(data: data) else { return nil }
         return .image(image)
         #else
         // iPad: image/SVG import via PhotosPicker/fileImporter is deferred to a follow-up.

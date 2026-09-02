@@ -33,8 +33,9 @@ enum FilePicker {
         #endif
     }
 
-    /// A single raster image, already read through the security-scoped URL.
-    static func pickImage() -> NSImage? {
+    /// A single raster image, already read through the security-scoped URL. The panel runs on the
+    /// main actor; the file read deliberately does not — see `Data.fromSecurityScopedURLOffMain`.
+    static func pickImage() async -> NSImage? {
         #if os(macOS)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image]
@@ -42,7 +43,8 @@ enum FilePicker {
         panel.canChooseDirectories = false
         let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
         guard response == .OK, let url = panel.url else { return nil }
-        return NSImage.fromSecurityScopedURL(url)
+        guard let data = await Data.fromSecurityScopedURLOffMain(url) else { return nil }
+        return NSImage(data: data)
         #else
         // iPad routes image selection through ImageSourceMenu (Photo Library / Camera / Files).
         return nil
@@ -50,16 +52,15 @@ enum FilePicker {
     }
 
     /// The raw text of a single `.svg` file. Not sanitized — callers run it through `SvgHelper`.
-    static func pickSvgText() -> String? {
+    static func pickSvgText() async -> String? {
         #if os(macOS)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [UTType(filenameExtension: "svg") ?? .xml]
         panel.allowsMultipleSelection = false
         let response = CrashReportingService.withAppHangTrackingPaused { panel.runModal() }
         guard response == .OK, let url = panel.url else { return nil }
-        let didAccess = url.startAccessingSecurityScopedResource()
-        defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
-        return try? String(contentsOf: url, encoding: .utf8)
+        guard let data = await Data.fromSecurityScopedURLOffMain(url) else { return nil }
+        return String(data: data, encoding: .utf8)
         #else
         // iPad: SVG file import via fileImporter is deferred; paste still works.
         return nil

@@ -176,10 +176,12 @@ struct SvgPasteDialog: View {
     }
 
     private func importFile() {
-        guard let content = FilePicker.pickSvgText() else { return }
-        svgText = content
-        errorMessage = nil
-        updatePreview()
+        Task { @MainActor in
+            guard let content = await FilePicker.pickSvgText() else { return }
+            svgText = content
+            errorMessage = nil
+            updatePreview()
+        }
     }
 
 }

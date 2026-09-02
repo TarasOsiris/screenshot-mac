@@ -11,7 +11,10 @@ extension View {
         modifier(ImageSourcePickerModifier(isPresented: isPresented, onImage: onImage))
         #else
         fileImporter(isPresented: isPresented, allowedContentTypes: [.image]) { result in
-            if case .success(let url) = result, let image = NSImage.fromSecurityScopedURL(url) {
+            guard case .success(let url) = result else { return }
+            Task { @MainActor in
+                guard let data = await Data.fromSecurityScopedURLOffMain(url),
+                      let image = NSImage(data: data) else { return }
                 onImage(image)
             }
         }

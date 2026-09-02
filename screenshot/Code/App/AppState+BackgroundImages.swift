@@ -85,13 +85,15 @@ extension AppState {
 
     @MainActor
     func pickAndSaveBackgroundImage(for rowId: UUID, templateIndex: Int? = nil) {
-        switch SvgHelper.pickImageOrSvg() {
-        case .svg(let sanitized):
-            saveBackgroundSvg(sanitized, for: rowId, templateIndex: templateIndex)
-        case .image(let image):
-            saveBackgroundImage(image, for: rowId, templateIndex: templateIndex)
-        case .none:
-            break
+        Task { @MainActor in
+            switch await SvgHelper.pickImageOrSvg() {
+            case .svg(let sanitized):
+                saveBackgroundSvg(sanitized, for: rowId, templateIndex: templateIndex)
+            case .image(let image):
+                saveBackgroundImage(image, for: rowId, templateIndex: templateIndex)
+            case .none:
+                break
+            }
         }
     }
 

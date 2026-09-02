@@ -108,7 +108,10 @@ private struct ImageSourcePresenters: ViewModifier {
                     .ignoresSafeArea()
             }
             .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.image]) { result in
-                if case .success(let url) = result, let image = NSImage.fromSecurityScopedURL(url) {
+                guard case .success(let url) = result else { return }
+                Task { @MainActor in
+                    guard let data = await Data.fromSecurityScopedURLOffMain(url),
+                          let image = NSImage(data: data) else { return }
                     deliver(image)
                 }
             }
