@@ -237,6 +237,7 @@ struct ShowcaseExportSheet: View {
     @ViewBuilder
     private var footer: some View {
         HStack {
+            HelpTopicButton(section: .showcase)
             if candidateRows.count > 1 {
                 Text(exportCountText)
                     .font(.system(size: 11))

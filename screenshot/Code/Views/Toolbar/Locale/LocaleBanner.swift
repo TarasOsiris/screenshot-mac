@@ -3,6 +3,9 @@ import SwiftUI
 
 struct LocaleBanner: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #if os(macOS)
+    @Environment(\.openWindow) private var openWindow
+    #endif
     @Bindable var state: AppState
     @State private var translationConfig: TranslationSession.Configuration?
     @State private var translationTargetCode = ""
@@ -64,6 +67,18 @@ struct LocaleBanner: View {
                                 }
                                 .scaledFont(UIMetrics.FontSize.body)
                                 .foregroundStyle(.secondary)
+                                #if os(macOS)
+                                // The full explanation lives in Help; this popover is the teaser.
+                                Button {
+                                    showLocaleHelp = false
+                                    AppWindowManager.shared.showHelp(.locales, using: openWindow)
+                                } label: {
+                                    Label("More in Help", systemImage: "questionmark.circle")
+                                }
+                                .buttonStyle(.link)
+                                .scaledFont(UIMetrics.FontSize.body)
+                                .padding(.top, 2)
+                                #endif
                             }
                             .padding(12)
                             .frame(width: 300, alignment: .leading)

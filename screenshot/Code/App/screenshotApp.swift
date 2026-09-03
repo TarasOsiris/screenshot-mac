@@ -592,13 +592,7 @@ private struct HelpCommands: Commands {
     var body: some Commands {
         CommandGroup(replacing: .help) {
             Button("Screenshot Bro Help") {
-                openWindow(id: HelpView.windowID)
-                // openWindow is async; the NSWindow isn't registered until the
-                // next runloop, so defer the raise so it can come to front even
-                // when the main window holds an active text selection.
-                DispatchQueue.main.async {
-                    AppWindowManager.shared.raiseHelpWindow()
-                }
+                AppWindowManager.shared.showHelp(using: openWindow)
             }
             .keyboardShortcut("?", modifiers: .command)
         }

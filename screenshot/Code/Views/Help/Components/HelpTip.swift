@@ -5,14 +5,13 @@ struct HelpTip: View {
     private static let fillOpacity: Double = 0.08
     private static let borderOpacity: Double = 0.25
 
-    let text: LocalizedStringKey
-    init(_ text: LocalizedStringKey) { self.text = text }
+    let text: LocalizedStringResource
+    init(_ text: LocalizedStringResource) { self.text = text }
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "lightbulb.fill")
                 .foregroundStyle(.yellow)
-            Text(text)
-                .fixedSize(horizontal: false, vertical: true)
+            HelpText(text)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -2,12 +2,12 @@ import SwiftUI
 
 #if os(macOS)
 struct ShortcutRow: View {
-    let keys: String
-    let description: LocalizedStringKey
+    let item: ShortcutRowItem
+    @Environment(\.helpSearchQuery) private var query
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(keys)
+            Text(AttributedString(item.keys).helpHighlighting(query))
                 .font(.system(.body, design: .monospaced).weight(.medium))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -16,8 +16,7 @@ struct ShortcutRow: View {
                     in: RoundedRectangle(cornerRadius: UIMetrics.CornerRadius.chip)
                 )
                 .frame(minWidth: 160, alignment: .leading)
-            Text(description)
-                .fixedSize(horizontal: false, vertical: true)
+            HelpText(item.description)
             Spacer(minLength: 0)
         }
     }

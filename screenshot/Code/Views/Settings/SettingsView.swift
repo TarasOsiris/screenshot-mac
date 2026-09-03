@@ -76,6 +76,19 @@ struct SettingsView: View {
             case .attributions: "heart"
             }
         }
+
+        /// The Help topic that documents this pane, so the pane doesn't have to restate it.
+        var helpTopic: HelpSection? {
+            switch self {
+            case .general: .settings
+            case .export: .exporting
+            case .appStoreConnect: .appStoreConnect
+            case .googlePlay: .googlePlay
+            case .automation: .automation
+            case .purchase: .proFeatures
+            case .attributions: nil
+            }
+        }
     }
 
     var body: some View {
@@ -90,6 +103,13 @@ struct SettingsView: View {
         } detail: {
             detailContent
                 .navigationTitle((selection ?? .general).title)
+                .toolbar {
+                    if let topic = (selection ?? .general).helpTopic {
+                        ToolbarItem(placement: .primaryAction) {
+                            HelpTopicButton(section: topic)
+                        }
+                    }
+                }
         }
         .frame(
             minWidth: UIMetrics.Window.settingsMinSize.width,
@@ -237,6 +257,22 @@ struct SettingsView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("Projects will be kept locally. Other Macs will no longer see updates.")
+            }
+
+            Section("Help") {
+                LabeledContent("Editor tour") {
+                    Button("Replay Tour") {
+                        // Not persisted: the first-run flag is already spent, and counting a
+                        // deliberate replay would inflate the onboarding funnel.
+                        appState.coach.start(persistOnEnd: false)
+                        AppWindowManager.shared.showMainWindow()
+                    }
+                    .disabled(appState.activeProjectId == nil || !OnboardingCoachStep.tourSupportedOnDevice)
+                }
+                if appState.activeProjectId == nil {
+                    Text("Open a project to replay the tour — its steps point at the editor.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
 
             Section("Storage") {

@@ -26,7 +26,7 @@ enum HelpSection: String, CaseIterable, Identifiable, Hashable {
 
     var id: String { rawValue }
 
-    var title: LocalizedStringKey {
+    var title: LocalizedStringResource {
         switch self {
         case .welcome: "Welcome"
         case .projects: "Projects"
@@ -50,6 +50,11 @@ enum HelpSection: String, CaseIterable, Identifiable, Hashable {
         case .tips: "Tips & Tricks"
         case .support: "Support & Feedback"
         }
+    }
+
+    /// The sidebar row and every "See also" link render the same way.
+    var label: some View {
+        Label { Text(title) } icon: { Image(systemName: icon) }
     }
 
     var icon: String {

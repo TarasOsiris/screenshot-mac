@@ -2,20 +2,20 @@ import SwiftUI
 
 #if os(macOS)
 struct HelpHeader: View {
-    let title: LocalizedStringKey
-    let subtitle: LocalizedStringKey?
+    let title: LocalizedStringResource
+    let subtitle: LocalizedStringResource?
 
-    init(_ title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil) {
+    init(_ title: LocalizedStringResource, subtitle: LocalizedStringResource? = nil) {
         self.title = title
         self.subtitle = subtitle
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
+            HelpText(title)
                 .scaledFont(UIMetrics.FontSize.displayTitle, weight: .bold)
             if let subtitle {
-                Text(subtitle)
+                HelpText(subtitle)
                     .font(.title3)
                     .foregroundStyle(.secondary)
             }

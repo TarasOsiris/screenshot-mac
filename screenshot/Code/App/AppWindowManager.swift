@@ -38,6 +38,17 @@ final class AppWindowManager {
         raiseWindow(helpWindow)
     }
 
+    /// Opens Help, optionally at a topic. The caller supplies `openWindow` because a `Window`
+    /// scene can't carry a value; the deferred raise is here so the runloop quirk it works around
+    /// is stated once rather than at every call site.
+    func showHelp(_ section: HelpSection? = nil, using openWindow: OpenWindowAction) {
+        if let section { HelpWindowNavigation.shared.requestedSection = section }
+        openWindow(id: HelpView.windowID)
+        // openWindow registers the NSWindow on the next runloop; raise it then so Help comes
+        // forward even when it was already open behind another window.
+        DispatchQueue.main.async { self.raiseHelpWindow() }
+    }
+
     func raiseSettingsWindow() {
         CrashReportingService.breadcrumb(.app, "Opened Settings window")
         raiseWindow(settingsWindow)

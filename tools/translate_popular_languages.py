@@ -4,6 +4,7 @@
 This keeps existing translations intact and fills missing entries for a
 high-impact set of languages:
   - French (`fr`)
+  - Spanish (`es`)
   - German (`de`)
   - Japanese (`ja`)
   - Korean (`ko`)
@@ -37,6 +38,11 @@ CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
 
 TARGET_LANGUAGES = {
     "fr": "fr",
+    # Spanish predates this script — `translate_catalog.py` fills it from a hand-curated dict,
+    # which covers only what had shipped when it was written. Listing `es` here tops up the rest
+    # so a Spanish user doesn't get a half-English UI; the curated entries already in the catalog
+    # win, because this script only fills what is missing.
+    "es": "es",
     "de": "de",
     "ja": "ja",
     "ko": "ko",
