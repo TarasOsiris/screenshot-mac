@@ -17,10 +17,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 import xcstrings_format
 
 CATALOG = Path(__file__).parent.parent / "screenshot" / "Localizable.xcstrings"
-STRINGSDATA_GLOB = (
-    "/Users/taras/Library/Developer/Xcode/DerivedData/"
-    "screenshot-fjyqstlptltgswabxaalthsugfna/Build/Intermediates.noindex/"
-    "screenshot.build/Debug/screenshot.build/Objects-normal/arm64/*.stringsdata"
+# Globbed rather than hardcoded: the DerivedData hash differs per checkout, and a
+# stale absolute path fails silently as "merged 0 keys".
+STRINGSDATA_GLOB = str(
+    Path.home() / "Library/Developer/Xcode/DerivedData"
+    / "screenshot-*/Build/Intermediates.noindex"
+    / "screenshot.build/Debug/screenshot.build/Objects-normal/arm64/*.stringsdata"
 )
 
 # Keys intentionally NOT translated (identical in Spanish: format strings,

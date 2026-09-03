@@ -626,52 +626,6 @@
         }
       }
     },
-    "**⌘L** locks or unlocks the selection. Locked shapes can't be dragged, resized, or deleted, and clicks fall through to whatever is behind them." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**⌘L** sperrt oder entsperrt die Auswahl. Gesperrte Formen können nicht gezogen, in der Größe geändert oder gelöscht werden, und Klicks wirken sich auf alles aus, was sich dahinter befindet."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**⌘L** انتخاب را قفل یا باز می کند. اشکال قفل شده قابل کشیدن، تغییر اندازه یا حذف نیستند و کلیک‌ها روی هر چیزی که پشت آن است می‌افتد."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**⌘L** verrouille ou déverrouille la sélection. Les formes verrouillées ne peuvent pas être glissées, redimensionnées ou supprimées, et les clics se répercutent sur ce qui se trouve derrière elles."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**⌘L** は選択をロックまたはロック解除します。ロックされた図形はドラッグ、サイズ変更、削除ができず、クリックするとその背後にあるものに影響が及びます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**⌘L**은 선택 항목을 잠그거나 잠금 해제합니다. 잠긴 도형은 끌거나 크기를 조정하거나 삭제할 수 없으며 클릭하면 뒤에 있는 모든 항목이 클릭됩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**⌘L** bloqueia ou desbloqueia a seleção. As formas bloqueadas não podem ser arrastadas, redimensionadas ou excluídas, e os cliques passam para o que quer que esteja por trás delas."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**⌘L** 锁定或解锁选择。锁定的形状无法拖动、调整大小或删除，并且单击会传递到其后面的任何内容。"
-          }
-        }
-      }
-    },
     "**1 project** — you can keep editing it forever." : {
       "localizations" : {
         "de" : {
@@ -2475,52 +2429,6 @@
         }
       }
     },
-    "**Drop shadow** — enable it in the properties bar and pick **Soft**, **Medium**, or **Strong**, or set color, radius, offset, and opacity by hand. It works on a multi-shape selection too." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Schlagschatten** – aktivieren Sie es in der Eigenschaftenleiste und wählen Sie **Weich**, **Mittel** oder **Stark** aus oder legen Sie Farbe, Radius, Versatz und Deckkraft manuell fest. Es funktioniert auch bei einer Auswahl mehrerer Formen."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**رها کردن سایه** - آن را در نوار خصوصیات فعال کنید و **نرم**، **متوسط**، یا **قوی** را انتخاب کنید، یا رنگ، شعاع، افست و کدورت را با دست تنظیم کنید. در انتخاب چند شکلی نیز کار می کند."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Ombre portée** : activez-la dans la barre de propriétés et choisissez **Doux**, **Moyen** ou **Fort**, ou définissez la couleur, le rayon, le décalage et l'opacité à la main. Cela fonctionne également sur une sélection multi-formes."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**ドロップ シャドウ** - プロパティ バーで有効にし、**ソフト**、**中**、または**強**を選択するか、色、半径、オフセット、不透明度を手動で設定します。複数のシェイプを選択した場合にも機能します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**그림자** — 속성 표시줄에서 활성화하고 **부드러움**, **중간** 또는 **강함**을 선택하거나 색상, 반경, 오프셋 및 불투명도를 직접 설정하세요. 다중 모양 선택에서도 작동합니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Sombra projetada** — habilite-o na barra de propriedades e escolha **Suave**, **Médio** ou **Forte**, ou defina cor, raio, deslocamento e opacidade manualmente. Também funciona em uma seleção de várias formas."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**阴影** — 在属性栏中启用它并选择**软**、**中**或**强**，或手动设置颜色、半径、偏移和不透明度。它也适用于多形状选择。"
-          }
-        }
-      }
-    },
     "**Duplicate ▸ To All Screenshots on the Left / Right / All** copies a shape into the other templates in the row at the same relative spot — the quickest way to repeat a logo or a footer." : {
       "localizations" : {
         "de" : {
@@ -3716,52 +3624,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "**锁定背景艺术。** 全出血图像上的 **⌘L** 会阻止您每次在画布边缘附近单击时抓取它。"
-          }
-        }
-      }
-    },
-    "**Lock** (**⌘L**) freezes a shape: clicks and drags pass straight through it. A locked shape's only right-click item is **Unlock**." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Sperren** (**⌘L**) friert eine Form ein: Klicken und Ziehen werden direkt durch sie hindurch ausgeführt. Das einzige Rechtsklick-Element einer gesperrten Form ist **Entsperren**."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**قفل** (**⌘L**) یک شکل را ثابت می کند: کلیک ها و کشیدن ها مستقیماً از آن عبور می کنند. تنها مورد کلیک راست یک شکل قفل شده **باز کردن قفل** است."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Lock** (**⌘L**) fige une forme : les clics et les glissements la traversent directement. Le seul élément cliqué avec le bouton droit d'une forme verrouillée est **Déverrouiller**."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**ロック** (**⌘L**) は形状を固定します。クリックとドラッグは形状を直接通過します。ロックされた図形の唯一の右クリック項目は ​​[**ロック解除**] です。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**잠금**(**⌘L**)은 모양을 고정합니다. 클릭하고 드래그하면 모양이 바로 통과됩니다. 잠긴 셰이프의 유일한 마우스 오른쪽 버튼 클릭 항목은 **잠금 해제**입니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Lock** (**⌘L**) congela uma forma: cliques e arrastamentos passam diretamente por ela. O único item de clique com o botão direito de uma forma bloqueada é **Desbloquear**."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**锁定** (**⌘L**) 冻结形状：单击和拖动直接穿过它。锁定形状的唯一右键单击项目是**解锁**。"
           }
         }
       }
@@ -13821,6 +13683,12 @@
             "value" : "تراز"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alignement"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15403,6 +15271,12 @@
             "value" : "App Store Connect پردازش اسکرین شات آپلود شده به موقع تمام نشد."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect n'a pas terminé le traitement de la capture d'écran téléchargée à temps."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15500,6 +15374,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "App Store Connect %1$@ را برای %2$@ مجاز نمی‌داند. این معمولاً به این معنی است که نسخه برنامه از آن خانواده دستگاه پشتیبانی نمی کند. این ردیف را حذف کنید، نوع نمایشی را انتخاب کنید که برنامه می‌پذیرد، یا پشتیبانی دستگاه برنامه را به‌روزرسانی کنید، سپس دوباره امتحان کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect n'autorise pas %1$@ pour %2$@. Cela signifie généralement que la version de l'application ne prend pas en charge cette famille d'appareils. Excluez cette ligne, choisissez un type d'affichage accepté par l'application ou mettez à jour la prise en charge des appareils de l'application, puis réessayez."
           }
         },
         "ja" : {
@@ -21286,52 +21166,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "单击行内的空白画布以选择行本身并显示行级检查器控件。"
-          }
-        }
-      }
-    },
-    "Click the image well in the properties bar to pick a file, or drag and drop directly onto the shape." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Klicken Sie in der Eigenschaftenleiste auf das Bildfeld, um eine Datei auszuwählen, oder ziehen Sie sie per Drag & Drop direkt auf die Form."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "برای انتخاب فایل روی تصویر در نوار خصوصیات به خوبی کلیک کنید یا مستقیماً روی شکل بکشید و رها کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cliquez sur le cadre d'image dans la barre de propriétés pour sélectionner un fichier, ou faites un glisser-déposer directement sur la forme."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プロパティ バーのイメージ ウェルをクリックしてファイルを選択するか、図形に直接ドラッグ アンド ドロップします。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "속성 표시줄에서 이미지 영역을 클릭하여 파일을 선택하거나 모양에 직접 끌어서 놓습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clique na imagem na barra de propriedades para escolher um arquivo ou arraste e solte diretamente na forma."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "单击属性栏中的图像以选择文件，或直接拖放到形状上。"
           }
         }
       }
@@ -28702,52 +28536,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设备框架将您的屏幕截图包裹在真正的手机或平板电脑边框中。 Screenshot Bro 为最新的 iPhone、iPad、Mac图书和通用 Android 目录提供像素精确的帧。"
-          }
-        }
-      }
-    },
-    "Device shapes render the screenshot inside a real device frame. Pick a category and model in the properties bar." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Geräteformen rendern den Screenshot innerhalb eines echten Geräterahmens. Wählen Sie in der Eigenschaftenleiste eine Kategorie und ein Modell aus."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اشکال دستگاه اسکرین شات را در یک قاب دستگاه واقعی ارائه می دهد. یک دسته و مدل را در نوار خواص انتخاب کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les formes d'appareil restituent la capture d'écran dans un véritable cadre d'appareil. Choisissez une catégorie et un modèle dans la barre de propriétés."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "デバイスの形状は、実際のデバイスのフレーム内にスクリーンショットをレンダリングします。プロパティ バーでカテゴリとモデルを選択します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "장치 모양은 실제 장치 프레임 내부에 스크린샷을 렌더링합니다. 속성 표시줄에서 카테고리와 모델을 선택합니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "As formas do dispositivo renderizam a captura de tela dentro de um quadro real do dispositivo. Escolha uma categoria e modelo na barra de propriedades."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "设备形状在真实设备框架内呈现屏幕截图。在属性栏中选择类别和型号。"
           }
         }
       }
@@ -73074,52 +72862,6 @@
         }
       }
     },
-    "The properties bar shows font, weight, size, color, horizontal and vertical alignment, line height, and letter spacing." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In der Eigenschaftenleiste werden Schriftart, Stärke, Größe, Farbe, horizontale und vertikale Ausrichtung, Zeilenhöhe und Buchstabenabstand angezeigt."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "نوار خواص فونت، وزن، اندازه، رنگ، تراز افقی و عمودی، ارتفاع خطوط و فاصله حروف را نشان می دهد."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La barre de propriétés affiche la police, l'épaisseur, la taille, la couleur, l'alignement horizontal et vertical, la hauteur des lignes et l'espacement des lettres."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プロパティ バーには、フォント、太さ、サイズ、色、水平方向と垂直方向の配置、行の高さ、文字間隔が表示されます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "속성 표시줄에는 글꼴, 두께, 크기, 색상, 가로 및 세로 정렬, 줄 높이, 문자 간격이 표시됩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A barra de propriedades mostra fonte, espessura, tamanho, cor, alinhamento horizontal e vertical, altura da linha e espaçamento entre letras."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "属性栏显示字体、粗细、大小、颜色、水平和垂直对齐方式、行高和字母间距。"
-          }
-        }
-      }
-    },
     "The required languages are not downloaded on your Mac.\n\nTo download them, go to:\nSystem Settings → General → Language & Region → Translation Languages\n\nThen download the languages you need and try again." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -76517,7 +76259,50 @@
       }
     },
     "Try Again" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versuchen Sie es erneut"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دوباره امتحان کنید"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayez"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "もう一度試してください"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다시 시도"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tente novamente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再试一次"
+          }
+        }
+      }
     },
     "Tune the app to match your workflow." : {
       "localizations" : {
@@ -82342,6 +82127,374 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "缩小"
+          }
+        }
+      }
+    },
+    "Mark This Install as Internal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markieren Sie diese Installation als „Intern“."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این نصب را به عنوان داخلی علامت گذاری کنید"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark This Install as Internal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このインストールを内部としてマークする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 설치를 내부로 표시"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar esta instalação como interna"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将此安装标记为内部安装"
+          }
+        }
+      }
+    },
+    "**Drop shadow** — select a shape, then click **Shadow** in the properties bar and pick **Soft**, **Medium**, or **Strong**, or set color, radius, offset, and opacity by hand. It works on a multi-shape selection too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Schlagschatten** – Wählen Sie eine Form aus, klicken Sie dann in der Eigenschaftenleiste auf **Schatten** und wählen Sie **Weich**, **Mittel** oder **Stark** aus oder legen Sie Farbe, Radius, Versatz und Deckkraft manuell fest. Es funktioniert auch bei einer Auswahl mehrerer Formen."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**رها کردن سایه** — یک شکل را انتخاب کنید، سپس روی **Shadow** در نوار خصوصیات کلیک کنید و **نرم**، **متوسط**، یا **قوی** را انتخاب کنید، یا رنگ، شعاع، افست و کدورت را با دست تنظیم کنید. در انتخاب چند شکلی نیز کار می کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ombre portée** : sélectionnez une forme, puis cliquez sur **Ombre** dans la barre de propriétés et choisissez **Doux**, **Moyen** ou **Fort**, ou définissez la couleur, le rayon, le décalage et l'opacité à la main. It works on a multi-shape selection too."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ドロップ シャドウ** — 形状を選択し、プロパティ バーで **シャドウ** をクリックし、**ソフト**、**中**、**強い**を選択するか、色、半径、オフセット、不透明度を手動で設定します。複数のシェイプを選択した場合にも機能します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**그림자 추가** — 모양을 선택한 다음 속성 표시줄에서 **그림자**를 클릭하고 **부드러움**, **중간** 또는 **강함**을 선택하거나 색상, 반경, 오프셋 및 불투명도를 직접 설정합니다. 다중 모양 선택에서도 작동합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Sombra projetada** — selecione uma forma, clique em **Sombra** na barra de propriedades e escolha **Suave**, **Média** ou **Forte**, ou defina cor, raio, deslocamento e opacidade manualmente. Também funciona em uma seleção de várias formas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**阴影** — 选择一个形状，然后单击属性栏中的 **阴影** 并选择 **软**、**中** 或 **强**，或手动设置颜色、半径、偏移和不透明度。它也适用于多形状选择。"
+          }
+        }
+      }
+    },
+    "Device shapes render the screenshot inside a real device frame. Select one, then pick a category and model in the properties bar." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräteformen rendern den Screenshot innerhalb eines echten Geräterahmens. Wählen Sie eine aus und wählen Sie dann in der Eigenschaftenleiste eine Kategorie und ein Modell aus."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اشکال دستگاه اسکرین شات را در یک قاب دستگاه واقعی ارائه می کند. یکی را انتخاب کنید، سپس یک دسته و مدل را در نوار خواص انتخاب کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les formes d'appareil restituent la capture d'écran dans un véritable cadre d'appareil. Sélectionnez-en un, puis choisissez une catégorie et un modèle dans la barre de propriétés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デバイスの形状は、実際のデバイスのフレーム内にスクリーンショットをレンダリングします。 1 つ選択し、プロパティ バーでカテゴリとモデルを選択します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "장치 모양은 실제 장치 프레임 내부에 스크린샷을 렌더링합니다. 하나를 선택한 다음 속성 표시줄에서 카테고리와 모델을 선택합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As formas do dispositivo renderizam a captura de tela dentro de um quadro real do dispositivo. Selecione um e escolha uma categoria e modelo na barra de propriedades."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设备形状在真实设备框架内呈现屏幕截图。选择一个，然后在属性栏中选择一个类别和型号。"
+          }
+        }
+      }
+    },
+    "Select the shape, then click the image well in the properties bar to pick a file, or drag and drop directly onto the shape." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie die Form aus und klicken Sie dann auf das Bildfeld in der Eigenschaftenleiste, um eine Datei auszuwählen, oder ziehen Sie sie per Drag & Drop direkt auf die Form."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شکل را انتخاب کنید، سپس روی تصویر در نوار خصوصیات به خوبی کلیک کنید تا یک فایل انتخاب شود، یا مستقیماً روی شکل بکشید و رها کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez la forme, puis cliquez sur le cadre d'image dans la barre de propriétés pour sélectionner un fichier, ou faites un glisser-déposer directement sur la forme."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "形状を選択し、プロパティ バーで画像ウェルをクリックしてファイルを選択するか、形状に直接ドラッグ アンド ドロップします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모양을 선택한 다음 속성 표시줄에서 이미지 영역을 클릭하여 파일을 선택하거나 모양에 직접 끌어서 놓습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecione a forma e clique na imagem na barra de propriedades para escolher um arquivo ou arraste e solte diretamente na forma."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择形状，然后单击属性栏中的图像以选取文件，或直接拖放到形状上。"
+          }
+        }
+      }
+    },
+    "Most shape settings live in the properties bar along the bottom of the window. It appears only when at least one shape is selected on the canvas — selecting a row is not enough — and its controls change to match the kind of shape you picked." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die meisten Formeinstellungen befinden sich in der Eigenschaftenleiste am unteren Rand des Fensters. Es wird nur angezeigt, wenn mindestens eine Form auf der Leinwand ausgewählt ist – die Auswahl einer Zeile reicht nicht aus – und seine Steuerelemente ändern sich entsprechend der Art der ausgewählten Form."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اکثر تنظیمات شکل در نوار خصوصیات در امتداد پایین پنجره قرار دارند. فقط زمانی ظاهر می‌شود که حداقل یک شکل روی بوم انتخاب شده باشد - انتخاب یک ردیف کافی نیست - و کنترل‌های آن برای مطابقت با نوع شکلی که انتخاب کرده‌اید تغییر می‌کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La plupart des paramètres de forme se trouvent dans la barre de propriétés en bas de la fenêtre. Il apparaît uniquement lorsqu'au moins une forme est sélectionnée sur le canevas (la sélection d'une ligne ne suffit pas) et que ses commandes changent pour correspondre au type de forme que vous avez choisi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほとんどの形状設定は、ウィンドウの下部にあるプロパティ バーにあります。これは、キャンバス上で少なくとも 1 つの図形が選択されている場合にのみ表示されます (行を選択するだけでは十分ではありません)。そのコントロールは、選択した図形の種類に合わせて変更されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대부분의 모양 설정은 창 하단의 속성 표시줄에 있습니다. 캔버스에서 하나 이상의 모양을 선택한 경우에만 나타나며(행을 선택하는 것만으로는 충분하지 않음) 해당 컨트롤은 선택한 모양의 종류에 맞게 변경됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A maioria das configurações de forma fica na barra de propriedades na parte inferior da janela. Ele aparece apenas quando pelo menos uma forma é selecionada na tela (selecionar uma linha não é suficiente) e seus controles mudam para corresponder ao tipo de forma escolhida."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大多数形状设置位于窗口底部的属性栏中。仅当在画布上至少选择一个形状时（选择一行是不够的）它才会出现，并且其控件会发生变化以匹配您选择的形状类型。"
+          }
+        }
+      }
+    },
+    "**Lock** — select a shape and choose **Edit ▸ Lock** (**⌘L**), or right-click it ▸ **Lock**. Clicks and drags then pass straight through it; a locked shape's only right-click item is **Unlock**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Sperren** – Wählen Sie eine Form aus und wählen Sie **Bearbeiten ▸ Sperren** (**⌘L**) oder klicken Sie mit der rechten Maustaste darauf ▸ **Sperren**. Klicks und Ziehbewegungen gehen dann direkt hindurch; Das einzige Rechtsklick-Element einer gesperrten Form ist **Entsperren**."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**قفل** - یک شکل را انتخاب کنید و **ویرایش ▸ قفل** (**⌘L**) را انتخاب کنید، یا روی آن کلیک راست کنید ▸ **قفل**. کلیک می کند و می کشد و سپس مستقیماً از آن عبور می کند. تنها مورد کلیک راست یک شکل قفل شده **باز کردن قفل** است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Verrouiller** : sélectionnez une forme et choisissez **Modifier ▸ Verrouiller** (**⌘L**), ou cliquez dessus avec le bouton droit ▸ **Verrouiller**. Clicks and drags then pass straight through it; le seul élément cliqué avec le bouton droit d'une forme verrouillée est **Déverrouiller**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ロック** — 図形を選択し、**編集 ▸ ロック** (**⌘L**) を選択するか、図形を右クリック ▸ **ロック** します。クリックしてドラッグすると、そのまま通過します。ロックされた形状の唯一の右クリック項目は **ロック解除**です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**잠금** — 모양을 선택하고 **편집 ▸ 잠금**(**⌘L**)을 선택하거나 마우스 오른쪽 버튼으로 클릭 ▸ **잠금**을 선택합니다. 클릭하고 드래그하면 곧바로 통과됩니다. 잠긴 셰이프의 유일한 마우스 오른쪽 버튼 클릭 항목은 **잠금 해제**입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Bloquear** — selecione uma forma e escolha **Editar ▸ Bloquear** (**⌘L**) ou clique com o botão direito nela ▸ **Bloquear**. Clique e arraste e passe direto por ele; o único item de clique com o botão direito de uma forma bloqueada é **Desbloquear**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**锁定** — 选择一个形状并选择 **编辑 ▸ 锁定** (**⌘L**)，或右键单击它 ▸ **锁定**。单击并拖动，然后直接穿过它；锁定形状的唯一右键单击项目是**解锁**。"
+          }
+        }
+      }
+    },
+    "With a text shape selected, the properties bar shows font, weight, size, color, horizontal and vertical alignment, line height, and letter spacing." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn eine Textform ausgewählt ist, werden in der Eigenschaftsleiste Schriftart, Stärke, Größe, Farbe, horizontale und vertikale Ausrichtung, Zeilenhöhe und Buchstabenabstand angezeigt."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "با انتخاب یک شکل متن، نوار خصوصیات فونت، وزن، اندازه، رنگ، تراز افقی و عمودی، ارتفاع خط و فاصله حروف را نشان می‌دهد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsqu'une forme de texte est sélectionnée, la barre de propriétés affiche la police, l'épaisseur, la taille, la couleur, l'alignement horizontal et vertical, la hauteur des lignes et l'espacement des lettres."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テキストの形状を選択すると、プロパティ バーにフォント、太さ、サイズ、色、水平方向と垂直方向の配置、行の高さ、文字間隔が表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "텍스트 모양을 선택하면 속성 표시줄에 글꼴, 두께, 크기, 색상, 가로 및 세로 정렬, 줄 높이, 문자 간격이 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Com uma forma de texto selecionada, a barra de propriedades mostra fonte, espessura, tamanho, cor, alinhamento horizontal e vertical, altura da linha e espaçamento entre letras."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择文本形状后，属性栏会显示字体、粗细、大小、颜色、水平和垂直对齐方式、行高和字母间距。"
+          }
+        }
+      }
+    },
+    "**Edit ▸ Lock** (**⌘L**) locks or unlocks the selection; **Lock** is on the right-click menu too. Locked shapes can't be dragged, resized, or deleted, and clicks fall through to whatever is behind them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Bearbeiten ▸ Sperren** (**⌘L**) sperrt oder entsperrt die Auswahl; **Sperren** befindet sich auch im Rechtsklick-Menü. Gesperrte Formen können nicht gezogen, in der Größe geändert oder gelöscht werden, und Klicks wirken sich auf alles aus, was sich dahinter befindet."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ویرایش ▸ قفل** (**⌘L**) انتخاب را قفل یا باز می کند. **قفل** در منوی کلیک راست نیز وجود دارد. شکل‌های قفل‌شده را نمی‌توان کشید، تغییر اندازه داد یا حذف کرد و کلیک‌ها روی هر چیزی که پشت آن‌ها است می‌افتد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Modifier ▸ Verrouiller** (**⌘L**) verrouille ou déverrouille la sélection ; **Lock** is on the right-click menu too. Les formes verrouillées ne peuvent pas être glissées, redimensionnées ou supprimées, et les clics se répercutent sur ce qui se trouve derrière elles."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**編集 ▸ ロック** (**⌘L**) 選択範囲をロックまたはロック解除します。 **ロック** も右クリック メニューにあります。ロックされた図形はドラッグ、サイズ変更、削除ができず、クリックするとその背後にあるものに影響が及びます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**편집 ▸ 잠금**(**⌘L**)은 선택 항목을 잠그거나 잠금 해제합니다. **잠금**은 마우스 오른쪽 버튼 클릭 메뉴에도 있습니다. 잠긴 도형은 끌거나 크기를 조정하거나 삭제할 수 없으며 클릭하면 뒤에 있는 모든 항목이 클릭됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Editar ▸ Bloquear** (**⌘L**) bloqueia ou desbloqueia a seleção; **Bloquear** também está no menu do botão direito. As formas bloqueadas não podem ser arrastadas, redimensionadas ou excluídas, e os cliques passam para o que quer que esteja por trás delas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**编辑 ▸ 锁定** (**⌘L**) 锁定或解锁选择； **锁定**也在右键菜单上。锁定的形状无法拖动、调整大小或删除，并且单击会传递到其后面的任何内容。"
           }
         }
       }
