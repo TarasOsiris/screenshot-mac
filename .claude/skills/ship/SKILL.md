@@ -9,17 +9,25 @@ disable-model-invocation: true
 Bump the app version, build archives, and upload to App Store Connect. The app is
 multiplatform (macOS + iOS), so each ship targets one or both platforms.
 
-## Step 1: Ask which platforms to ship
+## Step 1: Ask what to ship
 
-Always ask the user which platform(s) to ship this run, using the AskUserQuestion
-tool (multi-select). Options: **macOS**, **iOS**. Default recommendation: both.
+Ask both questions in **one** `AskUserQuestion` call, up front — never mid-ship, so a
+long archive never sits waiting on a prompt.
 
-Skip the question only if the invocation already names the platform(s) unambiguously
-(e.g. `/ship ios`, `/ship mac`, `/ship both`) — then proceed with that selection.
+**Which platform(s)** (multi-select). Options: **macOS**, **iOS**. Default
+recommendation: both. Skip this question only if the invocation already names the
+platform(s) unambiguously (e.g. `/ship ios`, `/ship mac`, `/ship both`) — then proceed
+with that selection.
 
 Note: a platform word in the arguments (`ios`, `mac`, `macos`, `both`) selects the
 platform — it is **not** a marketing version. Only treat an argument as a marketing
 version if it looks like one (e.g. `2.1`, `3.3`).
+
+**Submit for review?** (single-select). Options: **Submit for review** (recommended) —
+run Step 10; **Upload only** — stop after Step 9, leaving the build on App Store Connect
+for `/submit` to finish later. **Always ask this** — never infer it from the platform
+answer or from a previous ship. Skip it only if the invocation says so outright
+(e.g. `/ship --no-submit`, "ship but don't submit").
 
 ## Step 2: Determine version bump
 
@@ -212,7 +220,10 @@ What this buys, none of which works on a release with no commits:
 
 ## Step 10: Create the App Store version and submit for review
 
-Run the `submit` skill's flow (`.claude/skills/submit/SKILL.md`) for exactly the platforms this ship
+**Skip this whole step if Step 1 answered "Upload only."** Say so in Step 11: the build is
+uploaded but not submitted, and `/submit` can finish it whenever the user wants.
+
+Otherwise, run the `submit` skill's flow (`.claude/skills/submit/SKILL.md`) for exactly the platforms this ship
 targeted, using the version and build number just uploaded — don't re-detect them.
 
 In short, per platform: create the `<MARKETING_VERSION>` version record with
@@ -236,5 +247,5 @@ Print a summary:
 - Sentry dSYM upload status (per platform)
 - Sentry release + commit association status (once, not per platform)
 - App Store version record created or reused (per platform)
-- Review submission id and state (per platform) — or, if Step 10 failed, that the build is uploaded
-  but not submitted, and that `/submit` can finish it
+- Review submission id and state (per platform) — or, if Step 10 was skipped or failed, that the
+  build is uploaded but **not submitted**, and that `/submit` can finish it
