@@ -9,6 +9,11 @@ disable-model-invocation: true
 Bump the app version, build archives, and upload to App Store Connect. The app is
 multiplatform (macOS + iOS), so each ship targets one or both platforms.
 
+`xcode-select` points at CommandLineTools on this machine, so **every `xcodebuild` below needs
+`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`** — without it the command dies with
+"tool 'xcodebuild' requires Xcode". Archiving also needs `-allowProvisioningUpdates` plus the
+Step 7 API key, or signing fails on a device the Mac Team Provisioning Profile doesn't list.
+
 ## Step 1: Ask what to ship
 
 Ask both questions in **one** `AskUserQuestion` call, up front — never mid-ship, so a
@@ -127,7 +132,7 @@ sentry-cli debug-files upload -o nineva-studios -p screenshot-bro build/screensh
 `destination: export`. Authenticate with the App Store Connect API key (the
 signed-in-Xcode-account path fails with "Failed to Use Accounts" in automated/
 headless contexts — always pass the key):
-- Key file: `/Users/taras/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8`
+- Key file: `/Users/nineva/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8`
 - Key ID: `4KK2B86XC6`
 - Issuer ID: `69a6de84-a676-47e3-e053-5b8c7c11a4d1`
 
@@ -137,9 +142,9 @@ The `.p8` lives in iCloud (outside the repo) — never copy it into the repo.
 2. Run the upload for each selected platform (its own `-exportPath`), passing the API key:
 ```bash
 # macOS
-xcodebuild -exportArchive -archivePath build/screenshot-macos.xcarchive -exportPath build/upload-macos -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates -authenticationKeyPath "/Users/taras/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1
+xcodebuild -exportArchive -archivePath build/screenshot-macos.xcarchive -exportPath build/upload-macos -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates -authenticationKeyPath "/Users/nineva/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1
 # iOS
-xcodebuild -exportArchive -archivePath build/screenshot-ios.xcarchive -exportPath build/upload-ios -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates -authenticationKeyPath "/Users/taras/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1
+xcodebuild -exportArchive -archivePath build/screenshot-ios.xcarchive -exportPath build/upload-ios -exportOptionsPlist ExportOptions.plist -allowProvisioningUpdates -authenticationKeyPath "/Users/nineva/Library/Mobile Documents/com~apple~CloudDocs/Files/AuthKey_4KK2B86XC6_BRO.p8" -authenticationKeyID 4KK2B86XC6 -authenticationKeyIssuerID 69a6de84-a676-47e3-e053-5b8c7c11a4d1
 ```
 3. Revert `ExportOptions.plist` back to `destination: export`
 
