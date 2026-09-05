@@ -34,8 +34,7 @@ extension EditorRowView {
 
     private var scrollAreaContent: some View {
         ScrollViewReader { hProxy in
-            // `inertWhileEditorScrolls()` sits on this scroll view's *content*, below — keeping it
-            // off the scroll view itself is what preserves trackpad horizontal scrolling.
+            // `inertWhileEditorScrolls()` must stay on this scroll view's content, below, not here.
             ScrollView(.horizontal) {
                 // Render the canvas at full (zoom-inclusive) scale instead of a visual-only
                 // `.scaleEffect(zoom)`. Each shape's layout frame then equals its on-screen

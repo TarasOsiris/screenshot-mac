@@ -232,13 +232,11 @@ struct EditorRowLayoutTests {
         let window = makeTestWindow(hosting: host)
         defer { window.close() }
 
-        host.layoutSubtreeIfNeeded()
-        window.displayIfNeeded()
-        try await Task.sleep(for: .milliseconds(50))
+        try await settle(host)
         #expect(probe.publishedCenterXs.isEmpty)
 
         probe.isSelected = true
-        try await settle(host, window)
+        try await settle(host)
 
         let centerX = try? #require(probe.publishedCenterXs.last)
         #expect(centerX != nil)

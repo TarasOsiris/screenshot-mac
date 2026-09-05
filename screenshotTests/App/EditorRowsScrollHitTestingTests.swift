@@ -13,8 +13,7 @@ private struct HitProbe: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
-/// One row of the mirror: the fixed-height `Color.clear` shell, a header-sized block, and the row's
-/// own horizontal `ScrollView` over content wider than the viewport.
+/// Mirrors `EditorRowView`'s shell/overlay nesting: overlay content must not size the parent.
 private struct MirrorRow<Canvas: View>: View {
     @ViewBuilder let canvas: Canvas
 
@@ -60,7 +59,7 @@ private struct GateAroundListHost: View {
         ScrollView(.vertical) {
             LazyVStack(spacing: 0) {
                 ForEach(0..<3) { _ in
-                    MirrorRow { Color.red.frame(width: 4_000, height: 200) }
+                    MirrorRow { HitProbe().frame(width: 4_000, height: 200) }
                 }
             }
             .allowsHitTesting(!scrollState.isScrolling)
@@ -82,10 +81,9 @@ private struct GateAroundListHost: View {
 @MainActor
 struct EditorRowsScrollHitTestingTests {
 
-    /// Pre-order walk, unlike `MiddleMousePanView`'s walk *up* from a hit view, but the same
-    /// `scrollsHorizontally` predicate.
+    /// Walks down, unlike `MiddleMousePanView`'s walk up, but on the same predicate.
     private func firstHorizontalScrollView(in view: NSView) -> NSScrollView? {
-        if let scrollView = view as? NSScrollView, scrollView.scrollsHorizontally {
+        if let scrollView = view as? NSScrollView, scrollView.contentIsWiderThanViewport {
             return scrollView
         }
         for subview in view.subviews {
@@ -101,29 +99,27 @@ struct EditorRowsScrollHitTestingTests {
         return host.hitTest(canvas.convert(center, to: host.superview))
     }
 
-    /// Both halves of the fix on one tree: the canvas keeps receiving wheel events, *and* the gate
-    /// still makes its content inert. Without the second assertion a gate whose environment never
-    /// reached it would pass — having quietly deleted the optimization the flag exists for.
+    /// Without the inert assertion, a gate whose environment never reached it would pass — having
+    /// quietly deleted the optimization the flag exists for.
     @Test func rowCanvasKeepsReceivingWheelEventsWhileItsContentGoesInert() async throws {
         let scrollState = EditorScrollState()
         let host = NSHostingView(rootView: GateInsideRowHost(scrollState: scrollState))
         host.frame = NSRect(x: 0, y: 0, width: 640, height: 400)
         let window = makeTestWindow(hosting: host)
         defer { window.close() }
-        try await settle(host, window)
+        try await settle(host)
 
         let canvas = try #require(firstHorizontalScrollView(in: host))
         #expect(hitView(over: canvas, in: host) is HitProbe.ProbeView, "idle")
 
         scrollState.isScrolling = true
-        try await settle(host, window)
-        #expect(hitView(over: canvas, in: host)?.enclosingScrollView === canvas,
-                "the canvas must stay the wheel target")
-        #expect(!(hitView(over: canvas, in: host) is HitProbe.ProbeView),
-                "its content must go inert")
+        try await settle(host)
+        let scrollingHit = hitView(over: canvas, in: host)
+        #expect(scrollingHit?.enclosingScrollView === canvas, "the canvas must stay the wheel target")
+        #expect(!(scrollingHit is HitProbe.ProbeView), "its content must go inert")
 
         scrollState.isScrolling = false
-        try await settle(host, window)
+        try await settle(host)
         #expect(hitView(over: canvas, in: host) is HitProbe.ProbeView, "live again once it settles")
     }
 
@@ -135,13 +131,13 @@ struct EditorRowsScrollHitTestingTests {
         host.frame = NSRect(x: 0, y: 0, width: 640, height: 400)
         let window = makeTestWindow(hosting: host)
         defer { window.close() }
-        try await settle(host, window)
+        try await settle(host)
 
         let canvas = try #require(firstHorizontalScrollView(in: host))
         #expect(hitView(over: canvas, in: host)?.enclosingScrollView === canvas, "idle")
 
         scrollState.isScrolling = true
-        try await settle(host, window)
+        try await settle(host)
         #expect(hitView(over: canvas, in: host)?.enclosingScrollView !== canvas,
                 "gating above the nested scroll view is what dropped trackpad deltaX")
     }

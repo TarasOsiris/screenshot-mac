@@ -83,11 +83,7 @@ private final class PanCoordinator {
             let clipView = scrollView.contentView
             var origin = clipView.bounds.origin
             origin.x -= deltaX
-            // Clamp to document bounds
-            if let docView = scrollView.documentView {
-                let maxX = max(0, docView.frame.width - clipView.bounds.width)
-                origin.x = min(max(0, origin.x), maxX)
-            }
+            origin.x = min(max(0, origin.x), scrollView.maxHorizontalScrollOffset)
             clipView.setBoundsOrigin(origin)
             scrollView.reflectScrolledClipView(clipView)
 
@@ -123,7 +119,7 @@ private final class PanCoordinator {
     private static func findHorizontalScrollView(from view: NSView) -> NSScrollView? {
         var current: NSView? = view
         while let v = current {
-            if let sv = v as? NSScrollView, sv.scrollsHorizontally { return sv }
+            if let sv = v as? NSScrollView, sv.contentIsWiderThanViewport { return sv }
             current = v.superview
         }
         return nil
@@ -131,12 +127,11 @@ private final class PanCoordinator {
 }
 
 extension NSScrollView {
-    /// A row canvas: content wider than the viewport, so this is the scroll view a horizontal
-    /// gesture over it should reach.
-    var scrollsHorizontally: Bool {
-        guard let documentView else { return false }
-        return documentView.frame.width > contentView.bounds.width
+    var maxHorizontalScrollOffset: CGFloat {
+        max(0, (documentView?.frame.width ?? 0) - contentView.bounds.width)
     }
+
+    var contentIsWiderThanViewport: Bool { maxHorizontalScrollOffset > 0 }
 }
 #endif
 

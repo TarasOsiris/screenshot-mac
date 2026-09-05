@@ -263,9 +263,9 @@ func makeTestWindow(hosting host: NSView) -> NSWindow {
 /// Lets SwiftUI process a pending update, then forces AppKit to realize it, so layout and hit
 /// testing read as settled.
 @MainActor
-func settle(_ host: NSView, _ window: NSWindow) async throws {
+func settle(_ host: NSView) async throws {
     try await Task.sleep(for: .milliseconds(50))
     host.layoutSubtreeIfNeeded()
-    window.displayIfNeeded()
+    host.window?.displayIfNeeded()
     try await Task.sleep(for: .milliseconds(50))
 }

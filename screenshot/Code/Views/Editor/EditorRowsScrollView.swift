@@ -12,7 +12,9 @@ struct EditorRowsScrollView<Content: View>: View {
     /// `inertWhileEditorScrolls()`. Every shape and every row installs tracking areas and gesture
     /// responders, and while the list is moving AppKit re-derives them on each display cycle —
     /// `-[NSScrollView _updateTrackingAreasWithInvalidCursorRects:]` was one of the largest costs
-    /// left in a scrollbar-drag trace. Nothing can be clicked mid-flight anyway.
+    /// left in a scrollbar-drag trace. Only those subtrees go inert, so row-level clicks (select,
+    /// context menu, add-row) still land mid-flight — matching the platform, where a click during
+    /// deceleration is meaningful.
     ///
     /// An object rather than a `@State` Bool published through an `EnvironmentKey`: the rows read
     /// this too, and an environment *value* that changes invalidates every view declaring it —
@@ -69,21 +71,19 @@ final class EditorScrollState {
     var isScrolling = false
 }
 
-/// Optional environment read so a host that omits the injection renders instead of trapping.
 private struct EditorScrollHitTestGate: ViewModifier {
-    @Environment(EditorScrollState.self) private var scrollState: EditorScrollState?
+    @Environment(EditorScrollState.self) private var scrollState
 
     func body(content: Content) -> some View {
-        content.allowsHitTesting(!(scrollState?.isScrolling ?? false))
+        content.allowsHitTesting(!scrollState.isScrolling)
     }
 }
 
 extension View {
-    /// The gate makes its whole subtree unroutable for `scrollWheel:`, because AppKit picks the
-    /// scroll view to scroll by hit test. So apply it *inside* a nested scroll view rather than
-    /// above one — above one it takes that scroll view with it, which is how the row canvases lost
-    /// trackpad horizontal scrolling to the vertical list — and don't grow a scroll view you need
-    /// wheel-routable underneath one.
+    /// Apply *inside* a nested scroll view, never above one: the gate makes its whole subtree
+    /// unroutable for `scrollWheel:`, and AppKit picks the scroll view to scroll by hit test — so
+    /// above one it takes that scroll view with it, which is how the row canvases lost trackpad
+    /// horizontal scrolling to the vertical list.
     func inertWhileEditorScrolls() -> some View {
         modifier(EditorScrollHitTestGate())
     }
