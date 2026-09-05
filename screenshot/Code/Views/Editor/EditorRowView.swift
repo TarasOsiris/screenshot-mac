@@ -151,6 +151,8 @@ struct EditorRowView: View {
             // and ellipsis had from the row-wide animation this replaced, without putting the
             // canvas back inside an animated transaction.
             .animation(Self.selectionFade, value: isSelected)
+            // Safe here: nothing under the header scrolls.
+            .inertWhileEditorScrolls()
 
             if !row.isCollapsed {
                 // No re-key here any more. It existed because a `LazyVStack`'s first lazy pass can

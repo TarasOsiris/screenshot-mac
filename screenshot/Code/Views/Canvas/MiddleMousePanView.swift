@@ -123,14 +123,19 @@ private final class PanCoordinator {
     private static func findHorizontalScrollView(from view: NSView) -> NSScrollView? {
         var current: NSView? = view
         while let v = current {
-            if let sv = v as? NSScrollView,
-               let doc = sv.documentView,
-               doc.frame.width > sv.contentView.bounds.width {
-                return sv
-            }
+            if let sv = v as? NSScrollView, sv.scrollsHorizontally { return sv }
             current = v.superview
         }
         return nil
+    }
+}
+
+extension NSScrollView {
+    /// A row canvas: content wider than the viewport, so this is the scroll view a horizontal
+    /// gesture over it should reach.
+    var scrollsHorizontally: Bool {
+        guard let documentView else { return false }
+        return documentView.frame.width > contentView.bounds.width
     }
 }
 #endif

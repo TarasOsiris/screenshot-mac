@@ -244,3 +244,28 @@ private nonisolated final class ObservationFlag: @unchecked Sendable {
     func set() { lock.lock(); value = true; lock.unlock() }
     var isSet: Bool { lock.lock(); defer { lock.unlock() }; return value }
 }
+
+/// Hosts `host` in a window so SwiftUI lays it out and AppKit hit testing works.
+///
+/// `isReleasedWhenClosed` defaults to true, so a bare `close()` drops a retain ARC still owns: the
+/// window is released a second time when the pool pops, which took down the whole test process from
+/// whatever unrelated test happened to be running.
+@MainActor
+func makeTestWindow(hosting host: NSView) -> NSWindow {
+    let window = NSWindow(
+        contentRect: host.frame, styleMask: [.titled], backing: .buffered, defer: true
+    )
+    window.isReleasedWhenClosed = false
+    window.contentView = host
+    return window
+}
+
+/// Lets SwiftUI process a pending update, then forces AppKit to realize it, so layout and hit
+/// testing read as settled.
+@MainActor
+func settle(_ host: NSView, _ window: NSWindow) async throws {
+    try await Task.sleep(for: .milliseconds(50))
+    host.layoutSubtreeIfNeeded()
+    window.displayIfNeeded()
+    try await Task.sleep(for: .milliseconds(50))
+}

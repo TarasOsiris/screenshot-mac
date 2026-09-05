@@ -89,25 +89,13 @@ struct EditorRowLayoutTests {
         return row
     }
 
-    /// `isReleasedWhenClosed` defaults to true, so a bare `close()` drops a retain ARC still owns:
-    /// the window is released a second time when the pool pops, which took down the whole test
-    /// process from whatever unrelated test happened to be running.
-    private func makeWindow(hosting host: NSView) -> NSWindow {
-        let window = NSWindow(
-            contentRect: host.frame, styleMask: [.titled], backing: .buffered, defer: true
-        )
-        window.isReleasedWhenClosed = false
-        window.contentView = host
-        return window
-    }
-
     // MARK: - The stated height must match the real header
 
     @Test func headerHeightMatchesTheRenderedHeader() {
         for width in [500.0, 900.0, 1400.0] {
             let host = NSHostingView(rootView: HeaderMeasurementHost(row: row()))
             host.frame = NSRect(x: 0, y: 0, width: width, height: 400)
-            let window = makeWindow(hosting: host)
+            let window = makeTestWindow(hosting: host)
             defer { window.close() }
             host.layoutSubtreeIfNeeded()
             #expect(host.fittingSize.height == EditorRowLayout.headerHeight,
@@ -219,7 +207,7 @@ struct EditorRowLayoutTests {
             }
         )
         host.frame = NSRect(x: 0, y: 0, width: 640, height: 400)
-        let window = makeWindow(hosting: host)
+        let window = makeTestWindow(hosting: host)
         defer { window.close() }
         host.layoutSubtreeIfNeeded()
         window.displayIfNeeded()
@@ -241,7 +229,7 @@ struct EditorRowLayoutTests {
         let probe = ScrollGeometrySelectionProbe()
         let host = NSHostingView(rootView: ScrollGeometrySelectionHost(probe: probe))
         host.frame = NSRect(x: 0, y: 0, width: 640, height: 160)
-        let window = makeWindow(hosting: host)
+        let window = makeTestWindow(hosting: host)
         defer { window.close() }
 
         host.layoutSubtreeIfNeeded()
@@ -250,10 +238,7 @@ struct EditorRowLayoutTests {
         #expect(probe.publishedCenterXs.isEmpty)
 
         probe.isSelected = true
-        try await Task.sleep(for: .milliseconds(50))
-        host.layoutSubtreeIfNeeded()
-        window.displayIfNeeded()
-        try await Task.sleep(for: .milliseconds(50))
+        try await settle(host, window)
 
         let centerX = try? #require(probe.publishedCenterXs.last)
         #expect(centerX != nil)

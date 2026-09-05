@@ -8,10 +8,11 @@ import SwiftUI
 struct EditorRowsScrollView<Content: View>: View {
     @ViewBuilder let content: Content
 
-    /// Hit testing is switched off for the duration of a scroll. Every shape and every row installs
-    /// tracking areas and gesture responders, and while the list is moving AppKit re-derives them on
-    /// each display cycle — `-[NSScrollView _updateTrackingAreasWithInvalidCursorRects:]` was one of
-    /// the largest costs left in a scrollbar-drag trace. Nothing can be clicked mid-flight anyway.
+    /// Published so each row can make its heavy subtrees inert for the duration of a scroll — see
+    /// `inertWhileEditorScrolls()`. Every shape and every row installs tracking areas and gesture
+    /// responders, and while the list is moving AppKit re-derives them on each display cycle —
+    /// `-[NSScrollView _updateTrackingAreasWithInvalidCursorRects:]` was one of the largest costs
+    /// left in a scrollbar-drag trace. Nothing can be clicked mid-flight anyway.
     ///
     /// An object rather than a `@State` Bool published through an `EnvironmentKey`: the rows read
     /// this too, and an environment *value* that changes invalidates every view declaring it —
@@ -23,7 +24,6 @@ struct EditorRowsScrollView<Content: View>: View {
     var body: some View {
         ScrollView(.vertical) {
             LazyVStack(spacing: 0) { content }
-                .allowsHitTesting(!scrollState.isScrolling)
                 .environment(scrollState)
         }
         .onScrollPhaseChange { _, phase in
@@ -31,8 +31,8 @@ struct EditorRowsScrollView<Content: View>: View {
         }
     }
 
-    /// Restored without animation: re-enabling hit testing is a structural change to the responder
-    /// tree, and any ambient animation reaching this subtree would otherwise drive it.
+    /// Never animated: an ambient animation reaching the gates below would otherwise drive the
+    /// hit-testing flip, which is a structural change to the responder tree.
     private func setScrolling(_ scrolling: Bool) {
         guard scrolling != scrollState.isScrolling else { return }
         var transaction = Transaction()
@@ -67,4 +67,24 @@ private extension ScrollPhase {
 @Observable
 final class EditorScrollState {
     var isScrolling = false
+}
+
+/// Optional environment read so a host that omits the injection renders instead of trapping.
+private struct EditorScrollHitTestGate: ViewModifier {
+    @Environment(EditorScrollState.self) private var scrollState: EditorScrollState?
+
+    func body(content: Content) -> some View {
+        content.allowsHitTesting(!(scrollState?.isScrolling ?? false))
+    }
+}
+
+extension View {
+    /// The gate makes its whole subtree unroutable for `scrollWheel:`, because AppKit picks the
+    /// scroll view to scroll by hit test. So apply it *inside* a nested scroll view rather than
+    /// above one — above one it takes that scroll view with it, which is how the row canvases lost
+    /// trackpad horizontal scrolling to the vertical list — and don't grow a scroll view you need
+    /// wheel-routable underneath one.
+    func inertWhileEditorScrolls() -> some View {
+        modifier(EditorScrollHitTestGate())
+    }
 }
