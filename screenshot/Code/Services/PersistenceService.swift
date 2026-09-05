@@ -373,22 +373,29 @@ nonisolated struct PersistenceService {
     static func copyProjectFromURL(_ sourceURL: URL, to destId: UUID) -> Bool {
         guard copyDirectory(from: sourceURL, to: projectDir(destId)) else { return false }
         TemplateService.stripTemplateArtifacts(in: projectDir(destId))
-        copySharedFontsIfNeeded(to: destId)
+        let loaded = loadProject(destId)
+        copySharedFonts(to: destId, referencedBy: loaded)
         // Update modifiedAt so iCloud sync treats this as a fresh project
-        if var data = loadProject(destId) {
+        if var data = loaded {
             data.modifiedAt = Date()
             try? saveProject(destId, data: data)
         }
         return true
     }
 
-    private static func copySharedFontsIfNeeded(to projectId: UUID) {
+    /// A template's fonts live in the bundle's `shared/fonts`; the project gets its own copy so it
+    /// survives iCloud sync and transfer. Only the ones it actually uses — copying all of them put
+    /// ~1.2 MB of dead weight in every project, which nothing reclaimed. `data` is nil only when
+    /// the copied `project.json` won't decode, where copying everything is the safe guess.
+    private static func copySharedFonts(to projectId: UUID, referencedBy data: ProjectData?) {
         guard let sharedFontsURL = TemplateService.sharedFontsURL else { return }
         let fm = FileManager.default
         guard let fonts = try? fm.contentsOfDirectory(at: sharedFontsURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return }
+        let referenced = data?.referencedFontNames()
         let destResources = resourcesDir(projectId)
         try? fm.createDirectory(at: destResources, withIntermediateDirectories: true)
         for fontURL in fonts {
+            if let referenced, referenced.isDisjoint(with: CustomFont.identityKeys(at: fontURL)) { continue }
             let destURL = destResources.appendingPathComponent(fontURL.lastPathComponent)
             if !fm.fileExists(atPath: destURL.path) {
                 try? fm.copyItem(at: fontURL, to: destURL)

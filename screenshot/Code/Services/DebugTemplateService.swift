@@ -230,35 +230,13 @@ enum DebugTemplateService {
         }
     }
 
-    /// Collects all font family names referenced by shapes and locale overrides in a project.
+    /// The names stored on shapes, plus the family each resolves to. Promotion runs with the
+    /// authoring project's fonts registered, so the resolved family is available here and only
+    /// widens the match — over-promoting to `shared/fonts` is harmless, under-promoting would
+    /// strand a template without its font.
     private static func referencedFontFamilies(in projectData: ProjectData) -> Set<String> {
-        var families = Set<String>()
-        for row in projectData.rows {
-            for shape in row.shapes {
-                if let name = shape.fontName {
-                    families.insert(name)
-                    families.insert(CustomFontRegistry.resolve(name).family)
-                }
-            }
-        }
-        if let localeState = projectData.localeState {
-            for (_, shapeOverrides) in localeState.overrides {
-                for (_, override_) in shapeOverrides {
-                    if let name = override_.fontName {
-                        families.insert(name)
-                        families.insert(CustomFontRegistry.resolve(name).family)
-                    }
-                }
-            }
-        }
-        return families
-    }
-
-    /// Returns the identifier set used to match a font file against stored shape values.
-    /// This includes both the raw family name and the style-qualified display name.
-    private static func fontIdentityKeys(for url: URL) -> Set<String> {
-        guard let font = CustomFont.parseMetadata(at: url) else { return [] }
-        return [font.familyName, font.displayName]
+        let stored = projectData.referencedFontNames()
+        return stored.union(stored.map { CustomFontRegistry.resolve($0).family })
     }
 
     /// Moves font files that are actually used by the project from a template's resources
@@ -271,7 +249,7 @@ enum DebugTemplateService {
         guard let files = try? fm.contentsOfDirectory(at: templateResources, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return }
 
         for file in files where CustomFontLibrary.fontExtensions.contains(file.pathExtension.lowercased()) {
-            let keys = fontIdentityKeys(for: file)
+            let keys = CustomFont.identityKeys(at: file)
             if !keys.isEmpty && !usedFontFamilies.isDisjoint(with: keys) {
                 let sharedDest = sharedFontsURL.appendingPathComponent(file.lastPathComponent)
                 if !fm.fileExists(atPath: sharedDest.path) {

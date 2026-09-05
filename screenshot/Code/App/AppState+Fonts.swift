@@ -58,7 +58,12 @@ extension AppState {
         fonts.cleanupUnreferencedThrottled(referenced: allReferencedFontFamilies(), projectId: activeProjectId)
     }
 
-    func seedReferencedFontFamiliesFromLoadedProject() {
-        fonts.seedReferenced(allReferencedFontFamilies())
+    /// One document walk for both halves of the freshly loaded project's font bookkeeping: seed
+    /// the reference tracker, then hand back any bundled template font this project never used.
+    func seedAndReclaimFontsForLoadedProject() {
+        let referenced = allReferencedFontFamilies()
+        fonts.seedReferenced(referenced)
+        guard let activeProjectId else { return }
+        fonts.reclaimUnusedSharedFonts(referenced: referenced, projectId: activeProjectId)
     }
 }

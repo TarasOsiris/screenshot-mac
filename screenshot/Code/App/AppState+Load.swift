@@ -259,7 +259,7 @@ extension AppState {
         } else {
             cleanupOrphanedResourceFiles(for: projectId)
         }
-        seedReferencedFontFamiliesFromLoadedProject()
+        seedAndReclaimFontsForLoadedProject()
         // Otherwise a crash between opening a project and the first save tick carries no document
         // context at all — and "opened a project, then it crashed" is the common report shape.
         updateCrashDocumentContext()

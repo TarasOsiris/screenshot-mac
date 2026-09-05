@@ -179,7 +179,7 @@ dev_w = correct_w
 
 ## Step 5: Fonts
 
-Shared fonts live in `screenshot/Templates.bundle/shared/fonts/`. Template `resources/` directories should NOT contain fonts — they are copied into projects at load time by `PersistenceService.copySharedFontsIfNeeded()`. No action needed here unless introducing a new font not already in `shared/fonts/`.
+Shared fonts live in `screenshot/Templates.bundle/shared/fonts/`. Template `resources/` directories should NOT contain fonts — `PersistenceService.copySharedFonts(to:referencedBy:)` copies them into a project when it is created from the template, and **only the ones the template's `project.json` actually names** (matched against `CustomFont.identityKeys`, which covers both the family name and each named instance's display name). So a template whose text is all system fonts gets no font files at all. No action needed here unless introducing a new font not already in `shared/fonts/` — in which case check `SharedTemplateFontsTests`, which asserts every template's font names resolve to a system family or a shipped file.
 
 ## Step 6: Build project.json
 

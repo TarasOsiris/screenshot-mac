@@ -241,6 +241,33 @@ final class CustomFontLibrary {
         refreshAvailableFamilies(projectId: activeId)
     }
 
+    /// Reclaims bundled template fonts that `PersistenceService.copySharedFonts` left in a project
+    /// which never used them — 4.12 and earlier copied all of them into every template project.
+    /// `cleanupUnreferenced`'s "was once referenced" guard exists to protect a user font imported
+    /// but not yet applied, so it can never reach these; the file name is what tells them apart —
+    /// it matches one we ship in `Templates.bundle/shared/fonts`. A user import that happens to
+    /// share a shipped file name is reclaimed with them, and is re-importable.
+    func reclaimUnusedSharedFonts(referenced: Set<String>, projectId activeId: UUID) {
+        guard !customFonts.isEmpty, let sharedFontsURL = TemplateService.sharedFontsURL else { return }
+        let shipped = Set(
+            ((try? FileManager.default.contentsOfDirectory(
+                at: sharedFontsURL,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            )) ?? []).map(\.lastPathComponent)
+        )
+        guard !shipped.isEmpty else { return }
+        let toRemove = customFonts.filter { fileName, font in
+            shipped.contains(fileName) && !referenced.contains(font.familyName)
+        }
+        guard !toRemove.isEmpty else { return }
+        for fileName in toRemove.keys {
+            removeCustomFontFile(fileName, projectId: activeId)
+        }
+        CrashReportingService.breadcrumb(.project, "Reclaimed unused bundled fonts", data: ["count": toRemove.count])
+        refreshAvailableFamilies(projectId: activeId)
+    }
+
     /// Autosave-path variant: reclaiming unused font files only needs to happen
     /// eventually, so the full-document walk is throttled instead of running on
     /// every 0.3 s save tick. Quit (`saveAll`) and project switch still run the

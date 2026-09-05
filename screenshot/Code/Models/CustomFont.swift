@@ -107,6 +107,13 @@ nonisolated struct CustomFont: Hashable {
         return make(from: first, fileName: url.lastPathComponent)
     }
 
+    /// Every name a stored `shape.fontName` could hold for this file: the family plus each named
+    /// instance's display name. The picker writes either form, so matching a variable font on
+    /// `parseMetadata`'s first descriptor alone under-matches.
+    static func identityKeys(at url: URL) -> Set<String> {
+        Set(allInstances(at: url).flatMap { [$0.familyName, $0.displayName] })
+    }
+
     /// Every named instance a font file exposes. A variable font reports one descriptor per
     /// named instance (Thin…Black); a static font reports a single descriptor. Used to build
     /// the per-family variant table so a bare family name (e.g. "DM Sans") can resolve to the

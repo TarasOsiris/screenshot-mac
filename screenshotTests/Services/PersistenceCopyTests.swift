@@ -12,11 +12,37 @@ struct PersistenceCopyTests {
         try body(dir)
     }
 
-    private func makeTemplateDirectory() throws -> URL {
+    private func makeTemplateDirectory(fontName: String? = nil) throws -> URL {
         let source = makeTemporaryDataDirectory(label: "persistence-copy-source")
-        let data = try PersistenceService.encoder.encode(ProjectData(rows: [ScreenshotRow(label: "Hero")]))
+        var row = ScreenshotRow(label: "Hero")
+        if let fontName {
+            row.shapes = [CanvasShapeModel(type: .text, text: "Hello", fontName: fontName)]
+        }
+        let data = try PersistenceService.encoder.encode(ProjectData(rows: [row]))
         try data.write(to: source.appendingPathComponent("project.json"), options: .atomic)
         return source
+    }
+
+    private func copiedFontFileNames(for id: UUID) -> Set<String> {
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: PersistenceService.resourcesDir(id),
+            includingPropertiesForKeys: nil
+        )) ?? []
+        return Set(
+            files
+                .filter { CustomFontLibrary.fontExtensions.contains($0.pathExtension.lowercased()) }
+                .map(\.lastPathComponent)
+        )
+    }
+
+    private func shippedSharedFontFileNames() throws -> Set<String> {
+        let sharedFontsURL = try #require(TemplateService.sharedFontsURL)
+        let files = try FileManager.default.contentsOfDirectory(
+            at: sharedFontsURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        )
+        return Set(files.map(\.lastPathComponent))
     }
 
     @Test func copyFromURLSucceedsWhenProjectsDirectoryIsMissing() throws {
@@ -37,6 +63,86 @@ struct PersistenceCopyTests {
                 .appendingPathComponent("nope", isDirectory: true)
 
             #expect(!PersistenceService.copyProjectFromURL(missing, to: UUID()))
+        }
+    }
+
+    /// verdant-calm's exact shape: every text shape on a system family, so none of the bundled
+    /// fonts belong in the project. Copying all four is what put ~1.2 MB of dead weight in it.
+    @Test func copyFromURLCopiesNoSharedFontsForASystemFontTemplate() throws {
+        try withTempDataDir { _ in
+            let source = try makeTemplateDirectory(fontName: "Avenir Next")
+            defer { try? FileManager.default.removeItem(at: source) }
+
+            let id = UUID()
+            #expect(PersistenceService.copyProjectFromURL(source, to: id))
+            #expect(copiedFontFileNames(for: id).isEmpty)
+        }
+    }
+
+    @Test func copyFromURLCopiesOnlyTheFontMatchedByFamilyName() throws {
+        try withTempDataDir { _ in
+            let source = try makeTemplateDirectory(fontName: "DM Sans")
+            defer { try? FileManager.default.removeItem(at: source) }
+
+            let id = UUID()
+            #expect(PersistenceService.copyProjectFromURL(source, to: id))
+            #expect(copiedFontFileNames(for: id) == ["DMSans-VariableFont_opsz,wght.ttf"])
+        }
+    }
+
+    /// The picker writes a style-qualified display name, which is not the file's family name —
+    /// matching on the family alone would silently drop this template's font.
+    @Test func copyFromURLCopiesOnlyTheFontMatchedByDisplayName() throws {
+        try withTempDataDir { _ in
+            let source = try makeTemplateDirectory(fontName: "Playfair Display Italic")
+            defer { try? FileManager.default.removeItem(at: source) }
+
+            let id = UUID()
+            #expect(PersistenceService.copyProjectFromURL(source, to: id))
+            #expect(copiedFontFileNames(for: id) == ["PlayfairDisplay-Italic-VariableFont_wght.ttf"])
+        }
+    }
+
+    private func bundledTemplateURL(_ name: String) throws -> URL {
+        let bundleURL = try #require(Bundle.main.url(forResource: "Templates", withExtension: "bundle"))
+        let templateURL = bundleURL.appendingPathComponent(name, isDirectory: true)
+        #expect(FileManager.default.fileExists(atPath: templateURL.appendingPathComponent("project.json").path))
+        return templateURL
+    }
+
+    /// The bug as reported: verdant-calm is entirely Avenir Next, and used to land four fonts.
+    @Test func copyingTheRealVerdantCalmTemplateCopiesNoFonts() throws {
+        try withTempDataDir { _ in
+            let template = try bundledTemplateURL("verdant-calm")
+            let id = UUID()
+            #expect(PersistenceService.copyProjectFromURL(template, to: id))
+            #expect(copiedFontFileNames(for: id).isEmpty)
+        }
+    }
+
+    /// The other end of the range: a template that genuinely uses three of the four still gets them.
+    @Test func copyingTheRealPaperTemplateCopiesTheThreeFontsItUses() throws {
+        try withTempDataDir { _ in
+            let template = try bundledTemplateURL("paper")
+            let id = UUID()
+            #expect(PersistenceService.copyProjectFromURL(template, to: id))
+            #expect(copiedFontFileNames(for: id) == [
+                "DMSans-VariableFont_opsz,wght.ttf",
+                "PlayfairDisplay-Italic-VariableFont_wght.ttf",
+                "Tinos-Bold.ttf",
+            ])
+        }
+    }
+
+    @Test func copyFromURLCopiesEverySharedFontWhenTheProjectCannotBeDecoded() throws {
+        try withTempDataDir { _ in
+            let source = makeTemporaryDataDirectory(label: "persistence-copy-source")
+            defer { try? FileManager.default.removeItem(at: source) }
+            try Data("not json".utf8).write(to: source.appendingPathComponent("project.json"), options: .atomic)
+
+            let id = UUID()
+            #expect(PersistenceService.copyProjectFromURL(source, to: id))
+            #expect(copiedFontFileNames(for: id) == (try shippedSharedFontFileNames()))
         }
     }
 }

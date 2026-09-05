@@ -138,3 +138,24 @@ nonisolated struct ProjectData: Codable {
         name = try c.decodeIfPresent(String.self, forKey: .name)
     }
 }
+
+extension ProjectData {
+    /// Font names exactly as the picker stored them on shapes and locale overrides. Deliberately
+    /// not resolved through `CustomFontRegistry`: the copy path runs before this project's fonts
+    /// are registered, so the registry still holds the outgoing project's. `CustomFont.identityKeys`
+    /// is what closes the family-vs-display-name gap instead.
+    nonisolated func referencedFontNames() -> Set<String> {
+        var names = Set<String>()
+        for row in rows {
+            for shape in row.shapes {
+                if let name = shape.fontName, !name.isEmpty { names.insert(name) }
+            }
+        }
+        for shapeOverrides in (localeState?.overrides ?? [:]).values {
+            for override in shapeOverrides.values {
+                if let name = override.fontName, !name.isEmpty { names.insert(name) }
+            }
+        }
+        return names
+    }
+}
