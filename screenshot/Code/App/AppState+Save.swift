@@ -217,9 +217,18 @@ extension AppState {
 
     @discardableResult
     func saveIndex() -> Bool {
+        saveIndex(at: PersistenceService.rootURL)
+    }
+
+    /// Writes to an explicit root. A recovery write-back must use the root the rebuild was read
+    /// from, not the live one — otherwise a container resolving in between puts a locally rebuilt
+    /// "Recovered Project" index into iCloud, which is the failure `loadIndexOrRecover` exists to
+    /// prevent.
+    @discardableResult
+    func saveIndex(at root: URL) -> Bool {
         let index = makeIndexSnapshotForSave()
         do {
-            try PersistenceService.saveIndex(index)
+            try PersistenceService.saveIndex(index, at: root)
             return true
         } catch {
             reportIndexSaveFailure(error)

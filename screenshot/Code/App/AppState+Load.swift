@@ -127,12 +127,13 @@ extension AppState {
     /// `AppState.init`, where a synchronous font registration + JSON decode + catalog merge froze
     /// the app with nothing on screen to explain it.
     private func reloadLocalFromDisk() {
-        if let (index, wasRecovered) = PersistenceService.loadIndexOrRecover() {
-            projects = index.projects.purgingOldTombstones()
-            selectActiveProjectAfterReload(preferred: index.activeProjectId)
+        if let loaded = PersistenceService.loadIndexOrRecover() {
+            projects = loaded.index.projects.purgingOldTombstones()
+            selectActiveProjectAfterReload(preferred: loaded.index.activeProjectId)
             // Write the rebuild back now: the next launch must not have to recover again, and
-            // nothing else here schedules a save.
-            if wasRecovered { saveIndex() }
+            // nothing else here schedules a save. To `loaded.root`, not the live one — a
+            // container resolving mid-reload must not redirect a local rebuild into iCloud.
+            if loaded.wasRecovered { saveIndex(at: loaded.root) }
         }
         hasCompletedInitialLoad = true
         guard let activeId = activeProjectId else { return }
@@ -148,7 +149,8 @@ extension AppState {
         let indexURL = PersistenceService.indexURL
         let projectURLs = projects.map { PersistenceService.projectDataURL($0.id) }
 
-        let loadedIndex = await Task.detached(priority: .userInitiated) { () -> (index: ProjectIndex, wasRecovered: Bool)? in
+        let loadedIndex = await Task.detached(priority: .userInitiated) {
+            () -> (index: ProjectIndex, wasRecovered: Bool, root: URL)? in
             let sync = ICloudSyncService.shared
             sync.resolveConflicts(at: indexURL)
             // Resolve conflicts on all known projects, not just the active one, so switching
@@ -159,28 +161,30 @@ extension AppState {
 
         if Task.isCancelled { return }
 
-        if let (index, wasRecovered) = loadedIndex {
+        if let loaded = loadedIndex {
             // A rebuilt index still has to be written even when it changes nothing in memory:
             // it was reconstructed from the project directories and isn't on disk yet.
-            var needsWriteBack = wasRecovered
+            var needsWriteBack = loaded.wasRecovered
             if !projects.isEmpty {
                 // Tombstone-aware merge: union by UUID, LWW for alive pairs, delete-wins for
                 // conflicts. A rebuild goes through it too — the directories it was built from
                 // carry no tombstones, and this is what puts the in-memory ones back.
-                let mergedRaw = projects.merged(with: index.projects)
+                let mergedRaw = projects.merged(with: loaded.index.projects)
                 needsWriteBack = needsWriteBack || mergedRaw != projects
                 projects = mergedRaw.purgingOldTombstones()
             } else {
-                projects = index.projects.purgingOldTombstones()
+                projects = loaded.index.projects.purgingOldTombstones()
             }
             // Persist merge result so tombstones propagate back. Keep recordOwnWrite →
-            // saveIndex → snapshotAfterWrite together (no await between them).
+            // saveIndex → snapshotAfterWrite together (no await between them), and point all
+            // three at the root the read came from so the own-write bookkeeping names the file
+            // actually written.
             if needsWriteBack {
-                iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL])
-                saveIndex()
+                iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL(at: loaded.root)])
+                saveIndex(at: loaded.root)
                 iCloudMonitor?.snapshotAfterWrite()
             }
-            selectActiveProjectAfterReload(preferred: index.activeProjectId)
+            selectActiveProjectAfterReload(preferred: loaded.index.activeProjectId)
         }
 
         // Set once the index has been processed — independent of the (longer, more cancellable)

@@ -55,13 +55,13 @@ struct ProjectIndexRecoveryTests {
     // MARK: - Rebuild
 
     @Test func rebuildRecoversProjectsWithTheirPersistedNames() throws {
-        try withTempDataDir { _ in
+        try withTempDataDir { root in
             let older = UUID()
             let newer = UUID()
             try writeProject(older, name: "Older App", modifiedAt: Date(timeIntervalSince1970: 1_000))
             try writeProject(newer, name: "Newer App", modifiedAt: Date(timeIntervalSince1970: 2_000))
 
-            let rebuilt = try #require(PersistenceService.rebuildIndexFromProjectDirs())
+            let rebuilt = try #require(PersistenceService.rebuildIndexFromProjectDirs(at: root))
 
             #expect(rebuilt.projects.count == 2)
             #expect(rebuilt.projects.map(\.name) == ["Newer App", "Older App"])
@@ -71,10 +71,10 @@ struct ProjectIndexRecoveryTests {
     }
 
     @Test func rebuildFallsBackToAPlaceholderNameForProjectsSavedBeforeTheNameShipped() throws {
-        try withTempDataDir { _ in
+        try withTempDataDir { root in
             try writeProject(UUID(), name: nil)
 
-            let rebuilt = try #require(PersistenceService.rebuildIndexFromProjectDirs())
+            let rebuilt = try #require(PersistenceService.rebuildIndexFromProjectDirs(at: root))
 
             #expect(rebuilt.projects.count == 1)
             #expect(rebuilt.projects[0].name == String(localized: "Recovered Project"))
@@ -82,7 +82,7 @@ struct ProjectIndexRecoveryTests {
     }
 
     @Test func rebuildSkipsJunkInsteadOfFailing() throws {
-        try withTempDataDir { _ in
+        try withTempDataDir { root in
             let good = UUID()
             try writeProject(good, name: "Real")
 
@@ -98,15 +98,15 @@ struct ProjectIndexRecoveryTests {
             let empty = PersistenceService.projectDirectoryURL(UUID())
             try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: true)
 
-            let rebuilt = try #require(PersistenceService.rebuildIndexFromProjectDirs())
+            let rebuilt = try #require(PersistenceService.rebuildIndexFromProjectDirs(at: root))
 
             #expect(rebuilt.projects.map(\.id) == [good])
         }
     }
 
     @Test func rebuildReturnsNilWhenThereIsNothingToRecover() {
-        withTempDataDir { _ in
-            #expect(PersistenceService.rebuildIndexFromProjectDirs() == nil)
+        withTempDataDir { root in
+            #expect(PersistenceService.rebuildIndexFromProjectDirs(at: root) == nil)
         }
     }
 
@@ -184,6 +184,46 @@ struct ProjectIndexRecoveryTests {
 
         let rewritten = try #require(PersistenceService.loadIndex())
         #expect(rewritten.projects.map(\.id) == [id])
+    }
+
+    // MARK: - Write-back root
+
+    /// The caller has to know *where* the recovery read from, or its write-back resolves the root
+    /// a second time and can land in a different store than the one it rebuilt from.
+    @Test func recoveryReportsTheRootItReadFrom() throws {
+        try withTempDataDir { root in
+            try writeProject(UUID(), name: "Survivor")
+
+            let recovered = try #require(PersistenceService.loadIndexOrRecover(isUsingICloud: false))
+
+            #expect(recovered.wasRecovered)
+            #expect(recovered.root == root)
+        }
+    }
+
+    /// The other half of the same guard: a write-back aimed at an explicit root must not fall
+    /// through to the live one, or a container resolving mid-reload puts a locally rebuilt
+    /// "Recovered Project" index into iCloud.
+    @MainActor
+    @Test func aWriteBackGoesToItsOwnRootAndLeavesTheLiveOneAlone() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+
+        let destination = makeTemporaryDataDirectory(label: "project-index-recovery-writeback")
+        defer { try? FileManager.default.removeItem(at: destination) }
+
+        let liveIndexBefore = try Data(contentsOf: PersistenceService.indexURL)
+        state.projects = [Project(id: UUID(), name: "Written Elsewhere")]
+
+        #expect(state.saveIndex(at: destination))
+
+        let written = try PersistenceService.decoder.decode(
+            ProjectIndex.self,
+            from: Data(contentsOf: PersistenceService.indexURL(at: destination))
+        )
+        #expect(written.projects.map(\.name) == ["Written Elsewhere"])
+        #expect(try Data(contentsOf: PersistenceService.indexURL) == liveIndexBefore,
+                "The live root must be untouched by a write-back aimed elsewhere")
     }
 
     // MARK: - Backward compatibility

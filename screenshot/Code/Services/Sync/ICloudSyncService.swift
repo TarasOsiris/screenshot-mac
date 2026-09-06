@@ -38,14 +38,6 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
         iCloudContainerURL?.appendingPathComponent(Self.dataSubpath, isDirectory: true)
     }
 
-    /// The active root URL for project storage.
-    var activeRootURL: URL {
-        if isUsingICloud, let url = iCloudDataURL {
-            return url
-        }
-        return PersistenceService.localRootURL
-    }
-
     private init() {}
 
     // MARK: - Container Resolution

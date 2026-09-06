@@ -246,21 +246,23 @@ nonisolated struct PersistenceService {
     /// project's data is still sitting in `projects/<uuid>/` — without this, a missing
     /// `projects.json` presents as "all your projects are gone" and the next save writes an empty
     /// index over the top. Returns nil (callers keep their current list) when there is nothing to
-    /// recover; `wasRecovered` tells the caller to persist what it got back.
-    static func loadIndexOrRecover() -> (index: ProjectIndex, wasRecovered: Bool)? {
+    /// recover; `wasRecovered` tells the caller to persist what it got back, and `root` is the
+    /// root it must persist it to — writing a rebuild back to the *live* root is the same race
+    /// this function closes internally, just moved to the caller.
+    static func loadIndexOrRecover() -> (index: ProjectIndex, wasRecovered: Bool, root: URL)? {
         loadIndexOrRecover(isUsingICloud: isUsingICloud)
     }
 
     /// `isUsingICloud` is injected so both branches are testable — the real flag needs a resolved
     /// ubiquity container, which a test process never has.
-    static func loadIndexOrRecover(isUsingICloud: Bool) -> (index: ProjectIndex, wasRecovered: Bool)? {
+    static func loadIndexOrRecover(isUsingICloud: Bool) -> (index: ProjectIndex, wasRecovered: Bool, root: URL)? {
         // One root for the whole operation, so the read and the rebuild guard below can't
         // disagree about the storage mode.
         let root = rootURL(isUsingICloud: isUsingICloud)
         let result = loadIndex(at: root)
         switch result {
         case .loaded(let index):
-            return (index, false)
+            return (index, false, root)
         case .absent, .unreadable:
             // Local only, and the reason is the same for both: an iCloud index may simply not be
             // there *yet* — the container can still be materializing, the coordinated read can
@@ -283,15 +285,15 @@ nonisolated struct PersistenceService {
                 reason = "absent"
             }
             reportRebuild(rebuilt, reason: reason)
-            return (rebuilt, true)
+            return (rebuilt, true, root)
         }
     }
 
     /// Best-effort scan of `projects/` for anything that still decodes. Junk entries are skipped
-    /// silently — the point is to salvage what is there, not to audit the folder. `root` defaults
-    /// to the live global root for existing (non-racy) call sites and tests; `loadIndexOrRecover`
-    /// passes the exact root it already gated the rebuild decision on.
-    static func rebuildIndexFromProjectDirs(at root: URL = rootURL) -> ProjectIndex? {
+    /// silently — the point is to salvage what is there, not to audit the folder. `root` is
+    /// explicit and has no default: the only safe root here is the one the caller already gated
+    /// its rebuild decision on, and a default would quietly reintroduce the live-global read.
+    static func rebuildIndexFromProjectDirs(at root: URL) -> ProjectIndex? {
         let entries = (try? FileManager.default.contentsOfDirectory(
             at: projectsDir(at: root),
             includingPropertiesForKeys: nil,
