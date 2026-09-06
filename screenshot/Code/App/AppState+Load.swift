@@ -103,21 +103,24 @@ extension AppState {
     }
 
     func reloadFromDisk() {
+        // Read once and thread it down: the branch below and every root resolved under it must
+        // agree about the storage mode, whatever a resolving container does meanwhile.
+        let isUsingICloud = PersistenceService.isUsingICloud
         CrashReportingService.breadcrumb(
             .persistence,
             "Reloading from disk",
-            data: ["storage": PersistenceService.isUsingICloud ? "icloud" : "local", "projects": projects.count]
+            data: ["storage": isUsingICloud ? "icloud" : "local", "projects": projects.count]
         )
         // The local path reads with plain `Data(contentsOf:)` — fast, no file coordination —
         // so it stays synchronous. The iCloud path can block on undownloaded files and runs
         // off-main to avoid freezing the UI (the freeze when enabling sync with many projects).
-        guard PersistenceService.isUsingICloud else {
+        guard isUsingICloud else {
             reloadLocalFromDisk()
             return
         }
         reloadTask?.cancel()
         reloadTask = Task { @MainActor [weak self] in
-            await self?.reloadICloudFromDisk()
+            await self?.reloadICloudFromDisk(root: PersistenceService.rootURL(isUsingICloud: true))
         }
     }
 
@@ -131,8 +134,7 @@ extension AppState {
             projects = loaded.index.projects.purgingOldTombstones()
             selectActiveProjectAfterReload(preferred: loaded.index.activeProjectId)
             // Write the rebuild back now: the next launch must not have to recover again, and
-            // nothing else here schedules a save. To `loaded.root`, not the live one — a
-            // container resolving mid-reload must not redirect a local rebuild into iCloud.
+            // nothing else here schedules a save.
             if loaded.wasRecovered { saveIndex(at: loaded.root) }
         }
         hasCompletedInitialLoad = true
@@ -145,18 +147,17 @@ extension AppState {
     /// actor. `reloadTask` serializes overlapping remote changes so the own-write bookkeeping
     /// (`recordOwnWrite`/`saveIndex`/`snapshotAfterWrite`) never races.
     @MainActor
-    private func reloadICloudFromDisk() async {
-        let indexURL = PersistenceService.indexURL
-        let projectURLs = projects.map { PersistenceService.projectDataURL($0.id) }
+    private func reloadICloudFromDisk(root: URL) async {
+        let indexURL = PersistenceService.indexURL(at: root)
+        let projectURLs = projects.map { PersistenceService.projectDataURL($0.id, at: root) }
 
-        let loadedIndex = await Task.detached(priority: .userInitiated) {
-            () -> (index: ProjectIndex, wasRecovered: Bool, root: URL)? in
+        let loadedIndex = await Task.detached(priority: .userInitiated) { () -> PersistenceService.LoadedIndex? in
             let sync = ICloudSyncService.shared
             sync.resolveConflicts(at: indexURL)
             // Resolve conflicts on all known projects, not just the active one, so switching
             // projects later doesn't hit stale conflicts.
             for url in projectURLs { sync.resolveConflicts(at: url) }
-            return PersistenceService.loadIndexOrRecover()
+            return PersistenceService.loadIndexOrRecover(isUsingICloud: true)
         }.value
 
         if Task.isCancelled { return }
@@ -176,9 +177,9 @@ extension AppState {
                 projects = loaded.index.projects.purgingOldTombstones()
             }
             // Persist merge result so tombstones propagate back. Keep recordOwnWrite →
-            // saveIndex → snapshotAfterWrite together (no await between them), and point all
-            // three at the root the read came from so the own-write bookkeeping names the file
-            // actually written.
+            // saveIndex → snapshotAfterWrite together (no await between them). The monitor's own
+            // `snapshotAfterWrite` still stamps the live index, so it only suppresses the reload
+            // while `loaded.root` is the live root — which is the case this write-back expects.
             if needsWriteBack {
                 iCloudMonitor?.recordOwnWrite([PersistenceService.indexURL(at: loaded.root)])
                 saveIndex(at: loaded.root)

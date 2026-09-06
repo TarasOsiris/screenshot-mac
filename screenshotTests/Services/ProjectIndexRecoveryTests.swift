@@ -188,22 +188,8 @@ struct ProjectIndexRecoveryTests {
 
     // MARK: - Write-back root
 
-    /// The caller has to know *where* the recovery read from, or its write-back resolves the root
-    /// a second time and can land in a different store than the one it rebuilt from.
-    @Test func recoveryReportsTheRootItReadFrom() throws {
-        try withTempDataDir { root in
-            try writeProject(UUID(), name: "Survivor")
-
-            let recovered = try #require(PersistenceService.loadIndexOrRecover(isUsingICloud: false))
-
-            #expect(recovered.wasRecovered)
-            #expect(recovered.root == root)
-        }
-    }
-
-    /// The other half of the same guard: a write-back aimed at an explicit root must not fall
-    /// through to the live one, or a container resolving mid-reload puts a locally rebuilt
-    /// "Recovered Project" index into iCloud.
+    /// A write-back aimed at an explicit root must not fall through to the live one, or a
+    /// container resolving mid-reload puts a locally rebuilt "Recovered Project" index into iCloud.
     @MainActor
     @Test func aWriteBackGoesToItsOwnRootAndLeavesTheLiveOneAlone() throws {
         let (state, tempDir) = makeTestState()
@@ -217,10 +203,10 @@ struct ProjectIndexRecoveryTests {
 
         #expect(state.saveIndex(at: destination))
 
-        let written = try PersistenceService.decoder.decode(
-            ProjectIndex.self,
-            from: Data(contentsOf: PersistenceService.indexURL(at: destination))
-        )
+        guard case .loaded(let written) = PersistenceService.loadIndex(at: destination) else {
+            Issue.record("The index did not land at the requested root")
+            return
+        }
         #expect(written.projects.map(\.name) == ["Written Elsewhere"])
         #expect(try Data(contentsOf: PersistenceService.indexURL) == liveIndexBefore,
                 "The live root must be untouched by a write-back aimed elsewhere")
@@ -265,13 +251,16 @@ struct ProjectIndexRecoveryTests {
     }
 
     /// Local storage has no other copy to wait for, so rebuilding is still the right call there.
+    /// The reported `root` is what the caller's write-back must target — resolving it a second
+    /// time is how a local rebuild ends up in iCloud.
     @Test func localStillRebuildsAMissingIndex() throws {
-        try withTempDataDir { _ in
+        try withTempDataDir { root in
             let id = UUID()
             try writeProject(id, name: "Real Name")
 
             let recovered = try #require(PersistenceService.loadIndexOrRecover(isUsingICloud: false))
             #expect(recovered.wasRecovered)
+            #expect(recovered.root == root)
             #expect(recovered.index.projects.map(\.name) == ["Real Name"])
             #expect(recovered.index.projects.map(\.id) == [id])
         }

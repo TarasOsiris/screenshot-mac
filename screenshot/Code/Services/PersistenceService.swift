@@ -49,22 +49,13 @@ nonisolated struct PersistenceService {
         rootURL(isUsingICloud: isUsingICloud)
     }
 
-    /// Resolves the root from an explicit iCloud flag rather than re-deriving it from live global
-    /// state. `loadIndexOrRecover` captures `isUsingICloud` once and must read the same root it
-    /// gated the destructive rebuild on — a container resolution completing between two separate
-    /// reads of the global flag is exactly the "container still materializing" race the rebuild
-    /// guard exists to close, so the flag and the root it reads from must come from one snapshot.
+    /// Takes the flag rather than reading it, so a caller that gates on `isUsingICloud` reads the
+    /// root that flag describes — a container resolving between the two lets them disagree.
     static func rootURL(isUsingICloud: Bool) -> URL {
-        if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
-            return URL(fileURLWithPath: override, isDirectory: true)
-        }
-        if isUsingTemporaryRootDirectory || isRunningUnderXCTest {
-            return temporaryRootURL
-        }
-        if isUsingICloud, let url = ICloudSyncService.shared.iCloudDataURL {
+        if !hasDataDirOverride, isUsingICloud, let url = ICloudSyncService.shared.iCloudDataURL {
             return url
         }
-        return localRootURL
+        return localBaseURL
     }
 
     /// Like `rootURL`, but always local — never the iCloud container. For derived data
@@ -87,6 +78,7 @@ nonisolated struct PersistenceService {
     }
 
     private static let indexFileName = "projects.json"
+    private static let projectDataFileName = "project.json"
     private static let projectsDirName = "projects"
 
     private static var projectsDir: URL {
@@ -106,7 +98,7 @@ nonisolated struct PersistenceService {
     }
 
     static func projectDataURL(_ id: UUID) -> URL {
-        projectDir(id).appendingPathComponent("project.json")
+        projectDataURL(id, at: rootURL)
     }
 
     static func resourcesDir(_ id: UUID) -> URL {
@@ -159,8 +151,7 @@ nonisolated struct PersistenceService {
     // MARK: - Setup
 
     static func ensureDirectories() {
-        createDirectory(at: rootURL, label: "root")
-        createDirectory(at: projectsDir, label: "projects")
+        ensureDirectories(at: rootURL)
     }
 
     static func ensureProjectDirs(_ id: UUID) {
@@ -242,27 +233,33 @@ nonisolated struct PersistenceService {
         return index
     }
 
+    /// `root` is where the index was read from, and the only root a `wasRecovered` write-back may
+    /// go to: resolving it again at the write moves this function's race to the caller.
+    struct LoadedIndex {
+        let index: ProjectIndex
+        let wasRecovered: Bool
+        let root: URL
+    }
+
     /// The index is the one file whose loss makes every project invisible even though each
     /// project's data is still sitting in `projects/<uuid>/` — without this, a missing
     /// `projects.json` presents as "all your projects are gone" and the next save writes an empty
     /// index over the top. Returns nil (callers keep their current list) when there is nothing to
-    /// recover; `wasRecovered` tells the caller to persist what it got back, and `root` is the
-    /// root it must persist it to — writing a rebuild back to the *live* root is the same race
-    /// this function closes internally, just moved to the caller.
-    static func loadIndexOrRecover() -> (index: ProjectIndex, wasRecovered: Bool, root: URL)? {
+    /// recover.
+    static func loadIndexOrRecover() -> LoadedIndex? {
         loadIndexOrRecover(isUsingICloud: isUsingICloud)
     }
 
     /// `isUsingICloud` is injected so both branches are testable — the real flag needs a resolved
     /// ubiquity container, which a test process never has.
-    static func loadIndexOrRecover(isUsingICloud: Bool) -> (index: ProjectIndex, wasRecovered: Bool, root: URL)? {
+    static func loadIndexOrRecover(isUsingICloud: Bool) -> LoadedIndex? {
         // One root for the whole operation, so the read and the rebuild guard below can't
         // disagree about the storage mode.
         let root = rootURL(isUsingICloud: isUsingICloud)
         let result = loadIndex(at: root)
         switch result {
         case .loaded(let index):
-            return (index, false, root)
+            return LoadedIndex(index: index, wasRecovered: false, root: root)
         case .absent, .unreadable:
             // Local only, and the reason is the same for both: an iCloud index may simply not be
             // there *yet* — the container can still be materializing, the coordinated read can
@@ -285,14 +282,12 @@ nonisolated struct PersistenceService {
                 reason = "absent"
             }
             reportRebuild(rebuilt, reason: reason)
-            return (rebuilt, true, root)
+            return LoadedIndex(index: rebuilt, wasRecovered: true, root: root)
         }
     }
 
     /// Best-effort scan of `projects/` for anything that still decodes. Junk entries are skipped
-    /// silently — the point is to salvage what is there, not to audit the folder. `root` is
-    /// explicit and has no default: the only safe root here is the one the caller already gated
-    /// its rebuild decision on, and a default would quietly reintroduce the live-global read.
+    /// silently — the point is to salvage what is there, not to audit the folder.
     static func rebuildIndexFromProjectDirs(at root: URL) -> ProjectIndex? {
         let entries = (try? FileManager.default.contentsOfDirectory(
             at: projectsDir(at: root),
@@ -315,12 +310,10 @@ nonisolated struct PersistenceService {
     }
 
     /// Quiet counterpart of `loadProject` for the recovery scan: no decode report, and no catalog
-    /// merge — the rebuild only needs `name` and `modifiedAt`. Reads directly rather than through
-    /// `readData`, which picks coordination from the live global `isUsingICloud` — this rebuild
-    /// only ever runs against a root already known to be local (see the call site's guard).
+    /// merge — the rebuild only needs `name` and `modifiedAt`. Bypasses `readData` for the reason
+    /// `loadIndex(at:)` does; the call site's guard already makes `root` local.
     private static func recoverableProjectData(_ id: UUID, at root: URL) -> ProjectData? {
-        let url = projectDir(id, at: root).appendingPathComponent("project.json")
-        guard let data = try? Data(contentsOf: url) else { return nil }
+        guard let data = try? Data(contentsOf: projectDataURL(id, at: root)) else { return nil }
         return try? decoder.decode(ProjectData.self, from: data)
     }
 
@@ -346,12 +339,11 @@ nonisolated struct PersistenceService {
         )
     }
 
-    /// `ensureDirectories()` first, mirroring `saveProject`'s `ensureProjectDirs`: the root is
+    /// `ensureDirectories` first, mirroring `saveProject`'s `ensureProjectDirs`: the root is
     /// otherwise created only at launch, so a folder removed mid-session (external cleaner,
     /// container reset, restore) made every later index write fail with ENOENT on the parent.
     static func saveIndex(_ index: ProjectIndex) throws {
-        ensureDirectories()
-        try save(index, to: indexURL)
+        try saveIndex(index, at: rootURL)
     }
 
     // MARK: - Project data
@@ -459,9 +451,9 @@ nonisolated struct PersistenceService {
         }
     }
 
-    // MARK: - Explicit-root helpers (for iCloud migration)
-    // These bypass file coordination intentionally — they are only called during
-    // the single-threaded enable/disable migration in ICloudSyncService.
+    // MARK: - Explicit-root helpers
+    // Coordination follows the root these take, not the global `isUsingICloud`, which still
+    // describes the old mode while an enable/disable migration is in flight.
 
     static func indexURL(at root: URL) -> URL {
         root.appendingPathComponent(indexFileName)
@@ -473,6 +465,10 @@ nonisolated struct PersistenceService {
 
     private static func projectDir(_ id: UUID, at root: URL) -> URL {
         projectsDir(at: root).appendingPathComponent(id.uuidString, isDirectory: true)
+    }
+
+    static func projectDataURL(_ id: UUID, at root: URL) -> URL {
+        projectDir(id, at: root).appendingPathComponent(projectDataFileName)
     }
 
     /// Distinguishing these two is what stops a migration from merging against an empty set:
@@ -534,16 +530,22 @@ nonisolated struct PersistenceService {
         return fm.fileExists(atPath: placeholder.path)
     }
 
+    /// The write counterpart of `loadIndex(at:)`, and for the same reason: `writeData` picks
+    /// coordination from the global flag, so the root being written decides instead.
     static func saveIndex(_ index: ProjectIndex, at root: URL) throws {
         ensureDirectories(at: root)
         let url = indexURL(at: root)
         let data = try encoder.encode(index)
-        try data.write(to: url, options: .atomic)
+        if isICloudRoot(root) {
+            try ICloudSyncService.shared.coordinatedWrite(data, to: url)
+        } else {
+            try data.write(to: url, options: .atomic)
+        }
     }
 
     static func ensureDirectories(at root: URL) {
-        createDirectory(at: root, label: "migrationRoot")
-        createDirectory(at: projectsDir(at: root), label: "migrationProjects")
+        createDirectory(at: root, label: "root")
+        createDirectory(at: projectsDir(at: root), label: "projects")
     }
 
     /// Safely replace a project directory at destination with source.
