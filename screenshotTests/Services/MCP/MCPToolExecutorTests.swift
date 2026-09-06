@@ -536,6 +536,24 @@ struct MCPToolExecutorTests {
         try? FileManager.default.removeItem(atPath: payload.folder)
     }
 
+    /// A sandbox-denied `folder_path` is the same class as an unreadable import path: the agent's
+    /// environment, not our bug, and the message names the path — so it must throw
+    /// `unreadableFiles`, not `failed`, or it leaks into a Sentry report.
+    @Test func exportProjectUnwritableFolderIsAClientError() async throws {
+        let (executor, _, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        let blockerFile = tempDir.appendingPathComponent("blocker-file")
+        try Data().write(to: blockerFile)
+
+        do {
+            _ = try await executor.exportProject(MCPArguments(["folder_path": .string(blockerFile.path)]))
+            Issue.record("expected export to a path occupied by a file to throw")
+        } catch let error as MCPToolError {
+            #expect(error.isClientError)
+        }
+    }
+
     // MARK: - App Store Connect metadata
 
     @Test func appStoreDescriptionRoundTripInDemoMode() async throws {

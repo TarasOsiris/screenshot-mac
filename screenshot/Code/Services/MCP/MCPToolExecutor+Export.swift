@@ -36,7 +36,9 @@ extension MCPToolExecutor {
             do {
                 try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
             } catch {
-                throw MCPToolError.failed("Cannot write to \(destination.path) (sandbox) — omit folder_path to export to a temp folder and copy the files from there")
+                // Same class as `unreadableFiles`: a sandbox denial on a client-supplied path, and
+                // the message names it, so it must stay off Sentry too.
+                throw MCPToolError.unreadableFiles("Cannot write to \(destination.path) (sandbox) — omit folder_path to export to a temp folder and copy the files from there")
             }
         } else {
             destination = try ExportService.makeTempExportFolder()

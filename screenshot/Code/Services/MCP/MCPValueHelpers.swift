@@ -30,7 +30,8 @@ enum MCPToolError: Error, LocalizedError {
 
     /// A malformed or stale request from the client — the agent's mistake, not ours, so it stays
     /// breadcrumb-only rather than opening a Sentry issue. `unreadableFiles` is here for privacy
-    /// too: its message names the user's files, which must never reach a report.
+    /// too: its message names the user's paths (a sandbox read *or* write denial), which must
+    /// never reach a report.
     var isClientError: Bool {
         switch self {
         case .unknownTool, .missingArgument, .invalidArgument, .notFound, .unreadableFiles: true
