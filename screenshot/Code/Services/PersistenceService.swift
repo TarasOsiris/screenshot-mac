@@ -254,10 +254,8 @@ nonisolated struct PersistenceService {
     /// `isUsingICloud` is injected so both branches are testable — the real flag needs a resolved
     /// ubiquity container, which a test process never has.
     static func loadIndexOrRecover(isUsingICloud: Bool) -> (index: ProjectIndex, wasRecovered: Bool)? {
-        // Read and guard against the same root: deriving it from `isUsingICloud` again here
-        // (rather than the live global `rootURL`) is what stops a container resolution that
-        // completes mid-call from making the read and the destructive-rebuild guard below
-        // disagree about which storage mode they're looking at.
+        // One root for the whole operation, so the read and the rebuild guard below can't
+        // disagree about the storage mode.
         let root = rootURL(isUsingICloud: isUsingICloud)
         let result = loadIndex(at: root)
         switch result {
