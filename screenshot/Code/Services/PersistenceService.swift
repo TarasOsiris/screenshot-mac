@@ -46,13 +46,25 @@ nonisolated struct PersistenceService {
     }
 
     static var rootURL: URL {
+        rootURL(isUsingICloud: isUsingICloud)
+    }
+
+    /// Resolves the root from an explicit iCloud flag rather than re-deriving it from live global
+    /// state. `loadIndexOrRecover` captures `isUsingICloud` once and must read the same root it
+    /// gated the destructive rebuild on — a container resolution completing between two separate
+    /// reads of the global flag is exactly the "container still materializing" race the rebuild
+    /// guard exists to close, so the flag and the root it reads from must come from one snapshot.
+    static func rootURL(isUsingICloud: Bool) -> URL {
         if let override = ProcessInfo.processInfo.environment[rootDirectoryOverrideKey], !override.isEmpty {
             return URL(fileURLWithPath: override, isDirectory: true)
         }
         if isUsingTemporaryRootDirectory || isRunningUnderXCTest {
             return temporaryRootURL
         }
-        return ICloudSyncService.shared.activeRootURL
+        if isUsingICloud, let url = ICloudSyncService.shared.iCloudDataURL {
+            return url
+        }
+        return localRootURL
     }
 
     /// Like `rootURL`, but always local — never the iCloud container. For derived data
@@ -242,7 +254,12 @@ nonisolated struct PersistenceService {
     /// `isUsingICloud` is injected so both branches are testable — the real flag needs a resolved
     /// ubiquity container, which a test process never has.
     static func loadIndexOrRecover(isUsingICloud: Bool) -> (index: ProjectIndex, wasRecovered: Bool)? {
-        let result = loadIndex(at: rootURL)
+        // Read and guard against the same root: deriving it from `isUsingICloud` again here
+        // (rather than the live global `rootURL`) is what stops a container resolution that
+        // completes mid-call from making the read and the destructive-rebuild guard below
+        // disagree about which storage mode they're looking at.
+        let root = rootURL(isUsingICloud: isUsingICloud)
+        let result = loadIndex(at: root)
         switch result {
         case .loaded(let index):
             return (index, false)
@@ -258,11 +275,11 @@ nonisolated struct PersistenceService {
             // — and then syncs that over the real names everywhere. That happened; it cost 51
             // names. Coming back with nothing costs a launch, because `ICloudMonitor` re-runs this
             // as soon as the real index lands.
-            guard !isUsingICloud, let rebuilt = rebuildIndexFromProjectDirs() else { return nil }
+            guard !isUsingICloud, let rebuilt = rebuildIndexFromProjectDirs(at: root) else { return nil }
             let reason: String
             if case .unreadable = result {
                 // Keeps the bytes we couldn't parse, so a rebuild never destroys the only copy.
-                preserveUnreadableIndex()
+                preserveUnreadableIndex(at: root)
                 reason = "unreadable"
             } else {
                 reason = "absent"
@@ -273,10 +290,12 @@ nonisolated struct PersistenceService {
     }
 
     /// Best-effort scan of `projects/` for anything that still decodes. Junk entries are skipped
-    /// silently — the point is to salvage what is there, not to audit the folder.
-    static func rebuildIndexFromProjectDirs() -> ProjectIndex? {
+    /// silently — the point is to salvage what is there, not to audit the folder. `root` defaults
+    /// to the live global root for existing (non-racy) call sites and tests; `loadIndexOrRecover`
+    /// passes the exact root it already gated the rebuild decision on.
+    static func rebuildIndexFromProjectDirs(at root: URL = rootURL) -> ProjectIndex? {
         let entries = (try? FileManager.default.contentsOfDirectory(
-            at: projectsDir,
+            at: projectsDir(at: root),
             includingPropertiesForKeys: nil,
             options: [.skipsHiddenFiles]
         )) ?? []
@@ -284,7 +303,7 @@ nonisolated struct PersistenceService {
         var recovered: [Project] = []
         for entry in entries {
             guard let id = UUID(uuidString: entry.lastPathComponent),
-                  let data = recoverableProjectData(id) else { continue }
+                  let data = recoverableProjectData(id, at: root) else { continue }
             var project = Project(id: id, name: data.name ?? String(localized: "Recovered Project"))
             project.modifiedAt = data.modifiedAt
             recovered.append(project)
@@ -296,17 +315,21 @@ nonisolated struct PersistenceService {
     }
 
     /// Quiet counterpart of `loadProject` for the recovery scan: no decode report, and no catalog
-    /// merge — the rebuild only needs `name` and `modifiedAt`.
-    private static func recoverableProjectData(_ id: UUID) -> ProjectData? {
-        guard let data = readData(from: projectDataURL(id)) else { return nil }
+    /// merge — the rebuild only needs `name` and `modifiedAt`. Reads directly rather than through
+    /// `readData`, which picks coordination from the live global `isUsingICloud` — this rebuild
+    /// only ever runs against a root already known to be local (see the call site's guard).
+    private static func recoverableProjectData(_ id: UUID, at root: URL) -> ProjectData? {
+        let url = projectDir(id, at: root).appendingPathComponent("project.json")
+        guard let data = try? Data(contentsOf: url) else { return nil }
         return try? decoder.decode(ProjectData.self, from: data)
     }
 
     /// Keeps the bytes we couldn't parse so a rebuild never destroys the only copy of the list.
-    private static func preserveUnreadableIndex() {
-        let backup = indexURL.appendingPathExtension("corrupt")
+    private static func preserveUnreadableIndex(at root: URL) {
+        let url = indexURL(at: root)
+        let backup = url.appendingPathExtension("corrupt")
         try? FileManager.default.removeItem(at: backup)
-        try? FileManager.default.moveItem(at: indexURL, to: backup)
+        try? FileManager.default.moveItem(at: url, to: backup)
     }
 
     private static func reportRebuild(_ index: ProjectIndex, reason: String) {
