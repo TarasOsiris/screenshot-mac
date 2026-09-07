@@ -7,6 +7,10 @@ extension MCPToolExecutor {
 
     struct ImportResult: Encodable {
         let imported: Int
+        /// The locale the images were actually written into, omitted when nothing was written.
+        /// Present so a caller can assert on it instead of trusting that the app window happened
+        /// to be on the locale it meant.
+        let locale: String?
         let failures: [String]
         let row: MCPRowSnapshot
     }
@@ -34,14 +38,38 @@ extension MCPToolExecutor {
             )
         }
 
+        // Without an explicit locale this falls back to whatever the window is showing, which is
+        // invisible to an MCP caller — the reason a locale sweep used to file every language's
+        // screenshots under one locale and report success for all of them. A present-but-unusable
+        // value has to fail rather than fall back, or it reintroduces exactly that.
+        let targetLocale: ImageImportLocale
+        let writtenLocale: String
+        if args.has("locale") {
+            guard let requested = args.string("locale"), !requested.isEmpty else {
+                throw MCPToolError.invalidArgument("locale", "expected a locale code such as \"de-DE\"")
+            }
+            guard state.localeState.locales.contains(where: { $0.code == requested })
+                    || requested == state.localeState.baseLocaleCode else {
+                throw MCPToolError.notFound("Locale \(requested)")
+            }
+            targetLocale = .locale(requested)
+            writtenLocale = requested
+        } else {
+            targetLocale = .active
+            writtenLocale = state.localeState.activeLocaleCode
+        }
+
         let rowId = state.rows[rowIndex].id
-        let imported = await state.batchImportImages(sources, into: rowId, maxTemplatesPerRow: args.int("max_templates_per_row"), source: .mcp)
+        let imported = await state.batchImportImages(sources, into: rowId,
+                                                     maxTemplatesPerRow: args.int("max_templates_per_row"),
+                                                     source: .mcp, targetLocale: targetLocale)
         if imported < sources.count {
             failures.append("\(sources.count - imported) image(s) were not imported (column cap reached?)")
         }
 
         return try MCPResultEncoding.result(ImportResult(
             imported: imported,
+            locale: imported > 0 ? writtenLocale : nil,
             failures: failures,
             row: MCPSnapshotBuilder.rowSnapshot(state.rows[rowIndex], index: rowIndex, localeState: state.localeState)
         ))

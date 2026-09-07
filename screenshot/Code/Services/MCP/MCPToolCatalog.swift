@@ -233,10 +233,11 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.importScreenshots.rawValue,
-            description: "Import screenshot images from file paths into a row's device frames. Images fill device-holding columns in order starting from the first, replacing any existing screenshots; extra images append new columns. A single column cannot be targeted — re-import the whole row's images in order. \(screenshotStagingHint)",
+            description: "Import screenshot images from file paths into a row's device frames. Images fill device-holding columns in order starting from the first, replacing any existing screenshots; extra images append new columns. A single column cannot be targeted — re-import the whole row's images in order. Pass `locale` to say which locale's images these are; without it the images land in whichever locale the app window is currently showing, which a script cannot see. The response echoes the locale actually written. \(screenshotStagingHint)",
             inputSchema: MCPSchema.object([
                 "row_id": MCPSchema.string("Row UUID"),
                 "paths": MCPSchema.array(of: MCPSchema.string("Absolute file path"), "Image file paths in desired order"),
+                "locale": MCPSchema.string("Locale these images belong to, e.g. \"de-DE\". Use the base locale code for the images every other locale falls back to. Defaults to the locale the app is currently showing."),
                 "max_templates_per_row": MCPSchema.integer("Cap on columns to create (optional)"),
             ], required: ["row_id", "paths"])
         ),

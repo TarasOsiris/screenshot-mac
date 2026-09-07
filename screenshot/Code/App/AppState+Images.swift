@@ -40,6 +40,22 @@ enum ImageImportOrigin: String, CaseIterable {
     case simulator
 }
 
+/// Which locale variant an import writes into.
+///
+/// `.active` is what the editor wants: the locale the switcher is on. Anything driving the app
+/// from outside — MCP above all — needs to say so explicitly instead, because the active locale
+/// is invisible to it. Importing eight Spanish screenshots while the switcher happened to sit on
+/// German filed them all as `de-DE`, reported `imported: 8`, and left `es-ES` falling back to the
+/// base English images with nothing anywhere reporting a problem.
+enum ImageImportLocale {
+    /// Whatever the locale switcher is on. The editor's behaviour.
+    case active
+    /// The base image every locale falls back to.
+    case base
+    /// One named locale, regardless of what the UI is showing.
+    case locale(String)
+}
+
 /// A resource the batch import has already pointed the document at but not yet written to disk.
 /// The write happens after the undo step commits, off the main actor — a 20-image import used to
 /// block the main thread for 1.5-3.1 s and trip the app-hang watchdog (SCREENSHOT-BRO-W).
@@ -180,7 +196,10 @@ extension AppState {
         guard let activeId = activeId ?? activeProjectId else { return false }
         guard let location = location ?? shapeLocation(for: shapeId) else { return false }
 
-        let fileName = screenshotImageFileName(for: shapeId)
+        // Every caller of this synchronous path is an editor action, so it writes wherever the
+        // locale switcher is pointing — same as before the locale became explicit.
+        let localeCode = resolveImportLocale(.active)
+        let fileName = screenshotImageFileName(for: shapeId, localeCode: localeCode)
         guard let thumbnail = persistImageResource(
             image,
             named: fileName,
@@ -190,16 +209,19 @@ extension AppState {
             return false
         }
         screenshotImages[fileName] = thumbnail
-        cleanupUnreferencedImage(pointShape(at: location, shapeId: shapeId, at: fileName, imageSize: image.size))
+        cleanupUnreferencedImage(pointShape(at: location, shapeId: shapeId, at: fileName,
+                                            imageSize: image.size, localeCode: localeCode))
         return true
     }
 
     /// Batch sibling of `performSaveImage`: points the document at the new file now and returns the
     /// bytes still owed to disk, so the whole undo step commits without touching the filesystem.
     private func stageSaveImage(_ source: ImageImportSource, for shapeId: UUID,
-                                location: (rowIndex: Int, shapeIndex: Int)) -> (StagedImageWrite, replaced: String?) {
-        let fileName = screenshotImageFileName(for: shapeId)
-        let replaced = pointShape(at: location, shapeId: shapeId, at: fileName, imageSize: source.image.size)
+                                location: (rowIndex: Int, shapeIndex: Int),
+                                localeCode: String?) -> (StagedImageWrite, replaced: String?) {
+        let fileName = screenshotImageFileName(for: shapeId, localeCode: localeCode)
+        let replaced = pointShape(at: location, shapeId: shapeId, at: fileName,
+                                  imageSize: source.image.size, localeCode: localeCode)
         let staged = StagedImageWrite(
             fileName: fileName,
             source: source.sourceURL.map { .file($0) } ?? .image(source.image)
@@ -207,27 +229,50 @@ extension AppState {
         return (staged, replaced)
     }
 
-    /// Repoints one shape (or its active-locale override) at `fileName`, returning the file it
-    /// replaced. The half `performSaveImage` and `stageSaveImage` share.
+    /// Repoints one shape (or one locale's override) at `fileName`, returning the file it replaced.
+    /// The half `performSaveImage` and `stageSaveImage` share.
+    ///
+    /// `localeCode` is the locale to write, `nil` for the base image. It is passed in rather than
+    /// read from `localeState` so a caller can target a locale that is not the one on screen.
     private func pointShape(at location: (rowIndex: Int, shapeIndex: Int), shapeId: UUID,
-                            at fileName: String, imageSize: CGSize) -> String? {
-        let previous: String?
-        if !localeState.isBaseLocale {
-            let shape = rows[location.rowIndex].shapes[location.shapeIndex]
-            var override = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId) ?? ShapeLocaleOverride()
-            previous = override.overrideImageFileName
-            override.overrideImageFileName = fileName
-            LocaleService.setShapeOverride(&localeState, shapeId: shape.id, override: override)
-        } else {
-            var shape = rows[location.rowIndex].shapes[location.shapeIndex]
-            previous = shape.displayImageFileName
-            shape.displayImageFileName = fileName
-            if shape.flexesToImageAspect {
-                shape.adaptToImageAspectRatio(imageSize)
-            }
-            rows[location.rowIndex].shapes[location.shapeIndex] = shape
+                            at fileName: String, imageSize: CGSize, localeCode: String?) -> String? {
+        guard let localeCode else {
+            let previous = setBaseImage(at: location, fileName: fileName, imageSize: imageSize)
+            return previous == fileName ? nil : previous
         }
+
+        // A shape with no base image renders an empty frame in every locale that has no override
+        // of its own — and in the export — so the first image to arrive becomes the fallback too.
+        // Otherwise a locale-targeted import into a fresh row reports success and ships blanks.
+        if rows[location.rowIndex].shapes[location.shapeIndex].displayImageFileName == nil {
+            _ = setBaseImage(at: location, fileName: fileName, imageSize: imageSize)
+        }
+        let shape = rows[location.rowIndex].shapes[location.shapeIndex]
+        var override = localeState.override(forCode: localeCode, shapeId: shapeId) ?? ShapeLocaleOverride()
+        let previous = override.overrideImageFileName
+        override.overrideImageFileName = fileName
+        if shape.flexesToImageAspect {
+            // An abstract frame takes its aspect from the image, and this locale's image need not
+            // match the base one — so the resize has to be an override, not a base edit.
+            var flexed = shape
+            flexed.adaptToImageAspectRatio(imageSize)
+            override.offsetX = flexed.x == shape.x ? nil : flexed.x - shape.x
+            override.offsetWidth = flexed.width == shape.width ? nil : flexed.width - shape.width
+        }
+        LocaleService.setShapeOverride(&localeState, localeCode: localeCode, shapeId: shape.id, override: override)
         return previous == fileName ? nil : previous
+    }
+
+    private func setBaseImage(at location: (rowIndex: Int, shapeIndex: Int),
+                              fileName: String, imageSize: CGSize) -> String? {
+        var shape = rows[location.rowIndex].shapes[location.shapeIndex]
+        let previous = shape.displayImageFileName
+        shape.displayImageFileName = fileName
+        if shape.flexesToImageAspect {
+            shape.adaptToImageAspectRatio(imageSize)
+        }
+        rows[location.rowIndex].shapes[location.shapeIndex] = shape
+        return previous
     }
 
     /// Interpolated into the shared "Failed to %@: ..." messages, so the staged path reports the
@@ -235,9 +280,20 @@ extension AppState {
     /// the surrounding format string is, and that is the pre-existing convention here.
     static let saveScreenshotAction = "save screenshot"
 
-    private func screenshotImageFileName(for shapeId: UUID) -> String {
-        let localePart = localeState.isBaseLocale ? "" : "-\(localeState.activeLocaleCode)"
+    private func screenshotImageFileName(for shapeId: UUID, localeCode: String?) -> String {
+        let localePart = localeCode.map { "-\($0)" } ?? ""
         return "\(shapeId.uuidString)\(localePart)-\(UUID().uuidString).png"
+    }
+
+    /// The locale a write should land in, given what the caller asked for. `nil` means the base
+    /// image. `.active` collapses to `nil` when the switcher is on the base locale, which is what
+    /// makes the editor's own imports keep writing base images.
+    private func resolveImportLocale(_ target: ImageImportLocale) -> String? {
+        switch target {
+        case .active: return localeState.isBaseLocale ? nil : localeState.activeLocaleCode
+        case .base: return nil
+        case .locale(let code): return code == localeState.baseLocaleCode ? nil : code
+        }
     }
 
     /// How many decoded images to publish at a time. Every merge invalidates each canvas view
@@ -411,7 +467,8 @@ extension AppState {
         _ sources: [ImageImportSource],
         into rowId: UUID,
         maxTemplatesPerRow: Int? = nil,
-        source: ImageImportOrigin
+        source: ImageImportOrigin,
+        targetLocale: ImageImportLocale = .active
     ) async -> Int {
         guard let idx = rowIndex(for: rowId),
               let activeId = activeProjectId,
@@ -420,6 +477,7 @@ extension AppState {
         let span = PerfSignpost.begin("AppState.batchImportImages", "images=\(sources.count)")
         defer { PerfSignpost.end("AppState.batchImportImages", span) }
 
+        let localeCode = resolveImportLocale(targetLocale)
         let templatesWithDevices = templatesContainingDevices(inRowAt: idx)
         // Templates an image can fill without creating a new one.
         let reusableCount = templatesWithDevices.isEmpty ? rows[idx].templates.count : templatesWithDevices.count
@@ -452,7 +510,8 @@ extension AppState {
             }
 
             for (source, templateIndex) in zip(sources, targetTemplateIndices) {
-                guard let (write, replaced) = importImage(source, intoTemplateAt: templateIndex, rowIndex: idx) else { continue }
+                guard let (write, replaced) = importImage(source, intoTemplateAt: templateIndex,
+                                                          rowIndex: idx, localeCode: localeCode) else { continue }
                 staged.append(write)
                 replacedFiles.append(replaced)
             }
@@ -516,11 +575,12 @@ extension AppState {
     }
 
     private func importImage(_ source: ImageImportSource, intoTemplateAt templateIndex: Int,
-                             rowIndex: Int) -> (StagedImageWrite, replaced: String?)? {
+                             rowIndex: Int, localeCode: String?) -> (StagedImageWrite, replaced: String?)? {
         let row = rows[rowIndex]
         if let shapeIndex = existingDeviceShapeIndex(in: row, templateIndex: templateIndex) {
             return stageSaveImage(source, for: row.shapes[shapeIndex].id,
-                                  location: (rowIndex: rowIndex, shapeIndex: shapeIndex))
+                                  location: (rowIndex: rowIndex, shapeIndex: shapeIndex),
+                                  localeCode: localeCode)
         }
 
         let centerX = row.templateCenterX(at: templateIndex)
@@ -528,7 +588,8 @@ extension AppState {
         let shape = makeImageShape(image: source.image, row: row, centerX: centerX, centerY: centerY)
         let shapeIndex = rows[rowIndex].shapes.count
         rows[rowIndex].shapes.append(shape)
-        return stageSaveImage(source, for: shape.id, location: (rowIndex: rowIndex, shapeIndex: shapeIndex))
+        return stageSaveImage(source, for: shape.id, location: (rowIndex: rowIndex, shapeIndex: shapeIndex),
+                              localeCode: localeCode)
     }
 
     private func existingDeviceShapeIndex(in row: ScreenshotRow, templateIndex: Int) -> Int? {

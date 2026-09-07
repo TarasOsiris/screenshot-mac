@@ -482,6 +482,119 @@ struct MCPToolExecutorTests {
         #expect(message.contains(FileManager.default.temporaryDirectory.path))
     }
 
+    /// An MCP caller cannot see which locale the window is on, so an import must go where it says
+    /// and report where it went. Without this, a sweep over 14 languages filed every one of them
+    /// under whichever locale the editor happened to be showing and answered `imported: 8` each
+    /// time — the wrong screenshots reached a live store listing with no error anywhere.
+    @Test func importScreenshotsTargetsTheRequestedLocale() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        _ = await executor.call(name: "add_locale", arguments: ["code": .string("de-DE")])
+        _ = await executor.call(name: "add_locale", arguments: ["code": .string("fr-FR")])
+        // The window sits on German; the import asks for French.
+        state.setActiveLocale("de-DE")
+
+        let imageDir = makeTemporaryDataDirectory(label: "mcp-import-locale")
+        defer { try? FileManager.default.removeItem(at: imageDir) }
+        let url = imageDir.appendingPathComponent("shot.png")
+        let png = try #require(ExportService.pngData(from: makeTestImage(width: 1242, height: 2688)))
+        try png.write(to: url)
+
+        let result = await executor.call(name: "import_screenshots", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "paths": .array([.string(url.path)]),
+            "locale": .string("fr-FR"),
+        ])
+        expectSuccess(result)
+
+        let shapeId = try #require(state.rows[0].shapes.first { $0.type == .device }?.id)
+        let french = state.localeState.override(forCode: "fr-FR", shapeId: shapeId)?.overrideImageFileName
+        let german = state.localeState.override(forCode: "de-DE", shapeId: shapeId)?.overrideImageFileName
+        #expect(french != nil, "the requested locale should hold the image")
+        #expect(german == nil, "the locale merely on screen must not be written")
+        #expect(french?.contains("-fr-FR-") == true)
+    }
+
+    /// A locale-targeted import into a row whose frames are still empty writes an override, and
+    /// an override alone would leave the base locale — and every other one — exporting blank
+    /// frames while the call still answered `imported: 8`.
+    @Test func importScreenshotsSeedsTheBaseImageWhenThereIsNone() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        _ = await executor.call(name: "add_locale", arguments: ["code": .string("de-DE")])
+
+        let imageDir = makeTemporaryDataDirectory(label: "mcp-import-seed-base")
+        defer { try? FileManager.default.removeItem(at: imageDir) }
+        let url = imageDir.appendingPathComponent("shot.png")
+        let png = try #require(ExportService.pngData(from: makeTestImage(width: 1242, height: 2688)))
+        try png.write(to: url)
+
+        let result = await executor.call(name: "import_screenshots", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "paths": .array([.string(url.path)]),
+            "locale": .string("de-DE"),
+        ])
+        expectSuccess(result)
+
+        let shape = try #require(state.rows[0].shapes.first { $0.type == .device })
+        let german = state.localeState.override(forCode: "de-DE", shapeId: shape.id)?.overrideImageFileName
+        #expect(german != nil)
+        #expect(shape.displayImageFileName == german, "a frame with no image needs a base fallback")
+
+        // And the row the call returns shows where the image landed.
+        guard case .text(let json, _, _) = result.content.first else {
+            Issue.record("expected text content")
+            return
+        }
+        #expect(json.contains("\"image_overrides\""))
+        #expect(json.contains("\"de-DE\""))
+    }
+
+    /// A `locale` that is present but not a usable string must fail, not quietly fall back to the
+    /// active locale — that fallback is the whole bug.
+    @Test func importScreenshotsRejectsAMalformedLocale() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        let imageDir = makeTemporaryDataDirectory(label: "mcp-import-malformed-locale")
+        defer { try? FileManager.default.removeItem(at: imageDir) }
+        let url = imageDir.appendingPathComponent("shot.png")
+        let png = try #require(ExportService.pngData(from: makeTestImage(width: 1242, height: 2688)))
+        try png.write(to: url)
+
+        // `null` is not in this list on purpose: it reads as "unspecified", the same as omitting
+        // the key, which is how `render_preview` treats it too.
+        for bad: Value in [.int(5), .string(""), .bool(true)] {
+            let result = await executor.call(name: "import_screenshots", arguments: [
+                "row_id": .string(state.rows[0].id.uuidString),
+                "paths": .array([.string(url.path)]),
+                "locale": bad,
+            ])
+            #expect(result.isError == true, "expected \(bad) to be rejected")
+        }
+    }
+
+    /// Unknown locales fail loudly rather than silently landing in the active one.
+    @Test func importScreenshotsRejectsAnUnknownLocale() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+
+        let imageDir = makeTemporaryDataDirectory(label: "mcp-import-bad-locale")
+        defer { try? FileManager.default.removeItem(at: imageDir) }
+        let url = imageDir.appendingPathComponent("shot.png")
+        let png = try #require(ExportService.pngData(from: makeTestImage(width: 1242, height: 2688)))
+        try png.write(to: url)
+
+        let result = await executor.call(name: "import_screenshots", arguments: [
+            "row_id": .string(state.rows[0].id.uuidString),
+            "paths": .array([.string(url.path)]),
+            "locale": .string("xx-XX"),
+        ])
+        #expect(result.isError == true)
+    }
+
     /// Unreadable paths are the agent's environment (usually a Release sandbox denial), not our
     /// bug — and the message names the user's files, so it must never become a Sentry report.
     @Test func unreadableFilesIsAClientError() {

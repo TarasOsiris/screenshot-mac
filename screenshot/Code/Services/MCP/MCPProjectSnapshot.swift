@@ -59,6 +59,9 @@ struct MCPShapeSnapshot: Encodable {
     let fontWeight: Int?
     let textAlign: String?
     let translations: [String: String]?
+    /// Per-locale screenshot/image files, keyed by locale code. Without this a locale-targeted
+    /// import leaves no trace in the row it returns — the base file is unchanged.
+    let imageOverrides: [String: String]?
     let deviceCategory: String?
     let deviceFrameId: String?
     let screenshotFile: String?
@@ -174,9 +177,13 @@ enum MCPSnapshotBuilder {
 
     static func shapeSnapshot(_ shape: CanvasShapeModel, row: ScreenshotRow, localeState: LocaleState) -> MCPShapeSnapshot {
         var translations: [String: String] = [:]
+        var imageOverrides: [String: String] = [:]
         for (localeCode, overrides) in localeState.overrides {
             if let text = overrides[shape.textTranslationKey]?.text {
                 translations[localeCode] = text
+            }
+            if let file = overrides[shape.id.uuidString]?.overrideImageFileName {
+                imageOverrides[localeCode] = file
             }
         }
 
@@ -198,6 +205,7 @@ enum MCPSnapshotBuilder {
             fontWeight: shape.fontWeight,
             textAlign: shape.textAlign?.rawValue,
             translations: translations.isEmpty ? nil : translations,
+            imageOverrides: imageOverrides.isEmpty ? nil : imageOverrides,
             deviceCategory: shape.deviceCategory?.rawValue,
             deviceFrameId: shape.deviceFrameId,
             screenshotFile: shape.screenshotFileName,
