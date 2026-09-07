@@ -118,7 +118,13 @@ nonisolated struct PersistenceService {
     /// Modification date of the project's translation catalog, used to detect translator edits
     /// made outside the app (e.g. in Xcode's String Catalog editor). Nil when the file is absent.
     static func translationCatalogModifiedDate(_ id: UUID) -> Date? {
-        (try? FileManager.default.attributesOfItem(atPath: translationCatalogURL(id).path))?[.modificationDate] as? Date
+        modificationDate(of: translationCatalogURL(id))
+    }
+
+    /// Nil when the file is absent. Reads the one attribute rather than `attributesOfItem`, which
+    /// boxes a dozen of them per call — this runs on every save and every remote-change check.
+    static func modificationDate(of url: URL) -> Date? {
+        try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
     }
 
     /// Rendered project-card thumbnails. Always local (never the iCloud root) — derived data

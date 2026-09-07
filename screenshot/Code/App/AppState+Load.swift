@@ -80,7 +80,7 @@ extension AppState {
     func startICloudMonitoring(at url: URL) {
         stopICloudMonitoring()
 
-        let monitor = ICloudMonitor()
+        let monitor = ICloudMonitor(url: url)
         monitor.onRemoteChange = { [weak self] in
             guard let self else { return }
             CrashReportingService.breadcrumb(.sync, "Remote change, reloading", data: ["projects": self.projects.count])
@@ -92,7 +92,7 @@ extension AppState {
         monitor.onSyncStatusChange = { [weak self] status in
             self?.iCloudStatus.status = status
         }
-        monitor.startMonitoring(url: url)
+        monitor.startMonitoring()
         iCloudMonitor = monitor
     }
 

@@ -1,39 +1,36 @@
 import Foundation
 
-enum SyncStatus: Equatable {
-    case idle
-    case uploading(Double)
-    case downloading(Double)
-
-    /// True while iCloud is uploading or downloading (i.e. sync is in progress).
-    var isActive: Bool {
-        if case .idle = self { return false }
-        return true
-    }
-}
-
 nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sendable {
 
-    var presentedItemURL: URL?
+    private let rootURL: URL
+    var presentedItemURL: URL? { rootURL }
     let presentedItemOperationQueue = OperationQueue()
 
-    var onRemoteChange: (() -> Void)?
-    /// Invoked on the main thread whenever upload/download progress changes.
-    var onSyncStatusChange: ((SyncStatus) -> Void)?
-    private(set) var syncStatus: SyncStatus = .idle
+    var onRemoteChange: (@MainActor @Sendable () -> Void)?
+    var onSyncStatusChange: (@MainActor @Sendable (SyncStatus) -> Void)?
 
     private var recentWriteURLs: Set<URL> = []
     private let writeURLLock = NSLock()
 
-    private var metadataQuery: NSMetadataQuery?
+    private var queryController: MetadataQueryController?
+    private var prefetcher: ICloudDownloadPrefetcher?
+
+    /// Every read or write of the index mod-date runs here, which is what makes a save's snapshot
+    /// and the debounced remote-change check ordered rather than racing. The stat itself can block
+    /// on the file provider, so it must not be on the main thread either.
+    private let workQueue = DispatchQueue(label: "xyz.tleskiv.screenshot.icloud.monitor", qos: .utility)
+    private var lastKnownIndexModDate: Date?
+
     private var debounceTimer: DispatchWorkItem?
     private let debounceLock = NSLock()
     private let debounceInterval: TimeInterval = 1.0
 
-    /// Track last-known mod date of the index file to skip no-op reloads.
-    private var lastKnownIndexModDate: Date?
+    private var lastPublishedStatus: SyncStatus = .idle
+    private var isStopped = false
+    private let statusLock = NSLock()
 
-    override init() {
+    init(url: URL) {
+        rootURL = url
         super.init()
         presentedItemOperationQueue.maxConcurrentOperationCount = 1
         presentedItemOperationQueue.qualityOfService = .utility
@@ -46,45 +43,62 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
 
     // MARK: - Start / Stop
 
-    func startMonitoring(url: URL) {
-        presentedItemURL = url
+    func startMonitoring() {
+        statusLock.withLock {
+            isStopped = false
+            lastPublishedStatus = .idle
+        }
         NSFileCoordinator.addFilePresenter(self)
-        snapshotIndexModDate()
-        startMetadataQuery()
+        workQueue.async { [weak self] in self?.snapshotIndexModDate() }
+
+        let prefetcher = ICloudDownloadPrefetcher()
+        self.prefetcher = prefetcher
+        let controller = MetadataQueryController(rootURL: rootURL) { [weak self] items in
+            prefetcher.request(items.compactMap { $0.isDownloaded ? nil : $0.url })
+            self?.ingest(items)
+        }
+        queryController = controller
+        controller.start()
     }
 
     func stopMonitoring() {
+        // Before anything else: a metadata pass may already be mid-flight on the query's queue,
+        // and its publish would otherwise land after the caller has reset the label to idle.
+        statusLock.withLock { isStopped = true }
         NSFileCoordinator.removeFilePresenter(self)
-        stopMetadataQuery()
+        prefetcher?.cancel()
+        prefetcher = nil
+        queryController?.stop()
+        queryController = nil
         cancelDebounceTimer()
     }
 
     private func cancelDebounceTimer() {
-        debounceLock.lock()
-        debounceTimer?.cancel()
-        debounceTimer = nil
-        debounceLock.unlock()
+        debounceLock.withLock {
+            debounceTimer?.cancel()
+            debounceTimer = nil
+        }
     }
 
     /// Mark URLs as own writes so we can ignore the resulting NSFilePresenter callbacks.
     /// Call this BEFORE writing so `presentedSubitemDidChange` can filter own writes.
     func recordOwnWrite(_ urls: [URL]) {
-        writeURLLock.lock()
-        for url in urls { recentWriteURLs.insert(url) }
-        writeURLLock.unlock()
+        writeURLLock.withLock {
+            for url in urls { recentWriteURLs.insert(url) }
+        }
 
         // Clear after a short delay — remote changes arrive later
         DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            self?.writeURLLock.lock()
-            for url in urls { self?.recentWriteURLs.remove(url) }
-            self?.writeURLLock.unlock()
+            self?.writeURLLock.withLock {
+                for url in urls { self?.recentWriteURLs.remove(url) }
+            }
         }
     }
 
     /// Update the index mod-date snapshot AFTER writing, so `hasIndexChanged()`
-    /// correctly returns false for our own saves.
+    /// correctly returns false for our own saves. Returns before the stat runs.
     func snapshotAfterWrite() {
-        snapshotIndexModDate()
+        workQueue.async { [weak self] in self?.snapshotIndexModDate() }
     }
 
     // MARK: - NSFilePresenter
@@ -100,9 +114,7 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
     }
 
     private func isOwnWrite(_ url: URL) -> Bool {
-        writeURLLock.lock()
-        defer { writeURLLock.unlock() }
-        return recentWriteURLs.contains(url)
+        writeURLLock.withLock { recentWriteURLs.contains(url) }
     }
 
     func presentedSubitemDidAppear(at url: URL) {
@@ -114,124 +126,62 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
         completionHandler(nil)
     }
 
-    // MARK: - Metadata Query (upload/download progress)
+    // MARK: - Sync progress
 
-    private func startMetadataQuery() {
-        guard let rootURL = presentedItemURL else { return }
-
-        let query = NSMetadataQuery()
-        query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
-        query.predicate = NSPredicate(format: "%K BEGINSWITH %@",
-                                       NSMetadataItemPathKey,
-                                       rootURL.path)
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(metadataQueryDidUpdate(_:)),
-            name: .NSMetadataQueryDidUpdate,
-            object: query
-        )
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(metadataQueryDidUpdate(_:)),
-            name: .NSMetadataQueryDidFinishGathering,
-            object: query
-        )
-
-        metadataQuery = query
-        query.start()
-    }
-
-    private func stopMetadataQuery() {
-        metadataQuery?.stop()
-        metadataQuery?.disableUpdates()
-        NotificationCenter.default.removeObserver(self)
-        metadataQuery = nil
-    }
-
-    @objc private func metadataQueryDidUpdate(_ notification: Notification) {
-        guard let query = metadataQuery else { return }
-
-        query.disableUpdates()
-        defer { query.enableUpdates() }
-
-        var totalUploading = 0.0
-        var totalDownloading = 0.0
-        var uploadCount = 0
-        var downloadCount = 0
-
-        for item in query.results {
-            guard let mdItem = item as? NSMetadataItem else { continue }
-
-            if let uploadPercent = mdItem.value(forAttribute: NSMetadataUbiquitousItemPercentUploadedKey) as? Double,
-               uploadPercent < 100 {
-                totalUploading += uploadPercent / 100.0
-                uploadCount += 1
-            }
-            if let downloadPercent = mdItem.value(forAttribute: NSMetadataUbiquitousItemPercentDownloadedKey) as? Double,
-               downloadPercent < 100 {
-                totalDownloading += downloadPercent / 100.0
-                downloadCount += 1
-            }
-
-            // Trigger download for items not yet downloaded
-            if let status = mdItem.value(forAttribute: NSMetadataUbiquitousItemDownloadingStatusKey) as? String,
-               status == NSMetadataUbiquitousItemDownloadingStatusNotDownloaded,
-               let url = mdItem.value(forAttribute: NSMetadataItemURLKey) as? URL {
-                try? FileManager.default.startDownloadingUbiquitousItem(at: url)
-            }
+    /// One full metadata pass — items missing from `items` have settled or are gone, so the status
+    /// is recomputed from scratch rather than accumulated. Runs on the caller's queue (the query's,
+    /// which is serial and off-main); tests call it directly.
+    func ingest(_ items: [UbiquityItemProgress]) {
+        let status = ICloudSyncProgress.status(for: items)
+        let (changed, crossedIdle) = statusLock.withLock { () -> (Bool, Bool) in
+            guard !isStopped, status != lastPublishedStatus else { return (false, false) }
+            let wasIdle = lastPublishedStatus == .idle
+            lastPublishedStatus = status
+            return (true, wasIdle || status == .idle)
         }
+        guard changed else { return }
 
-        let newStatus: SyncStatus
-        if downloadCount > 0 {
-            newStatus = .downloading(totalDownloading / Double(downloadCount))
-        } else if uploadCount > 0 {
-            newStatus = .uploading(totalUploading / Double(uploadCount))
-        } else {
-            newStatus = .idle
+        if crossedIdle {
+            CrashReportingService.breadcrumb(.sync, status == .idle ? "iCloud transfer idle" : "iCloud transfer started")
         }
-
         DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.syncStatus = newStatus
-            self.onSyncStatusChange?(newStatus)
+            // Re-checked on the main thread: `stopMonitoring` may have run between the hop being
+            // enqueued and it landing, and the caller resets the published label itself.
+            guard let self, !statusLock.withLock({ isStopped }) else { return }
+            MainActor.assumeIsolated { self.onSyncStatusChange?(status) }
         }
     }
 
     // MARK: - Change Detection
 
-    private var indexFileURL: URL {
-        PersistenceService.indexURL
-    }
-
+    /// Both of these run on `workQueue`, which is what keeps `lastKnownIndexModDate` consistent
+    /// without a lock — a save's snapshot can't land between the stat and the compare below.
     private func snapshotIndexModDate() {
-        let url = indexFileURL
-        lastKnownIndexModDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
+        lastKnownIndexModDate = PersistenceService.modificationDate(of: PersistenceService.indexURL)
     }
 
-    /// Returns true if the index file has been modified since our last snapshot.
     private func hasIndexChanged() -> Bool {
-        let url = indexFileURL
-        let currentDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
-        return currentDate != lastKnownIndexModDate
+        let currentDate = PersistenceService.modificationDate(of: PersistenceService.indexURL)
+        guard currentDate != lastKnownIndexModDate else { return false }
+        lastKnownIndexModDate = currentDate
+        return true
     }
 
     // MARK: - Private
 
     private func scheduleDebouncedReload() {
         let task = DispatchWorkItem { [weak self] in
-            DispatchQueue.main.async {
-                guard let self, self.hasIndexChanged() else { return }
-                self.snapshotIndexModDate()
-                self.onRemoteChange?()
+            guard let self, hasIndexChanged() else { return }
+            DispatchQueue.main.async { [weak self] in
+                MainActor.assumeIsolated { self?.onRemoteChange?() }
             }
         }
         // NSFilePresenter callbacks arrive on a background operation queue, so
         // guard the shared work-item reference against concurrent cancel/replace.
-        debounceLock.lock()
-        debounceTimer?.cancel()
-        debounceTimer = task
-        debounceLock.unlock()
-        DispatchQueue.main.asyncAfter(deadline: .now() + debounceInterval, execute: task)
+        debounceLock.withLock {
+            debounceTimer?.cancel()
+            debounceTimer = task
+        }
+        workQueue.asyncAfter(deadline: .now() + debounceInterval, execute: task)
     }
 }

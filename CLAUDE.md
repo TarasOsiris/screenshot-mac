@@ -173,6 +173,8 @@ Release is the build worth measuring.
   (`batchImportImages`, `ImageDownsampler`, `StagedImageWrite`), SVG rasterization, and the SceneKit
   device path (scene load, `prepare`, and the otherwise-invisible blank-snapshot retry) — the last of
   which now runs on `DeviceModelSnapshotQueue`, so its spans should never appear on the main thread.
+  iCloud adds `ICloudMonitor.metadataScan` and `ICloudMonitor.prefetchRequest`, which like the
+  SceneKit spans should never appear on the main thread.
 
 **Product analytics (`AnalyticsService`) — how to instrument:** PostHog US Cloud, always-on in
 Release, **off in Debug and under XCTest** (`isEnabled`; `SCREENSHOT_ENABLE_ANALYTICS=1` opts a
@@ -277,6 +279,21 @@ one install in two. It is an irreversible merge that bills an event, so it is gu
 - The trap also applies to members of `nonisolated` **types**, which carry no keyword on the func — grepping for `nonisolated.*async` will not find them.
 - `TaskGroup.addTask` does *not* inherit isolation, so `ExportService.exportAll`'s encode/write group is already off-main. But `addTask` itself doesn't *suspend* — a loop that renders on the main actor and only awaits at the group drain still runs every render as one uninterrupted job. Any main-actor render loop needs an explicit `await Task.yield()` per iteration (`ExportService.exportAll`, `EditorRowView+Actions`' row export).
 - `ExportImageEncoderIsolationTests.expectSuspendsMainActor` pins the invariant — extend it when adding a `@concurrent` helper.
+
+**iCloud file-provider calls — never on the main thread, never per tick:**
+- An `NSMetadataQuery` with no `operationQueue` posts its notifications on the run loop that
+  started it. Started from the main actor, that means the whole update handler is main-thread work
+  — and `startDownloadingUbiquitousItem` is a synchronous XPC round trip to the file provider. One
+  per placeholder per tick shipped as a 16 s fully-blocked hang in 4.13 (129) (Sentry
+  `SCREENSHOT-BRO-1F`). `MetadataQueryController` sets the queue and does nothing blocking on it;
+  `ICloudDownloadPrefetcher` owns a second queue for the XPC, because `NSMetadataQuery.stop()`
+  synchronizes with in-flight work on the query's queue and `stopMonitoring()` runs on the main
+  actor.
+- The same applies to *stat*ing a ubiquitous path: `PersistenceService.modificationDate(of:)` on
+  the index can block. `ICloudMonitor` confines every read and write of the snapshot to its
+  `workQueue`, so callers — including the save queue and the quit flush — never choose a thread.
+- `ICloudSyncProgressTests` / `DownloadRequestThrottleTests` / `ICloudMonitorPublishTests` pin the
+  progress math, the re-request throttle, and the main-thread publish hop.
 
 **Undo stacks — never register against an object you don't outlive:**
 - The app has three: the **document**'s (`AppState.undoManager`, its own instance), the **inline text editor**'s (macOS `InlineTextEditor.Coordinator.editingUndoManager`, cleared in `dismantleNSView`; iOS `VerticalAlignTextView` overrides `undoManager` so its stack dies with the view), and **AppKit's window manager** (every SwiftUI `TextField`'s field editor). `screenshotApp.performEditingOrDocumentCommand` is the single place that routes ⌘Z between them.

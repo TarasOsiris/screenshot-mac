@@ -186,14 +186,13 @@ extension AppState {
                     catalogModified = PersistenceService.translationCatalogModifiedDate(snapshot.id)
                 } catch { projectError = error }
             }
+            monitor?.snapshotAfterWrite()
             DispatchQueue.main.async {
                 guard let self else { return }
                 if projectSnapshot != nil {
                     self.inFlightSaveCount -= 1
                     if self.inFlightSaveCount == 0 { self.inFlightSaveModifiedAt = nil }
                 }
-                // On the main actor to match saveAll's thread for the unlocked snapshot.
-                monitor?.snapshotAfterWrite()
                 if let indexError {
                     self.reportIndexSaveFailure(indexError)
                 }
@@ -291,8 +290,7 @@ extension AppState {
                 try PersistenceService.saveIndex(index)
                 // Snapshot AFTER the write completes so hasIndexChanged() treats it as our
                 // own save and the iCloud monitor doesn't trigger a reload (mirrors saveAll).
-                // On the main actor to match saveAll's thread for the unlocked snapshot.
-                DispatchQueue.main.async { monitor?.snapshotAfterWrite() }
+                monitor?.snapshotAfterWrite()
             } catch {
                 DispatchQueue.main.async {
                     self?.reportIndexSaveFailure(error)
