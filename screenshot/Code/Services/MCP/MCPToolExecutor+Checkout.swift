@@ -57,7 +57,7 @@ extension MCPToolExecutor {
             throw MCPToolError.notFound("Project \(id.uuidString)")
         }
         guard let linked = project.ascAppId, !linked.isEmpty else {
-            throw MCPToolError.failed("\(project.name) is not linked to an App Store Connect app — pass app_id, or link it via the App Store Connect upload wizard.")
+            throw MCPToolError.expected("\(project.name) is not linked to an App Store Connect app — pass app_id, or link it via the App Store Connect upload wizard.")
         }
         return linked
     }
@@ -66,19 +66,18 @@ extension MCPToolExecutor {
         do {
             return try await ProjectCheckout.open(projectId: id, state: state)
         } catch let error as ProjectCheckoutError {
-            // A bad id is the caller's mistake, so it stays breadcrumb-only rather than opening a
-            // Sentry issue; an unreadable file on disk is ours.
+            // Only an unreadable file on disk is our bug; the rest stay breadcrumb-only.
             switch error {
             case .notFound:
                 throw MCPToolError.notFound("Project \(id.uuidString)")
             case .unreadable(let name):
                 throw MCPToolError.failed("Project \(name) could not be read from disk")
             case .fontsUnavailable(let name):
-                throw MCPToolError.failed(
+                throw MCPToolError.expected(
                     "\(name) uses fonts whose files have not downloaded from iCloud yet. Open the project once to materialize them, then retry — rendering now would silently substitute the system font."
                 )
             case .openedConcurrently(let name):
-                throw MCPToolError.failed("\(name) was opened in the app while this edit was in progress. Retry it.")
+                throw MCPToolError.expected("\(name) was opened in the app while this edit was in progress. Retry it.")
             }
         }
     }

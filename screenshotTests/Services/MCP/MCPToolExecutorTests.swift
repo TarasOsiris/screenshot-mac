@@ -615,6 +615,11 @@ struct MCPToolExecutorTests {
         #expect(!MCPToolError.failed("detail").isClientError)
     }
 
+    /// Setup/business-rule conditions stay off Sentry, like client errors (SCREENSHOT-BRO-G).
+    @Test func expectedConditionIsAClientError() {
+        #expect(MCPToolError.expected("detail").isClientError)
+    }
+
     @Test func renderPreviewReturnsDownscaledPNG() async throws {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }

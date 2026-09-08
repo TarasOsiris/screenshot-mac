@@ -7,7 +7,7 @@ extension MCPToolExecutor {
     func addLocale(_ args: MCPArguments) throws -> CallTool.Result {
         let code = try args.requiredString("code")
         guard !state.localeState.locales.contains(where: { $0.code == code }) else {
-            throw MCPToolError.failed("Locale \(code) already exists")
+            throw MCPToolError.expected("Locale \(code) already exists")
         }
         let preset = LocalePresets.all.first { $0.code == code }
         let label = args.string("label") ?? preset?.label ?? code
@@ -21,7 +21,7 @@ extension MCPToolExecutor {
             throw MCPToolError.notFound("Locale \(code)")
         }
         guard code != state.localeState.baseLocaleCode else {
-            throw MCPToolError.failed("Cannot remove the base locale")
+            throw MCPToolError.expected("Cannot remove the base locale")
         }
         state.removeLocale(code)
         return try MCPResultEncoding.result(["locales": MCPSnapshotBuilder.locales(state.localeState)])
@@ -36,7 +36,7 @@ extension MCPToolExecutor {
             throw MCPToolError.notFound("Locale \(code)")
         }
         guard code != state.localeState.baseLocaleCode else {
-            throw MCPToolError.failed("\(code) is the base locale — use update_shape's text field instead")
+            throw MCPToolError.expected("\(code) is the base locale — use update_shape's text field instead")
         }
         let shape = state.rows[location.rowIndex].shapes[location.shapeIndex]
         guard shape.type == .text else {

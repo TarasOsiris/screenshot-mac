@@ -16,7 +16,7 @@ extension MCPToolExecutor {
         let checkout = try await requireCheckout(args)
         defer { checkout.dispose() }
         guard !checkout.rows.isEmpty else {
-            throw MCPToolError.failed("Project has no rows to export")
+            throw MCPToolError.expected("Project has no rows to export")
         }
 
         let format: ExportImageFormat = switch args.string("format") {

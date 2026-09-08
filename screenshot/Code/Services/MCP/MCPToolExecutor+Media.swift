@@ -84,7 +84,7 @@ extension MCPToolExecutor {
         }
         let row = checkout.rows[rowIndex]
         guard !row.templates.isEmpty else {
-            throw MCPToolError.failed("Row has no template columns")
+            throw MCPToolError.expected("Row has no template columns")
         }
 
         let localeCode = args.string("locale") ?? checkout.localeState.activeLocaleCode
