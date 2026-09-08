@@ -122,7 +122,7 @@ final class MCPToolExecutor {
 
     func activeProjectSnapshotResult() throws -> CallTool.Result {
         guard let project = state.activeProject else {
-            throw MCPToolError.failed("No active project")
+            throw MCPToolError.expected("No active project")
         }
         return try MCPResultEncoding.result(
             MCPSnapshotBuilder.project(id: project.id, name: project.name, rows: state.rows, localeState: state.localeState)

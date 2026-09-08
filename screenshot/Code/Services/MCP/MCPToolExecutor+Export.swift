@@ -13,10 +13,10 @@ extension MCPToolExecutor {
         // The MCP tools bypass ExportFlowModel, so they have to land a composing edit themselves.
         state.commitPendingEdits()
         guard let project = state.activeProject else {
-            throw MCPToolError.failed("No active project")
+            throw MCPToolError.expected("No active project")
         }
         guard !state.rows.isEmpty else {
-            throw MCPToolError.failed("Project has no rows to export")
+            throw MCPToolError.expected("Project has no rows to export")
         }
 
         let format: ExportImageFormat = switch args.string("format") {

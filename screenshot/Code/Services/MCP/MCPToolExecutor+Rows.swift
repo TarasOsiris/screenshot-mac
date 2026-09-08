@@ -137,7 +137,7 @@ extension MCPToolExecutor {
         // AppState.deleteRow silently no-ops on the last row — surface that instead of
         // acking a delete that never happened.
         guard state.rows.count > 1 else {
-            throw MCPToolError.failed("Cannot delete the last row of a project")
+            throw MCPToolError.expected("Cannot delete the last row of a project")
         }
         let rowId = state.rows[rowIndex].id
         state.deleteRow(rowId)
@@ -174,7 +174,7 @@ extension MCPToolExecutor {
             throw MCPToolError.notFound("Template \(templateId.uuidString)")
         }
         guard state.rows[rowIndex].templates.count > 1 else {
-            throw MCPToolError.failed("Cannot remove the last template column of a row")
+            throw MCPToolError.expected("Cannot remove the last template column of a row")
         }
         state.removeTemplate(templateId, from: state.rows[rowIndex].id)
         return try rowResult(rowIndex)

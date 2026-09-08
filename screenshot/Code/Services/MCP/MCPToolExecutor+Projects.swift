@@ -24,7 +24,7 @@ extension MCPToolExecutor {
             throw MCPToolError.notFound("Project \(id.uuidString)")
         }
         guard let data = PersistenceService.loadProject(id) else {
-            throw MCPToolError.failed("Project \(project.name) has no saved data yet")
+            throw MCPToolError.expected("Project \(project.name) has no saved data yet")
         }
         return try MCPResultEncoding.result(
             MCPSnapshotBuilder.project(id: id, name: project.name, rows: data.rows, localeState: data.localeState ?? .default)

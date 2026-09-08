@@ -9,6 +9,9 @@ enum MCPToolError: Error, LocalizedError {
     case invalidArgument(String, String)
     case notFound(String)
     case unreadableFiles(String)
+    /// A business-rule or setup condition the caller could have checked for (no active project,
+    /// ASC not configured, nothing matched the requested filters) — expected, not ours.
+    case expected(String)
     case failed(String)
 
     var errorDescription: String? {
@@ -23,18 +26,22 @@ enum MCPToolError: Error, LocalizedError {
             "\(what) not found — call get_project for current ids"
         case .unreadableFiles(let message):
             message
+        case .expected(let message):
+            message
         case .failed(let message):
             message
         }
     }
 
-    /// A malformed or stale request from the client — the agent's mistake, not ours, so it stays
+    /// A malformed or stale request, or an expected state/business-rule condition the caller
+    /// could have checked for — the agent's mistake or current app state, not ours — so it stays
     /// breadcrumb-only rather than opening a Sentry issue. `unreadableFiles` is here for privacy
     /// too: its message names the user's paths (a sandbox read *or* write denial), which must
-    /// never reach a report.
+    /// never reach a report. Only `.failed` — something that should have worked and didn't —
+    /// still opens one, or these drown the real bugs (SCREENSHOT-BRO-G).
     var isClientError: Bool {
         switch self {
-        case .unknownTool, .missingArgument, .invalidArgument, .notFound, .unreadableFiles: true
+        case .unknownTool, .missingArgument, .invalidArgument, .notFound, .unreadableFiles, .expected: true
         case .failed: false
         }
     }

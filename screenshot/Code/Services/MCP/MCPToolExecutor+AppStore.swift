@@ -144,7 +144,7 @@ extension MCPToolExecutor {
 
     func previewAppStoreScreenshotSync(_ args: MCPArguments) async throws -> CallTool.Result {
         try requireASCConfigured()
-        guard state.activeProjectId != nil else { throw MCPToolError.failed("No active project") }
+        guard state.activeProjectId != nil else { throw MCPToolError.expected("No active project") }
         let appId = try resolveASCAppId(args)
         let requestedVersionIds = Set(args.stringArray("version_ids") ?? [])
         let allVersions = try await ascAPI.listAppStoreVersions(appId: appId)
@@ -229,7 +229,7 @@ extension MCPToolExecutor {
             }
         }
         guard !targets.isEmpty else {
-            throw MCPToolError.failed("No compatible editable version × row × locale screenshot sets were found. \(issues.joined(separator: " "))")
+            throw MCPToolError.expected("No compatible editable version × row × locale screenshot sets were found. \(issues.joined(separator: " "))")
         }
 
         let plan = try await AppStoreConnectScreenshotSyncService.shared.buildPlan(
@@ -310,14 +310,14 @@ extension MCPToolExecutor {
 
     private func requireASCConfigured() throws {
         guard AppStoreConnectCredentialsStore.shared.isConfigured else {
-            throw MCPToolError.failed("App Store Connect is not configured — add your API key in Settings ▸ App Store Connect, or enable demo mode.")
+            throw MCPToolError.expected("App Store Connect is not configured — add your API key in Settings ▸ App Store Connect, or enable demo mode.")
         }
     }
 
     private func resolveASCAppId(_ args: MCPArguments) throws -> String {
         if let explicit = args.string("app_id"), !explicit.isEmpty { return explicit }
         if let linked = state.activeProject?.ascAppId, !linked.isEmpty { return linked }
-        throw MCPToolError.failed("No App Store Connect app id — pass app_id, or link the active project to an app via the App Store Connect upload wizard.")
+        throw MCPToolError.expected("No App Store Connect app id — pass app_id, or link the active project to an app via the App Store Connect upload wizard.")
     }
 
     /// All versions to read (a specific one if requested, else every version).
@@ -330,7 +330,7 @@ extension MCPToolExecutor {
             return [match]
         }
         guard !versions.isEmpty else {
-            throw MCPToolError.failed("App \(appId) has no App Store versions")
+            throw MCPToolError.expected("App \(appId) has no App Store versions")
         }
         return versions
     }
@@ -346,7 +346,7 @@ extension MCPToolExecutor {
         }
         let editable = versions.filter { $0.isEditable }
         guard !editable.isEmpty else {
-            throw MCPToolError.failed("App \(appId) has no editable App Store version (a version must be in an editable state such as Prepare for Submission)")
+            throw MCPToolError.expected("App \(appId) has no editable App Store version (a version must be in an editable state such as Prepare for Submission)")
         }
         return editable
     }

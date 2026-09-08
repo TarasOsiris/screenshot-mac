@@ -602,6 +602,13 @@ struct MCPToolExecutorTests {
         #expect(!MCPToolError.failed("detail").isClientError)
     }
 
+    /// An expected business-rule/setup condition (no active project, ASC not configured, nothing
+    /// matched the requested filters) is the caller's state to check, not our bug — it must stay
+    /// off Sentry the same as a client error, or these drown real `.failed` reports.
+    @Test func expectedConditionIsAClientError() {
+        #expect(MCPToolError.expected("detail").isClientError)
+    }
+
     @Test func renderPreviewReturnsDownscaledPNG() async throws {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }
