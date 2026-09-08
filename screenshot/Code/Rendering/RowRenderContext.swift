@@ -90,11 +90,15 @@ struct RowRenderContext {
 
     /// The same row and settings against another locale's resolved images, reusing the already
     /// precomposed background. Replaces the hand-managed `var rowBackground` + `if index == 0`.
+    ///
+    /// The two report arrays are required rather than defaulted: defaulting them let a caller
+    /// hand back a context claiming a clean bill of health, which is the shape of bug the reports
+    /// exist to catch.
     func withLocale(
         _ localeCode: String,
         images: [String: NSImage],
-        missingImageFileNames: [String] = [],
-        unusableImageFileNames: [String] = []
+        missingImageFileNames: [String],
+        unusableImageFileNames: [String]
     ) -> RowRenderContext {
         RowRenderContext(
             copying: self,
@@ -175,12 +179,15 @@ extension RowRenderContext {
     ) -> RowRenderContext {
         let fileNames = source.referencedImageFileNames(forRow: row, localeCode: localeCode)
         var images = source.loadFullResolutionImages(fileNames: fileNames, cache: &cache)
+        images.merge(seedImages) { _, seed in seed }
+        // Both lists have to describe the *merged* dictionary: a seed that replaces an undrawable
+        // disk image renders fine, and reporting it would now abort an upload rather than just
+        // colour a log line.
+        let missing = fileNames.subtracting(images.keys).sorted()
         let unusable = fileNames.filter { name in
             guard let image = images[name] else { return false }   // absent is `missing`, not unusable
             return !image.canDraw
         }.sorted()
-        images.merge(seedImages) { _, seed in seed }
-        let missing = fileNames.subtracting(images.keys).sorted()
 
         if let previous, previous.row.id == row.id {
             return previous.withLocale(

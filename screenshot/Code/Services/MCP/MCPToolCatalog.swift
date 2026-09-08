@@ -267,7 +267,7 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.exportProject.rawValue,
-            description: "Export the active project's screenshots as PNG/JPEG files and return the written file paths. Without folder_path, exports to a readable temp folder.",
+            description: "Export the active project's screenshots as PNG/JPEG files and return the written file paths. Without folder_path, exports to a readable temp folder. `unrenderable` lists any resource that composited to a blank area — a non-empty value means the exported images have holes in them, however many files were written.",
             inputSchema: MCPSchema.object([
                 "folder_path": MCPSchema.string("Destination folder (must be writable by the app; omit to use a temp folder and copy files from there)"),
                 "format": MCPSchema.string("Image format (default png)", oneOf: ["png", "jpeg"]),

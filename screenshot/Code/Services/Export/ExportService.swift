@@ -19,11 +19,9 @@ enum ExportImageFormat: String {
 }
 
 struct ExportService {
-    /// Async export that yields between templates so the UI stays responsive.
-    /// Rendering happens on @MainActor (required by ImageRenderer);
-    /// image encoding and file I/O are pipelined on a background thread.
-    @MainActor
-    /// Renders every row × locale to `folderURL`.
+    /// Renders every row × locale to `folderURL`, yielding between templates so the UI stays
+    /// responsive. Rendering happens on `@MainActor` (required by `ImageRenderer`); image encoding
+    /// and file I/O are pipelined on a background thread.
     ///
     /// Takes the render source rather than an image-provider closure so it builds its contexts
     /// through `RowRenderContext.load`, the one place that also reports what it could not load.
@@ -34,6 +32,7 @@ struct ExportService {
     /// `unrenderable` is that report, returned rather than only logged so a caller — the MCP
     /// `export_project` in particular — can say so instead of reporting a clean success over a
     /// folder of blank device frames.
+    @MainActor
     static func exportAll(
         rows: [ScreenshotRow],
         projectName: String,
@@ -65,7 +64,6 @@ struct ExportService {
 
         var completed = 0
         var writtenFileURLs: [URL] = []
-        var imageCache: [String: NSImage] = [:]
         var unrenderable = Set<String>()
 
         let startedAt = Date()
@@ -148,6 +146,10 @@ struct ExportService {
                     "pixels": Int(row.templateWidth * row.templateHeight),
                 ])
 
+                // Per row, not per export: a row's locale groups share their images, but two rows
+                // reference different files, so a document-wide cache only retains every
+                // full-resolution PNG in the project until the export ends.
+                var imageCache: [String: NSImage] = [:]
                 var context: RowRenderContext?
                 for group in localeGroups {
                     let renderCode = group[0].code

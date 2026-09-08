@@ -39,6 +39,10 @@ final class ExportFlowModel {
     private(set) var progress = 0
     private(set) var total = 0
     var errorMessage: String?
+    /// Resources the last completed run drew as holes; empty on a clean one. The files were still
+    /// written, so this is not an error — but "12 screenshots exported" over blank device frames is
+    /// not a success either, and this is what a UI needs to say so.
+    private(set) var unrenderableFileNames: [String] = []
 
     /// Rendered output held while the destination action sheet is on screen (iPad only — macOS
     /// picks the folder up front).
@@ -111,6 +115,12 @@ final class ExportFlowModel {
 
     /// `destination` is the only thing the render layer never learns — `ExportService` knows what
     /// was rendered, this is the one place that knows where it went.
+    /// Records what a finished run could not draw. The producers (`ExportService.exportAll`,
+    /// `ExportCoordinator.renderRows`) do the logging, so this only holds it for the UI.
+    private func note(unrenderable: [String]) {
+        unrenderableFileNames = unrenderable
+    }
+
     func showSuccess(projectName: String, destination: String) {
         AnalyticsService.capture(.exportRouted, [.destination: destination])
         successTimer?.cancel()
@@ -146,6 +156,7 @@ final class ExportFlowModel {
         run {
             defer { url.stopAccessingSecurityScopedResource() }
             let export = try await self.renderAll(document: document, to: url, localeFilter: localeFilter)
+            self.note(unrenderable: export.unrenderable)
             self.showSuccess(projectName: document.activeProjectName, destination: "folder")
             if self.revealAfterExport {
                 PlatformReveal.inFileViewer([export.folderURL])
@@ -210,7 +221,7 @@ final class ExportFlowModel {
             let destDir = ExportFileNaming.uniqueFolder(named: folderName, in: baseURL)
             try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
             var imageCache: [String: NSImage] = [:]
-            let fileURLs = try await ExportCoordinator.renderRows(
+            let rendered = try await ExportCoordinator.renderRows(
                 rowsToExport,
                 into: destDir,
                 source: document,
@@ -219,7 +230,8 @@ final class ExportFlowModel {
                 onProgress: { [weak self] in self?.progress = $0 },
                 render: render
             )
-            let staged = PendingExport(fileURLs: fileURLs, folderURL: destDir, cleanupBaseURL: baseURL)
+            self.note(unrenderable: rendered.unrenderable)
+            let staged = PendingExport(fileURLs: rendered.fileURLs, folderURL: destDir, cleanupBaseURL: baseURL)
             switch delivery {
             case .revealInPlace:
                 if self.revealAfterExport {
@@ -230,7 +242,7 @@ final class ExportFlowModel {
                 self.stage(staged)
             #if os(iOS)
             case .route(let destination):
-                guard !fileURLs.isEmpty else {
+                guard !rendered.fileURLs.isEmpty else {
                     try? FileManager.default.removeItem(at: baseURL)
                     return
                 }
@@ -253,6 +265,7 @@ final class ExportFlowModel {
         run {
             let tempBase = try ExportService.makeTempExportFolder()
             let export = try await self.renderAll(document: document, to: tempBase, localeFilter: localeFilter)
+            self.note(unrenderable: export.unrenderable)
             self.stage(PendingExport(
                 fileURLs: export.fileURLs,
                 folderURL: export.folderURL,

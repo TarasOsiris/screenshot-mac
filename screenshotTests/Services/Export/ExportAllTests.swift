@@ -3,8 +3,6 @@ import AppKit
 import SwiftUI
 import Testing
 
-/// Covers the locale-dedupe export path: rows untouched by a locale render once
-/// and the encoded bytes are shared across that locale group's folders.
 /// A source whose disk holds nothing, for the cases that render text and backgrounds only.
 @MainActor
 final class EmptyDiskRenderSource: RowRenderSource {
@@ -15,6 +13,8 @@ final class EmptyDiskRenderSource: RowRenderSource {
     func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
 }
 
+/// Covers the locale-dedupe export path: rows untouched by a locale render once
+/// and the encoded bytes are shared across that locale group's folders.
 @MainActor
 struct ExportAllTests {
 

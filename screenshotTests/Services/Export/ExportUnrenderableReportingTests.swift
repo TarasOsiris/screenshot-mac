@@ -91,4 +91,41 @@ struct ExportUnrenderableReportingTests {
         #expect(context.unusableImageFileNames == ["broken.png"])
         #expect(context.unrenderableImageFileNames == ["broken.png", "ghost.png"])
     }
+
+    /// A seed image replaces a disk resource, so it must be judged on the merged dictionary. Judged
+    /// before the merge, an undrawable file that a seed supersedes was still reported — and the
+    /// upload services now *throw* on that, so it would abort an upload over something that
+    /// renders correctly.
+    @Test func aSeedThatReplacesAnUndrawableFileIsNotReported() {
+        let source = ScriptedRenderSource()
+        source.referenced = ["cover.png"]
+        source.images = ["cover.png": NSImage(size: NSSize(width: 4, height: 4))]   // undrawable on disk
+        var cache: [String: NSImage] = [:]
+        let context = RowRenderContext.load(
+            row: deviceRow(screenshot: "cover.png"),
+            localeCode: "en", from: source, label: "test", cache: &cache,
+            seedImages: ["cover.png": makeTestImage(width: 40, height: 80)]
+        )
+        #expect(context.unrenderableImageFileNames.isEmpty,
+                "the seed supersedes the file, so nothing is unrenderable")
+    }
+
+    /// The row-level export path (row export, showcase, iPad share sheet) reports too — it built
+    /// its context through `load` and dropped both lists on the floor.
+    @Test func rowExportReportsAResourceItCouldNotDraw() async throws {
+        let source = ScriptedRenderSource()
+        source.referenced = ["ghost.png"]
+        let dir = makeTemporaryDataDirectory(label: "row-export-report")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        var cache: [String: NSImage] = [:]
+        let rendered = try await ExportCoordinator.renderRows(
+            [deviceRow(screenshot: "ghost.png")],
+            into: dir,
+            source: source,
+            imageCache: &cache,
+            render: { $0.templateImage(at: 0) }
+        )
+        #expect(rendered.fileURLs.count == 1)
+        #expect(rendered.unrenderable == ["ghost.png"])
+    }
 }

@@ -4,6 +4,7 @@ import AppKit
 import UIKit
 #endif
 import Foundation
+import os
 
 enum ExportRenderError: LocalizedError {
     case encodingFailed(rowIndex: Int)
@@ -91,9 +92,10 @@ enum ExportCoordinator {
         seedImages: [String: NSImage] = [:],
         onProgress: ((Int) -> Void)? = nil,
         render: @MainActor (RowRenderContext) async -> NSImage
-    ) async throws -> [URL] {
+    ) async throws -> (fileURLs: [URL], unrenderable: [String]) {
         let localeCode = source.localeState.activeLocaleCode
         var fileURLs: [URL] = []
+        var unrenderable = Set<String>()
         for (index, row) in rows.enumerated() {
             try Task.checkCancellation()
             let context = RowRenderContext.load(
@@ -104,6 +106,7 @@ enum ExportCoordinator {
                 cache: &imageCache,
                 seedImages: seedImages
             )
+            unrenderable.formUnion(context.unrenderableImageFileNames)
             guard let data = await ExportImageEncoder.opaquePNGDataOffMain(from: render(context)) else {
                 throw ExportRenderError.encodingFailed(rowIndex: index)
             }
@@ -113,7 +116,10 @@ enum ExportCoordinator {
             onProgress?(index + 1)
             await Task.yield()
         }
-        return fileURLs
+        if !unrenderable.isEmpty {
+            AppLogger.export.error("Row export wrote holes for \(unrenderable.count, privacy: .public) resource(s): \(unrenderable.sorted().joined(separator: ", "), privacy: .public)")
+        }
+        return (fileURLs, unrenderable.sorted())
     }
 
     /// `01.png`, or `01_Row Label.png` when the row is named.
