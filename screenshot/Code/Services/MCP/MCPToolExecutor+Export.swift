@@ -7,6 +7,9 @@ extension MCPToolExecutor {
     struct ExportResult: Encodable {
         let folder: String
         let files: [String]
+        /// Resources that composited to a hole. Empty on a clean export; present so an agent is
+        /// told rather than handed a folder of blank device frames with a success message.
+        let unrenderable: [String]
     }
 
     func exportProject(_ args: MCPArguments) async throws -> CallTool.Result {
@@ -51,16 +54,13 @@ extension MCPToolExecutor {
                 projectName: project.name,
                 to: destination,
                 format: format,
-                imageProvider: { row, localeCode in
-                    state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
-                },
-                localeState: state.localeState,
-                localeFilter: args.string("locale"),
-                availableFontFamilies: state.availableFontFamilySet
+                source: state,
+                localeFilter: args.string("locale")
             )
             return try MCPResultEncoding.result(ExportResult(
                 folder: result.folderURL.path,
-                files: result.fileURLs.map(\.path).sorted()
+                files: result.fileURLs.map(\.path).sorted(),
+                unrenderable: result.unrenderable
             ))
         } catch {
             throw MCPToolError.failed("Export failed: \(error.localizedDescription)")

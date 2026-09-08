@@ -32,6 +32,14 @@ struct RowRenderContext {
     /// Resources the model references that disk couldn't produce. Rendering degrades silently to
     /// a hole, so upload paths should refuse a context with a non-empty set.
     let missingImageFileNames: [String]
+    /// Resources disk *did* produce that cannot draw — zero-sized, or with no representation a
+    /// `CGImage` can come from. They composite to the same hole as a missing file while passing
+    /// every presence check, which is the shape that shipped 112 blank store screenshots.
+    let unusableImageFileNames: [String]
+
+    /// Everything referenced that will not appear in the output, whichever way it failed. Refuse
+    /// on this rather than on `missingImageFileNames` alone.
+    var unrenderableImageFileNames: [String] { (missingImageFileNames + unusableImageFileNames).sorted() }
 
     init(
         row: ScreenshotRow,
@@ -41,7 +49,8 @@ struct RowRenderContext {
         availableFontFamilies: Set<String>,
         displayScale: CGFloat = 1.0,
         label: String,
-        missingImageFileNames: [String] = []
+        missingImageFileNames: [String] = [],
+        unusableImageFileNames: [String] = []
     ) {
         self.row = row
         self.images = images
@@ -51,6 +60,7 @@ struct RowRenderContext {
         self.displayScale = displayScale
         self.label = label
         self.missingImageFileNames = missingImageFileNames
+        self.unusableImageFileNames = unusableImageFileNames
         self.precomposedRowBackground = RowRenderer.precomposedRowBackgroundIfNeeded(
             row: row,
             screenshotImages: images,
@@ -63,7 +73,8 @@ struct RowRenderContext {
         copying other: RowRenderContext,
         localeCode: String,
         images: [String: NSImage],
-        missingImageFileNames: [String]
+        missingImageFileNames: [String],
+        unusableImageFileNames: [String]
     ) {
         self.row = other.row
         self.images = images
@@ -74,6 +85,7 @@ struct RowRenderContext {
         self.label = other.label
         self.precomposedRowBackground = other.precomposedRowBackground
         self.missingImageFileNames = missingImageFileNames
+        self.unusableImageFileNames = unusableImageFileNames
     }
 
     /// The same row and settings against another locale's resolved images, reusing the already
@@ -81,13 +93,15 @@ struct RowRenderContext {
     func withLocale(
         _ localeCode: String,
         images: [String: NSImage],
-        missingImageFileNames: [String] = []
+        missingImageFileNames: [String] = [],
+        unusableImageFileNames: [String] = []
     ) -> RowRenderContext {
         RowRenderContext(
             copying: self,
             localeCode: localeCode,
             images: images,
-            missingImageFileNames: missingImageFileNames
+            missingImageFileNames: missingImageFileNames,
+            unusableImageFileNames: unusableImageFileNames
         )
     }
 
@@ -161,11 +175,18 @@ extension RowRenderContext {
     ) -> RowRenderContext {
         let fileNames = source.referencedImageFileNames(forRow: row, localeCode: localeCode)
         var images = source.loadFullResolutionImages(fileNames: fileNames, cache: &cache)
+        let unusable = fileNames.filter { name in
+            guard let image = images[name] else { return false }   // absent is `missing`, not unusable
+            return !image.canDraw
+        }.sorted()
         images.merge(seedImages) { _, seed in seed }
         let missing = fileNames.subtracting(images.keys).sorted()
 
         if let previous, previous.row.id == row.id {
-            return previous.withLocale(localeCode, images: images, missingImageFileNames: missing)
+            return previous.withLocale(
+                localeCode, images: images,
+                missingImageFileNames: missing, unusableImageFileNames: unusable
+            )
         }
         return RowRenderContext(
             row: row,
@@ -175,7 +196,8 @@ extension RowRenderContext {
             availableFontFamilies: source.availableFontFamilySet,
             displayScale: displayScale,
             label: label,
-            missingImageFileNames: missing
+            missingImageFileNames: missing,
+            unusableImageFileNames: unusable
         )
     }
 }

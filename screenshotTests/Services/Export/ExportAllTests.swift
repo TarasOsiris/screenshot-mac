@@ -5,6 +5,16 @@ import Testing
 
 /// Covers the locale-dedupe export path: rows untouched by a locale render once
 /// and the encoded bytes are shared across that locale group's folders.
+/// A source whose disk holds nothing, for the cases that render text and backgrounds only.
+@MainActor
+final class EmptyDiskRenderSource: RowRenderSource {
+    var localeState: LocaleState
+    var availableFontFamilySet: Set<String> = PlatformFonts.familyNameSet
+    init(localeState: LocaleState = .default) { self.localeState = localeState }
+    func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
+    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
+}
+
 @MainActor
 struct ExportAllTests {
 
@@ -106,8 +116,7 @@ struct ExportAllTests {
             rows: [rowA, rowB],
             projectName: "TestProject",
             to: tempDir,
-            imageProvider: { _, _ in [:] },
-            localeState: localeState
+            source: EmptyDiskRenderSource(localeState: localeState)
         )
 
         // 2 locales × 2 rows × 2 templates
@@ -156,8 +165,7 @@ struct ExportAllTests {
             rows: [row],
             projectName: "BlurProject",
             to: tempDir,
-            imageProvider: { _, _ in [:] },
-            localeState: .default
+            source: EmptyDiskRenderSource()
         )
         #expect(export.fileURLs.count == 2)
 

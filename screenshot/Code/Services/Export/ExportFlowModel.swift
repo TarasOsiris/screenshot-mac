@@ -157,21 +157,15 @@ final class ExportFlowModel {
         document: some ExportDocument,
         to url: URL,
         localeFilter: String?
-    ) async throws -> (folderURL: URL, fileURLs: [URL]) {
-        var imageCache: [String: NSImage] = [:]
-        return try await ExportService.exportAll(
+    ) async throws -> (folderURL: URL, fileURLs: [URL], unrenderable: [String]) {
+        try await ExportService.exportAll(
             rows: document.rows,
             projectName: document.activeProjectName,
             to: url,
             format: format,
-            imageProvider: { row, localeCode in
-                let fileNames = document.referencedImageFileNames(forRow: row, localeCode: localeCode)
-                return document.loadFullResolutionImages(fileNames: fileNames, cache: &imageCache)
-            },
-            localeState: document.localeState,
+            source: document,
             localeFilter: localeFilter,
             customSuffix: customSuffix,
-            availableFontFamilies: document.availableFontFamilySet,
             onProgress: { [weak self] completed in self?.progress = completed }
         )
     }

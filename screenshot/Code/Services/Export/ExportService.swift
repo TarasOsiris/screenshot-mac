@@ -3,6 +3,7 @@ import AppKit
 #else
 import UIKit
 #endif
+import os
 import UniformTypeIdentifiers
 
 enum ExportImageFormat: String {
@@ -22,18 +23,28 @@ struct ExportService {
     /// Rendering happens on @MainActor (required by ImageRenderer);
     /// image encoding and file I/O are pipelined on a background thread.
     @MainActor
+    /// Renders every row × locale to `folderURL`.
+    ///
+    /// Takes the render source rather than an image-provider closure so it builds its contexts
+    /// through `RowRenderContext.load`, the one place that also reports what it could not load.
+    /// Hand-rolling the load here is why the export path was the only renderer that could not
+    /// name a resource it had failed to draw — `missingImageFileNames` was plumbed everywhere and
+    /// always empty on the path that writes the files people ship.
+    ///
+    /// `unrenderable` is that report, returned rather than only logged so a caller — the MCP
+    /// `export_project` in particular — can say so instead of reporting a clean success over a
+    /// folder of blank device frames.
     static func exportAll(
         rows: [ScreenshotRow],
         projectName: String,
         to folderURL: URL,
         format: ExportImageFormat = .png,
-        imageProvider: (_ row: ScreenshotRow, _ localeCode: String) -> [String: NSImage],
-        localeState: LocaleState = .default,
+        source: some RowRenderSource,
         localeFilter: String? = nil,
         customSuffix: String = "",
-        availableFontFamilies: Set<String> = PlatformFonts.familyNameSet,
         onProgress: (@MainActor (Int) -> Void)? = nil
-    ) async throws -> (folderURL: URL, fileURLs: [URL]) {
+    ) async throws -> (folderURL: URL, fileURLs: [URL], unrenderable: [String]) {
+        let localeState = source.localeState
         let rootName = ExportFileNaming.sanitizedRootFolderName(projectName)
         let rootFolder = ExportFileNaming.uniqueFolder(named: rootName, in: folderURL)
         try FileManager.default.createDirectory(at: rootFolder, withIntermediateDirectories: true)
@@ -54,6 +65,8 @@ struct ExportService {
 
         var completed = 0
         var writtenFileURLs: [URL] = []
+        var imageCache: [String: NSImage] = [:]
+        var unrenderable = Set<String>()
 
         let startedAt = Date()
         let exportSpan = PerfSignpost.begin(
@@ -138,19 +151,18 @@ struct ExportService {
                 var context: RowRenderContext?
                 for group in localeGroups {
                     let renderCode = group[0].code
-                    let images = imageProvider(row, renderCode)
-                    // The first group builds the context (and the precomposed background when the
-                    // row is blurred); later locales reuse it against their own images.
-                    let rowContext = context?.withLocale(renderCode, images: images)
-                        ?? RowRenderContext(
-                            row: row,
-                            images: images,
-                            localeCode: renderCode,
-                            localeState: localeState,
-                            availableFontFamilies: availableFontFamilies,
-                            label: "export row"
-                        )
+                    // `load` carries the precomposed background forward for later locales via
+                    // `reusing:`, so the first group still pays for it once.
+                    let rowContext = RowRenderContext.load(
+                        row: row,
+                        localeCode: renderCode,
+                        from: source,
+                        label: "export row",
+                        cache: &imageCache,
+                        reusing: context
+                    )
                     context = rowContext
+                    unrenderable.formUnion(rowContext.unrenderableImageFileNames)
 
                     // Encode all templates of this group concurrently, then await
                     // before the next group to bound memory usage.
@@ -212,12 +224,18 @@ struct ExportService {
         CrashReportingService.breadcrumb(.export, "Export finished", data: [
             "files": writtenFileURLs.count,
             "elapsed_ms": Int(Date().timeIntervalSince(startedAt) * 1000),
+            "unrenderable": unrenderable.count,
         ])
         AnalyticsService.capture(.exportFinished, [
             .imageCount: writtenFileURLs.count,
             .durationMs: Int(Date().timeIntervalSince(startedAt) * 1000),
         ])
-        return (rootFolder, writtenFileURLs)
+        if !unrenderable.isEmpty {
+            // Not thrown: a stale reference should not cost the user the whole export. Loud,
+            // because the files it wrote have holes in them and nothing else says so.
+            AppLogger.export.error("Export wrote holes for \(unrenderable.count, privacy: .public) resource(s): \(unrenderable.sorted().joined(separator: ", "), privacy: .public)")
+        }
+        return (rootFolder, writtenFileURLs, unrenderable.sorted())
     }
 
     nonisolated static func encodeImage(_ image: NSImage, format: ExportImageFormat) -> Data? {

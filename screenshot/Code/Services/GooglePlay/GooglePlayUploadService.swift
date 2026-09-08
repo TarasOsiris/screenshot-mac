@@ -236,11 +236,11 @@ final class GooglePlayUploadService {
                     context = rowContext
                     // App Store Connect already refuses this; Play used to publish the screenshot
                     // with the missing image rendered as a hole.
-                    if !rowContext.missingImageFileNames.isEmpty {
+                    if !rowContext.unrenderableImageFileNames.isEmpty {
                         throw GooglePlayUploadError.unreadableImages(
                             rowLabel: target.rowLabel,
                             languageLabel: language.label,
-                            fileNames: rowContext.missingImageFileNames
+                            fileNames: rowContext.unrenderableImageFileNames
                         )
                     }
                     let rendered = try await renderScreenshots(

@@ -156,8 +156,7 @@ struct ExportImageEncoderIsolationTests {
                 rows: [row],
                 projectName: "YieldProject",
                 to: tempDir,
-                imageProvider: { _, _ in [:] },
-                localeState: .default
+                source: EmptyDiskRenderSource()
             )
         }
 

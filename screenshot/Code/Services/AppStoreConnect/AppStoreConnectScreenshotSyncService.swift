@@ -228,11 +228,11 @@ final class AppStoreConnectScreenshotSyncService {
                     context = rowContext
                     // Rendering degrades silently to a hole, so refuse to ship a screenshot
                     // whose image the model references but disk can't produce.
-                    if !rowContext.missingImageFileNames.isEmpty {
+                    if !rowContext.unrenderableImageFileNames.isEmpty {
                         throw ASCScreenshotSyncError.unreadableImages(
                             rowLabel: target.rowLabel,
                             localeLabel: localization.label,
-                            fileNames: rowContext.missingImageFileNames
+                            fileNames: rowContext.unrenderableImageFileNames
                         )
                     }
                     let localAssets = try await renderAssets(
