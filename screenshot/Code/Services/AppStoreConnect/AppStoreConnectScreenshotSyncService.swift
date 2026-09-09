@@ -256,12 +256,18 @@ final class AppStoreConnectScreenshotSyncService {
         return cache[id]?.plan
     }
 
+    /// `needsPreviews` is what makes the direct upload path fast: the 420 px download per remote
+    /// screenshot exists only to draw the review screen's side-by-side comparison, and pressing
+    /// Upload never opens that screen. Checksum matching reads `sourceFileChecksum` from
+    /// metadata, so dropping the previews changes no decision.
     func buildPlan(
         appId: String,
         targets: [ASCUploadTarget],
         rows: [ScreenshotRow],
         source: some RowRenderSource,
         document: DocumentStamp?,
+        strategy: ASCSyncStrategy = .reconcile,
+        needsPreviews: Bool = true,
         progress: @escaping (ASCSyncBuildProgress) -> Void = { _ in }
     ) async throws -> ASCScreenshotSyncPlan {
         guard let document else {
@@ -285,7 +291,11 @@ final class AppStoreConnectScreenshotSyncService {
         CrashReportingService.breadcrumb(.upload, "ASC plan build started", data: [
             "targets": targets.count,
             "localizations": targets.reduce(0) { $0 + $1.localizations.count },
+            "strategy": strategy.rawValue,
+            "previews": needsPreviews,
         ])
+        let buildSpan = PerfSignpost.begin("ASCSync.buildPlan")
+        defer { PerfSignpost.end("ASCSync.buildPlan", buildSpan) }
 
         do {
             for target in targets {
@@ -328,18 +338,23 @@ final class AppStoreConnectScreenshotSyncService {
                             fileNames: rowContext.unrenderableImageFileNames
                         )
                     }
+                    let renderSpan = PerfSignpost.begin("ASCSync.renderSet")
                     let localAssets = try await renderAssets(
                         context: rowContext,
                         target: target,
                         localization: localization,
                         directory: directory.appendingPathComponent(Self.safeFileName(diffId), isDirectory: true)
                     )
+                    PerfSignpost.end("ASCSync.renderSet", renderSpan)
                     completedRenders += target.templateCount
                     progress(.init(stage: .comparing, completedRenders: completedRenders, totalRenders: totalRenders, label: label))
                     let remotePreviewDirectory = directory
                         .appendingPathComponent("remote-previews", isDirectory: true)
                         .appendingPathComponent(Self.safeFileName(diffId), isDirectory: true)
+                    let fetchSpan = PerfSignpost.begin("ASCSync.fetchRemoteSet")
                     let remote = isDemoMode()
+                        // Demo previews are copied from local files, not downloaded, so there is
+                        // nothing to save by skipping them.
                         ? try await demoRemoteSet(
                             from: localAssets,
                             diffId: diffId,
@@ -348,9 +363,10 @@ final class AppStoreConnectScreenshotSyncService {
                         : try await fetchRemoteSet(
                             localizationId: localization.id,
                             displayType: target.displayType,
-                            previewMaxDimension: 420,
-                            previewDirectory: remotePreviewDirectory
+                            previewMaxDimension: needsPreviews ? 420 : nil,
+                            previewDirectory: needsPreviews ? remotePreviewDirectory : nil
                         )
+                    PerfSignpost.end("ASCSync.fetchRemoteSet", fetchSpan)
                     let diff = Self.makeDiff(
                         id: diffId,
                         target: target,
@@ -358,6 +374,7 @@ final class AppStoreConnectScreenshotSyncService {
                         localAssets: localAssets,
                         remoteSetId: remote.setId,
                         remoteAssets: remote.assets,
+                        strategy: strategy,
                         warnings: remote.warnings
                     )
                     diffs.append(diff)
@@ -721,6 +738,7 @@ final class AppStoreConnectScreenshotSyncService {
         localAssets: [ASCScreenshotLocalAsset],
         remoteSetId: String?,
         remoteAssets: [ASCScreenshotRemoteAsset],
+        strategy: ASCSyncStrategy = .reconcile,
         issues: [String] = [],
         warnings: [String] = []
     ) -> ASCScreenshotSetDiff {
@@ -735,7 +753,11 @@ final class AppStoreConnectScreenshotSyncService {
         var matchedRemoteIndexes = Set<Int>()
         var items: [ASCScreenshotDiffItem] = []
         for local in localAssets {
-            let matchedIndex = availableByChecksum[local.checksum]?.first(where: { !matchedRemoteIndexes.contains($0) })
+            // Under `replaceAll` nothing matches, so every local asset is an upload and every
+            // remote one falls through to the removal pass below.
+            let matchedIndex = strategy == .replaceAll
+                ? nil
+                : availableByChecksum[local.checksum]?.first(where: { !matchedRemoteIndexes.contains($0) })
             if let matchedIndex {
                 matchedRemoteIndexes.insert(matchedIndex)
                 let remote = remoteAssets[matchedIndex]

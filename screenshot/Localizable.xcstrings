@@ -10175,7 +10175,56 @@
       }
     },
     "%@ was partially uploaded before the last sync stopped. Refresh the review to re-diff this set — the sets that finished will not be uploaded again." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ wurde teilweise hochgeladen, bevor die letzte Synchronisierung gestoppt wurde. Aktualisieren Sie die Rezension, um diesen Satz erneut zu unterscheiden. Die abgeschlossenen Sätze werden nicht erneut hochgeladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ se cargó parcialmente antes de que se detuviera la última sincronización. Actualice la revisión para volver a diferenciar este conjunto; los conjuntos que finalizaron no se cargarán nuevamente."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ قبل از توقف آخرین همگام‌سازی تا حدی آپلود شد. مرور را بازخوانی کنید تا دوباره این مجموعه را متفاوت کنید - مجموعه‌هایی که به پایان رسید دوباره آپلود نمی‌شوند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a été partiellement téléchargé avant l'arrêt de la dernière synchronisation. Actualisez la révision pour re-différer cet ensemble — les ensembles terminés ne seront pas téléchargés à nouveau."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ は、最後の同期が停止する前に部分的にアップロードされました。レビューを更新してこのセットを再比較します。完了したセットは再度アップロードされません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@은 마지막 동기화가 중지되기 전에 부분적으로 업로드되었습니다. 이 세트를 다시 비교하려면 리뷰를 새로 고치세요. 완료된 세트는 다시 업로드되지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ foi parcialmente carregado antes da última sincronização ser interrompida. Atualize a revisão para diferenciar novamente este conjunto – os conjuntos concluídos não serão carregados novamente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在上次同步停止之前，%1$@ 已部分上传。刷新评论以重新比较此集合 - 已完成的集合将不会再次上传。"
+          }
+        }
+      }
     },
     "%@×%@ · %lld screenshot%@" : {
       "localizations" : {
@@ -10834,64 +10883,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld %2$@ 上传"
-          }
-        }
-      }
-    },
-    "%lld %@ will be safely synced across %lld %@, %lld %@, and %lld %@. Exact checksum matches will be preserved." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ wird sicher über %3$lld %4$@, %5$lld %6$@ und %7$lld %8$@ synchronisiert. Genaue Prüfsummenübereinstimmungen bleiben erhalten."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld %2$@ will be safely synced across %3$lld %4$@, %5$lld %6$@, and %7$lld %8$@. Exact checksum matches will be preserved."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ se sincronizará de forma segura entre %3$lld %4$@, %5$lld %6$@ y %7$lld %8$@. Se conservarán las coincidencias exactas de la suma de comprobación."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ به طور ایمن در بین %3$lld %4$@، %5$lld %6$@ و %7$lld %8$@ همگام‌سازی می‌شود. تطابق دقیق جمع کنترلی حفظ خواهد شد."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ sera synchronisé en toute sécurité sur %3$lld %4$@, %5$lld %6$@ et %7$lld %8$@. Les correspondances exactes de la somme de contrôle seront conservées."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ は %3$lld %4$@、%5$lld %6$@、および %7$lld %8$@ 全体で安全に同期されます。チェックサムの正確な一致は保持されます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@은 %3$lld %4$@, %5$lld %6$@ 및 %7$lld %8$@에서 안전하게 동기화됩니다. 정확한 체크섬 일치가 유지됩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ será sincronizado com segurança entre %3$lld %4$@, %5$lld %6$@ e %7$lld %8$@. As correspondências exatas da soma de verificação serão preservadas."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ 将在 %3$lld %4$@、%5$lld %6$@ 和 %7$lld %8$@ 之间安全同步。将保留精确的校验和匹配。"
           }
         }
       }
@@ -16712,7 +16703,56 @@
       }
     },
     "Agent Edit" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent bearbeiten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agente Editar"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عامل ویرایش"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent Modifier"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エージェント編集"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "에이전트 편집"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edição do Agente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "代理人 编辑"
+          }
+        }
+      }
     },
     "AirDrop, Mail, Messages and more" : {
       "localizations" : {
@@ -18119,7 +18159,56 @@
       }
     },
     "Another screenshot sync is already running. Wait for it to finish, or cancel it first." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine weitere Screenshot-Synchronisierung läuft bereits. Warten Sie, bis der Vorgang abgeschlossen ist, oder brechen Sie ihn zunächst ab."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya se está ejecutando otra sincronización de captura de pantalla. Espere a que termine o cancélelo primero."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "همگام‌سازی اسکرین‌شات دیگری از قبل در حال اجرا است. صبر کنید تا تمام شود یا ابتدا آن را لغو کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une autre synchronisation de capture d'écran est déjà en cours. Attendez qu'il se termine ou annulez-le d'abord."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のスクリーンショットの同期がすでに実行されています。完了するまで待つか、最初にキャンセルしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 스크린샷 동기화가 이미 실행 중입니다. 완료될 때까지 기다리거나 먼저 취소하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outra sincronização de captura de tela já está em execução. Espere que termine ou cancele primeiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另一个屏幕截图同步已在运行。等待它完成，或者先取消它。"
+          }
+        }
+      }
     },
     "API Key" : {
       "localizations" : {
@@ -41984,10 +42073,58 @@
     },
     "Finished %lld of %lld steps. Check each set's state — some did not complete." : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld von %2$lld Schritten abgeschlossen. Überprüfen Sie den Status jedes Satzes – einige wurden nicht abgeschlossen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Finished %1$lld of %2$lld steps. Check each set's state — some did not complete."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finalizó %1$lld de %2$lld pasos. Verifique el estado de cada conjunto; algunos no se completaron."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld از %2$lld مرحله به پایان رسید. وضعیت هر مجموعه را بررسی کنید - برخی کامل نشدند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez terminé %1$lld étapes sur %2$lld. Vérifiez l'état de chaque ensemble : certains ne sont pas terminés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$lld ステップ中 %1$lld を完了しました。各セットの状態を確認します。一部のセットは完了していません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$lld 단계 중 %1$lld 단계를 완료했습니다. 각 세트의 상태를 확인하세요. 일부는 완료되지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concluído %1$lld de %2$lld etapas. Verifique o estado de cada conjunto – alguns não foram concluídos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已完成 %1$lld 个步骤，共 %2$lld 个步骤。检查每组的状态 - 有些未完成。"
           }
         }
       }
@@ -63500,10 +63637,108 @@
       }
     },
     "Project %@ could not be read from disk" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projekt %1$@ konnte nicht von der Festplatte gelesen werden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El proyecto %1$@ no se pudo leer desde el disco"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "پروژه %1$@ از روی دیسک قابل خواندن نیست"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le projet %1$@ n'a pas pu être lu à partir du disque"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロジェクト %1$@ をディスクから読み取ることができませんでした"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로젝트 %1$@을(를) 디스크에서 읽을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O projeto %1$@ não pôde ser lido do disco"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法从磁盘读取项目 %1$@"
+          }
+        }
+      }
     },
     "Project %@ not found" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projekt %1$@ nicht gefunden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proyecto %1$@ no encontrado"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "پروژه %1$@ یافت نشد"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projet %1$@ introuvable"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロジェクト %1$@ が見つかりません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로젝트 %1$@을(를) 찾을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projeto %1$@ não encontrado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到项目 %1$@"
+          }
+        }
+      }
     },
     "Project actions" : {
       "localizations" : {
@@ -83905,7 +84140,56 @@
       }
     },
     "The screenshot sync was cancelled." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Screenshot-Synchronisierung wurde abgebrochen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sincronización de la captura de pantalla fue cancelada."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "همگام سازی اسکرین شات لغو شد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La synchronisation de la capture d'écran a été annulée."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショットの同期がキャンセルされました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷 동기화가 취소되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sincronização da captura de tela foi cancelada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏幕截图同步已取消。"
+          }
+        }
+      }
     },
     "The server requires an **access token**: every request must present it, so another app on your Mac can't quietly drive Screenshot Bro." : {
       "localizations" : {
@@ -94714,6 +94998,526 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "创建版本"
+          }
+        }
+      }
+    },
+    "Replace All Screenshots" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Screenshots ersetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar todas las capturas de pantalla"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "همه اسکرین شات ها را جایگزین کنید"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer toutes les captures d'écran"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのスクリーンショットを置き換える"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 스크린샷 바꾸기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substitua todas as capturas de tela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换所有屏幕截图"
+          }
+        }
+      }
+    },
+    "Rendering %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendern %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Representando %1$@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حال ارائه %1$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendu %1$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "レンダリング %1$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "렌더링 %1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renderizando %1$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "渲染 %1$@"
+          }
+        }
+      }
+    },
+    "Starting upload…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload wird gestartet…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando carga…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شروع آپلود…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrage du téléchargement…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロードを開始しています…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업로드 시작 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando upload…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始上传..."
+          }
+        }
+      }
+    },
+    "%@ was opened in the app while this edit was in progress. Retry it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ wurde in der App geöffnet, während diese Bearbeitung durchgeführt wurde. Versuchen Sie es erneut."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ se abrió en la aplicación mientras se realizaba esta edición. Vuelva a intentarlo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حالی که این ویرایش در حال انجام بود، %1$@ در برنامه باز شد. دوباره آن را امتحان کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a été ouvert dans l'application pendant que cette modification était en cours. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この編集の進行中に、アプリで %1$@ が開かれました。再試行してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 편집이 진행되는 동안 %1$@이(가) 앱에서 열렸습니다. 다시 시도해 보세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ foi aberto no aplicativo enquanto esta edição estava em andamento. Tente novamente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "进行此编辑时，%1$@ 在应用中打开。重试一下。"
+          }
+        }
+      }
+    },
+    "**Replace All Screenshots**, offered next to Upload when you confirm, skips the comparison entirely: everything currently in the selected sets is deleted and every screenshot is uploaded again with new asset IDs. It prepares faster and uploads slower, so it pays off when most screenshots changed and costs you when only one did." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Alle Screenshots ersetzen**, das beim Bestätigen neben Hochladen angeboten wird, überspringt den Vergleich vollständig: Alles, was derzeit in den ausgewählten Sätzen ist, wird gelöscht und jeder Screenshot wird erneut mit neuen Asset-IDs hochgeladen. Es bereitet sich schneller vor und lädt langsamer hoch, sodass es sich auszahlt, wenn die meisten Screenshots geändert wurden, und Kosten verursacht, wenn nur einer geändert wurde."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Reemplazar todas las capturas de pantalla**, que se ofrece junto a Cargar cuando confirmas, omite la comparación por completo: todo lo que se encuentra actualmente en los conjuntos seleccionados se elimina y cada captura de pantalla se carga nuevamente con nuevos ID de activos. Se prepara más rápido y carga más lento, por lo que vale la pena cuando la mayoría de las capturas de pantalla cambiaron y le cuesta cuando solo lo hizo una."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**جایگزینی همه اسکرین‌شات‌ها**، که در کنار آپلود ارائه می‌شود، به‌طور کامل از مقایسه صرفنظر می‌کند: همه چیزهایی که در حال حاضر در مجموعه‌های انتخابی وجود دارد حذف می‌شود و هر عکس صفحه‌نمایش دوباره با شناسه‌های دارایی جدید آپلود می‌شود. سریع‌تر آماده می‌شود و آهسته‌تر آپلود می‌شود، بنابراین زمانی که اکثر اسکرین‌شات‌ها تغییر می‌کنند، نتیجه می‌دهد و زمانی که فقط یکی از آن‌ها تغییر می‌کند، برای شما هزینه دارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Remplacer toutes les captures d'écran**, proposé à côté de Télécharger lorsque vous confirmez, ignore complètement la comparaison : tout ce qui se trouve actuellement dans les ensembles sélectionnés est supprimé et chaque capture d'écran est à nouveau téléchargée avec de nouveaux identifiants d'actifs. Il se prépare plus rapidement et se télécharge plus lentement, il est donc rentable lorsque la plupart des captures d'écran sont modifiées et vous coûte cher lorsqu'une seule l'a fait."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認時に [アップロード] の横に表示される [**すべてのスクリーンショットを置換]** では、比較が完全にスキップされます。現在選択されているセット内のすべてが削除され、すべてのスクリーンショットが新しいアセット ID で再度アップロードされます。準備が速くなり、アップロードが遅くなるため、ほとんどのスクリーンショットが変更された場合は効果があり、1 つだけ変更された場合はコストがかかります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인 시 업로드 옆에 제공되는 **모든 스크린샷 교체**는 비교를 완전히 건너뜁니다. 현재 선택한 세트에 있는 모든 항목이 삭제되고 모든 스크린샷이 새 자산 ID로 다시 업로드됩니다. 더 빠르게 준비하고 더 느리게 업로드하므로 대부분의 스크린샷이 변경되면 효과가 있고 하나만 변경하면 비용이 발생합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Substituir todas as capturas de tela**, oferecido ao lado de Carregar quando você confirma, ignora totalmente a comparação: tudo o que está atualmente nos conjuntos selecionados é excluído e cada captura de tela é carregada novamente com novos IDs de ativos. Ele se prepara mais rápido e carrega mais devagar, por isso compensa quando a maioria das capturas de tela é alterada e custa quando apenas uma é alterada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**替换所有屏幕截图**，在您确认时在上传旁边提供，完全跳过比较：当前所选集中的所有内容都将被删除，并且每个屏幕截图都会使用新的资产 ID 重新上传。它的准备速度更快，上传速度更慢，因此，当大多数屏幕截图发生变化时，它会带来回报，而当只有一张屏幕截图发生变化时，你就会付出代价。"
+          }
+        }
+      }
+    },
+    "Preparing screenshot sync…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot-Synchronisierung wird vorbereitet…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando sincronización de captura de pantalla…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حال آماده سازی همگام سازی نماگرفت…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préparation de la synchronisation des captures d'écran…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショットの同期を準備しています…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷 동기화 준비 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando sincronização de captura de tela…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在准备屏幕截图同步..."
+          }
+        }
+      }
+    },
+    "%@ uses fonts whose files have not downloaded yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ verwendet Schriftarten, deren Dateien noch nicht heruntergeladen wurden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ utiliza fuentes cuyos archivos aún no se han descargado."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ از فونت‌هایی استفاده می‌کند که فایل‌های آن‌ها هنوز دانلود نشده‌اند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ utilise des polices dont les fichiers n'ont pas encore été téléchargés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ は、ファイルがまだダウンロードされていないフォントを使用しています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@은(는) 아직 다운로드되지 않은 파일의 글꼴을 사용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ usa fontes cujos arquivos ainda não foram baixados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 使用尚未下载文件的字体。"
+          }
+        }
+      }
+    },
+    "**Upload** skips that screen and compares against the store as it goes, uploading only what differs and keeping the App Store asset IDs of exact matches. The progress bar counts the screenshots as they render, then compares each set." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Upload** überspringt diesen Bildschirm und vergleicht ihn mit dem Store, wobei nur das hochgeladen wird, was sich unterscheidet, und die App Store Asset-IDs der genauen Übereinstimmungen beibehalten werden. Der Fortschrittsbalken zählt die Screenshots beim Rendern und vergleicht dann jeden Satz."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Cargar** omite esa pantalla y se compara con la tienda a medida que avanza, cargando solo lo que difiere y manteniendo los App Store ID de activos de coincidencias exactas. La barra de progreso cuenta las capturas de pantalla a medida que se representan y luego compara cada conjunto."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**آپلود** آن صفحه را رد می‌کند و در طول زمان با فروشگاه مقایسه می‌کند، فقط موارد متفاوت را آپلود می‌کند و شناسه‌های دارایی App Store مطابقت دقیق را حفظ می‌کند. نوار پیشرفت اسکرین شات ها را در حین رندر شمارش می کند، سپس هر مجموعه را با هم مقایسه می کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Télécharger** ignore cet écran et effectue une comparaison avec le magasin au fur et à mesure, en téléchargeant uniquement ce qui diffère et en conservant les App Store ID d'éléments des correspondances exactes. La barre de progression compte les captures d'écran au fur et à mesure de leur rendu, puis compare chaque ensemble."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**アップロード** はその画面をスキップし、ストアと比較しながら、異なるもののみをアップロードし、完全に一致する App Store アセット ID を保持します。進行状況バーは、レンダリング時にスクリーンショットをカウントし、各セットを比較します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**업로드**는 해당 화면을 건너뛰고 스토어와 비교하여 차이점만 업로드하고 정확히 일치하는 App Store 자산 ID를 유지합니다. 진행률 표시줄은 렌더링되는 스크린샷의 수를 계산한 다음 각 세트를 비교합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Upload** ignora essa tela e compara com a loja conforme avança, fazendo upload apenas do que difere e mantendo os App Store IDs de recursos de correspondências exatas. A barra de progresso conta as capturas de tela à medida que são renderizadas e compara cada conjunto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**上传** 会跳过该屏幕并与商店进行比较，仅上传不同的内容并保持 App Store 资产 ID 完全匹配。进度条会在渲染时对屏幕截图进行计数，然后比较每组屏幕截图。"
+          }
+        }
+      }
+    },
+    "%lld %@ across %lld %@, %lld %@, and %lld %@.\n\nUpload compares each screenshot with the store and changes only what differs, keeping the App Store asset IDs of exact matches.\n\nReplace All Screenshots skips the comparison: everything currently in these sets is deleted and all %lld are uploaded again with new asset IDs. Quicker to prepare, slower to upload." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ über %3$lld %4$@, %5$lld %6$@ und %7$lld %8$@.\n\nUpload vergleicht jeden Screenshot mit dem Store und ändert nur die Unterschiede, wobei die App Store Asset-IDs der exakten Übereinstimmungen beibehalten werden.\n\n„Alle Screenshots ersetzen“ überspringt den Vergleich: Alles, was derzeit in diesen Sätzen enthalten ist, wird gelöscht und alle %9$lld werden erneut mit neuen Asset-IDs hochgeladen. Schnellere Vorbereitung, langsameres Hochladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ a través de %3$lld %4$@, %5$lld %6$@ y %7$lld %8$@.\n\nUpload compara cada captura de pantalla con la tienda y cambia solo lo que difiere, manteniendo los App Store ID de activos de coincidencias exactas.\n\nReemplazar todas las capturas de pantalla omite la comparación: todo lo que se encuentra actualmente en estos conjuntos se elimina y todos los %9$lld se cargan nuevamente con nuevos ID de activos. Más rápido de preparar, más lento de cargar."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ در سراسر %3$lld %4$@، %5$lld %6$@ و %7$lld %8$@.\n\nآپلود هر عکس صفحه‌نمایش را با فروشگاه مقایسه می‌کند و فقط موارد متفاوت را تغییر می‌دهد و شناسه‌های دارایی App Store مطابقت دقیق را حفظ می‌کند.\n\nReplace All Screenshots مقایسه را رد می‌کند: همه چیزهایی که در حال حاضر در این مجموعه‌ها هستند حذف می‌شوند و همه %9$lld دوباره با شناسه‌های دارایی جدید آپلود می‌شوند. آماده شدن سریعتر، آپلود کندتر."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ sur %3$lld %4$@, %5$lld %6$@ et %7$lld %8$@.\n\nLe téléchargement compare chaque capture d'écran avec celle du magasin et ne modifie que ce qui diffère, en conservant les App Store ID d'éléments correspondant exactement aux correspondances.\n\nRemplacer toutes les captures d'écran ignore la comparaison : tout ce qui se trouve actuellement dans ces ensembles est supprimé et tous les %9$lld sont à nouveau téléchargés avec de nouveaux ID d'actifs. Plus rapide à préparer, plus lent à télécharger."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%3$lld %4$@、%5$lld %6$@、および %7$lld %8$@ 全体の %1$lld %2$@。\n\nアップロードでは、各スクリーンショットをストアと比較し、完全に一致する App Store アセット ID を維持しながら、異なる部分のみを変更します。\n\n[すべてのスクリーンショットを置換] では比較がスキップされます。これらのセット内の現在すべてが削除され、すべての %9$lld が新しいアセット ID で再度アップロードされます。準備は早く、アップロードは遅くなります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@는 %3$lld %4$@, %5$lld %6$@ 및 %7$lld %8$@에 걸쳐 있습니다.\n\n업로드는 각 스크린샷을 스토어와 비교하고 차이점만 변경하며 정확히 일치하는 App Store 자산 ID를 유지합니다.\n\n모든 스크린샷 교체는 비교를 건너뜁니다. 현재 이 세트에 있는 모든 항목이 삭제되고 모든 %9$lld이 새 자산 ID로 다시 업로드됩니다. 준비는 빠르게, 업로드는 느리게 진행됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ em %3$lld %4$@, %5$lld %6$@ e %7$lld %8$@.\n\nO upload compara cada captura de tela com a loja e altera apenas o que difere, mantendo os App Store IDs de ativos de correspondências exatas.\n\nSubstituir todas as capturas de tela ignora a comparação: tudo o que está atualmente nesses conjuntos é excluído e todos os %9$lld são carregados novamente com novos IDs de ativos. Mais rápido de preparar, mais lento de carregar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ 跨 %3$lld %4$@、%5$lld %6$@ 和 %7$lld %8$@。\n\n上传会将每个屏幕截图与商店进行比较，并仅更改不同之处，保持 App Store 资产 ID 完全匹配。\n\n替换所有屏幕截图会跳过比较：这些集中当前的所有内容都会被删除，并且所有 %9$lld 都会使用新的资产 ID 重新上传。准备速度较快，上传速度较慢。"
+          }
+        }
+      }
+    },
+    "Comparing %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergleich von %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comparando %1$@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقایسه %1$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comparaison de %1$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ を比較しています"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 비교"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comparando %1$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "比较 %1$@"
           }
         }
       }

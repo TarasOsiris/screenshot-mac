@@ -67,7 +67,19 @@ final class ASCScreenshotSyncCoordinator {
         return parts.joined(separator: " ")
     }
 
-    func build(appId: String, targets: [ASCUploadTarget], rows: [ScreenshotRow], source: some RowRenderSource, document: DocumentStamp?) async {
+    /// `needsPreviews: false` skips the remote thumbnail downloads, which only the review screen
+    /// draws — pass it whenever the plan is built to be applied straight away. `progress` is the
+    /// typed build progress; the review screen reads `progressLabel` instead.
+    func build(
+        appId: String,
+        targets: [ASCUploadTarget],
+        rows: [ScreenshotRow],
+        source: some RowRenderSource,
+        document: DocumentStamp?,
+        strategy: ASCSyncStrategy = .reconcile,
+        needsPreviews: Bool = true,
+        progress: @escaping (ASCSyncBuildProgress) -> Void = { _ in }
+    ) async {
         phase = .loading
         errorMessage = nil
         result = nil
@@ -82,7 +94,12 @@ final class ASCScreenshotSyncCoordinator {
                 rows: rows,
                 source: source,
                 document: document,
-                progress: { [weak self] update in self?.progressLabel = update.label }
+                strategy: strategy,
+                needsPreviews: needsPreviews,
+                progress: { [weak self] update in
+                    self?.progressLabel = update.label
+                    progress(update)
+                }
             )
             // The build may have finished after the user dismissed the review; adopting it here
             // would resurrect a plan `discard()` already tried to drop, leaking its temp folder.

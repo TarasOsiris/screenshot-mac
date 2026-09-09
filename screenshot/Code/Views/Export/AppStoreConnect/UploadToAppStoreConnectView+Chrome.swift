@@ -19,7 +19,7 @@ extension UploadToAppStoreConnectView {
         let setNoun = setCount == 1 ? String(localized: "set") : String(localized: "sets")
         let localeNoun = localeCount == 1 ? String(localized: "locale") : String(localized: "locales")
         let versionNoun = versionCount == 1 ? String(localized: "version") : String(localized: "versions")
-        return String(localized: "\(screenshotCount) \(screenshotNoun) will be safely synced across \(setCount) \(setNoun), \(localeCount) \(localeNoun), and \(versionCount) \(versionNoun). Exact checksum matches will be preserved.")
+        return String(localized: "\(screenshotCount) \(screenshotNoun) across \(setCount) \(setNoun), \(localeCount) \(localeNoun), and \(versionCount) \(versionNoun).\n\nUpload compares each screenshot with the store and changes only what differs, keeping the App Store asset IDs of exact matches.\n\nReplace All Screenshots skips the comparison: everything currently in these sets is deleted and all \(screenshotCount) are uploaded again with new asset IDs. Quicker to prepare, slower to upload.")
     }
 
     // MARK: - Header / footer

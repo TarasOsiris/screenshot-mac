@@ -1,5 +1,19 @@
 import Foundation
 
+/// How `buildPlan` decides what to upload. Orthogonal to `ASCFlowMode`, which is the job type.
+///
+/// `replaceAll` changes the *matching* only, never the fetch: `apply` revalidates each set by
+/// re-reading the remote and comparing `remoteFingerprint`, which includes each asset's checksum
+/// and index — so a build that skipped the detail GETs or the order call would disagree with its
+/// own revalidation and fail as `staleRemote` every time. What makes the direct path fast is
+/// `needsPreviews`, not the strategy.
+nonisolated enum ASCSyncStrategy: String, Sendable {
+    /// Match local to remote by checksum; upload what differs, preserve what doesn't.
+    case reconcile
+    /// Treat every remote asset as a removal and every local one as an upload.
+    case replaceAll
+}
+
 /// Progress from `buildPlan`, typed.
 ///
 /// The previous channel was a bare label string. It carried user-written row and locale names and

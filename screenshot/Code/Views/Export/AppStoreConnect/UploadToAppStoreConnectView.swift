@@ -85,6 +85,14 @@ struct UploadToAppStoreConnectView: View {
                         model.startDirectScreenshotSync()
                     }
                 }
+                // Offered alongside Upload rather than behind a second dialog: re-presenting a
+                // confirmationDialog from inside its own button action is unreliable, so the
+                // message below has to describe both choices.
+                if !isConfirmingReviewedSync {
+                    Button("Replace All Screenshots", role: .destructive) {
+                        model.startReplaceAllScreenshotSync()
+                    }
+                }
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text(confirmationMessage)

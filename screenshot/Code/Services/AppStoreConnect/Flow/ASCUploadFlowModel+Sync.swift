@@ -7,7 +7,13 @@ extension ASCUploadFlowModel {
     }
 
     func startDirectScreenshotSync() {
-        uploadTask = Task { await buildAndApplyDirectScreenshotSync() }
+        uploadTask = Task { await buildAndApplyDirectScreenshotSync(strategy: .reconcile) }
+    }
+
+    /// Upload every selected screenshot and delete whatever is on the store, without matching
+    /// checksums. Faster to prepare and slower to apply — see the confirmation copy.
+    func startReplaceAllScreenshotSync() {
+        uploadTask = Task { await buildAndApplyDirectScreenshotSync(strategy: .replaceAll) }
     }
 
     func startReviewedScreenshotSync() {
@@ -50,7 +56,7 @@ extension ASCUploadFlowModel {
         errorMessage = screenshotSync.errorMessage
     }
 
-    func buildAndApplyDirectScreenshotSync() async {
+    func buildAndApplyDirectScreenshotSync(strategy: ASCSyncStrategy) async {
         errorMessage = nil
         errorDetailsText = nil
         let issues = validationIssues
@@ -70,10 +76,27 @@ extension ASCUploadFlowModel {
             return
         }
 
-        uploadProgress = UploadProgress(totalSteps: 1, completedSteps: 0, currentLabel: "Preparing safe screenshot sync…")
+        // `totalSteps: 0` on purpose: the view draws a determinate bar whenever it is positive,
+        // and a bar pinned at 0/1 for the whole build reads as a hang. Real counts arrive with
+        // the first progress callback.
+        uploadProgress = UploadProgress(
+            totalSteps: 0,
+            completedSteps: 0,
+            currentLabel: String(localized: "Preparing screenshot sync…")
+        )
         advance(to: .uploading)
         isBusy = true
-        await screenshotSync.build(appId: appId, targets: targets, rows: rows, source: document, document: document.documentStamp)
+        await screenshotSync.build(
+            appId: appId,
+            targets: targets,
+            rows: rows,
+            source: document,
+            document: document.documentStamp,
+            strategy: strategy,
+            // No review screen on this path, so the remote thumbnails it would draw are pure cost.
+            needsPreviews: false,
+            progress: { [weak self] update in self?.uploadProgress = Self.buildProgress(update) }
+        )
         isBusy = false
 
         guard let plan = screenshotSync.plan else {
@@ -108,6 +131,21 @@ extension ASCUploadFlowModel {
         )
     }
 
+    /// The build's own render counter, shown while the plan is being prepared. The label is
+    /// "row · locale" — user content, which `UploadProgress.currentLabel` already carries.
+    static func buildProgress(_ update: ASCSyncBuildProgress) -> UploadProgress {
+        let label: String
+        switch update.stage {
+        case .rendering: label = String(localized: "Rendering \(update.label)")
+        case .comparing: label = String(localized: "Comparing \(update.label)")
+        }
+        return UploadProgress(
+            totalSteps: update.totalRenders,
+            completedSteps: update.completedRenders,
+            currentLabel: label
+        )
+    }
+
     func applyPreparedScreenshotSync(
         returnOnFailure: ASCUploadStep,
         advanceToUploading: Bool = true
@@ -121,7 +159,11 @@ extension ASCUploadFlowModel {
             return
         }
 
-        uploadProgress = nil
+        uploadProgress = UploadProgress(
+            totalSteps: 0,
+            completedSteps: 0,
+            currentLabel: String(localized: "Starting upload…")
+        )
         if advanceToUploading {
             advance(to: .uploading)
         }

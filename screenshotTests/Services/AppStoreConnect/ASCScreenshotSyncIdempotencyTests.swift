@@ -20,22 +20,57 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
     /// localization rather than set id because set ids are minted here, not by the test.
     var failUploadsForLocalization: String?
 
+    /// Preview downloads, which only the review screen needs. Asserted to be zero on the direct
+    /// upload path.
+    private(set) var downloadCount = 0
+
     private var nextSetId = 0
     private var nextShotId = 0
     private var setLocalization: [String: String] = [:]
+    private var setDisplayType: [String: String] = [:]
     private var checksums: [String: String] = [:]
     private var members: [String: [String]] = [:]
     private var order: [String: [String]] = [:]
 
     var writeCount: Int { reserveCount + commitCount + createSetCount + deleteCount + orderCount }
 
-    func listScreenshotSets(localizationId: String, limit: Int) async throws -> [ASCAppScreenshotSet] { [] }
+    /// Put screenshots on the "store" before a build, so a plan has something to preserve or
+    /// replace. Returns the set id.
+    @discardableResult
+    func seedExistingSet(localizationId: String, displayType: ASCDisplayType, checksums seeded: [String]) -> String {
+        nextSetId += 1
+        let setId = "seeded-set-\(nextSetId)"
+        setLocalization[setId] = localizationId
+        setDisplayType[setId] = displayType.appStoreConnectValue
+        members[setId] = []
+        order[setId] = []
+        for checksum in seeded {
+            nextShotId += 1
+            let id = "seeded-shot-\(nextShotId)"
+            checksums[id] = checksum
+            members[setId, default: []].append(id)
+            order[setId, default: []].append(id)
+        }
+        return setId
+    }
+
+    func listScreenshotSets(localizationId: String, limit: Int) async throws -> [ASCAppScreenshotSet] {
+        try setLocalization
+            .filter { $0.value == localizationId }
+            .sorted { $0.key < $1.key }
+            .map { setId, _ in
+                try Self.decode(
+                    #"{"id":"\#(setId)","attributes":{"screenshotDisplayType":"\#(setDisplayType[setId] ?? "")"}}"#
+                )
+            }
+    }
 
     func createScreenshotSet(localizationId: String, displayType: String) async throws -> ASCAppScreenshotSet {
         createSetCount += 1
         nextSetId += 1
         let id = "set-\(nextSetId)"
         setLocalization[id] = localizationId
+        setDisplayType[id] = displayType
         members[id] = []
         order[id] = []
         return try Self.decode(#"{"id":"\#(id)","attributes":{"screenshotDisplayType":"\#(displayType)"}}"#)
@@ -56,7 +91,10 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
         order[setId] = screenshotIds
     }
 
-    func downloadScreenshotData(_ screenshot: ASCAppScreenshot, maxDimension: Int?) async throws -> Data { Data() }
+    func downloadScreenshotData(_ screenshot: ASCAppScreenshot, maxDimension: Int?) async throws -> Data {
+        downloadCount += 1
+        return Data()
+    }
 
     func deleteScreenshot(id: String) async throws {
         deleteCount += 1
@@ -129,7 +167,9 @@ struct ASCScreenshotSyncIdempotencyTests {
         _ service: AppStoreConnectScreenshotSyncService,
         localizations: [String] = ["loc-1"],
         projectId: UUID = UUID(),
-        modifiedAt: Date = Date()
+        modifiedAt: Date = Date(),
+        strategy: ASCSyncStrategy = .reconcile,
+        needsPreviews: Bool = true
     ) async throws -> (plan: ASCScreenshotSyncPlan, stamp: DocumentStamp) {
         let rowId = UUID()
         let row = makeRow(id: rowId)
@@ -139,9 +179,113 @@ struct ASCScreenshotSyncIdempotencyTests {
             targets: [makeTarget(rowId: rowId, localizations: localizations)],
             rows: [row],
             source: StubRenderSource(),
-            document: stamp
+            document: stamp,
+            strategy: strategy,
+            needsPreviews: needsPreviews
         )
         return (plan, stamp)
+    }
+
+    // MARK: - Strategy
+
+    /// The direct upload path builds to apply immediately, so the remote thumbnails the review
+    /// screen would draw are pure cost — hundreds of image downloads on a many-locale project.
+    @Test func theDirectPathDownloadsNoRemotePreviews() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: ["deadbeef"])
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+
+        _ = try await build(service, needsPreviews: false)
+
+        #expect(api.downloadCount == 0)
+    }
+
+    /// The contrast, so the assertion above is about `needsPreviews` and not about the fake.
+    @Test func theReviewPathStillDownloadsThem() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: ["deadbeef"])
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+
+        _ = try await build(service, needsPreviews: true)
+
+        #expect(api.downloadCount == 1)
+    }
+
+    @Test func replaceAllRemovesEveryRemoteAssetAndUploadsEveryLocalOne() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: ["aaa", "bbb"])
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+
+        let (plan, stamp) = try await build(service, strategy: .replaceAll, needsPreviews: false)
+        let diff = try #require(plan.sets.first)
+        #expect(diff.uploadCount == 1, "the one rendered template")
+        #expect(diff.removalCount == 2)
+        #expect(diff.unchangedCount == 0)
+
+        let result = try await service.apply(planId: plan.id, setIds: [diff.id], document: stamp)
+
+        #expect(result.succeeded)
+        #expect(api.deleteCount == 2)
+        #expect(api.reserveCount == 1)
+        #expect(api.createSetCount == 0, "the seeded set is reused, not recreated")
+    }
+
+    /// Under `.reconcile` the same rendered bytes already on the store are left alone — which is
+    /// exactly what Replace All gives up.
+    @Test func reconcilePreservesAnExactMatchThatReplaceAllWouldReupload() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+        // Learn the checksum the renderer produces, then seed the store with it.
+        let (probe, _) = try await build(service, needsPreviews: false)
+        let checksum = try #require(probe.sets.first?.items.first?.checksum)
+        service.discardPlan(probe.id)
+
+        api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: [checksum])
+        let (reconciled, _) = try await build(service, strategy: .reconcile, needsPreviews: false)
+        let reconciledDiff = try #require(reconciled.sets.first)
+        #expect(reconciledDiff.unchangedCount == 1)
+        #expect(reconciledDiff.uploadCount == 0)
+        service.discardPlan(reconciled.id)
+
+        let (replaced, _) = try await build(service, strategy: .replaceAll, needsPreviews: false)
+        let replacedDiff = try #require(replaced.sets.first)
+        #expect(replacedDiff.unchangedCount == 0)
+        #expect(replacedDiff.uploadCount == 1)
+        #expect(replacedDiff.removalCount == 1)
+    }
+
+    /// A replace plan must stay resumable: `apply` revalidates by re-reading the remote and
+    /// comparing `remoteFingerprint`, so the build has to have fetched the same detail the
+    /// revalidation does. Skipping the checksum GETs or the order call here would fail as
+    /// `staleRemote` on every run.
+    @Test func aReplaceAllPlanSurvivesItsOwnRevalidation() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: ["aaa"])
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+        let (plan, stamp) = try await build(service, strategy: .replaceAll, needsPreviews: false)
+        let setId = try #require(plan.sets.first?.id)
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(result.succeeded, "a fingerprint mismatch would have thrown staleRemote")
+    }
+
+    @Test func replaceAllStepCountStillMatchesTheProgressDenominator() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: ["aaa", "bbb"])
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+        let (plan, stamp) = try await build(service, strategy: .replaceAll, needsPreviews: false)
+        let diff = try #require(plan.sets.first)
+
+        var lastTotal = 0
+        _ = try await service.apply(
+            planId: plan.id,
+            setIds: [diff.id],
+            document: stamp,
+            progress: { lastTotal = $0.totalSteps }
+        )
+
+        #expect(lastTotal == AppStoreConnectScreenshotSyncService.applyStepCount([diff]))
     }
 
     @Test func applyUploadsOnceAndVerifies() async throws {
@@ -198,12 +342,17 @@ struct ASCScreenshotSyncIdempotencyTests {
 
     @Test func resumeAttemptsOnlyTheSetThatDidNotLand() async throws {
         let api = FakeScreenshotSyncAPI()
+        // Both display-type sets must already exist on the store. If `apply` has to *create* one,
+        // the remote no longer matches what the plan was built against and the resume correctly
+        // refuses it as a partially applied set — see the test below.
+        api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: [])
+        api.seedExistingSet(localizationId: "loc-2", displayType: .iphone67, checksums: [])
         let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
         let (plan, stamp) = try await build(service, localizations: ["loc-1", "loc-2"])
         #expect(plan.sets.count == 2)
         let ids = Set(plan.sets.map(\.id))
 
-        // Both sets create their own remote set; fail everything targeting the second locale.
+        // Fail everything targeting the second locale.
         api.failUploadsForLocalization = "loc-2"
         let first = try await service.apply(planId: plan.id, setIds: ids, document: stamp)
         #expect(!first.succeeded)
@@ -215,6 +364,26 @@ struct ASCScreenshotSyncIdempotencyTests {
 
         #expect(resumed.sets.first { $0.id == landed }?.state == .alreadyApplied)
         #expect(api.reserveCount == reservesBefore + 1, "only the set that failed should be retried")
+    }
+
+    /// The other half of 045dfdd6's contract: when the earlier attempt *did* change the remote —
+    /// here by creating a screenshot set the plan was not built against — the resume refuses
+    /// rather than writing against a stale plan, and says so as `partiallyAppliedSet` instead of
+    /// blaming the user for editing their listing.
+    @Test func resumeRefusesASetWhoseRemoteTheEarlierAttemptChanged() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+        let (plan, stamp) = try await build(service, localizations: ["loc-1"])
+        let setId = try #require(plan.sets.first?.id)
+
+        // No seeded set, so `apply` creates one, then the upload into it fails.
+        api.failUploadsForLocalization = "loc-1"
+        _ = try? await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+        api.failUploadsForLocalization = nil
+
+        await #expect(throws: ASCScreenshotSyncError.self) {
+            _ = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+        }
     }
 
     @Test func retainedPlanSurvivesADiscardAndDropsOnRelease() async throws {
