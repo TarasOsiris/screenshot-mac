@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""App Store descriptions for the 10 locales added in Aug 2026.
+"""App Store descriptions for the locales added in Aug 2026 and Sept 2026.
 
 Those locales were created carrying the en-US description (see finish.py), which
 was no regression — Apple already showed them the en-US listing as a fallback.
@@ -7,10 +7,17 @@ This file is the real copy. macOS and iOS are separate texts: the macOS listing
 advertises the MCP server and Finder, both of which are `#if os(macOS)` only, so
 the iOS text must never mention either.
 
-en-GB is not stored: it is a spelling pass over the version's own live en-US row
-(`british`), so it can never drift from an English rewrite. Every other locale is
-translated from en-US — never from another translation — except zh-Hant, which is
-written in Taiwan vocabulary rather than converted from zh-Hans.
+en-GB and en-AU are not stored: they are a spelling pass over the version's own
+live en-US row (`british`), so they can never drift from an English rewrite.
+Every other locale is translated from en-US — never from another translation —
+except zh-Hant, which is written in Taiwan vocabulary rather than converted from
+zh-Hans.
+
+en-CA is deliberately absent from LOCALES. Canadian English keeps the -ize
+spellings this copy uses, and the source contains no -our/-re word, so a spelling
+pass would be a no-op and `review` would flag the result as "identical to the
+en-US source". finish.py fills it with the version's own en-US text, which is the
+correct Canadian copy; the value of the locale is its own keyword field.
 
 macOS runs long, so the expanding-script locales carry the same trim the existing
 16 got: the 4 redundant bullets, then the closing "whether you are preparing"
@@ -28,7 +35,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 LIMIT = 4000        # Apple rejects the write above this
 TRIM_AT = 3900      # anything above this is treated as needing a trim
 
-LOCALES = ["en-GB", "pt-BR", "ru", "pl", "tr", "uk", "id", "vi", "th", "zh-Hant"]
+LOCALES = ["en-GB", "pt-BR", "ru", "pl", "tr", "uk", "id", "vi", "th", "zh-Hant",
+           # added 2026-09-09 — see RESEARCH.md Finding 5
+           "en-AU", "es-MX", "fr-CA", "cs", "sk", "hu", "ro", "hr", "el", "ca",
+           "sl-SI"]
+
+# Spelling pass over the live en-US row rather than a stored translation.
+SPELLING_PASS = {"en-GB", "en-AU"}
 
 # Must survive byte-identical in every locale.
 ATOMS = ["Screenshot Bro", "App Store", "App Store Connect",
@@ -48,13 +61,29 @@ BANNED_PLATFORM = ["google play", "googleplay", "google", "play store",
 
 BANNED_ANY = ["free", "gratis", "grátis", "discount", "бесплатн", "скидк",
               "безкоштов", "знижк", "darmow", "zniżk", "ücretsiz", "indirim",
-              "miễn phí", "giảm giá", "ฟรี", "ส่วนลด", "免費", "免费", "折扣"]
+              "miễn phí", "giảm giá", "ฟรี", "ส่วนลด", "免費", "免费", "折扣",
+              # added 2026-09-09 with the 12 new locales
+              "gratuito", "descuento", "rebaja",          # es-MX
+              "gratuit", "rabais", "réduction",           # fr-CA, ro
+              "zdarma", "slev",                           # cs
+              "zadarmo", "zľav",                          # sk
+              "ingyen", "kedvezmény", "akció",            # hu
+              "reducere",                                 # ro
+              "besplatn", "popust",                       # hr, sl-SI
+              "brezplač",                                 # sl-SI
+              "δωρεάν", "έκπτωση", "προσφορά",            # el
+              "gratuït", "descompte"]                     # ca
 
 # Script guards — a stripped diacritic or a mojibake round trip matches nothing.
 # Only characters common enough to appear in any full description: a rare letter
 # (ru "ъ", uk "ґ", th "ฮ") would fail honest copy. Script integrity for those is
 # covered by SCRIPT_RANGE plus the ru/uk-only letter checks in review().
-SCRIPT_REQUIRED = {"vi": "ảứộ", "tr": "şğı", "zh-Hant": "專範匯"}
+SCRIPT_REQUIRED = {"vi": "ảứộ", "tr": "şğı", "zh-Hant": "專範匯",
+                   # added 2026-09-09. Same bar as above: only letters frequent
+                   # enough that honest copy of this length cannot avoid them.
+                   "cs": "ěšč", "sk": "šč", "hu": "őű", "ro": "șță",
+                   "hr": "čž", "sl-SI": "čšž", "ca": "àè", "es-MX": "óñ",
+                   "fr-CA": "éà"}
 # Simplified-only forms: their presence means zh-Hans leaked into zh-Hant.
 SIMPLIFIED_ONLY = "软图应备设计项说编辑导语简体关开张页无为与个"
 TAIWAN_VOCAB = ["專案", "範本", "匯出", "匯入", "資料夾", "字型", "漸層",
@@ -751,18 +780,806 @@ Screenshot Bro 專為獨立開發者、產品團隊、設計師與行銷人員�
 
 使用條款（EULA）：https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
 
+
+# ---- added 2026-09-09 (RESEARCH.md Finding 5) ----
+DESC_MAC["es-MX"] = """\
+Screenshot Bro es un generador de capturas de pantalla para la App Store. Diseña un set completo una sola vez, agrega marcos de dispositivo, localiza cada titular para todos los mercados donde publicas y súbelo directo a App Store Connect, sin salir de tu Mac.
+
+A diferencia de las herramientas de diseño genéricas, Screenshot Bro entiende de filas por dispositivo, localización, cargas a App Store Connect, exportaciones por lotes, proyectos reutilizables y automatización local con asistentes de IA mediante el Model Context Protocol.
+
+Arma sets completos de capturas para iPhone, iPad, Mac, celulares Android, tabletas Android y diseños Pixel. Empieza con una plantilla o crea tu propio sistema de composición. Suelta tus capturas, agrega marcos de dispositivo o composiciones sin marco, escribe titulares y textos de apoyo, aplica estilos de texto enriquecido con fuentes propias y ajusta cada detalle en el lienzo.
+
+Screenshot Bro puede alojar un servidor MCP local en tu Mac. Conecta un asistente compatible con MCP, como Claude Code, Claude Desktop, Cursor u otro cliente, y déjalo crear proyectos, editar filas, acomodar figuras, importar capturas, traducir textos, generar vistas previas del lienzo y exportar las imágenes finales. MCP es opcional, viene desactivado, funciona solo en loopback y está protegido con un token de acceso.
+
+Mantén en un solo proyecto las variantes de cada versión, los ajustes por idioma, los planes de filas por tienda y los recursos listos para exportar: para la App Store, sitios web, redes sociales y campañas de lanzamiento.
+
+Funciones principales:
+
+- Crea capturas para la App Store desde un solo proyecto
+- Usa plantillas incluidas o diseños propios para lanzamientos recurrentes
+- Diseña filas de varias capturas, comparativas y campañas completas
+- Importa capturas por lotes en las filas y reemplaza imágenes al instante
+- Agrega marcos de dispositivo para iPhone, iPad, Mac, Android, Pixel y diseños abstractos
+- Trabaja con texto, figuras, imágenes, degradados, fondos en mosaico y gráficos SVG
+- Edita texto enriquecido con fuentes propias, variantes, espaciado, alineación y tamaño
+- Ajusta posición, imantado, capas, recorte y rotación directo en el lienzo
+- Administra textos e imágenes propios de cada idioma para cada mercado
+- Usa preajustes de idioma, traduce automáticamente lo que falte y sigue el avance
+- Exporta capturas en PNG o JPEG a carpetas por idioma y por fila
+- Crea exportaciones de escaparate para redes sociales, sitios web y vistas previas de campaña
+- Sube capturas directo a App Store Connect
+- Revisa y edita los metadatos de App Store Connect antes de subirlos
+- Sube capturas de iOS y de Mac a App Store Connect en un mismo flujo
+- Conecta un asistente compatible con MCP para controlar Screenshot Bro en tu equipo
+- Recibe notificaciones al terminar las exportaciones y las cargas a la tienda
+- Guarda los proyectos en tu computadora, sincroniza con iCloud cuando lo actives y crea respaldos ZIP
+- Abre en el Finder las carpetas de proyectos y de exportación
+- Sin rastreo
+
+Screenshot Bro está hecho para desarrolladores indie, equipos de producto, diseñadores y responsables de marketing que necesitan más control que un generador básico y un flujo más rápido que rehacer a mano cada imagen promocional.
+
+Ya sea que prepares un primer lanzamiento, una actualización mayor, una campaña de temporada o la salida a nuevos idiomas, Screenshot Bro te lleva de las capturas en bruto a imágenes listas para la tienda con más rapidez y consistencia.
+
+Si buscas un creador de capturas para la App Store, un editor de plantillas, una herramienta para localizar capturas, un cargador de App Store Connect o una automatización lista para MCP, Screenshot Bro reúne todo el flujo en una sola app de Mac.
+
+Términos de uso (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["es-MX"] = """\
+Screenshot Bro es un creador y editor de capturas de pantalla hecho específicamente para las capturas de la App Store. Crea plantillas reutilizables, diseña sets completos, localiza tu mensaje y exporta o sube material listo para la tienda.
+
+A diferencia de las herramientas de diseño genéricas, Screenshot Bro entiende de filas por dispositivo, localización, cargas a App Store Connect, exportaciones por lotes y proyectos reutilizables.
+
+Arma sets completos de capturas para iPhone, iPad, Mac, celulares Android, tabletas Android y diseños Pixel. Empieza con una plantilla o crea tu propio sistema de composición. Suelta tus capturas, agrega marcos de dispositivo o composiciones sin marco, escribe titulares y textos de apoyo, aplica estilos de texto enriquecido con fuentes propias y ajusta cada detalle en el lienzo.
+
+Mantén en un solo proyecto las variantes de cada versión, los ajustes por idioma, los planes de filas por tienda y los recursos listos para exportar: para la App Store, sitios web, redes sociales y campañas de lanzamiento.
+
+Funciones principales:
+
+- Crea capturas para la App Store desde un solo proyecto
+- Usa plantillas incluidas o diseños propios para lanzamientos recurrentes
+- Diseña filas de varias capturas, comparativas y campañas completas
+- Importa capturas por lotes en las filas y reemplaza imágenes al instante
+- Agrega marcos de dispositivo para iPhone, iPad, Mac, Android, Pixel y diseños abstractos
+- Trabaja con texto, figuras, imágenes, degradados, fondos en mosaico y gráficos SVG
+- Edita texto enriquecido con fuentes propias, variantes, espaciado, alineación y tamaño
+- Ajusta posición, imantado, capas, recorte y rotación directo en el lienzo
+- Administra textos e imágenes propios de cada idioma para cada mercado
+- Usa preajustes de idioma, traduce automáticamente lo que falte y sigue el avance
+- Exporta capturas en PNG o JPEG a carpetas por idioma y por fila
+- Crea exportaciones de escaparate para redes sociales, sitios web y vistas previas de campaña
+- Sube capturas directo a App Store Connect
+- Revisa y edita los metadatos de App Store Connect antes de subirlos
+- Recibe notificaciones al terminar las exportaciones y las cargas a la tienda
+- Guarda los proyectos en tu equipo, sincroniza con iCloud cuando lo actives y crea respaldos ZIP
+- Sin rastreo
+
+Screenshot Bro está hecho para desarrolladores indie, equipos de producto, diseñadores y responsables de marketing que necesitan más control que un generador básico y un flujo más rápido que rehacer a mano cada imagen promocional.
+
+Ya sea que prepares un primer lanzamiento, una actualización mayor, una campaña de temporada o la salida a nuevos idiomas, Screenshot Bro te lleva de las capturas en bruto a imágenes listas para la tienda con más rapidez y consistencia.
+
+Si buscas un creador de capturas para la App Store, un editor de plantillas, una herramienta para localizar capturas o un cargador de App Store Connect, Screenshot Bro reúne todo el flujo en una sola app enfocada.
+
+Términos de uso (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_MAC["fr-CA"] = """\
+Screenshot Bro génère les captures d'écran de votre app pour l'App Store. Concevez la série complète une fois, ajoutez les cadres d'appareils, adaptez chaque titre à chaque marché visé, puis téléversez dans App Store Connect — sans quitter votre Mac.
+
+Contrairement aux outils de conception génériques, Screenshot Bro connaît les rangées par appareil, la localisation, le téléversement vers App Store Connect, les exportations par lots, les projets réutilisables et l'automatisation locale par assistant IA via le Model Context Protocol.
+
+Montez des séries complètes pour iPhone, iPad, Mac, téléphones et tablettes Android et mises en page Pixel. Partez d'un modèle ou créez votre propre système. Déposez vos captures, ajoutez des cadres d'appareils ou des compositions sans cadre, rédigez titres et légendes, mettez en forme le texte enrichi avec vos polices et peaufinez chaque détail sur le canevas.
+
+Screenshot Bro peut héberger un serveur MCP local sur votre Mac. Branchez un assistant compatible MCP — Claude Code, Claude Desktop, Cursor ou un autre client — et laissez-le créer des projets, modifier des rangées, disposer des formes, importer des captures, traduire du texte, générer des aperçus du canevas et exporter les images finales. MCP est optionnel, désactivé par défaut, limité au bouclage local et protégé par un jeton d'accès.
+
+Regroupez dans un même projet vos variantes de version, vos remplacements par langue, vos plans de rangées par boutique et vos fichiers prêts à exporter, pour l'App Store, vos sites web, les réseaux sociaux et vos campagnes de lancement.
+
+Fonctions principales :
+
+- Produisez toutes vos captures d'écran App Store à partir d'un seul projet
+- Utilisez les modèles intégrés ou vos propres mises en page pour vos lancements récurrents
+- Importez vos captures par lots dans les rangées et remplacez les images en un geste
+- Ajoutez des cadres d'appareils pour iPhone, iPad, Mac, Android, Pixel et des mises en page abstraites
+- Travaillez avec du texte, des formes, des images, des dégradés, des arrière-plans en mosaïque et des graphiques SVG
+- Modifiez le texte enrichi avec vos polices, leurs variantes, l'espacement, l'alignement et la taille
+- Gérez les remplacements de texte et d'images propres à chaque marché
+- Utilisez les préréglages de langues, traduisez automatiquement le texte manquant et suivez l'avancement
+- Exportez vos captures en PNG ou en JPEG dans des dossiers classés par langue et par rangée
+- Créez des exportations vitrines pour les réseaux sociaux, les sites web et les aperçus de campagne
+- Téléversez vos captures d'écran directement dans App Store Connect
+- Révisez et modifiez les métadonnées App Store Connect avant le téléversement
+- Branchez un assistant compatible MCP pour piloter Screenshot Bro en local
+- Recevez un avis à la fin de vos exportations et de vos téléversements
+- Gardez vos projets en local par défaut, synchronisez-les avec iCloud au besoin et créez des sauvegardes ZIP
+- Aucun suivi
+
+Screenshot Bro s'adresse aux développeurs indépendants, aux équipes produit, aux designers et aux spécialistes du marketing qui veulent plus de contrôle qu'un générateur de base et un flux de travail plus rapide que de refaire à la main chaque image promotionnelle.
+
+Pour un premier lancement, une mise à jour majeure, une campagne saisonnière ou un déploiement multilingue, Screenshot Bro vous fait passer des captures brutes à des images prêtes pour la boutique, plus vite et avec plus de cohérence.
+
+Si vous cherchez un créateur de captures d'écran App Store, un générateur de modèles, un outil de localisation de captures, un utilitaire de téléversement vers App Store Connect ou un outil d'automatisation compatible MCP, Screenshot Bro réunit tout le flux de travail dans une seule app Mac.
+
+Conditions d'utilisation (CLUF) : https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["fr-CA"] = """\
+Screenshot Bro est un créateur et un éditeur de captures d'écran conçu spécialement pour l'App Store. Créez des modèles réutilisables, montez des séries complètes, adaptez votre message à chaque langue, puis exportez ou téléversez des visuels de boutique soignés.
+
+Contrairement aux outils de conception génériques, Screenshot Bro connaît les rangées par appareil, la localisation, le téléversement vers App Store Connect, les exportations par lots et les projets réutilisables.
+
+Montez des séries complètes pour iPhone, iPad, Mac, téléphones et tablettes Android et mises en page Pixel. Partez d'un modèle ou créez votre propre système. Déposez vos captures, ajoutez des cadres d'appareils ou des compositions sans cadre, rédigez titres et légendes, mettez en forme le texte enrichi avec vos polices et peaufinez chaque détail sur le canevas.
+
+Regroupez dans un même projet vos variantes de version, vos remplacements par langue, vos plans de rangées par boutique et vos fichiers prêts à exporter, pour l'App Store, vos sites web, les réseaux sociaux et vos campagnes de lancement.
+
+Fonctions principales :
+
+- Produisez toutes vos captures d'écran App Store à partir d'un seul projet
+- Utilisez les modèles intégrés ou vos propres mises en page pour vos lancements récurrents
+- Concevez des rangées à plusieurs images, des mises en page comparatives et des campagnes complètes
+- Importez vos captures par lots dans les rangées et remplacez les images en un geste
+- Ajoutez des cadres d'appareils pour iPhone, iPad, Mac, Android, Pixel et des mises en page abstraites
+- Travaillez avec du texte, des formes, des images, des dégradés, des arrière-plans en mosaïque et des graphiques SVG
+- Modifiez le texte enrichi avec vos polices, leurs variantes, l'espacement, l'alignement et la taille
+- Ajustez le positionnement, l'aimantation, la superposition, le rognage et la rotation à même le canevas
+- Gérez les remplacements de texte et d'images propres à chaque marché
+- Utilisez les préréglages de langues, traduisez automatiquement le texte manquant et suivez l'avancement
+- Exportez vos captures en PNG ou en JPEG dans des dossiers classés par langue et par rangée
+- Créez des exportations vitrines pour les réseaux sociaux, les sites web et les aperçus de campagne
+- Téléversez vos captures d'écran directement dans App Store Connect
+- Révisez et modifiez les métadonnées App Store Connect avant le téléversement
+- Recevez un avis à la fin de vos exportations et de vos téléversements
+- Gardez vos projets en local par défaut, synchronisez-les avec iCloud au besoin et créez des sauvegardes ZIP
+- Aucun suivi
+
+Screenshot Bro s'adresse aux développeurs indépendants, aux équipes produit, aux designers et aux spécialistes du marketing qui veulent plus de contrôle qu'un générateur de base et un flux de travail plus rapide que de refaire à la main chaque image promotionnelle.
+
+Pour un premier lancement, une mise à jour majeure, une campagne saisonnière ou un déploiement multilingue, Screenshot Bro vous fait passer des captures brutes à des images prêtes pour la boutique, plus vite et avec plus de cohérence.
+
+Si vous cherchez un créateur de captures d'écran App Store, un générateur de modèles, un outil de localisation de captures ou un utilitaire de téléversement vers App Store Connect, Screenshot Bro réunit tout le flux de travail dans une seule app ciblée.
+
+Conditions d'utilisation (CLUF) : https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_MAC["cs"] = """\
+Screenshot Bro je generátor snímků obrazovky aplikací pro App Store. Navrhněte kompletní sadu snímků jednou, přidejte rámečky zařízení, lokalizujte každý titulek do všech trhů, kam vydáváte, a nahrajte je rovnou do App Store Connect — aniž byste opustili Mac.
+
+Na rozdíl od univerzálních designových nástrojů Screenshot Bro rozumí řadám podle zařízení, lokalizaci, nahrávání do App Store Connect, dávkovým exportům, opakovaně použitelným projektům i lokální automatizaci pomocí AI asistenta přes Model Context Protocol.
+
+Vytvářejte kompletní sady snímků obrazovky pro iPhone, iPad, Mac, telefony s Androidem, tablety s Androidem a rozvržení Pixel. Začněte šablonou, nebo si postavte vlastní systém rozvržení. Vložte snímky obrazovky, přidejte rámečky zařízení nebo kompozice bez rámečků, napište titulky a popisky, upravte styl formátovaného textu vlastními písmy a doladěte každý detail přímo na plátně.
+
+Screenshot Bro umí na vašem Macu hostovat lokální MCP server. Připojte asistenta kompatibilního s MCP — třeba Claude Code, Claude Desktop, Cursor nebo jiného klienta — a nechte ho zakládat projekty, upravovat řady, uspořádávat objekty, importovat snímky obrazovky, překládat texty, vykreslovat náhledy plátna a exportovat finální obrázky. Funkce MCP je volitelná, ve výchozím stavu vypnutá, omezená na místní smyčku a chráněná přístupovým tokenem.
+
+Držte varianty vydání, přepisy pro jednotlivé jazykové verze, plány řad pro konkrétní obchody a hotové podklady v jednom projektu — pro App Store, weby, sociální sítě i kampaně k uvedení.
+
+Klíčové funkce:
+
+- Vytvářejte snímky obrazovky pro App Store z jednoho projektu
+- Používejte vestavěné šablony nebo vlastní rozvržení pro opakovaná vydání
+- Navrhujte řady s více snímky, srovnávací rozvržení i celé kampaně
+- Hromadně importujte snímky obrazovky do řad a rychle nahrazujte obrázky
+- Přidávejte rámečky zařízení pro iPhone, iPad, Mac, Android, Pixel i abstraktní rozvržení
+- Pracujte s textem, tvary, obrázky, přechody, dlážděnými pozadími a SVG grafikou
+- Upravujte formátovaný text vlastními písmy, řezy, proložením, zarovnáním a velikostí
+- Upravujte umístění, přichytávání, vrstvení, oříznutí i otočení přímo na plátně
+- Spravujte jazykově specifické texty a přepisy obrázků pro každý trh
+- Využijte přednastavení jazyků, automatický překlad chybějících textů a sledování postupu
+- Exportujte snímky obrazovky v PNG nebo JPEG do složek podle jazyka a řady
+- Vytvářejte prezentační exporty pro sociální sítě, weby a náhledy kampaní
+- Nahrávejte snímky obrazovky přímo do App Store Connect
+- Zkontrolujte a upravte metadata v App Store Connect ještě před nahráním
+- Nahrajte snímky pro iOS i Mac do App Store Connect v jednom průchodu
+- Připojte asistenta kompatibilního s MCP a řiďte Screenshot Bro lokálně
+- Dostávejte upozornění na dokončení exportů a nahrávání do obchodu
+- Ponechte projekty ve výchozím stavu lokálně, po zapnutí je synchronizujte přes iCloud a vytvářejte zálohy ZIP
+- Otevřete úložiště projektů a exportní složky ve Finderu
+- Žádné sledování
+
+Screenshot Bro je určený nezávislým vývojářům, produktovým týmům, designérům a marketérům, kteří potřebují větší kontrolu než u základního generátoru snímků a rychlejší postup než ruční přestavování každého marketingového obrázku.
+
+Ať už chystáte první uvedení, velkou aktualizaci, sezónní kampaň nebo rozšíření lokalizací, Screenshot Bro vás dostane od surových snímků obrazovky k marketingovým obrázkům připraveným pro obchod rychleji a konzistentněji.
+
+Pokud hledáte nástroj na tvorbu snímků obrazovky pro App Store, editor šablon snímků, nástroj pro lokalizaci snímků, nahrávání do App Store Connect nebo automatizaci snímků přes MCP, Screenshot Bro udrží celý postup v jediné soustředěné aplikaci pro Mac.
+
+Podmínky užívání (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["cs"] = """\
+Screenshot Bro je generátor a editor snímků obrazovky vytvořený přímo pro snímky do App Store. Postavte si opakovaně použitelné šablony, navrhněte kompletní sady snímků, lokalizujte své sdělení a hotové materiály pro obchod exportujte nebo rovnou nahrajte.
+
+Na rozdíl od univerzálních designových nástrojů Screenshot Bro rozumí řadám podle zařízení, lokalizaci, nahrávání do App Store Connect, dávkovým exportům i opakovaně použitelným projektům.
+
+Vytvářejte kompletní sady snímků obrazovky pro iPhone, iPad, Mac, telefony s Androidem, tablety s Androidem a rozvržení Pixel. Začněte šablonou, nebo si postavte vlastní systém rozvržení. Vložte snímky obrazovky, přidejte rámečky zařízení nebo kompozice bez rámečků, napište titulky a popisky, upravte styl formátovaného textu vlastními písmy a doladěte každý detail přímo na plátně.
+
+Držte varianty vydání, přepisy pro jednotlivé jazykové verze, plány řad pro konkrétní obchody a hotové podklady v jednom projektu — pro App Store, weby, sociální sítě i kampaně k uvedení.
+
+Klíčové funkce:
+
+- Vytvářejte snímky obrazovky pro App Store z jednoho projektu
+- Používejte vestavěné šablony nebo vlastní rozvržení pro opakovaná vydání
+- Navrhujte řady s více snímky, srovnávací rozvržení i celé kampaně
+- Hromadně importujte snímky obrazovky do řad a rychle nahrazujte obrázky
+- Přidávejte rámečky zařízení pro iPhone, iPad, Mac, Android, Pixel i abstraktní rozvržení
+- Pracujte s textem, tvary, obrázky, přechody, dlážděnými pozadími a SVG grafikou
+- Upravujte formátovaný text vlastními písmy, řezy, proložením, zarovnáním a velikostí
+- Upravujte umístění, přichytávání, vrstvení, oříznutí i otočení přímo na plátně
+- Spravujte jazykově specifické texty a přepisy obrázků pro každý trh
+- Využijte přednastavení jazyků, automatický překlad chybějících textů a sledování postupu
+- Exportujte snímky obrazovky v PNG nebo JPEG do složek podle jazyka a řady
+- Vytvářejte prezentační exporty pro sociální sítě, weby a náhledy kampaní
+- Nahrávejte snímky obrazovky přímo do App Store Connect
+- Zkontrolujte a upravte metadata v App Store Connect ještě před nahráním
+- Dostávejte upozornění na dokončení exportů a nahrávání do obchodu
+- Ponechte projekty ve výchozím stavu lokálně, po zapnutí je synchronizujte přes iCloud a vytvářejte zálohy ZIP
+- Žádné sledování
+
+Screenshot Bro je určený nezávislým vývojářům, produktovým týmům, designérům a marketérům, kteří potřebují větší kontrolu než u základního generátoru snímků a rychlejší postup než ruční přestavování každého marketingového obrázku.
+
+Ať už chystáte první uvedení, velkou aktualizaci, sezónní kampaň nebo rozšíření lokalizací, Screenshot Bro vás dostane od surových snímků obrazovky k marketingovým obrázkům připraveným pro obchod rychleji a konzistentněji.
+
+Pokud hledáte nástroj na tvorbu snímků obrazovky pro App Store, editor šablon snímků, nástroj pro lokalizaci snímků nebo nahrávání do App Store Connect, Screenshot Bro udrží celý postup v jediné soustředěné aplikaci.
+
+Podmínky užívání (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_MAC["sk"] = """\
+Screenshot Bro je generátor snímok obrazovky aplikácií pre App Store. Navrhnite kompletnú sadu snímok raz, pridajte rámy zariadení, lokalizujte každý titulok do všetkých trhov, na ktoré vydávate, a nahrajte ich priamo do App Store Connect — bez toho, aby ste opustili Mac.
+
+Na rozdiel od univerzálnych grafických nástrojov Screenshot Bro rozumie riadkom pre konkrétne zariadenia, lokalizácii, nahrávaniu do App Store Connect, dávkovým exportom, opakovane použiteľným projektom aj lokálnej automatizácii AI asistenta cez Model Context Protocol.
+
+Vytvárajte kompletné sady snímok obrazovky pre iPhone, iPad, Mac, telefóny a tablety s Androidom aj rozloženia pre Pixel. Začnite so šablónou alebo si postavte vlastný systém rozložení. Vložte snímky obrazovky, pridajte rámy zariadení alebo kompozície bez rámov, napíšte titulky a popisy, naštýlujte formátovaný text vlastnými písmami a dolaďte každý detail priamo na plátne.
+
+Screenshot Bro dokáže na vašom Macu spustiť lokálny MCP server. Pripojte asistenta kompatibilného s MCP, napríklad Claude Code, Claude Desktop, Cursor alebo iného klienta, a nechajte ho vytvárať projekty, upravovať riadky, usporadúvať tvary, importovať snímky, prekladať texty, vykresľovať náhľady plátna a exportovať finálne obrázky. MCP je voliteľné, štandardne vypnuté, funguje len cez loopback a je chránené prístupovým tokenom.
+
+Varianty vydaní, jazykové prepisy, plány riadkov pre jednotlivé obchody aj podklady pripravené na export si držte v jednom projekte — pre App Store, weby, sociálne siete a spúšťacie kampane.
+
+Kľúčové funkcie:
+
+- Vytvárajte snímky obrazovky pre App Store z jedného projektu
+- Používajte zabudované šablóny alebo vlastné rozloženia pre opakované vydania
+- Navrhujte viacsnímkové riadky, porovnávacie rozloženia a celé kampane
+- Dávkovo importujte snímky obrazovky do riadkov a rýchlo vymieňajte obrázky
+- Pridávajte rámy zariadení pre iPhone, iPad, Mac, Android, Pixel a abstraktné rozloženia
+- Pracujte s textom, tvarmi, obrázkami, prechodmi, dlaždicovými pozadiami a SVG grafikou
+- Upravujte formátovaný text vlastnými písmami, variantmi písma, rozostupmi, zarovnaním a veľkosťou
+- Meňte umiestnenie, prichytávanie, vrstvenie, orezanie a otáčanie priamo na plátne
+- Spravujte jazykovo špecifické texty a obrázkové prepisy pre každý trh
+- Využívajte jazykové predvoľby, automaticky prekladajte chýbajúci text a sledujte priebeh prekladu
+- Exportujte snímky obrazovky v PNG alebo JPEG do priečinkov podľa jazyka a riadka
+- Vytvárajte prezentačné exporty pre sociálne siete, weby a náhľady kampaní
+- Nahrajte snímky obrazovky priamo do App Store Connect
+- Skontrolujte a upravte metadáta v App Store Connect pred nahratím
+- Nahrajte snímky pre iOS aj Mac do App Store Connect v jednom kroku
+- Pripojte asistenta kompatibilného s MCP a ovládajte Screenshot Bro lokálne
+- Dostávajte upozornenia na dokončenie exportov a nahrávaní do obchodu
+- Držte projekty štandardne lokálne, voliteľne ich synchronizujte cez iCloud a vytvárajte ZIP zálohy
+- Otvárajte úložisko projektov a exportné priečinky vo Finderi
+- Žiadne sledovanie
+
+Screenshot Bro je určený pre nezávislých vývojárov, produktové tímy, dizajnérov a marketérov, ktorí potrebujú väčšiu kontrolu než pri základnom generátore snímok a rýchlejší postup než ručné prerábanie každého marketingového obrázka.
+
+Či pripravujete prvé vydanie, veľkú aktualizáciu, sezónnu kampaň alebo rozšírenie do ďalších jazykov, Screenshot Bro vám pomôže dostať sa od surových snímok k marketingovým obrázkom pripraveným pre obchod rýchlejšie a konzistentnejšie.
+
+Ak hľadáte nástroj na tvorbu snímok obrazovky pre App Store, tvorbu šablón, lokalizáciu snímok, nahrávanie do App Store Connect alebo automatizáciu snímok cez MCP, Screenshot Bro drží celý postup v jednej sústredenej aplikácii pre Mac.
+
+Podmienky používania (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["sk"] = """\
+Screenshot Bro je nástroj na tvorbu a úpravu snímok obrazovky vytvorený špeciálne pre App Store. Vytvárajte opakovane použiteľné šablóny, navrhujte kompletné sady snímok, lokalizujte svoje posolstvo a hotové podklady pre obchod exportujte alebo rovno nahrajte.
+
+Na rozdiel od univerzálnych grafických nástrojov Screenshot Bro rozumie riadkom pre konkrétne zariadenia, lokalizácii, nahrávaniu do App Store Connect, dávkovým exportom aj opakovane použiteľným projektom.
+
+Vytvárajte kompletné sady snímok obrazovky pre iPhone, iPad, Mac, telefóny s Androidom, tablety s Androidom aj rozloženia pre Pixel. Začnite so šablónou alebo si postavte vlastný systém rozložení. Vložte snímky obrazovky, pridajte rámy zariadení alebo kompozície bez rámov, napíšte titulky a popisy, naštýlujte formátovaný text vlastnými písmami a dolaďte každý detail priamo na plátne.
+
+Varianty vydaní, jazykové prepisy, plány riadkov pre jednotlivé obchody aj podklady pripravené na export si držte v jednom projekte — pre App Store, weby, sociálne siete a spúšťacie kampane.
+
+Kľúčové funkcie:
+
+- Vytvárajte snímky obrazovky pre App Store z jedného projektu
+- Používajte zabudované šablóny alebo vlastné rozloženia pre opakované vydania
+- Navrhujte viacsnímkové riadky, porovnávacie rozloženia a celé kampane
+- Dávkovo importujte snímky obrazovky do riadkov a rýchlo vymieňajte obrázky
+- Pridávajte rámy zariadení pre iPhone, iPad, Mac, Android, Pixel a abstraktné rozloženia
+- Pracujte s textom, tvarmi, obrázkami, prechodmi, dlaždicovými pozadiami a SVG grafikou
+- Upravujte formátovaný text vlastnými písmami, variantmi písma, rozostupmi, zarovnaním a veľkosťou
+- Meňte umiestnenie, prichytávanie, vrstvenie, orezanie a otáčanie priamo na plátne
+- Spravujte jazykovo špecifické texty a obrázkové prepisy pre každý trh
+- Využívajte jazykové predvoľby, automaticky prekladajte chýbajúci text a sledujte priebeh prekladu
+- Exportujte snímky obrazovky v PNG alebo JPEG do priečinkov podľa jazyka a riadka
+- Vytvárajte prezentačné exporty pre sociálne siete, weby a náhľady kampaní
+- Nahrajte snímky obrazovky priamo do App Store Connect
+- Skontrolujte a upravte metadáta v App Store Connect ešte pred nahratím
+- Dostávajte upozornenia na dokončenie exportov a nahrávaní do obchodu
+- Držte projekty štandardne lokálne, podľa potreby ich synchronizujte cez iCloud a vytvárajte ZIP zálohy
+- Žiadne sledovanie
+
+Screenshot Bro je určený pre nezávislých vývojárov, produktové tímy, dizajnérov a marketérov, ktorí potrebujú väčšiu kontrolu než pri základnom generátore snímok a rýchlejší postup než ručné prerábanie každého marketingového obrázka.
+
+Či pripravujete prvé vydanie, veľkú aktualizáciu, sezónnu kampaň alebo rozšírenie do ďalších jazykov, Screenshot Bro vám pomôže dostať sa od surových snímok obrazovky k marketingovým obrázkom pripraveným pre obchod rýchlejšie a konzistentnejšie.
+
+Ak hľadáte nástroj na tvorbu snímok obrazovky pre App Store, tvorbu šablón, lokalizáciu snímok alebo nahrávanie do App Store Connect, Screenshot Bro drží celý postup v jednej sústredenej aplikácii.
+
+Podmienky používania (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_MAC["hu"] = """\
+A Screenshot Bro képernyőkép-generátor alkalmazásokhoz, az App Store-hoz szabva. Tervezd meg egyszer a teljes képernyőkép-sorozatot, tegyél rá készülékkereteket, fordítsd le a főcímeket minden piacra, ahol megjelensz, és töltsd fel egyenesen az App Store Connectbe — anélkül, hogy elhagynád a Macet.
+
+Az általános tervezőprogramokkal ellentétben a Screenshot Bro ismeri a készülékenkénti sorokat, a lokalizációt, az App Store Connect-feltöltéseket, a kötegelt exportot, az újrafelhasználható projekteket és a helyi AI-asszisztenssel végzett automatizálást a Model Context Protocol révén.
+
+Állíts össze teljes képernyőkép-sorozatot iPhone-ra, iPadre, Macre, Android-telefonokra, Android-tabletekre és Pixel-elrendezésekhez. Indulj egy sablonból, vagy alakítsd ki a saját elrendezési rendszeredet. Húzd be a képernyőképeket, tegyél rájuk készülékkeretet vagy hagyd őket keret nélkül, írj főcímeket és feliratokat, formázd a szöveget egyedi betűtípusokkal, és hangolj minden részletet a vásznon.
+
+A Screenshot Bro helyi MCP-kiszolgálót futtathat a Macen. Csatlakoztass egy MCP-kompatibilis asszisztenst — például a Claude Code-ot, a Claude Desktopot, a Cursort vagy más klienst —, és bízd rá a projektek létrehozását, a sorok szerkesztését, az alakzatok rendezését, a képernyőképek importálását, a szövegek fordítását, a vászonelőnézetek renderelését és a végleges képek exportálását. Az MCP opcionális, alapértelmezés szerint kikapcsolt, csak loopback címen érhető el, és hozzáférési token védi.
+
+Tartsd egy projektben a kiadásváltozatokat, a nyelvspecifikus felülbírálatokat, az áruházankénti sorterveket és az exportra kész elemeket az App Store, a webhelyek, a közösségi média és a bevezető kampányok számára.
+
+Főbb funkciók:
+
+- App Store-képernyőképek készítése egyetlen projektből
+- Beépített sablonok vagy egyedi elrendezések ismétlődő kiadásokhoz
+- Képernyőképek kötegelt importálása sorokba, képek gyors cseréje
+- Készülékkeretek iPhone, iPad, Mac, Android, Pixel és absztrakt elrendezésekhez
+- Szöveg, alakzatok, képek, színátmenetek, csempézett hátterek és SVG-grafikák használata
+- Formázott szöveg szerkesztése egyedi betűtípusokkal, betűváltozatokkal, térközzel, igazítással és méretezéssel
+- Nyelvspecifikus szöveg- és képfelülbírálatok kezelése minden piachoz
+- Nyelvi előbeállítások, hiányzó szövegek automatikus fordítása, fordítási állapot követése
+- PNG- vagy JPEG-képernyőképek exportálása nyelv és sor szerinti mappákba
+- Bemutató exportok közösségi bejegyzésekhez, webhelyekhez és kampányelőnézetekhez
+- Képernyőképek feltöltése közvetlenül az App Store Connectbe
+- App Store Connect-metaadatok áttekintése és szerkesztése a feltöltés előtt
+- MCP-kompatibilis asszisztens csatlakoztatása a Screenshot Bro helyi vezérléséhez
+- Értesítés az exportálások és az áruházi feltöltések befejezéséről
+- A projektek alapból helyben maradnak, igény szerint iCloud-szinkronizálással és ZIP-mentésekkel
+- Nincs nyomkövetés
+
+A Screenshot Bro független fejlesztőknek, termékcsapatoknak, tervezőknek és marketingeseknek készült, akiknek egy egyszerű képernyőkép-generátornál több kontrollra van szükségük, és gyorsabb munkamenetre, mint minden egyes marketingkép kézi újraépítése.
+
+Akár az első megjelenésre, nagyobb frissítésre, szezonális kampányra vagy egy újabb nyelvi bővítésre készülsz, a Screenshot Bro segít gyorsabban és következetesebben eljutni a nyers képernyőképektől az áruházra kész marketingképekig.
+
+Ha App Store-képernyőképeket készítő eszközre, képernyőkép-sablonszerkesztőre, képernyőkép-lokalizációs eszközre, App Store Connect-feltöltőre vagy MCP-re felkészített képernyőkép-automatizálásra van szükséged, a Screenshot Bro egyetlen célirányos Mac-alkalmazásban tartja a teljes munkafolyamatot.
+
+Felhasználási feltételek (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["hu"] = """\
+A Screenshot Bro kifejezetten App Store-képernyőképekhez készült képernyőkép-szerkesztő. Hozz létre újrafelhasználható sablonokat, tervezz teljes képernyőkép-sorozatokat, lokalizáld az üzenetedet, majd exportáld vagy töltsd fel a kész áruházi képanyagot.
+
+Az általános tervezőprogramokkal ellentétben a Screenshot Bro ismeri a készülékenkénti sorokat, a lokalizációt, az App Store Connect-feltöltéseket, a kötegelt exportot és az újrafelhasználható projekteket.
+
+Állíts össze teljes képernyőkép-sorozatot iPhone-ra, iPadre, Macre, Android-telefonokra, Android-tabletekre és Pixel-elrendezésekhez. Indulj egy sablonból, vagy alakítsd ki a saját elrendezési rendszeredet. Húzd be a képernyőképeket, tegyél rájuk készülékkeretet vagy hagyd őket keret nélkül, írj főcímeket és feliratokat, formázd a szöveget egyedi betűtípusokkal, és hangolj minden részletet a vásznon.
+
+Tartsd egy projektben a kiadásváltozatokat, a nyelvspecifikus felülbírálatokat, az áruházankénti sorterveket és az exportra kész elemeket az App Store, a webhelyek, a közösségi média és a bevezető kampányok számára.
+
+Főbb funkciók:
+
+- App Store-képernyőképek készítése egyetlen projektből
+- Beépített sablonok vagy egyedi elrendezések ismétlődő kiadásokhoz
+- Többképes sorok, összehasonlító elrendezések és teljes kampányok tervezése
+- Képernyőképek kötegelt importálása sorokba, képek gyors cseréje
+- Készülékkeretek iPhone, iPad, Mac, Android, Pixel és absztrakt elrendezésekhez
+- Szöveg, alakzatok, képek, színátmenetek, csempézett hátterek és SVG-grafikák használata
+- Formázott szöveg szerkesztése egyedi betűtípusokkal, betűváltozatokkal, térközzel, igazítással és méretezéssel
+- Elhelyezés, illesztés, rétegsorrend, vágás és forgatás közvetlenül a vásznon
+- Nyelvspecifikus szöveg- és képfelülbírálatok kezelése minden piachoz
+- Nyelvi előbeállítások, hiányzó szövegek automatikus fordítása, fordítási állapot követése
+- PNG- vagy JPEG-képernyőképek exportálása nyelv és sor szerinti mappákba
+- Bemutató exportok közösségi bejegyzésekhez, webhelyekhez és kampányelőnézetekhez
+- Képernyőképek feltöltése közvetlenül az App Store Connectbe
+- App Store Connect-metaadatok áttekintése és szerkesztése a feltöltés előtt
+- Értesítés az exportálások és az áruházi feltöltések befejezéséről
+- A projektek alapból helyben maradnak, igény szerint iCloud-szinkronizálással és ZIP-mentésekkel
+- Nincs nyomkövetés
+
+A Screenshot Bro független fejlesztőknek, termékcsapatoknak, tervezőknek és marketingeseknek készült, akiknek egy egyszerű képernyőkép-generátornál több kontrollra van szükségük, és gyorsabb munkamenetre, mint minden egyes marketingkép kézi újraépítése.
+
+Akár az első megjelenésre, nagyobb frissítésre, szezonális kampányra vagy egy újabb nyelvi bővítésre készülsz, a Screenshot Bro segít gyorsabban és következetesebben eljutni a nyers képernyőképektől az áruházra kész marketingképekig.
+
+Ha App Store-képernyőképeket készítő eszközre, képernyőkép-sablonszerkesztőre, képernyőkép-lokalizációs eszközre vagy App Store Connect-feltöltőre van szükséged, a Screenshot Bro egyetlen célirányos alkalmazásban tartja a teljes munkafolyamatot.
+
+Felhasználási feltételek (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_MAC["ro"] = """\
+Screenshot Bro este un generator de capturi de ecran pentru App Store. Proiectezi o singură dată un set complet de capturi, adaugi rame de dispozitiv, localizezi fiecare titlu pentru toate piețele în care lansezi și încarci totul direct în App Store Connect — fără să ieși de pe Mac.
+
+Spre deosebire de instrumentele generice de design, Screenshot Bro înțelege rândurile dedicate fiecărui dispozitiv, localizarea, încărcările în App Store Connect, exporturile în lot, proiectele reutilizabile și automatizarea locală cu asistenți AI prin Model Context Protocol.
+
+Construiește seturi complete de capturi pentru iPhone, iPad, Mac, telefoane Android, tablete Android și machete Pixel. Pornește de la un șablon sau creează-ți propriul sistem de aspect. Adaugă capturile, pune rame de dispozitiv sau compoziții fără ramă, scrie titluri și descrieri, stilizează textul îmbogățit cu fonturi proprii și reglează fiecare detaliu direct pe canvas.
+
+Screenshot Bro poate găzdui un server MCP local pe Mac. Conectează un asistent compatibil MCP — Claude Code, Claude Desktop, Cursor sau alt client — și lasă-l să creeze proiecte, să editeze rânduri, să aranjeze forme, să importe capturi de ecran, să traducă texte, să randeze previzualizări ale canvasului și să exporte imaginile finale. MCP este opțional, dezactivat implicit, limitat la loopback și protejat cu un token de acces.
+
+Ține variantele de lansare, suprascrierile pe limbă, planurile de rânduri pentru fiecare magazin și materialele gata de export într-un singur proiect, pentru App Store, site-uri web, rețele sociale și campanii de lansare.
+
+Funcții principale:
+
+- Creează capturi de ecran pentru App Store dintr-un singur proiect
+- Folosește șabloane incluse sau machete proprii pentru lansări repetate
+- Importă capturi în lot pe rânduri și înlocuiește rapid imaginile
+- Adaugă rame de dispozitiv pentru iPhone, iPad, Mac, Android, Pixel și machete abstracte
+- Lucrează cu text, forme, imagini, degradeuri, fundaluri în mozaic și grafică SVG
+- Editează text îmbogățit cu fonturi proprii, variante de font, spațiere, aliniere și dimensiuni
+- Gestionează suprascrieri de text și de imagini pentru fiecare piață
+- Folosește presetări de limbă, tradu automat textele lipsă și urmărește progresul traducerii
+- Exportă capturi PNG sau JPEG în foldere, pe limbă și pe rând
+- Creează exporturi de prezentare pentru postări sociale, site-uri și previzualizări de campanie
+- Încarcă rapid capturile direct în App Store Connect
+- Verifică și editează metadatele din App Store Connect înainte de încărcare
+- Încarcă în App Store Connect capturile pentru iOS și Mac într-un singur flux
+- Conectează un asistent compatibil MCP care să controleze local Screenshot Bro
+- Primește notificări la finalizarea exporturilor și a încărcărilor în magazin
+- Ține proiectele local implicit, sincronizează cu iCloud când vrei și fă copii ZIP
+- Deschide folderele de proiecte și de export în Finder
+- Fără urmărire
+
+Screenshot Bro este făcut pentru dezvoltatori independenți, echipe de produs, designeri și marketeri care au nevoie de mai mult control decât oferă un generator obișnuit de capturi și de un flux de lucru mai rapid decât refacerea manuală a fiecărei imagini de marketing.
+
+Fie că pregătești o primă lansare, o actualizare majoră, o campanie sezonieră sau o extindere pe limbi noi, Screenshot Bro te ajută să treci de la capturi brute la imagini gata de publicat mai repede și mai consecvent.
+
+Dacă îți trebuie un creator de capturi de ecran pentru App Store, un constructor de șabloane, un instrument de localizare a capturilor, un uploader pentru App Store Connect sau un instrument de automatizare prin MCP, Screenshot Bro ține tot fluxul de lucru într-o singură aplicație Mac.
+
+Condiții de utilizare (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["ro"] = """\
+Screenshot Bro este un editor și un generator de capturi de ecran făcut special pentru capturile din App Store. Creezi șabloane reutilizabile, proiectezi seturi complete de capturi, îți localizezi mesajul și exporți sau încarci materiale finisate pentru magazin.
+
+Spre deosebire de instrumentele generice de design, Screenshot Bro înțelege rândurile dedicate fiecărui dispozitiv, localizarea, încărcările în App Store Connect, exporturile în lot și proiectele reutilizabile.
+
+Construiește seturi complete de capturi pentru iPhone, iPad, Mac, telefoane Android, tablete Android și machete Pixel. Pornește de la un șablon sau creează-ți propriul sistem de aspect. Adaugă capturile, pune rame de dispozitiv sau compoziții fără ramă, scrie titluri și descrieri, stilizează textul îmbogățit cu fonturi proprii și reglează fiecare detaliu direct pe canvas.
+
+Ține variantele de lansare, suprascrierile pe limbă, planurile de rânduri pentru fiecare magazin și materialele gata de export într-un singur proiect, pentru App Store, site-uri web, rețele sociale și campanii de lansare.
+
+Funcții principale:
+
+- Creează capturi de ecran pentru App Store dintr-un singur proiect
+- Folosește șabloane incluse sau machete proprii pentru lansări repetate
+- Proiectează rânduri cu mai multe capturi, machete comparative și campanii întregi
+- Importă capturi în lot pe rânduri și înlocuiește rapid imaginile
+- Adaugă rame de dispozitiv pentru iPhone, iPad, Mac, Android, Pixel și machete abstracte
+- Lucrează cu text, forme, imagini, degradeuri, fundaluri în mozaic și grafică SVG
+- Editează text îmbogățit cu fonturi proprii, variante de font, spațiere, aliniere și dimensiuni
+- Ajustează poziția, alinierea magnetică, straturile, decuparea și rotația direct pe canvas
+- Gestionează suprascrieri de text și de imagini pentru fiecare piață
+- Folosește presetări de limbă, tradu automat textele lipsă și urmărește progresul traducerii
+- Exportă capturi PNG sau JPEG în foldere, pe limbă și pe rând
+- Creează exporturi de prezentare pentru postări sociale, site-uri și previzualizări de campanie
+- Încarcă rapid capturile direct în App Store Connect
+- Verifică și editează metadatele din App Store Connect înainte de încărcare
+- Primește notificări la finalizarea exporturilor și a încărcărilor în magazin
+- Ține proiectele local implicit, sincronizează cu iCloud când vrei și fă copii ZIP
+- Fără urmărire
+
+Screenshot Bro este făcut pentru dezvoltatori independenți, echipe de produs, designeri și marketeri care au nevoie de mai mult control decât oferă un generator obișnuit de capturi și de un flux de lucru mai rapid decât refacerea manuală a fiecărei imagini de marketing.
+
+Fie că pregătești o primă lansare, o actualizare majoră, o campanie sezonieră sau o extindere pe limbi noi, Screenshot Bro te ajută să treci de la capturi brute la imagini gata de publicat mai repede și mai consecvent.
+
+Dacă îți trebuie un creator de capturi de ecran pentru App Store, un constructor de șabloane, un instrument de localizare a capturilor sau un uploader pentru App Store Connect, Screenshot Bro ține tot fluxul de lucru într-o singură aplicație.
+
+Condiții de utilizare (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_MAC["hr"] = """\
+Screenshot Bro je generator snimki zaslona za App Store. Osmislite cijeli set snimki zaslona jednom, dodajte okvire uređaja, lokalizirajte svaki naslov za svako tržište na kojem objavljujete i pošaljite sve izravno na App Store Connect — bez napuštanja Maca.
+
+Za razliku od općenitih dizajnerskih alata, Screenshot Bro razumije retke vezane uz pojedini uređaj, lokalizaciju, prijenos na App Store Connect, skupni izvoz, projekte za višekratnu upotrebu i lokalnu automatizaciju pomoću AI asistenta preko protokola Model Context Protocol.
+
+Izradite kompletne setove snimki zaslona za iPhone, iPad, Mac, Android telefone, Android tablete i Pixel rasporede. Krenite od predloška ili izgradite vlastiti sustav rasporeda. Ubacite snimke zaslona, dodajte okvire uređaja ili kompozicije bez okvira, napišite naslove i opise, oblikujte obogaćeni tekst vlastitim fontovima i dotjerajte svaki detalj na platnu.
+
+Screenshot Bro može pokrenuti lokalni MCP poslužitelj na vašem Macu. Povežite MCP-kompatibilnog asistenta poput alata Claude Code, Claude Desktop, Cursor ili nekog drugog klijenta i pustite ga da stvara projekte, uređuje retke, raspoređuje oblike, uvozi snimke zaslona, prevodi tekst, prikazuje pretpreglede platna i izvozi konačne slike. MCP je neobavezan, prema zadanim postavkama isključen, radi samo lokalno i zaštićen je pristupnim tokenom.
+
+Držite varijante izdanja, prilagodbe za pojedini jezik, planove redaka za pojedinu trgovinu i materijale spremne za izvoz u jednom projektu — za App Store, web stranice, društvene mreže i lansirne kampanje.
+
+Ključne značajke:
+
+- Izradite App Store snimke zaslona iz jednog projekta
+- Koristite ugrađene predloške ili vlastite rasporede za ponavljajuća izdanja
+- Skupno uvezite snimke zaslona u retke i brzo zamijenite slike
+- Dodajte okvire uređaja za iPhone, iPad, Mac, Android, Pixel i apstraktne rasporede
+- Radite s tekstom, oblicima, slikama, gradijentima, popločanim pozadinama i SVG grafikama
+- Uređujte obogaćeni tekst uz vlastite fontove, varijante pisma, razmake, poravnanje i veličine
+- Upravljajte tekstom i slikama prilagođenima svakom tržištu
+- Koristite gotove jezične postavke, automatski prevedite tekst koji nedostaje i pratite napredak prijevoda
+- Izvezite PNG ili JPEG snimke zaslona u mape po jeziku i retku
+- Izradite izvoze za predstavljanje na društvenim mrežama, web stranicama i u pretpregledima kampanja
+- Prenesite snimke zaslona izravno na App Store Connect
+- Pregledajte i uredite metapodatke za App Store Connect prije prijenosa
+- Povežite MCP-kompatibilnog asistenta koji lokalno upravlja aplikacijom Screenshot Bro
+- Primajte obavijesti o dovršenim izvozima i prijenosima u trgovinu
+- Držite projekte lokalno, sinkronizirajte ih putem iCloud usluge kad to uključite i izradite ZIP sigurnosne kopije
+- Bez praćenja
+
+Screenshot Bro je namijenjen samostalnim razvojnim programerima, produktnim timovima, dizajnerima i marketinškim stručnjacima kojima treba više kontrole nego što je nudi običan generator snimki zaslona i brži tijek rada od ručne izrade svake marketinške slike.
+
+Bilo da pripremate prvo izdanje, veliku nadogradnju, sezonsku kampanju ili uvođenje novih jezika, Screenshot Bro vas brže i dosljednije vodi od sirovih snimki zaslona do marketinških slika spremnih za trgovinu.
+
+Ako trebate alat za izradu App Store snimki zaslona, graditelj predložaka, alat za lokalizaciju snimki zaslona, alat za prijenos na App Store Connect ili MCP automatizaciju snimki zaslona, Screenshot Bro drži cijeli tijek rada u jednoj usredotočenoj Mac aplikaciji.
+
+Uvjeti korištenja (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["hr"] = """\
+Screenshot Bro je alat za izradu i uređivanje snimki zaslona, napravljen upravo za App Store snimke zaslona. Izradite predloške za višekratnu upotrebu, osmislite cijele setove snimki zaslona, lokalizirajte svoju poruku te izvezite ili prenesite dotjerane materijale za trgovinu.
+
+Za razliku od općenitih dizajnerskih alata, Screenshot Bro razumije retke vezane uz pojedini uređaj, lokalizaciju, prijenos na App Store Connect, skupni izvoz i projekte za višekratnu upotrebu.
+
+Izradite kompletne setove snimki zaslona za iPhone, iPad, Mac, Android telefone, Android tablete i Pixel rasporede. Krenite od predloška ili izgradite vlastiti sustav rasporeda. Ubacite snimke zaslona, dodajte okvire uređaja ili kompozicije bez okvira, napišite naslove i opise, oblikujte obogaćeni tekst vlastitim fontovima i dotjerajte svaki detalj na platnu.
+
+Držite varijante izdanja, prilagodbe za pojedini jezik, planove redaka za pojedinu trgovinu i materijale spremne za izvoz u jednom projektu — za App Store, web stranice, društvene mreže i lansirne kampanje.
+
+Ključne značajke:
+
+- Izradite App Store snimke zaslona iz jednog projekta
+- Koristite ugrađene predloške ili vlastite rasporede za ponavljajuća izdanja
+- Osmislite retke s više prizora, usporedne rasporede i cijele kampanje
+- Skupno uvezite snimke zaslona u retke i brzo zamijenite slike
+- Dodajte okvire uređaja za iPhone, iPad, Mac, Android, Pixel i apstraktne rasporede
+- Radite s tekstom, oblicima, slikama, gradijentima, popločanim pozadinama i SVG grafikama
+- Uređujte obogaćeni tekst uz vlastite fontove, varijante pisma, razmake, poravnanje i veličine
+- Namjestite položaj, prianjanje, slojeve, obrezivanje i rotaciju izravno na platnu
+- Upravljajte tekstom i slikama prilagođenima svakom tržištu
+- Koristite gotove jezične postavke, automatski prevedite tekst koji nedostaje i pratite napredak prijevoda
+- Izvezite PNG ili JPEG snimke zaslona u mape po jeziku i retku
+- Izradite izvoze za predstavljanje na društvenim mrežama, web stranicama i u pretpregledima kampanja
+- Prenesite snimke zaslona izravno na App Store Connect
+- Pregledajte i uredite metapodatke za App Store Connect prije prijenosa
+- Primajte obavijesti o dovršenim izvozima i prijenosima u trgovinu
+- Držite projekte lokalno, sinkronizirajte ih putem iCloud usluge kad to uključite i izradite ZIP sigurnosne kopije
+- Bez praćenja
+
+Screenshot Bro je namijenjen samostalnim razvojnim programerima, produktnim timovima, dizajnerima i marketinškim stručnjacima kojima treba više kontrole nego što je nudi običan generator snimki zaslona i brži tijek rada od ručne izrade svake marketinške slike.
+
+Bilo da pripremate prvo izdanje, veliku nadogradnju, sezonsku kampanju ili uvođenje novih jezika, Screenshot Bro vas brže i dosljednije vodi od sirovih snimki zaslona do marketinških slika spremnih za trgovinu.
+
+Ako trebate alat za izradu App Store snimki zaslona, graditelj predložaka, alat za lokalizaciju snimki zaslona ili alat za prijenos na App Store Connect, Screenshot Bro drži cijeli tijek rada u jednoj usredotočenoj aplikaciji.
+
+Uvjeti korištenja (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_MAC["el"] = """\
+Το Screenshot Bro είναι μια εφαρμογή δημιουργίας στιγμιοτύπων οθόνης για το App Store. Σχεδιάστε μία φορά ένα πλήρες σετ, προσθέστε πλαίσια συσκευών, μεταφράστε κάθε τίτλο για κάθε αγορά όπου κυκλοφορείτε και ανεβάστε τα απευθείας στο App Store Connect — χωρίς να φύγετε από τον Mac σας.
+
+Σε αντίθεση με τα γενικά εργαλεία σχεδίασης, το Screenshot Bro κατανοεί σειρές ανά συσκευή, τοπική προσαρμογή, μεταφορτώσεις στο App Store Connect, μαζικές εξαγωγές, επαναχρησιμοποιήσιμα έργα και τοπική αυτοματοποίηση με βοηθό τεχνητής νοημοσύνης μέσω του Model Context Protocol.
+
+Δημιουργήστε πλήρη σετ στιγμιοτύπων για iPhone, iPad, Mac, τηλέφωνα Android, tablet Android και διατάξεις Pixel. Ξεκινήστε από ένα πρότυπο ή φτιάξτε το δικό σας σύστημα διατάξεων. Ρίξτε μέσα στιγμιότυπα, προσθέστε πλαίσια συσκευών ή συνθέσεις χωρίς πλαίσιο, γράψτε τίτλους και λεζάντες, μορφοποιήστε εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές και ρυθμίστε κάθε λεπτομέρεια πάνω στον καμβά.
+
+Το Screenshot Bro μπορεί να φιλοξενήσει έναν τοπικό διακομιστή MCP στον Mac σας. Συνδέστε έναν συμβατό με MCP βοηθό, όπως το Claude Code, το Claude Desktop, το Cursor ή οποιονδήποτε άλλο πελάτη, και αφήστε τον να δημιουργεί έργα, να επεξεργάζεται σειρές, να τακτοποιεί σχήματα, να εισάγει στιγμιότυπα, να μεταφράζει κείμενα, να αποδίδει προεπισκοπήσεις του καμβά και να εξάγει τελικές εικόνες. Το MCP είναι προαιρετικό, ανενεργό από προεπιλογή, μόνο τοπικό (loopback) και προστατεύεται με διακριτικό πρόσβασης.
+
+Κρατήστε παραλλαγές κυκλοφορίας, παρακάμψεις ανά γλώσσα, πλάνα σειρών ανά κατάστημα και έτοιμα προς εξαγωγή στοιχεία σε ένα έργο, για το App Store, ιστότοπους, κοινωνικά δίκτυα και καμπάνιες κυκλοφορίας.
+
+Βασικές δυνατότητες:
+
+- Δημιουργία στιγμιοτύπων για το App Store από ένα μόνο έργο
+- Ενσωματωμένα πρότυπα ή δικές σας διατάξεις για επαναλαμβανόμενες κυκλοφορίες
+- Μαζική εισαγωγή στιγμιοτύπων σε σειρές και γρήγορη αντικατάσταση εικόνων
+- Πλαίσια συσκευών για iPhone, iPad, Mac, Android, Pixel και αφηρημένες διατάξεις
+- Κείμενο, σχήματα, εικόνες, διαβαθμίσεις, φόντα με μοτίβο και γραφικά SVG
+- Εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές, παραλλαγές, διάστιχο, στοίχιση και μεγέθη
+- Διαχείριση παρακάμψεων κειμένου και εικόνων ανά γλώσσα και αγορά
+- Προεπιλογές γλωσσών, αυτόματη μετάφραση κειμένων που λείπουν και παρακολούθηση προόδου
+- Εξαγωγή σε PNG ή JPEG με φακέλους ανά γλώσσα και σειρά
+- Εξαγωγές παρουσίασης για κοινωνικά δίκτυα, ιστότοπους και προεπισκοπήσεις καμπανιών
+- Απευθείας μεταφόρτωση στιγμιοτύπων στο App Store Connect
+- Έλεγχος και επεξεργασία μεταδεδομένων του App Store Connect πριν από την αποστολή
+- Σύνδεση συμβατού με MCP βοηθού για τοπικό έλεγχο του Screenshot Bro
+- Ειδοποιήσεις ολοκλήρωσης για εξαγωγές και αποστολές στο κατάστημα
+- Τοπικά έργα από προεπιλογή, συγχρονισμός με iCloud όταν ενεργοποιηθεί και αντίγραφα ασφαλείας ZIP
+- Καμία παρακολούθηση
+
+Το Screenshot Bro απευθύνεται σε ανεξάρτητους προγραμματιστές, ομάδες προϊόντος, σχεδιαστές και στελέχη μάρκετινγκ που θέλουν περισσότερο έλεγχο από μια απλή γεννήτρια στιγμιοτύπων και ταχύτερη ροή εργασίας από το να ξαναφτιάχνουν στο χέρι κάθε εικόνα προβολής της εφαρμογής.
+
+Είτε ετοιμάζετε την πρώτη κυκλοφορία, μια μεγάλη ενημέρωση, μια εποχική καμπάνια ή την επέκταση σε νέες γλώσσες, το Screenshot Bro σας οδηγεί από τα ακατέργαστα στιγμιότυπα σε εικόνες έτοιμες για το κατάστημα, πιο γρήγορα και με μεγαλύτερη συνέπεια.
+
+Αν χρειάζεστε εργαλείο δημιουργίας στιγμιοτύπων για το App Store, δόμηση προτύπων, τοπική προσαρμογή στιγμιοτύπων, αποστολή στο App Store Connect ή αυτοματοποίηση στιγμιοτύπων με MCP, το Screenshot Bro κρατά όλη τη ροή εργασίας σε μία εστιασμένη εφαρμογή για Mac.
+
+Όροι χρήσης (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["el"] = """\
+Το Screenshot Bro είναι ένα εργαλείο δημιουργίας και επεξεργασίας στιγμιοτύπων, φτιαγμένο ειδικά για στιγμιότυπα οθόνης του App Store. Φτιάξτε επαναχρησιμοποιήσιμα πρότυπα, σχεδιάστε πλήρη σετ στιγμιοτύπων, προσαρμόστε το μήνυμά σας ανά γλώσσα και εξάγετε ή ανεβάστε έτοιμο δημιουργικό υλικό για το κατάστημα.
+
+Σε αντίθεση με τα γενικά εργαλεία σχεδίασης, το Screenshot Bro κατανοεί σειρές ανά συσκευή, τοπική προσαρμογή, μεταφορτώσεις στο App Store Connect, μαζικές εξαγωγές και επαναχρησιμοποιήσιμα έργα.
+
+Δημιουργήστε πλήρη σετ στιγμιοτύπων για iPhone, iPad, Mac, τηλέφωνα Android, tablet Android και διατάξεις Pixel. Ξεκινήστε από ένα πρότυπο ή φτιάξτε το δικό σας σύστημα διατάξεων. Ρίξτε μέσα στιγμιότυπα, προσθέστε πλαίσια συσκευών ή συνθέσεις χωρίς πλαίσιο, γράψτε τίτλους και λεζάντες, μορφοποιήστε εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές και ρυθμίστε κάθε λεπτομέρεια πάνω στον καμβά.
+
+Κρατήστε παραλλαγές κυκλοφορίας, παρακάμψεις ανά γλώσσα, πλάνα σειρών ανά κατάστημα και έτοιμα προς εξαγωγή στοιχεία σε ένα έργο, για το App Store, ιστότοπους, κοινωνικά δίκτυα και καμπάνιες κυκλοφορίας.
+
+Βασικές δυνατότητες:
+
+- Δημιουργία στιγμιοτύπων για το App Store από ένα μόνο έργο
+- Ενσωματωμένα πρότυπα ή δικές σας διατάξεις για επαναλαμβανόμενες κυκλοφορίες
+- Σχεδίαση σειρών με πολλά στιγμιότυπα, διατάξεων σύγκρισης και ολόκληρων καμπανιών
+- Μαζική εισαγωγή στιγμιοτύπων σε σειρές και γρήγορη αντικατάσταση εικόνων
+- Πλαίσια συσκευών για iPhone, iPad, Mac, Android, Pixel και αφηρημένες διατάξεις
+- Κείμενο, σχήματα, εικόνες, διαβαθμίσεις, φόντα με μοτίβο και γραφικά SVG
+- Εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές, παραλλαγές, διάστιχο, στοίχιση και μεγέθη
+- Ρύθμιση θέσης, κουμπώματος, επιπέδων, περικοπής και περιστροφής απευθείας στον καμβά
+- Διαχείριση παρακάμψεων κειμένου και εικόνων ανά γλώσσα και αγορά
+- Προεπιλογές γλωσσών, αυτόματη μετάφραση κειμένων που λείπουν και παρακολούθηση προόδου
+- Εξαγωγή σε PNG ή JPEG με φακέλους ανά γλώσσα και σειρά
+- Εξαγωγές παρουσίασης για κοινωνικά δίκτυα, ιστότοπους και προεπισκοπήσεις καμπανιών
+- Απευθείας μεταφόρτωση στιγμιοτύπων στο App Store Connect
+- Έλεγχος και επεξεργασία μεταδεδομένων του App Store Connect πριν από την αποστολή
+- Ειδοποιήσεις ολοκλήρωσης για εξαγωγές και αποστολές στο κατάστημα
+- Τοπικά έργα από προεπιλογή, συγχρονισμός με iCloud όταν ενεργοποιηθεί και αντίγραφα ασφαλείας ZIP
+- Καμία παρακολούθηση
+
+Το Screenshot Bro απευθύνεται σε ανεξάρτητους προγραμματιστές, ομάδες προϊόντος, σχεδιαστές και στελέχη μάρκετινγκ που θέλουν περισσότερο έλεγχο από μια απλή γεννήτρια στιγμιοτύπων και ταχύτερη ροή εργασίας από το να ξαναφτιάχνουν στο χέρι κάθε εικόνα προβολής της εφαρμογής.
+
+Είτε ετοιμάζετε την πρώτη κυκλοφορία, μια μεγάλη ενημέρωση, μια εποχική καμπάνια ή την επέκταση σε νέες γλώσσες, το Screenshot Bro σας οδηγεί από τα ακατέργαστα στιγμιότυπα σε εικόνες έτοιμες για το κατάστημα, πιο γρήγορα και με μεγαλύτερη συνέπεια.
+
+Αν χρειάζεστε εργαλείο δημιουργίας στιγμιοτύπων για το App Store, δόμηση προτύπων στιγμιοτύπων, τοπική προσαρμογή στιγμιοτύπων ή αποστολή στο App Store Connect, το Screenshot Bro κρατά όλη τη ροή εργασίας σε μία εστιασμένη εφαρμογή.
+
+Όροι χρήσης (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_MAC["ca"] = """\
+Screenshot Bro és un generador de captures de pantalla d'aplicacions per a l'App Store. Dissenya un joc complet de captures una sola vegada, afegeix marcs de dispositiu, localitza cada titular a tots els mercats on publiques i puja-ho tot directament a App Store Connect, sense sortir del Mac.
+
+A diferència de les eines de disseny genèriques, Screenshot Bro entén les files per dispositiu, la localització, les pujades a App Store Connect, les exportacions per lots, els projectes reutilitzables i l'automatització local amb assistents d'IA mitjançant el Model Context Protocol.
+
+Crea jocs complets de captures per a iPhone, iPad, Mac, telèfons Android, tauletes Android i disposicions Pixel. Comença amb una plantilla o munta el teu propi sistema de disposicions. Arrossega-hi captures, afegeix marcs de dispositiu o composicions sense marc, escriu titulars i peus de text, dona estil al text enriquit amb tipus de lletra propis i ajusta cada detall al llenç.
+
+Screenshot Bro pot allotjar un servidor MCP local al teu Mac. Connecta-hi un assistent compatible amb MCP, com ara Claude Code, Claude Desktop, Cursor o qualsevol altre client, i deixa que creï projectes, editi files, ordeni formes, importi captures, tradueixi textos, generi previsualitzacions del llenç i exporti les imatges finals. L'MCP és opcional, està desactivat per defecte, només escolta en loopback i està protegit amb un token d'accés.
+
+Mantén les variants de llançament, les substitucions per idioma, els plans de files per botiga i els recursos llestos per exportar dins d'un mateix projecte, per a l'App Store, webs, xarxes socials i campanyes de llançament.
+
+Funcions principals:
+
+- Crea captures de pantalla per a l'App Store des d'un sol projecte
+- Fes servir plantilles integrades o disposicions pròpies per als llançaments recurrents
+- Importa captures per lots dins de les files i substitueix imatges ràpidament
+- Afegeix marcs de dispositiu per a iPhone, iPad, Mac, Android, Pixel i disposicions abstractes
+- Treballa amb text, formes, imatges, degradats, fons en mosaic i gràfics SVG
+- Edita text enriquit amb tipus de lletra propis, variants, espaiat, alineació i mides
+- Gestiona les substitucions de text i d'imatge de cada mercat
+- Fes servir idiomes predefinits, tradueix automàticament el text que falta i controla el progrés de la traducció
+- Exporta captures en PNG o JPEG a carpetes per idioma i per fila
+- Crea exportacions de presentació per a xarxes socials, webs i previsualitzacions de campanya
+- Puja les captures directament a App Store Connect
+- Revisa i edita les metadades d'App Store Connect abans de pujar-les
+- Connecta un assistent compatible amb MCP per controlar Screenshot Bro en local
+- Rep notificacions quan acabin les exportacions i les pujades a la botiga
+- Mantén els projectes en local per defecte, sincronitza'ls amb iCloud si ho actives i crea còpies de seguretat en ZIP
+- Sense seguiment
+
+Screenshot Bro està pensat per a desenvolupadors independents, equips de producte, dissenyadors i responsables de màrqueting que necessiten més control que un generador de captures bàsic i un flux de treball més ràpid que refer a mà cada imatge de màrqueting.
+
+Tant si prepares un primer llançament com una actualització important, una campanya de temporada o el desplegament d'un nou idioma, Screenshot Bro t'ajuda a passar de les captures en brut a les imatges llestes per a la botiga més de pressa i amb més coherència.
+
+Si necessites un creador de captures per a l'App Store, un constructor de plantilles, una eina de localització de captures, un carregador per a App Store Connect o una eina d'automatització preparada per a MCP, Screenshot Bro concentra tot el flux de treball en una sola aplicació de Mac.
+
+Condicions d'ús (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["ca"] = """\
+Screenshot Bro és un creador i editor de captures de pantalla fet expressament per a les captures de l'App Store. Crea plantilles reutilitzables, dissenya jocs complets de captures, localitza el teu missatge i exporta o puja creativitats de botiga ben acabades.
+
+A diferència de les eines de disseny genèriques, Screenshot Bro entén les files per dispositiu, la localització, les pujades a App Store Connect, les exportacions per lots i els projectes reutilitzables.
+
+Crea jocs complets de captures per a iPhone, iPad, Mac, telèfons Android, tauletes Android i disposicions Pixel. Comença amb una plantilla o munta el teu propi sistema de disposicions. Arrossega-hi captures, afegeix marcs de dispositiu o composicions sense marc, escriu titulars i peus de text, dona estil al text enriquit amb tipus de lletra propis i ajusta cada detall al llenç.
+
+Mantén les variants de llançament, les substitucions per idioma, els plans de files per botiga i els recursos llestos per exportar dins d'un mateix projecte, per a l'App Store, webs, xarxes socials i campanyes de llançament.
+
+Funcions principals:
+
+- Crea captures de pantalla per a l'App Store des d'un sol projecte
+- Fes servir plantilles integrades o disposicions pròpies per als llançaments recurrents
+- Dissenya files de diverses captures, disposicions comparatives i campanyes senceres
+- Importa captures per lots dins de les files i substitueix imatges ràpidament
+- Afegeix marcs de dispositiu per a iPhone, iPad, Mac, Android, Pixel i disposicions abstractes
+- Treballa amb text, formes, imatges, degradats, fons en mosaic i gràfics SVG
+- Edita text enriquit amb tipus de lletra propis, variants, espaiat, alineació i mides
+- Ajusta la col·locació, l'ajust automàtic, les capes, el retall i la rotació al llenç
+- Gestiona les substitucions de text i d'imatge de cada mercat
+- Fes servir idiomes predefinits, tradueix automàticament el text que falta i controla el progrés de la traducció
+- Exporta captures en PNG o JPEG a carpetes per idioma i per fila
+- Crea exportacions de presentació per a xarxes socials, webs i previsualitzacions de campanya
+- Puja les captures directament a App Store Connect
+- Revisa i edita les metadades d'App Store Connect abans de pujar-les
+- Rep notificacions quan acabin les exportacions i les pujades a la botiga
+- Mantén els projectes en local per defecte, sincronitza'ls amb iCloud si ho actives i crea còpies de seguretat en ZIP
+- Sense seguiment
+
+Screenshot Bro està pensat per a desenvolupadors independents, equips de producte, dissenyadors i responsables de màrqueting que necessiten més control que un generador de captures bàsic i un flux de treball més ràpid que refer a mà cada imatge de màrqueting.
+
+Tant si prepares un primer llançament com una actualització important, una campanya de temporada o el desplegament d'un nou idioma, Screenshot Bro t'ajuda a passar de les captures en brut a les imatges llestes per a la botiga més de pressa i amb més coherència.
+
+Si necessites un creador de captures per a l'App Store, un constructor de plantilles, una eina de localització de captures o un carregador per a App Store Connect, Screenshot Bro concentra tot el flux de treball en una sola aplicació.
+
+Condicions d'ús (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_MAC["sl-SI"] = """\
+Screenshot Bro je generator posnetkov zaslona za App Store. Celoten nabor posnetkov oblikujete enkrat, dodate okvirje naprav, vsak naslov lokalizirate za vse trge, na katerih objavljate, in naložite naravnost v App Store Connect – ne da bi zapustili Mac.
+
+Za razliko od splošnih orodij za oblikovanje Screenshot Bro pozna vrstice za posamezne naprave, lokalizacijo, nalaganje v App Store Connect, paketne izvoze, projekte za večkratno uporabo in lokalno avtomatizacijo s pomočniki AI prek Model Context Protocol.
+
+Sestavite celotne nabore posnetkov za iPhone, iPad, Mac, telefone Android, tablice Android in postavitve za Pixel. Začnite s predlogo ali zgradite lasten sistem postavitev. Dodajte posnetke zaslona, uporabite okvirje naprav ali kompozicije brez okvirjev, napišite naslove in podnapise, oblikujte besedilo z lastnimi pisavami in na platnu izpilite vsako podrobnost.
+
+Screenshot Bro lahko na Macu gosti lokalni strežnik MCP. Povežite združljivega pomočnika, kot so Claude Code, Claude Desktop, Cursor ali drug odjemalec, in mu prepustite ustvarjanje projektov, urejanje vrstic, razporejanje oblik, uvoz posnetkov zaslona, prevajanje besedila, izris predogledov platna in izvoz končnih slik. MCP je izbiren, privzeto izklopljen, dostopen samo lokalno in zaščiten z žetonom.
+
+Različice izdaj, prilagoditve za posamezne jezike, načrte vrstic za posamezne trgovine in gradivo, pripravljeno za izvoz, hranite v enem projektu za App Store, spletne strani, družbena omrežja in lansirne kampanje.
+
+Ključne funkcije:
+
+- Ustvarite posnetke zaslona za App Store iz enega projekta
+- Uporabite vgrajene predloge ali lastne postavitve za ponavljajoče se izdaje
+- Oblikujte vrstice z več posnetki, primerjalne postavitve in celotne kampanje
+- Paketno uvozite posnetke zaslona v vrstice in hitro zamenjajte slike
+- Dodajte okvirje naprav za iPhone, iPad, Mac, Android, Pixel in abstraktne postavitve
+- Delajte z besedilom, oblikami, slikami, prelivi, ponavljajočimi se ozadji in grafiko SVG
+- Urejajte oblikovano besedilo z lastnimi pisavami, različicami pisav, razmiki, poravnavo in velikostmi
+- Postavitev, pripenjanje, plasti, obrezovanje in vrtenje prilagajajte neposredno na platnu
+- Upravljajte prilagoditve besedila in slik za vsak trg posebej
+- Uporabite prednastavitve jezikov, samodejno prevedite manjkajoče besedilo in spremljajte napredek prevodov
+- Izvozite posnetke zaslona v PNG ali JPEG v mape po jeziku in vrstici
+- Ustvarite predstavitvene izvoze za objave na družbenih omrežjih, spletne strani in predoglede kampanj
+- Naložite posnetke zaslona neposredno v App Store Connect
+- Pred nalaganjem preglejte in uredite metapodatke v App Store Connect
+- V enem koraku naložite posnetke zaslona za iOS in Mac v App Store Connect
+- Povežite združljivega pomočnika MCP, ki Screenshot Bro upravlja lokalno
+- Prejmite obvestila o dokončanih izvozih in nalaganjih v trgovino
+- Projekti so privzeto lokalni, po želji jih sinhronizirate prek iCloud in shranite v varnostne kopije ZIP
+- Odprite shrambo projektov in mape z izvozi v Finderju
+- Brez sledenja
+
+Screenshot Bro je namenjen samostojnim razvijalcem, produktnim ekipam, oblikovalcem in tržnikom, ki potrebujejo več nadzora, kot ga ponuja osnovni generator posnetkov zaslona, in hitrejši potek dela od ročnega sestavljanja vsake tržne slike.
+
+Ne glede na to, ali pripravljate prvi izid, večjo posodobitev, sezonsko kampanjo ali uvedbo novih jezikov, vam Screenshot Bro pomaga hitreje in bolj dosledno priti od surovih posnetkov zaslona do tržnih slik, pripravljenih za trgovino.
+
+Če iščete orodje za izdelavo posnetkov zaslona za App Store, urejevalnik predlog, orodje za lokalizacijo posnetkov, nalagalnik v App Store Connect ali avtomatizacijo prek MCP, Screenshot Bro združi celoten potek dela v eni osredotočeni aplikaciji za Mac.
+
+Pogoji uporabe (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
+DESC_IOS["sl-SI"] = """\
+Screenshot Bro je urejevalnik in generator posnetkov zaslona, izdelan posebej za posnetke zaslona za App Store. Ustvarite predloge za večkratno uporabo, oblikujte celotne nabore posnetkov, lokalizirajte sporočilo ter izvozite ali naložite dodelano gradivo za trgovino.
+
+Za razliko od splošnih orodij za oblikovanje Screenshot Bro pozna vrstice za posamezne naprave, lokalizacijo, nalaganje v App Store Connect, paketne izvoze in projekte za večkratno uporabo.
+
+Sestavite celotne nabore posnetkov za iPhone, iPad, Mac, telefone Android, tablice Android in postavitve za Pixel. Začnite s predlogo ali zgradite lasten sistem postavitev. Dodajte posnetke zaslona, uporabite okvirje naprav ali kompozicije brez okvirjev, napišite naslove in podnapise, oblikujte besedilo z lastnimi pisavami in na platnu izpilite vsako podrobnost.
+
+Različice izdaj, prilagoditve za posamezne jezike, načrte vrstic za posamezne trgovine in gradivo, pripravljeno za izvoz, hranite v enem projektu za App Store, spletne strani, družbena omrežja in lansirne kampanje.
+
+Ključne funkcije:
+
+- Ustvarite posnetke zaslona za App Store iz enega projekta
+- Uporabite vgrajene predloge ali lastne postavitve za ponavljajoče se izdaje
+- Oblikujte vrstice z več posnetki, primerjalne postavitve in celotne kampanje
+- Paketno uvozite posnetke zaslona v vrstice in hitro zamenjajte slike
+- Dodajte okvirje naprav za iPhone, iPad, Mac, Android, Pixel in abstraktne postavitve
+- Delajte z besedilom, oblikami, slikami, prelivi, ponavljajočimi se ozadji in grafiko SVG
+- Urejajte oblikovano besedilo z lastnimi pisavami, različicami pisav, razmiki, poravnavo in velikostmi
+- Postavitev, pripenjanje, plasti, obrezovanje in vrtenje prilagajajte neposredno na platnu
+- Upravljajte prilagoditve besedila in slik za vsak trg posebej
+- Uporabite prednastavitve jezikov, samodejno prevedite manjkajoče besedilo in spremljajte napredek prevodov
+- Izvozite posnetke zaslona v PNG ali JPEG v mape po jeziku in vrstici
+- Ustvarite predstavitvene izvoze za objave na družbenih omrežjih, spletne strani in predoglede kampanj
+- Naložite posnetke zaslona neposredno v App Store Connect
+- Pred nalaganjem preglejte in uredite metapodatke v App Store Connect
+- Prejmite obvestila o dokončanih izvozih in nalaganjih v trgovino
+- Projekti so privzeto lokalni, po želji jih sinhronizirate prek iCloud in shranite v varnostne kopije ZIP
+- Brez sledenja
+
+Screenshot Bro je namenjen samostojnim razvijalcem, produktnim ekipam, oblikovalcem in tržnikom, ki potrebujejo več nadzora, kot ga ponuja osnovni generator posnetkov zaslona, in hitrejši potek dela od ročnega sestavljanja vsake tržne slike.
+
+Ne glede na to, ali pripravljate prvi izid, večjo posodobitev, sezonsko kampanjo ali uvedbo novih jezikov, vam Screenshot Bro pomaga hitreje in bolj dosledno priti od surovih posnetkov zaslona do tržnih slik, pripravljenih za trgovino.
+
+Če iščete orodje za izdelavo posnetkov zaslona za App Store, urejevalnik predlog, orodje za lokalizacijo posnetkov ali nalagalnik v App Store Connect, Screenshot Bro združi celoten potek dela v eni osredotočeni aplikaciji.
+
+Pogoji uporabe (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"""
+
 SCRIPT_RANGE = {"ru": (0x0400, 0x04FF), "uk": (0x0400, 0x04FF),
-                "th": (0x0E00, 0x0E7F), "zh-Hant": (0x4E00, 0x9FFF)}
+                "th": (0x0E00, 0x0E7F), "zh-Hant": (0x4E00, 0x9FFF),
+                "el": (0x0370, 0x03FF)}
 RU_ONLY = "ыъэё"     # absent from Ukrainian
 UK_ONLY = "іїєґ"     # absent from Russian
+
+# Letters that belong to a close neighbour and never to this locale. Each of
+# these pairs is a language a translator can slide into without noticing, and
+# every pair was produced in the same 2026-09-09 batch, so the guard is cheap.
+FOREIGN_CHARS = {
+    "cs": "ľĺŕäô",      # Slovak
+    "sk": "řě",         # Czech
+    "sl-SI": "ćđ",      # Croatian
+    "ca": "ñ",          # Castilian — Catalan writes "ny"
+}
+
+# Same idea one level up: vocabulary, where the scripts are identical.
+FOREIGN_WORDS = {
+    "es-MX": ["ordenador", "móvil", "vosotros", "vuestr", "fichero"],
+    "fr-CA": ["maquette"],   # RESEARCH.md Finding 5 — returns Marquette in CA
+    "hr": ["snimak", "fascikl"],
+}
 
 
 def text_for(platform, locale, en_us):
     """The description to write. `en_us` is that version's own live en-US row."""
-    if locale == "en-GB":
+    if locale in SPELLING_PASS:
         text = british(en_us)
         if text == en_us:
-            raise SystemExit("en-GB: the spelling pass changed nothing — the en-US "
+            raise SystemExit(f"{locale}: the spelling pass changed nothing — the en-US "
                              "copy no longer contains a mapped spelling. Update _BRITISH.")
         return text
     return (DESC_MAC if platform == "MAC_OS" else DESC_IOS)[locale]
@@ -812,6 +1629,13 @@ def review(platform, locale, text, en_us=None):
     lo_hi = SCRIPT_RANGE.get(locale)
     if lo_hi and _script_ratio(text, *lo_hi) < 0.3:
         bad.append("mostly not in the expected script — untranslated or transliterated")
+    intruders = sorted({c for c in low if c in FOREIGN_CHARS.get(locale, "")})
+    if intruders:
+        bad.append("letters from a neighbouring language: " + "".join(intruders))
+    borrowed = [w for w in FOREIGN_WORDS.get(locale, []) if w in low]
+    if borrowed:
+        bad.append("vocabulary from a neighbouring language: " + ", ".join(borrowed))
+
     if locale == "uk" and any(c in text for c in RU_ONLY):
         bad.append("Russian-only letters in Ukrainian — derived from ru, not en-US")
     if locale == "ru" and not any(c in text for c in RU_ONLY):
@@ -869,7 +1693,7 @@ def main(offline):
         print(f"\n== {platform} {vstr} ({state})")
         en_us, live = fetched if fetched else (None, {})
         for locale in LOCALES:
-            if locale == "en-GB" and not en_us:
+            if locale in SPELLING_PASS and not en_us:
                 print(f"  {locale:9} SKIP  spelling pass needs the live en-US row")
                 continue
             try:
@@ -879,10 +1703,14 @@ def main(offline):
                 failures += 1
                 continue
             problems = review(platform, locale, text, en_us)
-            still_english = live.get(locale) == en_us if en_us else None
             mark = "OK  " if not problems else "FAIL"
-            note = "" if still_english is None else (
-                "  live: still en-US" if still_english else "  live: translated")
+            if not en_us:
+                note = ""
+            elif locale not in live:
+                note = "  live: locale not created yet"
+            else:
+                note = ("  live: still en-US" if live[locale] == en_us
+                        else "  live: translated")
             print(f"  {locale:9} {mark} {len(text):5}/{LIMIT}{note}")
             for problem in problems:
                 print(f"            - {problem}")

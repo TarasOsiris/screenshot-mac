@@ -78,6 +78,56 @@ apps; the leaders are tiny (StoreView 52 ratings, Picasso 45, Screenshot Studio
 13, Frame Screenshots 87). Low difficulty. Contrast the generic `screenshot`
 field, which is unwinnable and would not convert anyway.
 
+## Finding 5 — the 12 locales added 2026-09-09 confirm Finding 3
+
+Sweeping the same way (`MZSearchHints`, `X-Apple-Store-Front`, Mac storefront)
+across the storefronts behind the 12 locales added on 2026-09-09:
+
+| locale | storefront | English `app screenshot` | the local phrase |
+|---|---|---|---|
+| es-MX | 143468 Mexico | full field of competitors | `captura de pantalla app` → **nothing** |
+| en-AU | 143460 Australia | full field | — |
+| en-CA | 143455 Canada | full field | — |
+| fr-CA | 143455 Canada | full field | `capture d'ecran app` → **nothing** |
+| cs | 143489 Czechia | full field | `snimek obrazovky aplikace` → **nothing** |
+| sk | 143496 Slovakia | full field | `snimka obrazovky aplikacie` → **nothing** |
+| hu | 143482 Hungary | full field | `kepernyokep alkalmazas` → **nothing** |
+| ro | 143487 Romania | full field | `captura de ecran aplicatie` → **nothing** |
+| hr | 143494 Croatia | full field | `snimka zaslona aplikacije` → **nothing** |
+| el | 143448 Greece | full field | `στιγμιότυπο οθόνης εφαρμογής` → **nothing** |
+| ca | 143454 Spain | full field | `captures de pantalla app` → **nothing** |
+| sl-SI | 143499 Slovenia | full field | `posnetek zaslona aplikacije` → **nothing** |
+
+Twelve for twelve. The English phrase returns StoreView, Picasso, Appshot,
+Mockify, ScreenConvert — the same category field as en-US — in every one of
+them; not one local-language equivalent autosuggests at all.
+
+**`el` takes the English subtitle, against the "non-Latin → local script" rule.**
+That rule exists because zh-Hans, ja, ru and uk have *real* local dev vocabulary
+(Finding 3). Greek has none: the Greek phrases return nothing, and `mockup`
+in the Greek storefront returns a Latin-script field. A Greek subtitle would
+spend all 30 characters on words no one types. Script is not the criterion —
+local search volume is, and Greek has none.
+
+**Two tokens are proven noise and must not be inherited:**
+
+- `maquette` in the Canadian storefront returns **Marquette** — the Michigan
+  city, its university and its sheriff's office. `fr-CA` must not reuse
+  `fr-FR`'s token.
+- `maqueta` / `plantilla` in the Mexican storefront return AR mockups, model-paint
+  apps and consumer photo/football templates. Wrong intent, so `es-MX` carries
+  the English tokens rather than inheriting `es-ES`'s.
+
+That second result puts a question mark over `es-ES`'s own `maqueta,captura,plantilla`
+tail, which was assigned in Aug 2026 without a Spain-storefront intent check.
+The Spain sweep run here for `ca` shows `captura de pantalla` returning consumer
+capture/long-screenshot apps — the same wrong-intent shape. Worth re-testing
+`es-ES` before the next keyword pass; not changed here.
+
+Consequence: all 12 take `LATIN_SUBTITLE` and the en-US keyword tail. Their
+value is the extra per-storefront keyword field and a native-language
+description, not new search vocabulary.
+
 ## 2026-09-01 — the subtitle was rejected
 
 `App Store & Play Screenshots` shipped, and Apple rejected iOS 4.9 on **two**

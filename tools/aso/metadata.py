@@ -15,6 +15,11 @@ LATIN_SUBTITLE = "App Screenshots & Localization"
 # Latin-script locales keep the English subtitle: developers in every market we
 # swept search the English phrase (RESEARCH.md finding 3). Non-Latin locales get
 # the local script, which is what those developers type.
+#
+# `el` is the one script-vs-search exception. Greek is not Latin, but the Greek
+# phrases autosuggest nothing at all (Finding 5), so a Greek subtitle would spend
+# all 30 characters on words nobody types. Local search volume is the criterion,
+# not the alphabet.
 SUBTITLE = {
     "en-US": LATIN_SUBTITLE, "en-GB": LATIN_SUBTITLE, "de-DE": LATIN_SUBTITLE,
     "fr-FR": LATIN_SUBTITLE, "es-ES": LATIN_SUBTITLE, "it": LATIN_SUBTITLE,
@@ -22,6 +27,11 @@ SUBTITLE = {
     "no": LATIN_SUBTITLE, "fi": LATIN_SUBTITLE, "pt-PT": LATIN_SUBTITLE,
     "pt-BR": LATIN_SUBTITLE, "pl": LATIN_SUBTITLE, "tr": LATIN_SUBTITLE,
     "id": LATIN_SUBTITLE, "vi": LATIN_SUBTITLE,
+    # added 2026-09-09
+    "en-AU": LATIN_SUBTITLE, "en-CA": LATIN_SUBTITLE, "es-MX": LATIN_SUBTITLE,
+    "fr-CA": LATIN_SUBTITLE, "cs": LATIN_SUBTITLE, "sk": LATIN_SUBTITLE,
+    "hu": LATIN_SUBTITLE, "ro": LATIN_SUBTITLE, "hr": LATIN_SUBTITLE,
+    "ca": LATIN_SUBTITLE, "sl-SI": LATIN_SUBTITLE, "el": LATIN_SUBTITLE,
     "ja": "アプリ画像の作成とローカライズ",
     "ko": "앱 스크린샷 제작 및 현지화",
     "zh-Hans": "应用截图制作与本地化",
@@ -61,6 +71,20 @@ PROMO_MAC = {
     "ar-SA": "أنشئ مجموعة كاملة من لقطات الشاشة، وترجمها لكل سوق، وارفعها مباشرة إلى App Store Connect. ويمكن أتمتة ذلك عبر MCP.",
     "he": "צרו סט מלא של צילומי מסך, תרגמו אותם לכל שוק והעלו ישירות ל-App Store Connect. הכול ניתן לאוטומציה דרך MCP.",
     "th": "สร้างชุดภาพหน้าจอครบชุด แปลให้ทุกตลาด และอัปโหลดตรงไปยัง App Store Connect ทำอัตโนมัติได้ผ่าน MCP",
+
+    # added 2026-09-09
+    "en-AU": "Build a complete screenshot set, localise it into every market, and upload directly to App Store Connect. Automate it all from your AI assistant via MCP.",
+    "en-CA": "Build a complete screenshot set, localize it into every market, and upload directly to App Store Connect. Automate it all from your AI assistant via MCP.",
+    "es-MX": "Arma un set completo de capturas, localízalo para cada mercado y súbelo directo a App Store Connect. Automatiza todo desde tu asistente de IA con MCP.",
+    "fr-CA": "Montez une série complète de captures, adaptez-la à chaque marché et téléversez-la dans App Store Connect. Automatisez le tout depuis votre assistant IA via MCP.",
+    "cs": "Sestavte kompletní sadu snímků obrazovky, lokalizujte ji do všech trhů a nahrajte přímo do App Store Connect. Vše zautomatizujte ze svého AI asistenta přes MCP.",
+    "sk": "Vytvorte kompletnú sadu snímok obrazovky, lokalizujte ju pre všetky trhy a nahrajte do App Store Connect. Všetko zautomatizujte z AI asistenta cez MCP.",
+    "hu": "Készíts teljes képernyőkép-sorozatot, lokalizáld minden piacra, és töltsd fel közvetlenül az App Store Connectbe. Automatizáld az egészet AI-asszisztensedből MCP-vel.",
+    "ro": "Construiește un set complet de capturi, localizează-l pentru toate piețele și încarcă-l direct în App Store Connect. Automatizează tot din asistentul tău AI, prin MCP.",
+    "hr": "Izradite cijeli set snimki zaslona, lokalizirajte ga za svako tržište i prenesite izravno na App Store Connect. Sve automatizirajte AI asistentom preko MCP-a.",
+    "el": "Φτιάξτε πλήρες σετ στιγμιοτύπων, προσαρμόστε το σε κάθε αγορά και ανεβάστε το απευθείας στο App Store Connect. Αυτοματοποιήστε τα πάντα μέσω MCP.",
+    "ca": "Crea un joc complet de captures, localitza'l a tots els mercats i puja'l directament a App Store Connect. Automatitza-ho tot amb el teu assistent d'IA via MCP.",
+    "sl-SI": "Sestavite celoten nabor posnetkov zaslona, ga lokalizirajte za vse trge in naložite v App Store Connect. Vse skupaj avtomatizirajte s pomočnikom AI prek MCP.",
 }
 
 # MCP is macOS-only (MCPServerService is entirely #if os(macOS)) — the iOS
@@ -92,6 +116,20 @@ PROMO_IOS = {
     "ar-SA": "أنشئ مجموعة كاملة من لقطات الشاشة، وترجمها لكل سوق، وارفعها مباشرة إلى App Store Connect — من الـ iPad مباشرة.",
     "he": "צרו סט מלא של צילומי מסך, תרגמו אותם לכל שוק והעלו ישירות ל-App Store Connect — היישר מה-iPad.",
     "th": "สร้างชุดภาพหน้าจอครบชุด แปลให้ทุกตลาด และอัปโหลดตรงไปยัง App Store Connect ได้จาก iPad",
+
+    # added 2026-09-09
+    "en-AU": "Build a complete screenshot set, localise it into every market, and upload it directly to App Store Connect — right from your iPad.",
+    "en-CA": "Build a complete screenshot set, localize it into every market, and upload it directly to App Store Connect — right from your iPad.",
+    "es-MX": "Arma un set completo de capturas, localízalo para cada mercado y súbelo directo a App Store Connect, desde tu iPad.",
+    "fr-CA": "Montez une série complète de captures, adaptez-la à chaque marché et téléversez-la directement dans App Store Connect — depuis votre iPad.",
+    "cs": "Sestavte kompletní sadu snímků obrazovky, lokalizujte ji do všech trhů a nahrajte ji rovnou do App Store Connect — přímo z iPadu.",
+    "sk": "Vytvorte kompletnú sadu snímok obrazovky, lokalizujte ju pre všetky trhy a nahrajte ju do App Store Connect — priamo z iPadu.",
+    "hu": "Készíts teljes képernyőkép-sorozatot, lokalizáld minden piacra, és töltsd fel közvetlenül az App Store Connectbe — egyenesen az iPadedről.",
+    "ro": "Construiește un set complet de capturi, localizează-l pentru toate piețele și încarcă-l direct în App Store Connect — chiar de pe iPad.",
+    "hr": "Izradite cijeli set snimki zaslona, lokalizirajte ga za svako tržište i prenesite ga izravno na App Store Connect — ravno s vašeg iPada.",
+    "el": "Φτιάξτε πλήρες σετ στιγμιοτύπων, προσαρμόστε το σε κάθε αγορά και ανεβάστε το απευθείας στο App Store Connect — από το iPad σας.",
+    "ca": "Crea un joc complet de captures, localitza'l a tots els mercats i puja'l directament a App Store Connect, des del teu iPad.",
+    "sl-SI": "Sestavite celoten nabor posnetkov zaslona, ga lokalizirajte za vse trge in ga naložite neposredno v App Store Connect – kar z iPada.",
 }
 
 VERBATIM = ["App Store Connect"]

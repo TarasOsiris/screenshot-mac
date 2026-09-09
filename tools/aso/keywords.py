@@ -45,9 +45,13 @@ CORE = ["store", "app", "generator", "device", "frames", "connect",
 EXTRA = {
     "en-US":   ["localization", "aso", "editor", "android", "indie"],
     "en-GB":   ["localization", "aso", "editor", "android", "indie"],
+    "en-AU":   ["localization", "aso", "editor", "android", "indie"],
+    "en-CA":   ["localization", "aso", "editor", "android", "indie"],
     "de-DE":   ["localization", "aso", "editor", "android", "vorlage", "entwickler"],
     "fr-FR":   ["localization", "aso", "editor", "android", "maquette", "capture"],
+    "fr-CA":   ["localization", "aso", "editor", "android", "indie"],
     "es-ES":   ["localization", "aso", "editor", "android", "maqueta", "captura", "plantilla"],
+    "es-MX":   ["localization", "aso", "editor", "android", "indie"],
     "it":      ["localization", "aso", "editor", "android", "schermate", "anteprima"],
     "nl-NL":   ["localization", "aso", "editor", "android", "sjabloon"],
     "sv":      ["localization", "aso", "editor", "android", "mall", "skärmdump"],
@@ -60,6 +64,21 @@ EXTRA = {
     "tr":      ["localization", "aso", "editor", "android", "ekran", "şablon"],
     "id":      ["localization", "aso", "editor", "android", "tangkapan", "layar", "aplikasi"],
     "vi":      ["localization", "aso", "editor", "android", "ảnh", "màn hình", "ứng dụng"],
+
+    # Added 2026-09-09. All twelve carry the en-US tail verbatim: RESEARCH.md
+    # Finding 5 swept every one of their storefronts and not a single
+    # local-language phrase autosuggested, while the English one returned the
+    # full category field. There is no local vocabulary to spend budget on, so
+    # the strongest English tokens are also the right ones. `el` is Greek script
+    # and still English here for the same reason — script is not the criterion.
+    "cs":     ["localization", "aso", "editor", "android", "indie"],
+    "sk":     ["localization", "aso", "editor", "android", "indie"],
+    "hu":     ["localization", "aso", "editor", "android", "indie"],
+    "ro":     ["localization", "aso", "editor", "android", "indie"],
+    "hr":     ["localization", "aso", "editor", "android", "indie"],
+    "el":     ["localization", "aso", "editor", "android", "indie"],
+    "ca":     ["localization", "aso", "editor", "android", "indie"],
+    "sl-SI":  ["localization", "aso", "editor", "android", "indie"],
     "ru":      ["мокап", "генератор", "скриншот", "localization", "aso", "editor", "android"],
     "uk":      ["мокап", "скриншот", "знімок", "localization", "aso", "editor", "android"],
     "th":      ["ภาพหน้าจอ", "แอป", "localization", "aso", "editor", "android"],
