@@ -22,8 +22,16 @@ nonisolated enum MCPJobPhase: String, Sendable {
 }
 
 nonisolated struct MCPJobSetProgress: Sendable, Equatable {
+    /// Snake case to match `ASCScreenshotSetSyncResult.State`, which appears under `result.sets`
+    /// in the same response. These are encoded *values*, so `keyEncodingStrategy` does not
+    /// normalize them, and two spellings of "already applied" in one envelope is a trap.
     enum State: String, Sendable {
-        case pending, inProgress, succeeded, alreadyApplied, failed, notAttempted
+        case pending
+        case inProgress = "in_progress"
+        case succeeded
+        case alreadyApplied = "already_applied"
+        case failed
+        case notAttempted = "not_attempted"
     }
 
     let setId: String

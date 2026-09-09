@@ -165,7 +165,12 @@ extension MCPToolExecutor {
     func previewAppStoreScreenshotSync(_ args: MCPArguments) async throws -> CallTool.Result {
         try requireASCConfigured()
         let checkout = try await requireCheckout(args)
-        defer { checkout.dispose() }
+        // In async mode `runJob` returns before the body has rendered anything, so disposing at
+        // function exit would unregister the project's fonts out from under the render — the exact
+        // silent system-face failure `ProjectFontScope` exists to prevent. Ownership transfers to
+        // the job body once it is started.
+        var jobOwnsCheckout = false
+        defer { if !jobOwnsCheckout { checkout.dispose() } }
         let appId = try resolveASCAppId(args, checkout: checkout)
         let requestedVersionIds = Set(args.stringArray("version_ids") ?? [])
         let allVersions = try await ascAPI.listAppStoreVersions(appId: appId)
@@ -273,9 +278,12 @@ extension MCPToolExecutor {
         let projectName = checkout.projectName
         let executorIssues = issues
 
+        jobOwnsCheckout = true
+        let sync = screenshotSync
         return try await runJob(kind: .preview, totalUnits: renders, mode: mode) { handle in
+            defer { checkout.dispose() }
             handle.phase(.rendering)
-            let plan = try await AppStoreConnectScreenshotSyncService.shared.buildPlan(
+            let plan = try await sync.buildPlan(
                 appId: appId,
                 targets: targets,
                 rows: allRows,
@@ -345,12 +353,17 @@ extension MCPToolExecutor {
             throw MCPToolError.invalidArgument("set_ids", "contains duplicates")
         }
         let setIds = Set(ids)
-        let service = AppStoreConnectScreenshotSyncService.shared
+        let service = screenshotSync
         // The plan records the project it was rendered from; `validCachedPlan` rejects a mismatch.
         // Resolving the checkout here means the caller names that project too, so an apply can
         // never be aimed at a different app's artwork than the preview it came from.
-        let checkout = try await requireCheckout(args, allowingPlan: service.plan(id: planId))
-        defer { checkout.dispose() }
+        //
+        // Optional, because a *successful* apply discards its plan — and the documented recovery is
+        // to reissue the identical call. With no plan and no project_id there is nothing to check
+        // against and nothing to render: the ledger answers, or `validCachedPlan` says planNotFound.
+        let checkout = try await optionalCheckout(args, matching: service.plan(id: planId))
+        var jobOwnsCheckout = false
+        defer { if !jobOwnsCheckout { checkout?.dispose() } }
         // Sized from the plan when it is still cached. When it isn't, the ledger answers without
         // touching App Store Connect at all, so the estimate only has to be non-zero.
         let selected = service.plan(id: planId)?.sets.filter { setIds.contains($0.id) } ?? []
@@ -366,9 +379,11 @@ extension MCPToolExecutor {
             hardLimit: Self.hardApplyStepLimit,
             unitName: "upload steps"
         )
-        let stamp = checkout.documentStamp
+        let stamp = checkout?.documentStamp
 
+        jobOwnsCheckout = true
         return try await runJob(kind: .apply, totalUnits: steps, mode: mode) { handle in
+            defer { checkout?.dispose() }
             handle.update {
                 $0.planId = planId
                 $0.sets = ids.sorted().map { MCPJobSetProgress(setId: $0) }
@@ -410,6 +425,10 @@ extension MCPToolExecutor {
             )
             handle.update { job in
                 job.didMutate = result.didMutate
+                // The ledger short-circuit returns before emitting any progress, so a wholly
+                // already-applied retry would otherwise finish at 0 of N and be downgraded to
+                // `failed` — the exact opposite of the guarantee it exists to provide.
+                if result.succeeded { job.completedUnits = job.totalUnits }
                 for set in result.sets {
                     guard let index = job.sets.firstIndex(where: { $0.setId == set.id }) else { continue }
                     job.sets[index].state = switch set.state {

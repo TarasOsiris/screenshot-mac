@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import MCP
 @testable import Screenshot_Bro
 import Testing
 
@@ -226,6 +227,49 @@ struct ASCScreenshotSyncIdempotencyTests {
 
         service.releasePlan(plan.id)
         #expect(service.plan(id: plan.id) == nil, "the deferred discard lands on release")
+    }
+
+    /// End-to-end through the tool, because the bug was in the *job wrapper*, not the service:
+    /// the ledger short-circuit returns before emitting any progress, so a wholly already-applied
+    /// retry finished at 0 of N and the completion backstop downgraded it to `failed` — reporting
+    /// failure for the one path that is guaranteed to be safe.
+    @Test func anIdempotentRetryThroughTheToolReportsSucceeded() async throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let credentials = AppStoreConnectCredentialsStore.shared
+        let originalDemoMode = credentials.isDemoMode
+        credentials.isDemoMode = false
+        defer { credentials.isDemoMode = originalDemoMode }
+
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(api: api)
+        let executor = MCPToolExecutor(state: state, jobs: MCPJobStore(), screenshotSync: service)
+        let (plan, _) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+
+        let arguments: [String: Value] = [
+            "plan_id": .string(plan.id),
+            "set_ids": .array([.string(setId)]),
+            "confirm": .bool(true),
+            "mode": .string("sync"),
+            "project_id": .string(plan.projectId.uuidString),
+        ]
+        let first = await executor.call(name: "apply_app_store_screenshot_sync", arguments: arguments)
+        #expect(first.isError != true, "unexpected error: \(first.content)")
+
+        let writesAfterFirst = api.writeCount
+        let retry = await executor.call(name: "apply_app_store_screenshot_sync", arguments: arguments)
+        #expect(retry.isError != true)
+        #expect(api.writeCount == writesAfterFirst, "a retry must not touch App Store Connect")
+
+        guard case .text(let json, _, _) = retry.content.first else {
+            Issue.record("expected text content")
+            return
+        }
+        let envelope = try #require(
+            try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any]
+        )
+        #expect(envelope["phase"] as? String == "succeeded", "a safe retry must not report failure")
     }
 
     @Test func applyStepCountMatchesTheProgressDenominator() async throws {

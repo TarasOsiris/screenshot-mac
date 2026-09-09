@@ -83,6 +83,40 @@ struct MCPProjectBindingTests {
         #expect(result.isError == true)
     }
 
+    /// A successful apply discards its plan, and the documented recovery is to reissue the
+    /// identical call. Demanding a project_id at that point would break the one path that is
+    /// guaranteed safe.
+    @Test func applyWithNoPlanAndNoProjectIdResolvesToNoCheckout() async throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let executor = MCPToolExecutor(state: state, jobs: MCPJobStore())
+        let checkout = try await executor.optionalCheckout(MCPArguments(nil), matching: nil)
+        #expect(checkout == nil)
+    }
+
+    @Test func applyRejectsAProjectIdThatDisagreesWithThePlan() async throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let executor = MCPToolExecutor(state: state, jobs: MCPJobStore())
+        let plan = ASCScreenshotSyncPlan(
+            id: "plan-1",
+            createdAt: Date(),
+            expiresAt: Date().addingTimeInterval(900),
+            projectId: UUID(),
+            projectModifiedAt: nil,
+            appId: "123",
+            sets: [],
+            issues: [],
+            directory: URL(fileURLWithPath: "/tmp")
+        )
+        await #expect(throws: MCPToolError.self) {
+            _ = try await executor.optionalCheckout(
+                MCPArguments(["project_id": .string(UUID().uuidString)]),
+                matching: plan
+            )
+        }
+    }
+
     /// A checkout of a project the editor does not have open must read that project's own rows.
     @Test func checkoutOfAClosedProjectReadsItsOwnRows() async throws {
         let (state, tempDir) = makeTestState()

@@ -20,7 +20,11 @@ extension MCPToolExecutor {
     /// For `apply`, where the project is already pinned by the plan: `project_id` stays optional and
     /// defaults to the plan's own project, because naming a different one is meaningless — the plan
     /// holds the rendered bytes.
-    func requireCheckout(_ args: MCPArguments, allowingPlan plan: ASCScreenshotSyncPlan?) async throws -> ProjectCheckout {
+    ///
+    /// Returns nil when there is neither a plan nor a `project_id`. That is the retry-after-success
+    /// case: the plan was discarded when it completed, and the ledger answers without needing a
+    /// document to validate against.
+    func optionalCheckout(_ args: MCPArguments, matching plan: ASCScreenshotSyncPlan?) async throws -> ProjectCheckout? {
         if let id = try args.optionalUUID("project_id") {
             if let plan, plan.projectId != id {
                 throw MCPToolError.invalidArgument(
@@ -30,7 +34,7 @@ extension MCPToolExecutor {
             }
             return try await openCheckout(id)
         }
-        guard let plan else { throw MCPToolError.missingArgument("project_id") }
+        guard let plan else { return nil }
         return try await openCheckout(plan.projectId)
     }
 
@@ -61,6 +65,12 @@ extension MCPToolExecutor {
                 throw MCPToolError.notFound("Project \(id.uuidString)")
             case .unreadable(let name):
                 throw MCPToolError.failed("Project \(name) could not be read from disk")
+            case .fontsUnavailable(let name):
+                throw MCPToolError.failed(
+                    "\(name) uses fonts whose files have not downloaded from iCloud yet. Open the project once to materialize them, then retry — rendering now would silently substitute the system font."
+                )
+            case .openedConcurrently(let name):
+                throw MCPToolError.failed("\(name) was opened in the app while this edit was in progress. Retry it.")
             }
         }
     }

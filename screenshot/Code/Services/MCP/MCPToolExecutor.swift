@@ -13,11 +13,19 @@ final class MCPToolExecutor {
     /// Shared rather than per-executor: a new executor is built on every server start, so a
     /// per-instance registry would drop running jobs on a settings toggle or token rotation.
     let jobs: MCPJobStore
+    /// Injected so the idempotent-retry path can be driven against a fake App Store Connect.
+    let screenshotSync: AppStoreConnectScreenshotSyncService
 
-    init(state: AppState, sessions: MCPSessionTracker = .shared, jobs: MCPJobStore = .shared) {
+    init(
+        state: AppState,
+        sessions: MCPSessionTracker = .shared,
+        jobs: MCPJobStore = .shared,
+        screenshotSync: AppStoreConnectScreenshotSyncService = .shared
+    ) {
         self.state = state
         self.sessions = sessions
         self.jobs = jobs
+        self.screenshotSync = screenshotSync
     }
 
     func call(name: String, arguments: [String: Value]?) async -> CallTool.Result {

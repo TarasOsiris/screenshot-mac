@@ -290,10 +290,10 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.getAppStoreMetadata.rawValue,
-            description: "Read App Store Connect listing metadata for the active project's linked app: every App Store version (one per platform, e.g. iOS and macOS) with its per-locale current descriptions. Call this first to discover the exact App Store locale codes (e.g. en-US, fr-FR, de-DE, pt-BR, zh-Hans) to translate a new description into, then pass those same codes to update_app_store_description.",
+            description: "Read App Store Connect listing metadata for the app linked to project_id: every App Store version (one per platform, e.g. iOS and macOS) with its per-locale current descriptions. Call this first to discover the exact App Store locale codes (e.g. en-US, fr-FR, de-DE, pt-BR, zh-Hans) to translate a new description into, then pass those same codes to update_app_store_description.",
             inputSchema: MCPSchema.object([
                 "project_id": MCPSchema.string("Project UUID whose linked app to use; pass this or app_id"),
-                "app_id": MCPSchema.string("App Store Connect app id (default: the active project's linked app)"),
+                "app_id": MCPSchema.string("App Store Connect app id (default: the app linked to project_id)"),
                 "version_id": MCPSchema.string("Limit to a single App Store version id (default: all versions)"),
             ])
         ),
@@ -309,7 +309,7 @@ nonisolated enum MCPToolCatalog {
                     ], required: ["locale", "description"]),
                     "Per-locale descriptions to apply — include the base locale too"
                 ),
-                "app_id": MCPSchema.string("App Store Connect app id (default: the active project's linked app)"),
+                "app_id": MCPSchema.string("App Store Connect app id (default: the app linked to project_id)"),
                 "version_id": MCPSchema.string("Update only this App Store version id (default: every editable version)"),
             ], required: ["descriptions"])
         ),

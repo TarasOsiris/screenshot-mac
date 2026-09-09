@@ -19,7 +19,15 @@ final class ProjectFontScope {
     private let instances: [CustomFont]
     let availableFamilySet: Set<String>
 
-    private init(registeredURLs: [URL], fontURLs: [URL]) {
+    /// Live scopes by project, so two concurrent checkouts of the same project share one
+    /// registration. Without this the second registers nothing (`CTFontManagerRegisterFontsForURL`
+    /// returns false for an already-registered URL, and only true URLs are recorded), so the first
+    /// to finish would unregister the fonts out from under the other.
+    private static var live: [UUID: (scope: ProjectFontScope, holders: Int)] = [:]
+    private let projectId: UUID?
+
+    private init(registeredURLs: [URL], fontURLs: [URL], projectId: UUID?) {
+        self.projectId = projectId
         self.registeredURLs = registeredURLs
         self.fonts = Dictionary(
             uniqueKeysWithValues: fontURLs.compactMap { url in
@@ -39,18 +47,32 @@ final class ProjectFontScope {
 
     /// nil when a font's bytes are not materialized yet (an iCloud placeholder), so a caller can
     /// refuse rather than render text in the wrong face.
+    /// nil when a font's bytes are not materialized yet — a refusal, not a reason to render with
+    /// somebody else's fonts. Shared with any other live scope for the same project.
     static func make(projectId: UUID) -> ProjectFontScope? {
+        if var entry = live[projectId] {
+            entry.holders += 1
+            live[projectId] = entry
+            return entry.scope
+        }
         guard let fontURLs = loadFontURLs(projectId: projectId) else { return nil }
-        return make(fontURLs: fontURLs)
+        let scope = register(fontURLs: fontURLs, projectId: projectId)
+        live[projectId] = (scope, 1)
+        return scope
     }
 
     /// For callers that already resolved the URLs and made their own decision about placeholders.
+    /// Unshared: the caller owns the registration for as long as it holds the scope.
     static func make(fontURLs: [URL]) -> ProjectFontScope {
+        register(fontURLs: fontURLs, projectId: nil)
+    }
+
+    private static func register(fontURLs: [URL], projectId: UUID?) -> ProjectFontScope {
         var registered: [URL] = []
         for url in fontURLs where CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil) {
             registered.append(url)
         }
-        return ProjectFontScope(registeredURLs: registered, fontURLs: fontURLs)
+        return ProjectFontScope(registeredURLs: registered, fontURLs: fontURLs, projectId: projectId)
     }
 
     /// Must wrap a **synchronous** render. `CustomFontRegistry.withTemporaryFonts` is a scoped swap
@@ -61,6 +83,14 @@ final class ProjectFontScope {
     }
 
     func dispose() {
+        if let projectId, var entry = Self.live[projectId] {
+            entry.holders -= 1
+            guard entry.holders <= 0 else {
+                Self.live[projectId] = entry
+                return
+            }
+            Self.live[projectId] = nil
+        }
         for url in registeredURLs {
             CTFontManagerUnregisterFontsForURL(url as CFURL, .process, nil)
         }

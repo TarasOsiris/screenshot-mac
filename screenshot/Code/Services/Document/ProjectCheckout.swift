@@ -10,6 +10,8 @@ import UIKit
 enum ProjectCheckoutError: Error, LocalizedError {
     case notFound(UUID)
     case unreadable(name: String)
+    case fontsUnavailable(name: String)
+    case openedConcurrently(name: String)
 
     var errorDescription: String? {
         switch self {
@@ -17,6 +19,10 @@ enum ProjectCheckoutError: Error, LocalizedError {
             String(localized: "Project \(id.uuidString) not found")
         case .unreadable(let name):
             String(localized: "Project \(name) could not be read from disk")
+        case .fontsUnavailable(let name):
+            String(localized: "\(name) uses fonts whose files have not downloaded yet.")
+        case .openedConcurrently(let name):
+            String(localized: "\(name) was opened in the app while this edit was in progress. Retry it.")
         }
     }
 }
@@ -68,9 +74,9 @@ final class DetachedProjectHost: ProjectMutationHost {
     private(set) var document: ProjectDocument
     private(set) var modifiedAt: Date?
     private var isDirty = false
-    private let fontScope: ProjectFontScope?
+    private let fontScope: ProjectFontScope
 
-    init(projectId: UUID, state: AppState, data: ProjectData, fontScope: ProjectFontScope?) {
+    init(projectId: UUID, state: AppState, data: ProjectData, fontScope: ProjectFontScope) {
         self.projectId = projectId
         self.state = state
         self.document = ProjectDocument(data)
@@ -78,9 +84,9 @@ final class DetachedProjectHost: ProjectMutationHost {
         self.fontScope = fontScope
     }
 
-    var availableFontFamilySet: Set<String> {
-        fontScope?.availableFamilySet ?? state.availableFontFamilySet
-    }
+    /// Non-optional: a detached host that could not resolve its own fonts is refused at `open`
+    /// rather than silently rendering with whichever project the editor happens to have open.
+    var availableFontFamilySet: Set<String> { fontScope.availableFamilySet }
 
     func mutate(_ actionName: String, _ body: (inout ProjectDocument) -> Void) {
         body(&document)
@@ -94,9 +100,10 @@ final class DetachedProjectHost: ProjectMutationHost {
         // Re-checked with no `await` since the gate was taken: if the user opened this project
         // under us, that copy is now authoritative and writing the file would lose their edits.
         if state.activeProjectId == projectId {
-            state.withDocument(String(localized: "Agent Edit")) { $0 = document }
-            isDirty = false
-            return
+            // Our snapshot predates the awaits, so writing it over their document — in memory or on
+            // disk — discards whatever they did in that window. There is no merge available here:
+            // the caller has to redo the edit against the now-open project.
+            throw ProjectCheckoutError.openedConcurrently(name: state.activeProject?.name ?? "")
         }
 
         // `ProjectData.name` is the only copy an index rebuild can recover from, so a write that
@@ -225,8 +232,12 @@ final class ProjectCheckout: RowRenderSource {
             throw ProjectCheckoutError.unreadable(name: project.name)
         }
         // Without the project's own fonts registered, its custom-font text renders in the system
-        // face — silently, and identically to a correct render at every other layer.
-        let fontScope = ProjectFontScope.make(projectId: projectId)
+        // face — silently, and identically to a correct render at every other layer. A nil scope
+        // means a font file exists but its bytes have not downloaded, which is a refusal, not a
+        // reason to fall back to somebody else's fonts.
+        guard let fontScope = ProjectFontScope.make(projectId: projectId) else {
+            throw ProjectCheckoutError.fontsUnavailable(name: project.name)
+        }
         return ProjectCheckout(
             projectId: projectId,
             projectName: project.name,

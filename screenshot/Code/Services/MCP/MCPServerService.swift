@@ -249,13 +249,11 @@ final class MCPServerService {
     static func makeStartedServer(executor: MCPToolExecutor, transport: StatelessHTTPServerTransport) async throws -> Server {
         let name = "screenshot-bro"
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0"
-        let instructions = """
-        Controls the Screenshot Bro app: create App Store / Google Play screenshot projects, edit         rows and shapes, import screenshots into device frames, translate texts, render previews,         and export final images. Call list_projects first to discover ids.
-
-        Reading, rendering, exporting and App Store Connect screenshot sync take an explicit         project_id and act on that project whether or not the app window has it open — omitting it         is an error, never a fall back to whichever project is open. The editing tools still act on         the open project, so switch_project before using them.
-
-        preview_app_store_screenshot_sync and apply_app_store_screenshot_sync return a job         envelope. Anything sizeable comes back immediately with a job_id and phase "queued": poll         get_sync_job_status until the phase is terminal, then read the payload from its `result`.         apply is idempotent for the same plan_id and set_ids, so a call that times out client-side         is safe to retry — finished sets report "already_applied" and are never uploaded twice.
-        """
+        let instructions = [
+            "Controls the Screenshot Bro app: create App Store / Google Play screenshot projects, edit rows and shapes, import screenshots into device frames, translate texts, render previews, and export final images. Call list_projects first to discover ids.",
+            "Reading, rendering, exporting and App Store Connect screenshot sync take an explicit project_id and act on that project whether or not the app window has it open — omitting it is an error, never a fall back to whichever project is open. The editing tools still act on the open project, so switch_project before using them.",
+            "preview_app_store_screenshot_sync and apply_app_store_screenshot_sync return a job envelope. Anything sizeable comes back immediately with a job_id and phase \"queued\": poll get_sync_job_status until the phase is terminal, then read the payload from its `result`. apply is idempotent for the same plan_id and set_ids, so a call that times out client-side is safe to retry — finished sets report \"already_applied\" and are never uploaded twice.",
+        ].joined(separator: "\n\n")
         let capabilities = Server.Capabilities(tools: .init(listChanged: false))
         let server = Server(name: name, version: version, instructions: instructions, capabilities: capabilities)
         // Discovery counts as session activity: a session that only ever lists tools is a client

@@ -281,7 +281,12 @@ final class AppStoreConnectScreenshotSyncService {
 
         do {
             for target in targets {
-                guard let row = rows.first(where: { $0.id == target.rowId }) else { continue }
+                guard let row = rows.first(where: { $0.id == target.rowId }) else {
+                    // Still advance the denominator, or the job ends short of its total and the
+                    // completion backstop reports a perfectly good plan as failed.
+                    completedRenders += target.templateCount * target.localizations.count
+                    continue
+                }
 
                 // Backgrounds are locale-independent, so the context (and its blur-only
                 // precomposed strip) is built once and reused across every localization.
@@ -385,6 +390,8 @@ final class AppStoreConnectScreenshotSyncService {
         setEvents: @escaping (ASCSyncApplySetEvent) -> Void = { _ in }
     ) async throws -> ASCScreenshotSyncResult {
         guard !setIds.isEmpty else { throw ASCScreenshotSyncError.noSetsSelected }
+        // `buildPlan` is not the only entry point, so it cannot be the only reaper.
+        purgeExpiredPlans()
 
         // The ledger is consulted before the plan, because a plan every one of whose sets already
         // landed may itself have been discarded — and answering "already applied" without needing
@@ -652,10 +659,11 @@ final class AppStoreConnectScreenshotSyncService {
             pendingDiscard.insert(id)
             return
         }
+        // Stamped before the early return: a plan discarded twice, or one whose cache entry is
+        // already gone, still has to age its ledger out rather than hold it for the process life.
+        ledgerExpiry[id] = Date().addingTimeInterval(Self.planLifetime)
         guard let cached = cache.removeValue(forKey: id) else { return }
         try? FileManager.default.removeItem(at: cached.plan.directory)
-        // The ledger outlives the plan on purpose — see `applied`.
-        if applied[id] != nil { ledgerExpiry[id] = Date().addingTimeInterval(Self.planLifetime) }
     }
 
     /// Marks a plan as in use by a running job, so a concurrent `discardPlan` defers.
