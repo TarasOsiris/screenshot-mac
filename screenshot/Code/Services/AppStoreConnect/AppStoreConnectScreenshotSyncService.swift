@@ -239,8 +239,16 @@ final class AppStoreConnectScreenshotSyncService {
     /// both write the same App Store set — the only true double-upload race left.
     private var isApplying = false
 
-    init(api: (any ASCScreenshotSyncAPI)? = nil) {
+    /// Read through a closure rather than the singleton directly: demo mode is a process-global
+    /// that other suites toggle, and a test of the idempotency ledger must not be at their mercy.
+    private let isDemoMode: () -> Bool
+
+    init(
+        api: (any ASCScreenshotSyncAPI)? = nil,
+        isDemoMode: @escaping () -> Bool = { AppStoreConnectCredentialsStore.shared.isDemoMode }
+    ) {
         self.api = api ?? AppStoreConnectAPIService.shared
+        self.isDemoMode = isDemoMode
     }
 
     func plan(id: String) -> ASCScreenshotSyncPlan? {
@@ -331,7 +339,7 @@ final class AppStoreConnectScreenshotSyncService {
                     let remotePreviewDirectory = directory
                         .appendingPathComponent("remote-previews", isDirectory: true)
                         .appendingPathComponent(Self.safeFileName(diffId), isDirectory: true)
-                    let remote = AppStoreConnectCredentialsStore.shared.isDemoMode
+                    let remote = isDemoMode()
                         ? try await demoRemoteSet(
                             from: localAssets,
                             diffId: diffId,
@@ -433,7 +441,7 @@ final class AppStoreConnectScreenshotSyncService {
                     )
                 }
             }
-            if !AppStoreConnectCredentialsStore.shared.isDemoMode {
+            if !isDemoMode() {
                 let snapshot = try await fetchRemoteSet(
                     localizationId: diff.localizationId,
                     displayType: diff.displayType,
@@ -1068,7 +1076,7 @@ final class AppStoreConnectScreenshotSyncService {
         screenshotId: String,
         expectedChecksum: String
     ) async throws -> ASCScreenshotDeliveryOutcome {
-        if AppStoreConnectCredentialsStore.shared.isDemoMode { return .assumedComplete(screenshotId) }
+        if isDemoMode() { return .assumedComplete(screenshotId) }
         for _ in 0..<30 {
             try Task.checkCancellation()
             let screenshot = try await api.screenshot(id: screenshotId, retryPolicy: .singleAttempt)
@@ -1107,7 +1115,7 @@ final class AppStoreConnectScreenshotSyncService {
         expectedIds: [String],
         expectedChecksums: [String]
     ) async throws -> Bool {
-        if AppStoreConnectCredentialsStore.shared.isDemoMode { return true }
+        if isDemoMode() { return true }
         var lastError: Error?
         for attempt in 0..<30 {
             try Task.checkCancellation()

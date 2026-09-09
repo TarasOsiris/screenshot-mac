@@ -127,11 +127,13 @@ struct ASCScreenshotSyncIdempotencyTests {
 
     private func build(
         _ service: AppStoreConnectScreenshotSyncService,
-        localizations: [String] = ["loc-1"]
+        localizations: [String] = ["loc-1"],
+        projectId: UUID = UUID(),
+        modifiedAt: Date = Date()
     ) async throws -> (plan: ASCScreenshotSyncPlan, stamp: DocumentStamp) {
         let rowId = UUID()
         let row = makeRow(id: rowId)
-        let stamp = DocumentStamp(projectId: UUID(), modifiedAt: Date())
+        let stamp = DocumentStamp(projectId: projectId, modifiedAt: modifiedAt)
         let plan = try await service.buildPlan(
             appId: "123",
             targets: [makeTarget(rowId: rowId, localizations: localizations)],
@@ -143,9 +145,8 @@ struct ASCScreenshotSyncIdempotencyTests {
     }
 
     @Test func applyUploadsOnceAndVerifies() async throws {
-        #expect(!AppStoreConnectCredentialsStore.shared.isDemoMode, "demo mode would short-circuit the writes under test")
         let api = FakeScreenshotSyncAPI()
-        let service = AppStoreConnectScreenshotSyncService(api: api)
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
         let (plan, stamp) = try await build(service)
         let setId = try #require(plan.sets.first?.id)
 
@@ -163,7 +164,7 @@ struct ASCScreenshotSyncIdempotencyTests {
     /// uploaded a second time.
     @Test func retryingAFullyAppliedPlanUploadsNothing() async throws {
         let api = FakeScreenshotSyncAPI()
-        let service = AppStoreConnectScreenshotSyncService(api: api)
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
         let (plan, stamp) = try await build(service)
         let setId = try #require(plan.sets.first?.id)
 
@@ -184,7 +185,7 @@ struct ASCScreenshotSyncIdempotencyTests {
     /// outlives the rendered bytes.
     @Test func retryAnswersEvenAfterThePlanWasDiscarded() async throws {
         let api = FakeScreenshotSyncAPI()
-        let service = AppStoreConnectScreenshotSyncService(api: api)
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
         let (plan, stamp) = try await build(service)
         let setId = try #require(plan.sets.first?.id)
 
@@ -197,7 +198,7 @@ struct ASCScreenshotSyncIdempotencyTests {
 
     @Test func resumeAttemptsOnlyTheSetThatDidNotLand() async throws {
         let api = FakeScreenshotSyncAPI()
-        let service = AppStoreConnectScreenshotSyncService(api: api)
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
         let (plan, stamp) = try await build(service, localizations: ["loc-1", "loc-2"])
         #expect(plan.sets.count == 2)
         let ids = Set(plan.sets.map(\.id))
@@ -218,7 +219,7 @@ struct ASCScreenshotSyncIdempotencyTests {
 
     @Test func retainedPlanSurvivesADiscardAndDropsOnRelease() async throws {
         let api = FakeScreenshotSyncAPI()
-        let service = AppStoreConnectScreenshotSyncService(api: api)
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
         let (plan, _) = try await build(service)
 
         service.retainPlan(plan.id)
@@ -229,22 +230,30 @@ struct ASCScreenshotSyncIdempotencyTests {
         #expect(service.plan(id: plan.id) == nil, "the deferred discard lands on release")
     }
 
-    /// End-to-end through the tool, because the bug was in the *job wrapper*, not the service:
-    /// the ledger short-circuit returns before emitting any progress, so a wholly already-applied
+    /// End-to-end through the tool, because the bug was in the *job wrapper*, not the service: the
+    /// ledger short-circuit returns before emitting any progress, so a wholly already-applied
     /// retry finished at 0 of N and the completion backstop downgraded it to `failed` — reporting
-    /// failure for the one path that is guaranteed to be safe.
+    /// failure for the one path guaranteed to be safe.
     @Test func anIdempotentRetryThroughTheToolReportsSucceeded() async throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }
+        // Demo mode only to satisfy `requireASCConfigured`; the service stays non-demo, so the
+        // writes under test still reach the fake rather than being short-circuited.
         let credentials = AppStoreConnectCredentialsStore.shared
         let originalDemoMode = credentials.isDemoMode
-        credentials.isDemoMode = false
+        credentials.isDemoMode = true
         defer { credentials.isDemoMode = originalDemoMode }
 
+        let projectId = try #require(state.activeProject?.id)
         let api = FakeScreenshotSyncAPI()
-        let service = AppStoreConnectScreenshotSyncService(api: api)
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
         let executor = MCPToolExecutor(state: state, jobs: MCPJobStore(), screenshotSync: service)
-        let (plan, _) = try await build(service)
+        // The plan must name a real project, because apply resolves a checkout from it.
+        let (plan, _) = try await build(
+            service,
+            projectId: projectId,
+            modifiedAt: state.documentStamp?.modifiedAt ?? Date()
+        )
         let setId = try #require(plan.sets.first?.id)
 
         let arguments: [String: Value] = [
@@ -252,29 +261,26 @@ struct ASCScreenshotSyncIdempotencyTests {
             "set_ids": .array([.string(setId)]),
             "confirm": .bool(true),
             "mode": .string("sync"),
-            "project_id": .string(plan.projectId.uuidString),
         ]
         let first = await executor.call(name: "apply_app_store_screenshot_sync", arguments: arguments)
         #expect(first.isError != true, "unexpected error: \(first.content)")
 
         let writesAfterFirst = api.writeCount
         let retry = await executor.call(name: "apply_app_store_screenshot_sync", arguments: arguments)
-        #expect(retry.isError != true)
+        #expect(retry.isError != true, "unexpected error: \(retry.content)")
         #expect(api.writeCount == writesAfterFirst, "a retry must not touch App Store Connect")
 
         guard case .text(let json, _, _) = retry.content.first else {
             Issue.record("expected text content")
             return
         }
-        let envelope = try #require(
-            try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any]
-        )
+        let envelope = try #require(try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
         #expect(envelope["phase"] as? String == "succeeded", "a safe retry must not report failure")
     }
 
     @Test func applyStepCountMatchesTheProgressDenominator() async throws {
         let api = FakeScreenshotSyncAPI()
-        let service = AppStoreConnectScreenshotSyncService(api: api)
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
         let (plan, stamp) = try await build(service)
         let expected = AppStoreConnectScreenshotSyncService.applyStepCount(plan.sets)
 
