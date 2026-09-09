@@ -256,10 +256,11 @@ final class AppStoreConnectScreenshotSyncService {
         return cache[id]?.plan
     }
 
-    /// `needsPreviews` is what makes the direct upload path fast: the 420 px download per remote
-    /// screenshot exists only to draw the review screen's side-by-side comparison, and pressing
-    /// Upload never opens that screen. Checksum matching reads `sourceFileChecksum` from
-    /// metadata, so dropping the previews changes no decision.
+    /// `needsPreviews` costs one 420 px download per remote screenshot and buys exactly one thing:
+    /// the review screen's side-by-side comparison. It defaults to off because every other consumer
+    /// — direct upload, MCP — would pay for thumbnails it never draws, and forgetting the flag then
+    /// shows up only as latency. Checksum matching reads `sourceFileChecksum` from metadata, so the
+    /// previews change no decision.
     func buildPlan(
         appId: String,
         targets: [ASCUploadTarget],
@@ -267,7 +268,7 @@ final class AppStoreConnectScreenshotSyncService {
         source: some RowRenderSource,
         document: DocumentStamp?,
         strategy: ASCSyncStrategy = .reconcile,
-        needsPreviews: Bool = true,
+        needsPreviews: Bool = false,
         progress: @escaping (ASCSyncBuildProgress) -> Void = { _ in }
     ) async throws -> ASCScreenshotSyncPlan {
         guard let document else {
@@ -282,7 +283,15 @@ final class AppStoreConnectScreenshotSyncService {
             .appendingPathComponent(planId, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        let totalRenders = targets.reduce(0) { $0 + $1.templateCount * $1.localizations.count }
+        // A target whose row is gone — the document changed while this build awaited App Store
+        // Connect — is not work, so it must not be in the denominator either. `previewRenderCount`
+        // sizes the job before this is known; the first callback below corrects it.
+        let rowsById = Dictionary(rows.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let renderable = targets.filter { rowsById[$0.rowId] != nil }
+        let droppedIssues = targets.filter { rowsById[$0.rowId] == nil }.map {
+            String(localized: "Skipped \($0.rowLabel) · \($0.versionLabel): its row is no longer in the project.")
+        }
+        let totalRenders = renderable.reduce(0) { $0 + $1.templateCount * $1.localizations.count }
         var completedRenders = 0
         var diffs: [ASCScreenshotSetDiff] = []
         var targetsBySetId: [String: ASCUploadTarget] = [:]
@@ -297,20 +306,13 @@ final class AppStoreConnectScreenshotSyncService {
         let buildSpan = PerfSignpost.begin("ASCSync.buildPlan")
         defer { PerfSignpost.end("ASCSync.buildPlan", buildSpan) }
 
+        // Publishes the real denominator before any work, so an observer sized from the estimate is
+        // corrected even when every target turned out to be unrenderable.
+        progress(.init(stage: .comparing, completedRenders: 0, totalRenders: totalRenders, label: ""))
+
         do {
-            for target in targets {
-                guard let row = rows.first(where: { $0.id == target.rowId }) else {
-                    // Still advance the denominator — and report it, since the observer's count is
-                    // the one the completion backstop checks, not this local total.
-                    completedRenders += target.templateCount * target.localizations.count
-                    progress(.init(
-                        stage: .comparing,
-                        completedRenders: completedRenders,
-                        totalRenders: totalRenders,
-                        label: target.rowLabel
-                    ))
-                    continue
-                }
+            for target in renderable {
+                guard let row = rowsById[target.rowId] else { continue }
 
                 // Backgrounds are locale-independent, so the context (and its blur-only
                 // precomposed strip) is built once and reused across every localization.
@@ -402,7 +404,8 @@ final class AppStoreConnectScreenshotSyncService {
             projectModifiedAt: document.modifiedAt,
             appId: appId,
             sets: diffs,
-            issues: [],
+            // Otherwise a dropped target is only visible as a set the caller asked for and didn't get.
+            issues: droppedIssues,
             directory: directory
         )
         cache[planId] = CachedPlan(

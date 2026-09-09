@@ -211,10 +211,10 @@ struct ASCScreenshotSyncIdempotencyTests {
         #expect(api.downloadCount == 1)
     }
 
-    /// A job's completion backstop compares the *observed* count against the total, so a target
-    /// skipped because its row is gone has to be reported and not merely counted locally —
-    /// otherwise a plan that built perfectly is handed back as `failed`.
-    @Test func aTargetWhoseRowIsGoneStillReportsItsRendersAsCompleted() async throws {
+    /// A target whose row is gone is not work, so it must leave the denominator — a job's
+    /// completion backstop compares the observed count against the total, and a plan that built
+    /// perfectly used to be handed back as `failed`. It is reported rather than dropped silently.
+    @Test func aTargetWhoseRowIsGoneLeavesTheDenominatorAndIsReported() async throws {
         let service = AppStoreConnectScreenshotSyncService(api: FakeScreenshotSyncAPI(), isDemoMode: { false })
         let presentId = UUID()
         var last: ASCSyncBuildProgress?
@@ -230,12 +230,13 @@ struct ASCScreenshotSyncIdempotencyTests {
             rows: [makeRow(id: presentId)],
             source: StubRenderSource(),
             document: DocumentStamp(projectId: UUID(), modifiedAt: Date()),
-            needsPreviews: false,
             progress: { last = $0 }
         )
 
         #expect(plan.sets.count == 1, "the target with no row produces no set")
+        #expect(plan.issues.count == 1, "and says so, rather than leaving it to be inferred")
         let final = try #require(last)
+        #expect(final.totalRenders == 1, "the vanished target is not in the denominator")
         #expect(final.completedRenders == final.totalRenders)
     }
 

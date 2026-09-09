@@ -36,7 +36,10 @@ extension AppState {
         await fonts.loadCustomFontsAsync(projectId: activeProjectId)
     }
 
+    /// Guarded like every other font path here: the library's nil branch drops the file names it
+    /// needs to *unregister*, so reaching it with no project leaks the CTFontManager registrations.
     func unregisterCustomFonts() {
+        guard let activeProjectId else { return }
         fonts.unregisterCustomFonts(projectId: activeProjectId)
     }
 

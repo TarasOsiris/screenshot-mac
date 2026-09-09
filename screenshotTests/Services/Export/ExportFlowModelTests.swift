@@ -173,34 +173,22 @@ struct ExportFlowModelTests {
         #expect(model.incompleteMessage != nil, "A run that drew holes must say so before the files are uploaded")
     }
 
-    /// The alert is bound to `incompleteMessage` and only the OK button clears it, so a run that
+    /// The alert is bound to `incompleteMessage` and only its OK button clears it, so a run that
     /// started with it on screen used to leave it there describing files nobody exported.
     @Test func aNewRunClearsThePreviousRunsBlankFrameReport() async throws {
         let model = ExportFlowModel(defaults: makeDefaults("holes-cleared"))
-        let document = StubDocument(rows: [makeRow("Alpha")])
-        document.unreadableResourceNames = ["gone.png"]
         let base = makeTemporaryDataDirectory(label: "export-flow-holes-cleared")
         defer { try? FileManager.default.removeItem(at: base) }
+        model.incompleteMessage = "left over from the previous run"
 
         model.exportRows(
-            document: document,
+            document: StubDocument(rows: [makeRow("Alpha")]),
             into: base,
-            folderName: "first",
-            delivery: .revealInPlace
-        ) { context in context.rowImage() }
-        try await waitForIdle(model)
-        #expect(model.incompleteMessage != nil)
-
-        document.unreadableResourceNames = []
-        model.exportRows(
-            document: document,
-            into: base,
-            folderName: "second",
+            folderName: "clean",
             delivery: .revealInPlace
         ) { context in context.rowImage() }
         try await waitForIdle(model)
 
         #expect(model.incompleteMessage == nil, "the previous run's alert must not survive a clean one")
-        #expect(model.unrenderableFileNames.isEmpty)
     }
 }

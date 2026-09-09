@@ -120,6 +120,7 @@ final class CustomFontLibrary {
             refreshAvailableFamilies(projectId: activeId)
             return
         }
+        let hadRegistrations = !customFonts.isEmpty
         let resourcesURL = PersistenceService.resourcesDir(activeId)
         for fileName in customFonts.keys {
             let url = resourcesURL.appendingPathComponent(fileName) as CFURL
@@ -127,7 +128,9 @@ final class CustomFontLibrary {
         }
         customFonts.removeAll()
         everReferencedFontFamilies.removeAll()
-        refreshAvailableFamilies(projectId: activeId)
+        // The refresh re-enumerates the system faces uncached — main-actor work worth skipping when
+        // nothing was registered, so the family set cannot have moved.
+        if hadRegistrations { refreshAvailableFamilies(projectId: activeId) }
     }
 
     /// Imports a single font file or every font in a folder, opportunistically pulling in

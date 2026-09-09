@@ -53,8 +53,7 @@ nonisolated final class MCPJobStore: @unchecked Sendable {
     /// because the user rotated a token is strictly worse than letting it finish.
     func cancelAll(now: Date = Date()) {
         let running: [Task<Void, Never>] = lock.withLock {
-            // Recorded before the tasks are dropped: a poller reading the envelope while a body
-            // unwinds must see a job the app has abandoned, not one still making progress.
+            // Intent first: a poller reading while a body unwinds must see an abandoned job.
             for id in tasks.keys { _ = registry.requestCancel(id, at: now) }
             let values = Array(tasks.values)
             tasks.removeAll()

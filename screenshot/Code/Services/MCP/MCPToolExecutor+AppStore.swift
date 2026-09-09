@@ -171,9 +171,6 @@ extension MCPToolExecutor {
         // the job body once it is started.
         var jobOwnsCheckout = false
         defer { if !jobOwnsCheckout { checkout.dispose() } }
-        // The MCP tools bypass ExportFlowModel, so they have to land a composing edit themselves —
-        // and this one renders what it will later upload to a live listing.
-        checkout.commitPendingEdits()
         let appId = try resolveASCAppId(args, checkout: checkout)
         let requestedVersionIds = Set(args.stringArray("version_ids") ?? [])
         let allVersions = try await ascAPI.listAppStoreVersions(appId: appId)
@@ -292,10 +289,6 @@ extension MCPToolExecutor {
                 rows: allRows,
                 source: checkout,
                 document: stamp,
-                // The contact sheet composites *local* previews only, and nothing in the result
-                // exposes a remote thumbnail — so downloading one per remote screenshot would buy
-                // this path nothing but latency.
-                needsPreviews: false,
                 progress: { update in
                     handle.update {
                         $0.phase = update.stage == .rendering ? .rendering : .comparing
@@ -313,9 +306,8 @@ extension MCPToolExecutor {
                 $0.sets = plan.sets.map { MCPJobSetProgress(setId: $0.id) }
                 $0.contactSheetPNG = contactSheet
             }
-            // `plan.issues` is always empty; the real ones are collected above while the targets
-            // are built, which is why they have to be carried into the job rather than read off
-            // the plan.
+            // The two sets are disjoint: the executor's are collected while the targets are built,
+            // so they have to be carried into the job; the plan's are what the build itself dropped.
             let result = ASCScreenshotPreviewResult(
                 planId: plan.id,
                 projectId: plan.projectId.uuidString,

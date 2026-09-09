@@ -18,12 +18,9 @@ extension AppState {
 
     func createBlankProject(name: String, rowConfigurations: [BlankProjectRowConfiguration]) {
         saveCurrentProject()
-        presentation.dismissAll()
-        // Before `activeProjectId` moves: teardown resolves the outgoing project's fonts against
-        // its own resources dir, and an image-load pass left in flight would strand
-        // `isLoadingScreenshotImages`, muting every later reload. Nothing to tear down with no
-        // project open, where a nil id would clear the font library wholesale instead.
-        if activeProjectId != nil { teardownActiveProject() }
+        // Same ordering rule as `switchToProject`: before `activeProjectId` moves, so the outgoing
+        // project's fonts resolve against its own resources dir.
+        teardownActiveProject()
 
         let sanitized = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxProjectNameLength))
         let baseName = sanitized.isEmpty ? "Project" : sanitized
@@ -31,7 +28,6 @@ extension AppState {
         projects.append(project)
         activeProjectId = project.id
         PersistenceService.ensureProjectDirs(project.id)
-        cancelPendingDebounceTasks()
         let configuredRows = rowConfigurations.enumerated().map { index, configuration in
             let fallbackLabel = rowLabel(for: configuration, rowIndex: index)
             let resolvedSize = configuration.sizePreset.flatMap(parseSizeString)

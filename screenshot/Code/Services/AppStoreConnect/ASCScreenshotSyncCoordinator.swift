@@ -67,9 +67,9 @@ final class ASCScreenshotSyncCoordinator {
         return parts.joined(separator: " ")
     }
 
-    /// `needsPreviews: false` skips the remote thumbnail downloads, which only the review screen
-    /// draws — pass it whenever the plan is built to be applied straight away. `progress` is the
-    /// typed build progress; the review screen reads `progressLabel` instead.
+    /// `needsPreviews: true` adds the remote thumbnail downloads only the review screen draws —
+    /// pass it there and nowhere else. `progress` is the typed build progress; the review screen
+    /// reads `progressLabel` instead.
     func build(
         appId: String,
         targets: [ASCUploadTarget],
@@ -77,7 +77,7 @@ final class ASCScreenshotSyncCoordinator {
         source: some RowRenderSource,
         document: DocumentStamp?,
         strategy: ASCSyncStrategy = .reconcile,
-        needsPreviews: Bool = true,
+        needsPreviews: Bool = false,
         progress: @escaping (ASCSyncBuildProgress) -> Void = { _ in }
     ) async {
         phase = .loading

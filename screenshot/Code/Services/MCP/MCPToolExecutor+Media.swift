@@ -78,8 +78,6 @@ extension MCPToolExecutor {
     func renderPreview(_ args: MCPArguments) async throws -> CallTool.Result {
         let checkout = try await requireCheckout(args)
         defer { checkout.dispose() }
-        // The MCP tools bypass ExportFlowModel, so they have to land a composing edit themselves.
-        checkout.commitPendingEdits()
         let rowId = try args.uuid("row_id")
         guard let rowIndex = checkout.rows.firstIndex(where: { $0.id == rowId }) else {
             throw MCPToolError.notFound("Row \(rowId.uuidString)")

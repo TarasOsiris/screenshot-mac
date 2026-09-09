@@ -42,7 +42,7 @@ extension ASCUploadFlowModel {
         isBusy = true
         defer { isBusy = false; uploadTask = nil }
         advance(to: .reviewingChanges)
-        await screenshotSync.build(appId: appId, targets: targets, rows: rows, source: document, document: document.documentStamp)
+        await screenshotSync.build(appId: appId, targets: targets, rows: rows, source: document, document: document.documentStamp, needsPreviews: true)
         if screenshotSync.plan == nil {
             errorMessage = screenshotSync.errorMessage
         }
@@ -52,7 +52,7 @@ extension ASCUploadFlowModel {
         guard let appId = selectedApp?.id, let document else { return }
         isBusy = true
         defer { isBusy = false; uploadTask = nil }
-        await screenshotSync.build(appId: appId, targets: buildUploadTargets(), rows: rows, source: document, document: document.documentStamp)
+        await screenshotSync.build(appId: appId, targets: buildUploadTargets(), rows: rows, source: document, document: document.documentStamp, needsPreviews: true)
         errorMessage = screenshotSync.errorMessage
     }
 
@@ -93,8 +93,6 @@ extension ASCUploadFlowModel {
             source: document,
             document: document.documentStamp,
             strategy: strategy,
-            // No review screen on this path, so the remote thumbnails it would draw are pure cost.
-            needsPreviews: false,
             progress: { [weak self] update in self?.uploadProgress = Self.buildProgress(update) }
         )
         isBusy = false

@@ -12,9 +12,14 @@ extension MCPToolExecutor {
     /// fail rather than fall back". A silent default is invisible to the caller, and the failure it
     /// produces — building a plan from one app's artwork and uploading it to another app's listing —
     /// is one no dimension check would catch.
+    ///
+    /// Every caller goes on to read `rows` or `localeState`, so the user's in-flight typing is
+    /// landed here rather than at each call site — three remembered to, `get_project` didn't.
     func requireCheckout(_ args: MCPArguments, key: String = "project_id") async throws -> ProjectCheckout {
         let id = try args.uuid(key)
-        return try await openCheckout(id)
+        let checkout = try await openCheckout(id)
+        checkout.commitPendingEdits()
+        return checkout
     }
 
     /// For `apply`, where the project is already pinned by the plan: `project_id` stays optional and

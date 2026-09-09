@@ -15,8 +15,6 @@ extension MCPToolExecutor {
     func exportProject(_ args: MCPArguments) async throws -> CallTool.Result {
         let checkout = try await requireCheckout(args)
         defer { checkout.dispose() }
-        // The MCP tools bypass ExportFlowModel, so they have to land a composing edit themselves.
-        checkout.commitPendingEdits()
         guard !checkout.rows.isEmpty else {
             throw MCPToolError.failed("Project has no rows to export")
         }
