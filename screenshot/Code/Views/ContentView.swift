@@ -457,6 +457,7 @@ struct ContentView: View {
     private func contentModals(_ base: some View) -> some View {
         base
         .exportFailedAlert($exportFlow.errorMessage)
+        .exportIncompleteAlert($exportFlow.incompleteMessage)
         #if os(iOS)
         .sheet(item: $exportFlow.pendingExport, onDismiss: { discardPendingExport() }) { _ in
             ExportDestinationSheet(title: pendingExportTitle) { destination in

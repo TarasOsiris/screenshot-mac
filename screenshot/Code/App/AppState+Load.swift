@@ -1,5 +1,16 @@
 import SwiftUI
 
+/// Which document replaced the one on screen, which decides whether the resources directory may
+/// be swept for orphans.
+enum ProjectLoadOrigin {
+    /// The user opened or switched projects: what is on screen is what is on disk, so a file the
+    /// document doesn't reference really is dead weight.
+    case open
+    /// An iCloud reload swapped in a remote snapshot. A peer's `project.json` can be newer by
+    /// mtime and behind in content, so its references are not a licence to delete anything.
+    case remoteReload
+}
+
 // Reading the document: first load, iCloud setup and monitoring, reload-from-disk, and applying
 // a decoded ProjectData. The writing half is AppState+Save.swift.
 extension AppState {
@@ -91,6 +102,9 @@ extension AppState {
         }
         monitor.onSyncStatusChange = { [weak self] status in
             self?.iCloudStatus.status = status
+        }
+        monitor.onResourcesDidChange = { [weak self] in
+            self?.reloadPendingScreenshotImages()
         }
         monitor.startMonitoring()
         iCloudMonitor = monitor
@@ -215,7 +229,7 @@ extension AppState {
             if let diskData, diskData.modifiedAt > localModified {
                 await loadCustomFontsAsync()
                 guard !Task.isCancelled, activeProjectId == activeId else { return }
-                applyProjectData(diskData, for: activeId)
+                applyProjectData(diskData, for: activeId, origin: .remoteReload)
                 loadScreenshotImages()
             }
         } else {
@@ -233,9 +247,7 @@ extension AppState {
         }
     }
 
-    /// `deferCleanup` runs the orphaned-resource scan off-main (project-open path) so the
-    /// switch doesn't block the push animation; iCloud reload keeps it synchronous.
-    func applyProjectData(_ data: ProjectData, for projectId: UUID, deferCleanup: Bool = false) {
+    func applyProjectData(_ data: ProjectData, for projectId: UUID, origin: ProjectLoadOrigin) {
         let span = PerfSignpost.begin(
             "AppState.applyProjectData",
             "rows=\(data.rows.count) shapes=\(data.rows.reduce(0) { $0 + $1.shapes.count })"
@@ -259,10 +271,9 @@ extension AppState {
         EditorBlurRasterCache.purgeIfProjectChanged(to: projectId)
         prewarmDeviceModelScenes()
         selectRow(rows.first?.id)
-        if deferCleanup {
-            cleanupOrphanedResourceFilesAsync(for: projectId)
-        } else {
-            cleanupOrphanedResourceFiles(for: projectId)
+        switch origin {
+        case .open: cleanupOrphanedResourceFilesAsync(for: projectId)
+        case .remoteReload: forgetDeferredOrphans()
         }
         seedAndReclaimFontsForLoadedProject()
         // Otherwise a crash between opening a project and the first save tick carries no document
@@ -292,7 +303,7 @@ extension AppState {
         defer { PerfSignpost.end("AppState.loadRowsForProject", span) }
         if let data = preloaded ?? PersistenceService.loadProject(id) {
             if degradedLoadProjectId == id { degradedLoadProjectId = nil }
-            applyProjectData(data, for: id, deferCleanup: true)
+            applyProjectData(data, for: id, origin: .open)
         } else {
             // The project file exists but wouldn't load. Refusing to save is what stops the next
             // autosave writing this empty fallback over the real data; the alert says why.

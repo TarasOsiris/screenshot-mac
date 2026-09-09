@@ -21,7 +21,13 @@ private final class StubDocument: ExportDocument {
 
     func commitPendingEdits() { commitPendingEditsCount += 1 }
 
-    func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
+    /// Names the renderer will ask for and never receive — the shape of a project whose resource
+    /// files are gone, which is what makes an export write blank device frames.
+    var unreadableResourceNames: Set<String> = []
+
+    func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> {
+        unreadableResourceNames
+    }
 
     func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
 }
@@ -141,5 +147,29 @@ struct ExportFlowModelTests {
         #expect(!model.exportSuccess)
         model.showSuccess(projectName: "Fixture", destination: "folder")
         #expect(model.exportSuccess)
+        #expect(model.incompleteMessage == nil)
+    }
+
+    /// The report used to be recorded and then dropped: a user whose screenshots had gone missing
+    /// got "12 screenshots exported" over a folder of blank frames and uploaded them.
+    @Test func anExportThatDrewHolesSaysSoInsteadOfClaimingSuccess() async throws {
+        let model = ExportFlowModel(defaults: makeDefaults("holes"))
+        let document = StubDocument(rows: [makeRow("Alpha")])
+        document.unreadableResourceNames = ["gone.png"]
+        let base = makeTemporaryDataDirectory(label: "export-flow-holes")
+        defer { try? FileManager.default.removeItem(at: base) }
+
+        model.exportRows(
+            document: document,
+            into: base,
+            folderName: "holes",
+            delivery: .revealInPlace
+        ) { context in context.rowImage() }
+
+        try await waitForIdle(model)
+
+        #expect(model.errorMessage == nil)
+        #expect(model.unrenderableFileNames == ["gone.png"])
+        #expect(model.incompleteMessage != nil, "A run that drew holes must say so before the files are uploaded")
     }
 }

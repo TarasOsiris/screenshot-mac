@@ -17,6 +17,16 @@ extension View {
             Text(message.wrappedValue ?? "")
         }
     }
+
+    /// The export wrote every file and still needs saying: blank device frames pass every check
+    /// downstream, and a run that reports only "12 screenshots exported" is how they get uploaded.
+    func exportIncompleteAlert(_ message: Binding<String?>) -> some View {
+        alert("Some Images Are Missing", isPresented: message.isPresent()) {
+            Button("OK") { message.wrappedValue = nil }
+        } message: {
+            Text(message.wrappedValue ?? "")
+        }
+    }
 }
 
 // The export *flow* — progress, cancellation, destination routing, temp-folder lifetime — lives in

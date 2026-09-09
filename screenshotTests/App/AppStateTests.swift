@@ -1699,7 +1699,7 @@ struct AppStateTests {
         let projectId = try #require(state.activeProjectId)
         state.presentation.backgroundPopoverTemplateId = UUID()
 
-        state.applyProjectData(ProjectData(rows: state.rows), for: projectId)
+        state.applyProjectData(ProjectData(rows: state.rows), for: projectId, origin: .open)
 
         #expect(state.presentation.backgroundPopoverTemplateId == nil)
     }

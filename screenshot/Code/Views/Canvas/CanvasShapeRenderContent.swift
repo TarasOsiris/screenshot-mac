@@ -1,6 +1,25 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// Why a shape that names a resource is drawing nothing. `.satisfied` covers both "the image is
+/// here" and "none was ever assigned" — only a reference the app failed to honour says anything,
+/// because a device frame with no screenshot in it is otherwise a legitimate design.
+enum CanvasResourceState {
+    case satisfied
+    case downloading
+    case missing
+
+    /// The view asks the document; the document doesn't need to know what the canvas draws.
+    init(_ fileName: String?, in state: AppState) {
+        guard let fileName else { self = .satisfied; return }
+        if state.pendingDownloadImageFileNames.contains(fileName) {
+            self = .downloading
+        } else {
+            self = state.missingImageFileNames.contains(fileName) ? .missing : .satisfied
+        }
+    }
+}
+
 struct CanvasShapeRenderContent: View {
     let shape: CanvasShapeModel
     let effectiveW: CGFloat
@@ -11,6 +30,7 @@ struct CanvasShapeRenderContent: View {
     let displayOutlineWidth: CGFloat
     var screenshotImage: NSImage?
     var screenshotImageIdentity: String?
+    var resourceState: CanvasResourceState = .satisfied
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color
     var deviceModelRenderingMode: DeviceModelRenderingMode
@@ -309,9 +329,15 @@ struct CanvasShapeRenderContent: View {
             .frame(width: displayW, height: displayH)
             .overlay {
                 if showsEditorHelpers, screenshotImage == nil {
-                    imagePickerButton(iconSize: min(28, max(14, sizeRef * 0.18)),
-                                      padding: min(12, max(4, sizeRef * 0.05)),
-                                      cornerRadius: cornerRadius)
+                    if resourceState == .satisfied {
+                        imagePickerButton(iconSize: min(28, max(14, sizeRef * 0.18)),
+                                          padding: min(12, max(4, sizeRef * 0.05)),
+                                          cornerRadius: cornerRadius)
+                    } else {
+                        unresolvedResourceBadge(iconSize: min(28, max(14, sizeRef * 0.18)),
+                                                padding: min(12, max(4, sizeRef * 0.05)),
+                                                cornerRadius: cornerRadius)
+                    }
                 }
                 if showsEditorHelpers, isDropTargeted {
                     dropHighlight(cornerRadius: cornerRadius)
@@ -321,6 +347,21 @@ struct CanvasShapeRenderContent: View {
                 guard showsEditorHelpers else { return false }
                 return onHandleDrop(providers)
             }
+    }
+
+    /// A referenced screenshot that isn't on screen is not the same as an empty frame, and the
+    /// difference used to be invisible — a project whose resources hadn't synced looked finished.
+    private func unresolvedResourceBadge(iconSize: CGFloat, padding: CGFloat, cornerRadius: CGFloat) -> some View {
+        let isDownloading = resourceState == .downloading
+        return Image(systemName: isDownloading ? "arrow.down.circle.dotted" : "exclamationmark.triangle")
+            .font(.system(size: iconSize))
+            .foregroundStyle(isDownloading ? Color.secondary : Color.orange)
+            .padding(padding)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .accessibilityLabel(isDownloading ? Text("Downloading screenshot") : Text("Screenshot file is missing"))
+            .help(isDownloading
+                  ? Text("This screenshot is still downloading from iCloud.")
+                  : Text("This screenshot's file is missing. Add the image again to restore it."))
     }
 
     private func imagePickerButton(iconSize: CGFloat, padding: CGFloat, cornerRadius: CGFloat) -> some View {

@@ -101,12 +101,45 @@ nonisolated struct PersistenceService {
         projectDataURL(id, at: rootURL)
     }
 
+    static let resourcesDirName = "resources"
+
     static func resourcesDir(_ id: UUID) -> URL {
-        projectDir(id).appendingPathComponent("resources", isDirectory: true)
+        projectDir(id).appendingPathComponent(resourcesDirName, isDirectory: true)
     }
 
     static func projectDataExists(_ id: UUID) -> Bool {
         FileManager.default.fileExists(atPath: projectDataURL(id).path)
+    }
+
+    /// Where iCloud parks a ubiquitous file whose bytes haven't materialized: a hidden sibling
+    /// named `.<name>.icloud`. Deleting one deletes the item itself, on every device.
+    static func ubiquitousPlaceholderURL(for url: URL) -> URL {
+        url.deletingLastPathComponent().appendingPathComponent(".\(url.lastPathComponent).icloud")
+    }
+
+    static func isUbiquitousPlaceholder(_ fileName: String) -> Bool {
+        fileName.hasPrefix(".") && fileName.hasSuffix(".icloud")
+    }
+
+    /// A resource iCloud hasn't brought down yet is not a resource that is gone: the first is a
+    /// wait, the second is a hole worth reporting. Nothing may delete or overwrite on the first.
+    enum ResourceAvailability {
+        case present
+        case notDownloaded
+        case absent
+    }
+
+    /// Blocks on the file provider for a ubiquitous path, so callers must be off the main thread.
+    static func availability(of url: URL) -> ResourceAvailability {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            return FileManager.default.fileExists(atPath: ubiquitousPlaceholderURL(for: url).path) ? .notDownloaded : .absent
+        }
+        // Presence is not bytes: iCloud also represents an undownloaded item as a dataless file at
+        // its own path, which exists, reports a size, and reads as empty. A non-ubiquitous file
+        // answers nil here, which is the ordinary case.
+        let status = try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey])
+            .ubiquitousItemDownloadingStatus
+        return status == .notDownloaded ? .notDownloaded : .present
     }
 
     /// Per-project String Catalog holding the screenshot-content translations. Lives inside the
@@ -525,15 +558,12 @@ nonisolated struct PersistenceService {
         return root.standardizedFileURL == dataURL.standardizedFileURL
     }
 
-    /// A ubiquitous file whose bytes haven't materialized has nothing at its own path — only a
-    /// sibling `.name.icloud` placeholder. Reading that as "absent" is exactly what let a merge
-    /// run against zero projects, so it counts as present.
+    /// Reading a not-yet-materialized index as "absent" is exactly what let a merge run against
+    /// zero projects, so its placeholder counts as present.
     private static func indexExists(at url: URL) -> Bool {
         let fm = FileManager.default
-        if fm.fileExists(atPath: url.path) { return true }
-        let placeholder = url.deletingLastPathComponent()
-            .appendingPathComponent(".\(url.lastPathComponent).icloud")
-        return fm.fileExists(atPath: placeholder.path)
+        return fm.fileExists(atPath: url.path)
+            || fm.fileExists(atPath: ubiquitousPlaceholderURL(for: url).path)
     }
 
     /// The write counterpart of `loadIndex(at:)`, and for the same reason: `writeData` picks

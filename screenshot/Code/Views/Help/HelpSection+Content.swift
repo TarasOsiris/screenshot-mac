@@ -436,6 +436,7 @@ extension HelpSection {
                 .heading("What actually gets exported"),
                 .bullet("Only what you see. Shape types switched off in the inspector's **Visibility** section are left out of the exported image too."),
                 .bullet("Template borders, alignment guides, and selection handles are editor-only and never exported."),
+                .bullet("If an image file a screenshot needs can't be read, the frame renders empty and the export ends with **Some Images Are Missing** rather than a plain success — a blank device frame otherwise passes every check right up to the store."),
                 .heading("Format and naming"),
                 .bullet("**Settings ▸ Export ▸ Format**: PNG or JPEG. PNG is recommended for marketing screenshots."),
                 .bullet("**Custom filename suffix**: add a suffix to every exported screenshot filename."),
@@ -554,6 +555,10 @@ extension HelpSection {
                 .heading("Knowing what's syncing"),
                 .bullet("The Projects screen shows sync progress while iCloud is uploading or downloading."),
                 .bullet("Behind the scenes, an `NSMetadataQuery` watches each project for upload/download progress."),
+                .heading("Screenshots that aren't there yet"),
+                .bullet("A project's text and layout sync in one small file, so a project can open before its screenshots have finished downloading."),
+                .bullet("A device frame with a **download badge** is waiting for iCloud. Screenshot Bro asks for those files first and fills them in as they land — no need to reopen the project."),
+                .bullet("A device frame with an **orange warning triangle** means the image file itself is gone. Add the image again to restore it; the layout, text and translations around it are untouched."),
                 .tip("If sync seems stuck, open Finder ▸ iCloud Drive ▸ Screenshot Bro and check whether files are still uploading. Toggling iCloud off and on again forces a re-scan."),
             ],
             seeAlso: [.projects, .settings]

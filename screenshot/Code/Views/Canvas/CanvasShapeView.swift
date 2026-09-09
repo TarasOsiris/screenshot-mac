@@ -38,6 +38,8 @@ struct CanvasShapeView: View {
     /// Stable content identity for `screenshotImage` (its resource file name). Backs the 3D
     /// device snapshot cache key, which must not fall back to a recyclable object address.
     var screenshotImageIdentity: String?
+    /// Editor-only: whether a named screenshot is absent or still arriving. Export never sets it.
+    var resourceState: CanvasResourceState = .satisfied
     var fillImage: NSImage?
     var defaultDeviceBodyColor: Color = CanvasShapeModel.defaultDeviceBodyColor
     var deviceModelRenderingMode: DeviceModelRenderingMode = .snapshot
@@ -323,6 +325,7 @@ struct CanvasShapeView: View {
             displayOutlineWidth: displayOutlineWidth,
             screenshotImage: screenshotImage,
             screenshotImageIdentity: screenshotImageIdentity,
+            resourceState: resourceState,
             fillImage: fillImage,
             defaultDeviceBodyColor: defaultDeviceBodyColor,
             deviceModelRenderingMode: deviceModelRenderingMode,

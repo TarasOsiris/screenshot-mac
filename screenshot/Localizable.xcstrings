@@ -93194,6 +93194,994 @@
           }
         }
       }
+    },
+    "**Drop shadow** — enable it in the properties bar and pick **Soft**, **Medium**, or **Strong**, or set color, radius, offset, and opacity by hand. It works on a multi-shape selection too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Schlagschatten** – aktivieren Sie es in der Eigenschaftenleiste und wählen Sie **Weich**, **Mittel** oder **Stark**, oder legen Sie Farbe, Radius, Versatz und Deckkraft manuell fest. Es funktioniert auch bei einer Auswahl mehrerer Formen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Sombra paralela**: habilítela en la barra de propiedades y seleccione **Suave**, **Media** o **Fuerte**, o establezca el color, el radio, el desplazamiento y la opacidad manualmente. También funciona en una selección de múltiples formas."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**رها کردن سایه** - آن را در نوار خصوصیات فعال کنید و **نرم**، **متوسط**، یا **قوی** را انتخاب کنید، یا رنگ، شعاع، افست و کدورت را با دست تنظیم کنید. در انتخاب چند شکلی نیز کار می کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ombre portée** : activez-la dans la barre de propriétés et choisissez **Doux**, **Moyen** ou **Fort**, ou définissez la couleur, le rayon, le décalage et l'opacité à la main. Cela fonctionne également sur une sélection multi-formes."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ドロップ シャドウ** — プロパティ バーで有効にし、**ソフト**、**中**、または**強**を選択するか、色、半径、オフセット、不透明度を手動で設定します。複数のシェイプを選択した場合にも機能します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**그림자** — 속성 표시줄에서 활성화하고 **부드러움**, **중간** 또는 **강함**을 선택하거나 색상, 반경, 오프셋 및 불투명도를 직접 설정하세요. 다중 모양 선택에서도 작동합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Sombra projetada** — habilite-o na barra de propriedades e escolha **Suave**, **Médio** ou **Forte**, ou defina cor, raio, deslocamento e opacidade manualmente. Também funciona em uma seleção de várias formas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**阴影** — 在属性栏中启用它并选择**软**、**中**或**强**，或手动设置颜色、半径、偏移和不透明度。它也适用于多形状选择。"
+          }
+        }
+      }
+    },
+    "Downloading screenshot" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot wird heruntergeladen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargando captura de pantalla"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حال دانلود اسکرین شات"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement de la capture d'écran"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショットのダウンロード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷 다운로드 중"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baixando captura de tela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在下载截图"
+          }
+        }
+      }
+    },
+    "%lld image files could not be read" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Bilddateien konnten nicht gelesen werden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld archivos de imagen no se pudieron leer"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld فایل های تصویری خوانده نشد"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld fichiers image n'ont pas pu être lus"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 画像ファイルを読み取れませんでした"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 이미지 파일을 읽을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld arquivos de imagem não puderam ser lidos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 无法读取图像文件"
+          }
+        }
+      }
+    },
+    "Click the image well in the properties bar to pick a file, or drag and drop directly onto the shape." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicken Sie in der Eigenschaftenleiste auf das Bildfeld, um eine Datei auszuwählen, oder ziehen Sie sie per Drag & Drop direkt auf die Form."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haga clic en la imagen en la barra de propiedades para seleccionar un archivo, o arrástrelo y suéltelo directamente sobre la forma."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برای انتخاب فایل روی تصویر در نوار خصوصیات به خوبی کلیک کنید یا مستقیماً روی شکل بکشید و رها کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez sur le cadre d'image dans la barre de propriétés pour sélectionner un fichier, ou faites un glisser-déposer directement sur la forme."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロパティ バーのイメージ ウェルをクリックしてファイルを選択するか、図形に直接ドラッグ アンド ドロップします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "속성 표시줄에서 이미지 영역을 클릭하여 파일을 선택하거나 모양에 직접 끌어서 놓습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique na imagem na barra de propriedades para escolher um arquivo ou arraste e solte diretamente na forma."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单击属性栏中的图像以选择文件，或直接拖放到形状上。"
+          }
+        }
+      }
+    },
+    "Screenshot file is missing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot-Datei fehlt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta el archivo de captura de pantalla"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فایل اسکرین شات موجود نیست"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier de capture d'écran est manquant"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショットファイルがありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷 파일이 누락되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo de captura de tela está faltando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏幕截图文件丢失"
+          }
+        }
+      }
+    },
+    "Some Images Are Missing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einige Bilder fehlen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faltan algunas imágenes"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "برخی از تصاویر گم شده اند"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certaines images manquent"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一部の画像がありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일부 이미지가 누락되었습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algumas imagens estão faltando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一些图像丢失"
+          }
+        }
+      }
+    },
+    "Export finished with blank frames" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export mit leeren Frames abgeschlossen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportación finalizada con marcos en blanco."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صادرات با قاب های خالی به پایان رسید"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export terminé avec des cadres vierges"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エクスポートは空白のフレームで終了しました"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "빈 프레임으로 내보내기가 완료되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportação finalizada com quadros em branco"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出完成后带有空白帧"
+          }
+        }
+      }
+    },
+    "If an image file a screenshot needs can't be read, the frame renders empty and the export ends with **Some Images Are Missing** rather than a plain success — a blank device frame otherwise passes every check right up to the store." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn eine Bilddatei, die ein Screenshot benötigt, nicht gelesen werden kann, wird der Frame leer gerendert und der Export endet mit **Einige Bilder fehlen** und nicht mit einem einfachen Erfolg – andernfalls besteht ein leerer Geräterahmen jede Prüfung bis zum Store."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si un archivo de imagen que necesita una captura de pantalla no se puede leer, el marco queda vacío y la exportación finaliza con **Faltan algunas imágenes** en lugar de un simple éxito; de lo contrario, un marco de dispositivo en blanco pasa todas las comprobaciones hasta la tienda."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اگر فایل تصویری مورد نیاز یک اسکرین شات قابل خواندن نباشد، قاب خالی می شود و صادرات با **برخی از تصاویر گم شده اند** به جای موفقیت ساده پایان می یابد - در غیر این صورت یک قاب دستگاه خالی هر بررسی را تا فروشگاه ارسال می کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si un fichier image dont une capture d'écran a besoin ne peut pas être lu, le cadre est vide et l'exportation se termine par **Certaines images sont manquantes** plutôt que par un simple succès : un cadre de périphérique vierge passe autrement à chaque vérification jusqu'au magasin."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショットに必要な画像ファイルを読み取れない場合、フレームは空としてレンダリングされ、エクスポートは単純な成功ではなく **いくつかの画像が見つかりません** で終了します。それ以外の場合、空のデバイス フレームはストアに至るまですべてのチェックに合格します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷에 필요한 이미지 파일을 읽을 수 없는 경우 프레임은 빈 상태로 렌더링되고 내보내기는 단순한 성공이 아닌 **일부 이미지가 누락되었습니다**라는 메시지로 끝납니다. 그렇지 않으면 빈 장치 프레임이 모든 확인을 저장소까지 바로 전달합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se um arquivo de imagem necessário para uma captura de tela não puder ser lido, o quadro ficará vazio e a exportação terminará com **Algumas imagens estão faltando** em vez de um simples sucesso - caso contrário, um quadro de dispositivo em branco passará em todas as verificações até a loja."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果无法读取屏幕截图所需的图像文件，则该框架会呈现为空，并且导出会以**某些图像丢失**结束，而不是简单的成功 - 否则，空白的设备框架会将每项检查直接传递到商店。"
+          }
+        }
+      }
+    },
+    "Device shapes render the screenshot inside a real device frame. Pick a category and model in the properties bar." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräteformen rendern den Screenshot innerhalb eines echten Geräterahmens. Wählen Sie in der Eigenschaftenleiste eine Kategorie und ein Modell aus."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las formas de los dispositivos representan la captura de pantalla dentro de un marco de dispositivo real. Elija una categoría y modelo en la barra de propiedades."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اشکال دستگاه اسکرین شات را در یک قاب دستگاه واقعی ارائه می دهد. یک دسته و مدل را در نوار خواص انتخاب کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les formes d'appareil restituent la capture d'écran dans un véritable cadre d'appareil. Choisissez une catégorie et un modèle dans la barre de propriétés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デバイスの形状は、実際のデバイスのフレーム内にスクリーンショットをレンダリングします。プロパティ バーでカテゴリとモデルを選択します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "장치 모양은 실제 장치 프레임 내부에 스크린샷을 렌더링합니다. 속성 표시줄에서 카테고리와 모델을 선택합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As formas do dispositivo renderizam a captura de tela dentro de um quadro real do dispositivo. Escolha uma categoria e modelo na barra de propriedades."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设备形状在真实设备框架内呈现屏幕截图。在属性栏中选择类别和型号。"
+          }
+        }
+      }
+    },
+    "A device frame with a **download badge** is waiting for iCloud. Screenshot Bro asks for those files first and fills them in as they land — no need to reopen the project." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Geräterahmen mit einem **Download-Badge** wartet auf iCloud. Screenshot Bro fragt zuerst nach diesen Dateien und füllt sie aus, sobald sie landen – das Projekt muss nicht erneut geöffnet werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un marco de dispositivo con una **insignia de descarga** está esperando iCloud. Screenshot Bro solicita esos archivos primero y los completa a medida que llegan; no es necesario volver a abrir el proyecto."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "یک قاب دستگاه با **نشان دانلود** در انتظار iCloud است. Screenshot Bro ابتدا آن فایل‌ها را می‌خواهد و به محض فرود آنها را پر می‌کند — نیازی به باز کردن مجدد پروژه نیست."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un cadre d'appareil avec un **badge de téléchargement** est en attente de iCloud. Screenshot Bro demande d'abord ces fichiers et les remplit au fur et à mesure qu'ils arrivent — pas besoin de rouvrir le projet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ダウンロード バッジ**が付いたデバイス フレームは iCloud を待機しています。 Screenshot Bro は最初にこれらのファイルを要求し、ファイルが到着したら入力します。プロジェクトを再度開く必要はありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**다운로드 배지**가 있는 기기 프레임이 iCloud을(를) 기다리고 있습니다. Screenshot Bro은 먼저 해당 파일을 요청하고 파일이 도착하면 채웁니다. 프로젝트를 다시 열 필요가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um frame de dispositivo com um **selo de download** está aguardando iCloud. Screenshot Bro solicita esses arquivos primeiro e os preenche assim que chegam — não há necessidade de reabrir o projeto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "带有 **下载徽章** 的设备框架正在等待 iCloud。 Screenshot Bro 首先请求这些文件并在它们落地时填写它们 - 无需重新打开项目。"
+          }
+        }
+      }
+    },
+    "The properties bar shows font, weight, size, color, horizontal and vertical alignment, line height, and letter spacing." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Eigenschaftenleiste werden Schriftart, Stärke, Größe, Farbe, horizontale und vertikale Ausrichtung, Zeilenhöhe und Buchstabenabstand angezeigt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La barra de propiedades muestra la fuente, el peso, el tamaño, el color, la alineación horizontal y vertical, la altura de la línea y el espaciado entre letras."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نوار خواص فونت، وزن، اندازه، رنگ، تراز افقی و عمودی، ارتفاع خطوط و فاصله حروف را نشان می دهد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La barre de propriétés affiche la police, l'épaisseur, la taille, la couleur, l'alignement horizontal et vertical, la hauteur des lignes et l'espacement des lettres."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロパティ バーには、フォント、太さ、サイズ、色、水平方向と垂直方向の配置、行の高さ、文字間隔が表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "속성 표시줄에는 글꼴, 두께, 크기, 색상, 가로 및 세로 정렬, 줄 높이, 문자 간격이 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A barra de propriedades mostra fonte, espessura, tamanho, cor, alinhamento horizontal e vertical, altura da linha e espaçamento entre letras."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "属性栏显示字体、粗细、大小、颜色、水平和垂直对齐方式、行高和字母间距。"
+          }
+        }
+      }
+    },
+    "Screenshots that aren't there yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshots, die noch nicht da sind"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas de pantalla que aún no están disponibles"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسکرین شات هایی که هنوز وجود ندارد"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captures d'écran qui ne sont pas encore là"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだ存在しないスクリーンショット"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 나오지 않은 스크린샷"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas de tela que ainda não estão lá"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有截图"
+          }
+        }
+      }
+    },
+    "A device frame with an **orange warning triangle** means the image file itself is gone. Add the image again to restore it; the layout, text and translations around it are untouched." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Geräterahmen mit einem **orangefarbenen Warndreieck** bedeutet, dass die Bilddatei selbst nicht mehr vorhanden ist. Fügen Sie das Bild erneut hinzu, um es wiederherzustellen. Das Layout, der Text und die Übersetzungen rundherum bleiben unberührt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un marco de dispositivo con un **triángulo de advertencia naranja** significa que el archivo de imagen ya no está. Agrega la imagen nuevamente para restaurarla; el diseño, el texto y las traducciones que lo rodean están intactos."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قاب دستگاه با **مثلث هشدار نارنجی** به این معنی است که خود فایل تصویر از بین رفته است. دوباره تصویر را اضافه کنید تا آن را بازیابی کنید. طرح، متن و ترجمه های اطراف آن دست نخورده است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un cadre d'appareil avec un **triangle d'avertissement orange** signifie que le fichier image lui-même a disparu. Ajoutez à nouveau l'image pour la restaurer ; la mise en page, le texte et les traductions qui l'entourent sont intacts."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**オレンジ色の警告三角形**が付いたデバイス フレームは、画像ファイル自体がなくなっていることを意味します。イメージを再度追加して復元します。レイアウト、テキスト、およびその周囲の翻訳は変更されません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**주황색 경고 삼각형**이 있는 기기 프레임은 이미지 파일 자체가 사라졌음을 의미합니다. 복원하려면 이미지를 다시 추가하세요. 주변의 레이아웃, 텍스트 및 번역은 그대로 유지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma moldura do dispositivo com um **triângulo de advertência laranja** significa que o próprio arquivo de imagem desapareceu. Adicione a imagem novamente para restaurá-la; o layout, o texto e as traduções permanecem intactos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "带有**橙色警告三角形**的设备框架表示图像文件本身已消失。再次添加图片即可恢复；其周围的布局、文本和翻译均未受影响。"
+          }
+        }
+      }
+    },
+    "**⌘L** locks or unlocks the selection. Locked shapes can't be dragged, resized, or deleted, and clicks fall through to whatever is behind them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** sperrt oder entsperrt die Auswahl. Gesperrte Formen können nicht gezogen, in der Größe geändert oder gelöscht werden, und Klicks wirken sich auf alles aus, was sich dahinter befindet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** bloquea o desbloquea la selección. Las formas bloqueadas no se pueden arrastrar, cambiar de tamaño ni eliminar, y los clics pasan a lo que hay detrás de ellas."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** انتخاب را قفل یا باز می کند. شکل‌های قفل‌شده را نمی‌توان کشید، تغییر اندازه داد یا حذف کرد و کلیک‌ها روی هر چیزی که پشت آن‌ها است می‌افتد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** verrouille ou déverrouille la sélection. Les formes verrouillées ne peuvent pas être glissées, redimensionnées ou supprimées, et les clics se répercutent sur ce qui se trouve derrière elles."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** は選択をロックまたはロック解除します。ロックされた図形はドラッグ、サイズ変更、削除ができず、クリックするとその背後にあるものに影響が及びます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L**은 선택 항목을 잠그거나 잠금 해제합니다. 잠긴 도형은 끌거나 크기를 조정하거나 삭제할 수 없으며 클릭하면 뒤에 있는 모든 항목이 클릭됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** bloqueia ou desbloqueia a seleção. As formas bloqueadas não podem ser arrastadas, redimensionadas ou excluídas, e os cliques passam para o que quer que esteja por trás delas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**⌘L** 锁定或解锁选择。锁定的形状无法拖动、调整大小或删除，并且单击会传递到其后面的任何内容。"
+          }
+        }
+      }
+    },
+    "**Lock** (**⌘L**) freezes a shape: clicks and drags pass straight through it. A locked shape's only right-click item is **Unlock**." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Sperren** (**⌘L**) friert eine Form ein: Klicken und Ziehen werden direkt durch sie hindurch ausgeführt. Das einzige Rechtsklick-Element einer gesperrten Form ist **Entsperren**."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Bloquear** (**⌘L**) congela una forma: los clics y los arrastres pasan directamente a través de ella. El único elemento de clic derecho de una forma bloqueada es **Desbloquear**."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**قفل** (**⌘L**) یک شکل را ثابت می کند: کلیک ها و کشیدن ها مستقیماً از آن عبور می کنند. تنها مورد کلیک راست یک شکل قفل شده **باز کردن قفل** است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Lock** (**⌘L**) fige une forme : les clics et les glissements la traversent directement. Le seul élément cliqué avec le bouton droit d'une forme verrouillée est **Déverrouiller**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**ロック** (**⌘L**) は形状を固定します。クリックとドラッグは形状を直接通過します。ロックされた図形の唯一の右クリック項目は ​​[**ロック解除**] です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**잠금**(**⌘L**)은 모양을 고정합니다. 클릭하고 드래그하면 모양이 바로 통과됩니다. 잠긴 셰이프의 유일한 마우스 오른쪽 버튼 클릭 항목은 **잠금 해제**입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Lock** (**⌘L**) congela uma forma: cliques e arrastamentos passam diretamente por ela. O único item de clique com o botão direito de uma forma bloqueada é **Desbloquear**."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**锁定** (**⌘L**) 冻结形状：单击和拖动直接穿过它。锁定形状的唯一右键单击项目是**解锁**。"
+          }
+        }
+      }
+    },
+    "A project's text and layout sync in one small file, so a project can open before its screenshots have finished downloading." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Text und das Layout eines Projekts werden in einer kleinen Datei synchronisiert, sodass ein Projekt geöffnet werden kann, bevor der Download seiner Screenshots abgeschlossen ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El texto y el diseño de un proyecto se sincronizan en un archivo pequeño, por lo que un proyecto puede abrirse antes de que terminen de descargarse las capturas de pantalla."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متن و طرح‌بندی پروژه در یک فایل کوچک همگام‌سازی می‌شود، بنابراین پروژه می‌تواند قبل از پایان دانلود اسکرین‌شات باز شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le texte et la mise en page d'un projet sont synchronisés dans un petit fichier, afin qu'un projet puisse s'ouvrir avant la fin du téléchargement de ses captures d'écran."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロジェクトのテキストとレイアウトは 1 つの小さなファイルで同期されるため、スクリーンショットのダウンロードが完了する前にプロジェクトを開くことができます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로젝트의 텍스트와 레이아웃은 하나의 작은 파일로 동기화되므로 스크린샷 다운로드가 완료되기 전에 프로젝트를 열 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O texto e o layout de um projeto são sincronizados em um arquivo pequeno, para que o projeto possa ser aberto antes que o download das capturas de tela seja concluído."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "项目的文本和布局同步在一个小文件中，因此项目可以在屏幕截图下载完成之前打开。"
+          }
+        }
+      }
+    },
+    "This screenshot's file is missing. Add the image again to restore it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei dieses Screenshots fehlt. Fügen Sie das Bild erneut hinzu, um es wiederherzustellen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta el archivo de esta captura de pantalla. Agregue la imagen nuevamente para restaurarla."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فایل این اسکرین شات موجود نیست. برای بازیابی تصویر را دوباره اضافه کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier de cette capture d'écran est manquant. Ajoutez à nouveau l'image pour la restaurer."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このスクリーンショットのファイルがありません。イメージを再度追加して復元します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 스크린샷의 파일이 없습니다. 복원하려면 이미지를 다시 추가하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo desta captura de tela está faltando. Adicione a imagem novamente para restaurá-la."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此屏幕截图的文件丢失。再次添加图像即可恢复。"
+          }
+        }
+      }
+    },
+    "%lld %@ were written, but %lld image files could not be read, so those device frames are blank. Check the canvas before uploading." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ wurden geschrieben, aber %3$lld Bilddateien konnten nicht gelesen werden, daher sind diese Geräterahmen leer. Überprüfen Sie die Leinwand vor dem Hochladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se escribieron %1$lld %2$@, pero los archivos de imagen %3$lld no se pudieron leer, por lo que los marcos de esos dispositivos están en blanco. Verifique el lienzo antes de cargarlo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ نوشته شد، اما %3$lld فایل تصویری خوانده نشد، بنابراین آن قاب‌های دستگاه خالی هستند. قبل از آپلود بوم را بررسی کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ ont été écrits, mais les fichiers image %3$lld n'ont pas pu être lus, ces cadres de périphérique sont donc vides. Vérifiez le canevas avant de télécharger."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ は書き込まれましたが、%3$lld イメージ ファイルを読み取ることができなかったため、これらのデバイス フレームは空白になっています。アップロードする前にキャンバスを確認してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@을 썼지만 %3$lld 이미지 파일을 읽을 수 없어 해당 장치 프레임이 비어 있습니다. 업로드하기 전에 캔버스를 확인하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ foram gravados, mas os arquivos de imagem %3$lld não puderam ser lidos, portanto, esses quadros do dispositivo estão em branco. Verifique a tela antes de fazer upload."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ 已写入，但 %3$lld 图像文件无法读取，因此这些设备帧为空白。上传前检查画布。"
+          }
+        }
+      }
+    },
+    "This screenshot is still downloading from iCloud." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Screenshot wird noch von iCloud heruntergeladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta captura de pantalla aún se está descargando desde iCloud."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این نماگرفت هنوز از iCloud در حال بارگیری است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette capture d'écran est toujours en cours de téléchargement depuis iCloud."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このスクリーンショットはまだ iCloud からダウンロード中です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 스크린샷은 아직 iCloud에서 다운로드 중입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta captura de tela ainda está sendo baixada de iCloud."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此屏幕截图仍在从 iCloud 下载。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -8,6 +8,9 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
 
     var onRemoteChange: (@MainActor @Sendable () -> Void)?
     var onSyncStatusChange: (@MainActor @Sendable (SyncStatus) -> Void)?
+    /// A file under some project's `resources/` appeared or changed — most usefully, a download
+    /// landed. Coalesced rather than per-URL: the only consumer re-reads what it is still missing.
+    var onResourcesDidChange: (@MainActor @Sendable () -> Void)?
 
     private var recentWriteURLs: Set<URL> = []
     private let writeURLLock = NSLock()
@@ -22,6 +25,7 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
     private var lastKnownIndexModDate: Date?
 
     private var debounceTimer: DispatchWorkItem?
+    private var resourceDebounceTimer: DispatchWorkItem?
     private let debounceLock = NSLock()
     private let debounceInterval: TimeInterval = 1.0
 
@@ -77,7 +81,15 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
         debounceLock.withLock {
             debounceTimer?.cancel()
             debounceTimer = nil
+            resourceDebounceTimer?.cancel()
+            resourceDebounceTimer = nil
         }
+    }
+
+    /// Ask the file provider for specific items ahead of the query's opportunistic pass. Returns
+    /// immediately; the synchronous XPC runs on the prefetcher's own queue.
+    func requestDownload(_ urls: [URL]) {
+        prefetcher?.request(urls)
     }
 
     /// Mark URLs as own writes so we can ignore the resulting NSFilePresenter callbacks.
@@ -105,6 +117,7 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
 
     func presentedSubitemDidChange(at url: URL) {
         guard !isOwnWrite(url) else { return }
+        noteResourceChange(at: url)
         scheduleDebouncedReload()
     }
 
@@ -118,6 +131,7 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
     }
 
     func presentedSubitemDidAppear(at url: URL) {
+        noteResourceChange(at: url)
         scheduleDebouncedReload()
     }
 
@@ -168,6 +182,22 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
     }
 
     // MARK: - Private
+
+    /// `hasIndexChanged()` gates the reload, and a screenshot arriving never touches the index —
+    /// which is why a resource that finished downloading used to reach nothing at all.
+    private func noteResourceChange(at url: URL) {
+        guard url.deletingLastPathComponent().lastPathComponent == PersistenceService.resourcesDirName else { return }
+        let task = DispatchWorkItem { [weak self] in
+            DispatchQueue.main.async { [weak self] in
+                MainActor.assumeIsolated { self?.onResourcesDidChange?() }
+            }
+        }
+        debounceLock.withLock {
+            resourceDebounceTimer?.cancel()
+            resourceDebounceTimer = task
+        }
+        workQueue.asyncAfter(deadline: .now() + debounceInterval, execute: task)
+    }
 
     private func scheduleDebouncedReload() {
         let task = DispatchWorkItem { [weak self] in

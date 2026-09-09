@@ -43,6 +43,9 @@ final class ExportFlowModel {
     /// written, so this is not an error — but "12 screenshots exported" over blank device frames is
     /// not a success either, and this is what a UI needs to say so.
     private(set) var unrenderableFileNames: [String] = []
+    /// Set when a run finished but drew holes. Separate from `errorMessage` because the files were
+    /// written — the user needs to know before uploading them, not to be told the export failed.
+    var incompleteMessage: String?
 
     /// Rendered output held while the destination action sheet is on screen (iPad only — macOS
     /// picks the folder up front).
@@ -128,10 +131,20 @@ final class ExportFlowModel {
         successTimer = .delayed(2) { [weak self] in self?.exportSuccess = false }
 
         let noun = total == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
-        let body = projectName.isEmpty
-            ? String(localized: "\(total) \(noun) exported")
-            : String(localized: "\(total) \(noun) exported · \(projectName)")
-        NotificationService.notify(title: String(localized: "Export complete"), body: body)
+        if unrenderableFileNames.isEmpty {
+            let body = projectName.isEmpty
+                ? String(localized: "\(total) \(noun) exported")
+                : String(localized: "\(total) \(noun) exported · \(projectName)")
+            NotificationService.notify(title: String(localized: "Export complete"), body: body)
+        } else {
+            let count = unrenderableFileNames.count
+            incompleteMessage = String(localized: """
+                \(total) \(noun) were written, but \(count) image files could not be read, so those \
+                device frames are blank. Check the canvas before uploading.
+                """)
+            NotificationService.notify(title: String(localized: "Export finished with blank frames"),
+                                       body: String(localized: "\(count) image files could not be read"))
+        }
 
         if review.recordExportAndCheck() {
             Task.delayed(2.5) { [requestReview] in requestReview() }

@@ -37,6 +37,14 @@ final class AppState {
     /// Editor popovers that must be single across the editor. See EditorPresentation.
     let presentation = EditorPresentation()
     var screenshotImages: [String: NSImage] = [:]
+    /// Referenced resources the editor asked for and did not get. Transient view state, not
+    /// document state — an absent file is not an edit, and the model deliberately keeps its
+    /// reference so the bytes coming back later put the screenshot back.
+    var missingImageFileNames: Set<String> = []
+    /// The subset iCloud still owes us bytes for, which is a wait rather than a hole.
+    var pendingDownloadImageFileNames: Set<String> = []
+    /// Reset per project so one absent file is one issue, not one per locale switch.
+    @ObservationIgnored var reportedMissingImageFileNames: Set<String> = []
     /// User-imported fonts. See CustomFontLibrary.
     let fonts: CustomFontLibrary
 

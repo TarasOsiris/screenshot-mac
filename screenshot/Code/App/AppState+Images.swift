@@ -64,6 +64,24 @@ private struct StagedImageWrite {
     let source: StagedImageSource
 }
 
+/// What the decode loop couldn't produce, split by whose fault it is. `notDownloaded` is a wait —
+/// the file provider owes us the bytes — so it asks for them rather than reporting a hole.
+/// `nonisolated` because the decode loop that fills it is detached.
+nonisolated private struct UnloadableResources {
+    var missing: Set<String> = []
+    var pending: Set<String> = []
+
+    var isEmpty: Bool { missing.isEmpty && pending.isEmpty }
+
+    /// `availability` stats a ubiquitous path, which can block, so this must stay off the main actor.
+    mutating func record(_ fileName: String, at url: URL) {
+        switch PersistenceService.availability(of: url) {
+        case .notDownloaded: pending.insert(fileName)
+        case .present, .absent: missing.insert(fileName)
+        }
+    }
+}
+
 extension AppState {
 
     // MARK: - Screenshot Images
@@ -318,6 +336,8 @@ extension AppState {
         for key in stale {
             screenshotImages.removeValue(forKey: key)
         }
+        missingImageFileNames.formIntersection(needed)
+        pendingDownloadImageFileNames.formIntersection(needed)
 
         let toLoad = needed.filter { screenshotImages[$0] == nil }
         guard !toLoad.isEmpty else {
@@ -332,6 +352,7 @@ extension AppState {
         let batchSize = Self.imagePublishBatchSize
         imageLoadTask = Task.detached { [weak self] in
             var batch: [String: NSImage] = [:]
+            var unloadable = UnloadableResources()
             var completed = 0
 
             for fileName in toLoad {
@@ -341,6 +362,8 @@ extension AppState {
                     if let image = ImageDownsampler.downsampledImage(at: url, maxDimension: maxDim)
                         ?? NSImage(contentsOf: url) {
                         batch[fileName] = image
+                    } else {
+                        unloadable.record(fileName, at: url)
                     }
                 }
                 completed += 1
@@ -351,7 +374,7 @@ extension AppState {
                 }
             }
             guard !Task.isCancelled else { return }
-            await self?.finishImageLoading(for: activeId)
+            await self?.finishImageLoading(unloadable, in: resourcesURL, for: activeId)
         }
     }
 
@@ -360,12 +383,50 @@ extension AppState {
     private func publishLoadedImages(_ images: [String: NSImage], completed: Int, for projectId: UUID) {
         guard activeProjectId == projectId else { return }
         screenshotImages.merge(images) { _, new in new }
+        // A resource that arrived is neither missing nor pending any more, and this is the only
+        // place that knows it — a retry re-reads the same names, so nothing else clears them.
+        missingImageFileNames.subtract(images.keys)
+        pendingDownloadImageFileNames.subtract(images.keys)
         projectOpen.advanceImages(to: completed)
     }
 
-    private func finishImageLoading(for projectId: UUID) {
+    private func finishImageLoading(_ unloadable: UnloadableResources, in resourcesURL: URL, for projectId: UUID) {
         guard activeProjectId == projectId else { return }
         projectOpen.finishImages()
+        guard !unloadable.isEmpty else { return }
+        missingImageFileNames.formUnion(unloadable.missing)
+        pendingDownloadImageFileNames.formUnion(unloadable.pending)
+        requestDownload(of: unloadable.pending, in: resourcesURL)
+        reportMissingResources(unloadable.missing, pending: unloadable.pending.count)
+    }
+
+    /// Re-reads what iCloud still owed us, once its bytes land. Anything unloaded is absent from
+    /// `screenshotImages`, so the ordinary load already re-attempts exactly those names — and with
+    /// nothing pending there is nothing to re-read, which is the common case.
+    func reloadPendingScreenshotImages() {
+        guard !pendingDownloadImageFileNames.isEmpty else { return }
+        loadScreenshotImages()
+    }
+
+    /// The container-wide prefetch pass is opportunistic, unordered and 24 URLs at a time, so the
+    /// project actually on screen asks for its own resources by name.
+    private func requestDownload(of fileNames: Set<String>, in resourcesURL: URL) {
+        guard !fileNames.isEmpty else { return }
+        iCloudMonitor?.requestDownload(fileNames.map { resourcesURL.appendingPathComponent($0) })
+    }
+
+    /// Counts only, and once per name per project — the file names would say what the user is
+    /// building, and a locale switch re-walks the same resources.
+    private func reportMissingResources(_ missing: Set<String>, pending: Int) {
+        let unreported = missing.subtracting(reportedMissingImageFileNames)
+        guard !unreported.isEmpty else { return }
+        reportedMissingImageFileNames.formUnion(unreported)
+        CrashReportingService.report(.referencedResourceMissing, extra: [
+            "missing": unreported.count,
+            "pending": pending,
+            "loaded": screenshotImages.count,
+            "icloud": PersistenceService.isUsingICloud,
+        ])
     }
 
     func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat, source: ImageImportOrigin) {

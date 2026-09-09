@@ -12,34 +12,42 @@ extension AppState {
 
     // MARK: - Image Cleanup
 
-    /// Image files in `files` that aren't referenced by the model and aren't fonts.
-    private nonisolated static func orphanedResourceURLs(in files: [URL], referenced: Set<String>) -> [URL] {
+    /// The extensions the app itself writes as image resources.
+    nonisolated static let imageResourceExtensions: Set<String> = ["png"]
+
+    /// Above this, one pass has removed more than any plausible manual deletion, and the sweep
+    /// itself is the suspect. Below it, the breadcrumb is enough.
+    private nonisolated static let largeSweepThreshold = 50
+
+    /// Image files in `files` that aren't referenced by the model.
+    ///
+    /// An allowlist, not a "not a font" denylist: `resources/` also holds entries we did not put
+    /// there and cannot classify, and one of them is fatal to touch. A ubiquitous resource whose
+    /// bytes haven't arrived exists on disk only as the hidden sibling `.<name>.png.icloud`, whose
+    /// name is not the referenced name and whose extension is not a font — so the old filter called
+    /// it an orphan and deleted it, which deletes the item itself on every device. That is how a
+    /// project opened before its screenshots finished syncing lost all 266 of them.
+    nonisolated static func orphanedResourceURLs(in files: [URL], referenced: Set<String>) -> [URL] {
         files.filter { url in
-            !CustomFontLibrary.fontExtensions.contains(url.pathExtension.lowercased())
-                && !referenced.contains(url.lastPathComponent)
+            let fileName = url.lastPathComponent
+            guard !fileName.hasPrefix("."),
+                  imageResourceExtensions.contains(url.pathExtension.lowercased()) else { return false }
+            return !referenced.contains(fileName)
         }
     }
 
-    func cleanupOrphanedResourceFiles(for projectId: UUID) {
-        // Callers clear the undo stack first, so nothing parked can be restored any more and
-        // this directory scan subsumes the parking lot.
-        deferredOrphanedImages.removeAll()
-        let resourcesURL = PersistenceService.resourcesDir(projectId)
-        guard let files = try? FileManager.default.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
-        for fileURL in Self.orphanedResourceURLs(in: files, referenced: allReferencedImageFileNames()) {
-            removeImageFile(fileURL.lastPathComponent)
-        }
-    }
-
-    /// Project-open variant: scans the resources directory and deletes orphans off-main so
-    /// the switch doesn't block the push animation. The `referenced` set is re-read on the
-    /// main actor at deletion time (not snapshotted at call time) so an image imported
-    /// right after the open isn't mistaken for an orphan, and the task bails if the active
-    /// project changed. Skips the in-memory `screenshotImages` eviction (it uses
-    /// `removeItem`, not `removeImageFile`); on open that dict was just cleared and is
-    /// repopulated by `loadScreenshotImages`.
+    /// Scans the resources directory and deletes orphans off-main so a project switch doesn't
+    /// block the push animation. The `referenced` set is re-read on the main actor at deletion
+    /// time (not snapshotted at call time) so an image imported right after the open isn't
+    /// mistaken for an orphan, and the task bails if the active project changed. Skips the
+    /// in-memory `screenshotImages` eviction (it uses `removeItem`, not `removeImageFile`); on
+    /// open that dict was just cleared and is repopulated by `loadScreenshotImages`.
+    ///
+    /// Only ever called for a project the user just opened. A document replaced by an iCloud
+    /// reload must not reach here: a peer's `project.json` can be newer by mtime and behind in
+    /// content, and sweeping against it deletes resources this device just wrote.
     func cleanupOrphanedResourceFilesAsync(for projectId: UUID) {
-        deferredOrphanedImages.removeAll()
+        forgetDeferredOrphans()
         let resourcesURL = PersistenceService.resourcesDir(projectId)
         Task.detached(priority: .utility) { [weak self] in
             guard let files = try? FileManager.default.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil) else { return }
@@ -51,10 +59,27 @@ extension AppState {
                 return self.allReferencedImageFileNames()
             }
             guard let referenced else { return }
-            for fileURL in AppState.orphanedResourceURLs(in: files, referenced: referenced) {
+            let orphans = AppState.orphanedResourceURLs(in: files, referenced: referenced)
+            for fileURL in orphans {
                 try? FileManager.default.removeItem(at: fileURL)
             }
+            AppState.reportSweep(listed: files.count, referenced: referenced.count, removed: orphans.count)
         }
+    }
+
+    /// Counts only — a file name here would name what the user is building.
+    private nonisolated static func reportSweep(listed: Int, referenced: Int, removed: Int) {
+        guard removed > 0 else { return }
+        let extra: [String: Any] = ["listed": listed, "referenced": referenced, "removed": removed]
+        CrashReportingService.breadcrumb(.persistence, "Swept orphaned resources", data: extra)
+        guard removed >= largeSweepThreshold else { return }
+        CrashReportingService.report(.orphanSweepRemovedManyResources, extra: extra, level: .warning)
+    }
+
+    /// The document was replaced, so the parked orphans were measured against an undo stack that
+    /// no longer exists. Anything genuinely dead is picked up by the next open's directory scan.
+    func forgetDeferredOrphans() {
+        deferredOrphanedImages.removeAll()
     }
 
     /// The generation past which an undo step has been pushed off the end of the stack, so

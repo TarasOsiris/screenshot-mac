@@ -245,6 +245,9 @@ extension AppState {
         imageLoadTask = nil
         unregisterCustomFonts()
         screenshotImages = [:]
+        missingImageFileNames = []
+        pendingDownloadImageFileNames = []
+        reportedMissingImageFileNames = []
     }
 
     func beginProjectOpening(for id: UUID) {

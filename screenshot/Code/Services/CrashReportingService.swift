@@ -43,6 +43,8 @@ nonisolated enum CrashReportingService {
         case iCloudMergeSourceUnreadable
         case iCloudConflictDiscardedVersions
         case imageResourceCopyFailed
+        case orphanSweepRemovedManyResources
+        case referencedResourceMissing
         case customFontCopyFailed
         case renderProducedBlankImage
         case imageEncodeFailed
@@ -476,6 +478,7 @@ nonisolated enum CrashReportingService {
         case .projectDecodeFailed, .projectReadFailed, .projectLoadFellBackToEmpty,
              .projectSaveFailed, .projectIndexSaveFailed, .projectIndexRebuilt,
              .projectDirectoryCopyFailed, .directoryCreateFailed, .imageResourceCopyFailed,
+             .orphanSweepRemovedManyResources, .referencedResourceMissing,
              .customFontCopyFailed, .bundledTemplateLoadFailed, .undoScopeViolation:
             AppLogger.persistence
         case .iCloudCoordinatedReadFailed, .iCloudMergeSourceUnreadable, .iCloudConflictDiscardedVersions:
