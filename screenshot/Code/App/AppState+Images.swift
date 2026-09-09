@@ -328,6 +328,8 @@ extension AppState {
 
         imageLoadTask?.cancel()
         imageLoadTask = nil
+        // The cancelled pass will never reach `finishImageLoading`, so it can't clear this itself.
+        isLoadingScreenshotImages = false
 
         let needed = editorReferencedImageFileNames()
 
@@ -345,6 +347,7 @@ extension AppState {
             return
         }
         projectOpen.beginImages(total: toLoad.count)
+        isLoadingScreenshotImages = true
 
         // Load downsampled images on a background thread, then publish in batches on main.
         // Full-resolution images are loaded from disk on-demand in export paths.
@@ -392,24 +395,40 @@ extension AppState {
 
     private func finishImageLoading(_ unloadable: UnloadableResources, in resourcesURL: URL, for projectId: UUID) {
         guard activeProjectId == projectId else { return }
+        isLoadingScreenshotImages = false
         projectOpen.finishImages()
-        guard !unloadable.isEmpty else { return }
-        missingImageFileNames.formUnion(unloadable.missing)
-        pendingDownloadImageFileNames.formUnion(unloadable.pending)
-        requestDownload(of: unloadable.pending, in: resourcesURL)
-        reportMissingResources(unloadable.missing, pending: unloadable.pending.count)
+        if !unloadable.isEmpty {
+            missingImageFileNames.formUnion(unloadable.missing)
+            pendingDownloadImageFileNames.formUnion(unloadable.pending)
+            requestDownload(of: unloadable.missing.union(unloadable.pending), in: resourcesURL)
+            reportMissingResources(unloadable.missing, pending: unloadable.pending.count)
+        }
+        guard needsScreenshotImageReload else { return }
+        needsScreenshotImageReload = false
+        reloadUnresolvedScreenshotImages()
     }
 
-    /// Re-reads what iCloud still owed us, once its bytes land. Anything unloaded is absent from
-    /// `screenshotImages`, so the ordinary load already re-attempts exactly those names — and with
-    /// nothing pending there is nothing to re-read, which is the common case.
-    func reloadPendingScreenshotImages() {
-        guard !pendingDownloadImageFileNames.isEmpty else { return }
+    /// Re-reads what the last pass couldn't, once resources under the project change. Anything
+    /// unresolved is absent from `screenshotImages`, so the ordinary load re-attempts exactly those
+    /// names — and with nothing unresolved there is nothing to re-read, the common case.
+    ///
+    /// Missing counts as unresolved, not just pending: a peer's `project.json` is one small file
+    /// and arrives before the file provider has placeholders for the resources it names, so those
+    /// names stat as absent rather than not-downloaded. Gating the retry on `pending` alone left
+    /// exactly the case this is for — a project opened mid-sync — stuck on the missing badge.
+    func reloadUnresolvedScreenshotImages() {
+        guard !pendingDownloadImageFileNames.isEmpty || !missingImageFileNames.isEmpty else { return }
+        guard !isLoadingScreenshotImages else {
+            needsScreenshotImageReload = true
+            return
+        }
         loadScreenshotImages()
     }
 
     /// The container-wide prefetch pass is opportunistic, unordered and 24 URLs at a time, so the
-    /// project actually on screen asks for its own resources by name.
+    /// project actually on screen asks for its own resources by name. Absent names are asked for
+    /// too: the file provider answers for an item it knows and errors harmlessly for one it
+    /// doesn't, and we cannot tell those apart from here.
     private func requestDownload(of fileNames: Set<String>, in resourcesURL: URL) {
         guard !fileNames.isEmpty else { return }
         iCloudMonitor?.requestDownload(fileNames.map { resourcesURL.appendingPathComponent($0) })
@@ -417,6 +436,11 @@ extension AppState {
 
     /// Counts only, and once per name per project — the file names would say what the user is
     /// building, and a locale switch re-walks the same resources.
+    ///
+    /// `.warning`, not the default error level: a resource can also be absent because iCloud
+    /// hasn't caught up or the user removed the file, and neither is our bug. It stays a report
+    /// rather than a breadcrumb because a project whose resources have vanished is the most
+    /// damaging failure this app has had, and the last one went unnoticed for two days.
     private func reportMissingResources(_ missing: Set<String>, pending: Int) {
         let unreported = missing.subtracting(reportedMissingImageFileNames)
         guard !unreported.isEmpty else { return }
@@ -426,7 +450,7 @@ extension AppState {
             "pending": pending,
             "loaded": screenshotImages.count,
             "icloud": PersistenceService.isUsingICloud,
-        ])
+        ], level: .warning)
     }
 
     func addImageShape(image: NSImage, centerX: CGFloat, centerY: CGFloat, source: ImageImportOrigin) {

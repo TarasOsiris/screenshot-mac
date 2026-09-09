@@ -243,6 +243,8 @@ extension AppState {
         undoManager?.removeAllActions()
         imageLoadTask?.cancel()
         imageLoadTask = nil
+        isLoadingScreenshotImages = false
+        needsScreenshotImageReload = false
         unregisterCustomFonts()
         screenshotImages = [:]
         missingImageFileNames = []

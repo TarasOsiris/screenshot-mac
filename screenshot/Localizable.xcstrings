@@ -93299,58 +93299,6 @@
         }
       }
     },
-    "%lld image files could not be read" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld Bilddateien konnten nicht gelesen werden"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld archivos de imagen no se pudieron leer"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld فایل های تصویری خوانده نشد"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld fichiers image n'ont pas pu être lus"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld 画像ファイルを読み取れませんでした"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld 이미지 파일을 읽을 수 없습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld arquivos de imagem não puderam ser lidos"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld 无法读取图像文件"
-          }
-        }
-      }
-    },
     "Click the image well in the properties bar to pick a file, or drag and drop directly onto the shape." : {
       "localizations" : {
         "de" : {
@@ -94079,58 +94027,6 @@
         }
       }
     },
-    "%lld %@ were written, but %lld image files could not be read, so those device frames are blank. Check the canvas before uploading." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ wurden geschrieben, aber %3$lld Bilddateien konnten nicht gelesen werden, daher sind diese Geräterahmen leer. Überprüfen Sie die Leinwand vor dem Hochladen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se escribieron %1$lld %2$@, pero los archivos de imagen %3$lld no se pudieron leer, por lo que los marcos de esos dispositivos están en blanco. Verifique el lienzo antes de cargarlo."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ نوشته شد، اما %3$lld فایل تصویری خوانده نشد، بنابراین آن قاب‌های دستگاه خالی هستند. قبل از آپلود بوم را بررسی کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ ont été écrits, mais les fichiers image %3$lld n'ont pas pu être lus, ces cadres de périphérique sont donc vides. Vérifiez le canevas avant de télécharger."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ は書き込まれましたが、%3$lld イメージ ファイルを読み取ることができなかったため、これらのデバイス フレームは空白になっています。アップロードする前にキャンバスを確認してください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@을 썼지만 %3$lld 이미지 파일을 읽을 수 없어 해당 장치 프레임이 비어 있습니다. 업로드하기 전에 캔버스를 확인하세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ foram gravados, mas os arquivos de imagem %3$lld não puderam ser lidos, portanto, esses quadros do dispositivo estão em branco. Verifique a tela antes de fazer upload."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ 已写入，但 %3$lld 图像文件无法读取，因此这些设备帧为空白。上传前检查画布。"
-          }
-        }
-      }
-    },
     "This screenshot is still downloading from iCloud." : {
       "localizations" : {
         "de" : {
@@ -94179,6 +94075,214 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此屏幕截图仍在从 iCloud 下载。"
+          }
+        }
+      }
+    },
+    "Export finished, but %lld %@ could not be read, so those device frames are blank. Check the canvas before uploading." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Export ist abgeschlossen, aber %1$lld %2$@ konnte nicht gelesen werden, daher sind diese Geräterahmen leer. Überprüfen Sie die Leinwand vor dem Hochladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La exportación finalizó, pero %1$lld %2$@ no se pudo leer, por lo que los marcos de esos dispositivos están en blanco. Verifique el lienzo antes de cargarlo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صادرات تمام شد، اما %1$lld %2$@ خوانده نشد، بنابراین آن قاب‌های دستگاه خالی هستند. قبل از آپلود بوم را بررسی کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'exportation est terminée, mais %1$lld %2$@ n'a pas pu être lu, ces cadres de périphérique sont donc vides. Vérifiez le canevas avant de télécharger."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エクスポートは完了しましたが、%1$lld %2$@ を読み取れなかったため、これらのデバイス フレームは空白です。アップロードする前にキャンバスを確認してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내보내기가 완료되었지만 %1$lld %2$@을 읽을 수 없어 해당 장치 프레임이 비어 있습니다. 업로드하기 전에 캔버스를 확인하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A exportação foi concluída, mas %1$lld %2$@ não pôde ser lido, portanto, esses quadros de dispositivo estão em branco. Verifique a tela antes de fazer upload."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出完成，但无法读取 %1$lld %2$@，因此这些设备帧为空白。上传前检查画布。"
+          }
+        }
+      }
+    },
+    "image file" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilddatei"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "archivo de imagen"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فایل تصویری"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fichier image"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像ファイル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지 파일"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "arquivo de imagem"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图像文件"
+          }
+        }
+      }
+    },
+    "%lld %@ could not be read" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ konnte nicht gelesen werden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ no se pudo leer"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ خوانده نشد"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ n'a pas pu être lu"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ を読み取れませんでした"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@을(를) 읽을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ não pôde ser lido"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取 %1$lld %2$@"
+          }
+        }
+      }
+    },
+    "image files" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilddateien"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "archivos de imagen"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فایل های تصویری"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fichiers images"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像ファイル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지 파일"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "arquivos de imagem"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图像文件"
           }
         }
       }

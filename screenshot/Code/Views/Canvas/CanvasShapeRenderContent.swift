@@ -329,14 +329,18 @@ struct CanvasShapeRenderContent: View {
             .frame(width: displayW, height: displayH)
             .overlay {
                 if showsEditorHelpers, screenshotImage == nil {
-                    if resourceState == .satisfied {
-                        imagePickerButton(iconSize: min(28, max(14, sizeRef * 0.18)),
-                                          padding: min(12, max(4, sizeRef * 0.05)),
-                                          cornerRadius: cornerRadius)
-                    } else {
-                        unresolvedResourceBadge(iconSize: min(28, max(14, sizeRef * 0.18)),
-                                                padding: min(12, max(4, sizeRef * 0.05)),
+                    imagePickerButton(iconSize: min(28, max(14, sizeRef * 0.18)),
+                                      padding: min(12, max(4, sizeRef * 0.05)),
+                                      cornerRadius: cornerRadius)
+                    // Beside the picker, never instead of it: the badge's own text says to add the
+                    // image again, and on iPad there is no tooltip and no drag source to fall back
+                    // on, so replacing the button leaves a broken frame with no way to fix it.
+                    if resourceState != .satisfied {
+                        unresolvedResourceBadge(iconSize: min(16, max(10, sizeRef * 0.1)),
+                                                padding: min(6, max(3, sizeRef * 0.025)),
                                                 cornerRadius: cornerRadius)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                            .padding(min(8, max(3, sizeRef * 0.03)))
                     }
                 }
                 if showsEditorHelpers, isDropTargeted {

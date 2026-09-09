@@ -45,6 +45,11 @@ final class AppState {
     var pendingDownloadImageFileNames: Set<String> = []
     /// Reset per project so one absent file is one issue, not one per locale switch.
     @ObservationIgnored var reportedMissingImageFileNames: Set<String> = []
+    /// A decode pass is running. iCloud delivers a large project's resources in bursts, and
+    /// restarting the pass on each one would cancel the decode already in flight and reset the
+    /// progress pill; the flag below is what turns those bursts into one follow-up pass.
+    @ObservationIgnored var isLoadingScreenshotImages = false
+    @ObservationIgnored var needsScreenshotImageReload = false
     /// User-imported fonts. See CustomFontLibrary.
     let fonts: CustomFontLibrary
 

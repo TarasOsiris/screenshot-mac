@@ -158,6 +158,14 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
         if crossedIdle {
             CrashReportingService.breadcrumb(.sync, status == .idle ? "iCloud transfer idle" : "iCloud transfer started")
         }
+        // A second source for the resource hook, independent of the subitem callbacks' path shape:
+        // transfers going quiet is the moment anything still unresolved is worth re-reading.
+        if crossedIdle, status == .idle {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !statusLock.withLock({ isStopped }) else { return }
+                MainActor.assumeIsolated { self.onResourcesDidChange?() }
+            }
+        }
         DispatchQueue.main.async { [weak self] in
             // Re-checked on the main thread: `stopMonitoring` may have run between the hop being
             // enqueued and it landing, and the caller resets the published label itself.

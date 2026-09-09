@@ -137,13 +137,16 @@ final class ExportFlowModel {
                 : String(localized: "\(total) \(noun) exported · \(projectName)")
             NotificationService.notify(title: String(localized: "Export complete"), body: body)
         } else {
+            // One plural, and it is the one that varies: "1 screenshot were written" is what a
+            // second interpolation costs, in eight languages.
             let count = unrenderableFileNames.count
+            let fileNoun = count == 1 ? String(localized: "image file") : String(localized: "image files")
             incompleteMessage = String(localized: """
-                \(total) \(noun) were written, but \(count) image files could not be read, so those \
-                device frames are blank. Check the canvas before uploading.
+                Export finished, but \(count) \(fileNoun) could not be read, so those device frames \
+                are blank. Check the canvas before uploading.
                 """)
             NotificationService.notify(title: String(localized: "Export finished with blank frames"),
-                                       body: String(localized: "\(count) image files could not be read"))
+                                       body: String(localized: "\(count) \(fileNoun) could not be read"))
         }
 
         if review.recordExportAndCheck() {

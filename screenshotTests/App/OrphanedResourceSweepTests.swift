@@ -148,7 +148,7 @@ struct OrphanedResourceSweepTests {
 
         try FileManager.default.removeItem(at: placeholder)
         try seedImageResource(named: "later.png", in: projectId)
-        state.reloadPendingScreenshotImages()
+        state.reloadUnresolvedScreenshotImages()
         for _ in 0..<40 where state.screenshotImages["later.png"] == nil {
             try await Task.sleep(for: .milliseconds(50))
         }
@@ -156,6 +156,48 @@ struct OrphanedResourceSweepTests {
         #expect(state.screenshotImages["later.png"] != nil)
         #expect(state.pendingDownloadImageFileNames.isEmpty)
         #expect(CanvasResourceState("later.png", in: state) == .satisfied)
+    }
+
+    /// A peer's `project.json` arrives before the file provider has placeholders for the resources
+    /// it names, so those stat as absent, not as pending. Gating the retry on pending alone left
+    /// exactly that case — a project opened mid-sync — stuck on the missing badge for the session.
+    @Test func aResourceThatArrivesAfterBeingReportedMissingIsPickedUp() async throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let projectId = try #require(state.activeProjectId)
+        state.rows[0].backgroundImageConfig.fileName = "arrives.png"
+        state.rows[0].backgroundStyle = .image
+
+        state.loadScreenshotImages()
+        for _ in 0..<40 where state.missingImageFileNames.isEmpty {
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        #expect(state.missingImageFileNames == ["arrives.png"])
+
+        try seedImageResource(named: "arrives.png", in: projectId)
+        state.reloadUnresolvedScreenshotImages()
+        for _ in 0..<40 where state.screenshotImages["arrives.png"] == nil {
+            try await Task.sleep(for: .milliseconds(50))
+        }
+
+        #expect(state.screenshotImages["arrives.png"] != nil)
+        #expect(state.missingImageFileNames.isEmpty)
+    }
+
+    /// iCloud delivers a large project in bursts. Restarting the decode on each one cancels the
+    /// pass in flight and resets the progress pill, so a burst becomes one follow-up pass.
+    @Test func aRetryDuringAnActiveLoadIsCoalescedRatherThanRestartingIt() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        state.rows[0].backgroundImageConfig.fileName = "gone.png"
+        state.rows[0].backgroundStyle = .image
+        state.missingImageFileNames = ["gone.png"]
+        state.isLoadingScreenshotImages = true
+
+        state.reloadUnresolvedScreenshotImages()
+
+        #expect(state.needsScreenshotImageReload)
+        #expect(state.isLoadingScreenshotImages, "The pass in flight must not have been cancelled")
     }
 
     @discardableResult

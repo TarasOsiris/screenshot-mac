@@ -104,7 +104,7 @@ extension AppState {
             self?.iCloudStatus.status = status
         }
         monitor.onResourcesDidChange = { [weak self] in
-            self?.reloadPendingScreenshotImages()
+            self?.reloadUnresolvedScreenshotImages()
         }
         monitor.startMonitoring()
         iCloudMonitor = monitor
