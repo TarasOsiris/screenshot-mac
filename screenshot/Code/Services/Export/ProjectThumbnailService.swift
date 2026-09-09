@@ -142,43 +142,20 @@ enum ProjectThumbnailService {
     }
 
     private static func render(_ inputs: RenderInputs) -> NSImage {
-        // The cached set, not `Set(PlatformFonts.systemFamilyNames)`: enumerating the installed
-        // families per thumbnail is what made a batch of them slow.
-        let systemFamilies = PlatformFonts.familyNameSet
-
-        var registeredURLs: [URL] = []
-        for url in inputs.fontURLs where CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil) {
-            registeredURLs.append(url)
-        }
-        defer {
-            for url in registeredURLs {
-                CTFontManagerUnregisterFontsForURL(url as CFURL, .process, nil)
-            }
-        }
-
-        let fonts = Dictionary(
-            uniqueKeysWithValues: inputs.fontURLs.compactMap { url in
-                CustomFont.parseMetadata(at: url).map { ($0.fileName, $0) }
-            }
-        )
-        let instances = inputs.fontURLs.flatMap(CustomFont.allInstances(at:))
-        var availableFontFamilies = systemFamilies
-        for font in fonts.values {
-            availableFontFamilies.insert(font.familyName)
-            availableFontFamilies.insert(font.displayName)
-        }
+        let fontScope = ProjectFontScope.make(fontURLs: inputs.fontURLs)
+        defer { fontScope.dispose() }
 
         // A card is offscreen like an export but draws `inputs.images` — editor downsamples
         // `EditorImagePresentation` already moved to sRGB. Saying so keeps a card's raster out of
         // the caches whose entries become exported bytes (see `RasterRenderContext`).
         return RasterRenderContext.$current.withValue(.displayRaster) {
-            CustomFontRegistry.withTemporaryFonts(fonts, instances: instances) {
+            fontScope.withResolvedFonts {
                 RowRenderer.renderRowImage(
                     row: inputs.row,
                     screenshotImages: inputs.images,
                     localeCode: inputs.localeCode,
                     localeState: inputs.localeState,
-                    availableFontFamilies: availableFontFamilies,
+                    availableFontFamilies: fontScope.availableFamilySet,
                     displayScale: thumbnailDisplayScale(for: inputs.row)
                 )
             }
@@ -241,20 +218,7 @@ enum ProjectThumbnailService {
     /// Materializes every font before rendering. Returning nil avoids caching a broken
     /// thumbnail when iCloud has listed a font placeholder but its bytes are not available yet.
     nonisolated private static func loadFontURLs(projectId: UUID) -> [URL]? {
-        let dir = PersistenceService.resourcesDir(projectId)
-        guard let files = try? FileManager.default.contentsOfDirectory(
-            at: dir,
-            includingPropertiesForKeys: nil,
-            options: [.skipsHiddenFiles]
-        ) else {
-            return []
-        }
-
-        let fontURLs = files.filter { CustomFontLibrary.fontExtensions.contains($0.pathExtension.lowercased()) }
-        for url in fontURLs {
-            guard PersistenceService.readData(from: url) != nil else { return nil }
-        }
-        return fontURLs
+        ProjectFontScope.loadFontURLs(projectId: projectId)
     }
 
     /// A cached PNG counts as fresh only if its stamped mod-date is at least as new as the

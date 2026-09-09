@@ -224,119 +224,42 @@ extension AppState {
         }
     }
 
-    /// Loads full-resolution images for the given filenames from disk.
+    /// Loads full-resolution images for the given filenames from the *active* project's
+    /// resources. The loader itself is project-agnostic — see `ImageResourceLoader`.
     /// Pass `cache` to avoid redundant disk reads across multiple calls (e.g. during export).
     func loadFullResolutionImages(
         fileNames: Set<String>,
         cache: inout [String: NSImage]
     ) -> [String: NSImage] {
         guard let activeId = activeProjectId else { return [:] }
-        let resourcesURL = PersistenceService.resourcesDir(activeId)
-        var images: [String: NSImage] = [:]
-        for fileName in fileNames {
-            if let cached = cache[fileName] {
-                images[fileName] = cached
-            } else {
-                autoreleasepool {
-                    let url = resourcesURL.appendingPathComponent(fileName)
-                    guard let image = NSImage(contentsOf: url) else {
-                        // Callers render a hole rather than an error, so this is the only trace.
-                        AppLogger.export.warning("Image resource failed to load: \(fileName, privacy: .public)")
-                        return
-                    }
-                    #if os(macOS)
-                    // Create a new NSImage with point size equal to pixel
-                    // dimensions so SwiftUI uses full resolution at 1x export
-                    // rendering (not limited by DPI metadata). A new NSImage
-                    // avoids mutating the shared NSImageRep.
-                    if let rep = image.representations.first,
-                       rep.pixelsWide > 0, rep.pixelsHigh > 0 {
-                        let normalized = NSImage(size: NSSize(width: rep.pixelsWide, height: rep.pixelsHigh))
-                        normalized.addRepresentation(rep)
-                        images[fileName] = normalized
-                        cache[fileName] = normalized
-                    } else {
-                        images[fileName] = image
-                        cache[fileName] = image
-                    }
-                    #else
-                    // UIImage already loads at native pixel resolution.
-                    images[fileName] = image
-                    cache[fileName] = image
-                    #endif
-                }
-            }
-        }
-        return images
+        return ImageResourceLoader.loadFullResolution(
+            fileNames: fileNames,
+            from: PersistenceService.resourcesDir(activeId),
+            cache: &cache
+        )
     }
 
     // MARK: - Referenced Image Filenames
 
-    /// The one traversal: rows in order, then each row's templates and shapes, then the locale
-    /// overrides (keyed by translation key, not shape id, so they can't be interleaved).
-    /// `activeBackgroundsOnly` drops background images whose style is switched off — see
-    /// `ScreenshotRow.backgroundImageFileName(activeOnly:)`.
-    ///
-    /// Ordered rather than a `Set` because `loadScreenshotImages` decodes in batches and a large
-    /// project should fill in from the top row down; the `Set` callers just wrap the result. Two
-    /// walks would mean a new image-bearing property could be added to one and not the other.
-    private func orderedReferencedImageFileNames(
-        rows targetRows: [ScreenshotRow],
-        localeOverrides: [String: [String: ShapeLocaleOverride]],
-        activeBackgroundsOnly: Bool = false
-    ) -> [String] {
-        var seen = Set<String>()
-        var ordered: [String] = []
-        func append(_ fileName: String?) {
-            guard let fileName, seen.insert(fileName).inserted else { return }
-            ordered.append(fileName)
-        }
-        for row in targetRows {
-            append(row.backgroundImageFileName(activeOnly: activeBackgroundsOnly))
-            for template in row.templates {
-                append(template.backgroundImageFileName(activeOnly: activeBackgroundsOnly))
-            }
-            for shape in row.shapes {
-                for fileName in shape.allImageFileNames { append(fileName) }
-            }
-        }
-        for shapeOverrides in localeOverrides.values {
-            for override in shapeOverrides.values { append(override.overrideImageFileName) }
-        }
-        return ordered
-    }
-
-    private func referencedImageFileNames(
-        rows targetRows: [ScreenshotRow],
-        localeOverrides: [String: [String: ShapeLocaleOverride]],
-        activeBackgroundsOnly: Bool = false
-    ) -> Set<String> {
-        Set(orderedReferencedImageFileNames(
-            rows: targetRows,
-            localeOverrides: localeOverrides,
-            activeBackgroundsOnly: activeBackgroundsOnly
-        ))
+    /// The document view of the open project. The walks themselves live on `ProjectDocument` so a
+    /// project the editor does not have open answers them identically.
+    var document: ProjectDocument {
+        ProjectDocument(rows: rows, localeState: localeState)
     }
 
     /// Image filenames needed for the editor (base shapes + active locale overrides only),
     /// in document order.
     func editorReferencedImageFileNames() -> [String] {
-        let activeCode = localeState.activeLocaleCode
-        let activeOverrides = localeState.overrides[activeCode].map { [activeCode: $0] } ?? [:]
-        return orderedReferencedImageFileNames(rows: rows, localeOverrides: activeOverrides)
+        document.editorReferencedImageFileNames()
     }
 
     /// Collect all referenced image filenames in a single pass (for batch cleanup).
     func allReferencedImageFileNames() -> Set<String> {
-        referencedImageFileNames(rows: rows, localeOverrides: localeState.overrides)
+        document.allReferencedImageFileNames()
     }
 
-    /// Image filenames for a specific row and locale (for per-row export). Render path, so
-    /// inactive background configs are excluded: they draw nothing, and counting them would
-    /// let a stale reference report itself as a missing resource and abort an upload.
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> {
-        let localeOverrides = localeState.overrides[localeCode].map { [localeCode: $0] } ?? [:]
-        return referencedImageFileNames(rows: [row], localeOverrides: localeOverrides, activeBackgroundsOnly: true)
+        document.referencedImageFileNames(forRow: row, localeCode: localeCode)
     }
 
     /// Loads full-resolution images for a single row and locale from disk.

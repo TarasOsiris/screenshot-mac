@@ -75,22 +75,31 @@ extension MCPToolExecutor {
         ))
     }
 
-    func renderPreview(_ args: MCPArguments) throws -> CallTool.Result {
+    func renderPreview(_ args: MCPArguments) async throws -> CallTool.Result {
+        let checkout = try await requireCheckout(args)
+        defer { checkout.dispose() }
         // The MCP tools bypass ExportFlowModel, so they have to land a composing edit themselves.
-        state.commitPendingEdits()
-        let rowIndex = try requireRowIndex(args)
-        let row = state.rows[rowIndex]
+        checkout.commitPendingEdits()
+        let rowId = try args.uuid("row_id")
+        guard let rowIndex = checkout.rows.firstIndex(where: { $0.id == rowId }) else {
+            throw MCPToolError.notFound("Row \(rowId.uuidString)")
+        }
+        let row = checkout.rows[rowIndex]
         guard !row.templates.isEmpty else {
             throw MCPToolError.failed("Row has no template columns")
         }
 
-        let localeCode = args.string("locale") ?? state.localeState.activeLocaleCode
-        if args.has("locale"), !state.localeState.locales.contains(where: { $0.code == localeCode }) {
+        let localeCode = args.string("locale") ?? checkout.localeState.activeLocaleCode
+        if args.has("locale"), !checkout.localeState.locales.contains(where: { $0.code == localeCode }) {
             throw MCPToolError.notFound("Locale \(localeCode)")
         }
 
         let maxDimension = CGFloat(min(max(args.int("max_dimension") ?? 700, 100), 1200))
-        let images = state.loadFullResolutionImages(forRow: row, localeCode: localeCode)
+        var imageCache: [String: NSImage] = [:]
+        let images = checkout.loadFullResolutionImages(
+            fileNames: checkout.referencedImageFileNames(forRow: row, localeCode: localeCode),
+            cache: &imageCache
+        )
 
         let image: NSImage
         if let templateIndex = args.int("template_index") {
@@ -98,26 +107,30 @@ extension MCPToolExecutor {
                 throw MCPToolError.invalidArgument("template_index", "row has \(row.templates.count) columns")
             }
             let scale = min(1, maxDimension / max(row.templateWidth, row.templateHeight))
-            image = RowRenderer.renderSingleTemplateImage(
-                index: templateIndex,
-                row: row,
-                screenshotImages: images,
-                localeCode: localeCode,
-                localeState: state.localeState,
-                availableFontFamilies: state.availableFontFamilySet,
-                displayScale: scale
-            )
+            image = checkout.withResolvedFonts {
+                RowRenderer.renderSingleTemplateImage(
+                    index: templateIndex,
+                    row: row,
+                    screenshotImages: images,
+                    localeCode: localeCode,
+                    localeState: checkout.localeState,
+                    availableFontFamilies: checkout.availableFontFamilySet,
+                    displayScale: scale
+                )
+            }
         } else {
             let totalWidth = row.templateWidth * CGFloat(row.templates.count)
             let scale = min(1, maxDimension / max(totalWidth, row.templateHeight))
-            image = RowRenderer.renderRowImage(
-                row: row,
-                screenshotImages: images,
-                localeCode: localeCode,
-                localeState: state.localeState,
-                availableFontFamilies: state.availableFontFamilySet,
-                displayScale: scale
-            )
+            image = checkout.withResolvedFonts {
+                RowRenderer.renderRowImage(
+                    row: row,
+                    screenshotImages: images,
+                    localeCode: localeCode,
+                    localeState: checkout.localeState,
+                    availableFontFamilies: checkout.availableFontFamilySet,
+                    displayScale: scale
+                )
+            }
         }
 
         guard let png = ExportService.pngData(from: image) else {

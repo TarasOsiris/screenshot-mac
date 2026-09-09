@@ -43,10 +43,14 @@ struct MCPToolExecutorTests {
         #expect(sessions.currentSessionId == opened)
     }
 
-    @Test func getProjectReturnsRowsAndShapes() async {
+    @Test func getProjectReturnsRowsAndShapes() async throws {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }
-        let result = await executor.call(name: "get_project", arguments: nil)
+        let projectId = try #require(state.activeProject?.id)
+        let result = await executor.call(
+            name: "get_project",
+            arguments: ["project_id": .string(projectId.uuidString)]
+        )
         expectSuccess(result)
         guard case .text(let json, _, _) = result.content.first else {
             Issue.record("expected text content")
@@ -54,6 +58,15 @@ struct MCPToolExecutorTests {
         }
         #expect(json.contains(state.rows[0].id.uuidString))
         #expect(json.contains("\"width\" : 1242"))
+    }
+
+    /// The default that used to exist here is the bug: a snapshot silently describing whichever
+    /// project the window happened to show, whose ids every other tool then uses.
+    @Test func getProjectWithoutAProjectIdIsRejected() async {
+        let (executor, _, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let result = await executor.call(name: "get_project", arguments: nil)
+        #expect(result.isError == true)
     }
 
     @Test func unknownToolAndUnknownIdsReturnErrors() async {
@@ -606,7 +619,9 @@ struct MCPToolExecutorTests {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }
 
+        let projectId = try #require(state.activeProject?.id)
         let result = await executor.call(name: "render_preview", arguments: [
+            "project_id": .string(projectId.uuidString),
             "row_id": .string(state.rows[0].id.uuidString),
             "max_dimension": 400,
         ])
@@ -627,7 +642,11 @@ struct MCPToolExecutorTests {
         let (executor, state, tempDir) = makeExecutor()
         defer { cleanupTestState(tempDir) }
 
-        let result = await executor.call(name: "export_project", arguments: [:])
+        let projectId = try #require(state.activeProject?.id)
+        let result = await executor.call(
+            name: "export_project",
+            arguments: ["project_id": .string(projectId.uuidString)]
+        )
         expectSuccess(result)
 
         guard case .text(let json, _, _) = result.content.first else {
@@ -658,9 +677,13 @@ struct MCPToolExecutorTests {
 
         let blockerFile = tempDir.appendingPathComponent("blocker-file")
         try Data().write(to: blockerFile)
+        let projectId = try #require(executor.state.activeProject?.id)
 
         do {
-            _ = try await executor.exportProject(MCPArguments(["folder_path": .string(blockerFile.path)]))
+            _ = try await executor.exportProject(MCPArguments([
+                "project_id": .string(projectId.uuidString),
+                "folder_path": .string(blockerFile.path),
+            ]))
             Issue.record("expected export to a path occupied by a file to throw")
         } catch let error as MCPToolError {
             #expect(error.isClientError)
@@ -687,7 +710,11 @@ struct MCPToolExecutorTests {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-        let metaResult = await executor.call(name: "get_app_store_metadata", arguments: [:])
+        // The project is named explicitly: the app window's open project is no longer a default.
+        let metaResult = await executor.call(
+            name: "get_app_store_metadata",
+            arguments: ["project_id": .string(projectId.uuidString)]
+        )
         expectSuccess(metaResult)
         guard case .text(let metaJson, _, _) = metaResult.content.first else {
             Issue.record("expected text content")
@@ -716,7 +743,7 @@ struct MCPToolExecutorTests {
         ])
         let updateResult = await executor.call(
             name: "update_app_store_description",
-            arguments: ["descriptions": descriptions]
+            arguments: ["project_id": .string(projectId.uuidString), "descriptions": descriptions]
         )
         expectSuccess(updateResult)
         guard case .text(let updateJson, _, _) = updateResult.content.first else {

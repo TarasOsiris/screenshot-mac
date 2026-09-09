@@ -7,6 +7,11 @@ extension MCPToolExecutor {
 
     struct ASCScreenshotPreviewResult: Encodable {
         let planId: String
+        /// Echoed so a caller can assert which project the plan was built from rather than
+        /// trusting that the app happened to have the right one open.
+        let projectId: String
+        let projectName: String
+        let appId: String
         let expiresAt: String
         let issues: [String]
         let sets: [SetResult]
@@ -26,18 +31,33 @@ extension MCPToolExecutor {
             let removed: Int
             let capacityFirstDeletions: Int
             let issues: [String]
+            /// Non-blocking notices — most usefully "these have no App Store checksum, so they
+            /// will be replaced rather than preserved", i.e. a preserve that is really a replace.
+            let warnings: [String]
         }
     }
 
     struct ASCScreenshotApplyResult: Encodable {
         let planId: String
         let succeeded: Bool
+        /// Whether anything was written to the live listing. The single most useful bit on a
+        /// partial failure, and previously invisible to an agent.
+        let didMutate: Bool
+        let attempted: Int
+        let alreadyApplied: Int
         let sets: [SetResult]
 
         struct SetResult: Encodable {
             let setId: String
-            let operations: [String]
+            let state: String
+            let uploaded: Int
+            let removed: Int
+            let moved: Int
+            let preserved: Int
             let finalVerified: Bool
+            let assetDeliveryStates: [String: Int]
+            let nonCompleteAssets: [ASCScreenshotDeliveryProblem]
+            let warnings: [String]
             let error: String?
         }
     }
@@ -80,7 +100,7 @@ extension MCPToolExecutor {
 
     func getAppStoreMetadata(_ args: MCPArguments) async throws -> CallTool.Result {
         try requireASCConfigured()
-        let appId = try resolveASCAppId(args)
+        let appId = try await resolveASCAppId(fromAppIdOrProject: args)
         let versions = try await ascVersions(appId: appId, requested: args.string("version_id"))
 
         var metas: [ASCMetadataResult.VersionMeta] = []
@@ -109,7 +129,7 @@ extension MCPToolExecutor {
             (try $0.requiredString("locale"), try $0.requiredString("description"))
         }
 
-        let appId = try resolveASCAppId(args)
+        let appId = try await resolveASCAppId(fromAppIdOrProject: args)
         let targets = try await resolveEditableTargets(appId: appId, requested: args.string("version_id"))
 
         var results: [ASCDescriptionUpdateResult.VersionResult] = []
@@ -144,8 +164,9 @@ extension MCPToolExecutor {
 
     func previewAppStoreScreenshotSync(_ args: MCPArguments) async throws -> CallTool.Result {
         try requireASCConfigured()
-        guard state.activeProjectId != nil else { throw MCPToolError.failed("No active project") }
-        let appId = try resolveASCAppId(args)
+        let checkout = try await requireCheckout(args)
+        defer { checkout.dispose() }
+        let appId = try resolveASCAppId(args, checkout: checkout)
         let requestedVersionIds = Set(args.stringArray("version_ids") ?? [])
         let allVersions = try await ascAPI.listAppStoreVersions(appId: appId)
         let candidateVersions: [ASCAppStoreVersion]
@@ -164,17 +185,20 @@ extension MCPToolExecutor {
             return id
         })
         let requestedLocaleCodes = Set(args.stringArray("locale_codes") ?? [])
-        let projectLocaleCodes = Set(state.localeState.locales.map(\.code))
+        let projectLocaleCodes = Set(checkout.localeState.locales.map(\.code))
         let unknownLocales = requestedLocaleCodes.subtracting(projectLocaleCodes)
         guard unknownLocales.isEmpty else {
-            throw MCPToolError.invalidArgument("locale_codes", "not in the active project: \(unknownLocales.sorted().joined(separator: ", "))")
+            throw MCPToolError.invalidArgument(
+                "locale_codes",
+                "not in project \(checkout.projectName): \(unknownLocales.sorted().joined(separator: ", "))"
+            )
         }
         let localeCodes = requestedLocaleCodes.isEmpty
-            ? state.localeState.locales.map(\.code)
-            : state.localeState.locales.map(\.code).filter(requestedLocaleCodes.contains)
+            ? checkout.localeState.locales.map(\.code)
+            : checkout.localeState.locales.map(\.code).filter(requestedLocaleCodes.contains)
 
         var issues: [String] = []
-        let rows = state.rows.filter { row in
+        let rows = checkout.rows.filter { row in
             requestedRowIds.isEmpty || requestedRowIds.contains(row.id)
         }
         let missingRows = requestedRowIds.subtracting(rows.map(\.id))
@@ -232,40 +256,80 @@ extension MCPToolExecutor {
             throw MCPToolError.failed("No compatible editable version × row × locale screenshot sets were found. \(issues.joined(separator: " "))")
         }
 
-        let plan = try await AppStoreConnectScreenshotSyncService.shared.buildPlan(
-            appId: appId,
-            targets: targets,
-            rows: state.rows,
-            source: state,
-            document: state.documentStamp
+        // 180 renders is what timed out at ~130 s; 36 returned fine. Anything sizeable becomes a
+        // job so the answer survives the client giving up on the request.
+        let renders = Self.previewRenderCount(targets)
+        let mode = try Self.decideMode(
+            Self.resolveMode(args),
+            units: renders,
+            fitsSync: renders <= Self.syncPreviewRenderLimit,
+            hardLimit: Self.hardPreviewRenderLimit,
+            unitName: "renders"
         )
-        let result = ASCScreenshotPreviewResult(
-            planId: plan.id,
-            expiresAt: ISO8601DateFormatter().string(from: plan.expiresAt),
-            issues: issues + plan.issues,
-            sets: plan.sets.map { set in
-                .init(
-                    setId: set.id,
-                    remoteSetId: set.remoteSetId,
-                    versionId: set.versionId,
-                    version: set.versionLabel,
-                    locale: set.localeLabel,
-                    displayType: set.displayType.appStoreConnectValue,
-                    status: !set.canApply ? "unavailable" : (set.isChanged ? "changed" : "unchanged"),
-                    canApply: set.canApply && set.isChanged,
-                    unchanged: set.unchangedCount,
-                    moved: set.moveCount,
-                    new: set.uploadCount,
-                    removed: set.removalCount,
-                    capacityFirstDeletions: set.capacityFirstDeletionCount,
-                    issues: set.issues
-                )
+
+        // Every row, not the filtered set above: `buildPlan` resolves each target's row by id.
+        let allRows = checkout.rows
+        let stamp = checkout.documentStamp
+        let projectName = checkout.projectName
+        let executorIssues = issues
+
+        return try await runJob(kind: .preview, totalUnits: renders, mode: mode) { handle in
+            handle.phase(.rendering)
+            let plan = try await AppStoreConnectScreenshotSyncService.shared.buildPlan(
+                appId: appId,
+                targets: targets,
+                rows: allRows,
+                source: checkout,
+                document: stamp,
+                progress: { update in
+                    handle.update {
+                        $0.phase = update.stage == .rendering ? .rendering : .comparing
+                        $0.completedUnits = update.completedRenders
+                        $0.totalUnits = update.totalRenders
+                        $0.currentLabel = update.label
+                    }
+                }
+            )
+            // Composited here rather than inside `update`: that closure is nonisolated and the
+            // contact sheet is drawn with AppKit on the main actor.
+            let contactSheet = Self.makeScreenshotContactSheet(plan: plan)
+            handle.update {
+                $0.planId = plan.id
+                $0.sets = plan.sets.map { MCPJobSetProgress(setId: $0.id) }
+                $0.contactSheetPNG = contactSheet
             }
-        )
-        if let contactSheet = makeScreenshotContactSheet(plan: plan) {
-            return try MCPResultEncoding.result(result, pngImage: contactSheet)
+            // `plan.issues` is always empty; the real ones are collected above while the targets
+            // are built, which is why they have to be carried into the job rather than read off
+            // the plan.
+            let result = ASCScreenshotPreviewResult(
+                planId: plan.id,
+                projectId: plan.projectId.uuidString,
+                projectName: projectName,
+                appId: plan.appId,
+                expiresAt: ISO8601DateFormatter().string(from: plan.expiresAt),
+                issues: executorIssues + plan.issues,
+                sets: plan.sets.map { set in
+                    .init(
+                        setId: set.id,
+                        remoteSetId: set.remoteSetId,
+                        versionId: set.versionId,
+                        version: set.versionLabel,
+                        locale: set.localeLabel,
+                        displayType: set.displayType.appStoreConnectValue,
+                        status: !set.canApply ? "unavailable" : (set.isChanged ? "changed" : "unchanged"),
+                        canApply: set.canApply && set.isChanged,
+                        unchanged: set.unchangedCount,
+                        moved: set.moveCount,
+                        new: set.uploadCount,
+                        removed: set.removalCount,
+                        capacityFirstDeletions: set.capacityFirstDeletionCount,
+                        issues: set.issues,
+                        warnings: set.warnings
+                    )
+                }
+            )
+            return MCPJobOutcome(try MCPResultEncoding.value(result))
         }
-        return try MCPResultEncoding.result(result)
     }
 
     func applyAppStoreScreenshotSync(_ args: MCPArguments) async throws -> CallTool.Result {
@@ -280,28 +344,108 @@ extension MCPToolExecutor {
         guard Set(ids).count == ids.count else {
             throw MCPToolError.invalidArgument("set_ids", "contains duplicates")
         }
-        let result = try await AppStoreConnectScreenshotSyncService.shared.apply(
-            planId: planId,
-            setIds: Set(ids),
-            document: state.documentStamp
+        let setIds = Set(ids)
+        let service = AppStoreConnectScreenshotSyncService.shared
+        // The plan records the project it was rendered from; `validCachedPlan` rejects a mismatch.
+        // Resolving the checkout here means the caller names that project too, so an apply can
+        // never be aimed at a different app's artwork than the preview it came from.
+        let checkout = try await requireCheckout(args, allowingPlan: service.plan(id: planId))
+        defer { checkout.dispose() }
+        // Sized from the plan when it is still cached. When it isn't, the ledger answers without
+        // touching App Store Connect at all, so the estimate only has to be non-zero.
+        let selected = service.plan(id: planId)?.sets.filter { setIds.contains($0.id) } ?? []
+        let steps = selected.isEmpty
+            ? ids.count
+            : AppStoreConnectScreenshotSyncService.applyStepCount(selected)
+        let mode = try Self.decideMode(
+            Self.resolveMode(args),
+            units: steps,
+            // Tighter than the render limit on purpose: delivery polls up to 30 s per upload and
+            // verification up to 30 s per set, so a small diff across many locales is still slow.
+            fitsSync: steps <= Self.syncApplyStepLimit && ids.count <= Self.syncApplySetLimit,
+            hardLimit: Self.hardApplyStepLimit,
+            unitName: "upload steps"
         )
-        return try MCPResultEncoding.result(ASCScreenshotApplyResult(
+        let stamp = checkout.documentStamp
+
+        return try await runJob(kind: .apply, totalUnits: steps, mode: mode) { handle in
+            handle.update {
+                $0.planId = planId
+                $0.sets = ids.sorted().map { MCPJobSetProgress(setId: $0) }
+                $0.phase = .revalidating
+            }
+            // Holds the plan's rendered bytes against the GUI wizard, which discards plans on this
+            // same singleton and would otherwise delete them mid-apply.
+            service.retainPlan(planId)
+            defer { service.releasePlan(planId) }
+
+            let result = try await service.apply(
+                planId: planId,
+                setIds: setIds,
+                document: stamp,
+                progress: { update in
+                    handle.update {
+                        if $0.phase == .revalidating { $0.phase = .uploading }
+                        $0.completedUnits = update.completedSteps
+                        $0.totalUnits = update.totalSteps
+                        $0.currentLabel = update.currentLabel
+                    }
+                },
+                setEvents: { event in
+                    handle.update { job in
+                        switch event {
+                        case .didMutate:
+                            job.didMutate = true
+                        case .started(let setId):
+                            if let index = job.sets.firstIndex(where: { $0.setId == setId }) {
+                                job.sets[index].state = .inProgress
+                            }
+                        case .finished(let setResult):
+                            if let index = job.sets.firstIndex(where: { $0.setId == setResult.id }) {
+                                job.sets[index].state = setResult.alreadyApplied ? .alreadyApplied : .succeeded
+                            }
+                        }
+                    }
+                }
+            )
+            handle.update { job in
+                job.didMutate = result.didMutate
+                for set in result.sets {
+                    guard let index = job.sets.firstIndex(where: { $0.setId == set.id }) else { continue }
+                    job.sets[index].state = switch set.state {
+                    case .succeeded: .succeeded
+                    case .alreadyApplied: .alreadyApplied
+                    case .failed: .failed
+                    case .notAttempted: .notAttempted
+                    }
+                }
+            }
+            let payload = ASCScreenshotApplyResult(
             planId: result.planId,
             succeeded: result.succeeded,
+            didMutate: result.didMutate,
+            attempted: result.sets.filter { !$0.alreadyApplied }.count,
+            alreadyApplied: result.sets.filter(\.alreadyApplied).count,
             sets: result.sets.map { set in
-                var operations: [String] = []
-                if set.preserved > 0 { operations.append("preserved \(set.preserved)") }
-                if set.uploaded > 0 { operations.append("uploaded \(set.uploaded)") }
-                if set.removed > 0 { operations.append("removed \(set.removed)") }
-                if set.moved > 0 { operations.append("moved \(set.moved)") }
-                return .init(
+                .init(
                     setId: set.id,
-                    operations: operations,
+                    state: set.state.rawValue,
+                    uploaded: set.uploaded,
+                    removed: set.removed,
+                    moved: set.moved,
+                    preserved: set.preserved,
                     finalVerified: set.verified,
+                    assetDeliveryStates: set.assetDeliveryStates,
+                    nonCompleteAssets: set.nonCompleteAssets,
+                    warnings: set.warnings,
                     error: set.error
                 )
             }
-        ))
+            )
+            // `apply` catches its own failures and returns a partial result, so "the body returned"
+            // is not "the upload landed".
+            return MCPJobOutcome(try MCPResultEncoding.value(payload), succeeded: result.succeeded)
+        }
     }
 
     // MARK: - Helpers
@@ -314,10 +458,10 @@ extension MCPToolExecutor {
         }
     }
 
-    private func resolveASCAppId(_ args: MCPArguments) throws -> String {
+    private func resolveASCAppId(_ args: MCPArguments, checkout: ProjectCheckout) throws -> String {
         if let explicit = args.string("app_id"), !explicit.isEmpty { return explicit }
-        if let linked = state.activeProject?.ascAppId, !linked.isEmpty { return linked }
-        throw MCPToolError.failed("No App Store Connect app id — pass app_id, or link the active project to an app via the App Store Connect upload wizard.")
+        if let linked = checkout.ascAppId, !linked.isEmpty { return linked }
+        throw MCPToolError.failed("No App Store Connect app id — pass app_id, or link \(checkout.projectName) to an app via the App Store Connect upload wizard.")
     }
 
     /// All versions to read (a specific one if requested, else every version).
@@ -351,7 +495,7 @@ extension MCPToolExecutor {
         return editable
     }
 
-    private func makeScreenshotContactSheet(plan: ASCScreenshotSyncPlan) -> Data? {
+    private static func makeScreenshotContactSheet(plan: ASCScreenshotSyncPlan) -> Data? {
         let previews = plan.sets.flatMap(\.proposedAssets).compactMap { $0.localAsset?.previewData }.prefix(20)
         let images = previews.compactMap { NSImage(data: $0) }
         guard !images.isEmpty else { return nil }

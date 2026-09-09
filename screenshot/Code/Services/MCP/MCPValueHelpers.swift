@@ -179,6 +179,12 @@ enum MCPResultEncoding {
         return encoder
     }()
 
+    /// The same encoding as `result`, as a bare `Value`. Lets a job retain its terminal payload
+    /// without the registry having to know any tool's result type.
+    static func value<T: Encodable>(_ payload: T) throws -> Value {
+        try JSONDecoder().decode(Value.self, from: encoder.encode(payload))
+    }
+
     /// Standard success result: pretty JSON text plus the same payload as structured content.
     /// Payloads must encode as JSON objects — the spec requires structuredContent to be one,
     /// so list results are wrapped in envelopes (e.g. `["projects": …]`) at the call site.

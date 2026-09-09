@@ -29,6 +29,8 @@ enum MCPToolName: String, CaseIterable {
     case updateAppStoreDescription = "update_app_store_description"
     case previewAppStoreScreenshotSync = "preview_app_store_screenshot_sync"
     case applyAppStoreScreenshotSync = "apply_app_store_screenshot_sync"
+    case getSyncJobStatus = "get_sync_job_status"
+    case cancelSyncJob = "cancel_sync_job"
 }
 
 nonisolated enum MCPToolCatalog {
@@ -69,10 +71,10 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.getProject.rawValue,
-            description: "Full structured snapshot of a project (defaults to the active one): rows, template columns, shapes, locales — including every id needed by other tools. All coordinates/sizes are in model space (pixels of the target screenshot).",
+            description: "Full structured snapshot of a project: rows, template columns, shapes, locales — including every id needed by other tools. All coordinates/sizes are in model space (pixels of the target screenshot). Works on any project, open in the app window or not.",
             inputSchema: MCPSchema.object([
-                "project_id": MCPSchema.string("Project UUID; omit for the active project"),
-            ])
+                "project_id": MCPSchema.string("Project UUID — from list_projects"),
+            ], required: ["project_id"])
         ),
         Tool(
             name: MCPToolName.createProject.rawValue,
@@ -267,27 +269,30 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.exportProject.rawValue,
-            description: "Export the active project's screenshots as PNG/JPEG files and return the written file paths. Without folder_path, exports to a readable temp folder. `unrenderable` lists any resource that composited to a blank area — a non-empty value means the exported images have holes in them, however many files were written.",
+            description: "Export a project's screenshots as PNG/JPEG files and return the written file paths. Without folder_path, exports to a readable temp folder. `unrenderable` lists any resource that composited to a blank area — a non-empty value means the exported images have holes in them, however many files were written.",
             inputSchema: MCPSchema.object([
+                "project_id": MCPSchema.string("Project UUID to export — from list_projects"),
                 "folder_path": MCPSchema.string("Destination folder (must be writable by the app; omit to use a temp folder and copy files from there)"),
                 "format": MCPSchema.string("Image format (default png)", oneOf: ["png", "jpeg"]),
                 "locale": MCPSchema.string("Export only this locale code (default: all locales)"),
-            ])
+            ], required: ["project_id"])
         ),
         Tool(
             name: MCPToolName.renderPreview.rawValue,
             description: "Render a row (or a single column) as a downscaled PNG image so you can see the current design.",
             inputSchema: MCPSchema.object([
+                "project_id": MCPSchema.string("Project UUID that owns the row — from list_projects"),
                 "row_id": MCPSchema.string("Row UUID"),
                 "template_index": MCPSchema.integer("Render only this column (default: whole row)"),
                 "locale": MCPSchema.string("Locale to render (default: active locale)"),
                 "max_dimension": MCPSchema.integer("Longest output side in pixels, 100-1200 (default 700)"),
-            ], required: ["row_id"])
+            ], required: ["project_id", "row_id"])
         ),
         Tool(
             name: MCPToolName.getAppStoreMetadata.rawValue,
             description: "Read App Store Connect listing metadata for the active project's linked app: every App Store version (one per platform, e.g. iOS and macOS) with its per-locale current descriptions. Call this first to discover the exact App Store locale codes (e.g. en-US, fr-FR, de-DE, pt-BR, zh-Hans) to translate a new description into, then pass those same codes to update_app_store_description.",
             inputSchema: MCPSchema.object([
+                "project_id": MCPSchema.string("Project UUID whose linked app to use; pass this or app_id"),
                 "app_id": MCPSchema.string("App Store Connect app id (default: the active project's linked app)"),
                 "version_id": MCPSchema.string("Limit to a single App Store version id (default: all versions)"),
             ])
@@ -296,6 +301,7 @@ nonisolated enum MCPToolCatalog {
             name: MCPToolName.updateAppStoreDescription.rawValue,
             description: "Update the App Store 'description' text for one or more locales on App Store Connect. Supply already-translated descriptions per locale — this tool does not translate, it only applies what you give it. By default it updates every editable App Store version (all platforms); only locales that already exist on a version are updated, the rest are reported as skipped. Discover valid locale codes with get_app_store_metadata first.",
             inputSchema: MCPSchema.object([
+                "project_id": MCPSchema.string("Project UUID whose linked app to use; pass this or app_id"),
                 "descriptions": MCPSchema.array(
                     of: MCPSchema.object([
                         "locale": MCPSchema.string("App Store locale code, e.g. en-US, fr-FR, de-DE"),
@@ -309,22 +315,41 @@ nonisolated enum MCPToolCatalog {
         ),
         Tool(
             name: MCPToolName.previewAppStoreScreenshotSync.rawValue,
-            description: "Render the active Screenshot Bro project, compare exact checksums and order with App Store Connect, and return a cached 15-minute screenshot sync plan plus a contact sheet. Ambiguous or incompatible rows/locales are reported and skipped.",
+            description: "Render the active Screenshot Bro project, compare exact checksums and order with App Store Connect, and return a cached 15-minute screenshot sync plan plus a contact sheet. Ambiguous or incompatible rows/locales are reported and skipped. Above ~40 renders (rows x columns x locales) this returns immediately with a job_id and phase \"queued\" — poll get_sync_job_status. Below that it blocks and returns the same envelope with phase \"succeeded\" and the plan in `result`.",
             inputSchema: MCPSchema.object([
-                "app_id": MCPSchema.string("App Store Connect app id (default: linked app)"),
+                "project_id": MCPSchema.string("Project UUID to render — from list_projects. Required: the app window's open project is never used as a default."),
+                "app_id": MCPSchema.string("App Store Connect app id (default: the app linked to project_id)"),
                 "version_ids": MCPSchema.array(of: MCPSchema.string("App Store version id"), "Editable version ids (default: every compatible editable version)"),
                 "row_ids": MCPSchema.array(of: MCPSchema.string("Screenshot Bro row UUID"), "Rows to include (default: non-excluded rows with detectable display types)"),
                 "locale_codes": MCPSchema.array(of: MCPSchema.string("Project locale code"), "Project locales to include (default: all project locales)"),
-            ])
+                "mode": MCPSchema.string("\"auto\" (default) runs small previews inline and large ones as a background job; \"sync\" blocks and is rejected above the cap; \"async\" always returns a job_id", oneOf: MCPJobMode.allCases.map(\.rawValue)),
+            ], required: ["project_id"])
         ),
         Tool(
             name: MCPToolName.applyAppStoreScreenshotSync.rawValue,
-            description: "Apply explicitly selected sets from a cached screenshot sync preview. Revalidates the project and every remote set, preserves matching assets, and verifies the final order.",
+            description: "Apply explicitly selected sets from a cached screenshot sync preview. Revalidates the project and every remote set, preserves matching assets, and verifies the final order. Idempotent for the same plan_id + set_ids: sets that already completed come back as \"already_applied\" and are never uploaded twice, so a call that timed out client-side is safe to retry.",
             inputSchema: MCPSchema.object([
                 "plan_id": MCPSchema.string("Plan id returned by preview_app_store_screenshot_sync"),
+                "project_id": MCPSchema.string("Project UUID the plan was rendered from (default: the plan's own project; a mismatch is rejected)"),
                 "set_ids": MCPSchema.array(of: MCPSchema.string("Set id returned by preview"), "Explicit nonempty set selection"),
                 "confirm": MCPSchema.boolean("Must be true to authorize App Store mutations"),
+                "mode": MCPSchema.string("\"auto\" (default) applies small selections inline and large ones as a background job; \"sync\" blocks and is rejected above the cap; \"async\" always returns a job_id", oneOf: MCPJobMode.allCases.map(\.rawValue)),
             ], required: ["plan_id", "set_ids", "confirm"])
+        ),
+        Tool(
+            name: MCPToolName.getSyncJobStatus.rawValue,
+            description: "Poll a screenshot sync job started by preview_app_store_screenshot_sync or apply_app_store_screenshot_sync. Returns phase, completed/total, per-set state, and once the phase is \"succeeded\" the full tool payload in `result`. Terminal results are retained for 15 minutes, so a call that timed out client-side can still collect its answer.",
+            inputSchema: MCPSchema.object([
+                "job_id": MCPSchema.string("Job id returned by preview_ or apply_app_store_screenshot_sync"),
+                "include_image": MCPSchema.boolean("Return the preview contact sheet too (default false — pass true once, after the job succeeds, rather than on every poll)"),
+            ], required: ["job_id"])
+        ),
+        Tool(
+            name: MCPToolName.cancelSyncJob.rawValue,
+            description: "Request cancellation of a running screenshot sync job. Returns immediately; poll get_sync_job_status for the terminal phase. Cancelling a job that already finished is a no-op. Note that screenshots already uploaded to App Store Connect are not rolled back — check did_mutate.",
+            inputSchema: MCPSchema.object([
+                "job_id": MCPSchema.string("Job id to cancel"),
+            ], required: ["job_id"])
         ),
     ]
 }

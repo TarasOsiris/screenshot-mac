@@ -13,12 +13,11 @@ extension MCPToolExecutor {
     }
 
     func exportProject(_ args: MCPArguments) async throws -> CallTool.Result {
+        let checkout = try await requireCheckout(args)
+        defer { checkout.dispose() }
         // The MCP tools bypass ExportFlowModel, so they have to land a composing edit themselves.
-        state.commitPendingEdits()
-        guard let project = state.activeProject else {
-            throw MCPToolError.failed("No active project")
-        }
-        guard !state.rows.isEmpty else {
+        checkout.commitPendingEdits()
+        guard !checkout.rows.isEmpty else {
             throw MCPToolError.failed("Project has no rows to export")
         }
 
@@ -29,7 +28,7 @@ extension MCPToolExecutor {
         }
 
         if let locale = args.string("locale"),
-           !state.localeState.locales.contains(where: { $0.code == locale }) {
+           !checkout.localeState.locales.contains(where: { $0.code == locale }) {
             throw MCPToolError.notFound("Locale \(locale)")
         }
 
@@ -47,14 +46,13 @@ extension MCPToolExecutor {
             destination = try ExportService.makeTempExportFolder()
         }
 
-        let state = self.state
         do {
             let result = try await ExportService.exportAll(
-                rows: state.rows,
-                projectName: project.name,
+                rows: checkout.rows,
+                projectName: checkout.projectName,
                 to: destination,
                 format: format,
-                source: state,
+                source: checkout,
                 localeFilter: args.string("locale")
             )
             return try MCPResultEncoding.result(ExportResult(

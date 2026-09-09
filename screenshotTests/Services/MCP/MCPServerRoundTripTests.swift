@@ -68,7 +68,7 @@ struct MCPServerRoundTripTests {
             "method": "tools/call",
             "params": [
                 "name": "get_project",
-                "arguments": [:],
+                "arguments": ["project_id": state.activeProjectId?.uuidString ?? ""],
             ],
         ])
         let callResult = try #require(call["result"] as? [String: Any])

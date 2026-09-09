@@ -8,6 +8,14 @@ protocol RowRenderSource: AnyObject {
     var availableFontFamilySet: Set<String> { get }
     func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String>
     func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage]
+    /// Resolves this source's custom fonts for the duration of one **synchronous** render.
+    func withResolvedFonts<R>(_ body: () -> R) -> R
+}
+
+extension RowRenderSource {
+    /// The process font registry already describes the open document, so the open document needs
+    /// no scope. Only a source reading a project the editor does *not* have open overrides this.
+    func withResolvedFonts<R>(_ body: () -> R) -> R { body() }
 }
 
 /// Everything the row renderers need beyond a template index, resolved once per (row, locale).
@@ -20,6 +28,10 @@ protocol RowRenderSource: AnyObject {
 struct RowRenderContext {
     let row: ScreenshotRow
     let images: [String: NSImage]
+    /// Captured from the source so every render through this context resolves the same fonts.
+    /// Only the synchronous renders are wrapped — `showcaseImage` is async and editor-only, and a
+    /// scoped registry swap must not be held across a suspension point.
+    private let resolveFonts: (() -> NSImage) -> NSImage
     let localeCode: String?
     let localeState: LocaleState
     let availableFontFamilies: Set<String>
@@ -50,8 +62,10 @@ struct RowRenderContext {
         displayScale: CGFloat = 1.0,
         label: String,
         missingImageFileNames: [String] = [],
-        unusableImageFileNames: [String] = []
+        unusableImageFileNames: [String] = [],
+        resolveFonts: @escaping (() -> NSImage) -> NSImage = { $0() }
     ) {
+        self.resolveFonts = resolveFonts
         self.row = row
         self.images = images
         self.localeCode = localeCode
@@ -76,6 +90,7 @@ struct RowRenderContext {
         missingImageFileNames: [String],
         unusableImageFileNames: [String]
     ) {
+        self.resolveFonts = other.resolveFonts
         self.row = other.row
         self.images = images
         self.localeCode = localeCode
@@ -112,16 +127,18 @@ struct RowRenderContext {
     var templateIndices: Range<Int> { row.templates.indices }
 
     func templateImage(at index: Int) -> NSImage {
-        RowRenderer.renderSingleTemplateImage(
+        resolveFonts {
+            RowRenderer.renderSingleTemplateImage(
             index: index,
             row: row,
             screenshotImages: images,
             localeCode: localeCode,
             localeState: localeState,
             availableFontFamilies: availableFontFamilies,
-            displayScale: displayScale,
-            preRenderedRowBackground: precomposedRowBackground
-        )
+                displayScale: displayScale,
+                preRenderedRowBackground: precomposedRowBackground
+            )
+        }
     }
 
     func templateData(at index: Int, format: ExportImageFormat) -> Data? {
@@ -129,14 +146,16 @@ struct RowRenderContext {
     }
 
     func rowImage() -> NSImage {
-        RowRenderer.renderRowImage(
-            row: row,
-            screenshotImages: images,
-            localeCode: localeCode,
-            localeState: localeState,
-            availableFontFamilies: availableFontFamilies,
-            displayScale: displayScale
-        )
+        resolveFonts {
+            RowRenderer.renderRowImage(
+                row: row,
+                screenshotImages: images,
+                localeCode: localeCode,
+                localeState: localeState,
+                availableFontFamilies: availableFontFamilies,
+                displayScale: displayScale
+            )
+        }
     }
 
     func showcaseImage(config: ShowcaseExportConfig) async -> NSImage {
@@ -204,7 +223,8 @@ extension RowRenderContext {
             displayScale: displayScale,
             label: label,
             missingImageFileNames: missing,
-            unusableImageFileNames: unusable
+            unusableImageFileNames: unusable,
+            resolveFonts: { render in source.withResolvedFonts(render) }
         )
     }
 }

@@ -10,10 +10,14 @@ import SwiftUI
 final class MCPToolExecutor {
     let state: AppState
     let sessions: MCPSessionTracker
+    /// Shared rather than per-executor: a new executor is built on every server start, so a
+    /// per-instance registry would drop running jobs on a settings toggle or token rotation.
+    let jobs: MCPJobStore
 
-    init(state: AppState, sessions: MCPSessionTracker = .shared) {
+    init(state: AppState, sessions: MCPSessionTracker = .shared, jobs: MCPJobStore = .shared) {
         self.state = state
         self.sessions = sessions
+        self.jobs = jobs
     }
 
     func call(name: String, arguments: [String: Value]?) async -> CallTool.Result {
@@ -50,7 +54,7 @@ final class MCPToolExecutor {
         switch tool {
         case .listTemplates: try await listTemplates()
         case .listProjects: try listProjects()
-        case .getProject: try getProject(args)
+        case .getProject: try await getProject(args)
         case .createProject: try await createProject(args)
         case .renameProject: try renameProject(args)
         case .deleteProject: try deleteProject(args)
@@ -69,11 +73,13 @@ final class MCPToolExecutor {
         case .removeLocale: try removeLocale(args)
         case .setTranslation: try setTranslation(args)
         case .exportProject: try await exportProject(args)
-        case .renderPreview: try renderPreview(args)
+        case .renderPreview: try await renderPreview(args)
         case .getAppStoreMetadata: try await getAppStoreMetadata(args)
         case .updateAppStoreDescription: try await updateAppStoreDescription(args)
         case .previewAppStoreScreenshotSync: try await previewAppStoreScreenshotSync(args)
         case .applyAppStoreScreenshotSync: try await applyAppStoreScreenshotSync(args)
+        case .getSyncJobStatus: try getSyncJobStatus(args)
+        case .cancelSyncJob: try cancelSyncJob(args)
         }
     }
 

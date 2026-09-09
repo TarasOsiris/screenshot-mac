@@ -27,6 +27,21 @@ extension AppState {
         return result
     }
 
+    /// The MCP seam: applies a whole-document mutation as one undo step.
+    ///
+    /// `withUndo` already commits pending edits first, which is the load-bearing part — the user's
+    /// composing drag and undebounced typing live only in memory, so a writer that snapshotted the
+    /// file instead would silently revert what they just typed. Not for the editor's own verbs:
+    /// they mutate `rows` in place and skip this whole-document copy.
+    func withDocument(_ actionName: String, _ body: (inout ProjectDocument) -> Void) {
+        withUndo(actionName) {
+            var updated = ProjectDocument(rows: rows, localeState: localeState)
+            body(&updated)
+            rows = updated.rows
+            localeState = updated.localeState
+        }
+    }
+
     /// Row-scoped `withUndo` for mutations confined to one row (plus `localeState` and
     /// selection): the no-op check compares a single row instead of the whole document,
     /// and the undo step retains one row. Shares `edits.isInUndoTransaction`, so nesting with

@@ -16,18 +16,19 @@ extension MCPToolExecutor {
         )
     }
 
-    func getProject(_ args: MCPArguments) throws -> CallTool.Result {
-        guard let id = try args.optionalUUID("project_id"), id != state.activeProjectId else {
-            return try activeProjectSnapshotResult()
-        }
-        guard let project = state.visibleProjects.first(where: { $0.id == id }) else {
-            throw MCPToolError.notFound("Project \(id.uuidString)")
-        }
-        guard let data = PersistenceService.loadProject(id) else {
-            throw MCPToolError.failed("Project \(project.name) has no saved data yet")
-        }
+    /// Named explicitly, always. The open project used to be the default, which meant a snapshot
+    /// could silently describe a different project than the caller meant — and every id it hands
+    /// back is then used by other tools.
+    func getProject(_ args: MCPArguments) async throws -> CallTool.Result {
+        let checkout = try await requireCheckout(args)
+        defer { checkout.dispose() }
         return try MCPResultEncoding.result(
-            MCPSnapshotBuilder.project(id: id, name: project.name, rows: data.rows, localeState: data.localeState ?? .default)
+            MCPSnapshotBuilder.project(
+                id: checkout.projectId,
+                name: checkout.projectName,
+                rows: checkout.rows,
+                localeState: checkout.localeState
+            )
         )
     }
 

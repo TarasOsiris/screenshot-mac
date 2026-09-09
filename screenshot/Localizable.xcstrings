@@ -10174,6 +10174,9 @@
         }
       }
     },
+    "%@ was partially uploaded before the last sync stopped. Refresh the review to re-diff this set — the sets that finished will not be uploaded again." : {
+
+    },
     "%@×%@ · %lld screenshot%@" : {
       "localizations" : {
         "de" : {
@@ -16708,6 +16711,9 @@
         }
       }
     },
+    "Agent Edit" : {
+
+    },
     "AirDrop, Mail, Messages and more" : {
       "localizations" : {
         "de" : {
@@ -18111,6 +18117,9 @@
           }
         }
       }
+    },
+    "Another screenshot sync is already running. Wait for it to finish, or cancel it first." : {
+
     },
     "API Key" : {
       "localizations" : {
@@ -41973,6 +41982,16 @@
         }
       }
     },
+    "Finished %lld of %lld steps. Check each set's state — some did not complete." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Finished %1$lld of %2$lld steps. Check each set's state — some did not complete."
+          }
+        }
+      }
+    },
     "First-time enable migrates your local project library into iCloud. A progress indicator shows the migration." : {
       "localizations" : {
         "de" : {
@@ -63480,6 +63499,12 @@
         }
       }
     },
+    "Project %@ could not be read from disk" : {
+
+    },
+    "Project %@ not found" : {
+
+    },
     "Project actions" : {
       "localizations" : {
         "de" : {
@@ -83878,6 +83903,9 @@
           }
         }
       }
+    },
+    "The screenshot sync was cancelled." : {
+
     },
     "The server requires an **access token**: every request must present it, so another app on your Mac can't quietly drive Screenshot Bro." : {
       "localizations" : {
