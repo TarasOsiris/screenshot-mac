@@ -91,6 +91,10 @@ final class ExportFlowModel {
         isExporting = true
         exportSuccess = false
         errorMessage = nil
+        // Both describe the previous run. Left standing, its "blank frames" alert survives this
+        // run and keeps describing files the user is no longer looking at.
+        incompleteMessage = nil
+        unrenderableFileNames = []
         progress = 0
         self.total = total
     }

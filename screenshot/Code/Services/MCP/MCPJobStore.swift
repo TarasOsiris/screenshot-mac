@@ -51,8 +51,11 @@ nonisolated final class MCPJobStore: @unchecked Sendable {
 
     /// Called when the server stops for good. Not on a restart: killing an in-flight upload
     /// because the user rotated a token is strictly worse than letting it finish.
-    func cancelAll() {
+    func cancelAll(now: Date = Date()) {
         let running: [Task<Void, Never>] = lock.withLock {
+            // Recorded before the tasks are dropped: a poller reading the envelope while a body
+            // unwinds must see a job the app has abandoned, not one still making progress.
+            for id in tasks.keys { _ = registry.requestCancel(id, at: now) }
             let values = Array(tasks.values)
             tasks.removeAll()
             return values

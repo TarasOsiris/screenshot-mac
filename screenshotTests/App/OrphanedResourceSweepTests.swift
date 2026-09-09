@@ -200,6 +200,21 @@ struct OrphanedResourceSweepTests {
         #expect(state.isLoadingScreenshotImages, "The pass in flight must not have been cancelled")
     }
 
+    /// Creating a project used to move `activeProjectId` without a teardown, so a decode pass in
+    /// flight left the flag set for the session — and every later retry then did nothing but
+    /// re-arm the coalescing flag it checks first.
+    @Test func creatingAProjectMidLoadDoesNotStrandTheLoadingFlag() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        state.isLoadingScreenshotImages = true
+        state.needsScreenshotImageReload = true
+
+        state.createProject(name: "Second")
+
+        #expect(!state.isLoadingScreenshotImages)
+        #expect(!state.needsScreenshotImageReload)
+    }
+
     @discardableResult
     private func seedResource(named name: String, in projectId: UUID, contents: Data = Data([0])) throws -> URL {
         let dir = PersistenceService.resourcesDir(projectId)

@@ -300,9 +300,15 @@ final class AppStoreConnectScreenshotSyncService {
         do {
             for target in targets {
                 guard let row = rows.first(where: { $0.id == target.rowId }) else {
-                    // Still advance the denominator, or the job ends short of its total and the
-                    // completion backstop reports a perfectly good plan as failed.
+                    // Still advance the denominator — and report it, since the observer's count is
+                    // the one the completion backstop checks, not this local total.
                     completedRenders += target.templateCount * target.localizations.count
+                    progress(.init(
+                        stage: .comparing,
+                        completedRenders: completedRenders,
+                        totalRenders: totalRenders,
+                        label: target.rowLabel
+                    ))
                     continue
                 }
 

@@ -113,6 +113,25 @@ struct MCPJobRunTests {
         #expect(settled, "cancellation must actually unwind the body")
     }
 
+    /// Stopping the server abandons whatever is running, and a poller has only the envelope to
+    /// read: without the recorded intent it sees a job that still looks like it is progressing.
+    @Test func stoppingTheServerMarksItsRunningJobsCancelRequested() async throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let store = MCPJobStore()
+        let executor = MCPToolExecutor(state: state, jobs: store)
+
+        let started = try await executor.runJob(kind: .apply, totalUnits: 10, mode: .async) { _ in
+            try await Task.sleep(for: .seconds(30))
+            return MCPJobOutcome(.null)
+        }
+        let jobId = try #require(try decode(started)["job_id"] as? String)
+
+        store.cancelAll()
+
+        #expect(store.job(jobId)?.cancelRequested == true)
+    }
+
     @Test func pollingAnUnknownJobIsAClientError() async throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }

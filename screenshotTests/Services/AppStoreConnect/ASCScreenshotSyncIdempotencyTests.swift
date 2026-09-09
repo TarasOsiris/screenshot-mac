@@ -211,6 +211,34 @@ struct ASCScreenshotSyncIdempotencyTests {
         #expect(api.downloadCount == 1)
     }
 
+    /// A job's completion backstop compares the *observed* count against the total, so a target
+    /// skipped because its row is gone has to be reported and not merely counted locally —
+    /// otherwise a plan that built perfectly is handed back as `failed`.
+    @Test func aTargetWhoseRowIsGoneStillReportsItsRendersAsCompleted() async throws {
+        let service = AppStoreConnectScreenshotSyncService(api: FakeScreenshotSyncAPI(), isDemoMode: { false })
+        let presentId = UUID()
+        var last: ASCSyncBuildProgress?
+
+        let plan = try await service.buildPlan(
+            appId: "123",
+            targets: [
+                makeTarget(rowId: presentId),
+                // Built from a row list that no longer holds it: the document changed while the
+                // build was awaiting App Store Connect.
+                makeTarget(rowId: UUID(), localizations: ["loc-2"]),
+            ],
+            rows: [makeRow(id: presentId)],
+            source: StubRenderSource(),
+            document: DocumentStamp(projectId: UUID(), modifiedAt: Date()),
+            needsPreviews: false,
+            progress: { last = $0 }
+        )
+
+        #expect(plan.sets.count == 1, "the target with no row produces no set")
+        let final = try #require(last)
+        #expect(final.completedRenders == final.totalRenders)
+    }
+
     @Test func replaceAllRemovesEveryRemoteAssetAndUploadsEveryLocalOne() async throws {
         let api = FakeScreenshotSyncAPI()
         api.seedExistingSet(localizationId: "loc-1", displayType: .iphone67, checksums: ["aaa", "bbb"])
