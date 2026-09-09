@@ -102,7 +102,16 @@ struct ASCScreenshotSyncPlan: Identifiable, Sendable {
     var changedSets: [ASCScreenshotSetDiff] { sets.filter(\.isChanged) }
 }
 
-struct ASCScreenshotSetSyncResult: Identifiable, Sendable {
+nonisolated struct ASCScreenshotSetSyncResult: Identifiable, Sendable {
+    nonisolated enum State: String, Sendable {
+        case succeeded
+        /// Applied by an earlier run of this same plan, and deliberately not touched again.
+        case alreadyApplied = "already_applied"
+        case failed
+        /// An earlier set in the same apply failed first, so this one was never started.
+        case notAttempted = "not_attempted"
+    }
+
     let id: String
     let uploaded: Int
     let removed: Int
@@ -110,11 +119,58 @@ struct ASCScreenshotSetSyncResult: Identifiable, Sendable {
     let preserved: Int
     let verified: Bool
     let error: String?
+    let state: State
+    /// `["COMPLETE": 9]` — a histogram, because nine identical strings per set × 64 sets is
+    /// unreadable and the interesting case is the one that isn't COMPLETE.
+    let assetDeliveryStates: [String: Int]
+    /// The escape hatch when the histogram isn't all COMPLETE.
+    let nonCompleteAssets: [ASCScreenshotDeliveryProblem]
+    /// Carried from the diff: notices such as "these have no App Store checksum, so they will be
+    /// replaced rather than preserved". Non-blocking, and previously dropped before reaching MCP.
+    let warnings: [String]
+
+    var alreadyApplied: Bool { state == .alreadyApplied }
+
+    init(
+        id: String,
+        uploaded: Int,
+        removed: Int,
+        moved: Int,
+        preserved: Int,
+        verified: Bool,
+        error: String?,
+        state: State? = nil,
+        deliveries: [ASCScreenshotDeliveryOutcome] = [],
+        warnings: [String] = []
+    ) {
+        self.id = id
+        self.uploaded = uploaded
+        self.removed = removed
+        self.moved = moved
+        self.preserved = preserved
+        self.verified = verified
+        self.error = error
+        self.state = state ?? (error == nil && verified ? .succeeded : .failed)
+        self.assetDeliveryStates = deliveries.reduce(into: [:]) { $0[$1.state, default: 0] += 1 }
+        self.nonCompleteAssets = deliveries.filter { !$0.isComplete }.map {
+            ASCScreenshotDeliveryProblem(screenshotId: $0.screenshotId, state: $0.state, messages: $0.messages)
+        }
+        self.warnings = warnings
+    }
 }
 
-struct ASCScreenshotSyncResult: Sendable {
+nonisolated struct ASCScreenshotSyncResult: Sendable {
     let planId: String
     let sets: [ASCScreenshotSetSyncResult]
+    /// Whether this run wrote anything to the live App Store listing. The difference between
+    /// "nothing was touched" and "your listing is now half-updated".
+    let didMutate: Bool
+
+    init(planId: String, sets: [ASCScreenshotSetSyncResult], didMutate: Bool = false) {
+        self.planId = planId
+        self.sets = sets
+        self.didMutate = didMutate
+    }
 
     var succeeded: Bool { sets.allSatisfy { $0.error == nil && $0.verified } }
 }
@@ -125,6 +181,8 @@ enum ASCScreenshotSyncError: LocalizedError {
     case staleProject
     case staleRemote(set: String)
     case noSetsSelected
+    case applyInProgress
+    case partiallyAppliedSet(set: String)
     case invalidPlan(String)
     case unreadableImages(rowLabel: String, localeLabel: String, fileNames: [String])
 
@@ -140,6 +198,10 @@ enum ASCScreenshotSyncError: LocalizedError {
             String(localized: "The App Store screenshots for \(set) changed after review. Refresh before syncing.")
         case .noSetsSelected:
             String(localized: "Select at least one changed screenshot set.")
+        case .applyInProgress:
+            String(localized: "Another screenshot sync is already running. Wait for it to finish, or cancel it first.")
+        case .partiallyAppliedSet(let set):
+            String(localized: "\(set) was partially uploaded before the last sync stopped. Refresh the review to re-diff this set — the sets that finished will not be uploaded again.")
         case .invalidPlan(let message):
             message
         case .unreadableImages(let rowLabel, let localeLabel, let fileNames):
@@ -159,11 +221,26 @@ final class AppStoreConnectScreenshotSyncService {
         let localizationsBySetId: [String: ASCUploadLocalization]
     }
 
-    private let api: AppStoreConnectAPIService
+    private let api: any ASCScreenshotSyncAPI
     private var cache: [String: CachedPlan] = [:]
+    /// Sets that reached a *verified* terminal state, keyed plan → set. Deliberately outlives
+    /// `discardPlan`: a retry of a plan whose rendered bytes are already gone must still be able
+    /// to answer "that one landed" rather than uploading it a second time.
+    private var applied: [String: [String: ASCScreenshotSetSyncResult]] = [:]
+    private var ledgerExpiry: [String: Date] = [:]
+    /// Sets an apply reached but did not verify — a half-mutated remote set. Distinguishes
+    /// "someone else edited your listing" from "we stopped halfway through this one".
+    private var attempted: [String: Set<String>] = [:]
+    /// Plans a running job is holding. The GUI wizard discards plans on the same singleton, and
+    /// that deletes the temp directory of rendered bytes a resume needs.
+    private var retained: Set<String> = []
+    private var pendingDiscard: Set<String> = []
+    /// One apply at a time. Two applies racing on the same version × locale × display type would
+    /// both write the same App Store set — the only true double-upload race left.
+    private var isApplying = false
 
-    init(api: AppStoreConnectAPIService? = nil) {
-        self.api = api ?? .shared
+    init(api: (any ASCScreenshotSyncAPI)? = nil) {
+        self.api = api ?? AppStoreConnectAPIService.shared
     }
 
     func plan(id: String) -> ASCScreenshotSyncPlan? {
@@ -177,7 +254,7 @@ final class AppStoreConnectScreenshotSyncService {
         rows: [ScreenshotRow],
         source: some RowRenderSource,
         document: DocumentStamp?,
-        progress: @escaping (String) -> Void = { _ in }
+        progress: @escaping (ASCSyncBuildProgress) -> Void = { _ in }
     ) async throws -> ASCScreenshotSyncPlan {
         guard let document else {
             throw ASCScreenshotSyncError.invalidPlan(String(localized: "Open a project before reviewing screenshots."))
@@ -191,6 +268,8 @@ final class AppStoreConnectScreenshotSyncService {
             .appendingPathComponent(planId, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
+        let totalRenders = targets.reduce(0) { $0 + $1.templateCount * $1.localizations.count }
+        var completedRenders = 0
         var diffs: [ASCScreenshotSetDiff] = []
         var targetsBySetId: [String: ASCUploadTarget] = [:]
         var localizationsBySetId: [String: ASCUploadLocalization] = [:]
@@ -216,7 +295,8 @@ final class AppStoreConnectScreenshotSyncService {
                             String(localized: "More than one row targets \(target.versionLabel) · \(localization.label) · \(target.displayType.label). Choose one row for this set.")
                         )
                     }
-                    progress("Rendering \(target.rowLabel) · \(localization.label)")
+                    let label = "\(target.rowLabel) · \(localization.label)"
+                    progress(.init(stage: .rendering, completedRenders: completedRenders, totalRenders: totalRenders, label: label))
                     let rowContext = RowRenderContext.load(
                         row: row,
                         localeCode: localization.localeCode,
@@ -241,7 +321,8 @@ final class AppStoreConnectScreenshotSyncService {
                         localization: localization,
                         directory: directory.appendingPathComponent(Self.safeFileName(diffId), isDirectory: true)
                     )
-                    progress("Comparing \(target.rowLabel) · \(localization.label)")
+                    completedRenders += target.templateCount
+                    progress(.init(stage: .comparing, completedRenders: completedRenders, totalRenders: totalRenders, label: label))
                     let remotePreviewDirectory = directory
                         .appendingPathComponent("remote-previews", isDirectory: true)
                         .appendingPathComponent(Self.safeFileName(diffId), isDirectory: true)
@@ -300,17 +381,42 @@ final class AppStoreConnectScreenshotSyncService {
         planId: String,
         setIds: Set<String>,
         document: DocumentStamp?,
-        progress: @escaping (UploadProgress) -> Void = { _ in }
+        progress: @escaping (UploadProgress) -> Void = { _ in },
+        setEvents: @escaping (ASCSyncApplySetEvent) -> Void = { _ in }
     ) async throws -> ASCScreenshotSyncResult {
         guard !setIds.isEmpty else { throw ASCScreenshotSyncError.noSetsSelected }
+
+        // The ledger is consulted before the plan, because a plan every one of whose sets already
+        // landed may itself have been discarded — and answering "already applied" without needing
+        // the plan is exactly what makes a retry after a client timeout safe.
+        let ledger = applied[planId] ?? [:]
+        if !ledger.isEmpty, setIds.allSatisfy({ ledger[$0] != nil }) {
+            return ASCScreenshotSyncResult(
+                planId: planId,
+                sets: setIds.sorted().compactMap { ledger[$0] },
+                didMutate: false
+            )
+        }
+
+        guard !isApplying else { throw ASCScreenshotSyncError.applyInProgress }
+        isApplying = true
+        defer { isApplying = false }
+
         let cached = try validCachedPlan(id: planId, document: document)
         let selected = cached.plan.sets.filter { setIds.contains($0.id) }
         guard selected.count == setIds.count, selected.allSatisfy({ $0.isChanged && $0.canApply }) else {
             throw ASCScreenshotSyncError.invalidPlan(String(localized: "One or more selected screenshot sets cannot be applied."))
         }
+        // Everything past here works on the sets that have NOT already landed. Revalidating a
+        // ledgered set would fail by design: its remote fingerprint no longer matches the plan
+        // precisely because we uploaded to it.
+        let remaining = selected.filter { ledger[$0.id] == nil }
+        guard !remaining.isEmpty else {
+            return ASCScreenshotSyncResult(planId: planId, sets: selected.compactMap { ledger[$0.id] }, didMutate: false)
+        }
 
-        // Revalidate every selected set and all cached local bytes before the first write.
-        for diff in selected {
+        // Revalidate every not-yet-applied set and its cached local bytes before the first write.
+        for diff in remaining {
             try Task.checkCancellation()
             for local in diff.proposedAssets.compactMap(\.localAsset) {
                 guard let checksum = try? await Self.fileChecksum(at: local.fileURL),
@@ -329,6 +435,12 @@ final class AppStoreConnectScreenshotSyncService {
                 )
                 guard Self.remoteFingerprint(snapshot.assets) == diff.remoteFingerprint,
                       snapshot.setId == diff.remoteSetId else {
+                    // We stopped halfway through this set on an earlier run, so *we* are why the
+                    // remote no longer matches. Saying "someone changed your listing" would be
+                    // both wrong and unactionable.
+                    if attempted[planId]?.contains(diff.id) == true {
+                        throw ASCScreenshotSyncError.partiallyAppliedSet(set: Self.label(for: diff))
+                    }
                     throw ASCScreenshotSyncError.staleRemote(set: Self.label(for: diff))
                 }
             }
@@ -338,22 +450,37 @@ final class AppStoreConnectScreenshotSyncService {
         // the first App Store mutation.
         _ = try validCachedPlan(id: planId, document: document)
 
-        var results: [ASCScreenshotSetSyncResult] = []
+        var results: [ASCScreenshotSetSyncResult] = selected.compactMap { ledger[$0.id] }
         var activeSet: ASCScreenshotSetDiff?
         // Once a write lands the plan's remote fingerprint is stale, so it must be discarded.
         // Before that it is still valid and worth keeping so a cancel or blip can retry cheaply.
         var didMutate = false
-        let total = selected.reduce(0) { $0 + max(1, $1.uploadCount + $1.removalCount + ($1.moveCount > 0 ? 1 : 0)) }
+        // Reported the moment it first becomes true: a poller asking "is my listing half-updated?"
+        // must not have to wait for the call to return to find out.
+        func markMutated() {
+            guard !didMutate else { return }
+            didMutate = true
+            setEvents(.didMutate)
+        }
+        let total = Self.applyStepCount(remaining)
         var completed = 0
         progress(UploadProgress(totalSteps: total, completedSteps: 0, currentLabel: "Starting screenshot sync…"))
         // Counts and ASC display types only — set labels are built from row labels, which are
         // user content and must never leave the device.
-        CrashReportingService.breadcrumb(.upload, "ASC apply started", data: ["sets": selected.count, "steps": total])
+        CrashReportingService.breadcrumb(.upload, "ASC apply started", data: [
+            "sets": remaining.count,
+            "already_applied": results.count,
+            "steps": total,
+        ])
 
         do {
-            for diff in selected {
+            for diff in remaining {
                 try Task.checkCancellation()
                 activeSet = diff
+                setEvents(.started(setId: diff.id))
+                // Recorded before the first write so a later resume can tell a set we half-applied
+                // from one a third party changed.
+                attempted[planId, default: []].insert(diff.id)
                 CrashReportingService.breadcrumb(.upload, "ASC applying set", data: [
                     "display_type": diff.displayType.appStoreConnectValue,
                     "uploads": diff.uploadCount,
@@ -374,7 +501,7 @@ final class AppStoreConnectScreenshotSyncService {
                             localizationId: diff.localizationId,
                             displayType: diff.displayType.appStoreConnectValue
                         ).id
-                        didMutate = true
+                        markMutated()
                     } catch {
                         throw Self.screenshotSetCreationError(error, diff: diff)
                     }
@@ -384,32 +511,36 @@ final class AppStoreConnectScreenshotSyncService {
                 for item in removed.prefix(diff.capacityFirstDeletionCount) {
                     guard let id = item.remoteId else { continue }
                     progress(UploadProgress(totalSteps: total, completedSteps: completed, currentLabel: "Freeing capacity · \(Self.label(for: diff))"))
-                    didMutate = true
+                    markMutated()
                     try await api.deleteScreenshot(id: id)
                     deletedIds.insert(id)
                     completed += 1
                 }
 
                 var finalIdsByLocalIndex: [Int: String] = [:]
+                var deliveries: [ASCScreenshotDeliveryOutcome] = []
                 // Everything the plan is keeping, so a reserve retry's cleanup can tell the
                 // reservation it just orphaned apart from a screenshot that belongs here.
                 let plannedRemoteIds = Set(diff.items.compactMap(\.remoteId))
                 for item in diff.proposedAssets {
                     guard let local = item.localAsset, let proposedIndex = item.proposedIndex else { continue }
                     if let remoteId = item.remoteId {
+                        // Already live on the store, so its state is known without another GET.
                         finalIdsByLocalIndex[proposedIndex] = remoteId
+                        deliveries.append(.assumedComplete(remoteId))
                     } else {
                         progress(UploadProgress(totalSteps: total, completedSteps: completed, currentLabel: "Uploading \(local.fileName)"))
                         let data = try Data(contentsOf: local.fileURL)
-                        didMutate = true
-                        let uploadedId = try await upload(
+                        markMutated()
+                        let uploaded = try await upload(
                             data: data,
                             fileName: local.fileName,
                             setId: setId,
                             checksum: local.checksum,
                             protectedRemoteIds: plannedRemoteIds.union(finalIdsByLocalIndex.values)
                         )
-                        finalIdsByLocalIndex[proposedIndex] = uploadedId
+                        finalIdsByLocalIndex[proposedIndex] = uploaded.id
+                        deliveries.append(uploaded.delivery)
                         completed += 1
                     }
                 }
@@ -417,7 +548,7 @@ final class AppStoreConnectScreenshotSyncService {
                 for item in removed where !deletedIds.contains(item.remoteId ?? "") {
                     guard let id = item.remoteId else { continue }
                     progress(UploadProgress(totalSteps: total, completedSteps: completed, currentLabel: "Removing \(item.remoteAsset?.fileName ?? "old screenshot")"))
-                    didMutate = true
+                    markMutated()
                     try await api.deleteScreenshot(id: id)
                     deletedIds.insert(id)
                     completed += 1
@@ -426,7 +557,7 @@ final class AppStoreConnectScreenshotSyncService {
                 let finalOrder = finalIdsByLocalIndex.sorted { $0.key < $1.key }.map(\.value)
                 if diff.moveCount > 0 || diff.uploadCount > 0 || diff.removalCount > 0 {
                     progress(UploadProgress(totalSteps: total, completedSteps: completed, currentLabel: "Setting final order · \(Self.label(for: diff))"))
-                    didMutate = true
+                    markMutated()
                     try await api.setScreenshotOrder(setId: setId, screenshotIds: finalOrder)
                     if diff.moveCount > 0 { completed += 1 }
                 }
@@ -440,21 +571,28 @@ final class AppStoreConnectScreenshotSyncService {
                         String(localized: "App Store Connect did not confirm the final screenshot order for \(Self.label(for: diff)).")
                     )
                 }
-                results.append(ASCScreenshotSetSyncResult(
+                let setResult = ASCScreenshotSetSyncResult(
                     id: diff.id,
                     uploaded: diff.uploadCount,
                     removed: diff.removalCount,
                     moved: diff.moveCount,
                     preserved: diff.unchangedCount + diff.moveCount,
                     verified: true,
-                    error: nil
-                ))
+                    error: nil,
+                    deliveries: deliveries,
+                    warnings: diff.warnings
+                )
+                results.append(setResult)
+                setEvents(.finished(setResult))
+                // Ledgered only now — after `verify`, so an entry means App Store Connect agrees
+                // about ids *and* checksums, not merely that we sent the requests.
+                recordApplied(setResult, planId: planId)
                 activeSet = nil
             }
             progress(UploadProgress(totalSteps: total, completedSteps: total, currentLabel: "Done"))
             CrashReportingService.breadcrumb(.upload, "ASC apply finished", data: ["sets": results.count])
             discardPlan(planId)
-            return ASCScreenshotSyncResult(planId: planId, sets: results)
+            return ASCScreenshotSyncResult(planId: planId, sets: results, didMutate: didMutate)
         } catch {
             // `didMutate` is the difference between "nothing was touched" and "the user's real
             // App Store Connect is now half-updated" — the single most useful bit here.
@@ -486,7 +624,7 @@ final class AppStoreConnectScreenshotSyncService {
                 ))
             }
             let reportedIds = Set(results.map(\.id))
-            for set in selected where !reportedIds.contains(set.id) {
+            for set in remaining where !reportedIds.contains(set.id) {
                 results.append(ASCScreenshotSetSyncResult(
                     id: set.id,
                     uploaded: 0,
@@ -494,17 +632,68 @@ final class AppStoreConnectScreenshotSyncService {
                     moved: 0,
                     preserved: 0,
                     verified: false,
-                    error: String(localized: "Not attempted because an earlier screenshot set failed.")
+                    error: String(localized: "Not attempted because an earlier screenshot set failed."),
+                    state: .notAttempted
                 ))
             }
-            if didMutate || error is ASCScreenshotSyncError { discardPlan(planId) }
-            return ASCScreenshotSyncResult(planId: planId, sets: results)
+            // `didMutate` used to force a discard, which is exactly backwards: a half-applied
+            // plan is the one whose rendered bytes a resume still needs. Discard only when the
+            // plan itself is provably unusable.
+            if Self.invalidatesPlan(error) { discardPlan(planId) }
+            return ASCScreenshotSyncResult(planId: planId, sets: results, didMutate: didMutate)
         }
     }
 
     func discardPlan(_ id: String) {
+        // A running job holds the rendered bytes it may still need to resume with. The GUI upload
+        // wizard discards plans on this same singleton, so without this an agent's plan (and its
+        // temp directory) vanishes the moment a user opens that sheet.
+        guard !retained.contains(id) else {
+            pendingDiscard.insert(id)
+            return
+        }
         guard let cached = cache.removeValue(forKey: id) else { return }
         try? FileManager.default.removeItem(at: cached.plan.directory)
+        // The ledger outlives the plan on purpose — see `applied`.
+        if applied[id] != nil { ledgerExpiry[id] = Date().addingTimeInterval(Self.planLifetime) }
+    }
+
+    /// Marks a plan as in use by a running job, so a concurrent `discardPlan` defers.
+    func retainPlan(_ id: String) {
+        retained.insert(id)
+    }
+
+    func releasePlan(_ id: String) {
+        retained.remove(id)
+        if pendingDiscard.remove(id) != nil { discardPlan(id) }
+    }
+
+    /// True only for failures that prove the cached plan can never be applied. Everything else —
+    /// cancellation, a network blip, an API 5xx — leaves it resumable.
+    private static func invalidatesPlan(_ error: Error) -> Bool {
+        guard let syncError = error as? ASCScreenshotSyncError else { return false }
+        switch syncError {
+        case .planNotFound, .planExpired, .staleProject, .staleRemote,
+             .invalidPlan, .unreadableImages, .noSetsSelected, .partiallyAppliedSet:
+            return true
+        case .applyInProgress:
+            return false
+        }
+    }
+
+    private func recordApplied(_ result: ASCScreenshotSetSyncResult, planId: String) {
+        applied[planId, default: [:]][result.id] = ASCScreenshotSetSyncResult(
+            id: result.id,
+            uploaded: result.uploaded,
+            removed: result.removed,
+            moved: result.moved,
+            preserved: result.preserved,
+            verified: result.verified,
+            error: nil,
+            state: .alreadyApplied,
+            warnings: result.warnings
+        )
+        attempted[planId]?.remove(result.id)
     }
 
     // MARK: - Matching
@@ -758,7 +947,7 @@ final class AppStoreConnectScreenshotSyncService {
         setId: String,
         checksum: String,
         protectedRemoteIds: Set<String>
-    ) async throws -> String {
+    ) async throws -> (id: String, delivery: ASCScreenshotDeliveryOutcome) {
         let reserved = try await reserve(
             setId: setId,
             fileName: fileName,
@@ -771,8 +960,8 @@ final class AppStoreConnectScreenshotSyncService {
                 try await api.uploadChunk(operation: operation, from: data)
             }
             try await api.commitScreenshot(id: reserved.id, md5Checksum: checksum)
-            try await waitForDelivery(screenshotId: reserved.id, expectedChecksum: checksum)
-            return reserved.id
+            let delivery = try await waitForDelivery(screenshotId: reserved.id, expectedChecksum: checksum)
+            return (reserved.id, delivery)
         } catch {
             // An unstructured Task doesn't inherit cancellation, so this cleanup still runs when
             // the failure *is* cancellation — otherwise the reservation is orphaned in the set.
@@ -866,8 +1055,12 @@ final class AppStoreConnectScreenshotSyncService {
         }
     }
 
-    private func waitForDelivery(screenshotId: String, expectedChecksum: String) async throws {
-        if AppStoreConnectCredentialsStore.shared.isDemoMode { return }
+    @discardableResult
+    private func waitForDelivery(
+        screenshotId: String,
+        expectedChecksum: String
+    ) async throws -> ASCScreenshotDeliveryOutcome {
+        if AppStoreConnectCredentialsStore.shared.isDemoMode { return .assumedComplete(screenshotId) }
         for _ in 0..<30 {
             try Task.checkCancellation()
             let screenshot = try await api.screenshot(id: screenshotId, retryPolicy: .singleAttempt)
@@ -879,7 +1072,11 @@ final class AppStoreConnectScreenshotSyncService {
                         String(localized: "App Store Connect completed an upload with an unexpected checksum.")
                     )
                 }
-                return
+                return ASCScreenshotDeliveryOutcome(
+                    screenshotId: screenshotId,
+                    state: delivery?.state ?? "COMPLETE",
+                    messages: delivery?.warnings?.compactMap { $0.message ?? $0.code } ?? []
+                )
             }
             if delivery?.isFailed == true {
                 let details = screenshot.attributes.assetDeliveryState?.errors?
@@ -982,8 +1179,20 @@ final class AppStoreConnectScreenshotSyncService {
     }
 
     private func purgeExpiredPlans() {
-        let expired = cache.values.filter { $0.plan.expiresAt <= Date() }
+        let now = Date()
+        let expired = cache.values.filter { $0.plan.expiresAt <= now }
         for cached in expired { discardPlan(cached.plan.id) }
+        for (id, expiry) in ledgerExpiry where expiry <= now {
+            ledgerExpiry[id] = nil
+            applied[id] = nil
+            attempted[id] = nil
+        }
+    }
+
+    /// The denominator `apply` reports progress against. Shared so the MCP layer can size a job
+    /// before starting one without re-deriving the formula and drifting from it.
+    static func applyStepCount(_ sets: [ASCScreenshotSetDiff]) -> Int {
+        sets.reduce(0) { $0 + max(1, $1.uploadCount + $1.removalCount + ($1.moveCount > 0 ? 1 : 0)) }
     }
 
     nonisolated static func md5Hex(_ data: Data) -> String {

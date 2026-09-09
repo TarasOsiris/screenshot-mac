@@ -82,7 +82,7 @@ final class ASCScreenshotSyncCoordinator {
                 rows: rows,
                 source: source,
                 document: document,
-                progress: { [weak self] label in self?.progressLabel = label }
+                progress: { [weak self] update in self?.progressLabel = update.label }
             )
             // The build may have finished after the user dismissed the review; adopting it here
             // would resurrect a plan `discard()` already tried to drop, leaking its temp folder.

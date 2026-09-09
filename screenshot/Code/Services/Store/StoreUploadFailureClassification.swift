@@ -61,7 +61,8 @@ nonisolated struct StoreUploadFailure: Equatable {
             }
         case let error as ASCScreenshotSyncError:
             switch error {
-            case .planNotFound, .planExpired, .staleProject, .staleRemote, .invalidPlan:
+            case .planNotFound, .planExpired, .staleProject, .staleRemote, .invalidPlan,
+                 .partiallyAppliedSet, .applyInProgress:
                 return StoreUploadFailure(kind: .stalePlan, errorCode: nil)
             case .noSetsSelected: return StoreUploadFailure(kind: .nothingSelected, errorCode: nil)
             case .unreadableImages: return StoreUploadFailure(kind: .unreadableImages, errorCode: nil)
