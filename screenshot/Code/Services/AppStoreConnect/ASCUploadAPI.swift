@@ -15,6 +15,11 @@ protocol ASCUploadAPI: Sendable {
     func listLocalizations(versionId: String, limit: Int) async throws -> [ASCAppStoreVersionLocalization]
     func listAppInfos(appId: String) async throws -> [ASCAppInfo]
     func listAppInfoLocalizations(appInfoId: String, limit: Int) async throws -> [ASCAppInfoLocalization]
+    func createAppStoreVersion(
+        appId: String,
+        platform: ASCPlatform,
+        versionString: String
+    ) async throws -> ASCAppStoreVersion
     func createVersionLocalization(
         versionId: String,
         locale: String,

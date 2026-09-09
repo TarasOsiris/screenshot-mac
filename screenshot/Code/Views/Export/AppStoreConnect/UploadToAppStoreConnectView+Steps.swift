@@ -64,6 +64,7 @@ extension UploadToAppStoreConnectView {
             mode: model.mode,
             selectedApp: model.selectedApp,
             versions: model.versions,
+            versionCreation: versionCreation,
             selectedVersionIds: $model.selectedVersionIds
         )
     }
@@ -475,6 +476,18 @@ extension UploadToAppStoreConnectView {
 
     private func refreshAppStoreData() {
         Task { await model.refreshLocalizations() }
+    }
+
+    private var versionCreation: ASCVersionCreationContext {
+        ASCVersionCreationContext(
+            platforms: model.platformsAwaitingAVersion,
+            creatingPlatform: model.creatingVersionPlatform,
+            errorMessage: model.versionCreationError,
+            suggestedVersionString: { model.suggestedVersionString(platform: $0) },
+            create: { platform, versionString in
+                Task { await model.createAppStoreVersion(platform: platform, versionString: versionString) }
+            }
+        )
     }
 
     private func localeCreation(for destination: ASCDestinationPlan) -> ASCLocaleCreationContext {

@@ -163,6 +163,34 @@ final class AppStoreConnectAPIService {
         return response.data
     }
 
+    /// Create the next App Store version. `releaseType` is deliberately not sent: it is a release
+    /// policy the app has no business choosing on the user's behalf, and App Store Connect applies
+    /// its own default.
+    func createAppStoreVersion(
+        appId: String,
+        platform: ASCPlatform,
+        versionString: String
+    ) async throws -> ASCAppStoreVersion {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.createVersion(appId: appId, platform: platform, versionString: versionString)
+        }
+        let body = ASCResourceCreate(
+            data: ASCResourceCreate.Payload(
+                type: "appStoreVersions",
+                attributes: [
+                    "platform": AnyEncodable(platform.rawValue),
+                    "versionString": AnyEncodable(versionString)
+                ],
+                relationships: [
+                    "app": AnyEncodable(ASCRelationship.single(type: "apps", id: appId))
+                ]
+            )
+        )
+        let response: ASCSingleResponse<ASCAppStoreVersion> = try await post("/v1/appStoreVersions", body: body)
+        return response.data
+    }
+
     func createVersionLocalization(
         versionId: String,
         locale: String,

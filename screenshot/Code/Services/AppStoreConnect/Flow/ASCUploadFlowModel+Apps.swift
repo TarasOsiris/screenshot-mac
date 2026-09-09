@@ -53,24 +53,31 @@ extension ASCUploadFlowModel {
         defer { isBusy = false }
         do {
             let fetched = try await api.listAppStoreVersions(appId: app.id)
-            versions = fetched.sorted { lhs, rhs in
-                let lhsSelectable = lhs.isSelectable(for: mode)
-                let rhsSelectable = rhs.isSelectable(for: mode)
-                if lhsSelectable != rhsSelectable { return lhsSelectable }
-                if lhs.attributes.displayPlatform != rhs.attributes.displayPlatform {
-                    return (lhs.attributes.displayPlatform ?? "") < (rhs.attributes.displayPlatform ?? "")
-                }
-                return lhs.attributes.versionString.compare(
-                    rhs.attributes.versionString,
-                    options: .numeric
-                ) == .orderedDescending
-            }
+            versions = sortedForSelection(fetched)
             selectedVersionIds = defaultSelectedVersionIds(from: versions)
             localizationsByVersionId = [:]
             updateDestinationPlans([])
             advance(to: .pickingVersion)
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    /// Selectable versions first, then grouped by platform, newest version first within a
+    /// platform. Shared with version creation so a version created mid-flow lands where the
+    /// fetched ones would have put it.
+    func sortedForSelection(_ versions: [ASCAppStoreVersion]) -> [ASCAppStoreVersion] {
+        versions.sorted { lhs, rhs in
+            let lhsSelectable = lhs.isSelectable(for: mode)
+            let rhsSelectable = rhs.isSelectable(for: mode)
+            if lhsSelectable != rhsSelectable { return lhsSelectable }
+            if lhs.attributes.displayPlatform != rhs.attributes.displayPlatform {
+                return (lhs.attributes.displayPlatform ?? "") < (rhs.attributes.displayPlatform ?? "")
+            }
+            return lhs.attributes.versionString.compare(
+                rhs.attributes.versionString,
+                options: .numeric
+            ) == .orderedDescending
         }
     }
 

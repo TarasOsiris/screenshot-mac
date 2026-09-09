@@ -185,6 +185,34 @@ final class FakeASCUploadAPI: ASCUploadAPI {
         appInfoLocalizationsByAppInfoId[appInfoId] ?? []
     }
 
+    /// Popped in order; the last result repeats once exhausted.
+    var createVersionResults: [Result<ASCAppStoreVersion, Error>] = []
+    private(set) var createVersionCalls: [(appId: String, platform: ASCPlatform, versionString: String)] = []
+
+    func createAppStoreVersion(
+        appId: String,
+        platform: ASCPlatform,
+        versionString: String
+    ) async throws -> ASCAppStoreVersion {
+        createVersionCalls.append((appId, platform, versionString))
+        let result = createVersionResults.count > 1 ? createVersionResults.removeFirst() : createVersionResults.first
+        switch result {
+        case .success(let version):
+            return version
+        case .failure(let error):
+            throw error
+        case nil:
+            return ASCAppStoreVersion(
+                id: "created-\(platform.rawValue)-\(versionString)",
+                attributes: .init(
+                    versionString: versionString,
+                    appStoreState: "PREPARE_FOR_SUBMISSION",
+                    platform: platform.rawValue
+                )
+            )
+        }
+    }
+
     func createVersionLocalization(
         versionId: String,
         locale: String,

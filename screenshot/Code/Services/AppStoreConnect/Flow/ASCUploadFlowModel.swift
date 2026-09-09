@@ -47,6 +47,11 @@ final class ASCUploadFlowModel {
     var errorDetailsText: String?
     var isBusy = false
 
+    /// The platform whose version is being created, if any, and the last rejection — the version
+    /// step's own inline state, for the same reason as the locale pair below.
+    var creatingVersionPlatform: ASCPlatform?
+    var versionCreationError: String?
+
     /// Per-(version, locale) state for the plan step's "Create in App Store Connect" action,
     /// keyed by `localeCreationKey`. Deliberately not `isBusy`, which disables the whole step's
     /// chrome — this is one row's action, and the row's error belongs on the row.

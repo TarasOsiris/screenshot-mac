@@ -83,6 +83,21 @@ final class AppStoreConnectDemoData: @unchecked Sendable {
         }
     }
 
+    /// Demo mode always has an editable version, so the wizard never offers to create one. The
+    /// mutator exists so the seam is complete: it hands back an editable version of the requested
+    /// platform without touching the seeded catalog.
+    func createVersion(appId: String, platform: ASCPlatform, versionString: String) -> ASCAppStoreVersion {
+        ASCAppStoreVersion(
+            id: Self.versionId(for: platform),
+            attributes: ASCAppStoreVersion.Attributes(
+                versionString: versionString,
+                appStoreState: "PREPARE_FOR_SUBMISSION",
+                platform: platform.rawValue,
+                copyright: "© 2026 Demo Inc."
+            )
+        )
+    }
+
     func versionLocalizations(forVersion versionId: String) -> [ASCAppStoreVersionLocalization] {
         guard versionId.hasPrefix("demo-version-") else { return [] }
         let codes = lockedRead { contextLocaleCodes }

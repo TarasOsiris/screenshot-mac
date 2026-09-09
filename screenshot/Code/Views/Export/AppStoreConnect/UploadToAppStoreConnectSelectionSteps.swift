@@ -91,13 +91,26 @@ struct ASCAppSelectionStepView: View {
 
 }
 
+/// What the version step needs to offer creating the next App Store version, so the step view
+/// keeps taking values rather than the whole flow model.
+struct ASCVersionCreationContext {
+    let platforms: [ASCPlatform]
+    let creatingPlatform: ASCPlatform?
+    let errorMessage: String?
+    let suggestedVersionString: (ASCPlatform) -> String?
+    let create: (ASCPlatform, String) -> Void
+}
+
 struct ASCVersionSelectionStepView: View {
     var mode: ASCFlowMode = .screenshots
     let selectedApp: ASCApp?
     let versions: [ASCAppStoreVersion]
+    let versionCreation: ASCVersionCreationContext
 
     @Binding var selectedVersionIds: Set<String>
     @State private var showReadOnlyVersions = false
+    @State private var newVersionPlatform: ASCPlatform?
+    @State private var newVersionString = ""
 
     private var hasSelectableVersion: Bool {
         versions.contains { $0.isSelectable(for: mode) }
@@ -167,11 +180,12 @@ struct ASCVersionSelectionStepView: View {
                 .font(.callout)
                 .fontWeight(.medium)
             Text(mode == .metadata
-                 ? "Every version on this app is already live. Create a new version in App Store Connect, then refresh this wizard."
-                 : "Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard.")
+                 ? "Every version on this app is already live. Create the next one below, or in App Store Connect."
+                 : "Every version on this app is locked for review or live. Create the next one below, or in App Store Connect.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            createVersionForm
             appStoreConnectLink
         }
         .padding(.horizontal, 16)
@@ -179,6 +193,71 @@ struct ASCVersionSelectionStepView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.orange.opacity(0.08), in: .rect(cornerRadius: 8))
         .padding(.horizontal, 16)
+    }
+
+    /// Only offered for a platform the app already ships on: App Store Connect needs a platform
+    /// that is enabled for the app, and an existing version is the one proof of that we have.
+    @ViewBuilder
+    private var createVersionForm: some View {
+        if let platform = activeNewVersionPlatform {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    if versionCreation.platforms.count > 1 {
+                        Picker("", selection: platformBinding) {
+                            ForEach(versionCreation.platforms, id: \.self) { option in
+                                Text(verbatim: option.displayName).tag(option)
+                            }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                    TextField("Version", text: $newVersionString, prompt: Text(verbatim: "1.0"))
+                        .frame(width: 90)
+                        #if os(macOS)
+                        .textFieldStyle(.roundedBorder)
+                        #endif
+                    if versionCreation.creatingPlatform != nil {
+                        HStack(spacing: 5) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Creating…")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    } else {
+                        Button("Create Version") {
+                            versionCreation.create(platform, newVersionString)
+                        }
+                        .disabled(newVersionString.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+                .compactControlSize()
+                if let failure = versionCreation.errorMessage {
+                    Text("Could not create the version: \(failure)")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.top, 2)
+            .task(id: platform) { newVersionString = versionCreation.suggestedVersionString(platform) ?? "" }
+        }
+    }
+
+    /// Falls back to the first offered platform, including when a previously picked one is no
+    /// longer offered — a refresh can change which platforms are waiting for a version.
+    private var activeNewVersionPlatform: ASCPlatform? {
+        guard let picked = newVersionPlatform, versionCreation.platforms.contains(picked) else {
+            return versionCreation.platforms.first
+        }
+        return picked
+    }
+
+    private var platformBinding: Binding<ASCPlatform> {
+        Binding(
+            get: { activeNewVersionPlatform ?? .ios },
+            set: { newVersionPlatform = $0 }
+        )
     }
 
     @ViewBuilder
