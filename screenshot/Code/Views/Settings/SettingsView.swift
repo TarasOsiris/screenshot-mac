@@ -78,7 +78,7 @@ struct SettingsView: View {
         }
 
         /// The Help topic that documents this pane, so the pane doesn't have to restate it.
-        var helpTopic: HelpSection? {
+        var helpTopic: HelpSection {
             switch self {
             case .general: .settings
             case .export: .exporting
@@ -86,7 +86,7 @@ struct SettingsView: View {
             case .googlePlay: .googlePlay
             case .automation: .automation
             case .purchase: .proFeatures
-            case .attributions: nil
+            case .attributions: .settings
             }
         }
     }
@@ -104,10 +104,8 @@ struct SettingsView: View {
             detailContent
                 .navigationTitle((selection ?? .general).title)
                 .toolbar {
-                    if let topic = (selection ?? .general).helpTopic {
-                        ToolbarItem(placement: .primaryAction) {
-                            HelpTopicButton(section: topic)
-                        }
+                    ToolbarItem(placement: .primaryAction) {
+                        HelpTopicButton(section: (selection ?? .general).helpTopic)
                     }
                 }
         }
@@ -606,20 +604,7 @@ struct SettingsView: View {
             ForEach(AppAttribution.Category.allCases) { category in
                 Section(category.title) {
                     ForEach(AppAttribution.inCategory(category)) { credit in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(credit.title)
-                                .fontWeight(.medium)
-                            Text(credit.subtitle)
-                                .foregroundStyle(.secondary)
-                            if let license = credit.license {
-                                Text(license)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Link(credit.linkTitle, destination: credit.url)
-                                .font(.caption)
-                        }
-                        .padding(.vertical, 2)
+                        AttributionRow(credit: credit)
                     }
                 }
             }

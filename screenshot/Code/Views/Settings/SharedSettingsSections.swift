@@ -155,6 +155,26 @@ struct ProFeatureRow: View {
     }
 }
 
+/// One third-party credit as a standard settings row, so Attributions reads like every other pane.
+struct AttributionRow: View {
+    let credit: AppAttribution
+
+    var body: some View {
+        LabeledContent {
+            HStack(spacing: 8) {
+                if let license = credit.license {
+                    Text(license)
+                        .foregroundStyle(.secondary)
+                }
+                Link(credit.linkTitle, destination: credit.url)
+            }
+        } label: {
+            Text(credit.title)
+            Text(credit.subtitle)
+        }
+    }
+}
+
 /// The language picker plus the "you have to restart" follow-up. macOS can relaunch itself;
 /// iPad can only ask, which is the one real difference between the two.
 struct AppLanguagePicker: View {

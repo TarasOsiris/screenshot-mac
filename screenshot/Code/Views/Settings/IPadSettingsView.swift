@@ -288,15 +288,7 @@ struct IPadSettingsView: View {
     private var attributionsSection: some View {
         Section("Attributions") {
             ForEach(AppAttribution.all) { credit in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(credit.title).fontWeight(.medium)
-                    Text(credit.subtitle).font(.caption).foregroundStyle(.secondary)
-                    if let license = credit.license {
-                        Text(license).font(.caption).foregroundStyle(.secondary)
-                    }
-                    Link(credit.linkTitle, destination: credit.url).font(.caption)
-                }
-                .padding(.vertical, 2)
+                AttributionRow(credit: credit)
             }
         }
     }
