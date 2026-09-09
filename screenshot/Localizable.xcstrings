@@ -94326,6 +94326,58 @@
         }
       }
     },
+    "The dots stand in for your access token — the copied text carries the real one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Punkte stehen für Ihr Zugriffstoken – der kopierte Text trägt den echten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los puntos sustituyen a su token de acceso: el texto copiado lleva el real."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نقطه ها برای نشانه دسترسی شما قرار می گیرند - متن کپی شده حاوی متن واقعی است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les points remplacent votre jeton d'accès : le texte copié porte le vrai."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ドットはアクセス トークンを表します。コピーされたテキストには実際のトークンが含まれます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "점은 액세스 토큰을 나타냅니다. 복사된 텍스트에는 실제 텍스트가 포함됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os pontos representam o seu token de acesso – o texto copiado contém o verdadeiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些点代表您的访问令牌 - 复制的文本带有真实的文本。"
+          }
+        }
+      }
+    },
     "Creating…" : {
       "localizations" : {
         "de" : {

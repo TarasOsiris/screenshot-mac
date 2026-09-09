@@ -423,6 +423,7 @@ struct SettingsView: View {
                             copyableValue(token, masked: true, tooltip: "Copy access token")
                         }
                     }
+                    agentPromptPreview
                     Button {
                         copyToPasteboard(mcpServer.agentPrompt)
                     } label: {
@@ -450,6 +451,23 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var agentPromptPreview: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(verbatim: mcpServer.agentPromptPreview)
+                .font(.system(.caption, design: .monospaced))
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(8)
+                .background(.quaternary, in: .rect(cornerRadius: UIMetrics.CornerRadius.card))
+            if mcpServer.authToken != nil {
+                Text("The dots stand in for your access token — the copied text carries the real one.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     @ViewBuilder
@@ -489,7 +507,7 @@ struct SettingsView: View {
 
     private func copyableValue(_ value: String, monospaced: Bool = false, masked: Bool = false, tooltip: LocalizedStringKey) -> some View {
         HStack(spacing: 6) {
-            Text(verbatim: masked ? "••••••••••••" : value)
+            Text(verbatim: masked ? MCPServerService.maskedToken : value)
                 .font(monospaced ? .system(.callout, design: .monospaced) : .callout)
                 .textSelection(.enabled)
                 .lineLimit(1)

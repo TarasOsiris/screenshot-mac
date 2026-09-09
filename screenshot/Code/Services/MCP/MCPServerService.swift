@@ -79,15 +79,23 @@ final class MCPServerService {
 
     /// A plain-English instruction a user can paste into any AI agent (Claude Code, Cursor, …) to
     /// have it register this server itself — friendlier than editing config files by hand.
-    var agentPrompt: String {
+    var agentPrompt: String { agentPrompt(token: authToken) }
+
+    /// The same text with the bearer token replaced by ``maskedToken``, for showing on screen: this
+    /// is a screenshot app, and Settings gets screenshotted.
+    var agentPromptPreview: String { agentPrompt(token: authToken.map { _ in Self.maskedToken }) }
+
+    static let maskedToken = "••••••••••••"
+
+    private func agentPrompt(token: String?) -> String {
         var lines = [
             "Add an MCP server named \"screenshot-bro\" to your configuration so you can control the Screenshot Bro app.",
             "",
             "It uses streamable HTTP transport:",
             "- URL: \(serverURL)"
         ]
-        if let authToken, !authToken.isEmpty {
-            lines.append("- HTTP header: Authorization: Bearer \(authToken)")
+        if let token, !token.isEmpty {
+            lines.append("- HTTP header: Authorization: Bearer \(token)")
         }
         lines.append("")
         lines.append("Use whatever method your MCP client supports (a config-file entry or an \"mcp add\" command). After adding it, reconnect so the screenshot-bro tools load, then list them to confirm.")
