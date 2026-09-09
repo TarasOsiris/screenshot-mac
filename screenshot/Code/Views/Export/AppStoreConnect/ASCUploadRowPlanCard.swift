@@ -1,11 +1,41 @@
 import SwiftUI
 
+/// Everything the locale rows need for the "Create in App Store Connect" action. One value
+/// rather than a parameter each because it passes through two container views untouched.
+struct ASCLocaleCreationContext {
+    let versionId: String
+    /// App Store Connect rejects a new localization on a version it won't take screenshots for,
+    /// so a locked version keeps the plain hint instead of a button that can only 409.
+    let versionAcceptsNewLocales: Bool
+    /// Lowercased App Store locale codes the version already has.
+    let existingStoreLocaleCodes: Set<String>
+    let inFlightKeys: Set<String>
+    let errors: [String: String]
+    let create: (String) -> Void
+
+    func key(projectLocaleCode: String) -> String {
+        ASCUploadFlowModel.localeCreationKey(versionId: versionId, projectLocaleCode: projectLocaleCode)
+    }
+
+    /// The App Store locale a project locale would be created as, or nil when there is nothing
+    /// worth offering: no App Store language for it, a locked version, or a code the version
+    /// already carries (which happens when a longer project locale claimed it first).
+    func creatableStoreCode(forProjectCode code: String) -> String? {
+        guard versionAcceptsNewLocales,
+              let storeCode = ASCLanguageMatcher.appStoreLanguageCode(forProjectCode: code),
+              !existingStoreLocaleCodes.contains(storeCode.lowercased())
+        else { return nil }
+        return storeCode
+    }
+}
+
 struct ASCUploadRowPlanCard: View {
     @Binding var plan: ASCRowPlan
     let detailsId: String
     let expanded: Bool
     let availableDisplayTypes: [ASCDisplayType]
     @Binding var displayTypeDetailsPlanId: String?
+    let localeCreation: ASCLocaleCreationContext
     let onToggleExpanded: () -> Void
 
     var body: some View {
@@ -24,7 +54,7 @@ struct ASCUploadRowPlanCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 ForEach($plan.localeTargets) { $target in
-                    ASCLocaleTargetRow(target: $target)
+                    ASCLocaleTargetRow(target: $target, creation: localeCreation)
                 }
             }
         }
@@ -221,6 +251,7 @@ private struct ASCDisplayTypeDetailsPopover: View {
 
 private struct ASCLocaleTargetRow: View {
     @Binding var target: ASCLocaleTarget
+    let creation: ASCLocaleCreationContext
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -259,9 +290,19 @@ private struct ASCLocaleTargetRow: View {
                 Text("No matching App Store locale")
                     .font(.caption)
                     .foregroundStyle(.orange)
-                Text("Add this locale in App Store Connect, then refresh locales.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if let storeCode = creation.creatableStoreCode(forProjectCode: target.appLocaleCode) {
+                    createLocaleAction(storeCode: storeCode)
+                } else {
+                    Text("Add this locale in App Store Connect, then refresh locales.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if let failure = creation.errors[creation.key(projectLocaleCode: target.appLocaleCode)] {
+                    Text("Could not create this locale: \(failure)")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         } else {
             VStack(alignment: .leading, spacing: 2) {
@@ -278,6 +319,27 @@ private struct ASCLocaleTargetRow: View {
                 }
             }
             selectedLocaleLabel
+        }
+    }
+
+    @ViewBuilder
+    private func createLocaleAction(storeCode: String) -> some View {
+        if creation.inFlightKeys.contains(creation.key(projectLocaleCode: target.appLocaleCode)) {
+            HStack(spacing: 5) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Creating…")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        } else {
+            Button {
+                creation.create(target.appLocaleCode)
+            } label: {
+                Label("Create \(storeCode) in App Store Connect", systemImage: "plus.circle")
+            }
+            .buttonStyle(.borderless)
+            .font(.caption)
         }
     }
 

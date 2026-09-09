@@ -33,6 +33,7 @@ extension ASCUploadFlowModel {
         seedDemoContextIfNeeded()
         isBusy = true
         errorMessage = nil
+        localeCreationErrors = [:]
         defer { isBusy = false }
         do {
             try await loadSelectedVersionLocalizations()
@@ -93,7 +94,13 @@ extension ASCUploadFlowModel {
                     appLocaleLabel: locale.flagLabel,
                     selectedASCLocalizationIds: selectedIds,
                     candidates: matches,
-                    isEnabled: matches.isEmpty ? false : (existingTarget?.isEnabled ?? true)
+                    // A target that was off only because nothing matched must come back on once a
+                    // candidate appears, or creating the locale (or adding it by hand and hitting
+                    // Refresh) leaves the row matched but silently skipped. `candidates.isEmpty`
+                    // is what tells that apart from a matched locale the user unticked.
+                    isEnabled: matches.isEmpty
+                        ? false
+                        : (existingTarget.map { $0.isEnabled || $0.candidates.isEmpty } ?? true)
                 )
             }
             let compatiblePreserved = existingPlan?.selectedAssetType.flatMap { $0.accepts(platform: platform) ? $0 : nil }

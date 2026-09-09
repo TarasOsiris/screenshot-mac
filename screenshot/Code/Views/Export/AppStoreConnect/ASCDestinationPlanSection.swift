@@ -4,6 +4,7 @@ struct ASCDestinationPlanSection: View {
     @Binding var destination: ASCDestinationPlan
     @Binding var expandedRowPlanIds: Set<String>
     @Binding var displayTypeDetailsPlanId: String?
+    let localeCreation: ASCLocaleCreationContext
 
     private var platform: ASCPlatform? {
         destination.version.attributes.ascPlatform
@@ -58,6 +59,7 @@ struct ASCDestinationPlanSection: View {
             expanded: expanded,
             availableDisplayTypes: availableDisplayTypes,
             displayTypeDetailsPlanId: $displayTypeDetailsPlanId,
+            localeCreation: localeCreation,
             onToggleExpanded: { toggleRowPlan(detailsId: detailsId, expanded: expanded) }
         )
     }

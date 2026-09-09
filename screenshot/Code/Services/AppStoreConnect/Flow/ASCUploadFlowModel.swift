@@ -47,6 +47,12 @@ final class ASCUploadFlowModel {
     var errorDetailsText: String?
     var isBusy = false
 
+    /// Per-(version, locale) state for the plan step's "Create in App Store Connect" action,
+    /// keyed by `localeCreationKey`. Deliberately not `isBusy`, which disables the whole step's
+    /// chrome — this is one row's action, and the row's error belongs on the row.
+    var creatingLocaleKeys: Set<String> = []
+    var localeCreationErrors: [String: String] = [:]
+
     // MARK: - Collaborators
 
     let mode: ASCFlowMode

@@ -442,7 +442,8 @@ extension UploadToAppStoreConnectView {
                     ASCDestinationPlanSection(
                         destination: $destination,
                         expandedRowPlanIds: $expandedRowPlanIds,
-                        displayTypeDetailsPlanId: $displayTypeDetailsPlanId
+                        displayTypeDetailsPlanId: $displayTypeDetailsPlanId,
+                        localeCreation: localeCreation(for: destination)
                     )
                 }
             }
@@ -474,6 +475,27 @@ extension UploadToAppStoreConnectView {
 
     private func refreshAppStoreData() {
         Task { await model.refreshLocalizations() }
+    }
+
+    private func localeCreation(for destination: ASCDestinationPlan) -> ASCLocaleCreationContext {
+        let versionId = destination.id
+        return ASCLocaleCreationContext(
+            versionId: versionId,
+            // The same predicate version selection uses: a localization we can't then upload
+            // screenshots to is worth nothing here.
+            versionAcceptsNewLocales: destination.version.isScreenshotUploadable,
+            existingStoreLocaleCodes: model.existingStoreLocaleCodes(versionId: versionId),
+            inFlightKeys: model.creatingLocaleKeys,
+            errors: model.localeCreationErrors,
+            create: { projectLocaleCode in
+                Task {
+                    await model.createAppStoreLocalization(
+                        projectLocaleCode: projectLocaleCode,
+                        versionId: versionId
+                    )
+                }
+            }
+        )
     }
 
     @ViewBuilder

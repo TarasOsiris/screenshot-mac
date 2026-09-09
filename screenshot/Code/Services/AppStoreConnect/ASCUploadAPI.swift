@@ -15,6 +15,11 @@ protocol ASCUploadAPI: Sendable {
     func listLocalizations(versionId: String, limit: Int) async throws -> [ASCAppStoreVersionLocalization]
     func listAppInfos(appId: String) async throws -> [ASCAppInfo]
     func listAppInfoLocalizations(appInfoId: String, limit: Int) async throws -> [ASCAppInfoLocalization]
+    func createVersionLocalization(
+        versionId: String,
+        locale: String,
+        attributes extra: [String: AnyEncodable]
+    ) async throws -> ASCAppStoreVersionLocalization
     func updateVersionLocalization(id: String, attributes: [String: AnyEncodable]) async throws
     func updateAppInfoLocalization(id: String, attributes: [String: AnyEncodable]) async throws
     func updateAppStoreVersion(id: String, attributes: [String: AnyEncodable]) async throws
@@ -39,5 +44,12 @@ extension ASCUploadAPI {
 
     func listAppInfoLocalizations(appInfoId: String) async throws -> [ASCAppInfoLocalization] {
         try await listAppInfoLocalizations(appInfoId: appInfoId, limit: 200)
+    }
+
+    func createVersionLocalization(
+        versionId: String,
+        locale: String
+    ) async throws -> ASCAppStoreVersionLocalization {
+        try await createVersionLocalization(versionId: versionId, locale: locale, attributes: [:])
     }
 }

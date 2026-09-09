@@ -163,6 +163,35 @@ final class AppStoreConnectAPIService {
         return response.data
     }
 
+    func createVersionLocalization(
+        versionId: String,
+        locale: String,
+        attributes extra: [String: AnyEncodable] = [:]
+    ) async throws -> ASCAppStoreVersionLocalization {
+        if isDemoMode {
+            await demoDelay()
+            return demoData.createVersionLocalization(versionId: versionId, locale: locale)
+        }
+        var attributes = extra
+        attributes["locale"] = AnyEncodable(locale)
+        let body = ASCResourceCreate(
+            data: ASCResourceCreate.Payload(
+                type: "appStoreVersionLocalizations",
+                attributes: attributes,
+                relationships: [
+                    "appStoreVersion": AnyEncodable(
+                        ASCRelationship.single(type: "appStoreVersions", id: versionId)
+                    )
+                ]
+            )
+        )
+        let response: ASCSingleResponse<ASCAppStoreVersionLocalization> = try await post(
+            "/v1/appStoreVersionLocalizations",
+            body: body
+        )
+        return response.data
+    }
+
     // MARK: - Metadata (editing)
 
     func listAppInfos(appId: String) async throws -> [ASCAppInfo] {

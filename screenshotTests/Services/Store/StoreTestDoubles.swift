@@ -124,3 +124,88 @@ final class FakeGPUploader: GPUploadPerforming {
         }
     }
 }
+
+/// An `ASCUploadDocument` backed by plain values. Sibling of `StubGPDocument`.
+@MainActor
+final class StubASCDocument: ASCUploadDocument {
+    var rows: [ScreenshotRow]
+    var activeProjectName: String
+    var localeState: LocaleState
+    var availableFontFamilySet: Set<String> = []
+    var documentStamp: DocumentStamp?
+    var savedASCAppId: String?
+
+    init(
+        rows: [ScreenshotRow] = [],
+        projectName: String = "Fixture",
+        localeState: LocaleState = .default,
+        savedASCAppId: String? = nil
+    ) {
+        self.rows = rows
+        self.activeProjectName = projectName
+        self.localeState = localeState
+        self.savedASCAppId = savedASCAppId
+    }
+
+    func rememberASCAppId(_ appId: String) { savedASCAppId = appId }
+
+    func referencedImageFileNames(forRow row: ScreenshotRow, localeCode: String) -> Set<String> { [] }
+
+    func loadFullResolutionImages(fileNames: Set<String>, cache: inout [String: NSImage]) -> [String: NSImage] { [:] }
+}
+
+/// The scripted `ASCUploadAPI` the protocol's doc comment promised and nobody had written. Every
+/// method has an inert default, so growing the protocol only touches this file.
+@MainActor
+final class FakeASCUploadAPI: ASCUploadAPI {
+    var appsWithVersions: [ASCAppWithVersions] = []
+    var versionsByAppId: [String: [ASCAppStoreVersion]] = [:]
+    var localizationsByVersionId: [String: [ASCAppStoreVersionLocalization]] = [:]
+    var appInfosByAppId: [String: [ASCAppInfo]] = [:]
+    var appInfoLocalizationsByAppInfoId: [String: [ASCAppInfoLocalization]] = [:]
+
+    /// Popped in order; the last result repeats once exhausted.
+    var createResults: [Result<ASCAppStoreVersionLocalization, Error>] = []
+    private(set) var createCalls: [(versionId: String, locale: String, attributeKeys: Set<String>)] = []
+    private(set) var createdAttributes: [[String: AnyEncodable]] = []
+
+    func listAppsWithVersions(limit: Int) async throws -> [ASCAppWithVersions] { appsWithVersions }
+
+    func listAppStoreVersions(appId: String, limit: Int) async throws -> [ASCAppStoreVersion] {
+        versionsByAppId[appId] ?? []
+    }
+
+    func listLocalizations(versionId: String, limit: Int) async throws -> [ASCAppStoreVersionLocalization] {
+        localizationsByVersionId[versionId] ?? []
+    }
+
+    func listAppInfos(appId: String) async throws -> [ASCAppInfo] { appInfosByAppId[appId] ?? [] }
+
+    func listAppInfoLocalizations(appInfoId: String, limit: Int) async throws -> [ASCAppInfoLocalization] {
+        appInfoLocalizationsByAppInfoId[appInfoId] ?? []
+    }
+
+    func createVersionLocalization(
+        versionId: String,
+        locale: String,
+        attributes: [String: AnyEncodable]
+    ) async throws -> ASCAppStoreVersionLocalization {
+        createCalls.append((versionId, locale, Set(attributes.keys)))
+        createdAttributes.append(attributes)
+        let result = createResults.count > 1 ? createResults.removeFirst() : createResults.first
+        switch result {
+        case .success(let localization):
+            return localization
+        case .failure(let error):
+            throw error
+        case nil:
+            return ASCAppStoreVersionLocalization(id: "created-\(locale)", attributes: .init(locale: locale))
+        }
+    }
+
+    func updateVersionLocalization(id: String, attributes: [String: AnyEncodable]) async throws {}
+
+    func updateAppInfoLocalization(id: String, attributes: [String: AnyEncodable]) async throws {}
+
+    func updateAppStoreVersion(id: String, attributes: [String: AnyEncodable]) async throws {}
+}

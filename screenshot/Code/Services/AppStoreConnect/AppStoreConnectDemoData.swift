@@ -102,6 +102,28 @@ final class AppStoreConnectDemoData: @unchecked Sendable {
         }
     }
 
+    /// Demo mode seeds a localization for every project locale, so the wizard never actually
+    /// offers to create one. Kept in step anyway: the code joins the context so a later
+    /// Refresh keeps handing it back.
+    func createVersionLocalization(versionId: String, locale: String) -> ASCAppStoreVersionLocalization {
+        lock.lock(); defer { lock.unlock() }
+        if !contextLocaleCodes.contains(locale) {
+            contextLocaleCodes.append(locale)
+        }
+        return ASCAppStoreVersionLocalization(
+            id: "demo-vloc-\(versionId)-\(locale)",
+            attributes: ASCAppStoreVersionLocalization.Attributes(
+                locale: locale,
+                description: "Demo description for \(locale).",
+                keywords: "demo, screenshots, app store",
+                promotionalText: "Demo promo text.",
+                whatsNew: "Demo release notes.",
+                marketingUrl: "https://example.com/marketing",
+                supportUrl: "https://example.com/support"
+            )
+        )
+    }
+
     func appInfos(forApp appId: String) -> [ASCAppInfo] {
         guard appId == Self.appId else { return [] }
         return [

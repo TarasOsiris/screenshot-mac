@@ -46208,58 +46208,6 @@
         }
       }
     },
-    "If a language has no matching App Store locale, the wizard says so — add the locale in App Store Connect, then refresh." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wenn eine Sprache kein passendes App Store-Gebietsschema hat, sagt der Assistent dies – fügen Sie das Gebietsschema in App Store Connect hinzu und aktualisieren Sie es dann."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si un idioma no tiene una configuración regional App Store coincidente, el asistente lo indica: agregue la configuración regional en App Store Connect y luego actualice."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اگر زبانی دارای App Store محلی منطبق نباشد، جادوگر چنین می‌گوید - زبان را در App Store Connect اضافه کنید، سپس بازخوانی کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si une langue n'a pas de paramètres régionaux App Store correspondant, l'assistant le dit : ajoutez les paramètres régionaux dans App Store Connect, puis actualisez."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言語に一致する App Store ロケールがない場合、ウィザードはその旨を表示します。App Store Connect にロケールを追加してから更新します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "언어에 일치하는 App Store 로캘이 없으면 마법사에서 그렇게 말합니다. App Store Connect에 로캘을 추가한 다음 새로 고칩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se um idioma não tiver localidade App Store correspondente, o assistente diz isso - adicione a localidade em App Store Connect e atualize."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "如果某种语言没有匹配的 App Store 语言环境，向导会这样提示 — 在 App Store Connect 中添加语言环境，然后刷新。"
-          }
-        }
-      }
-    },
     "If a language has no override for a shape, it falls back to the base language's content." : {
       "localizations" : {
         "de" : {
@@ -94322,6 +94270,214 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "缩小"
+          }
+        }
+      }
+    },
+    "If a language has no matching App Store locale, the wizard says so and offers **Create de-DE in App Store Connect** — naming the App Store locale code it would add — right on the row. One click adds it to that version and the row switches to it. Languages the App Store doesn't offer, and versions Apple has locked for editing, still have to be handled on the website; **Refresh App Store data** picks up anything added there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn eine Sprache kein passendes App Store-Gebietsschema hat, sagt der Assistent dies und bietet **Create de-DE in App Store Connect** an – und benennt den App Store-Gebietsschemacode, den er hinzufügen würde – direkt in der Zeile. Ein Klick fügt es dieser Version hinzu und die Zeile wechselt zu dieser Version. Sprachen, die der App Store nicht anbietet, und Versionen, die Apple für die Bearbeitung gesperrt hat, müssen noch auf der Website behandelt werden; **App Store-Daten aktualisieren** übernimmt alles, was dort hinzugefügt wurde."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si un idioma no tiene una configuración regional App Store coincidente, el asistente lo indica y ofrece **Crear de-DE en App Store Connect**, nombrando el código de configuración regional App Store que agregaría, justo en la fila. Un clic lo agrega a esa versión y la fila cambia a ella. Los idiomas que App Store no ofrece y las versiones que Apple ha bloqueado para su edición aún deben manejarse en el sitio web; **Actualizar datos de App Store** recoge todo lo que se agregue allí."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اگر زبانی دارای App Store محلی منطبق نباشد، جادوگر این را می‌گوید و **Create de-DE را در App Store Connect** ارائه می‌دهد — نامگذاری App Store کد محلی که اضافه می‌کند — درست روی ردیف. یک کلیک آن را به آن نسخه اضافه می کند و ردیف به آن سوئیچ می کند. زبان‌هایی که App Store ارائه نمی‌کند، و نسخه‌هایی که اپل برای ویرایش قفل کرده است، همچنان باید در وب‌سایت مدیریت شوند. **بازخوانی App Store داده** هر چیزی را که در آنجا اضافه شده است را انتخاب می کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si une langue n'a pas de paramètres régionaux App Store correspondant, l'assistant le dit et propose **Créer de-DE dans App Store Connect** — en nommant le code de paramètres régionaux App Store qu'il ajouterait — directement sur la ligne. Un clic l'ajoute à cette version et la ligne y bascule. Les langues que App Store ne propose pas et les versions verrouillées par Apple pour l'édition doivent toujours être gérées sur le site Web ; **Actualiser les données App Store** récupère tout ce qui y est ajouté."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "言語に一致する App Store ロケールがない場合、ウィザードはその旨を示し、**App Store Connect] に de-DE を作成** (追加する App Store ロケール コードに名前を付ける) をその行に表示します。ワンクリックでそのバージョンに追加され、行がそのバージョンに切り替わります。 App Store が提供していない言語や、Apple が編集のためにロックしているバージョンは、引き続き Web サイトで処理する必要があります。 **App Store データを更新**すると、そこに追加されたものがすべて取得されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어에 일치하는 App Store 로케일이 없는 경우 마법사는 그렇게 말하고 **App Store Connect에서 de-DE 생성**을 제안합니다. 즉, 추가할 App Store 로케일 코드의 이름을 행 오른쪽에 지정합니다. 한 번 클릭하면 해당 버전에 추가되고 행이 해당 버전으로 전환됩니다. App Store에서 제공하지 않는 언어와 Apple이 편집을 위해 잠근 버전은 여전히 ​​웹사이트에서 처리해야 합니다. **App Store 데이터를 새로 고치면** 거기에 추가된 모든 항목이 선택됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se um idioma não tiver localidade App Store correspondente, o assistente diz isso e oferece **Create de-DE in App Store Connect** — nomeando o código de localidade App Store que ele adicionaria — logo na linha. Um clique o adiciona a essa versão e a linha muda para ela. Idiomas que o App Store não oferece e versões que a Apple bloqueou para edição ainda precisam ser tratados no site; **Atualizar dados App Store** seleciona qualquer coisa adicionada lá."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果一种语言没有匹配的 App Store 区域设置，向导会这样提示并提供 **在 App Store Connect] 中创建 de-DE** — 命名它将添加的 App Store 区域设置代码 — 就在该行上。单击一下即可将其添加到该版本，并且行会切换到该版本。 App Store 不提供的语言，以及 Apple 已锁定编辑的版本，仍需在网站上处理； **刷新 App Store 数据** 会选取其中添加的所有内容。"
+          }
+        }
+      }
+    },
+    "Creating…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstellen…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creando…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حال ایجاد…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Création…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "作成中…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "만드는 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criando…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创造……"
+          }
+        }
+      }
+    },
+    "Could not create this locale: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Gebietsschema konnte nicht erstellt werden: %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo crear esta configuración regional: %1$@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این زبان ایجاد نشد: %1$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de créer ces paramètres régionaux : %1$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このロケールを作成できませんでした: %1$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 로케일을 생성할 수 없습니다: %1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível criar esta localidade: %1$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法创建此区域设置：%1$@"
+          }
+        }
+      }
+    },
+    "Create %@ in App Store Connect" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstellen Sie %1$@ in App Store Connect"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear %1$@ en App Store Connect"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ایجاد %1$@ در App Store Connect"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créez %1$@ dans App Store Connect"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect に %1$@ を作成します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect에 %1$@ 생성"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar %1$@ em App Store Connect"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 App Store Connect 中创建 %1$@"
           }
         }
       }
