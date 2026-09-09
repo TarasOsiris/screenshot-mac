@@ -83,13 +83,5 @@ nonisolated struct MCPJobHandle: Sendable {
     func phase(_ phase: MCPJobPhase) {
         store.update(id) { $0.phase = phase }
     }
-
-    func progress(completed: Int, total: Int? = nil, label: String? = nil) {
-        store.update(id) {
-            $0.completedUnits = completed
-            if let total { $0.totalUnits = total }
-            if let label { $0.currentLabel = label }
-        }
-    }
 }
 #endif

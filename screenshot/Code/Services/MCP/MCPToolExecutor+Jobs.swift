@@ -104,10 +104,14 @@ extension MCPToolExecutor {
     /// target's `SWIFT_APPROACHABLE_CONCURRENCY` the latter inherits the caller's executor, and the
     /// rendering inside genuinely needs the main actor anyway. What moves off the request here is
     /// the *waiting*, not the work.
+    /// `owning` transfers the checkout to the job: in async mode `runJob` returns long before the
+    /// body has rendered anything, so disposing at the caller's function exit would unregister the
+    /// project's fonts out from under the render.
     func runJob(
         kind: MCPJobKind,
         totalUnits: Int,
         mode: MCPJobMode,
+        owning checkout: ProjectCheckout? = nil,
         body: @escaping @MainActor (MCPJobHandle) async throws -> MCPJobOutcome
     ) async throws -> CallTool.Result {
         let store = jobs
@@ -119,6 +123,7 @@ extension MCPToolExecutor {
             "units": totalUnits,
         ])
         let task = Task { @MainActor in
+            defer { checkout?.dispose() }
             do {
                 let outcome = try await body(handle)
                 // The payload is retained either way — a partial apply's per-set detail is exactly

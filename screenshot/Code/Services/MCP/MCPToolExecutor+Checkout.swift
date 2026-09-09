@@ -46,15 +46,18 @@ extension MCPToolExecutor {
     /// The two App Store *metadata* tools are not project-scoped when `app_id` is supplied —
     /// `project_id` exists only to look up the linked app. So they take one or the other, rather
     /// than requiring a project that plays no part in the request.
-    func resolveASCAppId(fromAppIdOrProject args: MCPArguments) async throws -> String {
+    func resolveASCAppId(fromAppIdOrProject args: MCPArguments) throws -> String {
         if let explicit = args.string("app_id"), !explicit.isEmpty { return explicit }
         guard let id = try args.optionalUUID("project_id") else {
             throw MCPToolError.missingArgument("app_id (or project_id, to use its linked app)")
         }
-        let checkout = try await openCheckout(id)
-        defer { checkout.dispose() }
-        guard let linked = checkout.ascAppId, !linked.isEmpty else {
-            throw MCPToolError.failed("\(checkout.projectName) is not linked to an App Store Connect app — pass app_id, or link it via the App Store Connect upload wizard.")
+        // The index holds the link, so this stays a lookup: opening a checkout would read and
+        // decode the whole project and register its fonts to answer with one string.
+        guard let project = state.visibleProjects.first(where: { $0.id == id }) else {
+            throw MCPToolError.notFound("Project \(id.uuidString)")
+        }
+        guard let linked = project.ascAppId, !linked.isEmpty else {
+            throw MCPToolError.failed("\(project.name) is not linked to an App Store Connect app — pass app_id, or link it via the App Store Connect upload wizard.")
         }
         return linked
     }

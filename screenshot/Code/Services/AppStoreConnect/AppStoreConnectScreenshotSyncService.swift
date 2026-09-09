@@ -118,8 +118,8 @@ nonisolated struct ASCScreenshotSetSyncResult: Identifiable, Sendable {
     let moved: Int
     let preserved: Int
     let verified: Bool
-    let error: String?
-    let state: State
+    var error: String?
+    var state: State
     /// `["COMPLETE": 9]` — a histogram, because nine identical strings per set × 64 sets is
     /// unreadable and the interesting case is the one that isn't COMPLETE.
     let assetDeliveryStates: [String: Int]
@@ -287,11 +287,11 @@ final class AppStoreConnectScreenshotSyncService {
         // Connect — is not work, so it must not be in the denominator either. `previewRenderCount`
         // sizes the job before this is known; the first callback below corrects it.
         let rowsById = Dictionary(rows.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        let renderable = targets.filter { rowsById[$0.rowId] != nil }
+        let renderable = targets.compactMap { target in rowsById[target.rowId].map { (target, $0) } }
         let droppedIssues = targets.filter { rowsById[$0.rowId] == nil }.map {
             String(localized: "Skipped \($0.rowLabel) · \($0.versionLabel): its row is no longer in the project.")
         }
-        let totalRenders = renderable.reduce(0) { $0 + $1.templateCount * $1.localizations.count }
+        let totalRenders = renderable.reduce(0) { $0 + $1.0.templateCount * $1.0.localizations.count }
         var completedRenders = 0
         var diffs: [ASCScreenshotSetDiff] = []
         var targetsBySetId: [String: ASCUploadTarget] = [:]
@@ -311,8 +311,7 @@ final class AppStoreConnectScreenshotSyncService {
         progress(.init(stage: .comparing, completedRenders: 0, totalRenders: totalRenders, label: ""))
 
         do {
-            for target in renderable {
-                guard let row = rowsById[target.rowId] else { continue }
+            for (target, row) in renderable {
 
                 // Backgrounds are locale-independent, so the context (and its blur-only
                 // precomposed strip) is built once and reused across every localization.
@@ -724,17 +723,12 @@ final class AppStoreConnectScreenshotSyncService {
     }
 
     private func recordApplied(_ result: ASCScreenshotSetSyncResult, planId: String) {
-        applied[planId, default: [:]][result.id] = ASCScreenshotSetSyncResult(
-            id: result.id,
-            uploaded: result.uploaded,
-            removed: result.removed,
-            moved: result.moved,
-            preserved: result.preserved,
-            verified: result.verified,
-            error: nil,
-            state: .alreadyApplied,
-            warnings: result.warnings
-        )
+        // A copy, not a retype: rebuilding it member by member silently dropped the delivery
+        // histogram and its non-COMPLETE assets from the ledgered result.
+        var ledgered = result
+        ledgered.state = .alreadyApplied
+        ledgered.error = nil
+        applied[planId, default: [:]][result.id] = ledgered
         attempted[planId]?.remove(result.id)
     }
 

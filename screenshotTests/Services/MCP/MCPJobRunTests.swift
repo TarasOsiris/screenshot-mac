@@ -30,7 +30,7 @@ struct MCPJobRunTests {
         let result = try await executor.runJob(kind: .preview, totalUnits: 4, mode: .async) { handle in
             handle.phase(.rendering)
             try await Task.sleep(for: .milliseconds(400))
-            handle.progress(completed: 4)
+            handle.update { $0.completedUnits = 4 }
             return MCPJobOutcome(.object(["done": .bool(true)]))
         }
 
@@ -54,7 +54,7 @@ struct MCPJobRunTests {
         let executor = MCPToolExecutor(state: state, jobs: MCPJobStore())
 
         let result = try await executor.runJob(kind: .preview, totalUnits: 1, mode: .sync) { handle in
-            handle.progress(completed: 1)
+            handle.update { $0.completedUnits = 1 }
             return MCPJobOutcome(.object(["done": .bool(true)]))
         }
         #expect(try phase(result) == MCPJobPhase.succeeded.rawValue)
@@ -71,7 +71,7 @@ struct MCPJobRunTests {
         let executor = MCPToolExecutor(state: state, jobs: store)
 
         let result = try await executor.runJob(kind: .apply, totalUnits: 44, mode: .sync) { handle in
-            handle.progress(completed: 44)
+            handle.update { $0.completedUnits = 44 }
             return MCPJobOutcome(.object(["sets": .array([])]), succeeded: false)
         }
         #expect(try phase(result) == MCPJobPhase.failed.rawValue)

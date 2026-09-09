@@ -129,12 +129,12 @@ struct RowRenderContext {
     func templateImage(at index: Int) -> NSImage {
         resolveFonts {
             RowRenderer.renderSingleTemplateImage(
-            index: index,
-            row: row,
-            screenshotImages: images,
-            localeCode: localeCode,
-            localeState: localeState,
-            availableFontFamilies: availableFontFamilies,
+                index: index,
+                row: row,
+                screenshotImages: images,
+                localeCode: localeCode,
+                localeState: localeState,
+                availableFontFamilies: availableFontFamilies,
                 displayScale: displayScale,
                 preRenderedRowBackground: precomposedRowBackground
             )

@@ -13,7 +13,6 @@ nonisolated enum MCPJobPhase: String, Sendable {
     case comparing
     case revalidating
     case uploading
-    case verifying
     case succeeded
     case failed
     case cancelled

@@ -93,43 +93,21 @@ extension MCPToolExecutor {
         }
 
         let maxDimension = CGFloat(min(max(args.int("max_dimension") ?? 700, 100), 1200))
+        let templateIndex = args.int("template_index")
+        if let templateIndex, !row.templates.indices.contains(templateIndex) {
+            throw MCPToolError.invalidArgument("template_index", "row has \(row.templates.count) columns")
+        }
+        let fullWidth = templateIndex == nil ? row.templateWidth * CGFloat(row.templates.count) : row.templateWidth
         var imageCache: [String: NSImage] = [:]
-        let images = checkout.loadFullResolutionImages(
-            fileNames: checkout.referencedImageFileNames(forRow: row, localeCode: localeCode),
+        let context = RowRenderContext.load(
+            row: row,
+            localeCode: localeCode,
+            from: checkout,
+            displayScale: min(1, maxDimension / max(fullWidth, row.templateHeight)),
+            label: "mcp preview",
             cache: &imageCache
         )
-
-        let image: NSImage
-        if let templateIndex = args.int("template_index") {
-            guard row.templates.indices.contains(templateIndex) else {
-                throw MCPToolError.invalidArgument("template_index", "row has \(row.templates.count) columns")
-            }
-            let scale = min(1, maxDimension / max(row.templateWidth, row.templateHeight))
-            image = checkout.withResolvedFonts {
-                RowRenderer.renderSingleTemplateImage(
-                    index: templateIndex,
-                    row: row,
-                    screenshotImages: images,
-                    localeCode: localeCode,
-                    localeState: checkout.localeState,
-                    availableFontFamilies: checkout.availableFontFamilySet,
-                    displayScale: scale
-                )
-            }
-        } else {
-            let totalWidth = row.templateWidth * CGFloat(row.templates.count)
-            let scale = min(1, maxDimension / max(totalWidth, row.templateHeight))
-            image = checkout.withResolvedFonts {
-                RowRenderer.renderRowImage(
-                    row: row,
-                    screenshotImages: images,
-                    localeCode: localeCode,
-                    localeState: checkout.localeState,
-                    availableFontFamilies: checkout.availableFontFamilySet,
-                    displayScale: scale
-                )
-            }
-        }
+        let image = templateIndex.map(context.templateImage(at:)) ?? context.rowImage()
 
         guard let png = ExportService.pngData(from: image) else {
             throw MCPToolError.failed("Preview rendering produced no image data")

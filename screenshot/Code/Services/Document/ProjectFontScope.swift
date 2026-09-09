@@ -45,17 +45,19 @@ final class ProjectFontScope {
         self.availableFamilySet = families
     }
 
-    /// nil when a font's bytes are not materialized yet (an iCloud placeholder), so a caller can
-    /// refuse rather than render text in the wrong face.
     /// nil when a font's bytes are not materialized yet — a refusal, not a reason to render with
     /// somebody else's fonts. Shared with any other live scope for the same project.
-    static func make(projectId: UUID) -> ProjectFontScope? {
+    static func make(projectId: UUID) async -> ProjectFontScope? {
         if var entry = live[projectId] {
             entry.holders += 1
             live[projectId] = entry
             return entry.scope
         }
-        guard let fontURLs = loadFontURLs(projectId: projectId) else { return nil }
+        // Detached because the resolve stats every font file, which blocks on the file provider for
+        // a ubiquitous path — the same split `ProjectThumbnailService` already makes.
+        guard let fontURLs = await Task.detached(operation: { loadFontURLs(projectId: projectId) }).value else {
+            return nil
+        }
         let scope = register(fontURLs: fontURLs, projectId: projectId)
         live[projectId] = (scope, 1)
         return scope
@@ -96,7 +98,8 @@ final class ProjectFontScope {
         }
     }
 
-    /// Returns nil when any font file exists but its bytes cannot be read — see `make`.
+    /// Returns nil when any font file's bytes have not downloaded yet — see `make`. Blocks on the
+    /// file provider per file, so it must not be called from the main actor.
     nonisolated static func loadFontURLs(projectId: UUID) -> [URL]? {
         let dir = PersistenceService.resourcesDir(projectId)
         guard let files = try? FileManager.default.contentsOfDirectory(
@@ -107,7 +110,9 @@ final class ProjectFontScope {
             return []
         }
         let fontURLs = files.filter { CustomFontLibrary.fontExtensions.contains($0.pathExtension.lowercased()) }
-        for url in fontURLs where PersistenceService.readData(from: url) == nil {
+        // A stat, not a read: the question is whether the bytes are here, and reading every font
+        // file in full to answer it is a coordinated iCloud read per file.
+        for url in fontURLs where PersistenceService.availability(of: url) != .present {
             return nil
         }
         return fontURLs

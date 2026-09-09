@@ -195,30 +195,29 @@ nonisolated final class ICloudMonitor: NSObject, NSFilePresenter, @unchecked Sen
     /// which is why a resource that finished downloading used to reach nothing at all.
     private func noteResourceChange(at url: URL) {
         guard url.deletingLastPathComponent().lastPathComponent == PersistenceService.resourcesDirName else { return }
-        let task = DispatchWorkItem { [weak self] in
+        schedule(\.resourceDebounceTimer) { [weak self] in
             DispatchQueue.main.async { [weak self] in
                 MainActor.assumeIsolated { self?.onResourcesDidChange?() }
             }
         }
-        debounceLock.withLock {
-            resourceDebounceTimer?.cancel()
-            resourceDebounceTimer = task
-        }
-        workQueue.asyncAfter(deadline: .now() + debounceInterval, execute: task)
     }
 
     private func scheduleDebouncedReload() {
-        let task = DispatchWorkItem { [weak self] in
+        schedule(\.debounceTimer) { [weak self] in
             guard let self, hasIndexChanged() else { return }
             DispatchQueue.main.async { [weak self] in
                 MainActor.assumeIsolated { self?.onRemoteChange?() }
             }
         }
-        // NSFilePresenter callbacks arrive on a background operation queue, so
-        // guard the shared work-item reference against concurrent cancel/replace.
+    }
+
+    /// NSFilePresenter callbacks arrive on a background operation queue, so the shared work-item
+    /// reference is guarded against concurrent cancel/replace.
+    private func schedule(_ timer: ReferenceWritableKeyPath<ICloudMonitor, DispatchWorkItem?>, _ body: @escaping () -> Void) {
+        let task = DispatchWorkItem(block: body)
         debounceLock.withLock {
-            debounceTimer?.cancel()
-            debounceTimer = task
+            self[keyPath: timer]?.cancel()
+            self[keyPath: timer] = task
         }
         workQueue.asyncAfter(deadline: .now() + debounceInterval, execute: task)
     }

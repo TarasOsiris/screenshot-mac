@@ -100,7 +100,7 @@ extension MCPToolExecutor {
 
     func getAppStoreMetadata(_ args: MCPArguments) async throws -> CallTool.Result {
         try requireASCConfigured()
-        let appId = try await resolveASCAppId(fromAppIdOrProject: args)
+        let appId = try resolveASCAppId(fromAppIdOrProject: args)
         let versions = try await ascVersions(appId: appId, requested: args.string("version_id"))
 
         var metas: [ASCMetadataResult.VersionMeta] = []
@@ -129,7 +129,7 @@ extension MCPToolExecutor {
             (try $0.requiredString("locale"), try $0.requiredString("description"))
         }
 
-        let appId = try await resolveASCAppId(fromAppIdOrProject: args)
+        let appId = try resolveASCAppId(fromAppIdOrProject: args)
         let targets = try await resolveEditableTargets(appId: appId, requested: args.string("version_id"))
 
         var results: [ASCDescriptionUpdateResult.VersionResult] = []
@@ -165,10 +165,8 @@ extension MCPToolExecutor {
     func previewAppStoreScreenshotSync(_ args: MCPArguments) async throws -> CallTool.Result {
         try requireASCConfigured()
         let checkout = try await requireCheckout(args)
-        // In async mode `runJob` returns before the body has rendered anything, so disposing at
-        // function exit would unregister the project's fonts out from under the render — the exact
-        // silent system-face failure `ProjectFontScope` exists to prevent. Ownership transfers to
-        // the job body once it is started.
+        // Disposed here only on the paths that throw before the job starts; once it does, the job
+        // owns the checkout, because `runJob` returns long before an async body has rendered.
         var jobOwnsCheckout = false
         defer { if !jobOwnsCheckout { checkout.dispose() } }
         let appId = try resolveASCAppId(args, checkout: checkout)
@@ -278,10 +276,9 @@ extension MCPToolExecutor {
         let projectName = checkout.projectName
         let executorIssues = issues
 
-        jobOwnsCheckout = true
         let sync = screenshotSync
-        return try await runJob(kind: .preview, totalUnits: renders, mode: mode) { handle in
-            defer { checkout.dispose() }
+        jobOwnsCheckout = true
+        return try await runJob(kind: .preview, totalUnits: renders, mode: mode, owning: checkout) { handle in
             handle.phase(.rendering)
             let plan = try await sync.buildPlan(
                 appId: appId,
@@ -361,6 +358,7 @@ extension MCPToolExecutor {
         // to reissue the identical call. With no plan and no project_id there is nothing to check
         // against and nothing to render: the ledger answers, or `validCachedPlan` says planNotFound.
         let checkout = try await optionalCheckout(args, matching: service.plan(id: planId))
+        // As above: ours until the job starts, the job's afterwards.
         var jobOwnsCheckout = false
         defer { if !jobOwnsCheckout { checkout?.dispose() } }
         // Sized from the plan when it is still cached. When it isn't, the ledger answers without
@@ -381,8 +379,7 @@ extension MCPToolExecutor {
         let stamp = checkout?.documentStamp
 
         jobOwnsCheckout = true
-        return try await runJob(kind: .apply, totalUnits: steps, mode: mode) { handle in
-            defer { checkout?.dispose() }
+        return try await runJob(kind: .apply, totalUnits: steps, mode: mode, owning: checkout) { handle in
             handle.update {
                 $0.planId = planId
                 $0.sets = ids.sorted().map { MCPJobSetProgress(setId: $0) }

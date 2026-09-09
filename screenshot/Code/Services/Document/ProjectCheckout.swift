@@ -126,6 +126,7 @@ final class DetachedProjectHost: ProjectMutationHost {
 
         let monitor = state.iCloudMonitor
         let id = projectId
+        let owner = state
         // The shared save queue, not a private one: `loadProjectAfterQueuedWrites` puts its
         // barrier here too, so an open enqueued after this write reads these bytes.
         AppState.saveQueue.async {
@@ -133,7 +134,9 @@ final class DetachedProjectHost: ProjectMutationHost {
                 try PersistenceService.saveProject(id, data: data)
                 monitor?.snapshotAfterWrite()
             } catch {
-                CrashReportingService.report(.projectSaveFailed, error: error)
+                // Through the shared reporter, so a failed detached write raises `saveError` like
+                // every other save path instead of reaching Sentry and nobody else.
+                Task { @MainActor in owner.reportProjectSaveFailure(error) }
             }
         }
         state.saveIndexAsync()
@@ -235,7 +238,7 @@ final class ProjectCheckout: RowRenderSource {
         // face — silently, and identically to a correct render at every other layer. A nil scope
         // means a font file exists but its bytes have not downloaded, which is a refusal, not a
         // reason to fall back to somebody else's fonts.
-        guard let fontScope = ProjectFontScope.make(projectId: projectId) else {
+        guard let fontScope = await ProjectFontScope.make(projectId: projectId) else {
             throw ProjectCheckoutError.fontsUnavailable(name: project.name)
         }
         return ProjectCheckout(
