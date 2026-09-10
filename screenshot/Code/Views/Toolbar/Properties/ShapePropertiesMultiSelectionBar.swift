@@ -167,6 +167,8 @@ struct ShapePropertiesMultiSelectionBar: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 90)
+                .help("Horizontal alignment")
+                .accessibilityLabel("Horizontal alignment")
             }
 
             ShapePropertiesSection {
@@ -234,6 +236,8 @@ struct ShapePropertiesMultiSelectionBar: View {
                 .labelsHidden()
                 .frame(width: UIMetrics.ColorSwatch.inline)
                 .padding(.horizontal, 4)
+                .help("Outline")
+                .accessibilityLabel("Outline")
 
             ShapePropertiesSeparator()
 

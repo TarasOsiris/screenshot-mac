@@ -90,6 +90,7 @@ struct Device3DAppearancePopover: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .accessibilityLabel("Finish")
         }
     }
 

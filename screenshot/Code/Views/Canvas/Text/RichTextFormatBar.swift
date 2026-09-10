@@ -111,6 +111,7 @@ struct RichTextFormatBar: View {
             .frame(width: RichTextFormatBarMetrics.controlSize.width, height: RichTextFormatBarMetrics.controlSize.height)
             .padding(.horizontal, 4)
             .help("Text color")
+            .accessibilityLabel("Text color")
 
             divider
 

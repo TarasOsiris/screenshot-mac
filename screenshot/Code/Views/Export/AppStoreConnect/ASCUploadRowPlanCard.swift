@@ -82,6 +82,7 @@ struct ASCUploadRowPlanCard: View {
             Spacer()
             Toggle("", isOn: $plan.isEnabled)
                 .labelsHidden()
+                .accessibilityLabel("Include")
                 .toggleStyle(.switch)
                 .controlSize(.small)
         }

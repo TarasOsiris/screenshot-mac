@@ -64,6 +64,7 @@ struct BackgroundEditor: View {
                 Spacer()
                 ColorPicker("", selection: $bgColor.onSet { onChanged() }, supportsOpacity: false)
                     .labelsHidden()
+                    .accessibilityLabel("Color")
                     .iPadColorSwatchFrame()
                     .fixedSize()
             }

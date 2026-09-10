@@ -20,6 +20,7 @@ struct ShapeOutlineControls: View {
                 .frame(width: UIMetrics.ColorSwatch.inline)
                 .padding(.horizontal, 4)
                 .help("Outline")
+                .accessibilityLabel("Outline")
 
             ShapePropertiesSeparator()
 

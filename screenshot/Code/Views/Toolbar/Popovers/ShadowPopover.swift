@@ -111,6 +111,7 @@ struct ShadowPopover: View {
                 .frame(width: 60, alignment: .leading)
             ColorPicker("", selection: colorBinding, supportsOpacity: false)
                 .labelsHidden()
+                .accessibilityLabel("Color")
             Spacer()
         }
 

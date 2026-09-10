@@ -79,6 +79,7 @@ struct SvgPasteDialog: View {
 
                 ColorPicker("", selection: $overrideColor, supportsOpacity: false)
                     .labelsHidden()
+                    .accessibilityLabel("Override color")
                     .disabled(!useColorOverride)
                     .onChange(of: overrideColor) {
                         if useColorOverride { updatePreview() }

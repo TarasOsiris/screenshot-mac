@@ -13,5 +13,6 @@ struct FontWeightPicker: View {
         }
         .labelsHidden()
         .frame(width: width)
+        .accessibilityLabel("Weight")
     }
 }

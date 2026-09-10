@@ -210,6 +210,7 @@ struct ASCVersionSelectionStepView: View {
                         }
                         .labelsHidden()
                         .fixedSize()
+                        .accessibilityLabel("Platform")
                     }
                     TextField("Version", text: $newVersionString, prompt: Text(verbatim: "1.0"))
                         .frame(width: 90)
