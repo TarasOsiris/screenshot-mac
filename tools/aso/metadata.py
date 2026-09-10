@@ -41,6 +41,16 @@ SUBTITLE = {
     "ar-SA": "لقطات شاشة التطبيقات والتوطين",
     "he": "צילומי מסך ולוקליזציה",
     "th": "ภาพหน้าจอแอปและการแปลภาษา",
+    # added 2026-09-10. These keep the English subtitle for the same reason `el`
+    # does — the criterion is local search volume, not the alphabet. Developer
+    # tooling in India, Pakistan, Bangladesh and Malaysia is searched for in
+    # English; a Devanagari or Tamil subtitle would spend all 30 characters on
+    # words nobody types. The descriptions are translated (descriptions.py):
+    # a description is read, a subtitle is searched.
+    "ms": LATIN_SUBTITLE, "hi": LATIN_SUBTITLE, "mr-IN": LATIN_SUBTITLE,
+    "bn-BD": LATIN_SUBTITLE, "gu-IN": LATIN_SUBTITLE, "ta-IN": LATIN_SUBTITLE,
+    "te-IN": LATIN_SUBTITLE, "kn-IN": LATIN_SUBTITLE, "ml-IN": LATIN_SUBTITLE,
+    "ur-PK": LATIN_SUBTITLE,
 }
 
 # macOS promo mentions MCP (a macOS-only feature). See PROMO_IOS for the iOS train.
@@ -85,6 +95,17 @@ PROMO_MAC = {
     "el": "Φτιάξτε πλήρες σετ στιγμιοτύπων, προσαρμόστε το σε κάθε αγορά και ανεβάστε το απευθείας στο App Store Connect. Αυτοματοποιήστε τα πάντα μέσω MCP.",
     "ca": "Crea un joc complet de captures, localitza'l a tots els mercats i puja'l directament a App Store Connect. Automatitza-ho tot amb el teu assistent d'IA via MCP.",
     "sl-SI": "Sestavite celoten nabor posnetkov zaslona, ga lokalizirajte za vse trge in naložite v App Store Connect. Vse skupaj avtomatizirajte s pomočnikom AI prek MCP.",
+    # added 2026-09-10
+    "ms": "Bina set tangkapan skrin yang lengkap, setempatkan untuk setiap pasaran, dan muat naik terus ke App Store Connect. Automasikan semuanya melalui MCP.",
+    "hi": "पूरा स्क्रीनशॉट सेट बनाएँ, हर बाज़ार के लिए उसका अनुवाद करें और सीधे App Store Connect पर अपलोड करें। यह सब MCP से अपने-आप कराएँ।",
+    "mr-IN": "संपूर्ण स्क्रीनशॉट संच तयार करा, प्रत्येक बाजारपेठेसाठी भाषांतरित करा आणि थेट App Store Connect वर अपलोड करा. हे सर्व MCP द्वारे स्वयंचलित करा.",
+    "bn-BD": "সম্পূর্ণ স্ক্রিনশট সেট তৈরি করুন, প্রতিটি বাজারের জন্য অনুবাদ করুন এবং সরাসরি App Store Connect-এ আপলোড করুন। পুরোটা MCP দিয়ে স্বয়ংক্রিয় করুন।",
+    "gu-IN": "આખો સ્ક્રીનશોટ સેટ બનાવો, દરેક બજાર માટે ભાષાંતર કરો અને સીધા App Store Connect પર અપલોડ કરો. આ બધું MCP વડે આપમેળે કરાવો.",
+    "ta-IN": "முழு ஸ்கிரீன்ஷாட் தொகுப்பை உருவாக்கி, ஒவ்வொரு சந்தைக்கும் மொழிபெயர்த்து, நேரடியாக App Store Connect-க்கு பதிவேற்றுங்கள். அனைத்தையும் MCP வழியாக தானியக்கமாக்குங்கள்.",
+    "te-IN": "పూర్తి స్క్రీన్‌షాట్ సెట్ రూపొందించండి, ప్రతి మార్కెట్ కోసం అనువదించండి, నేరుగా App Store Connect కు అప్‌లోడ్ చేయండి. అంతా MCP తో ఆటోమేట్ చేయండి.",
+    "kn-IN": "ಪೂರ್ಣ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಸೆಟ್ ರಚಿಸಿ, ಪ್ರತಿ ಮಾರುಕಟ್ಟೆಗೆ ಅನುವಾದಿಸಿ, ನೇರವಾಗಿ App Store Connect ಗೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ. ಎಲ್ಲವನ್ನೂ MCP ಮೂಲಕ ಸ್ವಯಂಚಾಲಿತಗೊಳಿಸಿ.",
+    "ml-IN": "പൂർണ്ണ സ്ക്രീൻഷോട്ട് സെറ്റ് ഉണ്ടാക്കുക, ഓരോ വിപണിക്കും വിവർത്തനം ചെയ്യുക, നേരിട്ട് App Store Connect-ലേക്ക് അപ്‌ലോഡ് ചെയ്യുക. എല്ലാം MCP വഴി യാന്ത്രികമാക്കുക.",
+    "ur-PK": "مکمل اسکرین شاٹ سیٹ بنائیں، ہر مارکیٹ کے لیے ترجمہ کریں اور براہِ راست App Store Connect پر اپ لوڈ کریں۔ یہ سب MCP کے ذریعے خودکار کریں۔",
 }
 
 # MCP is macOS-only (MCPServerService is entirely #if os(macOS)) — the iOS
@@ -130,6 +151,17 @@ PROMO_IOS = {
     "el": "Φτιάξτε πλήρες σετ στιγμιοτύπων, προσαρμόστε το σε κάθε αγορά και ανεβάστε το απευθείας στο App Store Connect — από το iPad σας.",
     "ca": "Crea un joc complet de captures, localitza'l a tots els mercats i puja'l directament a App Store Connect, des del teu iPad.",
     "sl-SI": "Sestavite celoten nabor posnetkov zaslona, ga lokalizirajte za vse trge in ga naložite neposredno v App Store Connect – kar z iPada.",
+    # added 2026-09-10
+    "ms": "Bina set tangkapan skrin yang lengkap, setempatkan untuk setiap pasaran, dan muat naik terus ke App Store Connect — terus dari iPad anda.",
+    "hi": "पूरा स्क्रीनशॉट सेट बनाएँ, हर बाज़ार के लिए उसका अनुवाद करें और सीधे App Store Connect पर अपलोड करें — अपने iPad से ही।",
+    "mr-IN": "संपूर्ण स्क्रीनशॉट संच तयार करा, प्रत्येक बाजारपेठेसाठी भाषांतरित करा आणि थेट App Store Connect वर अपलोड करा — तुमच्या iPad वरूनच.",
+    "bn-BD": "সম্পূর্ণ স্ক্রিনশট সেট তৈরি করুন, প্রতিটি বাজারের জন্য অনুবাদ করুন এবং সরাসরি App Store Connect-এ আপলোড করুন — আপনার iPad থেকেই।",
+    "gu-IN": "આખો સ્ક્રીનશોટ સેટ બનાવો, દરેક બજાર માટે ભાષાંતર કરો અને સીધા App Store Connect પર અપલોડ કરો — તમારા iPad પરથી જ.",
+    "ta-IN": "முழு ஸ்கிரீன்ஷாட் தொகுப்பை உருவாக்கி, ஒவ்வொரு சந்தைக்கும் மொழிபெயர்த்து, நேரடியாக App Store Connect-க்கு பதிவேற்றுங்கள் — உங்கள் iPad-இலிருந்தே.",
+    "te-IN": "పూర్తి స్క్రీన్‌షాట్ సెట్ రూపొందించండి, ప్రతి మార్కెట్ కోసం అనువదించండి, నేరుగా App Store Connect కు అప్‌లోడ్ చేయండి — మీ iPad నుంచే.",
+    "kn-IN": "ಪೂರ್ಣ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಸೆಟ್ ರಚಿಸಿ, ಪ್ರತಿ ಮಾರುಕಟ್ಟೆಗೆ ಅನುವಾದಿಸಿ, ನೇರವಾಗಿ App Store Connect ಗೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ — ನಿಮ್ಮ iPad ನಿಂದಲೇ.",
+    "ml-IN": "പൂർണ്ണ സ്ക്രീൻഷോട്ട് സെറ്റ് ഉണ്ടാക്കുക, ഓരോ വിപണിക്കും വിവർത്തനം ചെയ്യുക, നേരിട്ട് App Store Connect-ലേക്ക് അപ്‌ലോഡ് ചെയ്യുക — നിങ്ങളുടെ iPad-ൽ നിന്ന് തന്നെ.",
+    "ur-PK": "مکمل اسکرین شاٹ سیٹ بنائیں، ہر مارکیٹ کے لیے ترجمہ کریں اور براہِ راست App Store Connect پر اپ لوڈ کریں — اپنے iPad سے ہی۔",
 }
 
 VERBATIM = ["App Store Connect"]

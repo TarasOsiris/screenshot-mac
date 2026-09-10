@@ -86,6 +86,20 @@ EXTRA = {
     "ru":      ["мокап", "генератор", "скриншот", "localization", "aso", "editor", "android"],
     "uk":      ["мокап", "скриншот", "знімок", "localization", "aso", "editor", "android"],
     "th":      ["ภาพหน้าจอ", "แอป", "localization", "aso", "editor", "android"],
+    # added 2026-09-10 — India, Pakistan, Bangladesh, Malaysia. English for the
+    # same reason as the `el` block above: these storefronts search developer
+    # tooling in English, so a local-script keyword field would spend the whole
+    # 100-char budget on tokens nobody types. Their descriptions are translated.
+    "ms":     EN_TAIL,
+    "hi":     EN_TAIL,
+    "mr-IN":  EN_TAIL,
+    "bn-BD":  EN_TAIL,
+    "gu-IN":  EN_TAIL,
+    "ta-IN":  EN_TAIL,
+    "te-IN":  EN_TAIL,
+    "kn-IN":  EN_TAIL,
+    "ml-IN":  EN_TAIL,
+    "ur-PK":  EN_TAIL,
     "ja":      ["モックアップ", "ストア", "画像", "作成", "素材", "localization", "aso", "editor", "android"],
     "ko":      ["스크린샷", "앱스토어", "목업", "제작", "localization", "aso", "editor", "android"],
     "zh-Hans": ["应用截图", "上架", "生成器", "制作", "工具", "localization", "aso", "editor", "android"],
