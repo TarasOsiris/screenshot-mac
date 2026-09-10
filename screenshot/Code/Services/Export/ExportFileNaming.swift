@@ -94,6 +94,19 @@ enum ExportFileNaming {
         return sanitized.isEmpty ? "Screenshots" : sanitized
     }
 
+    /// `"<Project> showcase"` — the sanitized project name prefixed to a folder kind. Falls back to
+    /// `base` alone when the name sanitizes away, and caps the prefix in UTF-8 bytes: project names
+    /// run to 100 characters, which in emoji is ~400 bytes and would fail `createDirectory` on a
+    /// 255-byte path component.
+    static func projectPrefixedFolderName(_ base: String, projectName: String) -> String {
+        let sanitized = sanitizedFileName(projectName)
+            .prefix(utf8Bytes: maxFolderNamePrefixBytes)
+            .trimmingCharacters(in: pathTrimSet)
+        return sanitized.isEmpty ? base : "\(sanitized) \(base)"
+    }
+
+    private static let maxFolderNamePrefixBytes = 180
+
     static func uniqueFolder(named baseName: String, in parent: URL) -> URL {
         let fm = FileManager.default
         let candidate = parent.appendingPathComponent(baseName)
@@ -104,5 +117,21 @@ enum ExportFileNaming {
             let numbered = parent.appendingPathComponent("\(baseName) (\(counter))")
             if !fm.fileExists(atPath: numbered.path) { return numbered }
         }
+    }
+}
+
+private extension String {
+    /// Truncates on grapheme boundaries so a multi-byte character is never split in half.
+    func prefix(utf8Bytes limit: Int) -> String {
+        guard utf8.count > limit else { return self }
+        var out = ""
+        var used = 0
+        for character in self {
+            let size = String(character).utf8.count
+            if used + size > limit { break }
+            out.append(character)
+            used += size
+        }
+        return out
     }
 }

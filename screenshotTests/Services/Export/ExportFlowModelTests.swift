@@ -82,6 +82,7 @@ struct ExportFlowModelTests {
         let destDir = try #require(
             try FileManager.default.contentsOfDirectory(at: base, includingPropertiesForKeys: nil).first
         )
+        #expect(destDir.lastPathComponent == "Fixture rows", "the folder must say which project it came from")
         let files = try FileManager.default.contentsOfDirectory(at: destDir, includingPropertiesForKeys: nil)
             .map(\.lastPathComponent)
             .sorted()

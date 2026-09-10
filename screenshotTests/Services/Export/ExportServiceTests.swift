@@ -268,6 +268,29 @@ struct ExportServiceTests {
                 == "02_Onboarding_en_v2.png")
     }
 
+    @Test func projectPrefixedFolderNamePrefixesTheSanitizedProjectName() {
+        #expect(ExportFileNaming.projectPrefixedFolderName("showcase", projectName: "My App") == "My App showcase")
+        #expect(ExportFileNaming.projectPrefixedFolderName("rows", projectName: " Trailing ") == "Trailing rows")
+        #expect(ExportFileNaming.projectPrefixedFolderName("showcase", projectName: "a/b") == "a_b showcase")
+    }
+
+    /// A name with nothing usable left must not leave the folder called `" showcase"` or `"_ showcase"`.
+    @Test func projectPrefixedFolderNameFallsBackToTheBareKind() {
+        #expect(ExportFileNaming.projectPrefixedFolderName("showcase", projectName: "") == "showcase")
+        #expect(ExportFileNaming.projectPrefixedFolderName("showcase", projectName: "   ") == "showcase")
+        #expect(ExportFileNaming.projectPrefixedFolderName("showcase", projectName: "///") == "showcase")
+    }
+
+    /// Project names run to 100 characters; in emoji that is ~400 bytes, past the 255-byte limit on
+    /// one path component — `createDirectory` would throw and the export would fail.
+    @Test func projectPrefixedFolderNameStaysWithinThePathComponentByteLimit() {
+        let name = String(repeating: "\u{1F600}", count: AppState.maxProjectNameLength)
+        let folder = ExportFileNaming.projectPrefixedFolderName("showcase", projectName: name)
+        #expect(folder.utf8.count < 255)
+        #expect(folder.hasSuffix(" showcase"))
+        #expect(folder.allSatisfy { $0 == "\u{1F600}" || " showcase".contains($0) }, "must not split a character")
+    }
+
     @Test func preferredCustomSuffixReadsTheExportSetting() {
         let defaults = UserDefaults.standard
         let previous = defaults.string(forKey: AppSettingsKeys.exportCustomSuffix)

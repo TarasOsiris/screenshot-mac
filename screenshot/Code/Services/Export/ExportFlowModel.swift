@@ -237,7 +237,8 @@ final class ExportFlowModel {
         beginRun(total: rowsToExport.count)
 
         run(cleanup: delivery.ownsTempFolder ? baseURL : nil) {
-            let destDir = ExportFileNaming.uniqueFolder(named: folderName, in: baseURL)
+            let named = ExportFileNaming.projectPrefixedFolderName(folderName, projectName: document.activeProjectName)
+            let destDir = ExportFileNaming.uniqueFolder(named: named, in: baseURL)
             try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
             var imageCache: [String: NSImage] = [:]
             let rendered = try await ExportCoordinator.renderRows(
