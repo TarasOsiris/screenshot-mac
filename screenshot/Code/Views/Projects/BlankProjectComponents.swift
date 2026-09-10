@@ -222,8 +222,10 @@ private struct BlankProjectRowCard: View {
             Image(systemName: "rectangle.split.3x1")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
             TemplateCountPicker(selection: $draft.templateCount, label: "")
                 .labelsHidden()
+                .accessibilityLabel("Screenshots per row")
         }
         .frame(width: 64)
         .help("Screenshots per row")

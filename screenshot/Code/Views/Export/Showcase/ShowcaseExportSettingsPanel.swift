@@ -72,6 +72,7 @@ private struct ShowcaseSettingsPanelHeader: View {
             }
             .buttonStyle(.borderless)
             .help("Reset to defaults")
+            .accessibilityLabel("Reset to defaults")
         }
         .padding(EdgeInsets(top: 14, leading: 24, bottom: 14, trailing: 16))
     }

@@ -225,6 +225,7 @@ extension ShapePropertiesSingleSelectionBar {
         .pickerStyle(.segmented)
         .labelsHidden()
         .help("Horizontal alignment")
+        .accessibilityLabel("Horizontal alignment")
     }
 
     @ViewBuilder
@@ -237,6 +238,7 @@ extension ShapePropertiesSingleSelectionBar {
         .pickerStyle(.segmented)
         .labelsHidden()
         .help("Vertical alignment")
+        .accessibilityLabel("Vertical alignment")
     }
 
     @ViewBuilder

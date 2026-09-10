@@ -173,6 +173,7 @@ struct TemplateControlBar: View {
         }
         .buttonStyle(EditorIconButtonStyle())
         .foregroundStyle(backgroundButtonStyle)
+        .accessibilityLabel(backgroundButtonHelp)
         .help(backgroundButtonHelp)
         // `.sheet` rather than the docked `.panel`: the panel needs a `BarPanelHost`,
         // which only `ShapePropertiesBar` provides.

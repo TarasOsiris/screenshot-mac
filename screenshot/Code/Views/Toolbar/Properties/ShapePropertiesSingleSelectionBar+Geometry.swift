@@ -13,6 +13,17 @@ extension ShapePropertiesSingleSelectionBar {
             }
         }
 
+        /// Spoken name for the field. The visible letter is notation VoiceOver would read as
+        /// a bare "X", and Voice Control needs a phrase to match "click".
+        var accessibilityLabel: LocalizedStringKey {
+            switch self {
+            case .x: "X position"
+            case .y: "Y position"
+            case .width: "Width"
+            case .height: "Height"
+            }
+        }
+
         var field: Field {
             switch self {
             case .x: .x
@@ -42,6 +53,7 @@ extension ShapePropertiesSingleSelectionBar {
             Text(verbatim: axis.label)
                 .scaledFont(UIMetrics.FontSize.hint)
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
 
             ShapePropertyField(
                 shapeId: shapeId,
@@ -57,6 +69,7 @@ extension ShapePropertiesSingleSelectionBar {
                 commit: { commitGeometry(axis, to: $0) },
                 liveSelection: { state.selectedShapeId }
             )
+            .accessibilityLabel(axis.accessibilityLabel)
         }
     }
 
