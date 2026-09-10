@@ -6321,6 +6321,58 @@
         }
       }
     },
+    "**Replace All Screenshots**, offered next to Upload when you confirm, skips the comparison entirely: everything currently in the selected sets is deleted and every screenshot is uploaded again with new asset IDs. It prepares faster and uploads slower, so it pays off when most screenshots changed and costs you when only one did." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Alle Screenshots ersetzen**, das beim Bestätigen neben Hochladen angeboten wird, überspringt den Vergleich vollständig: Alles, was derzeit in den ausgewählten Sätzen ist, wird gelöscht und jeder Screenshot wird erneut mit neuen Asset-IDs hochgeladen. Es bereitet sich schneller vor und lädt langsamer hoch, sodass es sich auszahlt, wenn die meisten Screenshots geändert wurden, und Kosten verursacht, wenn nur einer geändert wurde."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Reemplazar todas las capturas de pantalla**, que se ofrece junto a Cargar cuando confirmas, omite la comparación por completo: todo lo que se encuentra actualmente en los conjuntos seleccionados se elimina y cada captura de pantalla se carga nuevamente con nuevos ID de activos. Se prepara más rápido y carga más lento, por lo que vale la pena cuando la mayoría de las capturas de pantalla cambiaron y le cuesta cuando solo lo hizo una."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**جایگزینی همه اسکرین‌شات‌ها**، که در کنار آپلود ارائه می‌شود، به‌طور کامل از مقایسه صرفنظر می‌کند: همه چیزهایی که در حال حاضر در مجموعه‌های انتخابی وجود دارد حذف می‌شود و هر عکس صفحه‌نمایش دوباره با شناسه‌های دارایی جدید آپلود می‌شود. سریع‌تر آماده می‌شود و آهسته‌تر آپلود می‌شود، بنابراین زمانی که اکثر اسکرین‌شات‌ها تغییر می‌کنند، نتیجه می‌دهد و زمانی که فقط یکی از آن‌ها تغییر می‌کند، برای شما هزینه دارد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Remplacer toutes les captures d'écran**, proposé à côté de Télécharger lorsque vous confirmez, ignore complètement la comparaison : tout ce qui se trouve actuellement dans les ensembles sélectionnés est supprimé et chaque capture d'écran est à nouveau téléchargée avec de nouveaux identifiants d'actifs. Il se prépare plus rapidement et se télécharge plus lentement, il est donc rentable lorsque la plupart des captures d'écran sont modifiées et vous coûte cher lorsqu'une seule l'a fait."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認時に [アップロード] の横に表示される [**すべてのスクリーンショットを置換]** では、比較が完全にスキップされます。現在選択されているセット内のすべてが削除され、すべてのスクリーンショットが新しいアセット ID で再度アップロードされます。準備が速くなり、アップロードが遅くなるため、ほとんどのスクリーンショットが変更された場合は効果があり、1 つだけ変更された場合はコストがかかります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인 시 업로드 옆에 제공되는 **모든 스크린샷 교체**는 비교를 완전히 건너뜁니다. 현재 선택한 세트에 있는 모든 항목이 삭제되고 모든 스크린샷이 새 자산 ID로 다시 업로드됩니다. 더 빠르게 준비하고 더 느리게 업로드하므로 대부분의 스크린샷이 변경되면 효과가 있고 하나만 변경하면 비용이 발생합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Substituir todas as capturas de tela**, oferecido ao lado de Carregar quando você confirma, ignora totalmente a comparação: tudo o que está atualmente nos conjuntos selecionados é excluído e cada captura de tela é carregada novamente com novos IDs de ativos. Ele se prepara mais rápido e carrega mais devagar, por isso compensa quando a maioria das capturas de tela é alterada e custa quando apenas uma é alterada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**替换所有屏幕截图**，在您确认时在上传旁边提供，完全跳过比较：当前所选集中的所有内容都将被删除，并且每个屏幕截图都会使用新的资产 ID 重新上传。它的准备速度更快，上传速度更慢，因此，当大多数屏幕截图发生变化时，它会带来回报，而当只有一张屏幕截图发生变化时，你就会付出代价。"
+          }
+        }
+      }
+    },
     "**Reset all** returns rotation, material, and lighting to their defaults." : {
       "localizations" : {
         "de" : {
@@ -8879,6 +8931,58 @@
         }
       }
     },
+    "**Upload** skips that screen and compares against the store as it goes, uploading only what differs and keeping the App Store asset IDs of exact matches. The progress bar counts the screenshots as they render, then compares each set." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Upload** überspringt diesen Bildschirm und vergleicht ihn mit dem Store, wobei nur das hochgeladen wird, was sich unterscheidet, und die App Store Asset-IDs der genauen Übereinstimmungen beibehalten werden. Der Fortschrittsbalken zählt die Screenshots beim Rendern und vergleicht dann jeden Satz."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Cargar** omite esa pantalla y se compara con la tienda a medida que avanza, cargando solo lo que difiere y manteniendo los App Store ID de activos de coincidencias exactas. La barra de progreso cuenta las capturas de pantalla a medida que se representan y luego compara cada conjunto."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**آپلود** آن صفحه را رد می‌کند و در طول زمان با فروشگاه مقایسه می‌کند، فقط موارد متفاوت را آپلود می‌کند و شناسه‌های دارایی App Store مطابقت دقیق را حفظ می‌کند. نوار پیشرفت اسکرین شات ها را در حین رندر شمارش می کند، سپس هر مجموعه را با هم مقایسه می کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Télécharger** ignore cet écran et effectue une comparaison avec le magasin au fur et à mesure, en téléchargeant uniquement ce qui diffère et en conservant les App Store ID d'éléments des correspondances exactes. La barre de progression compte les captures d'écran au fur et à mesure de leur rendu, puis compare chaque ensemble."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**アップロード** はその画面をスキップし、ストアと比較しながら、異なるもののみをアップロードし、完全に一致する App Store アセット ID を保持します。進行状況バーは、レンダリング時にスクリーンショットをカウントし、各セットを比較します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**업로드**는 해당 화면을 건너뛰고 스토어와 비교하여 차이점만 업로드하고 정확히 일치하는 App Store 자산 ID를 유지합니다. 진행률 표시줄은 렌더링되는 스크린샷의 수를 계산한 다음 각 세트를 비교합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Upload** ignora essa tela e compara com a loja conforme avança, fazendo upload apenas do que difere e mantendo os App Store IDs de recursos de correspondências exatas. A barra de progresso conta as capturas de tela à medida que são renderizadas e compara cada conjunto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**上传** 会跳过该屏幕并与商店进行比较，仅上传不同的内容并保持 App Store 资产 ID 完全匹配。进度条会在渲染时对屏幕截图进行计数，然后比较每组屏幕截图。"
+          }
+        }
+      }
+    },
     "**Use Invisible category for clipped designs.** When you want the screenshot to bleed off the canvas with no bezel, pick the Invisible device category." : {
       "localizations" : {
         "de" : {
@@ -10174,6 +10278,110 @@
         }
       }
     },
+    "%@ uses fonts whose files have not downloaded yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ verwendet Schriftarten, deren Dateien noch nicht heruntergeladen wurden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ utiliza fuentes cuyos archivos aún no se han descargado."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ از فونت‌هایی استفاده می‌کند که فایل‌های آن‌ها هنوز دانلود نشده‌اند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ utilise des polices dont les fichiers n'ont pas encore été téléchargés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ は、ファイルがまだダウンロードされていないフォントを使用しています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@은(는) 아직 다운로드되지 않은 파일의 글꼴을 사용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ usa fontes cujos arquivos ainda não foram baixados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 使用尚未下载文件的字体。"
+          }
+        }
+      }
+    },
+    "%@ was opened in the app while this edit was in progress. Retry it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ wurde in der App geöffnet, während diese Bearbeitung durchgeführt wurde. Versuchen Sie es erneut."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ se abrió en la aplicación mientras se realizaba esta edición. Vuelva a intentarlo."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حالی که این ویرایش در حال انجام بود، %1$@ در برنامه باز شد. دوباره آن را امتحان کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a été ouvert dans l'application pendant que cette modification était en cours. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この編集の進行中に、アプリで %1$@ が開かれました。再試行してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 편집이 진행되는 동안 %1$@이(가) 앱에서 열렸습니다. 다시 시도해 보세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ foi aberto no aplicativo enquanto esta edição estava em andamento. Tente novamente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "进行此编辑时，%1$@ 在应用中打开。重试一下。"
+          }
+        }
+      }
+    },
     "%@ was partially uploaded before the last sync stopped. Refresh the review to re-diff this set — the sets that finished will not be uploaded again." : {
       "localizations" : {
         "de" : {
@@ -10673,6 +10881,58 @@
         }
       }
     },
+    "%lld %@ across %lld %@, %lld %@, and %lld %@.\n\nUpload compares each screenshot with the store and changes only what differs, keeping the App Store asset IDs of exact matches.\n\nReplace All Screenshots skips the comparison: everything currently in these sets is deleted and all %lld are uploaded again with new asset IDs. Quicker to prepare, slower to upload." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ über %3$lld %4$@, %5$lld %6$@ und %7$lld %8$@.\n\nUpload vergleicht jeden Screenshot mit dem Store und ändert nur die Unterschiede, wobei die App Store Asset-IDs der exakten Übereinstimmungen beibehalten werden.\n\n„Alle Screenshots ersetzen“ überspringt den Vergleich: Alles, was derzeit in diesen Sätzen enthalten ist, wird gelöscht und alle %9$lld werden erneut mit neuen Asset-IDs hochgeladen. Schnellere Vorbereitung, langsameres Hochladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ a través de %3$lld %4$@, %5$lld %6$@ y %7$lld %8$@.\n\nUpload compara cada captura de pantalla con la tienda y cambia solo lo que difiere, manteniendo los App Store ID de activos de coincidencias exactas.\n\nReemplazar todas las capturas de pantalla omite la comparación: todo lo que se encuentra actualmente en estos conjuntos se elimina y todos los %9$lld se cargan nuevamente con nuevos ID de activos. Más rápido de preparar, más lento de cargar."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ در سراسر %3$lld %4$@، %5$lld %6$@ و %7$lld %8$@.\n\nآپلود هر عکس صفحه‌نمایش را با فروشگاه مقایسه می‌کند و فقط موارد متفاوت را تغییر می‌دهد و شناسه‌های دارایی App Store مطابقت دقیق را حفظ می‌کند.\n\nReplace All Screenshots مقایسه را رد می‌کند: همه چیزهایی که در حال حاضر در این مجموعه‌ها هستند حذف می‌شوند و همه %9$lld دوباره با شناسه‌های دارایی جدید آپلود می‌شوند. آماده شدن سریعتر، آپلود کندتر."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ sur %3$lld %4$@, %5$lld %6$@ et %7$lld %8$@.\n\nLe téléchargement compare chaque capture d'écran avec celle du magasin et ne modifie que ce qui diffère, en conservant les App Store ID d'éléments correspondant exactement aux correspondances.\n\nRemplacer toutes les captures d'écran ignore la comparaison : tout ce qui se trouve actuellement dans ces ensembles est supprimé et tous les %9$lld sont à nouveau téléchargés avec de nouveaux ID d'actifs. Plus rapide à préparer, plus lent à télécharger."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%3$lld %4$@、%5$lld %6$@、および %7$lld %8$@ 全体の %1$lld %2$@。\n\nアップロードでは、各スクリーンショットをストアと比較し、完全に一致する App Store アセット ID を維持しながら、異なる部分のみを変更します。\n\n[すべてのスクリーンショットを置換] では比較がスキップされます。これらのセット内の現在すべてが削除され、すべての %9$lld が新しいアセット ID で再度アップロードされます。準備は早く、アップロードは遅くなります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@는 %3$lld %4$@, %5$lld %6$@ 및 %7$lld %8$@에 걸쳐 있습니다.\n\n업로드는 각 스크린샷을 스토어와 비교하고 차이점만 변경하며 정확히 일치하는 App Store 자산 ID를 유지합니다.\n\n모든 스크린샷 교체는 비교를 건너뜁니다. 현재 이 세트에 있는 모든 항목이 삭제되고 모든 %9$lld이 새 자산 ID로 다시 업로드됩니다. 준비는 빠르게, 업로드는 느리게 진행됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ em %3$lld %4$@, %5$lld %6$@ e %7$lld %8$@.\n\nO upload compara cada captura de tela com a loja e altera apenas o que difere, mantendo os App Store IDs de ativos de correspondências exatas.\n\nSubstituir todas as capturas de tela ignora a comparação: tudo o que está atualmente nesses conjuntos é excluído e todos os %9$lld são carregados novamente com novos IDs de ativos. Mais rápido de preparar, mais lento de carregar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ 跨 %3$lld %4$@、%5$lld %6$@ 和 %7$lld %8$@。\n\n上传会将每个屏幕截图与商店进行比较，并仅更改不同之处，保持 App Store 资产 ID 完全匹配。\n\n替换所有屏幕截图会跳过比较：这些集中当前的所有内容都会被删除，并且所有 %9$lld 都会使用新的资产 ID 重新上传。准备速度较快，上传速度较慢。"
+          }
+        }
+      }
+    },
     "%lld %@ could not be read" : {
       "localizations" : {
         "de" : {
@@ -10883,6 +11143,59 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld %2$@ 上传"
+          }
+        }
+      }
+    },
+    "%lld %@ will be safely synced across %lld %@, %lld %@, and %lld %@. Exact checksum matches will be preserved." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ wird sicher über %3$lld %4$@, %5$lld %6$@ und %7$lld %8$@ synchronisiert. Genaue Prüfsummenübereinstimmungen bleiben erhalten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ se sincronizará de forma segura entre %3$lld %4$@, %5$lld %6$@ y %7$lld %8$@. Se conservarán las coincidencias exactas de la suma de comprobación."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ به طور ایمن در بین %3$lld %4$@، %5$lld %6$@ و %7$lld %8$@ همگام‌سازی می‌شود. تطابق دقیق جمع کنترلی حفظ خواهد شد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ sera synchronisé en toute sécurité sur %3$lld %4$@, %5$lld %6$@ et %7$lld %8$@. Les correspondances exactes de la somme de contrôle seront conservées."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ は %3$lld %4$@、%5$lld %6$@、および %7$lld %8$@ 全体で安全に同期されます。チェックサムの正確な一致は保持されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@은 %3$lld %4$@, %5$lld %6$@ 및 %7$lld %8$@에서 안전하게 동기화됩니다. 정확한 체크섬 일치가 유지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ será sincronizado com segurança entre %3$lld %4$@, %5$lld %6$@ e %7$lld %8$@. As correspondências exatas da soma de verificação serão preservadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ 将在 %3$lld %4$@、%5$lld %6$@ 和 %7$lld %8$@ 之间安全同步。将保留精确的校验和匹配。"
           }
         }
       }
@@ -16703,6 +17016,7 @@
       }
     },
     "Agent Edit" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -19203,6 +19517,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "App Store Connect 不允许 %1$@ 用于 %2$@。这通常意味着应用程序版本不支持该设备系列。排除此行，选择应用程序接受的显示类型，或更新应用程序的设备支持，然后重试。"
+          }
+        }
+      }
+    },
+    "App Store Connect is rate limiting this account. Wait a few minutes, then run the sync again — screenshot sets that already finished will be skipped." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect begrenzt die Rate für dieses Konto. Warten Sie einige Minuten und führen Sie dann die Synchronisierung erneut aus. Bereits abgeschlossene Screenshot-Sätze werden übersprungen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect está limitando la tarifa de esta cuenta. Espere unos minutos y luego ejecute la sincronización nuevamente; se omitirán los conjuntos de capturas de pantalla que ya hayan finalizado."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect این حساب را محدود می‌کند. چند دقیقه صبر کنید، سپس دوباره همگام‌سازی را اجرا کنید - مجموعه‌های اسکرین‌شات‌هایی که قبلاً تمام شده‌اند نادیده گرفته می‌شوند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect limite le taux de ce compte. Attendez quelques minutes, puis relancez la synchronisation : les jeux de captures d'écran déjà terminés seront ignorés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect はこのアカウントのレート制限を行っています。数分待ってから、同期を再度実行します。すでに終了したスクリーンショット セットはスキップされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect은(는) 이 계정의 속도를 제한합니다. 몇 분 정도 기다린 후 동기화를 다시 실행하세요. 이미 완료된 스크린샷 세트는 건너뜁니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect está limitando a taxa desta conta. Aguarde alguns minutos e execute a sincronização novamente – os conjuntos de capturas de tela já concluídos serão ignorados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect 对此帐户进行了速率限制。等待几分钟，然后再次运行同步 - 已完成的屏幕截图集将被跳过。"
           }
         }
       }
@@ -25990,6 +26356,58 @@
         }
       }
     },
+    "Comparing %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergleich von %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comparando %1$@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقایسه %1$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comparaison de %1$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ を比較しています"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 비교"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comparando %1$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "比较 %1$@"
+          }
+        }
+      }
+    },
     "Complete the API key details below, then test the connection from the checklist." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -28075,6 +28493,110 @@
         }
       }
     },
+    "Could not create the version: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Version konnte nicht erstellt werden: %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo crear la versión: %1$@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسخه ایجاد نشد: %1$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de créer la version : %1$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バージョンを作成できませんでした: %1$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전을 생성할 수 없습니다: %1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível criar a versão: %1$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法创建版本：%1$@"
+          }
+        }
+      }
+    },
+    "Could not create this locale: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Gebietsschema konnte nicht erstellt werden: %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo crear esta configuración regional: %1$@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "این زبان ایجاد نشد: %1$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de créer ces paramètres régionaux : %1$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このロケールを作成できませんでした: %1$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 로케일을 생성할 수 없습니다: %1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível criar esta localidade: %1$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法创建此区域设置：%1$@"
+          }
+        }
+      }
+    },
     "Could not export row image: %@" : {
       "localizations" : {
         "de" : {
@@ -29395,6 +29917,58 @@
         }
       }
     },
+    "Create %@ in App Store Connect" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstellen Sie %1$@ in App Store Connect"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear %1$@ en App Store Connect"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ایجاد %1$@ در App Store Connect"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créez %1$@ dans App Store Connect"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect に %1$@ を作成します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect에 %1$@ 생성"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar %1$@ em App Store Connect"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 App Store Connect 中创建 %1$@"
+          }
+        }
+      }
+    },
     "Create a **JSON key** for that service account and download it — this is the file Screenshot Bro imports." : {
       "localizations" : {
         "de" : {
@@ -30021,6 +30595,58 @@
         }
       }
     },
+    "Create Version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version erstellen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear versión"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ایجاد نسخه"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créer une version"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バージョンの作成"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전 생성"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar versão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建版本"
+          }
+        }
+      }
+    },
     "Create your first project to start designing screenshots." : {
       "localizations" : {
         "de" : {
@@ -30173,6 +30799,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "创建项目"
+          }
+        }
+      }
+    },
+    "Creating…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstellen…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creando…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حال ایجاد…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Création…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "作成中…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "만드는 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criando…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创造……"
           }
         }
       }
@@ -38519,6 +39197,216 @@
         }
       }
     },
+    "Every version on this app is already live. Create a new version in App Store Connect, then refresh this wizard." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Version dieser App ist bereits live. Erstellen Sie eine neue Version in App Store Connect und aktualisieren Sie dann diesen Assistenten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las versiones de esta aplicación ya están disponibles. Cree una nueva versión en App Store Connect y luego actualice este asistente."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر نسخه در این برنامه در حال حاضر فعال است. یک نسخه جدید در App Store Connect ایجاد کنید، سپس این جادوگر را بازخوانی کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque version de cette application est déjà en ligne. Créez une nouvelle version dans App Store Connect, puis actualisez cet assistant."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアプリのすべてのバージョンはすでに公開されています。 App Store Connect で新しいバージョンを作成し、このウィザードを更新します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 앱의 모든 버전은 이미 출시되었습니다. App Store Connect에서 새 버전을 생성한 다음 이 마법사를 새로 고치세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as versões deste aplicativo já estão no ar. Crie uma nova versão em App Store Connect e atualize este assistente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该应用程序的每个版本都已上线。在 App Store Connect 中创建新版本，然后刷新此向导。"
+          }
+        }
+      }
+    },
+    "Every version on this app is already live. Create the next one below, or in App Store Connect." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Version dieser App ist bereits live. Erstellen Sie das nächste unten oder in App Store Connect."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las versiones de esta aplicación ya están disponibles. Crea el siguiente a continuación, o en App Store Connect."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر نسخه در این برنامه در حال حاضر فعال است. مورد بعدی را در زیر یا در App Store Connect ایجاد کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque version de cette application est déjà en ligne. Créez le suivant ci-dessous ou dans App Store Connect."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアプリのすべてのバージョンはすでに公開されています。次のものを下または App Store Connect に作成します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 앱의 모든 버전은 이미 출시되었습니다. 아래 또는 App Store Connect에 다음 항목을 만듭니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as versões deste aplicativo já estão no ar. Crie o próximo abaixo ou em App Store Connect."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该应用程序的每个版本都已上线。在下面或 App Store Connect 中创建下一个。"
+          }
+        }
+      }
+    },
+    "Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Version dieser App ist zur Überprüfung oder Live-Übertragung gesperrt. Erstellen Sie eine neue Version in App Store Connect und aktualisieren Sie dann diesen Assistenten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las versiones de esta app están bloqueadas para revisión o ya publicadas. Crea una nueva versión en App Store Connect y luego actualiza este asistente."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر نسخه در این برنامه برای بررسی یا زنده قفل است. یک نسخه جدید در App Store Connect ایجاد کنید، سپس این جادوگر را بازخوانی کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque version de cette application est verrouillée pour révision ou en direct. Créez une nouvelle version dans App Store Connect, puis actualisez cet assistant."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアプリのすべてのバージョンは、レビューまたはライブのためにロックされています。 App Store Connect で新しいバージョンを作成し、このウィザードを更新します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 앱의 모든 버전은 검토 또는 게시를 위해 잠겨 있습니다. App Store Connect에서 새 버전을 생성한 다음 이 마법사를 새로 고치세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada versão deste aplicativo está bloqueada para revisão ou ao vivo. Crie uma nova versão em App Store Connect e atualize este assistente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此应用程序上的每个版本都已锁定以供审核或上线。在 App Store Connect 中创建新版本，然后刷新此向导。"
+          }
+        }
+      }
+    },
+    "Every version on this app is locked for review or live. Create the next one below, or in App Store Connect." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Version dieser App ist zur Überprüfung oder Live-Übertragung gesperrt. Erstellen Sie das nächste unten oder in App Store Connect."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las versiones de esta aplicación están bloqueadas para revisión o en vivo. Crea el siguiente a continuación, o en App Store Connect."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر نسخه در این برنامه برای بررسی یا زنده قفل است. مورد بعدی را در زیر یا در App Store Connect ایجاد کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque version de cette application est verrouillée pour révision ou en direct. Créez le suivant ci-dessous ou dans App Store Connect."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアプリのすべてのバージョンは、レビューまたはライブのためにロックされています。次のものを下または App Store Connect に作成します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 앱의 모든 버전은 검토 또는 게시를 위해 잠겨 있습니다. 아래 또는 App Store Connect에 다음 항목을 만듭니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada versão deste aplicativo está bloqueada para revisão ou ao vivo. Crie o próximo abaixo ou em App Store Connect."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此应用程序上的每个版本都已锁定以供审核或上线。在下面或 App Store Connect 中创建下一个。"
+          }
+        }
+      }
+    },
     "Everything goes through the same actions you use by hand — so the assistant's changes are undoable with **⌘Z** and autosaved like any other edit." : {
       "localizations" : {
         "de" : {
@@ -46260,6 +47148,58 @@
         }
       }
     },
+    "If a language has no matching App Store locale, the wizard says so and offers **Create de-DE in App Store Connect** — naming the App Store locale code it would add — right on the row. One click adds it to that version and the row switches to it. Languages the App Store doesn't offer, and versions Apple has locked for editing, still have to be handled on the website; **Refresh App Store data** picks up anything added there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn eine Sprache kein passendes App Store-Gebietsschema hat, sagt der Assistent dies und bietet **Create de-DE in App Store Connect** an – und benennt den App Store-Gebietsschemacode, den er hinzufügen würde – direkt in der Zeile. Ein Klick fügt es dieser Version hinzu und die Zeile wechselt zu dieser Version. Sprachen, die der App Store nicht anbietet, und Versionen, die Apple für die Bearbeitung gesperrt hat, müssen noch auf der Website behandelt werden; **App Store-Daten aktualisieren** übernimmt alles, was dort hinzugefügt wurde."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si un idioma no tiene una configuración regional App Store coincidente, el asistente lo indica y ofrece **Crear de-DE en App Store Connect**, nombrando el código de configuración regional App Store que agregaría, justo en la fila. Un clic lo agrega a esa versión y la fila cambia a ella. Los idiomas que App Store no ofrece y las versiones que Apple ha bloqueado para su edición aún deben manejarse en el sitio web; **Actualizar datos de App Store** recoge todo lo que se agregue allí."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اگر زبانی دارای App Store محلی منطبق نباشد، جادوگر این را می‌گوید و **Create de-DE را در App Store Connect** ارائه می‌دهد — نامگذاری App Store کد محلی که اضافه می‌کند — درست روی ردیف. یک کلیک آن را به آن نسخه اضافه می کند و ردیف به آن سوئیچ می کند. زبان‌هایی که App Store ارائه نمی‌کند، و نسخه‌هایی که اپل برای ویرایش قفل کرده است، همچنان باید در وب‌سایت مدیریت شوند. **بازخوانی App Store داده** هر چیزی را که در آنجا اضافه شده است را انتخاب می کند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si une langue n'a pas de paramètres régionaux App Store correspondant, l'assistant le dit et propose **Créer de-DE dans App Store Connect** — en nommant le code de paramètres régionaux App Store qu'il ajouterait — directement sur la ligne. Un clic l'ajoute à cette version et la ligne y bascule. Les langues que App Store ne propose pas et les versions verrouillées par Apple pour l'édition doivent toujours être gérées sur le site Web ; **Actualiser les données App Store** récupère tout ce qui y est ajouté."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "言語に一致する App Store ロケールがない場合、ウィザードはその旨を示し、**App Store Connect] に de-DE を作成** (追加する App Store ロケール コードに名前を付ける) をその行に表示します。ワンクリックでそのバージョンに追加され、行がそのバージョンに切り替わります。 App Store が提供していない言語や、Apple が編集のためにロックしているバージョンは、引き続き Web サイトで処理する必要があります。 **App Store データを更新**すると、そこに追加されたものがすべて取得されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어에 일치하는 App Store 로케일이 없는 경우 마법사는 그렇게 말하고 **App Store Connect에서 de-DE 생성**을 제안합니다. 즉, 추가할 App Store 로케일 코드의 이름을 행 오른쪽에 지정합니다. 한 번 클릭하면 해당 버전에 추가되고 행이 해당 버전으로 전환됩니다. App Store에서 제공하지 않는 언어와 Apple이 편집을 위해 잠근 버전은 여전히 ​​웹사이트에서 처리해야 합니다. **App Store 데이터를 새로 고치면** 거기에 추가된 모든 항목이 선택됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se um idioma não tiver localidade App Store correspondente, o assistente diz isso e oferece **Create de-DE in App Store Connect** — nomeando o código de localidade App Store que ele adicionaria — logo na linha. Um clique o adiciona a essa versão e a linha muda para ela. Idiomas que o App Store não oferece e versões que a Apple bloqueou para edição ainda precisam ser tratados no site; **Atualizar dados App Store** seleciona qualquer coisa adicionada lá."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果一种语言没有匹配的 App Store 区域设置，向导会这样提示并提供 **在 App Store Connect] 中创建 de-DE** — 命名它将添加的 App Store 区域设置代码 — 就在该行上。单击一下即可将其添加到该版本，并且行会切换到该版本。 App Store 不提供的语言，以及 Apple 已锁定编辑的版本，仍需在网站上处理； **刷新 App Store 数据** 会选取其中添加的所有内容。"
+          }
+        }
+      }
+    },
     "If a language has no override for a shape, it falls back to the base language's content." : {
       "localizations" : {
         "de" : {
@@ -46571,6 +47511,110 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如果无法读取屏幕截图所需的图像文件，则该框架会呈现为空，并且导出会以**某些图像丢失**结束，而不是简单的成功 - 否则，空白的设备框架会将每项检查直接传递到商店。"
+          }
+        }
+      }
+    },
+    "If an upload stops partway — a dropped connection, or App Store Connect rate limiting a large sync — just run it again. Locales that finished are remembered and skipped, and screenshots already delivered are matched by checksum rather than uploaded twice." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn ein Upload unterbrochen wird – eine unterbrochene Verbindung oder eine App Store Connect-Rate, die eine große Synchronisierung einschränkt –, führen Sie ihn einfach erneut aus. Abgeschlossene Locales werden gespeichert und übersprungen, und bereits übermittelte Screenshots werden anhand einer Prüfsumme abgeglichen und nicht zweimal hochgeladen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si una carga se detiene a medio camino (una conexión interrumpida o una velocidad de App Store Connect que limita una sincronización grande), simplemente ejecútela nuevamente. Las configuraciones regionales que finalizaron se recuerdan y se omiten, y las capturas de pantalla ya entregadas se comparan mediante suma de verificación en lugar de cargarse dos veces."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اگر آپلود نیمه تمام متوقف شد - اتصال قطع شد، یا نرخ App Store Connect محدود کردن یک همگام‌سازی بزرگ - کافی است دوباره آن را اجرا کنید. محلی‌هایی که به پایان رسیده‌اند به خاطر سپرده می‌شوند و رد می‌شوند و اسکرین‌شات‌هایی که قبلاً تحویل داده شده‌اند، به جای اینکه دوبار آپلود شوند، با جمع‌بندی بررسی مطابقت داده می‌شوند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si un téléchargement s'arrête à mi-chemin (une connexion interrompue ou un débit de App Store Connect limitant une synchronisation importante), réexécutez-le simplement. Les paramètres régionaux terminés sont mémorisés et ignorés, et les captures d'écran déjà livrées sont mises en correspondance par somme de contrôle plutôt que téléchargées deux fois."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロードが途中で停止した場合、つまり接続が切断された場合、または大規模な同期の App Store Connect レート制限が発生した場合は、もう一度実行してください。終了したロケールは記憶されてスキップされ、配信済みのスクリーンショットは 2 回アップロードされるのではなく、チェックサムによって照合されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "연결이 끊겼거나 App Store Connect 속도가 대규모 동기화를 제한하는 등 업로드가 중간에 중지된 경우 다시 실행하세요. 완료된 로케일은 기억하고 건너뛰며, 이미 전달된 스크린샷은 두 번 업로드하는 대신 체크섬으로 일치시킵니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se um upload parar no meio — uma conexão perdida ou App Store Connect taxa limitando uma sincronização grande — basta executá-lo novamente. Os locais concluídos são lembrados e ignorados, e as capturas de tela já entregues são correspondidas por soma de verificação em vez de serem carregadas duas vezes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果上传中途停止（连接断开或 App Store Connect 速率限制大型同步），只需再次运行即可。完成的区域设置会被记住并跳过，并且已经交付的屏幕截图会通过校验和进行匹配，而不是上传两次。"
+          }
+        }
+      }
+    },
+    "If every version of the app is live or locked for review, the version step offers **Create Version** — it prefills the next number for each platform the app ships on, and you can edit it before creating." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn jede Version der App live ist oder zur Überprüfung gesperrt ist, bietet der Versionsschritt **Version erstellen** – er füllt die nächste Nummer für jede Plattform aus, auf der die App ausgeliefert wird, und Sie können sie vor dem Erstellen bearbeiten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si cada versión de la aplicación está activa o bloqueada para revisión, el paso de versión ofrece **Crear versión**: completa previamente el siguiente número para cada plataforma en la que se envía la aplicación y puede editarla antes de crearla."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اگر هر نسخه از برنامه برای بررسی فعال یا قفل شده باشد، مرحله نسخه **ایجاد نسخه** را ارائه می دهد - شماره بعدی را برای هر پلتفرمی که برنامه در آن ارسال می شود از قبل پر می کند، و می توانید قبل از ایجاد آن را ویرایش کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si chaque version de l'application est active ou verrouillée pour révision, l'étape de version propose **Créer une version** : elle préremplit le numéro suivant pour chaque plate-forme sur laquelle l'application est livrée et vous pouvez la modifier avant de la créer."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリのすべてのバージョンがライブであるか、レビュー用にロックされている場合、バージョン ステップでは **バージョンの作成** が提供されます。これにより、アプリが出荷されるプラットフォームごとに次の番号が事前に入力され、作成前に編集できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱의 모든 버전이 검토를 위해 활성화되거나 잠겨 있는 경우 버전 단계에서는 **버전 생성**을 제공합니다. 이는 앱이 출시되는 각 플랫폼에 대해 다음 번호를 미리 채우며 생성하기 전에 편집할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se todas as versões do aplicativo estiverem ativas ou bloqueadas para revisão, a etapa de versão oferece **Criar versão** — ela preenche previamente o próximo número para cada plataforma em que o aplicativo é enviado e você pode editá-lo antes de criar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果应用程序的每个版本都已上线或锁定以供审核，则版本步骤会提供**创建版本** - 它会为应用程序所搭载的每个平台预填充下一个编号，您可以在创建之前对其进行编辑。"
           }
         }
       }
@@ -62282,6 +63326,58 @@
         }
       }
     },
+    "Preparing screenshot sync…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot-Synchronisierung wird vorbereitet…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando sincronización de captura de pantalla…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حال آماده سازی همگام سازی نماگرفت…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préparation de la synchronisation des captures d'écran…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショットの同期を準備しています…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷 동기화 준비 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando sincronização de captura de tela…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在准备屏幕截图同步..."
+          }
+        }
+      }
+    },
     "Preparing the editor…" : {
       "localizations" : {
         "de" : {
@@ -66968,6 +68064,58 @@
         }
       }
     },
+    "Rendering %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendern %1$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Representando %1$@"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حال ارائه %1$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendu %1$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "レンダリング %1$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "렌더링 %1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renderizando %1$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "渲染 %1$@"
+          }
+        }
+      }
+    },
     "Renews" : {
       "localizations" : {
         "de" : {
@@ -67276,6 +68424,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将所有 %@ 文本替换为新翻译？"
+          }
+        }
+      }
+    },
+    "Replace All Screenshots" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Screenshots ersetzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar todas las capturas de pantalla"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "همه اسکرین شات ها را جایگزین کنید"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer toutes les captures d'écran"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのスクリーンショットを置き換える"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 스크린샷 바꾸기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substitua todas as capturas de tela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换所有屏幕截图"
           }
         }
       }
@@ -77723,6 +78923,58 @@
         }
       }
     },
+    "Skipped %@ · %@: its row is no longer in the project." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übersprungen %1$@ · %2$@: Die entsprechende Zeile befindet sich nicht mehr im Projekt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitido %1$@ · %2$@: su fila ya no está en el proyecto."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رد شد %1$@ · %2$@: ردیف آن دیگر در پروژه نیست."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignoré %1$@ · %2$@ : sa ligne n'est plus dans le projet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スキップされました %1$@ · %2$@: その行はプロジェクトに存在しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "건너뛴 %1$@ · %2$@: 해당 행이 더 이상 프로젝트에 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorado %1$@ · %2$@: sua linha não está mais no projeto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已跳过 %1$@ · %2$@：其行不再位于项目中。"
+          }
+        }
+      }
+    },
     "Skipped items (%lld)" : {
       "localizations" : {
         "de" : {
@@ -78870,6 +80122,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从模板开始，排列屏幕截图和文本，然后从一个项目中导出每个所需的尺寸。"
+          }
+        }
+      }
+    },
+    "Starting upload…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload wird gestartet…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando carga…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شروع آپلود…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrage du téléchargement…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロードを開始しています…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업로드 시작 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando upload…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始上传..."
           }
         }
       }
@@ -83196,6 +84500,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ 的已缓存审核字节已更改或不可用。同步前刷新。"
+          }
+        }
+      }
+    },
+    "The dots stand in for your access token — the copied text carries the real one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Punkte stehen für Ihr Zugriffstoken – der kopierte Text trägt den echten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los puntos sustituyen a su token de acceso: el texto copiado lleva el real."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نقطه ها برای نشانه دسترسی شما قرار می گیرند - متن کپی شده حاوی متن واقعی است."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les points remplacent votre jeton d'accès : le texte copié porte le vrai."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ドットはアクセス トークンを表します。コピーされたテキストには実際のトークンが含まれます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "점은 액세스 토큰을 나타냅니다. 복사된 텍스트에는 실제 텍스트가 포함됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os pontos representam o seu token de acesso – o texto copiado contém o verdadeiro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些点代表您的访问令牌 - 复制的文本带有真实的文本。"
           }
         }
       }
@@ -94478,1358 +95834,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "缩小"
-          }
-        }
-      }
-    },
-    "If a language has no matching App Store locale, the wizard says so and offers **Create de-DE in App Store Connect** — naming the App Store locale code it would add — right on the row. One click adds it to that version and the row switches to it. Languages the App Store doesn't offer, and versions Apple has locked for editing, still have to be handled on the website; **Refresh App Store data** picks up anything added there." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wenn eine Sprache kein passendes App Store-Gebietsschema hat, sagt der Assistent dies und bietet **Create de-DE in App Store Connect** an – und benennt den App Store-Gebietsschemacode, den er hinzufügen würde – direkt in der Zeile. Ein Klick fügt es dieser Version hinzu und die Zeile wechselt zu dieser Version. Sprachen, die der App Store nicht anbietet, und Versionen, die Apple für die Bearbeitung gesperrt hat, müssen noch auf der Website behandelt werden; **App Store-Daten aktualisieren** übernimmt alles, was dort hinzugefügt wurde."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si un idioma no tiene una configuración regional App Store coincidente, el asistente lo indica y ofrece **Crear de-DE en App Store Connect**, nombrando el código de configuración regional App Store que agregaría, justo en la fila. Un clic lo agrega a esa versión y la fila cambia a ella. Los idiomas que App Store no ofrece y las versiones que Apple ha bloqueado para su edición aún deben manejarse en el sitio web; **Actualizar datos de App Store** recoge todo lo que se agregue allí."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اگر زبانی دارای App Store محلی منطبق نباشد، جادوگر این را می‌گوید و **Create de-DE را در App Store Connect** ارائه می‌دهد — نامگذاری App Store کد محلی که اضافه می‌کند — درست روی ردیف. یک کلیک آن را به آن نسخه اضافه می کند و ردیف به آن سوئیچ می کند. زبان‌هایی که App Store ارائه نمی‌کند، و نسخه‌هایی که اپل برای ویرایش قفل کرده است، همچنان باید در وب‌سایت مدیریت شوند. **بازخوانی App Store داده** هر چیزی را که در آنجا اضافه شده است را انتخاب می کند."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si une langue n'a pas de paramètres régionaux App Store correspondant, l'assistant le dit et propose **Créer de-DE dans App Store Connect** — en nommant le code de paramètres régionaux App Store qu'il ajouterait — directement sur la ligne. Un clic l'ajoute à cette version et la ligne y bascule. Les langues que App Store ne propose pas et les versions verrouillées par Apple pour l'édition doivent toujours être gérées sur le site Web ; **Actualiser les données App Store** récupère tout ce qui y est ajouté."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言語に一致する App Store ロケールがない場合、ウィザードはその旨を示し、**App Store Connect] に de-DE を作成** (追加する App Store ロケール コードに名前を付ける) をその行に表示します。ワンクリックでそのバージョンに追加され、行がそのバージョンに切り替わります。 App Store が提供していない言語や、Apple が編集のためにロックしているバージョンは、引き続き Web サイトで処理する必要があります。 **App Store データを更新**すると、そこに追加されたものがすべて取得されます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "언어에 일치하는 App Store 로케일이 없는 경우 마법사는 그렇게 말하고 **App Store Connect에서 de-DE 생성**을 제안합니다. 즉, 추가할 App Store 로케일 코드의 이름을 행 오른쪽에 지정합니다. 한 번 클릭하면 해당 버전에 추가되고 행이 해당 버전으로 전환됩니다. App Store에서 제공하지 않는 언어와 Apple이 편집을 위해 잠근 버전은 여전히 ​​웹사이트에서 처리해야 합니다. **App Store 데이터를 새로 고치면** 거기에 추가된 모든 항목이 선택됩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se um idioma não tiver localidade App Store correspondente, o assistente diz isso e oferece **Create de-DE in App Store Connect** — nomeando o código de localidade App Store que ele adicionaria — logo na linha. Um clique o adiciona a essa versão e a linha muda para ela. Idiomas que o App Store não oferece e versões que a Apple bloqueou para edição ainda precisam ser tratados no site; **Atualizar dados App Store** seleciona qualquer coisa adicionada lá."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "如果一种语言没有匹配的 App Store 区域设置，向导会这样提示并提供 **在 App Store Connect] 中创建 de-DE** — 命名它将添加的 App Store 区域设置代码 — 就在该行上。单击一下即可将其添加到该版本，并且行会切换到该版本。 App Store 不提供的语言，以及 Apple 已锁定编辑的版本，仍需在网站上处理； **刷新 App Store 数据** 会选取其中添加的所有内容。"
-          }
-        }
-      }
-    },
-    "The dots stand in for your access token — the copied text carries the real one." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Punkte stehen für Ihr Zugriffstoken – der kopierte Text trägt den echten."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los puntos sustituyen a su token de acceso: el texto copiado lleva el real."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "نقطه ها برای نشانه دسترسی شما قرار می گیرند - متن کپی شده حاوی متن واقعی است."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les points remplacent votre jeton d'accès : le texte copié porte le vrai."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ドットはアクセス トークンを表します。コピーされたテキストには実際のトークンが含まれます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "점은 액세스 토큰을 나타냅니다. 복사된 텍스트에는 실제 텍스트가 포함됩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Os pontos representam o seu token de acesso – o texto copiado contém o verdadeiro."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这些点代表您的访问令牌 - 复制的文本带有真实的文本。"
-          }
-        }
-      }
-    },
-    "Creating…" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erstellen…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Creando…"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "در حال ایجاد…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Création…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "作成中…"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "만드는 중…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Criando…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "创造……"
-          }
-        }
-      }
-    },
-    "Could not create this locale: %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dieses Gebietsschema konnte nicht erstellt werden: %1$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo crear esta configuración regional: %1$@"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "این زبان ایجاد نشد: %1$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible de créer ces paramètres régionaux : %1$@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このロケールを作成できませんでした: %1$@"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 로케일을 생성할 수 없습니다: %1$@"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível criar esta localidade: %1$@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法创建此区域设置：%1$@"
-          }
-        }
-      }
-    },
-    "Create %@ in App Store Connect" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erstellen Sie %1$@ in App Store Connect"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crear %1$@ en App Store Connect"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ایجاد %1$@ در App Store Connect"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Créez %1$@ dans App Store Connect"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect に %1$@ を作成します"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect에 %1$@ 생성"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Criar %1$@ em App Store Connect"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 App Store Connect 中创建 %1$@"
-          }
-        }
-      }
-    },
-    "Every version on this app is already live. Create the next one below, or in App Store Connect." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jede Version dieser App ist bereits live. Erstellen Sie das nächste unten oder in App Store Connect."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas las versiones de esta aplicación ya están disponibles. Crea el siguiente a continuación, o en App Store Connect."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "هر نسخه در این برنامه در حال حاضر فعال است. مورد بعدی را در زیر یا در App Store Connect ایجاد کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chaque version de cette application est déjà en ligne. Créez le suivant ci-dessous ou dans App Store Connect."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このアプリのすべてのバージョンはすでに公開されています。次のものを下または App Store Connect に作成します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 앱의 모든 버전은 이미 출시되었습니다. 아래 또는 App Store Connect에 다음 항목을 만듭니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas as versões deste aplicativo já estão no ar. Crie o próximo abaixo ou em App Store Connect."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "该应用程序的每个版本都已上线。在下面或 App Store Connect 中创建下一个。"
-          }
-        }
-      }
-    },
-    "Every version on this app is locked for review or live. Create the next one below, or in App Store Connect." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jede Version dieser App ist zur Überprüfung oder Live-Übertragung gesperrt. Erstellen Sie das nächste unten oder in App Store Connect."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas las versiones de esta aplicación están bloqueadas para revisión o en vivo. Crea el siguiente a continuación, o en App Store Connect."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "هر نسخه در این برنامه برای بررسی یا زنده قفل است. مورد بعدی را در زیر یا در App Store Connect ایجاد کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chaque version de cette application est verrouillée pour révision ou en direct. Créez le suivant ci-dessous ou dans App Store Connect."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このアプリのすべてのバージョンは、レビューまたはライブのためにロックされています。次のものを下または App Store Connect に作成します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 앱의 모든 버전은 검토 또는 게시를 위해 잠겨 있습니다. 아래 또는 App Store Connect에 다음 항목을 만듭니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cada versão deste aplicativo está bloqueada para revisão ou ao vivo. Crie o próximo abaixo ou em App Store Connect."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此应用程序上的每个版本都已锁定以供审核或上线。在下面或 App Store Connect 中创建下一个。"
-          }
-        }
-      }
-    },
-    "If every version of the app is live or locked for review, the version step offers **Create Version** — it prefills the next number for each platform the app ships on, and you can edit it before creating." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wenn jede Version der App live ist oder zur Überprüfung gesperrt ist, bietet der Versionsschritt **Version erstellen** – er füllt die nächste Nummer für jede Plattform aus, auf der die App ausgeliefert wird, und Sie können sie vor dem Erstellen bearbeiten."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si cada versión de la aplicación está activa o bloqueada para revisión, el paso de versión ofrece **Crear versión**: completa previamente el siguiente número para cada plataforma en la que se envía la aplicación y puede editarla antes de crearla."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اگر هر نسخه از برنامه برای بررسی فعال یا قفل شده باشد، مرحله نسخه **ایجاد نسخه** را ارائه می دهد - شماره بعدی را برای هر پلتفرمی که برنامه در آن ارسال می شود از قبل پر می کند، و می توانید قبل از ایجاد آن را ویرایش کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si chaque version de l'application est active ou verrouillée pour révision, l'étape de version propose **Créer une version** : elle préremplit le numéro suivant pour chaque plate-forme sur laquelle l'application est livrée et vous pouvez la modifier avant de la créer."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリのすべてのバージョンがライブであるか、レビュー用にロックされている場合、バージョン ステップでは **バージョンの作成** が提供されます。これにより、アプリが出荷されるプラットフォームごとに次の番号が事前に入力され、作成前に編集できます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "앱의 모든 버전이 검토를 위해 활성화되거나 잠겨 있는 경우 버전 단계에서는 **버전 생성**을 제공합니다. 이는 앱이 출시되는 각 플랫폼에 대해 다음 번호를 미리 채우며 생성하기 전에 편집할 수 있습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se todas as versões do aplicativo estiverem ativas ou bloqueadas para revisão, a etapa de versão oferece **Criar versão** — ela preenche previamente o próximo número para cada plataforma em que o aplicativo é enviado e você pode editá-lo antes de criar."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "如果应用程序的每个版本都已上线或锁定以供审核，则版本步骤会提供**创建版本** - 它会为应用程序所搭载的每个平台预填充下一个编号，您可以在创建之前对其进行编辑。"
-          }
-        }
-      }
-    },
-    "Could not create the version: %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Version konnte nicht erstellt werden: %1$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo crear la versión: %1$@"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "نسخه ایجاد نشد: %1$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible de créer la version : %1$@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "バージョンを作成できませんでした: %1$@"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "버전을 생성할 수 없습니다: %1$@"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível criar a versão: %1$@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法创建版本：%1$@"
-          }
-        }
-      }
-    },
-    "Create Version" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Version erstellen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crear versión"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ایجاد نسخه"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Créer une version"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "バージョンの作成"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "버전 생성"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Criar versão"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "创建版本"
-          }
-        }
-      }
-    },
-    "Replace All Screenshots" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alle Screenshots ersetzen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reemplazar todas las capturas de pantalla"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "همه اسکرین شات ها را جایگزین کنید"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remplacer toutes les captures d'écran"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "すべてのスクリーンショットを置き換える"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모든 스크린샷 바꾸기"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Substitua todas as capturas de tela"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "替换所有屏幕截图"
-          }
-        }
-      }
-    },
-    "Rendering %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rendern %1$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Representando %1$@"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "در حال ارائه %1$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rendu %1$@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "レンダリング %1$@"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "렌더링 %1$@"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Renderizando %1$@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "渲染 %1$@"
-          }
-        }
-      }
-    },
-    "Starting upload…" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Upload wird gestartet…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Iniciando carga…"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "شروع آپلود…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Démarrage du téléchargement…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アップロードを開始しています…"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "업로드 시작 중…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Iniciando upload…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "开始上传..."
-          }
-        }
-      }
-    },
-    "%@ was opened in the app while this edit was in progress. Retry it." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ wurde in der App geöffnet, während diese Bearbeitung durchgeführt wurde. Versuchen Sie es erneut."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ se abrió en la aplicación mientras se realizaba esta edición. Vuelva a intentarlo."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "در حالی که این ویرایش در حال انجام بود، %1$@ در برنامه باز شد. دوباره آن را امتحان کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ a été ouvert dans l'application pendant que cette modification était en cours. Réessayez."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この編集の進行中に、アプリで %1$@ が開かれました。再試行してください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 편집이 진행되는 동안 %1$@이(가) 앱에서 열렸습니다. 다시 시도해 보세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ foi aberto no aplicativo enquanto esta edição estava em andamento. Tente novamente."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "进行此编辑时，%1$@ 在应用中打开。重试一下。"
-          }
-        }
-      }
-    },
-    "**Replace All Screenshots**, offered next to Upload when you confirm, skips the comparison entirely: everything currently in the selected sets is deleted and every screenshot is uploaded again with new asset IDs. It prepares faster and uploads slower, so it pays off when most screenshots changed and costs you when only one did." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Alle Screenshots ersetzen**, das beim Bestätigen neben Hochladen angeboten wird, überspringt den Vergleich vollständig: Alles, was derzeit in den ausgewählten Sätzen ist, wird gelöscht und jeder Screenshot wird erneut mit neuen Asset-IDs hochgeladen. Es bereitet sich schneller vor und lädt langsamer hoch, sodass es sich auszahlt, wenn die meisten Screenshots geändert wurden, und Kosten verursacht, wenn nur einer geändert wurde."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Reemplazar todas las capturas de pantalla**, que se ofrece junto a Cargar cuando confirmas, omite la comparación por completo: todo lo que se encuentra actualmente en los conjuntos seleccionados se elimina y cada captura de pantalla se carga nuevamente con nuevos ID de activos. Se prepara más rápido y carga más lento, por lo que vale la pena cuando la mayoría de las capturas de pantalla cambiaron y le cuesta cuando solo lo hizo una."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**جایگزینی همه اسکرین‌شات‌ها**، که در کنار آپلود ارائه می‌شود، به‌طور کامل از مقایسه صرفنظر می‌کند: همه چیزهایی که در حال حاضر در مجموعه‌های انتخابی وجود دارد حذف می‌شود و هر عکس صفحه‌نمایش دوباره با شناسه‌های دارایی جدید آپلود می‌شود. سریع‌تر آماده می‌شود و آهسته‌تر آپلود می‌شود، بنابراین زمانی که اکثر اسکرین‌شات‌ها تغییر می‌کنند، نتیجه می‌دهد و زمانی که فقط یکی از آن‌ها تغییر می‌کند، برای شما هزینه دارد."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Remplacer toutes les captures d'écran**, proposé à côté de Télécharger lorsque vous confirmez, ignore complètement la comparaison : tout ce qui se trouve actuellement dans les ensembles sélectionnés est supprimé et chaque capture d'écran est à nouveau téléchargée avec de nouveaux identifiants d'actifs. Il se prépare plus rapidement et se télécharge plus lentement, il est donc rentable lorsque la plupart des captures d'écran sont modifiées et vous coûte cher lorsqu'une seule l'a fait."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "確認時に [アップロード] の横に表示される [**すべてのスクリーンショットを置換]** では、比較が完全にスキップされます。現在選択されているセット内のすべてが削除され、すべてのスクリーンショットが新しいアセット ID で再度アップロードされます。準備が速くなり、アップロードが遅くなるため、ほとんどのスクリーンショットが変更された場合は効果があり、1 つだけ変更された場合はコストがかかります。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "확인 시 업로드 옆에 제공되는 **모든 스크린샷 교체**는 비교를 완전히 건너뜁니다. 현재 선택한 세트에 있는 모든 항목이 삭제되고 모든 스크린샷이 새 자산 ID로 다시 업로드됩니다. 더 빠르게 준비하고 더 느리게 업로드하므로 대부분의 스크린샷이 변경되면 효과가 있고 하나만 변경하면 비용이 발생합니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Substituir todas as capturas de tela**, oferecido ao lado de Carregar quando você confirma, ignora totalmente a comparação: tudo o que está atualmente nos conjuntos selecionados é excluído e cada captura de tela é carregada novamente com novos IDs de ativos. Ele se prepara mais rápido e carrega mais devagar, por isso compensa quando a maioria das capturas de tela é alterada e custa quando apenas uma é alterada."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**替换所有屏幕截图**，在您确认时在上传旁边提供，完全跳过比较：当前所选集中的所有内容都将被删除，并且每个屏幕截图都会使用新的资产 ID 重新上传。它的准备速度更快，上传速度更慢，因此，当大多数屏幕截图发生变化时，它会带来回报，而当只有一张屏幕截图发生变化时，你就会付出代价。"
-          }
-        }
-      }
-    },
-    "Preparing screenshot sync…" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Screenshot-Synchronisierung wird vorbereitet…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preparando sincronización de captura de pantalla…"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "در حال آماده سازی همگام سازی نماگرفت…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Préparation de la synchronisation des captures d'écran…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "スクリーンショットの同期を準備しています…"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "스크린샷 동기화 준비 중…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preparando sincronização de captura de tela…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在准备屏幕截图同步..."
-          }
-        }
-      }
-    },
-    "%@ uses fonts whose files have not downloaded yet." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ verwendet Schriftarten, deren Dateien noch nicht heruntergeladen wurden."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ utiliza fuentes cuyos archivos aún no se han descargado."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ از فونت‌هایی استفاده می‌کند که فایل‌های آن‌ها هنوز دانلود نشده‌اند."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ utilise des polices dont les fichiers n'ont pas encore été téléchargés."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ は、ファイルがまだダウンロードされていないフォントを使用しています。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@은(는) 아직 다운로드되지 않은 파일의 글꼴을 사용합니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ usa fontes cujos arquivos ainda não foram baixados."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ 使用尚未下载文件的字体。"
-          }
-        }
-      }
-    },
-    "**Upload** skips that screen and compares against the store as it goes, uploading only what differs and keeping the App Store asset IDs of exact matches. The progress bar counts the screenshots as they render, then compares each set." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Upload** überspringt diesen Bildschirm und vergleicht ihn mit dem Store, wobei nur das hochgeladen wird, was sich unterscheidet, und die App Store Asset-IDs der genauen Übereinstimmungen beibehalten werden. Der Fortschrittsbalken zählt die Screenshots beim Rendern und vergleicht dann jeden Satz."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Cargar** omite esa pantalla y se compara con la tienda a medida que avanza, cargando solo lo que difiere y manteniendo los App Store ID de activos de coincidencias exactas. La barra de progreso cuenta las capturas de pantalla a medida que se representan y luego compara cada conjunto."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**آپلود** آن صفحه را رد می‌کند و در طول زمان با فروشگاه مقایسه می‌کند، فقط موارد متفاوت را آپلود می‌کند و شناسه‌های دارایی App Store مطابقت دقیق را حفظ می‌کند. نوار پیشرفت اسکرین شات ها را در حین رندر شمارش می کند، سپس هر مجموعه را با هم مقایسه می کند."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Télécharger** ignore cet écran et effectue une comparaison avec le magasin au fur et à mesure, en téléchargeant uniquement ce qui diffère et en conservant les App Store ID d'éléments des correspondances exactes. La barre de progression compte les captures d'écran au fur et à mesure de leur rendu, puis compare chaque ensemble."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**アップロード** はその画面をスキップし、ストアと比較しながら、異なるもののみをアップロードし、完全に一致する App Store アセット ID を保持します。進行状況バーは、レンダリング時にスクリーンショットをカウントし、各セットを比較します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**업로드**는 해당 화면을 건너뛰고 스토어와 비교하여 차이점만 업로드하고 정확히 일치하는 App Store 자산 ID를 유지합니다. 진행률 표시줄은 렌더링되는 스크린샷의 수를 계산한 다음 각 세트를 비교합니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Upload** ignora essa tela e compara com a loja conforme avança, fazendo upload apenas do que difere e mantendo os App Store IDs de recursos de correspondências exatas. A barra de progresso conta as capturas de tela à medida que são renderizadas e compara cada conjunto."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**上传** 会跳过该屏幕并与商店进行比较，仅上传不同的内容并保持 App Store 资产 ID 完全匹配。进度条会在渲染时对屏幕截图进行计数，然后比较每组屏幕截图。"
-          }
-        }
-      }
-    },
-    "%lld %@ across %lld %@, %lld %@, and %lld %@.\n\nUpload compares each screenshot with the store and changes only what differs, keeping the App Store asset IDs of exact matches.\n\nReplace All Screenshots skips the comparison: everything currently in these sets is deleted and all %lld are uploaded again with new asset IDs. Quicker to prepare, slower to upload." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ über %3$lld %4$@, %5$lld %6$@ und %7$lld %8$@.\n\nUpload vergleicht jeden Screenshot mit dem Store und ändert nur die Unterschiede, wobei die App Store Asset-IDs der exakten Übereinstimmungen beibehalten werden.\n\n„Alle Screenshots ersetzen“ überspringt den Vergleich: Alles, was derzeit in diesen Sätzen enthalten ist, wird gelöscht und alle %9$lld werden erneut mit neuen Asset-IDs hochgeladen. Schnellere Vorbereitung, langsameres Hochladen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ a través de %3$lld %4$@, %5$lld %6$@ y %7$lld %8$@.\n\nUpload compara cada captura de pantalla con la tienda y cambia solo lo que difiere, manteniendo los App Store ID de activos de coincidencias exactas.\n\nReemplazar todas las capturas de pantalla omite la comparación: todo lo que se encuentra actualmente en estos conjuntos se elimina y todos los %9$lld se cargan nuevamente con nuevos ID de activos. Más rápido de preparar, más lento de cargar."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ در سراسر %3$lld %4$@، %5$lld %6$@ و %7$lld %8$@.\n\nآپلود هر عکس صفحه‌نمایش را با فروشگاه مقایسه می‌کند و فقط موارد متفاوت را تغییر می‌دهد و شناسه‌های دارایی App Store مطابقت دقیق را حفظ می‌کند.\n\nReplace All Screenshots مقایسه را رد می‌کند: همه چیزهایی که در حال حاضر در این مجموعه‌ها هستند حذف می‌شوند و همه %9$lld دوباره با شناسه‌های دارایی جدید آپلود می‌شوند. آماده شدن سریعتر، آپلود کندتر."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ sur %3$lld %4$@, %5$lld %6$@ et %7$lld %8$@.\n\nLe téléchargement compare chaque capture d'écran avec celle du magasin et ne modifie que ce qui diffère, en conservant les App Store ID d'éléments correspondant exactement aux correspondances.\n\nRemplacer toutes les captures d'écran ignore la comparaison : tout ce qui se trouve actuellement dans ces ensembles est supprimé et tous les %9$lld sont à nouveau téléchargés avec de nouveaux ID d'actifs. Plus rapide à préparer, plus lent à télécharger."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%3$lld %4$@、%5$lld %6$@、および %7$lld %8$@ 全体の %1$lld %2$@。\n\nアップロードでは、各スクリーンショットをストアと比較し、完全に一致する App Store アセット ID を維持しながら、異なる部分のみを変更します。\n\n[すべてのスクリーンショットを置換] では比較がスキップされます。これらのセット内の現在すべてが削除され、すべての %9$lld が新しいアセット ID で再度アップロードされます。準備は早く、アップロードは遅くなります。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@는 %3$lld %4$@, %5$lld %6$@ 및 %7$lld %8$@에 걸쳐 있습니다.\n\n업로드는 각 스크린샷을 스토어와 비교하고 차이점만 변경하며 정확히 일치하는 App Store 자산 ID를 유지합니다.\n\n모든 스크린샷 교체는 비교를 건너뜁니다. 현재 이 세트에 있는 모든 항목이 삭제되고 모든 %9$lld이 새 자산 ID로 다시 업로드됩니다. 준비는 빠르게, 업로드는 느리게 진행됩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ em %3$lld %4$@, %5$lld %6$@ e %7$lld %8$@.\n\nO upload compara cada captura de tela com a loja e altera apenas o que difere, mantendo os App Store IDs de ativos de correspondências exatas.\n\nSubstituir todas as capturas de tela ignora a comparação: tudo o que está atualmente nesses conjuntos é excluído e todos os %9$lld são carregados novamente com novos IDs de ativos. Mais rápido de preparar, mais lento de carregar."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ 跨 %3$lld %4$@、%5$lld %6$@ 和 %7$lld %8$@。\n\n上传会将每个屏幕截图与商店进行比较，并仅更改不同之处，保持 App Store 资产 ID 完全匹配。\n\n替换所有屏幕截图会跳过比较：这些集中当前的所有内容都会被删除，并且所有 %9$lld 都会使用新的资产 ID 重新上传。准备速度较快，上传速度较慢。"
-          }
-        }
-      }
-    },
-    "Comparing %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vergleich von %1$@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comparando %1$@"
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مقایسه %1$@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comparaison de %1$@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ を比較しています"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ 비교"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comparando %1$@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "比较 %1$@"
-          }
-        }
-      }
-    },
-    "Skipped %@ · %@: its row is no longer in the project." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Übersprungen %1$@ · %2$@: Die entsprechende Zeile befindet sich nicht mehr im Projekt."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Omitido %1$@ · %2$@: su fila ya no está en el proyecto."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "رد شد %1$@ · %2$@: ردیف آن دیگر در پروژه نیست."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ignoré %1$@ · %2$@ : sa ligne n'est plus dans le projet."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "スキップされました %1$@ · %2$@: その行はプロジェクトに存在しません。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "건너뛴 %1$@ · %2$@: 해당 행이 더 이상 프로젝트에 없습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ignorado %1$@ · %2$@: sua linha não está mais no projeto."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已跳过 %1$@ · %2$@：其行不再位于项目中。"
-          }
-        }
-      }
-    },
-    "If an upload stops partway — a dropped connection, or App Store Connect rate limiting a large sync — just run it again. Locales that finished are remembered and skipped, and screenshots already delivered are matched by checksum rather than uploaded twice." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wenn ein Upload unterbrochen wird – eine unterbrochene Verbindung oder eine App Store Connect-Rate, die eine große Synchronisierung einschränkt –, führen Sie ihn einfach erneut aus. Abgeschlossene Locales werden gespeichert und übersprungen, und bereits übermittelte Screenshots werden anhand einer Prüfsumme abgeglichen und nicht zweimal hochgeladen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si una carga se detiene a medio camino (una conexión interrumpida o una velocidad de App Store Connect que limita una sincronización grande), simplemente ejecútela nuevamente. Las configuraciones regionales que finalizaron se recuerdan y se omiten, y las capturas de pantalla ya entregadas se comparan mediante suma de verificación en lugar de cargarse dos veces."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اگر آپلود نیمه تمام متوقف شد - اتصال قطع شد، یا نرخ App Store Connect محدود کردن یک همگام‌سازی بزرگ - کافی است دوباره آن را اجرا کنید. محلی‌هایی که به پایان رسیده‌اند به خاطر سپرده می‌شوند و رد می‌شوند و اسکرین‌شات‌هایی که قبلاً تحویل داده شده‌اند، به جای اینکه دوبار آپلود شوند، با جمع‌بندی بررسی مطابقت داده می‌شوند."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si un téléchargement s'arrête à mi-chemin (une connexion interrompue ou un débit de App Store Connect limitant une synchronisation importante), réexécutez-le simplement. Les paramètres régionaux terminés sont mémorisés et ignorés, et les captures d'écran déjà livrées sont mises en correspondance par somme de contrôle plutôt que téléchargées deux fois."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アップロードが途中で停止した場合、つまり接続が切断された場合、または大規模な同期の App Store Connect レート制限が発生した場合は、もう一度実行してください。終了したロケールは記憶されてスキップされ、配信済みのスクリーンショットは 2 回アップロードされるのではなく、チェックサムによって照合されます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "연결이 끊겼거나 App Store Connect 속도가 대규모 동기화를 제한하는 등 업로드가 중간에 중지된 경우 다시 실행하세요. 완료된 로케일은 기억하고 건너뛰며, 이미 전달된 스크린샷은 두 번 업로드하는 대신 체크섬으로 일치시킵니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se um upload parar no meio — uma conexão perdida ou App Store Connect taxa limitando uma sincronização grande — basta executá-lo novamente. Os locais concluídos são lembrados e ignorados, e as capturas de tela já entregues são correspondidas por soma de verificação em vez de serem carregadas duas vezes."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "如果上传中途停止（连接断开或 App Store Connect 速率限制大型同步），只需再次运行即可。完成的区域设置会被记住并跳过，并且已经交付的屏幕截图会通过校验和进行匹配，而不是上传两次。"
-          }
-        }
-      }
-    },
-    "App Store Connect is rate limiting this account. Wait a few minutes, then run the sync again — screenshot sets that already finished will be skipped." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect begrenzt die Rate für dieses Konto. Warten Sie einige Minuten und führen Sie dann die Synchronisierung erneut aus. Bereits abgeschlossene Screenshot-Sätze werden übersprungen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect está limitando la tarifa de esta cuenta. Espere unos minutos y luego ejecute la sincronización nuevamente; se omitirán los conjuntos de capturas de pantalla que ya hayan finalizado."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect این حساب را محدود می‌کند. چند دقیقه صبر کنید، سپس دوباره همگام‌سازی را اجرا کنید - مجموعه‌های اسکرین‌شات‌هایی که قبلاً تمام شده‌اند نادیده گرفته می‌شوند."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect limite le taux de ce compte. Attendez quelques minutes, puis relancez la synchronisation : les jeux de captures d'écran déjà terminés seront ignorés."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect はこのアカウントのレート制限を行っています。数分待ってから、同期を再度実行します。すでに終了したスクリーンショット セットはスキップされます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect은(는) 이 계정의 속도를 제한합니다. 몇 분 정도 기다린 후 동기화를 다시 실행하세요. 이미 완료된 스크린샷 세트는 건너뜁니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect está limitando a taxa desta conta. Aguarde alguns minutos e execute a sincronização novamente – os conjuntos de capturas de tela já concluídos serão ignorados."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect 对此帐户进行了速率限制。等待几分钟，然后再次运行同步 - 已完成的屏幕截图集将被跳过。"
-          }
-        }
-      }
-    },
-    "Every version on this app is already live. Create a new version in App Store Connect, then refresh this wizard." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jede Version dieser App ist bereits live. Erstellen Sie eine neue Version in App Store Connect und aktualisieren Sie dann diesen Assistenten."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas las versiones de esta aplicación ya están disponibles. Cree una nueva versión en App Store Connect y luego actualice este asistente."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "هر نسخه در این برنامه در حال حاضر فعال است. یک نسخه جدید در App Store Connect ایجاد کنید، سپس این جادوگر را بازخوانی کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chaque version de cette application est déjà en ligne. Créez une nouvelle version dans App Store Connect, puis actualisez cet assistant."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このアプリのすべてのバージョンはすでに公開されています。 App Store Connect で新しいバージョンを作成し、このウィザードを更新します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 앱의 모든 버전은 이미 출시되었습니다. App Store Connect에서 새 버전을 생성한 다음 이 마법사를 새로 고치세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas as versões deste aplicativo já estão no ar. Crie uma nova versão em App Store Connect e atualize este assistente."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "该应用程序的每个版本都已上线。在 App Store Connect 中创建新版本，然后刷新此向导。"
-          }
-        }
-      }
-    },
-    "%lld %@ will be safely synced across %lld %@, %lld %@, and %lld %@. Exact checksum matches will be preserved." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ wird sicher über %3$lld %4$@, %5$lld %6$@ und %7$lld %8$@ synchronisiert. Genaue Prüfsummenübereinstimmungen bleiben erhalten."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ se sincronizará de forma segura entre %3$lld %4$@, %5$lld %6$@ y %7$lld %8$@. Se conservarán las coincidencias exactas de la suma de comprobación."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ به طور ایمن در بین %3$lld %4$@، %5$lld %6$@ و %7$lld %8$@ همگام‌سازی می‌شود. تطابق دقیق جمع کنترلی حفظ خواهد شد."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ sera synchronisé en toute sécurité sur %3$lld %4$@, %5$lld %6$@ et %7$lld %8$@. Les correspondances exactes de la somme de contrôle seront conservées."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ は %3$lld %4$@、%5$lld %6$@、および %7$lld %8$@ 全体で安全に同期されます。チェックサムの正確な一致は保持されます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@은 %3$lld %4$@, %5$lld %6$@ 및 %7$lld %8$@에서 안전하게 동기화됩니다. 정확한 체크섬 일치가 유지됩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ será sincronizado com segurança entre %3$lld %4$@, %5$lld %6$@ e %7$lld %8$@. As correspondências exatas da soma de verificação serão preservadas."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ 将在 %3$lld %4$@、%5$lld %6$@ 和 %7$lld %8$@ 之间安全同步。将保留精确的校验和匹配。"
-          }
-        }
-      }
-    },
-    "Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jede Version dieser App ist zur Überprüfung oder Live-Übertragung gesperrt. Erstellen Sie eine neue Version in App Store Connect und aktualisieren Sie dann diesen Assistenten."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas las versiones de esta app están bloqueadas para revisión o ya publicadas. Crea una nueva versión en App Store Connect y luego actualiza este asistente."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "هر نسخه در این برنامه برای بررسی یا زنده قفل است. یک نسخه جدید در App Store Connect ایجاد کنید، سپس این جادوگر را بازخوانی کنید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chaque version de cette application est verrouillée pour révision ou en direct. Créez une nouvelle version dans App Store Connect, puis actualisez cet assistant."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このアプリのすべてのバージョンは、レビューまたはライブのためにロックされています。 App Store Connect で新しいバージョンを作成し、このウィザードを更新します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 앱의 모든 버전은 검토 또는 게시를 위해 잠겨 있습니다. App Store Connect에서 새 버전을 생성한 다음 이 마법사를 새로 고치세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cada versão deste aplicativo está bloqueada para revisão ou ao vivo. Crie uma nova versão em App Store Connect e atualize este assistente."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此应用程序上的每个版本都已锁定以供审核或上线。在 App Store Connect 中创建新版本，然后刷新此向导。"
           }
         }
       }
