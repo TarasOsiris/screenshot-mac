@@ -144,9 +144,7 @@ final class ASCScreenshotSyncCoordinator {
             } else {
                 phase = .stale
                 errorMessage = result.sets.compactMap(\.error).first
-                // A per-set failure: the typed error was already stringified into the result,
-                // so the shape is all that survives.
-                failure = .unknown
+                failure = result.sets.compactMap(\.failure).first ?? .unknown
             }
         } catch let error as ASCScreenshotSyncError {
             if case .planExpired = error { phase = .stale }

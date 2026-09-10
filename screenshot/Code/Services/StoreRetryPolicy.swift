@@ -10,6 +10,10 @@ nonisolated struct StoreRetryPolicy: Sendable {
     var maxAttempts: Int = 3
     var baseDelay: Duration = .milliseconds(500)
     var maxDelay: Duration = .seconds(8)
+    /// Higher than `maxDelay` because a server naming a wait knows its own bucket, where the
+    /// backoff is only a guess. Still bounded: `apply` holds its plan and a progress label for
+    /// the whole sleep, so an hour-long one reads as a hang.
+    var maxRetryAfterDelay: Duration = .seconds(60)
 
     var attempts: Int { max(1, maxAttempts) }
 
@@ -71,7 +75,7 @@ nonisolated struct StoreRetryPolicy: Sendable {
     /// need clock-skew handling to be worth reading.
     func delay(forAttempt attempt: Int, retryAfter: String?) -> Duration {
         if let retryAfter, let seconds = Int(retryAfter.trimmingCharacters(in: .whitespaces)), seconds > 0 {
-            return min(.seconds(seconds), maxDelay)
+            return min(.seconds(seconds), maxRetryAfterDelay)
         }
         return min(baseDelay * pow(2.0, Double(attempt)), maxDelay)
     }

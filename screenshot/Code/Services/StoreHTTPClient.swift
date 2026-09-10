@@ -55,6 +55,10 @@ nonisolated struct StoreHTTPClient {
 
     /// `bypassCache` is for reads used to verify a write made moments earlier: a cached
     /// pre-mutation response otherwise looks like the write silently failed.
+    ///
+    /// `repeatable` nil judges the call by its verb. Pass it only when the *call* is repeatable
+    /// for a reason the verb cannot express — a fixed-value attribute write, a whole-collection
+    /// replace, a compensating cleanup between attempts.
     func data(
         method: String,
         path: String,
@@ -62,13 +66,15 @@ nonisolated struct StoreHTTPClient {
         contentType: String? = nil,
         extraHeaders: [String: String] = [:],
         bypassCache: Bool = false,
-        retryPolicy overridePolicy: StoreRetryPolicy? = nil
+        retryPolicy overridePolicy: StoreRetryPolicy? = nil,
+        repeatable: Bool? = nil
     ) async throws -> Data {
         guard let url = URL(string: baseURL + path) else {
             throw StoreHTTPError.invalidURL
         }
 
         let retryPolicy = overridePolicy ?? self.retryPolicy
+        let isRepeatable = repeatable ?? StoreRetryPolicy.isIdempotent(method)
         return try await retryPolicy.attempting {
             do {
                 // The token is minted per attempt on purpose: a retry that straddles an expiry
@@ -83,7 +89,7 @@ nonisolated struct StoreHTTPClient {
                 )
                 guard (200..<300).contains(response.statusCode) else {
                     let failure = StoreHTTPError.status(response.statusCode, message: errorMessage(data))
-                    guard retryPolicy.allowsRetry(status: response.statusCode, method: method) else {
+                    guard retryPolicy.allowsRetry(status: response.statusCode, repeatable: isRepeatable) else {
                         throw failure
                     }
                     throw StoreRetryPolicy.Retryable(
@@ -93,7 +99,7 @@ nonisolated struct StoreHTTPClient {
                 }
                 return data
             } catch let StoreHTTPError.transport(underlying) {
-                guard retryPolicy.allowsRetry(transportError: underlying, method: method) else {
+                guard retryPolicy.allowsRetry(transportError: underlying, repeatable: isRepeatable) else {
                     throw StoreHTTPError.transport(underlying)
                 }
                 throw StoreRetryPolicy.Retryable(underlying: StoreHTTPError.transport(underlying))

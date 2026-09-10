@@ -262,7 +262,8 @@ final class AppStoreConnectAPIService {
         let body = ASCResourceUpdate(
             data: ASCResourceUpdate.Payload(type: type, id: id, attributes: attributes)
         )
-        _ = try await rawRequest(method: "PATCH", path: "/v1/\(type)/\(id)", body: body)
+        // The signature permits nothing but attribute assignment, so a repeat is a no-op.
+        _ = try await rawRequest(method: "PATCH", path: "/v1/\(type)/\(id)", body: body, repeatable: true)
     }
 
     // MARK: - Screenshot sets
@@ -347,10 +348,12 @@ final class AppStoreConnectAPIService {
         let body = ASCRelationshipListRequest(
             data: screenshotIds.map { ASCResourceReference(type: "appScreenshots", id: $0) }
         )
+        // A whole-collection replace rather than a delta, so resending it is a no-op.
         _ = try await rawRequest(
             method: "PATCH",
             path: "/v1/appScreenshotSets/\(setId)/relationships/appScreenshots",
-            body: body
+            body: body,
+            repeatable: true
         )
     }
 
@@ -513,7 +516,10 @@ final class AppStoreConnectAPIService {
                 attributes: attributes
             )
         )
-        let _: ASCSingleResponse<ASCAppScreenshot> = try await patch("/v1/appScreenshots/\(id)", body: body)
+        // Both attributes are fixed values, so a repeat writes byte-identical state.
+        let _: ASCSingleResponse<ASCAppScreenshot> = try await patch(
+            "/v1/appScreenshots/\(id)", body: body, repeatable: true
+        )
     }
 
     // MARK: - HTTP helpers
@@ -526,8 +532,12 @@ final class AppStoreConnectAPIService {
         try await request(method: "POST", path: path, body: body)
     }
 
-    func patch<Body: Encodable, T: Decodable>(_ path: String, body: Body) async throws -> T {
-        try await request(method: "PATCH", path: path, body: body)
+    func patch<Body: Encodable, T: Decodable>(
+        _ path: String,
+        body: Body,
+        repeatable: Bool? = nil
+    ) async throws -> T {
+        try await request(method: "PATCH", path: path, body: body, repeatable: repeatable)
     }
 
     func delete(_ path: String) async throws {
@@ -538,9 +548,12 @@ final class AppStoreConnectAPIService {
         method: String,
         path: String,
         body: Body?,
-        retryPolicy: StoreRetryPolicy? = nil
+        retryPolicy: StoreRetryPolicy? = nil,
+        repeatable: Bool? = nil
     ) async throws -> T {
-        let data = try await rawRequest(method: method, path: path, body: body, retryPolicy: retryPolicy)
+        let data = try await rawRequest(
+            method: method, path: path, body: body, retryPolicy: retryPolicy, repeatable: repeatable
+        )
         do {
             return try Self.decoder.decode(T.self, from: data)
         } catch {
@@ -552,7 +565,8 @@ final class AppStoreConnectAPIService {
         method: String,
         path: String,
         body: Body?,
-        retryPolicy: StoreRetryPolicy? = nil
+        retryPolicy: StoreRetryPolicy? = nil,
+        repeatable: Bool? = nil
     ) async throws -> Data {
         do {
             return try await http.data(
@@ -562,7 +576,8 @@ final class AppStoreConnectAPIService {
                 // Screenshot relationship reads verify writes made moments earlier; a cached
                 // pre-mutation response would look like a failed order update.
                 bypassCache: method == "GET",
-                retryPolicy: retryPolicy
+                retryPolicy: retryPolicy,
+                repeatable: repeatable
             )
         } catch let error as StoreHTTPError {
             throw Self.mapped(error)

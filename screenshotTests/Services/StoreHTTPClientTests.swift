@@ -285,6 +285,53 @@ struct StoreHTTPClientTests {
         #expect(StubURLProtocol.requestCount == 1)
     }
 
+    /// `commitScreenshot` and `setScreenshotOrder` are PATCHes that write fixed state, so the
+    /// call is repeatable even though the verb is not.
+    @Test func repeatableOverrideRetriesANonIdempotentVerb() async throws {
+        StubURLProtocol.handler = flaky(status: 429, failures: 1)
+        defer { StubURLProtocol.handler = nil }
+
+        _ = try await makeClient().data(
+            method: "PATCH", path: "/x", body: Data("{}".utf8), repeatable: true
+        )
+        #expect(StubURLProtocol.requestCount == 2)
+    }
+
+    @Test func repeatableFalseDefeatsAnIdempotentVerb() async {
+        StubURLProtocol.handler = flaky(status: 429, failures: 1)
+        defer { StubURLProtocol.handler = nil }
+
+        await #expect(throws: StoreHTTPError.self) {
+            _ = try await makeClient().data(method: "GET", path: "/x", repeatable: false)
+        }
+        #expect(StubURLProtocol.requestCount == 1)
+    }
+
+    /// The guard that adding `repeatable:` changed nothing for callers that omit it.
+    @Test(arguments: [("GET", 2), ("PATCH", 1)])
+    func omittingRepeatableKeepsVerbBehaviour(method: String, expectedRequests: Int) async {
+        StubURLProtocol.handler = flaky(status: 500, failures: 1)
+        defer { StubURLProtocol.handler = nil }
+
+        _ = try? await makeClient().data(method: method, path: "/x", body: Data("{}".utf8))
+        #expect(StubURLProtocol.requestCount == expectedRequests)
+    }
+
+    /// Declaring a call repeatable widens retry past status codes to ambiguous transport
+    /// failures too. Correct for a fixed-state write, but it is not a rate-limit-only change.
+    @Test func repeatableAlsoWidensAmbiguousTransportRetries() async {
+        StubURLProtocol.handler = { _ in throw URLError(.timedOut) }
+        defer { StubURLProtocol.handler = nil }
+
+        _ = try? await makeClient().data(
+            method: "PATCH", path: "/x", body: Data("{}".utf8), repeatable: true
+        )
+        #expect(StubURLProtocol.requestCount == 3)
+
+        _ = try? await makeClient().data(method: "PATCH", path: "/x", body: Data("{}".utf8))
+        #expect(StubURLProtocol.requestCount == 1)
+    }
+
     /// The server's own pacing hint must win over the computed backoff.
     @Test func retryAfterHeaderIsHonoured() async throws {
         StubURLProtocol.handler = flaky(status: 503, failures: 1, headers: ["Retry-After": "1"])
@@ -429,7 +476,15 @@ struct StoreRetryPolicyTests {
     @Test func retryAfterOverridesBackoffButStaysCapped() {
         #expect(policy.delay(forAttempt: 0, retryAfter: "3") == .seconds(3))
         #expect(policy.delay(forAttempt: 0, retryAfter: " 2 ") == .seconds(2))
-        #expect(policy.delay(forAttempt: 0, retryAfter: "9999") == policy.maxDelay)
+        #expect(policy.delay(forAttempt: 0, retryAfter: "9999") == policy.maxRetryAfterDelay)
+    }
+
+    /// A rate limit Apple asks us to wait a minute for used to be cut to the 8s backoff cap,
+    /// so all three attempts landed inside the same closed bucket.
+    @Test func serverRetryAfterOutranksTheGuessCap() {
+        #expect(policy.maxRetryAfterDelay > policy.maxDelay)
+        #expect(policy.delay(forAttempt: 0, retryAfter: "30") == .seconds(30))
+        #expect(policy.delay(forAttempt: 5, retryAfter: nil) == policy.maxDelay)
     }
 
     /// An HTTP-date `Retry-After` is not parsed; it must fall back, not resolve to zero.

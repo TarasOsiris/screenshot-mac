@@ -128,6 +128,9 @@ nonisolated struct ASCScreenshotSetSyncResult: Identifiable, Sendable {
     /// Carried from the diff: notices such as "these have no App Store checksum, so they will be
     /// replaced rather than preserved". Non-blocking, and previously dropped before reaching MCP.
     let warnings: [String]
+    /// `error` is already localized prose, which analytics must never carry. This keeps the shape
+    /// of the failure — kind plus HTTP status — so a rate limit reports as itself.
+    let failure: StoreUploadFailure?
 
     var alreadyApplied: Bool { state == .alreadyApplied }
 
@@ -141,7 +144,8 @@ nonisolated struct ASCScreenshotSetSyncResult: Identifiable, Sendable {
         error: String?,
         state: State? = nil,
         deliveries: [ASCScreenshotDeliveryOutcome] = [],
-        warnings: [String] = []
+        warnings: [String] = [],
+        failure: StoreUploadFailure? = nil
     ) {
         self.id = id
         self.uploaded = uploaded
@@ -156,6 +160,7 @@ nonisolated struct ASCScreenshotSetSyncResult: Identifiable, Sendable {
             ASCScreenshotDeliveryProblem(screenshotId: $0.screenshotId, state: $0.state, messages: $0.messages)
         }
         self.warnings = warnings
+        self.failure = failure
     }
 }
 
@@ -243,12 +248,18 @@ final class AppStoreConnectScreenshotSyncService {
     /// that other suites toggle, and a test of the idempotency ledger must not be at their mercy.
     private let isDemoMode: () -> Bool
 
+    /// Base interval between delivery/verify polls. Injectable only so a test exercising a
+    /// refused poll doesn't have to sleep through the real backoff.
+    private let pollInterval: Duration
+
     init(
         api: (any ASCScreenshotSyncAPI)? = nil,
-        isDemoMode: @escaping () -> Bool = { AppStoreConnectCredentialsStore.shared.isDemoMode }
+        isDemoMode: @escaping () -> Bool = { AppStoreConnectCredentialsStore.shared.isDemoMode },
+        pollInterval: Duration = .seconds(1)
     ) {
         self.api = api ?? AppStoreConnectAPIService.shared
         self.isDemoMode = isDemoMode
+        self.pollInterval = pollInterval
     }
 
     func plan(id: String) -> ASCScreenshotSyncPlan? {
@@ -310,6 +321,7 @@ final class AppStoreConnectScreenshotSyncService {
         // corrected even when every target turned out to be unrenderable.
         progress(.init(stage: .comparing, completedRenders: 0, totalRenders: totalRenders, label: ""))
 
+        var setsByLocalization: [String: [ASCAppScreenshotSet]] = [:]
         do {
             for (target, row) in renderable {
 
@@ -371,7 +383,8 @@ final class AppStoreConnectScreenshotSyncService {
                             localizationId: localization.id,
                             displayType: target.displayType,
                             previewMaxDimension: needsPreviews ? 420 : nil,
-                            previewDirectory: needsPreviews ? remotePreviewDirectory : nil
+                            previewDirectory: needsPreviews ? remotePreviewDirectory : nil,
+                            setsByLocalization: &setsByLocalization
                         )
                     PerfSignpost.end("ASCSync.fetchRemoteSet", fetchSpan)
                     let diff = Self.makeDiff(
@@ -456,6 +469,7 @@ final class AppStoreConnectScreenshotSyncService {
         }
 
         // Revalidate every not-yet-applied set and its cached local bytes before the first write.
+        var setsByLocalization: [String: [ASCAppScreenshotSet]] = [:]
         for diff in remaining {
             try Task.checkCancellation()
             for local in diff.proposedAssets.compactMap(\.localAsset) {
@@ -471,7 +485,8 @@ final class AppStoreConnectScreenshotSyncService {
                     localizationId: diff.localizationId,
                     displayType: diff.displayType,
                     previewMaxDimension: nil,
-                    previewDirectory: nil
+                    previewDirectory: nil,
+                    setsByLocalization: &setsByLocalization
                 )
                 guard Self.remoteFingerprint(snapshot.assets) == diff.remoteFingerprint,
                       snapshot.setId == diff.remoteSetId else {
@@ -537,10 +552,10 @@ final class AppStoreConnectScreenshotSyncService {
                     setId = existing
                 } else {
                     do {
-                        setId = try await api.createScreenshotSet(
+                        setId = try await createOrAdoptScreenshotSet(
                             localizationId: diff.localizationId,
-                            displayType: diff.displayType.appStoreConnectValue
-                        ).id
+                            displayType: diff.displayType
+                        )
                         markMutated()
                     } catch {
                         throw Self.screenshotSetCreationError(error, diff: diff)
@@ -642,11 +657,16 @@ final class AppStoreConnectScreenshotSyncService {
                 "completed_sets": results.count,
             ], level: .warning)
             let completedIds = Set(results.map(\.id))
+            let failure = StoreUploadFailure.classify(error)
             let failureMessage: String
             if error is CancellationError {
                 failureMessage = didMutate
                     ? String(localized: "Screenshot sync was cancelled. Changes already made in App Store Connect were not reverted.")
                     : String(localized: "Screenshot sync was cancelled before anything was changed in App Store Connect.")
+            } else if failure.errorCode == 429 {
+                // Apple's own sentence says only "slow down". What the user needs to know is that
+                // finished sets are ledgered, so running the sync again resumes rather than repeats.
+                failureMessage = String(localized: "App Store Connect is rate limiting this account. \(results.count) screenshot sets already finished and will be skipped. Wait a few minutes, then run the sync again to continue where it stopped.")
             } else if didMutate {
                 failureMessage = String(localized: "\(error.localizedDescription) Changes already made in App Store Connect were not reverted.")
             } else {
@@ -660,7 +680,8 @@ final class AppStoreConnectScreenshotSyncService {
                     moved: 0,
                     preserved: 0,
                     verified: false,
-                    error: failureMessage
+                    error: failureMessage,
+                    failure: failure
                 ))
             }
             let reportedIds = Set(results.map(\.id))
@@ -812,13 +833,23 @@ final class AppStoreConnectScreenshotSyncService {
         let warnings: [String]
     }
 
+    /// One response covers every display type of a localization, and both sweeps ask once per
+    /// display type. `setsByLocalization` is scoped to a single sweep — the repeats come from
+    /// different outer-loop targets, so a per-iteration cache would never hit.
     private func fetchRemoteSet(
         localizationId: String,
         displayType: ASCDisplayType,
         previewMaxDimension: Int?,
-        previewDirectory: URL?
+        previewDirectory: URL?,
+        setsByLocalization: inout [String: [ASCAppScreenshotSet]]
     ) async throws -> RemoteSetSnapshot {
-        let sets = try await api.listScreenshotSets(localizationId: localizationId)
+        let sets: [ASCAppScreenshotSet]
+        if let cached = setsByLocalization[localizationId] {
+            sets = cached
+        } else {
+            sets = try await api.listScreenshotSets(localizationId: localizationId)
+            setsByLocalization[localizationId] = sets
+        }
         guard let set = sets.first(where: { $0.attributes.screenshotDisplayType == displayType.appStoreConnectValue }) else {
             return RemoteSetSnapshot(setId: nil, assets: [], warnings: [])
         }
@@ -1049,6 +1080,42 @@ final class AppStoreConnectScreenshotSyncService {
         }
     }
 
+    /// The transport must not repeat this POST: a duplicate set is invisible to `verify`, which
+    /// only ever inspects one set id, and it stays in the user's real listing. It is repeatable
+    /// here because the plan only reaches this branch with `remoteSetId == nil` — revalidation
+    /// confirmed no set for this display type existed moments ago, so one that exists now is ours.
+    private func createOrAdoptScreenshotSet(
+        localizationId: String,
+        displayType: ASCDisplayType
+    ) async throws -> String {
+        let policy = api.retryPolicy
+        let value = displayType.appStoreConnectValue
+        return try await policy.attempting {
+            do {
+                return try await api.createScreenshotSet(
+                    localizationId: localizationId,
+                    displayType: value
+                ).id
+            } catch {
+                guard Self.isTransient(error, policy: policy) else { throw error }
+                let apiError = error as? AppStoreConnectAPIError
+                CrashReportingService.breadcrumb(
+                    .upload,
+                    "ASC create set retry",
+                    data: apiError?.httpStatus.map { ["status": $0] },
+                    level: .warning
+                )
+                // A request that never reached Apple cannot have created a set.
+                if StoreRetryPolicy.reachedServer(apiError?.transportError ?? error),
+                   let existing = try? await api.listScreenshotSets(localizationId: localizationId)
+                       .first(where: { $0.attributes.screenshotDisplayType == value }) {
+                    return existing.id
+                }
+                throw StoreRetryPolicy.Retryable(underlying: error)
+            }
+        }
+    }
+
     /// Deletes only what this reserve attempt could have left behind: same file name, not yet
     /// delivered, and not one of the screenshots the plan is keeping.
     private func sweepOrphanedReservations(
@@ -1087,7 +1154,8 @@ final class AppStoreConnectScreenshotSyncService {
         }.map(\.id)
     }
 
-    /// The reserve POST is repeatable only because `sweepOrphanedReservations` runs first.
+    /// `repeatable: true` throughout, because each caller either compensates before retrying
+    /// (reserve sweeps, create adopts) or only reads.
     private static func isTransient(_ error: Error, policy: StoreRetryPolicy) -> Bool {
         switch error as? AppStoreConnectAPIError {
         case .httpError(let status, _): policy.allowsRetry(status: status, repeatable: true)
@@ -1102,37 +1170,59 @@ final class AppStoreConnectScreenshotSyncService {
         expectedChecksum: String
     ) async throws -> ASCScreenshotDeliveryOutcome {
         if isDemoMode() { return .assumedComplete(screenshotId) }
+        var lastError: Error?
+        var failedPolls = 0
         for _ in 0..<30 {
             try Task.checkCancellation()
-            let screenshot = try await api.screenshot(id: screenshotId, retryPolicy: .singleAttempt)
-            let delivery = screenshot.attributes.assetDeliveryState
-            if delivery?.isComplete == true {
-                if let checksum = screenshot.attributes.sourceFileChecksum,
-                   checksum.caseInsensitiveCompare(expectedChecksum) != .orderedSame {
-                    throw ASCScreenshotSyncError.invalidPlan(
-                        String(localized: "App Store Connect completed an upload with an unexpected checksum.")
+            do {
+                let screenshot = try await api.screenshot(id: screenshotId, retryPolicy: .singleAttempt)
+                let delivery = screenshot.attributes.assetDeliveryState
+                if delivery?.isComplete == true {
+                    if let checksum = screenshot.attributes.sourceFileChecksum,
+                       checksum.caseInsensitiveCompare(expectedChecksum) != .orderedSame {
+                        throw ASCScreenshotSyncError.invalidPlan(
+                            String(localized: "App Store Connect completed an upload with an unexpected checksum.")
+                        )
+                    }
+                    return ASCScreenshotDeliveryOutcome(
+                        screenshotId: screenshotId,
+                        state: delivery?.state ?? "COMPLETE",
+                        messages: delivery?.warnings?.compactMap { $0.message ?? $0.code } ?? []
                     )
                 }
-                return ASCScreenshotDeliveryOutcome(
-                    screenshotId: screenshotId,
-                    state: delivery?.state ?? "COMPLETE",
-                    messages: delivery?.warnings?.compactMap { $0.message ?? $0.code } ?? []
-                )
+                if delivery?.isFailed == true {
+                    let details = screenshot.attributes.assetDeliveryState?.errors?
+                        .compactMap { $0.message ?? $0.code }
+                        .joined(separator: ", ")
+                    throw ASCScreenshotSyncError.invalidPlan(
+                        details.map { String(localized: "App Store Connect rejected the screenshot: \($0)") }
+                            ?? String(localized: "App Store Connect rejected the screenshot upload.")
+                    )
+                }
+                lastError = nil
+                failedPolls = 0
+            } catch let error as ASCScreenshotSyncError {
+                // Apple rejecting the asset is a verdict, not a blip — polling past it would
+                // report "did not finish in time" for something it explicitly refused.
+                throw error
+            } catch {
+                guard Self.isTransient(error, policy: api.retryPolicy) else { throw error }
+                lastError = error
+                failedPolls += 1
             }
-            if delivery?.isFailed == true {
-                let details = screenshot.attributes.assetDeliveryState?.errors?
-                    .compactMap { $0.message ?? $0.code }
-                    .joined(separator: ", ")
-                throw ASCScreenshotSyncError.invalidPlan(
-                    details.map { String(localized: "App Store Connect rejected the screenshot: \($0)") }
-                        ?? String(localized: "App Store Connect rejected the screenshot upload.")
-                )
-            }
-            try await Task.sleep(for: .seconds(1))
+            try await Task.sleep(for: pollDelay(failedPolls: failedPolls))
         }
+        if let lastError { throw lastError }
         throw ASCScreenshotSyncError.invalidPlan(
             String(localized: "App Store Connect did not finish processing the uploaded screenshot in time.")
         )
+    }
+
+    /// A poll that failed is evidence the account is being throttled, so polling again a second
+    /// later makes the bucket worse. Tolerating failures without this turns one refused request
+    /// per screenshot into thirty.
+    private func pollDelay(failedPolls: Int) -> Duration {
+        failedPolls == 0 ? pollInterval : min(pollInterval * pow(2.0, Double(failedPolls)), pollInterval * 8)
     }
 
     private func verify(
@@ -1142,6 +1232,7 @@ final class AppStoreConnectScreenshotSyncService {
     ) async throws -> Bool {
         if isDemoMode() { return true }
         var lastError: Error?
+        var failedPolls = 0
         for attempt in 0..<30 {
             try Task.checkCancellation()
             do {
@@ -1154,12 +1245,15 @@ final class AppStoreConnectScreenshotSyncService {
                     return true
                 }
                 lastError = nil
+                failedPolls = 0
             } catch {
+                guard Self.isTransient(error, policy: api.retryPolicy) else { throw error }
                 lastError = error
+                failedPolls += 1
             }
 
             if attempt < 29 {
-                try await Task.sleep(for: .seconds(1))
+                try await Task.sleep(for: pollDelay(failedPolls: failedPolls))
             }
         }
         if let lastError { throw lastError }

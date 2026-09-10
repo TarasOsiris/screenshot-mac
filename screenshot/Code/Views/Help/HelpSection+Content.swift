@@ -502,6 +502,7 @@ extension HelpSection {
                 .bullet("**Upload** skips that screen and compares against the store as it goes, uploading only what differs and keeping the App Store asset IDs of exact matches. The progress bar counts the screenshots as they render, then compares each set."),
                 .bullet("**Replace All Screenshots**, offered next to Upload when you confirm, skips the comparison entirely: everything currently in the selected sets is deleted and every screenshot is uploaded again with new asset IDs. It prepares faster and uploads slower, so it pays off when most screenshots changed and costs you when only one did."),
                 .bullet("Sets are grouped by version and device — open a locale to compare the current App Store screenshots with the proposed ones. Locales that already match are hidden behind **Show unchanged**, and **Select All Changed** / **Deselect All** set what gets synced."),
+                .bullet("If an upload stops partway — a dropped connection, or App Store Connect rate limiting a large sync — just run it again. Locales that finished are remembered and skipped, and screenshots already delivered are matched by checksum rather than uploaded twice."),
                 .heading("Editing store metadata"),
                 .bullet("The same wizard edits the version's text, locale by locale, with a live character counter against Apple's limits."),
                 .bullet("**App Info** (shared across versions): **App Name**, **Subtitle**, **Privacy Policy URL**."),

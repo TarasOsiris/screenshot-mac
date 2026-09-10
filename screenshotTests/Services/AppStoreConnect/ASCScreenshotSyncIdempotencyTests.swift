@@ -9,20 +9,31 @@ import Testing
 /// nothing.
 @MainActor
 private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
-    let retryPolicy = StoreRetryPolicy.singleAttempt
+    /// `.singleAttempt` by default so the existing tests see no retries; the rate-limit tests
+    /// raise it to exercise the service's own `attempting` loops.
+    var retryPolicy = StoreRetryPolicy.singleAttempt
 
     private(set) var reserveCount = 0
     private(set) var commitCount = 0
     private(set) var createSetCount = 0
     private(set) var deleteCount = 0
     private(set) var orderCount = 0
+    private(set) var listSetsCount = 0
     /// Localization whose uploads should fail, to model a set that stops halfway. Keyed by
     /// localization rather than set id because set ids are minted here, not by the test.
     var failUploadsForLocalization: String?
+    /// Rate-limit knobs: each fails its call the first N times, then behaves normally.
+    var failCreateSetTimes = 0
+    var failDeliveryPollTimes = 0
+    var failCommitTimes = 0
+    /// Status the knobs above throw. 429 is the case under test; 401 pins the non-transient path.
+    var failureStatus = 429
 
     /// Preview downloads, which only the review screen needs. Asserted to be zero on the direct
     /// upload path.
     private(set) var downloadCount = 0
+    /// How many delivery polls were actually refused, so a test can prove the loop stopped early.
+    private(set) var deliveryPollFailures = 0
 
     private var nextSetId = 0
     private var nextShotId = 0
@@ -55,7 +66,8 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
     }
 
     func listScreenshotSets(localizationId: String, limit: Int) async throws -> [ASCAppScreenshotSet] {
-        try setLocalization
+        listSetsCount += 1
+        return try setLocalization
             .filter { $0.value == localizationId }
             .sorted { $0.key < $1.key }
             .map { setId, _ in
@@ -73,6 +85,12 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
         setDisplayType[id] = displayType
         members[id] = []
         order[id] = []
+        // The set is recorded before the throw on purpose: that models the proxy rate-limiting a
+        // POST the origin already processed, which is what the adopt path exists to survive.
+        if failCreateSetTimes > 0 {
+            failCreateSetTimes -= 1
+            throw AppStoreConnectAPIError.httpError(status: failureStatus, message: "create refused")
+        }
         return try Self.decode(#"{"id":"\#(id)","attributes":{"screenshotDisplayType":"\#(displayType)"}}"#)
     }
 
@@ -81,7 +99,12 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
     }
 
     func screenshot(id: String, retryPolicy: StoreRetryPolicy?) async throws -> ASCAppScreenshot {
-        try shot(id)
+        if failDeliveryPollTimes > 0 {
+            failDeliveryPollTimes -= 1
+            deliveryPollFailures += 1
+            throw AppStoreConnectAPIError.httpError(status: failureStatus, message: "poll refused")
+        }
+        return try shot(id)
     }
 
     func listScreenshotOrder(setId: String) async throws -> [String] { order[setId] ?? [] }
@@ -119,6 +142,10 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
 
     func commitScreenshot(id: String, md5Checksum: String) async throws {
         commitCount += 1
+        if failCommitTimes > 0 {
+            failCommitTimes -= 1
+            throw AppStoreConnectAPIError.httpError(status: failureStatus, message: "commit refused")
+        }
         checksums[id] = md5Checksum
     }
 
@@ -331,6 +358,149 @@ struct ASCScreenshotSyncIdempotencyTests {
         #expect(api.commitCount == 1)
         #expect(result.sets.first?.state == .succeeded)
         #expect(result.sets.first?.assetDeliveryStates == ["COMPLETE": 1])
+    }
+
+    // MARK: - Rate limiting
+
+    private static let retryingPolicy = StoreRetryPolicy(
+        maxAttempts: 3, baseDelay: .milliseconds(1), maxDelay: .milliseconds(2)
+    )
+
+    /// The reported bug: one 429 on a delivery poll used to abort the whole set, even though
+    /// the bytes were already delivered. `verify`'s loop always tolerated this; this one didn't.
+    @Test func deliveryPollSurvivesARateLimit() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+        api.failDeliveryPollTimes = 2
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(result.succeeded)
+        #expect(api.deliveryPollFailures == 2)
+        #expect(api.reserveCount == 1, "a refused poll must not re-upload the screenshot")
+        #expect(api.commitCount == 1)
+    }
+
+    /// Tolerating failures must not mean polling 30 times through a hard error — that would be a
+    /// worse rate-limit story than the bug being fixed.
+    @Test func deliveryPollStopsOnANonTransientError() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+        api.failureStatus = 401
+        api.failDeliveryPollTimes = 99
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(!result.succeeded)
+        #expect(api.deliveryPollFailures == 1, "a 401 is a verdict, not a blip")
+    }
+
+    /// A commit writes fixed values, so the transport may repeat it — but only the commit.
+    @Test func commitIsNotResentByReuploading() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+        api.failCommitTimes = 1
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(!result.succeeded, "the fake's policy is .singleAttempt, so the commit is not retried here")
+        #expect(api.reserveCount == 1, "a refused commit must not reserve a second screenshot")
+    }
+
+    /// A rate-limited create POST must not leave a second set behind: `verify` only ever inspects
+    /// one set id, so a duplicate would be invisible and stay in the user's listing.
+    @Test func createScreenshotSetAdoptsTheSetItAlreadyCreated() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.retryPolicy = Self.retryingPolicy
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+        api.failCreateSetTimes = 1
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(result.succeeded)
+        #expect(api.createSetCount == 1, "the retry adopts rather than posting again")
+        let sets = try await api.listScreenshotSets(localizationId: "loc-1", limit: 50)
+        #expect(sets.count == 1, "exactly one set for the display type")
+    }
+
+    /// A create failure Apple will never accept must surface immediately, not burn the budget.
+    @Test func nonTransientCreateFailureIsNotRetried() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.retryPolicy = Self.retryingPolicy
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+        api.failureStatus = 409
+        api.failCreateSetTimes = 99
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(!result.succeeded)
+        #expect(api.createSetCount == 1)
+    }
+
+    /// Without this the failure reaches PostHog as `unknown`, so the rate limit is invisible in
+    /// exactly the funnel that would tell us whether it is still happening.
+    @Test func perSetFailureCarriesTheTypedError() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+        api.failureStatus = 429
+        api.failDeliveryPollTimes = 99
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        let failed = try #require(result.sets.first { $0.state == .failed })
+        #expect(failed.failure == StoreUploadFailure(kind: .httpError, errorCode: 429))
+        #expect(failed.error?.contains("rate limiting") == true)
+    }
+
+    /// One response covers every display type of a localization, so asking once per display type
+    /// was pure duplicated load on the account the rate limit is measured against.
+    @Test func listScreenshotSetsIsFetchedOncePerLocalization() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(api: api, isDemoMode: { false })
+        let rowId = UUID()
+        let stamp = DocumentStamp(projectId: UUID(), modifiedAt: Date())
+        let localizations = [ASCUploadLocalization(id: "loc-1", label: "en-US", localeCode: "en")]
+
+        _ = try await service.buildPlan(
+            appId: "123",
+            targets: [ASCDisplayType.iphone67, .ipadPro129M4].map {
+                ASCUploadTarget(
+                    versionId: "v1", versionLabel: "iOS · Version 1.0", rowId: rowId, rowLabel: "Row",
+                    rowSize: CGSize(width: 60, height: 120), displayType: $0,
+                    localizations: localizations, templateCount: 1
+                )
+            },
+            rows: [makeRow(id: rowId)],
+            source: StubRenderSource(),
+            document: stamp,
+            needsPreviews: false
+        )
+
+        #expect(api.listSetsCount == 1, "two display types share one localization listing")
     }
 
     /// The whole point: a client that timed out can retry the identical call and nothing is

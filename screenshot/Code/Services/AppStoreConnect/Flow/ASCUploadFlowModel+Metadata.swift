@@ -125,38 +125,56 @@ extension ASCUploadFlowModel {
         }
     }
 
-    /// Patches every changed draft (copyright, version localizations, app-info localizations) in
-    /// parallel, then re-baselines the drafts so the change dots clear. Returns what was written.
+    /// One PATCH per changed draft, and a many-locale app has 70 of them — unbounded, that is 70
+    /// simultaneous writes against an account with an hourly request budget.
+    private static let metadataWriteConcurrency = 4
+
+    /// Patches every changed draft (copyright, version localizations, app-info localizations) a
+    /// few at a time, then re-baselines the drafts so the change dots clear. Returns what was
+    /// written.
     func saveMetadataChanges() async throws -> ASCMetadataSaveSummary {
         let changedCopyrights = copyrightByVersion.filter { $0.value != (originalCopyrightByVersion[$0.key] ?? "") }
         let versionSnapshot = versionDrafts
         let appInfoSnapshot = appInfoDrafts
         let api = api
 
+        // `@MainActor`, not `@Sendable`: `AnyEncodable` wraps a closure and is not Sendable, so
+        // `changes` cannot cross an isolation boundary. Spelling the isolation into the element
+        // type is what the inline `addTask` closures used to get by inference.
+        var writes: [@MainActor () async throws -> Void] = []
+        for (versionId, copyrightValue) in changedCopyrights {
+            writes.append {
+                try await api.updateAppStoreVersion(
+                    id: versionId,
+                    attributes: ["copyright": AnyEncodable(copyrightValue)]
+                )
+            }
+        }
+        for draft in versionSnapshot {
+            let changes = draft.changedAttributes()
+            guard !changes.isEmpty else { continue }
+            writes.append {
+                try await AppStoreConnectVersionMetadata.patchLocalization(api, id: draft.id, changes: changes)
+            }
+        }
+        for draft in appInfoSnapshot {
+            let changes = draft.changedAttributes()
+            guard !changes.isEmpty else { continue }
+            writes.append {
+                try await api.updateAppInfoLocalization(id: draft.id, attributes: changes)
+            }
+        }
+
         try await withThrowingTaskGroup(of: Void.self) { group in
-            for (versionId, copyrightValue) in changedCopyrights {
-                group.addTask {
-                    try await api.updateAppStoreVersion(
-                        id: versionId,
-                        attributes: ["copyright": AnyEncodable(copyrightValue)]
-                    )
-                }
+            var pending = writes.makeIterator()
+            for _ in 0..<Self.metadataWriteConcurrency {
+                guard let write = pending.next() else { break }
+                group.addTask { try await write() }
             }
-            for draft in versionSnapshot {
-                let changes = draft.changedAttributes()
-                guard !changes.isEmpty else { continue }
-                group.addTask {
-                    try await AppStoreConnectVersionMetadata.patchLocalization(api, id: draft.id, changes: changes)
-                }
+            while try await group.next() != nil {
+                guard let write = pending.next() else { continue }
+                group.addTask { try await write() }
             }
-            for draft in appInfoSnapshot {
-                let changes = draft.changedAttributes()
-                guard !changes.isEmpty else { continue }
-                group.addTask {
-                    try await api.updateAppInfoLocalization(id: draft.id, attributes: changes)
-                }
-            }
-            try await group.waitForAll()
         }
 
         let changedVersionDrafts = versionSnapshot.filter(\.isChanged)
