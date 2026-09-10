@@ -95677,6 +95677,162 @@
           }
         }
       }
+    },
+    "Every version on this app is already live. Create a new version in App Store Connect, then refresh this wizard." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Version dieser App ist bereits live. Erstellen Sie eine neue Version in App Store Connect und aktualisieren Sie dann diesen Assistenten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las versiones de esta aplicación ya están disponibles. Cree una nueva versión en App Store Connect y luego actualice este asistente."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر نسخه در این برنامه در حال حاضر فعال است. یک نسخه جدید در App Store Connect ایجاد کنید، سپس این جادوگر را بازخوانی کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque version de cette application est déjà en ligne. Créez une nouvelle version dans App Store Connect, puis actualisez cet assistant."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアプリのすべてのバージョンはすでに公開されています。 App Store Connect で新しいバージョンを作成し、このウィザードを更新します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 앱의 모든 버전은 이미 출시되었습니다. App Store Connect에서 새 버전을 생성한 다음 이 마법사를 새로 고치세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as versões deste aplicativo já estão no ar. Crie uma nova versão em App Store Connect e atualize este assistente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该应用程序的每个版本都已上线。在 App Store Connect 中创建新版本，然后刷新此向导。"
+          }
+        }
+      }
+    },
+    "%lld %@ will be safely synced across %lld %@, %lld %@, and %lld %@. Exact checksum matches will be preserved." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ wird sicher über %3$lld %4$@, %5$lld %6$@ und %7$lld %8$@ synchronisiert. Genaue Prüfsummenübereinstimmungen bleiben erhalten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ se sincronizará de forma segura entre %3$lld %4$@, %5$lld %6$@ y %7$lld %8$@. Se conservarán las coincidencias exactas de la suma de comprobación."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ به طور ایمن در بین %3$lld %4$@، %5$lld %6$@ و %7$lld %8$@ همگام‌سازی می‌شود. تطابق دقیق جمع کنترلی حفظ خواهد شد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ sera synchronisé en toute sécurité sur %3$lld %4$@, %5$lld %6$@ et %7$lld %8$@. Les correspondances exactes de la somme de contrôle seront conservées."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ は %3$lld %4$@、%5$lld %6$@、および %7$lld %8$@ 全体で安全に同期されます。チェックサムの正確な一致は保持されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@은 %3$lld %4$@, %5$lld %6$@ 및 %7$lld %8$@에서 안전하게 동기화됩니다. 정확한 체크섬 일치가 유지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ será sincronizado com segurança entre %3$lld %4$@, %5$lld %6$@ e %7$lld %8$@. As correspondências exatas da soma de verificação serão preservadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld %2$@ 将在 %3$lld %4$@、%5$lld %6$@ 和 %7$lld %8$@ 之间安全同步。将保留精确的校验和匹配。"
+          }
+        }
+      }
+    },
+    "Every version on this app is locked for review or live. Create a new version in App Store Connect, then refresh this wizard." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Version dieser App ist zur Überprüfung oder Live-Übertragung gesperrt. Erstellen Sie eine neue Version in App Store Connect und aktualisieren Sie dann diesen Assistenten."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las versiones de esta app están bloqueadas para revisión o ya publicadas. Crea una nueva versión en App Store Connect y luego actualiza este asistente."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هر نسخه در این برنامه برای بررسی یا زنده قفل است. یک نسخه جدید در App Store Connect ایجاد کنید، سپس این جادوگر را بازخوانی کنید."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque version de cette application est verrouillée pour révision ou en direct. Créez une nouvelle version dans App Store Connect, puis actualisez cet assistant."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアプリのすべてのバージョンは、レビューまたはライブのためにロックされています。 App Store Connect で新しいバージョンを作成し、このウィザードを更新します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 앱의 모든 버전은 검토 또는 게시를 위해 잠겨 있습니다. App Store Connect에서 새 버전을 생성한 다음 이 마법사를 새로 고치세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada versão deste aplicativo está bloqueada para revisão ou ao vivo. Crie uma nova versão em App Store Connect e atualize este assistente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此应用程序上的每个版本都已锁定以供审核或上线。在 App Store Connect 中创建新版本，然后刷新此向导。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
