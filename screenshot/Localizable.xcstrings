@@ -95574,58 +95574,6 @@
         }
       }
     },
-    "App Store Connect is rate limiting this account. %lld screenshot sets already finished and will be skipped. Wait a few minutes, then run the sync again to continue where it stopped." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect begrenzt die Rate für dieses Konto. %1$lld Screenshot-Sets sind bereits fertig und werden übersprungen. Warten Sie einige Minuten und führen Sie dann die Synchronisierung erneut aus, um dort fortzufahren, wo sie gestoppt wurde."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect está limitando la tarifa de esta cuenta. %1$lld conjuntos de capturas de pantalla ya finalizaron y se omitirán. Espere unos minutos y luego ejecute la sincronización nuevamente para continuar donde se detuvo."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect این حساب را محدود می‌کند. %1$lld مجموعه‌های اسکرین‌شات قبلاً تمام شده‌اند و نادیده گرفته می‌شوند. چند دقیقه صبر کنید، سپس همگام سازی را دوباره اجرا کنید تا در جایی که متوقف شده است ادامه دهید."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect limite le taux de ce compte. Les jeux de captures d'écran %1$lld sont déjà terminés et seront ignorés. Attendez quelques minutes, puis relancez la synchronisation pour continuer là où elle s'est arrêtée."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect はこのアカウントのレート制限を行っています。 %1$lld スクリーンショット セットはすでに終了しているため、スキップされます。数分待ってから同期を再度実行し、停止したところから続行します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect은(는) 이 계정의 속도를 제한합니다. %1$lld 스크린샷 세트가 이미 완료되었으므로 건너뜁니다. 몇 분 정도 기다린 후 동기화를 다시 실행하여 중지된 부분부터 계속하세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect está limitando a taxa desta conta. %1$lld conjuntos de capturas de tela já concluídos e serão ignorados. Aguarde alguns minutos e execute a sincronização novamente para continuar de onde parou."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store Connect 对此帐户进行了速率限制。 %1$lld 屏幕截图集已完成，将被跳过。等待几分钟，然后再次运行同步以从停止的位置继续。"
-          }
-        }
-      }
-    },
     "If an upload stops partway — a dropped connection, or App Store Connect rate limiting a large sync — just run it again. Locales that finished are remembered and skipped, and screenshots already delivered are matched by checksum rather than uploaded twice." : {
       "localizations" : {
         "de" : {
@@ -95674,6 +95622,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如果上传中途停止（连接断开或 App Store Connect 速率限制大型同步），只需再次运行即可。完成的区域设置会被记住并跳过，并且已经交付的屏幕截图会通过校验和进行匹配，而不是上传两次。"
+          }
+        }
+      }
+    },
+    "App Store Connect is rate limiting this account. Wait a few minutes, then run the sync again — screenshot sets that already finished will be skipped." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect begrenzt die Rate für dieses Konto. Warten Sie einige Minuten und führen Sie dann die Synchronisierung erneut aus. Bereits abgeschlossene Screenshot-Sätze werden übersprungen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect está limitando la tarifa de esta cuenta. Espere unos minutos y luego ejecute la sincronización nuevamente; se omitirán los conjuntos de capturas de pantalla que ya hayan finalizado."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect این حساب را محدود می‌کند. چند دقیقه صبر کنید، سپس دوباره همگام‌سازی را اجرا کنید - مجموعه‌های اسکرین‌شات‌هایی که قبلاً تمام شده‌اند نادیده گرفته می‌شوند."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect limite le taux de ce compte. Attendez quelques minutes, puis relancez la synchronisation : les jeux de captures d'écran déjà terminés seront ignorés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect はこのアカウントのレート制限を行っています。数分待ってから、同期を再度実行します。すでに終了したスクリーンショット セットはスキップされます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect은(는) 이 계정의 속도를 제한합니다. 몇 분 정도 기다린 후 동기화를 다시 실행하세요. 이미 완료된 스크린샷 세트는 건너뜁니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect está limitando a taxa desta conta. Aguarde alguns minutos e execute a sincronização novamente – os conjuntos de capturas de tela já concluídos serão ignorados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store Connect 对此帐户进行了速率限制。等待几分钟，然后再次运行同步 - 已完成的屏幕截图集将被跳过。"
           }
         }
       }

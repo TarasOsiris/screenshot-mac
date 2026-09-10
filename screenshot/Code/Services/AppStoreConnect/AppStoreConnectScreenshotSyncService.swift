@@ -663,14 +663,15 @@ final class AppStoreConnectScreenshotSyncService {
                 failureMessage = didMutate
                     ? String(localized: "Screenshot sync was cancelled. Changes already made in App Store Connect were not reverted.")
                     : String(localized: "Screenshot sync was cancelled before anything was changed in App Store Connect.")
-            } else if failure.errorCode == 429 {
+            } else {
                 // Apple's own sentence says only "slow down". What the user needs to know is that
                 // finished sets are ledgered, so running the sync again resumes rather than repeats.
-                failureMessage = String(localized: "App Store Connect is rate limiting this account. \(results.count) screenshot sets already finished and will be skipped. Wait a few minutes, then run the sync again to continue where it stopped.")
-            } else if didMutate {
-                failureMessage = String(localized: "\(error.localizedDescription) Changes already made in App Store Connect were not reverted.")
-            } else {
-                failureMessage = error.localizedDescription
+                let cause = failure.errorCode == 429
+                    ? String(localized: "App Store Connect is rate limiting this account. Wait a few minutes, then run the sync again — screenshot sets that already finished will be skipped.")
+                    : error.localizedDescription
+                failureMessage = didMutate
+                    ? String(localized: "\(cause) Changes already made in App Store Connect were not reverted.")
+                    : cause
             }
             if let activeSet, !completedIds.contains(activeSet.id) {
                 results.append(ASCScreenshotSetSyncResult(
@@ -1096,22 +1097,33 @@ final class AppStoreConnectScreenshotSyncService {
                     localizationId: localizationId,
                     displayType: value
                 ).id
-            } catch {
-                guard Self.isTransient(error, policy: policy) else { throw error }
-                let apiError = error as? AppStoreConnectAPIError
+            } catch let createError {
+                guard Self.isTransient(createError, policy: policy) else { throw createError }
+                let apiError = createError as? AppStoreConnectAPIError
                 CrashReportingService.breadcrumb(
                     .upload,
                     "ASC create set retry",
                     data: apiError?.httpStatus.map { ["status": $0] },
                     level: .warning
                 )
-                // A request that never reached Apple cannot have created a set.
-                if StoreRetryPolicy.reachedServer(apiError?.transportError ?? error),
-                   let existing = try? await api.listScreenshotSets(localizationId: localizationId)
-                       .first(where: { $0.attributes.screenshotDisplayType == value }) {
+                // A request that never reached Apple cannot have created a set, so there is
+                // nothing to adopt and repeating the POST is safe.
+                guard StoreRetryPolicy.reachedServer(apiError?.transportError ?? createError) else {
+                    throw StoreRetryPolicy.Retryable(underlying: createError)
+                }
+                // Being able to *ask* is the whole basis for repeating this POST. A refused
+                // listing cannot tell a set we just created from one that never existed, and
+                // guessing wrong leaves a duplicate `verify` never looks at.
+                let sets: [ASCAppScreenshotSet]
+                do {
+                    sets = try await api.listScreenshotSets(localizationId: localizationId)
+                } catch {
+                    throw createError
+                }
+                if let existing = sets.first(where: { $0.attributes.screenshotDisplayType == value }) {
                     return existing.id
                 }
-                throw StoreRetryPolicy.Retryable(underlying: error)
+                throw StoreRetryPolicy.Retryable(underlying: createError)
             }
         }
     }
@@ -1154,8 +1166,8 @@ final class AppStoreConnectScreenshotSyncService {
         }.map(\.id)
     }
 
-    /// `repeatable: true` throughout, because each caller either compensates before retrying
-    /// (reserve sweeps, create adopts) or only reads.
+    /// `repeatable: true` for both callers, because each compensates before retrying: reserve
+    /// sweeps the orphan it may have left, create adopts the set it may have made.
     private static func isTransient(_ error: Error, policy: StoreRetryPolicy) -> Bool {
         switch error as? AppStoreConnectAPIError {
         case .httpError(let status, _): policy.allowsRetry(status: status, repeatable: true)
@@ -1206,9 +1218,10 @@ final class AppStoreConnectScreenshotSyncService {
                 // report "did not finish in time" for something it explicitly refused.
                 throw error
             } catch {
-                guard Self.isTransient(error, policy: api.retryPolicy) else { throw error }
+                guard !Self.isPollFatal(error) else { throw error }
                 lastError = error
                 failedPolls += 1
+                guard failedPolls < Self.maxConsecutivePollFailures else { throw error }
             }
             try await Task.sleep(for: pollDelay(failedPolls: failedPolls))
         }
@@ -1223,6 +1236,24 @@ final class AppStoreConnectScreenshotSyncService {
     /// per screenshot into thirty.
     private func pollDelay(failedPolls: Int) -> Duration {
         failedPolls == 0 ? pollInterval : min(pollInterval * pow(2.0, Double(failedPolls)), pollInterval * 8)
+    }
+
+    /// Enough to ride out a blip (~15s with the backoff above) and not enough to stall. Both poll
+    /// loops run 30 iterations, so tolerating a *sustained* refusal would sit for ~4 minutes
+    /// behind a progress label that never moves — and a throttle that outlasts 15s is not going
+    /// to clear inside this loop anyway. Failing hands the user the resumable path instead.
+    private static let maxConsecutivePollFailures = 4
+
+    /// A poll asks about state that is still settling, so almost anything is worth asking again —
+    /// including the 404 or 409 a just-written relationship can answer with while App Store
+    /// Connect catches up. Only a failure that will never clear ends the loop.
+    private static func isPollFatal(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        switch error as? AppStoreConnectAPIError {
+        case .httpError(let status, _): return status == 401 || status == 403
+        case .transport: return false
+        case .decodingFailed, .invalidURL, .none: return true
+        }
     }
 
     private func verify(
@@ -1247,9 +1278,10 @@ final class AppStoreConnectScreenshotSyncService {
                 lastError = nil
                 failedPolls = 0
             } catch {
-                guard Self.isTransient(error, policy: api.retryPolicy) else { throw error }
+                guard !Self.isPollFatal(error) else { throw error }
                 lastError = error
                 failedPolls += 1
+                guard failedPolls < Self.maxConsecutivePollFailures else { throw error }
             }
 
             if attempt < 29 {

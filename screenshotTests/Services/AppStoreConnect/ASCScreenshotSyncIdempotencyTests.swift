@@ -28,6 +28,10 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
     var failCommitTimes = 0
     /// Status the knobs above throw. 429 is the case under test; 401 pins the non-transient path.
     var failureStatus = 429
+    /// Refuses the adopt lookup that follows a refused create, so a test can prove the retry
+    /// does not blindly post a second set when it cannot tell whether the first one landed.
+    var refuseAdoptLookup = false
+    private var failListSetsTimes = 0
 
     /// Preview downloads, which only the review screen needs. Asserted to be zero on the direct
     /// upload path.
@@ -67,6 +71,10 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
 
     func listScreenshotSets(localizationId: String, limit: Int) async throws -> [ASCAppScreenshotSet] {
         listSetsCount += 1
+        if failListSetsTimes > 0 {
+            failListSetsTimes -= 1
+            throw AppStoreConnectAPIError.httpError(status: failureStatus, message: "list refused")
+        }
         return try setLocalization
             .filter { $0.value == localizationId }
             .sorted { $0.key < $1.key }
@@ -89,6 +97,7 @@ private final class FakeScreenshotSyncAPI: ASCScreenshotSyncAPI {
         // POST the origin already processed, which is what the adopt path exists to survive.
         if failCreateSetTimes > 0 {
             failCreateSetTimes -= 1
+            if refuseAdoptLookup { failListSetsTimes = 1 }
             throw AppStoreConnectAPIError.httpError(status: failureStatus, message: "create refused")
         }
         return try Self.decode(#"{"id":"\#(id)","attributes":{"screenshotDisplayType":"\#(displayType)"}}"#)
@@ -437,6 +446,64 @@ struct ASCScreenshotSyncIdempotencyTests {
         #expect(api.createSetCount == 1, "the retry adopts rather than posting again")
         let sets = try await api.listScreenshotSets(localizationId: "loc-1", limit: 50)
         #expect(sets.count == 1, "exactly one set for the display type")
+    }
+
+    /// The adopt lookup is the entire basis for repeating a POST. Under the rate limiting this
+    /// guards against, the lookup is refused too — and "no set found" then means "we couldn't
+    /// ask", not "nothing was created". Posting again there is what leaves a duplicate behind.
+    @Test func aRefusedAdoptLookupDoesNotPostASecondSet() async throws {
+        let api = FakeScreenshotSyncAPI()
+        api.retryPolicy = Self.retryingPolicy
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+        api.failCreateSetTimes = 1
+        api.refuseAdoptLookup = true
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(!result.succeeded)
+        #expect(api.createSetCount == 1, "an unanswerable lookup must not be read as 'not created'")
+        api.refuseAdoptLookup = false
+        let sets = try await api.listScreenshotSets(localizationId: "loc-1", limit: 50)
+        #expect(sets.count == 1, "no duplicate set for the display type")
+    }
+
+    /// A throttle that outlasts the backoff must hand back the resumable failure, not sit through
+    /// all 30 iterations behind a progress label that never moves.
+    @Test func aSustainedRateLimitBailsOutOfThePollLoop() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+        api.failDeliveryPollTimes = 99
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(!result.succeeded)
+        #expect(api.deliveryPollFailures == 4, "bails on consecutive failures rather than polling 30 times")
+    }
+
+    /// App Store Connect can 404 a resource written moments earlier while it catches up, which is
+    /// the case a poll loop exists for — it must not be mistaken for a verdict.
+    @Test func anEventuallyConsistentNotFoundIsPolledAgain() async throws {
+        let api = FakeScreenshotSyncAPI()
+        let service = AppStoreConnectScreenshotSyncService(
+            api: api, isDemoMode: { false }, pollInterval: .milliseconds(1)
+        )
+        let (plan, stamp) = try await build(service)
+        let setId = try #require(plan.sets.first?.id)
+        api.failureStatus = 404
+        api.failDeliveryPollTimes = 2
+
+        let result = try await service.apply(planId: plan.id, setIds: [setId], document: stamp)
+
+        #expect(result.succeeded)
+        #expect(api.deliveryPollFailures == 2)
     }
 
     /// A create failure Apple will never accept must surface immediately, not burn the budget.
