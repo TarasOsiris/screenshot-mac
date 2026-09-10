@@ -60,6 +60,11 @@ struct TextImageRenderTests {
     /// `bitmapImageRepForCachingDisplay` + `cacheDisplay`, which silently picked the main screen's
     /// backing scale and the Generic RGB space; the explicit `NSBitmapImageRep` that replaced it
     /// has to reproduce both exactly, or every exported glyph moves.
+    ///
+    /// The scale to compare at is read back off the reference rep rather than assumed to be
+    /// `defaultTextRenderScale`: `bitmapImageRepForCachingDisplay` still follows the host display,
+    /// so it hands back 1x on a Mac driving a non-Retina monitor. What must match across the two
+    /// rasterizers is the pixels and the colour space, not the machine the suite runs on.
     @Test func defaultScaleMatchesTheImplicitCachingDisplayPathPixelForPixel() throws {
         let view = TextLayoutNSView(frame: NSRect(origin: .zero, size: Self.size))
         view.configure(
@@ -71,7 +76,8 @@ struct TextImageRenderTests {
         let reference = try #require(view.bitmapImageRepForCachingDisplay(in: view.bounds))
         view.cacheDisplay(in: view.bounds, to: reference)
 
-        let rendered = try #require(render(text: "Hello Parity", color: .systemBlue))
+        let referenceScale = CGFloat(reference.pixelsWide) / Self.size.width
+        let rendered = try #require(render(scale: referenceScale, text: "Hello Parity", color: .systemBlue))
         let rep = try #require(rendered.representations.first as? NSBitmapImageRep)
 
         #expect(rep.pixelsWide == reference.pixelsWide)
@@ -89,6 +95,16 @@ struct TextImageRenderTests {
             }
         }
         #expect(maxDelta == 0)
+    }
+
+    /// The default factor is pinned, not read from the display, so a Mac on a 1x external monitor
+    /// exports the same bytes as one on a Retina panel. This is the half of the parity guarantee
+    /// the comparison above cannot make, because its reference moves with the host.
+    @Test func defaultScaleRasterizesAtTwoTimesOnAnyDisplay() throws {
+        let rendered = try #require(render(text: "Pinned"))
+        let rep = try #require(rendered.representations.first as? NSBitmapImageRep)
+        #expect(rep.pixelsWide == Int(Self.size.width) * 2)
+        #expect(rep.pixelsHigh == Int(Self.size.height) * 2)
     }
 
     @Test func supersampledRenderKeepsPointSizeAndStillDrawsGlyphs() throws {

@@ -15,9 +15,10 @@ extension TextLayoutStyle {
 
     #if os(macOS)
     /// What the implicit path produced before the factor became explicit: `bitmapImageRepForCachingDisplay`
-    /// hands back a rep at the main screen's backing scale, which is 2× on every Mac this ships to,
-    /// while iOS's renderer was pinned to `format.scale = 1`. Preserved per-platform so export bytes
-    /// don't move underneath a change that is only meant to make the editor cheaper.
+    /// hands back a rep at the main screen's backing scale, while iOS's renderer was pinned to
+    /// `format.scale = 1`. Preserved per-platform so export bytes don't move underneath a change
+    /// that is only meant to make the editor cheaper — and pinned at 2 rather than read from the
+    /// display, so a Mac driving a non-Retina monitor doesn't export text at half the pixels.
     static let defaultTextRenderScale: CGFloat = 2
     #else
     static let defaultTextRenderScale: CGFloat = 1
