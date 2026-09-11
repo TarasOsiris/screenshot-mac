@@ -251,6 +251,8 @@ extension AppState {
         missingImageFileNames = []
         pendingDownloadImageFileNames = []
         reportedMissingImageFileNames = []
+        missingResourceVerdictTask?.cancel()
+        missingResourceVerdictTask = nil
     }
 
     func beginProjectOpening(for id: UUID) {
