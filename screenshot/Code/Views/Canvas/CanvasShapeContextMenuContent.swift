@@ -9,6 +9,7 @@ struct CanvasShapeContextMenuContent: View {
     var onClearImage: (() -> Void)?
     var onRemoveBackground: (() -> Void)?
     var onCaptureSimulator: (() -> Void)?
+    var onRevealImage: (() -> Void)?
     var onMatchDeviceSizes: (() -> Void)?
     var onMatchSelectedDeviceSizes: (() -> Void)?
     var onCenterShape: ((CenterAxis) -> Void)?
@@ -56,6 +57,10 @@ struct CanvasShapeContextMenuContent: View {
                         onClearImage?()
                     }
                     .disabled(shape.displayImageFileName == nil)
+                    if let onRevealImage {
+                        Divider()
+                        Button("Show in Finder", systemImage: "folder", action: onRevealImage)
+                    }
                     #if DEBUG
                     if let onCaptureSimulator {
                         Divider()
@@ -85,6 +90,9 @@ struct CanvasShapeContextMenuContent: View {
                 if let onRemoveBackground {
                     Button("Remove Background", systemImage: "wand.and.stars", action: onRemoveBackground)
                         .disabled(shape.displayImageFileName == nil)
+                }
+                if let onRevealImage {
+                    Button("Show in Finder", systemImage: "folder", action: onRevealImage)
                 }
                 Divider()
             }

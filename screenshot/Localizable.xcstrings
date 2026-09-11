@@ -96045,6 +96045,58 @@
           }
         }
       }
+    },
+    "**Show in Finder** (right-click an image or a device that has a screenshot in it) reveals the picture file the project is using." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Im Finder anzeigen** (Rechtsklick auf ein Bild oder ein Gerät, das einen Screenshot enthält) zeigt die Bilddatei an, die das Projekt verwendet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Mostrar en Finder** (haga clic con el botón derecho en una imagen o en un dispositivo que tenga una captura de pantalla) revela el archivo de imagen que está utilizando el proyecto."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**نمایش در Finder** (روی تصویر یا دستگاهی که دارای اسکرین شات است کلیک راست کنید) فایل تصویری را که پروژه از آن استفاده می کند نشان می دهد."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Afficher dans le Finder** (cliquez avec le bouton droit sur une image ou sur un appareil contenant une capture d'écran) révèle le fichier image utilisé par le projet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Finder で表示** (画像またはスクリーンショットが含まれるデバイスを右クリック) すると、プロジェクトで使用されている画像ファイルが表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Finder에 표시**(스크린샷이 있는 이미지나 장치를 마우스 오른쪽 버튼으로 클릭) 프로젝트에서 사용 중인 그림 파일이 표시됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Mostrar no Finder** (clique com o botão direito em uma imagem ou dispositivo que contenha uma captura de tela) revela o arquivo de imagem que o projeto está usando."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**在 Finder 中显示**（右键单击图像或包含屏幕截图的设备）会显示项目正在使用的图片文件。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

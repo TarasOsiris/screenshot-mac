@@ -211,6 +211,7 @@ extension HelpSection {
                 .bullet("Fill modes: **Fill** (crop to fit), **Fit** (letterbox), **Stretch** (distort), **Tile** (repeat). Tile mode unlocks spacing, offset, and scale controls."),
                 .bullet("**Remove Background** (right-click) cuts the subject out of the image on your Mac — nothing is uploaded anywhere."),
                 .bullet("**Restore Original Aspect Ratio** (right-click) undoes stretching by fitting the height to the current width."),
+                .bullet("**Show in Finder** (right-click an image or a device that has a screenshot in it) reveals the picture file the project is using."),
                 .bullet("Add an outline, corner radius, or rotation from the properties bar."),
                 .heading("Device"),
                 .bullet("Device shapes render the screenshot inside a real device frame. Select one, then pick a category and model in the properties bar."),

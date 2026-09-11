@@ -47,6 +47,7 @@ extension EditorRowView {
                 }
             } : nil,
             onCaptureSimulator: simulatorCaptureAction(for: shape),
+            onRevealImage: revealImageAction(for: shape),
             onMatchDeviceSizes: shape.type == .device ? {
                 let matchingIds = Set(row.activeShapes.filter { other in
                     other.id != shape.id &&

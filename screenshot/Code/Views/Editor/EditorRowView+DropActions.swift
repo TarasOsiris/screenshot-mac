@@ -19,6 +19,18 @@ extension EditorRowView {
         #endif
     }
 
+    func revealImageAction(for shape: CanvasShapeModel) -> (() -> Void)? {
+        #if os(macOS)
+        guard shape.type == .device || shape.type == .image,
+              let fileName = shape.displayImageFileName,
+              let projectId = state.activeProjectId else { return nil }
+        let url = PersistenceService.resourcesDir(projectId).appendingPathComponent(fileName)
+        return { PlatformReveal.inFileViewer([url]) }
+        #else
+        return nil
+        #endif
+    }
+
     func handleCanvasDrop(_ providers: [NSItemProvider], at displayLocation: CGPoint, displayScale ds: CGFloat) -> Bool {
         guard !providers.isEmpty else { return false }
 
