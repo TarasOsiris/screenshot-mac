@@ -36,6 +36,8 @@ def _reserved(locale):
 # Proven English dev vocabulary — searched in every storefront we swept.
 # `google` was here until the 2026-09-01 2.3.10 rejection took every Google Play
 # reference out of the listing; a keyword field is metadata Apple reads too.
+# `android` left every locale's tail the same way on 2026-09-11, when the rejection
+# of 4.14 (iOS) extended 2.3.10 to Android itself — see deandroid.py.
 CORE = ["store", "app", "generator", "device", "frames", "connect",
         "preview", "template", "design"]
 
@@ -44,30 +46,30 @@ CORE = ["store", "app", "generator", "device", "frames", "connect",
 # those tokens, and CORE's "store,app" would otherwise crowd them out.
 # Every locale whose research found no local-language demand carries this verbatim;
 # see RESEARCH.md Finding 5 and the note below.
-EN_TAIL = ["localization", "aso", "editor", "android", "indie"]
+EN_TAIL = ["localization", "aso", "editor", "indie"]
 
 EXTRA = {
     "en-US":   EN_TAIL,
     "en-GB":   EN_TAIL,
     "en-AU":   EN_TAIL,
     "en-CA":   EN_TAIL,
-    "de-DE":   ["localization", "aso", "editor", "android", "vorlage", "entwickler"],
-    "fr-FR":   ["localization", "aso", "editor", "android", "maquette", "capture"],
+    "de-DE":   ["localization", "aso", "editor", "vorlage", "entwickler"],
+    "fr-FR":   ["localization", "aso", "editor", "maquette", "capture"],
     "fr-CA":   EN_TAIL,
-    "es-ES":   ["localization", "aso", "editor", "android", "maqueta", "captura", "plantilla"],
+    "es-ES":   ["localization", "aso", "editor", "maqueta", "captura", "plantilla"],
     "es-MX":   EN_TAIL,
-    "it":      ["localization", "aso", "editor", "android", "schermate", "anteprima"],
-    "nl-NL":   ["localization", "aso", "editor", "android", "sjabloon"],
-    "sv":      ["localization", "aso", "editor", "android", "mall", "skärmdump"],
-    "da":      ["localization", "aso", "editor", "android", "skabelon"],
-    "no":      ["localization", "aso", "editor", "android", "mal", "skjermbilde"],
-    "fi":      ["localization", "aso", "editor", "android", "malli"],
-    "pt-PT":   ["localization", "aso", "editor", "android", "captura", "modelo"],
-    "pt-BR":   ["localization", "aso", "editor", "android", "captura", "tela", "modelo"],
-    "pl":      ["localization", "aso", "editor", "android", "zrzut", "ekranu", "szablon"],
-    "tr":      ["localization", "aso", "editor", "android", "ekran", "şablon"],
-    "id":      ["localization", "aso", "editor", "android", "tangkapan", "layar", "aplikasi"],
-    "vi":      ["localization", "aso", "editor", "android", "ảnh", "màn hình", "ứng dụng"],
+    "it":      ["localization", "aso", "editor", "schermate", "anteprima"],
+    "nl-NL":   ["localization", "aso", "editor", "sjabloon"],
+    "sv":      ["localization", "aso", "editor", "mall", "skärmdump"],
+    "da":      ["localization", "aso", "editor", "skabelon"],
+    "no":      ["localization", "aso", "editor", "mal", "skjermbilde"],
+    "fi":      ["localization", "aso", "editor", "malli"],
+    "pt-PT":   ["localization", "aso", "editor", "captura", "modelo"],
+    "pt-BR":   ["localization", "aso", "editor", "captura", "tela", "modelo"],
+    "pl":      ["localization", "aso", "editor", "zrzut", "ekranu", "szablon"],
+    "tr":      ["localization", "aso", "editor", "ekran", "şablon"],
+    "id":      ["localization", "aso", "editor", "tangkapan", "layar", "aplikasi"],
+    "vi":      ["localization", "aso", "editor", "ảnh", "màn hình", "ứng dụng"],
 
     # Added 2026-09-09. All twelve carry the en-US tail verbatim: RESEARCH.md
     # Finding 5 swept every one of their storefronts and not a single
@@ -83,9 +85,9 @@ EXTRA = {
     "el":     EN_TAIL,
     "ca":     EN_TAIL,
     "sl-SI":  EN_TAIL,
-    "ru":      ["мокап", "генератор", "скриншот", "localization", "aso", "editor", "android"],
-    "uk":      ["мокап", "скриншот", "знімок", "localization", "aso", "editor", "android"],
-    "th":      ["ภาพหน้าจอ", "แอป", "localization", "aso", "editor", "android"],
+    "ru":      ["мокап", "генератор", "скриншот", "localization", "aso", "editor"],
+    "uk":      ["мокап", "скриншот", "знімок", "localization", "aso", "editor"],
+    "th":      ["ภาพหน้าจอ", "แอป", "localization", "aso", "editor"],
     # added 2026-09-10 — India, Pakistan, Bangladesh, Malaysia. English for the
     # same reason as the `el` block above: these storefronts search developer
     # tooling in English, so a local-script keyword field would spend the whole
@@ -100,12 +102,12 @@ EXTRA = {
     "kn-IN":  EN_TAIL,
     "ml-IN":  EN_TAIL,
     "ur-PK":  EN_TAIL,
-    "ja":      ["モックアップ", "ストア", "画像", "作成", "素材", "localization", "aso", "editor", "android"],
-    "ko":      ["스크린샷", "앱스토어", "목업", "제작", "localization", "aso", "editor", "android"],
-    "zh-Hans": ["应用截图", "上架", "生成器", "制作", "工具", "localization", "aso", "editor", "android"],
-    "zh-Hant": ["應用截圖", "上架", "製作", "工具", "產生器", "localization", "aso", "editor", "android"],
-    "ar-SA":   ["لقطة", "شاشة", "تطبيق", "متجر", "localization", "aso", "editor", "android"],
-    "he":      ["צילום", "מסך", "אפליקציה", "localization", "aso", "editor", "android"],
+    "ja":      ["モックアップ", "ストア", "画像", "作成", "素材", "localization", "aso", "editor"],
+    "ko":      ["스크린샷", "앱스토어", "목업", "제작", "localization", "aso", "editor"],
+    "zh-Hans": ["应用截图", "上架", "生成器", "制作", "工具", "localization", "aso", "editor"],
+    "zh-Hant": ["應用截圖", "上架", "製作", "工具", "產生器", "localization", "aso", "editor"],
+    "ar-SA":   ["لقطة", "شاشة", "تطبيق", "متجر", "localization", "aso", "editor"],
+    "he":      ["צילום", "מסך", "אפליקציה", "localization", "aso", "editor"],
 }
 
 # Packed last: real queries, but weaker than anything above. They exist to spend

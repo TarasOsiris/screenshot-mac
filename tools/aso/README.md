@@ -10,6 +10,7 @@ per locale, per platform. See `RESEARCH.md` for why these values.
 | `openings.py` | replacement first paragraph of the description |
 | `descriptions.py` | the added locales' descriptions, macOS and iOS, plus the automated review |
 | `degoogle.py` | the per-locale deletions that took Google Play out of all 52 live descriptions |
+| `deandroid.py` | the per-locale deletions that took Android and Pixel out of all 48 iOS descriptions |
 | `apply.py` | push to App Store Connect, verified by read-back |
 | `finish.py` | subtitle everywhere, then fill any locale left empty or stale on an editable version |
 
@@ -29,6 +30,7 @@ python3 tools/aso/apply.py version <id> MAC_OS     # keywords + promo text
 python3 tools/aso/descriptions.py                  # review every stored description
 python3 tools/aso/apply.py descriptions <id> MAC_OS # write them (editable version only)
 python3 tools/aso/degoogle.py <id> --dry-run       # one-shot: strip Google Play from a version
+python3 tools/aso/deandroid.py <id> --dry-run      # one-shot: strip Android/Pixel from a version
 python3 tools/aso/finish.py --dry-run              # only if a locale is ever added again
 ```
 
@@ -57,7 +59,7 @@ from the live en-US source, that no macOS-only feature (MCP, Finder) appears in 
 listing, that vi/tr diacritics and the Thai/Cyrillic/Han scripts survived the round trip,
 that Ukrainian carries no Russian-only letter, that no locale mentions price or
 discounts, and — since the second 2026-09-01 rejection — that no locale names Google Play
-in any script. The 2026-09-09 batch added two guards for languages that sit next to each
+in any script, nor (since the 2026-09-11 rejection) Android or Pixel. The 2026-09-09 batch added two guards for languages that sit next to each
 other: `FOREIGN_CHARS` catches Slovak letters in Czech (and Czech in Slovak, Croatian in
 Slovenian, Castilian `ñ` in Catalan), and `FOREIGN_WORDS` catches Castilian vocabulary in
 es-MX and France-French `maquette` in fr-CA. `apply.py descriptions` re-runs the whole
@@ -130,8 +132,25 @@ rather than promotes it — did not survive contact with review. Every Google Pl
 mention is now gone from all 52 descriptions (26 locales × 2 platforms) and from
 the keyword field, which had been spending 7 of its 100 characters on `google`.
 `degoogle.py` is the record of exactly which words left. `Android` and `Pixel`
-stay: they name device frames the app really draws, which is 2.3.10's own
-carve-out, and Apple named only Google Play.
+stayed at the time: they name device frames the app really draws, which looked
+like 2.3.10's own carve-out, and Apple had named only Google Play.
+
+**That carve-out does not exist.** 4.14 (iOS) was rejected on 2026-09-11 under
+2.3.10 again — "remove Android references" — so the rule to work from is that
+*any* third-party platform word is a competitor reference, whether or not the app
+implements the thing. `Android` and `Pixel` are now gone from all 48 iOS
+descriptions and from the keyword field, which had been spending 8 of its 100
+characters on `android`; `deandroid.py` is the record. They survive only in
+`DeviceCategory` and the device-frame catalog, which is code, not metadata.
+
+The iOS half of that notice — "and What's New text" — was boilerplate: the 4.14
+release notes are one English text in all 48 locales and name no platform.
+
+The same words are still live on the **macOS** train, which was `IN_REVIEW` when
+this ran and therefore not editable. `descriptions.py` fails macOS `en-GB`/`en-AU`
+for exactly that reason (they derive from the live macOS `en-US`), and that
+failure is the reminder: run `deandroid.py` against the macOS version the moment
+it goes editable.
 
 `metadata.check()` encodes that line and every writer calls it: no Apple mark
 and no competitor platform in any subtitle (Latin script or local), and no bare

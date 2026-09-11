@@ -50,7 +50,7 @@ SPELLING_PASS = {"en-GB", "en-AU"}
 
 # Must survive byte-identical in every locale.
 ATOMS = ["Screenshot Bro", "App Store", "App Store Connect",
-         "iPhone", "iPad", "Mac", "Pixel", "Android", "PNG", "JPEG", "SVG",
+         "iPhone", "iPad", "Mac", "PNG", "JPEG", "SVG",
          "iCloud", "ZIP",
          "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"]
 ATOMS_MAC_ONLY = ["MCP", "Model Context Protocol", "Claude Code",
@@ -58,11 +58,18 @@ ATOMS_MAC_ONLY = ["MCP", "Model Context Protocol", "Claude Code",
 BANNED_IOS = ["MCP", "Model Context Protocol", "Finder"]
 
 # Price talk in the description of a paywalled app is a rejection class.
-# 2.3.10 — the competing store. Apple rejected 4.9 (iOS) on 2026-09-01 for naming
+# 2.3.10 — the competing platform. Apple rejected 4.9 (iOS) on 2026-09-01 for naming
 # Google Play in the description, so a reintroduction has to fail the review, not
 # the store. Latin and local script: a translated description is still metadata.
+# `android` and `pixel` joined the list after the 2026-09-11 rejection of 4.14 (iOS),
+# which killed the carve-out theory they had been kept under — Apple treats the word
+# as a competitor reference even when the app really draws that device frame. Both
+# were `ATOMS` until then; see deandroid.py. "pixel" is safe to match bare: no locale
+# writes the unit, only the phone.
 BANNED_PLATFORM = ["google play", "googleplay", "google", "play store",
-                   "гугл", "плей", "구글", "グーグル", "谷歌", "جوجل", "גוגל"]
+                   "гугл", "плей", "구글", "グーグル", "谷歌", "جوجل", "גוגל",
+                   "android", "pixel", "андроид", "안드로이드", "アンドロイド",
+                   "安卓", "أندرويد", "אנדרואיד", "แอนดรอยด์"]
 
 BANNED_ANY = ["free", "gratis", "grátis", "discount", "бесплатн", "скидк",
               "безкоштов", "знижк", "darmow", "zniżk", "ücretsiz", "indirim",
@@ -127,7 +134,7 @@ O Screenshot Bro é um gerador de capturas de tela para a App Store. Crie um con
 
 Ao contrário das ferramentas de design genéricas, o Screenshot Bro entende linhas específicas por dispositivo, localização, envios para o App Store Connect, exportações em lote, projetos reutilizáveis e automação local com assistentes de IA pelo Model Context Protocol.
 
-Monte conjuntos completos de capturas para iPhone, iPad, Mac, celulares Android, tablets Android e layouts do Pixel. Comece por um modelo ou crie o seu próprio sistema de layout. Solte as capturas, adicione molduras de dispositivos ou composições sem moldura, escreva títulos e legendas, estilize texto rico com fontes personalizadas e ajuste cada detalhe no canvas.
+Monte conjuntos completos de capturas para iPhone, iPad e Mac. Comece por um modelo ou crie o seu próprio sistema de layout. Solte as capturas, adicione molduras de dispositivos ou composições sem moldura, escreva títulos e legendas, estilize texto rico com fontes personalizadas e ajuste cada detalhe no canvas.
 
 O Screenshot Bro pode hospedar um servidor MCP local no seu Mac. Conecte um assistente compatível com MCP, como Claude Code, Claude Desktop, Cursor ou outro cliente, e deixe que ele crie projetos, edite linhas, organize formas, importe capturas, traduza textos, renderize prévias do canvas e exporte as imagens finais. O MCP é opcional, fica desativado por padrão, aceita apenas conexões locais e é protegido por um token de acesso.
 
@@ -139,7 +146,7 @@ Principais recursos:
 - Use modelos prontos ou layouts personalizados para lançamentos recorrentes
 - Desenhe linhas com várias capturas, layouts comparativos e campanhas completas
 - Importe capturas em lote para as linhas e troque imagens rapidamente
-- Adicione molduras de iPhone, iPad, Mac, Android, Pixel e layouts abstratos
+- Adicione molduras de iPhone, iPad, Mac e layouts abstratos
 - Trabalhe com texto, formas, imagens, gradientes, fundos em mosaico e gráficos SVG
 - Edite texto rico com fontes personalizadas, variantes de fonte, espaçamento, alinhamento e tamanho
 - Ajuste posição, encaixe, camadas, recorte e rotação direto no canvas
@@ -163,7 +170,7 @@ O Screenshot Bro é um criador e editor de capturas de tela feito sob medida par
 
 Ao contrário das ferramentas de design genéricas, o Screenshot Bro entende linhas específicas por dispositivo, localização, envios para o App Store Connect, exportações em lote e projetos reutilizáveis.
 
-Monte conjuntos completos de capturas para iPhone, iPad, Mac, celulares Android, tablets Android e layouts do Pixel. Comece por um modelo ou crie o seu próprio sistema de layout. Solte as capturas, adicione molduras de dispositivos ou composições sem moldura, escreva títulos e legendas, estilize texto rico com fontes personalizadas e ajuste cada detalhe no canvas.
+Monte conjuntos completos de capturas para iPhone, iPad e Mac. Comece por um modelo ou crie o seu próprio sistema de layout. Solte as capturas, adicione molduras de dispositivos ou composições sem moldura, escreva títulos e legendas, estilize texto rico com fontes personalizadas e ajuste cada detalhe no canvas.
 
 Mantenha variações de lançamento, substituições por idioma, planos de linhas por loja e materiais prontos para exportar em um único projeto — para a App Store, sites, redes sociais e campanhas de lançamento.
 
@@ -173,7 +180,7 @@ Principais recursos:
 - Use modelos prontos ou layouts personalizados para lançamentos recorrentes
 - Desenhe linhas com várias capturas, layouts comparativos e campanhas completas
 - Importe capturas em lote para as linhas e troque imagens rapidamente
-- Adicione molduras de iPhone, iPad, Mac, Android, Pixel e layouts abstratos
+- Adicione molduras de iPhone, iPad, Mac e layouts abstratos
 - Trabalhe com texto, formas, imagens, gradientes, fundos em mosaico e gráficos SVG
 - Edite texto rico com fontes personalizadas, variantes de fonte, espaçamento, alinhamento e tamanho
 - Ajuste posição, encaixe, camadas, recorte e rotação direto no canvas
@@ -200,7 +207,7 @@ Screenshot Bro — генератор скриншотов приложений 
 
 В отличие от универсальных графических редакторов, Screenshot Bro понимает ряды под конкретные устройства, локализацию, загрузку в App Store Connect, пакетный экспорт, переиспользуемые проекты и локальную автоматизацию через ИИ-ассистента по Model Context Protocol.
 
-Собирайте полные наборы скриншотов для iPhone, iPad, Mac, Android-смартфонов, Android-планшетов и раскладок Pixel. Начните с шаблона или создайте собственную систему макетов. Добавляйте скриншоты, рамки устройств или композиции без рамок, пишите заголовки и подписи, оформляйте текст своими шрифтами и доводите каждую деталь на холсте.
+Собирайте полные наборы скриншотов для iPhone, iPad и Mac. Начните с шаблона или создайте собственную систему макетов. Добавляйте скриншоты, рамки устройств или композиции без рамок, пишите заголовки и подписи, оформляйте текст своими шрифтами и доводите каждую деталь на холсте.
 
 Screenshot Bro умеет поднимать локальный MCP-сервер на вашем Mac. Подключите совместимого с MCP ассистента — Claude Code, Claude Desktop, Cursor или любой другой клиент — и он создаст проекты, отредактирует ряды, расставит фигуры, импортирует скриншоты, переведёт текст, отрисует превью холста и экспортирует финальные изображения. MCP включается по желанию, по умолчанию выключен, работает только на локальном интерфейсе и защищён токеном доступа.
 
@@ -212,7 +219,7 @@ Screenshot Bro умеет поднимать локальный MCP-сервер
 - Используйте встроенные шаблоны или свои макеты для регулярных релизов
 - Проектируйте ряды из нескольких кадров, сравнительные макеты и целые кампании
 - Импортируйте скриншоты в ряды пакетом и быстро заменяйте изображения
-- Добавляйте рамки устройств для iPhone, iPad, Mac, Android, Pixel и абстрактные макеты
+- Добавляйте рамки устройств для iPhone, iPad, Mac и абстрактные макеты
 - Работайте с текстом, фигурами, изображениями, градиентами, плиточными фонами и SVG-графикой
 - Оформляйте текст своими шрифтами, начертаниями, интервалами, выравниванием и размерами
 - Меняйте положение, привязку, порядок слоёв, обрезку и поворот прямо на холсте
@@ -236,7 +243,7 @@ Screenshot Bro — редактор и конструктор скриншото
 
 В отличие от универсальных графических редакторов, Screenshot Bro понимает ряды под конкретные устройства, локализацию, загрузку в App Store Connect, пакетный экспорт и переиспользуемые проекты.
 
-Собирайте полные наборы скриншотов для iPhone, iPad, Mac, Android-смартфонов, Android-планшетов и раскладок Pixel. Начните с шаблона или создайте собственную систему макетов. Добавляйте скриншоты, рамки устройств или композиции без рамок, пишите заголовки и подписи, оформляйте текст своими шрифтами и доводите каждую деталь на холсте.
+Собирайте полные наборы скриншотов для iPhone, iPad и Mac. Начните с шаблона или создайте собственную систему макетов. Добавляйте скриншоты, рамки устройств или композиции без рамок, пишите заголовки и подписи, оформляйте текст своими шрифтами и доводите каждую деталь на холсте.
 
 Держите варианты релизов, переопределения для отдельных языков, планы рядов под каждый магазин и готовые к экспорту материалы в одном проекте — для App Store, сайтов, соцсетей и запусков.
 
@@ -246,7 +253,7 @@ Screenshot Bro — редактор и конструктор скриншото
 - Используйте встроенные шаблоны или свои макеты для регулярных релизов
 - Проектируйте ряды из нескольких кадров, сравнительные макеты и целые кампании
 - Импортируйте скриншоты в ряды пакетом и быстро заменяйте изображения
-- Добавляйте рамки устройств для iPhone, iPad, Mac, Android, Pixel и абстрактные макеты
+- Добавляйте рамки устройств для iPhone, iPad, Mac и абстрактные макеты
 - Работайте с текстом, фигурами, изображениями, градиентами, плиточными фонами и SVG-графикой
 - Оформляйте текст своими шрифтами, начертаниями, интервалами, выравниванием и размерами
 - Меняйте положение, привязку, порядок слоёв, обрезку и поворот прямо на холсте
@@ -273,7 +280,7 @@ Screenshot Bro — застосунок для створення знімків
 
 На відміну від універсальних графічних редакторів, Screenshot Bro розуміє рядки під конкретні пристрої, локалізацію, завантаження в App Store Connect, пакетний експорт, проєкти для повторного використання та локальну автоматизацію ШІ-асистентом через Model Context Protocol.
 
-Складайте повні набори знімків для iPhone, iPad, Mac, смартфонів Android, планшетів Android і розкладок Pixel. Почніть із шаблона або створіть власну систему макетів. Додавайте знімки, рамки пристроїв чи композиції без рамок, пишіть заголовки та підписи, оформлюйте текст власними шрифтами й доводьте кожну деталь на полотні.
+Складайте повні набори знімків для iPhone, iPad і Mac. Почніть із шаблона або створіть власну систему макетів. Додавайте знімки, рамки пристроїв чи композиції без рамок, пишіть заголовки та підписи, оформлюйте текст власними шрифтами й доводьте кожну деталь на полотні.
 
 Screenshot Bro може підняти локальний сервер MCP на вашому Mac. Підключіть сумісного з MCP асистента — Claude Code, Claude Desktop, Cursor або інший клієнт — і він створить проєкти, відредагує рядки, розставить фігури, імпортує знімки, перекладе текст, покаже попередній вигляд полотна й експортує готові зображення. MCP вмикається за бажанням, типово вимкнений, працює лише на локальному інтерфейсі та захищений токеном доступу.
 
@@ -285,7 +292,7 @@ Screenshot Bro може підняти локальний сервер MCP на 
 - Використовуйте вбудовані шаблони або власні макети для регулярних релізів
 - Проєктуйте рядки з кількох кадрів, порівняльні макети й цілі кампанії
 - Імпортуйте знімки в рядки пакетом і швидко замінюйте зображення
-- Додавайте рамки пристроїв для iPhone, iPad, Mac, Android, Pixel і абстрактні макети
+- Додавайте рамки пристроїв для iPhone, iPad, Mac і абстрактні макети
 - Працюйте з текстом, фігурами, зображеннями, градієнтами, мозаїчними тлами та графікою SVG
 - Оформлюйте текст власними шрифтами, їхніми варіантами, інтервалами, вирівнюванням і розмірами
 - Змінюйте розташування, прив’язку, порядок шарів, обрізання та поворот просто на полотні
@@ -309,7 +316,7 @@ Screenshot Bro — редактор і конструктор знімків е�
 
 На відміну від універсальних графічних редакторів, Screenshot Bro розуміє рядки під конкретні пристрої, локалізацію, завантаження в App Store Connect, пакетний експорт і проєкти для повторного використання.
 
-Складайте повні набори знімків для iPhone, iPad, Mac, смартфонів Android, планшетів Android і розкладок Pixel. Почніть із шаблона або створіть власну систему макетів. Додавайте знімки, рамки пристроїв чи композиції без рамок, пишіть заголовки та підписи, оформлюйте текст власними шрифтами й доводьте кожну деталь на полотні.
+Складайте повні набори знімків для iPhone, iPad і Mac. Почніть із шаблона або створіть власну систему макетів. Додавайте знімки, рамки пристроїв чи композиції без рамок, пишіть заголовки та підписи, оформлюйте текст власними шрифтами й доводьте кожну деталь на полотні.
 
 Тримайте варіанти релізів, окремі тексти для кожної мови, плани рядків під кожен магазин і готові до експорту матеріали в одному проєкті — для App Store, сайтів, соцмереж і запусків.
 
@@ -319,7 +326,7 @@ Screenshot Bro — редактор і конструктор знімків е�
 - Використовуйте вбудовані шаблони або власні макети для регулярних релізів
 - Проєктуйте рядки з кількох кадрів, порівняльні макети й цілі кампанії
 - Імпортуйте знімки в рядки пакетом і швидко замінюйте зображення
-- Додавайте рамки пристроїв для iPhone, iPad, Mac, Android, Pixel і абстрактні макети
+- Додавайте рамки пристроїв для iPhone, iPad, Mac і абстрактні макети
 - Працюйте з текстом, фігурами, зображеннями, градієнтами, мозаїчними тлами та графікою SVG
 - Оформлюйте текст власними шрифтами, їхніми варіантами, інтервалами, вирівнюванням і розмірами
 - Змінюйте розташування, прив’язку, порядок шарів, обрізання та поворот просто на полотні
@@ -346,7 +353,7 @@ Screenshot Bro to generator zrzutów ekranu dla App Store. Zaprojektuj cały zes
 
 W przeciwieństwie do uniwersalnych narzędzi graficznych Screenshot Bro rozumie wiersze przypisane do konkretnych urządzeń, lokalizację, wysyłkę do App Store Connect, eksport wsadowy, projekty do wielokrotnego użytku i lokalną automatyzację asystentem AI przez Model Context Protocol.
 
-Twórz kompletne zestawy zrzutów dla iPhone'a, iPada, Maca, telefonów i tabletów z Androidem oraz układów Pixel. Zacznij od szablonu albo zbuduj własny system układów. Wrzuć zrzuty, dodaj ramki urządzeń lub kompozycje bez ramek, napisz nagłówki i podpisy, sformatuj tekst własnymi czcionkami i dopracuj każdy szczegół na obszarze roboczym.
+Twórz kompletne zestawy zrzutów dla iPhone'a, iPada i Maca. Zacznij od szablonu albo zbuduj własny system układów. Wrzuć zrzuty, dodaj ramki urządzeń lub kompozycje bez ramek, napisz nagłówki i podpisy, sformatuj tekst własnymi czcionkami i dopracuj każdy szczegół na obszarze roboczym.
 
 Screenshot Bro może uruchomić lokalny serwer MCP na Twoim Macu. Podłącz asystenta zgodnego z MCP — Claude Code, Claude Desktop, Cursor lub innego klienta — i pozwól mu tworzyć projekty, edytować wiersze, rozmieszczać kształty, importować zrzuty, tłumaczyć teksty, renderować podglądy obszaru roboczego i eksportować gotowe obrazy. MCP jest opcjonalny, domyślnie wyłączony, działa tylko lokalnie i jest chroniony tokenem dostępu.
 
@@ -358,7 +365,7 @@ Najważniejsze funkcje:
 - Korzystaj z wbudowanych szablonów lub własnych układów przy kolejnych premierach
 - Projektuj wiersze z wielu kadrów, układy porównawcze i całe kampanie
 - Importuj zrzuty do wierszy wsadowo i szybko podmieniaj obrazy
-- Dodawaj ramki urządzeń dla iPhone, iPad, Mac, Android, Pixel i układy abstrakcyjne
+- Dodawaj ramki urządzeń dla iPhone, iPad, Mac i układy abstrakcyjne
 - Pracuj z tekstem, kształtami, obrazami, gradientami, kafelkowymi tłami i grafiką SVG
 - Formatuj tekst własnymi czcionkami, odmianami, odstępami, wyrównaniem i rozmiarem
 - Zmieniaj położenie, przyciąganie, kolejność warstw, przycinanie i obrót wprost na obszarze roboczym
@@ -382,7 +389,7 @@ Screenshot Bro to kreator i edytor zrzutów ekranu zbudowany specjalnie pod zrzu
 
 W przeciwieństwie do uniwersalnych narzędzi graficznych Screenshot Bro rozumie wiersze przypisane do konkretnych urządzeń, lokalizację, wysyłkę do App Store Connect, eksport wsadowy i projekty do wielokrotnego użytku.
 
-Twórz kompletne zestawy zrzutów dla iPhone'a, iPada, Maca, telefonów i tabletów z Androidem oraz układów Pixel. Zacznij od szablonu albo zbuduj własny system układów. Wrzuć zrzuty, dodaj ramki urządzeń lub kompozycje bez ramek, napisz nagłówki i podpisy, sformatuj tekst własnymi czcionkami i dopracuj każdy szczegół na obszarze roboczym.
+Twórz kompletne zestawy zrzutów dla iPhone'a, iPada i Maca. Zacznij od szablonu albo zbuduj własny system układów. Wrzuć zrzuty, dodaj ramki urządzeń lub kompozycje bez ramek, napisz nagłówki i podpisy, sformatuj tekst własnymi czcionkami i dopracuj każdy szczegół na obszarze roboczym.
 
 Trzymaj warianty wydań, teksty przypisane do poszczególnych języków, plany wierszy pod konkretne sklepy i gotowe do eksportu materiały w jednym projekcie — dla App Store, stron internetowych, mediów społecznościowych i kampanii premierowych.
 
@@ -392,7 +399,7 @@ Najważniejsze funkcje:
 - Korzystaj z wbudowanych szablonów lub własnych układów przy kolejnych premierach
 - Projektuj wiersze z wielu kadrów, układy porównawcze i całe kampanie
 - Importuj zrzuty do wierszy wsadowo i szybko podmieniaj obrazy
-- Dodawaj ramki urządzeń dla iPhone, iPad, Mac, Android, Pixel i układy abstrakcyjne
+- Dodawaj ramki urządzeń dla iPhone, iPad, Mac i układy abstrakcyjne
 - Pracuj z tekstem, kształtami, obrazami, gradientami, kafelkowymi tłami i grafiką SVG
 - Formatuj tekst własnymi czcionkami, odmianami, odstępami, wyrównaniem i rozmiarem
 - Zmieniaj położenie, przyciąganie, kolejność warstw, przycinanie i obrót wprost na obszarze roboczym
@@ -419,7 +426,7 @@ Screenshot Bro, App Store için bir uygulama ekran görüntüsü üreticisidir. 
 
 Genel amaçlı tasarım araçlarının aksine Screenshot Bro cihaza özel satırları, yerelleştirmeyi, App Store Connect yüklemelerini, toplu dışa aktarmayı, yeniden kullanılabilir projeleri ve Model Context Protocol üzerinden yerel yapay zekâ asistanı otomasyonunu bilir.
 
-iPhone, iPad, Mac, Android telefonlar, Android tabletler ve Pixel düzenleri için eksiksiz ekran görüntüsü setleri hazırlayın. Bir şablonla başlayın ya da kendi düzen sisteminizi kurun. Ekran görüntülerini bırakın, cihaz çerçeveleri veya çerçevesiz kompozisyonlar ekleyin, başlıklar ve açıklamalar yazın, zengin metni özel yazı tipleriyle biçimlendirin ve her ayrıntıyı tuval üzerinde ince ayarlayın.
+iPhone, iPad ve Mac düzenleri için eksiksiz ekran görüntüsü setleri hazırlayın. Bir şablonla başlayın ya da kendi düzen sisteminizi kurun. Ekran görüntülerini bırakın, cihaz çerçeveleri veya çerçevesiz kompozisyonlar ekleyin, başlıklar ve açıklamalar yazın, zengin metni özel yazı tipleriyle biçimlendirin ve her ayrıntıyı tuval üzerinde ince ayarlayın.
 
 Screenshot Bro, Mac'inizde yerel bir MCP sunucusu çalıştırabilir. Claude Code, Claude Desktop, Cursor gibi MCP uyumlu bir asistanı ya da başka bir istemciyi bağlayın; projeler oluştursun, satırları düzenlesin, şekilleri yerleştirsin, ekran görüntüleri içe aktarsın, metinleri çevirsin, tuval önizlemeleri üretsin ve son görselleri dışa aktarsın. MCP isteğe bağlıdır, varsayılan olarak kapalıdır, yalnızca yerel bağlantıları kabul eder ve bir erişim jetonuyla korunur.
 
@@ -431,7 +438,7 @@ Sürüm varyantlarını, dile özel metinleri, mağazaya özel satır planların
 - Tekrarlayan lansmanlar için hazır şablonları veya kendi düzenlerinizi kullanın
 - Çok kareli satırlar, karşılaştırma düzenleri ve eksiksiz kampanyalar tasarlayın
 - Ekran görüntülerini satırlara toplu içe aktarın ve görselleri hızla değiştirin
-- iPhone, iPad, Mac, Android, Pixel ve soyut düzenler için cihaz çerçeveleri ekleyin
+- iPhone, iPad, Mac ve soyut düzenler için cihaz çerçeveleri ekleyin
 - Metin, şekil, görsel, gradyan, döşemeli arka plan ve SVG grafiklerle çalışın
 - Zengin metni özel yazı tipleri, yazı tipi varyantları, boşluk, hizalama ve boyutla düzenleyin
 - Konum, yapışma, katman sırası, kırpma ve döndürmeyi doğrudan tuvalde ayarlayın
@@ -455,7 +462,7 @@ Screenshot Bro, özellikle App Store ekran görüntüleri için yapılmış bir 
 
 Genel amaçlı tasarım araçlarının aksine Screenshot Bro cihaza özel satırları, yerelleştirmeyi, App Store Connect yüklemelerini, toplu dışa aktarmayı ve yeniden kullanılabilir projeleri bilir.
 
-iPhone, iPad, Mac, Android telefonlar, Android tabletler ve Pixel düzenleri için eksiksiz ekran görüntüsü setleri hazırlayın. Bir şablonla başlayın ya da kendi düzen sisteminizi kurun. Ekran görüntülerini bırakın, cihaz çerçeveleri veya çerçevesiz kompozisyonlar ekleyin, başlıklar ve açıklamalar yazın, zengin metni özel yazı tipleriyle biçimlendirin ve her ayrıntıyı tuval üzerinde ince ayarlayın.
+iPhone, iPad ve Mac düzenleri için eksiksiz ekran görüntüsü setleri hazırlayın. Bir şablonla başlayın ya da kendi düzen sisteminizi kurun. Ekran görüntülerini bırakın, cihaz çerçeveleri veya çerçevesiz kompozisyonlar ekleyin, başlıklar ve açıklamalar yazın, zengin metni özel yazı tipleriyle biçimlendirin ve her ayrıntıyı tuval üzerinde ince ayarlayın.
 
 Sürüm varyantlarını, dile özel metinleri, mağazaya özel satır planlarını ve dışa aktarmaya hazır görselleri tek bir projede tutun — App Store, web siteleri, sosyal medya ve lansman kampanyaları için.
 
@@ -465,7 +472,7 @@ Sürüm varyantlarını, dile özel metinleri, mağazaya özel satır planların
 - Tekrarlayan lansmanlar için hazır şablonları veya kendi düzenlerinizi kullanın
 - Çok kareli satırlar, karşılaştırma düzenleri ve eksiksiz kampanyalar tasarlayın
 - Ekran görüntülerini satırlara toplu içe aktarın ve görselleri hızla değiştirin
-- iPhone, iPad, Mac, Android, Pixel ve soyut düzenler için cihaz çerçeveleri ekleyin
+- iPhone, iPad, Mac ve soyut düzenler için cihaz çerçeveleri ekleyin
 - Metin, şekil, görsel, gradyan, döşemeli arka plan ve SVG grafiklerle çalışın
 - Zengin metni özel yazı tipleri, yazı tipi varyantları, boşluk, hizalama ve boyutla düzenleyin
 - Konum, yapışma, katman sırası, kırpma ve döndürmeyi doğrudan tuvalde ayarlayın
@@ -492,7 +499,7 @@ Screenshot Bro adalah pembuat screenshot aplikasi untuk App Store. Rancang satu 
 
 Berbeda dari alat desain umum, Screenshot Bro memahami baris khusus per perangkat, pelokalan, unggahan ke App Store Connect, ekspor massal, proyek yang bisa dipakai ulang, dan otomatisasi asisten AI lokal melalui Model Context Protocol.
 
-Bangun set screenshot lengkap untuk iPhone, iPad, Mac, ponsel Android, tablet Android, dan tata letak Pixel. Mulai dari templat atau buat sistem tata letak sendiri. Masukkan screenshot, tambahkan bingkai perangkat atau komposisi tanpa bingkai, tulis headline dan keterangan, atur gaya teks dengan font kustom, dan sempurnakan setiap detail di kanvas.
+Bangun set screenshot lengkap untuk iPhone, iPad, dan Mac. Mulai dari templat atau buat sistem tata letak sendiri. Masukkan screenshot, tambahkan bingkai perangkat atau komposisi tanpa bingkai, tulis headline dan keterangan, atur gaya teks dengan font kustom, dan sempurnakan setiap detail di kanvas.
 
 Screenshot Bro bisa menjalankan server MCP lokal di Mac kamu. Hubungkan asisten yang kompatibel dengan MCP seperti Claude Code, Claude Desktop, Cursor, atau klien lain, lalu biarkan asisten itu membuat proyek, mengedit baris, menata bentuk, mengimpor screenshot, menerjemahkan teks, merender pratinjau kanvas, dan mengekspor gambar akhir. MCP bersifat opsional, mati secara bawaan, hanya menerima koneksi lokal, dan dilindungi token akses.
 
@@ -504,7 +511,7 @@ Fitur utama:
 - Pakai templat bawaan atau tata letak sendiri untuk peluncuran berikutnya
 - Rancang baris multi-gambar, tata letak perbandingan, dan kampanye lengkap
 - Impor screenshot ke baris secara massal dan ganti gambar dengan cepat
-- Tambahkan bingkai perangkat untuk iPhone, iPad, Mac, Android, Pixel, dan tata letak abstrak
+- Tambahkan bingkai perangkat untuk iPhone, iPad, Mac, dan tata letak abstrak
 - Olah teks, bentuk, gambar, gradien, latar bermotif ubin, dan grafik SVG
 - Edit teks kaya dengan font kustom, varian font, spasi, perataan, dan ukuran
 - Atur posisi, snapping, urutan lapisan, pemotongan, dan rotasi langsung di kanvas
@@ -528,7 +535,7 @@ Screenshot Bro adalah pembuat dan editor screenshot yang dirancang khusus untuk 
 
 Berbeda dari alat desain umum, Screenshot Bro memahami baris khusus per perangkat, pelokalan, unggahan ke App Store Connect, ekspor massal, dan proyek yang bisa dipakai ulang.
 
-Bangun set screenshot lengkap untuk iPhone, iPad, Mac, ponsel Android, tablet Android, dan tata letak Pixel. Mulai dari templat atau buat sistem tata letak sendiri. Masukkan screenshot, tambahkan bingkai perangkat atau komposisi tanpa bingkai, tulis headline dan keterangan, atur gaya teks dengan font kustom, dan sempurnakan setiap detail di kanvas.
+Bangun set screenshot lengkap untuk iPhone, iPad, dan Mac. Mulai dari templat atau buat sistem tata letak sendiri. Masukkan screenshot, tambahkan bingkai perangkat atau komposisi tanpa bingkai, tulis headline dan keterangan, atur gaya teks dengan font kustom, dan sempurnakan setiap detail di kanvas.
 
 Simpan varian rilis, teks khusus per bahasa, rencana baris khusus per toko, dan aset siap ekspor dalam satu proyek — untuk App Store, situs web, media sosial, dan kampanye peluncuran.
 
@@ -538,7 +545,7 @@ Fitur utama:
 - Pakai templat bawaan atau tata letak sendiri untuk peluncuran berikutnya
 - Rancang baris multi-gambar, tata letak perbandingan, dan kampanye lengkap
 - Impor screenshot ke baris secara massal dan ganti gambar dengan cepat
-- Tambahkan bingkai perangkat untuk iPhone, iPad, Mac, Android, Pixel, dan tata letak abstrak
+- Tambahkan bingkai perangkat untuk iPhone, iPad, Mac, dan tata letak abstrak
 - Olah teks, bentuk, gambar, gradien, latar bermotif ubin, dan grafik SVG
 - Edit teks kaya dengan font kustom, varian font, spasi, perataan, dan ukuran
 - Atur posisi, snapping, urutan lapisan, pemotongan, dan rotasi langsung di kanvas
@@ -565,7 +572,7 @@ Screenshot Bro là công cụ tạo ảnh chụp màn hình ứng dụng cho App
 
 Khác với các công cụ thiết kế đa dụng, Screenshot Bro hiểu các hàng dành riêng cho từng thiết bị, việc bản địa hóa, tải lên App Store Connect, xuất theo lô, dự án dùng lại được và tự động hóa bằng trợ lý AI cục bộ qua Model Context Protocol.
 
-Tạo trọn bộ ảnh chụp cho iPhone, iPad, Mac, điện thoại Android, máy tính bảng Android và bố cục Pixel. Bắt đầu từ mẫu có sẵn hoặc tự xây hệ thống bố cục riêng. Kéo ảnh chụp vào, thêm khung thiết bị hoặc dựng ảnh không khung, viết tiêu đề và chú thích, tạo kiểu chữ với phông tùy chỉnh và chỉnh từng chi tiết ngay trên canvas.
+Tạo trọn bộ ảnh chụp cho iPhone, iPad và Mac. Bắt đầu từ mẫu có sẵn hoặc tự xây hệ thống bố cục riêng. Kéo ảnh chụp vào, thêm khung thiết bị hoặc dựng ảnh không khung, viết tiêu đề và chú thích, tạo kiểu chữ với phông tùy chỉnh và chỉnh từng chi tiết ngay trên canvas.
 
 Screenshot Bro có thể chạy một máy chủ MCP cục bộ trên máy Mac của bạn. Kết nối trợ lý tương thích MCP như Claude Code, Claude Desktop, Cursor hoặc ứng dụng khác, rồi để nó tạo dự án, sửa hàng, sắp xếp hình khối, nhập ảnh chụp, dịch văn bản, kết xuất bản xem trước canvas và xuất ảnh cuối. MCP là tùy chọn, mặc định tắt, chỉ nhận kết nối cục bộ và được bảo vệ bằng token truy cập.
 
@@ -577,7 +584,7 @@ Tính năng chính:
 - Dùng mẫu có sẵn hoặc bố cục riêng cho những lần phát hành sau
 - Thiết kế hàng nhiều ảnh, bố cục so sánh và trọn chiến dịch
 - Nhập ảnh chụp vào hàng theo lô và thay ảnh thật nhanh
-- Thêm khung thiết bị cho iPhone, iPad, Mac, Android, Pixel và bố cục trừu tượng
+- Thêm khung thiết bị cho iPhone, iPad, Mac và bố cục trừu tượng
 - Làm việc với văn bản, hình khối, ảnh, gradient, nền lát gạch và đồ họa SVG
 - Chỉnh văn bản với phông tùy chỉnh, biến thể phông, khoảng cách, căn lề và cỡ chữ
 - Điều chỉnh vị trí, bám dính, thứ tự lớp, cắt ảnh và xoay ngay trên canvas
@@ -601,7 +608,7 @@ Screenshot Bro là ứng dụng tạo và chỉnh ảnh chụp màn hình, làm 
 
 Khác với các công cụ thiết kế đa dụng, Screenshot Bro hiểu các hàng dành riêng cho từng thiết bị, việc bản địa hóa, tải lên App Store Connect, xuất theo lô và dự án dùng lại được.
 
-Tạo trọn bộ ảnh chụp cho iPhone, iPad, Mac, điện thoại Android, máy tính bảng Android và bố cục Pixel. Bắt đầu từ mẫu có sẵn hoặc tự xây hệ thống bố cục riêng. Kéo ảnh chụp vào, thêm khung thiết bị hoặc dựng ảnh không khung, viết tiêu đề và chú thích, tạo kiểu chữ với phông tùy chỉnh và chỉnh từng chi tiết ngay trên canvas.
+Tạo trọn bộ ảnh chụp cho iPhone, iPad và Mac. Bắt đầu từ mẫu có sẵn hoặc tự xây hệ thống bố cục riêng. Kéo ảnh chụp vào, thêm khung thiết bị hoặc dựng ảnh không khung, viết tiêu đề và chú thích, tạo kiểu chữ với phông tùy chỉnh và chỉnh từng chi tiết ngay trên canvas.
 
 Giữ các biến thể bản phát hành, phần chữ riêng theo từng ngôn ngữ, bố cục hàng riêng cho từng cửa hàng và tài nguyên sẵn sàng xuất trong cùng một dự án — cho App Store, website, mạng xã hội và các chiến dịch ra mắt.
 
@@ -611,7 +618,7 @@ Tính năng chính:
 - Dùng mẫu có sẵn hoặc bố cục riêng cho những lần phát hành sau
 - Thiết kế hàng nhiều ảnh, bố cục so sánh và trọn chiến dịch
 - Nhập ảnh chụp vào hàng theo lô và thay ảnh thật nhanh
-- Thêm khung thiết bị cho iPhone, iPad, Mac, Android, Pixel và bố cục trừu tượng
+- Thêm khung thiết bị cho iPhone, iPad, Mac và bố cục trừu tượng
 - Làm việc với văn bản, hình khối, ảnh, gradient, nền lát gạch và đồ họa SVG
 - Chỉnh văn bản với phông tùy chỉnh, biến thể phông, khoảng cách, căn lề và cỡ chữ
 - Điều chỉnh vị trí, bám dính, thứ tự lớp, cắt ảnh và xoay ngay trên canvas
@@ -638,7 +645,7 @@ Screenshot Bro คือแอปสร้างภาพหน้าจอส�
 
 ต่างจากเครื่องมือออกแบบทั่วไป Screenshot Bro เข้าใจแถวที่แยกตามอุปกรณ์ การแปลหลายภาษา การอัปโหลดขึ้น App Store Connect การส่งออกเป็นชุด โปรเจกต์ที่นำกลับมาใช้ซ้ำได้ และการสั่งงานด้วยผู้ช่วย AI ในเครื่องผ่าน Model Context Protocol
 
-สร้างชุดภาพหน้าจอครบชุดสำหรับ iPhone, iPad, Mac, โทรศัพท์ Android, แท็บเล็ต Android และเลย์เอาต์ Pixel เริ่มจากเทมเพลตหรือสร้างระบบเลย์เอาต์ของคุณเอง วางภาพหน้าจอลงไป เพิ่มกรอบอุปกรณ์หรือจัดองค์ประกอบแบบไม่มีกรอบ เขียนหัวข้อและคำบรรยาย จัดรูปแบบข้อความด้วยฟอนต์ของคุณเอง และปรับทุกรายละเอียดบนพื้นที่ทำงาน
+สร้างชุดภาพหน้าจอครบชุดสำหรับ iPhone, iPad และ Mac เริ่มจากเทมเพลตหรือสร้างระบบเลย์เอาต์ของคุณเอง วางภาพหน้าจอลงไป เพิ่มกรอบอุปกรณ์หรือจัดองค์ประกอบแบบไม่มีกรอบ เขียนหัวข้อและคำบรรยาย จัดรูปแบบข้อความด้วยฟอนต์ของคุณเอง และปรับทุกรายละเอียดบนพื้นที่ทำงาน
 
 Screenshot Bro เปิดเซิร์ฟเวอร์ MCP ในเครื่อง Mac ของคุณได้ เชื่อมต่อผู้ช่วยที่รองรับ MCP เช่น Claude Code, Claude Desktop, Cursor หรือไคลเอนต์อื่น แล้วให้มันสร้างโปรเจกต์ แก้ไขแถว จัดวางรูปทรง นำเข้าภาพหน้าจอ แปลข้อความ เรนเดอร์ตัวอย่างพื้นที่ทำงาน และส่งออกภาพสุดท้าย MCP เป็นตัวเลือกเสริม ปิดอยู่ตามค่าเริ่มต้น รับเฉพาะการเชื่อมต่อในเครื่อง และป้องกันด้วยโทเคนการเข้าถึง
 
@@ -650,7 +657,7 @@ Screenshot Bro เปิดเซิร์ฟเวอร์ MCP ในเคร
 - ใช้เทมเพลตที่มีให้หรือเลย์เอาต์ของคุณเองสำหรับการปล่อยอัปเดตครั้งถัดไป
 - ออกแบบแถวหลายภาพ เลย์เอาต์เปรียบเทียบ และแคมเปญทั้งชุด
 - นำเข้าภาพหน้าจอเข้าแถวเป็นชุดและเปลี่ยนรูปได้อย่างรวดเร็ว
-- เพิ่มกรอบอุปกรณ์สำหรับ iPhone, iPad, Mac, Android, Pixel และเลย์เอาต์แบบนามธรรม
+- เพิ่มกรอบอุปกรณ์สำหรับ iPhone, iPad, Mac และเลย์เอาต์แบบนามธรรม
 - ทำงานกับข้อความ รูปทรง รูปภาพ เกรเดียนต์ พื้นหลังแบบเรียงต่อ และกราฟิก SVG
 - แก้ไขข้อความด้วยฟอนต์ของคุณเอง น้ำหนักฟอนต์ ระยะห่าง การจัดแนว และขนาด
 - ปรับตำแหน่ง การดูดเข้าแนว ลำดับเลเยอร์ การครอบตัด และการหมุน ได้บนพื้นที่ทำงานโดยตรง
@@ -674,7 +681,7 @@ Screenshot Bro คือแอปสร้างและแก้ไขภา�
 
 ต่างจากเครื่องมือออกแบบทั่วไป Screenshot Bro เข้าใจแถวที่แยกตามอุปกรณ์ การแปลหลายภาษา การอัปโหลดขึ้น App Store Connect การส่งออกเป็นชุด และโปรเจกต์ที่นำกลับมาใช้ซ้ำได้
 
-สร้างชุดภาพหน้าจอครบชุดสำหรับ iPhone, iPad, Mac, โทรศัพท์ Android, แท็บเล็ต Android และเลย์เอาต์ Pixel เริ่มจากเทมเพลตหรือสร้างระบบเลย์เอาต์ของคุณเอง วางภาพหน้าจอลงไป เพิ่มกรอบอุปกรณ์หรือจัดองค์ประกอบแบบไม่มีกรอบ เขียนหัวข้อและคำบรรยาย จัดรูปแบบข้อความด้วยฟอนต์ของคุณเอง และปรับทุกรายละเอียดบนพื้นที่ทำงาน
+สร้างชุดภาพหน้าจอครบชุดสำหรับ iPhone, iPad และ Mac เริ่มจากเทมเพลตหรือสร้างระบบเลย์เอาต์ของคุณเอง วางภาพหน้าจอลงไป เพิ่มกรอบอุปกรณ์หรือจัดองค์ประกอบแบบไม่มีกรอบ เขียนหัวข้อและคำบรรยาย จัดรูปแบบข้อความด้วยฟอนต์ของคุณเอง และปรับทุกรายละเอียดบนพื้นที่ทำงาน
 
 เก็บเวอร์ชันของแต่ละรอบอัปเดต ข้อความเฉพาะของแต่ละภาษา แผนแถวของแต่ละสโตร์ และไฟล์ที่พร้อมส่งออก ไว้ในโปรเจกต์เดียว สำหรับ App Store, เว็บไซต์, โซเชียลมีเดีย และแคมเปญเปิดตัว
 
@@ -684,7 +691,7 @@ Screenshot Bro คือแอปสร้างและแก้ไขภา�
 - ใช้เทมเพลตที่มีให้หรือเลย์เอาต์ของคุณเองสำหรับการปล่อยอัปเดตครั้งถัดไป
 - ออกแบบแถวหลายภาพ เลย์เอาต์เปรียบเทียบ และแคมเปญทั้งชุด
 - นำเข้าภาพหน้าจอเข้าแถวเป็นชุดและเปลี่ยนรูปได้อย่างรวดเร็ว
-- เพิ่มกรอบอุปกรณ์สำหรับ iPhone, iPad, Mac, Android, Pixel และเลย์เอาต์แบบนามธรรม
+- เพิ่มกรอบอุปกรณ์สำหรับ iPhone, iPad, Mac และเลย์เอาต์แบบนามธรรม
 - ทำงานกับข้อความ รูปทรง รูปภาพ เกรเดียนต์ พื้นหลังแบบเรียงต่อ และกราฟิก SVG
 - แก้ไขข้อความด้วยฟอนต์ของคุณเอง น้ำหนักฟอนต์ ระยะห่าง การจัดแนว และขนาด
 - ปรับตำแหน่ง การดูดเข้าแนว ลำดับเลเยอร์ การครอบตัด และการหมุน ได้บนพื้นที่ทำงานโดยตรง
@@ -711,7 +718,7 @@ Screenshot Bro 是專為 App Store 打造的 App 截圖產生器。一次設計�
 
 與一般的通用設計工具不同，Screenshot Bro 懂得依裝置區分的行、在地化、App Store Connect 上傳、批次匯出、可重複使用的專案，以及透過 Model Context Protocol 實現的本機 AI 助理自動化。
 
-為 iPhone、iPad、Mac、Android 手機、Android 平板與 Pixel 版面打造完整的截圖組。你可以從範本開始，或建立自己的版面系統。放入截圖，加上裝置外框或無外框的構圖，撰寫標題與說明文字，用自訂字型設定豐富文字樣式，並在畫布上微調每一個細節。
+為 iPhone、iPad 與 Mac 版面打造完整的截圖組。你可以從範本開始，或建立自己的版面系統。放入截圖，加上裝置外框或無外框的構圖，撰寫標題與說明文字，用自訂字型設定豐富文字樣式，並在畫布上微調每一個細節。
 
 Screenshot Bro 可以在你的 Mac 上執行本機 MCP 伺服器。連接支援 MCP 的助理，例如 Claude Code、Claude Desktop、Cursor 或其他用戶端，讓它建立專案、編輯行、排列圖形、匯入截圖、翻譯文字、產生畫布預覽並匯出最終圖片。MCP 是選用功能，預設關閉，僅接受本機連線，並以存取權杖保護。
 
@@ -723,7 +730,7 @@ Screenshot Bro 可以在你的 Mac 上執行本機 MCP 伺服器。連接支援 
 - 使用內建範本或自訂版面，從容應對每一次發布
 - 設計多圖的行、比較式版面與完整宣傳素材
 - 批次把截圖匯入各行，並快速替換圖片
-- 為 iPhone、iPad、Mac、Android、Pixel 及抽象版面加上裝置外框
+- 為 iPhone、iPad、Mac 及抽象版面加上裝置外框
 - 處理文字、圖形、圖片、漸層、拼貼背景與 SVG 圖形
 - 編輯豐富文字，支援自訂字型、字型變體、間距、對齊與大小控制
 - 直接在畫布上調整位置、吸附、圖層、裁切與旋轉
@@ -753,7 +760,7 @@ Screenshot Bro 是一款專為 App Store 截圖打造的截圖製作與編輯工
 
 與一般的通用設計工具不同，Screenshot Bro 懂得依裝置區分的行、在地化、App Store Connect 上傳、批次匯出，以及可重複使用的專案。
 
-為 iPhone、iPad、Mac、Android 手機、Android 平板與 Pixel 版面打造完整的截圖組。你可以從範本開始，或建立自己的版面系統。放入截圖，加上裝置外框或無外框的構圖，撰寫標題與說明文字，用自訂字型設定豐富文字樣式，並在畫布上微調每一個細節。
+為 iPhone、iPad 與 Mac 版面打造完整的截圖組。你可以從範本開始，或建立自己的版面系統。放入截圖，加上裝置外框或無外框的構圖，撰寫標題與說明文字，用自訂字型設定豐富文字樣式，並在畫布上微調每一個細節。
 
 把發布版本、各語言的個別文案、各商店的行規劃，以及可直接匯出的素材，全部放在同一個專案裡，供 App Store、網站、社群媒體與上線宣傳使用。
 
@@ -763,7 +770,7 @@ Screenshot Bro 是一款專為 App Store 截圖打造的截圖製作與編輯工
 - 使用內建範本或自訂版面，從容應對每一次發布
 - 設計多圖的行、比較式版面與完整宣傳素材
 - 批次把截圖匯入各行，並快速替換圖片
-- 為 iPhone、iPad、Mac、Android、Pixel 及抽象版面加上裝置外框
+- 為 iPhone、iPad、Mac 及抽象版面加上裝置外框
 - 處理文字、圖形、圖片、漸層、拼貼背景與 SVG 圖形
 - 編輯豐富文字，支援自訂字型、字型變體、間距、對齊與大小控制
 - 直接在畫布上調整位置、吸附、圖層、裁切與旋轉
@@ -792,7 +799,7 @@ Screenshot Bro es un generador de capturas de pantalla para la App Store. Diseñ
 
 A diferencia de las herramientas de diseño genéricas, Screenshot Bro entiende de filas por dispositivo, localización, cargas a App Store Connect, exportaciones por lotes, proyectos reutilizables y automatización local con asistentes de IA mediante el Model Context Protocol.
 
-Arma sets completos de capturas para iPhone, iPad, Mac, celulares Android, tabletas Android y diseños Pixel. Empieza con una plantilla o crea tu propio sistema de composición. Suelta tus capturas, agrega marcos de dispositivo o composiciones sin marco, escribe titulares y textos de apoyo, aplica estilos de texto enriquecido con fuentes propias y ajusta cada detalle en el lienzo.
+Arma sets completos de capturas para iPhone, iPad y Mac. Empieza con una plantilla o crea tu propio sistema de composición. Suelta tus capturas, agrega marcos de dispositivo o composiciones sin marco, escribe titulares y textos de apoyo, aplica estilos de texto enriquecido con fuentes propias y ajusta cada detalle en el lienzo.
 
 Screenshot Bro puede alojar un servidor MCP local en tu Mac. Conecta un asistente compatible con MCP, como Claude Code, Claude Desktop, Cursor u otro cliente, y déjalo crear proyectos, editar filas, acomodar figuras, importar capturas, traducir textos, generar vistas previas del lienzo y exportar las imágenes finales. MCP es opcional, viene desactivado, funciona solo en loopback y está protegido con un token de acceso.
 
@@ -804,7 +811,7 @@ Funciones principales:
 - Usa plantillas incluidas o diseños propios para lanzamientos recurrentes
 - Diseña filas de varias capturas, comparativas y campañas completas
 - Importa capturas por lotes en las filas y reemplaza imágenes al instante
-- Agrega marcos de dispositivo para iPhone, iPad, Mac, Android, Pixel y diseños abstractos
+- Agrega marcos de dispositivo para iPhone, iPad, Mac y diseños abstractos
 - Trabaja con texto, figuras, imágenes, degradados, fondos en mosaico y gráficos SVG
 - Edita texto enriquecido con fuentes propias, variantes, espaciado, alineación y tamaño
 - Ajusta posición, imantado, capas, recorte y rotación directo en el lienzo
@@ -834,7 +841,7 @@ Screenshot Bro es un creador y editor de capturas de pantalla hecho específicam
 
 A diferencia de las herramientas de diseño genéricas, Screenshot Bro entiende de filas por dispositivo, localización, cargas a App Store Connect, exportaciones por lotes y proyectos reutilizables.
 
-Arma sets completos de capturas para iPhone, iPad, Mac, celulares Android, tabletas Android y diseños Pixel. Empieza con una plantilla o crea tu propio sistema de composición. Suelta tus capturas, agrega marcos de dispositivo o composiciones sin marco, escribe titulares y textos de apoyo, aplica estilos de texto enriquecido con fuentes propias y ajusta cada detalle en el lienzo.
+Arma sets completos de capturas para iPhone, iPad y Mac. Empieza con una plantilla o crea tu propio sistema de composición. Suelta tus capturas, agrega marcos de dispositivo o composiciones sin marco, escribe titulares y textos de apoyo, aplica estilos de texto enriquecido con fuentes propias y ajusta cada detalle en el lienzo.
 
 Mantén en un solo proyecto las variantes de cada versión, los ajustes por idioma, los planes de filas por tienda y los recursos listos para exportar: para la App Store, sitios web, redes sociales y campañas de lanzamiento.
 
@@ -844,7 +851,7 @@ Funciones principales:
 - Usa plantillas incluidas o diseños propios para lanzamientos recurrentes
 - Diseña filas de varias capturas, comparativas y campañas completas
 - Importa capturas por lotes en las filas y reemplaza imágenes al instante
-- Agrega marcos de dispositivo para iPhone, iPad, Mac, Android, Pixel y diseños abstractos
+- Agrega marcos de dispositivo para iPhone, iPad, Mac y diseños abstractos
 - Trabaja con texto, figuras, imágenes, degradados, fondos en mosaico y gráficos SVG
 - Edita texto enriquecido con fuentes propias, variantes, espaciado, alineación y tamaño
 - Ajusta posición, imantado, capas, recorte y rotación directo en el lienzo
@@ -871,7 +878,7 @@ Screenshot Bro génère les captures d'écran de votre app pour l'App Store. Con
 
 Contrairement aux outils de conception génériques, Screenshot Bro connaît les rangées par appareil, la localisation, le téléversement vers App Store Connect, les exportations par lots, les projets réutilisables et l'automatisation locale par assistant IA via le Model Context Protocol.
 
-Montez des séries complètes pour iPhone, iPad, Mac, téléphones et tablettes Android et mises en page Pixel. Partez d'un modèle ou créez votre propre système. Déposez vos captures, ajoutez des cadres d'appareils ou des compositions sans cadre, rédigez titres et légendes, mettez en forme le texte enrichi avec vos polices et peaufinez chaque détail sur le canevas.
+Montez des séries complètes pour iPhone, iPad et Mac. Partez d'un modèle ou créez votre propre système. Déposez vos captures, ajoutez des cadres d'appareils ou des compositions sans cadre, rédigez titres et légendes, mettez en forme le texte enrichi avec vos polices et peaufinez chaque détail sur le canevas.
 
 Screenshot Bro peut héberger un serveur MCP local sur votre Mac. Branchez un assistant compatible MCP — Claude Code, Claude Desktop, Cursor ou un autre client — et laissez-le créer des projets, modifier des rangées, disposer des formes, importer des captures, traduire du texte, générer des aperçus du canevas et exporter les images finales. MCP est optionnel, désactivé par défaut, limité au bouclage local et protégé par un jeton d'accès.
 
@@ -882,7 +889,7 @@ Fonctions principales :
 - Produisez toutes vos captures d'écran App Store à partir d'un seul projet
 - Utilisez les modèles intégrés ou vos propres mises en page pour vos lancements récurrents
 - Importez vos captures par lots dans les rangées et remplacez les images en un geste
-- Ajoutez des cadres d'appareils pour iPhone, iPad, Mac, Android, Pixel et des mises en page abstraites
+- Ajoutez des cadres d'appareils pour iPhone, iPad, Mac et des mises en page abstraites
 - Travaillez avec du texte, des formes, des images, des dégradés, des arrière-plans en mosaïque et des graphiques SVG
 - Modifiez le texte enrichi avec vos polices, leurs variantes, l'espacement, l'alignement et la taille
 - Gérez les remplacements de texte et d'images propres à chaque marché
@@ -909,7 +916,7 @@ Screenshot Bro est un créateur et un éditeur de captures d'écran conçu spéc
 
 Contrairement aux outils de conception génériques, Screenshot Bro connaît les rangées par appareil, la localisation, le téléversement vers App Store Connect, les exportations par lots et les projets réutilisables.
 
-Montez des séries complètes pour iPhone, iPad, Mac, téléphones et tablettes Android et mises en page Pixel. Partez d'un modèle ou créez votre propre système. Déposez vos captures, ajoutez des cadres d'appareils ou des compositions sans cadre, rédigez titres et légendes, mettez en forme le texte enrichi avec vos polices et peaufinez chaque détail sur le canevas.
+Montez des séries complètes pour iPhone, iPad et Mac. Partez d'un modèle ou créez votre propre système. Déposez vos captures, ajoutez des cadres d'appareils ou des compositions sans cadre, rédigez titres et légendes, mettez en forme le texte enrichi avec vos polices et peaufinez chaque détail sur le canevas.
 
 Regroupez dans un même projet vos variantes de version, vos remplacements par langue, vos plans de rangées par boutique et vos fichiers prêts à exporter, pour l'App Store, vos sites web, les réseaux sociaux et vos campagnes de lancement.
 
@@ -919,7 +926,7 @@ Fonctions principales :
 - Utilisez les modèles intégrés ou vos propres mises en page pour vos lancements récurrents
 - Concevez des rangées à plusieurs images, des mises en page comparatives et des campagnes complètes
 - Importez vos captures par lots dans les rangées et remplacez les images en un geste
-- Ajoutez des cadres d'appareils pour iPhone, iPad, Mac, Android, Pixel et des mises en page abstraites
+- Ajoutez des cadres d'appareils pour iPhone, iPad, Mac et des mises en page abstraites
 - Travaillez avec du texte, des formes, des images, des dégradés, des arrière-plans en mosaïque et des graphiques SVG
 - Modifiez le texte enrichi avec vos polices, leurs variantes, l'espacement, l'alignement et la taille
 - Ajustez le positionnement, l'aimantation, la superposition, le rognage et la rotation à même le canevas
@@ -946,7 +953,7 @@ Screenshot Bro je generátor snímků obrazovky aplikací pro App Store. Navrhn�
 
 Na rozdíl od univerzálních designových nástrojů Screenshot Bro rozumí řadám podle zařízení, lokalizaci, nahrávání do App Store Connect, dávkovým exportům, opakovaně použitelným projektům i lokální automatizaci pomocí AI asistenta přes Model Context Protocol.
 
-Vytvářejte kompletní sady snímků obrazovky pro iPhone, iPad, Mac, telefony s Androidem, tablety s Androidem a rozvržení Pixel. Začněte šablonou, nebo si postavte vlastní systém rozvržení. Vložte snímky obrazovky, přidejte rámečky zařízení nebo kompozice bez rámečků, napište titulky a popisky, upravte styl formátovaného textu vlastními písmy a doladěte každý detail přímo na plátně.
+Vytvářejte kompletní sady snímků obrazovky pro iPhone, iPad a Mac. Začněte šablonou, nebo si postavte vlastní systém rozvržení. Vložte snímky obrazovky, přidejte rámečky zařízení nebo kompozice bez rámečků, napište titulky a popisky, upravte styl formátovaného textu vlastními písmy a doladěte každý detail přímo na plátně.
 
 Screenshot Bro umí na vašem Macu hostovat lokální MCP server. Připojte asistenta kompatibilního s MCP — třeba Claude Code, Claude Desktop, Cursor nebo jiného klienta — a nechte ho zakládat projekty, upravovat řady, uspořádávat objekty, importovat snímky obrazovky, překládat texty, vykreslovat náhledy plátna a exportovat finální obrázky. Funkce MCP je volitelná, ve výchozím stavu vypnutá, omezená na místní smyčku a chráněná přístupovým tokenem.
 
@@ -958,7 +965,7 @@ Klíčové funkce:
 - Používejte vestavěné šablony nebo vlastní rozvržení pro opakovaná vydání
 - Navrhujte řady s více snímky, srovnávací rozvržení i celé kampaně
 - Hromadně importujte snímky obrazovky do řad a rychle nahrazujte obrázky
-- Přidávejte rámečky zařízení pro iPhone, iPad, Mac, Android, Pixel i abstraktní rozvržení
+- Přidávejte rámečky zařízení pro iPhone, iPad, Mac i abstraktní rozvržení
 - Pracujte s textem, tvary, obrázky, přechody, dlážděnými pozadími a SVG grafikou
 - Upravujte formátovaný text vlastními písmy, řezy, proložením, zarovnáním a velikostí
 - Upravujte umístění, přichytávání, vrstvení, oříznutí i otočení přímo na plátně
@@ -988,7 +995,7 @@ Screenshot Bro je generátor a editor snímků obrazovky vytvořený přímo pro
 
 Na rozdíl od univerzálních designových nástrojů Screenshot Bro rozumí řadám podle zařízení, lokalizaci, nahrávání do App Store Connect, dávkovým exportům i opakovaně použitelným projektům.
 
-Vytvářejte kompletní sady snímků obrazovky pro iPhone, iPad, Mac, telefony s Androidem, tablety s Androidem a rozvržení Pixel. Začněte šablonou, nebo si postavte vlastní systém rozvržení. Vložte snímky obrazovky, přidejte rámečky zařízení nebo kompozice bez rámečků, napište titulky a popisky, upravte styl formátovaného textu vlastními písmy a doladěte každý detail přímo na plátně.
+Vytvářejte kompletní sady snímků obrazovky pro iPhone, iPad a Mac. Začněte šablonou, nebo si postavte vlastní systém rozvržení. Vložte snímky obrazovky, přidejte rámečky zařízení nebo kompozice bez rámečků, napište titulky a popisky, upravte styl formátovaného textu vlastními písmy a doladěte každý detail přímo na plátně.
 
 Držte varianty vydání, přepisy pro jednotlivé jazykové verze, plány řad pro konkrétní obchody a hotové podklady v jednom projektu — pro App Store, weby, sociální sítě i kampaně k uvedení.
 
@@ -998,7 +1005,7 @@ Klíčové funkce:
 - Používejte vestavěné šablony nebo vlastní rozvržení pro opakovaná vydání
 - Navrhujte řady s více snímky, srovnávací rozvržení i celé kampaně
 - Hromadně importujte snímky obrazovky do řad a rychle nahrazujte obrázky
-- Přidávejte rámečky zařízení pro iPhone, iPad, Mac, Android, Pixel i abstraktní rozvržení
+- Přidávejte rámečky zařízení pro iPhone, iPad, Mac i abstraktní rozvržení
 - Pracujte s textem, tvary, obrázky, přechody, dlážděnými pozadími a SVG grafikou
 - Upravujte formátovaný text vlastními písmy, řezy, proložením, zarovnáním a velikostí
 - Upravujte umístění, přichytávání, vrstvení, oříznutí i otočení přímo na plátně
@@ -1025,7 +1032,7 @@ Screenshot Bro je generátor snímok obrazovky aplikácií pre App Store. Navrhn
 
 Na rozdiel od univerzálnych grafických nástrojov Screenshot Bro rozumie riadkom pre konkrétne zariadenia, lokalizácii, nahrávaniu do App Store Connect, dávkovým exportom, opakovane použiteľným projektom aj lokálnej automatizácii AI asistenta cez Model Context Protocol.
 
-Vytvárajte kompletné sady snímok obrazovky pre iPhone, iPad, Mac, telefóny a tablety s Androidom aj rozloženia pre Pixel. Začnite so šablónou alebo si postavte vlastný systém rozložení. Vložte snímky obrazovky, pridajte rámy zariadení alebo kompozície bez rámov, napíšte titulky a popisy, naštýlujte formátovaný text vlastnými písmami a dolaďte každý detail priamo na plátne.
+Vytvárajte kompletné sady snímok obrazovky pre iPhone, iPad a Mac. Začnite so šablónou alebo si postavte vlastný systém rozložení. Vložte snímky obrazovky, pridajte rámy zariadení alebo kompozície bez rámov, napíšte titulky a popisy, naštýlujte formátovaný text vlastnými písmami a dolaďte každý detail priamo na plátne.
 
 Screenshot Bro dokáže na vašom Macu spustiť lokálny MCP server. Pripojte asistenta kompatibilného s MCP, napríklad Claude Code, Claude Desktop, Cursor alebo iného klienta, a nechajte ho vytvárať projekty, upravovať riadky, usporadúvať tvary, importovať snímky, prekladať texty, vykresľovať náhľady plátna a exportovať finálne obrázky. MCP je voliteľné, štandardne vypnuté, funguje len cez loopback a je chránené prístupovým tokenom.
 
@@ -1037,7 +1044,7 @@ Kľúčové funkcie:
 - Používajte zabudované šablóny alebo vlastné rozloženia pre opakované vydania
 - Navrhujte viacsnímkové riadky, porovnávacie rozloženia a celé kampane
 - Dávkovo importujte snímky obrazovky do riadkov a rýchlo vymieňajte obrázky
-- Pridávajte rámy zariadení pre iPhone, iPad, Mac, Android, Pixel a abstraktné rozloženia
+- Pridávajte rámy zariadení pre iPhone, iPad, Mac a abstraktné rozloženia
 - Pracujte s textom, tvarmi, obrázkami, prechodmi, dlaždicovými pozadiami a SVG grafikou
 - Upravujte formátovaný text vlastnými písmami, variantmi písma, rozostupmi, zarovnaním a veľkosťou
 - Meňte umiestnenie, prichytávanie, vrstvenie, orezanie a otáčanie priamo na plátne
@@ -1067,7 +1074,7 @@ Screenshot Bro je nástroj na tvorbu a úpravu snímok obrazovky vytvorený špe
 
 Na rozdiel od univerzálnych grafických nástrojov Screenshot Bro rozumie riadkom pre konkrétne zariadenia, lokalizácii, nahrávaniu do App Store Connect, dávkovým exportom aj opakovane použiteľným projektom.
 
-Vytvárajte kompletné sady snímok obrazovky pre iPhone, iPad, Mac, telefóny s Androidom, tablety s Androidom aj rozloženia pre Pixel. Začnite so šablónou alebo si postavte vlastný systém rozložení. Vložte snímky obrazovky, pridajte rámy zariadení alebo kompozície bez rámov, napíšte titulky a popisy, naštýlujte formátovaný text vlastnými písmami a dolaďte každý detail priamo na plátne.
+Vytvárajte kompletné sady snímok obrazovky pre iPhone, iPad a Mac. Začnite so šablónou alebo si postavte vlastný systém rozložení. Vložte snímky obrazovky, pridajte rámy zariadení alebo kompozície bez rámov, napíšte titulky a popisy, naštýlujte formátovaný text vlastnými písmami a dolaďte každý detail priamo na plátne.
 
 Varianty vydaní, jazykové prepisy, plány riadkov pre jednotlivé obchody aj podklady pripravené na export si držte v jednom projekte — pre App Store, weby, sociálne siete a spúšťacie kampane.
 
@@ -1077,7 +1084,7 @@ Kľúčové funkcie:
 - Používajte zabudované šablóny alebo vlastné rozloženia pre opakované vydania
 - Navrhujte viacsnímkové riadky, porovnávacie rozloženia a celé kampane
 - Dávkovo importujte snímky obrazovky do riadkov a rýchlo vymieňajte obrázky
-- Pridávajte rámy zariadení pre iPhone, iPad, Mac, Android, Pixel a abstraktné rozloženia
+- Pridávajte rámy zariadení pre iPhone, iPad, Mac a abstraktné rozloženia
 - Pracujte s textom, tvarmi, obrázkami, prechodmi, dlaždicovými pozadiami a SVG grafikou
 - Upravujte formátovaný text vlastnými písmami, variantmi písma, rozostupmi, zarovnaním a veľkosťou
 - Meňte umiestnenie, prichytávanie, vrstvenie, orezanie a otáčanie priamo na plátne
@@ -1104,7 +1111,7 @@ A Screenshot Bro képernyőkép-generátor alkalmazásokhoz, az App Store-hoz sz
 
 Az általános tervezőprogramokkal ellentétben a Screenshot Bro ismeri a készülékenkénti sorokat, a lokalizációt, az App Store Connect-feltöltéseket, a kötegelt exportot, az újrafelhasználható projekteket és a helyi AI-asszisztenssel végzett automatizálást a Model Context Protocol révén.
 
-Állíts össze teljes képernyőkép-sorozatot iPhone-ra, iPadre, Macre, Android-telefonokra, Android-tabletekre és Pixel-elrendezésekhez. Indulj egy sablonból, vagy alakítsd ki a saját elrendezési rendszeredet. Húzd be a képernyőképeket, tegyél rájuk készülékkeretet vagy hagyd őket keret nélkül, írj főcímeket és feliratokat, formázd a szöveget egyedi betűtípusokkal, és hangolj minden részletet a vásznon.
+Állíts össze teljes képernyőkép-sorozatot iPhone-ra, iPadre és Macre. Indulj egy sablonból, vagy alakítsd ki a saját elrendezési rendszeredet. Húzd be a képernyőképeket, tegyél rájuk készülékkeretet vagy hagyd őket keret nélkül, írj főcímeket és feliratokat, formázd a szöveget egyedi betűtípusokkal, és hangolj minden részletet a vásznon.
 
 A Screenshot Bro helyi MCP-kiszolgálót futtathat a Macen. Csatlakoztass egy MCP-kompatibilis asszisztenst — például a Claude Code-ot, a Claude Desktopot, a Cursort vagy más klienst —, és bízd rá a projektek létrehozását, a sorok szerkesztését, az alakzatok rendezését, a képernyőképek importálását, a szövegek fordítását, a vászonelőnézetek renderelését és a végleges képek exportálását. Az MCP opcionális, alapértelmezés szerint kikapcsolt, csak loopback címen érhető el, és hozzáférési token védi.
 
@@ -1115,7 +1122,7 @@ Főbb funkciók:
 - App Store-képernyőképek készítése egyetlen projektből
 - Beépített sablonok vagy egyedi elrendezések ismétlődő kiadásokhoz
 - Képernyőképek kötegelt importálása sorokba, képek gyors cseréje
-- Készülékkeretek iPhone, iPad, Mac, Android, Pixel és absztrakt elrendezésekhez
+- Készülékkeretek iPhone, iPad, Mac és absztrakt elrendezésekhez
 - Szöveg, alakzatok, képek, színátmenetek, csempézett hátterek és SVG-grafikák használata
 - Formázott szöveg szerkesztése egyedi betűtípusokkal, betűváltozatokkal, térközzel, igazítással és méretezéssel
 - Nyelvspecifikus szöveg- és képfelülbírálatok kezelése minden piachoz
@@ -1142,7 +1149,7 @@ A Screenshot Bro kifejezetten App Store-képernyőképekhez készült képernyő
 
 Az általános tervezőprogramokkal ellentétben a Screenshot Bro ismeri a készülékenkénti sorokat, a lokalizációt, az App Store Connect-feltöltéseket, a kötegelt exportot és az újrafelhasználható projekteket.
 
-Állíts össze teljes képernyőkép-sorozatot iPhone-ra, iPadre, Macre, Android-telefonokra, Android-tabletekre és Pixel-elrendezésekhez. Indulj egy sablonból, vagy alakítsd ki a saját elrendezési rendszeredet. Húzd be a képernyőképeket, tegyél rájuk készülékkeretet vagy hagyd őket keret nélkül, írj főcímeket és feliratokat, formázd a szöveget egyedi betűtípusokkal, és hangolj minden részletet a vásznon.
+Állíts össze teljes képernyőkép-sorozatot iPhone-ra, iPadre és Macre. Indulj egy sablonból, vagy alakítsd ki a saját elrendezési rendszeredet. Húzd be a képernyőképeket, tegyél rájuk készülékkeretet vagy hagyd őket keret nélkül, írj főcímeket és feliratokat, formázd a szöveget egyedi betűtípusokkal, és hangolj minden részletet a vásznon.
 
 Tartsd egy projektben a kiadásváltozatokat, a nyelvspecifikus felülbírálatokat, az áruházankénti sorterveket és az exportra kész elemeket az App Store, a webhelyek, a közösségi média és a bevezető kampányok számára.
 
@@ -1152,7 +1159,7 @@ Főbb funkciók:
 - Beépített sablonok vagy egyedi elrendezések ismétlődő kiadásokhoz
 - Többképes sorok, összehasonlító elrendezések és teljes kampányok tervezése
 - Képernyőképek kötegelt importálása sorokba, képek gyors cseréje
-- Készülékkeretek iPhone, iPad, Mac, Android, Pixel és absztrakt elrendezésekhez
+- Készülékkeretek iPhone, iPad, Mac és absztrakt elrendezésekhez
 - Szöveg, alakzatok, képek, színátmenetek, csempézett hátterek és SVG-grafikák használata
 - Formázott szöveg szerkesztése egyedi betűtípusokkal, betűváltozatokkal, térközzel, igazítással és méretezéssel
 - Elhelyezés, illesztés, rétegsorrend, vágás és forgatás közvetlenül a vásznon
@@ -1179,7 +1186,7 @@ Screenshot Bro este un generator de capturi de ecran pentru App Store. Proiectez
 
 Spre deosebire de instrumentele generice de design, Screenshot Bro înțelege rândurile dedicate fiecărui dispozitiv, localizarea, încărcările în App Store Connect, exporturile în lot, proiectele reutilizabile și automatizarea locală cu asistenți AI prin Model Context Protocol.
 
-Construiește seturi complete de capturi pentru iPhone, iPad, Mac, telefoane Android, tablete Android și machete Pixel. Pornește de la un șablon sau creează-ți propriul sistem de aspect. Adaugă capturile, pune rame de dispozitiv sau compoziții fără ramă, scrie titluri și descrieri, stilizează textul îmbogățit cu fonturi proprii și reglează fiecare detaliu direct pe canvas.
+Construiește seturi complete de capturi pentru iPhone, iPad și Mac. Pornește de la un șablon sau creează-ți propriul sistem de aspect. Adaugă capturile, pune rame de dispozitiv sau compoziții fără ramă, scrie titluri și descrieri, stilizează textul îmbogățit cu fonturi proprii și reglează fiecare detaliu direct pe canvas.
 
 Screenshot Bro poate găzdui un server MCP local pe Mac. Conectează un asistent compatibil MCP — Claude Code, Claude Desktop, Cursor sau alt client — și lasă-l să creeze proiecte, să editeze rânduri, să aranjeze forme, să importe capturi de ecran, să traducă texte, să randeze previzualizări ale canvasului și să exporte imaginile finale. MCP este opțional, dezactivat implicit, limitat la loopback și protejat cu un token de acces.
 
@@ -1190,7 +1197,7 @@ Funcții principale:
 - Creează capturi de ecran pentru App Store dintr-un singur proiect
 - Folosește șabloane incluse sau machete proprii pentru lansări repetate
 - Importă capturi în lot pe rânduri și înlocuiește rapid imaginile
-- Adaugă rame de dispozitiv pentru iPhone, iPad, Mac, Android, Pixel și machete abstracte
+- Adaugă rame de dispozitiv pentru iPhone, iPad, Mac și machete abstracte
 - Lucrează cu text, forme, imagini, degradeuri, fundaluri în mozaic și grafică SVG
 - Editează text îmbogățit cu fonturi proprii, variante de font, spațiere, aliniere și dimensiuni
 - Gestionează suprascrieri de text și de imagini pentru fiecare piață
@@ -1219,7 +1226,7 @@ Screenshot Bro este un editor și un generator de capturi de ecran făcut specia
 
 Spre deosebire de instrumentele generice de design, Screenshot Bro înțelege rândurile dedicate fiecărui dispozitiv, localizarea, încărcările în App Store Connect, exporturile în lot și proiectele reutilizabile.
 
-Construiește seturi complete de capturi pentru iPhone, iPad, Mac, telefoane Android, tablete Android și machete Pixel. Pornește de la un șablon sau creează-ți propriul sistem de aspect. Adaugă capturile, pune rame de dispozitiv sau compoziții fără ramă, scrie titluri și descrieri, stilizează textul îmbogățit cu fonturi proprii și reglează fiecare detaliu direct pe canvas.
+Construiește seturi complete de capturi pentru iPhone, iPad și Mac. Pornește de la un șablon sau creează-ți propriul sistem de aspect. Adaugă capturile, pune rame de dispozitiv sau compoziții fără ramă, scrie titluri și descrieri, stilizează textul îmbogățit cu fonturi proprii și reglează fiecare detaliu direct pe canvas.
 
 Ține variantele de lansare, suprascrierile pe limbă, planurile de rânduri pentru fiecare magazin și materialele gata de export într-un singur proiect, pentru App Store, site-uri web, rețele sociale și campanii de lansare.
 
@@ -1229,7 +1236,7 @@ Funcții principale:
 - Folosește șabloane incluse sau machete proprii pentru lansări repetate
 - Proiectează rânduri cu mai multe capturi, machete comparative și campanii întregi
 - Importă capturi în lot pe rânduri și înlocuiește rapid imaginile
-- Adaugă rame de dispozitiv pentru iPhone, iPad, Mac, Android, Pixel și machete abstracte
+- Adaugă rame de dispozitiv pentru iPhone, iPad, Mac și machete abstracte
 - Lucrează cu text, forme, imagini, degradeuri, fundaluri în mozaic și grafică SVG
 - Editează text îmbogățit cu fonturi proprii, variante de font, spațiere, aliniere și dimensiuni
 - Ajustează poziția, alinierea magnetică, straturile, decuparea și rotația direct pe canvas
@@ -1256,7 +1263,7 @@ Screenshot Bro je generator snimki zaslona za App Store. Osmislite cijeli set sn
 
 Za razliku od općenitih dizajnerskih alata, Screenshot Bro razumije retke vezane uz pojedini uređaj, lokalizaciju, prijenos na App Store Connect, skupni izvoz, projekte za višekratnu upotrebu i lokalnu automatizaciju pomoću AI asistenta preko protokola Model Context Protocol.
 
-Izradite kompletne setove snimki zaslona za iPhone, iPad, Mac, Android telefone, Android tablete i Pixel rasporede. Krenite od predloška ili izgradite vlastiti sustav rasporeda. Ubacite snimke zaslona, dodajte okvire uređaja ili kompozicije bez okvira, napišite naslove i opise, oblikujte obogaćeni tekst vlastitim fontovima i dotjerajte svaki detalj na platnu.
+Izradite kompletne setove snimki zaslona za iPhone, iPad i Mac. Krenite od predloška ili izgradite vlastiti sustav rasporeda. Ubacite snimke zaslona, dodajte okvire uređaja ili kompozicije bez okvira, napišite naslove i opise, oblikujte obogaćeni tekst vlastitim fontovima i dotjerajte svaki detalj na platnu.
 
 Screenshot Bro može pokrenuti lokalni MCP poslužitelj na vašem Macu. Povežite MCP-kompatibilnog asistenta poput alata Claude Code, Claude Desktop, Cursor ili nekog drugog klijenta i pustite ga da stvara projekte, uređuje retke, raspoređuje oblike, uvozi snimke zaslona, prevodi tekst, prikazuje pretpreglede platna i izvozi konačne slike. MCP je neobavezan, prema zadanim postavkama isključen, radi samo lokalno i zaštićen je pristupnim tokenom.
 
@@ -1267,7 +1274,7 @@ Ključne značajke:
 - Izradite App Store snimke zaslona iz jednog projekta
 - Koristite ugrađene predloške ili vlastite rasporede za ponavljajuća izdanja
 - Skupno uvezite snimke zaslona u retke i brzo zamijenite slike
-- Dodajte okvire uređaja za iPhone, iPad, Mac, Android, Pixel i apstraktne rasporede
+- Dodajte okvire uređaja za iPhone, iPad, Mac i apstraktne rasporede
 - Radite s tekstom, oblicima, slikama, gradijentima, popločanim pozadinama i SVG grafikama
 - Uređujte obogaćeni tekst uz vlastite fontove, varijante pisma, razmake, poravnanje i veličine
 - Upravljajte tekstom i slikama prilagođenima svakom tržištu
@@ -1294,7 +1301,7 @@ Screenshot Bro je alat za izradu i uređivanje snimki zaslona, napravljen upravo
 
 Za razliku od općenitih dizajnerskih alata, Screenshot Bro razumije retke vezane uz pojedini uređaj, lokalizaciju, prijenos na App Store Connect, skupni izvoz i projekte za višekratnu upotrebu.
 
-Izradite kompletne setove snimki zaslona za iPhone, iPad, Mac, Android telefone, Android tablete i Pixel rasporede. Krenite od predloška ili izgradite vlastiti sustav rasporeda. Ubacite snimke zaslona, dodajte okvire uređaja ili kompozicije bez okvira, napišite naslove i opise, oblikujte obogaćeni tekst vlastitim fontovima i dotjerajte svaki detalj na platnu.
+Izradite kompletne setove snimki zaslona za iPhone, iPad i Mac. Krenite od predloška ili izgradite vlastiti sustav rasporeda. Ubacite snimke zaslona, dodajte okvire uređaja ili kompozicije bez okvira, napišite naslove i opise, oblikujte obogaćeni tekst vlastitim fontovima i dotjerajte svaki detalj na platnu.
 
 Držite varijante izdanja, prilagodbe za pojedini jezik, planove redaka za pojedinu trgovinu i materijale spremne za izvoz u jednom projektu — za App Store, web stranice, društvene mreže i lansirne kampanje.
 
@@ -1304,7 +1311,7 @@ Ključne značajke:
 - Koristite ugrađene predloške ili vlastite rasporede za ponavljajuća izdanja
 - Osmislite retke s više prizora, usporedne rasporede i cijele kampanje
 - Skupno uvezite snimke zaslona u retke i brzo zamijenite slike
-- Dodajte okvire uređaja za iPhone, iPad, Mac, Android, Pixel i apstraktne rasporede
+- Dodajte okvire uređaja za iPhone, iPad, Mac i apstraktne rasporede
 - Radite s tekstom, oblicima, slikama, gradijentima, popločanim pozadinama i SVG grafikama
 - Uređujte obogaćeni tekst uz vlastite fontove, varijante pisma, razmake, poravnanje i veličine
 - Namjestite položaj, prianjanje, slojeve, obrezivanje i rotaciju izravno na platnu
@@ -1331,7 +1338,7 @@ DESC_MAC["el"] = """\
 
 Σε αντίθεση με τα γενικά εργαλεία σχεδίασης, το Screenshot Bro κατανοεί σειρές ανά συσκευή, τοπική προσαρμογή, μεταφορτώσεις στο App Store Connect, μαζικές εξαγωγές, επαναχρησιμοποιήσιμα έργα και τοπική αυτοματοποίηση με βοηθό τεχνητής νοημοσύνης μέσω του Model Context Protocol.
 
-Δημιουργήστε πλήρη σετ στιγμιοτύπων για iPhone, iPad, Mac, τηλέφωνα Android, tablet Android και διατάξεις Pixel. Ξεκινήστε από ένα πρότυπο ή φτιάξτε το δικό σας σύστημα διατάξεων. Ρίξτε μέσα στιγμιότυπα, προσθέστε πλαίσια συσκευών ή συνθέσεις χωρίς πλαίσιο, γράψτε τίτλους και λεζάντες, μορφοποιήστε εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές και ρυθμίστε κάθε λεπτομέρεια πάνω στον καμβά.
+Δημιουργήστε πλήρη σετ στιγμιοτύπων για iPhone, iPad και Mac. Ξεκινήστε από ένα πρότυπο ή φτιάξτε το δικό σας σύστημα διατάξεων. Ρίξτε μέσα στιγμιότυπα, προσθέστε πλαίσια συσκευών ή συνθέσεις χωρίς πλαίσιο, γράψτε τίτλους και λεζάντες, μορφοποιήστε εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές και ρυθμίστε κάθε λεπτομέρεια πάνω στον καμβά.
 
 Το Screenshot Bro μπορεί να φιλοξενήσει έναν τοπικό διακομιστή MCP στον Mac σας. Συνδέστε έναν συμβατό με MCP βοηθό, όπως το Claude Code, το Claude Desktop, το Cursor ή οποιονδήποτε άλλο πελάτη, και αφήστε τον να δημιουργεί έργα, να επεξεργάζεται σειρές, να τακτοποιεί σχήματα, να εισάγει στιγμιότυπα, να μεταφράζει κείμενα, να αποδίδει προεπισκοπήσεις του καμβά και να εξάγει τελικές εικόνες. Το MCP είναι προαιρετικό, ανενεργό από προεπιλογή, μόνο τοπικό (loopback) και προστατεύεται με διακριτικό πρόσβασης.
 
@@ -1342,7 +1349,7 @@ DESC_MAC["el"] = """\
 - Δημιουργία στιγμιοτύπων για το App Store από ένα μόνο έργο
 - Ενσωματωμένα πρότυπα ή δικές σας διατάξεις για επαναλαμβανόμενες κυκλοφορίες
 - Μαζική εισαγωγή στιγμιοτύπων σε σειρές και γρήγορη αντικατάσταση εικόνων
-- Πλαίσια συσκευών για iPhone, iPad, Mac, Android, Pixel και αφηρημένες διατάξεις
+- Πλαίσια συσκευών για iPhone, iPad, Mac και αφηρημένες διατάξεις
 - Κείμενο, σχήματα, εικόνες, διαβαθμίσεις, φόντα με μοτίβο και γραφικά SVG
 - Εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές, παραλλαγές, διάστιχο, στοίχιση και μεγέθη
 - Διαχείριση παρακάμψεων κειμένου και εικόνων ανά γλώσσα και αγορά
@@ -1369,7 +1376,7 @@ DESC_IOS["el"] = """\
 
 Σε αντίθεση με τα γενικά εργαλεία σχεδίασης, το Screenshot Bro κατανοεί σειρές ανά συσκευή, τοπική προσαρμογή, μεταφορτώσεις στο App Store Connect, μαζικές εξαγωγές και επαναχρησιμοποιήσιμα έργα.
 
-Δημιουργήστε πλήρη σετ στιγμιοτύπων για iPhone, iPad, Mac, τηλέφωνα Android, tablet Android και διατάξεις Pixel. Ξεκινήστε από ένα πρότυπο ή φτιάξτε το δικό σας σύστημα διατάξεων. Ρίξτε μέσα στιγμιότυπα, προσθέστε πλαίσια συσκευών ή συνθέσεις χωρίς πλαίσιο, γράψτε τίτλους και λεζάντες, μορφοποιήστε εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές και ρυθμίστε κάθε λεπτομέρεια πάνω στον καμβά.
+Δημιουργήστε πλήρη σετ στιγμιοτύπων για iPhone, iPad και Mac. Ξεκινήστε από ένα πρότυπο ή φτιάξτε το δικό σας σύστημα διατάξεων. Ρίξτε μέσα στιγμιότυπα, προσθέστε πλαίσια συσκευών ή συνθέσεις χωρίς πλαίσιο, γράψτε τίτλους και λεζάντες, μορφοποιήστε εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές και ρυθμίστε κάθε λεπτομέρεια πάνω στον καμβά.
 
 Κρατήστε παραλλαγές κυκλοφορίας, παρακάμψεις ανά γλώσσα, πλάνα σειρών ανά κατάστημα και έτοιμα προς εξαγωγή στοιχεία σε ένα έργο, για το App Store, ιστότοπους, κοινωνικά δίκτυα και καμπάνιες κυκλοφορίας.
 
@@ -1379,7 +1386,7 @@ DESC_IOS["el"] = """\
 - Ενσωματωμένα πρότυπα ή δικές σας διατάξεις για επαναλαμβανόμενες κυκλοφορίες
 - Σχεδίαση σειρών με πολλά στιγμιότυπα, διατάξεων σύγκρισης και ολόκληρων καμπανιών
 - Μαζική εισαγωγή στιγμιοτύπων σε σειρές και γρήγορη αντικατάσταση εικόνων
-- Πλαίσια συσκευών για iPhone, iPad, Mac, Android, Pixel και αφηρημένες διατάξεις
+- Πλαίσια συσκευών για iPhone, iPad, Mac και αφηρημένες διατάξεις
 - Κείμενο, σχήματα, εικόνες, διαβαθμίσεις, φόντα με μοτίβο και γραφικά SVG
 - Εμπλουτισμένο κείμενο με δικές σας γραμματοσειρές, παραλλαγές, διάστιχο, στοίχιση και μεγέθη
 - Ρύθμιση θέσης, κουμπώματος, επιπέδων, περικοπής και περιστροφής απευθείας στον καμβά
@@ -1406,7 +1413,7 @@ Screenshot Bro és un generador de captures de pantalla d'aplicacions per a l'Ap
 
 A diferència de les eines de disseny genèriques, Screenshot Bro entén les files per dispositiu, la localització, les pujades a App Store Connect, les exportacions per lots, els projectes reutilitzables i l'automatització local amb assistents d'IA mitjançant el Model Context Protocol.
 
-Crea jocs complets de captures per a iPhone, iPad, Mac, telèfons Android, tauletes Android i disposicions Pixel. Comença amb una plantilla o munta el teu propi sistema de disposicions. Arrossega-hi captures, afegeix marcs de dispositiu o composicions sense marc, escriu titulars i peus de text, dona estil al text enriquit amb tipus de lletra propis i ajusta cada detall al llenç.
+Crea jocs complets de captures per a iPhone, iPad i Mac. Comença amb una plantilla o munta el teu propi sistema de disposicions. Arrossega-hi captures, afegeix marcs de dispositiu o composicions sense marc, escriu titulars i peus de text, dona estil al text enriquit amb tipus de lletra propis i ajusta cada detall al llenç.
 
 Screenshot Bro pot allotjar un servidor MCP local al teu Mac. Connecta-hi un assistent compatible amb MCP, com ara Claude Code, Claude Desktop, Cursor o qualsevol altre client, i deixa que creï projectes, editi files, ordeni formes, importi captures, tradueixi textos, generi previsualitzacions del llenç i exporti les imatges finals. L'MCP és opcional, està desactivat per defecte, només escolta en loopback i està protegit amb un token d'accés.
 
@@ -1417,7 +1424,7 @@ Funcions principals:
 - Crea captures de pantalla per a l'App Store des d'un sol projecte
 - Fes servir plantilles integrades o disposicions pròpies per als llançaments recurrents
 - Importa captures per lots dins de les files i substitueix imatges ràpidament
-- Afegeix marcs de dispositiu per a iPhone, iPad, Mac, Android, Pixel i disposicions abstractes
+- Afegeix marcs de dispositiu per a iPhone, iPad, Mac i disposicions abstractes
 - Treballa amb text, formes, imatges, degradats, fons en mosaic i gràfics SVG
 - Edita text enriquit amb tipus de lletra propis, variants, espaiat, alineació i mides
 - Gestiona les substitucions de text i d'imatge de cada mercat
@@ -1444,7 +1451,7 @@ Screenshot Bro és un creador i editor de captures de pantalla fet expressament 
 
 A diferència de les eines de disseny genèriques, Screenshot Bro entén les files per dispositiu, la localització, les pujades a App Store Connect, les exportacions per lots i els projectes reutilitzables.
 
-Crea jocs complets de captures per a iPhone, iPad, Mac, telèfons Android, tauletes Android i disposicions Pixel. Comença amb una plantilla o munta el teu propi sistema de disposicions. Arrossega-hi captures, afegeix marcs de dispositiu o composicions sense marc, escriu titulars i peus de text, dona estil al text enriquit amb tipus de lletra propis i ajusta cada detall al llenç.
+Crea jocs complets de captures per a iPhone, iPad i Mac. Comença amb una plantilla o munta el teu propi sistema de disposicions. Arrossega-hi captures, afegeix marcs de dispositiu o composicions sense marc, escriu titulars i peus de text, dona estil al text enriquit amb tipus de lletra propis i ajusta cada detall al llenç.
 
 Mantén les variants de llançament, les substitucions per idioma, els plans de files per botiga i els recursos llestos per exportar dins d'un mateix projecte, per a l'App Store, webs, xarxes socials i campanyes de llançament.
 
@@ -1454,7 +1461,7 @@ Funcions principals:
 - Fes servir plantilles integrades o disposicions pròpies per als llançaments recurrents
 - Dissenya files de diverses captures, disposicions comparatives i campanyes senceres
 - Importa captures per lots dins de les files i substitueix imatges ràpidament
-- Afegeix marcs de dispositiu per a iPhone, iPad, Mac, Android, Pixel i disposicions abstractes
+- Afegeix marcs de dispositiu per a iPhone, iPad, Mac i disposicions abstractes
 - Treballa amb text, formes, imatges, degradats, fons en mosaic i gràfics SVG
 - Edita text enriquit amb tipus de lletra propis, variants, espaiat, alineació i mides
 - Ajusta la col·locació, l'ajust automàtic, les capes, el retall i la rotació al llenç
@@ -1481,7 +1488,7 @@ Screenshot Bro je generator posnetkov zaslona za App Store. Celoten nabor posnet
 
 Za razliko od splošnih orodij za oblikovanje Screenshot Bro pozna vrstice za posamezne naprave, lokalizacijo, nalaganje v App Store Connect, paketne izvoze, projekte za večkratno uporabo in lokalno avtomatizacijo s pomočniki AI prek Model Context Protocol.
 
-Sestavite celotne nabore posnetkov za iPhone, iPad, Mac, telefone Android, tablice Android in postavitve za Pixel. Začnite s predlogo ali zgradite lasten sistem postavitev. Dodajte posnetke zaslona, uporabite okvirje naprav ali kompozicije brez okvirjev, napišite naslove in podnapise, oblikujte besedilo z lastnimi pisavami in na platnu izpilite vsako podrobnost.
+Sestavite celotne nabore posnetkov za iPhone, iPad in Mac. Začnite s predlogo ali zgradite lasten sistem postavitev. Dodajte posnetke zaslona, uporabite okvirje naprav ali kompozicije brez okvirjev, napišite naslove in podnapise, oblikujte besedilo z lastnimi pisavami in na platnu izpilite vsako podrobnost.
 
 Screenshot Bro lahko na Macu gosti lokalni strežnik MCP. Povežite združljivega pomočnika, kot so Claude Code, Claude Desktop, Cursor ali drug odjemalec, in mu prepustite ustvarjanje projektov, urejanje vrstic, razporejanje oblik, uvoz posnetkov zaslona, prevajanje besedila, izris predogledov platna in izvoz končnih slik. MCP je izbiren, privzeto izklopljen, dostopen samo lokalno in zaščiten z žetonom.
 
@@ -1493,7 +1500,7 @@ Ključne funkcije:
 - Uporabite vgrajene predloge ali lastne postavitve za ponavljajoče se izdaje
 - Oblikujte vrstice z več posnetki, primerjalne postavitve in celotne kampanje
 - Paketno uvozite posnetke zaslona v vrstice in hitro zamenjajte slike
-- Dodajte okvirje naprav za iPhone, iPad, Mac, Android, Pixel in abstraktne postavitve
+- Dodajte okvirje naprav za iPhone, iPad, Mac in abstraktne postavitve
 - Delajte z besedilom, oblikami, slikami, prelivi, ponavljajočimi se ozadji in grafiko SVG
 - Urejajte oblikovano besedilo z lastnimi pisavami, različicami pisav, razmiki, poravnavo in velikostmi
 - Postavitev, pripenjanje, plasti, obrezovanje in vrtenje prilagajajte neposredno na platnu
@@ -1523,7 +1530,7 @@ Screenshot Bro je urejevalnik in generator posnetkov zaslona, izdelan posebej za
 
 Za razliko od splošnih orodij za oblikovanje Screenshot Bro pozna vrstice za posamezne naprave, lokalizacijo, nalaganje v App Store Connect, paketne izvoze in projekte za večkratno uporabo.
 
-Sestavite celotne nabore posnetkov za iPhone, iPad, Mac, telefone Android, tablice Android in postavitve za Pixel. Začnite s predlogo ali zgradite lasten sistem postavitev. Dodajte posnetke zaslona, uporabite okvirje naprav ali kompozicije brez okvirjev, napišite naslove in podnapise, oblikujte besedilo z lastnimi pisavami in na platnu izpilite vsako podrobnost.
+Sestavite celotne nabore posnetkov za iPhone, iPad in Mac. Začnite s predlogo ali zgradite lasten sistem postavitev. Dodajte posnetke zaslona, uporabite okvirje naprav ali kompozicije brez okvirjev, napišite naslove in podnapise, oblikujte besedilo z lastnimi pisavami in na platnu izpilite vsako podrobnost.
 
 Različice izdaj, prilagoditve za posamezne jezike, načrte vrstic za posamezne trgovine in gradivo, pripravljeno za izvoz, hranite v enem projektu za App Store, spletne strani, družbena omrežja in lansirne kampanje.
 
@@ -1533,7 +1540,7 @@ Ključne funkcije:
 - Uporabite vgrajene predloge ali lastne postavitve za ponavljajoče se izdaje
 - Oblikujte vrstice z več posnetki, primerjalne postavitve in celotne kampanje
 - Paketno uvozite posnetke zaslona v vrstice in hitro zamenjajte slike
-- Dodajte okvirje naprav za iPhone, iPad, Mac, Android, Pixel in abstraktne postavitve
+- Dodajte okvirje naprav za iPhone, iPad, Mac in abstraktne postavitve
 - Delajte z besedilom, oblikami, slikami, prelivi, ponavljajočimi se ozadji in grafiko SVG
 - Urejajte oblikovano besedilo z lastnimi pisavami, različicami pisav, razmiki, poravnavo in velikostmi
 - Postavitev, pripenjanje, plasti, obrezovanje in vrtenje prilagajajte neposredno na platnu
@@ -1560,7 +1567,7 @@ Screenshot Bro ialah penjana tangkapan skrin aplikasi untuk App Store. Reka satu
 
 Tidak seperti alat reka bentuk umum, Screenshot Bro memahami baris khusus peranti, penyetempatan, muat naik ke App Store Connect, eksport pukal, projek boleh guna semula, dan automasi pembantu AI tempatan melalui Model Context Protocol.
 
-Bina set tangkapan skrin yang lengkap untuk iPhone, iPad, Mac, telefon Android, tablet Android, dan susun atur Pixel. Mulakan daripada templat atau bina sistem susun atur anda sendiri. Masukkan tangkapan skrin, tambah bingkai peranti atau komposisi tanpa bingkai, tulis tajuk dan kapsyen, gayakan teks kaya dengan fon tersuai, dan perhalusi setiap butiran pada kanvas.
+Bina set tangkapan skrin yang lengkap untuk iPhone, iPad, dan Mac. Mulakan daripada templat atau bina sistem susun atur anda sendiri. Masukkan tangkapan skrin, tambah bingkai peranti atau komposisi tanpa bingkai, tulis tajuk dan kapsyen, gayakan teks kaya dengan fon tersuai, dan perhalusi setiap butiran pada kanvas.
 
 Screenshot Bro boleh menjalankan pelayan MCP tempatan pada Mac anda. Sambungkan pembantu yang serasi MCP seperti Claude Code, Claude Desktop, Cursor, atau klien lain, dan biarkan ia mencipta projek, menyunting baris, menyusun bentuk, mengimport tangkapan skrin, menterjemah teks, memaparkan pratonton kanvas, dan mengeksport imej akhir. MCP ialah pilihan, dimatikan secara lalai, hanya menerima sambungan tempatan, dan dilindungi token akses.
 
@@ -1572,7 +1579,7 @@ Ciri utama:
 - Guna templat terbina dalam atau susun atur tersuai untuk pelancaran berulang
 - Reka baris berbilang gambar, susun atur perbandingan, dan kempen penuh
 - Import tangkapan skrin secara pukal ke dalam baris dan ganti imej dengan pantas
-- Tambah bingkai peranti untuk iPhone, iPad, Mac, Android, Pixel, dan susun atur abstrak
+- Tambah bingkai peranti untuk iPhone, iPad, Mac, dan susun atur abstrak
 - Olah teks, bentuk, imej, kecerunan, latar berjubin, dan grafik SVG
 - Sunting teks kaya dengan fon tersuai, varian fon, jarak, penjajaran, dan saiz
 - Laraskan kedudukan, snap, lapisan, pemangkasan, dan putaran terus pada kanvas
@@ -1596,7 +1603,7 @@ Screenshot Bro ialah pencipta dan penyunting tangkapan skrin yang dibina khas un
 
 Tidak seperti alat reka bentuk umum, Screenshot Bro memahami baris khusus peranti, penyetempatan, muat naik ke App Store Connect, eksport pukal, dan projek boleh guna semula.
 
-Bina set tangkapan skrin yang lengkap untuk iPhone, iPad, Mac, telefon Android, tablet Android, dan susun atur Pixel. Mulakan daripada templat atau bina sistem susun atur anda sendiri. Masukkan tangkapan skrin, tambah bingkai peranti atau komposisi tanpa bingkai, tulis tajuk dan kapsyen, gayakan teks kaya dengan fon tersuai, dan perhalusi setiap butiran pada kanvas.
+Bina set tangkapan skrin yang lengkap untuk iPhone, iPad, dan Mac. Mulakan daripada templat atau bina sistem susun atur anda sendiri. Masukkan tangkapan skrin, tambah bingkai peranti atau komposisi tanpa bingkai, tulis tajuk dan kapsyen, gayakan teks kaya dengan fon tersuai, dan perhalusi setiap butiran pada kanvas.
 
 Simpan varian keluaran, gantian mengikut bahasa, pelan baris mengikut gedung, dan aset sedia eksport dalam satu projek — untuk App Store, tapak web, media sosial, dan kempen pelancaran.
 
@@ -1606,7 +1613,7 @@ Ciri utama:
 - Guna templat terbina dalam atau susun atur tersuai untuk pelancaran berulang
 - Reka baris berbilang gambar, susun atur perbandingan, dan kempen penuh
 - Import tangkapan skrin secara pukal ke dalam baris dan ganti imej dengan pantas
-- Tambah bingkai peranti untuk iPhone, iPad, Mac, Android, Pixel, dan susun atur abstrak
+- Tambah bingkai peranti untuk iPhone, iPad, Mac, dan susun atur abstrak
 - Olah teks, bentuk, imej, kecerunan, latar berjubin, dan grafik SVG
 - Sunting teks kaya dengan fon tersuai, varian fon, jarak, penjajaran, dan saiz
 - Laraskan kedudukan, snap, lapisan, pemangkasan, dan putaran terus pada kanvas
@@ -1633,7 +1640,7 @@ Screenshot Bro, App Store के लिए ऐप स्क्रीनशॉट
 
 आम डिज़ाइन टूल के उलट, Screenshot Bro डिवाइस-विशिष्ट पंक्तियों, लोकलाइज़ेशन, App Store Connect अपलोड, बैच एक्सपोर्ट, दोबारा इस्तेमाल होने वाले प्रोजेक्ट, और Model Context Protocol के ज़रिए लोकल AI असिस्टेंट ऑटोमेशन को समझता है।
 
-iPhone, iPad, Mac, Android फ़ोन, Android टैबलेट और Pixel लेआउट के लिए पूरे स्क्रीनशॉट सेट बनाएँ। किसी टेम्प्लेट से शुरू करें या अपना लेआउट सिस्टम बनाएँ। स्क्रीनशॉट डालें, डिवाइस फ़्रेम या बिना फ़्रेम वाली कंपोज़िशन जोड़ें, हेडलाइन और कैप्शन लिखें, कस्टम फ़ॉन्ट के साथ रिच टेक्स्ट स्टाइल करें, और कैनवस पर हर बारीकी सँवारें।
+iPhone, iPad और Mac लेआउट के लिए पूरे स्क्रीनशॉट सेट बनाएँ। किसी टेम्प्लेट से शुरू करें या अपना लेआउट सिस्टम बनाएँ। स्क्रीनशॉट डालें, डिवाइस फ़्रेम या बिना फ़्रेम वाली कंपोज़िशन जोड़ें, हेडलाइन और कैप्शन लिखें, कस्टम फ़ॉन्ट के साथ रिच टेक्स्ट स्टाइल करें, और कैनवस पर हर बारीकी सँवारें।
 
 Screenshot Bro आपके Mac पर एक लोकल MCP सर्वर चला सकता है। Claude Code, Claude Desktop, Cursor या किसी दूसरे MCP-संगत असिस्टेंट को जोड़ें और उसे प्रोजेक्ट बनाने, पंक्तियाँ संपादित करने, आकृतियाँ व्यवस्थित करने, स्क्रीनशॉट इंपोर्ट करने, टेक्स्ट का अनुवाद करने, कैनवस प्रीव्यू रेंडर करने और अंतिम इमेज एक्सपोर्ट करने दें। MCP वैकल्पिक है, डिफ़ॉल्ट रूप से बंद रहता है, सिर्फ़ लोकल कनेक्शन लेता है, और एक्सेस टोकन से सुरक्षित है।
 
@@ -1645,7 +1652,7 @@ Screenshot Bro आपके Mac पर एक लोकल MCP सर्वर �
 - बार-बार होने वाले लॉन्च के लिए बिल्ट-इन टेम्प्लेट या अपने लेआउट इस्तेमाल करें
 - मल्टी-शॉट पंक्तियाँ, तुलना वाले लेआउट और पूरे कैंपेन डिज़ाइन करें
 - पंक्तियों में स्क्रीनशॉट बैच-इंपोर्ट करें और इमेज तेज़ी से बदलें
-- iPhone, iPad, Mac, Android, Pixel और एब्स्ट्रैक्ट लेआउट के लिए डिवाइस फ़्रेम जोड़ें
+- iPhone, iPad, Mac और एब्स्ट्रैक्ट लेआउट के लिए डिवाइस फ़्रेम जोड़ें
 - टेक्स्ट, आकृतियाँ, इमेज, ग्रेडिएंट, टाइल वाले बैकग्राउंड और SVG ग्राफ़िक्स के साथ काम करें
 - कस्टम फ़ॉन्ट, फ़ॉन्ट वेरिएंट, स्पेसिंग, अलाइनमेंट और साइज़ कंट्रोल के साथ रिच टेक्स्ट संपादित करें
 - कैनवस पर ही प्लेसमेंट, स्नैपिंग, लेयरिंग, क्रॉपिंग और रोटेशन एडजस्ट करें
@@ -1669,7 +1676,7 @@ Screenshot Bro एक स्क्रीनशॉट मेकर और एड�
 
 आम डिज़ाइन टूल के उलट, Screenshot Bro डिवाइस-विशिष्ट पंक्तियों, लोकलाइज़ेशन, App Store Connect अपलोड, बैच एक्सपोर्ट और दोबारा इस्तेमाल होने वाले प्रोजेक्ट को समझता है।
 
-iPhone, iPad, Mac, Android फ़ोन, Android टैबलेट और Pixel लेआउट के लिए पूरे स्क्रीनशॉट सेट बनाएँ। किसी टेम्प्लेट से शुरू करें या अपना लेआउट सिस्टम बनाएँ। स्क्रीनशॉट डालें, डिवाइस फ़्रेम या बिना फ़्रेम वाली कंपोज़िशन जोड़ें, हेडलाइन और कैप्शन लिखें, कस्टम फ़ॉन्ट के साथ रिच टेक्स्ट स्टाइल करें, और कैनवस पर हर बारीकी सँवारें।
+iPhone, iPad और Mac लेआउट के लिए पूरे स्क्रीनशॉट सेट बनाएँ। किसी टेम्प्लेट से शुरू करें या अपना लेआउट सिस्टम बनाएँ। स्क्रीनशॉट डालें, डिवाइस फ़्रेम या बिना फ़्रेम वाली कंपोज़िशन जोड़ें, हेडलाइन और कैप्शन लिखें, कस्टम फ़ॉन्ट के साथ रिच टेक्स्ट स्टाइल करें, और कैनवस पर हर बारीकी सँवारें।
 
 रिलीज़ वेरिएंट, भाषा-विशिष्ट ओवरराइड, स्टोर-विशिष्ट पंक्ति योजनाएँ और एक्सपोर्ट के लिए तैयार एसेट — सब कुछ एक ही प्रोजेक्ट में रखें, App Store, वेबसाइट, सोशल मीडिया और लॉन्च कैंपेन के लिए।
 
@@ -1679,7 +1686,7 @@ iPhone, iPad, Mac, Android फ़ोन, Android टैबलेट और Pixel
 - बार-बार होने वाले लॉन्च के लिए बिल्ट-इन टेम्प्लेट या अपने लेआउट इस्तेमाल करें
 - मल्टी-शॉट पंक्तियाँ, तुलना वाले लेआउट और पूरे कैंपेन डिज़ाइन करें
 - पंक्तियों में स्क्रीनशॉट बैच-इंपोर्ट करें और इमेज तेज़ी से बदलें
-- iPhone, iPad, Mac, Android, Pixel और एब्स्ट्रैक्ट लेआउट के लिए डिवाइस फ़्रेम जोड़ें
+- iPhone, iPad, Mac और एब्स्ट्रैक्ट लेआउट के लिए डिवाइस फ़्रेम जोड़ें
 - टेक्स्ट, आकृतियाँ, इमेज, ग्रेडिएंट, टाइल वाले बैकग्राउंड और SVG ग्राफ़िक्स के साथ काम करें
 - कस्टम फ़ॉन्ट, फ़ॉन्ट वेरिएंट, स्पेसिंग, अलाइनमेंट और साइज़ कंट्रोल के साथ रिच टेक्स्ट संपादित करें
 - कैनवस पर ही प्लेसमेंट, स्नैपिंग, लेयरिंग, क्रॉपिंग और रोटेशन एडजस्ट करें
@@ -1706,7 +1713,7 @@ Screenshot Bro हे App Store साठी अ‍ॅप स्क्रीन�
 
 सर्वसाधारण डिझाइन साधनांपेक्षा वेगळे, Screenshot Bro डिव्हाइसनुसार ओळी, स्थानिकीकरण, App Store Connect अपलोड, बॅच एक्सपोर्ट, पुन्हा वापरता येणारे प्रकल्प आणि Model Context Protocol द्वारे स्थानिक AI सहाय्यक ऑटोमेशन समजून घेते.
 
-iPhone, iPad, Mac, Android फोन, Android टॅबलेट आणि Pixel मांडणीसाठी संपूर्ण स्क्रीनशॉट संच तयार करा. एखाद्या टेम्प्लेटपासून सुरुवात करा किंवा स्वतःची मांडणी प्रणाली तयार करा. स्क्रीनशॉट टाका, डिव्हाइस फ्रेम किंवा फ्रेमशिवाय रचना जोडा, मथळे आणि मजकूर लिहा, कस्टम फॉन्टसह रिच टेक्स्टला शैली द्या आणि कॅनव्हासवर प्रत्येक तपशील नीट जुळवा.
+iPhone, iPad आणि Mac मांडणीसाठी संपूर्ण स्क्रीनशॉट संच तयार करा. एखाद्या टेम्प्लेटपासून सुरुवात करा किंवा स्वतःची मांडणी प्रणाली तयार करा. स्क्रीनशॉट टाका, डिव्हाइस फ्रेम किंवा फ्रेमशिवाय रचना जोडा, मथळे आणि मजकूर लिहा, कस्टम फॉन्टसह रिच टेक्स्टला शैली द्या आणि कॅनव्हासवर प्रत्येक तपशील नीट जुळवा.
 
 Screenshot Bro तुमच्या Mac वर स्थानिक MCP सर्व्हर चालवू शकते. Claude Code, Claude Desktop, Cursor किंवा इतर MCP-सुसंगत सहाय्यक जोडा आणि त्याला प्रकल्प तयार करू द्या, ओळी संपादित करू द्या, आकार मांडू द्या, स्क्रीनशॉट आयात करू द्या, मजकूर भाषांतरित करू द्या, कॅनव्हास पूर्वावलोकन तयार करू द्या आणि अंतिम प्रतिमा एक्सपोर्ट करू द्या. MCP ऐच्छिक आहे, सुरुवातीला बंद असते, फक्त स्थानिक जोडणी स्वीकारते आणि अ‍ॅक्सेस टोकनने संरक्षित असते.
 
@@ -1718,7 +1725,7 @@ Screenshot Bro तुमच्या Mac वर स्थानिक MCP सर
 - वारंवार होणाऱ्या प्रकाशनांसाठी अंगभूत टेम्प्लेट किंवा स्वतःची मांडणी वापरा
 - अनेक प्रतिमांच्या ओळी, तुलनात्मक मांडणी आणि संपूर्ण मोहिमा रचा
 - ओळींमध्ये स्क्रीनशॉट एकत्रितपणे आयात करा आणि प्रतिमा झटपट बदला
-- iPhone, iPad, Mac, Android, Pixel आणि अमूर्त मांडणीसाठी डिव्हाइस फ्रेम जोडा
+- iPhone, iPad, Mac आणि अमूर्त मांडणीसाठी डिव्हाइस फ्रेम जोडा
 - मजकूर, आकार, प्रतिमा, रंगछटा, फरशीसारखी पार्श्वभूमी आणि SVG ग्राफिक्ससह काम करा
 - कस्टम फॉन्ट, फॉन्ट प्रकार, अंतर, संरेखन आणि आकारासह रिच टेक्स्ट संपादित करा
 - कॅनव्हासवरच स्थान, स्नॅपिंग, थर, कापणी आणि फिरवणे जुळवा
@@ -1742,7 +1749,7 @@ Screenshot Bro हे App Store स्क्रीनशॉटसाठी ख�
 
 सर्वसाधारण डिझाइन साधनांपेक्षा वेगळे, Screenshot Bro डिव्हाइसनुसार ओळी, स्थानिकीकरण, App Store Connect अपलोड, बॅच एक्सपोर्ट आणि पुन्हा वापरता येणारे प्रकल्प समजून घेते.
 
-iPhone, iPad, Mac, Android फोन, Android टॅबलेट आणि Pixel मांडणीसाठी संपूर्ण स्क्रीनशॉट संच तयार करा. एखाद्या टेम्प्लेटपासून सुरुवात करा किंवा स्वतःची मांडणी प्रणाली तयार करा. स्क्रीनशॉट टाका, डिव्हाइस फ्रेम किंवा फ्रेमशिवाय रचना जोडा, मथळे आणि मजकूर लिहा, कस्टम फॉन्टसह रिच टेक्स्टला शैली द्या आणि कॅनव्हासवर प्रत्येक तपशील नीट जुळवा.
+iPhone, iPad आणि Mac मांडणीसाठी संपूर्ण स्क्रीनशॉट संच तयार करा. एखाद्या टेम्प्लेटपासून सुरुवात करा किंवा स्वतःची मांडणी प्रणाली तयार करा. स्क्रीनशॉट टाका, डिव्हाइस फ्रेम किंवा फ्रेमशिवाय रचना जोडा, मथळे आणि मजकूर लिहा, कस्टम फॉन्टसह रिच टेक्स्टला शैली द्या आणि कॅनव्हासवर प्रत्येक तपशील नीट जुळवा.
 
 प्रकाशनाचे प्रकार, भाषेनुसार बदल, स्टोअरनुसार ओळींच्या योजना आणि एक्सपोर्टसाठी तयार सामग्री — सर्व काही एकाच प्रकल्पात ठेवा, App Store, संकेतस्थळे, समाजमाध्यमे आणि प्रकाशन मोहिमांसाठी.
 
@@ -1752,7 +1759,7 @@ iPhone, iPad, Mac, Android फोन, Android टॅबलेट आणि Pixel
 - वारंवार होणाऱ्या प्रकाशनांसाठी अंगभूत टेम्प्लेट किंवा स्वतःची मांडणी वापरा
 - अनेक प्रतिमांच्या ओळी, तुलनात्मक मांडणी आणि संपूर्ण मोहिमा रचा
 - ओळींमध्ये स्क्रीनशॉट एकत्रितपणे आयात करा आणि प्रतिमा झटपट बदला
-- iPhone, iPad, Mac, Android, Pixel आणि अमूर्त मांडणीसाठी डिव्हाइस फ्रेम जोडा
+- iPhone, iPad, Mac आणि अमूर्त मांडणीसाठी डिव्हाइस फ्रेम जोडा
 - मजकूर, आकार, प्रतिमा, रंगछटा, फरशीसारखी पार्श्वभूमी आणि SVG ग्राफिक्ससह काम करा
 - कस्टम फॉन्ट, फॉन्ट प्रकार, अंतर, संरेखन आणि आकारासह रिच टेक्स्ट संपादित करा
 - कॅनव्हासवरच स्थान, स्नॅपिंग, थर, कापणी आणि फिरवणे जुळवा
@@ -1779,7 +1786,7 @@ Screenshot Bro হলো App Store-এর জন্য অ্যাপ স্ক
 
 সাধারণ ডিজাইন টুলের চেয়ে আলাদা, Screenshot Bro ডিভাইস-নির্দিষ্ট সারি, স্থানীয়করণ, App Store Connect আপলোড, ব্যাচ এক্সপোর্ট, পুনর্ব্যবহারযোগ্য প্রকল্প এবং Model Context Protocol-এর মাধ্যমে স্থানীয় AI সহকারী অটোমেশন বোঝে।
 
-iPhone, iPad, Mac, Android ফোন, Android ট্যাবলেট এবং Pixel লেআউটের জন্য সম্পূর্ণ স্ক্রিনশট সেট তৈরি করুন। কোনো টেমপ্লেট থেকে শুরু করুন বা নিজের লেআউট ব্যবস্থা গড়ে তুলুন। স্ক্রিনশট বসান, ডিভাইস ফ্রেম বা ফ্রেমবিহীন কম্পোজিশন যোগ করুন, শিরোনাম ও ক্যাপশন লিখুন, কাস্টম ফন্ট দিয়ে রিচ টেক্সট সাজান এবং ক্যানভাসে প্রতিটি খুঁটিনাটি নিখুঁত করুন।
+iPhone, iPad এবং Mac লেআউটের জন্য সম্পূর্ণ স্ক্রিনশট সেট তৈরি করুন। কোনো টেমপ্লেট থেকে শুরু করুন বা নিজের লেআউট ব্যবস্থা গড়ে তুলুন। স্ক্রিনশট বসান, ডিভাইস ফ্রেম বা ফ্রেমবিহীন কম্পোজিশন যোগ করুন, শিরোনাম ও ক্যাপশন লিখুন, কাস্টম ফন্ট দিয়ে রিচ টেক্সট সাজান এবং ক্যানভাসে প্রতিটি খুঁটিনাটি নিখুঁত করুন।
 
 Screenshot Bro আপনার Mac-এ একটি স্থানীয় MCP সার্ভার চালাতে পারে। Claude Code, Claude Desktop, Cursor বা অন্য কোনো MCP-সমর্থিত সহকারী যুক্ত করুন এবং তাকে প্রকল্প তৈরি করতে, সারি সম্পাদনা করতে, আকার সাজাতে, স্ক্রিনশট আমদানি করতে, লেখা অনুবাদ করতে, ক্যানভাস প্রিভিউ রেন্ডার করতে এবং চূড়ান্ত ছবি এক্সপোর্ট করতে দিন। MCP ঐচ্ছিক, ডিফল্টভাবে বন্ধ থাকে, কেবল স্থানীয় সংযোগ নেয় এবং অ্যাক্সেস টোকেন দিয়ে সুরক্ষিত।
 
@@ -1791,7 +1798,7 @@ Screenshot Bro আপনার Mac-এ একটি স্থানীয় MCP
 - বারবার প্রকাশের জন্য বিল্ট-ইন টেমপ্লেট বা নিজের লেআউট ব্যবহার করুন
 - একাধিক ছবির সারি, তুলনামূলক লেআউট এবং পূর্ণাঙ্গ প্রচারাভিযান ডিজাইন করুন
 - সারিতে স্ক্রিনশট একসঙ্গে আমদানি করুন এবং ছবি দ্রুত বদলান
-- iPhone, iPad, Mac, Android, Pixel এবং বিমূর্ত লেআউটের জন্য ডিভাইস ফ্রেম যোগ করুন
+- iPhone, iPad, Mac এবং বিমূর্ত লেআউটের জন্য ডিভাইস ফ্রেম যোগ করুন
 - লেখা, আকার, ছবি, গ্রেডিয়েন্ট, টাইল করা পটভূমি এবং SVG গ্রাফিক্স নিয়ে কাজ করুন
 - কাস্টম ফন্ট, ফন্ট ভ্যারিয়েন্ট, ব্যবধান, সারিবদ্ধতা এবং আকারসহ রিচ টেক্সট সম্পাদনা করুন
 - ক্যানভাসেই অবস্থান, স্ন্যাপিং, স্তর, ছাঁটাই এবং ঘূর্ণন সমন্বয় করুন
@@ -1815,7 +1822,7 @@ Screenshot Bro হলো App Store স্ক্রিনশটের জন্�
 
 সাধারণ ডিজাইন টুলের চেয়ে আলাদা, Screenshot Bro ডিভাইস-নির্দিষ্ট সারি, স্থানীয়করণ, App Store Connect আপলোড, ব্যাচ এক্সপোর্ট এবং পুনর্ব্যবহারযোগ্য প্রকল্প বোঝে।
 
-iPhone, iPad, Mac, Android ফোন, Android ট্যাবলেট এবং Pixel লেআউটের জন্য সম্পূর্ণ স্ক্রিনশট সেট তৈরি করুন। কোনো টেমপ্লেট থেকে শুরু করুন বা নিজের লেআউট ব্যবস্থা গড়ে তুলুন। স্ক্রিনশট বসান, ডিভাইস ফ্রেম বা ফ্রেমবিহীন কম্পোজিশন যোগ করুন, শিরোনাম ও ক্যাপশন লিখুন, কাস্টম ফন্ট দিয়ে রিচ টেক্সট সাজান এবং ক্যানভাসে প্রতিটি খুঁটিনাটি নিখুঁত করুন।
+iPhone, iPad এবং Mac লেআউটের জন্য সম্পূর্ণ স্ক্রিনশট সেট তৈরি করুন। কোনো টেমপ্লেট থেকে শুরু করুন বা নিজের লেআউট ব্যবস্থা গড়ে তুলুন। স্ক্রিনশট বসান, ডিভাইস ফ্রেম বা ফ্রেমবিহীন কম্পোজিশন যোগ করুন, শিরোনাম ও ক্যাপশন লিখুন, কাস্টম ফন্ট দিয়ে রিচ টেক্সট সাজান এবং ক্যানভাসে প্রতিটি খুঁটিনাটি নিখুঁত করুন।
 
 রিলিজ ভ্যারিয়েন্ট, ভাষাভিত্তিক পরিবর্তন, স্টোরভিত্তিক সারির পরিকল্পনা এবং এক্সপোর্টের জন্য প্রস্তুত উপকরণ — সবকিছু একটি প্রকল্পেই রাখুন, App Store, ওয়েবসাইট, সামাজিক মাধ্যম এবং প্রচারাভিযানের জন্য।
 
@@ -1825,7 +1832,7 @@ iPhone, iPad, Mac, Android ফোন, Android ট্যাবলেট এবং
 - বারবার প্রকাশের জন্য বিল্ট-ইন টেমপ্লেট বা নিজের লেআউট ব্যবহার করুন
 - একাধিক ছবির সারি, তুলনামূলক লেআউট এবং পূর্ণাঙ্গ প্রচারাভিযান ডিজাইন করুন
 - সারিতে স্ক্রিনশট একসঙ্গে আমদানি করুন এবং ছবি দ্রুত বদলান
-- iPhone, iPad, Mac, Android, Pixel এবং বিমূর্ত লেআউটের জন্য ডিভাইস ফ্রেম যোগ করুন
+- iPhone, iPad, Mac এবং বিমূর্ত লেআউটের জন্য ডিভাইস ফ্রেম যোগ করুন
 - লেখা, আকার, ছবি, গ্রেডিয়েন্ট, টাইল করা পটভূমি এবং SVG গ্রাফিক্স নিয়ে কাজ করুন
 - কাস্টম ফন্ট, ফন্ট ভ্যারিয়েন্ট, ব্যবধান, সারিবদ্ধতা এবং আকারসহ রিচ টেক্সট সম্পাদনা করুন
 - ক্যানভাসেই অবস্থান, স্ন্যাপিং, স্তর, ছাঁটাই এবং ঘূর্ণন সমন্বয় করুন
@@ -1852,7 +1859,7 @@ Screenshot Bro એ App Store માટે ઍપ સ્ક્રીનશોટ 
 
 સામાન્ય ડિઝાઇન સાધનોથી અલગ, Screenshot Bro ડિવાઇસ પ્રમાણેની હરોળ, સ્થાનિકીકરણ, App Store Connect અપલોડ, બૅચ એક્સપોર્ટ, ફરી વાપરી શકાય તેવા પ્રોજેક્ટ અને Model Context Protocol દ્વારા સ્થાનિક AI સહાયક ઑટોમેશન સમજે છે.
 
-iPhone, iPad, Mac, Android ફોન, Android ટૅબ્લેટ અને Pixel લેઆઉટ માટે સંપૂર્ણ સ્ક્રીનશોટ સેટ બનાવો. કોઈ ટેમ્પ્લેટથી શરૂ કરો અથવા તમારી પોતાની લેઆઉટ પદ્ધતિ ઘડો. સ્ક્રીનશોટ મૂકો, ડિવાઇસ ફ્રેમ કે ફ્રેમ વગરની રચના ઉમેરો, હેડલાઇન અને કૅપ્શન લખો, કસ્ટમ ફોન્ટ સાથે રિચ ટેક્સ્ટને શૈલી આપો અને કૅનવાસ પર દરેક વિગત સુધારો.
+iPhone, iPad અને Mac લેઆઉટ માટે સંપૂર્ણ સ્ક્રીનશોટ સેટ બનાવો. કોઈ ટેમ્પ્લેટથી શરૂ કરો અથવા તમારી પોતાની લેઆઉટ પદ્ધતિ ઘડો. સ્ક્રીનશોટ મૂકો, ડિવાઇસ ફ્રેમ કે ફ્રેમ વગરની રચના ઉમેરો, હેડલાઇન અને કૅપ્શન લખો, કસ્ટમ ફોન્ટ સાથે રિચ ટેક્સ્ટને શૈલી આપો અને કૅનવાસ પર દરેક વિગત સુધારો.
 
 Screenshot Bro તમારા Mac પર સ્થાનિક MCP સર્વર ચલાવી શકે છે. Claude Code, Claude Desktop, Cursor કે બીજું કોઈ MCP-સુસંગત સહાયક જોડો અને તેને પ્રોજેક્ટ બનાવવા, હરોળ સંપાદિત કરવા, આકાર ગોઠવવા, સ્ક્રીનશોટ આયાત કરવા, લખાણનું ભાષાંતર કરવા, કૅનવાસ પૂર્વાવલોકન રેન્ડર કરવા અને અંતિમ છબીઓ એક્સપોર્ટ કરવા દો. MCP વૈકલ્પિક છે, મૂળભૂત રીતે બંધ રહે છે, ફક્ત સ્થાનિક જોડાણ સ્વીકારે છે અને ઍક્સેસ ટોકનથી સુરક્ષિત છે.
 
@@ -1864,7 +1871,7 @@ Screenshot Bro તમારા Mac પર સ્થાનિક MCP સર્વ
 - વારંવારના લૉન્ચ માટે બિલ્ટ-ઇન ટેમ્પ્લેટ કે તમારા પોતાના લેઆઉટ વાપરો
 - અનેક છબીવાળી હરોળ, સરખામણી લેઆઉટ અને આખી ઝુંબેશ ડિઝાઇન કરો
 - હરોળમાં સ્ક્રીનશોટ એકસાથે આયાત કરો અને છબીઓ ઝડપથી બદલો
-- iPhone, iPad, Mac, Android, Pixel અને અમૂર્ત લેઆઉટ માટે ડિવાઇસ ફ્રેમ ઉમેરો
+- iPhone, iPad, Mac અને અમૂર્ત લેઆઉટ માટે ડિવાઇસ ફ્રેમ ઉમેરો
 - લખાણ, આકાર, છબીઓ, ગ્રેડિયન્ટ, ટાઇલવાળી પૃષ્ઠભૂમિ અને SVG ગ્રાફિક્સ સાથે કામ કરો
 - કસ્ટમ ફોન્ટ, ફોન્ટ પ્રકાર, અંતર, સંરેખણ અને કદ સાથે રિચ ટેક્સ્ટ સંપાદિત કરો
 - કૅનવાસ પર જ સ્થાન, સ્નૅપિંગ, સ્તર, કાપણી અને પરિભ્રમણ ગોઠવો
@@ -1888,7 +1895,7 @@ Screenshot Bro એ App Store સ્ક્રીનશોટ માટે ખા�
 
 સામાન્ય ડિઝાઇન સાધનોથી અલગ, Screenshot Bro ડિવાઇસ પ્રમાણેની હરોળ, સ્થાનિકીકરણ, App Store Connect અપલોડ, બૅચ એક્સપોર્ટ અને ફરી વાપરી શકાય તેવા પ્રોજેક્ટ સમજે છે.
 
-iPhone, iPad, Mac, Android ફોન, Android ટૅબ્લેટ અને Pixel લેઆઉટ માટે સંપૂર્ણ સ્ક્રીનશોટ સેટ બનાવો. કોઈ ટેમ્પ્લેટથી શરૂ કરો અથવા તમારી પોતાની લેઆઉટ પદ્ધતિ ઘડો. સ્ક્રીનશોટ મૂકો, ડિવાઇસ ફ્રેમ કે ફ્રેમ વગરની રચના ઉમેરો, હેડલાઇન અને કૅપ્શન લખો, કસ્ટમ ફોન્ટ સાથે રિચ ટેક્સ્ટને શૈલી આપો અને કૅનવાસ પર દરેક વિગત સુધારો.
+iPhone, iPad અને Mac લેઆઉટ માટે સંપૂર્ણ સ્ક્રીનશોટ સેટ બનાવો. કોઈ ટેમ્પ્લેટથી શરૂ કરો અથવા તમારી પોતાની લેઆઉટ પદ્ધતિ ઘડો. સ્ક્રીનશોટ મૂકો, ડિવાઇસ ફ્રેમ કે ફ્રેમ વગરની રચના ઉમેરો, હેડલાઇન અને કૅપ્શન લખો, કસ્ટમ ફોન્ટ સાથે રિચ ટેક્સ્ટને શૈલી આપો અને કૅનવાસ પર દરેક વિગત સુધારો.
 
 રિલીઝ પ્રકારો, ભાષા પ્રમાણેના ફેરફારો, સ્ટોર પ્રમાણેની હરોળ યોજનાઓ અને એક્સપોર્ટ માટે તૈયાર સામગ્રી — બધું એક જ પ્રોજેક્ટમાં રાખો, App Store, વેબસાઇટ, સામાજિક માધ્યમો અને લૉન્ચ ઝુંબેશ માટે.
 
@@ -1898,7 +1905,7 @@ iPhone, iPad, Mac, Android ફોન, Android ટૅબ્લેટ અને Pi
 - વારંવારના લૉન્ચ માટે બિલ્ટ-ઇન ટેમ્પ્લેટ કે તમારા પોતાના લેઆઉટ વાપરો
 - અનેક છબીવાળી હરોળ, સરખામણી લેઆઉટ અને આખી ઝુંબેશ ડિઝાઇન કરો
 - હરોળમાં સ્ક્રીનશોટ એકસાથે આયાત કરો અને છબીઓ ઝડપથી બદલો
-- iPhone, iPad, Mac, Android, Pixel અને અમૂર્ત લેઆઉટ માટે ડિવાઇસ ફ્રેમ ઉમેરો
+- iPhone, iPad, Mac અને અમૂર્ત લેઆઉટ માટે ડિવાઇસ ફ્રેમ ઉમેરો
 - લખાણ, આકાર, છબીઓ, ગ્રેડિયન્ટ, ટાઇલવાળી પૃષ્ઠભૂમિ અને SVG ગ્રાફિક્સ સાથે કામ કરો
 - કસ્ટમ ફોન્ટ, ફોન્ટ પ્રકાર, અંતર, સંરેખણ અને કદ સાથે રિચ ટેક્સ્ટ સંપાદિત કરો
 - કૅનવાસ પર જ સ્થાન, સ્નૅપિંગ, સ્તર, કાપણી અને પરિભ્રમણ ગોઠવો
@@ -1925,7 +1932,7 @@ Screenshot Bro என்பது App Store-க்கான ஆப் ஸ்க�
 
 பொதுவான வடிவமைப்புக் கருவிகளைப் போலல்லாமல், Screenshot Bro சாதனவாரியான வரிசைகள், உள்ளூர்மயமாக்கல், App Store Connect பதிவேற்றங்கள், தொகுப்பு ஏற்றுமதிகள், மீண்டும் பயன்படுத்தக்கூடிய திட்டங்கள், Model Context Protocol வழியாக உள்ளூர் AI உதவியாளர் தன்னியக்கம் ஆகியவற்றைப் புரிந்துகொள்கிறது.
 
-iPhone, iPad, Mac, Android தொலைபேசிகள், Android டேப்லெட்டுகள் மற்றும் Pixel தளவமைப்புகளுக்கு முழுமையான ஸ்கிரீன்ஷாட் தொகுப்புகளை உருவாக்குங்கள். ஒரு வார்ப்புருவிலிருந்து தொடங்குங்கள் அல்லது உங்கள் சொந்த தளவமைப்பு முறையை உருவாக்குங்கள். ஸ்கிரீன்ஷாட்களைச் சேர்த்து, சாதன சட்டங்கள் அல்லது சட்டமில்லாத அமைப்புகளைச் சேர்த்து, தலைப்புகளையும் விளக்கங்களையும் எழுதி, தனிப்பயன் எழுத்துருக்களுடன் வளமான உரையை வடிவமைத்து, கேன்வாஸில் ஒவ்வொரு நுணுக்கத்தையும் செம்மைப்படுத்துங்கள்.
+iPhone, iPad மற்றும் Mac தளவமைப்புகளுக்கு முழுமையான ஸ்கிரீன்ஷாட் தொகுப்புகளை உருவாக்குங்கள். ஒரு வார்ப்புருவிலிருந்து தொடங்குங்கள் அல்லது உங்கள் சொந்த தளவமைப்பு முறையை உருவாக்குங்கள். ஸ்கிரீன்ஷாட்களைச் சேர்த்து, சாதன சட்டங்கள் அல்லது சட்டமில்லாத அமைப்புகளைச் சேர்த்து, தலைப்புகளையும் விளக்கங்களையும் எழுதி, தனிப்பயன் எழுத்துருக்களுடன் வளமான உரையை வடிவமைத்து, கேன்வாஸில் ஒவ்வொரு நுணுக்கத்தையும் செம்மைப்படுத்துங்கள்.
 
 Screenshot Bro உங்கள் Mac-இல் உள்ளூர் MCP சேவையகத்தை இயக்க முடியும். Claude Code, Claude Desktop, Cursor அல்லது பிற MCP-இணக்க உதவியாளரை இணைத்து, திட்டங்களை உருவாக்கவும், வரிசைகளைத் திருத்தவும், வடிவங்களை ஒழுங்கமைக்கவும், ஸ்கிரீன்ஷாட்களை இறக்குமதி செய்யவும், உரையை மொழிபெயர்க்கவும், கேன்வாஸ் முன்னோட்டங்களை உருவாக்கவும், இறுதிப் படங்களை ஏற்றுமதி செய்யவும் அனுமதியுங்கள். MCP விருப்பத்தேர்வானது, இயல்பாக அணைந்திருக்கும், உள்ளூர் இணைப்புகளை மட்டுமே ஏற்கும், அணுகல் டோக்கனால் பாதுகாக்கப்படுகிறது.
 
@@ -1937,7 +1944,7 @@ Screenshot Bro உங்கள் Mac-இல் உள்ளூர் MCP சே
 - மீண்டும் வரும் வெளியீடுகளுக்கு உள்ளமைந்த வார்ப்புருக்கள் அல்லது சொந்த தளவமைப்புகளைப் பயன்படுத்துங்கள்
 - பல படங்கள் கொண்ட வரிசைகள், ஒப்பீட்டுத் தளவமைப்புகள் மற்றும் முழுப் பிரச்சாரங்களை வடிவமைக்குங்கள்
 - வரிசைகளுக்குள் ஸ்கிரீன்ஷாட்களைத் தொகுப்பாக இறக்குமதி செய்து படங்களை விரைவாக மாற்றுங்கள்
-- iPhone, iPad, Mac, Android, Pixel மற்றும் சுருக்கத் தளவமைப்புகளுக்கு சாதன சட்டங்களைச் சேர்க்குங்கள்
+- iPhone, iPad, Mac மற்றும் சுருக்கத் தளவமைப்புகளுக்கு சாதன சட்டங்களைச் சேர்க்குங்கள்
 - உரை, வடிவங்கள், படங்கள், சாய்வுகள், ஓடு போன்ற பின்னணிகள் மற்றும் SVG வரைகலையுடன் வேலை செய்யுங்கள்
 - தனிப்பயன் எழுத்துருக்கள், எழுத்துரு வகைகள், இடைவெளி, சீரமைப்பு மற்றும் அளவுடன் வளமான உரையைத் திருத்துங்கள்
 - கேன்வாஸிலேயே இடம், ஸ்னாப்பிங், அடுக்குகள், வெட்டுதல் மற்றும் சுழற்சியைச் சரிசெய்யுங்கள்
@@ -1961,7 +1968,7 @@ Screenshot Bro என்பது App Store ஸ்கிரீன்ஷாட்
 
 பொதுவான வடிவமைப்புக் கருவிகளைப் போலல்லாமல், Screenshot Bro சாதனவாரியான வரிசைகள், உள்ளூர்மயமாக்கல், App Store Connect பதிவேற்றங்கள், தொகுப்பு ஏற்றுமதிகள் மற்றும் மீண்டும் பயன்படுத்தக்கூடிய திட்டங்களைப் புரிந்துகொள்கிறது.
 
-iPhone, iPad, Mac, Android தொலைபேசிகள், Android டேப்லெட்டுகள் மற்றும் Pixel தளவமைப்புகளுக்கு முழுமையான ஸ்கிரீன்ஷாட் தொகுப்புகளை உருவாக்குங்கள். ஒரு வார்ப்புருவிலிருந்து தொடங்குங்கள் அல்லது உங்கள் சொந்த தளவமைப்பு முறையை உருவாக்குங்கள். ஸ்கிரீன்ஷாட்களைச் சேர்த்து, சாதன சட்டங்கள் அல்லது சட்டமில்லாத அமைப்புகளைச் சேர்த்து, தலைப்புகளையும் விளக்கங்களையும் எழுதி, தனிப்பயன் எழுத்துருக்களுடன் வளமான உரையை வடிவமைத்து, கேன்வாஸில் ஒவ்வொரு நுணுக்கத்தையும் செம்மைப்படுத்துங்கள்.
+iPhone, iPad மற்றும் Mac தளவமைப்புகளுக்கு முழுமையான ஸ்கிரீன்ஷாட் தொகுப்புகளை உருவாக்குங்கள். ஒரு வார்ப்புருவிலிருந்து தொடங்குங்கள் அல்லது உங்கள் சொந்த தளவமைப்பு முறையை உருவாக்குங்கள். ஸ்கிரீன்ஷாட்களைச் சேர்த்து, சாதன சட்டங்கள் அல்லது சட்டமில்லாத அமைப்புகளைச் சேர்த்து, தலைப்புகளையும் விளக்கங்களையும் எழுதி, தனிப்பயன் எழுத்துருக்களுடன் வளமான உரையை வடிவமைத்து, கேன்வாஸில் ஒவ்வொரு நுணுக்கத்தையும் செம்மைப்படுத்துங்கள்.
 
 வெளியீட்டு வகைகள், மொழிவாரியான மாற்றங்கள், கடைவாரியான வரிசைத் திட்டங்கள், ஏற்றுமதிக்குத் தயாரான சொத்துகள் — அனைத்தையும் ஒரே திட்டத்தில் வையுங்கள்: App Store, இணையதளங்கள், சமூக ஊடகங்கள், அறிமுகப் பிரச்சாரங்களுக்காக.
 
@@ -1971,7 +1978,7 @@ iPhone, iPad, Mac, Android தொலைபேசிகள், Android டேப�
 - மீண்டும் வரும் வெளியீடுகளுக்கு உள்ளமைந்த வார்ப்புருக்கள் அல்லது சொந்த தளவமைப்புகளைப் பயன்படுத்துங்கள்
 - பல படங்கள் கொண்ட வரிசைகள், ஒப்பீட்டுத் தளவமைப்புகள் மற்றும் முழுப் பிரச்சாரங்களை வடிவமைக்குங்கள்
 - வரிசைகளுக்குள் ஸ்கிரீன்ஷாட்களைத் தொகுப்பாக இறக்குமதி செய்து படங்களை விரைவாக மாற்றுங்கள்
-- iPhone, iPad, Mac, Android, Pixel மற்றும் சுருக்கத் தளவமைப்புகளுக்கு சாதன சட்டங்களைச் சேர்க்குங்கள்
+- iPhone, iPad, Mac மற்றும் சுருக்கத் தளவமைப்புகளுக்கு சாதன சட்டங்களைச் சேர்க்குங்கள்
 - உரை, வடிவங்கள், படங்கள், சாய்வுகள், ஓடு போன்ற பின்னணிகள் மற்றும் SVG வரைகலையுடன் வேலை செய்யுங்கள்
 - தனிப்பயன் எழுத்துருக்கள், எழுத்துரு வகைகள், இடைவெளி, சீரமைப்பு மற்றும் அளவுடன் வளமான உரையைத் திருத்துங்கள்
 - கேன்வாஸிலேயே இடம், ஸ்னாப்பிங், அடுக்குகள், வெட்டுதல் மற்றும் சுழற்சியைச் சரிசெய்யுங்கள்
@@ -1998,7 +2005,7 @@ Screenshot Bro అనేది App Store కోసం యాప్ స్క్�
 
 సాధారణ డిజైన్ సాధనాల కంటే భిన్నంగా, Screenshot Bro పరికరాల వారీ వరుసలు, స్థానికీకరణ, App Store Connect అప్‌లోడ్‌లు, బ్యాచ్ ఎగుమతులు, పునర్వినియోగ ప్రాజెక్టులు, Model Context Protocol ద్వారా స్థానిక AI సహాయక ఆటోమేషన్‌ను అర్థం చేసుకుంటుంది.
 
-iPhone, iPad, Mac, Android ఫోన్‌లు, Android టాబ్లెట్‌లు, Pixel లేఅవుట్‌ల కోసం పూర్తి స్క్రీన్‌షాట్ సెట్‌లను రూపొందించండి. ఒక టెంప్లేట్‌తో మొదలుపెట్టండి లేదా మీ సొంత లేఅవుట్ వ్యవస్థను నిర్మించండి. స్క్రీన్‌షాట్‌లు చేర్చండి, పరికర ఫ్రేమ్‌లు లేదా ఫ్రేమ్ లేని కూర్పులు జోడించండి, శీర్షికలు, వివరణలు రాయండి, కస్టమ్ ఫాంట్‌లతో రిచ్ టెక్స్ట్‌కు శైలి ఇవ్వండి, కాన్వాస్‌పై ప్రతి వివరాన్ని సరిచేయండి.
+iPhone, iPad, Mac లేఅవుట్‌ల కోసం పూర్తి స్క్రీన్‌షాట్ సెట్‌లను రూపొందించండి. ఒక టెంప్లేట్‌తో మొదలుపెట్టండి లేదా మీ సొంత లేఅవుట్ వ్యవస్థను నిర్మించండి. స్క్రీన్‌షాట్‌లు చేర్చండి, పరికర ఫ్రేమ్‌లు లేదా ఫ్రేమ్ లేని కూర్పులు జోడించండి, శీర్షికలు, వివరణలు రాయండి, కస్టమ్ ఫాంట్‌లతో రిచ్ టెక్స్ట్‌కు శైలి ఇవ్వండి, కాన్వాస్‌పై ప్రతి వివరాన్ని సరిచేయండి.
 
 Screenshot Bro మీ Mac లో స్థానిక MCP సర్వర్‌ను నడపగలదు. Claude Code, Claude Desktop, Cursor లేదా ఇతర MCP-అనుకూల సహాయకాన్ని కలిపి, ప్రాజెక్టులు సృష్టించడం, వరుసలు సవరించడం, ఆకారాలు అమర్చడం, స్క్రీన్‌షాట్‌లు దిగుమతి చేయడం, వచనాన్ని అనువదించడం, కాన్వాస్ ప్రివ్యూలు రెండర్ చేయడం, తుది చిత్రాలను ఎగుమతి చేయడం చేయనివ్వండి. MCP ఐచ్ఛికం, డిఫాల్ట్‌గా ఆఫ్‌లో ఉంటుంది, స్థానిక కనెక్షన్‌లనే స్వీకరిస్తుంది, యాక్సెస్ టోకెన్‌తో రక్షితం.
 
@@ -2010,7 +2017,7 @@ Screenshot Bro మీ Mac లో స్థానిక MCP సర్వర్‌
 - పునరావృత విడుదలలకు అంతర్నిర్మిత టెంప్లేట్‌లు లేదా సొంత లేఅవుట్‌లు వాడండి
 - బహుళ చిత్రాల వరుసలు, పోలిక లేఅవుట్‌లు, పూర్తి ప్రచారాలు డిజైన్ చేయండి
 - వరుసల్లోకి స్క్రీన్‌షాట్‌లను గుంపుగా దిగుమతి చేసి చిత్రాలను వేగంగా మార్చండి
-- iPhone, iPad, Mac, Android, Pixel, నైరూప్య లేఅవుట్‌లకు పరికర ఫ్రేమ్‌లు జోడించండి
+- iPhone, iPad, Mac, నైరూప్య లేఅవుట్‌లకు పరికర ఫ్రేమ్‌లు జోడించండి
 - వచనం, ఆకారాలు, చిత్రాలు, గ్రేడియంట్‌లు, పలకల నేపథ్యాలు, SVG గ్రాఫిక్స్‌తో పని చేయండి
 - కస్టమ్ ఫాంట్‌లు, ఫాంట్ రకాలు, అంతరం, సర్దుబాటు, పరిమాణంతో రిచ్ టెక్స్ట్ సవరించండి
 - కాన్వాస్‌పైనే స్థానం, స్నాపింగ్, పొరలు, కత్తిరింపు, భ్రమణం సర్దండి
@@ -2034,7 +2041,7 @@ Screenshot Bro అనేది App Store స్క్రీన్‌షాట్
 
 సాధారణ డిజైన్ సాధనాల కంటే భిన్నంగా, Screenshot Bro పరికరాల వారీ వరుసలు, స్థానికీకరణ, App Store Connect అప్‌లోడ్‌లు, బ్యాచ్ ఎగుమతులు, పునర్వినియోగ ప్రాజెక్టులను అర్థం చేసుకుంటుంది.
 
-iPhone, iPad, Mac, Android ఫోన్‌లు, Android టాబ్లెట్‌లు, Pixel లేఅవుట్‌ల కోసం పూర్తి స్క్రీన్‌షాట్ సెట్‌లను రూపొందించండి. ఒక టెంప్లేట్‌తో మొదలుపెట్టండి లేదా మీ సొంత లేఅవుట్ వ్యవస్థను నిర్మించండి. స్క్రీన్‌షాట్‌లు చేర్చండి, పరికర ఫ్రేమ్‌లు లేదా ఫ్రేమ్ లేని కూర్పులు జోడించండి, శీర్షికలు, వివరణలు రాయండి, కస్టమ్ ఫాంట్‌లతో రిచ్ టెక్స్ట్‌కు శైలి ఇవ్వండి, కాన్వాస్‌పై ప్రతి వివరాన్ని సరిచేయండి.
+iPhone, iPad, Mac లేఅవుట్‌ల కోసం పూర్తి స్క్రీన్‌షాట్ సెట్‌లను రూపొందించండి. ఒక టెంప్లేట్‌తో మొదలుపెట్టండి లేదా మీ సొంత లేఅవుట్ వ్యవస్థను నిర్మించండి. స్క్రీన్‌షాట్‌లు చేర్చండి, పరికర ఫ్రేమ్‌లు లేదా ఫ్రేమ్ లేని కూర్పులు జోడించండి, శీర్షికలు, వివరణలు రాయండి, కస్టమ్ ఫాంట్‌లతో రిచ్ టెక్స్ట్‌కు శైలి ఇవ్వండి, కాన్వాస్‌పై ప్రతి వివరాన్ని సరిచేయండి.
 
 విడుదల రకాలు, భాషల వారీ మార్పులు, స్టోర్ వారీ వరుస ప్రణాళికలు, ఎగుమతికి సిద్ధమైన సామగ్రి — అన్నీ ఒకే ప్రాజెక్టులో ఉంచండి: App Store, వెబ్‌సైట్లు, సామాజిక మాధ్యమాలు, విడుదల ప్రచారాల కోసం.
 
@@ -2044,7 +2051,7 @@ iPhone, iPad, Mac, Android ఫోన్‌లు, Android టాబ్లెట�
 - పునరావృత విడుదలలకు అంతర్నిర్మిత టెంప్లేట్‌లు లేదా సొంత లేఅవుట్‌లు వాడండి
 - బహుళ చిత్రాల వరుసలు, పోలిక లేఅవుట్‌లు, పూర్తి ప్రచారాలు డిజైన్ చేయండి
 - వరుసల్లోకి స్క్రీన్‌షాట్‌లను గుంపుగా దిగుమతి చేసి చిత్రాలను వేగంగా మార్చండి
-- iPhone, iPad, Mac, Android, Pixel, నైరూప్య లేఅవుట్‌లకు పరికర ఫ్రేమ్‌లు జోడించండి
+- iPhone, iPad, Mac, నైరూప్య లేఅవుట్‌లకు పరికర ఫ్రేమ్‌లు జోడించండి
 - వచనం, ఆకారాలు, చిత్రాలు, గ్రేడియంట్‌లు, పలకల నేపథ్యాలు, SVG గ్రాఫిక్స్‌తో పని చేయండి
 - కస్టమ్ ఫాంట్‌లు, ఫాంట్ రకాలు, అంతరం, సర్దుబాటు, పరిమాణంతో రిచ్ టెక్స్ట్ సవరించండి
 - కాన్వాస్‌పైనే స్థానం, స్నాపింగ్, పొరలు, కత్తిరింపు, భ్రమణం సర్దండి
@@ -2071,7 +2078,7 @@ Screenshot Bro ಎಂಬುದು App Store ಗಾಗಿ ಆ್ಯಪ್ ಸ್�
 
 ಸಾಮಾನ್ಯ ವಿನ್ಯಾಸ ಸಾಧನಗಳಿಗಿಂತ ಭಿನ್ನವಾಗಿ, Screenshot Bro ಸಾಧನವಾರು ಸಾಲುಗಳು, ಸ್ಥಳೀಕರಣ, App Store Connect ಅಪ್‌ಲೋಡ್‌ಗಳು, ಬ್ಯಾಚ್ ರಫ್ತುಗಳು, ಮರುಬಳಕೆಯ ಯೋಜನೆಗಳು, Model Context Protocol ಮೂಲಕ ಸ್ಥಳೀಯ AI ಸಹಾಯಕ ಸ್ವಯಂಚಾಲನೆಯನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತದೆ.
 
-iPhone, iPad, Mac, Android ಫೋನ್‌ಗಳು, Android ಟ್ಯಾಬ್ಲೆಟ್‌ಗಳು, Pixel ವಿನ್ಯಾಸಗಳಿಗಾಗಿ ಪೂರ್ಣ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಸೆಟ್‌ಗಳನ್ನು ರಚಿಸಿ. ಒಂದು ಟೆಂಪ್ಲೇಟ್‌ನಿಂದ ಆರಂಭಿಸಿ ಅಥವಾ ನಿಮ್ಮದೇ ವಿನ್ಯಾಸ ವ್ಯವಸ್ಥೆಯನ್ನು ಕಟ್ಟಿ. ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ಸೇರಿಸಿ, ಸಾಧನ ಚೌಕಟ್ಟುಗಳು ಅಥವಾ ಚೌಕಟ್ಟಿಲ್ಲದ ರಚನೆಗಳನ್ನು ಸೇರಿಸಿ, ಶೀರ್ಷಿಕೆ ಮತ್ತು ವಿವರಣೆ ಬರೆಯಿರಿ, ಕಸ್ಟಮ್ ಫಾಂಟ್‌ಗಳಿಂದ ರಿಚ್ ಟೆಕ್ಸ್ಟ್‌ಗೆ ಶೈಲಿ ನೀಡಿ, ಕ್ಯಾನ್ವಾಸ್‌ನಲ್ಲಿ ಪ್ರತಿ ವಿವರವನ್ನು ಸರಿಪಡಿಸಿ.
+iPhone, iPad, Mac ವಿನ್ಯಾಸಗಳಿಗಾಗಿ ಪೂರ್ಣ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಸೆಟ್‌ಗಳನ್ನು ರಚಿಸಿ. ಒಂದು ಟೆಂಪ್ಲೇಟ್‌ನಿಂದ ಆರಂಭಿಸಿ ಅಥವಾ ನಿಮ್ಮದೇ ವಿನ್ಯಾಸ ವ್ಯವಸ್ಥೆಯನ್ನು ಕಟ್ಟಿ. ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ಸೇರಿಸಿ, ಸಾಧನ ಚೌಕಟ್ಟುಗಳು ಅಥವಾ ಚೌಕಟ್ಟಿಲ್ಲದ ರಚನೆಗಳನ್ನು ಸೇರಿಸಿ, ಶೀರ್ಷಿಕೆ ಮತ್ತು ವಿವರಣೆ ಬರೆಯಿರಿ, ಕಸ್ಟಮ್ ಫಾಂಟ್‌ಗಳಿಂದ ರಿಚ್ ಟೆಕ್ಸ್ಟ್‌ಗೆ ಶೈಲಿ ನೀಡಿ, ಕ್ಯಾನ್ವಾಸ್‌ನಲ್ಲಿ ಪ್ರತಿ ವಿವರವನ್ನು ಸರಿಪಡಿಸಿ.
 
 Screenshot Bro ನಿಮ್ಮ Mac ನಲ್ಲಿ ಸ್ಥಳೀಯ MCP ಸರ್ವರ್ ಚಲಾಯಿಸಬಲ್ಲದು. Claude Code, Claude Desktop, Cursor ಅಥವಾ ಇತರ MCP-ಹೊಂದಾಣಿಕೆಯ ಸಹಾಯಕವನ್ನು ಜೋಡಿಸಿ, ಯೋಜನೆಗಳನ್ನು ರಚಿಸಲು, ಸಾಲುಗಳನ್ನು ಸಂಪಾದಿಸಲು, ಆಕಾರಗಳನ್ನು ಜೋಡಿಸಲು, ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ಆಮದು ಮಾಡಲು, ಪಠ್ಯ ಅನುವಾದಿಸಲು, ಕ್ಯಾನ್ವಾಸ್ ಮುನ್ನೋಟ ರೆಂಡರ್ ಮಾಡಲು, ಅಂತಿಮ ಚಿತ್ರಗಳನ್ನು ರಫ್ತು ಮಾಡಲು ಬಿಡಿ. MCP ಐಚ್ಛಿಕ, ಪೂರ್ವನಿಯೋಜಿತವಾಗಿ ಆಫ್ ಆಗಿರುತ್ತದೆ, ಸ್ಥಳೀಯ ಸಂಪರ್ಕಗಳನ್ನಷ್ಟೇ ಸ್ವೀಕರಿಸುತ್ತದೆ, ಪ್ರವೇಶ ಟೋಕನ್‌ನಿಂದ ಸಂರಕ್ಷಿತ.
 
@@ -2083,7 +2090,7 @@ Screenshot Bro ನಿಮ್ಮ Mac ನಲ್ಲಿ ಸ್ಥಳೀಯ MCP ಸರ
 - ಪುನರಾವರ್ತಿತ ಬಿಡುಗಡೆಗಳಿಗೆ ಅಂತರ್ನಿರ್ಮಿತ ಟೆಂಪ್ಲೇಟ್ ಅಥವಾ ಸ್ವಂತ ವಿನ್ಯಾಸ ಬಳಸಿ
 - ಬಹು ಚಿತ್ರಗಳ ಸಾಲುಗಳು, ಹೋಲಿಕೆ ವಿನ್ಯಾಸಗಳು, ಪೂರ್ಣ ಅಭಿಯಾನಗಳನ್ನು ರೂಪಿಸಿ
 - ಸಾಲುಗಳಿಗೆ ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ಗುಂಪಾಗಿ ಆಮದು ಮಾಡಿ, ಚಿತ್ರಗಳನ್ನು ಬೇಗ ಬದಲಿಸಿ
-- iPhone, iPad, Mac, Android, Pixel ಮತ್ತು ಅಮೂರ್ತ ವಿನ್ಯಾಸಗಳಿಗೆ ಸಾಧನ ಚೌಕಟ್ಟು ಸೇರಿಸಿ
+- iPhone, iPad, Mac ಮತ್ತು ಅಮೂರ್ತ ವಿನ್ಯಾಸಗಳಿಗೆ ಸಾಧನ ಚೌಕಟ್ಟು ಸೇರಿಸಿ
 - ಪಠ್ಯ, ಆಕಾರ, ಚಿತ್ರ, ಗ್ರೇಡಿಯಂಟ್, ಹಂಚಿನಂತಹ ಹಿನ್ನೆಲೆ, SVG ಗ್ರಾಫಿಕ್ಸ್‌ನೊಂದಿಗೆ ಕೆಲಸ ಮಾಡಿ
 - ಕಸ್ಟಮ್ ಫಾಂಟ್, ಫಾಂಟ್ ಪ್ರಕಾರ, ಅಂತರ, ಜೋಡಣೆ, ಗಾತ್ರದೊಂದಿಗೆ ರಿಚ್ ಟೆಕ್ಸ್ಟ್ ಸಂಪಾದಿಸಿ
 - ಕ್ಯಾನ್ವಾಸ್‌ನಲ್ಲಿಯೇ ಸ್ಥಾನ, ಸ್ನ್ಯಾಪಿಂಗ್, ಪದರ, ಕತ್ತರಿಸುವಿಕೆ, ತಿರುಗುವಿಕೆ ಹೊಂದಿಸಿ
@@ -2107,7 +2114,7 @@ Screenshot Bro ಎಂಬುದು App Store ಸ್ಕ್ರೀನ್‌ಶಾಟ
 
 ಸಾಮಾನ್ಯ ವಿನ್ಯಾಸ ಸಾಧನಗಳಿಗಿಂತ ಭಿನ್ನವಾಗಿ, Screenshot Bro ಸಾಧನವಾರು ಸಾಲುಗಳು, ಸ್ಥಳೀಕರಣ, App Store Connect ಅಪ್‌ಲೋಡ್‌ಗಳು, ಬ್ಯಾಚ್ ರಫ್ತುಗಳು, ಮರುಬಳಕೆಯ ಯೋಜನೆಗಳನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತದೆ.
 
-iPhone, iPad, Mac, Android ಫೋನ್‌ಗಳು, Android ಟ್ಯಾಬ್ಲೆಟ್‌ಗಳು, Pixel ವಿನ್ಯಾಸಗಳಿಗಾಗಿ ಪೂರ್ಣ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಸೆಟ್‌ಗಳನ್ನು ರಚಿಸಿ. ಒಂದು ಟೆಂಪ್ಲೇಟ್‌ನಿಂದ ಆರಂಭಿಸಿ ಅಥವಾ ನಿಮ್ಮದೇ ವಿನ್ಯಾಸ ವ್ಯವಸ್ಥೆಯನ್ನು ಕಟ್ಟಿ. ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ಸೇರಿಸಿ, ಸಾಧನ ಚೌಕಟ್ಟುಗಳು ಅಥವಾ ಚೌಕಟ್ಟಿಲ್ಲದ ರಚನೆಗಳನ್ನು ಸೇರಿಸಿ, ಶೀರ್ಷಿಕೆ ಮತ್ತು ವಿವರಣೆ ಬರೆಯಿರಿ, ಕಸ್ಟಮ್ ಫಾಂಟ್‌ಗಳಿಂದ ರಿಚ್ ಟೆಕ್ಸ್ಟ್‌ಗೆ ಶೈಲಿ ನೀಡಿ, ಕ್ಯಾನ್ವಾಸ್‌ನಲ್ಲಿ ಪ್ರತಿ ವಿವರವನ್ನು ಸರಿಪಡಿಸಿ.
+iPhone, iPad, Mac ವಿನ್ಯಾಸಗಳಿಗಾಗಿ ಪೂರ್ಣ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಸೆಟ್‌ಗಳನ್ನು ರಚಿಸಿ. ಒಂದು ಟೆಂಪ್ಲೇಟ್‌ನಿಂದ ಆರಂಭಿಸಿ ಅಥವಾ ನಿಮ್ಮದೇ ವಿನ್ಯಾಸ ವ್ಯವಸ್ಥೆಯನ್ನು ಕಟ್ಟಿ. ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ಸೇರಿಸಿ, ಸಾಧನ ಚೌಕಟ್ಟುಗಳು ಅಥವಾ ಚೌಕಟ್ಟಿಲ್ಲದ ರಚನೆಗಳನ್ನು ಸೇರಿಸಿ, ಶೀರ್ಷಿಕೆ ಮತ್ತು ವಿವರಣೆ ಬರೆಯಿರಿ, ಕಸ್ಟಮ್ ಫಾಂಟ್‌ಗಳಿಂದ ರಿಚ್ ಟೆಕ್ಸ್ಟ್‌ಗೆ ಶೈಲಿ ನೀಡಿ, ಕ್ಯಾನ್ವಾಸ್‌ನಲ್ಲಿ ಪ್ರತಿ ವಿವರವನ್ನು ಸರಿಪಡಿಸಿ.
 
 ಬಿಡುಗಡೆ ಪ್ರಕಾರಗಳು, ಭಾಷಾವಾರು ಬದಲಾವಣೆಗಳು, ಅಂಗಡಿವಾರು ಸಾಲಿನ ಯೋಜನೆಗಳು, ರಫ್ತಿಗೆ ಸಿದ್ಧ ಸಾಮಗ್ರಿ — ಎಲ್ಲವನ್ನೂ ಒಂದೇ ಯೋಜನೆಯಲ್ಲಿ ಇರಿಸಿ: App Store, ಜಾಲತಾಣಗಳು, ಸಾಮಾಜಿಕ ಮಾಧ್ಯಮ, ಬಿಡುಗಡೆ ಅಭಿಯಾನಗಳಿಗಾಗಿ.
 
@@ -2117,7 +2124,7 @@ iPhone, iPad, Mac, Android ಫೋನ್‌ಗಳು, Android ಟ್ಯಾಬ್�
 - ಪುನರಾವರ್ತಿತ ಬಿಡುಗಡೆಗಳಿಗೆ ಅಂತರ್ನಿರ್ಮಿತ ಟೆಂಪ್ಲೇಟ್ ಅಥವಾ ಸ್ವಂತ ವಿನ್ಯಾಸ ಬಳಸಿ
 - ಬಹು ಚಿತ್ರಗಳ ಸಾಲುಗಳು, ಹೋಲಿಕೆ ವಿನ್ಯಾಸಗಳು, ಪೂರ್ಣ ಅಭಿಯಾನಗಳನ್ನು ರೂಪಿಸಿ
 - ಸಾಲುಗಳಿಗೆ ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ಗುಂಪಾಗಿ ಆಮದು ಮಾಡಿ, ಚಿತ್ರಗಳನ್ನು ಬೇಗ ಬದಲಿಸಿ
-- iPhone, iPad, Mac, Android, Pixel ಮತ್ತು ಅಮೂರ್ತ ವಿನ್ಯಾಸಗಳಿಗೆ ಸಾಧನ ಚೌಕಟ್ಟು ಸೇರಿಸಿ
+- iPhone, iPad, Mac ಮತ್ತು ಅಮೂರ್ತ ವಿನ್ಯಾಸಗಳಿಗೆ ಸಾಧನ ಚೌಕಟ್ಟು ಸೇರಿಸಿ
 - ಪಠ್ಯ, ಆಕಾರ, ಚಿತ್ರ, ಗ್ರೇಡಿಯಂಟ್, ಹಂಚಿನಂತಹ ಹಿನ್ನೆಲೆ, SVG ಗ್ರಾಫಿಕ್ಸ್‌ನೊಂದಿಗೆ ಕೆಲಸ ಮಾಡಿ
 - ಕಸ್ಟಮ್ ಫಾಂಟ್, ಫಾಂಟ್ ಪ್ರಕಾರ, ಅಂತರ, ಜೋಡಣೆ, ಗಾತ್ರದೊಂದಿಗೆ ರಿಚ್ ಟೆಕ್ಸ್ಟ್ ಸಂಪಾದಿಸಿ
 - ಕ್ಯಾನ್ವಾಸ್‌ನಲ್ಲಿಯೇ ಸ್ಥಾನ, ಸ್ನ್ಯಾಪಿಂಗ್, ಪದರ, ಕತ್ತರಿಸುವಿಕೆ, ತಿರುಗುವಿಕೆ ಹೊಂದಿಸಿ
@@ -2144,7 +2151,7 @@ Screenshot Bro എന്നത് App Store-നായി ആപ്പ് സ്�
 
 സാധാരണ ഡിസൈൻ ഉപകരണങ്ങളിൽ നിന്ന് വ്യത്യസ്തമായി, Screenshot Bro ഉപകരണാധിഷ്ഠിത നിരകൾ, പ്രാദേശികവൽക്കരണം, App Store Connect അപ്‌ലോഡുകൾ, ബാച്ച് കയറ്റുമതികൾ, പുനരുപയോഗിക്കാവുന്ന പ്രോജക്ടുകൾ, Model Context Protocol വഴിയുള്ള പ്രാദേശിക AI സഹായി ഓട്ടോമേഷൻ എന്നിവ മനസ്സിലാക്കുന്നു.
 
-iPhone, iPad, Mac, Android ഫോണുകൾ, Android ടാബ്‌ലെറ്റുകൾ, Pixel ലേഔട്ടുകൾ എന്നിവയ്ക്കായി പൂർണ്ണ സ്ക്രീൻഷോട്ട് സെറ്റുകൾ ഉണ്ടാക്കുക. ഒരു ടെംപ്ലേറ്റിൽ നിന്ന് തുടങ്ങുക അല്ലെങ്കിൽ സ്വന്തം ലേഔട്ട് സംവിധാനം ഉണ്ടാക്കുക. സ്ക്രീൻഷോട്ടുകൾ ചേർക്കുക, ഉപകരണ ഫ്രെയിമുകളോ ഫ്രെയിമില്ലാത്ത ക്രമീകരണങ്ങളോ ചേർക്കുക, തലക്കെട്ടുകളും വിവരണങ്ങളും എഴുതുക, കസ്റ്റം ഫോണ്ടുകളോടെ റിച്ച് ടെക്സ്റ്റിന് ശൈലി നൽകുക, കാൻവാസിൽ ഓരോ വിശദാംശവും മെച്ചപ്പെടുത്തുക.
+iPhone, iPad, Mac ലേഔട്ടുകൾ എന്നിവയ്ക്കായി പൂർണ്ണ സ്ക്രീൻഷോട്ട് സെറ്റുകൾ ഉണ്ടാക്കുക. ഒരു ടെംപ്ലേറ്റിൽ നിന്ന് തുടങ്ങുക അല്ലെങ്കിൽ സ്വന്തം ലേഔട്ട് സംവിധാനം ഉണ്ടാക്കുക. സ്ക്രീൻഷോട്ടുകൾ ചേർക്കുക, ഉപകരണ ഫ്രെയിമുകളോ ഫ്രെയിമില്ലാത്ത ക്രമീകരണങ്ങളോ ചേർക്കുക, തലക്കെട്ടുകളും വിവരണങ്ങളും എഴുതുക, കസ്റ്റം ഫോണ്ടുകളോടെ റിച്ച് ടെക്സ്റ്റിന് ശൈലി നൽകുക, കാൻവാസിൽ ഓരോ വിശദാംശവും മെച്ചപ്പെടുത്തുക.
 
 Screenshot Bro-യ്ക്ക് നിങ്ങളുടെ Mac-ൽ ഒരു പ്രാദേശിക MCP സെർവർ പ്രവർത്തിപ്പിക്കാനാകും. Claude Code, Claude Desktop, Cursor അല്ലെങ്കിൽ മറ്റ് MCP-അനുയോജ്യ സഹായിയെ ബന്ധിപ്പിച്ച്, പ്രോജക്ടുകൾ ഉണ്ടാക്കാനും നിരകൾ തിരുത്താനും രൂപങ്ങൾ ക്രമീകരിക്കാനും സ്ക്രീൻഷോട്ടുകൾ ഇറക്കുമതി ചെയ്യാനും വാചകം വിവർത്തനം ചെയ്യാനും കാൻവാസ് പ്രിവ്യൂകൾ റെൻഡർ ചെയ്യാനും അന്തിമ ചിത്രങ്ങൾ കയറ്റുമതി ചെയ്യാനും അനുവദിക്കുക. MCP ഐച്ഛികമാണ്, സ്ഥിരസ്ഥിതിയായി ഓഫാണ്, പ്രാദേശിക കണക്ഷനുകൾ മാത്രം സ്വീകരിക്കുന്നു, ആക്‌സസ് ടോക്കൺ കൊണ്ട് സംരക്ഷിതമാണ്.
 
@@ -2156,7 +2163,7 @@ Screenshot Bro-യ്ക്ക് നിങ്ങളുടെ Mac-ൽ ഒരു 
 - ആവർത്തിക്കുന്ന റിലീസുകൾക്ക് അന്തർനിർമ്മിത ടെംപ്ലേറ്റുകളോ സ്വന്തം ലേഔട്ടുകളോ ഉപയോഗിക്കുക
 - ഒന്നിലധികം ചിത്രങ്ങളുള്ള നിരകൾ, താരതമ്യ ലേഔട്ടുകൾ, പൂർണ്ണ പ്രചാരണങ്ങൾ രൂപകൽപ്പന ചെയ്യുക
 - നിരകളിലേക്ക് സ്ക്രീൻഷോട്ടുകൾ കൂട്ടത്തോടെ ഇറക്കുമതി ചെയ്ത് ചിത്രങ്ങൾ വേഗത്തിൽ മാറ്റുക
-- iPhone, iPad, Mac, Android, Pixel, അമൂർത്ത ലേഔട്ടുകൾക്കായി ഉപകരണ ഫ്രെയിമുകൾ ചേർക്കുക
+- iPhone, iPad, Mac, അമൂർത്ത ലേഔട്ടുകൾക്കായി ഉപകരണ ഫ്രെയിമുകൾ ചേർക്കുക
 - വാചകം, രൂപങ്ങൾ, ചിത്രങ്ങൾ, ഗ്രേഡിയന്റുകൾ, ടൈൽ പശ്ചാത്തലങ്ങൾ, SVG ഗ്രാഫിക്‌സ് എന്നിവയിൽ പ്രവർത്തിക്കുക
 - കസ്റ്റം ഫോണ്ടുകൾ, ഫോണ്ട് വകഭേദങ്ങൾ, അകലം, വിന്യാസം, വലുപ്പം എന്നിവയോടെ റിച്ച് ടെക്സ്റ്റ് തിരുത്തുക
 - കാൻവാസിൽ തന്നെ സ്ഥാനം, സ്നാപ്പിംഗ്, പാളികൾ, ക്രോപ്പിംഗ്, തിരിക്കൽ ക്രമീകരിക്കുക
@@ -2180,7 +2187,7 @@ Screenshot Bro എന്നത് App Store സ്ക്രീൻഷോട്ട
 
 സാധാരണ ഡിസൈൻ ഉപകരണങ്ങളിൽ നിന്ന് വ്യത്യസ്തമായി, Screenshot Bro ഉപകരണാധിഷ്ഠിത നിരകൾ, പ്രാദേശികവൽക്കരണം, App Store Connect അപ്‌ലോഡുകൾ, ബാച്ച് കയറ്റുമതികൾ, പുനരുപയോഗിക്കാവുന്ന പ്രോജക്ടുകൾ എന്നിവ മനസ്സിലാക്കുന്നു.
 
-iPhone, iPad, Mac, Android ഫോണുകൾ, Android ടാബ്‌ലെറ്റുകൾ, Pixel ലേഔട്ടുകൾ എന്നിവയ്ക്കായി പൂർണ്ണ സ്ക്രീൻഷോട്ട് സെറ്റുകൾ ഉണ്ടാക്കുക. ഒരു ടെംപ്ലേറ്റിൽ നിന്ന് തുടങ്ങുക അല്ലെങ്കിൽ സ്വന്തം ലേഔട്ട് സംവിധാനം ഉണ്ടാക്കുക. സ്ക്രീൻഷോട്ടുകൾ ചേർക്കുക, ഉപകരണ ഫ്രെയിമുകളോ ഫ്രെയിമില്ലാത്ത ക്രമീകരണങ്ങളോ ചേർക്കുക, തലക്കെട്ടുകളും വിവരണങ്ങളും എഴുതുക, കസ്റ്റം ഫോണ്ടുകളോടെ റിച്ച് ടെക്സ്റ്റിന് ശൈലി നൽകുക, കാൻവാസിൽ ഓരോ വിശദാംശവും മെച്ചപ്പെടുത്തുക.
+iPhone, iPad, Mac ലേഔട്ടുകൾ എന്നിവയ്ക്കായി പൂർണ്ണ സ്ക്രീൻഷോട്ട് സെറ്റുകൾ ഉണ്ടാക്കുക. ഒരു ടെംപ്ലേറ്റിൽ നിന്ന് തുടങ്ങുക അല്ലെങ്കിൽ സ്വന്തം ലേഔട്ട് സംവിധാനം ഉണ്ടാക്കുക. സ്ക്രീൻഷോട്ടുകൾ ചേർക്കുക, ഉപകരണ ഫ്രെയിമുകളോ ഫ്രെയിമില്ലാത്ത ക്രമീകരണങ്ങളോ ചേർക്കുക, തലക്കെട്ടുകളും വിവരണങ്ങളും എഴുതുക, കസ്റ്റം ഫോണ്ടുകളോടെ റിച്ച് ടെക്സ്റ്റിന് ശൈലി നൽകുക, കാൻവാസിൽ ഓരോ വിശദാംശവും മെച്ചപ്പെടുത്തുക.
 
 റിലീസ് വകഭേദങ്ങൾ, ഭാഷാടിസ്ഥാന മാറ്റങ്ങൾ, സ്റ്റോർ അടിസ്ഥാന നിര പദ്ധതികൾ, കയറ്റുമതിക്ക് തയ്യാറായ സാമഗ്രികൾ — എല്ലാം ഒരൊറ്റ പ്രോജക്ടിൽ സൂക്ഷിക്കുക: App Store, വെബ്‌സൈറ്റുകൾ, സാമൂഹ്യ മാധ്യമങ്ങൾ, പ്രചാരണങ്ങൾ എന്നിവയ്ക്കായി.
 
@@ -2190,7 +2197,7 @@ iPhone, iPad, Mac, Android ഫോണുകൾ, Android ടാബ്‌ലെറ�
 - ആവർത്തിക്കുന്ന റിലീസുകൾക്ക് അന്തർനിർമ്മിത ടെംപ്ലേറ്റുകളോ സ്വന്തം ലേഔട്ടുകളോ ഉപയോഗിക്കുക
 - ഒന്നിലധികം ചിത്രങ്ങളുള്ള നിരകൾ, താരതമ്യ ലേഔട്ടുകൾ, പൂർണ്ണ പ്രചാരണങ്ങൾ രൂപകൽപ്പന ചെയ്യുക
 - നിരകളിലേക്ക് സ്ക്രീൻഷോട്ടുകൾ കൂട്ടത്തോടെ ഇറക്കുമതി ചെയ്ത് ചിത്രങ്ങൾ വേഗത്തിൽ മാറ്റുക
-- iPhone, iPad, Mac, Android, Pixel, അമൂർത്ത ലേഔട്ടുകൾക്കായി ഉപകരണ ഫ്രെയിമുകൾ ചേർക്കുക
+- iPhone, iPad, Mac, അമൂർത്ത ലേഔട്ടുകൾക്കായി ഉപകരണ ഫ്രെയിമുകൾ ചേർക്കുക
 - വാചകം, രൂപങ്ങൾ, ചിത്രങ്ങൾ, ഗ്രേഡിയന്റുകൾ, ടൈൽ പശ്ചാത്തലങ്ങൾ, SVG ഗ്രാഫിക്‌സ് എന്നിവയിൽ പ്രവർത്തിക്കുക
 - കസ്റ്റം ഫോണ്ടുകൾ, ഫോണ്ട് വകഭേദങ്ങൾ, അകലം, വിന്യാസം, വലുപ്പം എന്നിവയോടെ റിച്ച് ടെക്സ്റ്റ് തിരുത്തുക
 - കാൻവാസിൽ തന്നെ സ്ഥാനം, സ്നാപ്പിംഗ്, പാളികൾ, ക്രോപ്പിംഗ്, തിരിക്കൽ ക്രമീകരിക്കുക
@@ -2217,7 +2224,7 @@ Screenshot Bro ایک ایسی ایپ ہے جو App Store کے لیے ایپ ا�
 
 عام ڈیزائن ٹولز کے برعکس، Screenshot Bro ڈیوائس کے مطابق قطاریں، مقامی کاری، App Store Connect اپ لوڈز، بیچ ایکسپورٹ، دوبارہ استعمال ہونے والے پروجیکٹس، اور Model Context Protocol کے ذریعے مقامی AI معاون آٹومیشن کو سمجھتا ہے۔
 
-iPhone، iPad، Mac، Android فونز، Android ٹیبلٹس اور Pixel لے آؤٹس کے لیے مکمل اسکرین شاٹ سیٹ بنائیں۔ کسی ٹیمپلیٹ سے شروع کریں یا اپنا لے آؤٹ نظام بنائیں۔ اسکرین شاٹس رکھیں، ڈیوائس فریم یا بغیر فریم کی ترتیب شامل کریں، سرخیاں اور تفصیل لکھیں، کسٹم فونٹس کے ساتھ رچ ٹیکسٹ کو انداز دیں، اور کینوس پر ہر تفصیل کو بہتر بنائیں۔
+iPhone، iPad اور Mac لے آؤٹس کے لیے مکمل اسکرین شاٹ سیٹ بنائیں۔ کسی ٹیمپلیٹ سے شروع کریں یا اپنا لے آؤٹ نظام بنائیں۔ اسکرین شاٹس رکھیں، ڈیوائس فریم یا بغیر فریم کی ترتیب شامل کریں، سرخیاں اور تفصیل لکھیں، کسٹم فونٹس کے ساتھ رچ ٹیکسٹ کو انداز دیں، اور کینوس پر ہر تفصیل کو بہتر بنائیں۔
 
 Screenshot Bro آپ کے Mac پر مقامی MCP سرور چلا سکتا ہے۔ Claude Code، Claude Desktop، Cursor یا کوئی اور MCP-موافق معاون جوڑیں اور اسے پروجیکٹ بنانے، قطاریں ترمیم کرنے، شکلیں ترتیب دینے، اسکرین شاٹس درآمد کرنے، متن کا ترجمہ کرنے، کینوس پیش منظر بنانے اور حتمی تصاویر ایکسپورٹ کرنے دیں۔ MCP اختیاری ہے، بطورِ طے شدہ بند رہتا ہے، صرف مقامی کنکشن قبول کرتا ہے، اور رسائی ٹوکن سے محفوظ ہے۔
 
@@ -2229,7 +2236,7 @@ Screenshot Bro آپ کے Mac پر مقامی MCP سرور چلا سکتا ہے۔
 - بار بار ہونے والی ریلیزز کے لیے بلٹ اِن ٹیمپلیٹس یا اپنے لے آؤٹ استعمال کریں
 - کئی تصاویر والی قطاریں، تقابلی لے آؤٹ اور مکمل مہمات ڈیزائن کریں
 - قطاروں میں اسکرین شاٹس اجتماعی طور پر درآمد کریں اور تصاویر تیزی سے بدلیں
-- iPhone، iPad، Mac، Android، Pixel اور تجریدی لے آؤٹ کے لیے ڈیوائس فریم شامل کریں
+- iPhone، iPad، Mac اور تجریدی لے آؤٹ کے لیے ڈیوائس فریم شامل کریں
 - متن، شکلیں، تصاویر، گریڈیئنٹ، ٹائل والے پس منظر اور SVG گرافکس کے ساتھ کام کریں
 - کسٹم فونٹس، فونٹ اقسام، وقفہ، ترتیب اور سائز کے ساتھ رچ ٹیکسٹ میں ترمیم کریں
 - کینوس پر ہی جگہ، اسنیپنگ، تہیں، کٹائی اور گھماؤ ایڈجسٹ کریں
@@ -2253,7 +2260,7 @@ Screenshot Bro ایک اسکرین شاٹ بنانے اور ترمیم کرنے 
 
 عام ڈیزائن ٹولز کے برعکس، Screenshot Bro ڈیوائس کے مطابق قطاریں، مقامی کاری، App Store Connect اپ لوڈز، بیچ ایکسپورٹ، اور دوبارہ استعمال ہونے والے پروجیکٹس کو سمجھتا ہے۔
 
-iPhone، iPad، Mac، Android فونز، Android ٹیبلٹس اور Pixel لے آؤٹس کے لیے مکمل اسکرین شاٹ سیٹ بنائیں۔ کسی ٹیمپلیٹ سے شروع کریں یا اپنا لے آؤٹ نظام بنائیں۔ اسکرین شاٹس رکھیں، ڈیوائس فریم یا بغیر فریم کی ترتیب شامل کریں، سرخیاں اور تفصیل لکھیں، کسٹم فونٹس کے ساتھ رچ ٹیکسٹ کو انداز دیں، اور کینوس پر ہر تفصیل کو بہتر بنائیں۔
+iPhone، iPad اور Mac لے آؤٹس کے لیے مکمل اسکرین شاٹ سیٹ بنائیں۔ کسی ٹیمپلیٹ سے شروع کریں یا اپنا لے آؤٹ نظام بنائیں۔ اسکرین شاٹس رکھیں، ڈیوائس فریم یا بغیر فریم کی ترتیب شامل کریں، سرخیاں اور تفصیل لکھیں، کسٹم فونٹس کے ساتھ رچ ٹیکسٹ کو انداز دیں، اور کینوس پر ہر تفصیل کو بہتر بنائیں۔
 
 ریلیز کی اقسام، زبان کے مطابق تبدیلیاں، اسٹور کے مطابق قطار کے منصوبے، اور ایکسپورٹ کے لیے تیار مواد — سب کچھ ایک ہی پروجیکٹ میں رکھیں: App Store، ویب سائٹس، سوشل میڈیا اور لانچ مہمات کے لیے۔
 
@@ -2263,7 +2270,7 @@ iPhone، iPad، Mac، Android فونز، Android ٹیبلٹس اور Pixel لے 
 - بار بار ہونے والی ریلیزز کے لیے بلٹ اِن ٹیمپلیٹس یا اپنے لے آؤٹ استعمال کریں
 - کئی تصاویر والی قطاریں، تقابلی لے آؤٹ اور مکمل مہمات ڈیزائن کریں
 - قطاروں میں اسکرین شاٹس اجتماعی طور پر درآمد کریں اور تصاویر تیزی سے بدلیں
-- iPhone، iPad، Mac، Android، Pixel اور تجریدی لے آؤٹ کے لیے ڈیوائس فریم شامل کریں
+- iPhone، iPad، Mac اور تجریدی لے آؤٹ کے لیے ڈیوائس فریم شامل کریں
 - متن، شکلیں، تصاویر، گریڈیئنٹ، ٹائل والے پس منظر اور SVG گرافکس کے ساتھ کام کریں
 - کسٹم فونٹس، فونٹ اقسام، وقفہ، ترتیب اور سائز کے ساتھ رچ ٹیکسٹ میں ترمیم کریں
 - کینوس پر ہی جگہ، اسنیپنگ، تہیں، کٹائی اور گھماؤ ایڈجسٹ کریں
