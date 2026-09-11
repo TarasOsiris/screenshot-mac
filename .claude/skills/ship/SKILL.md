@@ -104,7 +104,7 @@ Archive each selected platform to its own archive path:
 
 ```bash
 # macOS
-xcodebuild -scheme screenshot -destination 'platform=macOS,arch=arm64' -archivePath build/screenshot-macos.xcarchive archive
+xcodebuild -scheme screenshot -destination 'platform=macOS' -archivePath build/screenshot-macos.xcarchive archive
 # iOS
 xcodebuild -scheme screenshot -destination 'generic/platform=iOS' -archivePath build/screenshot-ios.xcarchive archive
 ```
