@@ -173,7 +173,10 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
 
     // MARK: - Conflict Resolution
 
-    /// Resolve NSFileVersion conflicts using last-writer-wins strategy.
+    /// Resolve NSFileVersion conflicts on a project's data using last-writer-wins.
+    ///
+    /// Two separately edited row lists have no defined union, so one of them has to go. The index
+    /// is the exception and has its own path — see `resolveIndexConflicts(at:)`.
     func resolveConflicts(at url: URL) {
         guard let conflicts = NSFileVersion.unresolvedConflictVersionsOfItem(at: url),
               !conflicts.isEmpty else { return }
@@ -189,6 +192,66 @@ nonisolated final class ICloudSyncService: @unchecked Sendable {
             "versions": conflicts.count,
             "role": url.lastPathComponent == PersistenceService.indexURL.lastPathComponent ? "index" : "projectData",
         ], level: .warning)
+    }
+
+    /// The index is the only copy of a project's *name* on any document last saved before 4.10,
+    /// and the only record that a project exists at all. Dropping the losing version of it the way
+    /// `resolveConflicts` drops project data means a project created on one device disappears from
+    /// every list the moment two devices write the index in the same window — which is what the
+    /// ~100 `iCloudConflictDiscardedVersions` events a fortnight were reporting. Union by UUID is
+    /// well defined here (`Array<Project>.merged`, tombstone-aware), so nothing has to be lost.
+    ///
+    /// Returns what it read out of the losing versions rather than writing it: the write path owns
+    /// own-write bookkeeping (`recordOwnWrite`/`snapshotAfterWrite`) on the main actor, and a
+    /// second writer here would race it.
+    func resolveIndexConflicts(at root: URL) -> [Project] {
+        let url = PersistenceService.indexURL(at: root)
+        guard let conflicts = NSFileVersion.unresolvedConflictVersionsOfItem(at: url),
+              !conflicts.isEmpty else { return [] }
+
+        // Read before resolving — `removeOtherVersionsOfItem` takes the bytes with it.
+        let (recovered, unreadable) = recoveredProjects(fromConflictVersionsAt: conflicts.map(\.url))
+
+        for conflict in conflicts {
+            conflict.isResolved = true
+        }
+        try? NSFileVersion.removeOtherVersionsOfItem(at: url)
+
+        // A merged version lost nothing, so it is a breadcrumb. Only a version we could not read
+        // is still the old failure, and it is the one worth an issue now that it isn't buried.
+        if unreadable > 0 {
+            CrashReportingService.report(.iCloudConflictDiscardedVersions, extra: [
+                "versions": conflicts.count,
+                "unreadable": unreadable,
+                "role": "index",
+            ], level: .warning)
+        } else {
+            CrashReportingService.breadcrumb(.sync, "Merged index conflict", data: [
+                "versions": conflicts.count,
+                "projects": recovered.count,
+            ])
+        }
+        return recovered
+    }
+
+    /// Split out from `resolveIndexConflicts` so the part that decides what survives a conflict is
+    /// reachable without an NSFileVersion, which a test cannot manufacture.
+    ///
+    /// Coordinated, like every other read of this file: a conflict version can be a placeholder the
+    /// file provider hasn't materialized, and a bare `Data(contentsOf:)` would read that as a
+    /// version we can't have — three lines after which the caller deletes it.
+    func recoveredProjects(fromConflictVersionsAt urls: [URL]) -> (projects: [Project], unreadable: Int) {
+        var recovered: [Project] = []
+        var unreadable = 0
+        for url in urls {
+            guard let data = coordinatedRead(from: url),
+                  let index = try? PersistenceService.decoder.decode(ProjectIndex.self, from: data) else {
+                unreadable += 1
+                continue
+            }
+            recovered = recovered.merged(with: index.projects)
+        }
+        return (recovered, unreadable)
     }
 
     // MARK: - Private
