@@ -37,8 +37,10 @@ nonisolated enum DeviceFrameCatalogDefinitions {
         screenBottom: 120,
         screenCornerRadius: 145
     )
-    // The outer screen is rounder on the free edge than the hinge edge; the radius is the hinge
-    // side's, and the opaque bezel art covers the screenshot's extra corner on the free side.
+    // The cover screen is square-ish on the hinge (left) edge and well rounded on the free edge.
+    private static let iphoneDuoCoverScreenCorners = RectangleCornerRadii(
+        topLeading: 14, bottomLeading: 14, bottomTrailing: 150, topTrailing: 150
+    )
     private static let iphoneDuoOuterSpec = DeviceFrameImageSpec(
         frameWidth: 1574,
         frameHeight: 2194,
@@ -46,7 +48,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
         screenTop: 80,
         screenRight: 88,
         screenBottom: 80,
-        screenCornerRadius: 14
+        screenCornerRadii: iphoneDuoCoverScreenCorners
     )
     private static let iphoneDuoOuterOpenSpec = DeviceFrameImageSpec(
         frameWidth: 3056,
@@ -55,7 +57,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
         screenTop: 80,
         screenRight: 88,
         screenBottom: 80,
-        screenCornerRadius: 14
+        screenCornerRadii: iphoneDuoCoverScreenCorners
     )
     private static let macbookAir13Spec = DeviceFrameImageSpec(
         frameWidth: 3220,
@@ -64,7 +66,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
         screenTop: 218,
         screenRight: 330,
         screenBottom: 218,
-        screenCornerRadius: 34
+        screenCornerRadii: RectangleCornerRadii(top: 34)
     )
     private static let macbookPro14Spec = DeviceFrameImageSpec(
         frameWidth: 3944,
@@ -73,7 +75,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
         screenTop: 300,
         screenRight: 460,
         screenBottom: 300,
-        screenCornerRadius: 40
+        screenCornerRadii: RectangleCornerRadii(top: 40)
     )
     private static let macbookPro16Spec = DeviceFrameImageSpec(
         frameWidth: 4340,
@@ -82,7 +84,7 @@ nonisolated enum DeviceFrameCatalogDefinitions {
         screenTop: 313,
         screenRight: 442,
         screenBottom: 313,
-        screenCornerRadius: 38
+        screenCornerRadii: RectangleCornerRadii(top: 38)
     )
     private static let imac24Spec = DeviceFrameImageSpec(
         frameWidth: 4760,

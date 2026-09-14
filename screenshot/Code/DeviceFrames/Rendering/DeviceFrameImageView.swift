@@ -30,8 +30,7 @@ struct DeviceFrameImageView: View {
         // whatever sits behind the frame. Without this, light canvas backgrounds
         // show through as a 1px halo on the iPhone 17 family.
         let bleed: CGFloat = 1
-        let cornerRadius = height * spec.cornerRadiusFraction + bleed
-        let bottomCornerRadius = frame.fallbackCategory == .macbook ? 0 : cornerRadius
+        let screen = spec.screenRect(in: CGSize(width: width, height: height)).insetBy(dx: -bleed, dy: -bleed)
 
         ZStack(alignment: .topLeading) {
             Group {
@@ -44,21 +43,12 @@ struct DeviceFrameImageView: View {
                     Color.white
                 }
             }
-            .frame(
-                width: width * (1 - spec.leftFraction - spec.rightFraction) + bleed * 2,
-                height: height * (1 - spec.topFraction - spec.bottomFraction) + bleed * 2
-            )
+            .frame(width: screen.width, height: screen.height)
             .clipShape(UnevenRoundedRectangle(
-                topLeadingRadius: cornerRadius,
-                bottomLeadingRadius: bottomCornerRadius,
-                bottomTrailingRadius: bottomCornerRadius,
-                topTrailingRadius: cornerRadius,
+                cornerRadii: spec.clipCornerRadii(height: height, bleed: bleed),
                 style: .continuous
             ))
-            .offset(
-                x: width * spec.leftFraction - bleed,
-                y: height * spec.topFraction - bleed
-            )
+            .offset(x: screen.minX, y: screen.minY)
 
             if let frameImage {
                 let baseImage = Image(nsImage: frameImage)

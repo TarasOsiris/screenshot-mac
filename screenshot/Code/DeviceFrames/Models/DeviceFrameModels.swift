@@ -51,26 +51,90 @@ nonisolated struct DeviceFrameImageSpec {
     let screenRight: CGFloat
     let screenBottom: CGFloat
 
-    /// Screen corner radius in frame image pixels.
-    let screenCornerRadius: CGFloat
+    /// Screen corner radii in frame image pixels.
+    let screenCornerRadii: RectangleCornerRadii
 
     /// Screen insets as fractions of frame dimensions (for scaling).
     var leftFraction: CGFloat { screenLeft / frameWidth }
     var topFraction: CGFloat { screenTop / frameHeight }
     var rightFraction: CGFloat { screenRight / frameWidth }
     var bottomFraction: CGFloat { screenBottom / frameHeight }
-    var cornerRadiusFraction: CGFloat { screenCornerRadius / frameHeight }
 
-    /// Landscape variant (swap dimensions and insets).
-    var landscape: DeviceFrameImageSpec {
-        DeviceFrameImageSpec(
+    /// The screen area of a frame drawn into `size`.
+    func screenRect(in size: CGSize) -> CGRect {
+        CGRect(
+            x: size.width * leftFraction,
+            y: size.height * topFraction,
+            width: size.width * (1 - leftFraction - rightFraction),
+            height: size.height * (1 - topFraction - bottomFraction)
+        )
+    }
+
+    /// Corner radii for a screen drawn `height` tall and grown by `bleed`; a square corner stays square.
+    func clipCornerRadii(height: CGFloat, bleed: CGFloat) -> RectangleCornerRadii {
+        func scaled(_ radius: CGFloat) -> CGFloat {
+            radius > 0 ? height * radius / frameHeight + bleed : 0
+        }
+        return RectangleCornerRadii(
+            topLeading: scaled(screenCornerRadii.topLeading),
+            bottomLeading: scaled(screenCornerRadii.bottomLeading),
+            bottomTrailing: scaled(screenCornerRadii.bottomTrailing),
+            topTrailing: scaled(screenCornerRadii.topTrailing)
+        )
+    }
+
+    /// The spec for the art turned clockwise by `degrees`, the same turn `DeviceFrameImageView`
+    /// applies to the portrait PNG — insets and corners have to follow the art, not just swap axes.
+    func landscape(rotatedClockwiseBy degrees: Double) -> DeviceFrameImageSpec {
+        var (left, top, right, bottom) = (screenLeft, screenTop, screenRight, screenBottom)
+        var corners = screenCornerRadii
+        let quarterTurns = ((Int((degrees / 90).rounded()) % 4) + 4) % 4
+        for _ in 0..<quarterTurns {
+            (left, top, right, bottom) = (bottom, left, top, right)
+            corners = corners.rotatedClockwise
+        }
+        return DeviceFrameImageSpec(
             frameWidth: frameHeight,
             frameHeight: frameWidth,
-            screenLeft: screenTop,
-            screenTop: screenRight,
-            screenRight: screenBottom,
-            screenBottom: screenLeft,
-            screenCornerRadius: screenCornerRadius
+            screenLeft: left,
+            screenTop: top,
+            screenRight: right,
+            screenBottom: bottom,
+            screenCornerRadii: corners
+        )
+    }
+}
+
+nonisolated extension DeviceFrameImageSpec {
+    init(
+        frameWidth: CGFloat, frameHeight: CGFloat,
+        screenLeft: CGFloat, screenTop: CGFloat, screenRight: CGFloat, screenBottom: CGFloat,
+        screenCornerRadius: CGFloat
+    ) {
+        self.init(
+            frameWidth: frameWidth, frameHeight: frameHeight,
+            screenLeft: screenLeft, screenTop: screenTop, screenRight: screenRight, screenBottom: screenBottom,
+            screenCornerRadii: RectangleCornerRadii(uniform: screenCornerRadius)
+        )
+    }
+}
+
+nonisolated extension RectangleCornerRadii {
+    init(uniform radius: CGFloat) {
+        self.init(topLeading: radius, bottomLeading: radius, bottomTrailing: radius, topTrailing: radius)
+    }
+
+    /// Rounded top, square bottom — a laptop screen meeting its hinge.
+    init(top radius: CGFloat) {
+        self.init(topLeading: radius, topTrailing: radius)
+    }
+
+    var rotatedClockwise: RectangleCornerRadii {
+        RectangleCornerRadii(
+            topLeading: bottomLeading,
+            bottomLeading: bottomTrailing,
+            bottomTrailing: topTrailing,
+            topTrailing: topLeading
         )
     }
 }

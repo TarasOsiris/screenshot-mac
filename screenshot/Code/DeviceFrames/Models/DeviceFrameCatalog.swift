@@ -123,7 +123,10 @@ nonisolated enum DeviceFrameCatalog {
     }
 
     private static func makeGroup(from entry: DeviceFrameCatalogEntry) -> DeviceFrameGroup {
-        let landscapeSpec = entry.landscapeOnly ? entry.baseSpec : entry.baseSpec.landscape
+        let landscapeSpec = entry.landscapeOnly
+            ? entry.baseSpec
+            // Model-backed entries rotate no art; their uniform corners don't care about direction.
+            : entry.baseSpec.landscape(rotatedClockwiseBy: entry.landscapeRotationDegrees ?? 270)
         let orientations: [Bool] = entry.landscapeOnly ? [true] : [false, true]
 
         let colorGroups = entry.colors.map { color -> DeviceFrameColorGroup in
