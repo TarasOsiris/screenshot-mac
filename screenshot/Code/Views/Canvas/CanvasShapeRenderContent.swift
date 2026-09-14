@@ -266,7 +266,7 @@ struct CanvasShapeRenderContent: View {
             hideCameraCutout: shape.hideCameraCutout ?? false
         )
 
-        withImageDropAffordances(frame)
+        withImageDropAffordances(frame, screenOffset: frame.screenOffset)
     }
 
     @ViewBuilder
@@ -321,7 +321,7 @@ struct CanvasShapeRenderContent: View {
     /// raster (and therefore its pose) the moment a picked image arrived, and `showsEditorHelpers`
     /// would have done the same on every Edit↔Preview toggle, since that is a live toggle in one
     /// tree, not a per-host constant.
-    private func withImageDropAffordances(_ base: some View) -> some View {
+    private func withImageDropAffordances(_ base: some View, screenOffset: CGSize = .zero) -> some View {
         let sizeRef = min(displayW, displayH)
         let cornerRadius = min(8, max(4, sizeRef * 0.04))
 
@@ -332,6 +332,7 @@ struct CanvasShapeRenderContent: View {
                     imagePickerButton(iconSize: min(28, max(14, sizeRef * 0.18)),
                                       padding: min(12, max(4, sizeRef * 0.05)),
                                       cornerRadius: cornerRadius)
+                        .offset(screenOffset)
                     // Beside the picker, never instead of it: the badge's own text says to add the
                     // image again, and on iPad there is no tooltip and no drag source to fall back
                     // on, so replacing the button leaves a broken frame with no way to fix it.

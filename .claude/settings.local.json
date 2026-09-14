@@ -40,7 +40,9 @@
       "Bash(sentry-cli info *)",
       "Bash(asc:*)",
       "mcp__plugin_sentry_sentry__execute_sentry_tool",
-      "mcp__posthog__exec"
+      "mcp__posthog__exec",
+      "mcp__screenshot-bro__list_projects",
+      "mcp__screenshot-bro__get_project"
     ]
   },
   "enabledMcpjsonServers": [

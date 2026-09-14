@@ -134,6 +134,24 @@ struct DeviceFrameCatalogTests {
         #expect(DeviceFrameCatalog.frame(for: "iphoneduoopen-nightsky-portrait") == nil)
     }
 
+    /// The canvas's "add image" button sits on the screen, not the shape — the open Duo's screen is its right half.
+    @Test func screenOffsetFollowsOffCenterScreens() {
+        func offset(_ category: DeviceCategory, _ frameId: String?) -> CGSize {
+            DeviceFrameView(category: category, bodyColor: .black, width: 1000, height: 718, deviceFrameId: frameId).screenOffset
+        }
+
+        let duoOpen = offset(.iphone, "iphoneduoopen-nightsky-landscape")
+        #expect(duoOpen.width > 200)
+        #expect(abs(duoOpen.height) < 0.5)
+
+        let iphone = offset(.iphone, "iphone17-black-portrait")
+        #expect(abs(iphone.width) < 0.5)
+
+        let programmaticMac = offset(.macbook, nil)
+        #expect(programmaticMac.width == 0)
+        #expect(programmaticMac.height < 0)
+    }
+
     /// Every frame that claims a rotation must resolve to a real asset, and every frame that does
     /// not must ship its own — this is what catches a deleted imageset or a stale asset slug.
     @Test func everyImageBackedFrameResolvesItsAsset() {

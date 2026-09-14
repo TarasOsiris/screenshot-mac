@@ -28,6 +28,17 @@ struct DeviceFrameView: View {
     var invisibleOutlineColor: Color = .black
     var hideCameraCutout: Bool = false
 
+    /// How far the screen's center sits from the frame's; a 3D model's screen moves with its pose, so it stays at zero.
+    var screenOffset: CGSize {
+        let size = CGSize(width: width, height: height)
+        guard let frame = deviceFrameId.flatMap({ DeviceFrameCatalog.frame(for: $0) }) else {
+            return ProgrammaticDeviceFrameView.screenOffset(category: category, in: size)
+        }
+        guard !frame.isModelBacked else { return .zero }
+        let screen = frame.spec.screenRect(in: size)
+        return CGSize(width: screen.midX - width / 2, height: screen.midY - height / 2)
+    }
+
     var body: some View {
         if let frameId = deviceFrameId,
            let frame = DeviceFrameCatalog.frame(for: frameId) {

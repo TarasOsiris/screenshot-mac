@@ -16,9 +16,22 @@ struct ProgrammaticDeviceFrameView: View {
     let invisibleOutlineColor: Color
     var hideCameraCutout: Bool = false
 
+    private static let macBookLidFraction: CGFloat = 0.85
+
     private var scale: CGFloat {
+        Self.fitScale(for: category, width: width, height: height)
+    }
+
+    private static func fitScale(for category: DeviceCategory, width: CGFloat, height: CGFloat) -> CGFloat {
         let base = category.baseDimensions
         return min(width / base.width, height / base.height)
+    }
+
+    /// Every programmatic screen is centered in its body except the MacBook's, which sits in the lid above the base.
+    static func screenOffset(category: DeviceCategory, in size: CGSize) -> CGSize {
+        guard category == .macbook else { return .zero }
+        let bodyH = category.bodyDimensions.height * fitScale(for: category, width: size.width, height: size.height)
+        return CGSize(width: 0, height: -bodyH * (1 - macBookLidFraction) / 2)
     }
 
     var body: some View {
@@ -184,8 +197,8 @@ struct ProgrammaticDeviceFrameView: View {
         let bezelLR: CGFloat = bezels.lr * s
         let bezelTB: CGFloat = bezels.tb * s
 
-        let lidH: CGFloat = bodyH * 0.85
-        let baseH: CGFloat = bodyH * 0.15
+        let lidH: CGFloat = bodyH * Self.macBookLidFraction
+        let baseH: CGFloat = bodyH - lidH
 
         let screenW: CGFloat = bodyW - bezelLR * 2
         let screenH: CGFloat = lidH - bezelTB * 2
