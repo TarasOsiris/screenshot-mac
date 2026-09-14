@@ -7,7 +7,7 @@ import SwiftUI
 // OnboardingTemplateMarquee's conventions. Animated subviews are built once (outside the
 // TimelineView) so only transforms recompute per frame, not the device frames themselves.
 
-private let onboardingDeviceGroupId = "iphone17promax"
+private let onboardingDeviceGroupId = "iphone18promax"
 
 // A small bundled home-screen capture shown inside every device frame across the onboarding
 // illustrations. Decoded once.
@@ -15,7 +15,7 @@ private let onboardingDeviceScreen = NSImage(named: "OnboardingDeviceScreen")
 
 // MARK: - Step 2 · Add your content
 
-/// An empty real iPhone 17 Pro Max frame, surrounded by gently drifting "content" chips
+/// An empty real iPhone 18 Pro Max frame, surrounded by gently drifting "content" chips
 /// (text, shape, photo, frame) — the things you drop onto the canvas.
 struct OnboardingAddContentIllustration: View {
     let images: [NSImage]
@@ -160,7 +160,7 @@ struct OnboardingAddContentIllustration: View {
 
 // MARK: - Step 3 · Style it
 
-/// A clipped, staggered wall of iPhone 17 Pro Max frames on the real gradient renderer, with a
+/// A clipped, staggered wall of iPhone 18 Pro Max frames on the real gradient renderer, with a
 /// bigger interactive background switcher beneath: it auto-cycles until the user taps a swatch,
 /// then stays on the chosen background.
 struct OnboardingStyleIllustration: View {
@@ -339,7 +339,7 @@ struct OnboardingStyleIllustration: View {
 
 // MARK: - Step 4 · Export
 
-/// A fan of three finished-looking screenshots — each a gradient background with a padded iPhone 17
+/// A fan of three finished-looking screenshots — each a gradient background with a padded iPhone 18
 /// Pro Max frame and a single punchy headline, like a real template.
 struct OnboardingExportIllustration: View {
     let images: [NSImage]

@@ -266,13 +266,9 @@ struct AppStateTests {
         let (state, tempDir) = makeState()
         defer { cleanup(tempDir) }
 
-        let commonFrameId = try #require(DeviceFrameCatalog.firstPortraitFrameId(for: .iphone))
+        let commonFrameId = "iphone17-black-portrait"
         let commonFrame = try #require(DeviceFrameCatalog.frame(for: commonFrameId))
-        let alternateFrame = try #require(
-            DeviceFrameCatalog.allFrames.first {
-                $0.fallbackCategory == .iphone && !$0.isLandscape && $0.id != commonFrameId
-            }
-        )
+        let alternateFrame = try #require(DeviceFrameCatalog.frame(for: "iphone17-lavender-portrait"))
 
         var row = state.rows[0]
         row.templates = Array(row.templates.prefix(2))

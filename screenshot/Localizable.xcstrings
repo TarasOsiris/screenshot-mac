@@ -4596,58 +4596,6 @@
         }
       }
     },
-    "**iPhone** — iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max, and 3D iPhone options." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**iPhone** – iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max und 3D iPhone Optionen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**iPhone** — iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max y 3D iPhone."
-          }
-        },
-        "fa" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**iPhone** — iPhone 17، iPhone Air، iPhone 17 Pro، iPhone 17 Pro Max و 3D iPhone گزینه‌ها."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**iPhone** — iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max et options 3D iPhone."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**iPhone** — iPhone 17、iPhone Air、iPhone 17 Pro、iPhone 17 Pro Max、および 3D iPhone オプション。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**iPhone** — iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max 및 3D iPhone 옵션."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**iPhone** — opções iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max e 3D iPhone."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**iPhone** — iPhone 17、iPhone Air、iPhone 17 Pro、iPhone 17 Pro Max 和 3D iPhone 选项。"
-          }
-        }
-      }
-    },
     "**Italic** and **Uppercase** toggle the whole shape. Uppercase is display-only — the text you typed is unchanged, so translations still read normally." : {
       "localizations" : {
         "de" : {
@@ -96094,6 +96042,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "**在 Finder 中显示**（右键单击图像或包含屏幕截图的设备）会显示项目正在使用的图片文件。"
+          }
+        }
+      }
+    },
+    "**iPhone** — iPhone 18 Pro, iPhone 18 Pro Max, iPhone Duo, iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max, and 3D iPhone options." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone** – iPhone 18 Pro, iPhone 18 Pro Max, iPhone Duo, iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max und 3D iPhone Optionen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone** — iPhone 18 Pro, iPhone 18 Pro Max, iPhone Duo, iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max y 3D iPhone."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone** — iPhone 18 Pro، iPhone 18 Pro Max، iPhone Duo، iPhone 17، iPhone Air، iPhone 17 Pro، iPhone 17 Pro Max و 3D iPhone گزینه‌ها."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone** — iPhone 18 Pro, iPhone 18 Pro Max, iPhone Duo, iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max et options 3D iPhone."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone** — iPhone 18 Pro、iPhone 18 Pro Max、iPhone Duo、iPhone 17、iPhone Air、iPhone 17 Pro、iPhone 17 Pro Max、および 3D iPhone オプション。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone** — iPhone 18 Pro, iPhone 18 Pro Max, iPhone Duo, iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max 및 3D iPhone 옵션."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone** — opções iPhone 18 Pro, iPhone 18 Pro Max, iPhone Duo, iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max e 3D iPhone."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**iPhone** — iPhone 18 Pro、iPhone 18 Pro Max、iPhone Duo、iPhone 17、iPhone Air、iPhone 17 Pro、iPhone 17 Pro Max 和 3D iPhone 选项。"
           }
         }
       }

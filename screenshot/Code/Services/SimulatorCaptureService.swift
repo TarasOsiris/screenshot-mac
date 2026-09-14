@@ -178,6 +178,9 @@ enum SimulatorCaptureService {
             .lowercased() ?? deviceTypeIdentifier.lowercased()
 
         let mapping: [(needle: String, groupId: String)] = [
+            ("iphone-18-pro-max", "iphone18promax"),
+            ("iphone-18-pro", "iphone18pro"),
+            ("iphone-duo", "iphoneduo"),
             ("iphone-17-pro-max", "iphone17promax"),
             ("iphone-17-pro", "iphone17pro"),
             ("iphone-17-air", "iphoneair"),

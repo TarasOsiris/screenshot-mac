@@ -28,6 +28,35 @@ nonisolated enum DeviceFrameCatalogDefinitions {
         screenBottom: 72,
         screenCornerRadius: 165
     )
+    private static let iphoneDuoInnerSpec = DeviceFrameImageSpec(
+        frameWidth: 2247,
+        frameHeight: 3093,
+        screenLeft: 120,
+        screenTop: 120,
+        screenRight: 120,
+        screenBottom: 120,
+        screenCornerRadius: 145
+    )
+    // The outer screen is rounder on the free edge than the hinge edge; the radius is the hinge
+    // side's, and the opaque bezel art covers the screenshot's extra corner on the free side.
+    private static let iphoneDuoOuterSpec = DeviceFrameImageSpec(
+        frameWidth: 1574,
+        frameHeight: 2194,
+        screenLeft: 88,
+        screenTop: 80,
+        screenRight: 88,
+        screenBottom: 80,
+        screenCornerRadius: 14
+    )
+    private static let iphoneDuoOuterOpenSpec = DeviceFrameImageSpec(
+        frameWidth: 3056,
+        frameHeight: 2194,
+        screenLeft: 1570,
+        screenTop: 80,
+        screenRight: 88,
+        screenBottom: 80,
+        screenCornerRadius: 14
+    )
     private static let macbookAir13Spec = DeviceFrameImageSpec(
         frameWidth: 3220,
         frameHeight: 2100,
@@ -131,6 +160,65 @@ nonisolated enum DeviceFrameCatalogDefinitions {
 
     static let entries: [DeviceFrameCatalogEntry] = [
         DeviceFrameCatalogEntry(
+            groupId: "iphone18pro",
+            modelName: "iPhone 18 Pro",
+            family: .iphone,
+            fallbackCategory: .iphone,
+            colors: ["Black", "Burgundy", "Glacier", "Silver"],
+            baseSpec: iphone17Spec,
+            modelSpec: nil,
+            landscapeOnly: false,
+            landscapeRotationDegrees: 270,
+            suggestedSizePreset: "1206x2622"
+        ),
+        DeviceFrameCatalogEntry(
+            groupId: "iphone18promax",
+            modelName: "iPhone 18 Pro Max",
+            family: .iphone,
+            fallbackCategory: .iphone,
+            colors: ["Black", "Burgundy", "Glacier", "Silver"],
+            baseSpec: iphone17ProMaxSpec,
+            modelSpec: nil,
+            landscapeOnly: false,
+            landscapeRotationDegrees: 270,
+            suggestedSizePreset: "1320x2868"
+        ),
+        DeviceFrameCatalogEntry(
+            groupId: "iphoneduo",
+            modelName: "iPhone Duo",
+            family: .iphone,
+            fallbackCategory: .iphone,
+            colors: ["Night Sky", "Star White"],
+            baseSpec: iphoneDuoInnerSpec,
+            modelSpec: nil,
+            landscapeOnly: false,
+            landscapeRotationDegrees: 90,
+            suggestedSizePreset: nil
+        ),
+        DeviceFrameCatalogEntry(
+            groupId: "iphoneduoclosed",
+            modelName: "iPhone Duo (Closed)",
+            family: .iphone,
+            fallbackCategory: .iphone,
+            colors: ["Night Sky", "Star White"],
+            baseSpec: iphoneDuoOuterSpec,
+            modelSpec: nil,
+            landscapeOnly: false,
+            landscapeRotationDegrees: 270,
+            suggestedSizePreset: nil
+        ),
+        DeviceFrameCatalogEntry(
+            groupId: "iphoneduoopen",
+            modelName: "iPhone Duo (Open, Back)",
+            family: .iphone,
+            fallbackCategory: .iphone,
+            colors: ["Night Sky", "Star White"],
+            baseSpec: iphoneDuoOuterOpenSpec,
+            modelSpec: nil,
+            landscapeOnly: true,
+            suggestedSizePreset: nil
+        ),
+        DeviceFrameCatalogEntry(
             groupId: "iphone17",
             modelName: "iPhone 17",
             family: .iphone,
@@ -140,7 +228,8 @@ nonisolated enum DeviceFrameCatalogDefinitions {
             modelSpec: nil,
             landscapeOnly: false,
             landscapeRotationDegrees: 270,
-            suggestedSizePreset: "1206x2622"
+            suggestedSizePreset: "1206x2622",
+            isCategoryDefault: true
         ),
         DeviceFrameCatalogEntry(
             groupId: "iphone17pro",

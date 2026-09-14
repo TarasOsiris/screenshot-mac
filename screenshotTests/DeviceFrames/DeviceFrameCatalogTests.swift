@@ -24,7 +24,8 @@ struct DeviceFrameCatalogTests {
         #expect(DeviceFrameCatalog.sections.first(where: { $0.family == .other })?.categories == [.invisible])
     }
 
-    @Test func firstPortraitFrameIdUsesFirstCatalogMatchPerCategory() {
+    /// The picker lists the newest iPhones first, but iPhone 17 is still the flagged default.
+    @Test func firstPortraitFrameIdPrefersFlaggedDefaultThenFirstCatalogMatch() {
         #expect(DeviceFrameCatalog.firstPortraitFrameId(for: .iphone) == "iphone17-black-portrait")
         #expect(DeviceFrameCatalog.firstPortraitFrameId(for: .ipadPro11) == "ipadpro11-silver-portrait")
         #expect(DeviceFrameCatalog.firstPortraitFrameId(for: .macbook) == nil)
@@ -85,6 +86,7 @@ struct DeviceFrameCatalogTests {
     @Test(arguments: [
         "iphone17-black", "iphone17pro-silver", "iphone17promax-deepblue",
         "iphoneair-skyblue", "ipadpro11-silver", "ipadpro13-spacegray",
+        "iphone18pro-glacier", "iphone18promax-burgundy", "iphoneduoclosed-nightsky",
     ])
     func landscapeFramesReusePortraitArtRotatedCounterClockwise(colorSlug: String) throws {
         let portrait = try #require(DeviceFrameCatalog.frame(for: "\(colorSlug)-portrait"))
@@ -95,6 +97,79 @@ struct DeviceFrameCatalogTests {
         #expect(landscape.spec.frameWidth == portrait.spec.frameHeight)
         #expect(landscape.spec.frameHeight == portrait.spec.frameWidth)
         #expect(portrait.landscapeRotationDegrees == nil)
+    }
+
+    /// The Duo's inner-screen landscape art was rendered clockwise, unlike its outer screen.
+    @Test func iphoneDuoInnerLandscapeReusesPortraitArtRotatedClockwise() throws {
+        let portrait = try #require(DeviceFrameCatalog.frame(for: "iphoneduo-starwhite-portrait"))
+        let landscape = try #require(DeviceFrameCatalog.variant(forFrameId: portrait.id, isLandscape: true))
+
+        #expect(landscape.landscapeRotationDegrees == 90)
+        #expect(landscape.imageName == portrait.imageName)
+    }
+
+    @Test func iphoneDuoOpenBackViewIsLandscapeOnly() throws {
+        let frame = try #require(DeviceFrameCatalog.frame(for: "iphoneduoopen-nightsky-landscape"))
+
+        #expect(frame.landscapeRotationDegrees == nil)
+        #expect(frame.imageName == "DeviceFrames/iphoneduoopen-nightsky-landscape")
+        #expect(DeviceFrameCatalog.frame(for: "iphoneduoopen-nightsky-portrait") == nil)
+    }
+
+    /// Renders each new bezel over green with a magenta screenshot. Green the bezel fully encloses
+    /// means the clip radius is too large and the canvas shows through a screen corner; green
+    /// reachable from the image border is just the canvas around the device.
+    @Test(arguments: ["iphone18pro", "iphone18promax", "iphoneduo", "iphoneduoclosed", "iphoneduoopen"])
+    func screenshotFillsTheWholeApertureWithoutGaps(groupId: String) throws {
+        let group = try #require(DeviceFrameCatalog.groups.first { $0.id == groupId })
+        let frames = try #require(group.colorGroups.first).frames
+        let screenshot = NSImage(size: NSSize(width: 8, height: 8), flipped: false) { rect in
+            NSColor(srgbRed: 1, green: 0, blue: 1, alpha: 1).setFill()
+            rect.fill()
+            return true
+        }
+
+        for frame in frames {
+            let width = (frame.spec.frameWidth / 2).rounded()
+            let height = (frame.spec.frameHeight / 2).rounded()
+            let view = ZStack(alignment: .topLeading) {
+                Color(red: 0, green: 1, blue: 0)
+                DeviceFrameImageView(frame: frame, width: width, height: height, screenshotImage: screenshot)
+            }
+            .frame(width: width, height: height)
+            let image = RowRenderer.renderViewToImage(view, width: width, height: height, label: "aperture")
+            let png = try #require(ExportService.opaquePNGData(from: image))
+            let bitmap = try #require(NSBitmapImageRep(data: png))
+            let gaps = try enclosedCanvasPixelCount(bitmap)
+            #expect(gaps == 0, "\(frame.id): \(gaps) canvas pixels show through the screen aperture")
+        }
+    }
+
+    private func enclosedCanvasPixelCount(_ bitmap: NSBitmapImageRep) throws -> Int {
+        let data = try #require(bitmap.bitmapData)
+        let width = bitmap.pixelsWide, height = bitmap.pixelsHigh
+        // The decoded opaque PNG pads RGB to 4 bytes, so samplesPerPixel doesn't give the stride.
+        let bytesPerPixel = bitmap.bytesPerRow / width
+        var isCanvas = [Bool](repeating: false, count: width * height)
+        for index in isCanvas.indices {
+            let offset = (index / width) * bitmap.bytesPerRow + (index % width) * bytesPerPixel
+            isCanvas[index] = Int(data[offset + 1]) - max(Int(data[offset]), Int(data[offset + 2])) > 128
+        }
+
+        var reached = [Bool](repeating: false, count: width * height)
+        var stack: [Int] = []
+        for x in 0..<width { stack += [x, (height - 1) * width + x] }
+        for y in 0..<height { stack += [y * width, y * width + width - 1] }
+        while let index = stack.popLast() {
+            guard isCanvas[index], !reached[index] else { continue }
+            reached[index] = true
+            let x = index % width
+            if x > 0 { stack.append(index - 1) }
+            if x < width - 1 { stack.append(index + 1) }
+            if index >= width { stack.append(index - width) }
+            if index < (height - 1) * width { stack.append(index + width) }
+        }
+        return zip(isCanvas, reached).filter { $0 && !$1 }.count
     }
 
     /// Every frame that claims a rotation must resolve to a real asset, and every frame that does

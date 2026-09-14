@@ -34,8 +34,14 @@ nonisolated enum DeviceFrameCatalog {
         framesByID[id]
     }
 
+    private static let categoryDefaultGroupIds = Set(
+        DeviceFrameCatalogDefinitions.entries.filter(\.isCategoryDefault).map(\.groupId)
+    )
+
     static func firstFrame(for category: DeviceCategory, isLandscape: Bool) -> DeviceFrame? {
-        allFrames.first { $0.fallbackCategory == category && $0.isLandscape == isLandscape }
+        let matches = allFrames.filter { $0.fallbackCategory == category && $0.isLandscape == isLandscape }
+        return matches.first { groupIdByFrameId[$0.id].map(categoryDefaultGroupIds.contains) ?? false }
+            ?? matches.first
     }
 
     static func firstPortraitFrameId(for category: DeviceCategory) -> String? {

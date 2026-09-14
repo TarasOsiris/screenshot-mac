@@ -8,6 +8,10 @@ the `frameWidth`/`frameHeight` declared in `DeviceFrameCatalogDefinitions.swift`
 reference the insets were measured against, NOT a claim about the shipped file. Leave them alone —
 `DeviceFrame.baseDimensions` divides them by 6 for the default insert size of a new device shape.
 
+Resizing is the only lever for bezel-only art, which must stay lossless in the asset catalog:
+lossy (HEVC) shifts alpha along the screen aperture and bakes that into every export. Only the
+photographic iPhone Duo back view opts into `"compression-type": "lossy"` in its Contents.json.
+
 Idempotent: a file already at or below its cap is skipped, so a second lanczos pass can never
 degrade the art.
 

@@ -101,10 +101,13 @@ nonisolated struct DeviceFrameCatalogEntry {
     let landscapeOnly: Bool
     /// When set, the landscape frame reuses the portrait PNG rotated by this many degrees
     /// instead of shipping a second asset. Direction is per-device: the shipped iPhone/iPad
-    /// landscape art was rendered counter-clockwise (270°), the Apple Watch clockwise (90°).
+    /// landscape art was rendered counter-clockwise (270°), the Apple Watch and iPhone Duo inner
+    /// screen clockwise (90°) — the Duo's outer screen is 270° like the other phones.
     var landscapeRotationDegrees: Double?
     var iconOverride: String?
     let suggestedSizePreset: String?
+    /// Picker order is newest-first, so the category default is flagged rather than inferred from order.
+    var isCategoryDefault = false
 }
 
 /// A single real device frame image — one entry per PNG file.
@@ -212,6 +215,14 @@ private nonisolated enum DeviceFrameColorSwatches {
             Color(red: 0.13, green: 0.16, blue: 0.24)
         case "space gray":
             Color(red: 0.39, green: 0.42, blue: 0.45)
+        case "burgundy":
+            Color(red: 0.48, green: 0.22, blue: 0.26)
+        case "glacier":
+            Color(red: 0.78, green: 0.83, blue: 0.89)
+        case "night sky":
+            Color(red: 0.20, green: 0.25, blue: 0.31)
+        case "star white":
+            Color(red: 0.93, green: 0.93, blue: 0.91)
         default:
             nil
         }

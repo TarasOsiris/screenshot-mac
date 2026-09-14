@@ -248,7 +248,7 @@ extension HelpSection {
                 .paragraph("Device frames wrap your screenshot in an authentic device bezel. Screenshot Bro ships pixel-accurate frames for iPhone, iPad, Mac, Apple Watch, and Android-style layouts."),
                 .heading("Frame families"),
                 .paragraph("The model picker groups frames into **families**, which are not the same list as the **device categories** you pick when adding a row. A Watch frame, for example, lives in the Watch family but sits in a row whose category is something else — so don't go looking for Watch in the Add Row list."),
-                .bullet("**iPhone** — iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max, and 3D iPhone options."),
+                .bullet("**iPhone** — iPhone 18 Pro, iPhone 18 Pro Max, iPhone Duo, iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max, and 3D iPhone options."),
                 .bullet("**iPad Pro 11\"** and **iPad Pro 13\"** — current generation with portrait and landscape."),
                 .bullet("**Mac** — MacBook Air 13\", MacBook Pro 14\", MacBook Pro 16\", and iMac 24\"."),
                 .bullet("**Android Phone**, **Abstract Pixel 9**, and **Android Tablet** — abstract frames that flex to match the aspect ratio of dropped screenshots."),
