@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct StarShape: InsettableShape {
+nonisolated struct StarShape: InsettableShape {
     var pointCount: Int
     var insetAmount: CGFloat = 0
 

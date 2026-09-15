@@ -49,7 +49,7 @@ struct OnboardingTemplateMarquee: View {
 }
 
 /// Clips the left/right edges to the view bounds while leaving top/bottom effectively unbounded.
-private struct HorizontalClip: Shape {
+private nonisolated struct HorizontalClip: Shape {
     func path(in rect: CGRect) -> Path {
         Path(rect.insetBy(dx: 0, dy: -2000))
     }
