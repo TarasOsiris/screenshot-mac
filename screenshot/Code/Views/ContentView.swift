@@ -361,7 +361,6 @@ struct ContentView: View {
             #if os(macOS)
             ToolbarItem(id: "projectSwitcher", placement: .navigation) {
                 projectSwitcherToolbarMenu
-                    .padding(.leading, 8)
             }
 
             ToolbarItem(id: "projectActions", placement: .navigation) {

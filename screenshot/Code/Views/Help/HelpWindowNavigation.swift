@@ -24,8 +24,6 @@ struct HelpTopicButton: View {
         } label: {
             Image(systemName: "questionmark.circle")
         }
-        .buttonStyle(.borderless)
-        .focusable(false)
         .help(Text("Open Help"))
         .accessibilityLabel(Text("Open Help"))
     }
