@@ -22,6 +22,7 @@ struct AppSettingsKeysTests {
         #expect(AppSettingsKeys.defaultDeviceCategory == "defaultDeviceCategory")
         #expect(AppSettingsKeys.defaultDeviceFrameId == "defaultDeviceFrameId")
         #expect(AppSettingsKeys.projectSortOrder == "projectSortOrder")
+        #expect(AppSettingsKeys.selectionInspector == "selectionInspectorEnabled")
         #expect(AppSettingsKeys.lastZoomLevel == "lastZoomLevel")
         #expect(AppSettingsKeys.installId == "installId")
         #expect(AppSettingsKeys.installFirstVersion == "installFirstVersion")
@@ -38,6 +39,7 @@ struct AppSettingsKeysTests {
         #expect(AppSettingsKeys.Default.openExportFolderOnSuccess)
         #expect(AppSettingsKeys.Default.defaultDeviceCategory == "iphone")
         #expect(AppSettingsKeys.Default.projectSortOrder == "creation")
+        #expect(!AppSettingsKeys.Default.selectionInspector, "The selection inspector is opt-in")
     }
 
     /// Two keys differing only in case or by a typo would each read a different stored value
@@ -50,7 +52,7 @@ struct AppSettingsKeysTests {
             AppSettingsKeys.defaultTemplateCount, AppSettingsKeys.defaultZoomLevel,
             AppSettingsKeys.confirmBeforeDeleting, AppSettingsKeys.defaultDeviceCategory,
             AppSettingsKeys.defaultDeviceFrameId, AppSettingsKeys.projectSortOrder,
-            AppSettingsKeys.lastZoomLevel,
+            AppSettingsKeys.lastZoomLevel, AppSettingsKeys.selectionInspector,
         ]
         #expect(Set(keys).count == keys.count)
         #expect(keys.allSatisfy { !$0.isEmpty })

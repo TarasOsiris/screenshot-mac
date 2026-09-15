@@ -105,10 +105,7 @@ extension EditorRowView {
     // MARK: - Add Element helpers
 
     func addShapeFromMenu(_ type: ShapeType) {
-        let center = contextMenuPointStore.value ?? state.shapeCenter(for: row)
-        state.selectRow(row.id)
-        guard let shape = CanvasShapeModel.defaultShape(for: type, row: row, centerX: center.x, centerY: center.y) else { return }
-        state.addShape(shape)
+        state.insertDefaultShape(type, inRow: row.id, at: contextMenuPointStore.value)
     }
 
     // MARK: - Shared row menu

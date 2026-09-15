@@ -24,21 +24,31 @@ extension ShapePropertiesSingleSelectionBar {
         // and a bottom-docked panel would put those fields under the software keyboard.
         .barPopover(isPresented: $isTextLocalizationPopoverPresented, title: "Localization", style: .sheet) {
             #if os(macOS)
-            textLocalizationPopoverContent(shape: shape, shapeId: shapeId)
-                .padding(12)
-                .frame(width: 320)
+            TextLocalizationControls(state: state, shapeId: shapeId, fallbackShape: shape) {
+                isTextLocalizationPopoverPresented = false
+            }
             #else
             TextLocalizationSheetContent(state: state, shapeId: shapeId, fallbackShape: shape)
             #endif
         }
     }
+}
 
-    #if os(macOS)
-    @ViewBuilder
-    func textLocalizationPopoverContent(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        // The bar's `shape` is locale-resolved; read the base shape so the reference text and
+#if os(macOS)
+/// The per-text localization editor: base text, fan-out translate, one row per language, reuse,
+/// reset, and links to the translation table and language manager.
+struct TextLocalizationControls: View, ShapeEditing {
+    let state: AppState
+    let shapeId: UUID
+    /// Used only if the base shape lookup fails.
+    let fallbackShape: CanvasShapeModel
+    /// Closes whatever presents this before a follow-up sheet opens.
+    let onDismiss: () -> Void
+
+    var body: some View {
+        // `fallbackShape` is locale-resolved; read the base shape so the reference text and
         // translation key are correct even when editing a non-base locale.
-        let baseShape = idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape] } ?? shape
+        let baseShape = idx(for: shapeId).map { state.rows[$0.row].shapes[$0.shape] } ?? fallbackShape
         let baseText = baseShape.text ?? ""
         let hasBaseText = !baseText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
@@ -103,18 +113,20 @@ extension ShapePropertiesSingleSelectionBar {
 
             HStack {
                 Button("Edit Translation Table...") {
-                    isTextLocalizationPopoverPresented = false
+                    onDismiss()
                     state.localeMenu.pendingMenuRequest = .editTranslations
                 }
                 Spacer()
                 Button("Manage Languages...") {
-                    isTextLocalizationPopoverPresented = false
+                    onDismiss()
                     state.localeMenu.pendingMenuRequest = .manageLocales
                 }
             }
         }
         .scaledFont(UIMetrics.FontSize.body)
         .controlSize(.small)
+        .padding(12)
+        .frame(width: 320)
     }
 
     @ViewBuilder
@@ -167,8 +179,8 @@ extension ShapePropertiesSingleSelectionBar {
         )
         .menuStyle(.button)
     }
-    #endif
 }
+#endif
 
 #if os(iOS)
 /// iPad variant of the per-text localization popover: `barPopover` presents it as a

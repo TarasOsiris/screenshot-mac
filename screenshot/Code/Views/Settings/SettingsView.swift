@@ -36,6 +36,7 @@ struct SettingsView: View {
     @AppStorage(AppSettingsKeys.defaultDeviceCategory) private var defaultDeviceCategoryRaw = AppSettingsKeys.Default.defaultDeviceCategory
     @AppStorage(AppSettingsKeys.defaultDeviceFrameId) private var defaultDeviceFrameId = ""
     @AppStorage(AppSettingsKeys.projectSortOrder) private var projectSortOrder = AppSettingsKeys.Default.projectSortOrder
+    @AppStorage(AppSettingsKeys.selectionInspector) private var isSelectionInspectorEnabled = AppSettingsKeys.Default.selectionInspector
 
     @State private var selection: SettingsSection? = .general
     @State private var copiedDiagnostics = false
@@ -186,6 +187,13 @@ struct SettingsView: View {
                 ForEach(ZoomConstants.presets, id: \.self) { preset in
                     Text("\(Int(preset * 100))%").tag(Double(preset))
                 }
+            }
+
+            Section {
+                Toggle("Edit selected shapes in the inspector", isOn: $isSelectionInspectorEnabled)
+            } footer: {
+                Text("Shape properties move from the bar below the canvas into the sidebar, and come back to the bar while the sidebar is hidden. Click the row name or press Esc to return to row settings.")
+                    .foregroundStyle(.secondary)
             }
             Section("iCloud Sync") {
                 if !iCloud.isAvailable {

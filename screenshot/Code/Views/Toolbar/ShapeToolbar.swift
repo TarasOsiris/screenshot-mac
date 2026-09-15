@@ -119,21 +119,12 @@ struct ShapeToolbar: View {
     }
 
     private func addShape(_ type: ShapeType) {
-        guard let row = state.selectedRow else { return }
-        let center = state.shapeCenter(for: row)
-        guard let shape = CanvasShapeModel.defaultShape(for: type, row: row, centerX: center.x, centerY: center.y) else { return }
-        state.addShape(shape)
+        guard let rowId = state.selectedRowId else { return }
+        state.insertDefaultShape(type, inRow: rowId)
     }
 
     private func addSvgShape(svgContent: String, size: CGSize, useColor: Bool, color: Color) {
-        guard let row = state.selectedRow else { return }
-        let center = state.shapeCenter(for: row)
-        let scaledSize = SvgHelper.scaledSize(size, maxDim: row.svgMaxDimension)
-        var shape = CanvasShapeModel.defaultSvg(centerX: center.x, centerY: center.y, svgContent: svgContent, size: scaledSize)
-        if useColor {
-            shape.svgUseColor = true
-            shape.color = color
-        }
-        state.addShape(shape)
+        guard let rowId = state.selectedRowId else { return }
+        state.insertSvgShape(content: svgContent, naturalSize: size, customColor: useColor ? color : nil, inRow: rowId)
     }
 }

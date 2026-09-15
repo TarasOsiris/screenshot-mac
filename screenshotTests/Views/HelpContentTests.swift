@@ -79,6 +79,13 @@ struct HelpContentTests {
         #expect(HelpSection.matching("recovered project").contains(.projects))
     }
 
+    /// The selection inspector is off by default, so Help is where a user learns the setting exists.
+    @Test func searchFindsTheSelectionInspectorSetting() {
+        let topics = HelpSection.matching("Edit selected shapes in the inspector")
+        #expect(topics.contains(.settings))
+        #expect(topics.contains(.shapes))
+    }
+
     /// `matching` takes an already-trimmed needle — `HelpView` trims once per keystroke rather
     /// than once per section.
     @Test func searchIsCaseAndDiacriticInsensitive() {

@@ -11,12 +11,17 @@ struct PopoverSliderField: View {
 
     @State private var text = ""
     @FocusState private var focused: Bool
+    /// The binding as it was when editing began. A host that keeps this view alive across a selection
+    /// change hands it the next shape's binding, and a blur-commit through that would move the draft.
+    @State private var editingTarget: Binding<CGFloat>?
 
     private func sync() { text = "\(Int(value.rounded()))" }
 
     private func commit() {
+        let target = editingTarget ?? $value
+        editingTarget = nil
         if let parsed = Double(text) {
-            value = min(max(CGFloat(parsed), range.lowerBound), range.upperBound)
+            target.wrappedValue = min(max(CGFloat(parsed), range.lowerBound), range.upperBound)
         }
         sync()
     }
@@ -34,7 +39,13 @@ struct PopoverSliderField: View {
                     .frame(width: propertiesNumericFieldWidth)
                     .integerKeyboard()
                     .onSubmit { commit() }
-                    .onChange(of: focused) { _, isFocused in if !isFocused { commit() } }
+                    .onChange(of: focused) { _, isFocused in
+                        if isFocused {
+                            editingTarget = $value
+                        } else {
+                            commit()
+                        }
+                    }
             }
         } label: {
             Text(label)

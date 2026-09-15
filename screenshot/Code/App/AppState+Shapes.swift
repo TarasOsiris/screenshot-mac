@@ -22,6 +22,29 @@ extension AppState {
         }
     }
 
+    /// Adds a default `type` shape to `rowId` and selects it — at `center`, else the middle of the
+    /// template currently in view. SVG needs content, so it goes through `insertSvgShape`.
+    func insertDefaultShape(_ type: ShapeType, inRow rowId: UUID, at center: CGPoint? = nil) {
+        guard let row = rows.first(where: { $0.id == rowId }) else { return }
+        let center = center ?? shapeCenter(for: row)
+        guard let shape = CanvasShapeModel.defaultShape(for: type, row: row, centerX: center.x, centerY: center.y) else { return }
+        selectRow(rowId)
+        addShape(shape)
+    }
+
+    func insertSvgShape(content: String, naturalSize: CGSize, customColor: Color? = nil, inRow rowId: UUID, at center: CGPoint? = nil) {
+        guard let row = rows.first(where: { $0.id == rowId }) else { return }
+        let center = center ?? shapeCenter(for: row)
+        let scaledSize = SvgHelper.scaledSize(naturalSize, maxDim: row.svgMaxDimension)
+        var shape = CanvasShapeModel.defaultSvg(centerX: center.x, centerY: center.y, svgContent: content, size: scaledSize)
+        if let customColor {
+            shape.svgUseColor = true
+            shape.color = customColor
+        }
+        selectRow(rowId)
+        addShape(shape)
+    }
+
     /// Pass `forLocaleCode` to commit against a specific locale (e.g. the MCP tools always
     /// edit the base shape regardless of which locale the UI is viewing); nil = active locale.
     func updateShape(_ shape: CanvasShapeModel, forLocaleCode code: String? = nil) {

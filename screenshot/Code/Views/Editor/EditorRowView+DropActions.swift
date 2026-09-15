@@ -71,14 +71,12 @@ extension EditorRowView {
                 }
                 let size = SvgHelper.parseSize(sanitized, fallbackImage: image)
                 Task { @MainActor in
-                    state.selectRow(row.id)
-                    let maxDim = row.svgMaxDimension
-                    let scaledSize = SvgHelper.scaledSize(size, maxDim: maxDim)
-                    let shape = CanvasShapeModel.defaultSvg(
-                        centerX: modelX, centerY: modelY,
-                        svgContent: sanitized, size: scaledSize
+                    state.insertSvgShape(
+                        content: sanitized,
+                        naturalSize: size,
+                        inRow: row.id,
+                        at: CGPoint(x: modelX, y: modelY)
                     )
-                    state.addShape(shape)
                 }
             }
             handled = true

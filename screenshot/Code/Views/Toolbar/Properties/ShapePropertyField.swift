@@ -6,14 +6,13 @@ import SwiftUI
 /// of the same eight-modifier protocol, and both bugs this pattern has produced had to be fixed
 /// four times: committing to a captured `shapeId` after the selection moved on, and re-applying a
 /// no-op value (which flattens mixed per-run rich-text styling). Both fixes live here now.
-struct ShapePropertyField<Field: Hashable>: View {
+struct ShapePropertyField: View {
     enum Keyboard { case integer, signed }
 
     let shapeId: UUID
-    let field: Field
     @Binding var text: String
     @Binding var isActive: Bool
-    var focus: FocusState<Field?>.Binding
+    @FocusState private var isFocused: Bool
 
     let width: CGFloat
     var keyboard: Keyboard = .integer
@@ -45,7 +44,7 @@ struct ShapePropertyField<Field: Hashable>: View {
                 commit(liveSelection() ?? shapeId)
             }
         })
-        .focused(focus, equals: field)
+        .focused($isFocused)
         .frame(width: width)
         .textFieldStyle(.roundedBorder)
         .multilineTextAlignment(.center)
@@ -57,7 +56,7 @@ struct ShapePropertyField<Field: Hashable>: View {
                 // edit to the shape it belongs to before rebinding.
                 if isActive { commit(oldId) }
                 text = current(newId)
-                if clearsFocusOnSelectionChange { focus.wrappedValue = nil }
+                if clearsFocusOnSelectionChange { isFocused = false }
             }
             .onChange(of: modelValue) {
                 guard !isActive else { return }

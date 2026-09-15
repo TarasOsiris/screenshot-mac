@@ -1,22 +1,12 @@
 import SwiftUI
 
-struct ShapePropertiesMultiSelectionBar: View {
+struct ShapePropertiesMultiSelectionBar: View, MultiShapeEditing {
     @Bindable var state: AppState
-
-    private var rowIndex: Int? { state.selectedRowIndex }
-
-    private var selectedShapes: [CanvasShapeModel] {
-        guard let rowIndex else { return [] }
-        let ids = state.selectedShapeIds
-        return state.rows[rowIndex].shapes
-            .filter { ids.contains($0.id) }
-            .map { LocaleService.resolveShape($0, localeState: state.localeState) }
-    }
 
     var body: some View {
         let shapes = selectedShapes
         let count = shapes.count
-        let commonType = shapes.dropFirst().allSatisfy({ $0.type == shapes.first?.type }) ? shapes.first?.type : nil
+        let commonType = commonShapeType(of: shapes)
 
         HStack(spacing: 0) {
             ScrollView(.horizontal) {
@@ -61,9 +51,7 @@ struct ShapePropertiesMultiSelectionBar: View {
 
                                 if shapes.contains(where: { $0.rotation != 0 }) {
                                     ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
-                                        state.updateShapes(state.selectedShapeIds) { shape in
-                                            shape.rotation = 0
-                                        }
+                                        resetRotationOnSelection()
                                     }
                                 }
                             }
@@ -72,14 +60,14 @@ struct ShapePropertiesMultiSelectionBar: View {
                         ShapeClipToFrameSection(clipToTemplate: multiShapeOptionalBinding(\.clipToTemplate, default: false))
                     }
 
-                    ShapeSelectionActionsSection(
-                        canBringToFront: true,
-                        canSendToBack: true,
-                        onBringToFront: { state.bringSelectedShapesToFront() },
-                        onSendToBack: { state.sendSelectedShapesToBack() },
-                        onDuplicate: { state.duplicateSelectedShapes() },
-                        onDelete: { state.deleteSelectedShapes() }
-                    )
+                    ShapePropertiesSection {
+                        ShapeSelectionActionButtons(
+                            onBringToFront: { state.bringSelectedShapesToFront() },
+                            onSendToBack: { state.sendSelectedShapesToBack() },
+                            onDuplicate: { state.duplicateSelectedShapes() },
+                            onDelete: { state.deleteSelectedShapes() }
+                        )
+                    }
                 }
                 .padding(.horizontal, ShapePropertiesSectionLayout.horizontalPadding)
                 .padding(.vertical, ShapePropertiesSectionLayout.verticalPadding)
@@ -105,17 +93,8 @@ struct ShapePropertiesMultiSelectionBar: View {
             ShapePropertiesSection {
                 Menu {
                     DeviceMenuContent(
-                        onSelectCategory: { category in
-                            state.updateShapes(state.selectedShapeIds) {
-                                let imageSize = category == .invisible
-                                    ? $0.displayImageFileName.flatMap { state.screenshotImages[$0] }?.size
-                                    : nil
-                                $0.selectAbstractDevice(category, screenshotImageSize: imageSize)
-                            }
-                        },
-                        onSelectFrame: { frame in
-                            state.updateShapes(state.selectedShapeIds) { $0.selectRealFrame(frame) }
-                        }
+                        onSelectCategory: { selectAbstractDeviceOnSelection($0) },
+                        onSelectFrame: { selectRealFrameOnSelection($0) }
                     )
                 } label: {
                     HStack(spacing: 4) {
@@ -140,11 +119,7 @@ struct ShapePropertiesMultiSelectionBar: View {
                     fontWeight: weightBinding,
                     italic: italicBinding,
                     customFaces: state.customFaces,
-                    onApplyImportedSelection: { imported in
-                        state.updateShapes(state.selectedShapeIds) { shape in
-                            RichTextUtils.applyImportedFontSelection(imported, to: &shape, property: .fontName)
-                        }
-                    },
+                    onApplyImportedSelection: { applyImportedFontSelectionOnSelection($0) },
                     onImportFont: { url in state.importCustomFont(from: url) }
                 )
 
@@ -159,16 +134,8 @@ struct ShapePropertiesMultiSelectionBar: View {
                     ShapePropertiesSeparator()
                 }
 
-                Picker("", selection: multiShapeOptionalBinding(\.textAlign, default: .center)) {
-                    Image(systemName: "text.alignleft").tag(TextAlign.left)
-                    Image(systemName: "text.aligncenter").tag(TextAlign.center)
-                    Image(systemName: "text.alignright").tag(TextAlign.right)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 90)
-                .help("Horizontal alignment")
-                .accessibilityLabel("Horizontal alignment")
+                TextAlignPicker(selection: multiShapeOptionalBinding(\.textAlign, default: .center))
+                    .frame(width: 90)
             }
 
             ShapePropertiesSection {
@@ -221,12 +188,7 @@ struct ShapePropertiesMultiSelectionBar: View {
 
         Toggle("Outline", isOn: Binding(
             get: { hasOutline },
-            set: { enabled in
-                state.updateShapes(state.selectedShapeIds) { shape in
-                    shape.outlineColor = enabled ? CanvasShapeModel.defaultOutlineColor : nil
-                    shape.outlineWidth = enabled ? CanvasShapeModel.defaultOutlineWidth : nil
-                }
-            }
+            set: { setOutlineOnSelection($0) }
         ))
         .toggleStyle(.switch)
         .compactControlSize()
@@ -246,120 +208,5 @@ struct ShapePropertiesMultiSelectionBar: View {
                     .frame(width: UIMetrics.SliderWidth.standard)
             }
         }
-    }
-
-    private var firstTextShape: CanvasShapeModel? {
-        firstResolvedSelectedShape { $0.type == .text }
-    }
-
-    private func firstResolvedSelectedShape(where predicate: (CanvasShapeModel) -> Bool = { _ in true }) -> CanvasShapeModel? {
-        guard let rowIndex else { return nil }
-        let ids = state.selectedShapeIds
-        guard !ids.isEmpty else { return nil }
-        for shape in state.rows[rowIndex].shapes where ids.contains(shape.id) && predicate(shape) {
-            return LocaleService.resolveShape(shape, localeState: state.localeState)
-        }
-        return nil
-    }
-
-    private func showsMultiFontWeightPicker(primary: CustomFontControlState?, textShapes: [CanvasShapeModel]) -> Bool {
-        guard let primary else { return true }
-        return primary.showsWeightPicker && textShapes.allSatisfy { shape in
-            guard let state = CustomFontRegistry.controlState(for: shape) else { return true }
-            return state.showsWeightPicker && state.availableWeights == primary.availableWeights
-        }
-    }
-
-    private func showsMultiItalicToggle(textShapes: [CanvasShapeModel]) -> Bool {
-        textShapes.allSatisfy { shape in
-            CustomFontRegistry.controlState(for: shape)?.showsItalicToggle ?? true
-        }
-    }
-
-    private func multiFontNameBinding() -> Binding<String> {
-        Binding(
-            get: { firstTextShape?.fontName ?? "" },
-            set: { newValue in
-                state.updateShapes(state.selectedShapeIds) { shape in
-                    shape.fontName = newValue
-                    RichTextUtils.syncShapeStyleIfNeeded(in: &shape, property: .fontName)
-                }
-            }
-        )
-    }
-
-    private func multiFontWeightBinding(controlState: CustomFontControlState?) -> Binding<Int> {
-        Binding(
-            get: {
-                controlState?.effectiveWeight ?? firstTextShape?.fontWeight ?? 400
-            },
-            set: { newValue in
-                state.updateShapes(state.selectedShapeIds) { shape in
-                    RichTextUtils.applyFontWeightUpdate(to: &shape, weight: newValue)
-                }
-            }
-        )
-    }
-
-    private func multiItalicBinding(controlState: CustomFontControlState?) -> Binding<Bool> {
-        Binding(
-            get: {
-                controlState?.effectiveItalic ?? firstTextShape?.italic ?? false
-            },
-            set: { newValue in
-                state.updateShapes(state.selectedShapeIds) { shape in
-                    RichTextUtils.applyItalicUpdate(to: &shape, italic: newValue)
-                }
-            }
-        )
-    }
-
-    /// Shared shadow binding for the selected devices: reads the first device's shadow
-    /// and writes the edited config to all of them (clearing to nil when empty, matching
-    /// the single-selection behavior).
-    private func multiShadowBinding() -> Binding<ShadowConfig> {
-        Binding(
-            get: {
-                firstResolvedSelectedShape()?.shadow ?? ShadowConfig()
-            },
-            set: { newValue in
-                state.updateShapesContinuous(state.selectedShapeIds) { shape in
-                    shape.shadow = newValue.isEmpty ? nil : newValue
-                }
-            }
-        )
-    }
-
-    // Slider-only binding: writes go through the throttled continuous path.
-    private func multiShapeBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T>) -> Binding<T> {
-        Binding(
-            get: {
-                firstResolvedSelectedShape()?[keyPath: keyPath] ?? CanvasShapeModel.placeholder[keyPath: keyPath]
-            },
-            set: { newValue in
-                state.updateShapesContinuous(state.selectedShapeIds) { shape in
-                    shape[keyPath: keyPath] = newValue
-                }
-            }
-        )
-    }
-
-    private func multiShapeOptionalBinding<T: Equatable & Sendable>(_ keyPath: WritableKeyPath<CanvasShapeModel, T?>, default defaultValue: T, continuous: Bool = false) -> Binding<T> {
-        Binding(
-            get: {
-                firstResolvedSelectedShape()?[keyPath: keyPath] ?? defaultValue
-            },
-            set: { newValue in
-                if continuous {
-                    state.updateShapesContinuous(state.selectedShapeIds) { shape in
-                        shape[keyPath: keyPath] = newValue
-                    }
-                } else {
-                    state.updateShapes(state.selectedShapeIds) { shape in
-                        shape[keyPath: keyPath] = newValue
-                    }
-                }
-            }
-        )
     }
 }

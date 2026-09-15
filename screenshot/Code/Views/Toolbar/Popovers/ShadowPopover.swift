@@ -1,9 +1,8 @@
 import SwiftUI
 
-/// Popover for editing a shape's drop shadow: enable toggle, presets, and
-/// fine-tune sliders for color, blur, offset, and opacity. Layout mirrors
-/// `Device3DAppearancePopover`. On iPad it's presented as a sheet, so the
-/// content is a standard `Form` instead of the dense desktop column.
+/// Popover for editing a shape's drop shadow: a title with Reset over `ShadowControls`. Layout
+/// mirrors `Device3DAppearancePopover`. On iPad it's presented as a sheet, so the content is a
+/// standard `Form` instead of the dense desktop column.
 struct ShadowPopover: View {
     @Binding var shadow: ShadowConfig
 
@@ -12,36 +11,12 @@ struct ShadowPopover: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             Divider()
-            Toggle("Enable shadow", isOn: enabledBinding)
-                .toggleStyle(.switch)
-                .controlSize(.small)
-
-            if shadow.isActive {
-                Divider()
-                presetSection
-                Divider()
-                detailSection
-            }
+            ShadowControls(shadow: $shadow)
         }
         .popoverColumn()
         #else
         Form {
-            Section {
-                Toggle("Enable shadow", isOn: enabledBinding)
-            }
-            if shadow.isActive {
-                Section("Preset") {
-                    HStack(spacing: 8) {
-                        ForEach(ShadowConfig.Preset.allCases) { preset in
-                            presetButton(preset)
-                        }
-                    }
-                }
-                Section("Adjust") {
-                    ColorPicker("Color", selection: colorBinding, supportsOpacity: false)
-                    detailSliders
-                }
-            }
+            ShadowControls(shadow: $shadow)
         }
         #endif
     }
@@ -54,6 +29,50 @@ struct ShadowPopover: View {
             isResetDisabled: { shadow.isEmpty },
             onReset: reset
         )
+    }
+
+    private func reset() {
+        shadow = ShadowConfig()
+    }
+}
+
+/// The shadow's enable toggle, presets and fine-tune sliders, without a title — the popover and
+/// the inspector section each supply their own. macOS gets the dense column, iPad `Form` sections.
+struct ShadowControls: View {
+    @Binding var shadow: ShadowConfig
+
+    var body: some View {
+        #if os(macOS)
+        VStack(alignment: .leading, spacing: 12) {
+            Toggle("Enable shadow", isOn: enabledBinding)
+                .toggleStyle(.switch)
+                .controlSize(.small)
+
+            if shadow.isActive {
+                Divider()
+                presetSection
+                Divider()
+                detailSection
+            }
+        }
+        #else
+        Section {
+            Toggle("Enable shadow", isOn: enabledBinding)
+        }
+        if shadow.isActive {
+            Section("Preset") {
+                HStack(spacing: 8) {
+                    ForEach(ShadowConfig.Preset.allCases) { preset in
+                        presetButton(preset)
+                    }
+                }
+            }
+            Section("Adjust") {
+                ColorPicker("Color", selection: colorBinding, supportsOpacity: false)
+                detailSliders
+            }
+        }
+        #endif
     }
 
     @ViewBuilder
@@ -130,10 +149,6 @@ struct ShadowPopover: View {
             range: ShadowConfig.opacityRange,
             format: { "\(Int(($0 * 100).rounded()))%" }
         )
-    }
-
-    private func reset() {
-        shadow = ShadowConfig()
     }
 
     // MARK: - Bindings

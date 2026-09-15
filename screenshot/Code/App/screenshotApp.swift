@@ -262,11 +262,7 @@ struct ScreenshotBroApp: App {
                     .disabled(!appState.hasSelection || appState.textEdit.isActive)
 
                     Button("Deselect") {
-                        if appState.hasSelection {
-                            appState.selectedShapeIds = []
-                        } else {
-                            appState.deselectAll()
-                        }
+                        appState.stepBackSelection()
                     }
                     .keyboardShortcut(.escape, modifiers: [])
                     .disabled(!appState.hasSelection && appState.selectedRowId == nil)

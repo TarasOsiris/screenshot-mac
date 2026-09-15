@@ -66,6 +66,23 @@ struct ContentView: View {
     @AppStorage("reviewFirstExportDate") var reviewFirstExportDate: Double = 0
     @AppStorage("reviewLastPromptDate") var reviewLastPromptDate: Double = 0
     @AppStorage("inspectorPresented") var isInspectorPresented = true
+    #if os(macOS)
+    @AppStorage(AppSettingsKeys.selectionInspector) var isSelectionInspectorEnabled = AppSettingsKeys.Default.selectionInspector
+
+    /// The coach's inspector step points at the row form, so the tour keeps it on screen.
+    var inspectorIncludesShapes: Bool {
+        isSelectionInspectorEnabled && state.coach.step != .inspector
+    }
+
+    var showsPropertiesBar: Bool {
+        let rowIsPreviewing = state.selectedRowId.map { state.viewMode.previewingRows.contains($0) } ?? false
+        return InspectorContent.showsPropertiesBar(
+            hasShapeSelection: state.hasSelection,
+            inspectorShowsShapes: InspectorContent.showsShapeProperties(includesShapes: inspectorIncludesShapes, rowIsPreviewing: rowIsPreviewing),
+            inspectorPresented: isInspectorPresented
+        )
+    }
+    #endif
     #if os(iOS)
     @State private var inspectorSheetDetent: PresentationDetent = .large
     #endif
@@ -221,7 +238,7 @@ struct ContentView: View {
             }
 
             #if os(macOS)
-            if state.hasSelection {
+            if showsPropertiesBar {
                 Divider()
                 ShapePropertiesBar(state: state)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -241,15 +258,6 @@ struct ContentView: View {
             Task.delayed(0.35) {
                 guard state.textEdit.isActive, let rowId = state.selectedRowId else { return }
                 state.requestCanvasFocus(on: rowId, animated: true)
-            }
-        }
-        #endif
-        #if os(macOS)
-        .onExitCommand {
-            if state.hasSelection {
-                state.selectedShapeIds = []
-            } else if state.selectedRowId != nil {
-                state.deselectAll()
             }
         }
         #endif
@@ -308,9 +316,22 @@ struct ContentView: View {
         }
         #if os(macOS)
         .inspector(isPresented: $isInspectorPresented) {
-            InspectorPanel(state: state)
-                .inspectorColumnWidth(min: 220, ideal: 260, max: 320)
+            // Shape sections need more room than the row's.
+            InspectorPanel(state: state, includesShapes: inspectorIncludesShapes)
+                .inspectorColumnWidth(
+                    min: isSelectionInspectorEnabled ? 250 : 220,
+                    ideal: isSelectionInspectorEnabled ? 280 : 260,
+                    max: isSelectionInspectorEnabled ? 360 : 320
+                )
                 .frame(minHeight: 200)
+        }
+        // Below `.inspector` so Esc also steps back while focus is in the sidebar.
+        .onExitCommand {
+            state.stepBackSelection()
+        }
+        .onChange(of: isSelectionInspectorEnabled) { _, isEnabled in
+            // Turning it on is asking to see it.
+            if isEnabled { isInspectorPresented = true }
         }
         #else
         // Docked side panel only at regular width. Apple's `.inspector` ignores
@@ -369,6 +390,11 @@ struct ContentView: View {
 
             ToolbarItem(id: "trailingControls", placement: .primaryAction) {
                 HStack(spacing: 6) {
+                    if isSelectionInspectorEnabled {
+                        InsertShapeToolbarMenu(state: state)
+                        Divider()
+                            .frame(height: 16)
+                    }
                     ZoomControls(onFit: fitZoomToWindow, fitHelpText: fitZoomHelpText)
                     Divider()
                         .frame(height: 16)

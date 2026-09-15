@@ -1,84 +1,82 @@
 import SwiftUI
 
-struct ShapeOpacitySection: View {
+/// The opacity percentage field, optionally with a slider.
+struct ShapeOpacityField: View, ShapeEditing {
+    let state: AppState
     let shapeId: UUID
-    let field: ShapePropertiesSingleSelectionBar.Field
-    let opacity: Double
-    @Binding var text: String
-    @Binding var isActive: Bool
-    var focus: FocusState<ShapePropertiesSingleSelectionBar.Field?>.Binding
-    let current: (UUID) -> String
-    let commit: (UUID?) -> Void
-    let liveSelection: () -> UUID?
+    var showsSlider = false
+
+    @State private var text = ""
+    @State private var isActive = false
 
     var body: some View {
-        ShapePropertiesSection {
-            ShapePropertiesControlGroup("Opacity") {
-                HStack(spacing: 0) {
-                    ShapePropertyField(
-                        shapeId: shapeId,
-                        field: field,
-                        text: $text,
-                        isActive: $isActive,
-                        focus: focus,
-                        width: propertiesOpacityFieldWidth,
-                        clearsFocusOnSelectionChange: true,
-                        modelValue: opacity,
-                        current: current,
-                        commit: commit,
-                        liveSelection: liveSelection
-                    )
+        let draft = ShapeFieldDraft(text: $text, isActive: $isActive)
+        // Without a slider nothing here drags opacity, so there is no live value worth following.
+        let opacity = shapeBinding(shapeId, \.opacity, continuous: showsSlider)
+        HStack(spacing: 4) {
+            if showsSlider {
+                Slider(value: opacity, in: 0...1)
+                    .frame(width: UIMetrics.SliderWidth.standard)
+            }
 
-                    Text("%")
-                        .scaledFont(UIMetrics.FontSize.numericBadge)
-                        .foregroundStyle(.secondary)
-                }
+            HStack(spacing: 0) {
+                ShapePropertyField(
+                    shapeId: shapeId,
+                    text: $text,
+                    isActive: $isActive,
+                    width: propertiesOpacityFieldWidth,
+                    clearsFocusOnSelectionChange: true,
+                    modelValue: opacity.wrappedValue,
+                    current: { currentOpacityString(for: $0) },
+                    commit: { commitOpacity(to: $0, draft: draft) },
+                    liveSelection: { state.selectedShapeId }
+                )
+
+                Text("%")
+                    .scaledFont(UIMetrics.FontSize.numericBadge)
+                    .foregroundStyle(.secondary)
             }
         }
     }
 }
 
-struct ShapeRotationSection: View {
+/// Rotation slider, degree field and reset.
+struct ShapeRotationControl: View, ShapeEditing {
+    let state: AppState
     let shapeId: UUID
-    let field: ShapePropertiesSingleSelectionBar.Field
-    @Binding var slider: Double
-    @Binding var text: String
-    @Binding var isActive: Bool
-    var focus: FocusState<ShapePropertiesSingleSelectionBar.Field?>.Binding
-    let current: (UUID) -> String
-    let commit: (UUID?) -> Void
-    let liveSelection: () -> UUID?
-    let onReset: () -> Void
+
+    @State private var text = ""
+    @State private var isActive = false
 
     var body: some View {
-        ShapePropertiesSection {
-            ShapePropertiesControlGroup("Rotation") {
-                Slider(value: $slider, in: 0...360)
-                    .frame(width: UIMetrics.SliderWidth.standard)
+        let draft = ShapeFieldDraft(text: $text, isActive: $isActive)
+        let slider = shapeBinding(shapeId, \.rotation, continuous: true)
+        HStack(spacing: 4) {
+            Slider(value: slider, in: 0...360)
+                .frame(width: UIMetrics.SliderWidth.standard)
 
-                HStack(spacing: 0) {
-                    ShapePropertyField(
-                        shapeId: shapeId,
-                        field: field,
-                        text: $text,
-                        isActive: $isActive,
-                        focus: focus,
-                        width: propertiesNumericFieldWidth,
-                        keyboard: .signed,
-                        clearsFocusOnSelectionChange: true,
-                        modelValue: slider,
-                        current: current,
-                        commit: commit,
-                        liveSelection: liveSelection
-                    )
+            HStack(spacing: 0) {
+                ShapePropertyField(
+                    shapeId: shapeId,
+                    text: $text,
+                    isActive: $isActive,
+                    width: propertiesNumericFieldWidth,
+                    keyboard: .signed,
+                    clearsFocusOnSelectionChange: true,
+                    modelValue: slider.wrappedValue,
+                    current: { currentRotationString(for: $0) },
+                    commit: { commitRotation(to: $0, draft: draft) },
+                    liveSelection: { state.selectedShapeId }
+                )
 
-                    Text("°")
-                        .scaledFont(UIMetrics.FontSize.numericBadge)
-                        .foregroundStyle(.secondary)
-                }
+                Text("°")
+                    .scaledFont(UIMetrics.FontSize.numericBadge)
+                    .foregroundStyle(.secondary)
+            }
 
-                if slider != 0 {
-                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize, action: onReset)
+            if slider.wrappedValue != 0 {
+                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
+                    resetRotation(shapeId: shapeId, draft: draft)
                 }
             }
         }
@@ -138,13 +136,21 @@ struct AndroidCameraCutoutSection: View {
 
     var body: some View {
         ShapePropertiesSection {
-            Toggle("Camera", isOn: Binding(
-                get: { !hideCameraCutout },
-                set: { hideCameraCutout = !$0 }
-            ))
-            .toggleStyle(.switch)
-            .compactControlSize()
-            .help("Show camera cutout on the abstract Android frame")
+            AndroidCameraCutoutToggle(hideCameraCutout: $hideCameraCutout)
+                .compactControlSize()
         }
+    }
+}
+
+struct AndroidCameraCutoutToggle: View {
+    @Binding var hideCameraCutout: Bool
+
+    var body: some View {
+        Toggle("Camera", isOn: Binding(
+            get: { !hideCameraCutout },
+            set: { hideCameraCutout = !$0 }
+        ))
+        .toggleStyle(.switch)
+        .help("Show camera cutout on the abstract Android frame")
     }
 }

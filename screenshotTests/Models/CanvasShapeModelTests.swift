@@ -244,7 +244,7 @@ struct CanvasShapeModelTests {
     }
 
     @MainActor @Test func textBackgroundPresetsAreWellFormed() {
-        let presets = ShapePropertiesSingleSelectionBar.textBackgroundPresets
+        let presets = TextBackgroundPreset.presets
         #expect(presets.count == 4)
         for preset in presets {
             #expect(!preset.name.isEmpty)

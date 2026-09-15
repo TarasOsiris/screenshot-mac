@@ -41,13 +41,7 @@ struct PopoverHeader: View {
                 .scaledFont(UIMetrics.FontSize.body, weight: .semibold)
 
             if let badge {
-                Text(badge)
-                    .scaledFont(UIMetrics.FontSize.hint, weight: .semibold)
-                    .foregroundStyle(.orange)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(.orange.opacity(0.15), in: .capsule)
-                    .help(badgeHelp ?? badge)
+                PopoverBadge(text: badge, help: badgeHelp)
             }
 
             Spacer()
@@ -63,6 +57,22 @@ struct PopoverHeader: View {
             .disabled(isResetDisabled())
             .help(resetHelp)
         }
+    }
+}
+
+/// Orange capsule after a title (e.g. "Beta").
+struct PopoverBadge: View {
+    let text: LocalizedStringKey
+    var help: LocalizedStringKey?
+
+    var body: some View {
+        Text(text)
+            .scaledFont(UIMetrics.FontSize.hint, weight: .semibold)
+            .foregroundStyle(.orange)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(.orange.opacity(0.15), in: .capsule)
+            .help(help ?? text)
     }
 }
 

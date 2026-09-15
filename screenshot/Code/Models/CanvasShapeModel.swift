@@ -493,6 +493,15 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         type == .device && (resolvedDeviceFrame?.isModelBacked == true)
     }
 
+    var supportsCornerRadius: Bool {
+        type == .rectangle || type == .image || (type == .device && deviceCategory == .invisible)
+    }
+
+    /// `ShapeType.supportsOutline` plus the invisible device, whose frame is drawn as an outline.
+    var supportsOutlineEditing: Bool {
+        type.supportsOutline || (type == .device && deviceCategory == .invisible)
+    }
+
     var resolvedDevicePitch: Double {
         guard supportsDeviceModelRotation else { return 0 }
         return devicePitch ?? resolvedDeviceFrame?.modelSpec?.defaultPitch ?? Self.defaultDeviceModelPitch

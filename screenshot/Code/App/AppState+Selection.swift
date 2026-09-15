@@ -99,6 +99,15 @@ extension AppState {
         textEdit.isActive = false
     }
 
+    /// Esc: a shape selection steps back to its row, and a row selection to nothing.
+    func stepBackSelection() {
+        if hasSelection {
+            selectedShapeIds = []
+        } else if selectedRowId != nil {
+            deselectAll()
+        }
+    }
+
     /// Request the canvas ScrollView to scroll a row to center (drives the `ScrollViewReader`
     /// in `ContentView` via the nonce).
     func requestCanvasFocus(on rowId: UUID, animated: Bool) {

@@ -1,16 +1,15 @@
 import SwiftUI
 
-extension ShapePropertiesSingleSelectionBar {
+extension ShapeEditing {
     // MARK: - Device Picker
 
-    /// Shared device picker used across toolbar/settings/inspector.
     @ViewBuilder
-    func devicePicker(shape: CanvasShapeModel, shapeId: UUID) -> some View {
+    func devicePicker(shape: CanvasShapeModel, shapeId: UUID, presentation: DevicePickerPresentation = .toolbar) -> some View {
         DevicePickerMenu(
             category: shape.deviceCategory ?? .iphone,
             frameId: shape.deviceFrameId,
             allowsNoDevice: false,
-            presentation: .toolbar,
+            presentation: presentation,
             bodyColor: shape.deviceCategory != .invisible && shape.resolvedDeviceFrame?.isModelBacked != false ? deviceBodyColorBinding(shapeId) : nil,
             bodyColorLabel: String(localized: "Device color"),
             canResetBodyColor: hasDeviceBodyColorOverride(shapeId),
@@ -48,7 +47,7 @@ extension ShapePropertiesSingleSelectionBar {
     func deviceBodyColorBinding(_ shapeId: UUID) -> Binding<Color> {
         Binding(
             get: {
-                guard let i = idx(for: shapeId), let shape = editingShape(shapeId) else {
+                guard let i = idx(for: shapeId), let shape = resolvedDocumentShape(shapeId) else {
                     return CanvasShapeModel.defaultDeviceBodyColor
                 }
                 return shape.deviceBodyColorData?.color ?? state.rows[i.row].defaultDeviceBodyColor
@@ -101,6 +100,23 @@ extension ShapePropertiesSingleSelectionBar {
     func resetDeviceModelRotation(_ shapeId: UUID) {
         guard var resolved = editingShape(shapeId) else { return }
         resolved.resetDeviceModelRotation()
+        state.updateShape(resolved)
+    }
+
+    /// Rotation, material or lighting differs from the defaults — what "Reset all" undoes.
+    func hasDevice3DAppearanceOverride(_ shapeId: UUID) -> Bool {
+        guard let i = idx(for: shapeId) else { return false }
+        let shape = state.rows[i.row].shapes[i.shape]
+        return hasDeviceModelRotationOverride(shapeId)
+            || shape.deviceBodyMaterial?.isEmpty == false
+            || shape.deviceLighting?.isEmpty == false
+    }
+
+    func resetDevice3DAppearance(_ shapeId: UUID) {
+        guard var resolved = editingShape(shapeId) else { return }
+        resolved.resetDeviceModelRotation()
+        resolved.deviceBodyMaterial = nil
+        resolved.deviceLighting = nil
         state.updateShape(resolved)
     }
 

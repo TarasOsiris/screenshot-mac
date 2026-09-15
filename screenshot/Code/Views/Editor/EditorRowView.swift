@@ -207,15 +207,13 @@ struct EditorRowView: View {
         }
         .sheet(isPresented: $isSvgDialogPresented) {
             SvgPasteDialog(isPresented: $isSvgDialogPresented) { svgContent, size, useColor, color in
-                let center = contextMenuPointStore.value ?? state.shapeCenter(for: row)
-                let maxDim = row.svgMaxDimension
-                let scaledSize = SvgHelper.scaledSize(size, maxDim: maxDim)
-                var shape = CanvasShapeModel.defaultSvg(centerX: center.x, centerY: center.y, svgContent: svgContent, size: scaledSize)
-                if useColor {
-                    shape.svgUseColor = true
-                    shape.color = color
-                }
-                state.addShape(shape)
+                state.insertSvgShape(
+                    content: svgContent,
+                    naturalSize: size,
+                    customColor: useColor ? color : nil,
+                    inRow: row.id,
+                    at: contextMenuPointStore.value
+                )
             }
         }
         .sheet(item: $svgReplaceTarget) { target in

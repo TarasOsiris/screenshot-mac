@@ -134,6 +134,7 @@ extension HelpSection {
                 .bullet("Each category sets the row's default screenshot pixel size to a value the relevant store accepts."),
                 .heading("Row inspector"),
                 .bullet("Select a row (click empty canvas space inside it) to reveal row-level controls in the inspector."),
+                .bullet("With **Edit selected shapes in the inspector** turned on in Settings, selecting a shape swaps these controls for the shape's own. Click the row name at the top of the inspector, or press **Esc**, to come back."),
                 .bullet("**Row label** — names the folder this row exports into. **Double-click the label in the row header** to rename it in place."),
                 .bullet("**Screenshot size** — **Presets** lists the resolutions each store accepts, grouped by device. Switch to **Custom** to type any size from 100 to 5000 px."),
                 .bullet("**Orientation** flips the row between portrait and landscape by swapping width and height."),
@@ -192,6 +193,7 @@ extension HelpSection {
             subtitle: "Build the layout with rectangles, circles, stars, text, images, devices, and SVGs.",
             blocks: [
                 .paragraph("Most shape settings live in the properties bar along the bottom of the window. It appears only when at least one shape is selected on the canvas — selecting a row is not enough — and its controls change to match the kind of shape you picked."),
+                .paragraph("Prefer a sidebar? Turn on **Edit selected shapes in the inspector** in Settings ▸ General. The same controls then move into the inspector as collapsible sections (hide the inspector and the bar comes back), a multi-selection gets align and distribute buttons, and the **Insert** menu in the toolbar adds shapes."),
                 .heading("Adding shapes"),
                 .bullet("Use the **Shapes** dropdown in the inspector to add a Rectangle, Circle, or Star."),
                 .bullet("Buttons next to it add Text, Image, Device, or SVG elements."),
@@ -617,6 +619,7 @@ extension HelpSection {
                 .bullet("**Default zoom** — initial zoom level when opening the app."),
                 .bullet("**Ask before deleting rows and screenshots** — show a confirmation prompt for destructive row and screenshot actions."),
                 .bullet("**Project order** — By creation date or Alphabetically."),
+                .bullet("**Edit selected shapes in the inspector** — shows a selected shape's properties in the sidebar instead of the bar below the canvas."),
                 .bullet("**iCloud sync** — toggle and check status."),
                 .bullet("**Editor tour** — **Replay Tour** runs the first-run coach marks again over your open project."),
                 .bullet("**Storage** — open the project library in Finder or create a one-off backup zip."),

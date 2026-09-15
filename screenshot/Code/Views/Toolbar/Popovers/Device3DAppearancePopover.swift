@@ -13,29 +13,12 @@ struct Device3DAppearancePopover: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             Divider()
-            rotationSection
-            Divider()
-            materialSection
-            Divider()
-            lightingSection
+            Device3DAppearanceControls(pitch: $pitch, yaw: $yaw, material: $material, lighting: $lighting)
         }
         .popoverColumn()
         #else
         Form {
-            Section("Rotation") {
-                rotationSliders
-            }
-            Section("Material") {
-                Picker("Finish", selection: finishBinding) {
-                    ForEach(DeviceBodyFinish.allCases) { option in
-                        Text(option.label).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-            Section("Lighting") {
-                lightingSliders
-            }
+            Device3DAppearanceControls(pitch: $pitch, yaw: $yaw, material: $material, lighting: $lighting)
             Section {
                 PopoverResetButton(label: "Reset all", isDisabled: { !hasAnyOverride }, action: resetAll)
             } footer: {
@@ -55,6 +38,52 @@ struct Device3DAppearancePopover: View {
             isResetDisabled: { !hasAnyOverride },
             onReset: resetAll
         )
+    }
+
+    private var hasAnyOverride: Bool {
+        canResetRotation || !material.isEmpty || !lighting.isEmpty
+    }
+
+    private func resetAll() {
+        material = DeviceBodyMaterial()
+        lighting = DeviceLighting()
+        if canResetRotation { onResetRotation() }
+    }
+}
+
+/// Rotation, material and lighting for a model-backed device, without a title or reset — the
+/// popover and the inspector section each supply their own.
+struct Device3DAppearanceControls: View {
+    @Binding var pitch: Double
+    @Binding var yaw: Double
+    @Binding var material: DeviceBodyMaterial
+    @Binding var lighting: DeviceLighting
+
+    var body: some View {
+        #if os(macOS)
+        VStack(alignment: .leading, spacing: 12) {
+            rotationSection
+            Divider()
+            materialSection
+            Divider()
+            lightingSection
+        }
+        #else
+        Section("Rotation") {
+            rotationSliders
+        }
+        Section("Material") {
+            Picker("Finish", selection: finishBinding) {
+                ForEach(DeviceBodyFinish.allCases) { option in
+                    Text(option.label).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+        Section("Lighting") {
+            lightingSliders
+        }
+        #endif
     }
 
     @ViewBuilder
@@ -105,16 +134,6 @@ struct Device3DAppearancePopover: View {
         PopoverSliderRow(label: "Ambient", value: ambientBinding, range: DeviceLighting.ambientIntensityRange)
         PopoverSliderRow(label: "Key", value: keyBinding, range: DeviceLighting.keyIntensityRange)
         PopoverSliderRow(label: "Rim", value: rimBinding, range: DeviceLighting.rimIntensityRange)
-    }
-
-    private var hasAnyOverride: Bool {
-        canResetRotation || !material.isEmpty || !lighting.isEmpty
-    }
-
-    private func resetAll() {
-        material = DeviceBodyMaterial()
-        lighting = DeviceLighting()
-        if canResetRotation { onResetRotation() }
     }
 
     private var finishBinding: Binding<DeviceBodyFinish> {

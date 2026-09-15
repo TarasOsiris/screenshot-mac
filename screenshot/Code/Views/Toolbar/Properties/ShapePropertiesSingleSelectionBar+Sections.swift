@@ -1,8 +1,7 @@
 import SwiftUI
 
 // The per-shape-type runs of the properties bar, lifted out of `body` so the bar reads as
-// the ordered list of sections it is. They stay methods on the bar rather than standalone
-// views because every one of them needs the binding factories in `+ValueBindings`.
+// the ordered list of sections it is.
 extension ShapePropertiesSingleSelectionBar {
     @ViewBuilder
     func deviceSections(shape: CanvasShapeModel, shapeId: UUID) -> some View {
@@ -34,9 +33,7 @@ extension ShapePropertiesSingleSelectionBar {
                 onReset: { resetDeviceModelRotation(shapeId) },
                 bodyMaterial: optionalConfigBinding(shapeId, \.deviceBodyMaterial, fallback: DeviceBodyMaterial(), isEmpty: \.isEmpty),
                 lighting: optionalConfigBinding(shapeId, \.deviceLighting, fallback: DeviceLighting(), isEmpty: \.isEmpty),
-                showsOverrideDot: hasDeviceModelRotationOverride(shapeId)
-                    || shape.deviceBodyMaterial?.isEmpty == false
-                    || shape.deviceLighting?.isEmpty == false
+                showsOverrideDot: hasDevice3DAppearanceOverride(shapeId)
             )
         }
     }
@@ -52,19 +49,11 @@ extension ShapePropertiesSingleSelectionBar {
                     bgColor: shapeBinding(shapeId, \.color),
                     gradientConfig: shapeBinding(shapeId, \.fillGradientConfig, default: GradientConfig(), continuous: true),
                     backgroundImageConfig: shapeBinding(shapeId, \.fillImageConfig, default: BackgroundImageConfig(), continuous: true),
-                    backgroundImage: {
-                        (idx(for: shapeId).flatMap { i in
-                            state.rows[i.row].shapes[i.shape].fillImageConfig?.fileName
-                        }).flatMap { state.screenshotImages[$0] }
-                    },
+                    backgroundImage: { shapeFillImage(shapeId) },
                     onChanged: { state.scheduleSave() },
                     // macOS opens a file panel here; iPad picks via ImageSourceMenu
                     // inside BackgroundImageEditor (→ onDropImage → saveShapeFillImage).
-                    onPickImage: {
-                        #if os(macOS)
-                        isReplacingFillImage = true
-                        #endif
-                    },
+                    onPickImage: { isReplacingFillImage = true },
                     onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
                     onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
                 )
@@ -81,13 +70,13 @@ extension ShapePropertiesSingleSelectionBar {
 
     @ViewBuilder
     func shapeGeometrySections(shape: CanvasShapeModel, shapeId: UUID) -> some View {
-        if shape.type == .rectangle || shape.type == .image || (shape.type == .device && shape.deviceCategory == .invisible) {
+        if shape.supportsCornerRadius {
             ShapeCornerRadiusSection(
                 value: shapeBinding(shapeId, \.borderRadius, continuous: true)
             )
         }
 
-        if shape.type.supportsOutline || (shape.type == .device && shape.deviceCategory == .invisible) {
+        if shape.supportsOutlineEditing {
             ShapePropertiesSection {
                 ShapeOutlineControls(
                     hasOutline: outlineEnabledBinding(shapeId),
