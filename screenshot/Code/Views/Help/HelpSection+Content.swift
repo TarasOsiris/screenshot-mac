@@ -203,7 +203,7 @@ extension HelpSection {
                 .bullet("**Double-click the letter-spacing value** to snap it back to the default."),
                 .bullet("**Rich text**: while editing, select part of the text and use the format bar for bold, italic, underline, strikethrough, a different size, or a different color — per run, inside one shape. **Clear formatting** returns the selection to the shape's base style."),
                 .bullet("**Text background** turns a headline into a badge: pick **Solid**, **Pill**, **Outline**, or **Highlight**, then tune color, padding, corner radius, opacity, and an outline."),
-                .bullet("**Copy Text Style** / **Paste Text Style** (right-click) carry a text shape's whole look onto another one."),
+                .bullet("**Copy Text Style** / **Paste Text Style** (right-click) carry a text shape's whole look onto another one, or onto every selected text shape at once."),
                 .bullet("Text auto-grows vertically by default. Drag a side handle to fix the width and let it wrap."),
                 .bullet("Custom fonts: choose **Pick custom font** from the text font picker."),
                 .heading("Image"),

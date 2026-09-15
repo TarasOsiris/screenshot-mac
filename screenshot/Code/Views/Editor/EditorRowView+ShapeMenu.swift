@@ -118,7 +118,8 @@ extension EditorRowView {
             } : nil,
             onPasteTextStyle: shape.type == .text && state.textStyleClipboard != nil ? { [rowId = row.id] in
                 guard let style = state.textStyleClipboard else { return }
-                state.updateShapes([shape.id], in: rowId) { $0.applyTextStyle(style) }
+                let targets = isMulti ? facts.selectedTextShapeIds : [shape.id]
+                state.updateShapes(targets, in: rowId) { $0.applyTextStyle(style) }
             } : nil,
             applyUpdate: { update in
                 if isMulti && facts.allSelectedSameType {

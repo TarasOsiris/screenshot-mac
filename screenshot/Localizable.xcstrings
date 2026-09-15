@@ -2142,54 +2142,54 @@
         }
       }
     },
-    "**Copy Text Style** / **Paste Text Style** (right-click) carry a text shape's whole look onto another one." : {
+    "**Copy Text Style** / **Paste Text Style** (right-click) carry a text shape's whole look onto another one, or onto every selected text shape at once." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Textstil kopieren** / **Textstil einfügen** (Rechtsklick) überträgt das gesamte Erscheinungsbild einer Textform auf eine andere."
+            "value" : "**Textstil kopieren** / **Textstil einfügen** (Rechtsklick) überträgt das gesamte Erscheinungsbild einer Textform auf eine andere oder auf einmal auf alle ausgewählten Textformen."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Copiar estilo de texto** / **Pegar estilo de texto** (clic derecho) traslada el aspecto completo de una forma de texto a otra."
+            "value" : "**Copiar estilo de texto** / **Pegar estilo de texto** (clic derecho) traslada el aspecto completo de una forma de texto a otra, o a todas las formas de texto seleccionadas a la vez."
           }
         },
         "fa" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**سبک متن کپی**/*سبک متن چسباندن** (راست کلیک کنید) کل شکل یک متن را به شکل دیگری منتقل می کند."
+            "value" : "**کپی سبک متن** / **چسباندن سبک متن** (کلیک راست) کل ظاهر یک شکل متنی را به شکل دیگری، یا به‌طور هم‌زمان به همهٔ شکل‌های متنی انتخاب‌شده، منتقل می‌کند."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Copier le style de texte** / **Coller le style de texte** (clic droit) permet de transférer l'apparence complète d'une forme de texte sur une autre."
+            "value" : "**Copier le style du texte** / **Coller le style de texte** (clic droit) transfèrent l'apparence complète d'une forme de texte sur une autre, ou sur toutes les formes de texte sélectionnées à la fois."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**テキスト スタイルのコピー** / **テキスト スタイルの貼り付け** (右クリック) は、テキスト図形全体の外観を別の図形に引き継ぎます。"
+            "value" : "**テキストスタイルをコピー** / **テキストスタイルを貼り付け**（右クリック）で、テキスト図形の見た目全体を別の図形、または選択中のすべてのテキスト図形にまとめて適用できます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**텍스트 스타일 복사** / **텍스트 스타일 붙여넣기**(오른쪽 클릭)는 텍스트 모양의 전체 모양을 다른 모양으로 가져옵니다."
+            "value" : "**텍스트 스타일 복사** / **텍스트 스타일 붙여넣기**(오른쪽 클릭)로 텍스트 도형의 전체 모양을 다른 도형이나 선택한 모든 텍스트 도형에 한 번에 적용할 수 있습니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Copiar estilo de texto** / **Colar estilo de texto** (clique com o botão direito) transfere a aparência completa de uma forma de texto para outra."
+            "value" : "**Copiar estilo de texto** / **Colar estilo de texto** (clique com o botão direito) transferem a aparência completa de uma forma de texto para outra, ou para todas as formas de texto selecionadas de uma vez."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**复制文本样式** / **粘贴文本样式**（右键单击）将文本形状的整体外观转移到另一个文本形状上。"
+            "value" : "**复制文本样式** / **粘贴文本样式**（右键单击）可将文本形状的整体外观应用到另一个文本形状，或一次性应用到所有选中的文本形状。"
           }
         }
       }

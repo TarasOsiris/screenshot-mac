@@ -156,10 +156,12 @@ struct CanvasShapeContextMenuContent: View {
             } label: {
                 Label("Change Font Size", systemImage: "textformat.size")
             }
-            if !isMultiSelected, let onCopyTextStyle {
+            if let onCopyTextStyle {
                 Divider()
-                Button("Copy Text Style", systemImage: "paintbrush") {
-                    onCopyTextStyle()
+                if !isMultiSelected {
+                    Button("Copy Text Style", systemImage: "paintbrush") {
+                        onCopyTextStyle()
+                    }
                 }
                 Button("Paste Text Style", systemImage: "paintbrush.fill") {
                     onPasteTextStyle?()
