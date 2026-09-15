@@ -96105,12 +96105,106 @@
     },
     "**Replace SVG…** (right-click, or in the properties bar) swaps in new artwork and keeps the shape's position, rotation, color, and effects. The frame narrows to fit the new artwork's proportions." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**SVG ersetzen…** (Rechtsklick oder in der Eigenschaftenleiste) tauscht die Grafik aus und behält Position, Drehung, Farbe und Effekte der Form bei. Der Rahmen wird schmaler, damit er zu den Proportionen der neuen Grafik passt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Reemplazar SVG…** (clic derecho o en la barra de propiedades) cambia la ilustración y conserva la posición, la rotación, el color y los efectos de la forma. El marco se estrecha para ajustarse a las proporciones de la nueva ilustración."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**جایگزین کردن SVG…** (راست کلیک، یا در نوار خصوصیات) طرح جدید را جایگزین می‌کند و موقعیت، چرخش، رنگ و جلوه‌های شکل را حفظ می‌کند. قاب برای جا گرفتن در تناسبات طرح جدید تنگ‌تر می‌شود."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Remplacer le SVG…** (clic droit ou dans la barre de propriétés) remplace l'illustration et conserve la position, la rotation, la couleur et les effets de la forme. Le cadre se resserre pour épouser les proportions de la nouvelle illustration."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**SVG を置換…**（右クリック、またはプロパティ バー）で新しいアートワークに差し替えても、シェイプの位置、回転、色、エフェクトはそのまま保持されます。フレームは新しいアートワークの縦横比に合わせて狭まります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**SVG 교체…**(마우스 오른쪽 버튼 클릭 또는 속성 표시줄)는 새 아트워크로 바꾸면서 모양의 위치, 회전, 색상, 효과를 그대로 유지합니다. 프레임은 새 아트워크의 비율에 맞게 줄어듭니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Substituir SVG…** (clique com o botão direito ou na barra de propriedades) troca a arte e mantém a posição, a rotação, a cor e os efeitos da forma. O quadro se estreita para caber nas proporções da nova arte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**替换 SVG…**（右键单击，或在属性栏中）会换上新图形，并保留形状的位置、旋转、颜色和效果。框架会收窄以适应新图形的比例。"
+          }
+        }
       }
     },
     "Replace SVG..." : {
       "localizations" : {
-
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG ersetzen..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar SVG…"
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جایگزین کردن SVG..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer le SVG..."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG を置換..."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG 교체..."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir SVG..."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换 SVG..."
+          }
+        }
       }
     },
     "**iPhone** — iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max, and 3D iPhone options." : {
