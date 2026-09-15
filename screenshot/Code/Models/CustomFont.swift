@@ -6,8 +6,8 @@ import UIKit
 import CoreText
 import Foundation
 
-/// Metadata for a user-imported font file. One family can have multiple files (Regular,
-/// Italic, Bold, …); each is shown as its own picker entry.
+/// One face of an imported font file — the only one for a static file, one per named instance of a
+/// variable font or `.ttc`. Each is its own picker entry.
 nonisolated struct CustomFont: Hashable {
     let fileName: String
     let familyName: String
@@ -16,9 +16,8 @@ nonisolated struct CustomFont: Hashable {
     let isBold: Bool
     let isItalic: Bool
     let suggestedFontWeight: Int
-    /// Full 100–900 CSS weight inferred from the style name, used to pick the exact named
-    /// instance of a (variable) font when resolving a bare family name. Distinct from
-    /// `suggestedFontWeight`, which buckets to the picker's presets (300/400/500/700).
+    /// Full 100–900 CSS weight inferred from the style name; `suggestedFontWeight` buckets it to the
+    /// picker's presets (300/400/500/700).
     let typographicWeight: Int
 
     init(
@@ -90,6 +89,15 @@ nonisolated struct CustomFont: Hashable {
         return "\(familyName) \(trimmed)"
     }
 
+    /// Tie-break between faces equally close to a request: the plainer style name wins, so "Bold"
+    /// beats an optical-size "9pt Bold"; then a stable name order.
+    fileprivate static func plainerStyleFirst(_ lhs: CustomFont, _ rhs: CustomFont) -> Bool {
+        let lhsLength = lhs.styleName?.count ?? 0
+        let rhsLength = rhs.styleName?.count ?? 0
+        if lhsLength != rhsLength { return lhsLength < rhsLength }
+        return lhs.displayName != rhs.displayName ? lhs.displayName < rhs.displayName : lhs.fileName < rhs.fileName
+    }
+
     fileprivate static func isRegularStyle(_ style: String?) -> Bool {
         guard let style else { return false }
         let normalized = style.lowercased().trimmingCharacters(in: .whitespaces)
@@ -111,7 +119,11 @@ nonisolated struct CustomFont: Hashable {
     /// instance's display name. The picker writes either form, so matching a variable font on
     /// `parseMetadata`'s first descriptor alone under-matches.
     static func identityKeys(at url: URL) -> Set<String> {
-        Set(allInstances(at: url).flatMap { [$0.familyName, $0.displayName] })
+        identityKeys(of: allInstances(at: url))
+    }
+
+    static func identityKeys(of faces: some Sequence<CustomFont>) -> Set<String> {
+        Set(faces.flatMap { [$0.familyName, $0.displayName] })
     }
 
     /// Every named instance a font file exposes. A variable font reports one descriptor per
@@ -162,7 +174,7 @@ struct CustomFontControlState: Equatable {
 /// Process-wide lookup so rendering code can resolve a `shape.fontName` (which may be a
 /// custom font's display name) back to family + traits without having to thread the full
 /// custom-font dictionary through every call site. `CustomFontLibrary` keeps this in sync via
-/// `refreshAvailableFamilies(projectId:)`.
+/// `refreshAvailableFamilies()`.
 enum CustomFontRegistry {
     struct ResolvedFont: Equatable {
         let family: String
@@ -172,41 +184,36 @@ enum CustomFontRegistry {
 
     private static var byDisplayName: [String: CustomFont] = [:]
     private static var byFamily: [String: [CustomFont]] = [:]
-    /// All named instances per family (every weight a variable font exposes), used only to
-    /// resolve a bare family name to an exact PostScript name. Kept separate from `byFamily`
-    /// so the picker/control-state still see one primary face per imported file.
-    private static var instancesByFamily: [String: [CustomFont]] = [:]
 
-    static func update(with fonts: [String: CustomFont], instances: [CustomFont] = []) {
-        var map: [String: CustomFont] = [:]
-        var familyMap: [String: [CustomFont]] = [:]
-        for font in fonts.values {
-            map[font.displayName] = font
-            familyMap[font.familyName, default: []].append(font)
+    /// Picker order (family, upright before italic, light to heavy), one face per display name —
+    /// the name is what `shape.fontName` stores, so two files sharing one resolve to the first.
+    nonisolated static func faces(_ fonts: some Sequence<CustomFont>) -> [CustomFont] {
+        var seenDisplayNames = Set<String>()
+        return fonts.sorted { lhs, rhs in
+            if lhs.familyName != rhs.familyName { return lhs.familyName < rhs.familyName }
+            if lhs.isItalic != rhs.isItalic { return !lhs.isItalic }
+            if lhs.typographicWeight != rhs.typographicWeight { return lhs.typographicWeight < rhs.typographicWeight }
+            return CustomFont.plainerStyleFirst(lhs, rhs)
         }
-        byDisplayName = map
-        byFamily = familyMap
+        .filter { seenDisplayNames.insert($0.displayName).inserted }
+    }
 
-        var instanceMap: [String: [CustomFont]] = [:]
-        for font in instances {
-            instanceMap[font.familyName, default: []].append(font)
-        }
-        instancesByFamily = instanceMap
+    static func update(with fonts: [CustomFont]) {
+        let ordered = faces(fonts)
+        byDisplayName = Dictionary(uniqueKeysWithValues: ordered.map { ($0.displayName, $0) })
+        byFamily = Dictionary(grouping: ordered, by: \.familyName)
     }
 
     static func withTemporaryFonts<Result>(
-        _ fonts: [String: CustomFont],
-        instances: [CustomFont],
+        _ fonts: [CustomFont],
         perform: () throws -> Result
     ) rethrows -> Result {
         let previousByDisplayName = byDisplayName
         let previousByFamily = byFamily
-        let previousInstancesByFamily = instancesByFamily
-        update(with: fonts, instances: instances)
+        update(with: fonts)
         defer {
             byDisplayName = previousByDisplayName
             byFamily = previousByFamily
-            instancesByFamily = previousInstancesByFamily
         }
         return try perform()
     }
@@ -252,20 +259,24 @@ enum CustomFontRegistry {
 
         let requestedWeight = normalizedPresetWeight(fontWeight ?? 400)
         let requestedItalic = italic ?? false
+        // Stay on the current face's own weight within its preset, so italicizing Black lands on
+        // Black Italic rather than the preset's Bold Italic.
+        let current = byDisplayName[name]
+        let targetWeight = current.flatMap { $0.suggestedFontWeight == requestedWeight ? $0.typographicWeight : nil }
 
-        if let exact = exactVariant(in: variants, weight: requestedWeight, italic: requestedItalic) {
+        if let exact = exactVariant(in: variants, weight: requestedWeight, italic: requestedItalic, closestTo: targetWeight) {
             return exact.selectionResult()
         }
 
-        guard byDisplayName[name] == nil,
+        guard current == nil,
               let best = bestVariant(in: variants, weight: requestedWeight, italic: requestedItalic) else {
             return nil
         }
         return best.selectionResult()
     }
 
-    static func preferredSelection(for familyName: String, in fonts: [String: CustomFont]) -> ImportedCustomFontSelection? {
-        let variants = fonts.values.filter { $0.familyName == familyName }
+    static func preferredSelection(for familyName: String, in faces: [CustomFont]) -> ImportedCustomFontSelection? {
+        let variants = faces.filter { $0.familyName == familyName }
         return preferredVariant(in: variants)?.selectionResult()
     }
 
@@ -337,7 +348,7 @@ enum CustomFontRegistry {
     /// Best registered named-instance PostScript name for a custom family at the requested
     /// weight/italic, or nil if the family isn't a known custom font.
     static func postScriptName(forFamily family: String, managerWeight: Int, italic: Bool) -> String? {
-        guard let variants = instancesByFamily[family], !variants.isEmpty else { return nil }
+        guard let variants = byFamily[family], !variants.isEmpty else { return nil }
         return bestInstance(in: variants, weight: cssWeight(forManagerWeight: managerWeight), italic: italic)?.postScriptName
     }
 
@@ -406,8 +417,11 @@ enum CustomFontRegistry {
         return [300, 400, 500, 700].filter(set.contains)
     }
 
-    private static func exactVariant(in variants: [CustomFont], weight: Int, italic: Bool) -> CustomFont? {
-        variants.first { $0.suggestedFontWeight == weight && $0.isItalic == italic }
+    /// A variable font puts several faces in one preset (Thin/ExtraLight/Light are all 300), so
+    /// pick the one nearest the preset itself — or `closestTo`.
+    private static func exactVariant(in variants: [CustomFont], weight: Int, italic: Bool, closestTo target: Int? = nil) -> CustomFont? {
+        let candidates = variants.filter { $0.suggestedFontWeight == weight && $0.isItalic == italic }
+        return bestMatch(in: candidates, weight: target ?? weight, italic: italic, on: \.typographicWeight, tieBreak: CustomFont.plainerStyleFirst)
     }
 
     private static func preferredVariant(in variants: [CustomFont]) -> CustomFont? {
@@ -420,8 +434,13 @@ enum CustomFontRegistry {
         italic: Bool,
         preferRegularStyle: Bool = false
     ) -> CustomFont? {
-        bestMatch(in: variants, weight: weight, italic: italic, on: \.suggestedFontWeight, preferRegularStyle: preferRegularStyle) {
-            $0.displayName != $1.displayName ? $0.displayName < $1.displayName : $0.fileName < $1.fileName
-        }
+        bestMatch(
+            in: variants,
+            weight: weight,
+            italic: italic,
+            on: \.suggestedFontWeight,
+            preferRegularStyle: preferRegularStyle,
+            tieBreak: CustomFont.plainerStyleFirst
+        )
     }
 }

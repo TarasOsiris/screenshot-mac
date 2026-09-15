@@ -59,7 +59,9 @@ final class AppState {
     /// `RowRenderSource` conformance — the renderers ask the document, and it forwards.
     var availableFontFamilySet: Set<String> { fonts.availableFamilySet }
 
-    var customFonts: [String: CustomFont] { fonts.customFonts }
+    var customFonts: [String: [CustomFont]] { fonts.customFonts }
+
+    var customFaces: [CustomFont] { fonts.customFaces }
 
     /// Undo stack depth, and the reach `AppState+ImageResources` reaps orphaned files against.
     static let undoDepth = 50

@@ -4,7 +4,7 @@ struct FontPicker: View {
     @Binding var selection: String
     var fontWeight: Binding<Int>?
     var italic: Binding<Bool>?
-    var customFonts: [String: CustomFont] = [:]  // fileName → CustomFont
+    var customFaces: [CustomFont] = []
     var onApplyImportedSelection: ((ImportedCustomFontSelection) -> Void)?
     var onImportFont: ((URL) -> ImportedCustomFontSelection?)?
 
@@ -29,10 +29,6 @@ struct FontPicker: View {
     private static let fontFamilies: [String] = {
         PlatformFonts.systemFamilyNames.sorted()
     }()
-
-    private var customFontEntries: [String] {
-        customFonts.values.map(\.displayName).sorted()
-    }
 
     @ViewBuilder
     private func fontButton(_ label: String, value: String) -> some View {
@@ -105,10 +101,10 @@ struct FontPicker: View {
 
                 fontButton(String(localized: "System"), value: "")
 
-                if !customFontEntries.isEmpty {
+                if !customFaces.isEmpty {
                     Divider()
-                    ForEach(customFontEntries, id: \.self) { name in
-                        fontButton(name, value: name)
+                    ForEach(customFaces, id: \.displayName) { face in
+                        fontButton(face.displayName, value: face.displayName)
                     }
                 }
 

@@ -23,8 +23,9 @@ struct CustomFontLibraryTests {
         let destination = resources.appendingPathComponent(fileName)
         try FileManager.default.copyItem(at: source, to: destination)
 
-        let font = try #require(CustomFont.parseMetadata(at: destination))
-        return (CustomFontLibrary(customFonts: [fileName: font]), font)
+        let faces = CustomFont.allInstances(at: destination)
+        let font = try #require(faces.first)
+        return (CustomFontLibrary(customFonts: [fileName: faces]), font)
     }
 
     private func fontFileExists(_ fileName: String, projectId: UUID) -> Bool {
@@ -69,8 +70,7 @@ struct CustomFontLibraryTests {
             let imported = resources.appendingPathComponent("UserImported.ttf")
             try FileManager.default.copyItem(at: sharedFontsURL.appendingPathComponent(dmSans), to: imported)
 
-            let font = try #require(CustomFont.parseMetadata(at: imported))
-            let library = CustomFontLibrary(customFonts: ["UserImported.ttf": font])
+            let library = CustomFontLibrary(customFonts: ["UserImported.ttf": CustomFont.allInstances(at: imported)])
 
             library.reclaimUnusedSharedFonts(referenced: [], projectId: id)
 

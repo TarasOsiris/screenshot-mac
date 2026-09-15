@@ -139,7 +139,7 @@ struct ShapePropertiesMultiSelectionBar: View {
                     selection: multiFontNameBinding(),
                     fontWeight: weightBinding,
                     italic: italicBinding,
-                    customFonts: state.customFonts,
+                    customFaces: state.customFaces,
                     onApplyImportedSelection: { imported in
                         state.updateShapes(state.selectedShapeIds) { shape in
                             RichTextUtils.applyImportedFontSelection(imported, to: &shape, property: .fontName)

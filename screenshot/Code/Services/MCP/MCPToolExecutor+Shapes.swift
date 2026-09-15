@@ -113,7 +113,7 @@ extension MCPToolExecutor {
     private func validateFontName(_ args: MCPArguments) throws {
         guard let fontName = args.string("font_name") else { return }
         guard state.availableFontFamilySet.contains(fontName) else {
-            let custom = state.customFonts.values.map(\.displayName).sorted().joined(separator: ", ")
+            let custom = state.customFaces.map(\.displayName).joined(separator: ", ")
             let hint = custom.isEmpty ? "no custom fonts are imported in this project" : "imported custom fonts: \(custom)"
             throw MCPToolError.invalidArgument("font_name", "font \(fontName) is not available — it would silently render as the system font. Use a system font family or import the font into this project first (\(hint))")
         }

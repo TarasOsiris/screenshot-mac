@@ -171,7 +171,7 @@ extension ShapePropertiesSingleSelectionBar {
             selection: shapeBinding(shapeId, \.fontName, default: ""),
             fontWeight: fontWeightBinding(shapeId),
             italic: italicBinding(shapeId),
-            customFonts: state.customFonts,
+            customFaces: state.customFaces,
             onApplyImportedSelection: { imported in
                 applyImportedFontSelection(imported, to: shapeId)
             },

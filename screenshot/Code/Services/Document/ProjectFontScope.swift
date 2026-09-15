@@ -15,8 +15,7 @@ final class ProjectFontScope {
     /// `false`, and unregistering one somebody else registered would strip it from them — so this
     /// filter is the safety property, not a micro-optimisation.
     private let registeredURLs: [URL]
-    private let fonts: [String: CustomFont]
-    private let instances: [CustomFont]
+    private let faces: [CustomFont]
     let availableFamilySet: Set<String>
 
     /// Live scopes by project, so two concurrent checkouts of the same project share one
@@ -29,20 +28,10 @@ final class ProjectFontScope {
     private init(registeredURLs: [URL], fontURLs: [URL], projectId: UUID?) {
         self.projectId = projectId
         self.registeredURLs = registeredURLs
-        self.fonts = Dictionary(
-            uniqueKeysWithValues: fontURLs.compactMap { url in
-                CustomFont.parseMetadata(at: url).map { ($0.fileName, $0) }
-            }
-        )
-        self.instances = fontURLs.flatMap(CustomFont.allInstances(at:))
+        self.faces = fontURLs.flatMap(CustomFont.allInstances(at:))
         // The cached set, not a fresh enumeration: enumerating installed families per render is
         // what made a batch of thumbnails slow.
-        var families = PlatformFonts.familyNameSet
-        for font in fonts.values {
-            families.insert(font.familyName)
-            families.insert(font.displayName)
-        }
-        self.availableFamilySet = families
+        self.availableFamilySet = PlatformFonts.familyNameSet.union(CustomFont.identityKeys(of: faces))
     }
 
     /// nil when a font's bytes are not materialized yet — a refusal, not a reason to render with
@@ -81,7 +70,7 @@ final class ProjectFontScope {
     /// restored by `defer`, so holding it across a suspension point would leave the process-wide
     /// registry pointing at this project while the editor's own canvas draws.
     func withResolvedFonts<R>(_ body: () -> R) -> R {
-        CustomFontRegistry.withTemporaryFonts(fonts, instances: instances, perform: body)
+        CustomFontRegistry.withTemporaryFonts(faces, perform: body)
     }
 
     func dispose() {

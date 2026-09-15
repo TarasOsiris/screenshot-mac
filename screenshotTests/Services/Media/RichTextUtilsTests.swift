@@ -56,7 +56,7 @@ struct RichTextUtilsTests {
 
     @Test func customFontRegistryKeepsExactFaceForStyleQualifiedSelection() {
         CustomFontRegistry.update(with: [
-            "Family-Bold.otf": CustomFont(
+            CustomFont(
                 fileName: "Family-Bold.otf",
                 familyName: "Family",
                 styleName: "Bold",
@@ -65,7 +65,7 @@ struct RichTextUtilsTests {
                 isItalic: false
             )
         ])
-        defer { CustomFontRegistry.update(with: [:]) }
+        defer { CustomFontRegistry.update(with: []) }
 
         let resolved = CustomFontRegistry.resolve("Family Bold")
         #expect(resolved.family == "Family")
@@ -90,13 +90,10 @@ struct RichTextUtilsTests {
             isBold: false,
             isItalic: false
         )
-        CustomFontRegistry.update(with: [active.fileName: active], instances: [active])
-        defer { CustomFontRegistry.update(with: [:]) }
+        CustomFontRegistry.update(with: [active])
+        defer { CustomFontRegistry.update(with: []) }
 
-        CustomFontRegistry.withTemporaryFonts(
-            [thumbnail.fileName: thumbnail],
-            instances: [thumbnail]
-        ) {
+        CustomFontRegistry.withTemporaryFonts([thumbnail]) {
             #expect(CustomFontRegistry.resolve("Thumbnail Family Regular").exactName == "Thumbnail-Regular")
             #expect(CustomFontRegistry.postScriptName(
                 forFamily: "Active Family",
@@ -114,11 +111,10 @@ struct RichTextUtilsTests {
     }
 
     @Test func postScriptNameResolvesBareFamilyToWeightSpecificInstance() {
-        // A variable font exposes one CustomFont per named instance; the picker/byFamily keep a
-        // single primary face, but the instance table must hold every weight so a bare family
-        // name (as templates store, e.g. "DM Sans") resolves to the exact PostScript name. iOS
-        // renders process-registered fonts only by PostScript name — family resolution yields
-        // the "????" tofu this guards against.
+        // A variable font exposes one CustomFont per named instance, and the registry must hold
+        // every weight so a bare family name (as templates store, e.g. "DM Sans") resolves to
+        // the exact PostScript name. iOS renders process-registered fonts only by PostScript
+        // name — family resolution yields the "????" tofu this guards against.
         func variant(_ style: String, _ ps: String) -> CustomFont {
             CustomFont(fileName: "DMSans.ttf", familyName: "DM Sans", styleName: style,
                        postScriptName: ps, isBold: style.contains("Bold"), isItalic: false)
@@ -129,8 +125,8 @@ struct RichTextUtilsTests {
             variant("SemiBold", "DMSans-SemiBold"),
             variant("Bold", "DMSans-Bold"),
         ]
-        CustomFontRegistry.update(with: [instances[0].fileName: instances[0]], instances: instances)
-        defer { CustomFontRegistry.update(with: [:]) }
+        CustomFontRegistry.update(with: instances)
+        defer { CustomFontRegistry.update(with: []) }
 
         // managerWeight: regular=5, medium=6, semibold=8, bold=9 (NSFontManager scale).
         #expect(CustomFontRegistry.postScriptName(forFamily: "DM Sans", managerWeight: 5, italic: false) == "DMSans-Regular")
@@ -141,8 +137,8 @@ struct RichTextUtilsTests {
     }
 
     @Test func preferredSelectionPrefersRegularVariantWhenAvailable() {
-        let fonts: [String: CustomFont] = [
-            "Family-Regular.otf": CustomFont(
+        let fonts = [
+            CustomFont(
                 fileName: "Family-Regular.otf",
                 familyName: "Family",
                 styleName: "Regular",
@@ -150,7 +146,7 @@ struct RichTextUtilsTests {
                 isBold: false,
                 isItalic: false
             ),
-            "Family-Italic.otf": CustomFont(
+            CustomFont(
                 fileName: "Family-Italic.otf",
                 familyName: "Family",
                 styleName: "Italic",
@@ -158,7 +154,7 @@ struct RichTextUtilsTests {
                 isBold: false,
                 isItalic: true
             ),
-            "Family-Bold.otf": CustomFont(
+            CustomFont(
                 fileName: "Family-Bold.otf",
                 familyName: "Family",
                 styleName: "Bold",
@@ -229,12 +225,8 @@ struct RichTextUtilsTests {
             isItalic: true
         )
 
-        CustomFontRegistry.update(with: [
-            regular.fileName: regular,
-            bold.fileName: bold,
-            italic.fileName: italic
-        ])
-        defer { CustomFontRegistry.update(with: [:]) }
+        CustomFontRegistry.update(with: [regular, bold, italic])
+        defer { CustomFontRegistry.update(with: []) }
 
         let state = CustomFontRegistry.controlState(name: "Family Regular", fontWeight: nil, italic: nil)
         #expect(state?.effectiveItalic == false)
@@ -262,11 +254,8 @@ struct RichTextUtilsTests {
             isItalic: true
         )
 
-        CustomFontRegistry.update(with: [
-            bold.fileName: bold,
-            boldItalic.fileName: boldItalic
-        ])
-        defer { CustomFontRegistry.update(with: [:]) }
+        CustomFontRegistry.update(with: [bold, boldItalic])
+        defer { CustomFontRegistry.update(with: []) }
 
         let selection = CustomFontRegistry.selection(
             name: "Family Bold",
@@ -289,14 +278,77 @@ struct RichTextUtilsTests {
             isItalic: true
         )
 
-        CustomFontRegistry.update(with: [italic.fileName: italic])
-        defer { CustomFontRegistry.update(with: [:]) }
+        CustomFontRegistry.update(with: [italic])
+        defer { CustomFontRegistry.update(with: []) }
 
         let state = CustomFontRegistry.controlState(name: "Family Italic", fontWeight: nil, italic: nil)
         #expect(state?.effectiveItalic == true)
         #expect(state?.availableWeights == [400])
         #expect(state?.showsWeightPicker == false)
         #expect(state?.showsItalicToggle == false)
+    }
+
+    // MARK: - Variable fonts
+
+    /// The named instances a variable font file reports, in CoreText's order.
+    private func variableFamily(italicStyles: [String] = []) -> [CustomFont] {
+        let styles = ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black", "9pt Regular", "9pt Bold"]
+        return (styles + italicStyles).map { style in
+            CustomFont(
+                fileName: "Fam-VariableFont_wght.ttf",
+                familyName: "Fam",
+                styleName: style,
+                postScriptName: "Fam-\(style.replacingOccurrences(of: " ", with: ""))",
+                isBold: false,
+                isItalic: style.contains("Italic")
+            )
+        }
+    }
+
+    @Test func variableFontExposesEveryNamedInstanceAsAFace() {
+        let family = variableFamily()
+        let faces = CustomFontRegistry.faces(family)
+
+        #expect(faces.map(\.styleName) == [
+            "Thin", "ExtraLight", "Light", "Regular", "9pt Regular", "Medium", "SemiBold", "Bold", "9pt Bold", "ExtraBold", "Black",
+        ])
+
+        CustomFontRegistry.update(with: family)
+        defer { CustomFontRegistry.update(with: []) }
+
+        #expect(CustomFontRegistry.resolve("Fam Bold").exactName == "Fam-Bold")
+        #expect(CustomFontRegistry.resolve("Fam Bold").family == "Fam")
+        #expect(CustomFontRegistry.preferredSelection(for: "Fam", in: faces)?.fontName == "Fam Regular")
+    }
+
+    @Test func variableFontWeightPickerSnapsToTheMatchingInstance() {
+        let family = variableFamily()
+        CustomFontRegistry.update(with: family)
+        defer { CustomFontRegistry.update(with: []) }
+
+        let state = CustomFontRegistry.controlState(name: "Fam Thin", fontWeight: 300, italic: false)
+        #expect(state?.availableWeights == [300, 400, 500, 700])
+        #expect(state?.showsWeightPicker == true)
+
+        func selected(_ weight: Int) -> String? {
+            CustomFontRegistry.selection(name: "Fam Thin", fontWeight: weight, italic: false)?.fontName
+        }
+        #expect(selected(300) == "Fam Thin")
+        #expect(CustomFontRegistry.selection(name: "Fam Medium", fontWeight: 300, italic: false)?.fontName == "Fam Light")
+        // Optical-size instances tie on weight with the plain ones; the plain face must win.
+        #expect(selected(400) == "Fam Regular")
+        #expect(selected(500) == "Fam Medium")
+        #expect(selected(700) == "Fam Bold")
+    }
+
+    @Test func variableFontItalicToggleKeepsTheCurrentInstanceWeight() {
+        let family = variableFamily(italicStyles: ["Bold Italic", "Black Italic"])
+        CustomFontRegistry.update(with: family)
+        defer { CustomFontRegistry.update(with: []) }
+
+        let selection = CustomFontRegistry.selection(name: "Fam Black", fontWeight: 700, italic: true)
+        #expect(selection?.fontName == "Fam Black Italic")
+        #expect(selection?.italic == true)
     }
 
     @Test func buildAttributedStringMergesUpdatedParagraphStyleIntoRichText() {
