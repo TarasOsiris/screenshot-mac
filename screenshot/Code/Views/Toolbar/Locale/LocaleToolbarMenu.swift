@@ -165,8 +165,21 @@ struct LocaleBar: View {
                 .buttonStyle(.plain)
                 .disabled(state.localeMenu.isFanOutTranslating)
                 .opacity(state.localeMenu.isFanOutTranslating ? UIMetrics.Opacity.disabled : 1)
-                .help("Translate \(ids.count == 1 ? "this text" : "the \(ids.count) selected texts") into all \(count) other language\(count == 1 ? "" : "s")")
+                .help(fanOutTranslateHelpText(textCount: ids.count, languageCount: count))
             }
+        }
+    }
+
+    private func fanOutTranslateHelpText(textCount: Int, languageCount: Int) -> String {
+        switch (textCount == 1, languageCount == 1) {
+        case (true, true):
+            String(localized: "Translate this text into 1 other language")
+        case (true, false):
+            String(localized: "Translate this text into \(languageCount) other languages")
+        case (false, true):
+            String(localized: "Translate \(textCount) selected texts into 1 other language")
+        case (false, false):
+            String(localized: "Translate \(textCount) selected texts into \(languageCount) other languages")
         }
     }
 

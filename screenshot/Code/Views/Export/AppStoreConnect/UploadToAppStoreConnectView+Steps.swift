@@ -542,7 +542,7 @@ extension UploadToAppStoreConnectView {
         VStack(spacing: 14) {
             UploadCompleteHeader(title: "Screenshot sync complete")
             if let summary = model.uploadSummary {
-                Text("\(summary.totalScreenshots) screenshot\(summary.totalScreenshots == 1 ? "" : "s") synced across \(summary.localizationCount) locale\(summary.localizationCount == 1 ? "" : "s") and \(summary.versionCount) version\(summary.versionCount == 1 ? "" : "s").")
+                Text(screenshotSyncSummary(summary))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -561,7 +561,7 @@ extension UploadToAppStoreConnectView {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } else {
-                    Text("\(summary.fieldCount) field\(summary.fieldCount == 1 ? "" : "s") saved across \(summary.localeCount) locale\(summary.localeCount == 1 ? "" : "s") and \(summary.versionCount) version\(summary.versionCount == 1 ? "" : "s").")
+                    Text(metadataSavedSummary(summary))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -578,6 +578,48 @@ extension UploadToAppStoreConnectView {
                 Label("Open \(appName) in App Store Connect", systemImage: "arrow.up.right.square")
             }
             .buttonStyle(.bordered)
+        }
+    }
+
+    private func screenshotSyncSummary(_ summary: ASCUploadSummary) -> String {
+        switch (summary.totalScreenshots == 1, summary.localizationCount == 1, summary.versionCount == 1) {
+        case (true, true, true):
+            String(localized: "1 screenshot synced across 1 locale and 1 version.")
+        case (true, true, false):
+            String(localized: "1 screenshot synced across 1 locale and \(summary.versionCount) versions.")
+        case (true, false, true):
+            String(localized: "1 screenshot synced across \(summary.localizationCount) locales and 1 version.")
+        case (true, false, false):
+            String(localized: "1 screenshot synced across \(summary.localizationCount) locales and \(summary.versionCount) versions.")
+        case (false, true, true):
+            String(localized: "\(summary.totalScreenshots) screenshots synced across 1 locale and 1 version.")
+        case (false, true, false):
+            String(localized: "\(summary.totalScreenshots) screenshots synced across 1 locale and \(summary.versionCount) versions.")
+        case (false, false, true):
+            String(localized: "\(summary.totalScreenshots) screenshots synced across \(summary.localizationCount) locales and 1 version.")
+        case (false, false, false):
+            String(localized: "\(summary.totalScreenshots) screenshots synced across \(summary.localizationCount) locales and \(summary.versionCount) versions.")
+        }
+    }
+
+    private func metadataSavedSummary(_ summary: ASCMetadataSaveSummary) -> String {
+        switch (summary.fieldCount == 1, summary.localeCount == 1, summary.versionCount == 1) {
+        case (true, true, true):
+            String(localized: "1 field saved across 1 locale and 1 version.")
+        case (true, true, false):
+            String(localized: "1 field saved across 1 locale and \(summary.versionCount) versions.")
+        case (true, false, true):
+            String(localized: "1 field saved across \(summary.localeCount) locales and 1 version.")
+        case (true, false, false):
+            String(localized: "1 field saved across \(summary.localeCount) locales and \(summary.versionCount) versions.")
+        case (false, true, true):
+            String(localized: "\(summary.fieldCount) fields saved across 1 locale and 1 version.")
+        case (false, true, false):
+            String(localized: "\(summary.fieldCount) fields saved across 1 locale and \(summary.versionCount) versions.")
+        case (false, false, true):
+            String(localized: "\(summary.fieldCount) fields saved across \(summary.localeCount) locales and 1 version.")
+        case (false, false, false):
+            String(localized: "\(summary.fieldCount) fields saved across \(summary.localeCount) locales and \(summary.versionCount) versions.")
         }
     }
 }

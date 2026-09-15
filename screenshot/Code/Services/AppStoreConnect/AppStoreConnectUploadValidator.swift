@@ -17,7 +17,7 @@ enum AppStoreConnectUploadValidator {
             return [
                 UploadIssue(
                     severity: .error,
-                    message: "Select at least one editable version."
+                    message: String(localized: "Select at least one editable version.")
                 )
             ]
         }
@@ -39,8 +39,8 @@ enum AppStoreConnectUploadValidator {
         if !version.isScreenshotUploadable {
             issues.append(UploadIssue(
                 severity: .error,
-                message: "Version \(version.attributes.versionString) is \(version.attributes.displayState). Screenshots can only be changed when the version is editable.",
-                hint: "Create a new version in App Store Connect, or wait for this one to return to an editable state."
+                message: String(localized: "Version \(version.attributes.versionString) is \(version.attributes.displayState). Screenshots can only be changed when the version is editable."),
+                hint: String(localized: "Create a new version in App Store Connect, or wait for this one to return to an editable state.")
             ))
         }
 
@@ -60,8 +60,8 @@ enum AppStoreConnectUploadValidator {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "Pick a display type for this row (\(sizeLabel)).",
-                    hint: "Use the \"Display type\" picker above.",
+                    message: String(localized: "Pick a display type for this row (\(sizeLabel))."),
+                    hint: String(localized: "Use the \"Display Type\" picker above."),
                     demoDowngradable: true
                 ))
                 continue
@@ -74,10 +74,10 @@ enum AppStoreConnectUploadValidator {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "Row size \(sizeLabel) isn't accepted by App Store Connect for \(displayType.label).",
+                    message: String(localized: "Row size \(sizeLabel) isn't accepted by App Store Connect for \(displayType.label)."),
                     hint: accepted.isEmpty
-                        ? "Pick a different display type."
-                        : "Resize the row to one of: \(accepted), or pick a matching display type.",
+                        ? String(localized: "Pick a different display type.")
+                        : String(localized: "Resize the row to one of: \(accepted), or pick a matching display type."),
                     demoDowngradable: true
                 ))
             }
@@ -87,8 +87,8 @@ enum AppStoreConnectUploadValidator {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "\(displayType.label) can't be uploaded to a \(platform.displayName) version.",
-                    hint: "Pick a display type that matches the app's platform.",
+                    message: String(localized: "\(displayType.label) can't be uploaded to a \(platform.displayName) version."),
+                    hint: String(localized: "Pick a display type that matches the app's platform."),
                     demoDowngradable: true
                 ))
             }
@@ -97,25 +97,26 @@ enum AppStoreConnectUploadValidator {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "This row has no screenshots to upload.",
-                    hint: "Add at least one screenshot column to this row.",
+                    message: String(localized: "This row has no screenshots to upload."),
+                    hint: String(localized: "Add at least one screenshot column to this row."),
                     demoDowngradable: true
                 ))
             } else if plan.templateCount < ASCUploadLimits.recommendedScreenshotsPerSet {
-                let noun = plan.templateCount == 1 ? "screenshot" : "screenshots"
                 issues.append(UploadIssue(
                     severity: .warning,
                     scope: rowName,
-                    message: "This row uploads \(plan.templateCount) \(noun). App Store Connect accepts \(ASCUploadLimits.minScreenshotsPerSet)–\(ASCUploadLimits.maxScreenshotsPerSet), but most apps show at least \(ASCUploadLimits.recommendedScreenshotsPerSet).",
-                    hint: "Add more screenshot columns, or upload as is."
+                    message: plan.templateCount == 1
+                        ? String(localized: "This row uploads 1 screenshot. App Store Connect accepts \(ASCUploadLimits.minScreenshotsPerSet)–\(ASCUploadLimits.maxScreenshotsPerSet), but most apps show at least \(ASCUploadLimits.recommendedScreenshotsPerSet).")
+                        : String(localized: "This row uploads \(plan.templateCount) screenshots. App Store Connect accepts \(ASCUploadLimits.minScreenshotsPerSet)–\(ASCUploadLimits.maxScreenshotsPerSet), but most apps show at least \(ASCUploadLimits.recommendedScreenshotsPerSet)."),
+                    hint: String(localized: "Add more screenshot columns, or upload as is.")
                 ))
             }
             if plan.templateCount > ASCUploadLimits.maxScreenshotsPerSet {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "App Store Connect allows at most \(ASCUploadLimits.maxScreenshotsPerSet) screenshots per display type; this row has \(plan.templateCount).",
-                    hint: "Remove columns to bring the count to \(ASCUploadLimits.maxScreenshotsPerSet) or fewer.",
+                    message: String(localized: "App Store Connect allows at most \(ASCUploadLimits.maxScreenshotsPerSet) screenshots per display type; this row has \(plan.templateCount)."),
+                    hint: String(localized: "Remove columns to bring the count to \(ASCUploadLimits.maxScreenshotsPerSet) or fewer."),
                     demoDowngradable: true
                 ))
             }
@@ -125,8 +126,8 @@ enum AppStoreConnectUploadValidator {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "Pick at least one App Store locale to upload to.",
-                    hint: "Enable a locale checkbox and choose an App Store locale.",
+                    message: String(localized: "Pick at least one App Store locale to upload to."),
+                    hint: String(localized: "Enable a locale checkbox and choose an App Store locale."),
                     demoDowngradable: true
                 ))
             }
@@ -145,8 +146,8 @@ enum AppStoreConnectUploadValidator {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "Choose the App Store locale for \(target.appLocaleLabel).",
-                    hint: "Use the locale picker in this row, or disable this locale.",
+                    message: String(localized: "Choose the App Store locale for \(target.appLocaleLabel)."),
+                    hint: String(localized: "Use the locale picker in this row, or disable this locale."),
                     demoDowngradable: true
                 ))
             }
@@ -156,8 +157,8 @@ enum AppStoreConnectUploadValidator {
                 issues.append(UploadIssue(
                     severity: .error,
                     scope: rowName,
-                    message: "No App Store locale matches \(target.appLocaleLabel) on this version.",
-                    hint: "Add the locale in App Store Connect, or disable this locale here.",
+                    message: String(localized: "No App Store locale matches \(target.appLocaleLabel) on this version."),
+                    hint: String(localized: "Add the locale in App Store Connect, or disable this locale here."),
                     demoDowngradable: true
                 ))
             }
@@ -167,8 +168,8 @@ enum AppStoreConnectUploadValidator {
             UploadIssue(
                 severity: .error,
                 scope: rowName,
-                message: "This row uploads to the same App Store screenshot set as \(partner).",
-                hint: "Disable one of these rows or choose a different display type before uploading.",
+                message: String(localized: "This row uploads to the same App Store screenshot set as \(partner)."),
+                hint: String(localized: "Disable one of these rows or choose a different display type before uploading."),
                 demoDowngradable: true
             )
         })

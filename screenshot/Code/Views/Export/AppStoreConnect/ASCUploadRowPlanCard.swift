@@ -70,7 +70,7 @@ struct ASCUploadRowPlanCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(plan.displayLabel)
                     .fontWeight(.medium)
-                Text("\(String(Int(plan.rowSize.width)))×\(String(Int(plan.rowSize.height))) · \(plan.templateCount) screenshot\(plan.templateCount == 1 ? "" : "s")")
+                Text(rowSizeSummary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if plan.inferredStorePlatform == .android {
@@ -86,6 +86,14 @@ struct ASCUploadRowPlanCard: View {
                 .toggleStyle(.switch)
                 .controlSize(.small)
         }
+    }
+
+    private var rowSizeSummary: String {
+        let width = String(Int(plan.rowSize.width))
+        let height = String(Int(plan.rowSize.height))
+        return plan.templateCount == 1
+            ? String(localized: "\(width)×\(height) · 1 screenshot")
+            : String(localized: "\(width)×\(height) · \(plan.templateCount) screenshots")
     }
 }
 

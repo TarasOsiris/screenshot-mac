@@ -15,11 +15,35 @@ extension UploadToAppStoreConnectView {
         let localeCount = plan.localeCount
         let versionCount = plan.versionCount
         let setCount = plan.selected.count
-        let screenshotNoun = screenshotCount == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
-        let setNoun = setCount == 1 ? String(localized: "set") : String(localized: "sets")
-        let localeNoun = localeCount == 1 ? String(localized: "locale") : String(localized: "locales")
-        let versionNoun = versionCount == 1 ? String(localized: "version") : String(localized: "versions")
-        return String(localized: "\(screenshotCount) \(screenshotNoun) across \(setCount) \(setNoun), \(localeCount) \(localeNoun), and \(versionCount) \(versionNoun).\n\nUpload compares each screenshot with the store and changes only what differs, keeping the App Store asset IDs of exact matches.\n\nReplace All Screenshots skips the comparison: everything currently in these sets is deleted and all \(screenshotCount) are uploaded again with new asset IDs. Quicker to prepare, slower to upload.")
+        return [
+            directUploadCountSummary(
+                screenshotCount: screenshotCount,
+                setCount: setCount,
+                localeCount: localeCount,
+                versionCount: versionCount
+            ),
+            String(localized: "Upload compares each screenshot with the store and changes only what differs, keeping the App Store asset IDs of exact matches."),
+            replaceAllExplanation(screenshotCount: screenshotCount)
+        ].joined(separator: "\n\n")
+    }
+
+    private func directUploadCountSummary(
+        screenshotCount: Int,
+        setCount: Int,
+        localeCount: Int,
+        versionCount: Int
+    ) -> String {
+        let screenshots = screenshotCount == 1 ? String(localized: "1 screenshot") : String(localized: "\(screenshotCount) screenshots")
+        let sets = setCount == 1 ? String(localized: "1 set") : String(localized: "\(setCount) sets")
+        let locales = localeCount == 1 ? String(localized: "1 locale") : String(localized: "\(localeCount) locales")
+        let versions = versionCount == 1 ? String(localized: "1 version") : String(localized: "\(versionCount) versions")
+        return String(localized: "\(screenshots) across \(sets), \(locales), and \(versions).")
+    }
+
+    private func replaceAllExplanation(screenshotCount: Int) -> String {
+        screenshotCount == 1
+            ? String(localized: "Replace All Screenshots skips the comparison: everything currently in these sets is deleted and 1 screenshot is uploaded again with a new asset ID. Quicker to prepare, slower to upload.")
+            : String(localized: "Replace All Screenshots skips the comparison: everything currently in these sets is deleted and all \(screenshotCount) screenshots are uploaded again with new asset IDs. Quicker to prepare, slower to upload.")
     }
 
     // MARK: - Header / footer

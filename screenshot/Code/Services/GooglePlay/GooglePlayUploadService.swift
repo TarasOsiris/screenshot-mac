@@ -16,7 +16,10 @@ enum GooglePlayUploadError: StoreUploadErrorDescribing, LocalizedError {
         case .renderFailed(let label, let imageTypeLabel, let languageLabel, let index):
             return String(localized: "Could not render screenshot \(index + 1) for \(label) (\(imageTypeLabel)) in \(languageLabel). Check that this row previews correctly in the editor, then try the upload again.")
         case .unreadableImages(let label, let languageLabel, let fileNames):
-            return String(localized: "Could not read \(fileNames.count) image(s) used by \(label) in \(languageLabel). Re-import the missing screenshots before uploading, or the upload would publish them as blank areas.")
+            if fileNames.count == 1 {
+                return String(localized: "Could not read 1 image used by \(label) in \(languageLabel). Re-import the missing screenshot before uploading, or the upload would publish it as a blank area.")
+            }
+            return String(localized: "Could not read \(fileNames.count) images used by \(label) in \(languageLabel). Re-import the missing screenshots before uploading, or the upload would publish them as blank areas.")
         case .noRowsSelected:
             return String(localized: "No rows selected for upload.")
         case .requestFailed(let context):

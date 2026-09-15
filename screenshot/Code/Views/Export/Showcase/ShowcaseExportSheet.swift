@@ -213,7 +213,7 @@ struct ShowcaseExportSheet: View {
     @ViewBuilder
     private var exportDestinationMenu: some View {
         let count = selectedRowsOrdered.count
-        Section(count == 1 ? "Export 1 screenshot to…" : "Export \(count) screenshots to…") {
+        Section(exportDestinationTitle(count)) {
             Button { export(to: .photos) } label: {
                 Label("Save to Photos", systemImage: "photo.on.rectangle")
             }
@@ -224,6 +224,10 @@ struct ShowcaseExportSheet: View {
                 Label("Share…", systemImage: "square.and.arrow.up")
             }
         }
+    }
+
+    private func exportDestinationTitle(_ screenshotCount: Int) -> LocalizedStringKey {
+        screenshotCount == 1 ? "Export 1 screenshot to…" : "Export \(screenshotCount) screenshots to…"
     }
 
     private func export(to destination: ExportDestination) {

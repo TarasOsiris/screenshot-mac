@@ -160,11 +160,12 @@ final class GPUploadFlowModel {
                     .localeCount: summary.languageCount,
                 ])
                 step = .done
-                let shotNoun = summary.totalScreenshots == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
-                let langNoun = summary.languageCount == 1 ? String(localized: "language") : String(localized: "languages")
                 NotificationService.notify(
                     title: String(localized: "Upload complete"),
-                    body: String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.languageCount) \(langNoun)")
+                    body: uploadCompleteBody(
+                        screenshotCount: summary.totalScreenshots,
+                        languageCount: summary.languageCount
+                    )
                 )
             } catch is CancellationError {
                 errorMessage = String(localized: "Upload cancelled. The draft edit was discarded.")
@@ -183,6 +184,19 @@ final class GPUploadFlowModel {
         // the upload is in flight.
         uploadTask = task
         await task.value
+    }
+
+    private func uploadCompleteBody(screenshotCount: Int, languageCount: Int) -> String {
+        switch (screenshotCount == 1, languageCount == 1) {
+        case (true, true):
+            String(localized: "1 screenshot across 1 language")
+        case (true, false):
+            String(localized: "1 screenshot across \(languageCount) languages")
+        case (false, true):
+            String(localized: "\(screenshotCount) screenshots across 1 language")
+        case (false, false):
+            String(localized: "\(screenshotCount) screenshots across \(languageCount) languages")
+        }
     }
 
     /// The plan screen's Back button. Only one step back exists in this flow.

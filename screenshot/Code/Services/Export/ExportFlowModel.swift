@@ -133,28 +133,51 @@ final class ExportFlowModel {
         exportSuccess = true
         successTimer = .delayed(2) { [weak self] in self?.exportSuccess = false }
 
-        let noun = total == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
         if unrenderableFileNames.isEmpty {
             let body = projectName.isEmpty
-                ? String(localized: "\(total) \(noun) exported")
-                : String(localized: "\(total) \(noun) exported · \(projectName)")
+                ? exportCompleteBody(total)
+                : exportCompleteBody(total, projectName: projectName)
             NotificationService.notify(title: String(localized: "Export complete"), body: body)
         } else {
-            // One plural, and it is the one that varies: "1 screenshot were written" is what a
-            // second interpolation costs, in eight languages.
             let count = unrenderableFileNames.count
-            let fileNoun = count == 1 ? String(localized: "image file") : String(localized: "image files")
-            incompleteMessage = String(localized: """
-                Export finished, but \(count) \(fileNoun) could not be read, so those device frames \
-                are blank. Check the canvas before uploading.
-                """)
+            incompleteMessage = unreadableExportMessage(count)
             NotificationService.notify(title: String(localized: "Export finished with blank frames"),
-                                       body: String(localized: "\(count) \(fileNoun) could not be read"))
+                                       body: unreadableExportNotificationBody(count))
         }
 
         if review.recordExportAndCheck() {
             Task.delayed(2.5) { [requestReview] in requestReview() }
         }
+    }
+
+    private func exportCompleteBody(_ screenshotCount: Int) -> String {
+        screenshotCount == 1
+            ? String(localized: "1 screenshot exported")
+            : String(localized: "\(screenshotCount) screenshots exported")
+    }
+
+    private func exportCompleteBody(_ screenshotCount: Int, projectName: String) -> String {
+        screenshotCount == 1
+            ? String(localized: "1 screenshot exported · \(projectName)")
+            : String(localized: "\(screenshotCount) screenshots exported · \(projectName)")
+    }
+
+    private func unreadableExportMessage(_ imageFileCount: Int) -> String {
+        imageFileCount == 1
+            ? String(localized: """
+                Export finished, but 1 image file could not be read, so that device frame \
+                is blank. Check the canvas before uploading.
+                """)
+            : String(localized: """
+                Export finished, but \(imageFileCount) image files could not be read, so those device frames \
+                are blank. Check the canvas before uploading.
+                """)
+    }
+
+    private func unreadableExportNotificationBody(_ imageFileCount: Int) -> String {
+        imageFileCount == 1
+            ? String(localized: "1 image file could not be read")
+            : String(localized: "\(imageFileCount) image files could not be read")
     }
 
     // MARK: - Full export (all rows × locales)

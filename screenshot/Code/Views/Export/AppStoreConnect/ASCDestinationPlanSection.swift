@@ -40,10 +40,16 @@ struct ASCDestinationPlanSection: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Text("\(destination.localizations.count) locale\(destination.localizations.count == 1 ? "" : "s")")
+            Text(localizationCountText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var localizationCountText: String {
+        destination.localizations.count == 1
+            ? String(localized: "1 locale")
+            : String(localized: "\(destination.localizations.count) locales")
     }
 
     private func rowPlanCard(plan: Binding<ASCRowPlan>) -> some View {

@@ -100,7 +100,7 @@ extension UploadToGooglePlayView {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 let total = plannedScreenshotCount
-                Text("\(total) \(total == 1 ? "screenshot" : "screenshots") to upload")
+                Text(plannedScreenshotSummary(total))
                     .font(.headline)
                 Spacer()
                 PreflightStatusLabel(hasErrors: issues.hasErrors, font: .callout)
@@ -133,7 +133,7 @@ extension UploadToGooglePlayView {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(plan.wrappedValue.rowLabel.isEmpty ? "Row" : plan.wrappedValue.rowLabel)
                         .fontWeight(.medium)
-                    Text("\(Int(plan.wrappedValue.rowSize.width))×\(Int(plan.wrappedValue.rowSize.height)) · \(plan.wrappedValue.templateCount) \(plan.wrappedValue.templateCount == 1 ? "screenshot" : "screenshots")")
+                    Text(rowSizeSummary(plan.wrappedValue))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     if plan.wrappedValue.inferredStorePlatform == .apple {
@@ -235,7 +235,7 @@ extension UploadToGooglePlayView {
             Spacer()
             UploadCompleteHeader(title: "Upload complete")
             if let summary = model.uploadSummary {
-                Text("\(summary.totalScreenshots) \(summary.totalScreenshots == 1 ? "screenshot" : "screenshots") across \(summary.languageCount) \(summary.languageCount == 1 ? "language" : "languages")")
+                Text(uploadCompleteSummary(summary))
                     .foregroundStyle(.secondary)
                 if summary.sentForReview {
                     Text("Sent to Google Play. Review and publish from the Play Console (changes won't go live until you publish).")
@@ -259,5 +259,32 @@ extension UploadToGooglePlayView {
     private func playConsoleURL(packageName: String) -> URL? {
         guard !packageName.isEmpty else { return nil }
         return URL(string: "https://play.google.com/console/")
+    }
+
+    private func plannedScreenshotSummary(_ screenshotCount: Int) -> String {
+        screenshotCount == 1
+            ? String(localized: "1 screenshot to upload")
+            : String(localized: "\(screenshotCount) screenshots to upload")
+    }
+
+    private func rowSizeSummary(_ plan: GPRowPlan) -> String {
+        let width = Int(plan.rowSize.width)
+        let height = Int(plan.rowSize.height)
+        return plan.templateCount == 1
+            ? String(localized: "\(width)×\(height) · 1 screenshot")
+            : String(localized: "\(width)×\(height) · \(plan.templateCount) screenshots")
+    }
+
+    private func uploadCompleteSummary(_ summary: GPUploadSummary) -> String {
+        switch (summary.totalScreenshots == 1, summary.languageCount == 1) {
+        case (true, true):
+            String(localized: "1 screenshot across 1 language")
+        case (true, false):
+            String(localized: "1 screenshot across \(summary.languageCount) languages")
+        case (false, true):
+            String(localized: "\(summary.totalScreenshots) screenshots across 1 language")
+        case (false, false):
+            String(localized: "\(summary.totalScreenshots) screenshots across \(summary.languageCount) languages")
+        }
     }
 }

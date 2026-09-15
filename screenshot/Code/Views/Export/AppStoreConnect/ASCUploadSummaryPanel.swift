@@ -72,7 +72,7 @@ struct ASCUploadSummaryPanel: View {
                         ASCSkippedPlanEntryRow(entry: entry)
                     }
                     if plan.skipped.count > 12 {
-                        Text("\(plan.skipped.count - 12) more skipped item\(plan.skipped.count - 12 == 1 ? "" : "s")")
+                        Text(moreSkippedItemsText(plan.skipped.count - 12))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -81,6 +81,12 @@ struct ASCUploadSummaryPanel: View {
             }
             .font(.caption)
         }
+    }
+
+    private func moreSkippedItemsText(_ count: Int) -> String {
+        count == 1
+            ? String(localized: "1 more skipped item")
+            : String(localized: "\(count) more skipped items")
     }
 }
 
@@ -119,11 +125,11 @@ private struct ASCRowPlanGroupRow: View {
                 .font(.caption)
                 .fontWeight(.semibold)
                 Spacer()
-                Text("\(group.screenshotCount) screenshot\(group.screenshotCount == 1 ? "" : "s")")
+                Text(screenshotCountText(group.screenshotCount))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Text("Source \(group.sourceSizeLabel) · \(group.templateCount) screenshot\(group.templateCount == 1 ? "" : "s") · \(group.displayTypeRawValue)")
+            Text(sourceSummaryText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -159,13 +165,27 @@ private struct ASCRowPlanGroupRow: View {
         let labels = localeLabels
         let visible = labels.prefix(Self.visibleLocaleLimit)
         let hiddenCount = labels.count - visible.count
-        let noun = labels.count == 1 ? String(localized: "locale") : String(localized: "locales")
         let suffix = hiddenCount > 0 ? ", +\(hiddenCount)" : ""
-        return "\(labels.count) \(noun): \(visible.joined(separator: ", "))\(suffix)"
+        let prefix = labels.count == 1
+            ? String(localized: "1 locale")
+            : String(localized: "\(labels.count) locales")
+        return "\(prefix): \(visible.joined(separator: ", "))\(suffix)"
     }
 
     private var fullLocaleSummary: String {
         localeLabels.joined(separator: ", ")
+    }
+
+    private var sourceSummaryText: String {
+        group.templateCount == 1
+            ? String(localized: "Source \(group.sourceSizeLabel) · 1 screenshot · \(group.displayTypeRawValue)")
+            : String(localized: "Source \(group.sourceSizeLabel) · \(group.templateCount) screenshots · \(group.displayTypeRawValue)")
+    }
+
+    private func screenshotCountText(_ count: Int) -> String {
+        count == 1
+            ? String(localized: "1 screenshot")
+            : String(localized: "\(count) screenshots")
     }
 }
 

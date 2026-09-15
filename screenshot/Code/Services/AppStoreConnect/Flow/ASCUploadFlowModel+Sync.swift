@@ -198,13 +198,48 @@ extension ASCUploadFlowModel {
             .localeCount: summary.localizationCount,
         ])
         completeTerminalStep(.done)
-        let shotNoun = summary.totalScreenshots == 1 ? String(localized: "screenshot") : String(localized: "screenshots")
-        let locNoun = summary.localizationCount == 1 ? String(localized: "locale") : String(localized: "locales")
-        let versionNoun = summary.versionCount == 1 ? String(localized: "version") : String(localized: "versions")
         let body = summary.appName.isEmpty
-            ? String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) and \(summary.versionCount) \(versionNoun)")
-            : String(localized: "\(summary.totalScreenshots) \(shotNoun) across \(summary.localizationCount) \(locNoun) and \(summary.versionCount) \(versionNoun) · \(summary.appName)")
+            ? syncCompleteBody(
+                screenshotCount: summary.totalScreenshots,
+                localizationCount: summary.localizationCount,
+                versionCount: summary.versionCount
+            )
+            : syncCompleteBody(
+                screenshotCount: summary.totalScreenshots,
+                localizationCount: summary.localizationCount,
+                versionCount: summary.versionCount,
+                appName: summary.appName
+            )
         NotificationService.notify(title: String(localized: "Screenshot sync complete"), body: body)
+    }
+
+    private func syncCompleteBody(
+        screenshotCount: Int,
+        localizationCount: Int,
+        versionCount: Int,
+        appName: String? = nil
+    ) -> String {
+        let body: String
+        switch (screenshotCount == 1, localizationCount == 1, versionCount == 1) {
+        case (true, true, true):
+            body = String(localized: "1 screenshot across 1 locale and 1 version")
+        case (true, true, false):
+            body = String(localized: "1 screenshot across 1 locale and \(versionCount) versions")
+        case (true, false, true):
+            body = String(localized: "1 screenshot across \(localizationCount) locales and 1 version")
+        case (true, false, false):
+            body = String(localized: "1 screenshot across \(localizationCount) locales and \(versionCount) versions")
+        case (false, true, true):
+            body = String(localized: "\(screenshotCount) screenshots across 1 locale and 1 version")
+        case (false, true, false):
+            body = String(localized: "\(screenshotCount) screenshots across 1 locale and \(versionCount) versions")
+        case (false, false, true):
+            body = String(localized: "\(screenshotCount) screenshots across \(localizationCount) locales and 1 version")
+        case (false, false, false):
+            body = String(localized: "\(screenshotCount) screenshots across \(localizationCount) locales and \(versionCount) versions")
+        }
+        guard let appName, !appName.isEmpty else { return body }
+        return String(localized: "\(body) · \(appName)")
     }
 
     func buildUploadTargets() -> [ASCUploadTarget] {

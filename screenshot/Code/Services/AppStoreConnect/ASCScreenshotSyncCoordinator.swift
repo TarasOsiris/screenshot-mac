@@ -57,14 +57,39 @@ final class ASCScreenshotSyncCoordinator {
     var confirmationSummary: String {
         let totals = selectionTotals
         var parts = [
-            String(localized: "\(totals.setCount) screenshot sets included."),
-            String(localized: "\(totals.uploads) uploads, \(totals.removals) removals, and \(totals.moves) moves."),
-            String(localized: "\(totals.preserved) unchanged screenshots will keep their App Store asset IDs.")
+            includedSetsSummary(totals.setCount),
+            changedAssetsSummary(uploadCount: totals.uploads, removalCount: totals.removals, moveCount: totals.moves),
+            preservedScreenshotsSummary(totals.preserved)
         ]
         if totals.capacityFirstDeletions > 0 {
-            parts.append(String(localized: "\(totals.capacityFirstDeletions) screenshots must be removed first to stay within Apple's 10-screenshot limit."))
+            parts.append(capacityFirstDeletionSummary(totals.capacityFirstDeletions))
         }
         return parts.joined(separator: " ")
+    }
+
+    private func includedSetsSummary(_ setCount: Int) -> String {
+        setCount == 1
+            ? String(localized: "1 screenshot set included.")
+            : String(localized: "\(setCount) screenshot sets included.")
+    }
+
+    private func changedAssetsSummary(uploadCount: Int, removalCount: Int, moveCount: Int) -> String {
+        let uploads = uploadCount == 1 ? String(localized: "1 upload") : String(localized: "\(uploadCount) uploads")
+        let removals = removalCount == 1 ? String(localized: "1 removal") : String(localized: "\(removalCount) removals")
+        let moves = moveCount == 1 ? String(localized: "1 move") : String(localized: "\(moveCount) moves")
+        return String(localized: "\(uploads), \(removals), and \(moves).")
+    }
+
+    private func preservedScreenshotsSummary(_ screenshotCount: Int) -> String {
+        screenshotCount == 1
+            ? String(localized: "1 unchanged screenshot will keep its App Store asset ID.")
+            : String(localized: "\(screenshotCount) unchanged screenshots will keep their App Store asset IDs.")
+    }
+
+    private func capacityFirstDeletionSummary(_ screenshotCount: Int) -> String {
+        screenshotCount == 1
+            ? String(localized: "1 screenshot must be removed first to stay within Apple's 10-screenshot limit.")
+            : String(localized: "\(screenshotCount) screenshots must be removed first to stay within Apple's 10-screenshot limit.")
     }
 
     /// `needsPreviews: true` adds the remote thumbnail downloads only the review screen draws —

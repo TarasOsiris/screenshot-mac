@@ -57,10 +57,14 @@ struct ASCScreenshotReviewDeviceGroupView: View {
     }
 
     private var subtitle: String {
+        let locales = group.sets.count == 1 ? String(localized: "1 locale") : String(localized: "\(group.sets.count) locales")
+        let changed = group.changedCount == 1 ? String(localized: "1 changed") : String(localized: "\(group.changedCount) changed")
+        let included = includedCount == 1 ? String(localized: "1 included") : String(localized: "\(includedCount) included")
         if group.blockedCount > 0 {
-            return String(localized: "\(group.sets.count) locales · \(group.changedCount) changed · \(includedCount) included · \(group.blockedCount) blocked")
+            let blocked = group.blockedCount == 1 ? String(localized: "1 blocked") : String(localized: "\(group.blockedCount) blocked")
+            return String(localized: "\(locales) · \(changed) · \(included) · \(blocked)")
         }
-        return String(localized: "\(group.sets.count) locales · \(group.changedCount) changed · \(includedCount) included")
+        return String(localized: "\(locales) · \(changed) · \(included)")
     }
 
     private var includedCount: Int {

@@ -210,7 +210,9 @@ enum ASCScreenshotSyncError: LocalizedError {
         case .invalidPlan(let message):
             message
         case .unreadableImages(let rowLabel, let localeLabel, let fileNames):
-            String(localized: "\(rowLabel) · \(localeLabel) uses \(fileNames.count) image file(s) that could not be read, so the screenshots would upload with missing content. Re-add the affected images, then try again.")
+            fileNames.count == 1
+                ? String(localized: "\(rowLabel) · \(localeLabel) uses 1 image file that could not be read, so the screenshots would upload with missing content. Re-add the affected image, then try again.")
+                : String(localized: "\(rowLabel) · \(localeLabel) uses \(fileNames.count) image files that could not be read, so the screenshots would upload with missing content. Re-add the affected images, then try again.")
         }
     }
 }
