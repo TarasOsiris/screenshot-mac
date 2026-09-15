@@ -35,6 +35,33 @@ struct DeviceModelSnapshotTests {
         #expect(maxAlpha(of: image) > 0)
     }
 
+    // MARK: - Screen colour
+
+    /// Neither a model's cover glass nor the camera exposure may tint the screenshot.
+    @Test(arguments: DeviceFrameCatalog.allFrames.filter { $0.isModelBacked && !$0.isLandscape }.map(\.id),
+          [[128, 128, 128], [30, 144, 255], [250, 200, 20]] as [[UInt8]])
+    func screenMatchesScreenshotColours(frameId: String, source: [UInt8]) throws {
+        let frame = try #require(DeviceFrameCatalog.frame(for: frameId))
+        let screenshot = makeSolidImage(
+            NSColor(
+                deviceRed: CGFloat(source[0]) / 255,
+                green: CGFloat(source[1]) / 255,
+                blue: CGFloat(source[2]) / 255,
+                alpha: 1
+            ),
+            width: 1320,
+            height: 2868
+        )
+        let image = try #require(DeviceModelRenderer.snapshotDeviceModel(
+            request(frame: frame, isExport: true, screenshotImage: screenshot)
+        ))
+        let center = centerPixel(of: image)
+        #expect(
+            zip(center, source).allSatisfy { abs(Int($0) - Int($1)) <= 2 },
+            "screen rendered \(center.prefix(3))"
+        )
+    }
+
     // MARK: - Export path
 
     @Test func exportRendersDeviceForModelBackedFrame() throws {
@@ -216,14 +243,15 @@ struct DeviceModelSnapshotTests {
         frame: DeviceFrame,
         pitch: Double = 0,
         yaw: Double = 0,
-        isExport: Bool = false
+        isExport: Bool = false,
+        screenshotImage: NSImage = makeTestImage(width: 1320, height: 2868)
     ) -> DeviceModelSnapshotRequest {
         DeviceModelSnapshotRequest.make(
             frame: frame,
             width: 330,
             height: 717,
             isExport: isExport,
-            screenshotImage: makeTestImage(width: 1320, height: 2868),
+            screenshotImage: screenshotImage,
             pitch: pitch,
             yaw: yaw,
             bodyMaterial: DeviceBodyMaterial(),
@@ -246,6 +274,30 @@ struct DeviceModelSnapshotTests {
         ) else { return 0 }
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: side, height: side))
         return Int(alpha.max() ?? 0)
+    }
+
+    private func centerPixel(of cgImage: CGImage) -> [UInt8] {
+        var pixel = [UInt8](repeating: 0, count: 4)
+        guard let context = CGContext(
+            data: &pixel,
+            width: 1,
+            height: 1,
+            bitsPerComponent: 8,
+            bytesPerRow: 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return pixel }
+        context.interpolationQuality = .none
+        context.draw(
+            cgImage,
+            in: CGRect(
+                x: -CGFloat(cgImage.width / 2),
+                y: -CGFloat(cgImage.height / 2),
+                width: CGFloat(cgImage.width),
+                height: CGFloat(cgImage.height)
+            )
+        )
+        return pixel
     }
 
     private func bitmap(of image: NSImage) throws -> NSBitmapImageRep {

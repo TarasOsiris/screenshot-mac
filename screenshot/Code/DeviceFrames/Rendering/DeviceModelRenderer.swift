@@ -65,7 +65,9 @@ nonisolated enum DeviceModelRenderer {
             ? CGSize(width: quantizedLong, height: shortEdge)
             : CGSize(width: shortEdge, height: quantizedLong)
     }
-    private static let snapshotExposureOffset: CGFloat = -0.7
+    private static let cameraExposureOffset: CGFloat = -0.7
+    /// Cancels the camera exposure so the screenshot renders at its source colours.
+    private static let screenEmissionIntensity: CGFloat = pow(2, -cameraExposureOffset)
     nonisolated(unsafe) private static let snapshotImageCache: NSCache<NSString, NSImage> = {
         let cache = NSCache<NSString, NSImage>()
         cache.countLimit = 160
@@ -279,10 +281,6 @@ nonisolated enum DeviceModelRenderer {
             renderer.scene = nil
             renderer.pointOfView = nil
         }
-        if let camera = cameraNode.camera {
-            camera.wantsExposureAdaptation = false
-            camera.exposureOffset = .init(snapshotExposureOffset)
-        }
         gpuRenderLock.lock()
         defer { gpuRenderLock.unlock() }
 
@@ -401,6 +399,8 @@ nonisolated enum DeviceModelRenderer {
         camera.fieldOfView = 22
         camera.wantsDepthOfField = false
         camera.wantsHDR = true
+        camera.wantsExposureAdaptation = false
+        camera.exposureOffset = .init(cameraExposureOffset)
         camera.zNear = 0.1
         camera.zFar = 100
         let cameraNode = SCNNode()
@@ -672,24 +672,11 @@ nonisolated enum DeviceModelRenderer {
 
             let replacement = material.copy() as? SCNMaterial ?? SCNMaterial()
             replacement.name = material.name
-            let rot90 = screenTexture90CWTransform
-            for prop in [replacement.diffuse, replacement.ambient, replacement.emission] {
-                prop.contents = screenContents
-                prop.contentsTransform = rot90
-                prop.wrapS = .clamp
-                prop.wrapT = .clamp
-            }
-            replacement.multiply.contents = NSColor.white
-            replacement.transparent.contents = NSColor.white
-            replacement.reflective.contents = NSColor.black
-            replacement.metalness.contents = 0.0
-            replacement.roughness.contents = 1.0
-            replacement.normal.contents = NSColor.black
-            replacement.lightingModel = .constant
-            replacement.locksAmbientWithDiffuse = true
-            replacement.isDoubleSided = true
-            replacement.writesToDepthBuffer = true
-            replacement.readsFromDepthBuffer = true
+            configureScreenMaterial(
+                replacement,
+                contents: screenContents,
+                contentsTransform: screenTexture90CWTransform
+            )
             return replacement
         }
         remappedGeometry.materials = materials
@@ -717,26 +704,15 @@ nonisolated enum DeviceModelRenderer {
 
         let material = SCNMaterial()
         material.name = "ScreenOverlay"
-        for prop in [material.diffuse, material.ambient, material.emission] {
-            prop.contents = screenContents
-            prop.wrapS = .clamp
-            prop.wrapT = .clamp
-        }
-        material.multiply.contents = NSColor.white
-        material.transparent.contents = NSColor.white
-        material.reflective.contents = NSColor.black
-        material.metalness.contents = 0.0
-        material.roughness.contents = 1.0
-        material.lightingModel = .constant
-        material.isDoubleSided = true
-        material.writesToDepthBuffer = true
-        material.readsFromDepthBuffer = true
+        configureScreenMaterial(material, contents: screenContents)
         plane.materials = [material]
 
+        // The device's front face, not the screen mesh: a model's cover glass (the Pro Max's is
+        // translucent black) can sit above its Display mesh and would tint the screenshot.
         let centerInWorld = SCNVector3(
             (bounds.min.x + bounds.max.x) / 2,
             (bounds.min.y + bounds.max.y) / 2,
-            bounds.max.z + 0.001
+            contentNode.boundingBox.max.z + 0.001
         )
         let centerInContent = contentNode.convertPosition(centerInWorld, from: nil)
 
@@ -744,6 +720,28 @@ nonisolated enum DeviceModelRenderer {
         planeNode.name = "screenTextureOverlay"
         planeNode.position = centerInContent
         contentNode.addChildNode(planeNode)
+    }
+
+    /// Emission only: under `.constant` lighting diffuse adds to emission and doubles the screenshot.
+    private static func configureScreenMaterial(
+        _ material: SCNMaterial,
+        contents: Any,
+        contentsTransform: SCNMatrix4 = SCNMatrix4Identity
+    ) {
+        material.diffuse.contents = NSColor.black
+        material.ambient.contents = NSColor.black
+        material.emission.contents = contents
+        material.emission.intensity = screenEmissionIntensity
+        material.emission.contentsTransform = contentsTransform
+        material.emission.wrapS = .clamp
+        material.emission.wrapT = .clamp
+        material.multiply.contents = NSColor.white
+        material.transparent.contents = NSColor.white
+        material.reflective.contents = NSColor.black
+        material.lightingModel = .constant
+        material.isDoubleSided = true
+        material.writesToDepthBuffer = true
+        material.readsFromDepthBuffer = true
     }
 
     private static func remapUVsToFullRange(
