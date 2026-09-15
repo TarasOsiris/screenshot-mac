@@ -690,6 +690,32 @@ struct MCPToolExecutorTests {
         }
     }
 
+    /// A cancelled export (client disconnect, job stopped) is the agent's environment, not our
+    /// bug. It must propagate as `CancellationError`, not get wrapped into `MCPToolError.failed`
+    /// — `MCPToolExecutor.call` reports every non-client `MCPToolError` to Sentry, and this was
+    /// flooding it (SCREENSHOT-BRO-G) every time an agent cancelled a long export.
+    @Test func exportProjectCancellationIsNotWrappedAsFailure() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let projectId = try #require(state.activeProject?.id)
+
+        let task = Task {
+            try await executor.exportProject(MCPArguments([
+                "project_id": .string(projectId.uuidString),
+            ]))
+        }
+        task.cancel()
+
+        do {
+            _ = try await task.value
+            Issue.record("expected a cancelled export to throw")
+        } catch is CancellationError {
+            // Expected.
+        } catch {
+            Issue.record("expected CancellationError, got \(error)")
+        }
+    }
+
     // MARK: - Project binding
     //
     // In this suite rather than their own: they share `SCREENSHOT_DATA_DIR` and the demo-mode
