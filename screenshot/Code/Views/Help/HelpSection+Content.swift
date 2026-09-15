@@ -223,6 +223,7 @@ extension HelpSection {
                 .heading("SVG"),
                 .bullet("Click **SVG** to import a vector file. Or paste raw SVG via the SVG paste dialog."),
                 .bullet("SVGs render with a configurable color override and scale crisply at any export resolution."),
+                .bullet("**Replace SVG…** (right-click, or in the properties bar) swaps in new artwork and keeps the shape's position, rotation, color, and effects. The frame narrows to fit the new artwork's proportions."),
                 .bullet("During resize, rendering is debounced for performance — release the mouse to see the final crisp output."),
                 .heading("Common properties"),
                 .bullet("**X**, **Y**, **W**, and **H** at the head of the properties bar set position and size by hand. X is measured from the left edge of the template the shape sits in. Every device except an invisible frame keeps its proportions, so typing a width adjusts the height to match."),

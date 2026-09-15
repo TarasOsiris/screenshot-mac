@@ -23,6 +23,7 @@ struct EditorRowView: View {
     @Environment(EditorScrollState.self) private var scrollState
     @State var activeAlert: RowAlert?
     @State var isSvgDialogPresented = false
+    @State var svgReplaceTarget: CanvasShapeModel?
     @State var contextMenuPointStore = ModelPointStore()
     /// Latched once this row has mounted its chrome, so a scroll that starts later cannot take it
     /// away again. Only a row realized *during* a scroll waits.
@@ -215,6 +216,14 @@ struct EditorRowView: View {
                     shape.color = color
                 }
                 state.addShape(shape)
+            }
+        }
+        .sheet(item: $svgReplaceTarget) { target in
+            SvgPasteDialog(
+                isPresented: Binding(get: { svgReplaceTarget != nil }, set: { if !$0 { svgReplaceTarget = nil } }),
+                replacing: target
+            ) { svgContent, size, useColor, color in
+                state.replaceSvg(shapeId: target.id, content: svgContent, naturalSize: size, useColor: useColor, color: color)
             }
         }
     }

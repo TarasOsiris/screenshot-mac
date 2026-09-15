@@ -228,6 +228,11 @@ extension EditorRowView {
         #endif
     }
 
+    func requestSvgReplace(for shape: CanvasShapeModel) {
+        // Same menu-teardown hazard as `requestImagePicker`: flip the row's sheet state afterwards.
+        Task { @MainActor in svgReplaceTarget = shape }
+    }
+
     /// The row's one image picker (iPad only — macOS goes through `requestImagePicker`),
     /// anchored in canvas space on the shape that asked for it.
     ///

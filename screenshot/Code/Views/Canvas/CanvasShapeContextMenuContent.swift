@@ -6,6 +6,7 @@ struct CanvasShapeContextMenuContent: View {
     var screenshotImage: NSImage?
     /// Raises the row's single image picker for this shape (see `CanvasShapeInteractions`).
     var onRequestImagePicker: (() -> Void)?
+    var onReplaceSvg: (() -> Void)?
     var onClearImage: (() -> Void)?
     var onRemoveBackground: (() -> Void)?
     var onCaptureSimulator: (() -> Void)?
@@ -205,6 +206,9 @@ struct CanvasShapeContextMenuContent: View {
         }
 
         if shape.type == .svg {
+            if !isMultiSelected, let onReplaceSvg {
+                Button("Replace SVG...", systemImage: "arrow.triangle.2.circlepath", action: onReplaceSvg)
+            }
             if let originalSize = svgOriginalSize {
                 Button("Restore Original Aspect Ratio", systemImage: "aspectratio") {
                     let newHeight = shape.width / (originalSize.width / originalSize.height)

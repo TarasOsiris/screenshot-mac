@@ -38,6 +38,7 @@ extension EditorRowView {
             isMultiSelected: isMulti,
             screenshotImage: shape.displayImageFileName.flatMap { state.screenshotImages[$0] },
             onRequestImagePicker: { requestImagePicker(for: shape.id) },
+            onReplaceSvg: shape.type == .svg ? { requestSvgReplace(for: shape) } : nil,
             onClearImage: {
                 state.clearImage(for: shape.id)
             },

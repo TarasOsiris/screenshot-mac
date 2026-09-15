@@ -18,14 +18,14 @@ struct SvgPasteDialog: View {
     /// `replacing` seeds the color controls from the shape being replaced so confirming keeps its color.
     init(
         isPresented: Binding<Bool>,
-        replacing current: (useColor: Bool, color: Color)? = nil,
+        replacing shape: CanvasShapeModel? = nil,
         onConfirm: @escaping (String, CGSize, Bool, Color) -> Void
     ) {
         _isPresented = isPresented
-        isReplacing = current != nil
+        isReplacing = shape != nil
         self.onConfirm = onConfirm
-        _useColorOverride = State(initialValue: current?.useColor ?? false)
-        _overrideColor = State(initialValue: current?.color ?? .white)
+        _useColorOverride = State(initialValue: shape?.svgUseColor == true)
+        _overrideColor = State(initialValue: shape?.color ?? .white)
     }
 
     private var title: LocalizedStringKey { isReplacing ? "Replace SVG" : "Add SVG" }

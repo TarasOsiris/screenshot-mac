@@ -96097,6 +96097,26 @@
           }
         }
       }
+    },
+    "**Copy Text Style** / **Paste Text Style** (right-click) carry a text shape's whole look onto another one." : {
+      "localizations" : {
+
+      }
+    },
+    "**Replace SVG…** (right-click, or in the properties bar) swaps in new artwork and keeps the shape's position, rotation, color, and effects. The frame narrows to fit the new artwork's proportions." : {
+      "localizations" : {
+
+      }
+    },
+    "Replace SVG..." : {
+      "localizations" : {
+
+      }
+    },
+    "**iPhone** — iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max, and 3D iPhone options." : {
+      "localizations" : {
+
+      }
     }
   },
   "version" : "1.0"

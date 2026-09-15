@@ -222,10 +222,9 @@ struct ShapePropertiesSingleSelectionBar: View {
             }
             #endif
             .sheet(isPresented: $isReplacingSvg) {
-                let current = editingShape(shapeId) ?? shape
                 SvgPasteDialog(
                     isPresented: $isReplacingSvg,
-                    replacing: (useColor: current.svgUseColor == true, color: current.color)
+                    replacing: editingShape(shapeId) ?? shape
                 ) { svgContent, size, useColor, color in
                     state.replaceSvg(shapeId: shapeId, content: svgContent, naturalSize: size, useColor: useColor, color: color)
                 }
