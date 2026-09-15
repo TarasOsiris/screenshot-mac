@@ -1,6 +1,7 @@
 import AppKit
 import CoreGraphics
 @testable import Screenshot_Bro
+import SwiftUI
 import Testing
 
 @Suite(.serialized)
@@ -238,6 +239,95 @@ struct AppStateTests {
         state.deleteShape(shape.id)
         #expect(state.selectedShapeId == nil)
         #expect(!state.rows.first!.shapes.contains { $0.id == shape.id })
+    }
+
+    // MARK: - Replace SVG
+
+    private static let squareSvg = #"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100"/></svg>"#
+    private static let squareSvgSize = CGSize(width: 100, height: 100)
+    private static let wideSvg = #"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"><rect width="200" height="100"/></svg>"#
+    private static let wideSvgSize = CGSize(width: 200, height: 100)
+
+    private func addStyledSvgShape(to state: AppState) -> CanvasShapeModel {
+        state.selectRow(state.rows.first!.id)
+        var shape = CanvasShapeModel.defaultSvg(
+            centerX: 600, centerY: 1000, svgContent: Self.squareSvg, size: CGSize(width: 400, height: 400)
+        )
+        shape.rotation = 30
+        shape.opacity = 0.6
+        shape.shadow = ShadowConfig(enabled: true, radius: 20)
+        shape.outlineColor = .blue
+        shape.outlineWidth = 4
+        shape.clipToTemplate = true
+        shape.svgUseColor = true
+        shape.color = .red
+        state.addShape(shape)
+        return state.rows.first!.shapes.first { $0.id == shape.id }!
+    }
+
+    @Test func replaceSvgKeepsEveryPropertyButArtworkAndFrame() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let original = addStyledSvgShape(to: state)
+
+        state.replaceSvg(
+            shapeId: original.id, content: Self.wideSvg, naturalSize: Self.wideSvgSize,
+            useColor: true, color: original.color
+        )
+
+        var expected = original
+        expected.svgContent = Self.wideSvg
+        expected.fitFrame(toAspectOf: Self.wideSvgSize)
+        #expect(expected.height == 200, "The fixture must actually reshape the frame")
+        #expect(state.rows.first!.shapes.first { $0.id == original.id } == expected, "Only the artwork and its frame change")
+    }
+
+    @Test func replaceSvgAppliesColorChosenInDialog() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let original = addStyledSvgShape(to: state)
+
+        state.replaceSvg(
+            shapeId: original.id, content: Self.wideSvg, naturalSize: Self.wideSvgSize,
+            useColor: false, color: .green
+        )
+
+        let replaced = state.rows.first!.shapes.first { $0.id == original.id }!
+        #expect(replaced.svgUseColor == false)
+        #expect(replaced.colorData == original.colorData, "The color is kept for when the override is turned back on")
+    }
+
+    @Test func replaceSvgUndoesAsOneStep() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let original = addStyledSvgShape(to: state)
+        let um = state.undoManager!
+        um.removeAllActions()
+
+        state.replaceSvg(
+            shapeId: original.id, content: Self.wideSvg, naturalSize: Self.wideSvgSize,
+            useColor: true, color: original.color
+        )
+        #expect(um.canUndo)
+
+        um.undo()
+        #expect(state.rows.first!.shapes.first { $0.id == original.id } == original)
+        #expect(!um.canUndo)
+    }
+
+    @Test func replaceSvgWithSameArtworkRegistersNoUndoStep() {
+        let (state, tempDir) = makeState()
+        defer { cleanup(tempDir) }
+        let original = addStyledSvgShape(to: state)
+        let um = state.undoManager!
+        um.removeAllActions()
+
+        state.replaceSvg(
+            shapeId: original.id, content: Self.squareSvg, naturalSize: Self.squareSvgSize,
+            useColor: true, color: original.color
+        )
+        #expect(!um.canUndo)
+        #expect(state.rows.first!.shapes.first { $0.id == original.id } == original)
     }
 
     @Test func batchImportImagesReusesExistingDeviceShapes() async throws {

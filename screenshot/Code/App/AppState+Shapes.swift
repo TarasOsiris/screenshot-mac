@@ -43,6 +43,24 @@ extension AppState {
         }
     }
 
+    /// SVG content isn't localized, so the artwork and its fitted frame land on the base shape.
+    func replaceSvg(shapeId: UUID, content: String, naturalSize: CGSize, useColor: Bool, color: Color) {
+        guard let location = shapeLocation(for: shapeId) else { return }
+        withRowUndo("Replace SVG", rowId: rows[location.rowIndex].id) {
+            guard let loc = shapeLocation(for: shapeId) else { return }
+            var shape = rows[loc.rowIndex].shapes[loc.shapeIndex]
+            shape.svgContent = content
+            shape.fitFrame(toAspectOf: naturalSize)
+            if (shape.svgUseColor == true) != useColor {
+                shape.svgUseColor = useColor
+            }
+            if useColor, color.hexString != shape.color.hexString {
+                shape.color = color
+            }
+            rows[loc.rowIndex].shapes[loc.shapeIndex] = shape
+        }
+    }
+
     /// Commit inline-text-editor output for `shapeId` under a specific locale. Applies only the
     /// text/richText onto the *live* base shape (resolved for `code`), so concurrent geometry or
     /// override changes made while the editor was open aren't reverted by a stale captured model,

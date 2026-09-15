@@ -655,4 +655,38 @@ struct CanvasShapeModelTests {
         #expect(device.width == 300)
         #expect(device.height == 1200, "An invisible frame has no aspect to preserve")
     }
+
+    // MARK: - Fit frame to artwork aspect
+
+    @Test func fitFrameNarrowsToWiderArtworkAboutTheCenter() {
+        var shape = CanvasShapeModel(type: .svg, x: 100, y: 100, width: 400, height: 400)
+        shape.fitFrame(toAspectOf: CGSize(width: 200, height: 100))
+        #expect(shape.width == 400)
+        #expect(shape.height == 200)
+        #expect(shape.x == 100)
+        #expect(shape.y == 200, "Center stays at y = 300")
+    }
+
+    @Test func fitFrameNarrowsToTallerArtworkAboutTheCenter() {
+        var shape = CanvasShapeModel(type: .svg, x: 0, y: 0, width: 400, height: 200)
+        shape.fitFrame(toAspectOf: CGSize(width: 50, height: 100))
+        #expect(shape.width == 100)
+        #expect(shape.height == 200)
+        #expect(shape.x == 150, "Center stays at x = 200")
+        #expect(shape.y == 0)
+    }
+
+    @Test func fitFrameKeepsFrameForMatchingAspect() {
+        let original = CanvasShapeModel(type: .svg, x: 10, y: 20, width: 333, height: 111)
+        var shape = original
+        shape.fitFrame(toAspectOf: CGSize(width: 300, height: 100))
+        #expect(shape == original)
+    }
+
+    @Test func fitFrameIgnoresDegenerateSize() {
+        let original = CanvasShapeModel(type: .svg, x: 10, y: 20, width: 300, height: 100)
+        var shape = original
+        shape.fitFrame(toAspectOf: .zero)
+        #expect(shape == original)
+    }
 }

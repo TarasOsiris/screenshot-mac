@@ -575,6 +575,20 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         )
     }
 
+    /// Shrinks the frame about its center so artwork of `naturalSize` fits it without stretching.
+    mutating func fitFrame(toAspectOf naturalSize: CGSize) {
+        guard naturalSize.width > 0, naturalSize.height > 0 else { return }
+        let scale = min(width / naturalSize.width, height / naturalSize.height)
+        let fittedWidth = naturalSize.width * scale
+        let fittedHeight = naturalSize.height * scale
+        // A sub-half-point difference is float drift from a matching ratio, not a real change.
+        guard abs(fittedWidth - width) >= 0.5 || abs(fittedHeight - height) >= 0.5 else { return }
+        x += (width - fittedWidth) / 2
+        y += (height - fittedHeight) / 2
+        width = fittedWidth
+        height = fittedHeight
+    }
+
     var resolvedDeviceFrame: DeviceFrame? {
         guard let frameId = deviceFrameId else { return nil }
         return DeviceFrameCatalog.frame(for: frameId)

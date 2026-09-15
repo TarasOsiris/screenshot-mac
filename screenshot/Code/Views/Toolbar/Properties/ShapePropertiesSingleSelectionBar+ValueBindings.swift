@@ -280,16 +280,3 @@ extension ShapePropertiesSingleSelectionBar {
         CSSFontWeight(css: weight).platform
     }
 }
-
-extension ShapePropertiesSingleSelectionBar {
-    func replaceSvg(for shapeId: UUID, content: String, useColor: Bool, color: Color) {
-        guard let i = idx(for: shapeId) else { return }
-        state.withRowUndo("Replace SVG", rowId: state.rows[i.row].id) {
-            state.rows[i.row].shapes[i.shape].svgContent = content
-            if useColor {
-                state.rows[i.row].shapes[i.shape].svgUseColor = true
-                state.rows[i.row].shapes[i.shape].color = color
-            }
-        }
-    }
-}

@@ -222,8 +222,12 @@ struct ShapePropertiesSingleSelectionBar: View {
             }
             #endif
             .sheet(isPresented: $isReplacingSvg) {
-                SvgPasteDialog(isPresented: $isReplacingSvg) { svgContent, _, useColor, color in
-                    replaceSvg(for: shapeId, content: svgContent, useColor: useColor, color: color)
+                let current = editingShape(shapeId) ?? shape
+                SvgPasteDialog(
+                    isPresented: $isReplacingSvg,
+                    replacing: (useColor: current.svgUseColor == true, color: current.color)
+                ) { svgContent, size, useColor, color in
+                    state.replaceSvg(shapeId: shapeId, content: svgContent, naturalSize: size, useColor: useColor, color: color)
                 }
             }
         }

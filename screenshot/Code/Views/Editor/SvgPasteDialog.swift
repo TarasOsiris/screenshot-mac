@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct SvgPasteDialog: View {
-    private static let title: LocalizedStringKey = "Add SVG"
     @Binding var isPresented: Bool
+    private let isReplacing: Bool
     var onConfirm: (String, CGSize, Bool, Color) -> Void
 
     @Environment(\.colorScheme) private var colorScheme
@@ -10,15 +10,31 @@ struct SvgPasteDialog: View {
     @State private var errorMessage: String?
     @State private var previewImage: NSImage?
     @State private var isValidSvg = false
-    @State private var useColorOverride = false
-    @State private var overrideColor: Color = .white
+    @State private var useColorOverride: Bool
+    @State private var overrideColor: Color
     @State private var selectedPresetId: String?
     @State private var suppressTextChangeReset = false
+
+    /// `replacing` seeds the color controls from the shape being replaced so confirming keeps its color.
+    init(
+        isPresented: Binding<Bool>,
+        replacing current: (useColor: Bool, color: Color)? = nil,
+        onConfirm: @escaping (String, CGSize, Bool, Color) -> Void
+    ) {
+        _isPresented = isPresented
+        isReplacing = current != nil
+        self.onConfirm = onConfirm
+        _useColorOverride = State(initialValue: current?.useColor ?? false)
+        _overrideColor = State(initialValue: current?.color ?? .white)
+    }
+
+    private var title: LocalizedStringKey { isReplacing ? "Replace SVG" : "Add SVG" }
+    private var confirmTitle: LocalizedStringKey { isReplacing ? "Replace" : "Add" }
 
     var body: some View {
         VStack(spacing: 12) {
             #if os(macOS)
-            Text(Self.title)
+            Text(title)
                 .font(.headline)
             #endif
 
@@ -99,7 +115,7 @@ struct SvgPasteDialog: View {
                 }
                 .keyboardShortcut(.cancelAction)
 
-                Button("Add") {
+                Button(confirmTitle) {
                     addSvg()
                 }
                 .keyboardShortcut(.defaultAction)
@@ -112,8 +128,8 @@ struct SvgPasteDialog: View {
         .frame(width: 480)
         #endif
         .iosSheetChrome(
-            Text(Self.title),
-            confirmTitle: Text("Add"),
+            Text(title),
+            confirmTitle: Text(confirmTitle),
             confirmDisabled: !isValidSvg,
             showsCancel: true,
             onConfirm: addSvg
@@ -124,6 +140,7 @@ struct SvgPasteDialog: View {
         suppressTextChangeReset = true
         selectedPresetId = preset.id
         svgText = preset.sanitizedContent
+        guard !isReplacing else { return }
         overrideColor = colorScheme == .dark ? .white : .black
         useColorOverride = true
     }
