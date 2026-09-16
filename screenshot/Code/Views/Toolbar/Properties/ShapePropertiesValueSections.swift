@@ -42,8 +42,13 @@ struct ShapeOpacityField: View, ShapeEditing {
 
 /// Rotation slider, degree field and reset.
 struct ShapeRotationControl: View, ShapeEditing {
+    /// `strip` is the dense bottom bar; `formRow` matches the inspector's other rows so the value
+    /// fields share one column. Same split, and same reason, as `ShapeGeometryFields.Layout`.
+    enum Layout { case strip, formRow }
+
     let state: AppState
     let shapeId: UUID
+    var layout: Layout = .strip
 
     @State private var text = ""
     @State private var isActive = false
@@ -51,7 +56,7 @@ struct ShapeRotationControl: View, ShapeEditing {
     var body: some View {
         let draft = ShapeFieldDraft(text: $text, isActive: $isActive)
         let slider = shapeBinding(shapeId, \.rotation, continuous: true)
-        HStack(spacing: 4) {
+        HStack(spacing: layout == .formRow ? UIMetrics.InspectorRow.columnGap : 4) {
             Slider(value: slider, in: 0...360)
                 .frame(width: UIMetrics.SliderWidth.standard)
 
@@ -60,7 +65,7 @@ struct ShapeRotationControl: View, ShapeEditing {
                     shapeId: shapeId,
                     text: $text,
                     isActive: $isActive,
-                    width: propertiesNumericFieldWidth,
+                    width: layout == .formRow ? UIMetrics.InspectorRow.valueWidth : propertiesNumericFieldWidth,
                     keyboard: .signed,
                     clearsFocusOnSelectionChange: true,
                     modelValue: slider.wrappedValue,

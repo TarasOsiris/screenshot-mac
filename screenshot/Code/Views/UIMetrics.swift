@@ -242,6 +242,16 @@ enum UIMetrics {
         static let cornerRadius: CGFloat = 5
     }
 
+    /// The inspector's form rows are a two-column grid: a label, then a value control trailing.
+    /// Position/Size, Rotation and every slider row used to pick their own value width and gap
+    /// (52/44 and 10/4/6), so no two rows lined their fields up. These are the shared numbers.
+    enum InspectorRow {
+        /// Width of the trailing value control, so each row's field starts on the same x.
+        static let valueWidth: CGFloat = propertiesGeometryFieldWidth
+        /// Between the two columns of a value area (X↔Y, slider↔readout).
+        static let columnGap: CGFloat = 10
+    }
+
     /// Collapsible sections in the selection / row inspector.
     enum InspectorSection {
         /// Between a section's separating rule and its title.

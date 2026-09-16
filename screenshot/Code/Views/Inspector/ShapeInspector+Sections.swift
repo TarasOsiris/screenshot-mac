@@ -7,7 +7,7 @@ extension ShapeInspector {
         InspectorSection(.shapeGeometry, "Position & Size", accessory: { overrideBadge(.geometry, fields) }) {
             ShapeGeometryFields(state: state, shapeId: shapeId, shape: shape, layout: .formRows)
             LabeledContent("Rotation") {
-                ShapeRotationControl(state: state, shapeId: shapeId)
+                ShapeRotationControl(state: state, shapeId: shapeId, layout: .formRow)
             }
         }
     }

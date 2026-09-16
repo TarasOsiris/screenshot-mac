@@ -36,21 +36,25 @@ struct PopoverSliderRow<Value: BinaryFloatingPoint>: View where Value.Stride: Bi
             }
         case .form:
             LabeledContent(label) {
-                HStack(spacing: 6) {
+                HStack(spacing: UIMetrics.InspectorRow.columnGap) {
                     Slider(value: $value, in: range)
                         .frame(width: UIMetrics.SliderWidth.standard)
-                    readout
+                    readout(width: UIMetrics.InspectorRow.valueWidth)
                 }
             }
         }
     }
 
-    private var readout: some View {
+    private var readout: some View { readout(width: nil) }
+
+    /// The form rows pass the inspector's shared value width so their readouts line up with the
+    /// Position/Size fields; the popover columns keep their own dense sizing.
+    private func readout(width: CGFloat?) -> some View {
         Text(format(value))
             #if os(macOS)
-            .frame(width: 44, alignment: .trailing)
+            .frame(width: width ?? 44, alignment: .trailing)
             #else
-            .frame(minWidth: 52, alignment: .trailing)
+            .frame(minWidth: width ?? 52, alignment: .trailing)
             #endif
             .monospacedDigit()
             .foregroundStyle(.secondary)

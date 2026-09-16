@@ -67,13 +67,13 @@ struct ShapeGeometryFields: View, ShapeEditing {
             }
         case .formRows:
             LabeledContent("Position") {
-                HStack(spacing: 10) {
+                HStack(spacing: UIMetrics.InspectorRow.columnGap) {
                     geometryField(.x)
                     geometryField(.y)
                 }
             }
             LabeledContent("Size") {
-                HStack(spacing: 10) {
+                HStack(spacing: UIMetrics.InspectorRow.columnGap) {
                     geometryField(.width)
                     geometryField(.height)
                 }
