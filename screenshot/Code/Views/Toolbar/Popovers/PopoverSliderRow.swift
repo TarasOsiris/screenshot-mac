@@ -41,6 +41,7 @@ struct PopoverSliderRow<Value: BinaryFloatingPoint>: View where Value.Stride: Bi
                         .frame(width: UIMetrics.SliderWidth.standard)
                     readout(width: UIMetrics.InspectorRow.valueWidth)
                 }
+                .reservesInspectorUnitColumn(.formRow)
             }
         }
     }

@@ -5,6 +5,7 @@ struct ShapeOpacityField: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
     var showsSlider = false
+    var layout: InspectorValueLayout = .strip
 
     @State private var text = ""
     @State private var isActive = false
@@ -13,7 +14,7 @@ struct ShapeOpacityField: View, ShapeEditing {
         let draft = ShapeFieldDraft(text: $text, isActive: $isActive)
         // Without a slider nothing here drags opacity, so there is no live value worth following.
         let opacity = shapeBinding(shapeId, \.opacity, continuous: showsSlider)
-        HStack(spacing: 4) {
+        HStack(spacing: layout.columnGap) {
             if showsSlider {
                 Slider(value: opacity, in: 0...1)
                     .frame(width: UIMetrics.SliderWidth.standard)
@@ -24,7 +25,7 @@ struct ShapeOpacityField: View, ShapeEditing {
                     shapeId: shapeId,
                     text: $text,
                     isActive: $isActive,
-                    width: propertiesOpacityFieldWidth,
+                    width: layout.valueWidth(strip: propertiesOpacityFieldWidth),
                     clearsFocusOnSelectionChange: true,
                     modelValue: opacity.wrappedValue,
                     current: { currentOpacityString(for: $0) },
@@ -35,6 +36,7 @@ struct ShapeOpacityField: View, ShapeEditing {
                 Text("%")
                     .scaledFont(UIMetrics.FontSize.numericBadge)
                     .foregroundStyle(.secondary)
+                    .inspectorUnitColumn(layout)
             }
         }
     }
@@ -42,13 +44,9 @@ struct ShapeOpacityField: View, ShapeEditing {
 
 /// Rotation slider, degree field and reset.
 struct ShapeRotationControl: View, ShapeEditing {
-    /// `strip` is the dense bottom bar; `formRow` matches the inspector's other rows so the value
-    /// fields share one column. Same split, and same reason, as `ShapeGeometryFields.Layout`.
-    enum Layout { case strip, formRow }
-
     let state: AppState
     let shapeId: UUID
-    var layout: Layout = .strip
+    var layout: InspectorValueLayout = .strip
 
     @State private var text = ""
     @State private var isActive = false
@@ -56,7 +54,14 @@ struct ShapeRotationControl: View, ShapeEditing {
     var body: some View {
         let draft = ShapeFieldDraft(text: $text, isActive: $isActive)
         let slider = rotationBinding(shapeId)
-        HStack(spacing: layout == .formRow ? UIMetrics.InspectorRow.columnGap : 4) {
+        HStack(spacing: layout.columnGap) {
+            // Ahead of the slider in a form row: the content is trailing-aligned, so an
+            // affordance that comes and goes with the value has to sit on the side that isn't
+            // the shared column — otherwise rotating past 0 nudges the field sideways.
+            if layout == .formRow, slider.wrappedValue != 0 {
+                resetButton(draft: draft)
+            }
+
             Slider(value: slider, in: 0...360)
                 .frame(width: UIMetrics.SliderWidth.standard)
 
@@ -65,7 +70,7 @@ struct ShapeRotationControl: View, ShapeEditing {
                     shapeId: shapeId,
                     text: $text,
                     isActive: $isActive,
-                    width: layout == .formRow ? UIMetrics.InspectorRow.valueWidth : propertiesNumericFieldWidth,
+                    width: layout.valueWidth(strip: propertiesNumericFieldWidth),
                     keyboard: .signed,
                     clearsFocusOnSelectionChange: true,
                     modelValue: slider.wrappedValue,
@@ -77,13 +82,18 @@ struct ShapeRotationControl: View, ShapeEditing {
                 Text("°")
                     .scaledFont(UIMetrics.FontSize.numericBadge)
                     .foregroundStyle(.secondary)
+                    .inspectorUnitColumn(layout)
             }
 
-            if slider.wrappedValue != 0 {
-                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
-                    resetRotation(shapeId: shapeId, draft: draft)
-                }
+            if layout == .strip, slider.wrappedValue != 0 {
+                resetButton(draft: draft)
             }
+        }
+    }
+
+    private func resetButton(draft: ShapeFieldDraft) -> some View {
+        ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
+            resetRotation(shapeId: shapeId, draft: draft)
         }
     }
 }

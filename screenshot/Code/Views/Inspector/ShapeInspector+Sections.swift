@@ -5,7 +5,7 @@ extension ShapeInspector {
     @ViewBuilder
     func geometrySection(fields: Set<LocaleOverrideField>) -> some View {
         InspectorSection(.shapeGeometry, "Position & Size", accessory: { overrideBadge(.geometry, fields) }) {
-            ShapeGeometryFields(state: state, shapeId: shapeId, layout: .formRows)
+            ShapeGeometryFields(state: state, shapeId: shapeId, layout: .formRow)
             LabeledContent("Rotation") {
                 ShapeRotationControl(state: state, shapeId: shapeId, layout: .formRow)
             }
@@ -188,7 +188,7 @@ extension ShapeInspector {
     func appearanceSection(shape: CanvasShapeModel) -> some View {
         InspectorSection(.shapeAppearance, "Appearance") {
             LabeledContent("Opacity") {
-                ShapeOpacityField(state: state, shapeId: shapeId, showsSlider: true)
+                ShapeOpacityField(state: state, shapeId: shapeId, showsSlider: true, layout: .formRow)
             }
 
             if shape.supportsCornerRadius {

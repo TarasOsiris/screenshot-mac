@@ -250,6 +250,10 @@ enum UIMetrics {
         static let valueWidth: CGFloat = propertiesGeometryFieldWidth
         /// Between the two columns of a value area (X↔Y, slider↔readout).
         static let columnGap: CGFloat = 10
+        /// Trailing column holding a row's unit suffix ("°", "%"). Reserved even on the rows that
+        /// have none — a suffix laid out *after* a field pushes that field out of the shared
+        /// column, which is what left Rotation short of Position and Size.
+        static let unitWidth: CGFloat = 12
     }
 
     /// Collapsible sections in the selection / row inspector.

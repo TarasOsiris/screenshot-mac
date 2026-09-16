@@ -36,11 +36,10 @@ enum ShapeGeometryAxis: CaseIterable {
 /// X / Y / W / H for the selected shape: one strip in the properties bar, Position and Size form
 /// rows in the inspector. The four drafts live together because every commit re-reads all of them.
 struct ShapeGeometryFields: View, ShapeEditing {
-    enum Layout { case strip, formRows }
-
     let state: AppState
     let shapeId: UUID
-    let layout: Layout
+    /// `formRow` emits two of them — Position and Size — into the caller's `Form`.
+    let layout: InspectorValueLayout
 
     @State private var editingX = ""
     @State private var isXFieldActive = false
@@ -63,20 +62,22 @@ struct ShapeGeometryFields: View, ShapeEditing {
                 geometryField(.width)
                 geometryField(.height)
             }
-        case .formRows:
+        case .formRow:
             LabeledContent("Position") {
-                HStack(spacing: UIMetrics.InspectorRow.columnGap) {
-                    geometryField(.x)
-                    geometryField(.y)
-                }
+                valueColumns(.x, .y)
             }
             LabeledContent("Size") {
-                HStack(spacing: UIMetrics.InspectorRow.columnGap) {
-                    geometryField(.width)
-                    geometryField(.height)
-                }
+                valueColumns(.width, .height)
             }
         }
+    }
+
+    private func valueColumns(_ first: ShapeGeometryAxis, _ second: ShapeGeometryAxis) -> some View {
+        HStack(spacing: layout.columnGap) {
+            geometryField(first)
+            geometryField(second)
+        }
+        .reservesInspectorUnitColumn(layout)
     }
 
     private func geometryField(_ axis: ShapeGeometryAxis) -> some View {
@@ -92,7 +93,7 @@ struct ShapeGeometryFields: View, ShapeEditing {
                 shapeId: shapeId,
                 text: draft(axis).text,
                 isActive: draft(axis).isActive,
-                width: propertiesGeometryFieldWidth,
+                width: layout.valueWidth(strip: propertiesGeometryFieldWidth),
                 keyboard: .signed,
                 clearsFocusOnSelectionChange: true,
                 modelValue: modelValue(axis),
