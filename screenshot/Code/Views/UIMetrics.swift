@@ -248,10 +248,24 @@ enum UIMetrics {
         static let ruleGap: CGFloat = 6
         /// Between a section's title and its override badge.
         static let titleGap: CGFloat = 6
-        /// How far the header's hit area reaches back toward the disclosure chevron. The form owns
-        /// the chevron and the space after it, so without this the strip between the two is dead.
-        /// Stops short of the glyph on purpose — overlapping it would put two toggles on one click.
-        static let chevronGap: CGFloat = 8
+        #if os(macOS)
+        /// The disclosure glyph's box. Fixed so swapping in the wider `chevron.down` can't nudge
+        /// the title.
+        static let chevronSize: CGFloat = 12
+        static let chevronFont: CGFloat = 10
+        #else
+        static let chevronSize: CGFloat = 28
+        static let chevronFont: CGFloat = 15
+        #endif
+        /// How far the header is outdented so its own chevron lands in the margin the platform used
+        /// to draw one in, leaving the titles on the x they have today.
+        ///
+        /// **Set this to 0 if a click near the chevron ever stops working.** Zero puts the chevron
+        /// inline and indents the titles by this much — which costs nothing but looks: every pixel
+        /// of the row is inside the header's own frame, so it is hittable by construction. Any
+        /// value above zero is betting that hit testing reaches outside that frame, and that bet is
+        /// what the two attempts before this one lost.
+        static var chevronOutdent: CGFloat { chevronSize + titleGap }
         #if os(macOS)
         /// The grouped form's own horizontal row inset, cancelled out so the separating rule runs
         /// edge to edge. SwiftUI doesn't expose it, so this mirrors the platform value — if the

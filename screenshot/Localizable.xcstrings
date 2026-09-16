@@ -102728,7 +102728,27 @@
         }
       }
     },
-    "The inspector's controls are grouped into collapsible sections. Click a section's title to open or close it; hold **⌥** while clicking to open or close every section at once. How you leave them is remembered." : {
+    "Collapse section" : {
+      "localizations" : {
+
+      }
+    },
+    "The inspector's controls are grouped into collapsible sections. Click anywhere on a section's header to open or close it; hold **⌥** while clicking to open or close every section at once. How you leave them is remembered." : {
+      "localizations" : {
+
+      }
+    },
+    "Expand section" : {
+      "localizations" : {
+
+      }
+    },
+    "Expanded" : {
+      "localizations" : {
+
+      }
+    },
+    "Collapsed" : {
       "localizations" : {
 
       }

@@ -134,7 +134,7 @@ extension HelpSection {
                 .bullet("Each category sets the row's default screenshot pixel size to a value the relevant store accepts."),
                 .heading("Row inspector"),
                 .bullet("Select a row (click empty canvas space inside it) to reveal row-level controls in the inspector."),
-                .bullet("The inspector's controls are grouped into collapsible sections. Click a section's title to open or close it; hold **⌥** while clicking to open or close every section at once. How you leave them is remembered."),
+                .bullet("The inspector's controls are grouped into collapsible sections. Click anywhere on a section's header to open or close it; hold **⌥** while clicking to open or close every section at once. How you leave them is remembered."),
                 .bullet("With **Edit selected shapes in the inspector** turned on in Settings, selecting a shape swaps these controls for the shape's own. Click the row name at the top of the inspector, or press **Esc**, to come back."),
                 .bullet("**Row label** — names the folder this row exports into. **Double-click the label in the row header** to rename it in place."),
                 .bullet("**Screenshot size** — **Presets** lists the resolutions each store accepts, grouped by device. Switch to **Custom** to type any size from 100 to 5000 px."),

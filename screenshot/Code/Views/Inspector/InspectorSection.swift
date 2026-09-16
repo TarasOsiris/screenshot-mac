@@ -1,12 +1,17 @@
 import SwiftUI
 
-/// The inspector's collapsible section: the platform's `Section(isExpanded:)`, its header, and the
-/// expansion persisted under `id`'s key.
+/// The inspector's collapsible section: a header that toggles, the rows it hides, and the expansion
+/// persisted under `id`'s key.
 ///
 /// The three inspectors spelled that triple out by hand, which is how single- and multi-selection
 /// came to share five sections by copied string rather than by type. Holding the `@AppStorage` here
 /// rather than on the panel also means collapsing one section invalidates one section, not the
 /// whole inspector.
+///
+/// The disclosure control is ours, not `Section(isExpanded:)`'s. The platform draws that chevron and
+/// owns the space around it, handing app code only the label — so the strip between the two belongs
+/// to nobody and swallows clicks, and no padding on our side can reach it. Owning the row is what
+/// makes all of it clickable; `ASCScreenshotReviewLocaleRow` and `EditorRowHeader` do the same.
 struct InspectorSection<Content: View, Accessory: View>: View {
     private let id: InspectorSectionID
     private let title: LocalizedStringKey
@@ -28,8 +33,10 @@ struct InspectorSection<Content: View, Accessory: View>: View {
     }
 
     var body: some View {
-        Section(isExpanded: expansion) {
-            content
+        Section {
+            if isExpanded {
+                content
+            }
         } header: {
             header
         }
@@ -40,41 +47,52 @@ struct InspectorSection<Content: View, Accessory: View>: View {
     /// conditional — a star shape drops the type, fill and outline sections — so interleaved
     /// dividers would double up or trail. A header exists exactly when its section does.
     private var header: some View {
-        HStack(spacing: UIMetrics.InspectorSection.titleGap) {
-            Text(title)
-            accessory
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // An overlay, not a stacked child: in the layout the rule made the header two rows tall, and
-        // the grouped form centres its disclosure chevron on the whole header — which is what put
-        // the chevron above the title it labels. Outside the layout, the header is exactly as tall
-        // as its title and the chevron centres by construction.
-        .overlay(alignment: .top) {
-            // The grouped form insets every row, header included, so a plain Divider stops short of
-            // the panel edges. Negative padding is what reaches them; the title keeps the form's own
-            // inset, so it stays aligned with the rows below no matter what this value is.
-            Divider()
-                .padding(.horizontal, -UIMetrics.InspectorSection.rowInset)
-                .offset(y: -UIMetrics.InspectorSection.ruleGap)
-                // The rule must not take a click meant for collapsing the section.
-                .allowsHitTesting(false)
-        }
-        // The grouped form makes only the chevron clickable, so the header carries its own tap. The
-        // padding pair widens the hit area toward the chevron and then puts the frame back where it
-        // was, so the rule above — measured against the inner frame — doesn't move with it.
-        .padding(.leading, UIMetrics.InspectorSection.chevronGap)
-        .contentShape(Rectangle())
-        .onTapGesture { toggle() }
-        .padding(.leading, -UIMetrics.InspectorSection.chevronGap)
+        headerButton
+            // Outdents the row so our chevron lands in the margin the platform used to draw its own
+            // in, which keeps every title on the x it has today. The frame's leading edge doesn't
+            // move, so the rule below is measured against the same box as before.
+            .padding(.leading, -UIMetrics.InspectorSection.chevronOutdent)
+            .overlay(alignment: .top) {
+                // The grouped form insets every row, header included, so a plain Divider stops short
+                // of the panel edges. Negative padding is what reaches them.
+                Divider()
+                    .padding(.horizontal, -UIMetrics.InspectorSection.rowInset)
+                    .offset(y: -UIMetrics.InspectorSection.ruleGap)
+                    // The rule must not take a click meant for collapsing the section.
+                    .allowsHitTesting(false)
+            }
     }
 
-    /// The chevron writes through here, the header through `toggle()`; both land in the one writer,
-    /// so a click means the same thing wherever it hits. Deliberately no hover cursor — a native
-    /// disclosure row keeps the arrow.
-    private var expansion: Binding<Bool> {
-        Binding(get: { isExpanded }) { newValue in
-            InspectorSectionExpansion.apply(newValue, to: id, includingAll: PlatformModifiers.optionDown)
+    private var headerButton: some View {
+        Button(action: toggle) {
+            HStack(spacing: UIMetrics.InspectorSection.titleGap) {
+                chevron
+                Text(title)
+                accessory
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minHeight: UIMetrics.ActionButton.minTouchTarget)
+            // After the frames, not before: applied earlier it would only cover the title's own run.
+            .contentShape(Rectangle())
         }
+        .buttonStyle(InspectorSectionHeaderStyle())
+        #if os(macOS)
+        // 17 headers would otherwise be 17 new stops between the inspector's real controls.
+        .focusable(false)
+        #endif
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+        .accessibilityHint(isExpanded ? "Collapse section" : "Expand section")
+    }
+
+    /// Swapped, not rotated, and in a fixed box — the width has to hold steady or the wider
+    /// `chevron.down` nudges the title every time a section opens.
+    private var chevron: some View {
+        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+            .font(.system(size: UIMetrics.InspectorSection.chevronFont, weight: .medium))
+            .frame(width: UIMetrics.InspectorSection.chevronSize)
+            .foregroundStyle(.secondary)
     }
 
     private func toggle() {
@@ -92,8 +110,18 @@ extension InspectorSection where Accessory == EmptyView {
     }
 }
 
+/// No press feedback: a native disclosure row doesn't dim, and today's header didn't either, so
+/// `EditorIconButtonStyle`'s fade would read as a flash across the whole row. Not `.plain` — the
+/// primitive styles each bring a real `NSControl` with them (see `EditorIconButtonStyle`), and this
+/// panel holds one per section.
+private struct InspectorSectionHeaderStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+    }
+}
+
 /// The one writer of section expansion, so "⌥ means all of them" is a single named decision rather
-/// than an implicit property of one binding. Writing the keys — rather than a view's own state — is
+/// than an implicit property of some binding. Writing the keys — rather than a view's own state — is
 /// what lets one click reach the sections the panel isn't currently showing; `@AppStorage` observes
 /// `UserDefaults`, so the visible ones update themselves.
 enum InspectorSectionExpansion {
