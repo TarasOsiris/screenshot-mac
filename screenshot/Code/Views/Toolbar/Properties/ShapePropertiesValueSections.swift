@@ -17,7 +17,7 @@ struct ShapeOpacityField: View, ShapeEditing {
         HStack(spacing: layout.columnGap) {
             if showsSlider {
                 Slider(value: opacity, in: 0...1)
-                    .frame(width: UIMetrics.SliderWidth.standard)
+                    .inspectorSliderWidth(layout)
             }
 
             HStack(spacing: 0) {
@@ -58,12 +58,12 @@ struct ShapeRotationControl: View, ShapeEditing {
             // Ahead of the slider in a form row: the content is trailing-aligned, so an
             // affordance that comes and goes with the value has to sit on the side that isn't
             // the shared column — otherwise rotating past 0 nudges the field sideways.
-            if layout == .formRow, slider.wrappedValue != 0 {
-                resetButton(draft: draft)
+            if layout == .formRow {
+                resetButton(rotation: slider.wrappedValue, draft: draft)
             }
 
             Slider(value: slider, in: 0...360)
-                .frame(width: UIMetrics.SliderWidth.standard)
+                .inspectorSliderWidth(layout)
 
             HStack(spacing: 0) {
                 ShapePropertyField(
@@ -85,15 +85,19 @@ struct ShapeRotationControl: View, ShapeEditing {
                     .inspectorUnitColumn(layout)
             }
 
-            if layout == .strip, slider.wrappedValue != 0 {
-                resetButton(draft: draft)
+            if layout == .strip {
+                resetButton(rotation: slider.wrappedValue, draft: draft)
             }
         }
     }
 
-    private func resetButton(draft: ShapeFieldDraft) -> some View {
-        ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
-            resetRotation(shapeId: shapeId, draft: draft)
+    /// Only the placement differs between the two layouts, so the visibility rule lives here.
+    @ViewBuilder
+    private func resetButton(rotation: Double, draft: ShapeFieldDraft) -> some View {
+        if rotation != 0 {
+            ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
+                resetRotation(shapeId: shapeId, draft: draft)
+            }
         }
     }
 }

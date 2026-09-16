@@ -148,9 +148,8 @@ final class AppState {
     /// See `LiveShapeEditSession`.
     let liveShapeEdit = LiveShapeEditSession()
 
-    /// The frame a canvas drag/resize/rotate is composing, so the properties bar and the inspector
-    /// can show it while the gesture runs. See `LiveShapeGeometrySession` — the canvas itself
-    /// renders from `CanvasDragSession` and must not read this.
+    /// See `LiveShapeGeometrySession` — the canvas renders from `CanvasDragSession` and must not
+    /// read this, or it applies the gesture twice.
     let liveShapeGeometry = LiveShapeGeometrySession()
 
     /// The shape targeted by an in-flight continuous edit (nil when idle).

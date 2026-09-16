@@ -51,36 +51,42 @@ struct ShapeGeometryFields: View, ShapeEditing {
     @State private var isHeightFieldActive = false
 
     var body: some View {
+        // Resolved once: each field would otherwise re-scan the document for the same frame.
+        let frame = liveOrDocumentFrame
         switch layout {
         case .strip:
             HStack(spacing: 6) {
-                geometryField(.x)
-                geometryField(.y)
+                geometryField(.x, frame)
+                geometryField(.y, frame)
 
                 ShapePropertiesSeparator()
 
-                geometryField(.width)
-                geometryField(.height)
+                geometryField(.width, frame)
+                geometryField(.height, frame)
             }
         case .formRow:
             LabeledContent("Position") {
-                valueColumns(.x, .y)
+                valueColumns(.x, .y, frame)
             }
             LabeledContent("Size") {
-                valueColumns(.width, .height)
+                valueColumns(.width, .height, frame)
             }
         }
     }
 
-    private func valueColumns(_ first: ShapeGeometryAxis, _ second: ShapeGeometryAxis) -> some View {
+    private func valueColumns(
+        _ first: ShapeGeometryAxis,
+        _ second: ShapeGeometryAxis,
+        _ frame: LiveShapeGeometrySession.Frame?
+    ) -> some View {
         HStack(spacing: layout.columnGap) {
-            geometryField(first)
-            geometryField(second)
+            geometryField(first, frame)
+            geometryField(second, frame)
         }
         .reservesInspectorUnitColumn(layout)
     }
 
-    private func geometryField(_ axis: ShapeGeometryAxis) -> some View {
+    private func geometryField(_ axis: ShapeGeometryAxis, _ frame: LiveShapeGeometrySession.Frame?) -> some View {
         HStack(spacing: 3) {
             // Axis labels are notation, not prose — every design tool shows X/Y/W/H untranslated,
             // and the catalog's single-letter keys machine-translate to words ("Y" → "Oui").
@@ -96,7 +102,7 @@ struct ShapeGeometryFields: View, ShapeEditing {
                 width: layout.valueWidth(strip: propertiesGeometryFieldWidth),
                 keyboard: .signed,
                 clearsFocusOnSelectionChange: true,
-                modelValue: modelValue(axis),
+                modelValue: modelValue(axis, frame),
                 current: { currentGeometryString(axis, for: $0) },
                 commit: { commitGeometry(axis, to: $0, drafts: draft) },
                 liveSelection: { state.selectedShapeId }
@@ -115,11 +121,8 @@ struct ShapeGeometryFields: View, ShapeEditing {
         }
     }
 
-    /// `ShapePropertyField` re-reads its text when this moves, so it is what makes the fields
-    /// follow a canvas gesture. It reads the gesture's frame directly rather than through
-    /// `editingShape`, so an unrelated slider burst doesn't re-render the strip on every tick.
-    private func modelValue(_ axis: ShapeGeometryAxis) -> Double? {
-        guard let frame = liveOrDocumentFrame else { return nil }
+    private func modelValue(_ axis: ShapeGeometryAxis, _ frame: LiveShapeGeometrySession.Frame?) -> Double? {
+        guard let frame else { return nil }
         switch axis {
         case .x: return Double(frame.x)
         case .y: return Double(frame.y)
@@ -128,6 +131,9 @@ struct ShapeGeometryFields: View, ShapeEditing {
         }
     }
 
+    /// `ShapePropertyField` re-reads its text when this moves, so it is what makes the fields
+    /// follow a canvas gesture. Deliberately not `liveGeometryShape`: routing the trigger through
+    /// the burst session would re-render the strip on every tick of an unrelated slider.
     private var liveOrDocumentFrame: LiveShapeGeometrySession.Frame? {
         if let live = state.liveShapeGeometry.frame(for: shapeId) { return live }
         return resolvedDocumentShape(shapeId).map { LiveShapeGeometrySession.Frame($0) }

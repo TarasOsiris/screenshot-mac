@@ -63,8 +63,7 @@ extension ShapeEditing {
     /// persist a frame the pointer is still moving. On iPad the bar is on screen during a canvas
     /// drag, so a second finger really can reach a control mid-gesture.
     func liveGeometryShape(_ shapeId: UUID) -> CanvasShapeModel? {
-        guard let shape = editingShape(shapeId) else { return nil }
-        return state.liveShapeGeometry.applied(to: shape) ?? shape
+        editingShape(shapeId).map { state.liveShapeGeometry.applied(to: $0) ?? $0 }
     }
 
     /// What a control that is never dragged should *display*. A burst only changes the properties
@@ -228,8 +227,7 @@ extension ShapeEditing {
             draft.text.wrappedValue = currentRotationString(for: shapeId)
             return
         }
-        var normalized = value.truncatingRemainder(dividingBy: 360)
-        if normalized < 0 { normalized += 360 }
+        let normalized = CanvasShapeModel.normalizedRotation(value)
         if resolved.rotation != normalized {
             resolved.rotation = normalized
             state.updateShape(resolved)
@@ -247,17 +245,14 @@ extension ShapeEditing {
         draft.text.wrappedValue = "0"
     }
 
-    /// Rotation as the readouts must show it — a canvas rotate handle as well as a slider burst.
-    /// The setter deliberately composes from `editingShape`, so dragging the slider never writes
-    /// back a frame the canvas is still moving.
+    /// `shapeBinding`'s rotation, reading through the canvas gesture as well as the slider burst.
+    /// Only the getter differs — the write stays on the shared path, which is blind to the gesture
+    /// on purpose.
     func rotationBinding(_ shapeId: UUID) -> Binding<Double> {
-        Binding(
+        let write = shapeBinding(shapeId, \.rotation, continuous: true)
+        return Binding(
             get: { liveGeometryShape(shapeId)?.rotation ?? 0 },
-            set: { newValue in
-                guard var resolved = editingShape(shapeId) else { return }
-                resolved.rotation = newValue
-                state.updateShapeContinuous(resolved)
-            }
+            set: { write.wrappedValue = $0 }
         )
     }
 

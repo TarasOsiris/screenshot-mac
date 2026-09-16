@@ -24,18 +24,20 @@ struct LiveShapeGeometrySessionTests {
         #expect(session.shapeId == nil)
     }
 
-    /// The gate every reader of `editingShape` observes. It must move only at the edges of a
-    /// gesture, or the per-tick frame invalidates controls that aren't showing it.
-    @Test func shapeIdChangesOnlyWhenTheTargetChanges() {
+    /// The gate every reader of `editingShape` observes. `@Observable` notifies on same-value
+    /// writes, so a tick must not touch it at all — otherwise the per-tick frame invalidates the
+    /// controls of shapes that aren't being dragged.
+    @Test func ticksWithinOneGestureDoNotTouchTheGate() {
         let session = LiveShapeGeometrySession()
         let shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 10, height: 10)
-
         session.update(.init(shape), for: shape.id)
-        let afterFirstTick = session.shapeId
-        session.update(.init(shape, offsetBy: CGSize(width: 1, height: 0)), for: shape.id)
-        session.update(.init(shape, offsetBy: CGSize(width: 2, height: 0)), for: shape.id)
 
-        #expect(session.shapeId == afterFirstTick, "Ticks within one gesture keep the same target")
+        let notified = observationDidNotify({ session.shapeId }) {
+            session.update(.init(shape, offsetBy: CGSize(width: 1, height: 0)), for: shape.id)
+            session.update(.init(shape, offsetBy: CGSize(width: 2, height: 0)), for: shape.id)
+        }
+
+        #expect(!notified, "Ticks within one gesture keep the same target")
         #expect(session.frame(for: shape.id)?.x == 2)
     }
 
@@ -68,22 +70,23 @@ struct LiveShapeGeometrySessionTests {
 
         let session = LiveShapeGeometrySession()
         let shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 10, height: 10)
-        session.update(.init(shape, rotation: -30), for: shape.id)
+        session.update(LiveShapeGeometrySession.Frame(shape).rotated(by: -30), for: shape.id)
         #expect(session.frame(for: shape.id)?.rotation == 330)
     }
 
     /// A gesture is published at the precision the fields render, so a sub-unit tick of an
-    /// unthrottled drag doesn't repaint them.
+    /// unthrottled drag must not repaint them — same-value writes notify too.
     @Test func subUnitTicksRoundToTheSameFrame() {
         let session = LiveShapeGeometrySession()
         let shape = CanvasShapeModel(type: .rectangle, x: 10, y: 10, width: 10, height: 10)
-
         session.update(.init(shape, offsetBy: CGSize(width: 0.2, height: 0.1)), for: shape.id)
-        let first = session.frame(for: shape.id)
-        session.update(.init(shape, offsetBy: CGSize(width: 0.3, height: 0.2)), for: shape.id)
 
-        #expect(session.frame(for: shape.id) == first)
-        #expect(first?.x == 10)
+        let notified = observationDidNotify({ session.frame(for: shape.id) }) {
+            session.update(.init(shape, offsetBy: CGSize(width: 0.3, height: 0.2)), for: shape.id)
+        }
+
+        #expect(!notified)
+        #expect(session.frame(for: shape.id)?.x == 10)
     }
 
     /// One row tearing down must not blank a gesture running in another.

@@ -162,16 +162,13 @@ struct ShapeEditingTests {
     /// A canvas drag reaches `rows` only on mouse-up, so the readouts follow the gesture through
     /// `liveShapeGeometry` — including X's rebase when the shape crosses into another template.
     @Test func canvasGestureMovesTheReadoutsWithoutTouchingTheDocument() {
-        let (state, tempDir) = makeTestState()
-        defer { cleanupTestState(tempDir) }
-        let row = state.rows.first!
-        state.selectRow(row.id)
         let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
-        state.addShape(shape)
-        let editor = Editor(state: state)
+        let (state, tempDir, editor, _) = makeEditor(adding: shape)
+        defer { cleanupTestState(tempDir) }
 
+        let templateWidth = state.rows.first!.templateWidth
         state.liveShapeGeometry.update(
-            .init(x: row.templateWidth + 30, y: 220, width: 80, height: 90, rotation: 45),
+            .init(x: templateWidth + 30, y: 220, width: 80, height: 90, rotation: 45),
             for: shape.id
         )
 

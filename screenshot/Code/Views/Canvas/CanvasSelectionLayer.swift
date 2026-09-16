@@ -102,9 +102,11 @@ struct CanvasSelectionLayer: View {
     }
 
     /// A setter, not a `body`, so publishing the readout here is legal — and it is the one place
-    /// that sees every tick of a handle drag.
+    /// that sees every tick of a handle drag. The closures capture the shape's frame rather than
+    /// the shape: they outlive this body, and `CanvasShapeModel` is a large refcounted struct.
     private func resizeBinding(for shape: CanvasShapeModel) -> Binding<ResizeState?> {
         let id = shape.id
+        let base = LiveShapeGeometrySession.Frame(shape)
         return Binding(
             get: { dragSession.pendingResize[id] },
             set: { newValue in
@@ -116,7 +118,7 @@ struct CanvasSelectionLayer: View {
                             y: newValue.newY,
                             width: newValue.newW,
                             height: newValue.newH,
-                            rotation: shape.rotation
+                            rotation: base.rotation
                         ),
                         for: id
                     )
@@ -130,6 +132,7 @@ struct CanvasSelectionLayer: View {
 
     private func rotationBinding(for shape: CanvasShapeModel) -> Binding<Double> {
         let id = shape.id
+        let base = LiveShapeGeometrySession.Frame(shape)
         return Binding(
             get: { dragSession.pendingRotation[id] ?? 0 },
             set: { newValue in
@@ -139,7 +142,7 @@ struct CanvasSelectionLayer: View {
                 } else {
                     dragSession.pendingRotation[id] = newValue
                     // `Frame` normalizes the composed angle, the way the commit does.
-                    liveShapeGeometry.update(.init(shape, rotation: shape.rotation + newValue), for: id)
+                    liveShapeGeometry.update(base.rotated(by: newValue), for: id)
                 }
             }
         )

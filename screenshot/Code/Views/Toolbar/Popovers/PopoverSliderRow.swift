@@ -35,13 +35,14 @@ struct PopoverSliderRow<Value: BinaryFloatingPoint>: View where Value.Stride: Bi
                 readout
             }
         case .form:
+            let row = InspectorValueLayout.formRow
             LabeledContent(label) {
-                HStack(spacing: UIMetrics.InspectorRow.columnGap) {
+                HStack(spacing: row.columnGap) {
                     Slider(value: $value, in: range)
-                        .frame(width: UIMetrics.SliderWidth.standard)
-                    readout(width: UIMetrics.InspectorRow.valueWidth)
+                        .inspectorSliderWidth(row)
+                    readout(width: row.valueWidth(strip: 44))
                 }
-                .reservesInspectorUnitColumn(.formRow)
+                .reservesInspectorUnitColumn(row)
             }
         }
     }

@@ -9,7 +9,6 @@ enum InspectorValueLayout {
     case strip
     case formRow
 
-    /// Between the two columns of a value area (X↔Y, slider↔field).
     var columnGap: CGFloat {
         switch self {
         case .strip: 4
@@ -27,6 +26,18 @@ enum InspectorValueLayout {
 }
 
 extension View {
+    /// A form row must not wrap: `LabeledContent` stacks the label *above* the content when the
+    /// content doesn't fit the inspector's width, which is what dropped Rotation onto a second
+    /// line as soon as its reset button appeared. Capping instead of fixing the width lets the
+    /// slider give up points first. The bar has as much room as it wants, so it keeps the width.
+    @ViewBuilder
+    func inspectorSliderWidth(_ layout: InspectorValueLayout, _ width: CGFloat = UIMetrics.SliderWidth.standard) -> some View {
+        switch layout {
+        case .strip: frame(width: width)
+        case .formRow: frame(maxWidth: width)
+        }
+    }
+
     /// Places a unit suffix ("°", "%") in the inspector's unit column. Laid out plainly after the
     /// field, a suffix pushes that field left out of the shared column — which is what left
     /// Rotation short of Position and Size. The bar packs its units tight, so there it's a no-op.

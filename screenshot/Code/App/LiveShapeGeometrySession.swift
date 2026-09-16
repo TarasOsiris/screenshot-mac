@@ -11,9 +11,8 @@ import Foundation
 /// The channel is one-directional by design: the canvas renders from `CanvasDragSession` and
 /// already applies this transform itself, so a canvas layer reading here would apply it twice.
 ///
-/// `frame` is private behind the same gate as `LiveShapeEditSession.shape`: the accessors check
-/// `shapeId` first, so a shape that isn't under the pointer never subscribes to the per-tick value
-/// — it sees only the two `shapeId` transitions that bracket the gesture.
+/// `frame` is private behind the same gate as `LiveShapeEditSession.shape`, so a shape that isn't
+/// under the pointer subscribes to the two `shapeId` transitions and not to the ticks between.
 @Observable @MainActor
 final class LiveShapeGeometrySession {
     struct Frame: Equatable {
@@ -33,28 +32,31 @@ final class LiveShapeGeometrySession {
             self.rotation = CanvasShapeModel.normalizedRotation((rotation * 10).rounded() / 10)
         }
 
-        /// A moved or rotated shape. `ResizeState` lives in the canvas layer, so a resize builds
-        /// the frame from its own absolute values instead.
-        init(_ shape: CanvasShapeModel, offsetBy offset: CGSize = .zero, rotation: Double? = nil) {
+        /// A shape's own frame, optionally moved. `ResizeState` lives in the canvas layer, so a
+        /// resize builds the frame from its own absolute values instead.
+        init(_ shape: CanvasShapeModel, offsetBy offset: CGSize = .zero) {
             self.init(
                 x: shape.x + offset.width,
                 y: shape.y + offset.height,
                 width: shape.width,
                 height: shape.height,
-                rotation: rotation ?? shape.rotation
+                rotation: shape.rotation
             )
+        }
+
+        /// A rotate handle composes its angle from a delta against the pre-gesture rotation.
+        func rotated(by delta: Double) -> Frame {
+            Frame(x: x, y: y, width: width, height: height, rotation: rotation + delta)
         }
     }
 
     private(set) var shapeId: UUID?
     private var frame: Frame?
 
+    // `@Observable` notifies on same-value writes, so both assign only on change — `shapeId` is
+    // what every other shape's readouts observe, and a 120 Hz drag rounds to a repeated frame often.
     func update(_ frame: Frame, for id: UUID) {
-        // Assigned only on a real change: `shapeId` is what every other reader observes, so an
-        // unconditional write would invalidate them all on every tick.
         if shapeId != id { shapeId = id }
-        // Same-value writes still notify observers, and a 120 Hz drag rounds to the same frame
-        // often enough for the guard to earn its keep.
         if self.frame != frame { self.frame = frame }
     }
 
@@ -71,13 +73,11 @@ final class LiveShapeGeometrySession {
         frame = nil
     }
 
-    /// The in-flight frame for `id`, or nil when some other shape (or nothing) is being dragged.
     func frame(for id: UUID) -> Frame? {
         guard shapeId == id else { return nil }
         return frame
     }
 
-    /// `shape` with the in-flight geometry applied, or nil when it isn't the shape being dragged.
     func applied(to shape: CanvasShapeModel) -> CanvasShapeModel? {
         guard let frame = frame(for: shape.id) else { return nil }
         var updated = shape

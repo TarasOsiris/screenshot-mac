@@ -178,8 +178,7 @@ struct EditorRowView: View {
                     // launch, before any project exists.
                     .onAppear { startDeferredCoachIfNeeded() }
                     // A `DragGesture` whose view goes away mid-drag never delivers `onEnded`, so
-                    // the gesture's frame would keep driving the properties bar. Scoped to this
-                    // row's shapes so tearing down one row can't blank another's live gesture.
+                    // the gesture's frame would keep driving the properties bar.
                     .onDisappear { endLiveGeometryIfOwned() }
                     // Retry after a project open completes — on iPad the canvas can appear
                     // while `isOpeningProject` is still true, and no other trigger re-fires.
