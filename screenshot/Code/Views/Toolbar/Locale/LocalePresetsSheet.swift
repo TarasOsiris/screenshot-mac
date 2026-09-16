@@ -98,19 +98,13 @@ struct ManageLocalesSheet: View {
                         if isBase {
                             Text("Base")
                                 .font(.system(size: 10, weight: .medium))
-                                .padding(.horizontal, UIMetrics.StatusBadge.horizontalPadding)
-                                .padding(.vertical, UIMetrics.StatusBadge.verticalPadding)
-                                .background(Color.accentColor.opacity(UIMetrics.Opacity.accentBadge), in: Capsule())
-                                .foregroundStyle(Color.accentColor)
+                                .statusBadgeCapsule(Color.accentColor)
                         } else {
                             if progress.total > 0 {
                                 let statusColor: Color = progress.translated >= progress.total ? .green : .orange
                                 Text("\(progress.translated)/\(progress.total)")
                                     .font(.system(size: 10, weight: .medium, design: .monospaced))
-                                    .padding(.horizontal, UIMetrics.StatusBadge.horizontalPadding)
-                                    .padding(.vertical, UIMetrics.StatusBadge.verticalPadding)
-                                    .background(statusColor.opacity(UIMetrics.Opacity.accentBadge), in: Capsule())
-                                    .foregroundStyle(statusColor)
+                                    .statusBadgeCapsule(statusColor)
                             }
                             Button(role: .destructive) {
                                 pendingDeleteLocale = locale
@@ -203,18 +197,12 @@ struct ManageLocalesSheet: View {
             if isBase {
                 Text("Base")
                     .font(.caption.weight(.medium))
-                    .padding(.horizontal, UIMetrics.StatusBadge.horizontalPadding)
-                    .padding(.vertical, UIMetrics.StatusBadge.verticalPadding)
-                    .background(Color.accentColor.opacity(UIMetrics.Opacity.accentBadge), in: Capsule())
-                    .foregroundStyle(Color.accentColor)
+                    .statusBadgeCapsule(Color.accentColor)
             } else if progress.total > 0 {
                 let statusColor: Color = progress.translated >= progress.total ? .green : .orange
                 Text("\(progress.translated)/\(progress.total)")
                     .font(.caption.weight(.medium).monospaced())
-                    .padding(.horizontal, UIMetrics.StatusBadge.horizontalPadding)
-                    .padding(.vertical, UIMetrics.StatusBadge.verticalPadding)
-                    .background(statusColor.opacity(UIMetrics.Opacity.accentBadge), in: Capsule())
-                    .foregroundStyle(statusColor)
+                    .statusBadgeCapsule(statusColor)
             }
         }
         .deleteDisabled(isBase)

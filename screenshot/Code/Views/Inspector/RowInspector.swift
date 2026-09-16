@@ -29,8 +29,9 @@ struct RowInspector: View {
         if let rowIndex = state.selectedRowIndex, let rowId = state.selectedRowId, let row = state.selectedRow {
             VStack(spacing: 0) {
                 rowTitleHeader(row: row)
-                Divider()
                 if state.viewMode.previewingRows.contains(rowId) {
+                    // The Form branch gets its rule from the first section header instead.
+                    Divider()
                     previewModePanel(rowId: rowId)
                 } else {
                     Form {
@@ -40,7 +41,7 @@ struct RowInspector: View {
                         Section(isExpanded: $isAddElementExpanded) {
                             ShapeToolbar(state: state)
                         } header: {
-                            Text("Shapes")
+                            InspectorSectionHeader("Shapes")
                         }
                         visibilitySection(rowId: rowId)
                         otherSection(rowId: rowId)
@@ -134,7 +135,7 @@ struct RowInspector: View {
                 presetPicker(rowId: rowId)
             }
         } header: {
-            Text("Screenshot Size")
+            InspectorSectionHeader("Screenshot Size")
         }
     }
 
@@ -283,7 +284,7 @@ struct RowInspector: View {
                 }
             }
         } header: {
-            Text("Background")
+            InspectorSectionHeader("Background")
         }
     }
 
@@ -314,7 +315,7 @@ struct RowInspector: View {
             }
             .compactControlSize()
         } header: {
-            Text("Device")
+            InspectorSectionHeader("Device")
         }
     }
 
@@ -391,7 +392,7 @@ struct RowInspector: View {
             visibilityToggles(rowId: rowId)
             #endif
         } header: {
-            Text("Visibility")
+            InspectorSectionHeader("Visibility")
         }
     }
 
@@ -408,7 +409,7 @@ struct RowInspector: View {
                 .toggleStyle(.switch)
                 .compactControlSize()
         } header: {
-            Text("Other")
+            InspectorSectionHeader("Other")
         }
     }
 

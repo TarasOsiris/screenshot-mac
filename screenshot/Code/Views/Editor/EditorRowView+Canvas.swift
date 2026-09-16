@@ -481,6 +481,7 @@ extension EditorRowView {
                 row: row,
                 resolvedShapes: resolvedShapes,
                 selectedShapeIds: selectedShapeIds,
+                localeState: state.localeState,
                 visualScale: ds,
                 dragSession: dragSession,
                 liveShapeEdit: state.liveShapeEdit

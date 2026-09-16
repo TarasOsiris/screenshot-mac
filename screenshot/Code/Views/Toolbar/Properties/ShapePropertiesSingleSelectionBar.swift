@@ -32,11 +32,20 @@ struct ShapePropertiesSingleSelectionBar: View, ShapeEditing {
     var body: some View {
         if let shapeId = state.selectedShapeId, let i = idx(for: shapeId) {
             let shape = documentShape(at: i.row, shapeIdx: i.shape)
+            let overrideFields = LocaleService.overriddenFields(
+                for: state.rows[i.row].shapes[i.shape],
+                localeCode: state.localeState.activeLocaleCode,
+                localeState: state.localeState
+            )
 
             HStack(spacing: 0) {
                 ScrollView(.horizontal) {
                     HStack(spacing: 8) {
                         ShapePropertiesBadge(type: shape.type)
+
+                        if !overrideFields.isEmpty {
+                            LocaleOverrideChip(scope: .shape(id: shapeId, fields: overrideFields), state: state)
+                        }
 
                         ShapePropertiesSection {
                             ShapeGeometryFields(state: state, shapeId: shapeId, shape: shape, layout: .strip)
@@ -66,12 +75,6 @@ struct ShapePropertiesSingleSelectionBar: View, ShapeEditing {
                         shapeGeometrySections(shape: shape, shapeId: shapeId)
 
                         mediaSections(shape: shape, shapeId: shapeId)
-
-                        if hasLocaleOverride(shapeId) {
-                            LocaleOverrideIndicator {
-                                state.resetLocaleOverride(shapeId: shapeId)
-                            }
-                        }
 
                         textSections(shape: shape, shapeId: shapeId)
 
@@ -112,6 +115,7 @@ struct ShapePropertiesSingleSelectionBar: View, ShapeEditing {
             .scaledFont(UIMetrics.FontSize.body)
             .compactControlSize()
             .denseBarTypography()
+            .localeOverrideMarks(shapeId: shapeId, fields: overrideFields)
             .modifier(PropertiesBarChrome())
             .shapeReplacementPresenters(
                 state: state,

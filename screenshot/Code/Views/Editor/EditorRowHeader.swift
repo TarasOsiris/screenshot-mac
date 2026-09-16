@@ -20,6 +20,10 @@ struct EditorRowHeader<RowMenuContent: View>: View {
     let onDelete: () -> Void
     let isPreviewMode: Bool
     let onTogglePreview: () -> Void
+    /// Shapes in this row the active language overrides. Zero in the base language.
+    var overriddenShapeCount: Int = 0
+    var overrideLocaleLabel: String = ""
+    var onSelectOverridden: () -> Void = {}
     let rowMenuContent: () -> RowMenuContent
 
     @Environment(\.editorViewportWidth) private var editorViewportWidth
@@ -59,6 +63,17 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
                     .fixedSize()
+            }
+
+            // Outside `showLabels`: which rows a language touches is worth a badge even when the
+            // header is too narrow for the row's own name.
+            if overriddenShapeCount > 0 {
+                Button(action: onSelectOverridden) {
+                    LocaleOverrideCountBadge(count: overriddenShapeCount)
+                }
+                .buttonStyle(EditorIconButtonStyle())
+                .focusable(false)
+                .help("^[\(overriddenShapeCount) shape](inflect: true) overridden for \(overrideLocaleLabel) — click to select them")
             }
 
             previewToggle

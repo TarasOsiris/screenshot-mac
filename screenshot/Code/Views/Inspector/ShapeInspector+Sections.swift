@@ -3,30 +3,30 @@ import SwiftUI
 
 extension ShapeInspector {
     @ViewBuilder
-    func geometrySection(shape: CanvasShapeModel) -> some View {
+    func geometrySection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         Section(isExpanded: $isGeometryExpanded) {
             ShapeGeometryFields(state: state, shapeId: shapeId, shape: shape, layout: .formRows)
             LabeledContent("Rotation") {
                 ShapeRotationControl(state: state, shapeId: shapeId)
             }
         } header: {
-            Text("Position & Size")
+            sectionHeader("Position & Size", .geometry, fields)
         }
     }
 
     @ViewBuilder
-    func typeSections(shape: CanvasShapeModel) -> some View {
+    func typeSections(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         switch shape.type {
         case .device:
-            deviceSection(shape: shape)
+            deviceSection(shape: shape, fields: fields)
             if shape.supportsDeviceModelRotation {
                 device3DSection(shape: shape)
             }
         case .text:
-            textSection(shape: shape)
+            textSection(shape: shape, fields: fields)
             textBackgroundSection
         case .image:
-            imageSection(shape: shape)
+            imageSection(shape: shape, fields: fields)
         case .svg:
             svgSection(shape: shape)
         case .rectangle, .circle, .star:
@@ -37,7 +37,7 @@ extension ShapeInspector {
     // MARK: - Device
 
     @ViewBuilder
-    private func deviceSection(shape: CanvasShapeModel) -> some View {
+    private func deviceSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         Section(isExpanded: $isDeviceExpanded) {
             devicePicker(shape: shape, shapeId: shapeId, presentation: .sidebar)
 
@@ -49,7 +49,7 @@ extension ShapeInspector {
                 AndroidCameraCutoutToggle(hideCameraCutout: shapeBinding(shapeId, \.hideCameraCutout, default: false))
             }
         } header: {
-            Text("Device")
+            sectionHeader("Device", .media, fields)
         }
     }
 
@@ -68,8 +68,7 @@ extension ShapeInspector {
             }
             .help("Reset rotation, material, and lighting to defaults")
         } header: {
-            HStack(spacing: 6) {
-                Text("3D Device")
+            InspectorSectionHeader("3D Device") {
                 PopoverBadge(text: "Beta", help: "3D device rendering is an experimental feature")
             }
         }
@@ -78,19 +77,24 @@ extension ShapeInspector {
     // MARK: - Text
 
     @ViewBuilder
-    private func textSection(shape: CanvasShapeModel) -> some View {
+    private func textSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         let customControlState = CustomFontRegistry.controlState(for: shape)
 
         Section(isExpanded: $isTextExpanded) {
             LabeledContent("Font") {
                 TextFontPickerControl(state: state, shapeId: shapeId)
             }
+            .localeOverridden(.font)
 
             LabeledContent("Size") {
                 HStack(spacing: 4) {
+                    // Marked per control, not on the row: a row-level wash would stack with the
+                    // weight picker's own when both are overridden.
                     TextFontSizeField(state: state, shapeId: shapeId)
+                        .localeOverridden(.fontSize)
                     if customControlState?.showsWeightPicker ?? true {
                         TextFontWeightControl(state: state, shapeId: shapeId, customControlState: customControlState)
+                            .localeOverridden(.fontWeight)
                     }
                 }
             }
@@ -104,6 +108,7 @@ extension ShapeInspector {
                 VStack(alignment: .trailing, spacing: 6) {
                     TextAlignPicker(selection: shapeBinding(shapeId, \.textAlign, default: .center))
                         .fixedSize()
+                        .localeOverridden(.textAlign)
                     TextVerticalAlignPicker(selection: shapeBinding(shapeId, \.textVerticalAlign, default: .center))
                         .fixedSize()
                 }
@@ -112,24 +117,29 @@ extension ShapeInspector {
             if customControlState?.showsItalicToggle ?? true {
                 Toggle("Italic", isOn: italicBinding(shapeId))
                     .toggleStyle(.switch)
+                    .localeOverridden(.italic)
             }
 
             Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
                 .toggleStyle(.switch)
+                .localeOverridden(.uppercase)
 
             LabeledContent("Letter Spacing") {
                 TextLetterSpacingControl(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
             }
+            .localeOverridden(.letterSpacing)
 
             LabeledContent("Line Spacing") {
                 TextLineSpacingField(state: state, shapeId: shapeId)
             }
+            // This control writes `lineHeightMultiple`; `lineSpacing` is the legacy field.
+            .localeOverridden(.lineHeight)
 
             if shape.hasRichText {
                 TextClearFormattingButton(state: state, shapeId: shapeId)
             }
         } header: {
-            Text("Text")
+            sectionHeader("Text", .typography, fields)
         }
     }
 
@@ -137,18 +147,18 @@ extension ShapeInspector {
         Section(isExpanded: $isTextBackgroundExpanded) {
             TextBackgroundControls(state: state, shapeId: shapeId, wrapsPresets: true)
         } header: {
-            Text("Text Background")
+            InspectorSectionHeader("Text Background")
         }
     }
 
     // MARK: - Image & SVG
 
     @ViewBuilder
-    private func imageSection(shape: CanvasShapeModel) -> some View {
+    private func imageSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         Section(isExpanded: $isMediaExpanded) {
             replaceImageRow(title: shape.imageFileName != nil ? "Replace Image" : "Choose Image")
         } header: {
-            Text("Image")
+            sectionHeader("Image", .media, fields)
         }
     }
 
@@ -172,24 +182,17 @@ extension ShapeInspector {
                 Label("Replace SVG", systemImage: "arrow.triangle.2.circlepath")
             }
         } header: {
-            Text("SVG")
+            InspectorSectionHeader("SVG")
         }
     }
 
     private func replaceImageRow(title: LocalizedStringKey) -> some View {
-        HStack(spacing: 6) {
-            Button {
-                pickAndReplaceImage(for: shapeId)
-            } label: {
-                Label(title, systemImage: "photo.badge.arrow.down")
-            }
-
-            if hasLocaleImageOverride(shapeId) {
-                ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset to base-language image", frameSize: UIMetrics.IconButton.frameSize) {
-                    state.resetLocaleImageOverride(shapeId: shapeId)
-                }
-            }
+        Button {
+            pickAndReplaceImage(for: shapeId)
+        } label: {
+            Label(title, systemImage: "photo.badge.arrow.down")
         }
+        .localeOverridden(.image)
     }
 
     // MARK: - Appearance
@@ -220,7 +223,7 @@ extension ShapeInspector {
             Toggle("Clip to Frame", isOn: shapeBinding(shapeId, \.clipToTemplate, default: false))
                 .toggleStyle(.switch)
         } header: {
-            Text("Appearance")
+            InspectorSectionHeader("Appearance")
         }
     }
 
@@ -240,7 +243,7 @@ extension ShapeInspector {
                     onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
                 )
             } header: {
-                Text("Fill")
+                InspectorSectionHeader("Fill")
             }
         }
     }
@@ -256,7 +259,7 @@ extension ShapeInspector {
                     showsDetails: (shape.outlineWidth ?? 0) > 0
                 )
             } header: {
-                Text("Outline")
+                InspectorSectionHeader("Outline")
             }
         }
     }
@@ -272,14 +275,14 @@ extension ShapeInspector {
             }
             .help("Remove the shadow")
         } header: {
-            Text("Shadow")
+            InspectorSectionHeader("Shadow")
         }
     }
 
     // MARK: - Localization
 
     @ViewBuilder
-    func localizationSection(shape: CanvasShapeModel) -> some View {
+    func localizationSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         if shape.type == .text && state.localeState.nonBaseLocaleCount > 0 {
             Section(isExpanded: $isLocalizationExpanded) {
                 Button("Edit Translations...") {
@@ -291,7 +294,7 @@ extension ShapeInspector {
                     }
                 }
             } header: {
-                Text("Localization")
+                sectionHeader("Localization", .translation, fields)
             }
         }
     }

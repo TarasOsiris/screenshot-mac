@@ -34,6 +34,16 @@ enum ShapePropertiesSectionLayout {
 }
 
 extension View {
+    /// Tinted capsule behind a short status label — the Base tag and translation progress in the
+    /// language list, and the override counts. Takes the tint because the same shape carries
+    /// accent, amber and green.
+    func statusBadgeCapsule(_ tint: Color) -> some View {
+        foregroundStyle(tint)
+            .padding(.horizontal, UIMetrics.StatusBadge.horizontalPadding)
+            .padding(.vertical, UIMetrics.StatusBadge.verticalPadding)
+            .background(tint.opacity(UIMetrics.Opacity.accentBadge), in: Capsule())
+    }
+
     /// Accent capsule shared by the single-selection type badge and the multi-selection
     /// count badge so both read identically.
     func propertiesBadgeCapsule() -> some View {

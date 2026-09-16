@@ -21,7 +21,7 @@ struct PropertiesBarPopoverTrigger<Label: View, Content: View>: View {
                     .accessibilityHidden(true)
                 label()
                     .scaledFont(UIMetrics.FontSize.body)
-                if showsOverrideDot { OverrideDot() }
+                if showsOverrideDot { NonDefaultDot() }
                 Image(systemName: "chevron.down")
                     .scaledFont(UIMetrics.FontSize.hint, weight: .semibold)
                     .foregroundStyle(.secondary)
@@ -34,5 +34,15 @@ struct PropertiesBarPopoverTrigger<Label: View, Content: View>: View {
         .buttonStyle(.plain)
         .help(help)
         .barPopover(isPresented: $isPresented, title: popoverTitle, scrollableContent: scrollableContent, content: content)
+    }
+}
+
+/// Marks a popover whose contents sit at non-default values. Unrelated to locale overrides, which
+/// tint the control itself — see `View.localeOverridden(_:)`.
+struct NonDefaultDot: View {
+    var body: some View {
+        Circle()
+            .fill(Color.accentColor)
+            .frame(width: UIMetrics.OverrideMark.dot, height: UIMetrics.OverrideMark.dot)
     }
 }

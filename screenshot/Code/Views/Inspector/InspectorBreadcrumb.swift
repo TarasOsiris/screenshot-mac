@@ -8,6 +8,8 @@ struct InspectorBreadcrumb<Trailing: View>: View {
     let icon: String
     let title: String
     let onSelectRow: () -> Void
+    /// Sits with the resolution label because it is metadata about what is selected, not an action.
+    var overrideChip: LocaleOverrideChip?
     @ViewBuilder let trailing: () -> Trailing
 
     var body: some View {
@@ -35,9 +37,14 @@ struct InspectorBreadcrumb<Trailing: View>: View {
             .font(.headline)
 
             HStack(spacing: 8) {
+                // Short and fixed, but it is the only flexible text on this line — without this a
+                // narrow inspector squeezes it to zero width and wraps it one digit per line.
                 Text(verbatim: row.resolutionLabel)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .fixedSize()
+                overrideChip
                 Spacer(minLength: 0)
                 trailing()
             }

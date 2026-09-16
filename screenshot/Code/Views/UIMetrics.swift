@@ -233,6 +233,34 @@ enum UIMetrics {
         #endif
     }
 
+    /// How a locale-overridden property is marked: a wash over the control itself, plus the 5pt
+    /// dot the section-header and row-header counts use.
+    enum OverrideMark {
+        static let dot: CGFloat = 5
+        /// Laid over the control, so it has to read on an opaque field without dulling its text.
+        static let tint: Double = 0.16
+        static let cornerRadius: CGFloat = 5
+    }
+
+    /// Collapsible sections in the selection / row inspector.
+    enum InspectorSection {
+        /// Between a section's separating rule and its title.
+        static let ruleGap: CGFloat = 6
+        /// Between a section's title and its override badge.
+        static let titleGap: CGFloat = 6
+        #if os(macOS)
+        /// The grouped form's own horizontal row inset, cancelled out so the separating rule runs
+        /// edge to edge. SwiftUI doesn't expose it, so this mirrors the platform value — if the
+        /// rules stop short or overhang, this is the number to adjust.
+        static let rowInset: CGFloat = 20
+        #else
+        /// iPadOS renders the header *outside* the inset-grouped card and its inset is width-class
+        /// dependent, so the macOS value would land nowhere near the edges. Leave the rule where
+        /// the platform puts it until it has actually been looked at on device.
+        static let rowInset: CGFloat = 0
+        #endif
+    }
+
     /// Capsule status badges in locale lists (Base tag, translation progress).
     enum StatusBadge {
         #if os(macOS)

@@ -12,6 +12,15 @@ enum ShapeGeometryAxis: CaseIterable {
         }
     }
 
+    var overrideField: LocaleOverrideField {
+        switch self {
+        case .x: .positionX
+        case .y: .positionY
+        case .width: .width
+        case .height: .height
+        }
+    }
+
     /// Spoken name for the field. The visible letter is notation VoiceOver would read as
     /// a bare "X", and Voice Control needs a phrase to match "click".
     var accessibilityLabel: LocalizedStringKey {
@@ -95,6 +104,7 @@ struct ShapeGeometryFields: View, ShapeEditing {
             )
             .accessibilityLabel(axis.accessibilityLabel)
         }
+        .localeOverridden(axis.overrideField)
     }
 
     private func draft(_ axis: ShapeGeometryAxis) -> ShapeFieldDraft {

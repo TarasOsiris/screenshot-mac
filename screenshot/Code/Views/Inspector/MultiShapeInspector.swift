@@ -17,13 +17,17 @@ struct MultiShapeInspector: View, MultiShapeEditing {
         let shapes = selectedShapes
         if let row = state.selectedRow, shapes.count > 1 {
             let commonType = commonShapeType(of: shapes)
+            let overriddenIds = state.overriddenShapeIds(in: row).intersection(state.selectedShapeIds)
 
             VStack(spacing: 0) {
                 InspectorBreadcrumb(
                     row: row,
                     icon: commonType?.icon ?? "square.on.square",
                     title: String(localized: "\(shapes.count) shapes"),
-                    onSelectRow: { state.selectRow(row.id) }
+                    onSelectRow: { state.selectRow(row.id) },
+                    overrideChip: overriddenIds.isEmpty ? nil : LocaleOverrideChip(
+                        scope: .selection(ids: overriddenIds), state: state
+                    )
                 ) {
                     ShapeSelectionActionButtons(
                         onBringToFront: { state.bringSelectedShapesToFront() },
@@ -34,7 +38,6 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                 }
                 Divider()
                 InspectorAlignmentBar(canDistribute: shapes.count >= 3) { state.alignSelectedShapes($0) }
-                Divider()
 
                 Form {
                     if let commonType {
@@ -45,7 +48,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                     Section(isExpanded: $isShadowExpanded) {
                         ShadowControls(shadow: multiShadowBinding())
                     } header: {
-                        Text("Shadow")
+                        InspectorSectionHeader("Shadow")
                     }
                 }
                 .formStyle(.grouped)
@@ -70,7 +73,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                 }
                 .menuStyle(.button)
             } header: {
-                Text("Device")
+                InspectorSectionHeader("Device")
             }
         case .text:
             textSection(shapes: shapes)
@@ -119,7 +122,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
             Toggle("Uppercase", isOn: multiShapeOptionalBinding(\.uppercase, default: false))
                 .toggleStyle(.switch)
         } header: {
-            Text("Text")
+            InspectorSectionHeader("Text")
         }
     }
 
@@ -165,7 +168,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
             Toggle("Clip to Frame", isOn: multiShapeOptionalBinding(\.clipToTemplate, default: false))
                 .toggleStyle(.switch)
         } header: {
-            Text("Appearance")
+            InspectorSectionHeader("Appearance")
         }
     }
 
@@ -181,7 +184,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                     showsDetails: hasOutline
                 )
             } header: {
-                Text("Outline")
+                InspectorSectionHeader("Outline")
             }
         }
     }

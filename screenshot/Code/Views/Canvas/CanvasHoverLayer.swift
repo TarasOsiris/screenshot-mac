@@ -13,6 +13,10 @@ struct CanvasHoverLayer: View {
     let row: ScreenshotRow
     let resolvedShapes: [CanvasShapeModel]
     let selectedShapeIds: Set<UUID>
+    /// Hovering a shape the active language overrides reads as language-specific. Passed as the
+    /// locale state rather than a precomputed id set: only the hovered shape is ever asked, so
+    /// building a set per row body would be N lookups to answer one.
+    let localeState: LocaleState
     /// Model points × (base displayScale × zoom), matching `CanvasSelectionLayer`.
     let visualScale: CGFloat
     /// Read inside `body` on purpose — see `hoveredShapeId`.
@@ -38,7 +42,7 @@ struct CanvasHoverLayer: View {
             let canvasBounds = Self.canvasBounds(in: row, visualScale: visualScale)
             let outline = ZStack(alignment: .topLeading) {
                 Rectangle()
-                    .strokeBorder(Color.accentColor.opacity(0.5), lineWidth: 1)
+                    .strokeBorder(hoverTint(base).opacity(0.5), lineWidth: 1)
                     .modifier(ShapeChromeFrame(displayRect: displayRect, rotation: shape.rotation))
             }
             .frame(width: canvasBounds.width, height: canvasBounds.height, alignment: .topLeading)
@@ -55,6 +59,12 @@ struct CanvasHoverLayer: View {
                 outline
             }
         }
+    }
+
+    private func hoverTint(_ shape: CanvasShapeModel) -> Color {
+        LocaleService.hasOverriddenField(for: shape, localeCode: localeState.activeLocaleCode, localeState: localeState)
+            ? Color.localeWarning
+            : Color.accentColor
     }
 
     /// Display-space bounds in which hover chrome is allowed to appear.

@@ -62,18 +62,6 @@ extension ShapeEditing {
         idx(for: shapeId).map { documentShape(at: $0.row, shapeIdx: $0.shape) }
     }
 
-    /// Whether the shape has any locale override for the active locale.
-    func hasLocaleOverride(_ shapeId: UUID) -> Bool {
-        guard !state.localeState.isBaseLocale else { return false }
-        return state.shapeHasActiveLocaleOverride(shapeId)
-    }
-
-    /// Whether a shape has a locale image override for the active locale.
-    func hasLocaleImageOverride(_ shapeId: UUID) -> Bool {
-        guard !state.localeState.isBaseLocale else { return false }
-        return state.localeState.override(forCode: state.localeState.activeLocaleCode, shapeId: shapeId)?.overrideImageFileName != nil
-    }
-
     func canBringToFront(_ shapeId: UUID) -> Bool {
         guard let i = idx(for: shapeId) else { return false }
         return i.shape < state.rows[i.row].shapes.count - 1

@@ -264,4 +264,95 @@ struct AppStateLocaleTests {
         #expect(ended == shapeB)
     }
 
+    // MARK: - Per-field override reset
+
+    @Test func clearLocaleOverrideFieldDropsOnlyThatProperty() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let row = try #require(state.rows.first)
+        state.addShape(CanvasShapeModel.defaultText(centerX: row.templateWidth / 2, centerY: row.templateHeight / 2))
+        let shapeId = try #require(state.rows.first?.shapes.first(where: { $0.type == .text })?.id)
+        state.addLocale(.init(code: "fr", label: "French"))
+        state.setActiveLocale("fr")
+
+        var shape = try #require(state.rows.first?.shapes.first(where: { $0.id == shapeId }))
+        shape.x += 40
+        shape.fontSize = 99
+        state.updateShape(shape)
+
+        #expect(state.activeLocaleOverriddenFields(shapeId: shapeId) == [.positionX, .fontSize])
+
+        state.clearLocaleOverrideField(shapeId: shapeId, field: .fontSize)
+
+        #expect(state.activeLocaleOverriddenFields(shapeId: shapeId) == [.positionX])
+    }
+
+    @Test func clearLocaleOverrideFieldIsUndoable() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let row = try #require(state.rows.first)
+        state.addShape(CanvasShapeModel.defaultText(centerX: row.templateWidth / 2, centerY: row.templateHeight / 2))
+        let shapeId = try #require(state.rows.first?.shapes.first(where: { $0.type == .text })?.id)
+        state.addLocale(.init(code: "fr", label: "French"))
+        state.setActiveLocale("fr")
+
+        var shape = try #require(state.rows.first?.shapes.first(where: { $0.id == shapeId }))
+        shape.x += 40
+        state.updateShape(shape)
+        #expect(state.activeLocaleOverriddenFields(shapeId: shapeId) == [.positionX])
+
+        let um = try #require(state.undoManager)
+        um.removeAllActions()
+
+        state.clearLocaleOverrideField(shapeId: shapeId, field: .positionX)
+        #expect(state.activeLocaleOverriddenFields(shapeId: shapeId).isEmpty)
+        #expect(um.canUndo)
+
+        um.undo()
+        #expect(state.activeLocaleOverriddenFields(shapeId: shapeId) == [.positionX])
+    }
+
+    /// Regression: `shapeHasActiveLocaleOverride` counted a reused string's shared-key translation,
+    /// but `resetLocaleOverride` only cleared the id-keyed entry — so the indicator survived a reset.
+    @Test func resetLocaleOverrideClearsSharedTranslationKey() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let row = try #require(state.rows.first)
+        state.addShape(CanvasShapeModel.defaultText(centerX: row.templateWidth / 2, centerY: row.templateHeight / 2))
+        let shapeId = try #require(state.rows.first?.shapes.first(where: { $0.type == .text })?.id)
+
+        // Give the shape a shared translation key, the shape reuse assigns on the canvas.
+        let loc = try #require(state.shapeLocation(for: shapeId))
+        state.rows[loc.rowIndex].shapes[loc.shapeIndex].translationKey = "shared-key"
+
+        state.addLocale(.init(code: "fr", label: "French"))
+        state.setActiveLocale("fr")
+        state.updateTranslationText(shapeId: shapeId, text: "Bonjour")
+        state.finishTranslationEditIfNeeded()
+        #expect(state.shapeHasActiveLocaleOverride(shapeId))
+
+        state.resetLocaleOverride(shapeId: shapeId)
+
+        #expect(!state.shapeHasActiveLocaleOverride(shapeId))
+        #expect(state.activeLocaleOverriddenFields(shapeId: shapeId).isEmpty)
+    }
+
+    @Test func overriddenShapeIdsFindsOverriddenShapesInRow() throws {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let row = try #require(state.rows.first)
+        state.addShape(CanvasShapeModel.defaultText(centerX: row.templateWidth / 2, centerY: row.templateHeight / 2))
+        let shapeId = try #require(state.rows.first?.shapes.first(where: { $0.type == .text })?.id)
+        state.addLocale(.init(code: "fr", label: "French"))
+
+        #expect(state.overriddenShapeIds(in: row).isEmpty, "Base locale overrides nothing")
+
+        state.setActiveLocale("fr")
+        var shape = try #require(state.rows.first?.shapes.first(where: { $0.id == shapeId }))
+        shape.y += 12
+        state.updateShape(shape)
+
+        let updatedRow = try #require(state.rows.first)
+        #expect(state.overriddenShapeIds(in: updatedRow) == [shapeId])
+    }
 }

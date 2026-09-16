@@ -31,6 +31,12 @@ struct EditorRowView: View {
     @State var dragSession = CanvasDragSession()
     @State var isEditingLabel = false
     @State var editingLabelText = ""
+
+    /// Shapes this row has language overrides on. Derived from the `row` value input, never from
+    /// `state.rows` — reading that here would put the whole document in every realized row's
+    /// tracking scope, which `.equatable()` cannot intercept (same reasoning as `isSelected`).
+    /// Read once per body, into a local, so the sweep isn't repeated.
+    private var overriddenShapeIds: Set<UUID> { state.overriddenShapeIds(in: row) }
     /// True when the current mode (Edit or Preview) has had a chance to paint
     /// its first frame. Flipped to false on every Edit↔Preview toggle so we
     /// can show a `ProgressView` instead of a frozen UI for slow rows
@@ -116,6 +122,7 @@ struct EditorRowView: View {
         VStack(alignment: .leading, spacing: 0) {
             Group {
                 if showsChrome {
+                    let overridden = overriddenShapeIds
                     EditorRowHeader(
                         row: row,
                         isSelected: isSelected,
@@ -135,7 +142,10 @@ struct EditorRowView: View {
                         onReset: resetRow,
                         onDelete: deleteRow,
                         isPreviewMode: isPreviewMode,
-                        onTogglePreview: togglePreviewMode
+                        onTogglePreview: togglePreviewMode,
+                        overriddenShapeCount: overridden.count,
+                        overrideLocaleLabel: overridden.isEmpty ? "" : state.localeState.activeLocaleLabel,
+                        onSelectOverridden: { state.selectedShapeIds = overridden }
                     ) {
                         rowMenuContent
                     }

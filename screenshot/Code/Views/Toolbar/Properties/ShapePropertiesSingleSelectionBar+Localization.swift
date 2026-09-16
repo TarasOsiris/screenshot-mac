@@ -10,7 +10,7 @@ extension ShapePropertiesSingleSelectionBar {
         } label: {
             Image(systemName: "globe")
                 .font(.system(size: UIMetrics.ActionButton.iconSize))
-                .foregroundStyle(state.shapeHasActiveLocaleOverride(shapeId) ? Color.accentColor : Color.primary)
+                .foregroundStyle(state.shapeHasActiveLocaleOverride(shapeId) ? Color.localeWarning : Color.primary)
                 .frame(
                     width: max(UIMetrics.IconButton.frameSize, UIMetrics.ActionButton.minTouchTarget),
                     height: max(UIMetrics.IconButton.frameSize, UIMetrics.ActionButton.minTouchTarget)
@@ -18,6 +18,8 @@ extension ShapePropertiesSingleSelectionBar {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // Translated text is edited behind this button, so this is where its mark belongs.
+        .localeOverridden(.text)
         .help("Localization")
         .accessibilityLabel("Localization")
         // Sheet, not a docked panel: a row per language with an inline text field is sheet-scale,

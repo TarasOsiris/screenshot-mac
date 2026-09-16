@@ -38,6 +38,45 @@ enum LocaleService {
          localeState.overrides[localeCode]?[shape.textTranslationKey])
     }
 
+    /// The shape's override for `localeCode` as one value, with translated text folded in from the
+    /// shared key. `writeSplitOverride` re-splits it, so an editing caller works on one struct and
+    /// never has to know which key space a field lives in. Only the text fields are taken from the
+    /// text entry — any style stored alongside them belongs to whichever shape owns that key.
+    static func mergedOverride(
+        for shape: CanvasShapeModel,
+        localeCode: String,
+        localeState: LocaleState
+    ) -> ShapeLocaleOverride {
+        guard localeCode != localeState.baseLocaleCode else { return ShapeLocaleOverride() }
+        let (style, text) = shapeOverrides(for: shape, localeCode: localeCode, localeState: localeState)
+        var merged = style ?? ShapeLocaleOverride()
+        if let text { merged.copyTranslatedText(from: text) }
+        return merged
+    }
+
+    /// Which properties `localeCode` overrides on `shape`. Reads through `mergedOverride` so the
+    /// marks can never claim more or less than resolution applies.
+    static func overriddenFields(
+        for shape: CanvasShapeModel,
+        localeCode: String,
+        localeState: LocaleState
+    ) -> Set<LocaleOverrideField> {
+        mergedOverride(for: shape, localeCode: localeCode, localeState: localeState).overriddenFields
+    }
+
+    /// `!overriddenFields(...).isEmpty` without building the set — for the row sweep, which asks
+    /// this per shape on every body evaluation.
+    static func hasOverriddenField(
+        for shape: CanvasShapeModel,
+        localeCode: String,
+        localeState: LocaleState
+    ) -> Bool {
+        guard localeCode != localeState.baseLocaleCode else { return false }
+        let (style, text) = shapeOverrides(for: shape, localeCode: localeCode, localeState: localeState)
+        if let style, !style.isEmpty { return true }
+        return text?.hasTranslatedTextField == true
+    }
+
     /// True when `localeCode` resolves every shape in the row unchanged, so a neutral row
     /// renders pixel-identical to the base locale and export can reuse one render for all
     /// such locales. Backgrounds are not locale-overridable, so shapes are the only inputs

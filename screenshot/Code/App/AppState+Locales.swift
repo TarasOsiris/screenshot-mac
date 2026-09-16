@@ -169,13 +169,74 @@ extension AppState {
     }
 
     func resetLocaleOverride(shapeId: UUID) {
-        // The override may carry a per-locale screenshot; dropping it wholesale must
-        // release that file like resetLocaleImageOverride does.
-        let oldFile = localeState.override(forCode: localeState.activeLocaleCode, shapeId: shapeId)?.overrideImageFileName
+        guard let loc = shapeLocation(for: shapeId) else { return }
+        let shape = rows[loc.rowIndex].shapes[loc.shapeIndex]
+        let code = localeState.activeLocaleCode
+        // The override may carry a per-locale screenshot; dropping it must release that file.
+        let oldFile = LocaleService.mergedOverride(for: shape, localeCode: code, localeState: localeState).overrideImageFileName
         withUndo("Reset Override") {
-            LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
+            // writeSplitOverride reaches both key spaces, so a reused string's shared translation
+            // goes with it — setShapeOverride alone left the shape still reporting an override.
+            LocaleService.writeSplitOverride(
+                &localeState, localeCode: code, shapeId: shapeId,
+                textKey: shape.textTranslationKey, override: nil
+            )
             if let oldFile { cleanupUnreferencedImage(oldFile) }
         }
+    }
+
+    /// Reset a whole selection as one undo step — the nested `withUndo`s join this transaction.
+    func resetLocaleOverrides(shapeIds: Set<UUID>) {
+        guard !shapeIds.isEmpty else { return }
+        withUndo("Reset Override") {
+            for shapeId in shapeIds { resetLocaleOverride(shapeId: shapeId) }
+        }
+    }
+
+    /// Drop one overridden property, leaving the rest of the shape's override intact. Edits the
+    /// merged override so the caller needn't know which key space a field lives in; the only
+    /// per-field residue is releasing a dropped image, which is filesystem work `LocaleService`
+    /// deliberately has no part in.
+    func clearLocaleOverrideField(shapeId: UUID, field: LocaleOverrideField) {
+        guard !localeState.isBaseLocale, let loc = shapeLocation(for: shapeId) else { return }
+        let shape = rows[loc.rowIndex].shapes[loc.shapeIndex]
+        let code = localeState.activeLocaleCode
+        var merged = LocaleService.mergedOverride(for: shape, localeCode: code, localeState: localeState)
+        guard field.isSet(in: merged) else { return }
+        let oldFile = merged.overrideImageFileName
+
+        withUndo("Reset Override") {
+            field.clear(in: &merged)
+            LocaleService.writeSplitOverride(
+                &localeState, localeCode: code, shapeId: shapeId,
+                textKey: shape.textTranslationKey, override: merged.isEmpty ? nil : merged
+            )
+            if field == .image, let oldFile { cleanupUnreferencedImage(oldFile) }
+        }
+    }
+
+    /// Shapes in a row the active locale overrides — the row header's badge and its click target.
+    /// Takes the row by value: reading `rows` here would put the whole document in the tracking
+    /// scope of every realized `EditorRowView` body, which is what the row's value inputs avoid.
+    func overriddenShapeIds(in row: ScreenshotRow) -> Set<UUID> {
+        guard !localeState.isBaseLocale else { return [] }
+        let code = localeState.activeLocaleCode
+        var ids = Set<UUID>()
+        for shape in row.activeShapes
+        where LocaleService.hasOverriddenField(for: shape, localeCode: code, localeState: localeState) {
+            ids.insert(shape.id)
+        }
+        return ids
+    }
+
+    /// Which properties the active locale overrides on a shape, for the per-field override marks.
+    func activeLocaleOverriddenFields(shapeId: UUID) -> Set<LocaleOverrideField> {
+        guard !localeState.isBaseLocale, let loc = shapeLocation(for: shapeId) else { return [] }
+        return LocaleService.overriddenFields(
+            for: rows[loc.rowIndex].shapes[loc.shapeIndex],
+            localeCode: localeState.activeLocaleCode,
+            localeState: localeState
+        )
     }
 
     func resetTranslationText(shapeId: UUID) {
@@ -191,21 +252,6 @@ extension AppState {
         withUndo("Reset Translation") {
             // Clears plain + formatted text, so a rich-text-only translation reverts to base too.
             LocaleService.setTextOverride(&localeState, localeCode: code, key: textKey, text: nil)
-        }
-    }
-
-    func resetLocaleImageOverride(shapeId: UUID) {
-        let code = localeState.activeLocaleCode
-        guard var override = localeState.override(forCode: code, shapeId: shapeId),
-              let oldFile = override.overrideImageFileName else { return }
-        withUndo("Reset Image Override") {
-            override.overrideImageFileName = nil
-            if override.isEmpty {
-                LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: nil)
-            } else {
-                LocaleService.setShapeOverride(&localeState, shapeId: shapeId, override: override)
-            }
-            cleanupUnreferencedImage(oldFile)
         }
     }
 
@@ -232,13 +278,7 @@ extension AppState {
     /// override (under its id) or a shared translation (under its translation key). Drives the
     /// per-shape "reset to base" affordance.
     func shapeHasActiveLocaleOverride(_ shapeId: UUID) -> Bool {
-        guard !localeState.isBaseLocale else { return false }
-        let code = localeState.activeLocaleCode
-        if localeState.overrides[code]?[shapeId.uuidString]?.isEmpty == false { return true }
-        if let key = textShape(for: shapeId)?.translationKey {
-            return localeState.overrides[code]?[key]?.hasTextContent == true
-        }
-        return false
+        !activeLocaleOverriddenFields(shapeId: shapeId).isEmpty
     }
 
     /// Whether any of these shapes has a non-empty override in any locale, accounting for reused

@@ -172,6 +172,84 @@ nonisolated struct ShapeLocaleOverride: Codable, Equatable {
     }
 }
 
+/// The properties a locale override can carry, as the reader thinks of them. One table backs the
+/// per-field override marks, their reset, and the test that pins this set against the fields
+/// `LocaleService.makeOverride` can actually write — so the three can't drift apart.
+nonisolated enum LocaleOverrideField: CaseIterable {
+    case positionX, positionY, width, height
+    /// Plain text, rich text and the explicit rich-text clear are one property to the reader.
+    case text
+    case font, fontSize, fontWeight, textAlign, italic, uppercase
+    case letterSpacing, lineSpacing, lineHeight
+    case image
+
+    func isSet(in override: ShapeLocaleOverride) -> Bool {
+        switch self {
+        case .positionX: override.offsetX != nil
+        case .positionY: override.offsetY != nil
+        case .width: override.offsetWidth != nil
+        case .height: override.offsetHeight != nil
+        case .text: override.hasTranslatedTextField
+        case .font: override.fontName != nil
+        case .fontSize: override.fontSize != nil
+        case .fontWeight: override.fontWeight != nil
+        case .textAlign: override.textAlign != nil
+        case .italic: override.italic != nil
+        case .uppercase: override.uppercase != nil
+        case .letterSpacing: override.letterSpacing != nil
+        case .lineSpacing: override.lineSpacing != nil
+        case .lineHeight: override.lineHeightMultiple != nil
+        case .image: override.overrideImageFileName != nil
+        }
+    }
+
+    func clear(in override: inout ShapeLocaleOverride) {
+        switch self {
+        case .positionX: override.offsetX = nil
+        case .positionY: override.offsetY = nil
+        case .width: override.offsetWidth = nil
+        case .height: override.offsetHeight = nil
+        case .text: override.clearTranslatedText()
+        case .font: override.fontName = nil
+        case .fontSize: override.fontSize = nil
+        case .fontWeight: override.fontWeight = nil
+        case .textAlign: override.textAlign = nil
+        case .italic: override.italic = nil
+        case .uppercase: override.uppercase = nil
+        case .letterSpacing: override.letterSpacing = nil
+        case .lineSpacing: override.lineSpacing = nil
+        case .lineHeight: override.lineHeightMultiple = nil
+        case .image: override.overrideImageFileName = nil
+        }
+    }
+}
+
+extension LocaleOverrideField {
+    /// The inspector section a field is edited in. A switch rather than a set of sets so the
+    /// compiler, not a test, is what stops a new case from silently never being counted — and so
+    /// no field can land in two groups. `.media` is read by two headers: a device shape edits its
+    /// screenshot under "Device", a plain image shape under "Image".
+    enum InspectorGroup {
+        case geometry, typography, translation, media
+    }
+
+    var group: InspectorGroup {
+        switch self {
+        case .positionX, .positionY, .width, .height: .geometry
+        case .text: .translation
+        case .font, .fontSize, .fontWeight, .textAlign, .italic, .uppercase,
+             .letterSpacing, .lineSpacing, .lineHeight: .typography
+        case .image: .media
+        }
+    }
+}
+
+extension ShapeLocaleOverride {
+    var overriddenFields: Set<LocaleOverrideField> {
+        Set(LocaleOverrideField.allCases.filter { $0.isSet(in: self) })
+    }
+}
+
 nonisolated struct LocaleState: Codable, Equatable {
     var locales: [LocaleDefinition]
     var activeLocaleCode: String
@@ -213,11 +291,6 @@ nonisolated struct LocaleState: Codable, Equatable {
     var activeLocaleHasOverrides: Bool {
         guard !isBaseLocale else { return false }
         return !(overrides[activeLocaleCode]?.isEmpty ?? true)
-    }
-
-    /// Check if a shape has any override for the active locale.
-    func hasOverride(shapeId: UUID) -> Bool {
-        override(forCode: activeLocaleCode, shapeId: shapeId) != nil
     }
 
     /// Check if any of these shapes has a non-empty override in any locale.

@@ -540,3 +540,115 @@ struct LocaleServiceTests {
         #expect(state.baseLocaleCode == "fr")
     }
 }
+
+struct LocaleOverrideFieldTests {
+
+    /// Every `LocaleOverrideField` is reachable from `makeOverride` — a case that no override can
+    /// ever set would mark and offer to reset a property that doesn't exist.
+    ///
+    /// Note this is only one direction. `overriddenFields` filters `allCases`, so it cannot report
+    /// a field that has no case; the reverse guard — a *stored property* gaining no case — is
+    /// `storedFieldCountIsPinned` below.
+    @Test func everyOverrideFieldIsReachableFromMakeOverride() {
+        var textBase = CanvasShapeModel(type: .text, x: 0, y: 0, width: 100, height: 50, text: "a", fontSize: 10, fontWeight: 400)
+        textBase.fontName = "Helvetica"
+        textBase.textAlign = .left
+        textBase.italic = false
+        textBase.uppercase = false
+        textBase.letterSpacing = 0
+        textBase.lineSpacing = 0
+        textBase.lineHeightMultiple = 1
+
+        var textResolved = textBase
+        textResolved.x = 5
+        textResolved.y = 6
+        textResolved.width = 110
+        textResolved.height = 60
+        textResolved.text = "b"
+        textResolved.richText = "rtf"
+        textResolved.fontName = "Times"
+        textResolved.fontSize = 20
+        textResolved.fontWeight = 700
+        textResolved.textAlign = .right
+        textResolved.italic = true
+        textResolved.uppercase = true
+        textResolved.letterSpacing = 2
+        textResolved.lineSpacing = 3
+        textResolved.lineHeightMultiple = 1.5
+
+        var imageBase = CanvasShapeModel(type: .image, x: 0, y: 0, width: 10, height: 10)
+        imageBase.imageFileName = "base.png"
+        var imageResolved = imageBase
+        imageResolved.imageFileName = "other.png"
+
+        let covered = (LocaleService.makeOverride(base: textBase, resolved: textResolved)?.overriddenFields ?? [])
+            .union(LocaleService.makeOverride(base: imageBase, resolved: imageResolved)?.overriddenFields ?? [])
+
+        #expect(covered == Set(LocaleOverrideField.allCases))
+    }
+
+    /// The guard `everyOverrideFieldIsReachableFromMakeOverride` structurally cannot give: adding a
+    /// stored property to `ShapeLocaleOverride` without a matching `LocaleOverrideField` case would
+    /// leave that property unmarked and with no per-field reset, and no other test would notice.
+    /// Listing the names rather than counting them means a failure says *which* property is new.
+    @Test func everyStoredOverridePropertyHasAField() {
+        let stored = Set(Mirror(reflecting: ShapeLocaleOverride()).children.compactMap(\.label))
+
+        #expect(stored == [
+            "offsetX", "offsetY", "offsetWidth", "offsetHeight",
+            // All three are LocaleOverrideField.text — translated text moves as one unit.
+            "text", "richText", "clearsRichText",
+            "fontName", "fontSize", "fontWeight", "textAlign", "italic", "uppercase",
+            "letterSpacing", "lineSpacing", "lineHeightMultiple",
+            "overrideImageFileName",
+        ])
+    }
+
+    @Test func clearRemovesExactlyOneField() {
+        let full = ShapeLocaleOverride(
+            offsetX: 1, offsetY: 2, offsetWidth: 3, offsetHeight: 4,
+            text: "t", fontName: "F", fontSize: 12, fontWeight: 700,
+            textAlign: .right, italic: true, uppercase: true,
+            letterSpacing: 1, lineSpacing: 2, lineHeightMultiple: 1.5,
+            overrideImageFileName: "i.png"
+        )
+        #expect(full.overriddenFields == Set(LocaleOverrideField.allCases))
+
+        for field in LocaleOverrideField.allCases {
+            var copy = full
+            field.clear(in: &copy)
+            #expect(copy.overriddenFields == Set(LocaleOverrideField.allCases).subtracting([field]),
+                    "Clearing \(field) must leave every other field untouched")
+        }
+    }
+
+    /// Translated text lives under the shape's `textTranslationKey`, styling under its id. A shape
+    /// whose text is reused would otherwise report no text override at all.
+    @Test func overriddenFieldsMergesSharedTextKey() {
+        var shape = CanvasShapeModel(type: .text, x: 0, y: 0, width: 100, height: 50, text: "Hello")
+        shape.translationKey = "shared-key"
+        let state = LocaleState(
+            locales: [.init(code: "en", label: "English"), .init(code: "fr", label: "French")],
+            activeLocaleCode: "fr",
+            overrides: ["fr": [
+                shape.id.uuidString: ShapeLocaleOverride(offsetX: 12),
+                "shared-key": ShapeLocaleOverride(text: "Bonjour"),
+            ]]
+        )
+
+        let fields = LocaleService.overriddenFields(for: shape, localeCode: "fr", localeState: state)
+
+        #expect(fields == [.positionX, .text])
+    }
+
+    @Test func overriddenFieldsIsEmptyForBaseLocale() {
+        let shape = CanvasShapeModel(type: .text, x: 0, y: 0, width: 100, height: 50, text: "Hello")
+        let state = LocaleState(
+            locales: [.init(code: "en", label: "English")],
+            activeLocaleCode: "en",
+            overrides: ["en": [shape.id.uuidString: ShapeLocaleOverride(offsetX: 12)]]
+        )
+
+        #expect(LocaleService.overriddenFields(for: shape, localeCode: "en", localeState: state).isEmpty)
+    }
+}

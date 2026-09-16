@@ -14,6 +14,26 @@ struct EditorIconButtonStyle: ButtonStyle {
     }
 }
 
+/// The editor's icon-button label: glyph, tap target and hit shape. Its own view so a `Menu` that
+/// should look like an `ActionButton` inherits the iPad touch-target floor too, rather than
+/// re-spelling the frame and landing below it.
+struct IconButtonLabel: View {
+    let tooltip: LocalizedStringKey
+    let icon: String
+    var iconSize: CGFloat = UIMetrics.ActionButton.iconSize
+    var frameSize: CGFloat = UIMetrics.ActionButton.frameSize
+
+    private var tapTarget: CGFloat { max(frameSize, UIMetrics.ActionButton.minTouchTarget) }
+
+    var body: some View {
+        Label(tooltip, systemImage: icon)
+            .labelStyle(.iconOnly)
+            .font(.system(size: iconSize))
+            .frame(width: tapTarget, height: tapTarget)
+            .contentShape(Rectangle())
+    }
+}
+
 struct ActionButton: View {
     let icon: String
     let tooltip: LocalizedStringKey
@@ -23,15 +43,9 @@ struct ActionButton: View {
     var disabled: Bool = false
     let action: () -> Void
 
-    private var tapTarget: CGFloat { max(frameSize, UIMetrics.ActionButton.minTouchTarget) }
-
     var body: some View {
         Button(action: action) {
-            Label(tooltip, systemImage: icon)
-                .labelStyle(.iconOnly)
-                .font(.system(size: iconSize))
-                .frame(width: tapTarget, height: tapTarget)
-                .contentShape(Rectangle())
+            IconButtonLabel(tooltip: tooltip, icon: icon, iconSize: iconSize, frameSize: frameSize)
         }
         .buttonStyle(EditorIconButtonStyle())
         // Kept even though there is no NSButton left: this is SwiftUI focus, not AppKit's key-view
