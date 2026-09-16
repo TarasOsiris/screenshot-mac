@@ -63,8 +63,17 @@ extension View {
     /// Washes the control in the locale accent when this language overrides it. A wash rather than
     /// a badge because every changed control carries one: a dot per field read as clutter, and
     /// anything that occupies layout reflows the properties bar the moment an override appears.
-    func localeOverridden(_ field: LocaleOverrideField) -> some View {
-        modifier(LocaleOverriddenModifier(field: field))
+    ///
+    /// Attach it to the input control alone — never to a `LabeledContent` row or a field's unit
+    /// label. Washing the row tints prose the language does not override, and two marked controls
+    /// in one row would stack their washes into a single block.
+    ///
+    /// `inset` is for a control that doesn't paint its whole frame; `ShapePropertyField` passes its
+    /// bezel's. `field` is optional so a control that is sometimes locale-bearing (the same numeric
+    /// field serves opacity and font size) keeps one view identity either way — swapping branches
+    /// would tear a text field down mid-edit.
+    func localeOverridden(_ field: LocaleOverrideField?, inset: EdgeInsets = EdgeInsets()) -> some View {
+        modifier(LocaleOverriddenModifier(field: field, inset: inset))
     }
 
     /// Tints a glyph the same accent, for a control whose meaning *is* the overridden field — the
@@ -90,13 +99,15 @@ private struct LocaleOverriddenTintModifier: ViewModifier {
 /// in-progress text and focus.
 private struct LocaleOverriddenModifier: ViewModifier {
     @Environment(\.localeOverrideMarks) private var marks
-    let field: LocaleOverrideField
+    let field: LocaleOverrideField?
+    let inset: EdgeInsets
 
     func body(content: Content) -> some View {
-        let isMarked = marks?.fields.contains(field) == true
+        let isMarked = field.map { marks?.fields.contains($0) == true } ?? false
         return content.overlay {
             RoundedRectangle(cornerRadius: UIMetrics.OverrideMark.cornerRadius, style: .continuous)
                 .fill(Color.localeWarning.opacity(isMarked ? UIMetrics.OverrideMark.tint : 0))
+                .padding(inset)
                 .allowsHitTesting(false)
         }
     }

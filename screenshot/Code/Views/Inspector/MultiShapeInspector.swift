@@ -77,7 +77,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
         let italicBinding = multiItalicBinding(controlState: primaryControlState)
 
         InspectorSection(.shapeText, "Text") {
-            LabeledContent("Font") {
+            EditorLabeledContent("Font") {
                 FontPicker(
                     selection: multiFontNameBinding(),
                     fontWeight: weightBinding,
@@ -89,7 +89,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
             }
 
             if showsMultiFontWeightPicker(primary: primaryControlState, textShapes: shapes) {
-                LabeledContent("Weight") {
+                EditorLabeledContent("Weight") {
                     FontWeightPicker(
                         selection: weightBinding,
                         options: primaryControlState?.availableWeights ?? [300, 400, 500, 700]
@@ -97,7 +97,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                 }
             }
 
-            LabeledContent("Align") {
+            EditorLabeledContent("Align") {
                 TextAlignPicker(selection: multiShapeOptionalBinding(\.textAlign, default: .center))
                     .fixedSize()
             }
@@ -135,7 +135,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
             }
 
             if commonType == .star {
-                LabeledContent("Points") {
+                EditorLabeledContent("Points") {
                     Stepper(
                         value: multiShapeOptionalBinding(\.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
                         in: 3...20

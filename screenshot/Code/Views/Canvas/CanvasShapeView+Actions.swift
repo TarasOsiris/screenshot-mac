@@ -40,6 +40,7 @@ extension CanvasShapeView {
     }
 
     func handleDisappear() {
+        PlatformCursor.release(.shapeBody)
         guard isEditingText else { return }
         commitTextEdit()
         // `.onChange(of: isEditingText)` is not reliably delivered during view teardown.
@@ -100,6 +101,7 @@ extension CanvasShapeView {
         if !isDragging {
             beginDrag()
         }
+        PlatformCursor.hold(.closedHand, for: .shapeBody)
         let rawOffset = CGSize(
             width: value.translation.width / displayScale,
             height: value.translation.height / displayScale
@@ -116,7 +118,6 @@ extension CanvasShapeView {
 
     private func beginDrag() {
         isDragging = true
-        PlatformCursor.setClosedHand()
 
         if PlatformModifiers.optionDown {
             _ = interactions.onOptionDragDuplicate?(shape.id)
@@ -128,7 +129,7 @@ extension CanvasShapeView {
     }
 
     private func handleDragEnded(_: DragGesture.Value) {
-        PlatformCursor.setArrow()
+        PlatformCursor.release(.shapeBody)
         let finalOffset = dragOffset
         dragOffset = .zero
         isDragging = false

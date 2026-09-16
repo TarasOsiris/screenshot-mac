@@ -245,15 +245,9 @@ extension ShapeEditing {
         draft.text.wrappedValue = "0"
     }
 
-    /// `shapeBinding`'s rotation, reading through the canvas gesture as well as the slider burst.
-    /// Only the getter differs — the write stays on the shared path, which is blind to the gesture
-    /// on purpose.
-    func rotationBinding(_ shapeId: UUID) -> Binding<Double> {
-        let write = shapeBinding(shapeId, \.rotation, continuous: true)
-        return Binding(
-            get: { liveGeometryShape(shapeId)?.rotation ?? 0 },
-            set: { write.wrappedValue = $0 }
-        )
+    /// Rotation as the reader sees it, following the canvas rotate handle mid-gesture.
+    func liveRotation(_ shapeId: UUID) -> Double {
+        liveGeometryShape(shapeId)?.rotation ?? 0
     }
 
     // MARK: - Bindings

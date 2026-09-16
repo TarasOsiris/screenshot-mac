@@ -15,6 +15,8 @@ struct ShapePropertyField: View {
     @FocusState private var isFocused: Bool
 
     let width: CGFloat
+    /// Which surface this is drawing into — the wash's inset is the only thing that reads it.
+    var layout: InspectorValueLayout = .strip
     var keyboard: Keyboard = .integer
     /// Opacity and rotation drop focus when the selection changes; the text fields don't, because
     /// they sit next to a preset menu the user may still be driving.
@@ -35,6 +37,12 @@ struct ShapePropertyField: View {
     /// The live selection, so a commit lands on what the user is looking at rather than on
     /// whatever `shapeId` was captured when this closure was built.
     let liveSelection: () -> UUID?
+    /// The property this field writes, when the active locale can override it — opacity and
+    /// rotation can't. Marked here rather than by the caller so the wash lands on the bezel and
+    /// stops at it (how far that is inside the frame depends on the surface, hence
+    /// `\.fieldBezelInset`): the composites around these fields put a preset chevron and a unit
+    /// label in the same `HStack`, and neither is what the language overrides.
+    var overrideField: LocaleOverrideField?
 
     var body: some View {
         let base = TextField("", text: $text, onEditingChanged: { editing in
@@ -48,6 +56,7 @@ struct ShapePropertyField: View {
         .frame(width: width)
         .textFieldStyle(.roundedBorder)
         .multilineTextAlignment(.center)
+        .localeOverridden(overrideField, inset: layout.fieldBezelInset)
 
         keyboardApplied(base)
             .onAppear { text = current(shapeId) }

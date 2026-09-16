@@ -36,7 +36,7 @@ struct PopoverSliderRow<Value: BinaryFloatingPoint>: View where Value.Stride: Bi
             }
         case .form:
             let row = InspectorValueLayout.formRow
-            LabeledContent(label) {
+            EditorLabeledContent(label) {
                 HStack(spacing: row.columnGap) {
                     Slider(value: $value, in: range)
                         .inspectorSliderWidth(row)

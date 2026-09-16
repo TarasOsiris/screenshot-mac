@@ -26,6 +26,7 @@ struct ShapeOpacityField: View, ShapeEditing {
                     text: $text,
                     isActive: $isActive,
                     width: layout.valueWidth(strip: propertiesOpacityFieldWidth),
+                    layout: layout,
                     clearsFocusOnSelectionChange: true,
                     modelValue: opacity.wrappedValue,
                     current: { currentOpacityString(for: $0) },
@@ -42,7 +43,7 @@ struct ShapeOpacityField: View, ShapeEditing {
     }
 }
 
-/// Rotation slider, degree field and reset.
+/// Rotation degree field and reset.
 struct ShapeRotationControl: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
@@ -53,17 +54,14 @@ struct ShapeRotationControl: View, ShapeEditing {
 
     var body: some View {
         let draft = ShapeFieldDraft(text: $text, isActive: $isActive)
-        let slider = rotationBinding(shapeId)
+        let rotation = liveRotation(shapeId)
         HStack(spacing: layout.columnGap) {
-            // Ahead of the slider in a form row: the content is trailing-aligned, so an
-            // affordance that comes and goes with the value has to sit on the side that isn't
-            // the shared column — otherwise rotating past 0 nudges the field sideways.
+            // Leading in a form row: the content is trailing-aligned, so an affordance that comes
+            // and goes with the value has to sit on the side that isn't the shared column —
+            // otherwise rotating past 0 nudges the field sideways.
             if layout == .formRow {
-                resetButton(rotation: slider.wrappedValue, draft: draft)
+                resetButton(rotation: rotation, draft: draft)
             }
-
-            Slider(value: slider, in: 0...360)
-                .inspectorSliderWidth(layout)
 
             HStack(spacing: 0) {
                 ShapePropertyField(
@@ -71,9 +69,10 @@ struct ShapeRotationControl: View, ShapeEditing {
                     text: $text,
                     isActive: $isActive,
                     width: layout.valueWidth(strip: propertiesNumericFieldWidth),
+                    layout: layout,
                     keyboard: .signed,
                     clearsFocusOnSelectionChange: true,
-                    modelValue: slider.wrappedValue,
+                    modelValue: rotation,
                     current: { currentRotationString(for: $0) },
                     commit: { commitRotation(to: $0, draft: draft) },
                     liveSelection: { state.selectedShapeId }
@@ -86,7 +85,7 @@ struct ShapeRotationControl: View, ShapeEditing {
             }
 
             if layout == .strip {
-                resetButton(rotation: slider.wrappedValue, draft: draft)
+                resetButton(rotation: rotation, draft: draft)
             }
         }
     }

@@ -14,7 +14,7 @@ struct InspectorOutlineRows: View {
             .toggleStyle(.switch)
 
         if showsDetails {
-            LabeledContent("Color") {
+            EditorLabeledContent("Color") {
                 ColorPicker("Outline", selection: color, supportsOpacity: false)
                     .labelsHidden()
             }

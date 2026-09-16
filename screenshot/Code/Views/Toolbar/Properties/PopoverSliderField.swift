@@ -27,7 +27,7 @@ struct PopoverSliderField: View {
     }
 
     var body: some View {
-        LabeledContent {
+        EditorLabeledContent {
             HStack(spacing: 4) {
                 Slider(value: $value, in: range)
                     .frame(width: UIMetrics.SliderWidth.standard)

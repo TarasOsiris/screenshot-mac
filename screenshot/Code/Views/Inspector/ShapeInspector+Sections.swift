@@ -6,7 +6,7 @@ extension ShapeInspector {
     func geometrySection(fields: Set<LocaleOverrideField>) -> some View {
         InspectorSection(.shapeGeometry, "Position & Size", accessory: { overrideBadge(.geometry, fields) }) {
             ShapeGeometryFields(state: state, shapeId: shapeId, layout: .formRow)
-            LabeledContent("Rotation") {
+            EditorLabeledContent("Rotation") {
                 ShapeRotationControl(state: state, shapeId: shapeId, layout: .formRow)
             }
         }
@@ -76,17 +76,14 @@ extension ShapeInspector {
         let customControlState = CustomFontRegistry.controlState(for: shape)
 
         InspectorSection(.shapeText, "Text", accessory: { overrideBadge(.typography, fields) }) {
-            LabeledContent("Font") {
+            EditorLabeledContent("Font") {
                 TextFontPickerControl(state: state, shapeId: shapeId)
+                    .localeOverridden(.font)
             }
-            .localeOverridden(.font)
 
-            LabeledContent("Size") {
+            EditorLabeledContent("Size") {
                 HStack(spacing: 4) {
-                    // Marked per control, not on the row: a row-level wash would stack with the
-                    // weight picker's own when both are overridden.
-                    TextFontSizeField(state: state, shapeId: shapeId)
-                        .localeOverridden(.fontSize)
+                    TextFontSizeField(state: state, shapeId: shapeId, layout: .formRow)
                     if customControlState?.showsWeightPicker ?? true {
                         TextFontWeightControl(state: state, shapeId: shapeId, customControlState: customControlState)
                             .localeOverridden(.fontWeight)
@@ -94,12 +91,12 @@ extension ShapeInspector {
                 }
             }
 
-            LabeledContent("Color") {
+            EditorLabeledContent("Color") {
                 ColorPicker("Color", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
                     .labelsHidden()
             }
 
-            LabeledContent("Align") {
+            EditorLabeledContent("Align") {
                 VStack(alignment: .trailing, spacing: 6) {
                     TextAlignPicker(selection: shapeBinding(shapeId, \.textAlign, default: .center))
                         .fixedSize()
@@ -110,25 +107,29 @@ extension ShapeInspector {
             }
 
             if customControlState?.showsItalicToggle ?? true {
-                Toggle("Italic", isOn: italicBinding(shapeId))
+                EditorLabeledContent("Italic") {
+                    Toggle("Italic", isOn: italicBinding(shapeId))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .localeOverridden(.italic)
+                }
+            }
+
+            EditorLabeledContent("Uppercase") {
+                Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
+                    .labelsHidden()
                     .toggleStyle(.switch)
-                    .localeOverridden(.italic)
+                    .localeOverridden(.uppercase)
             }
 
-            Toggle("Uppercase", isOn: shapeBinding(shapeId, \.uppercase, default: false))
-                .toggleStyle(.switch)
-                .localeOverridden(.uppercase)
-
-            LabeledContent("Letter Spacing") {
+            EditorLabeledContent("Letter Spacing") {
                 TextLetterSpacingControl(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
+                    .localeOverridden(.letterSpacing)
             }
-            .localeOverridden(.letterSpacing)
 
-            LabeledContent("Line Spacing") {
-                TextLineSpacingField(state: state, shapeId: shapeId)
+            EditorLabeledContent("Line Spacing") {
+                TextLineSpacingField(state: state, shapeId: shapeId, layout: .formRow)
             }
-            // This control writes `lineHeightMultiple`; `lineSpacing` is the legacy field.
-            .localeOverridden(.lineHeight)
 
             if shape.hasRichText {
                 TextClearFormattingButton(state: state, shapeId: shapeId)
@@ -159,7 +160,7 @@ extension ShapeInspector {
                 .help("Use custom color for SVG")
 
             if shape.svgUseColor == true {
-                LabeledContent("Color") {
+                EditorLabeledContent("Color") {
                     ColorPicker("SVG custom color", selection: shapeBinding(shapeId, \.color), supportsOpacity: false)
                         .labelsHidden()
                 }
@@ -187,7 +188,7 @@ extension ShapeInspector {
     @ViewBuilder
     func appearanceSection(shape: CanvasShapeModel) -> some View {
         InspectorSection(.shapeAppearance, "Appearance") {
-            LabeledContent("Opacity") {
+            EditorLabeledContent("Opacity") {
                 ShapeOpacityField(state: state, shapeId: shapeId, showsSlider: true, layout: .formRow)
             }
 
@@ -196,7 +197,7 @@ extension ShapeInspector {
             }
 
             if shape.type == .star {
-                LabeledContent("Points") {
+                EditorLabeledContent("Points") {
                     Stepper(
                         value: shapeBinding(shapeId, \.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
                         in: 3...20

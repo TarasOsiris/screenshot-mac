@@ -65,10 +65,10 @@ struct ShapeGeometryFields: View, ShapeEditing {
                 geometryField(.height, frame)
             }
         case .formRow:
-            LabeledContent("Position") {
+            EditorLabeledContent("Position") {
                 valueColumns(.x, .y, frame)
             }
-            LabeledContent("Size") {
+            EditorLabeledContent("Size") {
                 valueColumns(.width, .height, frame)
             }
         }
@@ -100,16 +100,17 @@ struct ShapeGeometryFields: View, ShapeEditing {
                 text: draft(axis).text,
                 isActive: draft(axis).isActive,
                 width: layout.valueWidth(strip: propertiesGeometryFieldWidth),
+                layout: layout,
                 keyboard: .signed,
                 clearsFocusOnSelectionChange: true,
                 modelValue: modelValue(axis, frame),
                 current: { currentGeometryString(axis, for: $0) },
                 commit: { commitGeometry(axis, to: $0, drafts: draft) },
-                liveSelection: { state.selectedShapeId }
+                liveSelection: { state.selectedShapeId },
+                overrideField: axis.overrideField
             )
             .accessibilityLabel(axis.accessibilityLabel)
         }
-        .localeOverridden(axis.overrideField)
     }
 
     private func draft(_ axis: ShapeGeometryAxis) -> ShapeFieldDraft {

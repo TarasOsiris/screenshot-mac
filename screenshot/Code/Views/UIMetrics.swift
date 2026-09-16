@@ -240,6 +240,16 @@ enum UIMetrics {
         /// Laid over the control, so it has to read on an opaque field without dulling its text.
         static let tint: Double = 0.16
         static let cornerRadius: CGFloat = 5
+        /// In a grouped `Form`, a bezeled `TextField` doesn't fill the frame SwiftUI lays out for
+        /// it: the row's padding leaves the trailing and bottom edges bare, and a frame-sized wash
+        /// hangs past the field's corners. Injected by `inspectorFormChrome()` only — outside a
+        /// Form (the properties bar) the bezel fills its frame and this inset would gap it. UIKit's
+        /// rounded border fills its frame either way, so iPad needs no inset.
+        #if os(macOS)
+        static let formFieldBezelInset = EdgeInsets(top: 0, leading: 0, bottom: 3, trailing: 4)
+        #else
+        static let formFieldBezelInset = EdgeInsets()
+        #endif
     }
 
     /// The inspector's form rows are a two-column grid: a label, then a value control trailing.
@@ -254,6 +264,15 @@ enum UIMetrics {
         /// have none — a suffix laid out *after* a field pushes that field out of the shared
         /// column, which is what left Rotation short of Position and Size.
         static let unitWidth: CGFloat = 12
+    }
+
+    enum LabeledControl {
+        #if os(macOS)
+        /// AppKit fields render their text below the label's native baseline in compact rows.
+        static let labelVerticalOffset: CGFloat = 4
+        #else
+        static let labelVerticalOffset: CGFloat = 0
+        #endif
     }
 
     /// Collapsible sections in the selection / row inspector.

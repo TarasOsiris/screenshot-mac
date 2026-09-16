@@ -16,6 +16,18 @@ enum InspectorValueLayout {
         }
     }
 
+    /// How far a bezeled `TextField`'s chrome sits inside the frame SwiftUI lays out for it, which
+    /// the locale wash has to match. The inspector's grouped `Form` pads its rows' controls, so the
+    /// bezel leaves the trailing and bottom edges bare; the bar's fields fill their frame, where the
+    /// same inset gapped the wash along those two edges. UIKit's rounded border fills its frame
+    /// either way, so iPad needs no inset.
+    var fieldBezelInset: EdgeInsets {
+        switch self {
+        case .strip: EdgeInsets()
+        case .formRow: UIMetrics.OverrideMark.formFieldBezelInset
+        }
+    }
+
     /// The bar sizes each field to what it holds; the inspector shares one width across rows.
     func valueWidth(strip stripWidth: CGFloat) -> CGFloat {
         switch self {

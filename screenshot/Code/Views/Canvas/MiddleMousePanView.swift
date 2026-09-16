@@ -26,17 +26,6 @@ private final class PanCoordinator {
     private var monitors: [Any] = []
     private var lastDragPoint: NSPoint?
     private weak var activeScrollView: NSScrollView?
-    private var hasDragged = false
-    /// Tracks whether we currently have a cursor pushed onto the stack, so
-    /// push/pop always balance regardless of the order mouse events arrive in.
-    private var didPushCursor = false
-
-    private func popCursorIfNeeded() {
-        if didPushCursor {
-            NSCursor.pop()
-            didPushCursor = false
-        }
-    }
 
     func install() {
         uninstall()
@@ -47,7 +36,7 @@ private final class PanCoordinator {
 
             // Guard against double mouse-down without intervening mouse-up
             if self.activeScrollView != nil {
-                self.popCursorIfNeeded()
+                PlatformCursor.release(.pan)
                 self.activeScrollView = nil
             }
 
@@ -57,9 +46,7 @@ private final class PanCoordinator {
 
             self.activeScrollView = scrollView
             self.lastDragPoint = pointInWindow
-            self.hasDragged = false
-            NSCursor.openHand.push()
-            self.didPushCursor = true
+            PlatformCursor.hold(.openHand, for: .pan)
             return nil
         }
         if let downMonitor { monitors.append(downMonitor) }
@@ -69,13 +56,9 @@ private final class PanCoordinator {
                   let scrollView = self.activeScrollView,
                   let lastPoint = self.lastDragPoint else { return event }
 
-            // Switch from open hand to closed hand on first drag movement
-            if !self.hasDragged {
-                self.hasDragged = true
-                self.popCursorIfNeeded()
-                NSCursor.closedHand.push()
-                self.didPushCursor = true
-            }
+            // Re-asserted per event, not just on the first: AppKit resets the cursor as the
+            // pointer moves.
+            PlatformCursor.hold(.closedHand, for: .pan)
 
             let currentPoint = event.locationInWindow
             let deltaX = currentPoint.x - lastPoint.x
@@ -96,23 +79,20 @@ private final class PanCoordinator {
             guard let self, event.buttonNumber == 2, self.activeScrollView != nil else { return event }
             self.activeScrollView = nil
             self.lastDragPoint = nil
-            self.hasDragged = false
-            self.popCursorIfNeeded()
+            PlatformCursor.release(.pan)
             return nil
         }
         if let upMonitor { monitors.append(upMonitor) }
     }
 
     func uninstall() {
-        // Pop cursor if one is still pushed from an active drag session
-        popCursorIfNeeded()
+        PlatformCursor.release(.pan)
         for monitor in monitors {
             NSEvent.removeMonitor(monitor)
         }
         monitors.removeAll()
         activeScrollView = nil
         lastDragPoint = nil
-        hasDragged = false
     }
 
     /// Walk up from the hit view to find the nearest horizontal-scrolling NSScrollView.
