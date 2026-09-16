@@ -44,11 +44,7 @@ struct InspectorSection<Content: View, Accessory: View>: View {
             Text(title)
             accessory
         }
-        // The grouped form makes only the chevron clickable, so the header needs its own tap to
-        // behave like a disclosure row. There is no double-toggle to worry about for that reason.
         .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .onTapGesture { toggle() }
         // An overlay, not a stacked child: in the layout the rule made the header two rows tall, and
         // the grouped form centres its disclosure chevron on the whole header — which is what put
         // the chevron above the title it labels. Outside the layout, the header is exactly as tall
@@ -63,6 +59,13 @@ struct InspectorSection<Content: View, Accessory: View>: View {
                 // The rule must not take a click meant for collapsing the section.
                 .allowsHitTesting(false)
         }
+        // The grouped form makes only the chevron clickable, so the header carries its own tap. The
+        // padding pair widens the hit area toward the chevron and then puts the frame back where it
+        // was, so the rule above — measured against the inner frame — doesn't move with it.
+        .padding(.leading, UIMetrics.InspectorSection.chevronGap)
+        .contentShape(Rectangle())
+        .onTapGesture { toggle() }
+        .padding(.leading, -UIMetrics.InspectorSection.chevronGap)
     }
 
     /// The chevron writes through here, the header through `toggle()`; both land in the one writer,

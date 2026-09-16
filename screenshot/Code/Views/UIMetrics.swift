@@ -248,6 +248,10 @@ enum UIMetrics {
         static let ruleGap: CGFloat = 6
         /// Between a section's title and its override badge.
         static let titleGap: CGFloat = 6
+        /// How far the header's hit area reaches back toward the disclosure chevron. The form owns
+        /// the chevron and the space after it, so without this the strip between the two is dead.
+        /// Stops short of the glyph on purpose — overlapping it would put two toggles on one click.
+        static let chevronGap: CGFloat = 8
         #if os(macOS)
         /// The grouped form's own horizontal row inset, cancelled out so the separating rule runs
         /// edge to edge. SwiftUI doesn't expose it, so this mirrors the platform value — if the
