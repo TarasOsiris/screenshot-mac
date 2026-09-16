@@ -145,7 +145,7 @@ struct EditorRowView: View {
                         onTogglePreview: togglePreviewMode,
                         overriddenShapeCount: overridden.count,
                         overrideLocaleLabel: overridden.isEmpty ? "" : state.localeState.activeLocaleLabel,
-                        onSelectOverridden: { state.selectedShapeIds = overridden }
+                        onSelectOverridden: { state.selectShapes(overridden, in: row.id) }
                     ) {
                         rowMenuContent
                     }

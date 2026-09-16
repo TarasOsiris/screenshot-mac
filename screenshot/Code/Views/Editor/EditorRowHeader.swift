@@ -73,7 +73,11 @@ struct EditorRowHeader<RowMenuContent: View>: View {
                 }
                 .buttonStyle(EditorIconButtonStyle())
                 .focusable(false)
-                .help("^[\(overriddenShapeCount) shape](inflect: true) overridden for \(overrideLocaleLabel) — click to select them")
+                // One string for both: `.help` is a macOS tooltip and a no-op on iPad, so the badge
+                // needed a label — but a second inflected phrase would be a second catalog key to
+                // translate into eight languages and to keep in step with this one.
+                .help(overriddenShapesDescription)
+                .accessibilityLabel(overriddenShapesDescription)
             }
 
             previewToggle
@@ -82,6 +86,11 @@ struct EditorRowHeader<RowMenuContent: View>: View {
 
             trailingControls
         }
+    }
+
+    /// Names what the badge counts, for the tooltip and the accessibility label alike.
+    private var overriddenShapesDescription: LocalizedStringKey {
+        "^[\(overriddenShapeCount) shape](inflect: true) overridden for \(overrideLocaleLabel) — click to select them"
     }
 
     private var chevron: some View {

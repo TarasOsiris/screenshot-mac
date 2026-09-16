@@ -169,6 +169,13 @@ extension AppState {
     }
 
     func resetLocaleOverride(shapeId: UUID) {
+        resetLocaleOverride(shapeId: shapeId, resetIds: [shapeId])
+    }
+
+    /// `resetIds` is every shape this one command clears. Reset doesn't mutate `rows`, so a
+    /// whole-group reset that excluded only the shape in hand would see each sibling as a live
+    /// user of the shared translation and leave it behind for all of them.
+    private func resetLocaleOverride(shapeId: UUID, resetIds: Set<UUID>) {
         guard let loc = shapeLocation(for: shapeId) else { return }
         let shape = rows[loc.rowIndex].shapes[loc.shapeIndex]
         let code = localeState.activeLocaleCode
@@ -177,9 +184,12 @@ extension AppState {
         withUndo("Reset Override") {
             // writeSplitOverride reaches both key spaces, so a reused string's shared translation
             // goes with it — setShapeOverride alone left the shape still reporting an override.
+            // But that translation belongs to the whole reuse group, and this is a per-shape reset:
+            // while another member is still using it, clearing it would silently revert their text.
             LocaleService.writeSplitOverride(
                 &localeState, localeCode: code, shapeId: shapeId,
-                textKey: shape.textTranslationKey, override: nil
+                textKey: shape.textTranslationKey, override: nil,
+                writeText: !isTranslationShared(shape, excluding: resetIds)
             )
             if let oldFile { cleanupUnreferencedImage(oldFile) }
         }
@@ -189,7 +199,7 @@ extension AppState {
     func resetLocaleOverrides(shapeIds: Set<UUID>) {
         guard !shapeIds.isEmpty else { return }
         withUndo("Reset Override") {
-            for shapeId in shapeIds { resetLocaleOverride(shapeId: shapeId) }
+            for shapeId in shapeIds { resetLocaleOverride(shapeId: shapeId, resetIds: shapeIds) }
         }
     }
 
@@ -209,10 +219,25 @@ extension AppState {
             field.clear(in: &merged)
             LocaleService.writeSplitOverride(
                 &localeState, localeCode: code, shapeId: shapeId,
+                // Unlike a whole-shape reset, this one names the property: clearing `.text` on a
+                // reused string is a group-scoped edit the user asked for, so it writes the shared
+                // key. Guarding it here would leave the menu item present and inert.
                 textKey: shape.textTranslationKey, override: merged.isEmpty ? nil : merged
             )
             if field == .image, let oldFile { cleanupUnreferencedImage(oldFile) }
         }
+    }
+
+    /// Whether `shape`'s translation is stored under a key another text shape still uses, i.e. it is
+    /// one member of a reused string. A per-shape reset must leave such a translation alone — it is
+    /// the group's, and the last member out takes it with them.
+    ///
+    /// Comparing `translationKey` rather than `textTranslationKey` skips formatting a uuid string
+    /// per shape scanned: `ensureSharedKey` mints a fresh key and stamps it on every member, so a
+    /// group is exactly the shapes carrying that non-nil key.
+    func isTranslationShared(_ shape: CanvasShapeModel, excluding resetIds: Set<UUID>) -> Bool {
+        guard let key = shape.translationKey else { return false }
+        return allTextShapes().contains { !resetIds.contains($0.id) && $0.translationKey == key }
     }
 
     /// Shapes in a row the active locale overrides — the row header's badge and its click target.
@@ -276,10 +301,6 @@ extension AppState {
 
     /// Whether a shape carries any override for the active locale — a per-shape style/geometry
     /// override (under its id) or a shared translation (under its translation key). Drives the
-    /// per-shape "reset to base" affordance.
-    func shapeHasActiveLocaleOverride(_ shapeId: UUID) -> Bool {
-        !activeLocaleOverriddenFields(shapeId: shapeId).isEmpty
-    }
 
     /// Whether any of these shapes has a non-empty override in any locale, accounting for reused
     /// strings whose translations live under a shared key.

@@ -66,6 +66,22 @@ extension View {
     func localeOverridden(_ field: LocaleOverrideField) -> some View {
         modifier(LocaleOverriddenModifier(field: field))
     }
+
+    /// Tints a glyph the same accent, for a control whose meaning *is* the overridden field — the
+    /// properties bar's globe opens the translation editor. Reads the same environment the wash
+    /// does, so the two can't disagree about what this language overrides.
+    func localeOverriddenTint(_ field: LocaleOverrideField) -> some View {
+        modifier(LocaleOverriddenTintModifier(field: field))
+    }
+}
+
+private struct LocaleOverriddenTintModifier: ViewModifier {
+    @Environment(\.localeOverrideMarks) private var marks
+    let field: LocaleOverrideField
+
+    func body(content: Content) -> some View {
+        content.foregroundStyle(marks?.fields.contains(field) == true ? Color.localeWarning : Color.primary)
+    }
 }
 
 /// The tint is always applied and only its alpha changes, so the control keeps one structural

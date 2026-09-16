@@ -10,7 +10,9 @@ extension ShapePropertiesSingleSelectionBar {
         } label: {
             Image(systemName: "globe")
                 .font(.system(size: UIMetrics.ActionButton.iconSize))
-                .foregroundStyle(state.shapeHasActiveLocaleOverride(shapeId) ? Color.localeWarning : Color.primary)
+                // The text specifically, not any overridden field: this button opens the translation
+                // editor, so tinting it for a nudged x position promises a translation that isn't there.
+                .localeOverriddenTint(.text)
                 .frame(
                     width: max(UIMetrics.IconButton.frameSize, UIMetrics.ActionButton.minTouchTarget),
                     height: max(UIMetrics.IconButton.frameSize, UIMetrics.ActionButton.minTouchTarget)

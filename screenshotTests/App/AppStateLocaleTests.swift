@@ -312,8 +312,9 @@ struct AppStateLocaleTests {
         #expect(state.activeLocaleOverriddenFields(shapeId: shapeId) == [.positionX])
     }
 
-    /// Regression: `shapeHasActiveLocaleOverride` counted a reused string's shared-key translation,
-    /// but `resetLocaleOverride` only cleared the id-keyed entry — so the indicator survived a reset.
+    /// Regression: the override indicator counted a reused string's shared-key translation, but
+    /// `resetLocaleOverride` only cleared the id-keyed entry — so the indicator survived a reset.
+    /// This shape is the sole member of its key, so the reset does take the shared entry with it.
     @Test func resetLocaleOverrideClearsSharedTranslationKey() throws {
         let (state, tempDir) = makeTestState()
         defer { cleanupTestState(tempDir) }
@@ -329,11 +330,10 @@ struct AppStateLocaleTests {
         state.setActiveLocale("fr")
         state.updateTranslationText(shapeId: shapeId, text: "Bonjour")
         state.finishTranslationEditIfNeeded()
-        #expect(state.shapeHasActiveLocaleOverride(shapeId))
+        #expect(!state.activeLocaleOverriddenFields(shapeId: shapeId).isEmpty)
 
         state.resetLocaleOverride(shapeId: shapeId)
 
-        #expect(!state.shapeHasActiveLocaleOverride(shapeId))
         #expect(state.activeLocaleOverriddenFields(shapeId: shapeId).isEmpty)
     }
 

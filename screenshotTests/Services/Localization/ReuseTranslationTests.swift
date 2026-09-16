@@ -10,6 +10,10 @@ struct ReuseTranslationTests {
         state.rows.flatMap(\.shapes).first { $0.id == id }
     }
 
+    private func resolvedText(_ state: AppState, _ id: UUID, _ code: String = "fr") -> String? {
+        shape(state, id).flatMap { LocaleService.resolveShape($0, localeCode: code, localeState: state.localeState).text }
+    }
+
     /// A state with two "Get Started" text shapes in one row + a French locale (base = en).
     private func makeState() -> (AppState, URL, a: UUID, b: UUID) {
         let (state, dir) = makeTestState()
@@ -180,5 +184,49 @@ struct ReuseTranslationTests {
         state.linkTranslation(shapeId: b, toTargetKey: a.uuidString)
         // Once linked they share a key, so there's nothing else to reuse.
         #expect(state.reusableTranslationTargets(excludingShapeId: b).isEmpty)
+    }
+
+    /// Reset is a per-shape action but a reused string's translation belongs to the group, so
+    /// resetting one member must not revert the others' text.
+    @Test func resettingOneMemberKeepsTheSharedTranslation() {
+        let (state, dir, a, b) = makeState()
+        defer { cleanupTestState(dir) }
+
+        state.linkTranslation(shapeId: b, toTargetKey: a.uuidString)
+        state.updateTranslationText(shapeId: a, localeCode: "fr", text: "Commencer")
+        state.setActiveLocale("fr")
+
+        state.resetLocaleOverride(shapeId: b)
+
+        #expect(resolvedText(state, a) == "Commencer", "Resetting B must not take A's translation with it")
+    }
+
+    /// The last member out does take it — otherwise the entry outlives every shape using it.
+    @Test func resettingTheOnlyMemberClearsTheTranslation() {
+        let (state, dir, a, _) = makeState()
+        defer { cleanupTestState(dir) }
+
+        state.updateTranslationText(shapeId: a, localeCode: "fr", text: "Commencer")
+        state.setActiveLocale("fr")
+
+        state.resetLocaleOverride(shapeId: a)
+
+        #expect(resolvedText(state, a) == "Get Started", "An unshared translation is this shape's to drop")
+    }
+
+    /// Resetting the whole group at once must clear the shared entry. Reset doesn't mutate `rows`,
+    /// so excluding only the shape in hand would make each member see the other as a live user.
+    @Test func resettingEveryMemberClearsTheSharedTranslation() {
+        let (state, dir, a, b) = makeState()
+        defer { cleanupTestState(dir) }
+
+        state.linkTranslation(shapeId: b, toTargetKey: a.uuidString)
+        state.updateTranslationText(shapeId: a, localeCode: "fr", text: "Commencer")
+        state.setActiveLocale("fr")
+
+        state.resetLocaleOverrides(shapeIds: [a, b])
+
+        #expect(resolvedText(state, a) == "Get Started", "The last members out take the translation with them")
+        #expect(resolvedText(state, b) == "Get Started")
     }
 }
