@@ -690,6 +690,29 @@ struct MCPToolExecutorTests {
         }
     }
 
+    /// A cancelled export (the client disconnected, or the app quit mid-call) is not our bug.
+    /// Wrapping it in `MCPToolError.failed` would make `call`'s classification treat it as one and
+    /// report it to Sentry — it must come out the other side as a bare `CancellationError` instead.
+    @Test func exportProjectPropagatesCancellationUnwrapped() async throws {
+        let (executor, state, tempDir) = makeExecutor()
+        defer { cleanupTestState(tempDir) }
+        let projectId = try #require(state.activeProject?.id)
+
+        let task = Task {
+            try await executor.exportProject(MCPArguments(["project_id": .string(projectId.uuidString)]))
+        }
+        task.cancel()
+
+        do {
+            _ = try await task.value
+            Issue.record("expected a cancelled export to throw")
+        } catch is CancellationError {
+            // expected
+        } catch {
+            Issue.record("expected CancellationError, got \(error)")
+        }
+    }
+
     // MARK: - Project binding
     //
     // In this suite rather than their own: they share `SCREENSHOT_DATA_DIR` and the demo-mode
