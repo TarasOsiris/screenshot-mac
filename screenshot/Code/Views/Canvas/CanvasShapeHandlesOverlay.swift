@@ -109,16 +109,12 @@ struct CanvasShapeHandlesOverlay: View {
             .onEnded { _ in
                 PlatformCursor.setArrow()
                 var updated = shape
-                updated.rotation = normalizeAngle(shape.rotation + rotationDelta)
+                updated.rotation = CanvasShapeModel.normalizedRotation(shape.rotation + rotationDelta)
+                // Cleared before the commit, unlike the resize handle: `pendingRotation` is a
+                // delta the canvas *adds* to `shape.rotation`, where `ResizeState` is absolute.
                 rotationDelta = 0
                 onUpdate(updated)
             }
-    }
-
-    private func normalizeAngle(_ angle: Double) -> Double {
-        var normalized = angle.truncatingRemainder(dividingBy: 360)
-        if normalized < 0 { normalized += 360 }
-        return normalized
     }
 
     private func handlePosition(for edge: ResizeEdge) -> CGPoint {

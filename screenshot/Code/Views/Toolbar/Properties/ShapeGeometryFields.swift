@@ -40,8 +40,6 @@ struct ShapeGeometryFields: View, ShapeEditing {
 
     let state: AppState
     let shapeId: UUID
-    /// The document's shape (see `ShapeEditing.documentShape`); only its frame is read.
-    let shape: CanvasShapeModel
     let layout: Layout
 
     @State private var editingX = ""
@@ -116,13 +114,22 @@ struct ShapeGeometryFields: View, ShapeEditing {
         }
     }
 
-    private func modelValue(_ axis: ShapeGeometryAxis) -> Double {
+    /// `ShapePropertyField` re-reads its text when this moves, so it is what makes the fields
+    /// follow a canvas gesture. It reads the gesture's frame directly rather than through
+    /// `editingShape`, so an unrelated slider burst doesn't re-render the strip on every tick.
+    private func modelValue(_ axis: ShapeGeometryAxis) -> Double? {
+        guard let frame = liveOrDocumentFrame else { return nil }
         switch axis {
-        case .x: Double(shape.x)
-        case .y: Double(shape.y)
-        case .width: Double(shape.width)
-        case .height: Double(shape.height)
+        case .x: return Double(frame.x)
+        case .y: return Double(frame.y)
+        case .width: return Double(frame.width)
+        case .height: return Double(frame.height)
         }
+    }
+
+    private var liveOrDocumentFrame: LiveShapeGeometrySession.Frame? {
+        if let live = state.liveShapeGeometry.frame(for: shapeId) { return live }
+        return resolvedDocumentShape(shapeId).map { LiveShapeGeometrySession.Frame($0) }
     }
 }
 
@@ -138,7 +145,7 @@ extension ShapeEditing {
     /// `shape.x` is absolute across the row's whole template strip, so a shape on the third
     /// template would read ~3700. Field values are relative to the template the shape sits in.
     func currentGeometryString(_ axis: ShapeGeometryAxis, for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId), let shape = editingShape(shapeId) else { return "0" }
+        guard let i = idx(for: shapeId), let shape = liveGeometryShape(shapeId) else { return "0" }
         switch axis {
         case .x: return formatGeometry(shape.x - state.rows[i.row].templateOriginX(for: shape))
         case .y: return formatGeometry(shape.y)

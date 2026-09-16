@@ -3,9 +3,9 @@ import SwiftUI
 
 extension ShapeInspector {
     @ViewBuilder
-    func geometrySection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
+    func geometrySection(fields: Set<LocaleOverrideField>) -> some View {
         InspectorSection(.shapeGeometry, "Position & Size", accessory: { overrideBadge(.geometry, fields) }) {
-            ShapeGeometryFields(state: state, shapeId: shapeId, shape: shape, layout: .formRows)
+            ShapeGeometryFields(state: state, shapeId: shapeId, layout: .formRows)
             LabeledContent("Rotation") {
                 ShapeRotationControl(state: state, shapeId: shapeId, layout: .formRow)
             }

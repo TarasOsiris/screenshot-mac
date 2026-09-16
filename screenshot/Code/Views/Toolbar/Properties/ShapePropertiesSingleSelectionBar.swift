@@ -48,7 +48,7 @@ struct ShapePropertiesSingleSelectionBar: View, ShapeEditing {
                         }
 
                         ShapePropertiesSection {
-                            ShapeGeometryFields(state: state, shapeId: shapeId, shape: shape, layout: .strip)
+                            ShapeGeometryFields(state: state, shapeId: shapeId, layout: .strip)
                         }
 
                         deviceSections(shape: shape, shapeId: shapeId)

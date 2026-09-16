@@ -24,6 +24,9 @@ struct CanvasSelectionLayer: View {
     /// Read inside `body` for the same reason as `dragSession`: a properties-bar slider drag must
     /// move the handles with the shape, and reading it here keeps that off the row's body.
     let liveShapeEdit: LiveShapeEditSession
+    /// Written, never read, from here: the handle gestures publish their in-flight frame so the
+    /// properties bar and the inspector can show it. See `LiveShapeGeometrySession`.
+    let liveShapeGeometry: LiveShapeGeometrySession
     let textEditingShapeId: UUID?
     let onUpdate: (CanvasShapeModel) -> Void
 
@@ -82,8 +85,8 @@ struct CanvasSelectionLayer: View {
                 displayRect: displayRect,
                 currentRotation: currentRotation,
                 handleDiameter: handleDiameter,
-                rotationDelta: rotationBinding(for: shape.id),
-                resizeState: resizeBinding(for: shape.id),
+                rotationDelta: rotationBinding(for: shape),
+                resizeState: resizeBinding(for: shape),
                 onUpdate: onUpdate
             )
         } else {
@@ -98,27 +101,45 @@ struct CanvasSelectionLayer: View {
         }
     }
 
-    private func resizeBinding(for id: UUID) -> Binding<ResizeState?> {
-        Binding(
+    /// A setter, not a `body`, so publishing the readout here is legal — and it is the one place
+    /// that sees every tick of a handle drag.
+    private func resizeBinding(for shape: CanvasShapeModel) -> Binding<ResizeState?> {
+        let id = shape.id
+        return Binding(
             get: { dragSession.pendingResize[id] },
             set: { newValue in
                 if let newValue {
                     dragSession.pendingResize[id] = newValue
+                    liveShapeGeometry.update(
+                        .init(
+                            x: newValue.newX,
+                            y: newValue.newY,
+                            width: newValue.newW,
+                            height: newValue.newH,
+                            rotation: shape.rotation
+                        ),
+                        for: id
+                    )
                 } else {
                     dragSession.pendingResize.removeValue(forKey: id)
+                    liveShapeGeometry.end(for: id)
                 }
             }
         )
     }
 
-    private func rotationBinding(for id: UUID) -> Binding<Double> {
-        Binding(
+    private func rotationBinding(for shape: CanvasShapeModel) -> Binding<Double> {
+        let id = shape.id
+        return Binding(
             get: { dragSession.pendingRotation[id] ?? 0 },
             set: { newValue in
                 if newValue == 0 {
                     dragSession.pendingRotation.removeValue(forKey: id)
+                    liveShapeGeometry.end(for: id)
                 } else {
                     dragSession.pendingRotation[id] = newValue
+                    // `Frame` normalizes the composed angle, the way the commit does.
+                    liveShapeGeometry.update(.init(shape, rotation: shape.rotation + newValue), for: id)
                 }
             }
         )

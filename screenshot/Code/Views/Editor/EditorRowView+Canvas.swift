@@ -97,6 +97,7 @@ extension EditorRowView {
                                     visualScale: ds,
                                     dragSession: dragSession,
                                     liveShapeEdit: state.liveShapeEdit,
+                                    liveShapeGeometry: state.liveShapeGeometry,
                                     textEditingShapeId: textEditingShapeId,
                                     onUpdate: { state.updateShape($0) }
                                 )
@@ -410,6 +411,9 @@ extension EditorRowView {
                             },
                             onDragEnd: {
                                 dragSession.endDrag()
+                                // After the commit `handleDragEnded` already made, so the readout
+                                // hands the fields back to the document without a stale frame.
+                                state.liveShapeGeometry.end(for: shape.id)
                             },
                             onOptionDragDuplicate: { shapeId in
                                 if isMulti {
@@ -425,6 +429,8 @@ extension EditorRowView {
                                     dragSession.draggingShapeId = shape.id
                                 }
                                 dragSession.activeDragOffset = offset
+                                // The snapped offset, so the readout agrees with the guides.
+                                state.liveShapeGeometry.update(.init(shape, offsetBy: offset), for: shape.id)
                             },
                             onGroupDragEnd: { offset in
                                 state.applyGroupDrag(offset: offset)

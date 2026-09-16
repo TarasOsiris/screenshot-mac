@@ -159,6 +159,73 @@ struct ShapeEditingTests {
         #expect(!state.edits.shapeEditThrottle.hasPending)
     }
 
+    /// A canvas drag reaches `rows` only on mouse-up, so the readouts follow the gesture through
+    /// `liveShapeGeometry` — including X's rebase when the shape crosses into another template.
+    @Test func canvasGestureMovesTheReadoutsWithoutTouchingTheDocument() {
+        let (state, tempDir) = makeTestState()
+        defer { cleanupTestState(tempDir) }
+        let row = state.rows.first!
+        state.selectRow(row.id)
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        state.addShape(shape)
+        let editor = Editor(state: state)
+
+        state.liveShapeGeometry.update(
+            .init(x: row.templateWidth + 30, y: 220, width: 80, height: 90, rotation: 45),
+            for: shape.id
+        )
+
+        #expect(editor.currentGeometryString(.x, for: shape.id) == "30", "X rebases to the new template")
+        #expect(editor.currentGeometryString(.y, for: shape.id) == "220")
+        #expect(editor.currentGeometryString(.width, for: shape.id) == "80")
+        #expect(editor.currentGeometryString(.height, for: shape.id) == "90")
+        #expect(editor.currentRotationString(for: shape.id) == "45")
+        #expect(editor.rotationBinding(shape.id).wrappedValue == 45, "The slider follows the handle")
+        #expect(documentShape(state, shape.id)?.x == 100, "The gesture has not landed yet")
+
+        state.liveShapeGeometry.end()
+        #expect(editor.currentGeometryString(.x, for: shape.id) == "100")
+        #expect(editor.currentRotationString(for: shape.id) == "0")
+    }
+
+    /// The readout is keyed by shape: a drag elsewhere must not move this one's fields.
+    @Test func anotherShapesGestureLeavesTheReadoutsAlone() {
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        let (state, tempDir, editor, _) = makeEditor(adding: shape)
+        defer { cleanupTestState(tempDir) }
+
+        state.liveShapeGeometry.update(.init(x: 999, y: 999, width: 999, height: 999, rotation: 99), for: UUID())
+
+        #expect(editor.currentGeometryString(.x, for: shape.id) == "100")
+        #expect(editor.liveGeometryShape(shape.id)?.rotation == 0)
+    }
+
+    /// The readout is display-only. If it ever leaked into `editingShape`, every write site in
+    /// the bar and the inspector would become a way to persist a frame the pointer is still
+    /// moving — reachable on iPad, where the bar is on screen during a canvas drag.
+    @Test func aLiveGeometryFrameNeverReachesAWrite() {
+        let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
+        let (state, tempDir, editor, _) = makeEditor(adding: shape)
+        defer { cleanupTestState(tempDir) }
+
+        state.liveShapeGeometry.update(.init(x: 400, y: 400, width: 200, height: 200, rotation: 45), for: shape.id)
+
+        editor.shapeBinding(shape.id, \.opacity).wrappedValue = 0.5
+        editor.outlineEnabledBinding(shape.id).wrappedValue = true
+        let box = DraftBox()
+        box.text = "50"
+        box.isActive = true
+        editor.commitOpacity(to: shape.id, draft: box.draft)
+
+        let written = documentShape(state, shape.id)
+        #expect(written?.opacity == 0.5, "The write itself still lands")
+        #expect(written?.x == 100)
+        #expect(written?.y == 100)
+        #expect(written?.width == 50)
+        #expect(written?.height == 50)
+        #expect(written?.rotation == 0)
+    }
+
     @Test func badOpacityInputRestoresTheDisplay() {
         let shape = CanvasShapeModel(type: .rectangle, x: 100, y: 100, width: 50, height: 50)
         let (state, tempDir, editor, undoManager) = makeEditor(adding: shape)

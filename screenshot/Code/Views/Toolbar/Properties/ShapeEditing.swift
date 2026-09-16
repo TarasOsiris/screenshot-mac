@@ -55,6 +55,18 @@ extension ShapeEditing {
         return resolvedDocumentShape(shapeId)
     }
 
+    /// What a geometry readout must *show*: the edited shape with an in-flight canvas gesture's
+    /// frame laid over it, so X/Y/W/H and rotation track the pointer instead of freezing until
+    /// mouse-up.
+    ///
+    /// **Display only** — every write still resolves through `editingShape`, so no control can
+    /// persist a frame the pointer is still moving. On iPad the bar is on screen during a canvas
+    /// drag, so a second finger really can reach a control mid-gesture.
+    func liveGeometryShape(_ shapeId: UUID) -> CanvasShapeModel? {
+        guard let shape = editingShape(shapeId) else { return nil }
+        return state.liveShapeGeometry.applied(to: shape) ?? shape
+    }
+
     /// What a control that is never dragged should *display*. A burst only changes the properties
     /// being dragged, so a picker or toggle reading `editingShape` would re-render every tick of an
     /// unrelated slider for nothing. Writes still go through `editingShape`.
@@ -200,7 +212,7 @@ extension ShapeEditing {
     }
 
     func currentRotationString(for shapeId: UUID) -> String {
-        guard let shape = editingShape(shapeId) else { return "0" }
+        guard let shape = liveGeometryShape(shapeId) else { return "0" }
         return formatRotation(shape.rotation)
     }
 
@@ -233,6 +245,20 @@ extension ShapeEditing {
         resolved.rotation = 0
         state.updateShape(resolved)
         draft.text.wrappedValue = "0"
+    }
+
+    /// Rotation as the readouts must show it — a canvas rotate handle as well as a slider burst.
+    /// The setter deliberately composes from `editingShape`, so dragging the slider never writes
+    /// back a frame the canvas is still moving.
+    func rotationBinding(_ shapeId: UUID) -> Binding<Double> {
+        Binding(
+            get: { liveGeometryShape(shapeId)?.rotation ?? 0 },
+            set: { newValue in
+                guard var resolved = editingShape(shapeId) else { return }
+                resolved.rotation = newValue
+                state.updateShapeContinuous(resolved)
+            }
+        )
     }
 
     // MARK: - Bindings

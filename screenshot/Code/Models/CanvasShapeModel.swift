@@ -693,6 +693,14 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
 
     var minResizeSize: CGFloat { type == .device ? Self.deviceMinSize : Self.shapeMinSize }
 
+    /// Degrees folded into 0..<360, the form `rotation` is stored in. Every surface that composes
+    /// an angle from a delta normalizes through here, so a live readout matches what its gesture
+    /// finally commits.
+    static func normalizedRotation(_ degrees: Double) -> Double {
+        let remainder = degrees.truncatingRemainder(dividingBy: 360)
+        return remainder < 0 ? remainder + 360 : remainder
+    }
+
     /// Uniform scale that reaches `target` on the driving axis without letting either dimension
     /// fall under `minResizeSize` — the floor moves both sides together so the ratio survives it.
     /// Both resize paths run through here: the handle drag and the properties bar's typed size.

@@ -55,7 +55,7 @@ struct ShapeRotationControl: View, ShapeEditing {
 
     var body: some View {
         let draft = ShapeFieldDraft(text: $text, isActive: $isActive)
-        let slider = shapeBinding(shapeId, \.rotation, continuous: true)
+        let slider = rotationBinding(shapeId)
         HStack(spacing: layout == .formRow ? UIMetrics.InspectorRow.columnGap : 4) {
             Slider(value: slider, in: 0...360)
                 .frame(width: UIMetrics.SliderWidth.standard)

@@ -63,7 +63,7 @@ struct ShapeInspector: View, ShapeEditing {
                 }
 
                 Form {
-                    geometrySection(shape: shape, fields: overrideFields)
+                    geometrySection(fields: overrideFields)
                     typeSections(shape: shape, fields: overrideFields)
                     appearanceSection(shape: shape)
                     fillSection(shape: shape)

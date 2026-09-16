@@ -78,7 +78,15 @@ extension EditorRowView {
         if !wasPreview {
             textEditingShapeId = nil
             dragSession.reset()
+            endLiveGeometryIfOwned()
         }
+    }
+
+    /// Reading `shapeId` outside a `body` registers no observation dependency.
+    func endLiveGeometryIfOwned() {
+        guard let id = state.liveShapeGeometry.shapeId,
+              row.shapes.contains(where: { $0.id == id }) else { return }
+        state.liveShapeGeometry.end()
     }
 
     func startLabelEdit() {
