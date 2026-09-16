@@ -33,10 +33,11 @@ struct ShapeOpacityField: View, ShapeEditing {
                     liveSelection: { state.selectedShapeId }
                 )
 
-                Text("%")
-                    .scaledFont(UIMetrics.FontSize.numericBadge)
-                    .foregroundStyle(.secondary)
-                    .inspectorUnitColumn(layout)
+                if layout == .strip {
+                    Text("%")
+                        .scaledFont(UIMetrics.FontSize.numericBadge)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -79,10 +80,11 @@ struct ShapeRotationControl: View, ShapeEditing {
                     liveSelection: { state.selectedShapeId }
                 )
 
-                Text("°")
-                    .scaledFont(UIMetrics.FontSize.numericBadge)
-                    .foregroundStyle(.secondary)
-                    .inspectorUnitColumn(layout)
+                if layout == .strip {
+                    Text("°")
+                        .scaledFont(UIMetrics.FontSize.numericBadge)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             if layout == .strip {

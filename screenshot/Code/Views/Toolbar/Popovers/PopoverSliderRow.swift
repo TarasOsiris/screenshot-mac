@@ -15,6 +15,9 @@ struct PopoverSliderRow<Value: BinaryFloatingPoint>: View where Value.Stride: Bi
     @Binding var value: Value
     let range: ClosedRange<Value>
     var layout: Layout = .column
+    /// Shown in the form row's unit column, so it can't sit inside the value column where it
+    /// would never line up. Baking it into `format` is what made the multi-selection rows ragged.
+    var unit: String?
     /// Rounded whole number — what almost every caller wants.
     var format: (Value) -> String = { "\(Int($0.rounded()))" }
 
@@ -35,22 +38,16 @@ struct PopoverSliderRow<Value: BinaryFloatingPoint>: View where Value.Stride: Bi
                 readout
             }
         case .form:
-            let row = InspectorValueLayout.formRow
-            LabeledContent(label) {
-                HStack(spacing: row.columnGap) {
-                    Slider(value: $value, in: range)
-                        .inspectorSliderWidth(row)
-                    readout(width: row.valueWidth(strip: 44))
-                }
-                .reservesInspectorUnitColumn(row)
+            InspectorValueRow(label: label, unit: unit) {
+                InspectorSliderValue(value: $value, range: range, format: format)
             }
         }
     }
 
     private var readout: some View { readout(width: nil) }
 
-    /// The form rows pass the inspector's shared value width so their readouts line up with the
-    /// Position/Size fields; the popover columns keep their own dense sizing.
+    /// The popover columns keep their own dense sizing; a form row's readout is sized by
+    /// `InspectorSliderValue`, which owns the inspector's shared column.
     private func readout(width: CGFloat?) -> some View {
         Text(format(value))
             #if os(macOS)
@@ -60,5 +57,26 @@ struct PopoverSliderRow<Value: BinaryFloatingPoint>: View where Value.Stride: Bi
             #endif
             .monospacedDigit()
             .foregroundStyle(.secondary)
+    }
+}
+
+/// The slider and readout of an inspector form row, without the row around them — so a row that
+/// needs something else in its value area (the multi-selection rotation reset) composes the same
+/// control instead of rebuilding it.
+struct InspectorSliderValue<Value: BinaryFloatingPoint>: View where Value.Stride: BinaryFloatingPoint {
+    @Binding var value: Value
+    let range: ClosedRange<Value>
+    var format: (Value) -> String = { "\(Int($0.rounded()))" }
+
+    var body: some View {
+        HStack(spacing: InspectorValueLayout.formRow.columnGap) {
+            Slider(value: $value, in: range)
+                .inspectorSliderWidth(.formRow)
+
+            Text(format(value))
+                .frame(width: UIMetrics.InspectorRow.valueWidth, alignment: .trailing)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
     }
 }

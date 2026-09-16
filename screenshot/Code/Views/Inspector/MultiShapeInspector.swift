@@ -115,18 +115,22 @@ struct MultiShapeInspector: View, MultiShapeEditing {
     @ViewBuilder
     private func appearanceSection(commonType: ShapeType?, shapes: [CanvasShapeModel]) -> some View {
         InspectorSection(.shapeAppearance, "Appearance") {
-            PopoverSliderRow(label: "Opacity", value: multiShapeBinding(\.opacity), range: 0...1, layout: .form) {
-                "\(Int(($0 * 100).rounded()))%"
+            PopoverSliderRow(label: "Opacity", value: multiShapeBinding(\.opacity), range: 0...1, layout: .form, unit: "%") {
+                "\(Int(($0 * 100).rounded()))"
             }
 
-            HStack(spacing: 4) {
-                PopoverSliderRow(label: "Rotation", value: multiShapeBinding(\.rotation), range: 0...360, layout: .form) {
-                    "\(Int($0.rounded()))°"
-                }
-                if shapes.contains(where: { $0.rotation != 0 }) {
-                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
-                        resetRotationOnSelection()
+            InspectorValueRow(label: "Rotation", unit: "°") {
+                HStack(spacing: InspectorValueLayout.formRow.columnGap) {
+                    // Inside the row's value area, ahead of the slider: hung off the end of the
+                    // row instead, it shifts the label and value columns every time rotation
+                    // crosses zero. Same placement, same reason, as `ShapeRotationControl`.
+                    if shapes.contains(where: { $0.rotation != 0 }) {
+                        ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
+                            resetRotationOnSelection()
+                        }
                     }
+
+                    InspectorSliderValue(value: multiShapeBinding(\.rotation), range: 0...360)
                 }
             }
 

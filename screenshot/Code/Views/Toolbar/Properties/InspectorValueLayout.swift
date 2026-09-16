@@ -26,36 +26,14 @@ enum InspectorValueLayout {
 }
 
 extension View {
-    /// A form row must not wrap: `LabeledContent` stacks the label *above* the content when the
-    /// content doesn't fit the inspector's width, which is what dropped Rotation onto a second
-    /// line as soon as its reset button appeared. Capping instead of fixing the width lets the
-    /// slider give up points first. The bar has as much room as it wants, so it keeps the width.
+    /// A form row must not outgrow the inspector — it wraps onto two lines when it does, which is
+    /// what dropped Rotation below its label once its reset button appeared. Capping instead of
+    /// fixing the width lets the slider give up points first; the bar has room, so it keeps its.
     @ViewBuilder
     func inspectorSliderWidth(_ layout: InspectorValueLayout, _ width: CGFloat = UIMetrics.SliderWidth.standard) -> some View {
         switch layout {
         case .strip: frame(width: width)
         case .formRow: frame(maxWidth: width)
-        }
-    }
-
-    /// Places a unit suffix ("°", "%") in the inspector's unit column. Laid out plainly after the
-    /// field, a suffix pushes that field left out of the shared column — which is what left
-    /// Rotation short of Position and Size. The bar packs its units tight, so there it's a no-op.
-    @ViewBuilder
-    func inspectorUnitColumn(_ layout: InspectorValueLayout) -> some View {
-        switch layout {
-        case .strip: self
-        case .formRow: frame(width: UIMetrics.InspectorRow.unitWidth, alignment: .leading)
-        }
-    }
-
-    /// The other half of that column: a row with no unit reserves it, so its fields end on the
-    /// same x as the rows that have one.
-    @ViewBuilder
-    func reservesInspectorUnitColumn(_ layout: InspectorValueLayout) -> some View {
-        switch layout {
-        case .strip: self
-        case .formRow: padding(.trailing, UIMetrics.InspectorRow.unitWidth)
         }
     }
 }

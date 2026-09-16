@@ -6,7 +6,7 @@ extension ShapeInspector {
     func geometrySection(fields: Set<LocaleOverrideField>) -> some View {
         InspectorSection(.shapeGeometry, "Position & Size", accessory: { overrideBadge(.geometry, fields) }) {
             ShapeGeometryFields(state: state, shapeId: shapeId, layout: .formRow)
-            LabeledContent("Rotation") {
+            InspectorValueRow(label: "Rotation", unit: "°") {
                 ShapeRotationControl(state: state, shapeId: shapeId, layout: .formRow)
             }
         }
@@ -81,11 +81,11 @@ extension ShapeInspector {
             }
             .localeOverridden(.font)
 
-            LabeledContent("Size") {
+            InspectorValueRow(label: "Size") {
                 HStack(spacing: 4) {
                     // Marked per control, not on the row: a row-level wash would stack with the
                     // weight picker's own when both are overridden.
-                    TextFontSizeField(state: state, shapeId: shapeId)
+                    TextFontSizeField(state: state, shapeId: shapeId, layout: .formRow)
                         .localeOverridden(.fontSize)
                     if customControlState?.showsWeightPicker ?? true {
                         TextFontWeightControl(state: state, shapeId: shapeId, customControlState: customControlState)
@@ -119,13 +119,13 @@ extension ShapeInspector {
                 .toggleStyle(.switch)
                 .localeOverridden(.uppercase)
 
-            LabeledContent("Letter Spacing") {
-                TextLetterSpacingControl(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
+            InspectorValueRow(label: "Letter Spacing") {
+                TextLetterSpacingControl(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard, layout: .formRow)
             }
             .localeOverridden(.letterSpacing)
 
-            LabeledContent("Line Spacing") {
-                TextLineSpacingField(state: state, shapeId: shapeId)
+            InspectorValueRow(label: "Line Spacing", unit: "%") {
+                TextLineSpacingField(state: state, shapeId: shapeId, layout: .formRow)
             }
             // This control writes `lineHeightMultiple`; `lineSpacing` is the legacy field.
             .localeOverridden(.lineHeight)
@@ -187,7 +187,7 @@ extension ShapeInspector {
     @ViewBuilder
     func appearanceSection(shape: CanvasShapeModel) -> some View {
         InspectorSection(.shapeAppearance, "Appearance") {
-            LabeledContent("Opacity") {
+            InspectorValueRow(label: "Opacity", unit: "%") {
                 ShapeOpacityField(state: state, shapeId: shapeId, showsSlider: true, layout: .formRow)
             }
 
