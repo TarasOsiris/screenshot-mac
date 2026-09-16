@@ -65,8 +65,12 @@ struct ShapeGeometryFields: View, ShapeEditing {
                 geometryField(.height, frame)
             }
         case .formRow:
-            InspectorValueRow(label: "Position") { valueColumns(.x, .y, frame) }
-            InspectorValueRow(label: "Size") { valueColumns(.width, .height, frame) }
+            LabeledContent("Position") {
+                valueColumns(.x, .y, frame)
+            }
+            LabeledContent("Size") {
+                valueColumns(.width, .height, frame)
+            }
         }
     }
 
@@ -79,6 +83,7 @@ struct ShapeGeometryFields: View, ShapeEditing {
             geometryField(first, frame)
             geometryField(second, frame)
         }
+        .reservesInspectorUnitColumn(layout)
     }
 
     private func geometryField(_ axis: ShapeGeometryAxis, _ frame: LiveShapeGeometrySession.Frame?) -> some View {

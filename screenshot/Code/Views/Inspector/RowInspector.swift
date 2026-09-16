@@ -1,5 +1,13 @@
 import SwiftUI
 
+#if os(macOS)
+private let sizeFieldLabelWidth: CGFloat = 14
+private let blurValueWidth: CGFloat = 28
+#else
+private let sizeFieldLabelWidth: CGFloat = 20
+private let blurValueWidth: CGFloat = 36
+#endif
+
 /// The inspector's row state: size, device, background, shapes, visibility and upload settings for
 /// the selected row, or the preview-mode panel. `InspectorPanel` decides when it's shown.
 struct RowInspector: View {
@@ -145,30 +153,29 @@ struct RowInspector: View {
 
     @ViewBuilder
     private func customSizeFields(rowId: UUID) -> some View {
-        InspectorValueRow(label: "Size") {
-            HStack(spacing: InspectorValueLayout.formRow.columnGap) {
-                customSizeField(verbatim: "W", text: $customWidth, rowId: rowId)
-                customSizeField(verbatim: "H", text: $customHeight, rowId: rowId)
+        Grid(alignment: .leading, horizontalSpacing: 6, verticalSpacing: 4) {
+            GridRow {
+                Text(verbatim: "W")
+                    .frame(width: sizeFieldLabelWidth, alignment: .trailing)
+                    .foregroundStyle(.secondary)
+                TextField("", text: $customWidth)
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.trailing)
+                    .integerKeyboard()
+                    .onSubmit { applyCustomSize(rowId: rowId) }
+                Text(verbatim: "H")
+                    .frame(width: sizeFieldLabelWidth, alignment: .trailing)
+                    .foregroundStyle(.secondary)
+                TextField("", text: $customHeight)
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.trailing)
+                    .integerKeyboard()
+                    .onSubmit { applyCustomSize(rowId: rowId) }
             }
-            .scaledFont(UIMetrics.FontSize.body)
-            .monospacedDigit()
-            .compactControlSize()
         }
-    }
-
-    private func customSizeField(verbatim label: String, text: Binding<String>, rowId: UUID) -> some View {
-        HStack(spacing: 3) {
-            Text(verbatim: label)
-                .scaledFont(UIMetrics.FontSize.hint)
-                .foregroundStyle(.secondary)
-
-            TextField("", text: text)
-                .textFieldStyle(.roundedBorder)
-                .multilineTextAlignment(.center)
-                .frame(width: UIMetrics.InspectorRow.valueWidth)
-                .integerKeyboard()
-                .onSubmit { applyCustomSize(rowId: rowId) }
-        }
+        .scaledFont(UIMetrics.FontSize.body)
+        .monospacedDigit()
+        .compactControlSize()
     }
 
     private func isPresetSize(rowId: UUID) -> Bool {
@@ -234,11 +241,20 @@ struct RowInspector: View {
             )
 
             if state.rows[rowIndex].backgroundStyle != .color {
-                InspectorValueRow(label: "Blur") {
-                    InspectorSliderValue(
+                HStack(spacing: 4) {
+                    Text("Blur")
+                        .scaledFont(UIMetrics.FontSize.body)
+                    Spacer()
+                    Slider(
                         value: continuousRowBinding(rowId, keyPath: \.backgroundBlur, default: 0, actionName: "Background Blur"),
-                        range: 0...100
+                        in: 0...100
                     )
+                    .frame(width: 100)
+                    Text("\(Int(state.rows[rowIndex].backgroundBlur))")
+                        .scaledFont(UIMetrics.FontSize.numericBadge)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .frame(width: blurValueWidth, alignment: .trailing)
                 }
             }
 

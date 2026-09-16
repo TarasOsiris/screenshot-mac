@@ -38,7 +38,6 @@ struct TextFontWeightControl: View, ShapeEditing {
 struct TextFontSizeField: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
-    var layout: InspectorValueLayout = .strip
 
     @State private var text = ""
     @State private var isActive = false
@@ -50,7 +49,7 @@ struct TextFontSizeField: View, ShapeEditing {
                 shapeId: shapeId,
                 text: $text,
                 isActive: $isActive,
-                width: layout.valueWidth(strip: propertiesFontFieldWidth),
+                width: propertiesFontFieldWidth,
                 modelValue: editingShape(shapeId)?.fontSize.map(Double.init),
                 current: { currentFontSizeString(for: $0) },
                 commit: { commitFontSize(to: $0, draft: draft) },
@@ -73,7 +72,6 @@ struct TextFontSizeField: View, ShapeEditing {
 struct TextLineSpacingField: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
-    var layout: InspectorValueLayout = .strip
 
     @State private var text = ""
     @State private var isActive = false
@@ -85,7 +83,7 @@ struct TextLineSpacingField: View, ShapeEditing {
                 shapeId: shapeId,
                 text: $text,
                 isActive: $isActive,
-                width: layout.valueWidth(strip: propertiesFontFieldWidth),
+                width: propertiesFontFieldWidth,
                 modelValue: editingShape(shapeId)?.lineHeightMultiple.map(Double.init),
                 current: { currentLineHeightString(for: $0) },
                 commit: { commitLineHeight(to: $0, draft: draft) },
@@ -102,11 +100,9 @@ struct TextLineSpacingField: View, ShapeEditing {
                 }
             }
 
-            if layout == .strip {
-                Text("%")
-                    .foregroundStyle(.secondary)
-                    .padding(.leading, 2)
-            }
+            Text("%")
+                .foregroundStyle(.secondary)
+                .padding(.leading, 2)
         }
     }
 }
@@ -147,16 +143,15 @@ struct TextLetterSpacingControl: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
     let sliderWidth: CGFloat
-    var layout: InspectorValueLayout = .strip
 
     var body: some View {
         let trackingBinding = shapeBinding(shapeId, \.letterSpacing, default: 0, continuous: true)
-        HStack(spacing: layout.columnGap) {
+        HStack(spacing: 4) {
             Slider(value: trackingBinding, in: -5...30)
-                .inspectorSliderWidth(layout, sliderWidth)
+                .frame(width: sliderWidth)
 
             Text(trackingBinding.wrappedValue, format: .number.precision(.fractionLength(1)))
-                .frame(width: layout.valueWidth(strip: propertiesTrackingValueWidth), alignment: .trailing)
+                .frame(width: propertiesTrackingValueWidth, alignment: .trailing)
                 .onTapGesture(count: 2) { trackingBinding.wrappedValue = 0 }
                 #if os(macOS)
                 .help("Double-click to reset")
