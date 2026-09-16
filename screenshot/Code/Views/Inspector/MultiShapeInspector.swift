@@ -7,12 +7,6 @@ import SwiftUI
 struct MultiShapeInspector: View, MultiShapeEditing {
     @Bindable var state: AppState
 
-    @AppStorage("inspectorShapeDeviceExpanded") private var isDeviceExpanded = true
-    @AppStorage("inspectorShapeTextExpanded") private var isTextExpanded = true
-    @AppStorage("inspectorShapeAppearanceExpanded") private var isAppearanceExpanded = true
-    @AppStorage("inspectorShapeOutlineExpanded") private var isOutlineExpanded = true
-    @AppStorage("inspectorShapeShadowExpanded") private var isShadowExpanded = true
-
     var body: some View {
         let shapes = selectedShapes
         if let row = state.selectedRow, shapes.count > 1 {
@@ -45,15 +39,11 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                     }
                     appearanceSection(commonType: commonType, shapes: shapes)
                     outlineSection(commonType: commonType, shapes: shapes)
-                    Section(isExpanded: $isShadowExpanded) {
+                    InspectorSection(.shapeShadow, "Shadow") {
                         ShadowControls(shadow: multiShadowBinding())
-                    } header: {
-                        InspectorSectionHeader("Shadow")
                     }
                 }
-                .formStyle(.grouped)
-                .scaledFont(UIMetrics.FontSize.body)
-                .controlSize(.small)
+                .inspectorFormChrome()
             }
         }
     }
@@ -62,7 +52,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
     private func typeSections(_ type: ShapeType, shapes: [CanvasShapeModel]) -> some View {
         switch type {
         case .device:
-            Section(isExpanded: $isDeviceExpanded) {
+            InspectorSection(.shapeDevice, "Device") {
                 Menu {
                     DeviceMenuContent(
                         onSelectCategory: { selectAbstractDeviceOnSelection($0) },
@@ -72,8 +62,6 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                     Label("Change Device", systemImage: "iphone")
                 }
                 .menuStyle(.button)
-            } header: {
-                InspectorSectionHeader("Device")
             }
         case .text:
             textSection(shapes: shapes)
@@ -88,7 +76,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
         let weightBinding = multiFontWeightBinding(controlState: primaryControlState)
         let italicBinding = multiItalicBinding(controlState: primaryControlState)
 
-        Section(isExpanded: $isTextExpanded) {
+        InspectorSection(.shapeText, "Text") {
             LabeledContent("Font") {
                 FontPicker(
                     selection: multiFontNameBinding(),
@@ -121,14 +109,12 @@ struct MultiShapeInspector: View, MultiShapeEditing {
 
             Toggle("Uppercase", isOn: multiShapeOptionalBinding(\.uppercase, default: false))
                 .toggleStyle(.switch)
-        } header: {
-            InspectorSectionHeader("Text")
         }
     }
 
     @ViewBuilder
     private func appearanceSection(commonType: ShapeType?, shapes: [CanvasShapeModel]) -> some View {
-        Section(isExpanded: $isAppearanceExpanded) {
+        InspectorSection(.shapeAppearance, "Appearance") {
             PopoverSliderRow(label: "Opacity", value: multiShapeBinding(\.opacity), range: 0...1, layout: .form) {
                 "\(Int(($0 * 100).rounded()))%"
             }
@@ -167,8 +153,6 @@ struct MultiShapeInspector: View, MultiShapeEditing {
 
             Toggle("Clip to Frame", isOn: multiShapeOptionalBinding(\.clipToTemplate, default: false))
                 .toggleStyle(.switch)
-        } header: {
-            InspectorSectionHeader("Appearance")
         }
     }
 
@@ -176,15 +160,13 @@ struct MultiShapeInspector: View, MultiShapeEditing {
     private func outlineSection(commonType: ShapeType?, shapes: [CanvasShapeModel]) -> some View {
         if let commonType, commonType.supportsOutline {
             let hasOutline = shapes.contains { ($0.outlineWidth ?? 0) > 0 }
-            Section(isExpanded: $isOutlineExpanded) {
+            InspectorSection(.shapeOutline, "Outline") {
                 InspectorOutlineRows(
                     isOn: Binding(get: { hasOutline }, set: { setOutlineOnSelection($0) }),
                     color: multiShapeOptionalBinding(\.outlineColor, default: CanvasShapeModel.defaultOutlineColor),
                     width: multiShapeOptionalBinding(\.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true),
                     showsDetails: hasOutline
                 )
-            } header: {
-                InspectorSectionHeader("Outline")
             }
         }
     }

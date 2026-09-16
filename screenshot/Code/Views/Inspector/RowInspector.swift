@@ -15,12 +15,6 @@ struct RowInspector: View {
     #if DEBUG && os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
-    @AppStorage("inspectorSizeExpanded") private var isSizeExpanded = true
-    @AppStorage("inspectorBackgroundExpanded") private var isBackgroundExpanded = true
-    @AppStorage("inspectorShapesExpanded") private var isAddElementExpanded = true
-    @AppStorage("inspectorDeviceExpanded") private var isDeviceExpanded = true
-    @AppStorage("inspectorVisibilityExpanded") private var isVisibilityExpanded = true
-    @AppStorage("inspectorOtherExpanded") private var isOtherExpanded = true
     @State private var useCustomSize = false
     @State private var customWidth: String = ""
     @State private var customHeight: String = ""
@@ -38,10 +32,8 @@ struct RowInspector: View {
                         sizeSection(rowIndex: rowIndex, rowId: rowId)
                         deviceSection(rowId: rowId)
                         backgroundSection(rowIndex: rowIndex, rowId: rowId)
-                        Section(isExpanded: $isAddElementExpanded) {
+                        InspectorSection(.rowShapes, "Shapes") {
                             ShapeToolbar(state: state)
-                        } header: {
-                            InspectorSectionHeader("Shapes")
                         }
                         visibilitySection(rowId: rowId)
                         otherSection(rowId: rowId)
@@ -49,7 +41,7 @@ struct RowInspector: View {
                         debugSection
                         #endif
                     }
-                    .formStyle(.grouped)
+                    .inspectorFormChrome()
                     #if os(macOS)
                     .coachPopover(step: .inspector, coach: state.coach, arrowEdge: .trailing)
                     #else
@@ -110,7 +102,7 @@ struct RowInspector: View {
 
     @ViewBuilder
     private func sizeSection(rowIndex: Int, rowId: UUID) -> some View {
-        Section(isExpanded: $isSizeExpanded) {
+        InspectorSection(.rowSize, "Screenshot Size") {
             Picker("Mode", selection: $useCustomSize) {
                 Text("Presets").tag(false)
                 Text("Custom").tag(true)
@@ -134,8 +126,6 @@ struct RowInspector: View {
             } else {
                 presetPicker(rowId: rowId)
             }
-        } header: {
-            InspectorSectionHeader("Screenshot Size")
         }
     }
 
@@ -230,7 +220,7 @@ struct RowInspector: View {
 
     @ViewBuilder
     private func backgroundSection(rowIndex: Int, rowId: UUID) -> some View {
-        Section(isExpanded: $isBackgroundExpanded) {
+        InspectorSection(.rowBackground, "Background") {
             BackgroundEditor(
                 backgroundStyle: safeRowBinding(rowId, keyPath: \.backgroundStyle, default: .color),
                 bgColor: safeRowBinding(rowId, keyPath: \.bgColor, default: .blue),
@@ -283,14 +273,12 @@ struct RowInspector: View {
                         .foregroundStyle(.secondary)
                 }
             }
-        } header: {
-            InspectorSectionHeader("Background")
         }
     }
 
     @ViewBuilder
     private func deviceSection(rowId: UUID) -> some View {
-        Section(isExpanded: $isDeviceExpanded) {
+        InspectorSection(.rowDevice, "Device") {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Default device frame")
                     .scaledFont(UIMetrics.FontSize.body)
@@ -314,8 +302,6 @@ struct RowInspector: View {
                 .help(defaultDeviceHelp(for: rowId))
             }
             .compactControlSize()
-        } header: {
-            InspectorSectionHeader("Device")
         }
     }
 
@@ -360,7 +346,7 @@ struct RowInspector: View {
 
     @ViewBuilder
     private func visibilitySection(rowId: UUID) -> some View {
-        Section(isExpanded: $isVisibilityExpanded) {
+        InspectorSection(.rowVisibility, "Visibility") {
             #if os(macOS)
             HStack(spacing: 6) {
                 Button("Show All") { setVisibility(rowId: rowId, visible: true) }
@@ -391,8 +377,6 @@ struct RowInspector: View {
             // iPad renders each toggle as a native full-width Form row (label + switch).
             visibilityToggles(rowId: rowId)
             #endif
-        } header: {
-            InspectorSectionHeader("Visibility")
         }
     }
 
@@ -402,14 +386,12 @@ struct RowInspector: View {
 
     @ViewBuilder
     private func otherSection(rowId: UUID) -> some View {
-        Section(isExpanded: $isOtherExpanded) {
+        InspectorSection(.rowOther, "Other") {
             Toggle("Exclude when uploading to App Store Connect",
                    isOn: safeRowBinding(rowId, keyPath: \.excludeFromAppStoreConnect, default: false))
                 .scaledFont(UIMetrics.FontSize.body)
                 .toggleStyle(.switch)
                 .compactControlSize()
-        } header: {
-            InspectorSectionHeader("Other")
         }
     }
 

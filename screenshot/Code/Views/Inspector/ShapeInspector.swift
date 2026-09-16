@@ -16,33 +16,18 @@ struct ShapeInspector: View, ShapeEditing {
     @State var isReplacingFillImage = false
     @State var isLocalizationPopoverPresented = false
 
-    @AppStorage("inspectorShapeGeometryExpanded") var isGeometryExpanded = true
-    @AppStorage("inspectorShapeDeviceExpanded") var isDeviceExpanded = true
-    @AppStorage("inspectorShape3DExpanded") var is3DExpanded = false
-    @AppStorage("inspectorShapeTextExpanded") var isTextExpanded = true
-    @AppStorage("inspectorShapeTextBackgroundExpanded") var isTextBackgroundExpanded = false
-    @AppStorage("inspectorShapeMediaExpanded") var isMediaExpanded = true
-    @AppStorage("inspectorShapeAppearanceExpanded") var isAppearanceExpanded = true
-    @AppStorage("inspectorShapeFillExpanded") var isFillExpanded = true
-    @AppStorage("inspectorShapeOutlineExpanded") var isOutlineExpanded = true
-    @AppStorage("inspectorShapeShadowExpanded") var isShadowExpanded = true
-    @AppStorage("inspectorShapeLocalizationExpanded") var isLocalizationExpanded = true
-
-    /// A section header that counts its own overridden properties — without it a collapsed section
-    /// would hide every mark inside it. `group` comes from `LocaleOverrideField`'s named sets, so
-    /// a new case has to be assigned a section instead of silently never being counted.
+    /// A section accessory that counts the section's own overridden properties — without it a
+    /// collapsed section would hide every mark inside it. `group` comes from `LocaleOverrideField`'s
+    /// named sets, so a new case has to be assigned a section instead of silently never being counted.
     @ViewBuilder
-    func sectionHeader(
-        _ title: LocalizedStringKey,
+    func overrideBadge(
         _ group: LocaleOverrideField.InspectorGroup,
         _ fields: Set<LocaleOverrideField>
     ) -> some View {
         let overridden = fields.filter { $0.group == group }
-        InspectorSectionHeader(title) {
-            if !overridden.isEmpty {
-                LocaleOverrideCountBadge(count: overridden.count)
-                    .help(LocaleOverrideField.overriddenHelp(overridden, language: state.localeState.activeLocaleLabel))
-            }
+        if !overridden.isEmpty {
+            LocaleOverrideCountBadge(count: overridden.count)
+                .help(LocaleOverrideField.overriddenHelp(overridden, language: state.localeState.activeLocaleLabel))
         }
     }
 
@@ -86,9 +71,7 @@ struct ShapeInspector: View, ShapeEditing {
                     shadowSection
                     localizationSection(shape: shape, fields: overrideFields)
                 }
-                .formStyle(.grouped)
-                .scaledFont(UIMetrics.FontSize.body)
-                .controlSize(.small)
+                .inspectorFormChrome()
                 .localeOverrideMarks(shapeId: shapeId, fields: overrideFields)
             }
             .shapeReplacementPresenters(

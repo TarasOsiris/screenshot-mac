@@ -13144,6 +13144,16 @@
         }
       }
     },
+    "%lld of the selected shapes are overridden for %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of the selected shapes are overridden for %2$@"
+          }
+        }
+      }
+    },
     "%lld projects" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -15440,6 +15450,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "`~/Library/Application Support/screenshot/projects/<uuid>/resources/` — 导入的图像、屏幕截图和 SVG。"
+          }
+        }
+      }
+    },
+    "^[%lld shape](inflect: true) overridden for %@ — click to select them" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "^[%1$lld shape](inflect: true) overridden for %2$@ — click to select them"
           }
         }
       }
@@ -18426,6 +18446,11 @@
             "value" : "项目的文本和布局同步在一个小文件中，因此项目可以在屏幕截图下载完成之前打开。"
           }
         }
+      }
+    },
+    "A section header shows an amber count when properties inside it are overridden — so a collapsed section still tells you something is there." : {
+      "localizations" : {
+
       }
     },
     "A showcase arranges a row's screenshots side by side on a styled background and renders them as a single image — for a product page, a launch post, a README, or an ad. It doesn't replace store screenshots; it's the picture you post *about* them." : {
@@ -42086,6 +42111,11 @@
         }
       }
     },
+    "Each row header shows an amber count of the shapes that language overrides; click it to select them." : {
+      "localizations" : {
+
+      }
+    },
     "Easiest: paste the agent prompt into your AI assistant and let it connect. Or add the server by hand with the URL and access token, or the JSON configuration. Keep the token private — anyone with it can control the app while the server is running." : {
       "localizations" : {
         "de" : {
@@ -51393,6 +51423,11 @@
         }
       }
     },
+    "Hovering a shape the current language overrides outlines it in amber instead of the usual accent color." : {
+      "localizations" : {
+
+      }
+    },
     "How conflicts are resolved" : {
       "localizations" : {
         "de" : {
@@ -54263,6 +54298,11 @@
             "value" : "在 **Play 管理中心 ▸ 用户和权限**中，邀请服务帐户的电子邮件并授予其编辑应用商品详情的权限。"
           }
         }
+      }
+    },
+    "In the inspector, every control this language overrides is tinted amber, so you can see at a glance what differs from the base language. The properties bar tints the position, size and image controls the same way." : {
+      "localizations" : {
+
       }
     },
     "Include" : {
@@ -57292,6 +57332,11 @@
             "value" : "照明"
           }
         }
+      }
+    },
+    "Line Height" : {
+      "localizations" : {
+
       }
     },
     "Line Spacing" : {
@@ -65751,6 +65796,7 @@
       }
     },
     "Overridden" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -65798,6 +65844,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "被覆盖"
+          }
+        }
+      }
+    },
+    "Overridden for %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Overridden for %1$@: %2$@"
           }
         }
       }
@@ -68409,7 +68465,9 @@
       }
     },
     "Prefer a sidebar? Turn on **Edit selected shapes in the inspector** in Settings ▸ General. The same controls then move into the inspector as collapsible sections (hide the inspector and the bar comes back), a multi-selection gets align and distribute buttons, and the **Insert** menu in the toolbar adds shapes." : {
+      "localizations" : {
 
+      }
     },
     "Prefer a sidebar? Turn on **Edit selected shapes in the inspector** in Settings ▸ General. The same controls then move into the inspector as collapsible sections, a multi-selection gets align and distribute buttons, and the **Insert** menu in the toolbar adds shapes." : {
       "extractionState" : "stale",
@@ -74819,6 +74877,11 @@
         }
       }
     },
+    "Reset All" : {
+      "localizations" : {
+
+      }
+    },
     "Reset all %@ text and image overrides?" : {
       "localizations" : {
         "de" : {
@@ -74921,6 +74984,11 @@
             "value" : "重置所有图像"
           }
         }
+      }
+    },
+    "Reset all overrides for this language" : {
+      "localizations" : {
+
       }
     },
     "Reset All Translations" : {
@@ -75080,6 +75148,11 @@
         }
       }
     },
+    "Reset for this language" : {
+      "localizations" : {
+
+      }
+    },
     "Reset Image" : {
       "localizations" : {
         "de" : {
@@ -75235,6 +75308,11 @@
             "value" : "重置区域设置覆盖"
           }
         }
+      }
+    },
+    "Reset overrides for this language" : {
+      "localizations" : {
+
       }
     },
     "Reset Project" : {
@@ -75654,6 +75732,7 @@
       }
     },
     "Reset to base-language image" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -80768,6 +80847,11 @@
         }
       }
     },
+    "Seeing what a language overrides" : {
+      "localizations" : {
+
+      }
+    },
     "Select" : {
       "localizations" : {
         "de" : {
@@ -83171,7 +83255,9 @@
       }
     },
     "Shape properties move from the bar below the canvas into the sidebar, and come back to the bar while the sidebar is hidden. Click the row name or press Esc to return to row settings." : {
+      "localizations" : {
 
+      }
     },
     "Shape properties move from the bar below the canvas into the sidebar. Click the row name or press Esc to return to row settings." : {
       "extractionState" : "stale",
@@ -91539,6 +91625,11 @@
             "value" : "屏幕截图同步已取消。"
           }
         }
+      }
+    },
+    "The selected shape's summary sits beside its name at the top of the inspector: the language and how many properties it overrides. Its **reset** button opens a menu listing each overridden property, so you can put one back to the base language or reset them all." : {
+      "localizations" : {
+
       }
     },
     "The server requires an **access token**: every request must present it, so another app on your Mac can't quietly drive Screenshot Bro." : {
@@ -102635,6 +102726,11 @@
             "value" : "缩小"
           }
         }
+      }
+    },
+    "The inspector's controls are grouped into collapsible sections. Click a section's title to open or close it; hold **⌥** while clicking to open or close every section at once. How you leave them is remembered." : {
+      "localizations" : {
+
       }
     }
   },

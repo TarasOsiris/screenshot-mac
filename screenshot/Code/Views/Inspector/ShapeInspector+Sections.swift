@@ -4,13 +4,11 @@ import SwiftUI
 extension ShapeInspector {
     @ViewBuilder
     func geometrySection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
-        Section(isExpanded: $isGeometryExpanded) {
+        InspectorSection(.shapeGeometry, "Position & Size", accessory: { overrideBadge(.geometry, fields) }) {
             ShapeGeometryFields(state: state, shapeId: shapeId, shape: shape, layout: .formRows)
             LabeledContent("Rotation") {
                 ShapeRotationControl(state: state, shapeId: shapeId)
             }
-        } header: {
-            sectionHeader("Position & Size", .geometry, fields)
         }
     }
 
@@ -38,7 +36,7 @@ extension ShapeInspector {
 
     @ViewBuilder
     private func deviceSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
-        Section(isExpanded: $isDeviceExpanded) {
+        InspectorSection(.shapeDevice, "Device", accessory: { overrideBadge(.media, fields) }) {
             devicePicker(shape: shape, shapeId: shapeId, presentation: .sidebar)
 
             if shape.screenshotFileName != nil {
@@ -48,14 +46,15 @@ extension ShapeInspector {
             if shape.deviceCategory == .androidPhone && shape.deviceFrameId == nil {
                 AndroidCameraCutoutToggle(hideCameraCutout: shapeBinding(shapeId, \.hideCameraCutout, default: false))
             }
-        } header: {
-            sectionHeader("Device", .media, fields)
         }
     }
 
     @ViewBuilder
     private func device3DSection(shape: CanvasShapeModel) -> some View {
-        Section(isExpanded: $is3DExpanded) {
+        InspectorSection(
+            .shape3D, "3D Device",
+            accessory: { PopoverBadge(text: "Beta", help: "3D device rendering is an experimental feature") }
+        ) {
             Device3DAppearanceControls(
                 pitch: deviceModelRotationBinding(shapeId, \.devicePitch, defaultValue: \.resolvedDevicePitch),
                 yaw: deviceModelRotationBinding(shapeId, \.deviceYaw, defaultValue: \.resolvedDeviceYaw),
@@ -67,10 +66,6 @@ extension ShapeInspector {
                 resetDevice3DAppearance(shapeId)
             }
             .help("Reset rotation, material, and lighting to defaults")
-        } header: {
-            InspectorSectionHeader("3D Device") {
-                PopoverBadge(text: "Beta", help: "3D device rendering is an experimental feature")
-            }
         }
     }
 
@@ -80,7 +75,7 @@ extension ShapeInspector {
     private func textSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         let customControlState = CustomFontRegistry.controlState(for: shape)
 
-        Section(isExpanded: $isTextExpanded) {
+        InspectorSection(.shapeText, "Text", accessory: { overrideBadge(.typography, fields) }) {
             LabeledContent("Font") {
                 TextFontPickerControl(state: state, shapeId: shapeId)
             }
@@ -138,16 +133,12 @@ extension ShapeInspector {
             if shape.hasRichText {
                 TextClearFormattingButton(state: state, shapeId: shapeId)
             }
-        } header: {
-            sectionHeader("Text", .typography, fields)
         }
     }
 
     private var textBackgroundSection: some View {
-        Section(isExpanded: $isTextBackgroundExpanded) {
+        InspectorSection(.shapeTextBackground, "Text Background") {
             TextBackgroundControls(state: state, shapeId: shapeId, wrapsPresets: true)
-        } header: {
-            InspectorSectionHeader("Text Background")
         }
     }
 
@@ -155,16 +146,14 @@ extension ShapeInspector {
 
     @ViewBuilder
     private func imageSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
-        Section(isExpanded: $isMediaExpanded) {
+        InspectorSection(.shapeMedia, "Image", accessory: { overrideBadge(.media, fields) }) {
             replaceImageRow(title: shape.imageFileName != nil ? "Replace Image" : "Choose Image")
-        } header: {
-            sectionHeader("Image", .media, fields)
         }
     }
 
     @ViewBuilder
     private func svgSection(shape: CanvasShapeModel) -> some View {
-        Section(isExpanded: $isMediaExpanded) {
+        InspectorSection(.shapeMedia, "SVG") {
             Toggle("Custom color", isOn: shapeBinding(shapeId, \.svgUseColor, default: false))
                 .toggleStyle(.switch)
                 .help("Use custom color for SVG")
@@ -181,8 +170,6 @@ extension ShapeInspector {
             } label: {
                 Label("Replace SVG", systemImage: "arrow.triangle.2.circlepath")
             }
-        } header: {
-            InspectorSectionHeader("SVG")
         }
     }
 
@@ -199,7 +186,7 @@ extension ShapeInspector {
 
     @ViewBuilder
     func appearanceSection(shape: CanvasShapeModel) -> some View {
-        Section(isExpanded: $isAppearanceExpanded) {
+        InspectorSection(.shapeAppearance, "Appearance") {
             LabeledContent("Opacity") {
                 ShapeOpacityField(state: state, shapeId: shapeId, showsSlider: true)
             }
@@ -222,15 +209,13 @@ extension ShapeInspector {
 
             Toggle("Clip to Frame", isOn: shapeBinding(shapeId, \.clipToTemplate, default: false))
                 .toggleStyle(.switch)
-        } header: {
-            InspectorSectionHeader("Appearance")
         }
     }
 
     @ViewBuilder
     func fillSection(shape: CanvasShapeModel) -> some View {
         if shape.type.supportsFill {
-            Section(isExpanded: $isFillExpanded) {
+            InspectorSection(.shapeFill, "Fill") {
                 BackgroundEditor(
                     backgroundStyle: fillStyleBinding(shapeId),
                     bgColor: shapeBinding(shapeId, \.color),
@@ -242,8 +227,6 @@ extension ShapeInspector {
                     onRemoveImage: { state.removeShapeFillImage(for: shapeId) },
                     onDropImage: { image in state.saveShapeFillImage(image, for: shapeId) }
                 )
-            } header: {
-                InspectorSectionHeader("Fill")
             }
         }
     }
@@ -251,15 +234,13 @@ extension ShapeInspector {
     @ViewBuilder
     func outlineSection(shape: CanvasShapeModel) -> some View {
         if shape.supportsOutlineEditing {
-            Section(isExpanded: $isOutlineExpanded) {
+            InspectorSection(.shapeOutline, "Outline") {
                 InspectorOutlineRows(
                     isOn: outlineEnabledBinding(shapeId),
                     color: shapeBinding(shapeId, \.outlineColor, default: CanvasShapeModel.defaultOutlineColor),
                     width: shapeBinding(shapeId, \.outlineWidth, default: CanvasShapeModel.defaultOutlineWidth, continuous: true),
                     showsDetails: (shape.outlineWidth ?? 0) > 0
                 )
-            } header: {
-                InspectorSectionHeader("Outline")
             }
         }
     }
@@ -267,15 +248,13 @@ extension ShapeInspector {
     var shadowSection: some View {
         let shadow = optionalConfigBinding(shapeId, \.shadow, fallback: ShadowConfig(), isEmpty: \.isEmpty)
 
-        return Section(isExpanded: $isShadowExpanded) {
+        return InspectorSection(.shapeShadow, "Shadow") {
             ShadowControls(shadow: shadow)
 
             PopoverResetButton(label: "Reset", isDisabled: { resolvedDocumentShape(shapeId)?.shadow == nil }) {
                 shadow.wrappedValue = ShadowConfig()
             }
             .help("Remove the shadow")
-        } header: {
-            InspectorSectionHeader("Shadow")
         }
     }
 
@@ -284,7 +263,7 @@ extension ShapeInspector {
     @ViewBuilder
     func localizationSection(shape: CanvasShapeModel, fields: Set<LocaleOverrideField>) -> some View {
         if shape.type == .text && state.localeState.nonBaseLocaleCount > 0 {
-            Section(isExpanded: $isLocalizationExpanded) {
+            InspectorSection(.shapeLocalization, "Localization", accessory: { overrideBadge(.translation, fields) }) {
                 Button("Edit Translations...") {
                     isLocalizationPopoverPresented = true
                 }
@@ -293,8 +272,6 @@ extension ShapeInspector {
                         isLocalizationPopoverPresented = false
                     }
                 }
-            } header: {
-                sectionHeader("Localization", .translation, fields)
             }
         }
     }

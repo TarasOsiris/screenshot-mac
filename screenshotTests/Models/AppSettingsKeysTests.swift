@@ -63,4 +63,36 @@ struct AppSettingsKeysTests {
     @Test func defaultDeviceCategoryNamesARealCase() {
         #expect(DeviceCategory(rawValue: AppSettingsKeys.Default.defaultDeviceCategory) != nil)
     }
+
+    /// Until 4.16 these were inline `@AppStorage` literals in the three inspector views, five of
+    /// them copy-pasted so single- and multi-selection shared a section. They are now enum cases,
+    /// which is a rename away from re-expanding every section a user has collapsed.
+    @Test func inspectorSectionKeyRawValuesAreStable() {
+        #expect(InspectorSectionID.rowSize.rawValue == "inspectorSizeExpanded")
+        #expect(InspectorSectionID.rowDevice.rawValue == "inspectorDeviceExpanded")
+        #expect(InspectorSectionID.rowBackground.rawValue == "inspectorBackgroundExpanded")
+        #expect(InspectorSectionID.rowShapes.rawValue == "inspectorShapesExpanded")
+        #expect(InspectorSectionID.rowVisibility.rawValue == "inspectorVisibilityExpanded")
+        #expect(InspectorSectionID.rowOther.rawValue == "inspectorOtherExpanded")
+        #expect(InspectorSectionID.shapeGeometry.rawValue == "inspectorShapeGeometryExpanded")
+        #expect(InspectorSectionID.shapeDevice.rawValue == "inspectorShapeDeviceExpanded")
+        #expect(InspectorSectionID.shape3D.rawValue == "inspectorShape3DExpanded")
+        #expect(InspectorSectionID.shapeText.rawValue == "inspectorShapeTextExpanded")
+        #expect(InspectorSectionID.shapeTextBackground.rawValue == "inspectorShapeTextBackgroundExpanded")
+        #expect(InspectorSectionID.shapeMedia.rawValue == "inspectorShapeMediaExpanded")
+        #expect(InspectorSectionID.shapeAppearance.rawValue == "inspectorShapeAppearanceExpanded")
+        #expect(InspectorSectionID.shapeFill.rawValue == "inspectorShapeFillExpanded")
+        #expect(InspectorSectionID.shapeOutline.rawValue == "inspectorShapeOutlineExpanded")
+        #expect(InspectorSectionID.shapeShadow.rawValue == "inspectorShapeShadowExpanded")
+        #expect(InspectorSectionID.shapeLocalization.rawValue == "inspectorShapeLocalizationExpanded")
+        // An 18th case would otherwise ship unpinned, which is how a key drifts unnoticed.
+        #expect(InspectorSectionID.allCases.count == 17)
+    }
+
+    /// The expansion a fresh install opens with. Both closed sections are secondary surfaces that
+    /// would otherwise push the sections below them off-screen on every selection.
+    @Test func inspectorSectionsStartExpandedExceptTheSecondaryOnes() {
+        let closed = InspectorSectionID.allCases.filter { !$0.startsExpanded }
+        #expect(Set(closed) == [.shape3D, .shapeTextBackground])
+    }
 }

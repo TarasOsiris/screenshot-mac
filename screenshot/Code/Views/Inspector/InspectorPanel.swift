@@ -45,3 +45,14 @@ struct InspectorPanel: View {
         }
     }
 }
+
+extension View {
+    /// The three inspector panels are one surface, so they share a density. `compactControlSize`
+    /// rather than `.controlSize(.small)`: the row inspector also builds on iPad, where shrinking
+    /// the controls would put them under the touch-target floor.
+    func inspectorFormChrome() -> some View {
+        formStyle(.grouped)
+            .scaledFont(UIMetrics.FontSize.body)
+            .compactControlSize()
+    }
+}

@@ -55,3 +55,37 @@ nonisolated enum AppSettingsKeys {
         static let selectionInspector = false
     }
 }
+
+/// A collapsible inspector section, and the key its expansion persists under.
+///
+/// The raw values are the keys 4.16 shipped as inline literals across the three inspector views —
+/// changing one silently re-expands that section for everyone, so `AppSettingsKeysTests` pins them.
+/// Single- and multi-selection deliberately share five sections; as literals that was a string
+/// match nothing enforced, and as cases it is the same value by construction.
+nonisolated enum InspectorSectionID: String, CaseIterable {
+    case rowSize = "inspectorSizeExpanded"
+    case rowDevice = "inspectorDeviceExpanded"
+    case rowBackground = "inspectorBackgroundExpanded"
+    case rowShapes = "inspectorShapesExpanded"
+    case rowVisibility = "inspectorVisibilityExpanded"
+    case rowOther = "inspectorOtherExpanded"
+    case shapeGeometry = "inspectorShapeGeometryExpanded"
+    case shapeDevice = "inspectorShapeDeviceExpanded"
+    case shape3D = "inspectorShape3DExpanded"
+    case shapeText = "inspectorShapeTextExpanded"
+    case shapeTextBackground = "inspectorShapeTextBackgroundExpanded"
+    case shapeMedia = "inspectorShapeMediaExpanded"
+    case shapeAppearance = "inspectorShapeAppearanceExpanded"
+    case shapeFill = "inspectorShapeFillExpanded"
+    case shapeOutline = "inspectorShapeOutlineExpanded"
+    case shapeShadow = "inspectorShapeShadowExpanded"
+    case shapeLocalization = "inspectorShapeLocalizationExpanded"
+
+    /// Secondary and experimental sections start closed, as they shipped.
+    var startsExpanded: Bool {
+        switch self {
+        case .shape3D, .shapeTextBackground: false
+        default: true
+        }
+    }
+}
