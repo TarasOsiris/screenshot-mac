@@ -77,15 +77,37 @@ extension EditorRowView {
         state.viewMode.togglePreview(for: row.id)
         if !wasPreview {
             textEditingShapeId = nil
-            dragSession.reset()
-            endLiveGeometryIfOwned()
+            endCanvasGestures()
         }
+    }
+
+    /// One canvas gesture is tracked by three things — `CanvasDragSession`, the live-geometry
+    /// readout, and the canvas cursor claim — and each has its own end. Teardown goes through these
+    /// two verbs rather than pairing the calls by hand, which is how the cursor claim came to have
+    /// no teardown at all.
+    func endCanvasGesture(for shapeId: UUID) {
+        dragSession.endDrag()
+        state.liveShapeGeometry.end(for: shapeId)
+    }
+
+    /// The same, where the caller doesn't know which shape was under the pointer.
+    func endCanvasGestures() {
+        dragSession.reset()
+        endLiveGeometryIfOwned()
+        // Row preview is a different flag from the global view mode, so it never reaches
+        // `applyHoverCursor`'s guard.
+        PlatformCursor.clear(.canvas)
     }
 
     /// Reading `shapeId` outside a `body` registers no observation dependency.
     func endLiveGeometryIfOwned() {
-        guard let id = state.liveShapeGeometry.shapeId,
-              row.shapes.contains(where: { $0.id == id }) else { return }
+        guard let id = state.liveShapeGeometry.shapeId else { return }
+        // A shape deleted mid-drag belongs to no row, so its gesture's `onEnded` never fires and
+        // no row's teardown would ever claim it — the id would stay published for the rest of the
+        // session. Owned-here or owned-by-nobody are both ours to end.
+        let ownedHere = row.shapes.contains { $0.id == id }
+        let orphaned = !state.rows.contains { $0.shapes.contains { $0.id == id } }
+        guard ownedHere || orphaned else { return }
         state.liveShapeGeometry.end()
     }
 

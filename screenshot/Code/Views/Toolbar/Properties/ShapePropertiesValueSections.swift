@@ -20,29 +20,24 @@ struct ShapeOpacityField: View, ShapeEditing {
                     .inspectorSliderWidth(layout)
             }
 
-            HStack(spacing: 0) {
-                ShapePropertyField(
-                    shapeId: shapeId,
-                    text: $text,
-                    isActive: $isActive,
-                    width: layout.valueWidth(strip: propertiesOpacityFieldWidth),
-                    clearsFocusOnSelectionChange: true,
-                    modelValue: opacity.wrappedValue,
-                    current: { currentOpacityString(for: $0) },
-                    commit: { commitOpacity(to: $0, draft: draft) },
-                    liveSelection: { state.selectedShapeId }
-                )
-
-                Text("%")
-                    .scaledFont(UIMetrics.FontSize.numericBadge)
-                    .foregroundStyle(.secondary)
-                    .inspectorUnitColumn(layout)
-            }
+            ShapePropertyField(
+                shapeId: shapeId,
+                text: $text,
+                isActive: $isActive,
+                width: layout.valueWidth(strip: propertiesOpacityFieldWidth),
+                layout: layout,
+                clearsFocusOnSelectionChange: true,
+                modelValue: opacity.wrappedValue,
+                current: { currentOpacityString(for: $0) },
+                commit: { commitOpacity(to: $0, draft: draft) },
+                liveSelection: { state.selectedShapeId }
+            )
+            .unitSuffix("%", layout)
         }
     }
 }
 
-/// Rotation slider, degree field and reset.
+/// Rotation degree field and reset.
 struct ShapeRotationControl: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
@@ -53,40 +48,32 @@ struct ShapeRotationControl: View, ShapeEditing {
 
     var body: some View {
         let draft = ShapeFieldDraft(text: $text, isActive: $isActive)
-        let slider = rotationBinding(shapeId)
+        let rotation = liveRotation(shapeId)
         HStack(spacing: layout.columnGap) {
-            // Ahead of the slider in a form row: the content is trailing-aligned, so an
-            // affordance that comes and goes with the value has to sit on the side that isn't
-            // the shared column — otherwise rotating past 0 nudges the field sideways.
+            // Leading in a form row: the content is trailing-aligned, so an affordance that comes
+            // and goes with the value has to sit on the side that isn't the shared column —
+            // otherwise rotating past 0 nudges the field sideways.
             if layout == .formRow {
-                resetButton(rotation: slider.wrappedValue, draft: draft)
+                resetButton(rotation: rotation, draft: draft)
             }
 
-            Slider(value: slider, in: 0...360)
-                .inspectorSliderWidth(layout)
+            ShapePropertyField(
+                shapeId: shapeId,
+                text: $text,
+                isActive: $isActive,
+                width: layout.valueWidth(strip: propertiesNumericFieldWidth),
+                layout: layout,
+                keyboard: .signed,
+                clearsFocusOnSelectionChange: true,
+                modelValue: rotation,
+                current: { currentRotationString(for: $0) },
+                commit: { commitRotation(to: $0, draft: draft) },
+                liveSelection: { state.selectedShapeId }
+            )
+            .unitSuffix("°", layout)
 
-            HStack(spacing: 0) {
-                ShapePropertyField(
-                    shapeId: shapeId,
-                    text: $text,
-                    isActive: $isActive,
-                    width: layout.valueWidth(strip: propertiesNumericFieldWidth),
-                    keyboard: .signed,
-                    clearsFocusOnSelectionChange: true,
-                    modelValue: slider.wrappedValue,
-                    current: { currentRotationString(for: $0) },
-                    commit: { commitRotation(to: $0, draft: draft) },
-                    liveSelection: { state.selectedShapeId }
-                )
-
-                Text("°")
-                    .scaledFont(UIMetrics.FontSize.numericBadge)
-                    .foregroundStyle(.secondary)
-                    .inspectorUnitColumn(layout)
-            }
-
-            if layout == .strip {
-                resetButton(rotation: slider.wrappedValue, draft: draft)
+            if layout != .formRow {
+                resetButton(rotation: rotation, draft: draft)
             }
         }
     }

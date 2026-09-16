@@ -9,6 +9,9 @@ struct CanvasShapeHandlesOverlay: View {
     let handleDiameter: CGFloat
     @Binding var rotationDelta: Double
     @Binding var resizeState: ResizeState?
+    /// Holds the gesture's pre-resize base — see `CanvasDragSession.resizeBase`. Only
+    /// `@ObservationIgnored` state is touched here, so this registers no per-tick dependency.
+    let dragSession: CanvasDragSession
     let onUpdate: (CanvasShapeModel) -> Void
 
     /// Only `CanvasSelectionLayer` builds this, and only for a single selection — see the
@@ -29,8 +32,6 @@ struct CanvasShapeHandlesOverlay: View {
     private var displayY: CGFloat { displayRect.minY }
     private var displayW: CGFloat { displayRect.width }
     private var displayH: CGFloat { displayRect.height }
-
-    private var rotationRadians: CGFloat { shape.rotation * .pi / 180 }
 
     private var resizeHandles: some View {
         ZStack {
@@ -74,9 +75,7 @@ struct CanvasShapeHandlesOverlay: View {
                     .strokeBorder(Color.accentColor, lineWidth: 1.5 / zoom)
                     .frame(width: handleSize, height: handleSize)
             }
-            .onHover { hovering in
-                if hovering { PlatformCursor.pushRotate() } else { PlatformCursor.pop() }
-            }
+            .cursorHover(.rotate, for: .rotateHandle)
             .position(x: displayW / 2, y: -stemLength)
             .gesture(rotateGesture(stemLength: stemLength))
         }
@@ -89,9 +88,9 @@ struct CanvasShapeHandlesOverlay: View {
         let handleVectorY = handleDistance * sin(baseAngleRadians)
         let startAngle = atan2(handleVectorY, handleVectorX) * 180 / .pi
 
-        return DragGesture(coordinateSpace: .global)
+        return DragGesture(minimumDistance: 0, coordinateSpace: .global)
             .onChanged { value in
-                PlatformCursor.setRotate()
+                PlatformCursor.hold(.rotate, for: .rotateHandle)
 
                 let currentX = handleVectorX + value.translation.width
                 let currentY = handleVectorY + value.translation.height
@@ -107,12 +106,16 @@ struct CanvasShapeHandlesOverlay: View {
                 rotationDelta = delta
             }
             .onEnded { _ in
-                PlatformCursor.setArrow()
-                var updated = shape
-                updated.rotation = CanvasShapeModel.normalizedRotation(shape.rotation + rotationDelta)
+                PlatformCursor.release(.rotateHandle)
+                let delta = rotationDelta
                 // Cleared before the commit, unlike the resize handle: `pendingRotation` is a
                 // delta the canvas *adds* to `shape.rotation`, where `ResizeState` is absolute.
                 rotationDelta = 0
+                // `minimumDistance: 0` reports a bare click as a zero-delta gesture; committing it
+                // would walk the whole undo/save machinery to discover there is nothing to record.
+                guard delta != 0 else { return }
+                var updated = shape
+                updated.rotation = shape.rotation + delta
                 onUpdate(updated)
             }
     }
@@ -148,21 +151,35 @@ struct CanvasShapeHandlesOverlay: View {
                 .frame(width: handleSize, height: handleSize)
                 .allowsHitTesting(false)
         }
-        .onHover { hovering in
-            if hovering { PlatformCursor.pushResize(edge: edge, rotation: currentRotation) } else { PlatformCursor.pop() }
-        }
+        .cursorHover(resizeCursor(for: edge), for: .resizeHandle(edge))
         .position(position)
         .gesture(
-            DragGesture(coordinateSpace: .global)
+            // `minimumDistance: 0` — the default 10 pt threshold isn't a dead zone; the first
+            // tick reports it as translation, so the shape jumps by it before tracking starts.
+            DragGesture(minimumDistance: 0, coordinateSpace: .global)
                 .onChanged { value in
+                    PlatformCursor.hold(resizeCursor(for: edge), for: .resizeHandle(edge))
+                    // `resizeState == nil` is the authoritative "gesture began" — it is the
+                    // binding this gesture itself fills. The zero-translation test stays as the
+                    // second signal, for a fresh gesture following one whose `onEnded` never came.
+                    if resizeState == nil || value.translation == .zero {
+                        dragSession.resizeBase[shape.id] = shape
+                    }
+                    let base = dragSession.resizeBase[shape.id] ?? shape
                     let effectiveScale = displayScale * zoom
-                    let tx = value.translation.width / effectiveScale
-                    let ty = value.translation.height / effectiveScale
-                    let lockAspectRatio = PlatformModifiers.shiftDown || shape.locksAspectRatioOnResize
-                    resizeState = computeResize(edge: edge, tx: tx, ty: ty, lockAspectRatio: lockAspectRatio)
+                    resizeState = ResizeGeometry.resize(
+                        shape: base,
+                        edge: edge,
+                        translation: CGSize(
+                            width: value.translation.width / effectiveScale,
+                            height: value.translation.height / effectiveScale
+                        ),
+                        lockAspectRatio: PlatformModifiers.shiftDown || base.locksAspectRatioOnResize
+                    )
                 }
                 .onEnded { _ in
-                    if let resizeState {
+                    PlatformCursor.release(.resizeHandle(edge))
+                    if let resizeState, resizeState.movedFrom(shape) {
                         var updated = shape
                         updated.x = resizeState.newX
                         updated.y = resizeState.newY
@@ -170,81 +187,13 @@ struct CanvasShapeHandlesOverlay: View {
                         updated.height = resizeState.newH
                         onUpdate(updated)
                     }
+                    dragSession.resizeBase[shape.id] = nil
                     resizeState = nil
                 }
         )
     }
 
-    private func computeResize(edge: ResizeEdge, tx: CGFloat, ty: CGFloat, lockAspectRatio: Bool) -> ResizeState {
-        let minSize = shape.minResizeSize
-        let cosA = cos(rotationRadians)
-        let sinA = sin(rotationRadians)
-        let localTx = tx * cosA + ty * sinA
-        let localTy = -tx * sinA + ty * cosA
-
-        var newW = shape.width
-        var newH = shape.height
-        switch edge {
-        case .topLeft:
-            newW = max(minSize, shape.width - localTx)
-            newH = max(minSize, shape.height - localTy)
-        case .top:
-            newH = max(minSize, shape.height - localTy)
-        case .topRight:
-            newW = max(minSize, shape.width + localTx)
-            newH = max(minSize, shape.height - localTy)
-        case .left:
-            newW = max(minSize, shape.width - localTx)
-        case .right:
-            newW = max(minSize, shape.width + localTx)
-        case .bottomLeft:
-            newW = max(minSize, shape.width - localTx)
-            newH = max(minSize, shape.height + localTy)
-        case .bottom:
-            newH = max(minSize, shape.height + localTy)
-        case .bottomRight:
-            newW = max(minSize, shape.width + localTx)
-            newH = max(minSize, shape.height + localTy)
-        }
-
-        if lockAspectRatio {
-            let drivesWidth: Bool
-            switch edge {
-            case .left, .right:
-                drivesWidth = true
-            case .top, .bottom:
-                drivesWidth = false
-            case .topLeft, .topRight, .bottomLeft, .bottomRight:
-                let widthScale = newW / max(shape.width, 1)
-                let heightScale = newH / max(shape.height, 1)
-                drivesWidth = abs(widthScale - 1) >= abs(heightScale - 1)
-            }
-            let locked = drivesWidth
-                ? shape.aspectLockedSize(target: newW, drivenBy: shape.width)
-                : shape.aspectLockedSize(target: newH, drivenBy: shape.height)
-            newW = locked.width
-            newH = locked.height
-        }
-
-        let anchor = edge.anchorPoint(width: shape.width, height: shape.height)
-        let centerX = shape.x + shape.width / 2
-        let centerY = shape.y + shape.height / 2
-        let anchorX = anchor.x - shape.width / 2
-        let anchorY = anchor.y - shape.height / 2
-        let anchorCanvasX = centerX + anchorX * cosA - anchorY * sinA
-        let anchorCanvasY = centerY + anchorX * sinA + anchorY * cosA
-
-        let newAnchor = edge.anchorPoint(width: newW, height: newH)
-        let newAnchorX = newAnchor.x - newW / 2
-        let newAnchorY = newAnchor.y - newH / 2
-        let newCenterX = anchorCanvasX - (newAnchorX * cosA - newAnchorY * sinA)
-        let newCenterY = anchorCanvasY - (newAnchorX * sinA + newAnchorY * cosA)
-
-        return ResizeState(
-            newX: newCenterX - newW / 2,
-            newY: newCenterY - newH / 2,
-            newW: newW,
-            newH: newH
-        )
+    private func resizeCursor(for edge: ResizeEdge) -> PlatformCursor.Kind {
+        .resize(edge: edge, rotation: currentRotation)
     }
 }

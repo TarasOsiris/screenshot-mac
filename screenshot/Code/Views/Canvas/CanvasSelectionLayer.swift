@@ -87,6 +87,7 @@ struct CanvasSelectionLayer: View {
                 handleDiameter: handleDiameter,
                 rotationDelta: rotationBinding(for: shape),
                 resizeState: resizeBinding(for: shape),
+                dragSession: dragSession,
                 onUpdate: onUpdate
             )
         } else {
@@ -106,7 +107,7 @@ struct CanvasSelectionLayer: View {
     /// the shape: they outlive this body, and `CanvasShapeModel` is a large refcounted struct.
     private func resizeBinding(for shape: CanvasShapeModel) -> Binding<ResizeState?> {
         let id = shape.id
-        let base = LiveShapeGeometrySession.Frame(shape)
+        let rotation = shape.rotation
         return Binding(
             get: { dragSession.pendingResize[id] },
             set: { newValue in
@@ -118,7 +119,7 @@ struct CanvasSelectionLayer: View {
                             y: newValue.newY,
                             width: newValue.newW,
                             height: newValue.newH,
-                            rotation: base.rotation
+                            rotation: rotation
                         ),
                         for: id
                     )

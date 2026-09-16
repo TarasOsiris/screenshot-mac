@@ -52,24 +52,24 @@ struct ShapeGeometryFields: View, ShapeEditing {
 
     var body: some View {
         // Resolved once: each field would otherwise re-scan the document for the same frame.
-        let frame = liveOrDocumentFrame
+        let placement = liveOrDocumentPlacement
         switch layout {
-        case .strip:
+        case .strip, .popoverColumn:
             HStack(spacing: 6) {
-                geometryField(.x, frame)
-                geometryField(.y, frame)
+                geometryField(.x, placement)
+                geometryField(.y, placement)
 
                 ShapePropertiesSeparator()
 
-                geometryField(.width, frame)
-                geometryField(.height, frame)
+                geometryField(.width, placement)
+                geometryField(.height, placement)
             }
         case .formRow:
-            LabeledContent("Position") {
-                valueColumns(.x, .y, frame)
+            EditorLabeledContent("Position") {
+                valueColumns(.x, .y, placement)
             }
-            LabeledContent("Size") {
-                valueColumns(.width, .height, frame)
+            EditorLabeledContent("Size") {
+                valueColumns(.width, .height, placement)
             }
         }
     }
@@ -77,16 +77,16 @@ struct ShapeGeometryFields: View, ShapeEditing {
     private func valueColumns(
         _ first: ShapeGeometryAxis,
         _ second: ShapeGeometryAxis,
-        _ frame: LiveShapeGeometrySession.Frame?
+        _ placement: CGRect?
     ) -> some View {
         HStack(spacing: layout.columnGap) {
-            geometryField(first, frame)
-            geometryField(second, frame)
+            geometryField(first, placement)
+            geometryField(second, placement)
         }
         .reservesInspectorUnitColumn(layout)
     }
 
-    private func geometryField(_ axis: ShapeGeometryAxis, _ frame: LiveShapeGeometrySession.Frame?) -> some View {
+    private func geometryField(_ axis: ShapeGeometryAxis, _ placement: CGRect?) -> some View {
         HStack(spacing: 3) {
             // Axis labels are notation, not prose — every design tool shows X/Y/W/H untranslated,
             // and the catalog's single-letter keys machine-translate to words ("Y" → "Oui").
@@ -100,16 +100,17 @@ struct ShapeGeometryFields: View, ShapeEditing {
                 text: draft(axis).text,
                 isActive: draft(axis).isActive,
                 width: layout.valueWidth(strip: propertiesGeometryFieldWidth),
+                layout: layout,
                 keyboard: .signed,
                 clearsFocusOnSelectionChange: true,
-                modelValue: modelValue(axis, frame),
+                modelValue: modelValue(axis, placement),
                 current: { currentGeometryString(axis, for: $0) },
                 commit: { commitGeometry(axis, to: $0, drafts: draft) },
-                liveSelection: { state.selectedShapeId }
+                liveSelection: { state.selectedShapeId },
+                overrideField: axis.overrideField
             )
             .accessibilityLabel(axis.accessibilityLabel)
         }
-        .localeOverridden(axis.overrideField)
     }
 
     private func draft(_ axis: ShapeGeometryAxis) -> ShapeFieldDraft {
@@ -121,22 +122,26 @@ struct ShapeGeometryFields: View, ShapeEditing {
         }
     }
 
-    private func modelValue(_ axis: ShapeGeometryAxis, _ frame: LiveShapeGeometrySession.Frame?) -> Double? {
-        guard let frame else { return nil }
+    private func modelValue(_ axis: ShapeGeometryAxis, _ placement: CGRect?) -> Double? {
+        guard let placement else { return nil }
         switch axis {
-        case .x: return Double(frame.x)
-        case .y: return Double(frame.y)
-        case .width: return Double(frame.width)
-        case .height: return Double(frame.height)
+        case .x: return Double(placement.origin.x)
+        case .y: return Double(placement.origin.y)
+        case .width: return Double(placement.width)
+        case .height: return Double(placement.height)
         }
     }
 
     /// `ShapePropertyField` re-reads its text when this moves, so it is what makes the fields
     /// follow a canvas gesture. Deliberately not `liveGeometryShape`: routing the trigger through
-    /// the burst session would re-render the strip on every tick of an unrelated slider.
-    private var liveOrDocumentFrame: LiveShapeGeometrySession.Frame? {
-        if let live = state.liveShapeGeometry.frame(for: shapeId) { return live }
-        return resolvedDocumentShape(shapeId).map { LiveShapeGeometrySession.Frame($0) }
+    /// the burst session would re-render the strip on every tick of an unrelated slider. Reads
+    /// `placement(for:)` rather than `frame(for:)` for the same reason — these fields show no
+    /// angle, so a rotate gesture must not reach them.
+    private var liveOrDocumentPlacement: CGRect? {
+        if let live = state.liveShapeGeometry.placement(for: shapeId) { return live }
+        return resolvedDocumentShape(shapeId).map {
+            CGRect(x: $0.x.rounded(), y: $0.y.rounded(), width: $0.width.rounded(), height: $0.height.rounded())
+        }
     }
 }
 
@@ -152,7 +157,8 @@ extension ShapeEditing {
     /// `shape.x` is absolute across the row's whole template strip, so a shape on the third
     /// template would read ~3700. Field values are relative to the template the shape sits in.
     func currentGeometryString(_ axis: ShapeGeometryAxis, for shapeId: UUID) -> String {
-        guard let i = idx(for: shapeId), let shape = liveGeometryShape(shapeId) else { return "0" }
+        guard let i = idx(for: shapeId) else { return "0" }
+        let shape = liveGeometryShape(shapeId, at: i)
         switch axis {
         case .x: return formatGeometry(shape.x - state.rows[i.row].templateOriginX(for: shape))
         case .y: return formatGeometry(shape.y)

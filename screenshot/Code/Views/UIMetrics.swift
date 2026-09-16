@@ -240,6 +240,17 @@ enum UIMetrics {
         /// Laid over the control, so it has to read on an opaque field without dulling its text.
         static let tint: Double = 0.16
         static let cornerRadius: CGFloat = 5
+        /// In a grouped `Form`, a bezeled `TextField` doesn't fill the frame SwiftUI lays out for
+        /// it: the row's padding leaves the trailing and bottom edges bare, and a frame-sized wash
+        /// hangs past the field's corners. Reached through `InspectorValueLayout.fieldBezelInset`,
+        /// so only the `.formRow` surface takes it — outside a Form (the properties bar, a popover
+        /// column) the bezel fills its frame and this inset would gap the wash. UIKit's rounded
+        /// border fills its frame either way, so iPad needs no inset.
+        #if os(macOS)
+        static let formFieldBezelInset = EdgeInsets(top: 0, leading: 0, bottom: 3, trailing: 4)
+        #else
+        static let formFieldBezelInset = EdgeInsets()
+        #endif
     }
 
     /// The inspector's form rows are a two-column grid: a label, then a value control trailing.
@@ -250,10 +261,35 @@ enum UIMetrics {
         static let valueWidth: CGFloat = propertiesGeometryFieldWidth
         /// Between the two columns of a value area (X↔Y, slider↔readout).
         static let columnGap: CGFloat = 10
+        /// The bar packs the same two columns tighter than the inspector does.
+        static let stripColumnGap: CGFloat = 4
         /// Trailing column holding a row's unit suffix ("°", "%"). Reserved even on the rows that
         /// have none — a suffix laid out *after* a field pushes that field out of the shared
         /// column, which is what left Rotation short of Position and Size.
         static let unitWidth: CGFloat = 12
+    }
+
+    /// The property popovers (`ShadowPopover`, `Device3DAppearancePopover`) lay their rows out as a
+    /// dense label/slider/readout column rather than in a `Form`, so they size independently.
+    enum PopoverRow {
+        #if os(macOS)
+        static let labelWidth: CGFloat = 60
+        static let readoutWidth: CGFloat = 44
+        static let columnGap: CGFloat = 8
+        #else
+        static let labelWidth: CGFloat = 80
+        static let readoutWidth: CGFloat = 52
+        static let columnGap: CGFloat = 8
+        #endif
+    }
+
+    enum LabeledControl {
+        #if os(macOS)
+        /// AppKit fields render their text below the label's native baseline in compact rows.
+        static let labelVerticalOffset: CGFloat = 4
+        #else
+        static let labelVerticalOffset: CGFloat = 0
+        #endif
     }
 
     /// Collapsible sections in the selection / row inspector.

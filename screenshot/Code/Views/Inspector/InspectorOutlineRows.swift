@@ -14,11 +14,11 @@ struct InspectorOutlineRows: View {
             .toggleStyle(.switch)
 
         if showsDetails {
-            LabeledContent("Color") {
+            EditorLabeledContent("Color") {
                 ColorPicker("Outline", selection: color, supportsOpacity: false)
                     .labelsHidden()
             }
-            PopoverSliderRow(label: "Width", value: width, range: 1...50, layout: .form)
+            PopoverSliderRow(label: "Width", value: width, range: 1...50, layout: .formRow)
         }
     }
 }

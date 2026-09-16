@@ -71,6 +71,7 @@ struct ShapeToolbar: View {
                         addShape(type)
                     } label: {
                         Label(type.label, systemImage: type.icon)
+                            .labelStyle(.titleAndIcon)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)

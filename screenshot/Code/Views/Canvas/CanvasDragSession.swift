@@ -25,6 +25,12 @@ final class CanvasDragSession {
     @ObservationIgnored var cachedSnapTargets: [AlignmentService.OtherShapeBounds]?
     /// Captured on the marquee's first tick; not observable view input.
     @ObservationIgnored var marqueeBase: MarqueeBase?
+    /// The shape as it stood when a resize began. `shape` is re-supplied from the document on every
+    /// body evaluation, so a mid-drag write would rebase the accumulated translation and jump the
+    /// shape. Lives here, beside `pendingResize`, so the gesture has one base with one lifetime —
+    /// the handle overlay and the readout published from `CanvasSelectionLayer` used to latch their
+    /// own, at different moments, and nothing made them agree. Not observable view input.
+    @ObservationIgnored var resizeBase: [UUID: CanvasShapeModel] = [:]
 
     /// The parts of a marquee drag that are fixed at mouse-down: where it started, what the
     /// selection was (so a shift-drag can union against it on every tick), and whether the press
@@ -40,6 +46,7 @@ final class CanvasDragSession {
         endMarquee()
         pendingResize = [:]
         pendingRotation = [:]
+        resizeBase = [:]
     }
 
     func endMarquee() {

@@ -22,10 +22,28 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     var y: CGFloat
     var width: CGFloat
     var height: CGFloat
-    var rotation: Double
     var borderRadius: CGFloat
     var colorData: CodableColor
-    var opacity: Double
+
+    /// Backing storage for the two properties whose range is an invariant rather than a
+    /// convention. Every writer — the rotate handle, the typed field, a keypath binding, the MCP
+    /// `update_shape` patch, the decoder — goes through the computed pair below, so none of them
+    /// has to remember. `private` is file-scoped, and the whole struct's logic lives in this file.
+    private var storedRotation: Double = 0
+    private var storedOpacity: Double = 1.0
+
+    /// Degrees, always folded into 0..<360. Still a `var`, so `\.rotation` stays a
+    /// `WritableKeyPath` and the generic `shapeBinding`/`multiShapeBinding` keep working.
+    nonisolated var rotation: Double {
+        get { storedRotation }
+        set { storedRotation = Self.normalizedRotation(newValue) }
+    }
+
+    /// Always within 0...1.
+    nonisolated var opacity: Double {
+        get { storedOpacity }
+        set { storedOpacity = min(max(newValue, 0), 1) }
+    }
 
     // MARK: Type-specific field groups
     // Storage is grouped by shape type; the flat properties below are computed passthroughs so
@@ -181,10 +199,10 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         y = try c.decode(CGFloat.self, forKey: .y)
         width = try c.decode(CGFloat.self, forKey: .width)
         height = try c.decode(CGFloat.self, forKey: .height)
-        rotation = try c.decodeIfPresent(Double.self, forKey: .rotation) ?? 0
+        storedRotation = Self.normalizedRotation(try c.decodeIfPresent(Double.self, forKey: .rotation) ?? 0)
         borderRadius = try c.decodeIfPresent(CGFloat.self, forKey: .borderRadius) ?? 0
         colorData = try c.decode(CodableColor.self, forKey: .colorData)
-        opacity = try c.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
+        storedOpacity = min(max(try c.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0, 0), 1)
         text = try c.decodeIfPresent(String.self, forKey: .text)
         richText = try c.decodeIfPresent(String.self, forKey: .richText)
         fontName = try c.decodeIfPresent(String.self, forKey: .fontName)
@@ -337,10 +355,10 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
         self.y = y
         self.width = width
         self.height = height
-        self.rotation = rotation
+        self.storedRotation = Self.normalizedRotation(rotation)
         self.borderRadius = borderRadius
         self.colorData = CodableColor(color)
-        self.opacity = opacity
+        self.storedOpacity = min(max(opacity, 0), 1)
         self.text = text
         self.richText = nil
         self.fontName = fontName
@@ -696,7 +714,7 @@ struct CanvasShapeModel: Identifiable, Codable, Equatable {
     /// Degrees folded into 0..<360, the form `rotation` is stored in. Every surface that composes
     /// an angle from a delta normalizes through here, so a live readout matches what its gesture
     /// finally commits.
-    static func normalizedRotation(_ degrees: Double) -> Double {
+    nonisolated static func normalizedRotation(_ degrees: Double) -> Double {
         let remainder = degrees.truncatingRemainder(dividingBy: 360)
         return remainder < 0 ? remainder + 360 : remainder
     }

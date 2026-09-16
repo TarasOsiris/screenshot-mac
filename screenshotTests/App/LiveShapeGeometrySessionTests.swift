@@ -41,6 +41,33 @@ struct LiveShapeGeometrySessionTests {
         #expect(session.frame(for: shape.id)?.x == 2)
     }
 
+    /// Placement and rotation are stored apart so `@Observable` tracks them apart. The rotation
+    /// control and the X/Y/W/H strip are both mounted in the bar *and* the inspector, so a shared
+    /// property meant every canvas drag re-evaluated the other one at gesture rate.
+    @Test func placementAndRotationInvalidateIndependently() {
+        let session = LiveShapeGeometrySession()
+        let shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 10, height: 10)
+        session.update(.init(shape), for: shape.id)
+
+        // Each tick is composed from the one before it, the way a gesture publishes — rotating the
+        // *pre-gesture* frame would move the placement back and defeat the test rather than the code.
+        let moved = LiveShapeGeometrySession.Frame(shape, offsetBy: CGSize(width: 7, height: 3))
+        let rotationNotified = observationDidNotify({ session.rotation(for: shape.id) }) {
+            session.update(moved, for: shape.id)
+        }
+        #expect(!rotationNotified, "A translate tick must not reach a rotation-only reader")
+
+        let placementNotified = observationDidNotify({ session.placement(for: shape.id) }) {
+            session.update(moved.rotated(by: 25), for: shape.id)
+        }
+        #expect(!placementNotified, "A rotate tick must not reach the X/Y/W/H strip")
+
+        #expect(session.rotation(for: shape.id) == 25)
+        #expect(session.placement(for: shape.id) == CGRect(x: 7, y: 3, width: 10, height: 10))
+        #expect(session.placement(for: UUID()) == nil, "The gate still scopes both accessors")
+        #expect(session.rotation(for: UUID()) == nil)
+    }
+
     /// A resize publishes absolute values and must leave everything that isn't geometry alone —
     /// the shape it is applied to may itself be mid-slider-burst.
     @Test func appliedOverwritesGeometryOnly() {

@@ -177,7 +177,7 @@ struct ShapeEditingTests {
         #expect(editor.currentGeometryString(.width, for: shape.id) == "80")
         #expect(editor.currentGeometryString(.height, for: shape.id) == "90")
         #expect(editor.currentRotationString(for: shape.id) == "45")
-        #expect(editor.rotationBinding(shape.id).wrappedValue == 45, "The slider follows the handle")
+        #expect(editor.liveRotation(shape.id) == 45, "The readout follows the handle")
         #expect(documentShape(state, shape.id)?.x == 100, "The gesture has not landed yet")
 
         state.liveShapeGeometry.end()

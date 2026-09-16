@@ -409,12 +409,9 @@ extension EditorRowView {
                                 }
                                 return result
                             },
-                            onDragEnd: {
-                                dragSession.endDrag()
-                                // After the commit `handleDragEnded` already made, so the readout
-                                // hands the fields back to the document without a stale frame.
-                                state.liveShapeGeometry.end(for: shape.id)
-                            },
+                            // After the commit `handleDragEnded` already made, so the readout
+                            // hands the fields back to the document without a stale frame.
+                            onDragEnd: { endCanvasGesture(for: shape.id) },
                             onOptionDragDuplicate: { shapeId in
                                 if isMulti {
                                     state.duplicateShapesForOptionDrag()
@@ -612,22 +609,25 @@ extension EditorRowView {
 
     /// Only ever called on a hover *transition*, and only acts on one into or out of a **selected**
     /// shape — the scope the per-shape hover had. The open hand advertises the drag you can start
-    /// on a shape that is already selected, not the selection you could make. Anything wider
-    /// stomps cursors other views push: the handles' resize and rotate cursors while the pointer
-    /// is over a handle, and the middle-mouse pan's hand.
+    /// on a shape that is already selected, not the selection you could make. It writes the
+    /// `.canvas` hover slot, which a handle painted on top of the shape outranks and any in-flight
+    /// gesture's hold outranks — so it needs no guards of its own against either.
     private func applyHoverCursor(from previous: UUID?, to hoveredId: UUID?, in resolvedShapes: [CanvasShapeModel]) {
-        guard !state.viewMode.isViewMode,
-              dragSession.draggingShapeId == nil,
-              dragSession.pendingResize.isEmpty,
-              dragSession.pendingRotation.isEmpty else { return }
+        // Clear rather than return: `updateHover` forces the hit to nil in view mode, so the
+        // exit transition that would drop the hand is the very call this guard swallows — and
+        // once the hover is nil, the `previous != hit` gate short-circuits every later move.
+        guard !state.viewMode.isViewMode else {
+            PlatformCursor.clear(.canvas)
+            return
+        }
         let leavingSelected = previous.map(selectedShapeIds.contains) ?? false
         let enteringSelected = hoveredId.map(selectedShapeIds.contains) ?? false
         guard leavingSelected || enteringSelected else { return }
         guard let hoveredId, enteringSelected else {
-            PlatformCursor.setArrow()
+            PlatformCursor.hover(nil, for: .canvas)
             return
         }
         let locked = resolvedShapes.first { $0.id == hoveredId }?.resolvedIsLocked ?? false
-        PlatformCursor.setHover(grabbable: !locked)
+        PlatformCursor.hover(locked ? nil : .openHand, for: .canvas)
     }
 }

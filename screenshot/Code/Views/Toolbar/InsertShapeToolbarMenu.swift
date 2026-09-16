@@ -25,10 +25,8 @@ struct InsertShapeToolbarMenu: View {
                 insertButton(type)
             }
             Divider()
-            Button {
+            Button(ShapeType.svg.label + "…", systemImage: ShapeType.svg.icon) {
                 isSvgDialogPresented = true
-            } label: {
-                Label(ShapeType.svg.label + "…", systemImage: ShapeType.svg.icon)
             }
         } label: {
             Label("Insert", systemImage: "plus.square.on.square")
@@ -46,11 +44,9 @@ struct InsertShapeToolbarMenu: View {
     }
 
     private func insertButton(_ type: ShapeType) -> some View {
-        Button {
+        Button(type.label, systemImage: type.icon) {
             guard let rowId = targetRowId else { return }
             state.insertDefaultShape(type, inRow: rowId)
-        } label: {
-            Label(type.label, systemImage: type.icon)
         }
     }
 }

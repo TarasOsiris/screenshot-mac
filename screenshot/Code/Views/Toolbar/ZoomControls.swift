@@ -1,13 +1,14 @@
 import SwiftUI
 
 #if os(macOS)
-private let zoomButtonSize: CGFloat = 20
 private let zoomLabelMinWidth: CGFloat = 32
 #else
-private let zoomButtonSize: CGFloat = 32
 private let zoomLabelMinWidth: CGFloat = 42
 #endif
 
+/// Deliberately sets no `buttonStyle`: nested in a `ToolbarItem` under `.toolbarRole(.editor)`,
+/// a bare `Button` inherits the automatic toolbar chrome (hover highlight, pressed fill, Liquid
+/// Glass) that the adjacent Insert and Inspector items get. `.borderless` opts out of all of it.
 struct ZoomControls: View {
     @Environment(ZoomController.self) private var zoom
     @State private var isPopoverPresented = false
@@ -15,7 +16,7 @@ struct ZoomControls: View {
     var fitHelpText: LocalizedStringKey = "Fit canvas to the window"
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 4) {
             zoomButton("minus.magnifyingglass", label: "Zoom out", disabled: zoom.level <= ZoomConstants.min) {
                 zoom.zoomOut()
             }
@@ -23,14 +24,20 @@ struct ZoomControls: View {
             Button {
                 isPopoverPresented.toggle()
             } label: {
-                Text(verbatim: "\(Int(zoom.level * 100))%")
-                    .scaledFont(UIMetrics.FontSize.numericBadge, weight: .medium)
-                    .monospacedDigit()
-                    .foregroundStyle(zoom.level == 1.0 ? .tertiary : .secondary)
-                    .frame(minWidth: zoomLabelMinWidth)
-                    .contentShape(Rectangle())
+                HStack(spacing: 6) {
+                    Text(verbatim: "\(Int(zoom.level * 100))%")
+                        .scaledFont(UIMetrics.FontSize.body, weight: .medium)
+                        .monospacedDigit()
+                        .foregroundStyle(zoom.level == 1.0 ? .tertiary : .secondary)
+                        .frame(minWidth: zoomLabelMinWidth)
+
+                    Image(systemName: "chevron.down")
+                        .scaledFont(UIMetrics.FontSize.hint, weight: .semibold)
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                }
+                .contentShape(Rectangle())
             }
-            .buttonStyle(.borderless)
             .focusable(false)
             .help("Zoom options")
             .popover(isPresented: $isPopoverPresented, arrowEdge: .bottom) {
@@ -80,7 +87,6 @@ struct ZoomControls: View {
                 zoom.zoomIn()
             }
         }
-        .compactControlSize()
     }
 
     @ViewBuilder
@@ -100,13 +106,8 @@ struct ZoomControls: View {
         Button(action: action) {
             Label(label, systemImage: icon)
                 .labelStyle(.iconOnly)
-                .scaledFont(UIMetrics.FontSize.body, weight: .semibold)
-                .frame(width: zoomButtonSize, height: zoomButtonSize)
-                .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
         .focusable(false)
-        .foregroundStyle(.secondary)
         .disabled(disabled)
         .help(label)
     }

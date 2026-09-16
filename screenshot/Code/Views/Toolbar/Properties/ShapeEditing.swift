@@ -66,6 +66,14 @@ extension ShapeEditing {
         editingShape(shapeId).map { state.liveShapeGeometry.applied(to: $0) ?? $0 }
     }
 
+    /// The same value, resolved from an index the caller already has. `shapeLocation` scans every
+    /// row's shapes, and the readouts now re-resolve on every tick of a canvas gesture rather than
+    /// once per commit — so the geometry fields look their shape up once instead of twice a tick.
+    func liveGeometryShape(_ shapeId: UUID, at i: (row: Int, shape: Int)) -> CanvasShapeModel {
+        let base = state.liveShapeEdit.liveShape(for: shapeId) ?? documentShape(at: i.row, shapeIdx: i.shape)
+        return state.liveShapeGeometry.applied(to: base) ?? base
+    }
+
     /// What a control that is never dragged should *display*. A burst only changes the properties
     /// being dragged, so a picker or toggle reading `editingShape` would re-render every tick of an
     /// unrelated slider for nothing. Writes still go through `editingShape`.
@@ -211,8 +219,7 @@ extension ShapeEditing {
     }
 
     func currentRotationString(for shapeId: UUID) -> String {
-        guard let shape = liveGeometryShape(shapeId) else { return "0" }
-        return formatRotation(shape.rotation)
+        formatRotation(liveRotation(shapeId))
     }
 
     func formatRotation(_ value: Double) -> String {
@@ -245,15 +252,13 @@ extension ShapeEditing {
         draft.text.wrappedValue = "0"
     }
 
-    /// `shapeBinding`'s rotation, reading through the canvas gesture as well as the slider burst.
-    /// Only the getter differs — the write stays on the shared path, which is blind to the gesture
-    /// on purpose.
-    func rotationBinding(_ shapeId: UUID) -> Binding<Double> {
-        let write = shapeBinding(shapeId, \.rotation, continuous: true)
-        return Binding(
-            get: { liveGeometryShape(shapeId)?.rotation ?? 0 },
-            set: { write.wrappedValue = $0 }
-        )
+    /// Rotation as the reader sees it, following the canvas rotate handle mid-gesture. Reads the
+    /// session's rotation alone rather than `liveGeometryShape`: this runs inside a body, so going
+    /// through `applied(to:)` would subscribe the rotation control to every translate and resize
+    /// tick as well.
+    func liveRotation(_ shapeId: UUID) -> Double {
+        if let live = state.liveShapeGeometry.rotation(for: shapeId) { return live }
+        return resolvedDocumentShape(shapeId)?.rotation ?? 0
     }
 
     // MARK: - Bindings

@@ -51,6 +51,64 @@ struct CanvasShapeModelTests {
         #expect(abs(bb.maxY - 150) < 0.01)
     }
 
+    // MARK: - Rotation and opacity invariants
+
+    /// The range is an invariant, not a convention the writers each remember. Before the model
+    /// owned it, `update_shape` could store a rotation no UI path can produce.
+    @Test func rotationFoldsOnEveryWrite() {
+        var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 10, height: 10)
+
+        shape.rotation = -40
+        #expect(shape.rotation == 320)
+
+        shape.rotation = 370
+        #expect(shape.rotation == 10)
+
+        shape.rotation = -720
+        #expect(shape.rotation == 0)
+
+        shape.rotation = 360
+        #expect(shape.rotation == 0, "360 is outside 0..<360")
+
+        // Composed from a delta, the way the rotate handle commits.
+        shape.rotation = 350
+        shape.rotation = shape.rotation + 30
+        #expect(shape.rotation == 20)
+
+        // Through a keypath, the way the generic bindings write.
+        shape[keyPath: \CanvasShapeModel.rotation] = -90
+        #expect(shape.rotation == 270)
+    }
+
+    @Test func opacityClampsOnEveryWrite() {
+        var shape = CanvasShapeModel(type: .rectangle, x: 0, y: 0, width: 10, height: 10)
+
+        shape.opacity = 1.5
+        #expect(shape.opacity == 1)
+
+        shape.opacity = -0.2
+        #expect(shape.opacity == 0)
+
+        shape[keyPath: \CanvasShapeModel.opacity] = 2
+        #expect(shape.opacity == 1)
+    }
+
+    /// 16 bundled templates ship negative `rot` on disk, so the decoder is a writer like any other.
+    @Test func decodingFoldsAnOutOfRangeRotation() throws {
+        var shape = CanvasShapeModel(type: .rectangle, x: 1, y: 2, width: 3, height: 4)
+        shape.rotation = 300
+        var json = try JSONSerialization.jsonObject(
+            with: try JSONEncoder().encode(shape)
+        ) as? [String: Any] ?? [:]
+        json["rot"] = -40
+        json["o"] = 4.0
+        let patched = try JSONSerialization.data(withJSONObject: json)
+
+        let decoded = try JSONDecoder().decode(CanvasShapeModel.self, from: patched)
+        #expect(decoded.rotation == 320)
+        #expect(decoded.opacity == 1)
+    }
+
     // MARK: - Duplication
 
     @Test func duplicatedCreatesNewId() {

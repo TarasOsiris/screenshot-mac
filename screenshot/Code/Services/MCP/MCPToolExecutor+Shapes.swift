@@ -151,7 +151,7 @@ extension MCPToolExecutor {
     /// Fields only meaningful on update_shape.
     private func applyShapePatch(_ shape: inout CanvasShapeModel, args: MCPArguments) throws {
         if let rotation = args.double("rotation") { shape.rotation = rotation }
-        if let opacity = args.double("opacity") { shape.opacity = min(max(opacity, 0), 1) }
+        if let opacity = args.double("opacity") { shape.opacity = opacity }
         if let radius = args.double("border_radius") { shape.borderRadius = radius }
         if let align = try args.enumValue("text_align", TextAlign.self) { shape.textAlign = align }
         if let spacing = args.double("letter_spacing") { shape.letterSpacing = spacing }

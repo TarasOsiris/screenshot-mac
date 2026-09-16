@@ -53,11 +53,11 @@ extension ShapePropertiesSingleSelectionBar {
         let customControlState = CustomFontRegistry.controlState(for: shape)
 
         VStack(alignment: .leading, spacing: 10) {
-            LabeledContent("Font") {
+            EditorLabeledContent("Font") {
                 TextFontPickerControl(state: state, shapeId: shapeId)
             }
 
-            LabeledContent("Size") {
+            EditorLabeledContent("Size") {
                 HStack(spacing: 4) {
                     TextFontSizeField(state: state, shapeId: shapeId)
 
@@ -69,7 +69,7 @@ extension ShapePropertiesSingleSelectionBar {
 
             Divider()
 
-            LabeledContent("Align") {
+            EditorLabeledContent("Align") {
                 HStack(spacing: 8) {
                     TextAlignPicker(selection: shapeBinding(shapeId, \.textAlign, default: .center))
                         .frame(width: 90)
@@ -92,11 +92,11 @@ extension ShapePropertiesSingleSelectionBar {
 
             Divider()
 
-            LabeledContent("Letter Spacing") {
+            EditorLabeledContent("Letter Spacing") {
                 TextLetterSpacingControl(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.wide)
             }
 
-            LabeledContent("Line Spacing") {
+            EditorLabeledContent("Line Spacing") {
                 TextLineSpacingField(state: state, shapeId: shapeId)
             }
 
@@ -121,14 +121,14 @@ extension ShapePropertiesSingleSelectionBar {
                 TextFontPickerControl(state: state, shapeId: shapeId)
 
                 if customControlState?.showsWeightPicker ?? true {
-                    LabeledContent("Weight") {
+                    EditorLabeledContent("Weight") {
                         TextFontWeightControl(state: state, shapeId: shapeId, customControlState: customControlState)
                     }
                 }
             }
 
             Section("Size") {
-                LabeledContent("Size") {
+                EditorLabeledContent("Size") {
                     TextFontSizeField(state: state, shapeId: shapeId)
                 }
             }
@@ -146,10 +146,10 @@ extension ShapePropertiesSingleSelectionBar {
             }
 
             Section("Spacing") {
-                LabeledContent("Letter Spacing") {
+                EditorLabeledContent("Letter Spacing") {
                     TextLetterSpacingControl(state: state, shapeId: shapeId, sliderWidth: UIMetrics.SliderWidth.standard)
                 }
-                LabeledContent("Line Spacing") {
+                EditorLabeledContent("Line Spacing") {
                     TextLineSpacingField(state: state, shapeId: shapeId)
                 }
             }

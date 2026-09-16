@@ -38,6 +38,7 @@ struct TextFontWeightControl: View, ShapeEditing {
 struct TextFontSizeField: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
+    var layout: InspectorValueLayout = .strip
 
     @State private var text = ""
     @State private var isActive = false
@@ -50,11 +51,13 @@ struct TextFontSizeField: View, ShapeEditing {
                 text: $text,
                 isActive: $isActive,
                 width: propertiesFontFieldWidth,
+                layout: layout,
                 modelValue: editingShape(shapeId)?.fontSize.map(Double.init),
                 current: { currentFontSizeString(for: $0) },
                 commit: { commitFontSize(to: $0, draft: draft) },
                 liveApply: { applyFontSizeContinuously(fallbackShapeId: shapeId, draft: draft) },
-                liveSelection: { state.selectedShapeId }
+                liveSelection: { state.selectedShapeId },
+                overrideField: .fontSize
             )
 
             PresetChevronMenu {
@@ -72,6 +75,7 @@ struct TextFontSizeField: View, ShapeEditing {
 struct TextLineSpacingField: View, ShapeEditing {
     let state: AppState
     let shapeId: UUID
+    var layout: InspectorValueLayout = .strip
 
     @State private var text = ""
     @State private var isActive = false
@@ -84,11 +88,14 @@ struct TextLineSpacingField: View, ShapeEditing {
                 text: $text,
                 isActive: $isActive,
                 width: propertiesFontFieldWidth,
+                layout: layout,
                 modelValue: editingShape(shapeId)?.lineHeightMultiple.map(Double.init),
                 current: { currentLineHeightString(for: $0) },
                 commit: { commitLineHeight(to: $0, draft: draft) },
                 liveApply: { applyLineHeightContinuously(fallbackShapeId: shapeId, draft: draft) },
-                liveSelection: { state.selectedShapeId }
+                liveSelection: { state.selectedShapeId },
+                // This control writes `lineHeightMultiple`; `lineSpacing` is the legacy field.
+                overrideField: .lineHeight
             )
 
             PresetChevronMenu {
@@ -202,7 +209,7 @@ struct TextBackgroundControls: View, ShapeEditing {
                 .controlSize(.small)
 
             if isOn.wrappedValue {
-                LabeledContent("Color") {
+                EditorLabeledContent("Color") {
                     ColorPicker(
                         "",
                         selection: shapeBinding(shapeId, \.textBackgroundColor, default: CanvasShapeModel.defaultTextBackgroundColor),
@@ -239,7 +246,7 @@ struct TextBackgroundControls: View, ShapeEditing {
                     .help(hasOutline.wrappedValue ? String(localized: "Disable outline") : String(localized: "Enable outline"))
 
                 if hasOutline.wrappedValue {
-                    LabeledContent("Outline") {
+                    EditorLabeledContent("Outline") {
                         ColorPicker(
                             "",
                             selection: shapeBinding(

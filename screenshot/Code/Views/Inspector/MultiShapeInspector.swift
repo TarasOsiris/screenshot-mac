@@ -77,7 +77,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
         let italicBinding = multiItalicBinding(controlState: primaryControlState)
 
         InspectorSection(.shapeText, "Text") {
-            LabeledContent("Font") {
+            EditorLabeledContent("Font") {
                 FontPicker(
                     selection: multiFontNameBinding(),
                     fontWeight: weightBinding,
@@ -89,7 +89,7 @@ struct MultiShapeInspector: View, MultiShapeEditing {
             }
 
             if showsMultiFontWeightPicker(primary: primaryControlState, textShapes: shapes) {
-                LabeledContent("Weight") {
+                EditorLabeledContent("Weight") {
                     FontWeightPicker(
                         selection: weightBinding,
                         options: primaryControlState?.availableWeights ?? [300, 400, 500, 700]
@@ -97,45 +97,55 @@ struct MultiShapeInspector: View, MultiShapeEditing {
                 }
             }
 
-            LabeledContent("Align") {
+            EditorLabeledContent("Align") {
                 TextAlignPicker(selection: multiShapeOptionalBinding(\.textAlign, default: .center))
                     .fixedSize()
             }
 
             if showsMultiItalicToggle(textShapes: shapes) {
-                Toggle("Italic", isOn: italicBinding)
-                    .toggleStyle(.switch)
+                EditorLabeledContent("Italic") {
+                    Toggle("Italic", isOn: italicBinding)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
             }
 
-            Toggle("Uppercase", isOn: multiShapeOptionalBinding(\.uppercase, default: false))
-                .toggleStyle(.switch)
+            EditorLabeledContent("Uppercase") {
+                Toggle("Uppercase", isOn: multiShapeOptionalBinding(\.uppercase, default: false))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+            }
         }
     }
 
     @ViewBuilder
     private func appearanceSection(commonType: ShapeType?, shapes: [CanvasShapeModel]) -> some View {
         InspectorSection(.shapeAppearance, "Appearance") {
-            PopoverSliderRow(label: "Opacity", value: multiShapeBinding(\.opacity), range: 0...1, layout: .form) {
+            PopoverSliderRow(label: "Opacity", value: multiShapeBinding(\.opacity), range: 0...1, layout: .formRow) {
                 "\(Int(($0 * 100).rounded()))%"
             }
 
-            HStack(spacing: 4) {
-                PopoverSliderRow(label: "Rotation", value: multiShapeBinding(\.rotation), range: 0...360, layout: .form) {
-                    "\(Int($0.rounded()))°"
-                }
-                if shapes.contains(where: { $0.rotation != 0 }) {
-                    ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
-                        resetRotationOnSelection()
+            PopoverSliderRow(
+                label: "Rotation",
+                value: multiShapeBinding(\.rotation),
+                range: 0...360,
+                layout: .formRow,
+                format: { "\(Int($0.rounded()))°" },
+                leading: {
+                    if shapes.contains(where: { $0.rotation != 0 }) {
+                        ActionButton(icon: "arrow.counterclockwise", tooltip: "Reset rotation", frameSize: UIMetrics.IconButton.frameSize) {
+                            resetRotationOnSelection()
+                        }
                     }
                 }
-            }
+            )
 
             if commonType == .rectangle || commonType == .image {
-                PopoverSliderRow(label: "Radius", value: multiShapeBinding(\.borderRadius), range: 0...500, layout: .form)
+                PopoverSliderRow(label: "Radius", value: multiShapeBinding(\.borderRadius), range: 0...500, layout: .formRow)
             }
 
             if commonType == .star {
-                LabeledContent("Points") {
+                EditorLabeledContent("Points") {
                     Stepper(
                         value: multiShapeOptionalBinding(\.starPointCount, default: CanvasShapeModel.defaultStarPointCount),
                         in: 3...20

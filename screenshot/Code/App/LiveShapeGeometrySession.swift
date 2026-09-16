@@ -11,8 +11,13 @@ import Foundation
 /// The channel is one-directional by design: the canvas renders from `CanvasDragSession` and
 /// already applies this transform itself, so a canvas layer reading here would apply it twice.
 ///
-/// `frame` is private behind the same gate as `LiveShapeEditSession.shape`, so a shape that isn't
-/// under the pointer subscribes to the two `shapeId` transitions and not to the ticks between.
+/// The storage is private behind the same gate as `LiveShapeEditSession.shape`, so a shape that
+/// isn't under the pointer subscribes to the two `shapeId` transitions and not to the ticks between.
+///
+/// Placement and rotation are stored apart so `@Observable` tracks them apart: a translate or
+/// resize tick must not invalidate the rotation control, and a rotate tick must not invalidate the
+/// X/Y/W/H strip. Both readouts sit in the bar *and* the inspector, so one shared property meant
+/// every canvas drag re-evaluated the other one at gesture rate for a value it never touched.
 @Observable @MainActor
 final class LiveShapeGeometrySession {
     struct Frame: Equatable {
@@ -51,13 +56,16 @@ final class LiveShapeGeometrySession {
     }
 
     private(set) var shapeId: UUID?
-    private var frame: Frame?
+    private var placement: CGRect?
+    private var rotationValue: Double?
 
-    // `@Observable` notifies on same-value writes, so both assign only on change — `shapeId` is
-    // what every other shape's readouts observe, and a 120 Hz drag rounds to a repeated frame often.
+    // `@Observable` notifies on same-value writes, so each assigns only on change — `shapeId` is
+    // what every other shape's readouts observe, and a 120 Hz drag rounds to a repeated value often.
     func update(_ frame: Frame, for id: UUID) {
         if shapeId != id { shapeId = id }
-        if self.frame != frame { self.frame = frame }
+        let rect = CGRect(x: frame.x, y: frame.y, width: frame.width, height: frame.height)
+        if placement != rect { placement = rect }
+        if rotationValue != frame.rotation { rotationValue = frame.rotation }
     }
 
     /// Clears only when `id` is what's published, so tearing down one row can't blank the
@@ -70,12 +78,32 @@ final class LiveShapeGeometrySession {
     func end() {
         guard shapeId != nil else { return }
         shapeId = nil
-        frame = nil
+        placement = nil
+        rotationValue = nil
+    }
+
+    /// Position and size alone. A rotate tick leaves this untouched, so a reader of it doesn't
+    /// re-evaluate while the shape spins.
+    func placement(for id: UUID) -> CGRect? {
+        guard shapeId == id else { return nil }
+        return placement
+    }
+
+    /// Rotation alone — the other half of that split.
+    func rotation(for id: UUID) -> Double? {
+        guard shapeId == id else { return nil }
+        return rotationValue
     }
 
     func frame(for id: UUID) -> Frame? {
-        guard shapeId == id else { return nil }
-        return frame
+        guard shapeId == id, let placement, let rotationValue else { return nil }
+        return Frame(
+            x: placement.origin.x,
+            y: placement.origin.y,
+            width: placement.width,
+            height: placement.height,
+            rotation: rotationValue
+        )
     }
 
     func applied(to shape: CanvasShapeModel) -> CanvasShapeModel? {
