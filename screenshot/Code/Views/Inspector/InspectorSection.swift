@@ -44,9 +44,11 @@ struct InspectorSection<Content: View, Accessory: View>: View {
             Text(title)
             accessory
         }
-        // The header is the toggle's label, so the whole band should take the click — without this
-        // the gap between the title and its badge is dead.
+        // The grouped form makes only the chevron clickable, so the header needs its own tap to
+        // behave like a disclosure row. There is no double-toggle to worry about for that reason.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
+        .onTapGesture { toggle() }
         // An overlay, not a stacked child: in the layout the rule made the header two rows tall, and
         // the grouped form centres its disclosure chevron on the whole header — which is what put
         // the chevron above the title it labels. Outside the layout, the header is exactly as tall
@@ -61,19 +63,19 @@ struct InspectorSection<Content: View, Accessory: View>: View {
                 // The rule must not take a click meant for collapsing the section.
                 .allowsHitTesting(false)
         }
-        #if os(macOS)
-        // `.pointerStyle` rather than an `onHover` that pushes `NSCursor`: a push has to be balanced
-        // by a pop, and the header is torn down mid-hover whenever the selection changes panels.
-        .pointerStyle(.link)
-        #endif
     }
 
-    /// Widens the write the form's own toggle already makes, rather than adding a gesture — a second
-    /// one would toggle the section again and cancel the click out.
+    /// The chevron writes through here, the header through `toggle()`; both land in the one writer,
+    /// so a click means the same thing wherever it hits. Deliberately no hover cursor — a native
+    /// disclosure row keeps the arrow.
     private var expansion: Binding<Bool> {
         Binding(get: { isExpanded }) { newValue in
             InspectorSectionExpansion.apply(newValue, to: id, includingAll: PlatformModifiers.optionDown)
         }
+    }
+
+    private func toggle() {
+        InspectorSectionExpansion.apply(!isExpanded, to: id, includingAll: PlatformModifiers.optionDown)
     }
 }
 
