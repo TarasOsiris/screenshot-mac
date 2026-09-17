@@ -80,7 +80,7 @@ struct GooglePlaySettingsView: View {
             }
 
             if credentials.hasServiceAccount {
-                StoreRemoveCredentialsButton(label: "Remove Credentials…", isConfirming: $showClearConfirmation)
+                StoreRemoveCredentialsButton(label: "Clear Credentials…", isConfirming: $showClearConfirmation)
             }
         } header: {
             Text("Service Account")
@@ -94,7 +94,14 @@ struct GooglePlaySettingsView: View {
     }
 
     private var statusHeader: some View {
-        StoreCredentialsStatusHeader(status: status, message: statusMessage)
+        StoreCredentialsStatusHeader(status: status, message: statusMessage, progressSummary: setupSummary)
+    }
+
+    /// Play needs two things where App Store Connect needs four, but the capsule reads the same.
+    private var setupSummary: String {
+        let checks = [credentials.hasServiceAccount, testResult?.passed == true]
+        let complete = checks.count { $0 }
+        return String(localized: "\(complete) of \(checks.count) complete")
     }
 
     private var helpSection: some View {

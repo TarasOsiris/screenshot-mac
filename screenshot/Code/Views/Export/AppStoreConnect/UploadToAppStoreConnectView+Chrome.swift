@@ -53,16 +53,25 @@ extension UploadToAppStoreConnectView {
     }
 
     var header: some View {
-        HStack {
-            Image(systemName: model.mode == .metadata ? "text.badge.checkmark" : "arrow.up.circle.fill")
-                .foregroundStyle(.blue)
-            Text(flowTitle)
-                .font(.headline)
-            Spacer()
-            if model.isBusy { ProgressView().controlSize(.small) }
+        UploadWizardHeader(
+            systemImage: model.mode == .metadata ? "text.badge.checkmark" : "arrow.up.circle.fill",
+            tint: .blue,
+            title: flowTitle,
+            subtitle: stepSubtitle,
+            isBusy: model.isBusy
+        )
+    }
+
+    var stepSubtitle: String {
+        switch model.step {
+        case .pickingApp: String(localized: "Choose the app to upload to")
+        case .pickingVersion: String(localized: "Choose which versions to update")
+        case .editingMetadata: String(localized: "Review the store text")
+        case .configuringPlan: String(localized: "Choose what to upload")
+        case .reviewingChanges: String(localized: "Review what will change")
+        case .uploading: String(localized: "Syncing screenshots…")
+        case .done: String(localized: "All done")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 
     var demoModeBanner: some View {
@@ -70,25 +79,20 @@ extension UploadToAppStoreConnectView {
     }
 
     var footer: some View {
-        HStack(alignment: .top, spacing: 6) {
+        UploadWizardFooterBar(error: errorSlot) {
             backButton
-            if let errorMessage = model.errorMessage {
-                Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
-                    .font(.caption)
-                    .lineLimit(4)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button("Details") { presentErrorDetails(fallback: errorMessage) }
-                    .font(.caption)
-                    .buttonStyle(.borderless)
-            }
-            Spacer()
+        } actions: {
             dismissButton
             reviewChangesButton
             primaryButton
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+    }
+
+    var errorSlot: UploadWizardErrorSlot? {
+        guard let errorMessage = model.errorMessage else { return nil }
+        return UploadWizardErrorSlot(message: errorMessage) {
+            presentErrorDetails(fallback: errorMessage)
+        }
     }
 
     /// Show the full failure text, preferring the detailed report and falling back to the
@@ -128,35 +132,26 @@ extension UploadToAppStoreConnectView {
         }
     }
 
-    /// The forward primary action for the pre-upload steps (Next / Continue / Upload / Sync),
-    /// shared by the macOS footer button and the iPad nav-bar button so titles, actions, and
-    /// enabled rules stay in lockstep. `nil` on the terminal uploading/done screens.
-    struct ForwardPrimary {
-        let titleKey: LocalizedStringKey
-        let action: () -> Void
-        let isEnabled: Bool
-    }
-
     /// The forward button for the *current* step. Deliberately not parameterised: it
     /// always reflects `model.step`.
-    var forwardPrimary: ForwardPrimary? {
+    var forwardPrimary: UploadForwardPrimary? {
         switch model.step {
         case .pickingApp:
-            ForwardPrimary(titleKey: "Next", action: { Task { await model.moveToVersion() } },
-                           isEnabled: model.selectedApp != nil && !model.isBusy)
+            UploadForwardPrimary(titleKey: "Next", action: { Task { await model.moveToVersion() } },
+                                 isEnabled: model.selectedApp != nil && !model.isBusy)
         case .pickingVersion:
-            ForwardPrimary(titleKey: "Next", action: { Task { await model.moveToMetadata() } },
-                           isEnabled: canAdvanceFromVersion && !model.isBusy)
+            UploadForwardPrimary(titleKey: "Next", action: { Task { await model.moveToMetadata() } },
+                                 isEnabled: canAdvanceFromVersion && !model.isBusy)
         case .editingMetadata:
-            ForwardPrimary(titleKey: metadataPrimaryTitle,
-                           action: { Task { await model.saveMetadataAndContinue() } },
-                           isEnabled: !model.isBusy)
+            UploadForwardPrimary(titleKey: metadataPrimaryTitle,
+                                 action: { Task { await model.saveMetadataAndContinue() } },
+                                 isEnabled: !model.isBusy)
         case .configuringPlan:
-            ForwardPrimary(titleKey: "Upload", action: { requestDirectUpload() },
-                           isEnabled: model.canStartUpload && !model.isBusy)
+            UploadForwardPrimary(titleKey: "Upload", action: { requestDirectUpload() },
+                                 isEnabled: model.canStartUpload && !model.isBusy)
         case .reviewingChanges:
-            ForwardPrimary(titleKey: "Sync Selected Sets", action: { requestReviewedSync() },
-                           isEnabled: model.screenshotSync.canApply && !model.isBusy)
+            UploadForwardPrimary(titleKey: "Sync Selected Sets", action: { requestReviewedSync() },
+                                 isEnabled: model.screenshotSync.canApply && !model.isBusy)
         case .uploading, .done:
             nil
         }

@@ -25,29 +25,11 @@ extension UploadToAppStoreConnectView {
     }
 
     var missingCredentialsView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "key.horizontal")
-                .font(.largeTitle)
-                .foregroundStyle(.secondary)
-            Text("App Store Connect API key required")
-                .font(.headline)
-            Text("Add your Issuer ID, Key ID, and .p8 key in Settings → App Store Connect.")
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 400)
-            #if os(macOS)
-            OpenSettingsWindowButton()
-            #else
-            Button {
-                router.openAppStoreConnectSettings()
-                dismiss()
-            } label: {
-                Label("Open Settings", systemImage: "gearshape")
-            }
-            .buttonStyle(.borderedProminent)
-            #endif
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        StoreMissingCredentialsView(
+            title: "App Store Connect API key required",
+            message: "Add your Issuer ID, Key ID, and .p8 key in Settings → App Store Connect.",
+            target: .appStoreConnect
+        )
     }
 
     var pickAppView: some View {
@@ -623,25 +605,3 @@ extension UploadToAppStoreConnectView {
         }
     }
 }
-
-#if os(macOS)
-private struct OpenSettingsWindowButton: View {
-    var section: SettingsView.SettingsSection = .appStoreConnect
-    @Environment(\.openWindow) private var openWindow
-
-    var body: some View {
-        Button {
-            SettingsWindowNavigation.shared.requestedSection = section
-            openWindow(id: SettingsView.windowID)
-            // openWindow registers the NSWindow on the next runloop; raise it then
-            // so it comes forward even if it was already open behind this sheet.
-            DispatchQueue.main.async {
-                AppWindowManager.shared.raiseSettingsWindow()
-            }
-        } label: {
-            Label("Open Settings", systemImage: "gearshape")
-        }
-        .buttonStyle(.borderedProminent)
-    }
-}
-#endif

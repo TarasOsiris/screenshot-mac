@@ -117,6 +117,23 @@ final class GooglePlayAPIService {
         return sendForReview
     }
 
+    /// Checks that this service account can actually edit this package, before the wizard commits
+    /// the user to a plan built against it.
+    ///
+    /// The Play Developer API has no "does this app exist" call and no way to list the apps a
+    /// service account can reach — everything is keyed by package name — so opening a draft edit
+    /// and discarding it is the check. That writes server state, so it belongs on an explicit
+    /// action, never on a keystroke.
+    func verifyPackage(packageName: String) async throws {
+        if isDemoMode {
+            await demoDelay()
+            return
+        }
+        let edit = try await insertEdit(packageName: packageName)
+        // A failure to clean up doesn't invalidate the answer: Play expires abandoned edits.
+        try? await deleteEdit(packageName: packageName, editId: edit.id)
+    }
+
     func deleteEdit(packageName: String, editId: String) async throws {
         if isDemoMode { await demoDelay(); return }
         let path = "/androidpublisher/v3/applications/\(packageName)/edits/\(editId)"

@@ -39,61 +39,28 @@ struct ASCUploadRowPlanCard: View {
     let onToggleExpanded: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            header
+        StoreUploadRowPlanCard(
+            title: plan.displayLabel,
+            sizeSummary: plan.sizeAndCountSummary,
+            foreignPlatformHint: plan.inferredStorePlatform == .android ? "Looks like an Android row" : nil,
+            isEnabled: $plan.isEnabled,
+            expanded: expanded,
+            onToggleExpanded: onToggleExpanded
+        ) {
+            ASCDisplayTypePicker(
+                plan: $plan,
+                detailsId: detailsId,
+                availableDisplayTypes: availableDisplayTypes,
+                displayTypeDetailsPlanId: $displayTypeDetailsPlanId
+            )
 
-            if expanded && plan.isEnabled {
-                ASCDisplayTypePicker(
-                    plan: $plan,
-                    detailsId: detailsId,
-                    availableDisplayTypes: availableDisplayTypes,
-                    displayTypeDetailsPlanId: $displayTypeDetailsPlanId
-                )
-
-                Text("Locales")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                ForEach($plan.localeTargets) { $target in
-                    ASCLocaleTargetRow(target: $target, creation: localeCreation)
-                }
+            Text("Locales")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            ForEach($plan.localeTargets) { $target in
+                ASCLocaleTargetRow(target: $target, creation: localeCreation)
             }
         }
-        .padding(12)
-        .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
-    }
-
-    private var header: some View {
-        HStack(spacing: 6) {
-            if plan.isEnabled {
-                DisclosureChevronButton(expanded: expanded, action: onToggleExpanded)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(plan.displayLabel)
-                    .fontWeight(.medium)
-                Text(rowSizeSummary)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if plan.inferredStorePlatform == .android {
-                    Text("Looks like an Android row")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-            }
-            Spacer()
-            Toggle("", isOn: $plan.isEnabled)
-                .labelsHidden()
-                .accessibilityLabel("Include")
-                .toggleStyle(.switch)
-                .controlSize(.small)
-        }
-    }
-
-    private var rowSizeSummary: String {
-        let width = String(Int(plan.rowSize.width))
-        let height = String(Int(plan.rowSize.height))
-        return plan.templateCount == 1
-            ? String(localized: "\(width)×\(height) · 1 screenshot")
-            : String(localized: "\(width)×\(height) · \(plan.templateCount) screenshots")
     }
 }
 
@@ -283,12 +250,7 @@ private struct ASCLocaleTargetRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             #endif
         }
-        #if os(macOS)
-        .toggleStyle(.checkbox)
-        #else
-        .toggleStyle(.switch)
-        .controlSize(.small)
-        #endif
+        .storeSelectionToggleStyle()
         .disabled(target.candidates.isEmpty)
     }
 
@@ -317,12 +279,7 @@ private struct ASCLocaleTargetRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(target.candidates) { candidate in
                     Toggle(candidate.attributes.locale, isOn: $target.selectedASCLocalizationIds.contains(candidate.id))
-                        #if os(macOS)
-                        .toggleStyle(.checkbox)
-                        #else
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                        #endif
+                        .storeSelectionToggleStyle()
                         .font(.caption)
                         .disabled(!target.isEnabled)
                 }

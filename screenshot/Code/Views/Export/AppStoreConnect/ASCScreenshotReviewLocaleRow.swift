@@ -42,12 +42,7 @@ struct ASCScreenshotReviewLocaleRow: View {
     private var includeToggle: some View {
         Toggle("Include set", isOn: Binding(get: { isIncluded }, set: onIncludedChange))
             .labelsHidden()
-            #if os(macOS)
-            .toggleStyle(.checkbox)
-            #else
-            .toggleStyle(.switch)
-            .controlSize(.small)
-            #endif
+            .storeSelectionToggleStyle()
             .disabled(!set.isChanged || !set.canApply)
             .accessibilityLabel("Include \(localeName)")
     }

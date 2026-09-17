@@ -125,6 +125,21 @@ final class FakeGPUploader: GPUploadPerforming {
     }
 }
 
+/// Stands in for the `insertEdit`/`deleteEdit` probe the package step runs, so the flow's
+/// verified and rejected branches test without opening a real Play edit.
+@MainActor
+final class FakeGPPackageVerifier: GPPackageVerifying {
+    var error: (any Error)?
+    private(set) var callCount = 0
+    private(set) var lastPackageName: String?
+
+    func verifyPackage(packageName: String) async throws {
+        callCount += 1
+        lastPackageName = packageName
+        if let error { throw error }
+    }
+}
+
 /// An `ASCUploadDocument` backed by plain values. Sibling of `StubGPDocument`.
 @MainActor
 final class StubASCDocument: ASCUploadDocument {

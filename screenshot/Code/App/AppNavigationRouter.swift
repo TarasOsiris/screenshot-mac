@@ -17,9 +17,13 @@ final class AppNavigationRouter {
     var selectedTab: iPadRootTab = .projects
     var settingsPath: [iPadSettingsDestination] = []
 
-    func openAppStoreConnectSettings() {
+    func openStoreSettings(_ destination: iPadSettingsDestination) {
         selectedTab = .settings
-        settingsPath = [.appStoreConnect]
+        settingsPath = [destination]
+    }
+
+    func openAppStoreConnectSettings() {
+        openStoreSettings(.appStoreConnect)
     }
 }
 #endif

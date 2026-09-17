@@ -38,4 +38,12 @@ nonisolated struct StoreRowPlan<AssetType, LocaleTarget: Identifiable>: Identifi
     var sizeLabel: String {
         "\(Int(rowSize.width))×\(Int(rowSize.height))"
     }
+
+    /// The subtitle every row-plan card shows. Both store wizards had built this string
+    /// themselves, identically.
+    var sizeAndCountSummary: String {
+        templateCount == 1
+            ? String(localized: "\(sizeLabel) · 1 screenshot")
+            : String(localized: "\(sizeLabel) · \(templateCount) screenshots")
+    }
 }

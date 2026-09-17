@@ -13,20 +13,30 @@ struct GPUploadFlowModelTests {
     private final class Harness {
         let model: GPUploadFlowModel
         let uploader: FakeGPUploader
+        let verifier: FakeGPPackageVerifier
         let document: StubGPDocument
 
         init(
             uploader: FakeGPUploader = FakeGPUploader(),
+            verifier: FakeGPPackageVerifier = FakeGPPackageVerifier(),
             document: StubGPDocument = StubGPDocument(),
             credentials: GooglePlayCredentialsStore? = nil
         ) {
             self.uploader = uploader
+            self.verifier = verifier
             self.document = document
             self.model = GPUploadFlowModel(
                 uploader: uploader,
-                credentials: credentials ?? GooglePlayCredentialsStore.isolatedForTesting()
+                api: verifier,
+                credentials: credentials ?? GooglePlayCredentialsStore.isolatedForTesting(),
+                defaults: Self.isolatedDefaults()
             )
             model.bind(document: document)
+        }
+
+        /// The recents list is UserDefaults-backed; a test run must not write into the real one.
+        static func isolatedDefaults() -> UserDefaults {
+            UserDefaults(suiteName: "GPUploadFlowModelTests.\(UUID().uuidString)") ?? .standard
         }
     }
 
@@ -63,23 +73,24 @@ struct GPUploadFlowModelTests {
         #expect(model.packageName == "com.example.typed")
     }
 
-    @Test func continuingTrimsThePackageNameAndAdvances() {
+    @Test func continuingTrimsThePackageNameAndAdvances() async {
         let h = Harness(document: StubGPDocument(rows: [row(label: "A")]))
         let model = h.model
         let document = h.document
         model.packageName = "  com.example.app \n"
         model.errorMessage = "stale"
 
-        model.continueToPlan()
+        await model.continueToPlan()
 
         #expect(model.packageName == "com.example.app")
         #expect(model.step == .configuringPlan)
         #expect(model.errorMessage == nil)
         #expect(document.rememberedPackageNames == ["com.example.app"])
+        #expect(h.verifier.lastPackageName == "com.example.app", "the trimmed name is what gets probed")
     }
 
     /// A demo run must never write a package name into the user's project.
-    @Test func demoModeNeverPersistsThePackageName() {
+    @Test func demoModeNeverPersistsThePackageName() async {
         let credentials = GooglePlayCredentialsStore.isolatedForTesting()
         credentials.isDemoMode = true
         let h = Harness(credentials: credentials)
@@ -87,18 +98,159 @@ struct GPUploadFlowModelTests {
         let document = h.document
 
         model.packageName = "com.example.demo"
-        model.continueToPlan()
+        await model.continueToPlan()
 
         #expect(document.rememberedPackageNames.isEmpty)
+        #expect(model.recentPackageNames.isEmpty, "demo mode stays out of the recents list too")
     }
 
-    @Test func anEmptyPackageNameClearsTheStoredOne() {
+    /// Demo mode has no API key to check against, so it must still reach the plan step.
+    @Test func demoModePrefillsASamplePackageAndVerifies() async {
+        let credentials = GooglePlayCredentialsStore.isolatedForTesting()
+        credentials.isDemoMode = true
+        let h = Harness(document: StubGPDocument(rows: [row(label: "A")]), credentials: credentials)
+        let model = h.model
+
+        model.prefillPackageName()
+        #expect(model.packageName == GooglePlayDemoData.packageName)
+
+        await model.continueToPlan()
+        #expect(model.step == .configuringPlan)
+    }
+
+    @Test func anEmptyPackageNameGoesNowhere() async {
         let h = Harness(document: StubGPDocument(savedGooglePlayPackageName: "com.old"))
         let model = h.model
-        let document = h.document
         model.packageName = "   "
-        model.continueToPlan()
-        #expect(document.rememberedPackageNames == [String?.none])
+
+        await model.continueToPlan()
+
+        #expect(model.step == .enteringPackage)
+        #expect(h.verifier.callCount == 0, "an empty name is never worth a round trip")
+        #expect(h.document.rememberedPackageNames.isEmpty)
+    }
+
+    // MARK: - Package verification
+
+    @Test func aRejectedPackageKeepsTheUserOnTheStepWithTheReason() async {
+        let verifier = FakeGPPackageVerifier()
+        verifier.error = GooglePlayAPIError.httpError(status: 403, message: "no access")
+        let h = Harness(verifier: verifier, document: StubGPDocument(rows: [row(label: "A")]))
+        let model = h.model
+        model.packageName = "com.example.app"
+
+        await model.continueToPlan()
+
+        #expect(model.step == .enteringPackage)
+        #expect(model.packageVerification.isVerified == false)
+        if case .failed(let reason) = model.packageVerification {
+            #expect(reason.isEmpty == false)
+        } else {
+            Issue.record("expected a failed verification, got \(model.packageVerification)")
+        }
+        #expect(h.document.rememberedPackageNames.isEmpty, "a package we can't reach isn't worth remembering")
+    }
+
+    /// Play answers "no such app" and "no access" identically, so 403 and 404 must both explain
+    /// themselves rather than falling through to a raw HTTP string.
+    @Test func permissionAndMissingAppFailuresBothGetTheirOwnMessage() {
+        let forbidden = GPUploadFlowModel.verificationFailureMessage(
+            for: GooglePlayAPIError.httpError(status: 403, message: "x"))
+        let missing = GPUploadFlowModel.verificationFailureMessage(
+            for: GooglePlayAPIError.httpError(status: 404, message: "x"))
+        let unauthorized = GPUploadFlowModel.verificationFailureMessage(
+            for: GooglePlayAPIError.httpError(status: 401, message: "x"))
+
+        #expect(forbidden != missing)
+        #expect(unauthorized != forbidden)
+        #expect([forbidden, missing, unauthorized].allSatisfy { !$0.contains("403") && !$0.contains("404") })
+    }
+
+    @Test func editingThePackageNameDropsAnEarlierVerification() async {
+        let h = Harness(document: StubGPDocument(rows: [row(label: "A")]))
+        let model = h.model
+        model.packageName = "com.example.app"
+        await model.verifyPackage()
+        #expect(model.packageVerification.isVerified)
+
+        model.packageName = "com.example.other"
+
+        #expect(model.packageVerification.isVerified == false)
+    }
+
+    @Test func aMalformedPackageNameFailsWithoutAskingPlay() async {
+        let h = Harness()
+        let model = h.model
+        model.packageName = "not a package"
+
+        await model.verifyPackage()
+
+        #expect(h.verifier.callCount == 0)
+        #expect(model.packageVerification.isVerified == false)
+    }
+
+    // MARK: - Recents
+
+    @Test func recentsRememberTheMostRecentFirstAndCapTheList() {
+        let defaults = Harness.isolatedDefaults()
+        for index in 0..<(GooglePlayRecentPackages.limit + 3) {
+            GooglePlayRecentPackages.remember("com.example.app\(index)", defaults: defaults)
+        }
+
+        let recents = GooglePlayRecentPackages.load(defaults: defaults)
+
+        #expect(recents.count == GooglePlayRecentPackages.limit)
+        #expect(recents.first == "com.example.app\(GooglePlayRecentPackages.limit + 2)")
+    }
+
+    @Test func reusingAPackageMovesItToTheFrontWithoutDuplicating() {
+        let defaults = Harness.isolatedDefaults()
+        GooglePlayRecentPackages.remember("com.a", defaults: defaults)
+        GooglePlayRecentPackages.remember("com.b", defaults: defaults)
+        GooglePlayRecentPackages.remember("com.a", defaults: defaults)
+
+        #expect(GooglePlayRecentPackages.load(defaults: defaults) == ["com.a", "com.b"])
+    }
+
+    @Test func aSuccessfulContinueRecordsThePackageInRecents() async {
+        let h = Harness(document: StubGPDocument(rows: [row(label: "A")]))
+        let model = h.model
+        model.packageName = "com.example.app"
+
+        await model.continueToPlan()
+
+        #expect(model.recentPackageNames == ["com.example.app"])
+    }
+
+    // MARK: - iPad navigation
+
+    /// The back-swipe pops the path; the model follows it rather than driving it.
+    @Test func poppingThePathTakesTheStepBackWithIt() async {
+        let h = Harness(document: StubGPDocument(rows: [row(label: "A")]))
+        let model = h.model
+        var path: [GPUploadStep] = []
+        model.navigationDidAdvance = { path.append($0) }
+        model.packageName = "com.example.app"
+
+        await model.continueToPlan()
+        #expect(path == [.configuringPlan])
+
+        model.errorMessage = "stale"
+        model.handlePathChange(from: path, to: [])
+
+        #expect(model.step == .enteringPackage)
+        #expect(model.errorMessage == nil, "the failure belonged to the step we left")
+    }
+
+    @Test func aPushDoesNotRewindTheStep() async {
+        let h = Harness(document: StubGPDocument(rows: [row(label: "A")]))
+        let model = h.model
+        model.packageName = "com.example.app"
+        await model.continueToPlan()
+
+        model.handlePathChange(from: [], to: [.configuringPlan])
+
+        #expect(model.step == .configuringPlan)
     }
 
     // MARK: - Plan
@@ -164,19 +316,19 @@ struct GPUploadFlowModelTests {
 
     // MARK: - Upload outcomes
 
-    private func readyHarness(uploader: FakeGPUploader) -> Harness {
+    private func readyHarness(uploader: FakeGPUploader) async -> Harness {
         let h = Harness(uploader: uploader, document: StubGPDocument(
             rows: [row(label: "A", templates: 3)], localeState: localeState(["en", "de"])
         ))
         h.model.packageName = "com.example.app"
-        h.model.continueToPlan()
+        await h.model.continueToPlan()
         return h
     }
 
     @Test func aSuccessfulUploadSummarizesWhatWasSent() async {
         let uploader = FakeGPUploader()
         uploader.outcome = .success(sentForReview: false)
-        let h = readyHarness(uploader: uploader)
+        let h = await readyHarness(uploader: uploader)
         let model = h.model
 
         await model.startUpload()
@@ -196,7 +348,7 @@ struct GPUploadFlowModelTests {
     @Test func theSummaryEchoesTheServiceNotTheToggle() async {
         let uploader = FakeGPUploader()
         uploader.outcome = .success(sentForReview: true)
-        let h = readyHarness(uploader: uploader)
+        let h = await readyHarness(uploader: uploader)
         let model = h.model
         model.sendForReview = false
 
@@ -209,7 +361,7 @@ struct GPUploadFlowModelTests {
     @Test func cancellationReturnsToThePlanAndSaysTheDraftWasDiscarded() async {
         let uploader = FakeGPUploader()
         uploader.outcome = .cancelled
-        let h = readyHarness(uploader: uploader)
+        let h = await readyHarness(uploader: uploader)
         let model = h.model
 
         await model.startUpload()
@@ -223,7 +375,7 @@ struct GPUploadFlowModelTests {
     @Test func aFailureReturnsToThePlanWithBothSummaryAndDetails() async {
         let uploader = FakeGPUploader()
         uploader.outcome = .failure(GooglePlayUploadError.noRowsSelected)
-        let h = readyHarness(uploader: uploader)
+        let h = await readyHarness(uploader: uploader)
         let model = h.model
 
         await model.startUpload()
@@ -242,7 +394,7 @@ struct GPUploadFlowModelTests {
         ))
         let model = h.model
         model.packageName = "com.example.app"
-        model.continueToPlan()
+        await model.continueToPlan()
         model.rowPlans = model.rowPlans.map { var p = $0; p.isEnabled = false; return p }
 
         await model.startUpload()
@@ -252,11 +404,11 @@ struct GPUploadFlowModelTests {
         #expect(model.errorMessage?.isEmpty == false)
     }
 
-    @Test func goBackReturnsToThePackageStep() {
+    @Test func goBackReturnsToThePackageStep() async {
         let h = Harness()
         let model = h.model
         model.packageName = "com.example.app"
-        model.continueToPlan()
+        await model.continueToPlan()
         model.goBack()
         #expect(model.step == .enteringPackage)
     }

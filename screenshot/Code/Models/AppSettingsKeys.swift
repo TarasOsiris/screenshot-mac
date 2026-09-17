@@ -41,6 +41,10 @@ nonisolated enum AppSettingsKeys {
     /// billed `$set` event and only dedups within a process, so without this the flag would
     /// cost one event per launch forever — see `AnalyticsService.applyInternalUserProfile`.
     static let analyticsAppliedInternalUser = "analyticsAppliedInternalUser"
+    /// Package names the Google Play wizard has uploaded to, newest first. Kept across projects —
+    /// one developer's apps are usually the same handful — where the per-project
+    /// `savedGooglePlayPackageName` only prefills the project it belongs to.
+    static let googlePlayRecentPackageNames = "googlePlayRecentPackageNames"
 
     nonisolated enum Default {
         static let appearance = "auto"

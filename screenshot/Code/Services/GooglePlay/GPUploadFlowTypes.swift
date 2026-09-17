@@ -15,3 +15,18 @@ enum GPUploadStep: Hashable {
     case uploading
     case done
 }
+
+/// Whether the package name in the field has been confirmed to be one this service account can
+/// edit. Play has no app list to pick from, so this is what stands in for App Store Connect's
+/// app-selection step — without it a typo or a missing permission only surfaces mid-upload.
+enum GPPackageVerification: Equatable {
+    case unverified
+    case verifying
+    case verified(String)
+    case failed(String)
+
+    var isVerified: Bool {
+        if case .verified = self { return true }
+        return false
+    }
+}

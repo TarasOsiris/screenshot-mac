@@ -14,11 +14,19 @@ final class GPUploadFlowModel {
 
     private(set) var step: GPUploadStep = .enteringPackage
 
-    var packageName: String = ""
+    var packageName: String = "" {
+        didSet {
+            guard packageName != oldValue else { return }
+            packageVerification = .unverified
+        }
+    }
+    private(set) var packageVerification: GPPackageVerification = .unverified
     /// When off (default), the edit is committed with `changesNotSentForReview=true` so changes
     /// stage as a draft. On, they are submitted to Google Play review on commit.
     var sendForReview: Bool = false
     var rowPlans: [GPRowPlan] = []
+
+    var recentPackageNames: [String] { GooglePlayRecentPackages.load(defaults: defaults) }
 
     var uploadProgress: UploadProgress?
     var uploadSummary: GPUploadSummary?
@@ -29,15 +37,27 @@ final class GPUploadFlowModel {
     let credentials: GooglePlayCredentialsStore
 
     @ObservationIgnored private let uploader: any GPUploadPerforming
+    @ObservationIgnored private let api: any GPPackageVerifying
+    /// Where the recents list lives. Injected so a test run never writes into the real one.
+    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private(set) weak var document: (any GPUploadDocument)?
     @ObservationIgnored var uploadTask: Task<Void, Never>?
 
+    /// Keeps the iPad `NavigationStack` path in step with `step`. Same shape as
+    /// `ASCUploadFlowModel`'s: the model owns the transition, the view mirrors it.
+    @ObservationIgnored var navigationDidAdvance: (GPUploadStep) -> Void = { _ in }
+    @ObservationIgnored var navigationWillRetreat: () -> Void = {}
+
     init(
         uploader: any GPUploadPerforming = GooglePlayUploadService.shared,
-        credentials: GooglePlayCredentialsStore = .shared
+        api: any GPPackageVerifying = GooglePlayAPIService.shared,
+        credentials: GooglePlayCredentialsStore = .shared,
+        defaults: UserDefaults = .standard
     ) {
         self.uploader = uploader
+        self.api = api
         self.credentials = credentials
+        self.defaults = defaults
     }
 
     func bind(document: any GPUploadDocument) {
@@ -56,19 +76,89 @@ final class GPUploadFlowModel {
     }
 
     func prefillPackageName() {
-        if packageName.isEmpty, let saved = document?.savedGooglePlayPackageName {
+        guard packageName.isEmpty else { return }
+        if let saved = document?.savedGooglePlayPackageName {
             packageName = saved
+        } else if credentials.isDemoMode {
+            packageName = GooglePlayDemoData.packageName
         }
     }
 
-    func continueToPlan() {
+    /// Verifies the package with Play, then advances. A failure keeps the user on this step with
+    /// the reason, rather than letting a typo or a missing permission surface mid-upload.
+    func continueToPlan() async {
         packageName = packageName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !packageName.isEmpty else { return }
+
+        if !packageVerification.isVerified {
+            await verifyPackage()
+            guard packageVerification.isVerified else { return }
+        }
+
         if !credentials.isDemoMode {
-            document?.rememberGooglePlayPackageName(packageName.isEmpty ? nil : packageName)
+            document?.rememberGooglePlayPackageName(packageName)
+            GooglePlayRecentPackages.remember(packageName, defaults: defaults)
         }
         rowPlans = buildRowPlans(preserving: rowPlans)
         errorMessage = nil
+        advance(to: .configuringPlan)
+    }
+
+    func verifyPackage() async {
+        let candidate = packageName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard GooglePlayUploadValidator.isValidPackageName(candidate) else {
+            packageVerification = .failed(String(localized: "That isn't a valid package name. It looks like com.example.myapp."))
+            return
+        }
+
+        packageVerification = .verifying
+        isBusy = true
+        defer { isBusy = false }
+        do {
+            try await api.verifyPackage(packageName: candidate)
+            // The field can change while the probe is in flight; only claim the name we checked.
+            guard candidate == packageName.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+            packageVerification = .verified(candidate)
+        } catch {
+            guard candidate == packageName.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+            packageVerification = .failed(Self.verificationFailureMessage(for: error))
+        }
+    }
+
+    /// Play answers "no such app" and "you have no access to this app" with the same 404, so the
+    /// message has to cover both rather than guess.
+    nonisolated static func verificationFailureMessage(for error: Error) -> String {
+        switch (error as? GooglePlayAPIError)?.httpStatus {
+        case 401:
+            String(localized: "The service account was rejected. Check the key in Settings → Google Play.")
+        case 403:
+            String(localized: "This service account can't edit that app. Grant it access in the Play Console.")
+        case 404:
+            String(localized: "No app with that package name is reachable by this service account.")
+        default:
+            StoreUploadFailureText.summary(for: error)
+        }
+    }
+
+    private func advance(to next: GPUploadStep) {
+        step = next
+        navigationDidAdvance(next)
+    }
+
+    /// A finished or failed upload drops back to the plan, popping the pushed progress screen on
+    /// iPad so Back doesn't return to it.
+    private func retreatToPlan() {
         step = .configuringPlan
+        navigationWillRetreat()
+    }
+
+    /// The iPad back-swipe and the nav bar's Back both pop the path rather than calling `goBack()`,
+    /// so the model follows the path instead of driving it.
+    func handlePathChange(from oldPath: [GPUploadStep], to newPath: [GPUploadStep]) {
+        guard newPath.count < oldPath.count else { return }
+        step = newPath.last ?? .enteringPackage
+        errorMessage = nil
+        errorDetailsText = nil
     }
 
     func buildRowPlans(preserving existingPlans: [GPRowPlan] = []) -> [GPRowPlan] {
@@ -133,7 +223,7 @@ final class GPUploadFlowModel {
 
         let pkg = packageName.trimmingCharacters(in: .whitespacesAndNewlines)
         uploadProgress = nil
-        step = .uploading
+        advance(to: .uploading)
         isBusy = true
         defer { isBusy = false; uploadTask = nil }
 
@@ -170,13 +260,13 @@ final class GPUploadFlowModel {
             } catch is CancellationError {
                 errorMessage = String(localized: "Upload cancelled. The draft edit was discarded.")
                 StoreUploadFailure(kind: .cancelled, errorCode: nil).report(store: "play", cancelled: true)
-                step = .configuringPlan
+                retreatToPlan()
             } catch {
                 let summary = StoreUploadFailureText.summary(for: error)
                 errorMessage = summary
                 errorDetailsText = StoreUploadFailureText.details(for: error, context: ["Package: \(packageName)"])
                 StoreUploadFailure.classify(error).report(store: "play", cancelled: false)
-                step = .configuringPlan
+                retreatToPlan()
                 NotificationService.notify(title: String(localized: "Upload failed"), body: summary)
             }
         }
@@ -202,6 +292,9 @@ final class GPUploadFlowModel {
     /// The plan screen's Back button. Only one step back exists in this flow.
     func goBack() {
         step = .enteringPackage
+        errorMessage = nil
+        errorDetailsText = nil
+        navigationWillRetreat()
     }
 
     func cancelUpload() {

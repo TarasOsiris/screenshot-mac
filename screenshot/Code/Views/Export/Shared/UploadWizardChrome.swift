@@ -150,11 +150,11 @@ struct UploadCompleteHeader: View {
 /// The frame both upload wizards present: header, optional demo banner, the step content, and a
 /// footer, separated by dividers and pinned to the desktop sheet size on macOS.
 ///
-/// Only the shell is shared. The headers and footers are *not*: App Store Connect's header is a
-/// single title line and Google Play's carries a subtitle, their paddings differ (16/12 vs 20/14),
-/// and their error labels differ in font, line limit and whether the Details button appears at
-/// all. Unifying those would take a style enum plus roughly eight parameters to stay
-/// pixel-identical — a parameter bag that reads worse than the two originals.
+/// The header and footer are shared too, as `UploadWizardHeader` and `UploadWizardFooterBar`.
+/// They once weren't, because staying pixel-identical to two drifted originals would have taken a
+/// style enum and a bag of parameters. Aligning the two wizards removed that cost: the differences
+/// they encoded (subtitle or not, 16/12 vs 20/14 padding, caption vs callout errors) were drift,
+/// not design, and are gone.
 struct UploadWizardShell<Header: View, Banner: View, Content: View, Footer: View>: View {
     @ViewBuilder var header: () -> Header
     @ViewBuilder var banner: () -> Banner

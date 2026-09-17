@@ -280,12 +280,7 @@ struct ASCVersionSelectionStepView: View {
                         Toggle(isOn: $selectedVersionIds.contains(version.id)) {
                             ASCVersionSelectionRow(version: version, mode: mode)
                         }
-                        #if os(macOS)
-                        .toggleStyle(.checkbox)
-                        #else
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                        #endif
+                        .storeSelectionToggleStyle()
                         .disabled(!version.isSelectable(for: mode))
                     }
                 }

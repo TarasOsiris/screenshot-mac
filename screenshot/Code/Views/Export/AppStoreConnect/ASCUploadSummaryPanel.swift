@@ -10,42 +10,22 @@ struct ASCUploadSummaryPanel: View {
     let onRefresh: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            header
-
-            if isExpanded {
-                metrics
-                selectedUploads
-                skippedItems
-            }
-        }
-        .padding(12)
-        .background(Color.secondary.opacity(0.06), in: .rect(cornerRadius: 8))
-    }
-
-    private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
-            DisclosureChevronButton(expanded: isExpanded) {
-                isExpanded.toggle()
-            } label: {
-                Text("Preflight")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-            }
-            Spacer()
-            PreflightStatusLabel(hasErrors: issues.hasErrors, font: .caption)
-            Button("Refresh App Store data", action: onRefresh)
-                .font(.caption)
-                .disabled(isBusy)
-        }
-    }
-
-    private var metrics: some View {
-        HStack(spacing: 10) {
-            ASCSummaryMetric(value: "\(plan.selected.count)", label: "sets")
-            ASCSummaryMetric(value: "\(plan.versionCount)", label: "versions")
-            ASCSummaryMetric(value: "\(plan.screenshotCount)", label: "screenshots")
-            ASCSummaryMetric(value: "\(plan.localeCount)", label: "locales")
+        StorePreflightPanel(
+            isExpanded: $isExpanded,
+            hasErrors: issues.hasErrors,
+            refresh: StorePreflightRefresh(
+                title: "Refresh App Store data",
+                isBusy: isBusy,
+                action: onRefresh
+            )
+        ) {
+            StoreSummaryMetric(value: "\(plan.selected.count)", label: "sets")
+            StoreSummaryMetric(value: "\(plan.versionCount)", label: "versions")
+            StoreSummaryMetric(value: "\(plan.screenshotCount)", label: "screenshots")
+            StoreSummaryMetric(value: "\(plan.localeCount)", label: "locales")
+        } details: {
+            selectedUploads
+            skippedItems
         }
     }
 
@@ -87,25 +67,6 @@ struct ASCUploadSummaryPanel: View {
         count == 1
             ? String(localized: "1 more skipped item")
             : String(localized: "\(count) more skipped items")
-    }
-}
-
-private struct ASCSummaryMetric: View {
-    let value: String
-    let label: LocalizedStringKey
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value)
-                .font(.headline.monospacedDigit())
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(minWidth: 78, alignment: .leading)
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
-        .background(Color.primary.opacity(0.04), in: .rect(cornerRadius: 6))
     }
 }
 

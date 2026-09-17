@@ -102752,6 +102752,156 @@
       "localizations" : {
 
       }
+    },
+    "Google Play service account required" : {
+      "localizations" : {
+
+      }
+    },
+    "The changes are saved as an un-reviewed draft. Send them for review from the Play Console." : {
+      "localizations" : {
+
+      }
+    },
+    "The changes are sent to Google Play review when the edit is committed." : {
+      "localizations" : {
+
+      }
+    },
+    "Each row has an include switch, an **Upload as** image type (auto-detected from the row's size — the ⓘ button shows the sizes Play accepts), and a checkbox per language." : {
+      "localizations" : {
+
+      }
+    },
+    "Syncing screenshots…" : {
+      "localizations" : {
+
+      }
+    },
+    "%@ across %@." : {
+      "localizations" : {
+
+      }
+    },
+    "Image Type" : {
+      "localizations" : {
+
+      }
+    },
+    "Choose the app to upload to" : {
+      "localizations" : {
+
+      }
+    },
+    "**Next** checks the package before going on, so a typo or a service account without access is caught here instead of halfway through an upload." : {
+      "localizations" : {
+
+      }
+    },
+    "rows" : {
+      "localizations" : {
+
+      }
+    },
+    "Play value" : {
+      "localizations" : {
+
+      }
+    },
+    "This service account can't edit that app. Grant it access in the Play Console." : {
+      "localizations" : {
+
+      }
+    },
+    "%@ · %lld screenshots" : {
+      "localizations" : {
+
+      }
+    },
+    "Review the store text" : {
+      "localizations" : {
+
+      }
+    },
+    "1 language" : {
+      "localizations" : {
+
+      }
+    },
+    "Choose which versions to update" : {
+      "localizations" : {
+
+      }
+    },
+    "That isn't a valid package name. It looks like com.example.myapp." : {
+      "localizations" : {
+
+      }
+    },
+    "%@ · 1 screenshot" : {
+      "localizations" : {
+
+      }
+    },
+    "Recent package names" : {
+      "localizations" : {
+
+      }
+    },
+    "Import your service account JSON key in Settings → Google Play." : {
+      "localizations" : {
+
+      }
+    },
+    "Review what will change" : {
+      "localizations" : {
+
+      }
+    },
+    "%lld languages" : {
+      "localizations" : {
+
+      }
+    },
+    "Every screenshot currently on the listing for the selected languages and image types is deleted and replaced." : {
+      "localizations" : {
+
+      }
+    },
+    "Use it to walk through the whole upload flow before you have credentials set up. While demo mode is on, the imported service account is ignored, the package field starts on a sample name, and the package check always passes." : {
+      "localizations" : {
+
+      }
+    },
+    "No app with that package name is reachable by this service account." : {
+      "localizations" : {
+
+      }
+    },
+    "Enter your app's **package name** (for example `com.example.myapp`). Google Play has no way to list your apps, so the name is typed rather than picked — the clock button offers the ones you used before." : {
+      "localizations" : {
+
+      }
+    },
+    "Uploading **replaces** what is already on the listing: for every language and image type you selected, the existing screenshots are deleted and the new ones uploaded. The confirmation says so before anything is sent." : {
+      "localizations" : {
+
+      }
+    },
+    "%@ is reachable by this service account." : {
+      "localizations" : {
+
+      }
+    },
+    "The service account was rejected. Check the key in Settings → Google Play." : {
+      "localizations" : {
+
+      }
+    },
+    "Checking access…" : {
+      "localizations" : {
+
+      }
     }
   },
   "version" : "1.0"

@@ -21,3 +21,12 @@ protocol GPUploadPerforming {
 }
 
 extension GooglePlayUploadService: GPUploadPerforming {}
+
+/// The package-name check the wizard runs before building a plan, behind its own protocol for the
+/// same reason: the flow's verified / rejected branches should test without opening a real edit.
+@MainActor
+protocol GPPackageVerifying {
+    func verifyPackage(packageName: String) async throws
+}
+
+extension GooglePlayAPIService: GPPackageVerifying {}

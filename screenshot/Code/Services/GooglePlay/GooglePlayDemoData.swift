@@ -7,6 +7,10 @@ import Foundation
 final class GooglePlayDemoData: @unchecked Sendable {
     static let shared = GooglePlayDemoData()
 
+    /// Prefilled into the package field in demo mode. The wizard now verifies the package before
+    /// building a plan, so without a plausible name to start from demo mode would open on an error.
+    static let packageName = "com.example.demoapp"
+
     private let lock = NSLock()
     private var idCounter = 0
 
