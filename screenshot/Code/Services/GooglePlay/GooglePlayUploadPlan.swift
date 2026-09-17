@@ -5,10 +5,13 @@ import Foundation
 
 typealias GPRowPlan = StoreRowPlan<GPImageType, GPLocaleTarget>
 
+/// One project locale's place in a Play upload. `playLanguageCode` is nil when Play has no
+/// listing language for the project code, which is a permanent fact about the locale rather than
+/// something the user can toggle away.
 nonisolated struct GPLocaleTarget: Identifiable {
     let id = UUID()
     var appLocaleCode: String
     var appLocaleLabel: String
-    var playLanguageCode: String
+    var playLanguageCode: String?
     var isEnabled: Bool
 }

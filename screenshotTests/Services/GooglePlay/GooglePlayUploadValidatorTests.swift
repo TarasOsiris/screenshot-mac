@@ -11,6 +11,15 @@ struct GooglePlayUploadValidatorTests {
         Target(appLocaleCode: play, appLocaleLabel: play, playLanguageCode: play, isEnabled: enabled)
     }
 
+    /// A project locale Play has no listing language for.
+    private func unsupportedLocale(_ code: String, enabled: Bool = false) -> Target {
+        Target(appLocaleCode: code, appLocaleLabel: code, playLanguageCode: nil, isEnabled: enabled)
+    }
+
+    private func mappedLocale(_ code: String, to play: String) -> Target {
+        Target(appLocaleCode: code, appLocaleLabel: code, playLanguageCode: play, isEnabled: true)
+    }
+
     private func plan(
         size: CGSize = CGSize(width: 1080, height: 1920),
         count: Int = 3,
@@ -80,6 +89,44 @@ struct GooglePlayUploadValidatorTests {
             isDemoMode: false
         )
         #expect(issues.hasErrors)
+    }
+
+    /// The 4.16 bug: "en" and "en-US" both map to Play's en-US, so one row claimed the same slot
+    /// twice and was reported as colliding with itself — an error naming one row twice, which no
+    /// amount of disabling rows could clear.
+    @Test func aRowWhoseLocalesCollapseOntoOnePlayLanguageNamesTheLanguages() {
+        let row = plan(locales: [mappedLocale("en", to: "en-US"), mappedLocale("en-US", to: "en-US")])
+        let issues = GooglePlayUploadValidator.validate(
+            packageName: "com.example.app",
+            plans: [row],
+            isDemoMode: false
+        )
+        let errors = issues.filter { $0.severity == .error }
+        #expect(errors.count == 1)
+        #expect(errors.first?.message == "en and en-US both upload to Play's en-US listing.")
+        #expect(errors.allSatisfy { !$0.message.contains("same Play listing slot") }, "this is not a row clash")
+    }
+
+    @Test func languagesPlayCannotAcceptWarnButDoNotBlock() {
+        let row = plan(locales: [locale("en-US"), unsupportedLocale("ar-SA")])
+        let issues = GooglePlayUploadValidator.validate(
+            packageName: "com.example.app",
+            plans: [row],
+            isDemoMode: false
+        )
+        #expect(!issues.hasErrors)
+        #expect(issues.contains { $0.severity == .warning && $0.message.contains("ar-SA") })
+    }
+
+    /// An unsupported language files no claim, so it can never be mistaken for a collision.
+    @Test func twoUnsupportedLanguagesDoNotCollide() {
+        let row = plan(locales: [locale("en-US"), unsupportedLocale("ar-SA", enabled: true), unsupportedLocale("uz", enabled: true)])
+        let issues = GooglePlayUploadValidator.validate(
+            packageName: "com.example.app",
+            plans: [row],
+            isDemoMode: false
+        )
+        #expect(!issues.hasErrors)
     }
 
     @Test func demoModeSkipsPackageAndSoftensRowIssues() {

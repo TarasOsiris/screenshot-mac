@@ -132,11 +132,15 @@ enum AppStoreConnectUploadValidator {
                 ))
             }
 
+            // selectedCandidates, not the raw id set: it is what actually uploads, and it is ordered.
             for localeTarget in plan.localeTargets where localeTarget.isEnabled {
-                for localizationId in localeTarget.selectedASCLocalizationIds {
+                for candidate in localeTarget.selectedCandidates {
                     claims.append(UploadTargetClaim(
+                        rowId: plan.id,
                         rowName: rowName,
-                        key: "\(localizationId)|\(displayType.appStoreConnectValue)"
+                        targetLabel: localeTarget.appLocaleLabel,
+                        key: "\(candidate.id)|\(displayType.appStoreConnectValue)",
+                        slotLabel: candidate.attributes.locale
                     ))
                 }
             }
@@ -164,15 +168,30 @@ enum AppStoreConnectUploadValidator {
             }
         }
 
-        issues.append(contentsOf: StoreUploadChecks.collisionIssues(claims) { rowName, partner in
-            UploadIssue(
-                severity: .error,
-                scope: rowName,
-                message: String(localized: "This row uploads to the same App Store screenshot set as \(partner)."),
-                hint: String(localized: "Disable one of these rows or choose a different display type before uploading."),
-                demoDowngradable: true
-            )
-        })
+        issues.append(contentsOf: StoreUploadChecks.collisionIssues(
+            claims,
+            sameRow: { rowName, localeLabels, ascLocale in
+                let names = localeLabels.formatted(.list(type: .and))
+                return UploadIssue(
+                    severity: .error,
+                    scope: rowName,
+                    message: localeLabels.count == 2
+                        ? String(localized: "\(names) both upload to the \(ascLocale) App Store localization.")
+                        : String(localized: "\(names) all upload to the \(ascLocale) App Store localization."),
+                    hint: String(localized: "Pick a different App Store locale for one of them, or turn one off."),
+                    demoDowngradable: true
+                )
+            },
+            otherRow: { rowName, partner in
+                UploadIssue(
+                    severity: .error,
+                    scope: rowName,
+                    message: String(localized: "This row uploads to the same App Store screenshot set as \(partner)."),
+                    hint: String(localized: "Disable one of these rows or choose a different display type before uploading."),
+                    demoDowngradable: true
+                )
+            }
+        ))
 
         return issues
     }

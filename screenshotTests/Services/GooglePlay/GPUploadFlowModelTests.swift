@@ -304,6 +304,55 @@ struct GPUploadFlowModelTests {
         #expect(targets[0].rowLabel == "Good")
     }
 
+    /// Play keeps one screenshot set per language, and "en" and "en-US" both reach its en-US
+    /// listing — so the wizard opens with one of them off rather than with a blocking error.
+    /// The exact code wins over the mapped one.
+    @Test func localesThatCollapseOntoOnePlayLanguageStartWithOneEnabled() {
+        let h = Harness(document: StubGPDocument(
+            rows: [row(label: "A")],
+            localeState: localeState(["en", "uk", "en-US"])
+        ))
+        let model = h.model
+
+        let targets = model.buildRowPlans()[0].localeTargets
+
+        #expect(targets.map(\.isEnabled) == [false, true, true])
+    }
+
+    @Test func aLanguagePlayCannotAcceptStartsOffAndCarriesNoPlayCode() {
+        let h = Harness(document: StubGPDocument(
+            rows: [row(label: "A")],
+            localeState: localeState(["en", "ar-SA"])
+        ))
+        let model = h.model
+
+        let targets = model.buildRowPlans()[0].localeTargets
+
+        #expect(targets[1].playLanguageCode == nil)
+        #expect(targets[1].isEnabled == false)
+        #expect(targets[0].isEnabled)
+    }
+
+    /// Demo mode softens the duplicate-language error to a warning, so the upload path cannot
+    /// trust validation alone: uploading a Play language twice deletes the first set.
+    @Test func uploadTargetsDropUnsupportedLanguagesAndUploadEachPlayLanguageOnce() {
+        let h = Harness(document: StubGPDocument(
+            rows: [row(label: "A")],
+            localeState: localeState(["en", "en-US", "ar-SA"])
+        ))
+        let model = h.model
+        var plans = model.buildRowPlans()
+        for index in plans[0].localeTargets.indices {
+            plans[0].localeTargets[index].isEnabled = true
+        }
+        model.rowPlans = plans
+
+        let languages = model.buildUploadTargets().first?.languages ?? []
+
+        #expect(languages.map(\.playCode) == ["en-US"])
+        #expect(languages.first?.projectCode == "en", "the first claimant keeps the slot")
+    }
+
     /// An unlabelled row still needs something to show in the plan and in error messages.
     @Test func anUnlabelledRowGetsAFallbackLabel() {
         let h = Harness(document: StubGPDocument(

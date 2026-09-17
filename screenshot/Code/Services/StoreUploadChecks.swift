@@ -1,17 +1,17 @@
 import Foundation
 
-/// One row's claim on a destination slot in the store. Two rows claiming the same key would
-/// overwrite each other's screenshots.
+/// One row's claim on a destination slot in the store. Two claims on the same key would overwrite
+/// each other's screenshots — whether they come from two rows or from two locales inside one row.
 nonisolated struct UploadTargetClaim {
+    let rowId: UUID
     let rowName: String
-    /// Store-specific: "\(localizationId)|\(displayType)" for Apple,
+    /// What inside the row makes the claim, named the way the user sees it ("English (US)").
+    let targetLabel: String
+    /// Store-specific destination identity: "\(localizationId)|\(displayType)" for Apple,
     /// "\(playLanguageCode)|\(imageType)" for Play.
     let key: String
-
-    init(rowName: String, key: String) {
-        self.rowName = rowName
-        self.key = key
-    }
+    /// The destination named the way the user sees it in the row ("en-US").
+    let slotLabel: String
 }
 
 /// The parts of upload validation that are genuinely the same for both stores.
@@ -47,26 +47,49 @@ nonisolated enum StoreUploadChecks {
         return nil
     }
 
-    /// One issue per colliding *partner row*, not per shared key — a pair of rows that collide
+    /// Two kinds of collision, told apart by row *id* — a row whose own locales collapse onto one
+    /// store slot (several project languages mapping to one store language) cannot be fixed by
+    /// disabling a row, so it must not be reported as if another row were involved.
+    ///
+    /// `sameRow` fires once per colliding slot, naming every locale that lands on it. `otherRow`
+    /// fires once per colliding *partner row*, not per shared key — a pair of rows that collide
     /// across twelve locales must report once, not twelve times. Claims are consumed in order and
     /// the first row to claim a key owns it.
     static func collisionIssues(
         _ claims: [UploadTargetClaim],
-        issue: (_ rowName: String, _ partnerRowName: String) -> UploadIssue
+        sameRow: (_ rowName: String, _ targetLabels: [String], _ slotLabel: String) -> UploadIssue,
+        otherRow: (_ rowName: String, _ partnerRowName: String) -> UploadIssue
     ) -> [UploadIssue] {
-        var issues: [UploadIssue] = []
-        var owners: [String: String] = [:]
-        var reportedPartnersByRow: [String: Set<String>] = [:]
+        struct GroupKey: Hashable {
+            let rowId: UUID
+            let key: String
+        }
 
+        var order: [GroupKey] = []
+        var groups: [GroupKey: [UploadTargetClaim]] = [:]
         for claim in claims {
-            guard let owner = owners[claim.key] else {
-                owners[claim.key] = claim.rowName
+            let group = GroupKey(rowId: claim.rowId, key: claim.key)
+            if groups[group] == nil { order.append(group) }
+            groups[group, default: []].append(claim)
+        }
+
+        var issues: [UploadIssue] = []
+        var owners: [String: (rowId: UUID, rowName: String)] = [:]
+        var reportedPartnersByRow: [UUID: Set<UUID>] = [:]
+
+        for group in order {
+            guard let claimants = groups[group], let first = claimants.first else { continue }
+
+            if claimants.count > 1 {
+                issues.append(sameRow(first.rowName, claimants.map(\.targetLabel), first.slotLabel))
+            }
+
+            guard let owner = owners[group.key] else {
+                owners[group.key] = (first.rowId, first.rowName)
                 continue
             }
-            // No same-name guard: rows are identified by label, and two *unlabelled* rows both
-            // read as "Row" — suppressing those would hide a real collision.
-            if reportedPartnersByRow[claim.rowName, default: []].insert(owner).inserted {
-                issues.append(issue(claim.rowName, owner))
+            if reportedPartnersByRow[first.rowId, default: []].insert(owner.rowId).inserted {
+                issues.append(otherRow(first.rowName, owner.rowName))
             }
         }
         return issues

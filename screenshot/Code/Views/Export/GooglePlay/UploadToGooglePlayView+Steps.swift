@@ -274,29 +274,39 @@ extension UploadToGooglePlayView {
     // MARK: - Languages
 
     private func languageRow(_ target: Binding<GPLocaleTarget>) -> some View {
-        HStack(alignment: .firstTextBaseline) {
+        let playCode = target.wrappedValue.playLanguageCode
+        return HStack(alignment: .firstTextBaseline) {
             Toggle(isOn: target.isEnabled) {
                 Text(target.wrappedValue.appLocaleLabel)
             }
             .storeSelectionToggleStyle()
             .font(.caption)
+            .disabled(playCode == nil)
             Spacer()
-            Text(target.wrappedValue.playLanguageCode)
-                .font(.caption.monospaced())
-                .foregroundStyle(.secondary)
+            if let playCode {
+                Text(playCode)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Not on Play")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
     // MARK: - Counts
 
     var enabledRowCount: Int {
-        model.rowPlans.filter { $0.isEnabled && $0.localeTargets.contains(where: \.isEnabled) }.count
+        model.rowPlans.count { plan in
+            plan.isEnabled && plan.localeTargets.contains { $0.isEnabled && $0.playLanguageCode != nil }
+        }
     }
 
     var plannedScreenshotCount: Int {
         model.rowPlans.reduce(0) { acc, plan in
             guard plan.isEnabled else { return acc }
-            return acc + plan.templateCount * plan.localeTargets.filter(\.isEnabled).count
+            return acc + plan.templateCount * plan.localeTargets.count { $0.isEnabled && $0.playLanguageCode != nil }
         }
     }
 
@@ -304,7 +314,7 @@ extension UploadToGooglePlayView {
         Set(
             model.rowPlans
                 .filter(\.isEnabled)
-                .flatMap { $0.localeTargets.filter(\.isEnabled).map(\.playLanguageCode) }
+                .flatMap { $0.localeTargets.filter(\.isEnabled).compactMap(\.playLanguageCode) }
         ).count
     }
 

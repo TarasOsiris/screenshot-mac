@@ -4,14 +4,29 @@ import Testing
 
 struct StoreUploadChecksTests {
 
-    private func claim(_ row: String, _ key: String) -> UploadTargetClaim {
-        UploadTargetClaim(rowName: row, key: key)
+    /// Rows are identified by id, so two claims meaning "the same row" need the same UUID.
+    /// Deriving it from the label keeps the tests reading the way they did.
+    private func rowId(_ label: String) -> UUID {
+        var bytes = Array(label.utf8.prefix(16))
+        bytes.append(contentsOf: repeatElement(0, count: 16 - bytes.count))
+        return UUID(uuid: (bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+                           bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]))
+    }
+
+    private func claim(_ row: String, _ key: String, locale: String = "English") -> UploadTargetClaim {
+        UploadTargetClaim(rowId: rowId(row), rowName: row, targetLabel: locale, key: key, slotLabel: key)
     }
 
     private func collisions(_ claims: [UploadTargetClaim]) -> [UploadIssue] {
-        StoreUploadChecks.collisionIssues(claims) { rowName, partner in
-            UploadIssue(severity: .error, scope: rowName, message: "\(rowName) collides with \(partner)")
-        }
+        StoreUploadChecks.collisionIssues(
+            claims,
+            sameRow: { rowName, labels, slot in
+                UploadIssue(severity: .error, scope: rowName, message: "\(labels.joined(separator: "+")) share \(slot)")
+            },
+            otherRow: { rowName, partner in
+                UploadIssue(severity: .error, scope: rowName, message: "\(rowName) collides with \(partner)")
+            }
+        )
     }
 
     // MARK: - Row naming
@@ -72,10 +87,49 @@ struct StoreUploadChecksTests {
         #expect(Set(issues.map(\.scope)) == ["B", "C"])
     }
 
-    /// Two unlabelled rows both read as "Row" — that is still a real collision.
+    /// Two unlabelled rows both read as "Row", and that is still a real collision between two
+    /// rows — the check tells them apart by id, not by the name it puts in the message.
     @Test func identicallyNamedRowsStillCollide() {
-        let issues = collisions([claim("Row", "en|PHONE"), claim("Row", "en|PHONE")])
+        let first = UploadTargetClaim(rowId: UUID(), rowName: "Row", targetLabel: "English", key: "en|PHONE", slotLabel: "en")
+        let second = UploadTargetClaim(rowId: UUID(), rowName: "Row", targetLabel: "English", key: "en|PHONE", slotLabel: "en")
+        let issues = collisions([first, second])
         #expect(issues.count == 1)
+        #expect(issues[0].message.contains("collides with"))
+    }
+
+    // MARK: - Collisions inside one row
+
+    /// Several project locales can map to one store language ("en" and "en-US" both reach Play's
+    /// en-US). Disabling a row cannot fix that, so it must not be reported as a row clash.
+    @Test func oneRowClaimingASlotTwiceReportsItself() {
+        let issues = collisions([
+            claim("Android Phone", "en-US|PHONE", locale: "English"),
+            claim("Android Phone", "en-US|PHONE", locale: "English (US)")
+        ])
+        #expect(issues.count == 1)
+        #expect(issues[0].scope == "Android Phone")
+        #expect(issues[0].message == "English+English (US) share en-US|PHONE")
+    }
+
+    @Test func aSlotClaimedThreeTimesInOneRowReportsOnceNamingAll() {
+        let issues = collisions([
+            claim("A", "en-US|PHONE", locale: "English"),
+            claim("A", "en-US|PHONE", locale: "English (UK)"),
+            claim("A", "en-US|PHONE", locale: "English (US)")
+        ])
+        #expect(issues.count == 1)
+        #expect(issues[0].message == "English+English (UK)+English (US) share en-US|PHONE")
+    }
+
+    /// A row that duplicates a slot internally still owns it against other rows — once.
+    @Test func anInternalDuplicateStillCollidesWithAnotherRow() {
+        let issues = collisions([
+            claim("A", "en-US|PHONE", locale: "English"),
+            claim("A", "en-US|PHONE", locale: "English (US)"),
+            claim("B", "en-US|PHONE")
+        ])
+        #expect(issues.count == 2)
+        #expect(issues.filter { $0.scope == "B" }.count == 1)
     }
 
     @Test func differentAssetTypesOnTheSameLocaleDoNotCollide() {

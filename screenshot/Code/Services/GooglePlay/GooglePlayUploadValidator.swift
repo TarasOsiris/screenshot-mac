@@ -76,21 +76,57 @@ nonisolated enum GooglePlayUploadValidator {
             }
 
             for locale in enabledLocales {
+                guard let playCode = locale.playLanguageCode else { continue }
                 claims.append(UploadTargetClaim(
+                    rowId: plan.id,
                     rowName: rowName,
-                    key: "\(locale.playLanguageCode)|\(plan.selectedAssetType.apiValue)"
+                    targetLabel: locale.appLocaleLabel,
+                    key: "\(playCode)|\(plan.selectedAssetType.apiValue)",
+                    slotLabel: playCode
                 ))
             }
         }
 
-        perRow.append(contentsOf: StoreUploadChecks.collisionIssues(claims) { rowName, partner in
-            UploadIssue(
-                severity: .error,
-                scope: rowName,
-                message: "This row uploads to the same Play listing slot as \(partner).",
-                hint: "Disable one of these rows or pick a different image type."
-            )
-        })
+        // A property of the project's locales rather than of any one row, so it is said once.
+        let unsupported = enabledPlans.flatMap { $0.localeTargets }
+            .filter { $0.playLanguageCode == nil }
+            .map(\.appLocaleCode)
+            .reduce(into: [String]()) { codes, code in
+                if !codes.contains(code) { codes.append(code) }
+            }
+        if !unsupported.isEmpty {
+            let names = unsupported.formatted(.list(type: .and))
+            perRow.append(UploadIssue(
+                severity: .warning,
+                message: unsupported.count == 1
+                    ? "Google Play has no listing language for \(names), so it will be skipped."
+                    : "Google Play has no listing language for \(names), so they will be skipped.",
+                hint: "Play publishes one listing per language it supports; every other language uploads normally."
+            ))
+        }
+
+        perRow.append(contentsOf: StoreUploadChecks.collisionIssues(
+            claims,
+            sameRow: { rowName, localeLabels, playCode in
+                let names = localeLabels.formatted(.list(type: .and))
+                return UploadIssue(
+                    severity: .error,
+                    scope: rowName,
+                    message: localeLabels.count == 2
+                        ? "\(names) both upload to Play's \(playCode) listing."
+                        : "\(names) all upload to Play's \(playCode) listing.",
+                    hint: "Play keeps one screenshot set per language — turn all but one of them off."
+                )
+            },
+            otherRow: { rowName, partner in
+                UploadIssue(
+                    severity: .error,
+                    scope: rowName,
+                    message: "This row uploads to the same Play listing slot as \(partner).",
+                    hint: "Disable one of these rows or pick a different image type."
+                )
+            }
+        ))
 
         issues.append(contentsOf: isDemoMode ? perRow.map { $0.with(severity: .warning) } : perRow)
         return issues

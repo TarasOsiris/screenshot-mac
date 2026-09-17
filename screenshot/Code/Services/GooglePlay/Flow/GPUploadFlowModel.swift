@@ -162,7 +162,8 @@ final class GPUploadFlowModel {
     }
 
     func buildRowPlans(preserving existingPlans: [GPRowPlan] = []) -> [GPRowPlan] {
-        rows.map { row in
+        let defaultCodes = GooglePlayLanguageMatcher.defaultUploadCodes(among: localeState.locales.map(\.code))
+        return rows.map { row in
             let detected = GPImageType.detect(width: row.templateWidth, height: row.templateHeight)
             let existingPlan = existingPlans.first(where: { $0.id == row.id })
             let targets = localeState.locales.map { locale -> GPLocaleTarget in
@@ -171,7 +172,7 @@ final class GPUploadFlowModel {
                     appLocaleCode: locale.code,
                     appLocaleLabel: locale.flagLabel,
                     playLanguageCode: GooglePlayLanguageMatcher.playLanguageCode(forProjectCode: locale.code),
-                    isEnabled: existingTarget?.isEnabled ?? true
+                    isEnabled: existingTarget?.isEnabled ?? defaultCodes.contains(locale.code)
                 )
             }
             return GPRowPlan(
@@ -191,9 +192,14 @@ final class GPUploadFlowModel {
     func buildUploadTargets() -> [GPUploadTarget] {
         rowPlans.compactMap { plan -> GPUploadTarget? in
             guard plan.isEnabled else { return nil }
-            let languages = plan.localeTargets
-                .filter(\.isEnabled)
-                .map { GPUploadLanguage(projectCode: $0.appLocaleCode, playCode: $0.playLanguageCode, label: $0.appLocaleLabel) }
+            // Demo mode softens the duplicate-language error to a warning, so the upload path
+            // cannot trust validation alone: one Play language means one delete-and-reupload.
+            var claimedPlayCodes: Set<String> = []
+            let languages = plan.localeTargets.compactMap { target -> GPUploadLanguage? in
+                guard target.isEnabled, let playCode = target.playLanguageCode else { return nil }
+                guard claimedPlayCodes.insert(playCode).inserted else { return nil }
+                return GPUploadLanguage(projectCode: target.appLocaleCode, playCode: playCode, label: target.appLocaleLabel)
+            }
             guard !languages.isEmpty else { return nil }
             return GPUploadTarget(
                 rowId: plan.id,

@@ -101,6 +101,45 @@ struct AppStoreConnectUploadValidatorTests {
         })
     }
 
+    /// Two project locales can point the same row at one App Store localization. Disabling a row
+    /// cannot fix that, so it must be reported as the locale clash it is.
+    @Test func rejectsTwoLocalesInOneRowPointingAtOneLocalization() {
+        let localization = ASCAppStoreVersionLocalization(
+            id: "localization-en",
+            attributes: .init(locale: "en-US")
+        )
+        func target(_ code: String, _ label: String) -> ASCLocaleTarget {
+            ASCLocaleTarget(
+                appLocaleCode: code,
+                appLocaleLabel: label,
+                selectedASCLocalizationIds: [localization.id],
+                candidates: [localization],
+                isEnabled: true
+            )
+        }
+        let version = ASCAppStoreVersion(
+            id: "version-1",
+            attributes: .init(versionString: "1.0", appStoreState: "PREPARE_FOR_SUBMISSION", platform: "IOS")
+        )
+        let plans = [
+            ASCRowPlan(
+                id: UUID(),
+                rowLabel: "Phone",
+                rowSize: CGSize(width: 1290, height: 2796),
+                templateCount: ASCUploadLimits.recommendedScreenshotsPerSet,
+                isEnabled: true,
+                detectedAssetType: .iphone67,
+                selectedAssetType: .iphone67,
+                localeTargets: [target("en", "English"), target("en-US", "English (US)")]
+            )
+        ]
+
+        let issues = AppStoreConnectUploadValidator.validate(version: version, plans: plans)
+
+        #expect(issues.contains { $0.scope == "Phone" && $0.message.contains("English and English (US) both upload to the en-US") })
+        #expect(!issues.contains { $0.message.contains("same App Store screenshot set") }, "one row, not two")
+    }
+
     @Test func collidingRowsAcrossManyLocalesEmitOneErrorPerPartner() {
         let localizations = ["en-US", "fr-FR", "de-DE", "es-ES"].map { locale in
             ASCAppStoreVersionLocalization(id: "localization-\(locale)", attributes: .init(locale: locale))
